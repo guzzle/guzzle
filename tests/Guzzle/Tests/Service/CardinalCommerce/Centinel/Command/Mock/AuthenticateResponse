@@ -1,0 +1,18 @@
+HTTP/1.1 200 OK
+Date: Thu, 06 Jan 2011 18:35:09 GMT
+Server: Microsoft-IIS/6.0
+X-Powered-By: ASP.NET
+Content-Type: text/html
+Set-Cookie: ASPSESSIONIDCCTBQBSD=OCPOAFECILCPDHFPFJACHJOA; path=/
+Cache-control: private
+
+<?xml version="1.0"?>
+<CardinalMPI>
+    <ErrorDesc/>
+    <ErrorNo>0</ErrorNo>
+    <PAResStatus>Y</PAResStatus>
+    <SignatureVerification>Y</SignatureVerification>
+    <Cavv>AAAAAAAAAAAAAAAAAAAAAAAAA=</Cavv>
+    <EciFlag>05</EciFlag>
+    <Xid>k4Vf36ijnJX54kwHQNqUr8/ruvs=</Xid>
+</CardinalMPI>

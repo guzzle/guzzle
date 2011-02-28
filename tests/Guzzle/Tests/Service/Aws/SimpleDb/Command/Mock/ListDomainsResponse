@@ -1,0 +1,13 @@
+HTTP/1.1 200 OK
+
+<?xml version="1.0" encoding="UTF-8"?>
+<ListDomainsResponse xmlns="http://sdb.amazonaws.com/doc/2007-11-07/">
+	<ListDomainsResult>
+		<DomainName>domain_3</DomainName>
+        <DomainName>domain_4</DomainName>
+	</ListDomainsResult>
+	<ResponseMetadata>
+		<RequestId>string</RequestId>
+		<BoxUsage>string</BoxUsage>
+	</ResponseMetadata>
+</ListDomainsResponse>

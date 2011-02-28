@@ -1,0 +1,21 @@
+HTTP/1.1 200 OK
+Date: Wed, 25 Nov 2009 12:00:00 GMT
+Connection: close
+Server: AmazonS3
+
+<?xml version="1.0" encoding="UTF-8"?>
+<BucketLoggingStatus xmlns="http://doc.s3.amazonaws.com/2006-03-01">
+  <LoggingEnabled>
+    <TargetBucket>mybucketlogs</TargetBucket>
+    <TargetPrefix>mybucket-access_log-/</TargetPrefix>
+    <TargetGrants>
+      <Grant>
+        <Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:type="AmazonCustomerByEmail">
+          <EmailAddress>user@company.com</EmailAddress>
+        </Grantee>
+        <Permission>READ</Permission>
+      </Grant>
+    </TargetGrants>
+  </LoggingEnabled>
+</BucketLoggingStatus>

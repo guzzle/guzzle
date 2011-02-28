@@ -1,0 +1,13 @@
+HTTP/1.1 200 OK
+Content-Type: text/xml
+Transfer-Encoding: chunked
+Date: Mon, 03 Jan 2011 01:19:03 GMT
+Server: AWS Simple Queue Service
+
+<SetQueueAttributesResponse>
+    <ResponseMetadata>
+        <RequestId>
+            e5cca473-4fc0-4198-a451-8abb94d02c75
+        </RequestId>
+    </ResponseMetadata>
+</SetQueueAttributesResponse>

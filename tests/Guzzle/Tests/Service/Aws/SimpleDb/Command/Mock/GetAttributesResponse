@@ -1,0 +1,27 @@
+HTTP/1.1 200 OK
+
+<?xml version="1.0" encoding="UTF-8"?>
+<GetAttributesResponse xmlns="http://sdb.amazonaws.com/doc/2007-11-07/">
+	<GetAttributesResult>
+		<Attribute>
+			<Name>attr_1</Name>
+			<Value>value_1</Value>
+		</Attribute>
+        <Attribute>
+			<Name>attr_2</Name>
+			<Value>value_2</Value>
+		</Attribute>
+        <Attribute>
+			<Name>attr_2</Name>
+			<Value>value_3</Value>
+		</Attribute>
+        <Attribute>
+			<Name>attr_2</Name>
+			<Value>value_4</Value>
+		</Attribute>
+	</GetAttributesResult>
+	<ResponseMetadata>
+		<RequestId>string</RequestId>
+		<BoxUsage>string</BoxUsage>
+	</ResponseMetadata>
+</GetAttributesResponse>

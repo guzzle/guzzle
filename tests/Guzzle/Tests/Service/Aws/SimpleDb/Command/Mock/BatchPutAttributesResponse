@@ -1,0 +1,11 @@
+HTTP/1.1 200 OK
+Content-Type: text/xml
+Transfer-Encoding: chunked
+Content-Encoding: gzip
+Vary: Accept-Encoding
+Date: Sun, 07 Nov 2010 20:05:47 GMT
+Server: Amazon SimpleDB
+Content-Length: 257
+
+<?xml version="1.0"?>
+<BatchPutAttributesResponse xmlns="http://sdb.amazonaws.com/doc/2009-04-15/"><ResponseMetadata><RequestId>3994ae7b-b166-6d24-90c3-d53501518071</RequestId><BoxUsage>0.0000219909</BoxUsage></ResponseMetadata></BatchPutAttributesResponse>

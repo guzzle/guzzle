@@ -1,0 +1,25 @@
+HTTP/1.1 200 OK
+
+<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01">
+  <Name>johnsmith</Name>
+  <Prefix>photos/2006/</Prefix>
+  <Marker/>
+  <MaxKeys>1000</MaxKeys>
+  <Delimiter>/</Delimiter>
+  <IsTruncated>true</IsTruncated>
+  <Contents>
+    <Key>photos/2006/index.html</Key>
+    <LastModified>2009-01-01T12:00:00.000Z</LastModified>
+    <ETag>"ce1acdafcc879d7eee54cf4e97334078"</ETag>
+    <Size>1234</Size>
+    <Owner>
+      <ID>214153b66967d86f031c7249d1d9a80249109428335cd08f1cdc487b4566cb1b</ID>
+      <DisplayName>John Smith</DisplayName>
+    </Owner>
+    <StorageClass>STANDARD</StorageClass>
+  </Contents>
+  <CommonPrefixes>
+    <Prefix>photos/2006/January/</Prefix>
+  </CommonPrefixes>
+</ListBucketResult>

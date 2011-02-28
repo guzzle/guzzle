@@ -1,0 +1,68 @@
+HTTP/1.1 200 OK
+Date: Sat, 30 Oct 2010 03:29:36 GMT
+Server: Apache
+Vary: Accept-Encoding,User-Agent
+X-Powered-By: Phusion Passenger (mod_rails/mod_rack) 2.1.2
+X-Runtime: 11
+ETag: "9bf530a8ba0e3bb35f6329efa57f871f"
+Content-Encoding: deflate
+Cache-Control: private, max-age=0, must-revalidate
+Set-Cookie: _unfuddle_session=9ad92dc9dd62498a4de08678de78b3a7; domain=.unfuddle.com; path=/; expires=Sat, 30 Oct 2010 05:29:36 GMT; HttpOnly
+Content-Length: 688
+Status: 200
+Content-Type: application/xml; charset=utf-8
+
+<?xml version="1.0" encoding="UTF-8"?>
+<people type="array">
+  <person>
+    <account-id type="integer">1</account-id>
+    <email>test@test.com</email>
+    <first-name>Michael</first-name>
+    <id type="integer">1</id>
+    <identity-url></identity-url>
+    <is-administrator type="boolean">true</is-administrator>
+    <is-removed type="boolean">false</is-removed>
+    <last-name>Dowling</last-name>
+    <notification-frequency>dailyam</notification-frequency>
+    <notification-ignore-self type="boolean">true</notification-ignore-self>
+    <notification-last-sent type="datetime">2010-10-28T08:10:19-05:00</notification-last-sent>
+    <notification-scope-messages>all</notification-scope-messages>
+    <notification-scope-milestones>all</notification-scope-milestones>
+    <notification-scope-notebooks>all</notification-scope-notebooks>
+    <notification-scope-source>all</notification-scope-source>
+    <notification-scope-tickets>all</notification-scope-tickets>
+    <text-markup>markdown</text-markup>
+    <time-zone>Central Time (US &amp; Canada)</time-zone>
+    <username>test</username>
+    <show_help_messages>false</show_help_messages>
+    <access_key>1234</access_key>
+    <created-at>2009-10-10T04:14:00Z</created-at>
+    <last-signed-in>2010-10-30T02:35:11Z</last-signed-in>
+    <updated-at>2010-10-30T02:35:11Z</updated-at>
+  </person>
+  <person>
+    <account-id type="integer">1</account-id>
+    <email>test2@test.com</email>
+    <first-name>Public</first-name>
+    <id type="integer">2</id>
+    <identity-url></identity-url>
+    <is-administrator type="boolean">false</is-administrator>
+    <is-removed type="boolean">false</is-removed>
+    <last-name>User</last-name>
+    <notification-frequency>immediate</notification-frequency>
+    <notification-ignore-self type="boolean">false</notification-ignore-self>
+    <notification-last-sent type="datetime">2010-10-29T22:20:12-05:00</notification-last-sent>
+    <notification-scope-messages>none</notification-scope-messages>
+    <notification-scope-milestones>none</notification-scope-milestones>
+    <notification-scope-notebooks>none</notification-scope-notebooks>
+    <notification-scope-source>none</notification-scope-source>
+    <notification-scope-tickets>none</notification-scope-tickets>
+    <text-markup>markdown</text-markup>
+    <time-zone>Pacific Time (US &amp; Canada)</time-zone>
+    <username>test</username>
+    <show_help_messages>true</show_help_messages>
+    <created-at>2010-09-17T21:44:18Z</created-at>
+    <last-signed-in></last-signed-in>
+    <updated-at>2010-10-30T03:20:12Z</updated-at>
+  </person>
+</people>

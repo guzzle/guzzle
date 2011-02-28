@@ -1,0 +1,9 @@
+HTTP/1.1 200 OK
+Content-Type: text/xml
+Transfer-Encoding: chunked
+Date: Mon, 03 Jan 2011 01:19:03 GMT
+Server: AWS Simple Queue Service
+Content-Length: 212
+
+<?xml version="1.0"?>
+<DeleteQueueResponse xmlns="http://queue.amazonaws.com/doc/2009-02-01/"><ResponseMetadata><RequestId>f6a89b95-5f0f-44b5-ab58-7cfebd318361</RequestId></ResponseMetadata></DeleteQueueResponse>

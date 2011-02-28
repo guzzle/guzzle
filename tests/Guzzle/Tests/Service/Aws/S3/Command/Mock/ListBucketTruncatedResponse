@@ -1,0 +1,39 @@
+HTTP/1.1 200 OK
+x-amz-id-2: gyB+3jRPnrkN98ZajxHXr3u7EFM67bNgSAxexeEHndCX/7GRnfTXxReKUQF28IfP
+x-amz-request-id: 3B3C7C725673C630
+Date: Wed, 01 Mar  2009 12:00:00 GMT
+Content-Type: application/xml
+Content-Length: 302
+Connection: close
+Server: AmazonS3
+
+<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01">
+  <Name>quotes</Name>
+  <Prefix>N</Prefix>
+  <Marker>Ned</Marker>
+  <MaxKeys>40</MaxKeys>
+  <IsTruncated>true</IsTruncated>
+  <Contents>
+    <Key>Nelson</Key>
+    <LastModified>2006-01-01T12:00:00.000Z</LastModified>
+    <ETag>&quot;828ef3fdfa96f00ad9f27c383fc9ac7f&quot;</ETag>
+    <Size>5</Size>
+    <StorageClass>STANDARD</StorageClass>
+    <Owner>
+      <ID>bcaf161ca5fb16fd081034f</ID>
+      <DisplayName>webfile</DisplayName>
+     </Owner>
+  </Contents>
+  <Contents>
+    <Key>Neo</Key>
+    <LastModified>2006-01-01T12:00:00.000Z</LastModified>
+    <ETag>&quot;828ef3fdfa96f00ad9f27c383fc9ac7f&quot;</ETag>
+    <Size>4</Size>
+    <StorageClass>STANDARD</StorageClass>
+     <Owner>
+      <ID>bcaf1ffd86a5fb16fd081034f</ID>
+      <DisplayName>webfile</DisplayName>
+    </Owner>
+ </Contents>
+</ListBucketResult>

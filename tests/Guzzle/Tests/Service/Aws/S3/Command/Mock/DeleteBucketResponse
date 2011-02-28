@@ -1,0 +1,6 @@
+HTTP/1.1 204 No Content
+x-amz-id-2: JuKZqmXuiwFeDQxhD7M8KtsKobSzWA1QEjLbTMTagkKdBX2z7Il/jGhDeJ3j6s80
+x-amz-request-id: 32FE2CEB32F5EE25
+Date: Wed, 01 Mar  2009 12:00:00 GMT
+Connection: close
+Server: AmazonS3

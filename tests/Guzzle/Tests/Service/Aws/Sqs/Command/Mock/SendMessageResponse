@@ -1,0 +1,21 @@
+HTTP/1.1 200 OK
+Content-Type: text/xml
+Transfer-Encoding: chunked
+Date: Mon, 03 Jan 2011 01:19:03 GMT
+Server: AWS Simple Queue Service
+
+<SendMessageResponse>
+    <SendMessageResult>
+        <MD5OfMessageBody>
+            fafb00f5732ab283681e124bf8747ed1
+        </MD5OfMessageBody>
+        <MessageId>
+            5fea7756-0ea4-451a-a703-a558b933e274
+        </MessageId>
+    </SendMessageResult>
+    <ResponseMetadata>
+        <RequestId>
+            27daac76-34dd-47df-bd01-1f6e873584a0
+        </RequestId>
+    </ResponseMetadata>
+</SendMessageResponse>

@@ -1,0 +1,13 @@
+HTTP/1.1 200 OK
+Content-Type: text/xml
+Transfer-Encoding: chunked
+Date: Mon, 03 Jan 2011 01:19:03 GMT
+Server: AWS Simple Queue Service
+
+<RemovePermissionResponse>
+    <ResponseMetadata>
+        <RequestId>
+            f8bdb362-6616-42c0-977a-ce9a8bcce3bb
+        </RequestId>
+    </ResponseMetadata>
+</RemovePermissionResponse>

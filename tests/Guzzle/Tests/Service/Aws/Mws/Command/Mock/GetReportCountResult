@@ -1,0 +1,16 @@
+HTTP/1.1 200 OK
+Date: Fri, 21 Jan 2011 18:33:07 GMT
+Server: Server
+Content-Type: text/xml
+Vary: Accept-Encoding,User-Agent
+Content-Encoding: gzip
+
+<?xml version="1.0"?>
+<GetReportCountResponse xmlns="http://mws.amazonaws.com/doc/2009-01-01/">
+      <GetReportCountResult>
+            <Count>37</Count>
+      </GetReportCountResult>
+      <ResponseMetadata>
+            <RequestId>89b7fd6f-501d-4c4e-b8e4-de7621dfdfb4</RequestId>
+      </ResponseMetadata>
+</GetReportCountResponse>

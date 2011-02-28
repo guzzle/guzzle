@@ -1,0 +1,21 @@
+HTTP/1.1 200 OK
+Content-Type: text/xml
+Transfer-Encoding: chunked
+Date: Mon, 03 Jan 2011 01:19:03 GMT
+Server: AWS Simple Queue Service
+
+<ListQueuesResponse>v
+    <ListQueuesResult>
+        <QueueUrl>
+            http://sqs.us-east-1.amazonaws.com/123456789012/testQueue
+        </QueueUrl>
+        <QueueUrl>
+            http://sqs.us-east-1.amazonaws.com/123456789012/testQueue2
+        </QueueUrl>
+    </ListQueuesResult>
+    <ResponseMetadata>
+        <RequestId>
+            725275ae-0b9b-4762-b238-436d7c65a1ac
+        </RequestId>
+    </ResponseMetadata>
+</ListQueuesResponse>

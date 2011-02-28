@@ -1,0 +1,35 @@
+HTTP/1.1 200 OK
+Content-Type: text/xml
+Transfer-Encoding: chunked
+Date: Mon, 03 Jan 2011 01:19:03 GMT
+Server: AWS Simple Queue Service
+
+<GetQueueAttributesResponse>
+  <GetQueueAttributesResult>
+    <Attribute>
+      <Name>VisibilityTimeout</Name>
+      <Value>32</Value>
+    </Attribute>
+    <Attribute>
+      <Name>ApproximateNumberOfMessages</Name>
+      <Value>0</Value>
+    </Attribute>
+    <Attribute>
+      <Name>ApproximateNumberOfMessagesNotVisible</Name>
+      <Value>1</Value>
+    </Attribute>
+    <Attribute>
+      <Name>CreatedTimestamp</Name>
+      <Value>1238098969</Value>
+    </Attribute>
+    <Attribute>
+      <Name>LastModifiedTimestamp</Name>
+      <Value>1238099106</Value>
+    </Attribute>
+  </GetQueueAttributesResult>
+  <ResponseMetadata>
+    <RequestId>
+      cbd6e5cb-b4f1-46fb-8356-3b4705290606
+    </RequestId>
+  </ResponseMetadata>
+</GetQueueAttributesResponse>

@@ -1,0 +1,37 @@
+HTTP/1.1 200 OK
+x-amz-id-2: Uuag1LuByRx9e6j5Onimru9pO4ZVKnJ2Qz7/C1NPcfTWAtRPfTaOFg==
+x-amz-request-id: 656c76696e6727732072657175657374
+Date: Mon, 1 Nov 2010 20:34:56 GMT
+Connection: keep-alive
+Server: AmazonS3
+
+<?xml version="1.0" encoding="UTF-8"?>
+<ListPartsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Bucket>test</Bucket>
+  <Key>key</Key>
+  <UploadId>XXBsb2FkIElEIGZvciBlbHZpbmcncyVcdS1tb3ZpZS5tMnRzEEEwbG9hZA</UploadId>
+  <Initiator>
+      <ID>arn:aws:iam::11111111111:user/some-user-11116a31-17b5-4fb7-9df5-b288870f11xx</ID>
+      <DisplayName>umat-user-11116a31-17b5-4fb7-9df5-b288870f11xx</DisplayName>
+  </Initiator>
+  <Owner>
+    <ID>x1x16700c70b0b05597d7ecd6a3f92be</ID>
+    <DisplayName>someName</DisplayName>
+  </Owner>
+  <StorageClass>STANDARD</StorageClass>
+  <NextPartNumberMarker>2</NextPartNumberMarker>
+  <MaxParts>2</MaxParts>
+  <IsTruncated>true</IsTruncated>
+  <Part>
+    <PartNumber>1</PartNumber>
+    <LastModified>2010-11-10T20:48:30.000Z</LastModified>
+    <ETag>"7778aef83f66abc1fa1e8477f296d394"</ETag>
+    <Size>10485760</Size>
+  </Part>
+  <Part>
+    <PartNumber>2</PartNumber>
+    <LastModified>2010-11-10T20:48:31.000Z</LastModified>
+    <ETag>"aaaa18db4cc2f85cedef654fccc4a4x8"</ETag>
+    <Size>10485760</Size>
+  </Part>
+</ListPartsResult>

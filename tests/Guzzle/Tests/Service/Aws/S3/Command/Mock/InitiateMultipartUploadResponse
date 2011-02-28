@@ -1,0 +1,14 @@
+HTTP/1.1 200 OK
+x-amz-id-2: Uuag1LuByRx9e6j5Onimru9pO4ZVKnJ2Qz7/C1NPcfTWAtRPfTaOFg==
+x-amz-request-id: 656c76696e6727732072657175657374
+Date:  Mon, 1 Nov 2010 20:34:56 GMT
+Content-Length: 197
+Connection: keep-alive
+Server: AmazonS3
+
+<?xml version="1.0" encoding="UTF-8"?>
+<InitiateMultipartUploadResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Bucket>example-bucket</Bucket>
+  <Key>example-object</Key>
+  <UploadId>VXBsb2FkIElEIGZvciA2aWWpbmcncyBteS1tb3ZpZS5tMnRzIHVwbG9hZA</UploadId>
+</InitiateMultipartUploadResult>

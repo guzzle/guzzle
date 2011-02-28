@@ -1,0 +1,38 @@
+HTTP/1.1 200 OK
+
+<?xml version="1.0" encoding="UTF-8"?>
+<SelectResponse xmlns="http://sdb.amazonaws.com/doc/2007-11-07/">
+	<SelectResult>
+		<Item>
+			<Name>item_name1</Name>
+			<Attribute>
+				<Name>attr_1</Name>
+				<Value>value_1</Value>
+			</Attribute>
+            <Attribute>
+				<Name>attr_1</Name>
+				<Value>value_2</Value>
+			</Attribute>
+            <Attribute>
+				<Name>attr_1</Name>
+				<Value>value_3</Value>
+			</Attribute>
+            <Attribute>
+				<Name>attr_2</Name>
+				<Value>value_4</Value>
+			</Attribute>
+		</Item>
+        <Item>
+			<Name>item_name2</Name>
+			<Attribute>
+				<Name>animal</Name>
+				<Value>elephant</Value>
+			</Attribute>
+		</Item>
+        <NextToken>string</NextToken>
+	</SelectResult>
+	<ResponseMetadata>
+		<RequestId>string</RequestId>
+		<BoxUsage>string</BoxUsage>
+	</ResponseMetadata>
+</SelectResponse>

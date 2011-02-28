@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<service>
+
+    <!-- Basic service information -->
+    <name>Test Service</name>
+    <description>Description</description>
+    <base_url>http://www.test.com/</base_url>
+
+    <!-- Define custom types -->
+    <types>
+        <!-- Uses the Guzzle\Tests\Common\Mock\MockFilter class when a custom_filter type is used -->
+        <type name="custom_filter" class="Guzzle.Tests.Common.Mock.MockFilter" />
+        <!-- Adds a shortcut for a RegEx filter -->
+        <type name="slug" class="Guzzle.Common.InspectorFilter.Regex" default_args="/[0-9a-zA-z_\-]+/" />
+    </types>
+
+    <!-- Add commands to the service -->
+    <commands>
+
+        <command name="test" can_batch="false" method="DELETE" path="{{ bucket }}/{{ key }}{{ format }}" min_args="2">
+            <doc>Documentation</doc>
+            <param name="format" required="false" default="json" type="enum:json,xml" location="path" prepend="." />
+            <param name="bucket" required="true" location="path" doc="Bucket location" />
+            <param name="key" required="true" location="path"/>
+            <param name="query" location="query" default="123" />
+            <param name="query_d" location="query" default="abc" required="true"/>
+        </command>
+
+        <command name="search" method="GET">
+            <param name="q" type="string" required="true"/>
+            <param name="locale" type="string" required="false"/>
+            <param name="rpp" type="integer" required="false"/>
+            <param name="page" type="integer" required="false"/>
+            <param name="since_id" type="integer" required="false"/>
+            <param name="until" type="date" required="false"/>
+            <param name="show_user" type="boolean" required="false"/>
+            <param name="result_type" type="string" required="false"/>
+        </command>
+
+        <command name="trends.location" method="GET" min_args="1" path="/trends/{{ woeid }}">
+            <param name="woeid" type="integer" required="true"/>
+            <param name="acl" required="true" location="header:X-Amz-Acl" />
+        </command>
+
+        <command name="geo.id" method="GET" auth_required="true" path="/geo/id/{{ place_id }}">
+            <param name="place_id" type="string" required="true" prepend="/" append=".id" />
+            <!-- The request builder will remove '//', so it's okay to always prepend / if needed -->
+            <param name="second" type="string" required="true" prepend="/" condition="place_id ~ /[A-Z0-9]/" />
+        </command>
+
+    </commands>
+
+</service>

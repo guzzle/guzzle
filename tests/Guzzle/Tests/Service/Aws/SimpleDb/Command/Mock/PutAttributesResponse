@@ -1,0 +1,9 @@
+HTTP/1.1 200 OK
+
+<?xml version="1.0" encoding="UTF-8"?>
+<PutAttributesResponse xmlns="http://sdb.amazonaws.com/doc/2007-11-07/">
+	<ResponseMetadata>
+		<RequestId>string</RequestId>
+		<BoxUsage>string</BoxUsage>
+	</ResponseMetadata>
+</PutAttributesResponse>

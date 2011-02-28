@@ -1,0 +1,8 @@
+HTTP/1.1 200 OK
+x-amz-id-2: Vvag1LuByRx9e6j5Onimru9pO4ZVKnJ2Qz7/C1NPcfTWAtRPfTaOFg==
+x-amz-request-id: 656c76696e6727732072657175657374
+Date:  Mon, 1 Nov 2010 20:34:56 GMT
+ETag: "b54357faf0632cce46e942fa68356b38"
+Content-Length: 0
+Connection: keep-alive
+Server: AmazonS3

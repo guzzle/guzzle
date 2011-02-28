@@ -1,0 +1,14 @@
+HTTP/1.1 200 OK
+Content-Type: text/xml
+Transfer-Encoding: chunked
+Date: Mon, 03 Jan 2011 01:19:03 GMT
+Server: AWS Simple Queue Service
+
+<?xml version="1.0"?>
+<DeleteMessageResponse>
+    <ResponseMetadata>
+        <RequestId>
+            b5293cb5-d306-4a17-9048-b263635abe42
+        </RequestId>
+    </ResponseMetadata>
+</DeleteMessageResponse>

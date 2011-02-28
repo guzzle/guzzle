@@ -1,0 +1,20 @@
+HTTP/1.1 200 OK
+Date: Thu, 06 Jan 2011 18:35:09 GMT
+Server: Microsoft-IIS/6.0
+X-Powered-By: ASP.NET
+Content-Type: text/html
+Set-Cookie: ASPSESSIONIDCCTBQBSD=OCPOAFECILCPDHFPFJACHJOA; path=/
+Cache-control: private
+
+<?xml version="1.0"?>
+<CardinalMPI>
+    <TransactionType>C</TransactionType>
+    <ErrorNo>0</ErrorNo>
+    <ErrorDesc/>
+    <TransactionId>75f986t76f6</TransactionId>
+    <OrderId>2584</OrderId>
+    <Payload>eNpVUk1TwjAQ/SsM402nSUuKwSC/3gSoH5PL</Payload>
+    <Enrolled>Y</Enrolled>
+    <ACSUrl>https://www.somewebsite.com/acs</ACSUrl>
+    <EciFlag>07</EciFlag>
+</CardinalMPI>

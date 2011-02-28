@@ -1,0 +1,13 @@
+HTTP/1.1 200 OK
+x-amz-id-2: YgIPIfBiKa2bj0KMgUAdQkf3ShJTOOpXUueF6QKo
+x-amz-request-id: 236A8905248E5A02
+Date: Wed, 02 June 2010 12:00:00 GMT
+Connection: close
+Server: AmazonS3
+
+<NotificationConfiguration>
+   <TopicConfiguration>
+       <Topic>arn:aws:sns:us-east-1:123456789012:myTopic</Topic>
+       <Event>s3:ReducedRedundancyLostObject</Event>
+   </TopicConfiguration>
+</NotificationConfiguration>

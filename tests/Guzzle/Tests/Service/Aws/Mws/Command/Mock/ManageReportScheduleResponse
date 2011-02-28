@@ -1,0 +1,21 @@
+HTTP/1.1 200 OK
+Date: Fri, 21 Jan 2011 20:33:02 GMT
+Server: Server
+Content-Type: text/xml
+Vary: Accept-Encoding,User-Agent
+Content-Encoding: gzip
+
+<?xml version="1.0"?>
+<ManageReportScheduleResponse xmlns="http://mws.amazonaws.com/doc/2009-01-01/">
+      <ManageReportScheduleResult>
+            <Count>1</Count>
+            <ReportSchedule>
+                  <ReportType>_GET_MERCHANT_LISTINGS_DATA_</ReportType>
+                  <Schedule>_1_HOUR_</Schedule>
+                  <ScheduledDate>2011-01-21T20:33:02+00:00</ScheduledDate>
+            </ReportSchedule>
+      </ManageReportScheduleResult>
+      <ResponseMetadata>
+            <RequestId>95cab629-6efa-4465-a1cc-c30ff93bb303</RequestId>
+      </ResponseMetadata>
+</ManageReportScheduleResponse>

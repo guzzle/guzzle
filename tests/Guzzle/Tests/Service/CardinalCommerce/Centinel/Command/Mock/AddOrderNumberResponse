@@ -1,0 +1,18 @@
+HTTP/1.1 200 OK
+Date: Thu, 06 Jan 2011 18:35:09 GMT
+Server: Microsoft-IIS/6.0
+X-Powered-By: ASP.NET
+Content-Type: text/html
+Set-Cookie: ASPSESSIONIDCCTBQBSD=OCPOAFECILCPDHFPFJACHJOA; path=/
+Cache-control: private
+
+<?xml version="1.0"?>
+<CardinalMPI>
+    <ErrorNo>0</ErrorNo>
+    <ErrorDesc/>
+    <StatusCode>Y</StatusCode>
+    <ReasonCode/>
+    <ReasonDesc/>
+    <TransactionId>7fDSaySnCmDGCjPglzqX</TransactionId>
+    <OrderId>8604929789808576</OrderId>
+</CardinalMPI>

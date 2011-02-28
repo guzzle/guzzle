@@ -1,0 +1,13 @@
+HTTP/1.1 200 OK
+x-amz-id-2: ef8yU9AS1ed4OpIszj7UDNEHGran
+x-amz-request-id: 318BC8BC143432E5
+x-amz-version-id: 3HL4kqtJlcpXroDTDmjVBH40Nrjfkd
+Date: Wed, 28 Oct 2009 22:32:00 GMT
+Last-Modified: Sun, 1 Jan 2006 12:00:00 GMT
+ETag: "8d777f385d3dfec8815d20f7496026dc"
+Content-Length: 4
+Content-Type: text/plain
+Connection: close
+Server: AmazonS3
+
+data

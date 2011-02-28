@@ -1,0 +1,46 @@
+<?xml version="1.0" ?>
+<guzzle>
+
+    <clients>
+
+        <!-- Unfuddle client -->
+        <client name="test.unfuddle" builder="Guzzle.Service.Builder.DefaultBuilder" class="Guzzle.Service.Unfuddle.UnfuddleClient">
+            <param name="username" value="test_user" />
+            <param name="password" value="****" />
+            <param name="subdomain" value="test" />
+        </client>
+
+        <!-- Abstract service to store AWS account credentials -->
+        <client name="test.abstract.aws">
+            <param name="access_key_id" value="12345" />
+            <param name="secret_access_key" value="abcd" />
+        </client>
+
+        <client name="test.s3" builder="Guzzle.Service.Aws.S3.S3Builder" extends="test.abstract.aws">
+            <param name="devpay_product_token" value="" />
+            <param name="devpay_user_token" value="" />
+        </client>
+
+        <client name="test.simple_db" builder="Guzzle.Service.Aws.SimpleDb.SimpleDbBuilder" extends="test.abstract.aws" />
+        
+        <client name="test.sqs" builder="Guzzle.Service.Aws.Sqs.SqsBuilder" extends="test.abstract.aws" />
+            
+        <client name="test.centinel" builder="Guzzle.Service.Builder.DefaultBuilder" class="Guzzle.Service.CardinalCommerce.Centinel.CentinelClient">
+            <param name="password" value="test" />
+            <param name="processor_id" value="123" />
+            <param name="merchant_id" value="456" />
+        </client>
+
+        <client name="test.mws" builder="Guzzle.Service.Aws.Mws.MwsBuilder">
+            <param name="merchant_id" value="ABCDE" />
+            <param name="marketplace_id" value="FGHIJ" />
+            <param name="access_key_id" value="AABBCC" />
+            <param name="secret_access_key" value="DDEEFF" />
+            <param name="application_name" value="GuzzleTest" />
+            <param name="application_version" value="0.1" />
+            <param name="base_url" value="https://mws.amazonservices.com/" />
+        </client>
+
+    </clients>
+
+</guzzle>

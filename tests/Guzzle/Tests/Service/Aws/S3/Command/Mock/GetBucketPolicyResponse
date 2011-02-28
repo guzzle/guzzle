@@ -1,0 +1,23 @@
+HTTP/1.1 200 OK
+x-amz-id-2: Uuag1LuByru9pO4SAMPLEAtRPfTaOFg==
+x-amz-request-id: 656c76696e67SAMPLE57374
+Date: Tue, 04 Apr 2010 20:34:56 GMT
+Connection: keep-alive
+Server: AmazonS3
+
+
+{
+"Version":"2008-10-17",
+"Id":"aaaa-bbbb-cccc-dddd",
+"Statement" : [
+    {
+        "Effect":"Deny",
+        "Sid":"1",
+        "Principal" : {
+            "AWS":["1-22-333-4444","3-55-678-9100"]
+        },
+        "Action":["s3:*"],
+        "Resource":"arn:aws:s3:::bucket/*"
+    }
+ ]
+}
