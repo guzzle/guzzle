@@ -54,7 +54,9 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
      */
     public function getServicesFile()
     {
-        return __DIR__ . \DIRECTORY_SEPARATOR . 'services.xml';
+        return isset($_SERVER['GUZZLE_SERVICE_FILE'])
+            ? $_SERVER['GUZZLE_SERVICE_FILE']
+            : __DIR__ . DIRECTORY_SEPARATOR . 'services.xml';
     }
 
     /**
@@ -103,20 +105,14 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
      */
     public function getMockResponse(Client $client, $filename)
     {
-        $path = __DIR__;
-        $class = get_class($client);
-
-        // Determine the location of the mock directory based on the client class
-        foreach (explode('\\', substr($class, strpos($class, 'Guzzle\\') + 7)) as $part) {
-            if (strpos($part, 'Client')) {
-                break;
-            }
-
-            $path .= \DIRECTORY_SEPARATOR . $part;
-        }
+        $reflection = new \ReflectionClass(get_class($client));
+        $path = str_replace(array(
+            str_replace($reflection->getNamespaceName() . '\\', '', $reflection->getName()),
+            '.php'
+        ), '', $reflection->getFileName());
 
         // Create the path to the file
-        $path .= \DIRECTORY_SEPARATOR . 'Command' . \DIRECTORY_SEPARATOR . 'Mock' . \DIRECTORY_SEPARATOR . $filename;
+        $path .= DIRECTORY_SEPARATOR . 'Tests' . DIRECTORY_SEPARATOR . 'Command' . DIRECTORY_SEPARATOR . 'Mock' . DIRECTORY_SEPARATOR . $filename;
 
         if (!file_exists($path)) {
             throw new \Exception('Unable to open mock file: ' . $path);

@@ -3,13 +3,6 @@
 
     <clients>
 
-        <!-- Unfuddle client -->
-        <client name="test.unfuddle" builder="Guzzle.Service.Builder.DefaultBuilder" class="Guzzle.Service.Unfuddle.UnfuddleClient">
-            <param name="username" value="test_user" />
-            <param name="password" value="****" />
-            <param name="subdomain" value="test" />
-        </client>
-
         <!-- Abstract service to store AWS account credentials -->
         <client name="test.abstract.aws">
             <param name="access_key_id" value="12345" />
