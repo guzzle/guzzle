@@ -65,14 +65,12 @@ class ResourceIteratorApplyBatched extends AbstractSubject
         if ($this->iterated == 0) {
             $batched = array();
             $this->iterated = 0;
-            $currentCount = 0;
 
             foreach ($this->iterator as $resource) {
                 $batched[] = $resource;
-                if (++$currentCount >= $perBatch) {
+                if (count($batched) >= $perBatch) {
                     $this->applyBatch($batched);
                     $batched = array();
-                    $currentCount = 0;
                 }
                 $this->iterated++;
             }
@@ -80,6 +78,7 @@ class ResourceIteratorApplyBatched extends AbstractSubject
             if (count($batched)) {
                 $this->applyBatch($batched);
             }
+
             unset($batch);
         }
 

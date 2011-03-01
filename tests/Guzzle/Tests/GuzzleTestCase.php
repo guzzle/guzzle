@@ -105,15 +105,23 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
      */
     public function getMockResponse(Client $client, $filename)
     {
-        if (isset($_SERVER['GUZZLE_MOCK_PATH'])) {
-            $path = $_SERVER['GUZZLE_MOCK_PATH'] . DIRECTORY_SEPARATOR . $filename;
-        } else {
-            $reflection = new \ReflectionClass(get_class($client));
-            $path = str_replace(array(
-                str_replace($reflection->getNamespaceName() . '\\', '', $reflection->getName()),
-                '.php'
-            ), '', $reflection->getFileName());
+        
+        $reflection = new \ReflectionClass(get_class($client));
+        $path = str_replace(array(
+            str_replace($reflection->getNamespaceName() . '\\', '', $reflection->getName()),
+            '.php'
+        ), '', $reflection->getFileName());
 
+        // Handle nested mock files
+        if (isset($_SERVER['GUZZLE_SERVICE_MULTI']) && (int) $_SERVER['GUZZLE_SERVICE_MULTI'] == 1) {
+            $parts = explode(DIRECTORY_SEPARATOR, $path);
+            $path = implode(DIRECTORY_SEPARATOR, array_slice($parts, 0, count($parts) - 2))
+                . DIRECTORY_SEPARATOR . 'Tests'
+                . DIRECTORY_SEPARATOR . $parts[count($parts) - 2]
+                . DIRECTORY_SEPARATOR . 'Command'
+                . DIRECTORY_SEPARATOR . 'Mock'
+                . DIRECTORY_SEPARATOR . $filename;
+        } else {
             // Create the path to the file
             $path .= DIRECTORY_SEPARATOR . 'Tests' . DIRECTORY_SEPARATOR . 'Command' . DIRECTORY_SEPARATOR . 'Mock' . DIRECTORY_SEPARATOR . $filename;
         }
