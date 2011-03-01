@@ -43,16 +43,16 @@ class ServiceBuilder
     protected $cacheTtl;
 
     /**
-     * Create a new ServiceBuilder using an XML configuration file to configure 
+     * Create a new ServiceBuilder using an XML configuration file to configure
      * the registered ServiceBuilder builder objects
-     * 
+     *
      * @param string $filename Full path to the XML configuration file
      * @param CacheAdapterInterface $cacheAdapter (optional) Pass a cache
      *      adapter to cache the service configuration settings loaded from the
      *      XML and to cache dynamically built services.
      * @param int $cacheTtl (optional) How long to cache items in the cache
      *      adapter (defaults to 24 hours).
-     * 
+     *
      * @return ServiceBuilder
      * @throws ServiceException if the file cannot be openend
      */
@@ -63,10 +63,10 @@ class ServiceBuilder
         $cached = ($cacheAdapter) ? $cacheAdapter->fetch($key) : false;
 
         if ($cached) {
-            
+
             // Load the config from cache
             $config = unserialize($cached);
-            
+
         } else {
 
             // Build the service config from the XML file if the file exists
@@ -81,12 +81,12 @@ class ServiceBuilder
             foreach ($xml->clients->client as $client) {
 
                 $row = array();
-                $name = (string)$client->attributes()->name;
-                $builder = (string)$client->attributes()->builder;
-                $class = (string)$client->attributes()->class;
-                
+                $name = (string) $client->attributes()->name;
+                $builder = (string) $client->attributes()->builder;
+                $class = (string) $client->attributes()->class;
+
                 // Check if this client builder extends another client
-                if ($extends = (string)$client->attributes()->extends) {
+                if ($extends = (string) $client->attributes()->extends) {
                     // Make sure that the service it's extending has been defined
                     if (!isset($config[$extends])) {
                         throw new ServiceException($name . ' is trying to extend a non-existent or not yet defined service: ' . $extends);
@@ -99,7 +99,7 @@ class ServiceBuilder
 
                 // Add attributes to the row's parameters
                 foreach ($client->param as $param) {
-                    $row[(string)$param->attributes()->name] = (string)$param->attributes()->value;
+                    $row[(string) $param->attributes()->name] = (string) $param->attributes()->value;
                 }
 
                 // Add this client builder
@@ -114,7 +114,7 @@ class ServiceBuilder
                 $cacheAdapter->save($key, serialize($config), $cacheTtl);
             }
         }
-        
+
         $builder = new self($config);
         if ($cacheAdapter) {
             // Always share the cache
@@ -174,7 +174,7 @@ class ServiceBuilder
         if (!$throwAway && isset($this->serviceBuilders[$name])) {
             return $this->serviceBuilders[$name];
         }
-        
+
         if (!isset($this->serviceBuilderConfig[$name])) {
             throw new ServiceException('No service builder is registered as ' . $name);
         }

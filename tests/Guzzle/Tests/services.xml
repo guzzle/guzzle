@@ -22,9 +22,9 @@
         </client>
 
         <client name="test.simple_db" builder="Guzzle.Service.Aws.SimpleDb.SimpleDbBuilder" extends="test.abstract.aws" />
-        
+
         <client name="test.sqs" builder="Guzzle.Service.Aws.Sqs.SqsBuilder" extends="test.abstract.aws" />
-            
+
         <client name="test.centinel" builder="Guzzle.Service.Builder.DefaultBuilder" class="Guzzle.Service.CardinalCommerce.Centinel.CentinelClient">
             <param name="password" value="test" />
             <param name="processor_id" value="123" />
@@ -39,6 +39,13 @@
             <param name="application_name" value="GuzzleTest" />
             <param name="application_version" value="0.1" />
             <param name="base_url" value="https://mws.amazonservices.com/" />
+        </client>
+
+        <!-- Mock service -->
+        <client name="mock" builder="Guzzle.Service.Builder.DefaultBuilder" class="Guzzle.Tests.Service.Mock.MockClient">
+            <param name="username" value="test_user" />
+            <param name="password" value="****" />
+            <param name="subdomain" value="test" />
         </client>
 
     </clients>

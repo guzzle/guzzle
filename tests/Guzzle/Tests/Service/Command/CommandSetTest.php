@@ -12,6 +12,7 @@ use Guzzle\Service\Command\CommandSet;
 use Guzzle\Service\Client;
 use Guzzle\Service\DescriptionBuilder\XmlDescriptionBuilder;
 use Guzzle\Service\Command\ConcreteCommandFactory;
+use Guzzle\Tests\Service\Mock\Command\MockCommand;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>
@@ -59,7 +60,7 @@ class CommandSetTest extends AbstractCommandTest
         // Check that the commands are registered and findable
         $this->assertTrue($commandSet->hasCommand($command1));
         $this->assertTrue($commandSet->hasCommand($command2));
-        $this->assertTrue($commandSet->hasCommand('Guzzle\\Tests\\Service\\Command\\MockCommand'));
+        $this->assertTrue($commandSet->hasCommand('Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand'));
 
         // Test that the Countable interface is working
         $this->assertEquals(2, count($commandSet));
@@ -77,7 +78,7 @@ class CommandSetTest extends AbstractCommandTest
         $this->assertTrue($commandSet->hasCommand($command2));
 
         // Remove the command by class
-        $commandSet->removeCommand('Guzzle\\Tests\\Service\\Command\\MockCommand');
+        $commandSet->removeCommand('Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand');
         $this->assertFalse($commandSet->hasCommand($command2));
     }
 

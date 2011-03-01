@@ -69,7 +69,7 @@ class DefaultBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         } catch (\Guzzle\Service\ServiceException $e) {}
 
         $this->assertEquals($builder, $builder->setClass('abc.123'));
-        
+
         // The builder will convert lowercase and periods
         $this->assertEquals('Abc\\123', $builder->getClass());
 
@@ -90,15 +90,17 @@ class DefaultBuilderTest extends \Guzzle\Tests\GuzzleTestCase
             'subdomain' => 'michael'
         ), 'michael.unfuddle');
 
-        $builder->setClass('Guzzle\\Service\\Unfuddle\\UnfuddleClient');
+        $builder->setClass('Guzzle\\Tests\\Service\\Mock\\MockClient');
 
         $client = $builder->build();
-        $this->assertInstanceOf('Guzzle\\Service\\Unfuddle\\UnfuddleClient', $client);
+        $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\MockClient', $client);
 
         // make sure a service was created correctly
-        $this->assertTrue($client->getService()->hasCommand('tickets.create_ticket'));
+        $this->assertTrue($client->getService()->hasCommand('sub.sub'));
+        $this->assertTrue($client->getService()->hasCommand('mock_command'));
+        $this->assertTrue($client->getService()->hasCommand('other_command'));
     }
-    
+
     /**
      * @covers Guzzle\Service\Builder\AbstractBuilder::__toString
      */
@@ -108,12 +110,12 @@ class DefaultBuilderTest extends \Guzzle\Tests\GuzzleTestCase
             'username' => 'michael',
             'password' => 'test',
             'subdomain' => 'michael'
-        ), 'michael.unfuddle');
+        ), 'mock');
 
-        $builder->setClass('Guzzle\\Service\\Unfuddle\\UnfuddleClient');
+        $builder->setClass('Guzzle\\Tests\\Service\\Mock\\MockClient');
 
         $xml = <<<EOT
-<service name="michael.unfuddle" class="Guzzle.Service.Unfuddle.UnfuddleClient">
+<service name="mock" class="Guzzle.Tests.Service.Mock.MockClient">
     <param name="username" value="michael" />
     <param name="password" value="test" />
     <param name="subdomain" value="michael" />
@@ -121,7 +123,7 @@ class DefaultBuilderTest extends \Guzzle\Tests\GuzzleTestCase
 EOT;
         $xml = trim($xml);
 
-        $this->assertEquals($xml, (string)$builder);
+        $this->assertEquals($xml, (string) $builder);
     }
 
     /**
@@ -138,7 +140,7 @@ EOT;
             'subdomain' => 'michael'
         ), 'michael.unfuddle');
 
-        $builder->setClass('Guzzle\\Service\\Unfuddle\\UnfuddleClient');
+        $builder->setClass('Guzzle\\Tests\\Service\\Mock\\MockClient');
         $this->assertSame($builder, $builder->setCache($adapter));
 
         $client1 = $builder->build();

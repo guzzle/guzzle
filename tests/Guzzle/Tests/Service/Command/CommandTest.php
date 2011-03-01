@@ -10,6 +10,7 @@ use Guzzle\Service\ApiCommand;
 use Guzzle\Service\Client;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\AbstractCommand;
+use Guzzle\Tests\Service\Mock\Command\MockCommand;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>
@@ -115,7 +116,7 @@ class CommandTest extends AbstractCommandTest
         )));
 
         $command = new MockCommand();
-        
+
         $this->assertEquals($command, $command->setClient($client));
         $this->assertEquals($command, $command->execute()); // Implicitly calls prepare
 
@@ -199,7 +200,7 @@ class CommandTest extends AbstractCommandTest
             'method' => 'POST',
             'min_args' => 1,
             'can_batch' => true,
-            'concrete_command_class' => 'Guzzle\\Tests\\Common\\MockCommand',
+            'concrete_command_class' => 'Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand',
             'args' => array(
                 'test' => array(
                     'default' => '123',

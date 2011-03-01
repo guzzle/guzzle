@@ -22,6 +22,8 @@ use Guzzle\Tests\Common\Mock\MockFilter;
  * @guzzle date type="date"
  * @guzzle timestamp type="timestamp"
  * @guzzle string type="string"
+ * @guzzle username required="true"
+ * @guzzle dynamic default="{{username}}_{{ string }}_{{ does_not_exist }}"
  */
 class InspectorTest extends \Guzzle\Tests\GuzzleTestCase implements FilterInterface
 {
@@ -42,7 +44,7 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase implements FilterInterf
     public function testValidatesRequiredArgs()
     {
         $col = new Collection();
-        Inspector::getInstance()->validateClass('Guzzle\Service\Unfuddle\UnfuddleClient', $col);
+        Inspector::getInstance()->validateClass(__CLASS__, $col);
     }
 
     /**
@@ -52,15 +54,14 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase implements FilterInterf
     {
         $col = new Collection(array(
             'username' => 'user',
-            'password' => 'test',
-            'subdomain' => 'test.{{ username }}'
+            'string' => 'test',
+            'float' => 1.23
         ));
 
-        Inspector::getInstance()->validateClass('Guzzle\Service\Unfuddle\UnfuddleClient', $col);
-        $this->assertEquals('https', $col->get('protocol'));
-        $this->assertEquals('v1', $col->get('api_version'));
-        $this->assertEquals('user', $col->get('username'));
-        $this->assertEquals('test.user', $col->get('subdomain'));
+        Inspector::getInstance()->validateClass(__CLASS__, $col);
+        $this->assertEquals(false, $col->get('bool_2'));
+        $this->assertEquals('user_test_', $col->get('dynamic'));
+        $this->assertEquals(1.23, $col->get('float'));
     }
 
     /**
@@ -71,7 +72,8 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase implements FilterInterf
     public function testValidatesTypeHints()
     {
         Inspector::getInstance()->validateClass(__CLASS__, new Collection(array(
-            'test' => 'uh oh'
+            'test' => 'uh oh',
+            'username' => 'test'
         )));
     }
 
@@ -83,7 +85,8 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase implements FilterInterf
     public function testConvertsBooleanDefaults()
     {
         $c = new Collection(array(
-            'test' => $this
+            'test' => $this,
+            'username' => 'test'
         ));
 
         Inspector::getInstance()->validateClass(__CLASS__, $c);
@@ -149,6 +152,17 @@ EOT;
         $this->assertEquals(array(
             'type' => 'class'
         ), $params['class']);
+
+        $config = new Collection(array(
+            'username' => 'test',
+            'password' => 'pass',
+            'subdomain' => 'sub'
+        ));
+
+        Inspector::getInstance()->validateConfig($params, $config);
+
+        // make sure the configs were injected
+        $this->assertEquals('https://sub.unfuddle.com/api/v1/', $config->get('base_url'));
 
         try {
             Inspector::getInstance()->validateConfig($params, new Collection(array(
@@ -225,6 +239,12 @@ The supplied value is not an instance of stdClass: <string:123> supplied", $e->g
      */
     public function testValidatesArgs()
     {
+        $config = new Collection(array(
+            'data' => 123,
+            'min' => 'a',
+            'max' => 'aaa'
+        ));
+
         $result = Inspector::getInstance()->validateConfig(array(
             'data' => array(
                 'type' => 'string'
@@ -237,12 +257,7 @@ The supplied value is not an instance of stdClass: <string:123> supplied", $e->g
                 'type' => 'string',
                 'max_length' => 2
             )
-        ), new Collection(array(
-            'data' => 123,
-            'min' => 'a',
-            'max' => 'aaa',
-            'test' => '{{ data }}{{ max }} whoo'
-        )), false);
+        ), $config, false);
 
         $this->assertEquals("The supplied value is not a string: integer supplied
 Requires that the min argument be >= 2 characters.

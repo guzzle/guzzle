@@ -29,7 +29,7 @@ class ConcreteCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
                 'doc' => 'documentationForCommand',
                 'method' => 'DELETE',
                 'can_batch' => true,
-                'concrete_command_class' => 'Guzzle\\Service\\Aws\\S3\\Command\\Object\\DeleteObject',
+                'concrete_command_class' => 'Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand',
                 'args' => array(
                     'bucket' => array(
                         'required' => true
@@ -73,7 +73,7 @@ class ConcreteCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
             'key' => 'my_key.txt'
         ));
 
-        $this->assertInstanceOf('Guzzle\\Service\\Aws\\S3\\Command\\Object\\DeleteObject', $command);
+        $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand', $command);
         $this->assertEquals('test', $command->get('bucket'));
         $this->assertEquals('my_key.txt', $command->get('key'));
     }

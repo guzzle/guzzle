@@ -1,8 +1,0 @@
-HTTP/1.1 200 OK
-Date: Wed, 25 Nov 2009 12:00:00 GMT
-Connection: close
-Server: AmazonS3
-
-<VersioningConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-  <Status>Enabled</Status>
-</VersioningConfiguration>

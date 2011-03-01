@@ -1,6 +1,0 @@
-HTTP/1.1 204 No Content
-x-amz-id-2: Uuag1LuByRx9e6j5OnimrSAMPLEtRPfTaOFg==
-x-amz-request-id: 656c76696e672SAMPLE5657374
-Date: Tue, 04 Apr 2010 20:34:56 GMT
-Connection: keep-alive
-Server: AmazonS3    

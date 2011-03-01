@@ -9,12 +9,16 @@ namespace Guzzle\Tests\Service;
 use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Log\Logger;
+use Guzzle\Common\Log\Adapter\ClosureLogAdapter;
 use Guzzle\Http\Plugin\Log\LogPlugin;
 use Guzzle\Service\ApiCommand;
 use Guzzle\Service\Client;
+use Guzzle\Service\Command\CommandSet;
+use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\ConcreteCommandFactory;
 use Guzzle\Service\DescriptionBuilder\XmlDescriptionBuilder;
 use Guzzle\Service\ServiceDescription;
+use Guzzle\Tests\Service\Mock\Command\MockCommand;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>
@@ -34,7 +38,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
                 'doc' => 'documentationForCommand',
                 'method' => 'DELETE',
                 'can_batch' => true,
-                'concrete_command_class' => 'Guzzle\\Service\\Aws\\S3\\Command\\Object\\DeleteObject',
+                'concrete_command_class' => 'Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand',
                 'args' => array(
                     'bucket' => array(
                         'required' => true
@@ -70,7 +74,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     private function getLogPlugin()
     {
-        return new \Guzzle\Http\Plugin\Log\LogPlugin(new \Guzzle\Common\Log\Logger(array(new \Guzzle\Common\Log\Adapter\ClosureLogAdapter(
+        return new LogPlugin(new Logger(array(new ClosureLogAdapter(
             function($message, $priority, $category, $host) {
                 echo $message . ' ' . $priority . ' ' . $category . ' ' . $host . "\n";
             }
@@ -245,6 +249,23 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Client::execute
+     */
+    public function testExecutesCommands()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
+
+        $client = new Client(array('base_url' => $this->getServer()->getUrl()), $this->service, $this->factory);
+        $cmd = new MockCommand();
+        $client->execute($cmd);
+
+        $this->assertInstanceOf('Guzzle\\Http\\Message\\Response', $cmd->getResponse());
+        $this->assertInstanceOf('Guzzle\\Http\\Message\\Response', $cmd->getResult());
+        $this->assertEquals(1, count($this->getServer()->getReceivedRequests(false)));
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::execute
      * @expectedException Guzzle\Service\Command\CommandSetException
      */
     public function testThrowsExceptionWhenExecutingMixedClientCommandSets()
@@ -253,8 +274,8 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $otherClient = new Client(array('base_url' => 'http://www.test-123.com/'), $this->service, $this->factory);
 
         // Create a command set and a command
-        $set = new \Guzzle\Service\Command\CommandSet();
-        $cmd = new Command\MockCommand();
+        $set = new CommandSet();
+        $cmd = new MockCommand();
         $set->addCommand($cmd);
 
         // Associate the other client with the command
@@ -291,7 +312,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Create a command set and a command
         $set = new \Guzzle\Service\Command\CommandSet();
-        $cmd = new Command\MockCommand();
+        $cmd = new MockCommand();
         $set->addCommand($cmd);
         $this->assertSame($set, $client->execute($set));
 
@@ -369,7 +390,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         );
 
         $request = $client->getRequest('GET');
-        $options = $request->getCurlOptions();        
+        $options = $request->getCurlOptions();
         $this->assertEquals(CURLAUTH_DIGEST, $options->get(CURLOPT_HTTPAUTH));
         $this->assertNull($options->get('curl.abc'));
     }

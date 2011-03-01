@@ -59,7 +59,7 @@ class StreamHelperTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($stream->isConsumed());
         unset($stream);
     }
-    
+
     /**
      * @covers Guzzle\Common\Stream\StreamHelper::__destruct
      */
@@ -145,8 +145,8 @@ class StreamHelperTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testGetSize()
     {
-        $size = filesize(__DIR__ . '/../../bootstrap.php');
-        $handle = fopen(__DIR__ . '/../../bootstrap.php', 'r');
+        $size = filesize(__DIR__ . '/../../../../bootstrap.php');
+        $handle = fopen(__DIR__ . '/../../../../bootstrap.php', 'r');
         $stream = new StreamHelper($handle);
         $stream->addFilter('string.rot13', \STREAM_FILTER_READ);
         $this->assertEquals($handle, $stream->getStream());
@@ -170,7 +170,7 @@ class StreamHelperTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testAddFilter()
     {
-        $handle = fopen(__DIR__ . '/../../bootstrap.php', 'r');
+        $handle = fopen(__DIR__ . '/../../../../bootstrap.php', 'r');
         $stream = new StreamHelper($handle);
         $stream->addFilter('string.rot13', \STREAM_FILTER_READ);
         // Prepend this one
@@ -182,7 +182,7 @@ class StreamHelperTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array(), $filters['unwrapped']);
         $this->assertArrayHasKey('string.rot13|1', $filters['wrapped']);
         $this->assertInternalType('resource', $filters['wrapped']['string.rot13|1']);
-        
+
         unset($stream);
     }
 
@@ -193,7 +193,7 @@ class StreamHelperTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testRemoveFilter()
     {
-        $handle = fopen(__DIR__ . '/../../bootstrap.php', 'r');
+        $handle = fopen(__DIR__ . '/../../../../bootstrap.php', 'r');
         $stream = new StreamHelper($handle);
         $stream->addFilter('string.rot13', \STREAM_FILTER_READ, false);
         $data = (string)$stream;

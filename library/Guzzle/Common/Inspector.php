@@ -211,9 +211,9 @@ class Inspector
         $errors = array();
 
         foreach ($params as $name => $arg) {
-            
+
             $arg = ($arg instanceof Collection) ? $arg : (is_array($arg) ? new Collection($arg) : new Collection());
-            
+
             // Set the default value if it is not set
             if ($arg->get('static') || ($arg->get('default') && !$config->get($name))) {
                 $check = $arg->get('static', $arg->get('default'));
@@ -227,7 +227,7 @@ class Inspector
             }
 
             // Inject configuration information into the config value
-            if (is_scalar($config->get($name)) && strpos($config->get($name), '{{')) {
+            if (is_scalar($config->get($name)) && strpos($config->get($name), '{{') !== false) {
                 $config->set($name, Injector::inject($config->get($name), $config));
             }
 

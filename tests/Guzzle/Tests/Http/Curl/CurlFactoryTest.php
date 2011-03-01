@@ -85,7 +85,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     public function dataProvider()
     {
         $postBody = new QueryString(array(
-            'file' => '@' . __DIR__ . '/../../phpunit.xml'
+            'file' => '@' . __DIR__ . '/../../../../../phpunit.xml'
         ));
 
         $qs = new QueryString(array(
@@ -197,7 +197,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
                     'Content-Type: application/x-www-form-urlencoded'
                 )
             )),
-            array('PUT', 'http://www.guzzle-project.com/put.php', null, EntityBody::factory(fopen(__DIR__ . '/../../phpunit.xml', 'r+')), array(
+            array('PUT', 'http://www.guzzle-project.com/put.php', null, EntityBody::factory(fopen(__DIR__ . '/../../../../../phpunit.xml', 'r+')), array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
                 CURLOPT_FOLLOWLOCATION => 1,
@@ -210,7 +210,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_PROGRESSFUNCTION => 'callback',
                 CURLOPT_NOPROGRESS => 0,
                 CURLOPT_ENCODING => '',
-                CURLOPT_INFILESIZE => filesize(__DIR__ . '/../../phpunit.xml'),
+                CURLOPT_INFILESIZE => filesize(__DIR__ . '/../../../../../phpunit.xml'),
                 CURLOPT_HTTPHEADER => array (
                     'User-Agent: ' . $userAgent,
                     'Host: www.guzzle-project.com',
@@ -276,7 +276,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_ENCODING => '',
                 CURLOPT_POST => 1,
                 CURLOPT_POSTFIELDS => array(
-                    'file' => '@' . __DIR__ . '/../../phpunit.xml'
+                    'file' => '@' . __DIR__ . '/../../../../../phpunit.xml'
                 ),
                 CURLOPT_HTTPHEADER => array (
                     'User-Agent: ' . $userAgent,
@@ -355,7 +355,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
             "Host: " . $host . "\r\n\r\n",
             (string) $request
         );
-        
+
         $request->setState('new');
         $request->setAuth('michael', 'test');
         $h2 = $request->getCurlHandle();
@@ -369,7 +369,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
             "Authorization: Basic bWljaGFlbDp0ZXN0\r\n\r\n",
             (string) $request
         );
-        
+
         $request->setState('new');
         $request->setAuth(false);
         $h3 = $request->getCurlHandle();
@@ -382,7 +382,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
             "Host: " . $host . "\r\n\r\n",
             (string) $request
         );
-        
+
         $this->assertSame($h1, $h2);
         $this->assertSame($h1, $h3);
     }
@@ -426,7 +426,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $request = RequestFactory::getInstance()->newRequest('HEAD', $this->getServer()->getUrl());
         $this->assertSame($h1, $request->getCurlHandle());
         $request->send();
-        
+
         // Make sure that the request was sent correctly
         $r = $this->getServer()->getReceivedRequests(true);
         $this->assertEquals((string) $request, (string) $r[1]);

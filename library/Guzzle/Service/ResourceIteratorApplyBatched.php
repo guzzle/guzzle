@@ -26,9 +26,9 @@ class ResourceIteratorApplyBatched extends AbstractSubject
     protected $iterator;
 
     /**
-     * @var integer Total number of sent request pools
+     * @var integer Total number of sent batches
      */
-    protected $sentPools = 0;
+    protected $batches = 0;
 
     /**
      * @var int Total number of iterated resources
@@ -39,7 +39,7 @@ class ResourceIteratorApplyBatched extends AbstractSubject
      * Constructor
      *
      * @param ResourceIterator $iterator Resource iterator to apply a callback to
-     * @param array|function $callback Callback method accepting the resource 
+     * @param array|function $callback Callback method accepting the resource
      *      iterator and an array of the iterator's current resources
      */
     public function __construct(ResourceIterator $iterator, $callback)
@@ -65,13 +65,14 @@ class ResourceIteratorApplyBatched extends AbstractSubject
         if ($this->iterated == 0) {
             $batched = array();
             $this->iterated = 0;
+            $currentCount = 0;
 
             foreach ($this->iterator as $resource) {
-                if ($this->iterated && !($this->iterated % $perBatch)) {
+                $batched[] = $resource;
+                if (++$currentCount >= $perBatch) {
                     $this->applyBatch($batched);
                     $batched = array();
-                } else {
-                    $batched[] = $resource;
+                    $currentCount = 0;
                 }
                 $this->iterated++;
             }
@@ -86,13 +87,13 @@ class ResourceIteratorApplyBatched extends AbstractSubject
     }
 
     /**
-     * Get the total number of sent request pools
+     * Get the total number of batches sent
      *
      * @return int
      */
-    public function getSentPoolCount()
+    public function getBatchCount()
     {
-        return $this->sentPools;
+        return $this->batches;
     }
 
     /**
@@ -112,7 +113,7 @@ class ResourceIteratorApplyBatched extends AbstractSubject
      */
     private function applyBatch(array $batch)
     {
-        $this->sentPools++;
+        $this->batches++;
 
         $this->getSubjectMediator()->notify('before_batch', $batch);
         call_user_func_array($this->callback, array(

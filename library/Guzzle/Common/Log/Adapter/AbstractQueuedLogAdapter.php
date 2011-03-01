@@ -17,6 +17,7 @@ use Guzzle\Service\Aws\SimpleDb\Command\BatchPutAttributes;
  * 'implicit_flush' => TRUE to disable batching.
  *
  * @author Michael Dowling <michael@guzzle-project.org>
+ * @codeCoverageIgnore
  */
 abstract class AbstractQueuedLogAdapter extends AbstractLogAdapter
 {

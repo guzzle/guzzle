@@ -26,15 +26,18 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
 <?xml version="1.0" ?>
 <guzzle>
     <clients>
-        <client name="michael.unfuddle" builder="Guzzle.Service.Builder.DefaultBuilder" class="Guzzle.Service.Unfuddle.UnfuddleClient">
+        <client name="michael.mock" builder="Guzzle.Service.Builder.DefaultBuilder" class="Guzzle.Tests.Service.Mock.MockClient">
             <param name="username" value="michael" />
             <param name="password" value="testing123" />
             <param name="subdomain" value="michael" />
         </client>
-        <client name="billy.unfuddle" builder="Guzzle.Service.Builder.DefaultBuilder" class="Guzzle.Service.Unfuddle.UnfuddleClient">
+        <client name="billy.mock" builder="Guzzle.Service.Builder.DefaultBuilder" class="Guzzle.Tests.Service.Mock.MockClient">
             <param name="username" value="billy" />
             <param name="password" value="passw0rd" />
             <param name="subdomain" value="billy" />
+        </client>
+        <client name="billy.testing" extends="billy.mock">
+            <param name="subdomain" value="test.billy" />
         </client>
     </clients>
 </guzzle>
@@ -58,7 +61,7 @@ EOT;
     public function testCanBeCreatedUsingAnXmlFile()
     {
         $builder = ServiceBuilder::factory($this->tempFile);
-        $b = $builder->getBuilder('michael.unfuddle');
+        $b = $builder->getBuilder('michael.mock');
         $this->assertInstanceOf('Guzzle\\Service\\Builder\\DefaultBuilder', $b);
     }
 
@@ -70,6 +73,17 @@ EOT;
     public function testFactoryEnsuresItCanOpenFile()
     {
         ServiceBuilder::factory('foobarfile');
+    }
+
+    /**
+     * @covers Guzzle\Service\Builder\ServiceBuilder::factory
+     */
+    public function testFactoryCanBuildServicesThatExtendOtherServices()
+    {
+        $s = ServiceBuilder::factory($this->tempFile);
+        $s = $s->getClient('billy.testing');
+        $this->assertEquals('test.billy', $s->getConfig('subdomain'));
+        $this->assertEquals('billy', $s->getConfig('username'));
     }
 
     /**
@@ -104,7 +118,7 @@ EOT;
         $this->assertEmpty($cache->getIds());
 
         $s1 = ServiceBuilder::factory($this->tempFile, $adapter, 86400);
-        
+
         // Make sure it added to the cache
         $this->assertNotEmpty($cache->getIds());
 
@@ -115,7 +129,7 @@ EOT;
         $this->assertEquals($s1, $s2);
 
         $this->assertSame($s1, $s1->setCache($adapter, 86400));
-        $client = $s1->getClient('michael.unfuddle');
+        $client = $s1->getClient('michael.mock');
     }
 
     /**
@@ -124,8 +138,8 @@ EOT;
     public function testBuildersAreStoredForPerformance()
     {
         $builder = ServiceBuilder::factory($this->tempFile);
-        $b = $builder->getBuilder('michael.unfuddle');
-        $this->assertTrue($b === $builder->getBuilder('michael.unfuddle'));
+        $b = $builder->getBuilder('michael.mock');
+        $this->assertTrue($b === $builder->getBuilder('michael.mock'));
     }
 
     /**
@@ -144,27 +158,27 @@ EOT;
     public function testGetClientStoresClientCopy()
     {
         $builder = ServiceBuilder::factory($this->tempFile);
-        $client = $builder->getClient('michael.unfuddle');
-        $this->assertInstanceOf('Guzzle\\Service\\Unfuddle\\UnfuddleClient', $client);
-        $this->assertEquals('https://michael.unfuddle.com/api/v1/', $client->getBaseUrl());
-        $this->assertEquals($client, $builder->getClient('michael.unfuddle'));
+        $client = $builder->getClient('michael.mock');
+        $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\MockClient', $client);
+        $this->assertEquals('http://127.0.0.1:8124/v1/michael', $client->getBaseUrl());
+        $this->assertEquals($client, $builder->getClient('michael.mock'));
 
         // Get another client but throw this one away
-        $client2 = $builder->getClient('billy.unfuddle', true);
-        $this->assertInstanceOf('Guzzle\\Service\\Unfuddle\\UnfuddleClient', $client2);
-        $this->assertEquals('https://billy.unfuddle.com/api/v1/', $client2->getBaseUrl());
+        $client2 = $builder->getClient('billy.mock', true);
+        $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\MockClient', $client2);
+        $this->assertEquals('http://127.0.0.1:8124/v1/billy', $client2->getBaseUrl());
 
         // Make sure the original client is still there and set
-        $this->assertTrue($client === $builder->getClient('michael.unfuddle'));
+        $this->assertTrue($client === $builder->getClient('michael.mock'));
 
-        // Create a new billy.unfuddle client that is stored
-        $client3 = $builder->getClient('billy.unfuddle');
-        
-        // Make sure that the stored billy.unfuddle client is equal to the other stored client
-        $this->assertTrue($client3 === $builder->getClient('billy.unfuddle'));
+        // Create a new billy.mock client that is stored
+        $client3 = $builder->getClient('billy.mock');
+
+        // Make sure that the stored billy.mock client is equal to the other stored client
+        $this->assertTrue($client3 === $builder->getClient('billy.mock'));
 
         // Make sure that this client is not equal to the previous throwaway client
-        $this->assertFalse($client2 === $builder->getClient('billy.unfuddle'));
+        $this->assertFalse($client2 === $builder->getClient('billy.mock'));
     }
 
     /**
@@ -175,7 +189,7 @@ EOT;
     public function testThrowsExceptionWhenGettingDefaultBuilderWithNoClassSpecified()
     {
         $s = new ServiceBuilder(array(
-            'michael.unfuddle' => array(
+            'michael.mock' => array(
                 'builder' => 'Guzzle.Service.Builder.DefaultBuilder',
                 'params' => array(
                     'username' => 'michael'
@@ -183,7 +197,7 @@ EOT;
             )
         ));
 
-        $s->getBuilder('michael.unfuddle');
+        $s->getBuilder('michael.mock');
     }
 
     /**
@@ -192,9 +206,9 @@ EOT;
     public function testBuildersPassOptionsThroughToClients()
     {
         $s = new ServiceBuilder(array(
-            'michael.unfuddle' => array(
+            'michael.mock' => array(
                 'builder' => 'Guzzle.Service.Builder.DefaultBuilder',
-                'class' => 'Guzzle.Service.Unfuddle.UnfuddleClient',
+                'class' => 'Guzzle\\Tests\\Service\\Mock\\MockClient',
                 'params' => array(
                     'subdomain' => 'michael',
                     'password' => 'test',
@@ -204,7 +218,7 @@ EOT;
             )
         ));
 
-        $c = $s->getBuilder('michael.unfuddle')->build();
+        $c = $s->getBuilder('michael.mock')->build();
         $this->assertEquals(8080, $c->getConfig('curl.curlopt_proxyport'));
     }
 }

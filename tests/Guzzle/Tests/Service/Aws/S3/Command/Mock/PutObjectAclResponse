@@ -1,9 +1,0 @@
-HTTP/1.1 200 OK
-x-amz-id-2: eftixk72aD6Ap51T9AS1ed4OpIszj7UDNEHGran
-x-amz-request-id: 318BC8BC148832E5
-x-amz-version-id: 3/L4kqtJlcpXrof3vjVBH40Nr8X8gdRQBpUMLUo
-Date: Wed, 28 Oct 2009 22:32:00 GMT
-Last-Modified: Sun, 1 Jan 2006 12:00:00 GMT
-Content-Length: 0
-Connection: close
-Server: AmazonS3

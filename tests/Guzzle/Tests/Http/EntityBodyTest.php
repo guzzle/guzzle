@@ -33,15 +33,15 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('php', $body->getWrapper());
         $this->assertEquals('temp', $body->getStreamType());
 
-        $handle = fopen(__DIR__ . '/../phpunit.xml', 'r');
+        $handle = fopen(__DIR__ . '/../../../../phpunit.xml', 'r');
         if (!$handle) {
             $this->fail('Could not open test file');
         }
         $body = EntityBody::factory($handle);
-        $this->assertEquals(__DIR__ . '/../phpunit.xml', $body->getUri());
+        $this->assertEquals(__DIR__ . '/../../../../phpunit.xml', $body->getUri());
         $this->assertTrue($body->isLocal());
-        $this->assertEquals(__DIR__ . '/../phpunit.xml', $body->getUri());
-        $this->assertEquals(filesize(__DIR__ . '/../phpunit.xml'), $body->getContentLength());
+        $this->assertEquals(__DIR__ . '/../../../../phpunit.xml', $body->getUri());
+        $this->assertEquals(filesize(__DIR__ . '/../../../../phpunit.xml'), $body->getContentLength());
 
         // make sure that a body will return as the same object
         $this->assertTrue($body === EntityBody::factory($body));
@@ -82,13 +82,13 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertTrue($body->compress('bzip2.compress'));
         $this->assertEquals('compress', $body->getContentEncoding(), '-> compress() must set \'compress\' as the Content-Encoding');
-        
+
         $this->assertFalse($body->compress('non-existent'), '-> compress() must return false when a non-existent stream filter is used');
 
         // Release the body
         unset($body);
 
-        // Use gzip compression on the initial content.  This will include a 
+        // Use gzip compression on the initial content.  This will include a
         // gzip header which will need to be stripped when deflating the stream
         $body = EntityBody::factory(gzencode('test'));
         $this->assertSame($body, $body->setStreamFilterContentEncoding('zlib.deflate'));

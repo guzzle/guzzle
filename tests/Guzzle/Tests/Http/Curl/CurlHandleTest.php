@@ -82,7 +82,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             CURLOPT_STDERR => $h->getStderr(true)
         ), $h->getOptions());
 
-        $this->assertEquals(0, $h->getIdleTime());
+        $this->assertTrue($h->getIdleTime() == 0 || $h->getIdleTime() == 1);
 
         $this->assertNull($h->getOwner());
     }
@@ -97,7 +97,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $h = new CurlHandle($handle, array());
         $this->assertTrue($h->isAvailable());
         $this->assertTrue($h->isMyHandle($handle));
-        
+
         // Mess it up by closing the handle
         curl_close($handle);
 
@@ -129,7 +129,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertEquals($this->getServer()->getUrl(), $h->getInfo(CURLINFO_EFFECTIVE_URL));
         $this->assertInternalType('array', $h->getInfo());
-        
+
         curl_close($handle);
         $this->assertEquals(null, $h->getInfo('url'));
     }
@@ -183,7 +183,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     public function testCanBeClaimedAndUnclaimed()
     {
         $request = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl());
-        
+
         $handle = curl_init($this->getServer()->getUrl());
         $h = new CurlHandle($handle, array(
             CURLOPT_URL => $this->getServer()->getUrl()

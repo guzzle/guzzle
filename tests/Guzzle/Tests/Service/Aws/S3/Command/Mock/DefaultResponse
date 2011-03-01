@@ -1,8 +1,0 @@
-HTTP/1.1 200 OK
-x-amz-id-2: v/vlNj0Y74zxJI7nPcBAnjuoMkbEc7poZTe0H1xUr7zxUSRm4SW62fDnwRSZ29GD
-x-amz-request-id: F9A6FA092B31B885
-Date: Tue, 09 Nov 2010 01:46:51 GMT
-Content-Type: application/xml
-Transfer-Encoding: chunked
-Server: AmazonS3
-Content-Length: 0

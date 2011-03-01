@@ -206,14 +206,14 @@ class Pool extends AbstractSubject implements PoolInterface
 
             $this->getSubjectMediator()->notify(self::POLLING, null);
 
+            // @codeCoverageIgnoreStart
             if ($isRunning) {
                 while (($selectResult = curl_multi_select($this->multiHandle, 5)) === 0);
                 if ($selectResult == -1) {
-                    // @codeCoverageIgnoreStart
                     break;
-                    // @codeCoverageIgnoreEnd
                 }
             }
+            // @codeCoverageIgnoreEnd
 
         } while ($isRunning || !$finished);
 

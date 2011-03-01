@@ -46,7 +46,7 @@ class ClosureCommandTest extends \Guzzle\Tests\GuzzleTestCase
             'closure' => function() {},
             'closure_api' => true
         ));
-        
+
         $this->assertTrue($c->canBatch());
         $this->assertSame($c, $c->setCanBatch(false));
         $this->assertFalse($c->canBatch());
@@ -66,7 +66,7 @@ class ClosureCommandTest extends \Guzzle\Tests\GuzzleTestCase
             'closure_api' => true
         ));
 
-        $client = $this->getServiceBuilder()->getClient('test.unfuddle');
+        $client = $this->getServiceBuilder()->getClient('mock');
         $c->prepare($client);
         $this->assertEquals('123', $c->get('testing'));
         $this->assertEquals('http://www.test.com/', $c->getRequest()->getUrl());
@@ -86,7 +86,7 @@ class ClosureCommandTest extends \Guzzle\Tests\GuzzleTestCase
             'closure_api' => true
         ));
 
-        $client = $this->getServiceBuilder()->getClient('test.unfuddle');
+        $client = $this->getServiceBuilder()->getClient('mock');
         $c->prepare($client);
     }
 }

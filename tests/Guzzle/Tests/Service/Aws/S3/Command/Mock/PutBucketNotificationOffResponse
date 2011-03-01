@@ -1,7 +1,0 @@
-HTTP/1.1 200 OK
-x-amz-id-2: YgIPIfBiKa2bj0KMgUAdQkf3ShJTOOpXUueF6QKo
-x-amz-request-id: 236A890524860101
-Date: Wed, 02 June 2010 12:01:00 GMT
-Content-Length: 0
-Connection: close
-Server: AmazonS3
