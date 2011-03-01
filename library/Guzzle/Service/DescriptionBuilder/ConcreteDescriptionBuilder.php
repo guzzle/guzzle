@@ -67,7 +67,7 @@ class ConcreteDescriptionBuilder implements DescriptionBuilderInterface
         $this->relativeNamespace = $reflection->getNamespaceName() . '\\Command';
         $this->path = dirname($reflection->getFileName()) . DIRECTORY_SEPARATOR . 'Command';
         $this->name = str_replace(array($reflection->getNamespaceName(), 'Client', '\\'), '', $reflection->getName());
-
+        
         // Parse the client's docBlock for information
         $parsed = Inspector::getInstance()->parseDocBlock($reflection->getDocComment());
         $this->description = $parsed['doc'];
@@ -89,8 +89,9 @@ class ConcreteDescriptionBuilder implements DescriptionBuilderInterface
         // Iterate over all of the .php files in the specified directory
         foreach ($iterator as $name => $file) {
 
-            $name = str_replace('/', '\\', $name);
-            $className = str_replace('.php', '', substr($name, strpos($name, $this->relativeNamespace)));
+            $className = str_replace(array('.php', '/'), array('', '\\'), $name);
+            $className = $this->relativeNamespace . '\\' . substr($className, strpos($className, 'Command\\') + 8);
+
             $reflection = new \ReflectionClass($className);
 
             // Make sure that this is not an abstract class and implements
