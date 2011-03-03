@@ -34,8 +34,6 @@ Install Guzzle using pear when using Guzzle in production::
 
 You will need to add Guzzle to your application's autoloader.  Guzzle ships with a few select classes from other vendors, one of which is the Symfony2 universal class loader.  If your application does not already use an autoloader, you can use the autoloader distributed with Guzzle:
 
-.. code-block:: php
-
     <?php
 
     require_once '/path/to/guzzle/library/vendor/Symfony/Component/ClassLoader/UniversalClassLoader.php';
@@ -46,7 +44,7 @@ You will need to add Guzzle to your application's autoloader.  Guzzle ships with
     ));
     $classLoader->register();
 
-*Substitute '/path/to/' with the full path to your Guzzle installation.  You can find the PEAR installation folder using pear config-get php_dir*
+Substitute '/path/to/' with the full path to your Guzzle installation.  You can find the PEAR installation folder using pear config-get php_dir
 
 Installing services
 -------------------
@@ -57,10 +55,12 @@ Current Services
 Guzzle services are distributed separately from the Guzzle framework.  Guzzle officially supports a few webservice clients (these clients are currently what we use at SHOEBACCA.com), and hopefully there will be third-party created services coming soon:
 
 * `Amazon Webservices (AWS) <https://github.com/guzzle/guzzle-aws>`_
+
     * Amazon S3
     * Amazon SimpleDB
     * Amazon SQS
     * Amazon MWS
+
 * `Unfuddle <https://github.com/guzzle/guzzle-unfuddle>`_
 * `Cardinal Commerce <https://github.com/guzzle/guzzle-cardinal-commerce>`_
 
@@ -88,8 +88,6 @@ Let's say you want to use the Amazon S3 client from the Guzzle AWS service.
 
 Create a services.xml that your ServiceBuilder will use to create service clients.  The services.xml file defines the clients you will be using and the arguments that will be passed into the client when it is constructed.  Each client + arguments combination is given a name and  referenced by name when retrieving a client from the ServiceBuilder.
 
-.. code-block:: xml
-
     <?xml version="1.0" ?>
     <guzzle>
         <clients>
@@ -107,8 +105,6 @@ Create a services.xml that your ServiceBuilder will use to create service client
 
 2. Create a ServiceBuilder
 
-.. code-block:: php
-
     <?php
     use Guzzle\Service\Builder\ServiceBuilder;
 
@@ -116,9 +112,6 @@ Create a services.xml that your ServiceBuilder will use to create service client
 
 3. Get the Amazon S3 client from the ServiceBuilder and execute a command
 
-.. code-block:: php
-
-    <?php
     use Guzzle\Service\Aws\S3\Command\Object\GetObject;
 
     $client = $serviceBuilder->getClient('test.s3');
@@ -131,9 +124,6 @@ Create a services.xml that your ServiceBuilder will use to create service client
 
 The GetObject command just returns the HTTP response object when it is executed.  Other commands might return more valuable information when executed:
 
-.. code-block:: php
-
-    <?php
     use Guzzle\Service\Aws\S3\Command\Bucket\ListBucket;
 
     $command = new ListBucket();
@@ -155,15 +145,13 @@ The ListBucket command above returns a BucketIterator which will iterate over th
 
 If the above code samples seem a little verbose to you, you can take some shortcuts in your code by leveraging the Guzzle command factory inherent to each client:
 
-.. code-block:: php
-
-    <?php
-
     $objects = $client->getCommand('bucket.list_bucket', array('bucket' => 'my_bucket'))->execute();
 
-## Examples of sending HTTP requests
+Examples of sending HTTP requests
+---------------------------------
 
-### GET the google.com homepage
+GET the google.com homepage
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     <?php
 
@@ -180,7 +168,8 @@ If the above code samples seem a little verbose to you, you can take some shortc
     // Echo the raw HTTP response
     echo $response;
 
-### POST to a Solr server
+POST to a Solr server
+~~~~~~~~~~~~~~~~~~~~~
 
     <?php
 
