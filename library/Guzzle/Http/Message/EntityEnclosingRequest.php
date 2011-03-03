@@ -55,13 +55,15 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     /**
      * Set the body of the request
      *
-     * @param EntityBody $body Body to use in the entity body of the request
+     * @param string|resource|EntityBody $body Body to use in the entity body
+     *      of the request
      *
      * @return EntityEnclosingRequest
+     * @throws HttpException if an invalid body is provided
      */
-    public function setBody(EntityBody $body)
+    public function setBody($body)
     {
-        $this->body = $body;
+        $this->body = EntityBody::factory($body);
         $this->addChain();
 
         return $this;

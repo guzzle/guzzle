@@ -113,7 +113,7 @@ class CookiePlugin extends AbstractPlugin
         // Add the cookie pieces into the parsed data array
         foreach ($pieces as $part) {
 
-            $avPair = array_map('trim', explode('=', $part));
+            $avPair = array_map('trim', explode('=', $part, 2));
             $key = $avPair[0];
 
             if (count($avPair) === 1) {
@@ -152,7 +152,7 @@ class CookiePlugin extends AbstractPlugin
                 // IF non-cookies have been parsed, then this isn't a cookie,
                 // but it's cookie data.  Cookies must be first, followed by data.
                 if ($foundNonCookies == 0) {
-                    $data['cookies'][$key] = $value;
+                    $data['cookies'][] = $key . ($value ? ('=' . $value) : '');
                     $foundCookies++;
                 } else {
                     $data['data'][$key] = $value;
@@ -176,7 +176,8 @@ class CookiePlugin extends AbstractPlugin
 
     /**
      * Add cookies to a request based on the destination of the request and
-     * the cookies stored in the storage backend.
+     * the cookies stored in the storage backend.  Any previously set cookies
+     * will be removed.
      *
      * @param RequestInterface $request Request to add cookies to.  If the
      *      request object already has a cookie header, then no further cookies
@@ -186,6 +187,8 @@ class CookiePlugin extends AbstractPlugin
      */
     public function addCookies(RequestInterface $request)
     {
+        $request->removeHeader('Cookie');
+
         // Find cookies that match this request
         $cookies = $this->jar->getCookies($request->getHost(), $request->getPath());
         $match = false;
@@ -195,7 +198,7 @@ class CookiePlugin extends AbstractPlugin
             foreach ($cookies as $cookie) {
 
                 $match = true;
-                
+
                 // If a port restriction is set, validate the port
                 if (!empty($cookie['port'])) {
                     if (!in_array($request->getPort(), $cookie['port'])) {
@@ -212,8 +215,9 @@ class CookiePlugin extends AbstractPlugin
 
                 // If this request is eligible for the cookie, then merge it in
                 if ($match) {
-                    foreach ($cookie['cookies'] as $key => $value) {
-                        $request->addCookie($key, $value);
+                    foreach ($cookie['cookies'] as $value) {
+                        $parts = explode('=', $value, 2);
+                        $request->addCookie($parts[0], isset($parts[1]) ? $parts[1] : null);
                     }
                 }
             }
@@ -227,9 +231,6 @@ class CookiePlugin extends AbstractPlugin
      * and Set-Cookie2: headers and persists them to the cookie storage.
      *
      * @param Response $response
-     *
-     * @return array Returns an array of the extracted cookie information
-     *      {@see CookiePlugin::parseCookie}
      */
     public function extractCookies(Response $response)
     {
@@ -237,9 +238,12 @@ class CookiePlugin extends AbstractPlugin
         $cookieData = array();
         
         if ($cookie) {
-            $cookieData = self::parseCookie($cookie);
-            if ($cookieData) {
-                $this->jar->save($cookieData);
+            foreach ((array) $cookie as $c) {
+                $cdata = self::parseCookie($c);
+                if ($cdata) {
+                    $this->jar->save($cdata);
+                    $cookieData[] = $cdata;
+                }
             }
         }
 
@@ -294,10 +298,10 @@ class CookiePlugin extends AbstractPlugin
         }
         // @codeCoverageIgnoreEnd
 
-        if ($command->getState() != RequestInterface::STATE_COMPLETE) {
+        if ($command->getState() == RequestInterface::STATE_TRANSFER) {
             // The request is being prepared
             $this->addCookies($command);
-        } else {
+        } else if ($command->getState() == RequestInterface::STATE_COMPLETE) {
             // The response is being processed
             $this->extractCookies($command->getResponse());
         }

@@ -261,7 +261,7 @@ class CachePlugin extends AbstractPlugin implements FilterInterface
                 return false;
             }
 
-        } catch (\Exception $e) {            
+        } catch (\Exception $e) {
             // Don't fail on re-validation attempts
         }
 

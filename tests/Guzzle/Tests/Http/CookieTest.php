@@ -62,9 +62,19 @@ class CookieTest extends \Guzzle\Tests\GuzzleTestCase
      * @covers Guzzle\Http\QueryString::__toString
      * @dataProvider provider
      */
-    public function testConvertsToString($cookieString, array $data)
+    public function testConvertsToString($cookieString)
     {
-        $jar = Cookie::factory($cookieString);
-        $this->assertEquals($cookieString, (string)$jar);
+        $cookie = Cookie::factory($cookieString);
+        $this->assertEquals($cookieString, (string) $cookie);
+    }
+
+    /**
+     * @covers Guzzle\Http\QueryString
+     */
+    public function testAggregatesMultipleCookieValues()
+    {
+        $cookie = Cookie::factory('name=a;name=b');
+        $this->assertEquals(array('a', 'b'), $cookie->get('name'));
+        $this->assertEquals('name=a;name=b', (string) $cookie);
     }
 }

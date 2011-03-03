@@ -20,11 +20,12 @@ interface EntityEnclosingRequestInterface extends RequestInterface, FilterInterf
     /**
      * Set the body of the request
      *
-     * @param EntityBody $body Body to use in the entity body of the request
+     * @param string|resource|EntityBody $body Body to use in the entity body
+     *      of the request
      *
      * @return EntityEnclosingRequestInterface
      */
-    public function setBody(EntityBody $body);
+    public function setBody($body);
 
     /**
      * Get the body of the request if set

@@ -85,14 +85,17 @@ class QueryString extends Collection
         $firstValue = true;
 
         foreach ($this->encodeData($this->data, $this->encodeFields, $this->encodeValues) as $name => $value) {
-            if (!$firstValue) {
-                $queryString .= $this->fieldSeparator;
+            $value = !is_null($value) ? (array) $value : array(false);
+            foreach ($value as $v) {
+                if (!$firstValue) {
+                    $queryString .= $this->fieldSeparator;
+                }
+                $queryString .= $name;
+                if (is_string($v)) {
+                    $queryString .= $this->valueSeparator . $v;
+                }
+                $firstValue = false;
             }
-            $queryString .= $name;
-            if (is_string($value)) {
-                $queryString .= $this->valueSeparator . $value;
-            }
-            $firstValue = false;
         }
         
         return $queryString;

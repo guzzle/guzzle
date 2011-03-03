@@ -126,7 +126,7 @@ class Response extends AbstractMessage
 
         $protocol = $code = $status = '';
         $parts = explode("\r\n\r\n", $message, 2);
-        $headers = array();
+        $headers = new Collection();
 
         foreach (array_values(array_filter(explode("\r\n", $parts[0]))) as $i => $line) {
             // Remove newlines from headers
@@ -136,8 +136,8 @@ class Response extends AbstractMessage
                 list($protocol, $code, $status) = array_map('trim', explode(' ', $line, 3));
             } else if (strpos($line, ':')) {
                 // Add a header
-                list($key, $value) = explode(':', $line, 2);
-                $headers[trim($key)] = trim($value);
+                list($key, $value) = array_map('trim', explode(':', $line, 2));
+                $headers->add($key, $value);
             }
         }
 
@@ -149,7 +149,7 @@ class Response extends AbstractMessage
             $headers['Content-Length'] = $body->getSize();
         }
 
-        $response = new self(trim($code), new Collection($headers), $body);
+        $response = new self(trim($code), $headers, $body);
         $response->setProtocol($protocol)
                  ->setStatus($code, $status);
 

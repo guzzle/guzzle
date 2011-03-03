@@ -355,7 +355,7 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function getQuery($asString = false)
     {
-        return $asString ? (string)$this->url->getQuery() : $this->url->getQuery();
+        return $asString ? (string) $this->url->getQuery() : $this->url->getQuery();
     }
 
     /**
@@ -813,7 +813,7 @@ class Request extends AbstractMessage implements RequestInterface
             throw new \InvalidArgumentException('Invalid cookie data');
         }
 
-        $this->headers->set('Cookie', (string)$this->cookie);
+        $this->headers->set('Cookie', (string) $this->cookie);
 
         return $this;
     }
@@ -828,8 +828,8 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function addCookie($name, $value)
     {
-        $this->cookie->set($name, $value);
-        $this->headers->set('Cookie', (string)$this->cookie);
+        $this->cookie->add($name, $value);
+        $this->headers->set('Cookie', (string) $this->cookie);
 
         return $this;
     }
@@ -845,7 +845,7 @@ class Request extends AbstractMessage implements RequestInterface
     public function removeCookie($name = null)
     {
         $this->cookie->remove($name);
-        $this->headers->set('Cookie', (string)$this->cookie);
+        $this->headers->set('Cookie', (string) $this->cookie);
 
         return $this;
     }

@@ -58,7 +58,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
                     'discard' => NULL,
                     'port' => NULL,
                     'cookies' => array(
-                        'ASIHTTPRequestTestCookie' => 'This is the value'
+                        'ASIHTTPRequestTestCookie=This is the value'
                     ),
                     'comment' => null,
                     'comment_url' => null,
@@ -72,7 +72,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
                 'foo=', 'foo =', 'foo =;', 'foo= ;', 'foo =', 'foo= '),
                 array(
                     'cookies' => array(
-                        'foo' => ''
+                        'foo'
                     ),
                     'data' => array(),
                     'discard' => null,
@@ -93,7 +93,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
                 'foo=1', 'foo =1', 'foo =1;', 'foo=1 ;', 'foo =1', 'foo= 1', 'foo = 1 ;', 'foo="1"', 'foo="1";', 'foo= "1";'),
                 array(
                     'cookies' => array(
-                        'foo' => 1
+                        'foo=1'
                     ),
                     'data' => array(),
                     'discard' => null,
@@ -114,8 +114,8 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
                 'foo=1; bar=2', 'foo =1; bar = "2"', 'foo=1;   bar=2'),
                 array(
                     'cookies' => array(
-                        'foo' => 1,
-                        'bar' => 2
+                        'foo=1',
+                        'bar=2'
                     ),
                     'data' => array(),
                     'discard' => null,
@@ -136,7 +136,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
                 'foo=1; port="80,8081"; httponly', 'foo=1; port="80,8081"; domain=www.test.com; HttpOnly;', 'foo=1; ; domain=www.test.com; path=/path/; port="80,8081"; HttpOnly;'),
                 array(
                     'cookies' => array(
-                        'foo' => 1
+                        'foo=1'
                     ),
                     'data' => array(),
                     'discard' => null,
@@ -158,7 +158,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
                 'justacookie=foo; domain=example.com',
                 array(
                     'cookies' => array(
-                        'justacookie' => 'foo'
+                        'justacookie=foo'
                     ),
                     'domain' => 'example.com',
                     'path' => '',
@@ -179,7 +179,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
                 'expires=tomorrow; secure; path=/Space Out/; expires=Tue, 21-Nov-2006 08:33:44 GMT; domain=.example.com',
                 array(
                     'cookies' => array(
-                        'expires' => 'tomorrow'
+                        'expires=tomorrow'
                     ),
                     'domain' => '.example.com',
                     'path' => '/Space Out/',
@@ -199,7 +199,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
                 'domain=unittests; expires=Tue, 21-Nov-2006 08:33:44 GMT; domain=example.com; path=/some%20value/',
                 array(
                     'cookies' => array(
-                        'domain' => 'unittests'
+                        'domain=unittests'
                     ),
                     'domain' => 'example.com',
                     'path' => '/some value/',
@@ -219,7 +219,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
                 'path=indexAction; path=/; domain=.foo.com; expires=Tue, 21-Nov-2006 08:33:44 GMT',
                 array(
                     'cookies' => array(
-                        'path' => 'indexAction'
+                        'path=indexAction'
                     ),
                     'domain' => '.foo.com',
                     'path' => '/',
@@ -239,7 +239,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
                 'secure=sha1; secure; SECURE; domain=some.really.deep.domain.com; version=1; Max-Age=86400',
                 array(
                     'cookies' => array(
-                        'secure' => 'sha1'
+                        'secure=sha1'
                     ),
                     'domain' => 'some.really.deep.domain.com',
                     'path' => '/',
@@ -259,7 +259,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
                 'PHPSESSID=123456789+abcd%2Cef; secure; discard; domain=.localdomain; path=/foo/baz; expires=Tue, 21-Nov-2006 08:33:44 GMT;',
                 array(
                     'cookies' => array(
-                        'PHPSESSID' => '123456789 abcd,ef'
+                        'PHPSESSID=123456789 abcd,ef'
                     ),
                     'domain' => '.localdomain',
                     'path' => '/foo/baz',
@@ -289,7 +289,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
             $request = RequestFactory::getInstance()->newRequest('GET', $url);
         }
 
-        foreach ((array)$cookie as $c) {
+        foreach ((array) $cookie as $c) {
             $p = CookiePlugin::parseCookie($c, $request);
 
             // Remove expires values from the assertion if they are relatively equal
@@ -300,7 +300,17 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
                 }
             }
 
-            $this->assertEquals($parsed, $p);
+            if (is_array($parsed)) {
+                foreach ($parsed as $key => $value) {
+                    $this->assertEquals($parsed[$key], $p[$key], 'Comparing ' . $key);
+                }
+                
+                foreach ($p as $key => $value) {
+                    $this->assertEquals($p[$key], $parsed[$key], 'Comparing ' . $key);
+                }
+            } else {
+                $this->assertEquals($parsed, $p);
+            }
         }
     }
 
@@ -312,7 +322,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->storage->save(array(
             'domain' => '.example.com',
             'cookies' => array(
-                'a' => '123'
+                'a=123'
             )
         ));
 
@@ -329,7 +339,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->storage->save(array(
             'domain' => '.example.com',
             'cookies' => array(
-                'a' => '123'
+                'a=123'
             )
         ));
 
@@ -346,13 +356,13 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame($this->storage, $this->storage->save(array(
             'domain' => '.example.com',
             'cookies' => array(
-                'a' => '123'
+                'a=123'
             )
         )));
         $this->assertSame($this->storage, $this->storage->save(array(
             'domain' => 'example.com',
             'cookies' => array(
-                'b' => '123'
+                'b=123'
             )
         )));
         $this->assertEquals(2, count($this->storage->getCookies()));
@@ -378,15 +388,15 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
             'comment_url' => NULL,
             'http_only' => false,
             'cookies' => array(
-                'a' => 'b',
-                'c' => 'd',
+                'a=b',
+                'c=d',
             ),
             'data' => array(),
         );
 
         $response = Response::factory("HTTP/1.1 200 OK\r\nSet-Cookie: a=b; c=d; port=\"80,8081\"; version=1; Max-Age=86400; domain=.example.com; discard; secure;\r\n\r\n");
         $result = $this->plugin->extractCookies($response);
-        $this->assertEquals($cookie, $result);
+        $this->assertEquals(array($cookie), $result);
 
         $this->assertEquals(1, count($this->storage->getCookies()));
         $this->assertEquals(array($cookie), $this->storage->getCookies());
@@ -417,7 +427,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
             'domain' => '.y.example.com',
             'path' => '/acme/',
             'cookies' => array(
-                'secure' => 'sec'
+                'secure=sec'
             ),
             'expires' => Guzzle::getHttpDate('+1 day'),
             'secure' => true
@@ -429,7 +439,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
             'domain' => '.y.example.com',
             'path' => '/acme/',
             'cookies' => array(
-                'test' => 'port'
+                'test=port'
             ),
             'expires' => Guzzle::getHttpDate('+1 day'),
             'secure' => false,
@@ -469,5 +479,57 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request4->setResponse($response3, true);
         $request4->send();
         $this->assertEquals('muppet=cookie_monster', (string) $request4->getCookie());
+    }
+
+    /**
+     * @covers Guzzle\Http\Plugin\Cookie\CookiePlugin
+     */
+    public function testExtractsMultipleCookies()
+    {
+        $this->plugin->clearCookies();
+        
+        $response = Response::factory(
+            "HTTP/1.1 200 OK\r\n" .
+            "Set-Cookie: IU=deleted; expires=Wed, 03-Mar-2010 02:17:39 GMT; path=/; domain=127.0.0.1\r\n" .
+            "Set-Cookie: PH=deleted; expires=Wed, 03-Mar-2010 02:17:39 GMT; path=/; domain=127.0.0.1\r\n" .
+            "Set-Cookie: fpc=d=.Hm.yh4.1XmJWjJfs4orLQzKzPImxklQoxXSHOZATHUSEFciRueW_7704iYUtsXNEXq0M92Px2glMdWypmJ7HIQl6XIUvrZimWjQ3vIdeuRbI.FNQMAfcxu_XN1zSx7l.AcPdKL6guHc2V7hIQFhnjRW0rxm2oHY1P4bGQxFNz7f.tHm12ZD3DbdMDiDy7TBXsuP4DM-&v=2; expires=Fri, 02-Mar-2012 02:17:40 GMT; path=/; domain=127.0.0.1\r\n" .
+            "Set-Cookie: FPCK3=AgBNbvoQAGpGEABZLRAAbFsQAF1tEABkDhAAeO0=; expires=Sat, 02-Apr-2011 02:17:40 GMT; path=/; domain=127.0.0.1\r\n" .
+            "Set-Cookie: CH=deleted; expires=Wed, 03-Mar-2010 02:17:39 GMT; path=/; domain=127.0.0.1\r\n" .
+            "Set-Cookie: CH=AgBNbvoQAAEcEAApuhAAMJcQADQvEAAvGxAALe0QAD6uEAATwhAAC1AQAC8t; expires=Sat, 02-Apr-2011 02:17:40 GMT; path=/; domain=127.0.0.1\r\n" .
+            "Set-Cookie: fpt=d=_e2d6jLXesxx4AoiC0W7W3YktnpITDTHoJ6vNxF7TU6JEep6Y5BFk7Z9NgHmhiXoB7jGV4uR_GBQtSDOLjflKBUVZ6UgnGmDztoj4GREK30jm1qDgReyhPv7iWaN8e8ZLpUKXtPioOzQekGha1xR8ZqGR25GT7aYQpcxaaY.2ATjTpbm7HmX8tlBIte6mYMwFpIh_krxtofGPH3R337E_aNF3illhunC5SK6I0IfZvHzBXCoxu9fjH6e0IHzyOBY656YMUIElQiDkSd8werkBIRE6LJi6YU8AWgitEpMLisOIQSkqyGiahcPFt_fsD8DmIX2YAdSeVE0KycIqd0Z9aM7mdJ3xNQ4dmOOfcZ83dDrZ.4hvuKN2jB2FQDKuxEjTVO4DmiCCSyYgcs2wh0Lc3RODVKzqAZNMTYltWMELw9JdUyDFD3EGT3ZCnH8NQ6f_AAWffyj92ZMLYfWJnXHSG.DTKlVHj.IsihVT73QzrfoMFIs&v=1; path=/; domain=127.0.0.1\r\n" .
+            "Set-Cookie: fpps=deleted; expires=Wed, 03-Mar-2010 02:17:39 GMT; path=/; domain=127.0.0.1\r\n" .
+            "Set-Cookie: fpc_s=d=ng6sEJk.1XnLUt1pfJ2kiUon07QEppAUuwW3nk0tYwcHMQ1CijnSGVZHfgvWSXQxE5eW_1hjvDAA4Nu0CSSn2xk9_.DOkKI_fZLLLUrm0hJ41VMbSUTrklw.u5IlTM5JCeK_PDjSjZNkvHMbNYziu8vwd8fMnbecf9bSo3eDDv1boowyLFk_9mnGYBeSI4U86mnm.mnfOHMARxzL6BVMTAblIAml65cR486SHzPVO6KNYvkqh8zP3m0hVIkRaPhzvDjQkDG28HCbMjq745QR2FcCmI4TNJbk7EtJmsBrlL8wvVyX5DiBmP9W990-&v=2; path=/; domain=127.0.0.1\r\n" .
+            "Content-Length: 0\r\n\r\n"
+        );
+
+        $this->getServer()->enqueue(array(
+            (string) $response,
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\rn"
+        ));
+
+        $request = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl());
+        $this->plugin->attach($request);
+
+        $request->send();
+        $this->assertNull($request->getHeader('Cookie'));
+        
+        $request->setState('new');
+        $request->send();
+
+        $this->assertNotNull($request->getHeader('Cookie'));
+
+        // Doesn't send expired cookies
+        $this->assertEmpty($request->getCookie('IU'));
+        $this->assertEmpty($request->getCookie('PH'));
+
+        $this->assertNotEmpty($request->getCookie('fpc'));
+        $this->assertNotEmpty($request->getCookie('FPCK3'));
+        $this->assertNotEmpty($request->getCookie('CH'));
+        $this->assertNotEmpty($request->getCookie('fpt'));
+        $this->assertNotEmpty($request->getCookie('fpc_s'));
+        $this->assertNotEmpty($request->getCookie('CH'));
+        $this->assertNotEmpty($request->getCookie('CH'));
+
+        $this->assertEquals(9, count($this->plugin->extractCookies($response)));
     }
 }

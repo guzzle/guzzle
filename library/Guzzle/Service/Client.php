@@ -373,9 +373,7 @@ class Client extends AbstractSubject
             return $command->execute();
 
         } else {
-
             throw new ServiceException('Invalid command sent to ' . __METHOD__);
-
         }
     }
 

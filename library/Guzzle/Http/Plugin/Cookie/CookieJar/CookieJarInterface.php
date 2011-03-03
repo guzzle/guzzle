@@ -64,16 +64,16 @@ interface CookieJarInterface
      *
      *      domain  (string) - Domain of the cookie
      *      path    (string) - Path of the cookie
-     *      name    (string) - Name of the cookie
-     *      value   (string) - Value of the cookie
+     *      cookies (array)  - Array of cookie name value pairs (e.g. 'x=123')
      *      max_age (int)    - Lifetime of the cookie in seconds
      *      expires (int)    - The UNIX timestamp when the cookie expires
-     *      version (int)              - Version of the cookie specification. Default is 0. RFC 2965 is 1
+     *      version (int)    - Version of the cookie specification. RFC 2965 is 1
      *      secure  (bool)   - Whether or not this is a secure cookie
      *      discard (bool)   - Whether or not this is a discardable cookie
      *      comment (string) - How the cookie is intended to be used
      *      comment_url (str)- URL with info on how it will be used
-     *      port (string)- CSV list of ports
+     *      port (string)    - CSV list of ports
+     *      http_only (bool) - HTTP only cookie
      */
     public function getCookies($domain = null, $path = null, $name = null, $skipDiscardable = false, $skipExpired = true);
 
@@ -83,14 +83,15 @@ interface CookieJarInterface
      * @parm array $cookieData Cookie information, including the following:
      *      domain  (string, required) - Domain of the cookie
      *      path    (string, required) - Path of the cookie
-     *      cookies (array)            - Associative array of cookie names and values
+     *      cookies                    - Array of cookie names and values as string
      *      max_age (int, required)    - Lifetime of the cookie in seconds
-     *      version (int)              - Version of the cookie specification
+     *      version (int)              - Version of the cookie specification. Default is 0. RFC 2965 is 1
      *      secure  (bool)             - If it is a secure cookie
      *      discard (bool)             - If it is a discardable cookie
      *      comment (string)           - How the cookie is intended to be used
      *      comment_url (str)          - URL with info on how it will be used
      *      port (string)              - CSV list of ports
+     *      http_only (bool)           - HTTP only cookie
      *
      * @return CookieJarInterface
      */

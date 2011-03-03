@@ -59,11 +59,11 @@ class ArrayCookieJar implements CookieJarInterface
                     // Removing only a single cookie value from a cookie?
                     if ($name) {
 
-                        foreach (array_keys($c['cookies']) as $k) {
-                            if ($k == $name) {
-                                unset($c['cookies'][$k]);
-                            }
-                        }
+                        $c['cookies'] = array_values(array_filter($c['cookies'], function($v) use ($name) {
+                            $parts = array_map('trim', explode('=', $v, 2));
+
+                            return $parts[0] != trim($name);
+                        }));
 
                         // Add the modified cookie back into the cookie jar
                         $this->save($c);
@@ -123,8 +123,7 @@ class ArrayCookieJar implements CookieJarInterface
      *
      *      domain  (string) - Domain of the cookie
      *      path    (string) - Path of the cookie
-     *      name    (string) - Name of the cookie
-     *      value   (string) - Value of the cookie
+     *      cookies (array)  - Array of cookie name value pairs (e.g. 'x=123')
      *      max_age (int)    - Lifetime of the cookie in seconds
      *      expires (int)    - The UNIX timestamp when the cookie expires
      *      version (int)    - Version of the cookie specification. RFC 2965 is 1
@@ -162,8 +161,9 @@ class ArrayCookieJar implements CookieJarInterface
             // Check cookie name matches
             $nameMatch = false;
             if ($name) {
-                foreach (array_keys($cookie['cookies']) as $key) {
-                    if ($key == $name) {
+                foreach ($cookie['cookies'] as $c) {
+                    $parts = explode('=', $c, 2);
+                    if ($parts[0] == $name) {
                         $nameMatch = true;
                         break;
                     }
@@ -172,13 +172,13 @@ class ArrayCookieJar implements CookieJarInterface
 
             if (!$domain || $domainMatch) {
                 if (!$path || !strcasecmp($path, $cookie['path']) || 0 === stripos($path, $cookie['path'])) {
-                        if (!$name || $nameMatch) {
-                            if (!$skipDiscardable || !$cookie['discard']) {
-                                return true;
-                            }
+                    if (!$name || $nameMatch) {
+                        if (!$skipDiscardable || !$cookie['discard']) {
+                            return true;
                         }
                     }
                 }
+            }
 
             return false;
         }));
@@ -192,7 +192,7 @@ class ArrayCookieJar implements CookieJarInterface
      * @parm array $cookieData Cookie information, including the following:
      *      domain  (string, required) - Domain of the cookie
      *      path    (string, required) - Path of the cookie
-     *      cookies                    - Associative array of cookie names and values
+     *      cookies                    - Array of cookie names and values as string
      *      max_age (int, required)    - Lifetime of the cookie in seconds
      *      version (int)              - Version of the cookie specification. Default is 0. RFC 2965 is 1
      *      secure  (bool)             - If it is a secure cookie
@@ -228,10 +228,24 @@ class ArrayCookieJar implements CookieJarInterface
 
         // Calculate the expires date
         if (!$cookieData['expires'] && $cookieData['max_age']) {
-            $cookieData['expires'] = time() + (int)$cookieData['max_age'];
+            $cookieData['expires'] = time() + (int) $cookieData['max_age'];
         }
 
-        $this->cookies[] = $cookieData;
+        $alreadyPresent = false;
+        foreach ($this->cookies as $cookie) {
+            foreach ($cookie as $k => $v) {
+                if ($cookieData[$k] != $v) {
+                    continue 2;
+                }
+            }
+
+            $alreadyPresent = true;
+            break;
+        }
+
+        if (!$alreadyPresent) {
+            $this->cookies[] = $cookieData;
+        }
 
         return $this;
     }
