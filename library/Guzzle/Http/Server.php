@@ -78,7 +78,7 @@ class Server extends AbstractSubject
     /**
      * Queue an array of responses on the server
      *
-     * @param array|Response $resposnes A single or array of Responses to queue
+     * @param array|Response $responses A single or array of Responses to queue
      *
      * @return bool Returns TRUE on success or FALSE on failure
      * @throws HttpException
@@ -159,7 +159,7 @@ class Server extends AbstractSubject
      * Get all of the received requests
      *
      * @param bool $hydrate (optional) Set to TRUE to turn the messages into
-     *      actual request objects
+     *      actual RequestInterface objects
      *
      * @return array
      * @throws HttpException

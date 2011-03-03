@@ -1,6 +1,6 @@
 /**
  * Guzzle node.js test server to return queued responses to HTTP requests and
- * expose a RESTful API for enqueueing responeses and retrieving the requests
+ * expose a RESTful API for enqueueing responses and retrieving the requests
  * that have been received.
  *
  * - Delete all requests that have been received:

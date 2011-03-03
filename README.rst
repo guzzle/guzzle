@@ -131,7 +131,7 @@ The GetObject command just returns the HTTP response object when it is executed.
     $objects = $client->execute($command);
 
     // Iterate over every single object in the bucket
-    // subsequent requests will be issued to retreive
+    // subsequent requests will be issued to retrieve
     // the next result of a truncated response
     foreach ($objects as $object) {
         echo "{$object['key']} {$object['size']}\n";
