@@ -32,7 +32,7 @@ Install Guzzle using pear when using Guzzle in production::
     pear channel-discover pearhub.org
     pear install pearhub/guzzle
 
-You will need to add Guzzle to your application's autoloader.  Guzzle ships with a few select classes from other vendors, one of which is the Symfony2 universal class loader.  If your application does not already use an autoloader, you can use the autoloader distributed with Guzzle:
+You will need to add Guzzle to your application's autoloader.  Guzzle ships with a few select classes from other vendors, one of which is the Symfony2 universal class loader.  If your application does not already use an autoloader, you can use the autoloader distributed with Guzzle::
 
     <?php
 
@@ -86,7 +86,7 @@ Let's say you want to use the Amazon S3 client from the Guzzle AWS service.
 
 1. Create a services.xml file:
 
-Create a services.xml that your ServiceBuilder will use to create service clients.  The services.xml file defines the clients you will be using and the arguments that will be passed into the client when it is constructed.  Each client + arguments combination is given a name and  referenced by name when retrieving a client from the ServiceBuilder.
+Create a services.xml that your ServiceBuilder will use to create service clients.  The services.xml file defines the clients you will be using and the arguments that will be passed into the client when it is constructed.  Each client + arguments combination is given a name and  referenced by name when retrieving a client from the ServiceBuilder.::
 
     <?xml version="1.0" ?>
     <guzzle>
@@ -103,14 +103,14 @@ Create a services.xml that your ServiceBuilder will use to create service client
         </clients>
     </guzzle>
 
-2. Create a ServiceBuilder
+2. Create a ServiceBuilder::
 
     <?php
     use Guzzle\Service\Builder\ServiceBuilder;
 
     $serviceBuilder = ServiceBuilder::factory('/path/to/services.xml');
 
-3. Get the Amazon S3 client from the ServiceBuilder and execute a command
+3. Get the Amazon S3 client from the ServiceBuilder and execute a command::
 
     use Guzzle\Service\Aws\S3\Command\Object\GetObject;
 
@@ -122,7 +122,7 @@ Create a services.xml that your ServiceBuilder will use to create service client
     $httpResponse = $client->execute($command);
     echo $httpResponse->getBody();
 
-The GetObject command just returns the HTTP response object when it is executed.  Other commands might return more valuable information when executed:
+The GetObject command just returns the HTTP response object when it is executed.  Other commands might return more valuable information when executed::
 
     use Guzzle\Service\Aws\S3\Command\Bucket\ListBucket;
 
@@ -143,7 +143,7 @@ The GetObject command just returns the HTTP response object when it is executed.
 
 The ListBucket command above returns a BucketIterator which will iterate over the entire contents of a bucket.  As you can see, commands can be as simple or complex as you want.
 
-If the above code samples seem a little verbose to you, you can take some shortcuts in your code by leveraging the Guzzle command factory inherent to each client:
+If the above code samples seem a little verbose to you, you can take some shortcuts in your code by leveraging the Guzzle command factory inherent to each client::
 
     $objects = $client->getCommand('bucket.list_bucket', array('bucket' => 'my_bucket'))->execute();
 
@@ -152,6 +152,8 @@ Examples of sending HTTP requests
 
 GET the google.com homepage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Example of how to send a GET request::
 
     <?php
 
@@ -170,6 +172,8 @@ GET the google.com homepage
 
 POST to a Solr server
 ~~~~~~~~~~~~~~~~~~~~~
+
+Example of how to send a POST request::
 
     <?php
 
