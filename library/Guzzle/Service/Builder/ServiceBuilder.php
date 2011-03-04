@@ -179,6 +179,11 @@ class ServiceBuilder
             throw new ServiceException('No service builder is registered as ' . $name);
         }
 
+        // Use the DefaultBuilder if no builder was specified
+        if (!isset($this->serviceBuilderConfig[$name]['builder'])) {
+            $this->serviceBuilderConfig[$name]['builder'] = 'Guzzle.Service.Builder.DefaultBuilder';
+        }
+
         $class = str_replace('.', '\\', $this->serviceBuilderConfig[$name]['builder']);
         $builder = new $class($this->serviceBuilderConfig[$name]['params'], $name);
         if ($this->cache) {
