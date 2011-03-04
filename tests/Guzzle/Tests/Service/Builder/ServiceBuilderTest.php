@@ -240,5 +240,6 @@ EOT;
         ));
 
         $c = $s->getBuilder('michael.mock')->build();
+        $this->assertType('Guzzle\\Tests\\Service\\Mock\\MockClient', $c);
     }
 }
