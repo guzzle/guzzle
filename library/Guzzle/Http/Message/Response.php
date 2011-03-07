@@ -187,7 +187,7 @@ class Response extends AbstractMessage
         if ($body instanceof EntityBody) {
             $this->body = $body;
         } else if ($body && is_scalar($body)) {
-            $this->body = EntityBody::factory((string)$body);
+            $this->body = EntityBody::factory((string) $body);
         } else if ($body) {
             throw new BadResponseException('Invalid body sent to ' . __CLASS__ . ' constructor');
         } else {
@@ -215,7 +215,7 @@ class Response extends AbstractMessage
      */
     public function getBody($asString = false)
     {
-        return ($asString) ? (string)$this->body : $this->body;
+        return ($asString) ? (string) $this->body : $this->body;
     }
 
     /**
@@ -298,7 +298,7 @@ class Response extends AbstractMessage
      */
     public function setStatus($statusCode, $reasonPhrase = '')
     {
-        $statusCode = (int)trim($statusCode);
+        $statusCode = (int) trim($statusCode);
 
         if (!array_key_exists($statusCode, self::$statusTexts)) {
             throw new BadResponseException('Invalid response code: ' . $statusCode);
@@ -332,7 +332,7 @@ class Response extends AbstractMessage
         // Only include the body in the message if the size is < 2MB
         $size = $this->body->getSize();
         if ($size < 2097152) {
-            $message .= (string)$this->body;
+            $message .= (string) $this->body;
         }
 
         return $message;
@@ -348,7 +348,7 @@ class Response extends AbstractMessage
         $headers = 'HTTP/1.1 ' . $this->statusCode . ' ' . $this->reasonPhrase . "\r\n";
 
         foreach ($this->headers as $key => $value) {
-            foreach ((array)$value as $v) {
+            foreach ((array) $value as $v) {
                 $headers .= $key . ': ' . $v . "\r\n";
             }
         }

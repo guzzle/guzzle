@@ -91,7 +91,7 @@ class CommandSet implements \IteratorAggregate, \Countable
         // If any commands do not have a Client, then throw an exception
         if (count($invalid)) {
             $e = new CommandSetException('Commands found with no associated Client');
-            $e->setInvalidCommands($invalid);
+            $e->setCommands($invalid);
             throw $e;
         }
 

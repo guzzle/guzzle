@@ -94,7 +94,7 @@ class CommandSetTest extends AbstractCommandTest
             $commandSet->execute();
             $this->fail('CommandSetException not thrown when a command did not have a client');
         } catch (\Guzzle\Service\Command\CommandSetException $e) {
-            $this->assertEquals(array($cmd), $e->getInvalidCommands());
+            $this->assertEquals(array($cmd), $e->getCommands());
         }
     }
 

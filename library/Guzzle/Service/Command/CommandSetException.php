@@ -25,7 +25,7 @@ class CommandSetException extends ServiceException
      *
      * @return array
      */
-    public function getInvalidCommands()
+    public function getCommands()
     {
         return $this->invalidCommands;
     }
@@ -35,7 +35,7 @@ class CommandSetException extends ServiceException
      *
      * @param array $commands Array of Command objects
      */
-    public function setInvalidCommands(array $commands)
+    public function setCommands(array $commands)
     {
         $this->invalidCommands = $commands;
     }
