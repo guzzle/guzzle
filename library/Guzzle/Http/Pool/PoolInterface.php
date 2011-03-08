@@ -3,7 +3,7 @@
 namespace Guzzle\Http\Pool;
 
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Common\Subject\Subject;
+use Guzzle\Common\Event\Subject;
 
 /**
  * Execute a pool of {@see RequestInterface} objects in

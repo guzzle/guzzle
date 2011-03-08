@@ -3,9 +3,8 @@
 namespace Guzzle\Http\Plugin\ExponentialBackoff;
 
 use \Closure;
-use Guzzle\Common\Subject\Subject;
-use Guzzle\Common\Subject\SubjectMediator;
-use Guzzle\Common\Subject\Observer;
+use Guzzle\Common\Event\Subject;
+use Guzzle\Common\Event\Observer;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Plugin\AbstractPlugin;
 
@@ -127,22 +126,22 @@ class ExponentialBackoffPlugin extends AbstractPlugin
 
     /**
      * {@inheritdoc}
-     *
-     * @param RequestInterface $command Request to process
      */
-    public function process($command)
+    public function update(Subject $subject, $event, $context = null)
     {
-        $key = spl_object_hash($command);
+        /* @var $subject RequestInterface */
+
+        $key = spl_object_hash($subject);
 
         // @codeCoverageIgnoreStart
         // Make sure it's the right object and has been attached to the plugin
-        if (!$command instanceof RequestInterface || !array_key_exists($key, $this->state)) {
+        if (!($subject instanceof RequestInterface) || !array_key_exists($key, $this->state)) {
             return false;
         }
         // @codeCoverageIgnoreEnd
 
         // Make sure that the request needs to be retried
-        if ($command->getState() == RequestInterface::STATE_COMPLETE && in_array($command->getResponse()->getStatusCode(), $this->failureCodes)) {
+        if ($event == 'request.sent' && in_array($subject->getResponse()->getStatusCode(), $this->failureCodes)) {
 
             // If this request has been retried too many times, then throw an exception
             if (++$this->state[$key] <= $this->maxRetries) {
@@ -150,17 +149,17 @@ class ExponentialBackoffPlugin extends AbstractPlugin
                 $delay = (int) call_user_func($this->delayClosure, $this->state[$key]);
 
                 // Send the request again
-                $command->setState(RequestInterface::STATE_NEW);
+                $subject->setState(RequestInterface::STATE_NEW);
 
                 // Pooled requests need to be sent via curl multi
-                if ($command->getParams()->get('pool')) {
-                    $command->getParams()->get('pool')
-                        ->getSubjectMediator()
-                        ->attach(new ExponentialBackoffObserver($command, $delay));
+                if ($subject->getParams()->get('pool')) {
+                    $subject->getParams()->get('pool')
+                        ->getEventManager()
+                        ->attach(new ExponentialBackoffObserver($subject, $delay));
                 } else {
                     // Wait for a delay then retry the request
                     sleep($delay);
-                    $command->send();
+                    $subject->send();
                 }
             }
         }

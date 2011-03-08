@@ -6,8 +6,9 @@
 
 namespace Guzzle\Tests\Common\Mock;
 
-use Guzzle\Common\Subject\SubjectMediator;
-use Guzzle\Common\Subject\Observer;
+use Guzzle\Common\Event\Subject;
+use Guzzle\Common\Event\EventManager;
+use Guzzle\Common\Event\Observer;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>
@@ -17,18 +18,21 @@ class MockObserver implements Observer
     public $notified = 0;
     public $subject;
     public $context;
-    public $state;
+    public $event;
     public $log = array();
-    public $logByState = array();
+    public $logByEvent = array();
 
-    public function update(SubjectMediator $subject)
+   /**
+     * {@inheritdoc}
+     */
+    public function update(Subject $subject, $event, $context = null)
     {
         $this->notified++;
         $this->subject = $subject;
-        $this->context = $subject->getContext();
-        $this->state = $subject->getState();
-        $this->log[] = array($subject->getState(), $subject->getContext());
-        $this->logByState[$subject->getState()] = $subject->getContext();
+        $this->context = $context;
+        $this->event = $event;
+        $this->log[] = array($event, $context);
+        $this->logByEvent[$event] = $context;
         
         return true;
     }

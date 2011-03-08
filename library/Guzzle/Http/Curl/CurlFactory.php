@@ -336,7 +336,7 @@ class CurlFactory implements CurlFactoryInterface
             CURLOPT_PROXY => '', // Reset proxy settings,
             CURLOPT_NOPROGRESS => false,
             CURLOPT_WRITEFUNCTION => function($curl, $data) use ($request) {
-                $request->getSubjectMediator()->notify('curl.callback.write', $data);
+                $request->getEventManager()->notify('curl.callback.write', $data);
 
                 return $request->getResponse()->getBody()->write($data);
             },
@@ -346,13 +346,13 @@ class CurlFactory implements CurlFactoryInterface
             CURLOPT_READFUNCTION => function($ch, $fd, $length) use ($request) {
                 $read = ($request->getBody()) ? $request->getBody()->read($length) : 0;
                 if ($read) {
-                    $request->getSubjectMediator()->notify('curl.callback.read', $read, true);
+                    $request->getEventManager()->notify('curl.callback.read', $read, true);
                 }
 
                 return $read === false || $read === 0 ? '' : $read;
             },
             CURLOPT_PROGRESSFUNCTION => function($downloadSize, $downloaded, $uploadSize, $uploaded) use ($request) {
-                $request->getSubjectMediator()->notify('curl.callback.progress', array(
+                $request->getEventManager()->notify('curl.callback.progress', array(
                     'download_size' => $downloadSize,
                     'downloaded' => $downloaded,
                     'upload_size' => $uploadSize,

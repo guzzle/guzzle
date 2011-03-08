@@ -35,11 +35,11 @@ class DefaultResponseProcessor implements ResponseProcessorInterface
             $e->setResponse($response);
             $e->setRequest($request);
 
-            $request->getSubjectMediator()->notify('request.failure', $e);
+            $request->getEventManager()->notify('request.failure', $e);
             
             throw $e;
         }
 
-        $request->getSubjectMediator()->notify('request.success', $response);
+        $request->getEventManager()->notify('request.success', $response);
     }
 }

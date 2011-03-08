@@ -70,6 +70,7 @@ class CookieTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\QueryString
+     * @covers Guzzle\Http\Cookie
      */
     public function testAggregatesMultipleCookieValues()
     {

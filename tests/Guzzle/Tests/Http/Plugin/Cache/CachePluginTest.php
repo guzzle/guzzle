@@ -63,7 +63,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Plugin\AbstractPlugin::attach
-     * @covers Guzzle\Http\Plugin\Cache\CachePlugin::process
+     * @covers Guzzle\Http\Plugin\Cache\CachePlugin::update
      * @covers Guzzle\Http\Plugin\Cache\CachePlugin::attach
      * @covers Guzzle\Http\Plugin\Cache\CachePlugin::saveCache
      * @covers Guzzle\Http\Plugin\Cache\CachePlugin::getCacheKey
@@ -110,7 +110,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\Cache\CachePlugin::process
+     * @covers Guzzle\Http\Plugin\Cache\CachePlugin::update
      * @covers Guzzle\Http\Plugin\Cache\CachePlugin::saveCache
      */
     public function testSkipsNonReadableResponseBodies()
@@ -209,7 +209,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\Cache\CachePlugin::process
+     * @covers Guzzle\Http\Plugin\Cache\CachePlugin::update
      * @covers Guzzle\Http\Plugin\Cache\CachePlugin::saveCache
      */
     public function testRequestsCanOverrideTtlUsingCacheParam()
@@ -231,7 +231,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Plugin\Cache\CachePlugin::canResponseSatisfyRequest
-     * @covers Guzzle\Http\Plugin\Cache\CachePlugin::process
+     * @covers Guzzle\Http\Plugin\Cache\CachePlugin::update
      * @covers Guzzle\Http\Plugin\Cache\CachePlugin::saveCache
      */
     public function testRequestsCanAcceptStaleResponses()

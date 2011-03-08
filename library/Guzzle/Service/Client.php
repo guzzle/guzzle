@@ -10,7 +10,7 @@ use Guzzle\Common\Inspector;
 use Guzzle\Common\Injector;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Filter\Chain;
-use Guzzle\Common\Subject\AbstractSubject;
+use Guzzle\Common\Event\AbstractSubject;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactory;
@@ -206,7 +206,7 @@ class Client extends AbstractSubject
         }
 
         $this->createRequestChain->process($request);
-        $this->getSubjectMediator()->notify('request.create', $request, true);
+        $this->getEventManager()->notify('request.create', $request);
 
         return $request;
     }
@@ -221,7 +221,7 @@ class Client extends AbstractSubject
     public function setRequestFactory(RequestFactory $factory)
     {
         $this->requestFactory = $factory;
-        $this->getSubjectMediator()->notify('request.factory.set', $factory, true);
+        $this->getEventManager()->notify('request.factory.set', $factory);
 
         return $this;
     }
@@ -237,7 +237,7 @@ class Client extends AbstractSubject
     {
         if (!$this->hasPlugin(get_class($plugin))) {
             $this->plugins[self::getShortPluginName($plugin)] = $plugin;
-            $this->getSubjectMediator()->attach($plugin);
+            $this->getEventManager()->attach($plugin);
         }
 
         return $this;
@@ -259,7 +259,7 @@ class Client extends AbstractSubject
             $plugin = self::getShortPluginName($plugin);
         }
 
-        $mediator = $this->getSubjectMediator();
+        $mediator = $this->getEventManager();
         $that = $this;
         $c = __CLASS__;
         $this->plugins = array_filter($this->plugins, function($p) use ($plugin, $mediator, $that, $c) {
@@ -327,7 +327,7 @@ class Client extends AbstractSubject
     {
         $command = $this->commandFactory->buildCommand($name, $args);
         $command->setClient($this);
-        $this->getSubjectMediator()->notify('command.create', $command);
+        $this->getEventManager()->notify('command.create', $command);
 
         return $command;
     }
@@ -350,9 +350,9 @@ class Client extends AbstractSubject
         if ($command instanceof CommandInterface) {
 
             $command->prepare($this);
-            $this->getSubjectMediator()->notify('command.before_send', $command);
+            $this->getEventManager()->notify('command.before_send', $command);
             $command->getRequest()->send();
-            $this->getSubjectMediator()->notify('command.after_send', $command, true);
+            $this->getEventManager()->notify('command.after_send', $command);
 
             return $command->getResult();
 

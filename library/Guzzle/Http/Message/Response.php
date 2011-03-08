@@ -7,7 +7,7 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Subject\AbstractSubject;
+use Guzzle\Common\Event\AbstractSubject;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\HttpException;
 

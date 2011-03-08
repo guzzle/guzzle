@@ -197,9 +197,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
         $request = $client->getRequest('GET');
         // Make sure the the plugin was attached to the new request
-        $this->assertTrue($request->getPrepareChain()->hasFilter($logPlugin));
-        $this->assertTrue($request->getProcessChain()->hasFilter($logPlugin));
-        $this->assertTrue($request->getSubjectMediator()->hasObserver($logPlugin));
+        $this->assertTrue($request->getEventManager()->hasObserver($logPlugin));
 
         // Make sure that the log plugin actually logged the request and response
         ob_start();
@@ -213,9 +211,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         // Ensure that it was actually detached
         $this->assertFalse($client->hasPlugin($logPlugin));
         $request = $client->getRequest('GET');
-        $this->assertFalse($request->getPrepareChain()->hasFilter($logPlugin));
-        $this->assertFalse($request->getProcessChain()->hasFilter($logPlugin));
-        $this->assertFalse($request->getSubjectMediator()->hasObserver($logPlugin));
+        $this->assertFalse($request->getEventManager()->hasObserver($logPlugin));
 
         // Try that again, but reference it by name
         $client->attachPlugin($logPlugin);

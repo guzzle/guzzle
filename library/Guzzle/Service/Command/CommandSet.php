@@ -109,7 +109,7 @@ class CommandSet implements \IteratorAggregate, \Countable
             // Prepare each request and send out Client notifications
             foreach ($parallel as $command) {
                 $request = $command->prepare();
-                $command->getClient()->getSubjectMediator()->notify('command.before_send', $command, true);
+                $command->getClient()->getEventManager()->notify('command.before_send', $command);
                 $this->pool->addRequest($request);
             }
 
@@ -117,7 +117,7 @@ class CommandSet implements \IteratorAggregate, \Countable
 
             // Notify any observers that the requests are complete
             foreach ($parallel as $command) {
-                $command->getClient()->getSubjectMediator()->notify('command.after_send', $command, true);
+                $command->getClient()->getEventManager()->notify('command.after_send', $command);
             }
         }
 

@@ -6,7 +6,7 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Common\Subject\Subject;
+use Guzzle\Common\Event\Subject;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Curl\CurlFactoryInterface;
@@ -87,22 +87,6 @@ interface RequestInterface extends MessageInterface, Subject
      * @return Response|null
      */
     public function getResponse();
-
-    /**
-     * Get the intercepting filter Chain that is processed before the request
-     * is sent.
-     *
-     * @return Chain
-     */
-    public function getPrepareChain();
-
-    /**
-     * Get the intercepting filter Chain that is processed after the response is
-     * received
-     *
-     * @return Chain
-     */
-    public function getProcessChain();
 
     /**
      * Get the collection of key value pairs that will be used as the query

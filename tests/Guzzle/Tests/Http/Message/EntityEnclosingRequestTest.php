@@ -66,7 +66,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Message\EntityEnclosingRequest::process
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::update
      */
     public function testRequestDeterminesContentBeforeSending()
     {
@@ -82,7 +82,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $this->factory->newRequest('PUT', 'http://www.test.com/');
         $request->setBody(EntityBody::factory('test'));
         $this->assertNull($request->getHeader('Content-Length'));
-        $request->process($request);
+        $request->getEventManager()->notify('request.prepare_entity_body');
         $this->assertEquals(4, $request->getHeader('Content-Length'));
         unset($request);
 
@@ -90,14 +90,14 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $this->factory->newRequest('PUT', 'http://www.test.com/');
         $request->setBody(EntityBody::factory('test'))
                 ->setHeader('Transfer-Encoding', 'chunked');
-        $request->process($request);
+        $request->getEventManager()->notify('request.prepare_entity_body');
         $this->assertNull($request->getHeader('Content-Length'));
 
         // Tests using a Transfer-Encoding chunked entity body with undeterminable size
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\nData");
         $request = $this->factory->newRequest('PUT', 'http://www.test.com/');
         $request->setBody(EntityBody::factory(fopen($this->getServer()->getUrl(), 'r')));
-        $request->process($request);
+        $request->getEventManager()->notify('request.prepare_entity_body');
         $this->assertNull($request->getHeader('Content-Length'));
         $this->assertEquals('chunked', $request->getHeader('Transfer-Encoding'));
 
@@ -107,7 +107,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request->setBody(EntityBody::factory(fopen($this->getServer()->getUrl(), 'r')));
         $request->setProtocolVersion('1.0');
         try {
-            $request->process($request);
+            $request->getEventManager()->notify('request.prepare_entity_body');
             $this->fail('Expected exception due to 1.0 and no Content-Length');
         } catch (RequestException $e) {
         }
@@ -182,7 +182,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Message\EntityEnclosingRequest::process
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::update
      */
     public function testProcessMethodAddsPostBodyAndEntityBodyHeaders()
     {
@@ -194,14 +194,14 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
 
         $request = $this->factory->newRequest('POST', 'http://www.guzzle-project.com/');
         $request->getPostFields()->set('a', 'b');
-        $request->process($request);
+        $request->getEventManager()->notify('request.prepare_entity_body');
         $this->assertEquals('application/x-www-form-urlencoded', $request->getHeader('Content-Type'));
         $this->assertEquals('a=b', $request->getCurlOptions()->get(CURLOPT_POSTFIELDS));
         unset($request);
 
         $request = $this->factory->newRequest('POST', 'http://www.guzzle-project.com/');
         $request->addPostFiles(array('file' => __FILE__));
-        $request->process($request);
+        $request->getEventManager()->notify('request.prepare_entity_body');
         $this->assertEquals('multipart/form-data', $request->getHeader('Content-Type'));
         $this->assertEquals(array('file' => '@' . __FILE__), $request->getCurlOptions()->get(CURLOPT_POSTFIELDS));
     }

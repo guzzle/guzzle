@@ -8,9 +8,8 @@ namespace Guzzle\Http\Message;
 
 use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
-use Guzzle\Common\Filter\Chain;
-use Guzzle\Common\Subject\SubjectMediator;
-use Guzzle\Common\Subject\Observer;
+use Guzzle\Common\Event\EventManager;
+use Guzzle\Common\Event\Observer;
 use Guzzle\Http\Curl\CurlFactoryInterface;
 use Guzzle\Http\Curl\CurlFactory;
 use Guzzle\Http\Curl\CurlHandle;
@@ -46,9 +45,9 @@ class Request extends AbstractMessage implements RequestInterface
     protected $method;
 
     /**
-     * @var SubjectMediator Subject mediator
+     * @var EventManager Subject mediator
      */
-    protected $subjectMediator;
+    protected $eventManager;
 
     /**
      * @var Response Response of the request
@@ -61,19 +60,9 @@ class Request extends AbstractMessage implements RequestInterface
     protected $responseBody;
 
     /**
-     * @var bool Has the response been sent through the process chain
+     * @var bool Has the response been processed
      */
     protected $processedResponse = false;
-
-    /**
-     * @var Chain Chain of intercepting filters to process the request before sending
-     */
-    protected $prepareChain;
-
-    /**
-     * @var Chain Chain of intercepting filters to process the request after sending
-     */
-    protected $processChain;
 
     /**
      * @var string State of the request object
@@ -144,7 +133,7 @@ class Request extends AbstractMessage implements RequestInterface
         $this->curlFactory = $curlFactory ?: CurlFactory::getInstance();
         $this->curlOptions = new Collection();
         $this->cookie = Cookie::factory($this->getHeader('Cookie'));
-        $this->subjectMediator = new SubjectMediator($this);
+        $this->eventManager = new EventManager($this);
 
         if (!$this->hasHeader('User-Agent', true)) {
             $this->setHeader('User-Agent', Guzzle::getDefaultUserAgent());
@@ -172,12 +161,10 @@ class Request extends AbstractMessage implements RequestInterface
     public function __clone()
     {
         // Clone object properties
-        $this->prepareChain = $this->prepareChain ? clone $this->prepareChain : null;
-        $this->processChain = $this->processChain ? clone $this->processChain : null;
-        $this->subjectMediator = clone $this->subjectMediator;
+        $this->eventManager = clone $this->eventManager;
 
         // Reattach any plugins
-        foreach ($this->subjectMediator->getAttached() as $observer) {
+        foreach ($this->eventManager->getAttached() as $observer) {
             if ($observer instanceof AbstractPlugin) {
                 $observer->attach($this);
             }
@@ -260,13 +247,13 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the SubjectMediator of the request
+     * Get the EventManager of the request
      *
-     * @return SubjectMediator
+     * @return EventManager
      */
-    public function getSubjectMediator()
+    public function getEventManager()
     {
-        return $this->subjectMediator;
+        return $this->eventManager;
     }
 
     /**
@@ -281,14 +268,13 @@ class Request extends AbstractMessage implements RequestInterface
             try {
                 try {
                     $this->state = self::STATE_TRANSFER;
-                    $this->getSubjectMediator()->notify('request.before_send');
-                    $this->getPrepareChain()->process($this);
+                    $this->getEventManager()->notify('request.before_send');
                     if (!$this->response && !$this->getParams()->get('queued_response')) {
                         curl_exec($this->getCurlHandle()->getHandle());
                     }
                     $this->setState(self::STATE_COMPLETE);
                 } catch (BadResponseException $e) {
-                    $this->getSubjectMediator()->notify('request.bad_response');
+                    $this->getEventManager()->notify('request.bad_response');
                     if ($this->response) {
                         $e->setResponse($this->response);
                     }
@@ -296,7 +282,7 @@ class Request extends AbstractMessage implements RequestInterface
                 }
             } catch (RequestException $e) {
                 $e->setRequest($this);
-                $this->getSubjectMediator()->notify('request.exception', $e);
+                $this->getEventManager()->notify('request.exception', $e);
                 throw $e;
             }
         }
@@ -313,36 +299,6 @@ class Request extends AbstractMessage implements RequestInterface
     public function getResponse()
     {
         return $this->response;
-    }
-
-    /**
-     * Get the intercepting filter Chain that is processed before the request
-     * is sent.
-     *
-     * @return Chain
-     */
-    public function getPrepareChain()
-    {
-        if (!$this->prepareChain) {
-            $this->prepareChain = new Chain();
-        }
-
-        return $this->prepareChain;
-    }
-
-    /**
-     * Get the intercepting filter Chain that is processed after the response is
-     * received
-     *
-     * @return Chain
-     */
-    public function getProcessChain()
-    {
-        if (!$this->processChain) {
-            $this->processChain = new Chain();
-        }
-
-        return $this->processChain;
     }
 
     /**
@@ -659,9 +615,9 @@ class Request extends AbstractMessage implements RequestInterface
     {
         // Create a new cURL handle using the cURL factory
         if (!$this->curlHandle) {
-            // Call the prepare chain to prepare the request
-            $this->getPrepareChain()->process($this);
+            $this->getEventManager()->notify('request.curl.before_create');
             $this->curlHandle = $this->curlFactory->getHandle($this);
+            $this->getEventManager()->notify('request.curl.after_create', $this->curlHandle);
         }
 
         return $this->curlHandle;
@@ -699,7 +655,7 @@ class Request extends AbstractMessage implements RequestInterface
 
         if (preg_match('/^\HTTP\/1\.[0|1]\s\d{3}\s.+$/', $data)) {
             list($dummy, $code, $status) = explode(' ', str_replace("\r\n", '', $data), 3);
-            $this->getSubjectMediator()->notify('transaction.receive_response_header', array(
+            $this->getEventManager()->notify('transaction.receive_response_header', array(
                 'header' => 'HTTP',
                 'value' => $code
             ), true);
@@ -710,7 +666,7 @@ class Request extends AbstractMessage implements RequestInterface
             $this->response->addHeaders(array(
                 $header => $value
             ));
-            $this->getSubjectMediator()->notify('transaction.receive_response_header', array(
+            $this->getEventManager()->notify('transaction.receive_response_header', array(
                 'header' => $header,
                 'value' => $value
             ), true);
@@ -746,7 +702,7 @@ class Request extends AbstractMessage implements RequestInterface
             $this->getParams()->set('queued_response', $response);
         }
 
-        $this->getSubjectMediator()->notify('request.set_response', $this->response);
+        $this->getEventManager()->notify('request.set_response', $this->response);
 
         return $this;
     }
@@ -1017,16 +973,15 @@ class Request extends AbstractMessage implements RequestInterface
                 }
             }
 
-            $this->getSubjectMediator()->notify('request.sent', $this);
             $this->state = self::STATE_COMPLETE;
-            $this->getProcessChain()->process($this);
+            $this->getEventManager()->notify('request.sent', $this);
 
             // Some response processor can remove the response or reset the state
             if ($this->state == RequestInterface::STATE_COMPLETE) {
                 
                 $this->processedResponse = true;
 
-                $this->getSubjectMediator()->notify('request.complete', $this->response);
+                $this->getEventManager()->notify('request.complete', $this->response);
 
                 // Release the cURL handle
                 $this->releaseCurlHandle();

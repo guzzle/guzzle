@@ -4,7 +4,7 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Common\Subject;
+namespace Guzzle\Common\Event;
 
 /**
  * Abstract subject class
@@ -14,21 +14,21 @@ namespace Guzzle\Common\Subject;
 abstract class AbstractSubject implements Subject
 {
     /**
-     * @var SubjectMediator
+     * @var EventManager
      */
-    protected $subjectMediator;
+    protected $eventManager;
 
     /**
      * Get the subject mediator associated with the subject
      *
-     * @return SubjectMediator
+     * @return EventManager
      */
-    public function getSubjectMediator()
+    public function getEventManager()
     {
-        if (!$this->subjectMediator) {
-            $this->subjectMediator = new SubjectMediator($this);
+        if (!$this->eventManager) {
+            $this->eventManager = new EventManager($this);
         }
 
-        return $this->subjectMediator;
+        return $this->eventManager;
     }
 }

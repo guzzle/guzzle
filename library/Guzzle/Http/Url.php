@@ -6,15 +6,13 @@
 
 namespace Guzzle\Http;
 
-use Guzzle\Common\Subject\AbstractSubject;
-
 /**
  * Parses and generates URLs based on URL parts.  In favor of performance,
  * URL parts are not validated.
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
-class Url extends AbstractSubject
+class Url
 {
     /**#@+
      * @var string URL parts
@@ -221,7 +219,6 @@ class Url extends AbstractSubject
     public function setHost($host)
     {
         $this->host = $host;
-        $this->getSubjectMediator()->notify('change_host', $this->host, true);
 
         return $this;
     }
@@ -246,7 +243,6 @@ class Url extends AbstractSubject
     public function setScheme($scheme)
     {
         $this->scheme = $scheme;
-        $this->getSubjectMediator()->notify('change_scheme', $this->scheme, true);
 
         return $this;
     }
@@ -271,7 +267,6 @@ class Url extends AbstractSubject
     public function setPort($port)
     {
         $this->port = $port;
-        $this->getSubjectMediator()->notify('change_port', $this->port, true);
 
         return $this;
     }
@@ -309,7 +304,6 @@ class Url extends AbstractSubject
         if ($this->path != '*' && substr($this->path, 0, 1) != '/') {
             $this->path = '/' . $this->path;
         }
-        $this->getSubjectMediator()->notify('change_path', $this->getPath(), true);
 
         return $this;
     }
@@ -344,7 +338,6 @@ class Url extends AbstractSubject
     public function setPassword($password)
     {
         $this->password = $password;
-        $this->getSubjectMediator()->notify('change_password', $this->password, true);
 
         return $this;
     }
@@ -369,7 +362,6 @@ class Url extends AbstractSubject
     public function setUsername($username)
     {
         $this->username = $username;
-        $this->getSubjectMediator()->notify('change_username', $this->username, true);
 
         return $this;
     }
@@ -404,7 +396,6 @@ class Url extends AbstractSubject
     public function setQuery($query)
     {
         $this->query = $query;
-        $this->getSubjectMediator()->notify('change_query', $this->query, true);
 
         return $this;
     }
@@ -429,7 +420,6 @@ class Url extends AbstractSubject
     public function setFragment($fragment)
     {
         $this->fragment = $fragment;
-        $this->getSubjectMediator()->notify('change_fragment', $this->fragment);
 
         return $this;
     }

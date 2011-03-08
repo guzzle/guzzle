@@ -4,15 +4,15 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Common\Subject;
+namespace Guzzle\Common\Event;
 
 /**
- * Subject mediator that connects {@see Subject}s and their {@see Observer}s for
- * loose coupling.
+ * Subject mediator event manager that connects {@see Subject}s and their
+ * {@see Observer}s for loose coupling.
  *
  * @author Michael Dowling <michael@guzzle-project.org>
  */
-class SubjectMediator
+class EventManager
 {
     /**
      * @var Subject Mediated {@see Subject} to connect with {@see Observer}s
@@ -20,22 +20,17 @@ class SubjectMediator
     protected $subject;
 
     /**
-     * @var string The current state of the {@see Subject}
-     */
-    protected $state;
-
-    /**
-     * @var mixed Contextual information used with state change notifications
-     */
-    protected $stateContext;
-
-    /**
      * @var array Array of {@see Observer} objects.
      */
     protected $observers = array();
 
     /**
-     * Construct a new SubjectMediator
+     * @var array Array of observer priorities
+     */
+    protected $priorities = array();
+
+    /**
+     * Construct a new EventManager
      *
      * @param Subject Subject colleague object
      * @param array $observers (optional) Array of {@see Observer} objects
@@ -54,13 +49,41 @@ class SubjectMediator
      * Attach a new observer.
      *
      * @param Observer $observer Object that observes the subject.
+     * @param int $priority (optional) Priority to attach to the subject.  The
+     *      higher the priority, the sooner it will be notified
      *
      * @return Observer Returns the $observer that was attached.
      */
-    public function attach(Observer $observer)
+    public function attach(Observer $observer, $priority = 0)
     {
         if (!$this->hasObserver($observer)) {
+
+            $hash = spl_object_hash($observer);
             $this->observers[] = $observer;
+
+            if ($priority) {
+                $this->priorities[$hash] = $priority;
+            }
+            $priorities = $this->priorities;
+
+            // Sort the events by priority
+            usort($this->observers, function($a, $b) use ($priorities) {
+                $priority1 = $priority2 = 0;
+                $ah = spl_object_hash($a);
+                $bh = spl_object_hash($b);
+                if (isset($priorities[$ah])) {
+                    $priority1 = $priorities[$ah];
+                }
+                if (isset($priorities[$bh])) {
+                    $priority2 = $priorities[$bh];
+                }
+
+                if ($priority1 === $priority2) {
+                    return 0;
+                }
+
+                return $priority1 > $priority2 ? -1 : 1;
+            });
         }
 
         return $observer;
@@ -107,40 +130,29 @@ class SubjectMediator
      * Set the state and stateContext of the subject and notify all observers
      * of the state change.
      *
-     * @param string $state (optional) State of the object.  Leave unchanged to
-     *      use the current state.
-     * @param mixed $stateContext (optional) The context of the object's state
-     * @param bool $unsetContext (optional) Set to TRUE to remove the
-     *      stateContext of the subject after sending the notification.
+     * @param string $event (optional) Event signal to emit
+     * @param mixed $context (optional) Context about the event
+     * @param bool $until (optional) Set to TRUE to stop event propagation when
+     *      one of the observers returns TRUE
      *
      * @return array Returns an array containing the response of each observer
      */
-    public function notify($state = Subject::STATE_UNCHANGED,
-        $stateContext = Subject::STATE_UNCHANGED, $unsetContext = false)
+    public function notify($event, $context = null, $until = false)
     {
-        if ($state != Subject::STATE_UNCHANGED) {
-            $this->state = (string) $state;
-        }
-
-        if ($stateContext != Subject::STATE_UNCHANGED) {
-            $this->stateContext = $stateContext;
-        }
-        
         $responses = array();
 
         foreach ($this->observers as $observer) {
             if ($observer) {
-                $result = $observer->update($this);
+                $result = $observer->update($this->subject, $event, $context);
                 if ($result) {
                     $responses[] = $result;
+                    if ($until == true) {
+                        break;
+                    }
                 }
             }
         }
-
-        if ($unsetContext) {
-            $this->stateContext = null;
-        }
-
+        
         return $responses;
     }
 
@@ -166,30 +178,6 @@ class SubjectMediator
             }
             return $results;
         }
-    }
-
-    /**
-     * Get contextual information about the state of the subject.
-     *
-     * @param mixed $default (optional) Pass a default value so that if the
-     *      state context of the subject isn't set, the default value will be
-     *      returned.
-     *
-     * @return mixed
-     */
-    public function getContext($default = null)
-    {
-        return (isset($this->stateContext)) ? $this->stateContext : $default;
-    }
-
-    /**
-     * Get the state of the subject
-     *
-     * @return string|null
-     */
-    public function getState()
-    {
-        return $this->state;
     }
 
     /**
@@ -220,19 +208,5 @@ class SubjectMediator
         }
 
         return false;
-    }
-
-    /**
-     * Check to see if the Subject is an instance of a class or a specific class
-     *
-     * @param string|Object $check A concrete Subject or class name of a subject
-     *
-     * @return bool
-     */
-    public function is($check)
-    {
-        return (is_string($check))
-            ? $this->subject instanceof $check
-            : $this->subject === $check;
     }
 }

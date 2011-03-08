@@ -6,7 +6,7 @@
 
 namespace Guzzle\Service;
 
-use Guzzle\Common\Subject\AbstractSubject;
+use Guzzle\Common\Event\AbstractSubject;
 
 /**
  * Apply a callback to the contents of a {@see ResourceIterator}
@@ -114,10 +114,10 @@ class ResourceIteratorApplyBatched extends AbstractSubject
     {
         $this->batches++;
 
-        $this->getSubjectMediator()->notify('before_batch', $batch);
+        $this->getEventManager()->notify('before_batch', $batch);
         call_user_func_array($this->callback, array(
             $this->iterator, $batch
         ));
-        $this->getSubjectMediator()->notify('after_batch', $batch);
+        $this->getEventManager()->notify('after_batch', $batch);
     }
 }

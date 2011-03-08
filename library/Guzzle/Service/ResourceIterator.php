@@ -6,7 +6,7 @@
 
 namespace Guzzle\Service;
 
-use Guzzle\Common\Subject\AbstractSubject;
+use Guzzle\Common\Event\AbstractSubject;
 use Guzzle\Service\Client;
 
 /**
@@ -199,9 +199,9 @@ abstract class ResourceIterator extends AbstractSubject implements \Iterator, \C
             || ++$this->currentIndex >= count($this->resourceList)
             && $this->nextToken
             && ($this->limit == -1 || $this->pos < $this->limit)) {
-                $this->getSubjectMediator()->notify('before_send', $this->resourceList);
+                $this->getEventManager()->notify('before_send', $this->resourceList);
                 $this->sendRequest();
-                $this->getSubjectMediator()->notify('after_send', $this->resourceList);
+                $this->getEventManager()->notify('after_send', $this->resourceList);
         }
 
         $this->current = (array_key_exists($this->currentIndex, $this->resourceList))

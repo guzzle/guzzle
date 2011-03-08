@@ -6,8 +6,8 @@
 
 namespace Guzzle\Tests\Http;
 
-use Guzzle\Common\Subject\SubjectMediator;
-use Guzzle\Common\Subject\Observer;
+use Guzzle\Common\Event\EventManager;
+use Guzzle\Common\Event\Observer;
 use Guzzle\Http\Server;
 use Guzzle\Http\Message\BadResponseException;
 use Guzzle\Http\Message\Response;

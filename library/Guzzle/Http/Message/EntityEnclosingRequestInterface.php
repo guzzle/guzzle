@@ -6,7 +6,7 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Common\Filter\FilterInterface;
+use Guzzle\Common\Event\Observer;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\QueryString;
 
@@ -15,7 +15,7 @@ use Guzzle\Http\QueryString;
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
-interface EntityEnclosingRequestInterface extends RequestInterface, FilterInterface
+interface EntityEnclosingRequestInterface extends RequestInterface, Observer
 {
     /**
      * Set the body of the request

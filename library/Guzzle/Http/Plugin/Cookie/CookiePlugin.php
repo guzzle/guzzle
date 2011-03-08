@@ -6,6 +6,7 @@
 
 namespace Guzzle\Http\Plugin\Cookie;
 
+use Guzzle\Common\Event\Subject;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Plugin\AbstractPlugin;
@@ -287,23 +288,21 @@ class CookiePlugin extends AbstractPlugin
 
     /**
      * {@inheritdoc}
-     *
-     * @param RequestInterface $command Request to process
      */
-    public function process($command)
+    public function update(Subject $subject, $event, $context = null)
     {
         // @codeCoverageIgnoreStart
-        if (!$command instanceof RequestInterface) {
+        if (!($subject instanceof RequestInterface)) {
             return;
         }
         // @codeCoverageIgnoreEnd
 
-        if ($command->getState() == RequestInterface::STATE_TRANSFER) {
+        if ($event == 'request.before_send') {
             // The request is being prepared
-            $this->addCookies($command);
-        } else if ($command->getState() == RequestInterface::STATE_COMPLETE) {
+            $this->addCookies($subject);
+        } else if ($event == 'request.sent') {
             // The response is being processed
-            $this->extractCookies($command->getResponse());
+            $this->extractCookies($subject->getResponse());
         }
     }
 }

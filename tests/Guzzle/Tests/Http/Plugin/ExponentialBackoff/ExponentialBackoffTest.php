@@ -84,7 +84,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffPlugin::process
+     * @covers Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffPlugin::update
      * @covers Guzzle\Http\Message\Request
      * @expectedException Guzzle\Http\Message\BadResponseException
      */
@@ -107,7 +107,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffPlugin::process
+     * @covers Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffPlugin::update
      * @covers Guzzle\Http\Pool\Pool
      * @covers Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffObserver
      */

@@ -2,8 +2,8 @@
 
 namespace Guzzle\Http\Plugin\ExponentialBackoff;
 
-use Guzzle\Common\Subject\SubjectMediator;
-use Guzzle\Common\Subject\Observer;
+use Guzzle\Common\Event\Subject;
+use Guzzle\Common\Event\Observer;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Pool\PoolInterface;
 
@@ -41,23 +41,21 @@ class ExponentialBackoffObserver implements Observer
     /**
      * Check if the request object is ready to be retried
      *
-     * @param SubjectMediator $subject Subject of the notification
-     *
-     * @return bool
+     * {@inheritdoc}
      */
-    public function update(SubjectMediator $subject)
+    public function update(Subject $subject, $event, $context = null)
     {
-        if ($subject->getSubject() instanceof PoolInterface && $subject->getState() == PoolInterface::POLLING) {
+        if ($subject instanceof PoolInterface && $event == PoolInterface::POLLING) {
 
             // If the duration of the delay has passed, retry the request using the pool
             if (time() >= $this->retryTime) {
 
                 // Remove the request from the pool and then add it back again
-                $pool = $subject->getSubject();
-                $pool->removeRequest($this->request);
-                $pool->addRequest($this->request);
+                $subject->removeRequest($this->request);
+                $subject->addRequest($this->request);
+                
                 // Remove this observer from the request
-                $subject->detach($this);
+                $subject->getEventManager()->detach($this);
 
                 return true;
             }

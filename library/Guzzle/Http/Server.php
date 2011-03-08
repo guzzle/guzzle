@@ -6,7 +6,7 @@
 
 namespace Guzzle\Http;
 
-use Guzzle\Common\Subject\AbstractSubject;
+use Guzzle\Common\Event\AbstractSubject;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;

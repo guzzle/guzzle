@@ -2,7 +2,7 @@
 
 namespace Guzzle\Http\Pool;
 
-use Guzzle\Common\Subject\AbstractSubject;
+use Guzzle\Common\Event\AbstractSubject;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestException;
 
@@ -63,7 +63,7 @@ class Pool extends AbstractSubject implements PoolInterface
             curl_multi_add_handle($this->multiHandle, $request->getCurlHandle()->getHandle());
         }
 
-        $this->getSubjectMediator()->notify(self::ADD_REQUEST, $request, true);
+        $this->getEventManager()->notify(self::ADD_REQUEST, $request);
 
         // Associate the pool with the request
         $request->getParams()->set('pool', $this);
@@ -108,7 +108,7 @@ class Pool extends AbstractSubject implements PoolInterface
             return $req !== $request;
         }));
 
-        $this->getSubjectMediator()->notify(self::REMOVE_REQUEST, $request, true);
+        $this->getEventManager()->notify(self::REMOVE_REQUEST, $request);
 
         // Remove the pool's request association
         $request->getParams()->remove('pool');
@@ -136,7 +136,7 @@ class Pool extends AbstractSubject implements PoolInterface
         $this->multiHandle = curl_multi_init();
 
         // Notify any observers of the reset event
-        $this->getSubjectMediator()->notify(self::RESET);
+        $this->getEventManager()->notify(self::RESET);
     }
 
     /**
@@ -156,7 +156,7 @@ class Pool extends AbstractSubject implements PoolInterface
             return false;
         }
 
-        $this->getSubjectMediator()->notify(self::BEFORE_SEND, $this->attached, true);
+        $this->getEventManager()->notify(self::BEFORE_SEND, $this->attached);
         $this->state = self::STATE_SENDING;
 
         foreach ($this->attached as $request) {
@@ -188,7 +188,7 @@ class Pool extends AbstractSubject implements PoolInterface
                         try {
                             $request->setState(RequestInterface::STATE_COMPLETE);
                         } catch (RequestException $e) {
-                            $this->getSubjectMediator()->notify('exception', $e);
+                            $this->getEventManager()->notify('exception', $e);
                             $exceptions[] = $e;
                         }
                         curl_multi_remove_handle($this->multiHandle, $done['handle']);
@@ -204,7 +204,7 @@ class Pool extends AbstractSubject implements PoolInterface
                 }
             }
 
-            $this->getSubjectMediator()->notify(self::POLLING, null);
+            $this->getEventManager()->notify(self::POLLING);
 
             // @codeCoverageIgnoreStart
             if ($isRunning) {
@@ -218,7 +218,7 @@ class Pool extends AbstractSubject implements PoolInterface
         } while ($isRunning || !$finished);
 
         $this->state = self::STATE_COMPLETE;
-        $this->getSubjectMediator()->notify(self::COMPLETE, $this->attached, true);
+        $this->getEventManager()->notify(self::COMPLETE, $this->attached);
 
         // Throw any Request exceptions encountered during the transfer
         if (count($exceptions)) {

@@ -7,9 +7,8 @@
 namespace Guzzle\Http\Plugin;
 
 use Guzzle\Common;
-use Guzzle\Common\Filter\FilterInterface;
-use Guzzle\Common\Subject\SubjectMediator;
-use Guzzle\Common\Subject\Observer;
+use Guzzle\Common\Event\Subject;
+use Guzzle\Common\Event\Observer;
 use Guzzle\Http\Message\RequestInterface;
 
 /**
@@ -17,8 +16,13 @@ use Guzzle\Http\Message\RequestInterface;
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
-abstract class AbstractPlugin implements Observer, FilterInterface
+abstract class AbstractPlugin implements Observer
 {
+    /**
+     * @var int Priority to attach to this plugin.  Override in subclasses.
+     */
+    protected $priority = 0;
+
     /**
      * Check if the plugin is attached to a request
      *
@@ -28,7 +32,7 @@ abstract class AbstractPlugin implements Observer, FilterInterface
      */
     public function isAttached(RequestInterface $request)
     {
-        return $request->getSubjectMediator()->hasObserver($this) && $request->getPrepareChain()->hasFilter($this) && $request->getProcessChain()->hasFilter($this);
+        return $request->getEventManager()->hasObserver($this);
     }
 
     /**
@@ -52,9 +56,7 @@ abstract class AbstractPlugin implements Observer, FilterInterface
         }
         // @codeCoverageIgnoreEnd
 
-        $request->getSubjectMediator()->attach($this);
-        $request->getPrepareChain()->addFilter($this);
-        $request->getProcessChain()->addFilter($this);
+        $request->getEventManager()->attach($this, $this->priority);
 
         return true;
     }
@@ -70,28 +72,18 @@ abstract class AbstractPlugin implements Observer, FilterInterface
             return false;
         }
 
-        $request->getSubjectMediator()->detach($this);
-        $request->getPrepareChain()->removeFilter($this);
-        $request->getProcessChain()->removeFilter($this);
+        $request->getEventManager()->detach($this);
 
         return true;
     }
 
     /**
-     * Observer update method
-     *
-     * @param SubjectMediator $subject Subject of the notification
+     * {@inheritdoc}
      * @codeCoverageIgnoreStart
      */
-    public function update(SubjectMediator $subject) {}
-
-    /**
-     * Intercepting filter process method
-     *
-     * @param RequestInterface $context
-     * @codeCoverageIgnoreStart
-     */
-    public function process($context) {}
+    public function update(Subject $subject, $event, $context = null)
+    {
+    }
 
     /**
      * Hook to run when the plugin is attached to a request
@@ -101,5 +93,7 @@ abstract class AbstractPlugin implements Observer, FilterInterface
      * @return null|bool Returns TRUE or FALSE if it can attach or NULL if indifferent
      * @codeCoverageIgnoreStart
      */
-    protected function handleAttach(RequestInterface $request) {}
+    protected function handleAttach(RequestInterface $request)
+    {
+    }
 }

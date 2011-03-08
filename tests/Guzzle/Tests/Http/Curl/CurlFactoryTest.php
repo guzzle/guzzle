@@ -405,18 +405,18 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $o = new MockObserver();
         $request = RequestFactory::getInstance()->newRequest('PUT', $this->getServer()->getUrl());
         $request->setBody(EntityBody::factory('test'));
-        $request->getSubjectMediator()->attach($o);
+        $request->getEventManager()->attach($o);
         $h1 = $request->getCurlHandle();
         $request->send();
 
         // Make sure that the events were dispatched
-        $this->assertArrayHasKey('curl.callback.read', $o->logByState);
-        $this->assertArrayHasKey('curl.callback.write', $o->logByState);
-        $this->assertArrayHasKey('curl.callback.progress', $o->logByState);
+        $this->assertArrayHasKey('curl.callback.read', $o->logByEvent);
+        $this->assertArrayHasKey('curl.callback.write', $o->logByEvent);
+        $this->assertArrayHasKey('curl.callback.progress', $o->logByEvent);
 
         // Make sure that the data was sent through the event
-        $this->assertEquals('test', $o->logByState['curl.callback.read']);
-        $this->assertEquals('hi', $o->logByState['curl.callback.write']);
+        $this->assertEquals('test', $o->logByEvent['curl.callback.read']);
+        $this->assertEquals('hi', $o->logByEvent['curl.callback.write']);
 
         // Ensure that the request was received exactly as intended
         $r = $this->getServer()->getReceivedRequests(true);

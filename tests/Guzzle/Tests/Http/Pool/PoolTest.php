@@ -7,8 +7,8 @@
 namespace Guzzle\Tests\Http\Pool;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Subject\SubjectMediator;
-use Guzzle\Common\Subject\Observer;
+use Guzzle\Common\Event\Subject;
+use Guzzle\Common\Event\Observer;
 use Guzzle\Http\Server;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\Request;
@@ -37,7 +37,7 @@ class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
     {
         parent::setUp();
         $this->pool = new MockPool();
-        $this->pool->getSubjectMediator()->attach($this);
+        $this->pool->getEventManager()->attach($this);
         $this->updates = new Collection();
     }
 
@@ -97,8 +97,8 @@ class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
         $this->assertTrue($this->updates->hasKey(Pool::ADD_REQUEST));
         $this->assertTrue($this->updates->hasKey(Pool::POLLING));
         $this->assertTrue($this->updates->hasKey(Pool::COMPLETE));
-        $this->assertEquals(array('idle', $request), $this->updates->get(Pool::ADD_REQUEST));
-        $this->assertEquals(array('sending', null), $this->updates->get(Pool::POLLING));
+        $this->assertEquals(array('add_request', $request), $this->updates->get(Pool::ADD_REQUEST));
+        $this->assertEquals(array('polling', null), $this->updates->get(Pool::POLLING));
         $this->assertEquals(array('complete', array($request)), $this->updates->get(Pool::COMPLETE));
         $this->assertEquals('complete', $this->pool->getState());
         $this->assertEquals('Body', $request->getResponse()->getBody()->__toString());
@@ -131,9 +131,7 @@ class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
         $this->assertEquals('idle', $this->pool->getState());
         
         // Make sure the notification came through
-        $this->assertEquals(array(
-            'idle', null
-        ), $this->updates->get('reset'));
+        $this->assertEquals(array('reset', null), $this->updates->get('reset'));
     }
 
     /**
@@ -239,11 +237,10 @@ class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
      * Listens for updates to the pool object and logs them in a
      * Guzzle\Common\Collection object.
      *
-     * @param SubjectMediator $subject The subject sending the update
+     * {@inheritdoc}
      */
-    public function update(SubjectMediator $subject)
+    public function update(Subject $subject, $event, $context = null)
     {
-        $colleague = $subject->getSubject();
-        $this->updates->add($subject->getState(), array($colleague->getState(), $subject->getContext()));
+        $this->updates->add($event, array($event, $context));
     }
 }
