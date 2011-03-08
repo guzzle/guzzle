@@ -27,6 +27,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
 
     public static $serviceBuilder;
     public static $server;
+    public $mockObserver;
 
     /**
      * Get the global server object used throughout the unit tests of Guzzle
@@ -159,23 +160,24 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
     {
         $this->requests = array();
         $responses = array();
-        foreach ((array)$filenames as $filename) {
+        foreach ((array) $filenames as $filename) {
             $responses[] = $this->getMockResponse($client, $filename);
         }
 
         // Add a filter to the client to set a mock response on the next request
         $that = $this;
-        $client->getCreateRequestChain()->addFilter(new MockFilter(array(
-            'callback' => function($filter, $command) use (&$responses, $client, $that) {
-                $that->addMockedRequest($command);
+
+        $that->mockObserver = $client->getEventManager()->attach(function($subject, $event, $context) use (&$responses, $client, $that) {
+            if ($event == 'request.create') {
+                $that->addMockedRequest($context);
                 // Set the mock response
-                $command->setResponse(array_shift($responses), true);
+                $context->setResponse(array_shift($responses), true);
                 // Detach the filter from the client so it's a one-time use
                 if (count($responses) == 0) {
-                    $client->getCreateRequestChain()->removeFilter($filter);
+                    $subject->getEventManager()->detach($that->mockObserver);
                 }
             }
-        )));
+        }, 9999);
     }
 
     /**

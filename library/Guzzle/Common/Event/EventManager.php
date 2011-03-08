@@ -48,14 +48,21 @@ class EventManager
     /**
      * Attach a new observer.
      *
-     * @param Observer $observer Object that observes the subject.
+     * @param Observer|Closure $observer Object that observes the subject.
      * @param int $priority (optional) Priority to attach to the subject.  The
      *      higher the priority, the sooner it will be notified
      *
-     * @return Observer Returns the $observer that was attached.
+     * @return Observer|Closure Returns the $observer that was attached
+     * @throws InvalidArgumentException if the observer is not a Closure or Observer
      */
-    public function attach(Observer $observer, $priority = 0)
+    public function attach($observer, $priority = 0)
     {
+        if (!($observer instanceof \Closure) && !($observer instanceof Observer)) {
+            throw new \InvalidArgumentException(
+                'Observer must be a Closure or Observer object'
+            );
+        }
+
         if (!$this->hasObserver($observer)) {
 
             $hash = spl_object_hash($observer);
@@ -92,11 +99,11 @@ class EventManager
     /**
      * Detach an observer.
      *
-     * @param Observer $observer Observer to detach.
+     * @param Observer|Closure $observer Observer to detach.
      *
      * @return Observer Returns the $observer that was detached.
      */
-    public function detach(Observer $observer)
+    public function detach($observer)
     {
         if ($this->observers === array($observer)) {
             $this->observers = array();
@@ -142,7 +149,11 @@ class EventManager
 
         foreach ($this->observers as $observer) {
             if ($observer) {
-                $result = $observer->update($this->subject, $event, $context);
+                if ($observer instanceof Observer) {
+                    $result = $observer->update($this->subject, $event, $context);
+                } else {
+                    $result = $observer($this->subject, $event, $context);
+                }
                 if ($result) {
                     $responses[] = $result;
                     if ($until == true) {
@@ -192,8 +203,8 @@ class EventManager
     /**
      * Check if a certain observer or type of observer is attached
      *
-     * @param string|Observer $observer Observer to check for.  Pass the
-     *      name of an observer or a concrete {@see Observer}
+     * @param string|Observer|Closure $observer Observer to check for.  Pass the
+     *      name of an observer, a concrete {@see Observer}, or Closure
      *
      * @return bool
      */

@@ -117,11 +117,11 @@ class CommandSetTest extends AbstractCommandTest
         ), '<xml><data>123</data></xml>');
 
         // Set a mock response for each request from the Client
-        $client->getCreateRequestChain()->addFilter(new \Guzzle\Tests\Common\Mock\MockFilter(array(
-            'callback' => function($filter, $command) use ($response) {
-                $command->setResponse($response);
+        $client->getEventManager()->attach(function($subject, $event, $context) use ($response) {
+            if ($event == 'request.create') {
+                $context->setResponse($response);
             }
-        )));
+        });
 
         $command1 = new MockCommand();
         $command1->setClient($client);

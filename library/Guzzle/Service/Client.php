@@ -72,11 +72,6 @@ class Client extends AbstractSubject
     protected $plugins = array();
 
     /**
-     * @var Chain Chain of intercepting filters that are used to create a request object
-     */
-    protected $createRequestChain;
-
-    /**
      * @var string Your application's name and version (e.g. MyApp/1.0)
      */
     protected $userApplication = null;
@@ -122,9 +117,6 @@ class Client extends AbstractSubject
         // Set the default request factory
         $this->setRequestFactory(RequestFactory::getInstance());
 
-        // Create the chain used to modify the request as it's created
-        $this->createRequestChain = new Chain();
-
         $this->init();
     }
 
@@ -155,16 +147,6 @@ class Client extends AbstractSubject
     public function getConfig($key = false)
     {
         return (!$key) ? $this->config->getAll() : $this->config->get($key);
-    }
-
-    /**
-     * Get the filter chain used to augment requests as they are created
-     *
-     * @return Chain
-     */
-    public function getCreateRequestChain()
-    {
-        return $this->createRequestChain;
     }
 
     /**
@@ -205,7 +187,6 @@ class Client extends AbstractSubject
             $plugin->attach($request);
         }
 
-        $this->createRequestChain->process($request);
         $this->getEventManager()->notify('request.create', $request);
 
         return $request;

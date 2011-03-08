@@ -23,7 +23,7 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
      * @covers Guzzle\Common\Event\EventManager::__construct
      * @covers Guzzle\Common\Event\EventManager::getSubject
      */
-    public function testAttach()
+    public function testAttachesObservers()
     {
         $observer = new MockObserver();
         $mock = new MockSubject();
@@ -34,12 +34,20 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
         // A single observer can only be attached once
         $subject->attach($observer);
         $this->assertEquals(array($observer), $subject->getAttached());
+
+        // Ensure that closures can be attached alongside other Observers
+        $closure = $subject->attach(function($subject, $event, $context) {
+            return true;
+        }, -10);
+
+        $this->assertType('Closure', $closure);
+        $this->assertEquals(array($observer, $closure), $subject->getAttached());
     }
 
     /**
      * @covers Guzzle\Common\Event\EventManager::getAttached
      */
-    public function testGetAttachedByName()
+    public function testRetrievesAttachedObserversByName()
     {
         $observer = new MockObserver();
         $subject = new EventManager(new MockSubject());
@@ -51,9 +59,8 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
     /**
      * @covers Guzzle\Common\Event\EventManager::detach
      * @covers Guzzle\Common\Event\EventManager::getAttached
-     * @depends testAttach
      */
-    public function testDetach()
+    public function testDetachesObservers()
     {
         $observer = new MockObserver();
         $subject = new EventManager(new MockSubject());
@@ -72,9 +79,8 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
 
     /**
      * @covers Guzzle\Common\Event\EventManager::detachAll
-     * @depends testAttach
      */
-    public function testDetachAll()
+    public function testDetachesAllObservers()
     {
         $observer = new MockObserver();
         $subject = new EventManager(new MockSubject());
@@ -87,7 +93,6 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
 
     /**
      * @covers Guzzle\Common\Event\EventManager::hasObserver
-     * @depends testAttach
      */
     public function testHasObserver()
     {
@@ -104,7 +109,7 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
      * @covers Guzzle\Common\Event\EventManager::notify
      * @covers Guzzle\Common\Event\EventManager::attach
      */
-    public function testNotify()
+    public function testNotifiesObservers()
     {
         $priorities = array(10, 0, 999, 0, -10);
 
@@ -154,7 +159,7 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
     /**
      * @covers Guzzle\Common\Event\EventManager::notify
      */
-    public function testNotifyUntil()
+    public function testNotifiesObserversUntil()
     {
         $sub = new MockSubject();
         $subject = new EventManager($sub);
@@ -170,6 +175,40 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
         $subject->attach($observer4);
 
         $this->assertEquals(array(true), $subject->notify('test', null, true));
+    }
+
+    /**
+     * @covers Guzzle\Common\Event\EventManager
+     */
+    public function testCanAttachClosures()
+    {
+        $mock = new MockSubject();
+        $subject = new EventManager($mock);
+
+        try {
+            $apples = 'oranges';
+            $subject->attach($apples);
+            $this->fail('Expected exception when adding oberser that was not a Closure or Observer');
+        } catch (\InvalidArgumentException $e) {
+        }
+
+        $out = '';
+
+        $closureA = $subject->attach(function($subject, $event, $context) use (&$out) {
+            $out .= 'A: ' . $context;
+            return true;
+        }, 0);
+
+        $closureB = $subject->attach(function($subject, $event, $context) use (&$out) {
+            $out .= 'B: ' . $event;
+            return true;
+        }, 1);
+
+        $this->assertEquals(array($closureB, $closureA), $subject->getAttached());
+
+        $subject->notify('test', 'context');
+
+        $this->assertEquals('B: testA: context', $out);
     }
     
     /**
