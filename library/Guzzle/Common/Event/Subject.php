@@ -14,14 +14,6 @@ namespace Guzzle\Common\Event;
 interface Subject
 {
     /**
-     * STATE_UNCHANGED is used when dispatching events so that the state
-     * will remain unchanged from the previous state.
-     *
-     * @var string
-     */
-    const STATE_UNCHANGED = 'unchaged';
-
-    /**
      * Get the subject mediator associated with the subject
      *
      * @return EventManager

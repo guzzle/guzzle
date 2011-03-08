@@ -127,11 +127,10 @@ class EventManager
     }
 
     /**
-     * Set the state and stateContext of the subject and notify all observers
-     * of the state change.
+     * Notify all observers of an event
      *
      * @param string $event (optional) Event signal to emit
-     * @param mixed $context (optional) Context about the event
+     * @param mixed $context (optional) Context of the event
      * @param bool $until (optional) Set to TRUE to stop event propagation when
      *      one of the observers returns TRUE
      *
@@ -165,7 +164,7 @@ class EventManager
      * @return array Returns an array containing the matching observers.  The
      *      returned array may or may not be empty.
      */
-    public function getAttached($byName = '')
+    public function getAttached($byName = null)
     {
         if (!$byName) {
             return $this->observers;
