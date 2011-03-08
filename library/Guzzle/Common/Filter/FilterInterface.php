@@ -9,7 +9,7 @@ namespace Guzzle\Common\Filter;
 /**
  * An intercepting filter interface
  * 
- * @author Michael Dowling <michael@guzzle-project.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  */
 interface FilterInterface
 {

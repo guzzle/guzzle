@@ -15,7 +15,7 @@ namespace Guzzle\Common\CacheAdapter;
  * The CacheAdapter interface was inspired by the Doctrine 2 ORM:
  * @link http://www.doctrine-project.org/
  *
- * @author Michael Dowling <michael@guzzle-project.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  */
 interface CacheAdapterInterface
 {

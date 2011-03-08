@@ -11,7 +11,7 @@ use Guzzle\Common\GuzzleException;
 /**
  * Guzzle log exception
  *
- * @author Michael Dowling <michael@guzzle-project.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  */
 class LogException extends \Exception implements GuzzleException
 {

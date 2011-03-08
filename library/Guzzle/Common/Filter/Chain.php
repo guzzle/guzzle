@@ -17,7 +17,7 @@ use Guzzle\Common\Filter\FilterInterface;
  * run by the chain.  Filters are self-contained components without any direct
  * dependency on other filters.
  *
- * @author Michael Dowling <michael@guzzle-project.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  */
 class Chain implements Countable
 {

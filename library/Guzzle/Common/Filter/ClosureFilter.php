@@ -10,7 +10,7 @@ namespace Guzzle\Common\Filter;
  * An implementation of an intercepting filter using a closure as the processing
  * method.
  *
- * @author Michael Dowling <michael@guzzle-project.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  */
 class ClosureFilter extends AbstractFilter
 {

@@ -11,7 +11,7 @@ use Guzzle\Common\Log\LogException;
 /**
  * Description of LogAdapterException
  *
- * @author Michael Dowling <michael@guzzle-project.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  */
 class LogAdapterException extends LogException
 {

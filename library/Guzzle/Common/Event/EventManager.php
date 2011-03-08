@@ -10,7 +10,7 @@ namespace Guzzle\Common\Event;
  * Subject mediator event manager that connects {@see Subject}s and their
  * {@see Observer}s for loose coupling.
  *
- * @author Michael Dowling <michael@guzzle-project.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  */
 class EventManager
 {

@@ -9,7 +9,7 @@ namespace Guzzle\Common\Log\Adapter;
 /**
  * Adapts the Zend_Log class to the Guzzle framework
  *
- * @author Michael Dowling <michael@guzzle-project.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  */
 class ZendLogAdapter extends AbstractLogAdapter
 {

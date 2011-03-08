@@ -15,7 +15,7 @@ use Guzzle\Common\Log\LogException;
  * implementations so that you may use the log classes of your favorite
  * framework.
  * 
- * @author Michael Dowling <michael@guzzle-project.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  */
 abstract class AbstractLogAdapter implements LogAdapterInterface
 {

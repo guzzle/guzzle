@@ -9,7 +9,7 @@ namespace Guzzle\Common\Event;
 /**
  * Guzzle Observer class
  *
- * @author Michael Dowling <michael@guzzle-project.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  */
 interface Observer
 {

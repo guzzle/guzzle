@@ -11,7 +11,7 @@ use Guzzle\Common\Log\Adapter\LogAdapterInterface;
 /**
  * Logs data to multiple {@see LogAdapterInterface} objects.
  *
- * @author Michael Dowling <michael@guzzle-project.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  */
 class Logger
 {

@@ -11,7 +11,7 @@ use Guzzle\Common\GuzzleException;
 /**
  * Cache adapter exception
  * 
- * @author Michael Dowling <michael@guzzle-project.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  */
 class CacheAdapterException extends \Exception implements GuzzleException
 {

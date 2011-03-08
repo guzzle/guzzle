@@ -9,7 +9,7 @@ namespace Guzzle\Common\Event;
 /**
  * Abstract subject class
  *
- * @author Michael Dowling <michael@guzzle-project.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  */
 abstract class AbstractSubject implements Subject
 {

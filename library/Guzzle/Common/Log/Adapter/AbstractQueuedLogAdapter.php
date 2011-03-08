@@ -16,7 +16,7 @@ use Guzzle\Service\Aws\SimpleDb\Command\BatchPutAttributes;
  * the $_maxQueueSize.  Pass a configuration parameter of
  * 'implicit_flush' => TRUE to disable batching.
  *
- * @author Michael Dowling <michael@guzzle-project.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  * @codeCoverageIgnore
  */
 abstract class AbstractQueuedLogAdapter extends AbstractLogAdapter

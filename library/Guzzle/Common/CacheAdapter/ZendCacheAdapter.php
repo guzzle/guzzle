@@ -10,7 +10,7 @@ namespace Guzzle\Common\CacheAdapter;
  * Zend Framework cache adapter
  *
  * @link    http://www.doctrine-project.org/
- * @author Michael Dowling <michael@guzzle-project.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  */
 class ZendCacheAdapter extends AbstractCacheAdapter
 {

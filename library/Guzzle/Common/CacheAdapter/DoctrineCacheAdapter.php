@@ -10,7 +10,7 @@ namespace Guzzle\Common\CacheAdapter;
  * Doctrine 2 cache adapter
  *
  * @link    http://www.doctrine-project.org/ 
- * @author Michael Dowling <michael@guzzle-project.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  */
 class DoctrineCacheAdapter extends AbstractCacheAdapter
 {
