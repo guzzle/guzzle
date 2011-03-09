@@ -6,7 +6,7 @@
 
 namespace Guzzle\Service\Builder;
 
-use Guzzle\Common\CacheAdapter\CacheAdapterInterface;
+use Guzzle\Common\Cache\CacheAdapterInterface;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Service\ServiceException;
 

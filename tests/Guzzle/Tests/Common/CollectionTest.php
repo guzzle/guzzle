@@ -406,4 +406,18 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
             'a' => '123'
         ), $this->coll->getAll());
     }
+
+    /**
+     * @covers Guzzle\Common\Collection::isRegex
+     */
+    public function testChecksIfRegex()
+    {
+        $this->assertTrue($this->coll->isRegex('/aaa/'));
+        $this->assertTrue($this->coll->isRegex('/aaa/i'));
+        $this->assertTrue($this->coll->isRegex('/a[0-9a-z]+\.*/i'));
+
+        $this->assertFalse($this->coll->isRegex('test'));
+        $this->assertFalse($this->coll->isRegex('/a[0-9a-z]+\.*'));
+        $this->assertFalse($this->coll->isRegex('a[0-9a-z]+\.*/i'));
+    }
 }

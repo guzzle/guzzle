@@ -6,7 +6,6 @@
 
 namespace Guzzle\Service\Command;
 
-use Guzzle\Common\Filter\Chain;
 use Guzzle\Common\Inspector;
 use Guzzle\Common\Collection;
 use Guzzle\Common\NullObject;

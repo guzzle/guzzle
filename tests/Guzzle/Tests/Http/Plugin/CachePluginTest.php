@@ -8,7 +8,7 @@ namespace Guzzle\Tests\Http\Plugin;
 
 use Doctrine\Common\Cache\ArrayCache;
 use Guzzle\Guzzle;
-use Guzzle\Common\CacheAdapter\DoctrineCacheAdapter;
+use Guzzle\Common\Cache\DoctrineCacheAdapter;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactory;

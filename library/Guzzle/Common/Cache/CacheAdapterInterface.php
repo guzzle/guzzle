@@ -4,7 +4,7 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Common\CacheAdapter;
+namespace Guzzle\Common\Cache;
 
 /**
  * Interface for cache adapters.
@@ -19,17 +19,6 @@ namespace Guzzle\Common\CacheAdapter;
  */
 interface CacheAdapterInterface
 {
-    /**
-     * Create a new cache adapter
-     *
-     * @param object $cacheObject (optional) Concrete cache implementation that
-     *      will be wrapped by the adapter.
-     *
-     * @throws CacheAdapterException if the supplied
-     *      object does not implement the correct interface.
-     */
-    public function __construct($cacheObject);
-
     /**
      * Test if an entry exists in the cache.
      *

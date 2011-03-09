@@ -4,10 +4,9 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Tests\Common\CacheAdapter;
+namespace Guzzle\Tests\Common\Cache;
 
-use Guzzle\Common\CacheAdapter;
-use Guzzle\Common\CacheAdapter\DoctrineCacheAdapter;
+use Guzzle\Common\Cache\DoctrineCacheAdapter;
 use Doctrine\Common\Cache\ArrayCache;
 
 /**
@@ -48,40 +47,7 @@ class CacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Common\CacheAdapter\AbstractCacheAdapter::__construct
-     * @covers Guzzle\Common\CacheAdapter\AbstractCacheAdapter
-     * @covers Guzzle\Common\CacheAdapter\CacheAdapterInterface
-     * @covers Guzzle\Common\CacheAdapter\DoctrineCacheAdapter::__construct
-     * @covers Guzzle\Common\CacheAdapter\DoctrineCacheAdapter
-     * @covers Guzzle\Common\CacheAdapter\CacheAdapterException
-     * @expectedException Guzzle\Common\CacheAdapter\CacheAdapterException
-     */
-    public function test__construct()
-    {
-        $adapter = new DoctrineCacheAdapter(new \stdClass());        
-    }
-
-    /**
-     * @covers \Guzzle\Common\CacheAdapter\AbstractCacheAdapter::__call
-     * @covers \Guzzle\Common\CacheAdapter\DoctrineCacheAdapter::__call
-     * @expectedException \BadMethodCallException
-     */
-    public function test__callException()
-    {
-        $this->adapter->testContains();
-    }
-
-    /**
-     * @covers \Guzzle\Common\CacheAdapter\AbstractCacheAdapter::__call
-     */
-    public function test__call()
-    {
-        $this->assertEquals(array(), $this->adapter->getIds());
-    }
-
-    /**
-     * @covers \Guzzle\Common\CacheAdapter\AbstractCacheAdapter::__call
-     * @covers \Guzzle\Common\CacheAdapter\DoctrineCacheAdapter::getCacheObject
+     * @covers \Guzzle\Common\Cache\AbstractCacheAdapter::getCacheObject
      */
     public function testGetCacheObject()
     {
@@ -89,7 +55,7 @@ class CacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers \Guzzle\Common\CacheAdapter\DoctrineCacheAdapter::save
+     * @covers \Guzzle\Common\Cache\DoctrineCacheAdapter::save
      */
     public function testSave()
     {
@@ -97,7 +63,7 @@ class CacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers \Guzzle\Common\CacheAdapter\DoctrineCacheAdapter::fetch
+     * @covers \Guzzle\Common\Cache\DoctrineCacheAdapter::fetch
      */
     public function testFetch()
     {
@@ -106,7 +72,7 @@ class CacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers \Guzzle\Common\CacheAdapter\DoctrineCacheAdapter::contains
+     * @covers \Guzzle\Common\Cache\DoctrineCacheAdapter::contains
      */
     public function testContains()
     {
@@ -115,7 +81,7 @@ class CacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers \Guzzle\Common\CacheAdapter\DoctrineCacheAdapter::delete
+     * @covers \Guzzle\Common\Cache\DoctrineCacheAdapter::delete
      */
     public function testDelete()
     {

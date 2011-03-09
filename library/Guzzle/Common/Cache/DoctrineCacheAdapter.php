@@ -4,17 +4,27 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Common\CacheAdapter;
+namespace Guzzle\Common\Cache;
+
+use Doctrine\Common\Cache\Cache;
 
 /**
- * Zend Framework cache adapter
+ * Doctrine 2 cache adapter
  *
- * @link    http://www.doctrine-project.org/
+ * @link    http://www.doctrine-project.org/ 
  * @author Michael Dowling <michael@guzzlephp.org>
  */
-class ZendCacheAdapter extends AbstractCacheAdapter
+class DoctrineCacheAdapter extends AbstractCacheAdapter
 {
-    protected $className = 'Zend_Cache_Backend';
+    /**
+     * Constructor
+     *
+     * @param Cache $cacheObject Object to wrap and adapt
+     */
+    public function __construct(Cache $cache)
+    {
+        $this->cache = $cache;
+    }
 
     /**
      * Test if an entry exists in the cache.
@@ -26,7 +36,7 @@ class ZendCacheAdapter extends AbstractCacheAdapter
      */
     public function contains($id)
     {
-        return $this->cache->test($id);
+        return $this->cache->contains($id);
     }
 
     /**
@@ -38,7 +48,7 @@ class ZendCacheAdapter extends AbstractCacheAdapter
      */
     public function delete($id)
     {
-        return $this->cache->remove($id);
+        return $this->cache->delete($id);
     }
 
     /**
@@ -51,7 +61,7 @@ class ZendCacheAdapter extends AbstractCacheAdapter
      */
     public function fetch($id)
     {
-        return $this->cache->load($id);
+        return $this->cache->fetch($id);
     }
 
     /**
@@ -62,11 +72,10 @@ class ZendCacheAdapter extends AbstractCacheAdapter
      * @param int $lifeTime The lifetime. If != false, sets a specific lifetime
      *      for this cache entry (null => infinite lifeTime).
      *
-     * @return bool TRUE if the entry was successfully stored in the cache,
-     *      FALSE otherwise.
+     * @return bool TRUE on success, FALSE on failure
      */
     public function save($id, $data, $lifeTime = false)
     {
-        return $this->cache->save($data, $id, array(), $lifeTime);
+        return $this->cache->save($id, $data, $lifeTime);
     }
 }

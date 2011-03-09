@@ -417,7 +417,7 @@ class Collection implements ArrayAccess, IteratorAggregate, Countable
      *
      * @return bool
      */
-    protected function isRegex($expression)
+    public function isRegex($expression)
     {
         return ($expression[0] == '/' && strrpos($expression, '/') > 0);
     }

@@ -11,7 +11,7 @@ namespace Guzzle\Common;
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
-class NullObject extends \ArrayIterator
+class NullObject implements \Iterator, \Countable, \ArrayAccess
 {
     public function __call($method, $params)
     {
@@ -37,16 +37,54 @@ class NullObject extends \ArrayIterator
     {
         return null;
     }
-
-    /**
-     * Get an array value.  Allows access of missing array keys
-     *
-     * @param mixed $key Key to retrieve
-     *
-     * @return mixed|null Returns NULL if the key does not exist
-     */
-    public function offsetGet($key)
+    
+    public function offsetExists($offset)
     {
-        return (!$this->offsetExists($key)) ? null : parent::offsetGet($key);
+        return false;
+    }
+
+    public function offsetUnset($offset)
+    {
+        return null;
+    }
+
+    public function offsetSet($offset, $value)
+    {
+        return null;
+    }
+
+    public function offsetGet($offset)
+    {
+        return null;
+    }
+
+    public function count()
+    {
+        return null;
+    }
+
+    public function current()
+    {
+        return null;
+    }
+
+    public function key()
+    {
+        return null;
+    }
+
+    public function next()
+    {
+        return null;
+    }
+
+    public function rewind()
+    {
+        return null;
+    }
+
+    public function valid()
+    {
+        return null;
     }
 }

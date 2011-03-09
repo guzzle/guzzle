@@ -8,8 +8,7 @@ namespace Guzzle\Tests\Service;
 
 use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
-use Guzzle\Common\Log\Logger;
-use Guzzle\Common\Log\Adapter\ClosureLogAdapter;
+use Guzzle\Common\Log\ClosureLogAdapter;
 use Guzzle\Http\Plugin\LogPlugin;
 use Guzzle\Service\ApiCommand;
 use Guzzle\Service\Client;
@@ -74,11 +73,11 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     private function getLogPlugin()
     {
-        return new LogPlugin(new Logger(array(new ClosureLogAdapter(
-            function($message, $priority, $category, $host) {
-                echo $message . ' ' . $priority . ' ' . $category . ' ' . $host . "\n";
+        return new LogPlugin(new ClosureLogAdapter(
+            function($message, $priority, $extras = null) {
+                echo $message . ' ' . $priority . ' ' . $extras . "\n";
             }
-        ))));
+        ));
     }
 
     /**
@@ -187,7 +186,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         ob_start();
         $request->send();
         $logged = ob_get_clean();
-        $this->assertEquals('www.google.com - "GET / HTTP/1.1" - 200 0 - 7 guzzle_request ' . gethostname() . "\n", $logged);
+        $this->assertEquals('www.google.com - "GET / HTTP/1.1" - 200 0 - 7 guzzle_request' . "\n", $logged);
     }
 
     /**

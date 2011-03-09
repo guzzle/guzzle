@@ -133,7 +133,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFields
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::getPostFields
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::getPostFiles
-     * @covers Guzzle\Http\Message\EntityEnclosingRequest::addChain
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::addEvent
      */
     public function testSetPostFields()
     {

@@ -7,7 +7,6 @@
 namespace Guzzle\Service\Command;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Filter\Chain;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\Client;

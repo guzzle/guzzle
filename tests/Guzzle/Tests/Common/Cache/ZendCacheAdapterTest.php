@@ -4,10 +4,9 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Tests\Common\CacheAdapter;
+namespace Guzzle\Tests\Common\Cache;
 
-use Guzzle\Common\CacheAdapter;
-use Guzzle\Common\CacheAdapter\ZendCacheAdapter;
+use Guzzle\Common\Cache\ZendCacheAdapter;
 
 /**
  * CacheAdapter test case
@@ -47,7 +46,7 @@ class ZendCacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Common\CacheAdapter\ZendCacheAdapter
+     * @covers Guzzle\Common\Cache\ZendCacheAdapter
      */
     public function testAll()
     {

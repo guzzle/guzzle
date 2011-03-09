@@ -7,7 +7,6 @@
 namespace Guzzle\Tests;
 
 use Guzzle\Common\Log\Adapter\ZendLogAdapter;
-use Guzzle\Common\Log\Logger;
 use Guzzle\Http\Server;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
@@ -190,8 +189,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
     public function enableClientDebug(Client $client)
     {
         $adapter = new ZendLogAdapter(new \Zend_Log(new \Zend_Log_Writer_Stream('php://output')));
-        $logger = new Logger(array($adapter));
-        $plugin = new LogPlugin($logger, true, 2);
+        $plugin = new LogPlugin($adapter, true, 2);
         $client->attachPlugin($plugin);
     }
 

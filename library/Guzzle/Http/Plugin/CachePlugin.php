@@ -7,7 +7,7 @@
 namespace Guzzle\Http\Plugin;
 
 use Guzzle\Guzzle;
-use Guzzle\Common\CacheAdapter\CacheAdapterInterface;
+use Guzzle\Common\Cache\CacheAdapterInterface;
 use Guzzle\Common\Event\Observer;
 use Guzzle\Common\Event\Subject;
 use Guzzle\Http\Message\RequestInterface;

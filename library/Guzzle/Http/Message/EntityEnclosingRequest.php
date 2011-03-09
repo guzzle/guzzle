@@ -7,7 +7,6 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Filter\Chain;
 use Guzzle\Common\Event\Subject;
 use Guzzle\Common\Event\Observer;
 use Guzzle\Http\EntityBody;
@@ -63,7 +62,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     public function setBody($body)
     {
         $this->body = EntityBody::factory($body);
-        $this->addChain();
+        $this->addEvent();
 
         return $this;
     }
@@ -147,7 +146,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         if (!$this->postFields) {
             $this->postFields = new QueryString();
             $this->postFields->setPrefix('');
-            $this->addChain();
+            $this->addEvent();
         }
 
         return $this->postFields;
@@ -234,7 +233,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     /**
      * Attach the POST request to the parent pre-processing chain
      */
-    private function addChain()
+    private function addEvent()
     {
         $sm = $this->getEventManager();
         if (!$sm->hasObserver($this)) {

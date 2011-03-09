@@ -4,12 +4,11 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Tests\Common\Log\Adapter;
+namespace Guzzle\Tests\Common\Log;
 
-use Guzzle\Common\Log\Adapter\LogAdapterInterface;
-use Guzzle\Common\Log\Adapter\ZendLogAdapter;
+use Guzzle\Common\Log\LogAdapterInterface;
+use Guzzle\Common\Log\ZendLogAdapter;
 use Guzzle\Common\Collection;
-use Guzzle\Common\Filter\Chain;
 
 /**
  * Test class for ZendLogAdapter
@@ -52,29 +51,25 @@ class ZendLogAdapterTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Common\Log\Adapter\AbstractLogAdapter::__construct
-     * @expectedException Guzzle\Common\Log\Adapter\LogAdapterException
+     * @covers Guzzle\Common\Log\AbstractLogAdapter::__construct
+     * @expectedException InvalidArgumentException
      */
     public function testConstruct()
     {
         $this->zfSkip();
         
-        $chain = new Chain();
-
         // A successful construction
-        $this->adapter = new ZendLogAdapter($this->log, new Collection(), $chain);
-        $this->assertEquals($chain, $this->adapter->getFilterChain());
-
+        $this->adapter = new ZendLogAdapter($this->log, new Collection());
+        
         // Throws an exception
         $this->adapter = new ZendLogAdapter(new \stdClass());
     }
 
     /**
-     * @covers Guzzle\Common\Log\Adapter\AbstractLogAdapter::log
-     * @covers Guzzle\Common\Log\Adapter\ZendLogAdapter::logMessage
+     * @covers Guzzle\Common\Log\ZendLogAdapter::log
      * @outputBuffering enabled
      */
-    public function testLog()
+    public function testLogsMessagesToAdaptedObject()
     {
         $this->zfSkip();
         
@@ -88,34 +83,12 @@ class ZendLogAdapterTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Common\Log\Adapter\AbstractLogAdapter::getLogObject
+     * @covers Guzzle\Common\Log\AbstractLogAdapter::getLogObject
      */
-    public function testGetLogObject()
+    public function testExposesAdaptedLogObject()
     {
         $this->zfSkip();
         
         $this->assertEquals($this->log, $this->adapter->getLogObject());
-    }
-
-    /**
-     * @covers Guzzle\Common\Log\Adapter\AbstractLogAdapter::__call
-     * @expectedException Zend_Log_Exception
-     */
-    public function testAdapterMustProxyToWrappedObject()
-    {
-        $this->zfSkip();
-        
-        $this->adapter->addPriority('EMERG', 0);
-    }
-
-    /**
-     * @covers Guzzle\Common\Log\Adapter\AbstractLogAdapter::__call
-     * @expectedException BadMethodCallException
-     */
-    public function testAdapterThrowExceptionsWhenProxyingToMissingMethods()
-    {
-        $this->zfSkip();
-        
-        $this->adapter->foo();
     }
 }

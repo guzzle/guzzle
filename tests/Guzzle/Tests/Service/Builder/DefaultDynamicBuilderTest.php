@@ -7,7 +7,7 @@
 namespace Guzzle\Tests\Service\Builder;
 
 use Doctrine\Common\Cache\ArrayCache;
-use Guzzle\Common\CacheAdapter\DoctrineCacheAdapter;
+use Guzzle\Common\Cache\DoctrineCacheAdapter;
 use Guzzle\Service\Builder\DefaultDynamicBuilder;
 
 /**
