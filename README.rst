@@ -23,10 +23,6 @@ Guzzle is used in production a mutli-million dollar e-commerce company.  Guzzle 
 Installing Guzzle
 -----------------
 
-Contributors should install Guzzle using git::
-
-    git clone https://mtdowling@github.com/guzzle/guzzle.git
-
 Install Guzzle using pear when using Guzzle in production::
 
     pear channel-discover pearhub.org
@@ -106,7 +102,7 @@ Create a services.xml that your ServiceBuilder will use to create service client
 2. Create a ServiceBuilder::
 
     <?php
-    use Guzzle\Service\Builder\ServiceBuilder;
+    use Guzzle\Service\ServiceBuilder;
 
     $serviceBuilder = ServiceBuilder::factory('/path/to/services.xml');
 

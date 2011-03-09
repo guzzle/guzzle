@@ -115,11 +115,11 @@ class DefaultBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $builder->setClass('Guzzle\\Tests\\Service\\Mock\\MockClient');
 
         $xml = <<<EOT
-<service name="mock" class="Guzzle.Tests.Service.Mock.MockClient">
+<client name="mock" class="Guzzle.Tests.Service.Mock.MockClient">
     <param name="username" value="michael" />
     <param name="password" value="test" />
     <param name="subdomain" value="michael" />
-</service>
+</client>
 EOT;
         $xml = trim($xml);
 

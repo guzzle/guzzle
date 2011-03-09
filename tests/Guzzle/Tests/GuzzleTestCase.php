@@ -12,7 +12,7 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Plugin\Log\LogPlugin;
 use Guzzle\Service\Client;
-use Guzzle\Service\Builder\ServiceBuilder;
+use Guzzle\Service\ServiceBuilder;
 use Guzzle\Tests\Common\Mock\MockFilter;
 
 /**

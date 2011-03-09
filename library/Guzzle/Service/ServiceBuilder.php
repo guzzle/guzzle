@@ -4,7 +4,7 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Service\Builder;
+namespace Guzzle\Service;
 
 use Guzzle\Common\Cache\CacheAdapterInterface;
 use Guzzle\Service\ServiceException;
