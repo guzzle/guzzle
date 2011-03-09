@@ -4,11 +4,11 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Tests\Http\Plugin\Cookie\CookieJar;
+namespace Guzzle\Tests\Http\CookieJar;
 
 use Guzzle\Guzzle;
 use Guzzle\Http\Message\Request;
-use Guzzle\Http\Plugin\Cookie\CookieJar\FileCookieJar;
+use Guzzle\Http\CookieJar\FileCookieJar;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>
@@ -74,7 +74,7 @@ class FileCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\Cookie\CookieJar\FileCookieJar
+     * @covers Guzzle\Http\CookieJar\FileCookieJar
      */
     public function testLoadsFromFileFile()
     {
@@ -85,7 +85,7 @@ class FileCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\Cookie\CookieJar\FileCookieJar
+     * @covers Guzzle\Http\CookieJar\FileCookieJar
      */
     public function testPersistsToFileFile()
     {

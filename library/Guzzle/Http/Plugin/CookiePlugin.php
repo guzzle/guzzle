@@ -4,20 +4,20 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Http\Plugin\Cookie;
+namespace Guzzle\Http\Plugin;
 
+use Guzzle\Common\Event\Observer;
 use Guzzle\Common\Event\Subject;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Plugin\AbstractPlugin;
-use Guzzle\Http\Plugin\Cookie\CookieJar\CookieJarInterface;
+use Guzzle\Http\CookieJar\CookieJarInterface;
 
 /**
  * Adds, extracts, and persists cookies between HTTP requests
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
-class CookiePlugin extends AbstractPlugin
+class CookiePlugin implements Observer
 {
     /**
      * @var CookieJarInterface

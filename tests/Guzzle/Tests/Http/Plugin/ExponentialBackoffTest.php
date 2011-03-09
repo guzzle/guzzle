@@ -4,9 +4,9 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Tests\Http\Plugin\ExponentialBackoff;
+namespace Guzzle\Tests\Http\Plugin;
 
-use Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffPlugin;
+use Guzzle\Http\Plugin\ExponentialBackoffPlugin;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Pool\Pool;
@@ -22,12 +22,12 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffPlugin
-     * @covers Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffPlugin::__construct
-     * @covers Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffPlugin::getFailureCodes
-     * @covers Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffPlugin::getMaxRetries
-     * @covers Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffPlugin::setMaxRetries
-     * @covers Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffPlugin::setFailureCodes
+     * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin
+     * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin::__construct
+     * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin::getFailureCodes
+     * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin::getMaxRetries
+     * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin::setMaxRetries
+     * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin::setFailureCodes
      */
     public function testConstructsCorrectly()
     {
@@ -41,7 +41,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffPlugin::calculateWait
+     * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin::calculateWait
      */
     public function testCalculateWait()
     {
@@ -54,7 +54,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffPlugin
+     * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin
      */
     public function testRetriesRequests()
     {
@@ -71,7 +71,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
         
         $plugin = new ExponentialBackoffPlugin(2, null, array($this, 'delayClosure'));
         $request = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl());
-        $plugin->attach($request);
+        $request->getEventManager()->attach($plugin);
         $request->send();
 
         // Make sure it eventually completed successfully
@@ -84,7 +84,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffPlugin::update
+     * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin::update
      * @covers Guzzle\Http\Message\Request
      * @expectedException Guzzle\Http\Message\BadResponseException
      */
@@ -99,7 +99,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         $plugin = new ExponentialBackoffPlugin(2, null, array($this, 'delayClosure'));
         $request = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl());
-        $plugin->attach($request);
+        $request->getEventManager()->attach($plugin);
 
         // This will fail because the plugin isn't retrying the request because
         // the max number of retries is exceeded (1 > 0)
@@ -107,9 +107,8 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffPlugin::update
+     * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin::update
      * @covers Guzzle\Http\Pool\Pool
-     * @covers Guzzle\Http\Plugin\ExponentialBackoff\ExponentialBackoffObserver
      */
     public function testRetriesPooledRequestsUsingDelayAndPollingEvent()
     {
@@ -126,7 +125,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
         });
         
         $request = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl());
-        $plugin->attach($request);
+        $request->getEventManager()->attach($plugin);
 
         $pool = new Pool();
         $pool->addRequest($request);

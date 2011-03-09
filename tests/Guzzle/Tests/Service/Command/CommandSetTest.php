@@ -6,6 +6,7 @@
 
 namespace Guzzle\Tests\Service\Command;
 
+use Guzzle\Tests\Common\Mock\MockObserver;
 use Guzzle\Http\Pool\Pool;
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Command\CommandSet;
@@ -104,12 +105,7 @@ class CommandSetTest extends AbstractCommandTest
     public function testExecutesCommands()
     {
         $client = $this->getClient();
-
-        // Create a mock observer
-        $observer = $this->getMockBuilder('Guzzle\\Common\\Event\\Observer')->setMethods(array('update'))->getMock();
-        // The observer should be called 4 times, 3 times for each command (once to retrieve from client, one before send, one after send)
-        $observer->expects($this->exactly(6))
-                 ->method('update');
+        $observer = new MockObserver();
 
         // Create a Mock response
         $response = new Response(200, array(
@@ -141,5 +137,13 @@ class CommandSetTest extends AbstractCommandTest
 
         $this->assertEquals($response, $command1->getResponse());
         $this->assertEquals($response, $command2->getResponse());
+
+        $this->assertEquals(2, count(array_filter($observer->events, function($e) {
+            return $e == 'command.before_send';
+        })));
+
+        $this->assertEquals(2, count(array_filter($observer->events, function($e) {
+            return $e == 'command.after_send';
+        })));
     }
 }

@@ -21,6 +21,7 @@ class MockObserver implements Observer
     public $event;
     public $log = array();
     public $logByEvent = array();
+    public $events = array();
 
    /**
      * {@inheritdoc}
@@ -31,6 +32,7 @@ class MockObserver implements Observer
         $this->subject = $subject;
         $this->context = $context;
         $this->event = $event;
+        $this->events[] = $event;
         $this->log[] = array($event, $context);
         $this->logByEvent[$event] = $context;
         

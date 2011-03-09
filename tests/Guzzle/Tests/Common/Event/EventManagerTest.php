@@ -107,9 +107,10 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
 
     /**
      * @covers Guzzle\Common\Event\EventManager::notify
+     * @covers Guzzle\Common\Event\EventManager::notifyObserver
      * @covers Guzzle\Common\Event\EventManager::attach
      */
-    public function testNotifiesObservers()
+    public function testNotifiesObserversWithActionEventsAndNormalEvents()
     {
         $priorities = array(10, 0, 999, 0, -10);
 
@@ -142,8 +143,10 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
         foreach ($observers as $o) {
             $this->assertEquals('test', $o->event);
             $this->assertEquals('context', $o->context);
-            $this->assertEquals(1, $o->notified);
+            $this->assertEquals(2, $o->notified);
             $this->assertEquals($sub, $o->subject);
+            // Should have gotten the attach event and the subsequent test event
+            $this->assertEquals(array('event.attach', 'test'), $o->events);
         }
 
         // Make sure the it will update them again
@@ -151,8 +154,10 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
         foreach ($observers as $o) {
             $this->assertEquals('test', $o->event);
             $this->assertEquals(null, $o->context);
-            $this->assertEquals(2, $o->notified);
+            $this->assertEquals(3, $o->notified);
             $this->assertEquals($sub, $o->subject);
+            // Did it get another test event?
+            $this->assertEquals(array('event.attach', 'test', 'test'), $o->events);
         }
     }
 
@@ -195,12 +200,12 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
         $out = '';
 
         $closureA = $subject->attach(function($subject, $event, $context) use (&$out) {
-            $out .= 'A: ' . $context;
+            $out .= 'A: ' . $event . ' - ' . $context . "\n";
             return true;
         }, 0);
 
         $closureB = $subject->attach(function($subject, $event, $context) use (&$out) {
-            $out .= 'B: ' . $event;
+            $out .= 'B: ' . $event . ' - ' . $context . "\n";
             return true;
         }, 1);
 
@@ -208,7 +213,14 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
 
         $subject->notify('test', 'context');
 
-        $this->assertEquals('B: testA: context', $out);
+        // The events should have been received in the following order by the 
+        // observers
+        $this->assertEquals(trim(implode("\n", array(
+            'A: event.attach - ',
+            'B: event.attach - ',
+            'B: test - context',
+            'A: test - context',
+        ))), trim($out));
     }
     
     /**

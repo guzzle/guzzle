@@ -6,10 +6,10 @@
 
 namespace Guzzle\Tests\Common\Filter;
 
-use \Guzzle\Common\Filter\Chain,
-    \Guzzle\Common\Filter\AbstractFilter,
-    \Guzzle\Tests\Common\Mock\MockFilter,
-    \Guzzle\Tests\Common\Mock\MockFilterCommand;
+use Guzzle\Common\Filter\Chain;
+use Guzzle\Common\Filter\AbstractFilter;
+use Guzzle\Tests\Common\Mock\MockFilter;
+use Guzzle\Tests\Common\Mock\MockFilterCommand;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>

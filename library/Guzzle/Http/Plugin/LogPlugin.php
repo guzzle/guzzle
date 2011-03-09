@@ -4,30 +4,25 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Http\Plugin\Log;
+namespace Guzzle\Http\Plugin;
 
 use Guzzle\Common\Log\Logger;
+use Guzzle\Common\Event\Observer;
 use Guzzle\Common\Event\Subject;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
-use Guzzle\Http\Plugin\AbstractPlugin;
 
 /**
  * Plugin class that will add request and response logging to an HTTP request
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
-class LogPlugin extends AbstractPlugin
+class LogPlugin implements Observer
 {
     const WIRE_HEADERS = 1;
     const WIRE_FULL = 2;
-
-    /**
-     * {@inheritdoc} Try to ensure this is called last
-     */
-    protected $priority = -9999;
 
     /**
      * @var Logger Logger object used to delegate log messages to adapters
@@ -81,64 +76,65 @@ class LogPlugin extends AbstractPlugin
      */
     public function update(Subject $subject, $event, $context = null)
     {
-        if ($subject instanceof RequestInterface) {
+        // @codeCoverageIgnoreStart
+        if (!($subject instanceof RequestInterface)) {
+            return;
+        }
+        // @codeCoverageIgnoreEnd
             
-            $request = $subject;
-            /* @var $request EntityEnclosingRequest */
+        /* @var $subject EntityEnclosingRequest */
+        switch ($event) {
 
-            switch ($event) {
+            case 'request.before_send':
 
-                case 'request.before_send':
+                // We need to make special handling for content wiring and
+                // non-repeatable streams.
+                if ($this->wireLevel == self::WIRE_FULL) {
 
-                    // We need to make special handling for content wiring and
-                    // non-repeatable streams.
-                    if ($this->wireLevel == self::WIRE_FULL) {
-
-                        if ($request instanceof EntityEnclosingRequestInterface) {
-                            if ($request->getBody() && (!$request->getBody()->isSeekable() || !$request->getBody()->isReadable())) {
-                                // The body of the request cannot be recalled so
-                                // logging the content of the request will need to
-                                // be streamed using updates
-                                $request->getParams()->set('request_wire', EntityBody::factory(''));
-                            }
-                        }
-
-                        if (!$request->isResponseBodyRepeatable()) {
-                            // The body of the response cannot be recalled so
-                            // logging the content of the response will need to
+                    if ($subject instanceof EntityEnclosingRequestInterface) {
+                        if ($subject->getBody() && (!$subject->getBody()->isSeekable() || !$subject->getBody()->isReadable())) {
+                            // The body of the request cannot be recalled so
+                            // logging the content of the request will need to
                             // be streamed using updates
-                            $request->getParams()->set('response_wire', EntityBody::factory(''));
+                            $subject->getParams()->set('request_wire', EntityBody::factory(''));
                         }
                     }
 
-                    break;
-
-                case 'request.success':
-
-                    $this->log($request, $context);
-                    break;
-
-                case 'request.failure':
-
-                    // Log curl exception messages
-                    $this->log($request, $context->getResponse(), $context->getMessage());
-                    
-                    break;
-
-                case 'curl.callback.write':
-                    // Stream the response body as it is read using cURL
-                    if ($request->getParams()->get('response_wire')) {
-                        $request->getParams()->get('response_wire')->write($context);
+                    if (!$subject->isResponseBodyRepeatable()) {
+                        // The body of the response cannot be recalled so
+                        // logging the content of the response will need to
+                        // be streamed using updates
+                        $subject->getParams()->set('response_wire', EntityBody::factory(''));
                     }
-                    break;
+                }
 
-                case 'curl.callback.read':
-                    // Stream the request body as it is read using cURL
-                    if ($request->getParams()->get('request_wire')) {
-                        $request->getParams()->get('request_wire')->write($context);
-                    }
-                    break;
-            }
+                break;
+
+            case 'request.success':
+
+                $this->log($subject, $context);
+                break;
+
+            case 'request.failure':
+
+                // Log curl exception messages
+                $this->log($subject, $context->getResponse(), $context->getMessage());
+
+                break;
+
+            case 'curl.callback.write':
+                // Stream the response body as it is read using cURL
+                if ($subject->getParams()->get('response_wire')) {
+                    $subject->getParams()->get('response_wire')->write($context);
+                }
+                break;
+
+            case 'curl.callback.read':
+                // Stream the request body as it is read using cURL
+                if ($subject->getParams()->get('request_wire')) {
+                    $subject->getParams()->get('request_wire')->write($context);
+                }
+                break;
         }
     }
 
@@ -151,13 +147,16 @@ class LogPlugin extends AbstractPlugin
      */
     private function log(RequestInterface $request, Response $response = null, $moreInfo = null)
     {
-        $priority = ($response && !$response->isSuccessful()) ? \LOG_ERR : \LOG_DEBUG;
+        $priority = ($response && !$response->isSuccessful()) ? LOG_ERR : LOG_DEBUG;
         $message = '';
 
         if ($this->logContext) {
 
             // Log common contextual information
-            $message = $request->getHost() . ' - "' .  $request->getMethod() . ' ' . $request->getResourceUri() . ' ' . strtoupper($request->getScheme()) . '/' . $request->getProtocolVersion() . '"';
+            $message = $request->getHost() . ' - "' .  $request->getMethod()
+                . ' ' . $request->getResourceUri() . ' '
+                . strtoupper($request->getScheme()) . '/'
+                . $request->getProtocolVersion() . '"';
 
             // If a response is set, then log additional contextual information
             if ($response) {
@@ -181,9 +180,9 @@ class LogPlugin extends AbstractPlugin
             if ($this->wireLevel == self::WIRE_HEADERS) {
                 $message .= $request->getRawHeaders();
             } else {
-                $message .= (string)$request;
+                $message .= (string) $request;
                 if ($request->getParams()->get('request_wire')) {
-                    $message .= (string)$request->getParams()->get('request_wire');
+                    $message .= (string) $request->getParams()->get('request_wire');
                 }
             }
 
@@ -194,9 +193,9 @@ class LogPlugin extends AbstractPlugin
                 if ($this->wireLevel == self::WIRE_HEADERS) {
                     $message .= $response->getRawHeaders();
                 } else {
-                    $message .= (string)$response;
+                    $message .= (string) $response;
                     if ($request->getParams()->get('response_wire')) {
-                        $message .= (string)$request->getParams()->get('response_wire');
+                        $message .= (string) $request->getParams()->get('response_wire');
                     }
                 }
             }

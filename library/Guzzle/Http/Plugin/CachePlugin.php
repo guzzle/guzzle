@@ -4,16 +4,16 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Http\Plugin\Cache;
+namespace Guzzle\Http\Plugin;
 
 use Guzzle\Guzzle;
 use Guzzle\Common\CacheAdapter\CacheAdapterInterface;
+use Guzzle\Common\Event\Observer;
 use Guzzle\Common\Event\Subject;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\Request;
-use Guzzle\Http\Plugin\AbstractPlugin;
 
 /**
  * Plugin to enable the caching of GET and HEAD requests.  Caching can be done
@@ -24,7 +24,7 @@ use Guzzle\Http\Plugin\AbstractPlugin;
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
-class CachePlugin extends AbstractPlugin
+class CachePlugin implements Observer
 {
     /**
      * @var CacheAdapter Cache adapter used to write cache data to cache objects
@@ -158,49 +158,67 @@ class CachePlugin extends AbstractPlugin
         }
         // @codeCoverageIgnoreEnd
 
-        /* @var $subject EntityEnclosingRequest */
-        if ($event == 'request.before_send' && $subject->canCache()) {
+        switch ($event) {
 
-            // This request is being prepared
-            $key = spl_object_hash($subject);
-            $hashKey = $this->getCacheKey($subject);
-            $this->cached[$key] = $hashKey;
-            $cachedData = $this->getCacheAdapter()->fetch($hashKey);
+            case 'event.attach':
 
-            // If the cached data was found, then make the request into a
-            // manually set request
-            if ($cachedData) {
-                if ($this->serialize) {
-                    $cachedData = unserialize($cachedData);
+                // If the request is not cacheable, remove this observer
+                if (!$subject->canCache()) {
+                    $subject->getEventManager()->detach($this);
                 }
-                unset($this->cached[$key]);
-                $response = new Response($cachedData['c'], $cachedData['h'], $cachedData['b']);
-                $response->setHeader('Age', time() - strtotime($response->getDate() ?: 'now'));
-                $response->setHeader('X-Guzzle-Cache', $hashKey);
 
-                // Validate that the response satisfies the request
-                if ($this->canResponseSatisfyRequest($subject, $response)) {
-                    $subject->setResponse($response);
+                break;
+
+            case 'request.before_send':
+                
+                // This request is being prepared
+                $key = spl_object_hash($subject);
+                $hashKey = $this->getCacheKey($subject);
+                $this->cached[$key] = $hashKey;
+                $cachedData = $this->getCacheAdapter()->fetch($hashKey);
+
+                // If the cached data was found, then make the request into a
+                // manually set request
+                if ($cachedData) {
+                    if ($this->serialize) {
+                        $cachedData = unserialize($cachedData);
+                    }
+                    unset($this->cached[$key]);
+                    $response = new Response($cachedData['c'], $cachedData['h'], $cachedData['b']);
+                    $response->setHeader('Age', time() - strtotime($response->getDate() ?: 'now'));
+                    $response->setHeader('X-Guzzle-Cache', $hashKey);
+
+                    // Validate that the response satisfies the request
+                    if ($this->canResponseSatisfyRequest($subject, $response)) {
+                        $subject->setResponse($response);
+                    }
                 }
-            }
 
-        } else if ($event == 'request.sent' && $subject->getResponse()->canCache()) {
+                break;
 
-            // The request is complete and now processing the response
-            $response = $subject->getResponse();
-            $key = spl_object_hash($subject);
-            if (isset($this->cached[$key]) && $response->isSuccessful()) {
-                if ($subject->getParams()->get('cache.override_ttl')) {
-                    $lifetime = $subject->getParams()->get('cache.override_ttl');
-                    $response->setHeader('X-Guzzle-Ttl', $lifetime);
-                } else {
-                    $lifetime = $response->getMaxAge();
+            case 'request.sent':
+
+                $response = $subject->getResponse();
+
+                if ($response->canCache()) {
+                    // The request is complete and now processing the response
+                    $response = $subject->getResponse();
+                    $key = spl_object_hash($subject);
+                    if (isset($this->cached[$key]) && $response->isSuccessful()) {
+                        if ($subject->getParams()->get('cache.override_ttl')) {
+                            $lifetime = $subject->getParams()->get('cache.override_ttl');
+                            $response->setHeader('X-Guzzle-Ttl', $lifetime);
+                        } else {
+                            $lifetime = $response->getMaxAge();
+                        }
+                        $this->saveCache($this->cached[$key], $response, $lifetime);
+                    }
+
+                    // Remove the hashed placeholder from the parameters object
+                    unset($this->cached[$key]);
                 }
-                $this->saveCache($this->cached[$key], $response, $lifetime);
-            }
 
-            // Remove the hashed placeholder from the parameters object
-            unset($this->cached[$key]);
+                break;
         }
     }
 
@@ -215,7 +233,7 @@ class CachePlugin extends AbstractPlugin
     public function revalidate(RequestInterface $request, Response $response)
     {
         $revalidate = clone $request;
-        $this->detach($revalidate);
+        $revalidate->getEventManager()->detach($this);
         $revalidate->setHeader('If-Modified-Since', $response->getDate());
         if ($response->getEtag()) {
             $revalidate->setHeader('If-None-Match', '"' . $response->getEtag() . '"');
@@ -328,16 +346,6 @@ class CachePlugin extends AbstractPlugin
         }
 
         return true;
-    }
-
-    /**
-     * Ensure that the request can be cached
-     *
-     * {@inheritdoc}
-     */
-    protected function handleAttach(RequestInterface $request)
-    {
-        return $request->canCache();
     }
 
     /**

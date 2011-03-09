@@ -4,10 +4,9 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Http\Plugin\Cookie\CookieJar;
+namespace Guzzle\Http\CookieJar;
 
 use Guzzle\Common\Collection;
-use Guzzle\Http\Plugin\PluginException;
 
 /**
  * Persists cookies using a JSON formatted file
@@ -26,7 +25,7 @@ class FileCookieJar extends ArrayCookieJar
      *
      * @param string $cookieFile File to store the cookie data
      *
-     * @throws PluginException if the file cannot be found or created
+     * @throws HttpException if the file cannot be found or created
      */
     public function __construct($cookieFile)
     {
@@ -45,14 +44,14 @@ class FileCookieJar extends ArrayCookieJar
     /**
      * Save the contents of the data array to the file
      *
-     * @throws PluginException if the file cannot be found or created
+     * @throws HttpException if the file cannot be found or created
      */
     protected function persist()
     {
         $handle = fopen($this->file, 'w+');
         // @codeCoverageIgnoreStart
         if ($handle === false) {
-            throw new PluginException('Unable to open file ' . $this->file);
+            throw new HttpException('Unable to open file ' . $this->file);
         }
         // @codeCoverageIgnoreEnd
         
@@ -69,7 +68,7 @@ class FileCookieJar extends ArrayCookieJar
         $handle = fopen($this->file, 'c+');
         // @codeCoverageIgnoreStart
         if ($handle === false) {
-            throw new PluginException('Unable to open file ' . $this->file);
+            throw new HttpException('Unable to open file ' . $this->file);
         }
         // @codeCoverageIgnoreEnd
 

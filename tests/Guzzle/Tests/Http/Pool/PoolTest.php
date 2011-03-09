@@ -12,6 +12,7 @@ use Guzzle\Common\Event\Observer;
 use Guzzle\Http\Server;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\Request;
+use Guzzle\Http\Pool\PoolInterface;
 use Guzzle\Http\Pool\Pool;
 use Guzzle\Http\Pool\PoolRequestException;
 
@@ -36,9 +37,9 @@ class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
     protected function setUp()
     {
         parent::setUp();
+        $this->updates = new Collection();
         $this->pool = new MockPool();
         $this->pool->getEventManager()->attach($this);
-        $this->updates = new Collection();
     }
 
     /**
@@ -46,6 +47,7 @@ class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
      */
     protected function tearDown()
     {
+        $this->pool->getEventManager()->detach($this);
         $this->pool = null;
         parent::tearDown();
     }

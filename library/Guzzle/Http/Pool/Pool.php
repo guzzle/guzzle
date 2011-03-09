@@ -173,7 +173,7 @@ class Pool extends AbstractSubject implements PoolInterface
 
         do {
             // Exec until there's no more data in this iteration.
-            while(($execrun = curl_multi_exec($this->multiHandle, $isRunning)) == CURLM_CALL_MULTI_PERFORM);
+            while (($execrun = curl_multi_exec($this->multiHandle, $isRunning)) == CURLM_CALL_MULTI_PERFORM);
 
             // @codeCoverageIgnoreStart
             if ($execrun != CURLM_OK) {
@@ -199,11 +199,14 @@ class Pool extends AbstractSubject implements PoolInterface
             $finished = true;
             foreach ($this->attached as $request) {
                 if ($request->getState() != RequestInterface::STATE_COMPLETE) {
+                    // Notify each request's event manager that it is polling
+                    $request->getEventManager()->notify(self::POLLING_REQUEST, $this);
                     $finished = false;
-                    break;
                 }
             }
 
+            // Notify any listeners that the pool is polling.  Good place for
+            // status updates
             $this->getEventManager()->notify(self::POLLING);
 
             // @codeCoverageIgnoreStart
@@ -212,6 +215,10 @@ class Pool extends AbstractSubject implements PoolInterface
                 if ($selectResult == -1) {
                     break;
                 }
+            } else if (!$finished) {
+                // Requests are not actually pending a cURL select call, so
+                // we need to delay in order to prevent eating too much CPU
+                usleep(30000);
             }
             // @codeCoverageIgnoreEnd
 

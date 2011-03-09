@@ -4,13 +4,13 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Tests\Http\Plugin\Cookie\CookieJar;
+namespace Guzzle\Tests\Http\CookieJar;
 
 use Guzzle\Guzzle;
 use Guzzle\Http\Message\Request;
-use Guzzle\Http\Plugin\Cookie\CookiePlugin;
-use Guzzle\Http\Plugin\Cookie\CookieJar\ArrayCookieJar;
-use Guzzle\Http\Plugin\Cookie\CookieJar\CookieJarInterface;
+use Guzzle\Http\Plugin\CookiePlugin;
+use Guzzle\Http\CookieJar\ArrayCookieJar;
+use Guzzle\Http\CookieJar\CookieJarInterface;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>
@@ -89,7 +89,7 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\Cookie\CookieJar\ArrayCookieJar
+     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
      */
     public function testStoresAndRetrievesCookies()
     {
@@ -183,7 +183,7 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\Cookie\CookieJar\ArrayCookieJar
+     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
      * @dataProvider getCookiesDataProvider
      */
     public function testGetCookies(array $matches, $domain = null, $path = null, $name = null, $skipDiscardable = false)
@@ -194,7 +194,7 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\Cookie\CookieJar\ArrayCookieJar
+     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
      */
     public function testClearsTemporaryCookies()
     {
@@ -220,7 +220,7 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\Cookie\CookieJar\ArrayCookieJar
+     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
      */
     public function testClearsExpiredCookies()
     {
@@ -242,7 +242,7 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\Cookie\CookieJar\ArrayCookieJar
+     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
      * @expectedException InvalidArgumentException
      * @expectedExceptionMessage Cookies require a domain
      */
@@ -252,7 +252,7 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\Cookie\CookieJar\ArrayCookieJar
+     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
      * @expectedException InvalidArgumentException
      * @expectedExceptionMessage Cookies require a names and values
      */
@@ -280,7 +280,7 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\Cookie\CookieJar\ArrayCookieJar
+     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
      * @dataProvider clearCookiesDataProvider
      */
     public function testClearsCookies($matches, $total, $domain, $path, $name)
@@ -291,7 +291,7 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\Cookie\CookieJar\ArrayCookieJar
+     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
      */
     public function testDoesNotAddDuplicates()
     {

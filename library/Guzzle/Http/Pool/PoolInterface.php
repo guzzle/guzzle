@@ -16,6 +16,7 @@ interface PoolInterface extends Subject
     // Various states of the pool's request cycle
     const BEFORE_SEND = 'before_send';
     const POLLING = 'polling';
+    const POLLING_REQUEST = 'polling_request';
     const COMPLETE = 'complete';
     const ADD_REQUEST = 'add_request';
     const REMOVE_REQUEST = 'remove_request';

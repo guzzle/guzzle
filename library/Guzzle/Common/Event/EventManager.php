@@ -91,6 +91,9 @@ class EventManager
 
                 return $priority1 > $priority2 ? -1 : 1;
             });
+
+            // Notify the observer that it is being attached to the subject
+            $this->notifyObserver($observer, 'event.attach');
         }
 
         return $observer;
@@ -109,11 +112,14 @@ class EventManager
             $this->observers = array();
         } else {
             if (count($this->observers)) {
-                $this->observers = array_values(
-                    array_filter($this->observers, function($value) use ($observer) {
-                        return ($observer !== $value);
-                    })
-                );
+                foreach ($this->observers as $i => $o) {
+                    if ($o === $observer) {
+                        // Notify the observer that it is being detached
+                        $this->notifyObserver($observer, 'event.detach');
+                        unset($this->observers[$i]);
+                    }
+                }
+                $this->observers = array_values($this->observers);
             }
         }
 
@@ -128,7 +134,9 @@ class EventManager
     public function detachAll()
     {
         $detached = $this->observers;
-        $this->observers = array();
+        foreach ($this->observers as $o) {
+            $this->detach($o);
+        }
 
         return $detached;
     }
@@ -149,11 +157,7 @@ class EventManager
 
         foreach ($this->observers as $observer) {
             if ($observer) {
-                if ($observer instanceof Observer) {
-                    $result = $observer->update($this->subject, $event, $context);
-                } else {
-                    $result = $observer($this->subject, $event, $context);
-                }
+                $result = $this->notifyObserver($observer, $event, $context);
                 if ($result) {
                     $responses[] = $result;
                     if ($until == true) {
@@ -218,5 +222,23 @@ class EventManager
         }
 
         return false;
+    }
+
+    /**
+     * Notify a single observer of an event
+     *
+     * @param Closure|Observer $observer Observer to notify
+     * @param string $event Event signal to send to the observer
+     * @param mixed $context (optional) Context about the event
+     *
+     * @return mixed
+     */
+    protected function notifyObserver($observer, $event, $context = null)
+    {
+        if ($observer instanceof Observer) {
+            return $observer->update($this->subject, $event, $context);
+        } else {
+            return $observer($this->subject, $event, $context);
+        }
     }
 }

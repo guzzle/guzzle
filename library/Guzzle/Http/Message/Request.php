@@ -161,14 +161,9 @@ class Request extends AbstractMessage implements RequestInterface
     public function __clone()
     {
         // Clone object properties
-        $this->eventManager = clone $this->eventManager;
 
-        // Reattach any plugins
-        foreach ($this->eventManager->getAttached() as $observer) {
-            if ($observer instanceof AbstractPlugin) {
-                $observer->attach($this);
-            }
-        }
+        // Reattach any plugins using a new EventManager instance
+        $this->eventManager = new EventManager($this, $this->eventManager->getAttached());
 
         $this->curlOptions = clone $this->curlOptions;
         $this->headers = clone $this->headers;

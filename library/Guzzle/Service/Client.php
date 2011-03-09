@@ -9,14 +9,13 @@ namespace Guzzle\Service;
 use Guzzle\Common\Inspector;
 use Guzzle\Common\Injector;
 use Guzzle\Common\Collection;
-use Guzzle\Common\Filter\Chain;
+use Guzzle\Common\Event\Observer;
 use Guzzle\Common\Event\AbstractSubject;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Curl\CurlConstants;
-use Guzzle\Http\Plugin\AbstractPlugin;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\CommandSet;
 use Guzzle\Service\Command\CommandFactoryInterface;
@@ -65,11 +64,6 @@ class Client extends AbstractSubject
      * @var RequestFactory Request factory used to create new client requests
      */
     protected $requestFactory;
-
-    /**
-     * @var array Plugins attached to the client which will be attached to requests
-     */
-    protected $plugins = array();
 
     /**
      * @var string Your application's name and version (e.g. MyApp/1.0)
@@ -121,20 +115,6 @@ class Client extends AbstractSubject
     }
 
     /**
-     * Get the short name of a plugin
-     *
-     * @param AbstractPlugin|string $plugin Plugin to shorten
-     *
-     * @return string
-     */
-    public static function getShortPluginName($plugin)
-    {
-        $class = (is_object($plugin)) ? get_class($plugin) : $plugin;
-
-        return basename(str_replace('\\', '/', $class));
-    }
-
-    /**
      * Get a configuration setting from the client or all of the configuration
      * settings.  This command should not allow the client config to be
      * modified, so an immutable value is returned
@@ -182,9 +162,9 @@ class Client extends AbstractSubject
             $request->getParams()->set('cache.key_filter', $this->getConfig('cache.key_filter'));
         }
 
-        // Attach registered plugins to the request
-        foreach ($this->plugins as $plugin) {
-            $plugin->attach($request);
+        // Attach client observers to the request
+        foreach ($this->getEventManager()->getAttached() as $observer) {
+            $request->getEventManager()->attach($observer);
         }
 
         $this->getEventManager()->notify('request.create', $request);
@@ -205,95 +185,6 @@ class Client extends AbstractSubject
         $this->getEventManager()->notify('request.factory.set', $factory);
 
         return $this;
-    }
-
-    /**
-     * Attach a plugin to the client
-     *
-     * @param AbstractPlugin $plugin  Plugin to attach to the client
-     *
-     * @return Client
-     */
-    public function attachPlugin(AbstractPlugin $plugin)
-    {
-        if (!$this->hasPlugin(get_class($plugin))) {
-            $this->plugins[self::getShortPluginName($plugin)] = $plugin;
-            $this->getEventManager()->attach($plugin);
-        }
-
-        return $this;
-    }
-
-    /**
-     * Remove a plugin by plugin or plugin class
-     *
-     * @param string|AbstractPlugin $plugin The plugin to detach from the
-     *      client.  Pass a string to remove all plugins that are an instance
-     *      of $plugin.  Pass a concrete plugin to remove a specific plugin
-     *
-     * @return Client
-     */
-    public function detachPlugin($plugin)
-    {
-        $foundPlugin = false;
-        if (is_string($plugin)) {
-            $plugin = self::getShortPluginName($plugin);
-        }
-
-        $mediator = $this->getEventManager();
-        $that = $this;
-        $c = __CLASS__;
-        $this->plugins = array_filter($this->plugins, function($p) use ($plugin, $mediator, $that, $c) {
-            $short = $c::getShortPluginName($p);
-            if ((is_string($plugin) && !strcmp($short, $plugin)) || $p === $plugin) {
-                if (!is_string($plugin)) {
-                    $mediator->detach($plugin);
-                }
-                return false;
-            }
-
-            return true;
-        });
-
-        return $this;
-    }
-
-    /**
-     * Check if the client has a specific plugin
-     *
-     * @param string|AbstractPlugin $plugin Check for the existence of a plugin
-     *      by class or a concrete plugin
-     *
-     * @return bool
-     */
-    public function hasPlugin($plugin)
-    {
-        if (is_string($plugin)) {
-            $plugin = self::getShortPluginName($plugin);
-        }
-
-        foreach ($this->plugins as $pluginItem) {
-            $short = self::getShortPluginName($pluginItem);
-            if ((is_string($plugin) && $short == $plugin) || $pluginItem === $plugin) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Get an attached plugin by name
-     *
-     * @param string $pluginClass Plugin class to retrieve
-     *
-     * @return AbstractPlugin|bool
-     */
-    public function getPlugin($pluginClass)
-    {
-        $short = self::getShortPluginName($pluginClass);
-
-        return (array_key_exists($short, $this->plugins)) ? $this->plugins[$short] : false;
     }
 
     /**
