@@ -650,18 +650,19 @@ class Request extends AbstractMessage implements RequestInterface
 
         if (preg_match('/^\HTTP\/1\.[0|1]\s\d{3}\s.+$/', $data)) {
             list($dummy, $code, $status) = explode(' ', str_replace("\r\n", '', $data), 3);
-            $this->getEventManager()->notify('transaction.receive_response_header', array(
-                'header' => 'HTTP',
-                'value' => $code
-            ), true);
             $this->response = new Response($code, null, $this->getResponseBody());
             $this->response->setStatus($code, $status)->setRequest($this);
+            $this->getEventManager()->notify('request.receive.status_line', array(
+                'line' => $data,
+                'status_code' => $code,
+                'reason_phrase' => $status,
+            ), true);
         } else if ($length > 2) {
             list($header, $value) = array_map('trim', explode(':', trim($data), 2));
             $this->response->addHeaders(array(
                 $header => $value
             ));
-            $this->getEventManager()->notify('transaction.receive_response_header', array(
+            $this->getEventManager()->notify('request.receive.header', array(
                 'header' => $header,
                 'value' => $value
             ), true);
@@ -1006,6 +1007,7 @@ class Request extends AbstractMessage implements RequestInterface
     public function releaseCurlHandle()
     {
         if ($this->curlHandle) {
+            $this->getEventManager()->notify('request.release_handle', $this->curlHandle);
             // Check if the handle should be closed
             $this->curlFactory->releaseHandle(
                 $this->curlHandle,
