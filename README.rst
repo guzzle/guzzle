@@ -10,15 +10,9 @@ Guzzle makes writing services an easy task by providing a simple pattern to foll
 #. Create commands for each API action.  Guzzle uses the command pattern.
 #. Add the service definition to your services.xml file
 
-Michael Dowling, lead developer of SHOEBACCA.com and the Guzzle project, has written many PHP webservice clients during his time at SHOEBACCA.com:
-
-    | With the growth of our company came the growth of our website's feature set and the amount of web services we had to interact with.  We were consistently being tasked with integrating new web services.  Some of the services we integrated with had existing PHP clients, but sadly, most PHP clients seemed like more of an afterthough or were written in 2005.  After we created several clients with very similar functionality, I realized the need for a webservice client framework that could reduce code duplication, make it dead simple to create a testable client, and give developers access to a broad range of HTTP and webservice related functionality.
-    |
-    | Because of Guzzle, now I don't cringe as much when my boss comes into my office telling me that we have a new API to integrate into our application.
-
 Most web service clients follow a specific pattern: create a client class, create methods for each action that can be taken on the API, create a cURL handle to transfer an HTTP request to the client, parse the response, implement error handling, and return the result. You've probably had to interact with an API that either doesn't have a PHP client or the currently available PHP clients are not up to an acceptable level of quality. When facing these types of situations, you probably find yourself writing a webservice that lacks most of the advanced features mentioned by Michael. It wouldn't make sense to spend all that time writing those features-- it's just a simple webservice client for just one API... But then you build another client... and another. Suddenly you find yourself with several web service clients to maintain, each client a God class, each reeking of code duplication and lacking most, if not all, of the aforementioned features. Enter Guzzle.
 
-Guzzle is used in production a mutli-million dollar e-commerce company.  Guzzle has 100% code coverage; every line of Guzzle has been tested using PHPUnit.
+Guzzle is used in production at `SHOEBACCA.com <http://www.shoebacca.com/>`_, a mutli-million dollar e-commerce company.  Guzzle has 100% code coverage; every line of Guzzle has been tested using PHPUnit.
 
 Installing Guzzle
 -----------------
@@ -68,8 +62,6 @@ Services can also be installed using git submodules::
 
     git submodule add git://github.com/guzzle/guzzle-aws.git /path/to/guzzle/library/Guzzle/Service/Aws
 
-*Please note: we are still figuring out a few deployment related issues, so the only packaged available on pearhub is guzzle.*
-
 Autoloading Services
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -92,10 +84,8 @@ Create a services.xml that your ServiceBuilder will use to create service client
                 <param name="access_key_id" value="12345" />
                 <param name="secret_access_key" value="abcd" />
             </client>
-            <client name="test.s3" builder="Guzzle.Service.Aws.S3.S3Builder" extends="test.abstract.aws">
-                <param name="devpay_product_token" value="" />
-                <param name="devpay_user_token" value="" />
-            </client>
+            <!-- Concrete Amazon S3 client -->
+            <client name="test.s3" builder="Guzzle.Service.Aws.S3.S3Builder" extends="test.abstract.aws" />
         </clients>
     </guzzle>
 
@@ -141,7 +131,13 @@ The ListBucket command above returns a BucketIterator which will iterate over th
 
 If the above code samples seem a little verbose to you, you can take some shortcuts in your code by leveraging the Guzzle command factory inherent to each client::
 
+    // Most succinctly
     $objects = $client->getCommand('bucket.list_bucket', array('bucket' => 'my_bucket'))->execute();
+
+    // The best blend of verbose and succinct
+    $objects = $client->getCommand('bucket.list_bucket')
+        ->setBucket('my_bucket')
+        ->execute();
 
 Examples of sending HTTP requests
 ---------------------------------
@@ -173,8 +169,27 @@ Example of how to send a POST request::
 
     <?php
 
+    // Use the factory:
+    $request = RequestFactory::post('http://localhost:8983/solr/update', null, null, array (
+        'file' => '/path/to/documents.xml'
+    ));
+    $request->send();
+
+    // Add the POST files manually
     $request = RequestFactory::post('http://localhost:8983/solr/update');
     $request->addPostFiles(array(
         'file' => '/path/to/documents.xml'
     ));
+    $request->send();
+
+Send a request and retry using exponential backoff
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Here's an example of sending an HTTP request that will be automatically retry
+transient failures using truncated exponential backoff::
+
+    use Guzzle\Http\Plugin\ExponentialBackoffPlugin;
+
+    $request = RequestFactory::get('http://google.com/');
+    $request->getEventManager()->attach(new ExponentialBackoffPlugin());
     $request->send();
