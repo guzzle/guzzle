@@ -12,15 +12,25 @@ use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactory;
 
 /**
- * Server is used to create a scripted webserver using node.js that will
- * respond to HTTP requests with queued responses
+ * The Server class is used to control a scripted webserver using node.js that
+ * will respond to HTTP requests with queued responses.
+ * 
+ * Queued responses will be served to requests using a FIFO order.  All requests
+ * received by the server are stored on the node.js server and can be retreived
+ * by calling {@see Server::getReceivedRequests()}.
+ * 
+ * Mock responses that don't require data to be transmitted over HTTP a great
+ * for testing.  Mock respones, however, cannot test the actual sending of an
+ * HTTP request using cURL.  This test server allows the simulation of any
+ * number of HTTP request response transactions to test the actual sending of
+ * requests over the wire without having to leave an internal network.
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class Server
 {
     const DEFAULT_PORT = 8124;
-    const RESPONSE_DELIMITER = "\n----[request]\n";
+    const REQUEST_DELIMITER = "\n----[request]\n";
 
     /**
      * @var int Port that the server will listen on
@@ -43,7 +53,7 @@ class Server
     }
 
     /**
-     * Destructor to cleanup the server
+     * Destructor to safely shutdown the node.js server if it is still running
      *
      * @codeCoverageIgnore
      */
@@ -70,12 +80,16 @@ class Server
             return false;
         }
         
-        return RequestFactory::getInstance()->newRequest('DELETE', $this->getUrl() . 'guzzle-server/requests')
+        return RequestFactory::getInstance()
+            ->newRequest('DELETE', $this->getUrl() . 'guzzle-server/requests')
             ->send()->getStatusCode() == 200;
     }
 
     /**
-     * Queue an array of responses on the server
+     * Queue an array of responses or a single response on the server.
+     *
+     * Any currently queued responses will be overwritten.  Subsequent requests
+     * on the server will return queued responses in FIFO order.
      *
      * @param array|Response $responses A single or array of Responses to queue
      *
@@ -104,12 +118,9 @@ class Server
             );
         }
 
-        $response = RequestFactory::getInstance()->newRequest(
-            'PUT',
-            $this->getUrl() . 'guzzle-server/responses',
-            null,
-            json_encode($data)
-        )->send();
+        $response = RequestFactory::getInstance()
+            ->newRequest('PUT', $this->getUrl() . 'guzzle-server/responses', null, json_encode($data))
+            ->send();
 
         return $response->getStatusCode() == 200;
     }
@@ -158,7 +169,8 @@ class Server
      * Get all of the received requests
      *
      * @param bool $hydrate (optional) Set to TRUE to turn the messages into
-     *      actual RequestInterface objects
+     *      actual {@see RequestInterface} objects.  If $hydrate is FALSE,
+     *      requests will be returned as strings.
      *
      * @return array
      * @throws HttpException
@@ -169,7 +181,7 @@ class Server
 
         if ($this->isRunning()) {
             $response = RequestFactory::getInstance()->newRequest('GET', $this->getUrl() . 'guzzle-server/requests')->send();
-            $data = array_filter(explode(self::RESPONSE_DELIMITER, $response->getBody(true)));
+            $data = array_filter(explode(self::REQUEST_DELIMITER, $response->getBody(true)));
             if ($hydrate) {
                 $data = array_map(function($message) {
                     return RequestFactory::getInstance()->createFromMessage($message);
@@ -181,7 +193,7 @@ class Server
     }
 
     /**
-     * Start running the server
+     * Start running the node.js server in the background
      */
     public function start()
     {
@@ -197,7 +209,7 @@ class Server
     }
 
     /**
-     * Stop running the server
+     * Stop running the node.js server
      *
      * @return bool Returns TRUE on success or FALSE on failure
      * @throws HttpException
@@ -210,7 +222,8 @@ class Server
 
         $this->running = false;
         
-        return RequestFactory::getInstance()->newRequest('DELETE', $this->getUrl() . 'guzzle-server')->send()
+        return RequestFactory::getInstance()
+            ->newRequest('DELETE', $this->getUrl() . 'guzzle-server')->send()
             ->getStatusCode() == 200;
     }
 }
