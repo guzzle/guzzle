@@ -686,4 +686,46 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
             $this->assertContains('Connection refused', $m);
         }
     }
+
+    /**
+     * @covers Guzzle\Http\Message\Request::onComplete
+     */
+    public function testThrowsExceptionsWhenUnsuccessfulResponseIsReceivedByDefault()
+    {
+        $this->getServer()->enqueue("HTTP/1.1 404 Not found\r\nContent-Length: 0\r\n\r\n");
+
+        try {
+            $request = RequestFactory::get($this->getServer()->getUrl() . 'index.html');
+            $response = $request->send();
+            $this->fail('Request did not receive a 404 response');
+        } catch (BadResponseException $e) {
+            $this->assertContains('Unsuccessful response ', $e->getMessage());
+            $this->assertContains('[status code] 404 | [reason phrase] Not found | [url] http://127.0.0.1:8124/index.html | [request] GET /index.html HTTP/1.1', $e->getMessage());
+            $this->assertContains('Host: 127.0.0.1:8124', $e->getMessage());
+            $this->assertContains(" | [response] HTTP/1.1 404 Not found", $e->getMessage());
+        }
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\Request::setOnComplete
+     */
+    public function testCanSetCustomOnCompleteHandler()
+    {
+        $request = RequestFactory::get($this->getServer()->getUrl());
+        $out = '';
+        $that = $this;
+        $request->setOnComplete(function($request, $response, $default) use (&$out, $that) {
+            $out .= $request . "\n" . $response . "\n";
+            $that->assertInternalType('array', $default);
+        })->send();
+        $this->assertContains((string) $request, $out);
+        $this->assertContains((string) $request->getResponse(), $out);
+
+        try {
+            $a = 'abc';
+            $request->setOnComplete($a);
+            $this->fail('Set an invalid callback for setOnComplete');
+        } catch (\InvalidArgumentException $e) {
+        }
+    }
 }

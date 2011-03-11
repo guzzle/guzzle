@@ -14,14 +14,9 @@ use Guzzle\Http\Curl\CurlFactoryInterface;
 use Guzzle\Http\Curl\CurlFactory;
 use Guzzle\Http\Curl\CurlHandle;
 use Guzzle\Http\Curl\CurlException;
-use Guzzle\Http\Plugin\AbstractPlugin;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Cookie;
 use Guzzle\Http\EntityBody;
-use Guzzle\Http\Transaction\Transaction;
-use Guzzle\Http\RequestManager;
-use Guzzle\Http\Transaction\TransactionOptions;
-use Guzzle\Http\RequestManagerException;
 use Guzzle\Http\Url;
 
 /**
@@ -34,10 +29,12 @@ use Guzzle\Http\Url;
  *  request.before_send         null              About to send the request
  *  request.sent                null              Sent the request
  *  request.complete            Response          Completed HTTP transaction
- *  request.bad_response        null              Received non-success response
  *  request.exception           RequestException  Encountered an exception sending
+ *  request.failure             BadResponseException The request failed
+ *  request.success             Response          The request succeeded
  *  request.receive.status_line array             Received response status line
  *  request.receive.header      array             Received response header
+ *  request.bad_response        null              Received non-success response
  *  request.set_response        Response          Manually set a response
  *  request.curl.before_create  null              About to create a CurlHandle
  *  request.curl.after_create   CurlHandle        Created a CurlHandle
@@ -103,9 +100,9 @@ class Request extends AbstractMessage implements RequestInterface
     protected $password;
 
     /**
-     * @param ResponseProcessorInterface Object used to process the response
+     * @param mixed Callable function used to process the response
      */
-    protected $responseProcessor;
+    protected $onComplete;
 
     /**
      * @var Collection cURL specific transfer options
@@ -121,11 +118,6 @@ class Request extends AbstractMessage implements RequestInterface
      * @var CurlHandle cURL handle associated with the request
      */
     protected $curlHandle;
-
-    /**
-     * @param DefaultResponseProcessor
-     */
-    protected static $defaultResponseProcessor;
 
     /**
      * Create a new request
@@ -152,13 +144,13 @@ class Request extends AbstractMessage implements RequestInterface
         $this->curlOptions = new Collection();
         $this->cookie = Cookie::factory($this->getHeader('Cookie'));
         $this->eventManager = new EventManager($this);
+        $this->onComplete = array(__CLASS__, 'onComplete');
 
         if (!$this->hasHeader('User-Agent', true)) {
             $this->setHeader('User-Agent', Guzzle::getDefaultUserAgent());
         }
         
         $this->parseCacheControlDirective();
-
         $this->setState(self::STATE_NEW);
         $this->setUrl($url);
     }
@@ -178,23 +170,14 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function __clone()
     {
-        // Clone object properties
-
-        // Reattach any plugins using a new EventManager instance
         $this->eventManager = new EventManager($this, $this->eventManager->getAttached());
-
         $this->curlOptions = clone $this->curlOptions;
         $this->headers = clone $this->headers;
         $this->params = clone $this->params;
         $this->url = clone $this->url;
-        $this->curlHandle = null;
-
-        // Reset response properties
+        $this->curlHandle = $this->response = $this->responseBody = null;
         $this->params->set('queued_response', false);
-        $this->response = null;
-        $this->responseBody = null;
         $this->processedResponse = $this->preparedRequest = false;
-
         $this->setState(RequestInterface::STATE_NEW);
     }
 
@@ -206,6 +189,39 @@ class Request extends AbstractMessage implements RequestInterface
     public function __toString()
     {
         return $this->getRawHeaders() . "\r\n\r\n";
+    }
+
+    /**
+     * Default onComplete method that will throw exceptions if an unsuccessful
+     * response is received.
+     *
+     * @param RequestInterface $request Request that completed
+     * @param Response $response Response that was received
+     * @param array $default Callable default response processor
+     *
+     * @throws BadResponseException if the response is not successful
+     */
+    public static function OnComplete(RequestInterface $request, Response $response, array $default)
+    {
+        // Throw an exception if the request was not successful
+        if ($response->isClientError() || $response->isServerError()) {
+            $messageParts = array(
+                '[status code] ' . $response->getStatusCode(),
+                '[reason phrase] ' . $response->getReasonPhrase(),
+                '[url] ' . $request->getUrl(),
+                '[request] ' . (string) $request,
+                '[response] ' . (string) $response
+            );
+            $e = new BadResponseException('Unsuccessful response | ' . implode(' | ', array_filter($messageParts, function($message) {
+                return preg_match('/\[[A-Za-z0-9 ]+\]\s.+/', $message);
+            })));
+            $e->setResponse($response);
+            $e->setRequest($request);
+            $request->getEventManager()->notify('request.failure', $e);
+            throw $e;
+        }
+
+        $request->getEventManager()->notify('request.success', $response);
     }
 
     /**
@@ -560,7 +576,7 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function getUrl()
     {
-        return (string)$this->url;
+        return (string) $this->url;
     }
 
     /**
@@ -704,7 +720,6 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function setResponse(Response $response, $queued = false)
     {
-        $this->transaction = null;
         $response->setRequest($this);
 
         if (!$queued) {
@@ -831,7 +846,7 @@ class Request extends AbstractMessage implements RequestInterface
         if ($this->method != RequestInterface::GET && $this->method != RequestInterface::HEAD) {
             return false;
         }
-
+        
         // Never cache requests when using no-store
         if ($this->hasCacheControlDirective('no-store')) {
             return false;
@@ -841,23 +856,28 @@ class Request extends AbstractMessage implements RequestInterface
     }
     
     /**
-     * Set the response processor
+     * Setting an onComplete method will override the default behavior of
+     * throwing an exception when an unsuccessful response is received. The
+     * callable function passed to this method should resemble the following
+     * prototype:
      *
-     * @param null|ResponseProcessorInterface $processor Response processor
+     * function myOncompleteFunction(RequestInterface $request, Response $response, \Closure $default);
+     *
+     * The default onComplete method can be invoked from your custom handler by
+     * calling the $default closure passed to your function.
+     *
+     * @param mixed $callable Method to invoke when a request completes.
      *
      * @return Request
-     *
-     * @throws InvalidArgumentException on invalid response processor
+     * @throws InvalidArgumentException if the method is not callable
      */
-    public function setResponseProcessor($processor)
+    public function setOnComplete($callable)
     {
-        // @codeCoverageIgnoreStart
-        if (!is_null($processor) && !($processor instanceof ResponseProcessorInterface)) {
-            throw new \InvalidArgumentException('Invalid response processor');
+        if (!is_callable($callable)) {
+            throw new \InvalidArgumentException('onComplete method must be callable');
         }
-        // @codeCoverageIgnoreEnd
-
-        $this->responseProcessor = $processor;
+        
+        $this->onComplete = $callable;
 
         return $this;
     }
@@ -867,8 +887,7 @@ class Request extends AbstractMessage implements RequestInterface
      */
     protected function changedHeader($action, $keyOrArray)
     {
-        $keys = (array)$keyOrArray;
-
+        $keys = (array) $keyOrArray;
         parent::changedHeader($action, $keys);
 
         if (in_array('Cookie', $keys)) {
@@ -990,27 +1009,14 @@ class Request extends AbstractMessage implements RequestInterface
             $this->state = self::STATE_COMPLETE;
             $this->getEventManager()->notify('request.sent');
 
-            // Some response processor can remove the response or reset the state
+            // Some response processors will remove the response or reset the state
             if ($this->state == RequestInterface::STATE_COMPLETE) {
-                
                 $this->processedResponse = true;
-
                 $this->getEventManager()->notify('request.complete', $this->response);
-
                 // Release the cURL handle
                 $this->releaseCurlHandle();
-
-                // Use the default response processor if one was not set
-                if (!$this->responseProcessor) {
-                    // @codeCoverageIgnoreStart
-                    if (!self::$defaultResponseProcessor) {
-                        self::$defaultResponseProcessor = new DefaultResponseProcessor();
-                    }
-                    // @codeCoverageIgnoreEnd
-                    $this->setResponseProcessor(self::$defaultResponseProcessor);
-                }
-
-                $this->responseProcessor->processResponse($this, $this->response);
+                // Pass the request to the onComplete handler
+                call_user_func($this->onComplete, $this, $this->response, array(__CLASS__, 'defaultOnComplete'));
             }
         }
 
