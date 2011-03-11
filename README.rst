@@ -152,13 +152,12 @@ Example of how to send a GET request::
     use Guzzle\Http\Message\RequestFactory;
 
     $request = RequestFactory::get('http://www.google.com/');
-    $response = $message->send();
+    $response = $request->send();
 
+    // The response is an object
     echo $response->getStatusCode() . "\n";
-
     // Echo the raw HTTP request
     echo $request;
-
     // Echo the raw HTTP response
     echo $response;
 
