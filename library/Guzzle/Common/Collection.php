@@ -6,17 +6,12 @@
 
 namespace Guzzle\Common;
 
-use \ArrayAccess;
-use \IteratorAggregate;
-use \Countable;
-use \Closure;
-
 /**
  * Key value pair collection object
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
-class Collection implements ArrayAccess, IteratorAggregate, Countable
+class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
 {
     /**
      * @var array Data associated with the object.
@@ -108,7 +103,7 @@ class Collection implements ArrayAccess, IteratorAggregate, Countable
      *
      * @return Collection
      */
-    public function filter(Closure $closure, $static = true)
+    public function filter(\Closure $closure, $static = true)
     {
         $collection = ($static) ? new static() : new self();
         foreach ($this->data as $key => $value) {
@@ -276,7 +271,7 @@ class Collection implements ArrayAccess, IteratorAggregate, Countable
      *
      * @return Collection
      */
-    public function map(Closure $closure, array $context = array(), $static = true)
+    public function map(\Closure $closure, array $context = array(), $static = true)
     {
         $collection = ($static) ? new static() : new self();
         foreach ($this->getIterator() as $key => $value) {
