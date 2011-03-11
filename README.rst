@@ -175,7 +175,7 @@ Example of how to send a POST request::
     ));
     $request->send();
 
-    // Add the POST files manually
+    // Or, Add the POST files manually
     $request = RequestFactory::post('http://localhost:8983/solr/update');
     $request->addPostFiles(array(
         'file' => '/path/to/documents.xml'
@@ -185,8 +185,7 @@ Example of how to send a POST request::
 Send a request and retry using exponential backoff
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here's an example of sending an HTTP request that will be automatically retry
-transient failures using truncated exponential backoff::
+Here's an example of sending an HTTP request that will automatically retry transient failures using truncated exponential backoff::
 
     use Guzzle\Http\Plugin\ExponentialBackoffPlugin;
 
