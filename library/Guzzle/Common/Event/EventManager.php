@@ -7,8 +7,9 @@
 namespace Guzzle\Common\Event;
 
 /**
- * Subject mediator event manager that connects {@see Subject}s and their
- * {@see Observer}s for loose coupling.
+ * Connects {@see Subject} objects and {@see Observer} objects by emitting
+ * signals from the subject to the observer.  Contextual information can be
+ * sent to observers to give more context on how to react to a signal.
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */

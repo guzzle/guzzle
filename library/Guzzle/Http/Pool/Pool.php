@@ -9,6 +9,19 @@ use Guzzle\Http\Message\RequestException;
 /**
  * Execute a pool of {@see RequestInterface} objects in parallel.
  *
+ * Signals emitted:
+ *
+ *  event           context             description
+ *  -----           -------             -----------
+ *  add_request     RequestInterface    A request was added to the pool
+ *  remove_request  RequestInterface    A request was removed from the pool
+ *  reset           null                The pool was reset
+ *  before_send     array               The pool is about to be sent
+ *  complete        array               The pool finished sending the requests
+ *  polling_request RequestInterface    A request is still polling
+ *  polling         null                Some requests are still polling
+ *  exception       RequestException    A request exception occurred
+ *
  * @author  michael@guzzlephp.org
  */
 class Pool extends AbstractSubject implements PoolInterface

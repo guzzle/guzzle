@@ -16,6 +16,13 @@ use Guzzle\Service\Client;
  * Implements Iterator and can be used in a foreach loop.
  * {@link http://www.php.net/manual/en/spl.iterators.php}
  *
+ * Signals emitted:
+ *
+ *  event         context    description
+ *  -----         -------    -----------
+ *  before_send   array      About to issue another command to get more results
+ *  after_send    array      Issued another command to get more results
+ *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 abstract class ResourceIterator extends AbstractSubject implements \Iterator, \Countable

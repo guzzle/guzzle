@@ -6,7 +6,6 @@
 
 namespace Guzzle\Http;
 
-use Guzzle\Common\Event\AbstractSubject;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
@@ -18,7 +17,7 @@ use Guzzle\Http\Message\RequestFactory;
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
-class Server extends AbstractSubject
+class Server
 {
     const DEFAULT_PORT = 8124;
     const RESPONSE_DELIMITER = "\n----[request]\n";

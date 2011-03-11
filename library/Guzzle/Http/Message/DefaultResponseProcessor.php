@@ -6,6 +6,13 @@ namespace Guzzle\Http\Message;
  * Default response processor that throws Exceptions when a non-2xx response
  * is received.
  *
+ * Signals emitted:
+ *
+ *  event           context                 description
+ *  -----           -------                 -----------
+ *  request.failure BadResponseException    The request failed
+ *  request.success Response                The request succeeded
+ *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class DefaultResponseProcessor implements ResponseProcessorInterface

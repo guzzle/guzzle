@@ -25,6 +25,24 @@ use Guzzle\Http\RequestManagerException;
 use Guzzle\Http\Url;
 
 /**
+ * HTTP request class to send requests
+ *
+ * Signals emitted:
+ * 
+ *  event                       context           description
+ *  -----                       -------           -----------
+ *  request.before_send         null              About to send the request
+ *  request.sent                null              Sent the request
+ *  request.complete            Response          Completed HTTP transaction
+ *  request.bad_response        null              Received non-success response
+ *  request.exception           RequestException  Encountered an exception sending
+ *  request.receive.status_line array             Received response status line
+ *  request.receive.header      array             Received response header
+ *  request.set_response        Response          Manually set a response
+ *  request.curl.before_create  null              About to create a CurlHandle
+ *  request.curl.after_create   CurlHandle        Created a CurlHandle
+ *  request.curl.release        CurlHandle        About to release a CurlHandle
+ *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class Request extends AbstractMessage implements RequestInterface
@@ -970,7 +988,7 @@ class Request extends AbstractMessage implements RequestInterface
             }
 
             $this->state = self::STATE_COMPLETE;
-            $this->getEventManager()->notify('request.sent', $this);
+            $this->getEventManager()->notify('request.sent');
 
             // Some response processor can remove the response or reset the state
             if ($this->state == RequestInterface::STATE_COMPLETE) {

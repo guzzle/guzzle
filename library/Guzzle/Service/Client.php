@@ -23,23 +23,15 @@ use Guzzle\Service\Command\CommandFactoryInterface;
 /**
  * Client object for executing commands on a webservice.
  *
- * Available events states:
+ * Signals emitted:
  *
- *  # request.create - When a request is created, the
- *      {@see RequestInterface} will be set as the state context
- *
- *  # request.factory.set - When the request factory is set, overriding the
- *      default RequestFactory the {@see RequestFactory} prototype will be
- *      set as the state context
- *
- *  # command.before_execute - Called before executing a command.  The
- *      {@see CommandInterface} will be set as the state context
- *
- *  # command.after_execute - Called after executing a command.  The
- *      {@see CommandInterface} will be set as the state context
- *
- *  # command.create - Called when a command was dynamically created.  The
- *      {@see CommandInterface} will be set as the state context
+ *  event                   context           description
+ *  -----                   -------           -----------
+ *  request.create          RequestInterface  Created a new request
+ *  request.factory.set     RequestFactory    Setting a custom request factory
+ *  command.before_execute  CommandInterface  A command is about to execute
+ *  command.after_execute   CommandInterface  A command executed
+ *  command.create          CommandInterface  A command was created
  *
  * @author  michael@guzzlephp.org
  */
