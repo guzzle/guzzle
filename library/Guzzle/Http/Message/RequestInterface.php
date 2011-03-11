@@ -165,7 +165,7 @@ interface RequestInterface extends MessageInterface, Subject
     /**
      * Set the path of the request (e.g. '/', '/index.html')
      *
-     * @param string $path Path to set
+     * @param string|array $path Path to set or array of segments to implode
      *
      * @return RequestInterface
      */

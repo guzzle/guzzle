@@ -110,7 +110,7 @@ class CommandSet implements \IteratorAggregate, \Countable
             foreach ($parallel as $command) {
                 $request = $command->prepare();
                 $command->getClient()->getEventManager()->notify('command.before_send', $command);
-                $this->pool->addRequest($request);
+                $this->pool->add($request);
             }
 
             $this->pool->send();

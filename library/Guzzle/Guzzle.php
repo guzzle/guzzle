@@ -6,8 +6,10 @@
 
 namespace Guzzle;
 
+use Guzzle\Common\Collection;
+
 /**
- * Guzzle PHP Library information file
+ * Guzzle information and utility class
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
@@ -48,5 +50,27 @@ class Guzzle
     public static function getHttpDate($date)
     {
         return gmdate('D, d M Y H:i:s', (!is_numeric($date)) ? strtotime($date) : $date) . ' GMT';
+    }
+
+    /**
+     * Inject configuration settings into an input string
+     *
+     * @param string $input Input to inject
+     * @param Collection $config Configuration data to inject into the input
+     *
+     * @return string
+     */
+    public static function inject($input, Collection $config)
+    {
+        // Skip expensive regular expressions if it isn't needed
+        if (strpos($input, '{{') === false) {
+            return $input;
+        }
+
+        return preg_replace_callback('/{{\s*([A-Za-z_\-\.0-9]+)\s*}}/',
+            function($matches) use ($config) {
+                return $config->get(trim($matches[1]));
+            }, $input
+        );
     }
 }

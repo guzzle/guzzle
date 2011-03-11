@@ -22,6 +22,7 @@
  *      Host: 127.0.0.1:8124
  *
  * @package Guzzle PHP <http://www.guzzlephp.org>
+ * @author Michael Dowling <michael@guzzlephp.org>
  * @license See the LICENSE file that was distributed with this source code.
  */
 

@@ -4,44 +4,44 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Tests\Common\Stream;
+namespace Guzzle\Tests\Common;
 
-use Guzzle\Common\Stream\StreamHelper;
+use Guzzle\Common\Stream;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>
  */
-class StreamHelperTest extends \Guzzle\Tests\GuzzleTestCase
+class StreamTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
-     * @covers Guzzle\Common\Stream\StreamHelper::__construct
-     * @expectedException Guzzle\Common\Stream\StreamException
+     * @covers Guzzle\Common\Stream::__construct
+     * @expectedException InvalidArgumentException
      */
     public function testConstructorThrowsExceptionOnInvalidArgument()
     {
-        $stream = new StreamHelper(true);
+        $stream = new Stream(true);
     }
 
     /**
-     * @covers Guzzle\Common\Stream\StreamHelper::__construct
-     * @covers Guzzle\Common\Stream\StreamHelper::getSize
-     * @covers Guzzle\Common\Stream\StreamHelper::getUri
-     * @covers Guzzle\Common\Stream\StreamHelper::isReadable
-     * @covers Guzzle\Common\Stream\StreamHelper::isWritable
-     * @covers Guzzle\Common\Stream\StreamHelper::isSeekable
-     * @covers Guzzle\Common\Stream\StreamHelper::isLocal
-     * @covers Guzzle\Common\Stream\StreamHelper::isConsumed
-     * @covers Guzzle\Common\Stream\StreamHelper::getStream
-     * @covers Guzzle\Common\Stream\StreamHelper::getWrapper
-     * @covers Guzzle\Common\Stream\StreamHelper::getWrapperData
-     * @covers Guzzle\Common\Stream\StreamHelper::getFilters
-     * @covers Guzzle\Common\Stream\StreamHelper::getStreamType
+     * @covers Guzzle\Common\Stream::__construct
+     * @covers Guzzle\Common\Stream::getSize
+     * @covers Guzzle\Common\Stream::getUri
+     * @covers Guzzle\Common\Stream::isReadable
+     * @covers Guzzle\Common\Stream::isWritable
+     * @covers Guzzle\Common\Stream::isSeekable
+     * @covers Guzzle\Common\Stream::isLocal
+     * @covers Guzzle\Common\Stream::isConsumed
+     * @covers Guzzle\Common\Stream::getStream
+     * @covers Guzzle\Common\Stream::getWrapper
+     * @covers Guzzle\Common\Stream::getWrapperData
+     * @covers Guzzle\Common\Stream::getFilters
+     * @covers Guzzle\Common\Stream::getStreamType
      */
     public function testConstructor()
     {
         $handle = fopen('php://temp', 'r+');
         fwrite($handle, 'data');
-        $stream = new StreamHelper($handle);
+        $stream = new Stream($handle);
         $this->assertEquals($handle, $stream->getStream());
         $this->assertTrue($stream->isReadable());
         $this->assertTrue($stream->isWritable());
@@ -61,72 +61,72 @@ class StreamHelperTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Common\Stream\StreamHelper::__destruct
+     * @covers Guzzle\Common\Stream::__destruct
      */
-    public function testStreamHelperClosesHandleOnDestruct()
+    public function testStreamClosesHandleOnDestruct()
     {
         $handle = fopen('php://temp', 'r');
-        $stream = new StreamHelper($handle);
+        $stream = new Stream($handle);
         unset($stream);
         $this->assertFalse(is_resource($handle));
     }
 
     /**
-     * @covers Guzzle\Common\Stream\StreamHelper::__toString
+     * @covers Guzzle\Common\Stream::__toString
      */
     public function testConvertsToString()
     {
         $handle = fopen('php://temp', 'w+');
         fwrite($handle, 'data');
-        $stream = new StreamHelper($handle);
+        $stream = new Stream($handle);
         $this->assertEquals('data', (string)$stream);
         unset($stream);
 
-        $handle = fopen(__DIR__ . '/../../TestData/FileBody.txt', 'w');
-        $stream = new StreamHelper($handle);
+        $handle = fopen(__DIR__ . '/../TestData/FileBody.txt', 'w');
+        $stream = new Stream($handle);
         $this->assertEquals('', (string)$stream);
         unset($stream);
     }
 
     /**
-     * @covers Guzzle\Common\Stream\StreamHelper::isConsumed
+     * @covers Guzzle\Common\Stream::isConsumed
      */
     public function testIsConsumed()
     {
         $handle = fopen('php://temp', 'w+');
         fwrite($handle, 'data');
-        $stream = new StreamHelper($handle);
+        $stream = new Stream($handle);
         $this->assertFalse($stream->isConsumed());
         $stream->read(4);
         $this->assertTrue($stream->isConsumed());
     }
 
     /**
-     * @covers Guzzle\Common\Stream\StreamHelper::setSize
-     * @covers Guzzle\Common\Stream\StreamHelper::getSize
+     * @covers Guzzle\Common\Stream::setSize
+     * @covers Guzzle\Common\Stream::getSize
      */
     public function testAllowsSettingManualSize()
     {
         $handle = fopen('php://temp', 'w+');
         fwrite($handle, 'data');
-        $stream = new StreamHelper($handle);
+        $stream = new Stream($handle);
         $stream->setSize(10);
         $this->assertEquals(10, $stream->getSize());
         unset($stream);
     }
 
     /**
-     * @covers Guzzle\Common\Stream\StreamHelper::read
-     * @covers Guzzle\Common\Stream\StreamHelper::write
-     * @covers Guzzle\Common\Stream\StreamHelper::seek
-     * @covers Guzzle\Common\Stream\StreamHelper::isReadable
-     * @covers Guzzle\Common\Stream\StreamHelper::isSeekable
+     * @covers Guzzle\Common\Stream::read
+     * @covers Guzzle\Common\Stream::write
+     * @covers Guzzle\Common\Stream::seek
+     * @covers Guzzle\Common\Stream::isReadable
+     * @covers Guzzle\Common\Stream::isSeekable
      */
     public function testWrapsStream()
     {
         $handle = fopen('php://temp', 'w+');
         fwrite($handle, 'data');
-        $stream = new StreamHelper($handle);
+        $stream = new Stream($handle);
         $this->assertTrue($stream->isSeekable());
         $this->assertTrue($stream->isReadable());
         $this->assertTrue($stream->seek(0));
@@ -140,14 +140,14 @@ class StreamHelperTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Common\Stream\StreamHelper::getSize
-     * @covers Guzzle\Common\Stream\StreamHelper::__construct
+     * @covers Guzzle\Common\Stream::getSize
+     * @covers Guzzle\Common\Stream::__construct
      */
     public function testGetSize()
     {
-        $size = filesize(__DIR__ . '/../../../../bootstrap.php');
-        $handle = fopen(__DIR__ . '/../../../../bootstrap.php', 'r');
-        $stream = new StreamHelper($handle);
+        $size = filesize(__DIR__ . '/../../../bootstrap.php');
+        $handle = fopen(__DIR__ . '/../../../bootstrap.php', 'r');
+        $stream = new Stream($handle);
         $stream->addFilter('string.rot13', \STREAM_FILTER_READ);
         $this->assertEquals($handle, $stream->getStream());
         $this->assertEquals($size, $stream->getSize());
@@ -159,19 +159,19 @@ class StreamHelperTest extends \Guzzle\Tests\GuzzleTestCase
         // Make sure that false is returned when the size cannot be determined
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Lenght: 0\r\n\r\n");
         $handle = fopen('http://localhost:' . $this->getServer()->getPort(), 'r');
-        $stream = new StreamHelper($handle);
+        $stream = new Stream($handle);
         $this->assertEquals(false, $stream->getSize());
         unset($stream);
     }
 
     /**
-     * @covers Guzzle\Common\Stream\StreamHelper::addFilter
-     * @covers Guzzle\Common\Stream\StreamHelper::getFilters
+     * @covers Guzzle\Common\Stream::addFilter
+     * @covers Guzzle\Common\Stream::getFilters
      */
     public function testAddFilter()
     {
-        $handle = fopen(__DIR__ . '/../../../../bootstrap.php', 'r');
-        $stream = new StreamHelper($handle);
+        $handle = fopen(__DIR__ . '/../../../bootstrap.php', 'r');
+        $stream = new Stream($handle);
         $stream->addFilter('string.rot13', \STREAM_FILTER_READ);
         // Prepend this one
         $stream->addFilter('string.toupper', \STREAM_FILTER_READ, null, true);
@@ -187,14 +187,14 @@ class StreamHelperTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Common\Stream\StreamHelper::addFilter
-     * @covers Guzzle\Common\Stream\StreamHelper::getFilters
-     * @covers Guzzle\Common\Stream\StreamHelper::removeFilter
+     * @covers Guzzle\Common\Stream::addFilter
+     * @covers Guzzle\Common\Stream::getFilters
+     * @covers Guzzle\Common\Stream::removeFilter
      */
     public function testRemoveFilter()
     {
-        $handle = fopen(__DIR__ . '/../../../../bootstrap.php', 'r');
-        $stream = new StreamHelper($handle);
+        $handle = fopen(__DIR__ . '/../../../bootstrap.php', 'r');
+        $stream = new Stream($handle);
         $stream->addFilter('string.rot13', \STREAM_FILTER_READ, false);
         $data = (string)$stream;
 

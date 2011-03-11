@@ -11,7 +11,7 @@ use Guzzle\Common\Event\Subject;
  *
  * @author  michael@guzzlephp.org
  */
-interface PoolInterface extends Subject
+interface PoolInterface extends Subject, \Countable
 {
     // Various states of the pool's request cycle
     const BEFORE_SEND = 'before_send';
@@ -31,21 +31,7 @@ interface PoolInterface extends Subject
      *
      * @param RequestInterface $request Returns the Request that was added
      */
-    public function addRequest(RequestInterface $request);
-
-    /**
-     * Get an array of attached {@see RequestInterface}s.
-     *
-     * @return array Returns an array of attached requests.
-     */
-    public function getRequests();
-
-    /**
-     * Get the current state of the Pool
-     *
-     * @return string
-     */
-    public function getState();
+    public function add(RequestInterface $request);
 
     /**
      * Remove a request from the pool.
@@ -54,7 +40,21 @@ interface PoolInterface extends Subject
      *
      * @return RequestInterface Returns the Request object that was removed
      */
-    public function removeRequest(RequestInterface $request);
+    public function remove(RequestInterface $request);
+
+    /**
+     * Get an array of attached {@see RequestInterface}s.
+     *
+     * @return array Returns an array of attached requests.
+     */
+    public function all();
+
+    /**
+     * Get the current state of the Pool
+     *
+     * @return string
+     */
+    public function getState();
 
     /**
      * Reset the state of the Pool and remove any attached Requests

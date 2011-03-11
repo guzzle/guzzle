@@ -6,8 +6,8 @@
 
 namespace Guzzle\Service\Command;
 
+use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
-use Guzzle\Common\Injector;
 use Guzzle\Common\Inspector;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactory;
@@ -49,8 +49,8 @@ class DynamicCommandFactory extends AbstractCommandFactory
 
                 // Build a custom URL if there are path values
                 if ($foundPath) {
-                    $path = str_replace('//', '', Injector::inject($api->getPath(), $pathValues));
-                    $url = Injector::inject($that->getClient()->getBaseUrl(false), $pathValues) . $path;
+                    $path = str_replace('//', '', Guzzle::inject($api->getPath(), $pathValues));
+                    $url = Guzzle::inject($that->getClient()->getBaseUrl(false), $pathValues) . $path;
                 } else {
                     $url = $that->getClient()->getBaseUrl() . $arg->get('path');
                 }

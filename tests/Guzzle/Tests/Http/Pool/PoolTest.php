@@ -72,14 +72,16 @@ class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
     }
 
     /**
-     * @covers Guzzle\Http\Pool\Pool::addRequest
+     * @covers Guzzle\Http\Pool\Pool::add
+     * @covers Guzzle\Http\Pool\Pool::count
      */
-    public function testRequestsCanBeAdded()
+    public function testRequestsCanBeAddedAndCounted()
     {
-        $request1 = $this->pool->addRequest(new Request('GET', 'http://www.google.com/'));
-        $this->assertEquals(array($request1), $this->pool->getRequests());
-        $request2 = $this->pool->addRequest(new Request('POST', 'http://www.google.com/'));
-        $this->assertEquals(array($request1, $request2), $this->pool->getRequests());
+        $request1 = $this->pool->add(new Request('GET', 'http://www.google.com/'));
+        $this->assertEquals(array($request1), $this->pool->all());
+        $request2 = $this->pool->add(new Request('POST', 'http://www.google.com/'));
+        $this->assertEquals(array($request1, $request2), $this->pool->all());
+        $this->assertEquals(2, count($this->pool));
         $this->assertTrue($this->updates->hasKey(Pool::ADD_REQUEST));
         $this->assertFalse($this->updates->hasKey(Pool::REMOVE_REQUEST));
         $this->assertFalse($this->updates->hasKey(Pool::POLLING));
@@ -93,7 +95,7 @@ class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
     public function testSendsRequestsInParallel()
     {
         $this->assertEquals('idle', $this->pool->getState());
-        $request = $this->pool->addRequest(new Request('GET', 'http://www.google.com/'));
+        $request = $this->pool->add(new Request('GET', 'http://www.google.com/'));
         $request->setResponse(new Response(200, array(), 'Body'), true);
         $this->pool->send();
         $this->assertTrue($this->updates->hasKey(Pool::ADD_REQUEST));
@@ -110,16 +112,16 @@ class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
     }
 
     /**
-     * @covers Guzzle\Http\Pool\Pool::removeRequest
-     * @covers Guzzle\Http\Pool\Pool::getRequests
+     * @covers Guzzle\Http\Pool\Pool::remove
+     * @covers Guzzle\Http\Pool\Pool::all
      */
     public function testRequestsCanBeRemoved()
     {
-        $request1 = $this->pool->addRequest(new Request('GET', 'http://www.google.com/'));
-        $request2 = $this->pool->addRequest(new Request('PUT', 'http://www.google.com/'));
-        $this->assertEquals(array($request1, $request2), $this->pool->getRequests());
-        $this->assertEquals($request1, $this->pool->removeRequest($request1));
-        $this->assertEquals(array($request2), $this->pool->getRequests());
+        $request1 = $this->pool->add(new Request('GET', 'http://www.google.com/'));
+        $request2 = $this->pool->add(new Request('PUT', 'http://www.google.com/'));
+        $this->assertEquals(array($request1, $request2), $this->pool->all());
+        $this->assertEquals($request1, $this->pool->remove($request1));
+        $this->assertEquals(array($request2), $this->pool->all());
     }
 
     /**
@@ -127,9 +129,9 @@ class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
      */
     public function testsResetRemovesRequestsAndResetsState()
     {
-        $request1 = $this->pool->addRequest(new Request('GET', 'http://www.google.com/'));
+        $request1 = $this->pool->add(new Request('GET', 'http://www.google.com/'));
         $this->pool->reset();
-        $this->assertEquals(array(), $this->pool->getRequests());
+        $this->assertEquals(array(), $this->pool->all());
         $this->assertEquals('idle', $this->pool->getState());
         
         // Make sure the notification came through
@@ -157,8 +159,8 @@ class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
         
         $request1 = new Request('GET', $this->getServer()->getUrl());
         $request2 = new Request('GET', $this->getServer()->getUrl());
-        $this->pool->addRequest($request1);
-        $this->pool->addRequest($request2);
+        $this->pool->add($request1);
+        $this->pool->add($request2);
         $this->assertEquals(array($request1, $request2), $this->pool->send());
 
         $response1 = $request1->getResponse();
@@ -201,9 +203,9 @@ class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
         $request1 = new Request('GET', $this->getServer()->getUrl());
         $request2 = new Request('HEAD', $this->getServer()->getUrl());
         $request3 = new Request('GET', $this->getServer()->getUrl());
-        $this->pool->addRequest($request1);
-        $this->pool->addRequest($request2);
-        $this->pool->addRequest($request3);
+        $this->pool->add($request1);
+        $this->pool->add($request2);
+        $this->pool->add($request3);
 
         try {
             $this->pool->send();

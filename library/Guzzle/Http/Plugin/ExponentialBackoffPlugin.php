@@ -143,8 +143,8 @@ class ExponentialBackoffPlugin implements Observer
                     if (time() >= $subject->getParams()->get(self::DELAY_PARAM)) {
 
                         // Remove the request from the pool and then add it back again
-                        $context->removeRequest($subject);
-                        $context->addRequest($subject);
+                        $context->remove($subject);
+                        $context->add($subject);
                         $subject->getParams()->remove(self::DELAY_PARAM);
 
                         return true;

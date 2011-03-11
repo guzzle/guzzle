@@ -4,14 +4,14 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Common\Stream;
+namespace Guzzle\Common;
 
 /**
- * Adds object oriented convenience methods to PHP streams
+ * OO interface to PHP streams
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
-class StreamHelper
+class Stream
 {
     /**
      * @var resource Stream resource
@@ -54,16 +54,20 @@ class StreamHelper
     protected $filters = array();
 
     /**
-     * Construct a new StreamHelper
+     * Construct a new Stream
      *
      * @param resource $stream Stream resource to wrap
      * @param int $size (optional) Size of the stream in bytes.  Only pass this
      *      parameter if the size cannot be obtained from the stream.
+     * 
+     * @throws InvalidArgumentException if the stream is not a stream resource
      */
     public function __construct($stream, $size = null)
     {
         if (!is_resource($stream)) {
-            throw new StreamException('Invalid $stream argument sent to ' . __METHOD__);
+            throw new \InvalidArgumentException(
+                'Invalid $stream argument sent to ' . __METHOD__
+            );
         }
 
         $this->stream = $stream;
@@ -257,7 +261,7 @@ class StreamHelper
      *
      * @param int $size Size of the stream contents in bytes
      *
-     * @return StreamHelper
+     * @return Stream
      */
     public function setSize($size)
     {
@@ -324,7 +328,7 @@ class StreamHelper
      * @param bool $prepend (optional) Set to TRUE to prepend the filter.
      *      Default is to append
      *
-     * @return StreamHelper
+     * @return Stream
      */
     public function addFilter($filter, $readWrite = STREAM_FILTER_ALL, $options = null, $prepend = false)
     {

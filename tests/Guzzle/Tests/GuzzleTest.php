@@ -7,6 +7,7 @@
 namespace Guzzle\Tests;
 
 use Guzzle\Guzzle;
+use Guzzle\Common\Collection;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>
@@ -37,5 +38,36 @@ class GuzzleTest extends GuzzleTestCase
         $this->assertEquals(gmdate($fmt), Guzzle::getHttpDate('now'));
         $this->assertEquals(gmdate($fmt), Guzzle::getHttpDate(strtotime('now')));
         $this->assertEquals(gmdate($fmt, strtotime('+1 day')), Guzzle::getHttpDate('+1 day'));
+    }
+
+    public function dataProvider()
+    {
+        return array(
+            array('this_is_a_test', '{{ a }}_is_a_{{ b }}', array(
+                'a' => 'this',
+                'b' => 'test'
+            )),
+            array('this_is_a_test', '{{abc}}_is_a_{{ 0 }}', array(
+                'abc' => 'this',
+                0 => 'test'
+            )),
+            array('this_is_a_test', '{{ abc }}_is_{{ not_found }}a_{{ 0 }}', array(
+                'abc' => 'this',
+                0 => 'test'
+            )),
+            array('this_is_a_test', 'this_is_a_test', array(
+                'abc' => 'this'
+            )),
+            array('_is_a_', '{{ abc }}_is_{{ not_found }}a_{{ 0 }}', array()),
+        );
+    }
+
+    /**
+     * @covers Guzzle\Guzzle::inject
+     * @dataProvider dataProvider
+     */
+    public function testInjectsConfigData($output, $input, $config)
+    {
+        $this->assertEquals($output, Guzzle::inject($input, new Collection($config)));
     }
 }

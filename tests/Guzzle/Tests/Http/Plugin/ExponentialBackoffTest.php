@@ -128,7 +128,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request->getEventManager()->attach($plugin);
 
         $pool = new Pool();
-        $pool->addRequest($request);
+        $pool->add($request);
         $pool->send();
 
         // Make sure it eventually completed successfully

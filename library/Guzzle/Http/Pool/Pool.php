@@ -21,7 +21,7 @@ class Pool extends AbstractSubject implements PoolInterface
     /**
      * @var array Attached {@see RequestInterface} objects.
      */
-    protected $attached = array();
+    protected $requests = array();
 
     /**
      * @var string The current state of the pool
@@ -51,10 +51,10 @@ class Pool extends AbstractSubject implements PoolInterface
      *
      * @param RequestInterface $request Returns the Request that was added
      */
-    public function addRequest(RequestInterface $request)
+    public function add(RequestInterface $request)
     {
         if ($this->state != self::STATE_COMPLETE) {
-            $this->attached[] = $request;
+            $this->requests[] = $request;
         }
 
         if ($this->state == self::STATE_SENDING) {
@@ -76,9 +76,9 @@ class Pool extends AbstractSubject implements PoolInterface
      *
      * @return array Returns an array of attached requests.
      */
-    public function getRequests()
+    public function all()
     {
-        return $this->attached;
+        return $this->requests;
     }
 
     /**
@@ -98,13 +98,13 @@ class Pool extends AbstractSubject implements PoolInterface
      *
      * @return RequestInterface Returns the Request object that was removed
      */
-    public function removeRequest(RequestInterface $request)
+    public function remove(RequestInterface $request)
     {
         if ($this->state == self::STATE_SENDING && $this->multiHandle) {
             curl_multi_remove_handle($this->multiHandle, $request->getCurlHandle()->getHandle());
         }
 
-        $this->attached = array_values(array_filter($this->attached, function($req) use ($request) {
+        $this->requests = array_values(array_filter($this->requests, function($req) use ($request) {
             return $req !== $request;
         }));
 
@@ -122,8 +122,8 @@ class Pool extends AbstractSubject implements PoolInterface
     public function reset()
     {
         // Remove each request
-        foreach ($this->attached as $request) {
-            $this->removeRequest($request);
+        foreach ($this->requests as $request) {
+            $this->remove($request);
         }
 
         $this->state = self::STATE_IDLE;
@@ -156,10 +156,10 @@ class Pool extends AbstractSubject implements PoolInterface
             return false;
         }
 
-        $this->getEventManager()->notify(self::BEFORE_SEND, $this->attached);
+        $this->getEventManager()->notify(self::BEFORE_SEND, $this->requests);
         $this->state = self::STATE_SENDING;
 
-        foreach ($this->attached as $request) {
+        foreach ($this->requests as $request) {
             // Do not send if a manual response is being used.
             if (!$request->getResponse() && !$request->getParams()->get('queued_response')) {
                 curl_multi_add_handle($this->multiHandle, $request->getCurlHandle()->getHandle());
@@ -183,7 +183,7 @@ class Pool extends AbstractSubject implements PoolInterface
 
             // Get information about the handle
             while ($done = curl_multi_info_read($this->multiHandle)) {
-                foreach ($this->attached as $request) {
+                foreach ($this->requests as $request) {
                     if ($request->getCurlHandle()->isMyHandle($done['handle'])) {
                         try {
                             $request->setState(RequestInterface::STATE_COMPLETE);
@@ -197,7 +197,7 @@ class Pool extends AbstractSubject implements PoolInterface
             }
 
             $finished = true;
-            foreach ($this->attached as $request) {
+            foreach ($this->requests as $request) {
                 if ($request->getState() != RequestInterface::STATE_COMPLETE) {
                     // Notify each request's event manager that it is polling
                     $request->getEventManager()->notify(self::POLLING_REQUEST, $this);
@@ -225,7 +225,7 @@ class Pool extends AbstractSubject implements PoolInterface
         } while ($isRunning || !$finished);
 
         $this->state = self::STATE_COMPLETE;
-        $this->getEventManager()->notify(self::COMPLETE, $this->attached);
+        $this->getEventManager()->notify(self::COMPLETE, $this->requests);
 
         // Throw any Request exceptions encountered during the transfer
         if (count($exceptions)) {
@@ -239,6 +239,16 @@ class Pool extends AbstractSubject implements PoolInterface
             throw $poolException;
         }
 
-        return $this->attached;
+        return $this->requests;
+    }
+
+    /**
+     * Get the number of requests in the pool
+     *
+     * @return int
+     */
+    public function count()
+    {
+        return count($this->requests);
     }
 }

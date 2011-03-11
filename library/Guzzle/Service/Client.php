@@ -6,8 +6,8 @@
 
 namespace Guzzle\Service;
 
+use Guzzle\Guzzle;
 use Guzzle\Common\Inspector;
-use Guzzle\Common\Injector;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Event\Observer;
 use Guzzle\Common\Event\AbstractSubject;
@@ -259,7 +259,7 @@ class Client extends AbstractSubject
      */
     public function getBaseUrl($inject = true)
     {
-        return ($inject) ? $this->injectConfig($this->config->get('base_url')) : $this->config->get('base_url');
+        return $inject ? $this->inject($this->config->get('base_url')) : $this->config->get('base_url');
     }
 
     /**
@@ -284,9 +284,9 @@ class Client extends AbstractSubject
      *
      * @return string
      */
-    public function injectConfig($string)
+    public function inject($string)
     {
-        return Injector::inject($string, $this->config);
+        return Guzzle::inject($string, $this->config);
     }
 
     /**

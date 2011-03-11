@@ -6,14 +6,14 @@
 
 namespace Guzzle\Http;
 
-use Guzzle\Common\Stream\StreamHelper;
+use Guzzle\Common\Stream;
 
 /**
  * Entity body used with an HTTP request or response
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
-class EntityBody extends StreamHelper
+class EntityBody extends Stream
 {
     /**
      * @var bool Content-Encoding of the entity body if known

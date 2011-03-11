@@ -334,7 +334,7 @@ class Request extends AbstractMessage implements RequestInterface
      *
      * @param string $scheme Scheme to set
      *
-     * @return RequestInterface
+     * @return Request
      */
     public function setScheme($scheme)
     {
@@ -358,7 +358,7 @@ class Request extends AbstractMessage implements RequestInterface
      *
      * @param string $host Host to set (e.g. www.yahoo.com, www.yahoo.com)
      *
-     * @return RequestInterface
+     * @return Request
      */
     public function setHost($host)
     {
@@ -418,9 +418,9 @@ class Request extends AbstractMessage implements RequestInterface
     /**
      * Set the path of the request (e.g. '/', '/index.html')
      *
-     * @param string $path Path to set
+     * @param string|array $path Path to set or array of segments to implode
      *
-     * @return RequestInterface
+     * @return Request
      */
     public function setPath($path)
     {
@@ -444,7 +444,7 @@ class Request extends AbstractMessage implements RequestInterface
      *
      * @param int $port Port number to set
      *
-     * @return RequestInterface
+     * @return Request
      */
     public function setPort($port)
     {
@@ -560,7 +560,7 @@ class Request extends AbstractMessage implements RequestInterface
      *
      * @param string $state State of the request (complete, sending, or new)
      *
-     * @return RequestInterface
+     * @return Request
      */
     public function setState($state)
     {
@@ -1007,7 +1007,7 @@ class Request extends AbstractMessage implements RequestInterface
     public function releaseCurlHandle()
     {
         if ($this->curlHandle) {
-            $this->getEventManager()->notify('request.release_handle', $this->curlHandle);
+            $this->getEventManager()->notify('request.curl.release', $this->curlHandle);
             // Check if the handle should be closed
             $this->curlFactory->releaseHandle(
                 $this->curlHandle,
