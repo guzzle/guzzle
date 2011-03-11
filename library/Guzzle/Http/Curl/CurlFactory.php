@@ -46,13 +46,14 @@ class CurlFactory implements CurlFactoryInterface
      * creating standard curl handles.
      *
      * @return CurlFactory
-     * @codeCoverageIgnore
      */
     public static function getInstance()
     {
+        // @codeCoverageIgnoreStart
         if (!self::$instance) {
             self::$instance = new self();
         }
+        // @codeCoverageIgnoreEnd
 
         return self::$instance;
     }

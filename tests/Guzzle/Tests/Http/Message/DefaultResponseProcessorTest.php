@@ -22,7 +22,7 @@ class DefaultResponseProcessorTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->enqueue("HTTP/1.1 404 Not found\r\nContent-Length: 0\r\n\r\n");
 
         try {
-            $request = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl() . 'index.html');
+            $request = RequestFactory::get($this->getServer()->getUrl() . 'index.html');
             $response = $request->send();
             $this->fail('Request did not receive a 404 response');
         } catch (BadResponseException $e) {

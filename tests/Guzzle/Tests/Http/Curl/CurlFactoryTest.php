@@ -293,8 +293,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testFactoryCreatesCurlResourceBasedOnRequest($method, $url, $headers, $body, $options)
     {
-        $factory = RequestFactory::getInstance();
-        $request = $factory->newRequest($method, $url, $headers, $body);
+        $request = RequestFactory::create($method, $url, $headers, $body);
         $handle = $request->getCurlHandle();
         $this->assertType('Guzzle\\Http\\Curl\\CurlHandle', $handle);
         $o = $request->getCurlOptions()->getAll();
@@ -317,8 +316,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testFactoryUsesSpecifiedProtocol()
     {
-        $factory = RequestFactory::getInstance();
-        $request = $factory->newRequest('GET', 'http://www.guzzle-project.com/');
+        $request = RequestFactory::get('http://www.guzzle-project.com/');
         $request->setProtocolVersion('1.1');
         $handle = CurlFactory::getInstance()->getHandle($request);
         $this->assertEquals(CURL_HTTP_VERSION_1_1, $request->getCurlOptions()->get(CURLOPT_HTTP_VERSION));
@@ -344,7 +342,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $host = Url::factory($this->getServer()->getUrl());
         $host = $host->getHost() . ':' . $host->getPort();
 
-        $request = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl());
+        $request = RequestFactory::get($this->getServer()->getUrl());
         $h1 = $request->getCurlHandle();
         $request->send();
         $this->assertEquals(
@@ -403,7 +401,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $host = $host->getHost() . ':' . $host->getPort();
 
         $o = new MockObserver();
-        $request = RequestFactory::getInstance()->newRequest('PUT', $this->getServer()->getUrl());
+        $request = RequestFactory::put($this->getServer()->getUrl());
         $request->setBody(EntityBody::factory('test'));
         $request->getEventManager()->attach($o);
         $h1 = $request->getCurlHandle();
@@ -423,7 +421,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals((string) $request, (string) $r[0]);
 
         // Create a new request and try to reuse the connection
-        $request = RequestFactory::getInstance()->newRequest('HEAD', $this->getServer()->getUrl());
+        $request = RequestFactory::head($this->getServer()->getUrl());
         $this->assertSame($h1, $request->getCurlHandle());
         $request->send();
 
@@ -432,7 +430,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals((string) $request, (string) $r[1]);
 
         // Create a new request using the same connection and POST
-        $request = RequestFactory::getInstance()->newRequest('POST', $this->getServer()->getUrl());
+        $request = RequestFactory::post($this->getServer()->getUrl());
         $request->addPostFields(array(
             'a' => 'b',
             'c' => 'ay! ~This is a test, isn\'t it?'
@@ -452,9 +450,9 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $f = CurlFactory::getInstance();
         $baseline = $f->getConnectionsPerHost(true, '127.0.0.1:8124');
-        $request1 = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl());
+        $request1 = RequestFactory::get($this->getServer()->getUrl());
         $request1->getCurlHandle();
-        $request2 = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl());
+        $request2 = RequestFactory::get($this->getServer()->getUrl());
         $request2->getCurlHandle();
 
         // Make sure tha allocated count went up
@@ -480,7 +478,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $f->clean(true);
         $this->assertEquals(array(), $f->getConnectionsPerHost(false));
 
-        $request = RequestFactory::getInstance()->newRequest('HEAD', $this->getServer()->getUrl());
+        $request = RequestFactory::head($this->getServer()->getUrl());
         $handle1 = $request->getCurlHandle();
         $this->assertEquals(1, $f->getConnectionsPerHost(true, '127.0.0.1:8124'));
         $f->releaseHandle($handle1);
@@ -491,7 +489,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Make sure that the handle was closed
         $this->assertEquals(0, $f->getConnectionsPerHost(null, '127.0.0.1:8124'));
-        $request = RequestFactory::getInstance()->newRequest('HEAD', $this->getServer()->getUrl());
+        $request = RequestFactory::head($this->getServer()->getUrl());
         $handle2 = $request->getCurlHandle();
         $this->assertNotSame($handle1, $handle2);
         $this->assertEquals(1, $f->getConnectionsPerHost(true, '127.0.0.1:8124'));
@@ -509,7 +507,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $f = CurlFactory::getInstance();
         $this->assertSame($f, $f->setMaxIdleTime(0));
-        $request = RequestFactory::getInstance()->newRequest('HEAD', $this->getServer()->getUrl());
+        $request = RequestFactory::head($this->getServer()->getUrl());
         $request->getCurlHandle();
         $this->assertEquals(1, $f->getConnectionsPerHost(true, '127.0.0.1:8124'));
         $this->assertEquals(0, $f->getConnectionsPerHost(false, '127.0.0.1:8124'));

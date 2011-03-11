@@ -182,7 +182,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testCanBeClaimedAndUnclaimed()
     {
-        $request = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl());
+        $request = RequestFactory::get($this->getServer()->getUrl());
 
         $handle = curl_init($this->getServer()->getUrl());
         $h = new CurlHandle($handle, array(
@@ -223,7 +223,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testChecksIfRequestIsCompatibleForConnectionReuse()
     {
-        $request = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl());
+        $request = RequestFactory::get($this->getServer()->getUrl());
 
         $handle = curl_init($this->getServer()->getUrl());
         $h = new CurlHandle($handle, array(

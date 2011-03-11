@@ -253,7 +253,7 @@ class LogPluginTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testLogsTransactionsAtDifferentLevels($level, $request)
     {
-        $request = RequestFactory::getInstance()->createFromMessage($request);
+        $request = RequestFactory::fromMessage($request);
         $plugin = new LogPlugin(new ClosureLogAdapter(
             function($message, $priority, $extras = null) {
                 echo $message . "\n";

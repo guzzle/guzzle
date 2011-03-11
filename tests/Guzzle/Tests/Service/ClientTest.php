@@ -9,6 +9,8 @@ namespace Guzzle\Tests\Service;
 use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Log\ClosureLogAdapter;
+use Guzzle\Http\Message\RequestFactory;
+use Guzzle\Http\Plugin\ExponentialBackoffPlugin;
 use Guzzle\Http\Plugin\LogPlugin;
 use Guzzle\Service\ApiCommand;
 use Guzzle\Service\Client;
@@ -155,7 +157,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      * Test that a plugin can be attached to a client
      *
      * @covers Guzzle\Service\Client::__construct
-     * @covers Guzzle\Service\Client::getRequest
+     * @covers Guzzle\Service\Client::createRequest
      */
     public function testClientAttachersObserversToRequests()
     {
@@ -175,7 +177,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Get a request from the client and ensure the the observer was
         // attached to the new request
-        $request = $client->getRequest('GET');
+        $request = $client->createRequest();
         $this->assertTrue($request->getEventManager()->hasObserver($logPlugin));
 
         // Make sure that the log plugin actually logged the request and response
@@ -310,7 +312,8 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Client::setUserApplication
-     * @covers Guzzle\Service\Client::getRequest
+     * @covers Guzzle\Service\Client::createRequest
+     * @covers Guzzle\Service\Client::prepareRequest
      */
     public function testSetsUserApplication()
     {
@@ -322,12 +325,13 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertSame($client, $client->setUserApplication('Test', '1.0Ab'));
 
-        $request = $client->getRequest('GET');
+        $request = $client->createRequest();
         $this->assertEquals('Test/1.0Ab ' . Guzzle::getDefaultUserAgent(), $request->getHeader('User-Agent'));
     }
 
     /**
-     * @covers Guzzle\Service\Client::getRequest
+     * @covers Guzzle\Service\Client::createRequest
+     * @covers Guzzle\Service\Client::prepareRequest
      */
     public function testClientAddsCurlOptionsToRequests()
     {
@@ -343,14 +347,15 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
             new ConcreteCommandFactory($this->serviceTest)
         );
 
-        $request = $client->getRequest('GET');
+        $request = $client->createRequest();
         $options = $request->getCurlOptions();
         $this->assertEquals(CURLAUTH_DIGEST, $options->get(CURLOPT_HTTPAUTH));
         $this->assertNull($options->get('curl.abc'));
     }
 
     /**
-     * @covers Guzzle\Service\Client::getRequest
+     * @covers Guzzle\Service\Client::createRequest
+     * @covers Guzzle\Service\Client::prepareRequest
      */
     public function testClientAddsCacheKeyFiltersToRequests()
     {
@@ -364,7 +369,101 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
             new ConcreteCommandFactory($this->serviceTest)
         );
 
-        $request = $client->getRequest('GET');
+        $request = $client->createRequest();
         $this->assertEquals('query=Date', $request->getParams()->get('cache.key_filter'));
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::getCommand
+     * @expectedException Guzzle\Service\ServiceException
+     */
+    public function testThrowsExceptionWhenNoCommandFactoryIsSetAndGettingCommand()
+    {
+        $client = new Client(array(
+            'base_url' => $this->getServer()->getUrl()
+        ));
+
+        $client->getCommand('test');
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::prepareRequest
+     */
+    public function testPreparesRequestsNotCreatedByTheClient()
+    {
+        $client = new Client(array(
+            'base_url' => $this->getServer()->getUrl()
+        ));
+        $client->getEventManager()->attach(new ExponentialBackoffPlugin());
+
+        $request = RequestFactory::get($client->getBaseUrl());
+        $this->assertSame($request, $client->prepareRequest($request));
+
+        $this->assertTrue($request->getEventManager()->hasObserver('Guzzle\\Http\\Plugin\\ExponentialBackoffPlugin'));
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::createRequest
+     */
+    public function testCreatesRequestsWithDefaultValues()
+    {
+        $client = new Client(array(
+            'base_url' => $this->getServer()->getUrl()
+        ));
+
+        // Create a GET request
+        $request = $client->createRequest();
+        $this->assertEquals('GET', $request->getMethod());
+        $this->assertEquals($client->getBaseUrl(), $request->getUrl());
+
+        // Create a DELETE request
+        $request = $client->createRequest(array(
+            'method' => 'DELETE'
+        ));
+        $this->assertEquals('DELETE', $request->getMethod());
+        $this->assertEquals($client->getBaseUrl(), $request->getUrl());
+
+        // Test using just the method as the param
+        $request = $client->createRequest('DELETE');
+        $this->assertEquals('DELETE', $request->getMethod());
+
+        // Create a HEAD request with custom headers
+        $request = $client->createRequest(array(
+            'method' => 'HEAD',
+            'url' => 'http://www.test.com/',
+            'headers' => array(
+                'X-Test' => '123'
+            )
+        ));
+        $this->assertEquals('HEAD', $request->getMethod());
+        $this->assertEquals('http://www.test.com/', $request->getUrl());
+        $this->assertEquals('123', $request->getHeader('X-Test'));
+
+        // Create a PUT request
+        $request = $client->createRequest(array(
+            'method' => 'PUT',
+            'body' => '123'
+        ));
+        $this->assertEquals('PUT', $request->getMethod());
+        $this->assertEquals('123', (string) $request->getBody());
+
+        // Create POST request
+        $request = $client->createRequest(array(
+            'method' => 'POST',
+            'files' => array(
+                'file_1' => __FILE__
+            ),
+            'params' => array(
+                'a' => '123'
+            )
+        ));
+
+        $this->assertEquals('POST', $request->getMethod());
+        $this->assertEquals(array(
+            'a' => '123',
+            'file_1' => '@' . __FILE__
+        ), $request->getPostFields()->getAll());
+
+        $this->assertEquals(1, count($request->getPostFiles()));
     }
 }

@@ -12,24 +12,23 @@ use Guzzle\Http\QueryString;
 use Guzzle\Http\Url;
 
 /**
- * Default HTTP request factory.
+ * Default HTTP request factory used to create the default
+ * Guzzle\Http\Message\Request and Guzzle\Http\Message\EntityEnclosingRequest
+ * objects.
+ *
+ * If you need to extend the Request or EntityEnclosingRequest classes, then
+ * this default factory implementation will not work for your client, though
+ * you can extend this class with your custom factory.
  *
  * <code>
- * $factory = new RequestFactory();
- * $request = $factory->newRequest('GET', 'http://www.google.com/');
+ * $request = RequestFactory::get('http://www.google.com/');
  * $response = $request->send();
- * echo $response;
  * </code>
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class RequestFactory
 {
-    /**
-     * @var RequestFactory Singleton instance
-     */
-    private static $instance;
-
     /**
      * @var Standard request headers
      */
@@ -43,25 +42,15 @@ class RequestFactory
     );
 
     /**
-     * Singleton method to get a single instance of the default RequestFactory.
-     *
-     * Because the default request factory will be most commonly used, it is
-     * recommended to get the singleton instance of the RequestFactory when
-     * creating standard HTTP requests.
-     *
-     * @return RequestFactory
+     * @var string Class to instantiate for GET, HEAD, and DELETE requests
      */
-    public static function getInstance()
-    {
-        // @codeCoverageIgnoreStart
-        if (!self::$instance) {
-            self::$instance = new self();
-        }
+    protected static $requestClass = 'Guzzle\\Http\\Message\\Request';
 
-        return self::$instance;
-        // @codeCoverageIgnoreEnd
-    }
-
+    /**
+     * @var string Class to instantiate for POST and PUT requests
+     */
+    protected static $entityEnclosingRequestClass = 'Guzzle\\Http\\Message\\EntityEnclosingRequest';
+    
     /**
      * Parse an HTTP message and return an array of request information
      *
@@ -77,7 +66,7 @@ class RequestFactory
      *      # headers: associative array of request headers
      *      # body: string containing the request body
      */
-    public function parseMessage($message)
+    public static function parseMessage($message)
     {
         if (!$message) {
             return false;
@@ -165,15 +154,15 @@ class RequestFactory
      *
      * @return RequestInterface
      */
-    public function createFromMessage($message)
+    public static function fromMessage($message)
     {
-        $parsed = $this->parseMessage($message);
+        $parsed = self::parseMessage($message);
 
         if (!$parsed) {
             return false;
         }
 
-        return $this->createFromParts(
+        return self::fromParts(
             $parsed['method'],
             $parsed['parts'],
             $parsed['headers'],
@@ -204,10 +193,10 @@ class RequestFactory
      *
      * @return RequestInterface
      */
-    public function createFromParts($method, array $parts, $headers = null, $body = null, $protocol = 'HTTP', $protocolVersion = '1.1')
+    public static function fromParts($method, array $parts, $headers = null, $body = null, $protocol = 'HTTP', $protocolVersion = '1.1')
     {
-        return $this->newRequest($method, Url::buildUrl($parts, true), $headers, $body)
-                    ->setProtocolVersion($protocolVersion);
+        return self::create($method, Url::buildUrl($parts, true), $headers, $body)
+                   ->setProtocolVersion($protocolVersion);
     }
 
     /**
@@ -222,12 +211,14 @@ class RequestFactory
      *
      * @return RequestInterface
      */
-    public function newRequest($method, $url, $headers = null, $body = null)
+    public static function create($method, $url, $headers = null, $body = null)
     {
         if ($method != 'POST' && $method != 'PUT') {
-            $request = new Request($method, $url, $headers);
+            $c = static::$requestClass;
+            $request = new $c($method, $url, $headers);
         } else {
-            $request = new EntityEnclosingRequest($method, $url, $headers);
+            $c = static::$entityEnclosingRequestClass;
+            $request = new $c($method, $url, $headers);
 
             if ($body) {
 
@@ -248,5 +239,85 @@ class RequestFactory
         }
 
         return $request;
+    }
+
+    /**
+     * Create a new GET request
+     *
+     * @param string $url URL of the GET request
+     * @param array|Collection $headers (optional) HTTP headers
+     * @param string|resource|array|EntityBody $body (optional) Where to store
+     *      the response entity body
+     *
+     * @return Request
+     */
+    public static function get($url, $headers = null, $body = null)
+    {
+        $request = self::create('GET', $url, $headers);
+        if ($body) {
+            $request->setResponseBody($body);
+        }
+
+        return $request;
+    }
+
+    /**
+     * Create a new HEAD request
+     *
+     * @param string $url URL of the HEAD request
+     * @param array|Collection $headers (optional) HTTP headers
+     *
+     * @return Request
+     */
+    public static function head($url, $headers = null)
+    {
+        return self::create('HEAD', $url, $headers);
+    }
+
+    /**
+     * Create a new DELETE request
+     *
+     * @param string $url URL of the DELETE request
+     * @param array|Collection $headers (optional) HTTP headers
+     *
+     * @return Request
+     */
+    public static function delete($url, $headers = null)
+    {
+        return self::create('DELETE', $url, $headers);
+    }
+
+    /**
+     * Create a new POST request
+     *
+     * @param string $url URL of the POST request
+     * @param array|Collection $headers (optional) HTTP headers
+     * @param array|Collection $postParams (optional) KVP POST params
+     * @param array $files (optional) Files to send in the request
+     *
+     * @return EntityEnclosingRequest
+     */
+    public static function post($url, $headers = null, $postParams = null, array $files = null)
+    {
+        $request = self::create('POST', $url, $headers, $postParams);
+        if ($files) {
+            $request->addPostFiles($files);
+        }
+
+        return $request;
+    }
+
+    /**
+     * Create a new PUT request
+     *
+     * @param string $url URL of the PUT request
+     * @param array|Collection $headers (optional) HTTP headers
+     * @param string|resource|array|EntityBody $body Body to send in the request
+     *
+     * @return EntityEnclosingRequest
+     */
+    public static function put($url, $headers = null, $body = null)
+    {
+        return self::create('PUT', $url, $headers, $body);
     }
 }

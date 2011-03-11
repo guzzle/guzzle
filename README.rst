@@ -155,7 +155,7 @@ Example of how to send a GET request::
 
     use Guzzle\Http\Message\RequestFactory;
 
-    $request = RequestFactory::getInstance()->newRequest('GET', 'http://www.google.com/');
+    $request = RequestFactory::get('http://www.google.com/');
     $response = $message->send();
 
     echo $response->getStatusCode() . "\n";
@@ -173,7 +173,7 @@ Example of how to send a POST request::
 
     <?php
 
-    $request = RequestFactory::getInstance()->newRequest('POST', 'http://localhost:8983/solr/update');
+    $request = RequestFactory::post('http://localhost:8983/solr/update');
     $request->addPostFiles(array(
         'file' => '/path/to/documents.xml'
     ));

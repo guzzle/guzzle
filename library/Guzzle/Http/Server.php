@@ -80,8 +80,7 @@ class Server
             return false;
         }
         
-        return RequestFactory::getInstance()
-            ->newRequest('DELETE', $this->getUrl() . 'guzzle-server/requests')
+        return RequestFactory::delete($this->getUrl() . 'guzzle-server/requests')
             ->send()->getStatusCode() == 200;
     }
 
@@ -118,8 +117,7 @@ class Server
             );
         }
 
-        $response = RequestFactory::getInstance()
-            ->newRequest('PUT', $this->getUrl() . 'guzzle-server/responses', null, json_encode($data))
+        $response = RequestFactory::put($this->getUrl() . 'guzzle-server/responses', null, json_encode($data))
             ->send();
 
         return $response->getStatusCode() == 200;
@@ -180,11 +178,11 @@ class Server
         $data = array();
 
         if ($this->isRunning()) {
-            $response = RequestFactory::getInstance()->newRequest('GET', $this->getUrl() . 'guzzle-server/requests')->send();
+            $response = RequestFactory::get($this->getUrl() . 'guzzle-server/requests')->send();
             $data = array_filter(explode(self::REQUEST_DELIMITER, $response->getBody(true)));
             if ($hydrate) {
                 $data = array_map(function($message) {
-                    return RequestFactory::getInstance()->createFromMessage($message);
+                    return RequestFactory::fromMessage($message);
                 }, $data);
             }
         }
@@ -222,8 +220,7 @@ class Server
 
         $this->running = false;
         
-        return RequestFactory::getInstance()
-            ->newRequest('DELETE', $this->getUrl() . 'guzzle-server')->send()
+        return RequestFactory::delete($this->getUrl() . 'guzzle-server')->send()
             ->getStatusCode() == 200;
     }
 }

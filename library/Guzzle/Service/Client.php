@@ -19,6 +19,7 @@ use Guzzle\Http\Curl\CurlConstants;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\CommandSet;
 use Guzzle\Service\Command\CommandFactoryInterface;
+use Guzzle\Common\NullObject;
 
 /**
  * Client object for executing commands on a webservice.
@@ -28,7 +29,6 @@ use Guzzle\Service\Command\CommandFactoryInterface;
  *  event                   context           description
  *  -----                   -------           -----------
  *  request.create          RequestInterface  Created a new request
- *  request.factory.set     RequestFactory    Setting a custom request factory
  *  command.before_execute  CommandInterface  A command is about to execute
  *  command.after_execute   CommandInterface  A command executed
  *  command.create          CommandInterface  A command was created
@@ -53,11 +53,6 @@ class Client extends AbstractSubject
     protected $commandFactory;
 
     /**
-     * @var RequestFactory Request factory used to create new client requests
-     */
-    protected $requestFactory;
-
-    /**
      * @var string Your application's name and version (e.g. MyApp/1.0)
      */
     protected $userApplication = null;
@@ -67,14 +62,14 @@ class Client extends AbstractSubject
      *
      * @param array|Collection $config Parameters that define how the client
      *      behaves and connects to a webservice
-     * @param ServiceDescription $serviceDescription Description of the service
-     *      and the commands that can be taken on the webservice
-     * @param CommandFactoryInterface $commandFactory Command factory used to
-     *      create commands by name.
+     * @param ServiceDescription $serviceDescription (optional) Description of
+     *      the service and the commands that can be taken on the webservice
+     * @param CommandFactoryInterface $commandFactory (optional) Command factory
+     *      used to create commands by name.
      *
      * @throws ServiceException
      */
-    public function __construct($config, ServiceDescription $serviceDescription, CommandFactoryInterface $commandFactory)
+    public function __construct($config, ServiceDescription $serviceDescription = null, CommandFactoryInterface $commandFactory = null)
     {
         // Set the configuration object
         if ($config instanceof Collection) {
@@ -88,20 +83,19 @@ class Client extends AbstractSubject
         $this->serviceDescription = $serviceDescription;
         $this->commandFactory = $commandFactory;
 
-        if (!$this->getConfig('base_url')) {
-            $this->config->set('base_url', $serviceDescription->getBaseUrl());
-        }
+        if ($serviceDescription) {
+            if (!$this->getConfig('base_url')) {
+                $this->config->set('base_url', $serviceDescription->getBaseUrl());
+            }
 
-        // Add default arguments and validate the supplied arguments
-        Inspector::getInstance()->validateConfig($serviceDescription->getClientArgs(), $this->config, true);
+            // Add default arguments and validate the supplied arguments
+            Inspector::getInstance()->validateConfig($serviceDescription->getClientArgs(), $this->config, true);
+        }
 
         // Make sure that the service has a base_url specified
         if (!$this->config->get('base_url')) {
             throw new ServiceException('No base_url argument was supplied to the constructor');
         }
-
-        // Set the default request factory
-        $this->setRequestFactory(RequestFactory::getInstance());
 
         $this->init();
     }
@@ -118,22 +112,65 @@ class Client extends AbstractSubject
      */
     public function getConfig($key = false)
     {
-        return (!$key) ? $this->config->getAll() : $this->config->get($key);
+        return !$key ? $this->config->getAll() : $this->config->get($key);
     }
 
     /**
      * Create and return a new {@see RequestInterface} configured for the client
      *
-     * @param string $httpMethod HTTP Method to set on the request.
-     * @param array|Collection $headers (optional) Headers to set on the request
-     * @param string|resource|EntityBody (optional) Body to set on the request
+     * @param array|string $config (optional) Request configuration parameters
+     *      or the request method.  When using an array, use the following keys:
+     *      'url' => URL of the request. Optional.  Leave blank to use the base URL
+     *      'method' => HTTP method. Optional.  Leave blank to use GET
+     *      'headers' => Optional array of HTTP headers
+     *      'body' => Optional string|resource|EntityBody to use in the request body
+     *      'params' => Optional array|Collection of POST parameters
+     *      'files' => Optional array of POST files
      *
      * @return RequestInterface
      */
-    public function getRequest($httpMethod, $headers = null, $body = null)
+    public function createRequest($config = array())
     {
-        $request = $this->requestFactory->newRequest($httpMethod, $this->getBaseUrl(), $headers, $body);
+        // If only the method was passed, convert it to a string
+        if (is_string($config)) {
+            $config = array(
+                'method' => $config
+            );
+        }
 
+        // Add default values to the config array
+        $config = array_merge(array(
+            'url' => $this->getBaseUrl(),
+            'method' => 'GET',
+            'headers' => null,
+            'body' => null,
+            'params' => null,
+            'files' => null
+        ), $config);
+
+        if ($config['method'] == RequestInterface::POST && is_null($config['body'])) {
+            $request = RequestFactory::post($config['url'], $config['headers'], $config['params'], $config['files']);
+        } else {
+            $request = RequestFactory::create($config['method'], $config['url'], $config['headers'], $config['body']);
+        }
+
+        return $this->prepareRequest($request);
+    }
+
+    /**
+     * Prepare a request to be sent from the Client by adding client specific
+     * behaviors and properties to the request.
+     *
+     * This method should only be called when using the default RequestFactory
+     * is not an option and the request sent from the client must be created
+     * manually.
+     *
+     * @param RequestInterface $request Request to prepare for the client
+     *
+     * @return RequestInterface
+     */
+    public function prepareRequest(RequestInterface $request)
+    {
         // Add your application name to the request
         if ($this->userApplication) {
             $request->setHeader('User-Agent', trim($this->userApplication . ' ' . $request->getHeader('User-Agent')));
@@ -148,7 +185,7 @@ class Client extends AbstractSubject
                 $request->getCurlOptions()->set($curlOption, $curlValue);
             }
         }
-        
+
         // Add the cache key filter to requests if one is set on the client
         if ($this->getConfig('cache.key_filter')) {
             $request->getParams()->set('cache.key_filter', $this->getConfig('cache.key_filter'));
@@ -165,30 +202,22 @@ class Client extends AbstractSubject
     }
 
     /**
-     * Set the request factory used to create new requests
-     *
-     * @param RequestFactory $factory Factory used to create new requests
-     *
-     * @return Client
-     */
-    public function setRequestFactory(RequestFactory $factory)
-    {
-        $this->requestFactory = $factory;
-        $this->getEventManager()->notify('request.factory.set', $factory);
-
-        return $this;
-    }
-
-    /**
      * Get a command using the client's CommandFactoryInterface
      *
      * @param string $name Name of the command to retrieve
      * @param array $args (optional) Arguments to pass to the command
      *
      * @return CommandInterface
+     * @throws ServiceException if no command factory has been set
      */
     public function getCommand($name, array $args = array())
     {
+        if (!$this->commandFactory) {
+            throw new ServiceException(
+                'No command factory has been set on the client'
+            );
+        }
+
         $command = $this->commandFactory->buildCommand($name, $args);
         $command->setClient($this);
         $this->getEventManager()->notify('command.create', $command);
@@ -284,11 +313,11 @@ class Client extends AbstractSubject
     /**
      * Get the service description of the client
      *
-     * @return ServiceDescription
+     * @return ServiceDescription|NullObject
      */
     public function getService()
     {
-        return $this->serviceDescription;
+        return $this->serviceDescription ?: new NullObject();
     }
 
     /**

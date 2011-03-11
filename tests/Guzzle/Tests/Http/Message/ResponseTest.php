@@ -647,7 +647,7 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
 
         // When an HTTPS request is sent and the Cache-Control directive does
         // not include a 'public' value, then the response is not to be cached
-        $request = RequestFactory::getInstance()->newRequest('GET', 'https://www.test.com/');
+        $request = RequestFactory::get('https://www.test.com/');
         $response = new Response(200);
         $response->setRequest($request);
         $this->assertFalse($response->canCache());

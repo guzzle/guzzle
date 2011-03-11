@@ -66,7 +66,7 @@ class ServerTest extends \Guzzle\Tests\GuzzleTestCase
         $server->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
         $factory = new RequestFactory();
 
-        $request = $factory->newRequest('GET', $server->getUrl());
+        $request = RequestFactory::get($server->getUrl());
         $response = $request->send();
         $this->assertEquals(
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
@@ -119,7 +119,7 @@ class ServerTest extends \Guzzle\Tests\GuzzleTestCase
         $server->start();
         $this->assertTrue($server->isRunning());
         try {
-            RequestFactory::getInstance()->newRequest('GET', $server->getUrl())->send();
+            RequestFactory::get($server->getUrl())->send();
             $this->fail('Server must return 500 error when no responses are queued');
         } catch (BadResponseException $e) {
             $this->assertEquals(500, $e->getResponse()->getStatusCode());

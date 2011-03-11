@@ -70,7 +70,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->flush();
         
         $plugin = new ExponentialBackoffPlugin(2, null, array($this, 'delayClosure'));
-        $request = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl());
+        $request = RequestFactory::get($this->getServer()->getUrl());
         $request->getEventManager()->attach($plugin);
         $request->send();
 
@@ -98,7 +98,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
         ));
 
         $plugin = new ExponentialBackoffPlugin(2, null, array($this, 'delayClosure'));
-        $request = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl());
+        $request = RequestFactory::get($this->getServer()->getUrl());
         $request->getEventManager()->attach($plugin);
 
         // This will fail because the plugin isn't retrying the request because
@@ -124,7 +124,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
             return 1;
         });
         
-        $request = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl());
+        $request = RequestFactory::get($this->getServer()->getUrl());
         $request->getEventManager()->attach($plugin);
 
         $pool = new Pool();

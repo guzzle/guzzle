@@ -56,7 +56,7 @@ class DynamicCommandFactory extends AbstractCommandFactory
                 }
 
                 // Inject path and base_url values into the URL
-                $request = RequestFactory::getInstance()->newRequest($api->getMethod(), $url);
+                $request = RequestFactory::create($api->getMethod(), $url);
 
                 // Add arguments to the request using the location attribute
                 foreach ($api->getArgs() as $name => $arg) {

@@ -76,12 +76,12 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $plugin = new CachePlugin($this->adapter, true);
 
         // Make sure that non GET and HEAD requests are not attached
-        $request = RequestFactory::getInstance()->newRequest('POST', $this->getServer()->getUrl());
+        $request = RequestFactory::post($this->getServer()->getUrl());
         $request->getEventManager()->attach($plugin);
         $this->assertFalse($request->getEventManager()->hasObserver($plugin));
         
         // Create a new Request
-        $request = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl());
+        $request = RequestFactory::get($this->getServer()->getUrl());
         $request->getEventManager()->attach($plugin);
         $this->assertTrue($request->getEventManager()->hasObserver($plugin));
         
@@ -100,7 +100,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         // Test that the request is set manually
         // The test server has no more script data, so if it actually sends a
         // request it will fail the test.
-        $request2 = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl());
+        $request2 = RequestFactory::get($this->getServer()->getUrl());
         $request2->getEventManager()->attach($plugin);
         $request2->send();
         $this->assertEquals('data', $request2->getResponse()->getBody(true));
@@ -122,7 +122,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $plugin = new CachePlugin($this->adapter, true);
 
         // Create a new Client using the Cache plugin
-        $request = RequestFactory::getInstance()->newRequest('GET', $this->getServer()->getUrl());
+        $request = RequestFactory::get($this->getServer()->getUrl());
         $request->getEventManager()->attach($plugin);
 
         // Create a temp file that is not readable
@@ -177,7 +177,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         }
 
         // Create the request
-        $request = RequestFactory::getInstance()->newRequest('GET', $url, $h);
+        $request = RequestFactory::get($url, $h);
         $request->getParams()->set('cache.key_filter', $filter);
         $request->removeHeader('User-Agent');
 
@@ -196,7 +196,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
     public function testCreatesEncodedKeys()
     {
         $plugin = new CachePlugin($this->adapter, true);
-        $request = RequestFactory::getInstance()->createFromMessage(
+        $request = RequestFactory::fromMessage(
             "GET / HTTP/1.1\r\nHost: www.test.com\r\nCache-Control: no-cache, no-store, max-age=120"
         );
 
@@ -281,12 +281,12 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $server = $this->getServer();
         
         // No restrictions
-        $request = RequestFactory::getInstance()->newRequest('GET', $server->getUrl());
+        $request = RequestFactory::get($server->getUrl());
         $response = new Response(200, array('Date' => Guzzle::getHttpDate('now')));
         $this->assertTrue($plugin->canResponseSatisfyRequest($request, $response));
 
         // Request max-age is less than response age
-        $request = RequestFactory::getInstance()->newRequest('GET', $server->getUrl());
+        $request = RequestFactory::get($server->getUrl());
         $request->addCacheControlDirective('max-age', 100);
         $response = new Response(200, array('Age' => 10));
         $this->assertTrue($plugin->canResponseSatisfyRequest($request, $response));
@@ -381,7 +381,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
             $server->enqueue($validate);
         }
 
-        $request = RequestFactory::getInstance()->createFromMessage("GET / HTTP/1.1\r\nHost: 127.0.0.1:" . $server->getPort() . "\r\n" . $request);
+        $request = RequestFactory::fromMessage("GET / HTTP/1.1\r\nHost: 127.0.0.1:" . $server->getPort() . "\r\n" . $request);
         
         if ($param) {
             $request->getParams()->set('cache.revalidate', $param);

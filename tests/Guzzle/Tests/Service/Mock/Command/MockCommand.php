@@ -22,7 +22,7 @@ class MockCommand extends \Guzzle\Service\Command\AbstractCommand
      */
     protected function build()
     {
-        $this->request = $this->client->getRequest('GET');
+        $this->request = $this->client->createRequest();
     }
 
     /**

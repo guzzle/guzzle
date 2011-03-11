@@ -33,20 +33,12 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     protected $request;
 
     /**
-     * @var RequestFactory
-     */
-    protected $factory;
-
-    /**
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
     protected function setUp()
     {
         $this->request = new Request('GET', 'http://www.google.com/');
-        if (!$this->factory) {
-            $this->factory = RequestFactory::getInstance();
-        }
     }
 
     public function tearDown()
@@ -87,7 +79,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $auth = base64_encode('michael:123');
         $message = "PUT /path?q=1&v=2 HTTP/1.1\r\nAuthorization: Basic {$auth}\r\nUser-Agent: " . Guzzle::getDefaultUserAgent() . "\r\nHost: www.google.com\r\nContent-Length: 4\r\nExpect: 100-Continue\r\n\r\nData";
-        $request = $this->factory->newRequest('PUT', 'http://www.google.com/path?q=1&v=2', array(
+        $request = RequestFactory::put('http://www.google.com/path?q=1&v=2', array(
             'Authorization' => 'Basic ' . $auth
         ), 'Data');
 
@@ -95,7 +87,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Add authorization after the fact and see that it was put in the message
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
-        $request = $this->factory->newRequest('PUT', $this->getServer()->getUrl(), null, 'Data');
+        $request = RequestFactory::put($this->getServer()->getUrl(), null, 'Data');
         $request->setAuth('michael', '123', 'Basic');
         $request->send();
         $str = (string) $request;
@@ -392,7 +384,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 404 Not Found\r\nContent-Encoding: application/xml\r\nContent-Length: 48\r\n\r\n<error><mesage>File not found</message></error>"
         ));
 
-        $request = $this->factory->newRequest('GET', $this->getServer()->getUrl());
+        $request = RequestFactory::get($this->getServer()->getUrl());
         $response = $request->send();
         $this->assertEquals('data', $response->getBody(true));
         $this->assertEquals(200, (int)$response->getStatusCode());
@@ -401,7 +393,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('Thu, 01 Dec 1994 16:00:00 GMT', $response->getExpires());
 
         try {
-            $request = $this->factory->newRequest('GET', $this->getServer()->getUrl() . 'index.html');
+            $request = RequestFactory::get($this->getServer()->getUrl() . 'index.html');
             $response = $request->send();
             $this->fail('Request did not receive a 404 response');
         } catch (BadResponseException $e) {
@@ -437,7 +429,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         }
 
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ndata");
-        $request = $this->factory->newRequest('GET', $this->getServer()->getUrl());
+        $request = RequestFactory::get($this->getServer()->getUrl());
         $request->setResponseBody(EntityBody::factory(fopen($file, 'w+')));
         $request->send();
         
@@ -453,7 +445,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     public function testDeterminesIfResponseBodyRepeatable()
     {
         // The default stream created for responses is seekable
-        $request = $this->factory->newRequest('GET', 'http://localhost:' . $this->getServer()->getPort());
+        $request = RequestFactory::get('http://localhost:' . $this->getServer()->getPort());
         $this->assertTrue($request->isResponseBodyRepeatable());
 
         // This should return false because an HTTP stream is not seekable
@@ -467,23 +459,23 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testDeterminesIfCanCacheRequest()
     {
-        $this->assertTrue(RequestFactory::getInstance()->createFromMessage(
+        $this->assertTrue(RequestFactory::fromMessage(
             "GET / HTTP/1.1\r\nHost: www.test.com\r\nCache-Control: no-cache, max-age=120\r\n\r\n"
         )->canCache());
 
-        $this->assertTrue(RequestFactory::getInstance()->createFromMessage(
+        $this->assertTrue(RequestFactory::fromMessage(
             "HEAD / HTTP/1.1\r\nHost: www.test.com\r\nCache-Control: no-cache, max-age=120\r\n\r\n"
         )->canCache());
 
-        $this->assertFalse(RequestFactory::getInstance()->createFromMessage(
+        $this->assertFalse(RequestFactory::fromMessage(
             "HEAD / HTTP/1.1\r\nHost: www.test.com\r\nCache-Control: no-cache, max-age=120, no-store\r\n\r\n"
         )->canCache());
 
-        $this->assertFalse(RequestFactory::getInstance()->createFromMessage(
+        $this->assertFalse(RequestFactory::fromMessage(
             "POST / HTTP/1.1\r\nHost: www.test.com\r\n\r\n"
         )->canCache());
 
-        $this->assertFalse(RequestFactory::getInstance()->createFromMessage(
+        $this->assertFalse(RequestFactory::fromMessage(
             "PUT / HTTP/1.1\r\nHost: www.test.com\r\nCache-Control: no-cache, max-age=120\r\n\r\n"
         )->canCache());
     }
@@ -635,7 +627,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 404 Not Found\r\nContent-Encoding: application/xml\r\nContent-Length: 48\r\n\r\n<error><mesage>File not found</message></error>"
         ));
 
-        $request = $this->factory->newRequest('GET', $this->getServer()->getUrl());
+        $request = RequestFactory::get($this->getServer()->getUrl());
         $response = $request->send();
 
         $this->assertEquals('data', $response->getBody(true));
@@ -645,7 +637,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('Thu, 01 Dec 1994 16:00:00 GMT', $response->getExpires());
 
         try {
-            $request = $this->factory->newRequest('GET', $this->getServer()->getUrl() . 'index.html');
+            $request = RequestFactory::get($this->getServer()->getUrl() . 'index.html');
             $response = $request->send();
             $this->fail('Request did not receive a 404 response');
         } catch (BadResponseException $e) {
@@ -678,7 +670,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
 
         try {
-            $request = $this->factory->newRequest('GET', 'http://127.0.0.1:9876/');
+            $request = RequestFactory::get('http://127.0.0.1:9876/');
             $request->getCurlOptions()->set(CURLOPT_FRESH_CONNECT, true);
             $request->getCurlOptions()->set(CURLOPT_TIMEOUT, 0);
             $request->getCurlOptions()->set(CURLOPT_CONNECTTIMEOUT, 1);
