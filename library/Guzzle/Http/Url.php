@@ -50,7 +50,7 @@ class Url
             'user' => null,
             'pass' => null,
             'fragment' => null
-        ), parse_url($url));
+        ), (array) parse_url($url));
 
         if ($parts['query']) {
             $query = array();
