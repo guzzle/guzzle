@@ -71,18 +71,18 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
      * @covers Guzzle\Http\Url::__construct
      * @covers Guzzle\Http\Url::factory
      * @covers Guzzle\Http\Url::__toString
+     * @covers Guzzle\Http\Url::isAbsolute
      */
     public function testValidatesUrlPartsInFactory()
     {
-        try {
-            Url::factory('/index.php');
-            $this->fail('Should have thrown an exception because the host and scheme are missing');
-        } catch (HttpException $e) {
-        }
+        $url = Url::factory('/index.php');
+        $this->assertEquals('/index.php', (string) $url);
+        $this->assertFalse($url->isAbsolute());
 
         $url = 'http://michael:test@test.com:80/path/123?q=abc#test';
         $u = Url::factory($url);
-        $this->assertEquals('http://michael:test@test.com/path/123?q=abc#test', (string)$u);
+        $this->assertEquals('http://michael:test@test.com/path/123?q=abc#test', (string) $u);
+        $this->assertTrue($u->isAbsolute());
     }
 
     /**
@@ -134,5 +134,51 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('http://www.test.com/', Url::buildUrl($parts));
         $parts['path'] = 'test';
         $this->assertEquals('http://www.test.com/test', Url::buildUrl($parts));
+    }
+
+    /**
+     * @covers Guzzle\Http\Url::addPath
+     */
+    public function testAddsToPath()
+    {
+        // Does nothing here
+        $this->assertEquals('http://e.com/base?a=1', (string) Url::factory('http://e.com/base?a=1')->addPath(false));
+        $this->assertEquals('http://e.com/base?a=1', (string) Url::factory('http://e.com/base?a=1')->addPath(''));
+        $this->assertEquals('http://e.com/base?a=1', (string) Url::factory('http://e.com/base?a=1')->addPath('/'));
+
+        $this->assertEquals('http://e.com/base/relative?a=1', (string) Url::factory('http://e.com/base?a=1')->addPath('relative'));
+        $this->assertEquals('http://e.com/base/relative?a=1', (string) Url::factory('http://e.com/base?a=1')->addPath('/relative'));
+    }
+
+    /**
+     * URL combination data provider
+     *
+     * @return array
+     */
+    public function urlCombineDataProvider()
+    {
+        return array(
+            array('http://www.example.com/', 'http://www.example.com/', 'http://www.example.com/'),
+            array('http://www.example.com/path', '/absolute', 'http://www.example.com/absolute'),
+            array('http://www.example.com/path', '/absolute?q=2', 'http://www.example.com/absolute?q=2'),
+            array('http://www.example.com/path', 'more', 'http://www.example.com/path/more'),
+            array('http://www.example.com/path', 'more?q=1', 'http://www.example.com/path/more?q=1'),
+            array('http://www.example.com/', '?q=1', 'http://www.example.com/?q=1'),
+            array('http://www.example.com/path', 'http://test.com', 'http://test.com/path'),
+            array('http://www.example.com:8080/path', 'http://test.com', 'http://test.com/path'),
+            array('http://www.example.com:8080/path', '?q=2#abc', 'http://www.example.com:8080/path?q=2#abc'),
+            array('http://u:a@www.example.com/path', 'test', 'http://u:a@www.example.com/path/test'),
+            array('http://www.example.com/path', 'http://u:a@www.example.com/', 'http://u:a@www.example.com/path'),
+            array('/path?q=2', 'http://www.test.com/', 'http://www.test.com/path?q=2'),
+        );
+    }
+
+    /**
+     * @covers Guzzle\Http\Url::combine
+     * @dataProvider urlCombineDataProvider
+     */
+    public function testCombinesUrls($a, $b, $c)
+    {
+        $this->assertEquals($c, (string) Url::factory($a)->combine($b));
     }
 }

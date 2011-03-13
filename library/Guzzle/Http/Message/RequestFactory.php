@@ -246,7 +246,7 @@ class RequestFactory
      */
     public static function get($url, $headers = null, $body = null)
     {
-        $request = self::create('GET', $url, $headers);
+        $request = self::create(RequestInterface::GET, $url, $headers);
         if ($body) {
             $request->setResponseBody($body);
         }
@@ -264,7 +264,7 @@ class RequestFactory
      */
     public static function head($url, $headers = null)
     {
-        return self::create('HEAD', $url, $headers);
+        return self::create(RequestInterface::HEAD, $url, $headers);
     }
 
     /**
@@ -277,7 +277,7 @@ class RequestFactory
      */
     public static function delete($url, $headers = null)
     {
-        return self::create('DELETE', $url, $headers);
+        return self::create(RequestInterface::DELETE, $url, $headers);
     }
 
     /**
@@ -285,19 +285,15 @@ class RequestFactory
      *
      * @param string $url URL of the POST request
      * @param array|Collection $headers (optional) HTTP headers
-     * @param array|Collection $postParams (optional) KVP POST params
-     * @param array $files (optional) Files to send in the request
+     * @param array|Collection $postFields (optional) Associative array of POST
+     *      fields to send in the body of the request.  Prefix a value in the
+     *      array with the @ symbol reference a file.
      *
      * @return EntityEnclosingRequest
      */
-    public static function post($url, $headers = null, $postParams = null, array $files = null)
+    public static function post($url, $headers = null, $postFields = null)
     {
-        $request = self::create('POST', $url, $headers, $postParams);
-        if ($files) {
-            $request->addPostFiles($files);
-        }
-
-        return $request;
+        return self::create(RequestInterface::POST, $url, $headers, $postFields);
     }
 
     /**
@@ -311,6 +307,6 @@ class RequestFactory
      */
     public static function put($url, $headers = null, $body = null)
     {
-        return self::create('PUT', $url, $headers, $body);
+        return self::create(RequestInterface::PUT, $url, $headers, $body);
     }
 }

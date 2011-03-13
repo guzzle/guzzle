@@ -37,12 +37,13 @@ class Url
      * @param string $url Full URL used to create a Url object
      *
      * @return Url
-     * @throws HttpException when an invalid URL is encountered
      */
     public static function factory($url)
     {
         // Parse the URL into parts
         $parts = array_merge(array(
+            'scheme' => null,
+            'host' => null,
             'path' => null,
             'port' => null,
             'query' => null,
@@ -50,12 +51,6 @@ class Url
             'pass' => null,
             'fragment' => null
         ), parse_url($url));
-
-        if (!isset($parts['host']) || !isset($parts['scheme'])) {
-            throw new HttpException(
-                'Invalid URL sent to ' . __METHOD__ . ': ' . $url
-            );
-        }
 
         if ($parts['query']) {
             $query = array();
@@ -309,6 +304,28 @@ class Url
     }
 
     /**
+     * Add a relative path to the currently set path
+     *
+     * @param string $relativePath Relative path to add
+     *
+     * @return Url
+     */
+    public function addPath($relativePath)
+    {
+        // Only add to the path if necessary
+        if (!$relativePath || $relativePath == '/') {
+            return $this;
+        }
+
+        // Add a leading slash if needed
+        if ($relativePath[0] != '/') {
+            $relativePath = '/' . $relativePath;
+        }
+
+        return $this->setPath(str_replace('//', '/', $this->getPath() . $relativePath));
+    }
+
+    /**
      * Get the path part of the URL
      *
      * @return string
@@ -420,6 +437,75 @@ class Url
     public function setFragment($fragment)
     {
         $this->fragment = $fragment;
+
+        return $this;
+    }
+
+    /**
+     * Check if this is an absolute URL
+     *
+     * @return bool
+     */
+    public function isAbsolute()
+    {
+        return $this->scheme && $this->host;
+    }
+
+    /**
+     * Combine the URL with another URL.  Every part of the second URL supercede
+     * the current URL if that part is specified.
+     *
+     * @param string $url Relative URL to combine with
+     *
+     * @return Url
+     * @throws InvalidArgumentException
+     */
+    public function combine($url)
+    {
+        $absolutePath = $url[0] == '/';
+        $url = self::factory($url);
+
+        if ($url->getScheme()) {
+            $this->scheme = $url->getScheme();
+        }
+
+        if ($url->getHost()) {
+            $this->host = $url->getHost();
+        }
+
+        if ($url->getPort()) {
+            $this->port = $url->getPort();
+        }
+
+        if ($url->getUsername()) {
+            $this->username = $url->getUsername();
+        }
+
+        if ($url->getPassword()) {
+            $this->password = $url->getPassword();
+        }
+
+        if ($url->getFragment()) {
+            $this->fragment = $url->getFragment();
+        }
+
+        if ($absolutePath) {
+            // Replace the current URL and query if set
+            if ($url->getPath()) {
+                $this->path = $url->getPath();
+            }
+            if (count($url->getQuery())) {
+                $this->query = clone $url->getQuery();
+            }
+        } else {
+            // Append to the current path and query string
+            if ($url->getPath()) {
+                $this->addPath($url->getPath());
+            }
+            if ($url->getQuery()) {
+                $this->query->merge($url->getQuery());
+            }
+        }
 
         return $this;
     }

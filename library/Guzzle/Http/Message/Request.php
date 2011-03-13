@@ -201,7 +201,7 @@ class Request extends AbstractMessage implements RequestInterface
      *
      * @throws BadResponseException if the response is not successful
      */
-    public static function OnComplete(RequestInterface $request, Response $response, array $default)
+    public static function onComplete(RequestInterface $request, Response $response, array $default)
     {
         // Throw an exception if the request was not successful
         if ($response->isClientError() || $response->isServerError()) {

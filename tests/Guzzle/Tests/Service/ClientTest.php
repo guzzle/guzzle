@@ -109,6 +109,15 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Client::__construct
+     */
+    public function testConstructorCanAcceptString()
+    {
+        $client = new Client('http://www.test.com/');
+        $this->assertEquals('http://www.test.com/', $client->getBaseUrl());
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::__construct
      * @expectedException Guzzle\Service\ServiceException
      */
     public function testConstructorValidatesBaseUrlIsProvided()
@@ -407,9 +416,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testCreatesRequestsWithDefaultValues()
     {
-        $client = new Client(array(
-            'base_url' => $this->getServer()->getUrl()
-        ));
+        $client = new Client($this->getServer()->getUrl() . 'base');
 
         // Create a GET request
         $request = $client->createRequest();
@@ -417,53 +424,78 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($client->getBaseUrl(), $request->getUrl());
 
         // Create a DELETE request
-        $request = $client->createRequest(array(
-            'method' => 'DELETE'
-        ));
+        $request = $client->createRequest('DELETE');
         $this->assertEquals('DELETE', $request->getMethod());
         $this->assertEquals($client->getBaseUrl(), $request->getUrl());
 
-        // Test using just the method as the param
-        $request = $client->createRequest('DELETE');
-        $this->assertEquals('DELETE', $request->getMethod());
-
         // Create a HEAD request with custom headers
-        $request = $client->createRequest(array(
-            'method' => 'HEAD',
-            'url' => 'http://www.test.com/',
-            'headers' => array(
-                'X-Test' => '123'
-            )
-        ));
+        $request = $client->createRequest('HEAD', 'http://www.test.com/');
         $this->assertEquals('HEAD', $request->getMethod());
         $this->assertEquals('http://www.test.com/', $request->getUrl());
-        $this->assertEquals('123', $request->getHeader('X-Test'));
 
         // Create a PUT request
-        $request = $client->createRequest(array(
-            'method' => 'PUT',
-            'body' => '123'
-        ));
+        $request = $client->createRequest('PUT');
         $this->assertEquals('PUT', $request->getMethod());
-        $this->assertEquals('123', (string) $request->getBody());
 
-        // Create POST request
-        $request = $client->createRequest(array(
-            'method' => 'POST',
-            'files' => array(
-                'file_1' => __FILE__
-            ),
-            'params' => array(
-                'a' => '123'
-            )
+        // Create a PUT request with injected config
+        $request = $client->createRequest('PUT', '/path/{{a}}?q={{b}}', array(
+            'a' => '1',
+            'b' => '2'
         ));
+        $this->assertEquals($request->getUrl(), $this->getServer()->getUrl() . 'path/1?q=2');
 
-        $this->assertEquals('POST', $request->getMethod());
-        $this->assertEquals(array(
-            'a' => '123',
-            'file_1' => '@' . __FILE__
-        ), $request->getPostFields()->getAll());
+        // Realtive URL with relative path
+        $request = $client->createRequest('GET', 'relative/path/to/resource');
+        $this->assertEquals($this->getServer()->getUrl() . 'base/relative/path/to/resource', $request->getUrl());
 
-        $this->assertEquals(1, count($request->getPostFiles()));
+        // Realtive URL with relative path and query
+        $request = $client->createRequest('GET', 'relative/path/to/resource?a=b&c=d');
+        $this->assertEquals($this->getServer()->getUrl() . 'base/relative/path/to/resource?a=b&c=d', $request->getUrl());
+
+        // Relative URL with absolute path
+        $request = $client->createRequest('GET', '/absolute/path/to/resource');
+        $this->assertEquals($this->getServer()->getUrl() . 'absolute/path/to/resource', $request->getUrl());
+
+        // Relative URL with absolute path and query
+        $request = $client->createRequest('GET', '/absolute/path/to/resource?a=b&c=d');
+        $this->assertEquals($this->getServer()->getUrl() . 'absolute/path/to/resource?a=b&c=d', $request->getUrl());
+
+        // Test with a base URL containing a query string too
+        $client = new Client($this->getServer()->getUrl() . 'base?z=1');
+
+        // Absolute so replaces query
+        $request = $client->createRequest('GET', '/absolute/path/to/resource?a=b&c=d');
+        $this->assertEquals($this->getServer()->getUrl() . 'absolute/path/to/resource?a=b&c=d', $request->getUrl());
+
+        // Add relative with no query
+        $request = $client->createRequest('GET', 'relative/path/to/resource');
+        $this->assertEquals($this->getServer()->getUrl() . 'base/relative/path/to/resource?z=1', $request->getUrl());
+
+        // Add relative with query
+        $request = $client->createRequest('GET', 'relative/path/to/resource?another=query');
+        $this->assertEquals($this->getServer()->getUrl() . 'base/relative/path/to/resource?z=1&another=query', $request->getUrl());
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::get
+     * @covers Guzzle\Service\Client::delete
+     * @covers Guzzle\Service\Client::head
+     * @covers Guzzle\Service\Client::put
+     * @covers Guzzle\Service\Client::post
+     */
+    public function testClientHasHelperMethodsForCreatingRequests()
+    {
+        $url = $this->getServer()->getUrl();
+        $client = new Client($url . 'base');
+        $this->assertEquals('GET', $client->get()->getMethod());
+        $this->assertEquals('PUT', $client->put()->getMethod());
+        $this->assertEquals('POST', $client->post()->getMethod());
+        $this->assertEquals('HEAD', $client->head()->getMethod());
+        $this->assertEquals('DELETE', $client->delete()->getMethod());
+        $this->assertEquals($url . 'base/abc', $client->get('abc')->getUrl());
+        $this->assertEquals($url . 'zxy', $client->put('/zxy')->getUrl());
+        $this->assertEquals($url . 'zxy?a=b', $client->post('/zxy?a=b')->getUrl());
+        $this->assertEquals($url . 'base?a=b', $client->head('?a=b')->getUrl());
+        $this->assertEquals($url . 'base?a=b', $client->delete('/base?a=b')->getUrl());
     }
 }

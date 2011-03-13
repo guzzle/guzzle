@@ -113,9 +113,8 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array('a' => 'b'), $request->getPostFields()->getAll());
 
         $request = RequestFactory::post('http://www.test.com/', null, array(
-            'a' => 'b'
-        ), array(
-            'file' => __FILE__
+            'a' => 'b',
+            'file' => '@' . __FILE__
         ));
 
         $this->assertEquals(array(

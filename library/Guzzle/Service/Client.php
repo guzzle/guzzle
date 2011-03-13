@@ -11,6 +11,7 @@ use Guzzle\Common\Inspector;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Event\Observer;
 use Guzzle\Common\Event\AbstractSubject;
+use Guzzle\Http\Url;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactory;
@@ -58,10 +59,17 @@ class Client extends AbstractSubject
     protected $userApplication = null;
 
     /**
+     * @var Url Injected base URL
+     */
+    protected $baseUrl;
+
+    /**
      * Client constructor
      *
-     * @param array|Collection $config Parameters that define how the client
-     *      behaves and connects to a webservice
+     * @param array|Collection|string $config Parameters that define how the
+     *      client behaves and connects to a webservice.  Pass an array,
+     *      Collection object or a string.  When passing a string, it will be
+     *      treated as the base_url of the client.
      * @param ServiceDescription $serviceDescription (optional) Description of
      *      the service and the commands that can be taken on the webservice
      * @param CommandFactoryInterface $commandFactory (optional) Command factory
@@ -76,8 +84,14 @@ class Client extends AbstractSubject
             $this->config = $config;
         } else if (is_array($config)) {
             $this->config = new Collection($config);
+        } else if (is_string($config)) {
+            $this->config = new Collection(array(
+                'base_url' => $config
+            ));
         } else {
-            throw new ServiceException('Invalid config argument passed to ' . __METHOD__);
+            throw new ServiceException(
+                '$config must be a string, Collection, or array'
+            );
         }
 
         $this->serviceDescription = $serviceDescription;
@@ -96,6 +110,8 @@ class Client extends AbstractSubject
         if (!$this->config->get('base_url')) {
             throw new ServiceException('No base_url argument was supplied to the constructor');
         }
+        
+        $this->setBaseUrl($this->config->get('base_url'));
 
         $this->init();
     }
@@ -118,43 +134,41 @@ class Client extends AbstractSubject
     /**
      * Create and return a new {@see RequestInterface} configured for the client
      *
-     * @param array|string $config (optional) Request configuration parameters
-     *      or the request method.  When using an array, use the following keys:
-     *      'url' => URL of the request. Optional.  Leave blank to use the base URL
-     *      'method' => HTTP method. Optional.  Leave blank to use GET
-     *      'headers' => Optional array of HTTP headers
-     *      'body' => Optional string|resource|EntityBody to use in the request body
-     *      'params' => Optional array|Collection of POST parameters
-     *      'files' => Optional array of POST files
+     * @param string $method (optional) HTTP method.  Defaults to GET
+     * @param string $uri (optional) Resource URI.  Use an absolute path to
+     *      override the base path of the client, or a relative path to append
+     *      to the base path of the client.  The URI can contain the
+     *      querystring as well.
+     * @param array|Collection (optional) Parameters to replace from the uri
+     *      {{}} injection points.
      *
      * @return RequestInterface
      */
-    public function createRequest($config = array())
+    public function createRequest($method = RequestInterface::GET, $uri = null, $inject = null)
     {
-        // If only the method was passed, convert it to a string
-        if (is_string($config)) {
-            $config = array(
-                'method' => $config
-            );
+        // Inject configuration data into the URI if needed
+        if ($inject) {
+            if (is_array($inject)) {
+                $inject = new Collection($inject);
+            }
+            $uri = Guzzle::inject($uri, $inject);
         }
 
-        // Add default values to the config array
-        $config = array_merge(array(
-            'url' => $this->getBaseUrl(),
-            'method' => 'GET',
-            'headers' => null,
-            'body' => null,
-            'params' => null,
-            'files' => null
-        ), $config);
-
-        if ($config['method'] == RequestInterface::POST && is_null($config['body'])) {
-            $request = RequestFactory::post($config['url'], $config['headers'], $config['params'], $config['files']);
+        if ($uri) {
+            // Use absolute URLs as-is
+            if (strpos($uri, 'http') === 0) {
+                $url = $uri;
+            } else {
+                $url = clone $this->baseUrl;
+                $url = (string) $url->combine($uri);
+            }
         } else {
-            $request = RequestFactory::create($config['method'], $config['url'], $config['headers'], $config['body']);
+            $url = $this->getBaseUrl();
         }
 
-        return $this->prepareRequest($request);
+        return $this->prepareRequest(
+            RequestFactory::create($method, $url)
+        );
     }
 
     /**
@@ -293,12 +307,14 @@ class Client extends AbstractSubject
     public function setBaseUrl($url)
     {
         $this->config->set('base_url', $url);
+        // Store the injected base_url
+        $this->baseUrl = Url::factory($this->getBaseUrl());
 
         return $this;
     }
 
     /**
-     * Inject configuration values into a formatted string with {{ param }} as a
+     * Inject configuration values into a formatted string with {{param}} as a
      * parameter delimiter (replace param with the configuration value name)
      *
      * @param string $string String to inject config values into
@@ -334,6 +350,82 @@ class Client extends AbstractSubject
         $this->userApplication = $appName . '/' . ($version ?: '1.0');
 
         return $this;
+    }
+
+    /**
+     * Create a GET request for the client
+     *
+     * @param string $uri (optional) Resource URI of the request.  Use an
+     *      absolute path to override the base path, or a relative path to append
+     * @param array|Collection (optional) Parameters to replace from the uri
+     *      {{}} injection points.
+     *
+     * @return Request
+     */
+    public function get($uri = null, $inject = null)
+    {
+        return $this->createRequest('GET', $uri, $inject);
+    }
+
+    /**
+     * Create a HEAD request for the client
+     *
+     * @param string $uri (optional) Resource URI of the request.  Use an
+     *      absolute path to override the base path, or a relative path to append
+     * @param array|Collection (optional) Parameters to replace from the uri
+     *      {{}} injection points.
+     *
+     * @return Request
+     */
+    public function head($uri = null, $inject = null)
+    {
+        return $this->createRequest('HEAD', $uri, $inject);
+    }
+
+    /**
+     * Create a DELETE request for the client
+     *
+     * @param string $uri (optional) Resource URI of the request.  Use an
+     *      absolute path to override the base path, or a relative path to append
+     * @param array|Collection (optional) Parameters to replace from the uri
+     *      {{}} injection points.
+     *
+     *
+     * @return Request
+     */
+    public function delete($uri = null, $inject = null)
+    {
+        return $this->createRequest('DELETE', $uri, $inject);
+    }
+
+    /**
+     * Create a PUT request for the client
+     *
+     * @param string $uri (optional) Resource URI of the request.  Use an
+     *      absolute path to override the base path, or a relative path to append
+     * @param array|Collection (optional) Parameters to replace from the uri
+     *      {{}} injection points.
+     *
+     * @return EntityEnclosingRequest
+     */
+    public function put($uri = null, $inject = null)
+    {
+        return $this->createRequest('PUT', $uri, $inject);
+    }
+
+    /**
+     * Create a POST request for the client
+     *
+     * @param string $uri (optional) Resource URI of the request.  Use an absolute path to
+     *      override the base path, or a relative path to append it.
+     * @param array|Collection (optional) Parameters to replace from the uri
+     *      {{}} injection points.
+     *
+     * @return EntityEnclosingRequest
+     */
+    public function post($uri = null, $inject = null)
+    {
+        return $this->createRequest('POST', $uri, $inject);
     }
 
     /**
