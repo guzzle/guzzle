@@ -10,7 +10,7 @@ Guzzle is a PHP framework for building REST webservice clients.  Guzzle provides
 * Responses can be cached and served from cache using the CachePlugin
 * Failed requests can be retried using truncated exponential backoff using the ExponentialBackoffPlugin
 * All data sent over the wire can be logged using the LogPlugin
-* Cookies sessions can be maintained between requests using the CookiePlugin
+* Cookie sessions can be maintained between requests using the CookiePlugin
 * Send requests in parallel
 * Supports HTTPS and SSL certificate validation
 * Requests can be sent through a proxy
@@ -203,9 +203,9 @@ Example of how to send a GET request::
 
     // The response is an object
     echo $response->getStatusCode() . "\n";
-    // Echo the raw HTTP request
+    // Cast the request to a string to see the raw HTTP request message
     echo $request;
-    // Echo the raw HTTP response
+    // Cast the response to a string to see the raw HTTP response message
     echo $response;
 
 POST to a Solr server
@@ -215,26 +215,27 @@ Example of how to send a POST request::
 
     <?php
 
-    // Use the factory:
-    $request = RequestFactory::post('http://localhost:8983/solr/update', null, null, array (
-        'file' => '/path/to/documents.xml'
+    // Use the factory (notice the @ symbol):
+    $request = RequestFactory::post('http://localhost:8983/solr/update', null, array (
+        'file' => '@/path/to/documents.xml'
     ));
-    $request->send();
+    $response = $request->send();
 
     // Or, Add the POST files manually
-    $request = RequestFactory::post('http://localhost:8983/solr/update');
-    $request->addPostFiles(array(
-        'file' => '/path/to/documents.xml'
-    ));
-    $request->send();
+    $request = RequestFactory::post('http://localhost:8983/solr/update')
+        ->addPostFiles(array(
+            'file' => '/path/to/documents.xml'
+        ));
+    $response = $request->send();
 
 Send a request and retry using exponential backoff
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here's an example of sending an HTTP request that will automatically retry transient failures using truncated exponential backoff::
 
+    <?php
     use Guzzle\Http\Plugin\ExponentialBackoffPlugin;
 
     $request = RequestFactory::get('http://google.com/');
     $request->getEventManager()->attach(new ExponentialBackoffPlugin());
-    $request->send();
+    $response = $request->send();
