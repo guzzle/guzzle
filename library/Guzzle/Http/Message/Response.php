@@ -525,6 +525,20 @@ class Response extends AbstractMessage
     }
 
     /**
+     * Checks if the Content-Type is of a certain type.  This is useful if the
+     * Content-Type header contains charset information and you need to know if
+     * the Content-Type matches a particular type.
+     *
+     * @param string $type Content type to check against
+     *
+     * @return bool
+     */
+    public function isContentType($type)
+    {
+        return stripos($this->getContentType(), $type) !== false;
+    }
+
+    /**
      * Get the Date HTTP header
      *
      * @return string|null Returns the date and time that the message was sent.

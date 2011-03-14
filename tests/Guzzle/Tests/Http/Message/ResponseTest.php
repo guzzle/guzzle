@@ -737,4 +737,19 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('HTTP', $this->response->getProtocol());
         $this->assertEquals('1.0', $this->response->getProtocolVersion());
     }
+
+    /**
+     * @covers Guzzle\Http\Message\Response::isContentType
+     */
+    public function testComparesContentType()
+    {
+        $response = new Response(200, array(
+            'Content-Type' => 'text/html; charset=ISO-8859-4'
+        ));
+
+        $this->assertTrue($response->isContentType('text/html'));
+        $this->assertTrue($response->isContentType('TExT/html'));
+        $this->assertTrue($response->isContentType('charset=ISO-8859-4'));
+        $this->assertFalse($response->isContentType('application/xml'));
+    }
 }
