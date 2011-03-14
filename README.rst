@@ -239,3 +239,96 @@ Here's an example of sending an HTTP request that will automatically retry trans
     $request = RequestFactory::get('http://google.com/');
     $request->getEventManager()->attach(new ExponentialBackoffPlugin());
     $response = $request->send();
+
+Over the wire logging
+~~~~~~~~~~~~~~~~~~~~~
+
+Use the ``Guzzle\Http\Plugin\LogPlugin`` to view all data sent over the wire, including entity bodies and redirects::
+
+    <?php
+    use Guzzle\Http\Message\RequestFactory;
+    use Guzzle\Common\Log\ZendLogAdapter;
+    use Guzzle\Http\Plugin\LogPlugin;
+
+    $adapter = new ZendLogAdapter(new \Zend_Log(new \Zend_Log_Writer_Stream('php://output')));
+    $logPlugin = new LogPlugin($adapter, LogPlugin::LOG_VERBOSE);
+    $request = RequestFactory::get('http://google.com/');
+
+    // Attach the plugin to the request
+    $request->getEventManager()->attach($logPlugin);
+
+    $request->send();
+
+The code sample above wraps a ``Zend_Log`` object using a ``Guzzle\Common\Log\ZendLogAdapter``.  After attaching the request to the plugin, all data sent over the wire will be logged to stdout.  The above code sample would output something like::
+
+    2011-03-10T20:07:56-06:00 DEBUG (7): www.google.com - "GET / HTTP/1.1" - 200 0 - 0.195698 0 45887
+    * About to connect() to google.com port 80 (#0)
+    *   Trying 74.125.227.50... * connected
+    * Connected to google.com (74.125.227.50) port 80 (#0)
+    > GET / HTTP/1.1
+    Accept: */*
+    Accept-Encoding: deflate, gzip
+    User-Agent: Guzzle/0.9 (Language=PHP/5.3.5; curl=7.21.2; Host=x86_64-apple-darwin10.4.0)
+    Host: google.com
+
+    < HTTP/1.1 301 Moved Permanently
+    < Location: http://www.google.com/
+    < Content-Type: text/html; charset=UTF-8
+    < Date: Fri, 11 Mar 2011 02:06:32 GMT
+    < Expires: Sun, 10 Apr 2011 02:06:32 GMT
+    < Cache-Control: public, max-age=2592000
+    < Server: gws
+    < Content-Length: 219
+    < X-XSS-Protection: 1; mode=block
+    <
+    * Ignoring the response-body
+    * Connection #0 to host google.com left intact
+    * Issue another request to this URL: 'http://www.google.com/'
+    * About to connect() to www.google.com port 80 (#1)
+    *   Trying 74.125.45.147... * connected
+    * Connected to www.google.com (74.125.45.147) port 80 (#1)
+    > GET / HTTP/1.1
+    Host: www.google.com
+    Accept: */*
+    Accept-Encoding: deflate, gzip
+    User-Agent: Guzzle/0.9 (Language=PHP/5.3.5; curl=7.21.2; Host=x86_64-apple-darwin10.4.0)
+
+    < HTTP/1.1 200 OK
+    < Date: Fri, 11 Mar 2011 02:06:32 GMT
+    < Expires: -1
+    < Cache-Control: private, max-age=0
+    < Content-Type: text/html; charset=ISO-8859-1
+    < Set-Cookie: PREF=ID=8a61470bce22ed5b:FF=0:TM=1299809192:LM=1299809192:S=axQwBxLyhXV7mbE3; expires=Sun, 10-Mar-2013 02:06:32 GMT; path=/; domain=.google.com
+    < Set-Cookie: NID=44=qxXLtXgSKI2S9_mG7KbN7yR2atSje1B9Eft_CHTyjTuIivwE9kB1sATn_YPmBNhZHiNyxcP4_tIYnawjSNWeAepixK3CoKHw-RINrgGNSG3RfpAG7M-IKxHmLhJM6NeA; expires=Sat, 10-Sep-2011 02:06:32 GMT; path=/; domain=.google.com; HttpOnly
+    < Server: gws
+    < X-XSS-Protection: 1; mode=block
+    < Transfer-Encoding: chunked
+    <
+    * Connection #1 to host www.google.com left intact
+    <!doctype html><html><head>
+    [...snipped]
+
+PHP-based caching forward proxy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Guzzle can leverage HTTP's caching specifications using the ``Guzzle\Http\Plugin\CachePlugin``.  The CachePlugin provides a private transparent proxy cache that caches HTTP responses.  The caching logic, based on `RFC 2616 <http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html>`_, uses HTTP headers to control caching behavior, cache lifetime, and supports ETag and Last-Modified based revalidation::
+
+    <?php
+    use Doctrine\Common\Cache\ArrayCache;
+    use Guzzle\Common\Cache\DoctrineCacheAdapter;
+    use Guzzle\Http\Plugin\CachePlugin;
+    use Guzzle\Http\Message\RequestFactory;
+
+    $adapter = new DoctrineCacheAdapter(new ArrayCache());
+    $cache = new CachePlugin($adapter, true);
+
+    $request = RequestFactory::get('http://www.wikipedia.org/');
+    $request->getEventManager()->attach($cache);
+    $request->send();
+
+    // The next request will revalidate against the origin server to see if it
+    // has been modified.  If a 304 response is recieved the response will be
+    // served from cache
+    $request->setState('new')->$request->send();
+
+Guzzle doesn't try to reinvent the wheel when it comes to caching or logging.  Plenty of other frameworks, namely the `Zend Framework <http://framework.zend.com/>`_, have excellent solutions in place that you are probably already using in your applications.  Guzzle uses adapters for caching and logging.  Guzzle currently supports log adapters for the Zend Framework and cache adapters for `Doctrine 2.0 <http://www.doctrine-project.org/>`_ and the Zend Framework.
