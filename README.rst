@@ -1,7 +1,7 @@
 Guzzle
 ======
 
-Guzzle is a PHP framework for building REST webservice clients.  Guzzle provides the tools necessary to quickly build a testable webservice client with complete control over preparing HTTP requests and processing HTTP responses.
+Guzzle is a PHP framework for building REST webservice clients.  Guzzle provides the tools necessary to quickly build a testable webservice client with complete control over preparing HTTP requests and processing HTTP responses::
 
     <?php
     use Guzzle\Http\Message\RequestFactory;
