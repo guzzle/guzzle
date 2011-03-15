@@ -3,6 +3,84 @@ Guzzle
 
 Guzzle is a PHP framework for building REST webservice clients.  Guzzle provides the tools necessary to quickly build a testable webservice client with complete control over preparing HTTP requests and processing HTTP responses.
 
+    <?php
+    use Guzzle\Http\Message\RequestFactory;
+
+    // Send a GET request
+    $request = RequestFactory::get('http://www.example.com/');
+    $response = $request->send();
+
+    // More succinctly, send a HEAD request followed by DELETE request
+    $response = RequestFactory::head('http://www.example.com/')->send();
+    $response = RequestFactory::delete('http://www.example.com/')->send();
+
+    // Send a PUT request with custom headers
+    $response = RequestFactory::put('http://www.example.com/upload', array(
+        'X-Header' => 'My Header'
+    ), 'body of the request');
+
+    // Send a PUT request using the contents of a PHP stream as the body
+    $response = RequestFactory::put('http://www.example.com/upload', array(
+        'X-Header' => 'My Header'
+    ), fopen('http://www.test.com/', 'r'));
+
+    // Send a POST request with a file upload (notice the @ symbol):
+    $request = RequestFactory::post('http://localhost:8983/solr/update', null, array (
+        'custom_field' => 'my value',
+        'file' => '@/path/to/documents.xml'
+    ));
+    $response = $request->send();
+
+    // Send a POST request and add the POST files manually
+    $request = RequestFactory::post('http://localhost:8983/solr/update')
+        ->addPostFiles(array(
+            'file' => '/path/to/documents.xml'
+        ));
+    $response = $request->send();
+
+    // Responses are objects
+    echo $response->getStatusCode() . ' ' . $response->getReasonPhrase() . "\n";
+
+    // Requests and responses can be cast to a string to show the raw HTTP message
+    echo $request . "\n\n" . $response;
+
+    // Create the request objects manually
+    $getRequest = new Guzzle\Http\Message\Request('GET', 'http://www.example.com/');
+    $putRequest = new Guzzle\Http\Message\EntityEnclosingRequest('PUT', 'http://www.example.com/');
+
+    // Create a request based on an HTTP message
+    $request = RequestFactory::fromMessage(
+        "PUT / HTTP/1.1\r\n" .
+        "Host: test.com:8081\r\n" .
+        "Content-Type: text/plain"
+        "Transfer-Encoding: chunked\r\n" .
+        "\r\n" .
+        "this is the body"
+    );
+
+Send requests in parallel::
+
+    <?php
+    use Guzzle\Http\Pool\Pool;
+    use Guzzle\Http\Pool\PoolRequestException;
+
+    $pool = new Pool();
+    $pool->add(RequestFactory::get('http://www.google.com/'));
+    $pool->add(RequestFactory::head('http://www.google.com/'));
+    $pool->add(RequestFactory::get('https://www.github.com/'));
+
+    try {
+        $pool->send();
+    } catch (PoolRequestException $e) {
+        echo "The following requests encountered an exception: \n";
+        foreach ($e as $exception) {
+            echo $exception->getRequest() . "\n" . $exception->getMessage() . "\n";
+        }
+    }
+
+Features
+--------
+
 * Supports GET, HEAD, POST, DELETE, and PUT methods
 * Persistent connections are implicitly managed by Guzzle, resulting in huge performance benefits
 * Allows custom entity bodies to be sent in PUT and POST requests, including sending data from a PHP stream
@@ -30,6 +108,52 @@ Guzzle makes writing services an easy task by providing a simple pattern to foll
 Most web service clients follow a specific pattern: create a client class, create methods for each action that can be taken on the API, create a cURL handle to transfer an HTTP request to the client, parse the response, implement error handling, and return the result. You've probably had to interact with an API that either doesn't have a PHP client or the currently available PHP clients are not up to an acceptable level of quality. When facing these types of situations, you probably find yourself writing a webservice that lacks most of the advanced features mentioned by Michael. It wouldn't make sense to spend all that time writing those features-- it's just a simple webservice client for just one API... But then you build another client... and another. Suddenly you find yourself with several web service clients to maintain, each client a God class, each reeking of code duplication and lacking most, if not all, of the aforementioned features. Enter Guzzle.
 
 Guzzle is used in production at `SHOEBACCA.com <http://www.shoebacca.com/>`_, a mutli-million dollar e-commerce company.  Guzzle has 100% code coverage; every line of Guzzle has been tested using PHPUnit.
+
+Creating a simple web service client
+------------------------------------
+
+The Guzzle ``Guzzle\Service\Client`` object can be used directly with a simple web service.  Robust web service clients should interact with a web service using command objects, but if you want to quickly interact with a web service, you can create a client and build your HTTP requests manually.  When creating a simple client, pass the base URL of the web service to the client's constructor.  In the following example, we are interacting with the Unfuddle API and issuing a GET request to retrieve a listing of tickets in the 123 project::
+
+    <?php
+    use Guzzle\Service\Client;
+
+    $client = new Client('https://mydomain.unfuddle.com/api/v1');
+    $request = $client->get('projects/{{project_id}}/tickets', array(
+        'project_id' => '123'
+    ));
+
+    $request->setAuth('myusername', 'mypassword');
+    $response = $request->send();
+
+Notice that the URI provided to the client's ``get`` method is relative.  The path in the URI is also relative.  Relative paths will add to the path of the base URL of the client-- so in the example above, the path of the base URL is ``/api/v1``, the relative path is ``projects/123/tickets``, and the URL will ultimately become ``https://mydomain.unfuddle.com/api/v1/projects/123/tickets``.  If a relative path and a query string are provided, then the relative path will be appended to the base URL path, and the query string provided will be merged into the query string of the base URL.  If an absolute path is provided (e.g. /path/to/something), then the path specified in the base URL of the client will be replaced with the absolute path, and the query string provided will replace the query string of the base URL.  If an absolute URL is provided (e.g. ``http://www.test.com/path``), then the request will completely use the absolute URL as-is without merging in any of the URL parts specified in the base URL.
+
+Templates can be specified in the client's get, head, delete, post, and put methods, which allow placeholders to be specified in the the request template that will be overwritten with an array of configuration data referenced by key.
+
+All requests in the above client would need the basic HTTP authorization added after they are created.  You can automate this and add the authorization header to all requests generated by the client by adding a custom event to the client's event manager.  Another annoyance you can solve with Guzzle's event system is automatically creating SimpleXMLElement objects for a response when the content type is ``application/xml``.  Here's an example of creating a very simple Unfuddle client that lists the email addresses of everyone in your project (note: Guzzle has a robust Unfuddle client-- this is just an example)::
+
+    <?php
+
+    $client = new Client('https://mydomain.unfuddle.com/api/v1');
+    $client->getEventManager()->attach(function($subject, $event, $context) {
+        if ($event == 'request.create') {
+            $context->setAuth('myusername', 'mypassword');
+        } else if ($event == 'request.complete' && $context->isContentType('application/xml')) {
+            // Hack the getInfo/setInfo methods
+            $context->setInfo(
+                array_merge(array(
+                    'xml' => new \SimpleXMLElement($context->getBody(true)))
+                ), $context->getInfo()
+            );
+        }
+    });
+
+    $response = $client->get('projects/{{project_id}}/people', array(
+        'project_id' => '1'
+    ))->send();
+
+    foreach ($response->getInfo('xml')->person as $person) {
+        echo $person->email . "\n";
+    }
 
 Installing Guzzle
 -----------------
@@ -155,94 +279,6 @@ If the above code samples seem a little verbose to you, you can take some shortc
     $objects = $client->getCommand('bucket.list_bucket')
         ->setBucket('my_bucket')
         ->execute();
-
-Creating a simple web service client
-------------------------------------
-
-The Guzzle ``Guzzle\Service\Client`` object can be used directly with a simple web service.  Robust web service clients should interact with a web service using command objects, but if you want to quickly interact with a web service, you can create a client and build your HTTP requests manually.  When creating a simple client, pass the base URL of the web service to the client's constructor.  In the following example, we are interacting with the Unfuddle API and issuing a GET request to retrieve a listing of tickets in the 123 project::
-
-    <?php
-    use Guzzle\Service\Client;
-
-    $client = new Client('https://mydomain.unfuddle.com/api/v1');
-    $request = $client->get('projects/{{project_id}}/tickets', array(
-        'project_id' => '123'
-    ));
-
-    $request->setAuth('myusername', 'mypassword');
-    $response = $request->send();
-
-Notice that the URI provided to the client's ``get`` method is relative.  The path in the URI is also relative.  Relative paths will add to the path of the base URL of the client-- so in the example above, the path of the base URL is ``/api/v1``, the relative path is ``projects/123/tickets``, and the URL will ultimately become ``https://mydomain.unfuddle.com/api/v1/projects/123/tickets``.  If a relative path and a query string are provided, then the relative path will be appended to the base URL path, and the query string provided will be merged into the query string of the base URL.  If an absolute path is provided (e.g. /path/to/something), then the path specified in the base URL of the client will be replaced with the absolute path, and the query string provided will replace the query string of the base URL.  If an absolute URL is provided (e.g. ``http://www.test.com/path``), then the request will completely use the absolute URL as-is without merging in any of the URL parts specified in the base URL.
-
-Templates can be specified in the client's get, head, delete, post, and put methods, which allow placeholders to be specified in the the request template that will be overwritten with an array of configuration data referenced by key.
-
-All requests in the above client would need the basic HTTP authorization added after they are created.  You can automate this and add the authorization header to all requests generated by the client by adding a custom event to the client's event manager.  Another annoyance you can solve with Guzzle's event system is automatically creating SimpleXMLElement objects for a response when the content type is ``application/xml``.  Here's an example of creating a very simple Unfuddle client that lists the email addresses of everyone in your project (note: Guzzle has a robust Unfuddle client-- this is just an example)::
-
-    <?php
-
-    $client = new Client('https://mydomain.unfuddle.com/api/v1');
-    $client->getEventManager()->attach(function($subject, $event, $context) {
-        if ($event == 'request.create') {
-            $context->setAuth('myusername', 'mypassword');
-        } else if ($event == 'request.complete' && $context->isContentType('application/xml')) {
-            // Hack the getInfo/setInfo methods
-            $context->setInfo(
-                array_merge(array(
-                    'xml' => new \SimpleXMLElement($context->getBody(true)))
-                ), $context->getInfo()
-            );
-        }
-    });
-
-    $response = $client->get('projects/{{project_id}}/people', array(
-        'project_id' => '1'
-    ))->send();
-
-    foreach ($response->getInfo('xml')->person as $person) {
-        echo $person->email . "\n";
-    }
-
-Examples of sending HTTP requests
----------------------------------
-
-GET the google.com homepage
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Example of how to send a GET request::
-
-    <?php
-
-    use Guzzle\Http\Message\RequestFactory;
-
-    $request = RequestFactory::get('http://www.google.com/');
-    $response = $request->send();
-
-    // The response is an object
-    echo $response->getStatusCode() . "\n";
-    // Cast the request to a string to see the raw HTTP request message
-    echo $request;
-    // Cast the response to a string to see the raw HTTP response message
-    echo $response;
-
-POST to a Solr server
-~~~~~~~~~~~~~~~~~~~~~
-
-Example of how to send a POST request::
-
-    <?php
-
-    // Use the factory (notice the @ symbol):
-    $request = RequestFactory::post('http://localhost:8983/solr/update', null, array (
-        'file' => '@/path/to/documents.xml'
-    ));
-    $response = $request->send();
-
-    // Or, Add the POST files manually
-    $request = RequestFactory::post('http://localhost:8983/solr/update')
-        ->addPostFiles(array(
-            'file' => '/path/to/documents.xml'
-        ));
-    $response = $request->send();
 
 Send a request and retry using exponential backoff
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
