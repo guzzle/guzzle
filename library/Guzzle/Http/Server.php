@@ -199,8 +199,18 @@ class Server
             exec('node ' . __DIR__ . \DIRECTORY_SEPARATOR . 'server.js ' . $this->port . ' >> /tmp/server.log 2>&1 &');
             // Shut the server down when the script exits unexpectedly
             register_shutdown_function(array($this, 'stop'));
-            // Wait for the server the setup before proceeding
-            while (!$this->isRunning());
+            // Wait at most 5 seconds for the server the setup before proceeding
+            $start = time();
+            while (!$this->isRunning() && time() - $start < 5);
+            // @codeCoverageIgnoreStart
+            if (!$this->isRunning()) {
+                throw new HttpException(
+                    'Unable to contact server.js.  Have you installed node.js '
+                    . 'v0.5.0+?  The node.js executable, node, must also be in '
+                    . 'your path.'
+                );
+            }
+            // @codeCoverageIgnoreEnd
         }
 
         $this->running = true;
