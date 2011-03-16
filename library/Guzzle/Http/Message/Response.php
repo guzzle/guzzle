@@ -420,6 +420,26 @@ class Response extends AbstractMessage
     }
 
     /**
+     * Check if an HTTP method is allowed by checking the Allow response header
+     *
+     * @param string $method Method to check
+     *
+     * @return bool
+     */
+    public function isMethodAllowed($method)
+    {
+        $allow = $this->getAllow();
+        if (!$allow) {
+            return false;
+        } else {
+            return false !== array_search(
+                strtoupper($method),
+                array_map('trim', array_map('strtoupper', explode(',', $allow)))
+            );
+        }
+    }
+
+    /**
      * Get the Cache-Control HTTP header
      *
      * @return string|null Returns a string that tells all caching mechanisms

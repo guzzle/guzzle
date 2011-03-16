@@ -752,4 +752,25 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($response->isContentType('charset=ISO-8859-4'));
         $this->assertFalse($response->isContentType('application/xml'));
     }
+
+    /**
+     * @covers Guzzle\Http\Message\Response::isMethodAllowed
+     */
+    public function testResponseDeterminesIfMethodIsAllowedBaseOnAllowHeader()
+    {
+        $response = new Response(200, array(
+            'Allow' => 'OPTIONS, POST, deletE,GET'
+        ));
+
+        $this->assertTrue($response->isMethodAllowed('get'));
+        $this->assertTrue($response->isMethodAllowed('GET'));
+        $this->assertTrue($response->isMethodAllowed('options'));
+        $this->assertTrue($response->isMethodAllowed('post'));
+        $this->assertTrue($response->isMethodAllowed('Delete'));
+        $this->assertFalse($response->isMethodAllowed('put'));
+        $this->assertFalse($response->isMethodAllowed('PUT'));
+
+        $response = new Response(200);
+        $this->assertFalse($response->isMethodAllowed('get'));
+    }
 }

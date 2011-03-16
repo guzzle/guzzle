@@ -78,6 +78,16 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
+     * @covers Guzzle\Http\Message\RequestFactory::options
+     */
+    public function testCreatesOptionsRequests()
+    {
+        $request = RequestFactory::options('http://www.example.com/');
+        $this->assertEquals('OPTIONS', $request->getMethod());
+        $this->assertType('Guzzle\\Http\\Message\\Request', $request);
+    }
+
+    /**
      * @covers Guzzle\Http\Message\RequestFactory::create
      * @covers Guzzle\Http\Message\RequestFactory::put
      */

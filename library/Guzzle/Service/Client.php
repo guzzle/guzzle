@@ -429,6 +429,21 @@ class Client extends AbstractSubject
     }
 
     /**
+     * Create an OPTIONS request for the client
+     *
+     * @param string $uri (optional) Resource URI of the request.  Use an
+     *      absolute path to override the base path, or relative path to append
+     * @param array|Collection (optional) Parameters to replace from the uri
+     *      {{}} injection points.
+     *
+     * @return Request
+     */
+    public function options($uri = null, $inject = null)
+    {
+        return $this->createRequest('OPTIONS', $uri, $inject);
+    }
+
+    /**
      * Hook method to initialize the client
      *
      * @return void

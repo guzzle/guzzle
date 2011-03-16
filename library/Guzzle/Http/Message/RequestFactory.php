@@ -309,4 +309,17 @@ class RequestFactory
     {
         return self::create(RequestInterface::PUT, $url, $headers, $body);
     }
+
+    /**
+     * Create a new OPTIONS request
+     *
+     * @param string $url URL of the OPTIONS request
+     * @param array|Collection $headers (optional) HTTP headers
+     *
+     * @return Request
+     */
+    public static function options($url, $headers = null, $body = null)
+    {
+        return self::create(RequestInterface::OPTIONS, $url, $headers, $body);
+    }
 }
