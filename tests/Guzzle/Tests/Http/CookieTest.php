@@ -24,11 +24,11 @@ class CookieTest extends \Guzzle\Tests\GuzzleTestCase
             array('name=value', array(
                 'name' => 'value'
             )),
-            array('name=value;name2=value%202', array(
+            array('name=value;name2=value 2', array(
                 'name' => 'value',
                 'name2' => 'value 2'
             )),
-            array('name=value;name2=x%3Dy%26a%3Db', array(
+            array('name=value;name2=x=y&a=b', array(
                 'name' => 'value',
                 'name2' => 'x=y&a=b'
             )),
@@ -53,8 +53,8 @@ class CookieTest extends \Guzzle\Tests\GuzzleTestCase
         $jar = new Cookie();
         $this->assertEquals(';', $jar->getFieldSeparator());
         $this->assertEquals('=', $jar->getValueSeparator());
-        $this->assertEquals(true, $jar->isEncodingFields());
-        $this->assertEquals(true, $jar->isEncodingValues());
+        $this->assertEquals(false, $jar->isEncodingFields());
+        $this->assertEquals(false, $jar->isEncodingValues());
         $this->assertEquals('', $jar->getPrefix());
     }
 

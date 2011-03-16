@@ -50,8 +50,8 @@ class Cookie extends QueryString
         $this->setFieldSeparator(';')
              ->setPrefix('')
              ->setValueSeparator('=')
-             ->setEncodeFields(true)
-             ->setEncodeValues(true)
+             ->setEncodeFields(false)
+             ->setEncodeValues(false)
              ->setAggregateFunction(function($key, $value, $encodeFields = false, $encodeValues = false) {
                  $value = array_unique($value);
                  return array(

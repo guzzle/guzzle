@@ -196,7 +196,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
                 )
             ),
             array(
-                'domain=unittests; expires=Tue, 21-Nov-2006 08:33:44 GMT; domain=example.com; path=/some%20value/',
+                'domain=unittests; expires=Tue, 21-Nov-2006 08:33:44 GMT; domain=example.com; path=/some value/',
                 array(
                     'cookies' => array(
                         'domain=unittests'
@@ -472,7 +472,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertEquals('muppet=cookie_monster;secure=sec', (string) $request1->getCookie());
         $this->assertEquals('muppet=cookie_monster;secure=sec;a=b;c=d', (string) $request2->getCookie());
-        $this->assertEquals('muppet=cookie_monster;e=f%20h', (string) $request3->getCookie());
+        $this->assertEquals('muppet=cookie_monster;e=f h', (string) $request3->getCookie());
 
         // Clear the e=f h temporary cookie
         $this->plugin->clearTemporaryCookies();
@@ -531,5 +531,33 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertNotEmpty($request->getCookie('CH'));
 
         $this->assertEquals(9, count($this->plugin->extractCookies($response)));
+    }
+
+    /**
+     * @covers Guzzle\Http\Plugin\CookiePlugin::update
+     */
+    public function testCookiesAreExtractedFromRedirectResponses()
+    {
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 302 Moved Temporarily\r\n" .
+            "Set-Cookie: test=583551; expires=Wednesday, 23-Mar-2011 19:49:45 GMT; path=/\r\n" .
+            "Location: /redirect\r\n\r\n",
+            
+            "HTTP/1.1 200 OK\r\n" .
+            "Content-Length: 0\r\n\r\n",
+
+            "HTTP/1.1 200 OK\r\n" .
+            "Content-Length: 0\r\n\r\n"
+        ));
+
+        $request = RequestFactory::get($this->getServer()->getUrl());
+        $request->getEventManager()->attach($this->plugin);
+        $request->send();
+
+        $request = RequestFactory::get($this->getServer()->getUrl());
+        $request->getEventManager()->attach($this->plugin);
+        $request->send();
+
+        $this->assertEquals('test=583551', $request->getHeader('Cookie'));
     }
 }

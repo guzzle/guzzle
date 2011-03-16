@@ -240,7 +240,7 @@ class CookiePlugin implements Observer
         
         if ($cookie) {
             foreach ((array) $cookie as $c) {
-                $cdata = self::parseCookie($c);
+                $cdata = self::parseCookie($c, $response->getRequest());
                 if ($cdata) {
                     $this->jar->save($cdata);
                     $cookieData[] = $cdata;
@@ -303,6 +303,10 @@ class CookiePlugin implements Observer
         } else if ($event == 'request.sent') {
             // The response is being processed
             $this->extractCookies($subject->getResponse());
+        } else if ($event == 'request.receive.status_line') {
+            if ($context['previous_response']) {
+                $this->extractCookies($context['previous_response']);
+            }
         }
     }
 }

@@ -683,6 +683,7 @@ class Request extends AbstractMessage implements RequestInterface
         $data = preg_replace("/([^\r])(\n)\b/", "$1\r\n", $data);
 
         if (preg_match('/^\HTTP\/1\.[0|1]\s\d{3}\s.+$/', $data)) {
+            $previousResponse = $this->response;
             list($dummy, $code, $status) = explode(' ', str_replace("\r\n", '', $data), 3);
             $this->response = new Response($code, null, $this->getResponseBody());
             $this->response->setStatus($code, $status)->setRequest($this);
@@ -690,6 +691,7 @@ class Request extends AbstractMessage implements RequestInterface
                 'line' => $data,
                 'status_code' => $code,
                 'reason_phrase' => $status,
+                'previous_response' => $previousResponse
             ), true);
         } else if ($length > 2) {
             list($header, $value) = array_map('trim', explode(':', trim($data), 2));
