@@ -11,8 +11,6 @@ use Guzzle\Common\Cache\DoctrineCacheAdapter;
 use Guzzle\Service\ServiceBuilder;
 
 /**
- * @group service
- *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
@@ -26,12 +24,12 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
 <?xml version="1.0" ?>
 <guzzle>
     <clients>
-        <client name="michael.mock" builder="Guzzle.Tests.Service.Mock.MockBuilder">
+        <client name="michael.mock" class="Guzzle.Tests.Service.Mock.MockClient">
             <param name="username" value="michael" />
             <param name="password" value="testing123" />
             <param name="subdomain" value="michael" />
         </client>
-        <client name="billy.mock" builder="Guzzle.Tests.Service.Mock.MockBuilder">
+        <client name="billy.mock" class="Guzzle.Tests.Service.Mock.MockClient">
             <param name="username" value="billy" />
             <param name="password" value="passw0rd" />
             <param name="subdomain" value="billy" />
@@ -56,13 +54,12 @@ EOT;
 
     /**
      * @covers Guzzle\Service\ServiceBuilder::factory
-     * @covers Guzzle\Service\ServiceBuilder::getBuilder
      */
     public function testCanBeCreatedUsingAnXmlFile()
     {
         $builder = ServiceBuilder::factory($this->tempFile);
-        $b = $builder->getBuilder('michael.mock');
-        $this->assertInstanceOf('Guzzle\\Service\\Builder\\DefaultBuilder', $b);
+        $c = $builder->get('michael.mock');
+        $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\MockClient', $c);
     }
 
     /**
@@ -81,7 +78,7 @@ EOT;
     public function testFactoryCanBuildServicesThatExtendOtherServices()
     {
         $s = ServiceBuilder::factory($this->tempFile);
-        $s = $s->getClient('billy.testing');
+        $s = $s->get('billy.testing');
         $this->assertEquals('test.billy', $s->getConfig('subdomain'));
         $this->assertEquals('billy', $s->getConfig('username'));
     }
@@ -129,76 +126,46 @@ EOT;
         $this->assertEquals($s1, $s2);
 
         $this->assertSame($s1, $s1->setCache($adapter, 86400));
-        $client = $s1->getClient('michael.mock');
+        $client = $s1->get('michael.mock');
     }
 
     /**
-     * @covers Guzzle\Service\ServiceBuilder::getBuilder
-     */
-    public function testBuildersAreStoredForPerformance()
-    {
-        $builder = ServiceBuilder::factory($this->tempFile);
-        $b = $builder->getBuilder('michael.mock');
-        $this->assertTrue($b === $builder->getBuilder('michael.mock'));
-    }
-
-    /**
-     * @covers Guzzle\Service\ServiceBuilder::getBuilder
+     * @covers Guzzle\Service\ServiceBuilder::get
      * @expectedException Guzzle\Service\ServiceException
-     * @expectedExceptionMessage No service builder is registered as foobar
+     * @expectedExceptionMessage No client is registered as foobar
      */
-    public function testThrowsExceptionWhenGettingInvalidBuilder()
+    public function testThrowsExceptionWhenGettingInvalidClient()
     {
-        ServiceBuilder::factory($this->tempFile)->getBuilder('foobar');
+        ServiceBuilder::factory($this->tempFile)->get('foobar');
     }
 
     /**
-     * @covers Guzzle\Service\ServiceBuilder::getClient
+     * @covers Guzzle\Service\ServiceBuilder::get
      */
-    public function testGetClientStoresClientCopy()
+    public function testStoresClientCopy()
     {
         $builder = ServiceBuilder::factory($this->tempFile);
-        $client = $builder->getClient('michael.mock');
+        $client = $builder->get('michael.mock');
         $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\MockClient', $client);
         $this->assertEquals('http://127.0.0.1:8124/v1/michael', $client->getBaseUrl());
-        $this->assertEquals($client, $builder->getClient('michael.mock'));
+        $this->assertEquals($client, $builder->get('michael.mock'));
 
         // Get another client but throw this one away
-        $client2 = $builder->getClient('billy.mock', true);
+        $client2 = $builder->get('billy.mock', true);
         $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\MockClient', $client2);
         $this->assertEquals('http://127.0.0.1:8124/v1/billy', $client2->getBaseUrl());
 
         // Make sure the original client is still there and set
-        $this->assertTrue($client === $builder->getClient('michael.mock'));
+        $this->assertTrue($client === $builder->get('michael.mock'));
 
         // Create a new billy.mock client that is stored
-        $client3 = $builder->getClient('billy.mock');
+        $client3 = $builder->get('billy.mock');
 
         // Make sure that the stored billy.mock client is equal to the other stored client
-        $this->assertTrue($client3 === $builder->getClient('billy.mock'));
+        $this->assertTrue($client3 === $builder->get('billy.mock'));
 
         // Make sure that this client is not equal to the previous throwaway client
-        $this->assertFalse($client2 === $builder->getClient('billy.mock'));
-    }
-
-    /**
-     * @covers Guzzle\Service\ServiceBuilder::getBuilder
-     * @expectedException Guzzle\Service\ServiceException
-     * @expectedExceptionMessage A class attribute must be present when using Guzzle\Service\Builder\DefaultBuilder
-     */
-    public function testThrowsExceptionWhenGettingDefaultBuilderWithNoClassSpecified()
-    {
-        $s = new ServiceBuilder(array(
-            'michael.mock' => array(
-                'builder' => 'Guzzle.Service.Builder.DefaultBuilder',
-                'params' => array(
-                    'base_url' => 'http://www.test.com/',
-                    'username' => 'michael'
-                )
-            )
-        ));
-
-        $s->getBuilder('michael.mock');
+        $this->assertFalse($client2 === $builder->get('billy.mock'));
     }
 
     /**
@@ -208,7 +175,6 @@ EOT;
     {
         $s = new ServiceBuilder(array(
             'michael.mock' => array(
-                'builder' => 'Guzzle.Service.Builder.DefaultBuilder',
                 'class' => 'Guzzle\\Tests\\Service\\Mock\\MockClient',
                 'params' => array(
                     'base_url' => 'http://www.test.com/',
@@ -220,7 +186,7 @@ EOT;
             )
         ));
 
-        $c = $s->getBuilder('michael.mock')->build();
+        $c = $s->get('michael.mock');
         $this->assertEquals(8080, $c->getConfig('curl.curlopt_proxyport'));
     }
 
@@ -242,7 +208,7 @@ EOT;
             )
         ));
 
-        $c = $s->getBuilder('michael.mock')->build();
+        $c = $s->get('michael.mock');
         $this->assertType('Guzzle\\Tests\\Service\\Mock\\MockClient', $c);
     }
 }

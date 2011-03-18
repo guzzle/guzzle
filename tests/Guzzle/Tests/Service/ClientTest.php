@@ -133,6 +133,20 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
+     * @covers Guzzle\Service\Client::factory
+     */
+    public function testFactoryCreatesClient()
+    {
+        $client = Client::factory(array(
+            'base_url' => 'http://www.test.com/',
+            'test' => '123'
+        ));
+
+        $this->assertEquals('http://www.test.com/', $client->getBaseUrl());
+        $this->assertEquals('123', $client->getConfig('test'));
+    }
+
+    /**
      * @covers Guzzle\Service\Client
      */
     public function testInjectConfig()

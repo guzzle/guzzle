@@ -20,7 +20,7 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
     public function testConstructorConfiguresDefaults()
     {
         $ri = $this->getMockForAbstractClass('Guzzle\\Service\\ResourceIterator', array(
-            $this->getServiceBuilder()->getClient('mock'),
+            $this->getServiceBuilder()->get('mock'),
             array(
                 'limit' => 10,
                 'page_size' => 3,
@@ -67,7 +67,7 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 41\r\n\r\n{ \"next_token\": \"\", \"resources\": [\"j\"] }",
         ));
 
-        $ri = new MockResourceIterator($this->getServiceBuilder()->getClient('mock'), array(
+        $ri = new MockResourceIterator($this->getServiceBuilder()->get('mock'), array(
             'page_size' => 3,
             'resources' => array('a', 'b', 'c'),
             'next_token' => 'd'
@@ -107,7 +107,7 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 52\r\n\r\n{ \"next_token\": \"j\", \"resources\": [\"g\", \"h\"] }"
         ));
 
-        $ri = new MockResourceIterator($this->getServiceBuilder()->getClient('mock'), array(
+        $ri = new MockResourceIterator($this->getServiceBuilder()->get('mock'), array(
             'page_size' => 3,
             'limit' => 8,
             'resources' => array('a', 'b', 'c'),

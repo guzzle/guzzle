@@ -7,6 +7,7 @@
 namespace Guzzle\Service;
 
 use Guzzle\Guzzle;
+use Guzzle\Common\Cache\CacheAdapterInterface;
 use Guzzle\Common\Inspector;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Event\Observer;
@@ -68,6 +69,22 @@ class Client extends AbstractSubject
      */
     private $injectedBaseUrl;
 
+    /**
+     * Basic factory method to create a new client.  Extend this method in
+     * subclasses to build more complex clients.
+     *
+     * @param array|Collection $config (optiona) Configuartion data
+     * @param CacheAdapterInterface $cacheAdapter (optional) Pass a cache
+     *      adapter to cache the service configuration settings
+     * @param int $cacheTtl (optional) How long to cache data
+     *
+     * @return Client
+     */
+    public static function factory($config, CacheAdapterInterface $cache = null, $ttl = 86400)
+    {
+        return new self($config['base_url'], $config);
+    }
+    
     /**
      * Client constructor
      *

@@ -27,7 +27,7 @@ class ResourceIteratorApplyBatchedTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 41\r\n\r\n{ \"next_token\": \"\", \"resources\": [\"j\"] }",
         ));
 
-        $ri = new MockResourceIterator($this->getServiceBuilder()->getClient('mock'), array(
+        $ri = new MockResourceIterator($this->getServiceBuilder()->get('mock'), array(
             'page_size' => 3,
             'resources' => array('a', 'b', 'c'),
             'next_token' => 'd'

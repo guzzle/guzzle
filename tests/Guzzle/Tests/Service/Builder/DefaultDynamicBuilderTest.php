@@ -6,8 +6,6 @@
 
 namespace Guzzle\Tests\Service\Builder;
 
-use Doctrine\Common\Cache\ArrayCache;
-use Guzzle\Common\Cache\DoctrineCacheAdapter;
 use Guzzle\Service\Builder\DefaultDynamicBuilder;
 
 /**
@@ -27,8 +25,6 @@ class DefaultDynamicBuilderTest extends \Guzzle\Tests\GuzzleTestCase
             'password' => 'test',
             'subdomain' => 'michael'
         ));
-
-        $this->assertEquals('Test Service Builder', $builder->getName());
         $this->assertEquals('Guzzle\\Service\\Client', $builder->getClass());
     }
 

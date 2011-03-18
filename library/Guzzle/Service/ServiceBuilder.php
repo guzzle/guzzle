@@ -20,12 +20,7 @@ class ServiceBuilder
     /**
      * @var array Service builder configuration data
      */
-    protected $serviceBuilderConfig = array();
-
-    /**
-     * @var array Instantiated service builders
-     */
-    protected $serviceBuilders = array();
+    protected $builderConfig = array();
 
     /**
      * @var array Instantiated client objects
@@ -60,7 +55,7 @@ class ServiceBuilder
     {
         // Compute the cache key for this service and check if it exists in cache
         $key = 'guz_service_' . md5($filename);
-        $cached = ($cacheAdapter) ? $cacheAdapter->fetch($key) : false;
+        $cached = $cacheAdapter ? $cacheAdapter->fetch($key) : false;
 
         if ($cached) {
 
@@ -82,7 +77,6 @@ class ServiceBuilder
 
                 $row = array();
                 $name = (string) $client->attributes()->name;
-                $builder = (string) $client->attributes()->builder;
                 $class = (string) $client->attributes()->class;
 
                 // Check if this client builder extends another client
@@ -92,7 +86,6 @@ class ServiceBuilder
                         throw new ServiceException($name . ' is trying to extend a non-existent or not yet defined service: ' . $extends);
                     }
 
-                    $builder = $builder ?: $config[$extends]['builder'];
                     $class = $class ?: $config[$extends]['class'];
                     $row = $config[$extends]['params'];
                 }
@@ -104,8 +97,7 @@ class ServiceBuilder
 
                 // Add this client builder
                 $config[$name] = array(
-                    'builder' => $builder,
-                    'class' => $class,
+                    'class' => str_replace('.', '\\', $class),
                     'params' => $row
                 );
             }
@@ -134,7 +126,7 @@ class ServiceBuilder
      */
     public function __construct(array $serviceBuilderConfig)
     {
-        $this->serviceBuilderConfig = $serviceBuilderConfig;
+        $this->builderConfig = $serviceBuilderConfig;
     }
 
     /**
@@ -159,52 +151,6 @@ class ServiceBuilder
     }
 
     /**
-     * Get a registered service builder by name
-     *
-     * @param string $name Name of the registered service builder to retrieve
-     * @param bool $throwAway (optional) Set to TRUE to not store the builder
-     *      for later retrieval on the ServiceBuilder
-     *
-     * @return AbstractBuilder
-     * @throws ServiceException if no builder is registered by the requested name
-     * @throws ServiceException if no client attribute is set when using a DefaultBuilder
-     */
-    public function getBuilder($name, $throwAway = false)
-    {
-        if (!$throwAway && isset($this->serviceBuilders[$name])) {
-            return $this->serviceBuilders[$name];
-        }
-
-        if (!isset($this->serviceBuilderConfig[$name])) {
-            throw new ServiceException('No service builder is registered as ' . $name);
-        }
-
-        // Use the DefaultBuilder if no builder was specified
-        if (!isset($this->serviceBuilderConfig[$name]['builder'])) {
-            $this->serviceBuilderConfig[$name]['builder'] = 'Guzzle.Service.Builder.DefaultBuilder';
-        }
-
-        $class = str_replace('.', '\\', $this->serviceBuilderConfig[$name]['builder']);
-        $builder = new $class($this->serviceBuilderConfig[$name]['params'], $name);
-        if ($this->cache) {
-            $builder->setCache($this->cache, $this->cacheTtl);
-        }
-
-        if ($class == 'Guzzle\\Service\\Builder\\DefaultBuilder') {
-            if (!isset($this->serviceBuilderConfig[$name]['class'])) {
-                throw new ServiceException('A class attribute must be present when using Guzzle\\Service\\Builder\\DefaultBuilder');
-            }
-            $builder->setClass($this->serviceBuilderConfig[$name]['class']);
-        }
-
-        if (!$throwAway) {
-            $this->serviceBuilders[$name] = $builder;
-        }
-
-        return $builder;
-    }
-
-    /**
      * Get a client using a registered builder
      *
      * @param $name Name of the registered client to retrieve
@@ -213,13 +159,22 @@ class ServiceBuilder
      *
      * @return Client
      */
-    public function getClient($name, $throwAway = false)
+    public function get($name, $throwAway = false)
     {
+        if (!isset($this->builderConfig[$name])) {
+            throw new ServiceException('No client is registered as ' . $name);
+        }
+
         if (!$throwAway && isset($this->clients[$name])) {
             return $this->clients[$name];
         }
 
-        $client = $this->getBuilder($name, $throwAway)->build();
+        $client = call_user_func(
+            array($this->builderConfig[$name]['class'], 'factory'),
+            $this->builderConfig[$name]['params'],
+            $this->cache,
+            $this->cacheTtl
+        );
 
         if (!$throwAway) {
             $this->clients[$name] = $client;

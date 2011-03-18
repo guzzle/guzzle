@@ -17,7 +17,7 @@ use Guzzle\Service\Command\DynamicCommandFactory;
  *
  * @author  michael@guzzlephp.org
  */
-class DefaultDynamicBuilder extends AbstractBuilder
+class DefaultDynamicBuilder
 {
     /**
      * @var CommandFactory Factory to build commands based on a description
@@ -35,6 +35,11 @@ class DefaultDynamicBuilder extends AbstractBuilder
     protected $class;
 
     /**
+     * @var Collection Configuration object that should hold all config settings
+     */
+    protected $config;
+
+    /**
      * Construct the DynamicClient builder using an XML document
      *
      * @param string $filename Full path to the service description document
@@ -47,7 +52,6 @@ class DefaultDynamicBuilder extends AbstractBuilder
         $clientArgs = $this->service->getClientArgs();
         $this->class = $clientArgs['_client_class']['value'];
         $this->commandFactory = new DynamicCommandFactory($this->service);
-        $this->name = $this->service->getName() . ' Builder';
         $this->config = $config ?: array();
     }
 
@@ -58,7 +62,7 @@ class DefaultDynamicBuilder extends AbstractBuilder
      */
     public function build()
     {
-        $class = $this->getClass();
+        $class = $this->class;
         $client = new $class($this->service->getBaseUrl());
         $client->setConfig($this->config)
                ->setService($this->service)
@@ -68,7 +72,9 @@ class DefaultDynamicBuilder extends AbstractBuilder
     }
 
     /**
-     * {@inheritdoc}
+     * Get the dynamic builder's class
+     *
+     * @return string
      */
     public function getClass()
     {
