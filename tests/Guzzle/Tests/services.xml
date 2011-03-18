@@ -35,7 +35,7 @@
         </client>
 
         <!-- Mock service -->
-        <client name="mock" builder="Guzzle.Service.Builder.DefaultBuilder" class="Guzzle.Tests.Service.Mock.MockClient">
+        <client name="mock" builder="Guzzle.Tests.Service.Mock.MockBuilder">
             <param name="username" value="test_user" />
             <param name="password" value="****" />
             <param name="subdomain" value="test" />

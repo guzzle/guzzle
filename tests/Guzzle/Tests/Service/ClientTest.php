@@ -84,57 +84,51 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Client::getConfig
+     * @covers Guzzle\Service\Client::setConfig
+     * @covers Guzzle\Service\Client::setBaseUrl
+     * @covers Guzzle\Service\Client::getBaseUrl
      */
-    public function testGetConfig()
+    public function testAcceptsConfig()
     {
-        $client = new Client(new Collection(array(
-            'base_url' => 'http://www.google.com/'
-        )), $this->service, $this->factory);
+        $client = new Client('http://www.google.com/');
+        $this->assertEquals('http://www.google.com/', $client->getBaseUrl());
+        $this->assertSame($client, $client->setConfig(array(
+            'test' => '123'
+        )));
+        $this->assertEquals(array('test' => '123'), $client->getConfig()->getAll());
+        $this->assertEquals('123', $client->getConfig('test'));
+        $this->assertSame($client, $client->setBaseUrl('http://www.test.com/{{test}}'));
+        $this->assertEquals('http://www.test.com/123', $client->getBaseUrl());
+        $this->assertEquals('http://www.test.com/{{test}}', $client->getBaseUrl(false));
 
-        $this->assertEquals('http://www.google.com/', $client->getConfig('base_url'));
-
-        $this->assertEquals(array(
-            'base_url' => 'http://www.google.com/'
-        ), $client->getConfig());
+        try {
+            $client->setConfig(false);
+        } catch (\InvalidArgumentException $e) {
+        }
     }
 
     /**
      * @covers Guzzle\Service\Client::__construct
-     * @expectedException Guzzle\Service\ServiceException
      */
-    public function testConstructorValidatesConfig()
+    public function testConstructorCanAcceptConfig()
     {
-        $client = new Client(false, $this->service, $this->factory);
+        $client = new Client('http://www.test.com/', array(
+            'data' => '123'
+        ));
+        $this->assertEquals('123', $client->getConfig('data'));
     }
 
     /**
-     * @covers Guzzle\Service\Client::__construct
-     */
-    public function testConstructorCanAcceptString()
-    {
-        $client = new Client('http://www.test.com/');
-        $this->assertEquals('http://www.test.com/', $client->getBaseUrl());
-    }
-
-    /**
-     * @covers Guzzle\Service\Client::__construct
-     * @expectedException Guzzle\Service\ServiceException
-     */
-    public function testConstructorValidatesBaseUrlIsProvided()
-    {
-        $client = new Client(array(), new ServiceDescription('test', 'Test service', '', array(), array()), $this->factory);
-    }
-
-    /**
-     * @covers Guzzle\Service\Client::__construct
+     * @covers Guzzle\Service\Client::setConfig
      */
     public function testCanUseCollectionAsConfig()
     {
-        $client = new Client(new Collection(array(
+        $client = new Client('http://www.google.com/');
+        $client->setConfig(new Collection(array(
             'api' => 'v1',
             'key' => 'value',
             'base_url' => 'http://www.google.com/'
-        )), $this->serviceTest, $this->factory);
+        )));
         $this->assertEquals('v1', $client->getConfig('api'));
     }
 
@@ -143,28 +137,19 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testInjectConfig()
     {
-        $client = new Client(array(
+        $client = new Client('http://www.google.com/');
+        $client->setConfig(array(
             'api' => 'v1',
             'key' => 'value',
-            'base_url' => 'http://www.google.com/'
-        ), $this->serviceTest, $this->factory);
-
-        $this->assertEquals('Testing...api/v1/key/value', $client->inject('Testing...api/{{ api }}/key/{{ key }}'));
+            'foo' => 'bar'
+        ));
+        $this->assertEquals('Testing...api/v1/key/value', $client->inject('Testing...api/{{api}}/key/{{key}}'));
 
         // Make sure that the client properly validates and injects config
         $this->assertEquals('bar', $client->getConfig('foo'));
-
-        try {
-            $client = new Client(array(), $this->serviceTest, $this->factory);
-            $this->fail('Did not throw exception when missing required arg');
-        } catch (\Exception $e) {
-            $this->assertContains('Requires that the api argument be supplied', $e->getMessage());
-        }
     }
 
     /**
-     * Test that a plugin can be attached to a client
-     *
      * @covers Guzzle\Service\Client::__construct
      * @covers Guzzle\Service\Client::createRequest
      */
@@ -173,12 +158,8 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->flush();
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
 
-        $client = new Client(array(
-            'base_url' => $this->getServer()->getUrl()
-        ), $this->service, $this->factory);
-
+        $client = new Client($this->getServer()->getUrl());
         $logPlugin = $this->getLogPlugin();
-
         $client->getEventManager()->attach($logPlugin);
 
         // Make sure the plugin was registered correctly
@@ -202,12 +183,10 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testClientReturnsValidBaseUrls()
     {
-        $client = new Client(array(
-            'base_url' => 'http://www.{{ foo }}.{{ data }}/',
+        $client = new Client('http://www.{{foo}}.{{data}}/', array(
             'data' => '123',
             'foo' => 'bar'
-        ), $this->service, $this->factory);
-
+        ));
         $this->assertEquals('http://www.bar.123/', $client->getBaseUrl());
         $client->setBaseUrl('http://www.google.com/');
         $this->assertEquals('http://www.google.com/', $client->getBaseUrl());
@@ -221,7 +200,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->flush();
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
 
-        $client = new Client(array('base_url' => $this->getServer()->getUrl()), $this->service, $this->factory);
+        $client = new Client($this->getServer()->getUrl());
         $cmd = new MockCommand();
         $client->execute($cmd);
 
@@ -236,8 +215,8 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testThrowsExceptionWhenExecutingMixedClientCommandSets()
     {
-        $client = new Client(array('base_url' => 'http://www.test.com/'), $this->service, $this->factory);
-        $otherClient = new Client(array('base_url' => 'http://www.test-123.com/'), $this->service, $this->factory);
+        $client = new Client('http://www.test.com/');
+        $otherClient = new Client('http://www.test-123.com/');
 
         // Create a command set and a command
         $set = new CommandSet();
@@ -257,7 +236,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testThrowsExceptionWhenExecutingInvalidCommandSets()
     {
-        $client = new Client(array('base_url' => 'http://www.test.com/'), $this->service, $this->factory);
+        $client = new Client('http://www.test.com/');
         $client->execute(new \stdClass());
     }
 
@@ -266,7 +245,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testExecutesCommandSets()
     {
-        $client = new Client(array('base_url' => 'http://www.test.com/'), $this->service, $this->factory);
+        $client = new Client('http://www.test.com/');
 
         // Set a mock response for each request from the Client
         $client->getEventManager()->attach(function($subject, $event, $context) {
@@ -276,7 +255,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         });
 
         // Create a command set and a command
-        $set = new \Guzzle\Service\Command\CommandSet();
+        $set = new CommandSet();
         $cmd = new MockCommand();
         $set->addCommand($cmd);
         $this->assertSame($set, $client->execute($set));
@@ -288,35 +267,26 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
+     * @covers Guzzle\Service\Client::setService
+     * @covers Guzzle\Service\Client::getService
      * @covers Guzzle\Service\Client::getCommand
+     * @covers Guzzle\Service\Client::setCommandFactory
      */
     public function testClientUsesCommandFactory()
     {
-        $client = new Client(
-            array('base_url' => 'http://www.test.com/', 'api' => 'v1'),
-            $this->serviceTest,
-            new ConcreteCommandFactory($this->serviceTest)
-        );
+        $client = new Client('http://www.test.com/', array(
+            'api' => 'v1'
+        ));
+
+        $this->assertSame($client, $client->setService($this->service));
+        $this->assertSame($this->service, $client->getService());
+        $factory = new ConcreteCommandFactory($this->serviceTest);
+        $this->assertSame($client, $client->setCommandFactory($factory));
 
         $this->assertInstanceOf('Guzzle\\Service\\Command\\CommandInterface', $client->getCommand('test_command', array(
             'bucket' => 'test',
             'key' => 'keyTest'
         )));
-    }
-
-    /**
-     * @covers Guzzle\Service\Client::getService
-     */
-    public function testClientUsesService()
-    {
-        $client = new Client(
-            array('base_url' => 'http://www.test.com/', 'api' => 'v1'),
-            $this->serviceTest,
-            new ConcreteCommandFactory($this->serviceTest)
-        );
-
-        $this->assertInstanceOf('Guzzle\\Service\\ServiceDescription', $client->getService());
-        $this->assertSame($this->serviceTest, $client->getService());
     }
 
     /**
@@ -326,15 +296,12 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testSetsUserApplication()
     {
-        $client = new Client(
-            array('base_url' => 'http://www.test.com/', 'api' => 'v1'),
-            $this->serviceTest,
-            new ConcreteCommandFactory($this->serviceTest)
-        );
+        $client = new Client('http://www.test.com/', array(
+            'api' => 'v1'
+        ));
 
         $this->assertSame($client, $client->setUserApplication('Test', '1.0Ab'));
-
-        $request = $client->createRequest();
+        $request = $client->get();
         $this->assertEquals('Test/1.0Ab ' . Guzzle::getDefaultUserAgent(), $request->getHeader('User-Agent'));
     }
 
@@ -344,17 +311,12 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testClientAddsCurlOptionsToRequests()
     {
-        $client = new Client(
-            array(
-                'base_url' => 'http://www.test.com/',
-                'api' => 'v1',
-                // Adds the option using the curl values
-                'curl.CURLOPT_HTTPAUTH' => 'CURLAUTH_DIGEST',
-                'curl.abc' => 'not added'
-            ),
-            $this->serviceTest,
-            new ConcreteCommandFactory($this->serviceTest)
-        );
+        $client = new Client('http://www.test.com/', array(
+            'api' => 'v1',
+            // Adds the option using the curl values
+            'curl.CURLOPT_HTTPAUTH' => 'CURLAUTH_DIGEST',
+            'curl.abc' => 'not added'
+        ));
 
         $request = $client->createRequest();
         $options = $request->getCurlOptions();
@@ -368,15 +330,10 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testClientAddsCacheKeyFiltersToRequests()
     {
-        $client = new Client(
-            array(
-                'base_url' => 'http://www.test.com/',
-                'api' => 'v1',
-                'cache.key_filter' => 'query=Date'
-            ),
-            $this->serviceTest,
-            new ConcreteCommandFactory($this->serviceTest)
-        );
+        $client = new Client('http://www.test.com/', array(
+            'api' => 'v1',
+            'cache.key_filter' => 'query=Date'
+        ));
 
         $request = $client->createRequest();
         $this->assertEquals('query=Date', $request->getParams()->get('cache.key_filter'));
@@ -388,10 +345,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testThrowsExceptionWhenNoCommandFactoryIsSetAndGettingCommand()
     {
-        $client = new Client(array(
-            'base_url' => $this->getServer()->getUrl()
-        ));
-
+        $client = new Client($this->getServer()->getUrl());
         $client->getCommand('test');
     }
 
@@ -400,14 +354,10 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testPreparesRequestsNotCreatedByTheClient()
     {
-        $client = new Client(array(
-            'base_url' => $this->getServer()->getUrl()
-        ));
+        $client = new Client($this->getServer()->getUrl());
         $client->getEventManager()->attach(new ExponentialBackoffPlugin());
-
         $request = RequestFactory::get($client->getBaseUrl());
         $this->assertSame($request, $client->prepareRequest($request));
-
         $this->assertTrue($request->getEventManager()->hasObserver('Guzzle\\Http\\Plugin\\ExponentialBackoffPlugin'));
     }
 
@@ -499,5 +449,15 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($url . 'zxy?a=b', $client->post('/zxy?a=b')->getUrl());
         $this->assertEquals($url . 'base?a=b', $client->head('?a=b')->getUrl());
         $this->assertEquals($url . 'base?a=b', $client->delete('/base?a=b')->getUrl());
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::getBaseUrl
+     * @expectedException Guzzle\Service\ServiceException
+     */
+    public function testClientEnsuresBaseUrlIsSetWhenRetrievingIt()
+    {
+        $client = new Client('');
+        $client->getBaseUrl();
     }
 }

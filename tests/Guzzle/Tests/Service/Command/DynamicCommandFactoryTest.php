@@ -95,7 +95,9 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     public function testBuildsUsingPathParametersAndAppendSlashPrepend()
     {
         $factory = new DynamicCommandFactory($this->service);
-        $client = new Client(array(), $this->service, $factory);
+        $client = new Client($this->service->getBaseUrl());
+        $client->setService($this->service);
+        $client->setCommandFactory($factory);
 
         $command = $factory->buildCommand('test_command', array(
             'bucket' => 'test',
@@ -129,7 +131,8 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     public function testValidatesArgs()
     {
         $factory = new DynamicCommandFactory($this->service);
-        $client = new Client(array(), $this->service, $factory);
+        $client = new Client($this->service->getBaseUrl());
+        $client->setService($this->service)->setCommandFactory($factory);
         $command = $factory->buildCommand('test_command', array());
         $client->execute($command);
     }
@@ -140,7 +143,8 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     public function testUsesDifferentLocations()
     {
         $factory = new DynamicCommandFactory($this->service);
-        $client = new Client(array(), $this->service, $factory);
+        $client = new Client($this->service->getBaseUrl());
+        $client->setCommandFactory($factory);
         $command = $factory->buildCommand('body', array(
             'b' => 'my-data',
             'q' => 'abc',

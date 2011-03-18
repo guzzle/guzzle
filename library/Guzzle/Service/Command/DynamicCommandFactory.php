@@ -38,7 +38,7 @@ class DynamicCommandFactory extends AbstractCommandFactory
                 Inspector::getInstance()->validateConfig($api->getArgs(), $that);
 
                 // Get the path values and use the client config settings
-                $pathValues = new Collection($that->getClient()->getConfig());
+                $pathValues = $that->getClient()->getConfig();
                 $foundPath = false;
                 foreach ($api->getArgs() as $name => $arg) {
                     if ($arg->get('location') == 'path') {

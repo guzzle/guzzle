@@ -6,9 +6,10 @@
 
 namespace Guzzle\Service\Builder;
 
+use Guzzle\Common\Inspector;
 use Guzzle\Common\Cache\CacheAdapterInterface;
 use Guzzle\Common\Collection;
-use Guzzle\Common\Service\ServiceException;
+use Guzzle\Service\ServiceException;
 
 /**
  * Abstract service client builder
@@ -40,13 +41,27 @@ abstract class AbstractBuilder
     /**
      * Construct the builder
      *
-     * @param array $config (optional) Configuration values to apply
+     * @param array $config (optional) Configuration values to apply.  A
+     *      'base_url' array key is required, specifying the base URL of the
+     *      web service.
      * @param string $name (optional) Name of the builder
+     *
+     * @throws ServiceException if a base_url is not specified
      */
     public function __construct(array $config = null, $name = '')
     {
         $this->name = $name;
         $this->config = new Collection($config);
+
+        // Add default arguments to the config
+        Inspector::getInstance()->validateClass(get_class($this), $this->config, false);
+
+        // Make sure that the service has a base_url specified
+        if (!$this->config->get('base_url')) {
+            throw new ServiceException(
+                'No base_url is set in the builder config or class docblock'
+            );
+        }
     }
 
     /**
@@ -57,12 +72,38 @@ abstract class AbstractBuilder
     public function __toString()
     {
         $xml = '<client name="' . htmlspecialchars($this->getName()) . '" class="' . htmlspecialchars(str_replace('\\', '.', $this->getClass())) . '">' . "\n";
-
         foreach ($this->config as $key => $value) {
             $xml .= '    <param name="' . htmlspecialchars($key) . '" value="' . htmlspecialchars($value) . '" />' . "\n";
         }
 
         return $xml . '</client>';
+    }
+
+    /**
+     * Build the client
+     *
+     * @return Client
+     */
+    abstract public function build();
+
+    /**
+     * Get the class name of the client that will be built by the builder
+     *
+     * @return string
+     */
+    abstract public function getClass();
+
+    /**
+     * Validate that the builder has all of the required parameters and that the
+     * configuration values set on the builder meet the requirements of the
+     * docblock of the builder.
+     *
+     * @throws ServiceException If the config value set on the builder do not
+     *      meet the requirements set in the docblock of the builder.
+     */
+    public final function validate()
+    {
+        Inspector::getInstance()->validateClass(get_class($this), $this->config, true);
     }
 
     /**
@@ -84,20 +125,6 @@ abstract class AbstractBuilder
         return $this;
     }
 
-    /**
-     * Build the client
-     *
-     * @return Client
-     */
-    abstract public function build();
-
-    /**
-     * Get the class name of the client that will be built by the builder
-     *
-     * @return string
-     */
-    abstract public function getClass();
-    
     /**
      * Get the name of the builder
      * 

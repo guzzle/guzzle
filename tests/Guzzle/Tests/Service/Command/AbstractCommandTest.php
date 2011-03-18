@@ -21,6 +21,10 @@ abstract class AbstractCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $service = $builder->build();
         $factory = new ConcreteCommandFactory($service);
 
-        return new Client(array('base_url' => 'http://www.google.com/'), $service, $factory);
+        $client =  new Client('http://www.google.com/');
+        $client->setService($service)
+               ->setCommandFactory($factory);
+
+        return $client;
     }
 }

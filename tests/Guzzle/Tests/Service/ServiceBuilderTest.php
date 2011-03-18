@@ -26,12 +26,12 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
 <?xml version="1.0" ?>
 <guzzle>
     <clients>
-        <client name="michael.mock" builder="Guzzle.Service.Builder.DefaultBuilder" class="Guzzle.Tests.Service.Mock.MockClient">
+        <client name="michael.mock" builder="Guzzle.Tests.Service.Mock.MockBuilder">
             <param name="username" value="michael" />
             <param name="password" value="testing123" />
             <param name="subdomain" value="michael" />
         </client>
-        <client name="billy.mock" builder="Guzzle.Service.Builder.DefaultBuilder" class="Guzzle.Tests.Service.Mock.MockClient">
+        <client name="billy.mock" builder="Guzzle.Tests.Service.Mock.MockBuilder">
             <param name="username" value="billy" />
             <param name="password" value="passw0rd" />
             <param name="subdomain" value="billy" />
@@ -192,6 +192,7 @@ EOT;
             'michael.mock' => array(
                 'builder' => 'Guzzle.Service.Builder.DefaultBuilder',
                 'params' => array(
+                    'base_url' => 'http://www.test.com/',
                     'username' => 'michael'
                 )
             )
@@ -210,6 +211,7 @@ EOT;
                 'builder' => 'Guzzle.Service.Builder.DefaultBuilder',
                 'class' => 'Guzzle\\Tests\\Service\\Mock\\MockClient',
                 'params' => array(
+                    'base_url' => 'http://www.test.com/',
                     'subdomain' => 'michael',
                     'password' => 'test',
                     'username' => 'michael',
@@ -231,6 +233,7 @@ EOT;
             'michael.mock' => array(
                 'class' => 'Guzzle\\Tests\\Service\\Mock\\MockClient',
                 'params' => array(
+                    'base_url' => 'http://www.test.com/',
                     'subdomain' => 'michael',
                     'password' => 'test',
                     'username' => 'michael',

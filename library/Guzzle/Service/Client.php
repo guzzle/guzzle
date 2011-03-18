@@ -39,11 +39,6 @@ use Guzzle\Common\NullObject;
 class Client extends AbstractSubject
 {
     /**
-     * @var Collection Parameter object holding configuration data
-     */
-    protected $config;
-
-    /**
      * @var ServiceDescription Description of the service and possible commands
      */
     protected $serviceDescription;
@@ -59,76 +54,89 @@ class Client extends AbstractSubject
     protected $userApplication = null;
 
     /**
-     * @var Url Injected base URL
+     * @var Collection Parameter object holding configuration data
      */
-    protected $baseUrl;
+    private $config;
+
+    /**
+     * @var Url Base URL of the client
+     */
+    private $baseUrl;
+
+    /**
+     * @var Url Cached injected base URL
+     */
+    private $injectedBaseUrl;
 
     /**
      * Client constructor
      *
-     * @param array|Collection|string $config Parameters that define how the
-     *      client behaves and connects to a webservice.  Pass an array,
-     *      Collection object or a string.  When passing a string, it will be
-     *      treated as the base_url of the client.
-     * @param ServiceDescription $serviceDescription (optional) Description of
-     *      the service and the commands that can be taken on the webservice
-     * @param CommandFactoryInterface $commandFactory (optional) Command factory
-     *      used to create commands by name.
-     *
+     * @param string $baseUrl Base URL used to interact with a web service
+     * @param array|Collection $config (optional) Configuration settings
      * @throws ServiceException
      */
-    public function __construct($config, ServiceDescription $serviceDescription = null, CommandFactoryInterface $commandFactory = null)
+    public function __construct($baseUrl, $config = null)
+    {
+        $this->setBaseUrl($baseUrl);
+        if ($config) {
+            $this->setConfig($config);
+        }
+    }
+
+    /**
+     * Set the configuration object to use with the client
+     *
+     * @param array|Collection|string $config Parameters that define how the
+     *      client behaves and connects to a webservice.  Pass an array or a
+     *      Collection object.
+     *
+     * @return Client
+     */
+    public final function setConfig($config)
     {
         // Set the configuration object
         if ($config instanceof Collection) {
             $this->config = $config;
         } else if (is_array($config)) {
             $this->config = new Collection($config);
-        } else if (is_string($config)) {
-            $this->config = new Collection(array(
-                'base_url' => $config
-            ));
         } else {
-            throw new ServiceException(
-                '$config must be a string, Collection, or array'
+            throw new \InvalidArgumentException(
+                'Config must be an array or Collection'
             );
         }
 
-        $this->serviceDescription = $serviceDescription;
-        $this->commandFactory = $commandFactory;
-
-        if ($serviceDescription) {
-            if (!$this->getConfig('base_url')) {
-                $this->config->set('base_url', $serviceDescription->getBaseUrl());
-            }
-
-            // Add default arguments and validate the supplied arguments
-            Inspector::getInstance()->validateConfig($serviceDescription->getClientArgs(), $this->config, true);
-        }
-
-        // Make sure that the service has a base_url specified
-        if (!$this->config->get('base_url')) {
-            throw new ServiceException('No base_url argument was supplied to the constructor');
-        }
-        
-        $this->setBaseUrl($this->config->get('base_url'));
-
-        $this->init();
+        return $this;
     }
 
     /**
-     * Get a configuration setting from the client or all of the configuration
-     * settings.  This command should not allow the client config to be
-     * modified, so an immutable value is returned
+     * Get a configuration setting or all of the configuration settings
      *
      * @param bool|string $key Configuration value to retrieve.  Set to FALSE
-     *      to retrieve all values as an array.
+     *      to retrieve all values of the client.  The object return can be
+     *      modified, and modifications will affect the client's config.
      *
-     * @return mixed|array
+     * @return mixed|Collection
      */
-    public function getConfig($key = false)
+    public final function getConfig($key = false)
     {
-        return !$key ? $this->config->getAll() : $this->config->get($key);
+        if (!$this->config) {
+            $this->config = new Collection();
+        }
+
+        return $key ? $this->config->get($key) : $this->config;
+    }
+
+    /**
+     * Inject configuration values into a formatted string with {{param}} as a
+     * parameter delimiter (replace param with the configuration value name)
+     *
+     * @param string $string String to inject config values into
+     *
+     * @return string
+     */
+    public final function inject($string)
+    {
+        return Guzzle::inject($string, $this->getConfig());
     }
 
     /**
@@ -159,7 +167,7 @@ class Client extends AbstractSubject
             if (strpos($uri, 'http') === 0) {
                 $url = $uri;
             } else {
-                $url = clone $this->baseUrl;
+                $url = clone $this->injectedBaseUrl;
                 $url = (string) $url->combine($uri);
             }
         } else {
@@ -191,7 +199,7 @@ class Client extends AbstractSubject
         }
 
         // Add any curl options that might in the config to the request
-        foreach ($this->config->getAll(array('/^curl\..+/')) as $key => $value) {
+        foreach ($this->getConfig()->getAll(array('/^curl\..+/')) as $key => $value) {
             $curlOption = CurlConstants::getOptionInt(str_replace('curl.', '', $key));
             if ($curlOption !== false) {
                 $curlValue = CurlConstants::getValueInt($value);
@@ -228,7 +236,8 @@ class Client extends AbstractSubject
     {
         if (!$this->commandFactory) {
             throw new ServiceException(
-                'No command factory has been set on the client'
+                'No command factory has been set on the client.  A command ' .
+                'factory is usually set on a client by a builder object.'
             );
         }
 
@@ -240,6 +249,20 @@ class Client extends AbstractSubject
     }
 
     /**
+     * Set the command factory that will create command objects by name
+     *
+     * @param CommandFactoryInterface $factory Factory to create commands
+     *
+     * @return Client
+     */
+    public final function setCommandFactory(CommandFactoryInterface $commandFactory)
+    {
+        $this->commandFactory = $commandFactory;
+
+        return $this;
+    }
+
+    /**
      * Execute a command and return the response
      *
      * @param CommandInterface|CommandSet $command The command or set to execute
@@ -247,9 +270,8 @@ class Client extends AbstractSubject
      * @return mixed Returns the result of the executed command's
      *       {@see CommandInterface::getResult} method if a CommandInterface is
      *       passed, or the CommandSet itself if a CommandSet is passed
-     *
-     * @throws InvalidArgumentException if neither a Command or CommandSet is passed
-     * @throws Command\CommandSetException if the set contains commands associated
+     * @throws InvalidArgumentException
+     * @throws Command\CommandSetException if a set contains commands associated
      *      with other clients
      */
     public function execute($command)
@@ -266,14 +288,12 @@ class Client extends AbstractSubject
         } else if ($command instanceof CommandSet) {
 
             foreach ($command as $c) {
-
                 if ($c->getClient() && $c->getClient() !== $this) {
                     throw new Command\CommandSetException(
                         'Attempting to run a mixed-Client CommandSet from a ' .
                         'Client context.  Run the set using CommandSet::execute() '
                     );
                 }
-
                 $c->setClient($this);
             }
 
@@ -288,13 +308,18 @@ class Client extends AbstractSubject
      * Get the base service endpoint URL with configuration options injected
      * into the configuration setting.
      *
-     * @param bool $inject (optional) Set to FALSE to get the raw base_url
+     * @param bool $inject (optional) Set to FALSE to get the raw base URL
      *
      * @return string
+     * @throws ServiceException if a base URL has not been set
      */
     public function getBaseUrl($inject = true)
     {
-        return $inject ? $this->inject($this->config->get('base_url')) : $this->config->get('base_url');
+        if (!$this->baseUrl) {
+            throw new ServiceException('A base URL has not been set');
+        }
+
+        return $inject ? $this->inject((string) $this->baseUrl) : $this->baseUrl;
     }
 
     /**
@@ -304,26 +329,27 @@ class Client extends AbstractSubject
      *
      * @return Client
      */
-    public function setBaseUrl($url)
+    public final function setBaseUrl($url)
     {
-        $this->config->set('base_url', $url);
-        // Store the injected base_url
-        $this->baseUrl = Url::factory($this->getBaseUrl());
+        $this->baseUrl = $url;
+        $this->injectedBaseUrl = Url::factory($this->inject($url));
 
         return $this;
     }
 
     /**
-     * Inject configuration values into a formatted string with {{param}} as a
-     * parameter delimiter (replace param with the configuration value name)
+     * Set the service description of the client
      *
-     * @param string $string String to inject config values into
+     * @param ServiceDescription $description Service description that describes
+     *      all of the commands and information of the client
      *
-     * @return string
+     * @return Client
      */
-    public function inject($string)
+    public final function setService(ServiceDescription $service)
     {
-        return Guzzle::inject($string, $this->config);
+        $this->serviceDescription = $service;
+
+        return $this;
     }
 
     /**
@@ -331,7 +357,7 @@ class Client extends AbstractSubject
      *
      * @return ServiceDescription|NullObject
      */
-    public function getService()
+    public final function getService()
     {
         return $this->serviceDescription ?: new NullObject();
     }
@@ -345,7 +371,7 @@ class Client extends AbstractSubject
      *
      * @return Client
      */
-    public function setUserApplication($appName, $version)
+    public final function setUserApplication($appName, $version)
     {
         $this->userApplication = $appName . '/' . ($version ?: '1.0');
 
@@ -362,7 +388,7 @@ class Client extends AbstractSubject
      *
      * @return Request
      */
-    public function get($uri = null, $inject = null)
+    public final function get($uri = null, $inject = null)
     {
         return $this->createRequest('GET', $uri, $inject);
     }
@@ -377,7 +403,7 @@ class Client extends AbstractSubject
      *
      * @return Request
      */
-    public function head($uri = null, $inject = null)
+    public final function head($uri = null, $inject = null)
     {
         return $this->createRequest('HEAD', $uri, $inject);
     }
@@ -393,7 +419,7 @@ class Client extends AbstractSubject
      *
      * @return Request
      */
-    public function delete($uri = null, $inject = null)
+    public final function delete($uri = null, $inject = null)
     {
         return $this->createRequest('DELETE', $uri, $inject);
     }
@@ -408,7 +434,7 @@ class Client extends AbstractSubject
      *
      * @return EntityEnclosingRequest
      */
-    public function put($uri = null, $inject = null)
+    public final function put($uri = null, $inject = null)
     {
         return $this->createRequest('PUT', $uri, $inject);
     }
@@ -423,7 +449,7 @@ class Client extends AbstractSubject
      *
      * @return EntityEnclosingRequest
      */
-    public function post($uri = null, $inject = null)
+    public final function post($uri = null, $inject = null)
     {
         return $this->createRequest('POST', $uri, $inject);
     }
@@ -438,18 +464,8 @@ class Client extends AbstractSubject
      *
      * @return Request
      */
-    public function options($uri = null, $inject = null)
+    public final function options($uri = null, $inject = null)
     {
         return $this->createRequest('OPTIONS', $uri, $inject);
-    }
-
-    /**
-     * Hook method to initialize the client
-     *
-     * @return void
-     */
-    protected function init()
-    {
-        return;
     }
 }
