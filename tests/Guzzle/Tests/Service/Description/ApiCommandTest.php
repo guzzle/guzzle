@@ -4,11 +4,11 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Tests\Service;
+namespace Guzzle\Tests\Service\Description;
 
 use Guzzle\Common\Collection;
-use Guzzle\Service\ApiCommand;
-use Guzzle\Service\ServiceDescription;
+use Guzzle\Service\Description\ApiCommand;
+use Guzzle\Service\Description\ServiceDescription;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>
@@ -16,7 +16,7 @@ use Guzzle\Service\ServiceDescription;
 class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
-     * @covers Guzzle\Service\ApiCommand
+     * @covers Guzzle\Service\Description\ApiCommand
      */
     public function testApiCommandIsDataObject()
     {
@@ -27,7 +27,6 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
             'path' => '/api/v1',
             'min_args' => 2,
             'can_batch' => true,
-            'concrete_command_class' => 'Guzzle\\Service\\Command\\ClosureCommand',
             'args' => array(
                 'key' => array(
                     'required' => 'true',
@@ -75,5 +74,18 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
         ), $c->validate(new Collection(array())));
 
         $this->assertNull($c->getArg('afefwef'));
+    }
+
+    /**
+     * @covers Guzzle\Service\Description\ApiCommand::__construct
+     */
+    public function testAllowsConcreteCommands()
+    {
+        $c = new ApiCommand(array(
+            'name' => 'test',
+            'class' => 'Guzzle\\Service\\Command\ClosureCommand',
+            'args' => array()
+        ));
+        $this->assertEquals('Guzzle\\Service\\Command\ClosureCommand', $c->getConcreteClass());
     }
 }

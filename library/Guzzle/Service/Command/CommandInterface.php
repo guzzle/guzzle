@@ -10,7 +10,6 @@ use Guzzle\Common\Collection;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\Client;
-use Guzzle\Service\Command\CommandException;
 
 /**
  * Command object to handle preparing and processing client requests and
@@ -39,7 +38,7 @@ interface CommandInterface
      * Execute the command
      *
      * @return Command
-     * @throws CommandException if a client has not been associated with the command
+     * @throws RuntimeException if a client has not been associated with the command
      */
     public function execute();
 
@@ -54,7 +53,7 @@ interface CommandInterface
      * Get the request object associated with the command
      *
      * @return RequestInterface
-     * @throws CommandException if the command has not been executed
+     * @throws RuntimeException if the command has not been executed
      */
     public function getRequest();
 
@@ -62,7 +61,7 @@ interface CommandInterface
      * Get the response object associated with the command
      *
      * @return Response
-     * @throws CommandException if the command has not been executed
+     * @throws RuntimeException if the command has not been executed
      */
     public function getResponse();
 
@@ -71,7 +70,7 @@ interface CommandInterface
      *
      * @return Response By default, commands return a Response
      *      object unless overridden in a subclass
-     * @throws CommandException if the command has not been executed
+     * @throws RuntimeException if the command has not been executed
      */
     public function getResult();
 
@@ -97,7 +96,7 @@ interface CommandInterface
      * @param Client $client (optional) The client object used to execute the command
      *
      * @return Command Provides a fluent interface.
-     * @throws CommandException if a client object has not been set previously
+     * @throws RuntimeException if a client object has not been set previously
      *      or in the prepare()
      */
     public function prepare(Client $client = null);

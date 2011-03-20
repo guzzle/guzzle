@@ -4,9 +4,11 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Service;
+namespace Guzzle\Service\Description;
 
 use Guzzle\Common\NullObject;
+use Guzzle\Service\Command\CommandFactoryInterface;
+use Guzzle\Service\Description\DynamicCommandFactory;
 
 /**
  * A ServiceDescription stores service information based on a service document
@@ -16,88 +18,31 @@ use Guzzle\Common\NullObject;
 class ServiceDescription
 {
     const DEFAULT_COMMAND_CLASS = 'Guzzle\\Service\\Command\\ClosureCommand';
-
-    /**
-     * @var string Name of the webservice
-     */
-    protected $name;
     
-    /**
-     * @var string ServiceDescription of the webservice
-     */
-    protected $description;
-
-    /**
-     * @var string Base URL of the webservice
-     */
-    protected $baseUrl;
-
     /**
      * @var array Array of ApiCommand objects
      */
     protected $commands = array();
 
     /**
-     * @var array Arguments for a client constructor
+     * @var CommandFactoryInterface
      */
-    protected $clientArgs = array();
+    protected $commandFactory;
 
     /**
      * Create a new ServiceDescription
      *
-     * @param string $name Name of the service
-     * @param string $description Service description
-     * @param string $baseUrl Default service base URL
      * @param array $commands (optional) Array of {@see ApiCommand} objects
-     * @param array $clientArgs (optional) Arguments of the class constructor
+     * @param CommandFactoryInterface (optional) Command factory to build
+     *      dynamic commands.  Uses the DynamicCommandFactory by default.
      */
-    public function __construct($name, $description, $baseUrl, array $commands = array(), array $clientArgs = array())
+    public function __construct(array $commands = array(), CommandFactoryInterface $commandFactory = null)
     {
-        $this->name = $name;
-        $this->description = $description;
-        $this->baseUrl = $baseUrl;
         $this->commands = $commands;
-        $this->clientArgs = $clientArgs ?: array();
-    }
-
-    /**
-     * Get the name of the service
-     *
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * Get the description of the service
-     *
-     * @return string
-     */
-    public function getDescription()
-    {
-        return $this->description;
-    }
-
-    /**
-     * Get the base URL of the service
-     *
-     * @return string
-     */
-    public function getBaseUrl()
-    {
-        return $this->baseUrl;
-    }
-
-    /**
-     * Get the arguments of a client object
-     *
-     * @return array
-     */
-    public function getClientArgs()
-    {
-        return $this->clientArgs;
+        if (!$commandFactory) {
+            $commandFactory = new DynamicCommandFactory();
+        }
+        $this->commandFactory = $commandFactory;
     }
 
     /**
@@ -145,5 +90,23 @@ class ServiceDescription
         }
 
         return new NullObject();
+    }
+
+    /**
+     * Create a webservice command based on the service document
+     *
+     * @param string $command Name of the command to retrieve
+     * @param array $args (optional) Arguments to pass to the command
+     *
+     * @return Command\CommandInterface
+     * @throws InvalidArgumentException if the command was not found in the service doc
+     */
+    public function createCommand($name, array $args = array())
+    {
+        if (!$this->hasCommand($name)) {
+            throw new \InvalidArgumentException($name . ' command not found');
+        }
+
+        return $this->commandFactory->createCommand($this->getCommand($name), $args);
     }
 }

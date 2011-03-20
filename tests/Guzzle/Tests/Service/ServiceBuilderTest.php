@@ -64,7 +64,7 @@ EOT;
 
     /**
      * @covers Guzzle\Service\ServiceBuilder::factory
-     * @expectedException Guzzle\Service\ServiceException
+     * @expectedException RuntimeException
      * @expectedExceptionMessage Unable to open service configuration file foobarfile
      */
     public function testFactoryEnsuresItCanOpenFile()
@@ -96,7 +96,7 @@ EOT;
             ServiceBuilder::factory($tempFile);
             unlink($tempFile);
             $this->fail('Test did not throw ServiceException');
-        } catch (\Guzzle\Service\ServiceException $e) {
+        } catch (\LogicException $e) {
             $this->assertEquals('invalid is trying to extend a non-existent or not yet defined service: missing', $e->getMessage());
         }
 
@@ -131,7 +131,7 @@ EOT;
 
     /**
      * @covers Guzzle\Service\ServiceBuilder::get
-     * @expectedException Guzzle\Service\ServiceException
+     * @expectedException InvalidArgumentException
      * @expectedExceptionMessage No client is registered as foobar
      */
     public function testThrowsExceptionWhenGettingInvalidClient()

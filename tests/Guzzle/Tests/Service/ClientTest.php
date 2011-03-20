@@ -12,13 +12,12 @@ use Guzzle\Common\Log\ClosureLogAdapter;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Plugin\ExponentialBackoffPlugin;
 use Guzzle\Http\Plugin\LogPlugin;
-use Guzzle\Service\ApiCommand;
+use Guzzle\Service\Description\ApiCommand;
 use Guzzle\Service\Client;
 use Guzzle\Service\Command\CommandSet;
 use Guzzle\Service\Command\CommandInterface;
-use Guzzle\Service\Command\ConcreteCommandFactory;
-use Guzzle\Service\DescriptionBuilder\XmlDescriptionBuilder;
-use Guzzle\Service\ServiceDescription;
+use Guzzle\Service\Description\XmlDescriptionBuilder;
+use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
 
 /**
@@ -33,13 +32,13 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     public function setUp()
     {
-        $this->serviceTest = new ServiceDescription('test', 'Test service', 'http://www.test.com/', array(
+        $this->serviceTest = new ServiceDescription(array(
             new ApiCommand(array(
                 'name' => 'test_command',
                 'doc' => 'documentationForCommand',
                 'method' => 'DELETE',
                 'can_batch' => true,
-                'concrete_command_class' => 'Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand',
+                'class' => 'Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand',
                 'args' => array(
                     'bucket' => array(
                         'required' => true
@@ -49,23 +48,10 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
                     )
                 )
             ))
-        ), array(
-            'foo' => array(
-                'default' => 'bar',
-                'required' => 'true'
-            ),
-            'base_url' => array(
-                'required' => 'true'
-            ),
-            'api' => array(
-                'required' => 'true'
-            )
         ));
 
         $builder = new XmlDescriptionBuilder(__DIR__ . DIRECTORY_SEPARATOR . 'test_service.xml');
         $this->service = $builder->build();
-
-        $this->factory = new ConcreteCommandFactory($this->service);
     }
 
     /**
@@ -246,7 +232,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Client::execute
-     * @expectedException Guzzle\Service\ServiceException
+     * @expectedException InvalidArgumentException
      */
     public function testThrowsExceptionWhenExecutingInvalidCommandSets()
     {
@@ -278,29 +264,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($cmd->isExecuted());
         $this->assertTrue($cmd->isPrepared());
         $this->assertEquals(200, $cmd->getResponse()->getStatusCode());
-    }
-
-    /**
-     * @covers Guzzle\Service\Client::setService
-     * @covers Guzzle\Service\Client::getService
-     * @covers Guzzle\Service\Client::getCommand
-     * @covers Guzzle\Service\Client::setCommandFactory
-     */
-    public function testClientUsesCommandFactory()
-    {
-        $client = new Client('http://www.test.com/', array(
-            'api' => 'v1'
-        ));
-
-        $this->assertSame($client, $client->setService($this->service));
-        $this->assertSame($this->service, $client->getService());
-        $factory = new ConcreteCommandFactory($this->serviceTest);
-        $this->assertSame($client, $client->setCommandFactory($factory));
-
-        $this->assertInstanceOf('Guzzle\\Service\\Command\\CommandInterface', $client->getCommand('test_command', array(
-            'bucket' => 'test',
-            'key' => 'keyTest'
-        )));
     }
 
     /**
@@ -355,12 +318,28 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Client::getCommand
-     * @expectedException Guzzle\Service\ServiceException
+     * @expectedException InvalidArgumentException
      */
     public function testThrowsExceptionWhenNoCommandFactoryIsSetAndGettingCommand()
     {
         $client = new Client($this->getServer()->getUrl());
         $client->getCommand('test');
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::getCommand
+     * @covers Guzzle\Service\Client::getDescription
+     * @covers Guzzle\Service\Client::setDescription
+     */
+    public function testRetrievesCommandsFromConcreteAndService()
+    {
+        $client = new Mock\MockClient('http://www.example.com/');
+        $this->assertSame($client, $client->setDescription($this->serviceTest));
+        $this->assertSame($this->serviceTest, $client->getDescription());
+        // Creates service commands
+        $this->assertType('Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand', $client->getCommand('test_command'));
+        // Creates concrete commands
+        $this->assertType('Guzzle\\Tests\\Service\\Mock\\Command\\OtherCommand', $client->getCommand('other_command'));
     }
 
     /**
@@ -467,7 +446,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Client::getBaseUrl
-     * @expectedException Guzzle\Service\ServiceException
+     * @expectedException RuntimeException
      */
     public function testClientEnsuresBaseUrlIsSetWhenRetrievingIt()
     {

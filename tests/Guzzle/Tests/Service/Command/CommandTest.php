@@ -6,10 +6,10 @@
 
 namespace Guzzle\Tests\Service\Command;
 
-use Guzzle\Service\ApiCommand;
 use Guzzle\Service\Client;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\AbstractCommand;
+use Guzzle\Service\Description\ApiCommand;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
 
 /**
@@ -35,7 +35,7 @@ class CommandTest extends AbstractCommandTest
 
     /**
      * @covers Guzzle\Service\Command\AbstractCommand::getRequest
-     * @expectedException Guzzle\Service\Command\CommandException
+     * @expectedException RuntimeException
      */
     public function testGetRequestThrowsExceptionBeforePreparation()
     {
@@ -45,7 +45,7 @@ class CommandTest extends AbstractCommandTest
 
     /**
      * @covers Guzzle\Service\Command\AbstractCommand::getResponse
-     * @expectedException Guzzle\Service\Command\CommandException
+     * @expectedException RuntimeException
      */
     public function testGetResponseThrowsExceptionBeforePreparation()
     {
@@ -55,7 +55,7 @@ class CommandTest extends AbstractCommandTest
 
     /**
      * @covers Guzzle\Service\Command\AbstractCommand::getResult
-     * @expectedException Guzzle\Service\Command\CommandException
+     * @expectedException RuntimeException
      */
     public function testGetResultThrowsExceptionBeforePreparation()
     {
@@ -154,7 +154,7 @@ class CommandTest extends AbstractCommandTest
 
     /**
      * @covers Guzzle\Service\Command\AbstractCommand::execute
-     * @expectedException Guzzle\Service\Command\CommandException
+     * @expectedException RuntimeException
      */
     public function testExecuteThrowsExceptionWhenNoClientIsSet()
     {
@@ -164,7 +164,7 @@ class CommandTest extends AbstractCommandTest
 
     /**
      * @covers Guzzle\Service\Command\AbstractCommand::prepare
-     * @expectedException Guzzle\Service\Command\CommandException
+     * @expectedException RuntimeException
      */
     public function testPrepareThrowsExceptionWhenNoClientIsSet()
     {

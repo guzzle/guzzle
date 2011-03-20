@@ -4,15 +4,15 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Service\Command;
+namespace Guzzle\Service\Description;
 
 use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Inspector;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactory;
-use Guzzle\Service\ApiCommand;
 use Guzzle\Http\EntityBody;
+use Guzzle\Service\Command\ClosureCommand;
 
 /**
  * Build Guzzle commands based on a service document using dynamically created
@@ -20,15 +20,20 @@ use Guzzle\Http\EntityBody;
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
-class DynamicCommandFactory extends AbstractCommandFactory
+class DynamicCommandFactory implements CommandFactoryInterface
 {
     /**
      * {@inheritdoc}
      */
-    protected function createCommand(ApiCommand $command, Collection $args)
+    public function createCommand(ApiCommand $command, array $args)
     {
+        if ($command->getConcreteClass() != 'Guzzle\\Service\\Command\\ClosureCommand') {
+            $class = $command->getConcreteClass();
+            return new $class($args);
+        }
+
         // Build the command based on the service doc and supplied arguments
-        return new ClosureCommand(array_merge($args->getAll(), array(
+        return new ClosureCommand(array_merge($args, array(
             
             // Generate a dynamically created command using a closure to
             // prepare the command

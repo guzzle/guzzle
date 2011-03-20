@@ -62,6 +62,33 @@ class Inspector
     }
 
     /**
+     * Validate and prepare configuration parameters
+     *
+     * @param array $config Configuration values to apply.
+     * @param array $defaults (optional) Default parameters
+     * @param array $required (optional) Required parameter names
+     *
+     * @return Collection
+     * @throws InvalidArgumentException if a parameter is missing
+     */
+    public static function prepareConfig(array $config = null, $defaults = null, $required = null)
+    {
+        $collection = new Collection((array) $defaults);
+        foreach ((array) $config as $key => $value) {
+            $collection->set($key, $value);
+        }
+        foreach ((array) $required as $key) {
+            if (!$collection->hasKey($key)) {
+                throw new \InvalidArgumentException(
+                    "Config must contain a '{$key}' key"
+                );
+            }
+        }
+
+        return $collection;
+    }
+
+    /**
      * Private constructor
      */
     private function __construct()

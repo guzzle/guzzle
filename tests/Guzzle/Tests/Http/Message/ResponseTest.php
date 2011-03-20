@@ -334,7 +334,8 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertNull($this->response->getAge());
 
         $this->response->setHeader('Date', Guzzle::getHttpDate(strtotime('-1 minute')));
-        $this->assertEquals(60, $this->response->getAge());
+        // If the test runs slowly, still pass with a +5 second allowance
+        $this->assertTrue($this->response->getAge() - 60 <= 5);
         $this->assertNull($this->response->getAge(true));
     }
 

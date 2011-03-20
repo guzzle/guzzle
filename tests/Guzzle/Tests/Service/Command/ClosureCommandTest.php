@@ -54,6 +54,7 @@ class ClosureCommandTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Command\ClosureCommand::prepare
+     * @covers Guzzle\Service\Command\ClosureCommand::build
      */
     public function testExecutesClosure()
     {
@@ -74,7 +75,7 @@ class ClosureCommandTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Command\ClosureCommand
-     * @expectedException Guzzle\Service\ServiceException
+     * @expectedException UnexpectedValueException
      * @expectedExceptionMessage Closure command did not return a RequestInterface object
      */
     public function testMustReturnRequest()

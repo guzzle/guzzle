@@ -7,11 +7,12 @@
 namespace Guzzle\Service;
 
 use Guzzle\Guzzle;
-use Guzzle\Common\Cache\CacheAdapterInterface;
+use Guzzle\Common\Inflector;
 use Guzzle\Common\Inspector;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Event\Observer;
 use Guzzle\Common\Event\AbstractSubject;
+use Guzzle\Common\NullObject;
 use Guzzle\Http\Url;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\RequestInterface;
@@ -20,8 +21,7 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Http\Curl\CurlConstants;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\CommandSet;
-use Guzzle\Service\Command\CommandFactoryInterface;
-use Guzzle\Common\NullObject;
+use Guzzle\Service\Description\ServiceDescription;
 
 /**
  * Client object for executing commands on a webservice.
@@ -43,11 +43,6 @@ class Client extends AbstractSubject
      * @var ServiceDescription Description of the service and possible commands
      */
     protected $serviceDescription;
-
-    /**
-     * @var CommandFactoryInterface Factory used to build API commands
-     */
-    protected $commandFactory;
 
     /**
      * @var string Your application's name and version (e.g. MyApp/1.0)
@@ -74,13 +69,10 @@ class Client extends AbstractSubject
      * subclasses to build more complex clients.
      *
      * @param array|Collection $config (optiona) Configuartion data
-     * @param CacheAdapterInterface $cacheAdapter (optional) Pass a cache
-     *      adapter to cache the service configuration settings
-     * @param int $cacheTtl (optional) How long to cache data
      *
      * @return Client
      */
-    public static function factory($config, CacheAdapterInterface $cache = null, $ttl = 86400)
+    public static function factory($config)
     {
         return new self($config['base_url'], $config);
     }
@@ -90,7 +82,6 @@ class Client extends AbstractSubject
      *
      * @param string $baseUrl Base URL used to interact with a web service
      * @param array|Collection $config (optional) Configuration settings
-     * @throws ServiceException
      */
     public function __construct($baseUrl, $config = null)
     {
@@ -241,42 +232,54 @@ class Client extends AbstractSubject
     }
 
     /**
-     * Get a command using the client's CommandFactoryInterface
+     * Get a command by name.  First, the client will see if it has a service
+     * description and if the service description defines a command by the
+     * supplied name.  If no dynamic command is found, the client will look for
+     * a concrete command class exists matching the name supplied.  If neither
+     * are found, an InvalidArgumentException is thrown.
      *
      * @param string $name Name of the command to retrieve
      * @param array $args (optional) Arguments to pass to the command
      *
      * @return CommandInterface
-     * @throws ServiceException if no command factory has been set
+     * @throws InvalidArgumentException if no command can be found by name
      */
     public function getCommand($name, array $args = array())
     {
-        if (!$this->commandFactory) {
-            throw new ServiceException(
-                'No command factory has been set on the client.  A command ' .
-                'factory is usually set on a client by a builder object.'
-            );
+        $command = null;
+
+        // If a service description is present, see if a command is defined
+        if ($this->serviceDescription && $this->serviceDescription->hasCommand($name)) {
+            $command = $this->serviceDescription->createCommand($name, $args);
         }
 
-        $command = $this->commandFactory->buildCommand($name, $args);
+        // Check if a concrete command exists using inflection
+        if (!$command) {
+            // Determine the class to instantiate based on the namespace of the
+            // current client and the default location of commands
+            $prefix = $this->getConfig('command.prefix');
+            if (!$prefix) {
+                // The prefix can be specified in a factory method and is cached
+                $prefix = implode('\\', array_slice(explode('\\', get_class($this)), 0, -1)) . '\\Command\\';
+                $this->getConfig()->set('command.prefix', $prefix);
+            }
+
+            $class = $prefix . str_replace(' ', '\\', ucwords(str_replace('.', ' ', Inflector::camel($name))));
+
+            // Create the concrete command if it exists
+            if (class_exists($class)) {
+                $command = new $class($args);
+            }
+        }
+
+        if (!$command) {
+            throw new \InvalidArgumentException("$name command could not be found");
+        }
+
         $command->setClient($this);
         $this->getEventManager()->notify('command.create', $command);
 
         return $command;
-    }
-
-    /**
-     * Set the command factory that will create command objects by name
-     *
-     * @param CommandFactoryInterface $factory Factory to create commands
-     *
-     * @return Client
-     */
-    public final function setCommandFactory(CommandFactoryInterface $commandFactory)
-    {
-        $this->commandFactory = $commandFactory;
-
-        return $this;
     }
 
     /**
@@ -287,7 +290,7 @@ class Client extends AbstractSubject
      * @return mixed Returns the result of the executed command's
      *       {@see CommandInterface::getResult} method if a CommandInterface is
      *       passed, or the CommandSet itself if a CommandSet is passed
-     * @throws InvalidArgumentException
+     * @throws InvalidArgumentException if an invalid command is passed
      * @throws Command\CommandSetException if a set contains commands associated
      *      with other clients
      */
@@ -317,7 +320,7 @@ class Client extends AbstractSubject
             return $command->execute();
 
         } else {
-            throw new ServiceException('Invalid command sent to ' . __METHOD__);
+            throw new \InvalidArgumentException('Invalid command sent to ' . __METHOD__);
         }
     }
 
@@ -328,12 +331,12 @@ class Client extends AbstractSubject
      * @param bool $inject (optional) Set to FALSE to get the raw base URL
      *
      * @return string
-     * @throws ServiceException if a base URL has not been set
+     * @throws RuntimeException if a base URL has not been set
      */
     public function getBaseUrl($inject = true)
     {
         if (!$this->baseUrl) {
-            throw new ServiceException('A base URL has not been set');
+            throw new \RuntimeException('A base URL has not been set');
         }
 
         return $inject ? $this->inject((string) $this->baseUrl) : $this->baseUrl;
@@ -362,7 +365,7 @@ class Client extends AbstractSubject
      *
      * @return Client
      */
-    public final function setService(ServiceDescription $service)
+    public final function setDescription(ServiceDescription $service)
     {
         $this->serviceDescription = $service;
 
@@ -374,7 +377,7 @@ class Client extends AbstractSubject
      *
      * @return ServiceDescription|NullObject
      */
-    public final function getService()
+    public final function getDescription()
     {
         return $this->serviceDescription ?: new NullObject();
     }

@@ -4,10 +4,10 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Service\DescriptionBuilder;
+namespace Guzzle\Service\Description;
 
 /**
- * Interface for ServiceDescription builders
+ * Build service descriptions
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */

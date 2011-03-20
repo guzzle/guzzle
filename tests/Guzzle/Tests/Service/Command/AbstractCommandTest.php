@@ -7,8 +7,7 @@
 namespace Guzzle\Tests\Service\Command;
 
 use Guzzle\Service\Client;
-use Guzzle\Service\DescriptionBuilder\XmlDescriptionBuilder;
-use Guzzle\Service\Command\ConcreteCommandFactory;
+use Guzzle\Service\Description\XmlDescriptionBuilder;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>
@@ -19,11 +18,8 @@ abstract class AbstractCommandTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $builder = new XmlDescriptionBuilder(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'test_service.xml');
         $service = $builder->build();
-        $factory = new ConcreteCommandFactory($service);
-
         $client =  new Client('http://www.google.com/');
-        $client->setService($service)
-               ->setCommandFactory($factory);
+        $client->setDescription($service);
 
         return $client;
     }

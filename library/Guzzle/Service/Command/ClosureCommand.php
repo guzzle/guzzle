@@ -7,7 +7,6 @@
 namespace Guzzle\Service\Command;
 
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Service\ServiceException;
 
 /**
  * A ClosureCommand is a command that allows dynamic commands to be created at
@@ -38,7 +37,7 @@ class ClosureCommand extends AbstractCommand
     /**
      * {@inheritdoc}
      *
-     * @throws ServiceException If the closure does not return a request
+     * @throws UnexpectedValueException If the closure does not return a request
      */
     protected function build()
     {
@@ -46,7 +45,7 @@ class ClosureCommand extends AbstractCommand
         $this->request = $closure($this, $this->get('closure_api'));
 
         if (!$this->request || !$this->request instanceof RequestInterface) {
-            throw new ServiceException('Closure command did not return a RequestInterface object');
+            throw new \UnexpectedValueException('Closure command did not return a RequestInterface object');
         }
     }
 
@@ -59,7 +58,7 @@ class ClosureCommand extends AbstractCommand
      */
     public function setCanBatch($canBatch)
     {
-        $this->canBatch = (bool)$canBatch;
+        $this->canBatch = (bool) $canBatch;
 
         return $this;
     }

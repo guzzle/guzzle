@@ -6,14 +6,12 @@
 
 namespace Guzzle\Service\Command;
 
-use Guzzle\Service\ServiceException;
-
 /**
  * Command Set exception
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
-class CommandSetException extends ServiceException
+class CommandSetException extends \RuntimeException
 {
     /**
      * @var array Commands with an invalid client

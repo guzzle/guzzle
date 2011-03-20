@@ -4,14 +4,14 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Tests\Service\Command;
+namespace Guzzle\Tests\Service\Description;
 
 use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
-use Guzzle\Service\Command\DynamicCommandFactory;
+use Guzzle\Service\Description\DynamicCommandFactory;
 use Guzzle\Service\Client;
-use Guzzle\Service\ServiceDescription;
-use Guzzle\Service\ApiCommand;
+use Guzzle\Service\Description\ServiceDescription;
+use Guzzle\Service\Description\ApiCommand;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>
@@ -29,15 +29,13 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     public function setUp()
     {
         $this->service = new ServiceDescription(
-            'test',
-            'Test service',
-            'http://{{ bucket }}s3.amazonaws.com{{ key }}',
             array(
                 new ApiCommand(array(
                     'name' => 'test_command',
                     'doc' => 'documentationForCommand',
                     'method' => 'HEAD',
                     'can_batch' => true,
+                    'path' => '/{{key}}',
                     'args' => array(
                         'bucket' => array(
                             'required' => true,
@@ -84,22 +82,25 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
                             'location' => 'data'
                         )
                     )
+                )),
+                new ApiCommand(array(
+                    'name' => 'concrete',
+                    'class' => 'Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand',
+                    'args' => array()
                 ))
             )
         );
     }
 
     /**
-     * @covers Guzzle\Service\Command\DynamicCommandFactory
+     * @covers Guzzle\Service\Description\DynamicCommandFactory
      */
     public function testBuildsUsingPathParametersAndAppendSlashPrepend()
     {
-        $factory = new DynamicCommandFactory($this->service);
-        $client = new Client($this->service->getBaseUrl());
-        $client->setService($this->service);
-        $client->setCommandFactory($factory);
-
-        $command = $factory->buildCommand('test_command', array(
+        $client = new Client('http://www.example.com/');
+        $client->setDescription($this->service);
+        
+        $command = $this->service->createCommand('test_command', array(
             'bucket' => 'test',
             'key' => 'key'
         ));
@@ -108,13 +109,13 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Ensure that the path values were injected into the path and base_url
         $this->assertEquals('/key', $request->getPath());
-        $this->assertEquals('test.s3.amazonaws.com', $request->getHost());
+        $this->assertEquals('www.example.com', $request->getHost());
 
         // Check the complete request
         $this->assertEquals(
             "HEAD /key HTTP/1.1\r\n" .
             "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n" .
-            "Host: test.s3.amazonaws.com\r\n" .
+            "Host: www.example.com\r\n" .
             "\r\n", (string) $request);
 
         // Make sure the concrete command class is used
@@ -125,27 +126,24 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Command\DynamicCommandFactory
+     * @covers Guzzle\Service\Description\DynamicCommandFactory
      * @expectedException InvalidArgumentException
      */
     public function testValidatesArgs()
     {
-        $factory = new DynamicCommandFactory($this->service);
-        $client = new Client($this->service->getBaseUrl());
-        $client->setService($this->service)->setCommandFactory($factory);
-        $command = $factory->buildCommand('test_command', array());
+        $client = new Client('http://www.fragilerock.com/');
+        $client->setDescription($this->service);
+        $command = $this->service->createCommand('test_command', array());
         $client->execute($command);
     }
 
     /**
-     * @covers Guzzle\Service\Command\DynamicCommandFactory
+     * @covers Guzzle\Service\Description\DynamicCommandFactory
      */
     public function testUsesDifferentLocations()
     {
-        $factory = new DynamicCommandFactory($this->service);
-        $client = new Client($this->service->getBaseUrl());
-        $client->setCommandFactory($factory);
-        $command = $factory->buildCommand('body', array(
+        $client = new Client('http://www.tazmania.com/');
+        $command = $this->service->createCommand('body', array(
             'b' => 'my-data',
             'q' => 'abc',
             'h' => 'haha'
@@ -156,7 +154,7 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(
             "PUT /?test=abc&i=test HTTP/1.1\r\n" .
             "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n" .
-            "Host: s3.amazonaws.com\r\n" .
+            "Host: www.tazmania.com\r\n" .
             "X-Custom: haha\r\n" .
             "Content-Length: 29\r\n" .
             "Expect: 100-Continue\r\n" .
@@ -166,7 +164,7 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         unset($command);
         unset($request);
         
-        $command = $factory->buildCommand('body', array(
+        $command = $this->service->createCommand('body', array(
             'b' => 'my-data',
             'q' => 'abc',
             'h' => 'haha',
@@ -178,11 +176,20 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(
             "PUT /?test=abc&i=test HTTP/1.1\r\n" .
             "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n" .
-            "Host: s3.amazonaws.com\r\n" .
+            "Host: www.tazmania.com\r\n" .
             "X-Custom: haha\r\n" .
             "Content-Length: 29\r\n" .
             "Expect: 100-Continue\r\n" .
             "\r\n" .
             "begin_body::my-data::end_body", (string) $request);
+    }
+
+    /**
+     * @covers Guzzle\Service\Description\DynamicCommandFactory::createCommand
+     */
+    public function testBuildsConcreteCommands()
+    {
+        $c = $this->service->createCommand('concrete');
+        $this->assertEquals('Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand', get_class($c));
     }
 }

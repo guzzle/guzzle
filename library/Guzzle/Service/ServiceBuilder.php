@@ -7,7 +7,6 @@
 namespace Guzzle\Service;
 
 use Guzzle\Common\Cache\CacheAdapterInterface;
-use Guzzle\Service\ServiceException;
 
 /**
  * Service builder to generate service builders and service clients from
@@ -35,7 +34,7 @@ class ServiceBuilder
     /**
      * @var int Cache entry TTL
      */
-    protected $cacheTtl;
+    protected $ttl;
 
     /**
      * Create a new ServiceBuilder using an XML configuration file to configure
@@ -45,13 +44,14 @@ class ServiceBuilder
      * @param CacheAdapterInterface $cacheAdapter (optional) Pass a cache
      *      adapter to cache the service configuration settings loaded from the
      *      XML and to cache dynamically built services.
-     * @param int $cacheTtl (optional) How long to cache items in the cache
+     * @param int $ttl (optional) How long to cache items in the cache
      *      adapter (defaults to 24 hours).
      *
      * @return ServiceBuilder
-     * @throws ServiceException if the file cannot be openend
+     * @throws RuntimeException if the file cannot be openend
+     * @throws LogicException when trying to extend a missing client
      */
-    public static function factory($filename, CacheAdapterInterface $cacheAdapter = null, $cacheTtl = 86400)
+    public static function factory($filename, CacheAdapterInterface $cacheAdapter = null, $ttl = 86400)
     {
         // Compute the cache key for this service and check if it exists in cache
         $key = 'guz_service_' . md5($filename);
@@ -66,7 +66,7 @@ class ServiceBuilder
 
             // Build the service config from the XML file if the file exists
             if (!is_file($filename)) {
-                throw new ServiceException('Unable to open service configuration file ' . $filename);
+                throw new \RuntimeException('Unable to open service configuration file ' . $filename);
             }
 
             $config = array();
@@ -83,7 +83,7 @@ class ServiceBuilder
                 if ($extends = (string) $client->attributes()->extends) {
                     // Make sure that the service it's extending has been defined
                     if (!isset($config[$extends])) {
-                        throw new ServiceException($name . ' is trying to extend a non-existent or not yet defined service: ' . $extends);
+                        throw new \LogicException($name . ' is trying to extend a non-existent or not yet defined service: ' . $extends);
                     }
 
                     $class = $class ?: $config[$extends]['class'];
@@ -103,14 +103,14 @@ class ServiceBuilder
             }
 
             if ($cacheAdapter) {
-                $cacheAdapter->save($key, serialize($config), $cacheTtl);
+                $cacheAdapter->save($key, serialize($config), $ttl);
             }
         }
 
         $builder = new self($config);
         if ($cacheAdapter) {
             // Always share the cache
-            $builder->setCache($cacheAdapter, $cacheTtl);
+            $builder->setCache($cacheAdapter, $ttl);
         }
 
         return $builder;
@@ -137,15 +137,15 @@ class ServiceBuilder
      * @param CacheAdapterInterface $cacheAdapter (optional) Pass a cache
      *      adapter to cache the service configuration settings loaded from the
      *      XML and to cache dynamically built services.
-     * @param int $cacheTtl (optional) How long to cache items in the cache
+     * @param int $ttl (optional) How long to cache items in the cache
      *      adapter (defaults to 24 hours).
      *
      * @return ServiceBuilder
      */
-    public function setCache(CacheAdapterInterface $cacheAdapter, $cacheTtl = 86400)
+    public function setCache(CacheAdapterInterface $cacheAdapter, $ttl = 86400)
     {
         $this->cache = $cacheAdapter;
-        $this->cacheTtl = $cacheTtl ?: 86400;
+        $this->ttl = $ttl ?: 86400;
 
         return $this;
     }
@@ -158,11 +158,12 @@ class ServiceBuilder
      *     for later retrieval from the ServiceBuilder
      *
      * @return Client
+     * @throws InvalidArgumentException when a client cannot be found by name
      */
     public function get($name, $throwAway = false)
     {
         if (!isset($this->builderConfig[$name])) {
-            throw new ServiceException('No client is registered as ' . $name);
+            throw new \InvalidArgumentException('No client is registered as ' . $name);
         }
 
         if (!$throwAway && isset($this->clients[$name])) {
@@ -171,9 +172,7 @@ class ServiceBuilder
 
         $client = call_user_func(
             array($this->builderConfig[$name]['class'], 'factory'),
-            $this->builderConfig[$name]['params'],
-            $this->cache,
-            $this->cacheTtl
+            $this->builderConfig[$name]['params']
         );
 
         if (!$throwAway) {

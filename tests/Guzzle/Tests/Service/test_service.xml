@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<service>
-
-    <!-- Basic service information -->
-    <name>Test Service</name>
-    <description>Description</description>
-    <base_url>http://www.test.com/</base_url>
-
+<client>
     <!-- Define custom types -->
     <types>
         <!-- Uses the Guzzle\Tests\Common\Mock\MockFilter class when a custom_filter type is used -->
@@ -48,7 +41,5 @@
             <!-- The request builder will remove '//', so it's okay to always prepend / if needed -->
             <param name="second" type="string" required="true" prepend="/" condition="place_id ~ /[A-Z0-9]/" />
         </command>
-
     </commands>
-
-</service>
+</client>

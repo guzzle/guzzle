@@ -75,7 +75,7 @@ class CommandSet implements \IteratorAggregate, \Countable
      * Execute the command set
      *
      * @return CommandSet
-     * @throws CommandException if any of the commands do not have an associated
+     * @throws CommandSetException if any of the commands do not have an associated
      *      {@see Client} object
      */
     public function execute()

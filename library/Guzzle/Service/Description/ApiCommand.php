@@ -4,7 +4,7 @@
  * @license See the LICENSE file that was distributed with this source code.
  */
 
-namespace Guzzle\Service;
+namespace Guzzle\Service\Description;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\Inspector;
@@ -66,7 +66,7 @@ class ApiCommand
      *      string path (optional) Path routing information of the command to include in the path
      *      string min_args (optional) The minimum number of required args
      *      bool can_batch (optional) Can the command be sent in a batch request
-     *      string concrete_command_class (optional) Concrete class that implements this command
+     *      string class (optional) Concrete class that implements this command
      *      array args Associative array of arguments for the command with each
      *          argument containing the following keys:
      *
@@ -91,8 +91,8 @@ class ApiCommand
         $this->canBatch = isset($config['can_batch']) ? $config['can_batch'] : '';
         $this->path = isset($config['path']) ? trim($config['path']) : '';
         
-        if (isset($config['concrete_command_class'])) {
-            $this->concreteCommandClass = $config['concrete_command_class'];
+        if (isset($config['class'])) {
+            $this->concreteCommandClass = $config['class'];
         }
 
         // Build the argument array
@@ -227,6 +227,6 @@ class ApiCommand
             $errors = array_merge($errors, $e);
         }
 
-        return (count($errors) == 0) ? true : $errors;
+        return count($errors) == 0 ? true : $errors;
     }
 }
