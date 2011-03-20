@@ -91,7 +91,7 @@ class XmlDescriptionBuilder implements DescriptionBuilderInterface
                 'doc' => (string) $command->doc,
                 'method' => (string) $attr->method,
                 'path' => (string) $attr->path,
-                'min_args' => (int)(string) $attr->min_args,
+                'min_args' => (int) (string) $attr->min_args,
                 'can_batch' => (string) $attr->can_batch == 'false' ? false : true,
                 'class' => (string) $attr->class ?: ServiceDescription::DEFAULT_COMMAND_CLASS,
                 'args' => $args

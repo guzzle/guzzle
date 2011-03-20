@@ -29,6 +29,7 @@ class DynamicCommandFactory implements CommandFactoryInterface
     {
         if ($command->getConcreteClass() != 'Guzzle\\Service\\Command\\ClosureCommand') {
             $class = $command->getConcreteClass();
+            
             return new $class($args);
         }
 

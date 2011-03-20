@@ -95,10 +95,10 @@ abstract class ResourceIterator extends AbstractSubject implements \Iterator, \C
     {
         $this->client = $client;
         $this->data = $data;
-        $this->limit = (array_key_exists('limit', $data)) ? $data['limit'] : -1;
-        $this->pageSize = (array_key_exists('page_size', $data)) ? $data['page_size'] : false;
-        $this->resourceList = (array_key_exists('resources', $data)) ? $data['resources'] : array();
-        $this->nextToken = (array_key_exists('next_token', $data)) ? $data['next_token'] : false;
+        $this->limit = array_key_exists('limit', $data) ? $data['limit'] : -1;
+        $this->pageSize = array_key_exists('page_size', $data) ? $data['page_size'] : false;
+        $this->resourceList = array_key_exists('resources', $data) ? $data['resources'] : array();
+        $this->nextToken = array_key_exists('next_token', $data) ? $data['next_token'] : false;
         $this->retrievedCount = count($this->resourceList);
         $this->onLoad();
     }

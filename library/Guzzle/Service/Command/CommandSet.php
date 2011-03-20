@@ -44,7 +44,7 @@ class CommandSet implements \IteratorAggregate, \Countable
             }
         }
 
-        $this->pool = (!$pool) ? new Pool() : $pool;
+        $this->pool = $pool ?: new Pool();
     }
 
     /**
@@ -168,8 +168,8 @@ class CommandSet implements \IteratorAggregate, \Countable
      */
     public function hasCommand($command)
     {
-        return (bool)(count(array_filter($this->commands, function($value) use ($command) {
-            return (is_string($command)) ? ($value instanceof $command) : ($value === $command);
+        return (bool) (count(array_filter($this->commands, function($value) use ($command) {
+            return is_string($command) ? ($value instanceof $command) : ($value === $command);
         })) > 0);
     }
 
@@ -184,7 +184,7 @@ class CommandSet implements \IteratorAggregate, \Countable
     public function removeCommand($command)
     {
         $this->commands = array_values(array_filter($this->commands, function($value) use ($command) {
-            return (is_string($command)) ? (!($value instanceof $command)) : ($value !== $command);
+            return is_string($command) ? !($value instanceof $command) : ($value !== $command);
         }));
 
         return $this;

@@ -52,6 +52,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
      *
      * @param array|Collection $parameters (optional) Collection of parameters
      *      to set on the command
+     * @param ApiCommand $apiCommand (optional) Command definition from description
      */
     public function __construct($parameters = null, ApiCommand $apiCommand = null)
     {
@@ -81,20 +82,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     public function getApiCommand()
     {
         return $this->apiCommand ?: new NullObject();
-    }
-
-    /**
-     * Set the API command associated with the command
-     *
-     * @param ApiCommand $apiCommand API command information
-     *
-     * @return AbstractCommand
-     */
-    public function setApiCommand(ApiCommand $apiCommand)
-    {
-        $this->apiCommand = $apiCommand;
-
-        return $this;
     }
 
     /**
@@ -263,28 +250,14 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
-     * Set an HTTP header on the outbound request
-     *
-     * @param string $header The name of the header to set
-     * @param string $value The value to set on the header
-     *
-     * @return AbstractCommand
-     */
-    public function setRequestHeader($header, $value)
-    {
-        $this->get('headers')->set($header, $value);
-
-        return $this;
-    }
-
-    /**
-     * Get the object that manages the request headers
+     * Get the object that manages the request headers that will be set on any
+     * outbound requests from the command
      *
      * @return Collection
      */
     public function getRequestHeaders()
     {
-        return ($this->request) ? $this->request->getHeaders() : $this->get('headers');
+        return $this->get('headers', new Collection());
     }
 
     /**
