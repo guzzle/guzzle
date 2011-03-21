@@ -35,7 +35,7 @@ class CommandTest extends AbstractCommandTest
     }
 
     /**
-     * @covers Guzzle\Service\Command::getName
+     * @covers Guzzle\Service\Command\AbstractCommand::getName
      */
     public function testDeterminesShortName()
     {
