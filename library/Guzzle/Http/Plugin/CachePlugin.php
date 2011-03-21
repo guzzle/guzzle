@@ -97,15 +97,12 @@ class CachePlugin implements Observer
 
             // Check to see if the key should be filtered
             $filter = $request->getParams()->get('cache.key_filter');
-
             // The generate the start of the key
             $key = $request->getScheme() . '&' . $request->getHost() . $request->getPath();
-
             $filterHeaders = array('Cache-Control');
             $filterQuery = array();
 
             if ($filter) {
-
                 // Parse the filter string
                 foreach (explode(';', $filter) as $part) {
                     $pieces = array_map('trim', explode('=', $part));
@@ -159,30 +156,26 @@ class CachePlugin implements Observer
         // @codeCoverageIgnoreEnd
 
         switch ($event) {
-
             case 'event.attach':
-
                 // If the request is not cacheable, remove this observer
                 if (!$subject->canCache()) {
                     $subject->getEventManager()->detach($this);
                 }
-
                 break;
-
             case 'request.before_send':
-                
                 // This request is being prepared
                 $key = spl_object_hash($subject);
                 $hashKey = $this->getCacheKey($subject);
                 $this->cached[$key] = $hashKey;
                 $cachedData = $this->getCacheAdapter()->fetch($hashKey);
-
                 // If the cached data was found, then make the request into a
                 // manually set request
                 if ($cachedData) {
+                    
                     if ($this->serialize) {
                         $cachedData = unserialize($cachedData);
                     }
+
                     unset($this->cached[$key]);
                     $response = new Response($cachedData['c'], $cachedData['h'], $cachedData['b']);
                     $response->setHeader('Age', time() - strtotime($response->getDate() ?: 'now'));
@@ -193,17 +186,14 @@ class CachePlugin implements Observer
                         $subject->setResponse($response);
                     }
                 }
-
                 break;
-
             case 'request.sent':
-
                 $response = $subject->getResponse();
-
                 if ($response->canCache()) {
                     // The request is complete and now processing the response
                     $response = $subject->getResponse();
                     $key = spl_object_hash($subject);
+                    
                     if (isset($this->cached[$key]) && $response->isSuccessful()) {
                         if ($subject->getParams()->get('cache.override_ttl')) {
                             $lifetime = $subject->getParams()->get('cache.override_ttl');
@@ -213,11 +203,9 @@ class CachePlugin implements Observer
                         }
                         $this->saveCache($this->cached[$key], $response, $lifetime);
                     }
-
                     // Remove the hashed placeholder from the parameters object
                     unset($this->cached[$key]);
                 }
-
                 break;
         }
     }
@@ -240,11 +228,17 @@ class CachePlugin implements Observer
         }
 
         try {
-
             $validateResponse = $revalidate->send();
+            if ($validateResponse->getStatusCode() == 200) {
+                // The server does not support validation, so use this response
+                $request->setResponse($validateResponse);
+                // Store this response in cache if possible
+                if ($validateResponse->canCache()) {
+                    $this->saveCache($this->getCacheKey($request), $validateResponse);
+                }
 
-            if ($validateResponse->getStatusCode() == 304) {
-
+                return false;
+            } else if ($validateResponse->getStatusCode() == 304) {
                 // Make sure that this response has the same ETage
                 if ($validateResponse->getEtag() != $response->getEtag()) {
                     return false;
@@ -263,20 +257,7 @@ class CachePlugin implements Observer
 
                     return true;
                 }
-
-            } else if ($validateResponse->getStatusCode() == 200) {
-
-                // The server does not support validation, so use this response
-                $request->setResponse($validateResponse);
-
-                // Store this response in cache if possible
-                if ($validateResponse->canCache()) {
-                    $this->saveCache($this->getCacheKey($request), $validateResponse);
-                }
-
-                return false;
             }
-
         } catch (\Exception $e) {
             // Don't fail on re-validation attempts
         }
@@ -295,7 +276,6 @@ class CachePlugin implements Observer
     public function canResponseSatisfyRequest(RequestInterface $request, Response $response)
     {
         $maxAge = null;
-
         $responseAge = $response->getAge();
 
         // Check the request's max-age header against the age of the response
@@ -319,14 +299,12 @@ class CachePlugin implements Observer
 
         // Only revalidate GET requests
         if ($request->getMethod() == RequestInterface::GET) {
-
             // Check if the response must be validated against the origin server
             if ($request->getHeader('Pragma') == 'no-cache' ||
                 $request->hasCacheControlDirective('no-cache') ||
                 $request->hasCacheControlDirective('must-revalidate') ||
                 $response->hasCacheControlDirective('must-revalidate') ||
                 $response->hasCacheControlDirective('no-cache')) {
-
                 // no-cache: When no parameters are present, always revalidate
                 // When parameters are present in no-cache and the request includes
                 // those same parameters, then the response must re-validate
@@ -363,27 +341,22 @@ class CachePlugin implements Observer
 
         // If the data is cacheable, then save it to the cache adapter
         if ($lifetime) {
-
             // Remove excluded headers from the response  (see RFC 2616:13.5.1)
             foreach ($this->excludeResponseHeaders as $header) {
                 $response->removeHeader($header);
             }
-
             // Add a Date header to the response if none is set (for validation)
             if (!$response->getDate()) {
                 $response->setHeader('Date', Guzzle::getHttpDate('now'));
             }
-
             $data = array(
                 'c' => $response->getStatusCode(),
                 'h' => $response->getHeaders(),
                 'b' => $response->getBody(true)
             );
-
             if ($this->serialize) {
                 $data = serialize($data);
             }
-
             $this->getCacheAdapter()->save($key, $data, $lifetime);
         }
 

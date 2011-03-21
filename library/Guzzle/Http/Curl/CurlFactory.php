@@ -281,10 +281,8 @@ class CurlFactory implements CurlFactoryInterface
     {
         $handle = curl_init();
         $options = $this->getOptions($request);
-        
         // Set the CurlOptions on the request
         $request->getCurlOptions()->replace($options);
-
         // Apply the options to the cURL handle.
         curl_setopt_array($handle, $options);
         $h = new CurlHandle($handle, $options);

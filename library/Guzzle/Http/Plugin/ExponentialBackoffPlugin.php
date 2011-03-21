@@ -134,14 +134,11 @@ class ExponentialBackoffPlugin implements Observer
         // @codeCoverageIgnoreEnd
 
         switch ($event) {
-
-            // The most frequent event, thus at the top of the switch
             case PoolInterface::POLLING_REQUEST:
-
+                // The most frequent event, thus at the top of the switch
                 if ($subject->getParams()->hasKey(self::DELAY_PARAM)) {
                     // If the duration of the delay has passed, retry the request using the pool
                     if (time() >= $subject->getParams()->get(self::DELAY_PARAM)) {
-
                         // Remove the request from the pool and then add it back again
                         $context->remove($subject);
                         $context->add($subject);
@@ -150,18 +147,13 @@ class ExponentialBackoffPlugin implements Observer
                         return true;
                     }
                 }
-
                 break;
-
-            // Called when the observer is initially attached to the request
             case 'event.attach':
-
+                // Called when the observer is initially attached to the request
                 $this->state[spl_object_hash($subject)] = 0;
                 break;
-
-            // Called when the request has been sent and isn't finished processing
             case 'request.sent':
-
+                // Called when the request has been sent and isn't finished processing
                 $key = spl_object_hash($subject);
 
                 if (in_array($subject->getResponse()->getStatusCode(), $this->failureCodes)) {
@@ -169,17 +161,14 @@ class ExponentialBackoffPlugin implements Observer
                     if (++$this->state[$key] <= $this->maxRetries) {
                         // Calculate how long to wait until the request should be retried
                         $delay = (int) call_user_func($this->delayClosure, $this->state[$key]);
-
                         // Send the request again
                         $subject->setState(RequestInterface::STATE_NEW);
 
                         if ($subject->getParams()->get('pool')) {
-
                             // Pooled requests need to be sent via curl
                             // multi, and the retry will happen after a
                             // period of polling to prevent pool exclusivity
                             $subject->getParams()->set(self::DELAY_PARAM, time() + $delay);
-
                         } else {
                             // Wait for a delay then retry the request
                             sleep($delay);
@@ -187,7 +176,6 @@ class ExponentialBackoffPlugin implements Observer
                         }
                     }
                 }
-                
                 break;
         }
     }

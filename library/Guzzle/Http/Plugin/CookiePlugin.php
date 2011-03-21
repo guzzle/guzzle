@@ -189,31 +189,25 @@ class CookiePlugin implements Observer
     public function addCookies(RequestInterface $request)
     {
         $request->removeHeader('Cookie');
-
         // Find cookies that match this request
         $cookies = $this->jar->getCookies($request->getHost(), $request->getPath());
         $match = false;
 
         if ($cookies) {
-
             foreach ($cookies as $cookie) {
-
                 $match = true;
-
                 // If a port restriction is set, validate the port
                 if (!empty($cookie['port'])) {
                     if (!in_array($request->getPort(), $cookie['port'])) {
                         $match = false;
                     }
                 }
-
                 // Validate the secure flag
                 if ($cookie['secure']) {
                     if ($request->getScheme() != 'https') {
                         $match = false;
                     }
                 }
-
                 // If this request is eligible for the cookie, then merge it in
                 if ($match) {
                     foreach ($cookie['cookies'] as $value) {

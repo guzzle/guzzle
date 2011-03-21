@@ -41,7 +41,6 @@ class LogPlugin implements Observer
     const LOG_HEADERS = 2;
     const LOG_BODY = 4;
     const LOG_DEBUG = 8;
-
     // Log context, headers, debug, and entity bodies
     const LOG_VERBOSE = 15;
 
@@ -110,21 +109,18 @@ class LogPlugin implements Observer
             
         /* @var $subject EntityEnclosingRequest */
         switch ($event) {
-
             case 'curl.callback.write':
                 // Stream the response body to the log if the body is not repeatable
                 if ($subject->getParams()->get('response_wire')) {
                     $subject->getParams()->get('response_wire')->write($context);
                 }
                 break;
-
             case 'curl.callback.read':
                 // Stream the request body to the log if the body is not repeatable
                 if ($subject->getParams()->get('request_wire')) {
                     $subject->getParams()->get('request_wire')->write($context);
                 }
                 break;
-
             case 'request.before_send':
                 // We need to make special handling for content wiring and
                 // non-repeatable streams.
@@ -145,7 +141,6 @@ class LogPlugin implements Observer
                     }
                 }
                 break;
-
             case 'request.curl.release':
                 // Triggers the actual log write
                 $this->log($subject, $subject->getResponse());
@@ -165,7 +160,6 @@ class LogPlugin implements Observer
         $message = '';
 
         if ($this->settings & self::LOG_CONTEXT) {
-
             // Log common contextual information
             $message = $request->getHost() . ' - "' .  $request->getMethod()
                 . ' ' . $request->getResourceUri() . ' '

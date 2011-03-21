@@ -113,7 +113,7 @@ class CurlHandle
      */
     public function getError()
     {
-        return ($this->isAvailable()) ? @curl_error($this->handle) : '';
+        return $this->isAvailable() ? @curl_error($this->handle) : '';
     }
 
     /**
@@ -123,7 +123,7 @@ class CurlHandle
      */
     public function getErrorNo()
     {
-        return ($this->isAvailable()) ? @curl_errno($this->handle) : 0;
+        return $this->isAvailable() ? @curl_errno($this->handle) : 0;
     }
 
     /**
