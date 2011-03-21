@@ -90,6 +90,7 @@ class ApiCommand
         $this->minArgs = isset($config['min_args']) ? min(100, max(0, $config['min_args'])) : '';
         $this->canBatch = isset($config['can_batch']) ? $config['can_batch'] : '';
         $this->path = isset($config['path']) ? trim($config['path']) : '';
+        $this->args = array();
         
         if (isset($config['class'])) {
             $this->concreteCommandClass = $config['class'];

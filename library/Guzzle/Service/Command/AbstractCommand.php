@@ -75,6 +75,25 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
+     * Get the short form name of the command
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        if ($this->apiCommand) {
+            return $this->apiCommand->getName();
+        } else {
+            // Determine the name of the command based on the relation to the
+            // client that executes the command
+            $parts = explode('\\', get_class($this));
+            while (array_shift($parts) !== 'Command');
+            
+            return implode('.', array_map(array('Guzzle\\Common\\Inflector', 'snake'), $parts));
+        }
+    }
+
+    /**
      * Get the API command information about the command
      *
      * @return ApiCommand|NullObject

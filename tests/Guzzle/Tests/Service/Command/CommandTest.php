@@ -11,6 +11,7 @@ use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\AbstractCommand;
 use Guzzle\Service\Description\ApiCommand;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
+use Guzzle\Tests\Service\Mock\Command\Sub\Sub;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>
@@ -31,6 +32,24 @@ class CommandTest extends AbstractCommandTest
         $this->assertTrue($command->canBatch());
         $this->assertFalse($command->isPrepared());
         $this->assertFalse($command->isExecuted());
+    }
+
+    /**
+     * @covers Guzzle\Service\Command::getName
+     */
+    public function testDeterminesShortName()
+    {
+        $api = new ApiCommand(array(
+            'name' => 'foobar'
+        ));
+        $command = new MockCommand(array(), $api);
+        $this->assertEquals('foobar', $command->getName());
+
+        $command = new MockCommand();
+        $this->assertEquals('mock_command', $command->getName());
+
+        $command = new Sub();
+        $this->assertEquals('sub.sub', $command->getName());
     }
 
     /**
@@ -199,7 +218,7 @@ class CommandTest extends AbstractCommandTest
             'method' => 'POST',
             'min_args' => 1,
             'can_batch' => true,
-            'concrete_command_class' => 'Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand',
+            'class' => 'Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand',
             'args' => array(
                 'test' => array(
                     'default' => '123',

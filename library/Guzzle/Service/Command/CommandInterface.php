@@ -30,6 +30,13 @@ interface CommandInterface
     public function __construct($parameters = null, ApiCommand $apiCommand = null);
 
     /**
+     * Get the short form name of the command
+     *
+     * @return string
+     */
+    public function getName();
+
+    /**
      * Get the API command information about the command
      *
      * @return ApiCommand|NullObject
