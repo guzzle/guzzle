@@ -10,7 +10,7 @@ use Guzzle\Common\Log\Adapter\ZendLogAdapter;
 use Guzzle\Http\Server;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Plugin\Log\LogPlugin;
+use Guzzle\Http\Plugin\LogPlugin;
 use Guzzle\Service\Client;
 use Guzzle\Service\ServiceBuilder;
 use Guzzle\Tests\Common\Mock\MockFilter;
@@ -189,7 +189,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
     public function enableClientDebug(Client $client)
     {
         $adapter = new ZendLogAdapter(new \Zend_Log(new \Zend_Log_Writer_Stream('php://output')));
-        $plugin = new LogPlugin($adapter, true, 2);
+        $plugin = new LogPlugin($adapter, LogPlugin::LOG_VERBOSE);
         $client->attachPlugin($plugin);
     }
 
