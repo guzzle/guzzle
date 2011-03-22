@@ -5,7 +5,7 @@
         <!-- Uses the Guzzle\Tests\Common\Mock\MockFilter class when a custom_filter type is used -->
         <type name="custom_filter" class="Guzzle.Tests.Common.Mock.MockFilter" />
         <!-- Adds a shortcut for a RegEx filter -->
-        <type name="slug" class="Guzzle.Common.InspectorFilter.Regex" default_args="/[0-9a-zA-z_\-]+/" />
+        <type name="slug" class="Guzzle.Common.InspectorFilter.Regex" default="/[0-9a-zA-z_\-]+/" />
     </types>
 
     <!-- Add commands to the service -->
