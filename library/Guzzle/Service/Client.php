@@ -85,10 +85,10 @@ class Client extends AbstractSubject
      */
     public function __construct($baseUrl, $config = null)
     {
-        $this->setBaseUrl($baseUrl);
         if ($config) {
             $this->setConfig($config);
         }
+        $this->setBaseUrl($baseUrl);
     }
 
     /**
