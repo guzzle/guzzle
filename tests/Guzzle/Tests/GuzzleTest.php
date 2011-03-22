@@ -70,4 +70,15 @@ class GuzzleTest extends GuzzleTestCase
     {
         $this->assertEquals($output, Guzzle::inject($input, new Collection($config)));
     }
+
+    /**
+     * @covers Guzzle\Guzzle::getCurlInfo
+     */
+    public function testCachesCurlInfo()
+    {
+        $c = curl_version();
+        $this->assertInternalType('array', Guzzle::getCurlInfo());
+        $this->assertEquals(false, Guzzle::getCurlInfo('ewfewfewfe'));
+        $this->assertEquals($c['version'], Guzzle::getCurlInfo('version'));
+    }
 }

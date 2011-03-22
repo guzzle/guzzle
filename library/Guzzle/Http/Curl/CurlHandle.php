@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http\Curl;
 
+use Guzzle\Guzzle;
 use Guzzle\Common\Stream\StreamHelper;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Url;
@@ -38,6 +39,11 @@ class CurlHandle
      * @var resource
      */
     protected $stderr;
+
+    /**
+     * @var array Statically cached array of cURL options that pollute handles
+     */
+    protected static $pollute;
 
     /**
      * Construct a new CurlHandle object that wraps a cURL handle
@@ -340,18 +346,26 @@ class CurlHandle
      */
     public function hasProblematicOption()
     {
-        // The following options cannot be unset
-        return 0 != count(array_intersect(array(
-            CURLOPT_RANGE,
-            CURLOPT_COOKIEFILE,
-            CURLOPT_COOKIEJAR,
-            CURLOPT_LOW_SPEED_LIMIT,
-            CURLOPT_LOW_SPEED_TIME,
-            CURLOPT_TIMEOUT,
-            CURLOPT_TIMEOUT_MS,
-            CURLOPT_FORBID_REUSE,
-            CURLOPT_RESUME_FROM,
-            CURLOPT_HTTPAUTH
-        ), $this->options->getKeys()));
+        if (!self::$pollute) {
+            self::$pollute = array(
+                CURLOPT_RANGE,
+                CURLOPT_COOKIEFILE,
+                CURLOPT_COOKIEJAR,
+                CURLOPT_LOW_SPEED_LIMIT,
+                CURLOPT_LOW_SPEED_TIME,
+                CURLOPT_TIMEOUT,
+                CURLOPT_TIMEOUT_MS,
+                CURLOPT_FORBID_REUSE,
+                CURLOPT_RESUME_FROM,
+                CURLOPT_HTTPAUTH
+            );
+
+            // CURLOPT_TIMEOUT_MS was added in v7.16.2
+            if (Guzzle::getCurlInfo('version') > '7.16.2') {
+                self::$pollute[] = \CURLOPT_TIMEOUT_MS;
+            }
+        }
+
+        return count(array_intersect(self::$pollute, $this->options->getKeys())) > 0;
     }
 }

@@ -23,8 +23,12 @@ class Guzzle
     protected static $userAgent;
 
     /**
-     * Get the default User-Agent to add to HTTP headers sent through the
-     * library
+     * @var array cURL version information
+     */
+    protected static $curl;
+
+    /**
+     * Get the default User-Agent to add to requests sent through the library
      *
      * @return string
      */
@@ -32,12 +36,52 @@ class Guzzle
     {
         // @codeCoverageIgnoreStart
         if (!self::$userAgent) {
-            $version = curl_version();
-            self::$userAgent = sprintf('Guzzle/%s (Language=PHP/%s; curl=%s; Host=%s)', Guzzle::VERSION, \PHP_VERSION, $version['version'], $version['host']);
+            $version = self::getCurlInfo();
+            self::$userAgent = sprintf('Guzzle/%s (Language=PHP/%s; curl=%s; Host=%s)',
+                Guzzle::VERSION,
+                \PHP_VERSION,
+                $version['version'],
+                $version['host']
+            );
         }
         // @codeCoverageIgnoreEnd
 
         return self::$userAgent;
+    }
+
+    /**
+     * Get curl version information and caches a local copy for fast re-use
+     *
+     * @param $type (optional) Version information to retrieve
+     *     version_number - cURL 24 bit version number
+     *     version - cURL version number, as a string
+     *     ssl_version_number - OpenSSL 24 bit version number
+     *     ssl_version - OpenSSL version number, as a string
+     *     libz_version - zlib version number, as a string
+     *     host - Information about the host where cURL was built
+     *     age
+     *     features - A bitmask of the CURL_VERSION_XXX constants
+     *     protocols - An array of protocols names supported by cURL
+     *
+     * @return array|string|float false Returns an array if no $type is
+     *      provided, a string|float if a $type is provided and found, or false
+     *      if a $type is provided and not found.
+     */
+    public static function getCurlInfo($type = null)
+    {
+        // @codeCoverageIgnoreStart
+        if (!self::$curl) {
+            self::$curl = curl_version();
+        }
+        // @codeCoverageIgnoreEnd
+
+        if (!$type) {
+            return self::$curl;
+        } else if (isset(self::$curl[$type])) {
+            return self::$curl[$type];
+        } else {
+            return false;
+        }
     }
     
     /**
