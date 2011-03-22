@@ -221,12 +221,12 @@ class RequestFactory
             $request = new $c($method, $url, $headers);
 
             if ($body) {
-                if ($method == 'POST' && is_array($body)) {
-                    $request->addPostFields(new QueryString($body));
-                } else if ($method == 'POST' && $body instanceof Collection) {
-                    $request->addPostFields($body->getAll());
-                } else {
+                if ($method == 'POST' && (is_array($body) || $body instanceof Collection)) {
+                    $request->addPostFields($body);
+                } else if (is_resource($body) || $body instanceof EntityBody) {
                     $request->setBody($body);
+                } else {
+                    $request->setBody((string) $body);
                 }
             }
         }
