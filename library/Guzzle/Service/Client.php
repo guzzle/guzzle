@@ -113,6 +113,8 @@ class Client extends AbstractSubject
             );
         }
 
+        $this->setBaseUrl($this->baseUrl);
+
         return $this;
     }
 
@@ -175,6 +177,7 @@ class Client extends AbstractSubject
             if (strpos($uri, 'http') === 0) {
                 $url = $uri;
             } else {
+                $this->getBaseUrl();
                 $url = clone $this->injectedBaseUrl;
                 $url = (string) $url->combine($uri);
             }
@@ -352,7 +355,9 @@ class Client extends AbstractSubject
     public final function setBaseUrl($url)
     {
         $this->baseUrl = $url;
-        $this->injectedBaseUrl = Url::factory($this->inject($url));
+        if ($this->config || strpos($url, '{{') === false) {
+            $this->injectedBaseUrl = Url::factory($this->inject($url));
+        }
 
         return $this;
     }
