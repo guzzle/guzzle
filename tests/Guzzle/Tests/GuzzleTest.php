@@ -81,4 +81,18 @@ class GuzzleTest extends GuzzleTestCase
         $this->assertEquals(false, Guzzle::getCurlInfo('ewfewfewfe'));
         $this->assertEquals($c['version'], Guzzle::getCurlInfo('version'));
     }
+
+    /**
+     * @covers Guzzle\Guzzle::getCurlInfo
+     * @covers Guzzle\Guzzle::reset
+     */
+    public function testDeterminesIfCurlCanFollowLocation()
+    {
+        Guzzle::reset();
+        if (!ini_get('open_basedir')) {
+            $this->assertTrue(Guzzle::getCurlInfo('follow_location'));
+        } else {
+            $this->assertFalse(Guzzle::getCurlInfo('follow_location'));
+        }
+    }
 }

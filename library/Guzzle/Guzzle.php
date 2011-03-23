@@ -72,6 +72,8 @@ class Guzzle
         // @codeCoverageIgnoreStart
         if (!self::$curl) {
             self::$curl = curl_version();
+            // Check if CURLOPT_FOLLOWLOCATION is available
+            self::$curl['follow_location'] = !ini_get('open_basedir');
         }
         // @codeCoverageIgnoreEnd
 
@@ -93,7 +95,11 @@ class Guzzle
      */
     public static function getHttpDate($date)
     {
-        return gmdate('D, d M Y H:i:s', (!is_numeric($date)) ? strtotime($date) : $date) . ' GMT';
+        if (!is_numeric($date)) {
+            $date = strtotime($date);
+        }
+
+        return gmdate('D, d M Y H:i:s', $date) . ' GMT';
     }
 
     /**
@@ -116,5 +122,14 @@ class Guzzle
                 return $config->get(trim($matches[1]));
             }, $input
         );
+    }
+
+    /**
+     * Reset the cached internal state
+     */
+    public static function reset()
+    {
+        self::$userAgent = null;
+        self::$curl = null;
     }
 }

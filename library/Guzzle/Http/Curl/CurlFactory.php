@@ -326,8 +326,6 @@ class CurlFactory implements CurlFactoryInterface
             CURLOPT_CONNECTTIMEOUT => 120, // Connect timeout in seconds
             CURLOPT_RETURNTRANSFER => false, // Streaming the return, so no need
             CURLOPT_HEADER => false, // Retrieve the received headers
-            CURLOPT_FOLLOWLOCATION => true, // Follow redirects
-            CURLOPT_MAXREDIRS => 5,
             CURLOPT_USERAGENT => $request->getHeader('User-Agent', Guzzle::getDefaultUserAgent()),
             CURLOPT_ENCODING => '', // Supports all encodings
             CURLOPT_PORT => $request->getPort(),
@@ -365,6 +363,13 @@ class CurlFactory implements CurlFactoryInterface
             $curlOptions[CURLOPT_SSL_VERIFYPEER] = false;
             $curlOptions[CURLOPT_SSL_VERIFYHOST] = false;
         }
+
+        // @codeCoverageIgnoreStart
+        if (Guzzle::getCurlInfo('follow_location')) {
+            $curlOptions[CURLOPT_FOLLOWLOCATION] = true;
+            $curlOptions[CURLOPT_MAXREDIRS] = 5;
+        }
+        // @codeCoverageIgnoreEnd
 
         return $curlOptions;
     }
