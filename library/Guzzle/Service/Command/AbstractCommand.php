@@ -197,7 +197,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             throw new \RuntimeException('The command must be executed before retrieving the result');
         }
         
-        if (is_null($this->result)) {
+        if (null === $this->result) {
             $this->process();
         }
 
@@ -211,7 +211,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
      */
     public function isPrepared()
     {
-        return !is_null($this->request);
+        return $this->request !== null;
     }
 
     /**
@@ -221,7 +221,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
      */
     public function isExecuted()
     {
-        return !is_null($this->request) && $this->request->getState() == 'complete';
+        return $this->request !== null && $this->request->getState() == 'complete';
     }
 
     /**
@@ -258,8 +258,9 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             $this->build();
 
             // Add custom request headers set on the command
-            if ($this->hasKey('headers') && $this->get('headers') instanceof Collection) {
-                foreach ($this->get('headers') as $key => $value) {
+            $headers = $this->get('headers');
+            if ($headers && $headers instanceof Collection) {
+                foreach ($headers as $key => $value) {
                     $this->request->setHeader($key, $value);
                 }
             }

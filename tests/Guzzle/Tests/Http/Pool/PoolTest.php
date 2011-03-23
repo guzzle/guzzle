@@ -82,10 +82,10 @@ class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
         $request2 = $this->pool->add(new Request('POST', 'http://www.google.com/'));
         $this->assertEquals(array($request1, $request2), $this->pool->all());
         $this->assertEquals(2, count($this->pool));
-        $this->assertTrue($this->updates->hasKey(Pool::ADD_REQUEST));
-        $this->assertFalse($this->updates->hasKey(Pool::REMOVE_REQUEST));
-        $this->assertFalse($this->updates->hasKey(Pool::POLLING));
-        $this->assertFalse($this->updates->hasKey(Pool::COMPLETE));
+        $this->assertTrue($this->updates->hasKey(Pool::ADD_REQUEST) !== false);
+        $this->assertFalse($this->updates->hasKey(Pool::REMOVE_REQUEST) !== false);
+        $this->assertFalse($this->updates->hasKey(Pool::POLLING) !== false);
+        $this->assertFalse($this->updates->hasKey(Pool::COMPLETE) !== false);
     }
 
     /**
@@ -98,9 +98,9 @@ class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
         $request = $this->pool->add(new Request('GET', 'http://www.google.com/'));
         $request->setResponse(new Response(200, array(), 'Body'), true);
         $this->pool->send();
-        $this->assertTrue($this->updates->hasKey(Pool::ADD_REQUEST));
-        $this->assertTrue($this->updates->hasKey(Pool::POLLING));
-        $this->assertTrue($this->updates->hasKey(Pool::COMPLETE));
+        $this->assertTrue($this->updates->hasKey(Pool::ADD_REQUEST) !== false);
+        $this->assertTrue($this->updates->hasKey(Pool::POLLING) !== false);
+        $this->assertTrue($this->updates->hasKey(Pool::COMPLETE) !== false);
         $this->assertEquals(array('add_request', $request), $this->updates->get(Pool::ADD_REQUEST));
         $this->assertEquals(array('polling', null), $this->updates->get(Pool::POLLING));
         $this->assertEquals(array('complete', array($request)), $this->updates->get(Pool::COMPLETE));

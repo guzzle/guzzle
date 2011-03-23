@@ -50,8 +50,8 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
             'X-Data' => '123'
         )));
 
-        $this->assertTrue($this->request->hasHeader('X-Data'));
-        $this->assertTrue($this->request->hasHeader('A'));
+        $this->assertTrue($this->request->hasHeader('X-Data') !== false);
+        $this->assertTrue($this->request->hasHeader('A') !== false);
     }
 
     /**
@@ -91,7 +91,7 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->assertFalse($this->request->hasHeader('Foo'));
         $this->request->setHeader('Foo', 'Bar');
-        $this->assertTrue($this->request->hasHeader('Foo'));
+        $this->assertEquals('Foo', $this->request->hasHeader('Foo'));
     }
 
     /**
@@ -101,7 +101,7 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
     public function testRemoveHeader()
     {
         $this->request->setHeader('Foo', 'Bar');
-        $this->assertTrue($this->request->hasHeader('Foo'));
+        $this->assertEquals('Foo', $this->request->hasHeader('Foo'));
         $this->request->removeHeader('Foo');
         $this->assertFalse($this->request->hasHeader('Foo'));
     }

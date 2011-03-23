@@ -133,7 +133,11 @@ class Client extends AbstractSubject
             $this->config = new Collection();
         }
 
-        return $key ? $this->config->get($key) : $this->config;
+        if ($key) {
+            return $this->config->get($key);
+        } else {
+            return $this->config;
+        }
     }
 
     /**
@@ -210,7 +214,7 @@ class Client extends AbstractSubject
         }
 
         // Add any curl options that might in the config to the request
-        foreach ($this->getConfig()->getAll(array('/^curl\..+/')) as $key => $value) {
+        foreach ($this->getConfig()->getAll('/^curl\..+/', Collection::MATCH_REGEX) as $key => $value) {
             $curlOption = CurlConstants::getOptionInt(str_replace('curl.', '', $key));
             if ($curlOption !== false) {
                 $curlValue = CurlConstants::getValueInt($value);

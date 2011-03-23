@@ -93,11 +93,11 @@ class CurlHandle
      */
     public function isAvailable()
     {
-        if (!$this->handle || !is_resource($this->handle)) {
+        if (!$this->handle) {
             return false;
         }
 
-        return !is_null(@curl_getinfo($this->handle, CURLINFO_EFFECTIVE_URL));
+        return false != @curl_getinfo($this->handle, CURLINFO_EFFECTIVE_URL);
     }
 
     /**
@@ -143,10 +143,10 @@ class CurlHandle
     public function getInfo($option = null)
     {
         if (!$this->isAvailable()) {
-            return !is_null($option) ? null : array();
+            return null !== $option ? null : array();
         }
 
-        return !is_null($option)
+        return null !== $option
             ? @curl_getinfo($this->handle, $option)
             : @curl_getinfo($this->handle);
     }

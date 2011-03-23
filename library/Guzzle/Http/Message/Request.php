@@ -920,7 +920,7 @@ class Request extends AbstractMessage implements RequestInterface
      */
     protected function getResponseBody()
     {
-        if (is_null($this->responseBody)) {
+        if ($this->responseBody === null) {
             $this->responseBody = EntityBody::factory('');
         }
 

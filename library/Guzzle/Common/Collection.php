@@ -13,6 +13,10 @@ namespace Guzzle\Common;
  */
 class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
 {
+    const MATCH_EXACT = 0;
+    const MATCH_IGNORE_CASE = 1;
+    const MATCH_REGEX = 2;
+
     /**
      * @var array Data associated with the object.
      */
@@ -25,7 +29,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      */
     public function __construct(array $data = null)
     {
-        if (!is_null($data)) {
+        if ($data) {
             $this->data = $data;
         }
     }
@@ -132,72 +136,72 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      *      regular expression.
      * @param mixed $default (optional) If the key is not found, set this
      *      value to specify a default
-     * @param bool $caseInsensitive (optional) Set to TRUE to retrieve
-     *      key values by a case-insensitive key
+     * @param int $match (optional) Bitwise match setting:
+     *      0 - Exact match
+     *      1 - Case insensitive match
+     *      2 - Regular expression match
      *
      * @return mixed|null Value of the key or NULL
      */
-    public function get($key, $default = null, $caseInsensitive = false)
+    public function get($key, $default = null, $match = self::MATCH_EXACT)
     {
-        if ($caseInsensitive) {
-
+        if ($match == self::MATCH_EXACT) {
+            if (array_key_exists($key, $this->data)) {
+                return $this->data[$key];
+            }
+        } else if ($match == self::MATCH_IGNORE_CASE) {
             foreach ($this->data as $k => $value) {
                 if (strcasecmp($k, $key) === 0) {
                     return $value;
                 }
             }
-
-            return $default;
-
-        } else if ($this->isRegex($key)) {
-
+        } else if ($match == self::MATCH_REGEX) {
             foreach ($this->data as $k => $value) {
                 if (preg_match($key, $k)) {
                     return $value;
                 }
             }
-            
-            return $default;
-
-        } else {
-            return array_key_exists($key, $this->data)
-                ? $this->data[$key]
-                : $default;
         }
+
+        return $default;
     }
 
     /**
      * Get all or a subset of matching key value pairs
      *
-     * @param array $keys (optional) Pass an array of keys to
-     *      retrieve only a particular subset of kvp.  Regular
-     *      expressions are accepted in the $keys array of values.
-     * @param bool $caseInsensitive (optional) Set to TRUE to compliment the
-     *      $keys argument and match keys in a case-insensitive comparison.
+     * @param array|string|int $keys (optional) Pass an array of keys to
+     *      retrieve only a particular subset of kvp.
+     * @param int $match (optional) Bitwise key match setting:
+     *      0 - Exact match
+     *      1 - Case insensitive match
+     *      2 - Regular expression match
      *
      * @return array Returns an array of all key value pairs if no $keys array
      *      is specified, or an array of only the key value pairs matching the
      *      values in the $keys array.
      */
-    public function getAll(array $keys = null, $caseInsensitive = false)
+    public function getAll($keys = null, $match = false)
     {
         if (!$keys) {
             return $this->data;
         }
         $matches = array();
-        foreach ($keys as $expression) {
-            $regEx = $this->isRegex($expression);
-            foreach ($this->data as $key => $value) {
-                if ($expression == $key) {
-                    $matches[$key] = $value;
-                } else {
-                    if (!$regEx) {
-                        if ($caseInsensitive
-                            && strcasecmp($expression, $key) === 0) {
-                            $matches[$key] = $value;
-                        }
-                    } else if (preg_match($expression, $key)) {
-                        $matches[$key] = $value;
+        $allKeys = $this->getKeys();
+        foreach ((array) $keys as $expression) {
+            if ($match == self::MATCH_EXACT) {
+                if (in_array($expression, $allKeys)) {
+                    $matches[$expression] = $this->data[$expression];
+                }
+            } else if ($match == self::MATCH_IGNORE_CASE) {
+                foreach ($allKeys as $key) {
+                    if (strcasecmp($expression, $key) === 0) {
+                        $matches[$key] = $this->data[$key];
+                    }
+                }
+            } else if ($match == self::MATCH_REGEX) {
+                foreach ($allKeys as $key) {
+                    if (preg_match($expression, $key)) {
+                        $matches[$key] = $this->data[$key];
                     }
                 }
             }
@@ -219,7 +223,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
         $keys = array_keys($this->data);
 
         // If a regular expression was set, filter the keys
-        if ($regexp && $this->isRegex($regexp)) {
+        if ($regexp) {
             $keys = array_filter($keys, function($key) use ($regexp) {
                 return preg_match($regexp, $key);
             });
@@ -232,17 +236,35 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      * Returns whether or not the specified key is present.
      *
      * @param string $key The key for which to check the existence.
-     *      This key can also be a regular expression
-     * @param bool $caseInsensitive (optional) Set to TRUE to compliment the
-     *      $key argument and match keys in a case-insensitive comparison.
+     * @param int $match (optional) Bitwise key match setting:
+     *      0 - Exact match
+     *      1 - Case insensitive match
+     *      2 - Regular expression match
      *
-     * @return bool Returns TRUE if the key is present and FALSE if not
+     * @return int|string Returns the key value if the key is present or FALSE
+     *      if the key is not.  Use === matching to check if false.
      */
-    public function hasKey($key, $caseInsensitive = false)
+    public function hasKey($key, $match = self::MATCH_EXACT)
     {
-        return ($this->isRegex($key) || $caseInsensitive)
-            ? !is_null($this->get($key, null, $caseInsensitive))
-            : array_key_exists($key, $this->data);
+        if ($match == self::MATCH_EXACT) {
+            if (array_key_exists($key, $this->data)) {
+                return $key;
+            }
+        } else if ($match == self::MATCH_IGNORE_CASE) {
+            foreach (array_keys($this->data) as $k) {
+                if (strcasecmp($k, $key) === 0) {
+                    return $k;
+                }
+            }
+        } else if ($match == self::MATCH_REGEX) {
+            foreach (array_keys($this->data) as $k) {
+                if (preg_match($key, $k)) {
+                    return $k;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -318,7 +340,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      */
     public function offsetExists($offset)
     {
-        return $this->hasKey($offset);
+        return $this->hasKey($offset) !== false;
     }
 
     /**
@@ -354,22 +376,20 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Remove a specific key value pair
      *
-     * @param array|string $key Key, regexp, or array of keys to remove
+     * @param array|string $key A key, regexp, or array of keys to remove
+     * @param int $match (optional) Bitwise key match setting:
+     *     0 - Exact match
+     *     1 - Case insensitive match
+     *     2 - Regular expression match
      *
      * @return Collection Returns a reference to the object
      */
-    public function remove($key)
+    public function remove($key, $match = self::MATCH_EXACT)
     {
-        if (is_array($key)) {
-            foreach ($key as $k) {
-                $this->remove($k);
-            }
-        } else {
-            $keys = $this->isRegex($key) ? $this->getKeys($key) : array($key);
-            foreach ($keys as $k) {
-                if (array_key_exists($k, $this->data)) {
-                    unset($this->data[$k]);
-                }
+        foreach ((array) $key as $k) {
+            $matched = $this->hasKey($k, $match);
+            if ($matched !== false) {
+                unset($this->data[$matched]);
             }
         }
 
@@ -403,17 +423,5 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
         $this->data[$key] = $value;
 
         return $this;
-    }
-
-    /**
-     * Check if a string is a regular expression
-     *
-     * @param string $expression The string to check
-     *
-     * @return bool
-     */
-    public function isRegex($expression)
-    {
-        return ($expression[0] == '/' && strrpos($expression, '/') > 0);
     }
 }

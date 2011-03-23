@@ -40,17 +40,16 @@ class Url
      */
     public static function factory($url)
     {
-        // Parse the URL into parts
-        $parts = array_merge(array(
-            'scheme' => null,
-            'host' => null,
-            'path' => null,
-            'port' => null,
-            'query' => null,
-            'user' => null,
-            'pass' => null,
-            'fragment' => null
-        ), (array) parse_url($url));
+        // Performance improvement to Parse the URL into parts
+        $parts = (array) parse_url($url);
+        if (!isset($parts['scheme'])) $parts['scheme'] = null;
+        if (!isset($parts['host'])) $parts['host'] = null;
+        if (!isset($parts['path'])) $parts['path'] = null;
+        if (!isset($parts['port'])) $parts['port'] = null;
+        if (!isset($parts['query'])) $parts['query'] = null;
+        if (!isset($parts['user'])) $parts['user'] = null;
+        if (!isset($parts['pass'])) $parts['pass'] = null;
+        if (!isset($parts['fragment'])) $parts['fragment'] = null;
 
         if ($parts['query']) {
             $query = array();
@@ -142,28 +141,25 @@ class Url
      */
     public function __construct($scheme, $host, $username = null, $password = null, $port = null, $path = null, QueryString $query = null, $fragment = null)
     {
-        $this->setScheme($scheme);
-        $this->setHost($host);
-        if ($username) {
-            $this->setUsername($username);
-            if ($password) {
-                $this->setPassword($password);
-            }
-        }
-
-        if ($port) {
-            $this->setPort($port);
+        $this->scheme = $scheme;
+        $this->host = $host;
+        $this->port = $port;
+        $this->username = $username;
+        if ($username && $password) {
+            $this->password = $password;
         }
 
         if ($path) {
             $this->setPath($path);
         }
 
-        $this->setQuery($query ?: new QueryString());
-        
-        if ($fragment) {
-            $this->setFragment($fragment);
+        if ($query) {
+            $this->query = $query;
+        } else {
+            $this->query = new QueryString();
         }
+        
+        $this->fragment = $fragment;
     }
 
     /**
@@ -295,7 +291,11 @@ class Url
      */
     public function setPath($path)
     {
-        $this->path = is_array($path) ? implode('/', $path) : $path;
+        if (is_array($path)) {
+            $this->path = implode('/', $path);
+        } else {
+            $this->path = $path;
+        }
         if ($this->path != '*' && substr($this->path, 0, 1) != '/') {
             $this->path = '/' . $this->path;
         }

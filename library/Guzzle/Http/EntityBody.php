@@ -241,7 +241,7 @@ class EntityBody extends Stream
      */
     public function readChunked($chunkLength = 4096, $startPos = null)
     {
-        if (!is_null($startPos) && ftell($this->stream) != $startPos) {
+        if ($startPos !== null && ftell($this->stream) != $startPos) {
             $this->seek($startPos);
         }
 

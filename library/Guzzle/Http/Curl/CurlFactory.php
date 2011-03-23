@@ -409,7 +409,7 @@ class CurlFactory implements CurlFactoryInterface
                 $curlOptions[CURLOPT_UPLOAD] = true;
                 if ($request->getBody()) {
                     $size = $request->getBody()->getSize();
-                    $curlOptions[CURLOPT_INFILESIZE] = is_null($size) ? -1 : $size;
+                    $curlOptions[CURLOPT_INFILESIZE] = null === $size ? -1 : $size;
                 }
                 break;
             case 'POST':
@@ -431,7 +431,7 @@ class CurlFactory implements CurlFactoryInterface
         $formattedHeaders = array();
         foreach ($request->getHeaders() as $key => $value) {
             // cURL will set the Content-Length header for PUT requests
-            if ($key == 'Content-Length' && ($value === '' || is_null($value) || $request->getMethod() == 'PUT')) {
+            if ($key == 'Content-Length' && ($value === '' || $value === null || $request->getMethod() == 'PUT')) {
                 continue;
             }
             $formattedHeaders[] = $key . ': ' . $value;

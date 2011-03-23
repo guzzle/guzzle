@@ -288,7 +288,7 @@ class CachePlugin implements Observer
         // Check the response's max-age header
         if ($response->isFresh() === false) {
             $maxStale = $request->getCacheControlDirective('max-stale');
-            if (!is_null($maxStale)) {
+            if (null !== $maxStale) {
                 if ($maxStale !== true && $response->getFreshness() < (-1 * $maxStale)) {
                     return false;
                 }

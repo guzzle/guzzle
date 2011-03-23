@@ -173,7 +173,7 @@ class Stream
      */
     public function getSize()
     {
-        if (!is_null($this->size)) {
+        if ($this->size !== null) {
             return $this->size;
         }
 

@@ -78,7 +78,7 @@ class Inspector
             $collection->set($key, $value);
         }
         foreach ((array) $required as $key) {
-            if (!$collection->hasKey($key)) {
+            if ($collection->hasKey($key) === false) {
                 throw new \InvalidArgumentException(
                     "Config must contain a '{$key}' key"
                 );
@@ -266,14 +266,14 @@ class Inspector
             }
 
             // Skip further validation if the arg is not set
-            if (!$config->hasKey($name)) {
+            if ($config->hasKey($name) === false) {
                 continue;
             }
 
             // Ensure that the correct data type is being used
             if ($arg->get('type')) {
                 $result = $this->validate($arg->get('type'), $config->get($name));
-                if ($result !== true && !is_null($result)) {
+                if ($result !== true && $result !== null) {
                     $errors[] = $result;
                 }
             }

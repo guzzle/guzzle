@@ -64,64 +64,75 @@ abstract class AbstractMessage implements MessageInterface
     /**
      * Retrieve an HTTP header by name
      *
-     * @param string $header The case-insensitive header to retrieve. Can be a
-     *      regular expression
+     * @param string $header Header to retrieve.
      * @param mixed $default (optional) If the header is not found, the passed
      *      $default value will be returned
+     * @param int $match (optional) Bitwise match setting:
+     *     0 - Exact match
+     *     1 - Case insensitive match
+     *     2 - Regular expression match
      *
-     * @return string|null Returns the matching HTTP header or NULL if the
+     * @return string|null Returns the matching HTTP header value or NULL if the
      *      header is not found
      */
-    public function getHeader($header, $default = null)
+    public function getHeader($header, $default = null, $match = Collection::MATCH_EXACT)
     {
-        return $this->headers->get($header, $default);
+        return $this->headers->get($header, $default, $match);
     }
 
     /**
      * Get all or all matching headers.
      *
      * @param array $names (optional) Pass an array of header names to retrieve
-     *      only a particular subset of headers.  Regular expressions are
-     *      accepted in the $names array of values.
+     *      only a particular subset of headers.
+     * @param int $match (optional) Bitwise match setting:
+     *      0 - Exact match
+     *      1 - Case insensitive match
+     *      2 - Regular expression match
      *
-     * @return Collection Returns a collection of all headers if no $names
+     * @return Collection Returns a collection of all headers if no $headers
      *      array is specified, or a Collection of only the headers matching
-     *      the headers in the $names array.
+     *      the headers in the $headers array.
      */
-    public function getHeaders(array $headers = null)
+    public function getHeaders(array $headers = null, $match = Collection::MATCH_EXACT)
     {
         if (!$headers) {
             return clone $this->headers;
         } else {
-            return new Collection($this->headers->getAll($headers, true));
+            return new Collection($this->headers->getAll($headers, $match));
         }
     }
 
     /**
      * Returns TRUE or FALSE if the specified header is present.
      *
-     * @param string $header The header to check.  This parameter can also be a
-     *      regular expression
-     * @param bool $caseInsensitive (optional) Set to TRUE to compliment the
-     *      $header argument and match headers in a case-insensitive comparison.
+     * @param string $header The header to check.
+     * @param int $match (optional) Bitwise key match setting:
+     *      0 - Exact match
+     *      1 - Case insensitive match
+     *      2 - Regular expression match
      *
-     * @return bool Returns TRUE if the header is present and FALSE if not set
+     * @return bool|mixed Returns the matching header or FALSE if no match found
      */
-    public function hasHeader($header, $caseInsensitive = false)
+    public function hasHeader($header, $match = Collection::MATCH_EXACT)
     {
-        return $this->headers->hasKey($header, $caseInsensitive);
+        return $this->headers->hasKey($header, $match);
     }
 
     /**
      * Remove a specific HTTP header.
      *
      * @param string $header HTTP header to remove.
+     * @param int $match (optional) Bitwise match setting:
+     *      0 - Exact match
+     *      1 - Case insensitive match
+     *      2 - Regular expression match
      *
      * @return AbstractMessage
      */
-    public function removeHeader($header)
+    public function removeHeader($header, $match = Collection::MATCH_EXACT)
     {
-        $this->headers->remove($header);
+        $this->headers->remove($header, $match);
         $this->changedHeader('remove', $header);
 
         return $this;

@@ -264,7 +264,7 @@ class Response extends AbstractMessage
      */
     public function getInfo($key = null)
     {
-        if (is_null($key)) {
+        if ($key === null) {
             return $this->info;
         } else if (array_key_exists($key, $this->info)) {
             return $this->info[$key];
@@ -385,7 +385,7 @@ class Response extends AbstractMessage
      */
     public function getAcceptRanges()
     {
-        return $this->headers->get('/^Accept-*Ranges$/i');
+        return $this->headers->get('/^Accept-*Ranges$/i', null, Collection::MATCH_REGEX);
     }
 
     /**
@@ -399,9 +399,9 @@ class Response extends AbstractMessage
      */
     public function getAge($headerOnly = false)
     {
-        $age = $this->headers->get('Age', null, true);
+        $age = $this->headers->get('Age', null, Collection::MATCH_IGNORE_CASE);
 
-        if (!$headerOnly && is_null($age) && $this->getDate()) {
+        if (!$headerOnly && $age === null && $this->getDate()) {
             $age = time() - strtotime($this->getDate());
         }
 
@@ -416,7 +416,7 @@ class Response extends AbstractMessage
      */
     public function getAllow()
     {
-        return $this->headers->get('Allow', null, true);
+        return $this->headers->get('Allow', null, Collection::MATCH_IGNORE_CASE);
     }
 
     /**
@@ -447,7 +447,7 @@ class Response extends AbstractMessage
      */
     public function getCacheControl()
     {
-        return $this->headers->get('/^Cache-*Control$/i');
+        return $this->headers->get('/^Cache-*Control$/i', null, Collection::MATCH_REGEX);
     }
 
     /**
@@ -457,7 +457,7 @@ class Response extends AbstractMessage
      */
     public function getConnection()
     {
-        return $this->headers->get('Connection', null, true);
+        return $this->headers->get('Connection', null, Collection::MATCH_IGNORE_CASE);
     }
 
     /**
@@ -468,7 +468,7 @@ class Response extends AbstractMessage
      */
     public function getContentEncoding()
     {
-        return $this->headers->get('/^Content-*Encoding$/i');
+        return $this->headers->get('/^Content-*Encoding$/i', null, Collection::MATCH_REGEX);
     }
 
     /**
@@ -478,7 +478,7 @@ class Response extends AbstractMessage
      */
     public function getContentLanguage()
     {
-        return $this->headers->get('/^Content-*Language$/i');
+        return $this->headers->get('/^Content-*Language$/i', null, Collection::MATCH_REGEX);
     }
 
     /**
@@ -488,7 +488,7 @@ class Response extends AbstractMessage
      */
     public function getContentLength()
     {
-        return $this->headers->get('/^Content-*Length$/i');
+        return $this->headers->get('/^Content-*Length$/i', null, Collection::MATCH_REGEX);
     }
 
     /**
@@ -499,7 +499,7 @@ class Response extends AbstractMessage
      */
     public function getContentLocation()
     {
-        return $this->headers->get('/^Content-*Location$/i');
+        return $this->headers->get('/^Content-*Location$/i', null, Collection::MATCH_REGEX);
     }
 
     /**
@@ -509,7 +509,7 @@ class Response extends AbstractMessage
      */
     public function getContentDisposition()
     {
-        return $this->headers->get('/^Content-*Disposition$/i');
+        return $this->headers->get('/^Content-*Disposition$/i', null, Collection::MATCH_REGEX);
     }
 
     /**
@@ -520,7 +520,7 @@ class Response extends AbstractMessage
      */
     public function getContentMd5()
     {
-        return $this->headers->get('/^Content-*MD5$/i');
+        return $this->headers->get('/^Content-*MD5$/i', null, Collection::MATCH_REGEX);
     }
 
     /**
@@ -531,7 +531,7 @@ class Response extends AbstractMessage
      */
     public function getContentRange()
     {
-        return $this->headers->get('/^Content-*Range$/i');
+        return $this->headers->get('/^Content-*Range$/i', null, Collection::MATCH_REGEX);
     }
 
     /**
@@ -541,7 +541,7 @@ class Response extends AbstractMessage
      */
     public function getContentType()
     {
-        return $this->headers->get('/^Content-*Type$/i');
+        return $this->headers->get('/^Content-*Type$/i', null, Collection::MATCH_REGEX);
     }
 
     /**
@@ -565,7 +565,7 @@ class Response extends AbstractMessage
      */
     public function getDate()
     {
-        return $this->headers->get('Date', null, true);
+        return $this->headers->get('Date', null, Collection::MATCH_IGNORE_CASE);
     }
 
     /**
@@ -576,7 +576,7 @@ class Response extends AbstractMessage
      */
     public function getEtag()
     {
-        $etag = $this->headers->get('ETag', null, true);
+        $etag = $this->headers->get('ETag', null, Collection::MATCH_IGNORE_CASE);
         
         return $etag ? str_replace('"', '', $etag) : null;
     }
@@ -589,7 +589,7 @@ class Response extends AbstractMessage
      */
     public function getExpires()
     {
-        return $this->headers->get('Expires', null, true);
+        return $this->headers->get('Expires', null, Collection::MATCH_IGNORE_CASE);
     }
 
     /**
@@ -600,7 +600,7 @@ class Response extends AbstractMessage
      */
     public function getLastModified()
     {
-        return $this->headers->get('/^Last-*Modified$/i');
+        return $this->headers->get('/^Last-*Modified$/i', null, Collection::MATCH_REGEX);
     }
 
     /**
@@ -611,7 +611,7 @@ class Response extends AbstractMessage
      */
     public function getLocation()
     {
-        return $this->headers->get('Location', null, true);
+        return $this->headers->get('Location', null, Collection::MATCH_IGNORE_CASE);
     }
 
     /**
@@ -622,7 +622,7 @@ class Response extends AbstractMessage
      */
     public function getPragma()
     {
-        return $this->headers->get('Pragma', null, true);
+        return $this->headers->get('Pragma', null, Collection::MATCH_IGNORE_CASE);
     }
 
     /**
@@ -632,7 +632,7 @@ class Response extends AbstractMessage
      */
     public function getProxyAuthenticate()
     {
-        return $this->headers->get('/^Proxy-*Authenticate$/i');
+        return $this->headers->get('/^Proxy-*Authenticate$/i', null, Collection::MATCH_REGEX);
     }
 
     /**
@@ -643,7 +643,7 @@ class Response extends AbstractMessage
      */
     public function getRetryAfter()
     {
-        return $this->headers->get('/^Retry-*After$/i');
+        return $this->headers->get('/^Retry-*After$/i', null, Collection::MATCH_REGEX);
     }
 
     /**
@@ -653,7 +653,7 @@ class Response extends AbstractMessage
      */
     public function getServer()
     {
-        return $this->headers->get('Server', null, true);
+        return $this->headers->get('Server', null, Collection::MATCH_IGNORE_CASE);
     }
 
     /**
@@ -663,7 +663,7 @@ class Response extends AbstractMessage
      */
     public function getSetCookie()
     {
-        return $this->headers->get('/^Set-*Cookie2*$/i');
+        return $this->headers->get('/^Set-*Cookie2*$/i', null, Collection::MATCH_REGEX);
     }
 
     /**
@@ -675,7 +675,7 @@ class Response extends AbstractMessage
      */
     public function getTrailer()
     {
-        return $this->headers->get('Trailer', null, true);
+        return $this->headers->get('Trailer', null, Collection::MATCH_IGNORE_CASE);
     }
 
     /**
@@ -686,7 +686,7 @@ class Response extends AbstractMessage
      */
     public function getTransferEncoding()
     {
-        return $this->headers->get('/^Transfer\-*Encoding$/i');
+        return $this->headers->get('/^Transfer\-*Encoding$/i', null, Collection::MATCH_REGEX);
     }
 
     /**
@@ -698,7 +698,7 @@ class Response extends AbstractMessage
      */
     public function getVary()
     {
-        return $this->headers->get('Vary', null, true);
+        return $this->headers->get('Vary', null, Collection::MATCH_IGNORE_CASE);
     }
 
     /**
@@ -709,7 +709,7 @@ class Response extends AbstractMessage
      */
     public function getVia()
     {
-        return $this->headers->get('Via', null, true);
+        return $this->headers->get('Via', null, Collection::MATCH_IGNORE_CASE);
     }
 
     /**
@@ -720,7 +720,7 @@ class Response extends AbstractMessage
      */
     public function getWarning()
     {
-        return $this->headers->get('Warning', null, true);
+        return $this->headers->get('Warning', null, Collection::MATCH_IGNORE_CASE);
     }
 
     /**
@@ -731,7 +731,7 @@ class Response extends AbstractMessage
      */
     public function getWwwAuthenticate()
     {
-        return $this->headers->get('/^WWW-*Authenticate$/i');
+        return $this->headers->get('/^WWW-*Authenticate$/i', null, Collection::MATCH_REGEX);
     }
 
     /**
@@ -837,7 +837,7 @@ class Response extends AbstractMessage
             return false;
         }
 
-        return $this->isFresh() || is_null($this->getFreshness()) || $this->canValidate();
+        return $this->isFresh() || $this->getFreshness() === null || $this->canValidate();
     }
 
     /**
@@ -876,7 +876,7 @@ class Response extends AbstractMessage
     {
         $fresh = $this->getFreshness();
 
-        return is_null($fresh) ? null : $this->getFreshness() > 0;
+        return $fresh === null ? null : $this->getFreshness() > 0;
     }
 
     /**

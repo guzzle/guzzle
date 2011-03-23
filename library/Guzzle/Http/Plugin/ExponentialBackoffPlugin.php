@@ -136,9 +136,10 @@ class ExponentialBackoffPlugin implements Observer
         switch ($event) {
             case PoolInterface::POLLING_REQUEST:
                 // The most frequent event, thus at the top of the switch
-                if ($subject->getParams()->hasKey(self::DELAY_PARAM)) {
+                $delay = $subject->getParams()->get(self::DELAY_PARAM);
+                if ($delay) {
                     // If the duration of the delay has passed, retry the request using the pool
-                    if (time() >= $subject->getParams()->get(self::DELAY_PARAM)) {
+                    if (time() >= $delay) {
                         // Remove the request from the pool and then add it back again
                         $context->remove($subject);
                         $context->add($subject);

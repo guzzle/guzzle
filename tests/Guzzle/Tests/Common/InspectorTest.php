@@ -66,6 +66,12 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase implements FilterInterf
             'b' => 'lol',
             'base_url' => 'http://www.test.com/'
         ), $c->getAll());
+
+        try {
+            $c = Inspector::prepareConfig(null, null, array('a'));
+            $this->fail('Exception not throw when missing config');
+        } catch (\InvalidArgumentException $e) {
+        }
     }
 
     /**

@@ -57,7 +57,7 @@ class QueryString extends Collection
     public static function rawurlencode($string, array $doNotEncode = null)
     {
         $result = rawurlencode($string);
-        if (is_null($doNotEncode) || !count($doNotEncode)) {
+        if ($doNotEncode === null || !count($doNotEncode)) {
             
             return $result;
         } else {
@@ -85,7 +85,7 @@ class QueryString extends Collection
         $firstValue = true;
 
         foreach ($this->encodeData($this->data, $this->encodeFields, $this->encodeValues) as $name => $value) {
-            $value = !is_null($value) ? (array) $value : array(false);
+            $value = $value !== null ? (array) $value : array(false);
             foreach ($value as $v) {
                 if (!$firstValue) {
                     $queryString .= $this->fieldSeparator;
@@ -310,7 +310,7 @@ class QueryString extends Collection
             if (is_array($value)) {
 
                 $encoded = $this->encodeData($value, $encodeFields, $encodeValues);
-                if (!is_null($this->aggregator)) {
+                if ($this->aggregator !== null) {
                     $temp = array_merge($temp, call_user_func_array($this->aggregator, array($key, $value, $encodeFields, $encodeValues)));
                 } else {
                     foreach ($encoded as $i => $v) {

@@ -423,6 +423,6 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request->send();
         $request2->send();
 
-        $this->assertTrue($request2->getResponse()->hasHeader('X-Guzzle-Cache'));
+        $this->assertEquals('X-Guzzle-Cache', $request2->getResponse()->hasHeader('X-Guzzle-Cache'));
     }
 }

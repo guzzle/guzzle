@@ -47,15 +47,12 @@ abstract class AbstractFilter extends Collection implements FilterInterface
      */
     public function process($command)
     {
-        $canProcess = true;
-        if ($this->hasKey('type_hint')) {
-            $typeHint = $this->get('type_hint');
-            if (!($command instanceof $typeHint)) {
-                $canProcess = false;
-            }
+        $typeHint = $this->get('type_hint');
+        if ($typeHint && !($command instanceof $typeHint)) {
+            return false;
         }
 
-        return ($canProcess) ? $this->filterCommand($command) : false;
+        return $this->filterCommand($command);
     }
 
     /**
