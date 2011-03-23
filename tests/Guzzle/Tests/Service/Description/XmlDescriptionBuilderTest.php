@@ -75,8 +75,16 @@ class XmlDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         <type name="slug" class="Guzzle.Common.InspectorFilter.Regex" default_args="/[0-9a-zA-z_\-]+/" />
     </types>
     <commands>
-        <command name="geo.id" method="GET" auth_required="true" path="/geo/id/:place_id">
-            <param name="place_id" type="string" required="true"/>
+        <command name="abstract" method="GET" path="/path/{{def}}" min_args="2">
+            <param name="st" static="static" />
+            <param name="def" default="123" location="path" />
+        </command>
+        <command name="test1" extends="abstract">
+            <param name="hd" type="string" required="true" location="header:X-Hd" />
+        </command>
+        <command name="test2" extends="abstract" method="DELETE" />
+        <command name="test3" class="Guzzle.Service.Command.ClosureCommand">
+            <param name="a" type="string" required="true" />
         </command>
     </commands>
 </client>
@@ -84,7 +92,45 @@ EOT;
         
         $builder = new XmlDescriptionBuilder($xml);
         $service = $builder->build();
-        $this->assertTrue($service->hasCommand('geo.id'));
         $this->arrayHasKey('slug', Inspector::getInstance()->getRegisteredFilters());
+        $this->assertTrue($service->hasCommand('abstract'));
+        $this->assertTrue($service->hasCommand('test1'));
+        $this->assertTrue($service->hasCommand('test1'));
+        $this->assertTrue($service->hasCommand('test2'));
+        $this->assertTrue($service->hasCommand('test3'));
+        
+        $test1 = $service->getCommand('test1');
+        $test2 = $service->getCommand('test2');
+        $test3 = $service->getCommand('test3');
+
+        $this->assertEquals('GET', $test1->getMethod());
+        $this->assertEquals('/path/{{def}}', $test1->getPath());
+        $this->assertEquals('2', $test1->getMinArgs());
+        $this->assertEquals('static', $test1->getArg('st')->get('static'));
+        $this->assertEquals('123', $test1->getArg('def')->get('default'));
+
+        $this->assertEquals('DELETE', $test2->getMethod());
+        $this->assertEquals('/path/{{def}}', $test1->getPath());
+        $this->assertEquals('2', $test1->getMinArgs());
+        $this->assertEquals('static', $test1->getArg('st')->get('static'));
+        $this->assertEquals('123', $test1->getArg('def')->get('default'));
+        $this->assertEquals('header:X-Hd', $test1->getArg('hd')->get('location'));
+
+        $this->assertEquals('', $test3->getMethod());
+        $this->assertEquals('Guzzle\Service\Command\ClosureCommand', $test3->getConcreteClass());
+    }
+
+    /**
+     * @covers Guzzle\Service\Description\XmlDescriptionBuilder
+     * @expectedException RuntimeException
+     */
+    public function testvalidatesXmlExtensions()
+    {
+        $xml = <<<EOT
+<?xml version="1.0" encoding="UTF-8"?>
+<client><commands><command name="invalid" extends="abstract" method="DELETE" /></commands></client>
+EOT;
+        $builder = new XmlDescriptionBuilder($xml);
+        $service = $builder->build();
     }
 }

@@ -100,7 +100,11 @@ class ApiCommand
         if (isset($config['args']) && is_array($config['args'])) {
             $this->args = array();
             foreach ($config['args'] as $argName => $arg) {
-                $this->args[$argName] = new Collection($arg);
+                if ($arg instanceof Collection) {
+                    $this->args[$argName] = $arg;
+                } else {
+                    $this->args[$argName] = new Collection($arg);
+                }
             }
         }
     }

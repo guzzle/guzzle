@@ -93,9 +93,11 @@ class CurlHandle
      */
     public function isAvailable()
     {
+        //@codeCoverageIgnoreStart
         if (!$this->handle) {
             return false;
         }
+        //@codeCoverageIgnoreEnd
 
         return false != @curl_getinfo($this->handle, CURLINFO_EFFECTIVE_URL);
     }
@@ -346,6 +348,7 @@ class CurlHandle
      */
     public function hasProblematicOption()
     {
+        //@codeCoverageIgnoreStart
         if (!self::$pollute) {
             self::$pollute = array(
                 CURLOPT_RANGE,
@@ -365,6 +368,7 @@ class CurlHandle
                 self::$pollute[] = \CURLOPT_TIMEOUT_MS;
             }
         }
+        //@codeCoverageIgnoreEnd
 
         return count(array_intersect(self::$pollute, $this->options->getKeys())) > 0;
     }

@@ -412,7 +412,13 @@ class Url
      */
     public function setQuery($query)
     {
-        $this->query = $query;
+        if (is_string($query)) {
+            $output = null;
+            parse_str($query, $output);
+            $this->query = new QueryString($output);
+        } else {
+            $this->query = $query;
+        }
 
         return $this;
     }

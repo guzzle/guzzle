@@ -84,7 +84,11 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $c = new ApiCommand(array(
             'name' => 'test',
             'class' => 'Guzzle\\Service\\Command\ClosureCommand',
-            'args' => array()
+            'args' => array(
+                'p' => new Collection(array(
+                    'name' => 'foo'
+                ))
+            )
         ));
         $this->assertEquals('Guzzle\\Service\\Command\ClosureCommand', $c->getConcreteClass());
     }

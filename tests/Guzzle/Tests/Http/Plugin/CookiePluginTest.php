@@ -540,7 +540,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->getServer()->enqueue(array(
             "HTTP/1.1 302 Moved Temporarily\r\n" .
-            "Set-Cookie: test=583551; expires=Wednesday, 23-Mar-2011 19:49:45 GMT; path=/\r\n" .
+            "Set-Cookie: test=583551; expires=Wednesday, 23-Mar-2050 19:49:45 GMT; path=/\r\n" .
             "Location: /redirect\r\n\r\n",
             
             "HTTP/1.1 200 OK\r\n" .

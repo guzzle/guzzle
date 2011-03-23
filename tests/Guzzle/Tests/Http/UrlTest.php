@@ -6,6 +6,7 @@
 
 namespace Guzzle\Tests\Http;
 
+use Guzzle\Http\QueryString;
 use Guzzle\Http\Url;
 use Guzzle\Http\HttpException;
 
@@ -180,5 +181,26 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
     public function testCombinesUrls($a, $b, $c)
     {
         $this->assertEquals($c, (string) Url::factory($a)->combine($b));
+    }
+
+    /**
+     * @covers Guzzle\Http\Url
+     */
+    public function testHasGettersAndSetters()
+    {
+        $url = Url::factory('http://www.test.com/');
+        $this->assertEquals('example.com', $url->setHost('example.com')->getHost());
+        $this->assertEquals('8080', $url->setPort(8080)->getPort());
+        $this->assertEquals('/foo/bar', $url->setPath(array('foo', 'bar'))->getPath());
+        $this->assertEquals('a', $url->setPassword('a')->getPassword());
+        $this->assertEquals('b', $url->setUsername('b')->getUsername());
+        $this->assertEquals('abc', $url->setFragment('abc')->getFragment());
+        $this->assertEquals('https', $url->setScheme('https')->getScheme());
+        $this->assertEquals('?a=123', (string) $url->setQuery('a=123')->getQuery());
+        $this->assertEquals('https://b:a@example.com:8080/foo/bar?a=123#abc', (string)$url);
+        $this->assertEquals('?b=boo', (string) $url->setQuery(new QueryString(array(
+            'b' => 'boo'
+        )))->getQuery());
+        $this->assertEquals('https://b:a@example.com:8080/foo/bar?b=boo#abc', (string)$url);
     }
 }
