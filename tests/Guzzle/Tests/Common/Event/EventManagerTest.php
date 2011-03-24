@@ -22,6 +22,7 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
      * @covers Guzzle\Common\Event\EventManager::getAttached
      * @covers Guzzle\Common\Event\EventManager::__construct
      * @covers Guzzle\Common\Event\EventManager::getSubject
+     * @covers Guzzle\Common\Event\EventManager::getPriority
      */
     public function testAttachesObservers()
     {
@@ -42,6 +43,11 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
 
         $this->assertType('Closure', $closure);
         $this->assertEquals(array($observer, $closure), $subject->getAttached());
+
+        $this->assertEquals(0, $subject->getPriority($observer));
+        $this->assertEquals(-10, $subject->getPriority($closure));
+        $this->assertNull($subject->getPriority(new \stdClass()));
+        $this->assertNull($subject->getPriority('abc'));
     }
 
     /**

@@ -229,11 +229,13 @@ class Client extends AbstractSubject
         }
 
         // Attach client observers to the request
-        foreach ($this->getEventManager()->getAttached() as $observer) {
-            $request->getEventManager()->attach($observer);
+        $reqManager = $request->getEventManager();
+        $manager = $this->getEventManager();
+        foreach ($manager->getAttached() as $observer) {
+            $reqManager->attach($observer, $manager->getPriority($observer));
         }
 
-        $this->getEventManager()->notify('request.create', $request);
+        $manager->notify('request.create', $request);
 
         return $request;
     }

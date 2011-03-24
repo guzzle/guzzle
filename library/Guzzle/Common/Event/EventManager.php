@@ -68,10 +68,7 @@ class EventManager
 
             $hash = spl_object_hash($observer);
             $this->observers[] = $observer;
-
-            if ($priority) {
-                $this->priorities[$hash] = $priority;
-            }
+            $this->priorities[$hash] = $priority;
             $priorities = $this->priorities;
 
             // Sort the events by priority
@@ -111,12 +108,14 @@ class EventManager
     {
         if ($this->observers === array($observer)) {
             $this->observers = array();
+            $this->priorities = array();
         } else {
             if (count($this->observers)) {
                 foreach ($this->observers as $i => $o) {
                     if ($o === $observer) {
                         // Notify the observer that it is being detached
                         $this->notifyObserver($observer, 'event.detach');
+                        unset($this->priorities[spl_object_hash($observer)]);
                         unset($this->observers[$i]);
                     }
                 }
@@ -241,5 +240,24 @@ class EventManager
         } else {
             return $observer($this->subject, $event, $context);
         }
+    }
+
+    /**
+     * Get the priority level that an observer was attached at
+     *
+     * @param object $observer Observer to get the priority level of
+     *
+     * @return int|null Returns the priortity level or NULl if not attached
+     */
+    public function getPriority($observer)
+    {
+        if (is_object($observer)) {
+            $hash = spl_object_hash($observer);
+            if (array_key_exists($hash, $this->priorities)) {
+                return $this->priorities[$hash];
+            }
+        }
+
+        return null;
     }
 }
