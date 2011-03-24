@@ -73,21 +73,16 @@ class EventManager
 
             // Sort the events by priority
             usort($this->observers, function($a, $b) use ($priorities) {
-                $priority1 = $priority2 = 0;
-                $ah = spl_object_hash($a);
-                $bh = spl_object_hash($b);
-                if (isset($priorities[$ah])) {
-                    $priority1 = $priorities[$ah];
-                }
-                if (isset($priorities[$bh])) {
-                    $priority2 = $priorities[$bh];
-                }
+                $priority1 = $priorities[spl_object_hash($a)];
+                $priority2 = $priorities[spl_object_hash($b)];
 
                 if ($priority1 === $priority2) {
                     return 0;
+                } else if ($priority1 > $priority2) {
+                    return -1;
+                } else {
+                    return 1;
                 }
-
-                return $priority1 > $priority2 ? -1 : 1;
             });
 
             // Notify the observer that it is being attached to the subject
