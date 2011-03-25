@@ -125,24 +125,28 @@ class CommandSetTest extends AbstractCommandTest
         $command2 = new MockCommand();
         $command2->setClient($client);
         $command2->setCanBatch(false);
+        $command3 = new MockCommand();
+        $command3->setClient($client);
 
-        $commandSet = new CommandSet(array($command1, $command2));
+        $commandSet = new CommandSet(array($command1, $command2, $command3));
         $client->getEventManager()->attach($observer);
         $commandSet->execute();
 
         $this->assertTrue($command1->isExecuted());
         $this->assertTrue($command2->isExecuted());
+        $this->assertTrue($command3->isExecuted());
         $this->assertTrue($command1->isPrepared());
         $this->assertTrue($command2->isPrepared());
+        $this->assertTrue($command3->isPrepared());
 
         $this->assertEquals($response, $command1->getResponse());
         $this->assertEquals($response, $command2->getResponse());
 
-        $this->assertEquals(2, count(array_filter($observer->events, function($e) {
+        $this->assertEquals(3, count(array_filter($observer->events, function($e) {
             return $e == 'command.before_send';
         })));
 
-        $this->assertEquals(2, count(array_filter($observer->events, function($e) {
+        $this->assertEquals(3, count(array_filter($observer->events, function($e) {
             return $e == 'command.after_send';
         })));
 
@@ -150,5 +154,14 @@ class CommandSetTest extends AbstractCommandTest
         $this->assertFalse($command1->getRequest()->getEventManager()->hasObserver('Guzzle\\Service\\Command\\CommandSet'));
         // make sure that the command reference was removed
         $this->assertFalse($command1->getRequest()->getParams()->hasKey('command'));
+
+        // Make sure that the command.after_send events are staggered, meaning they happened as requests completed
+        $lastEvent = '';
+        foreach ($observer->events as $e) {
+            if ($lastEvent == 'command.after_send' && $e == 'command.after_send') {
+                $this->fail('Not completing commands as they complete: ' . var_export($observer->events, true));
+            }
+            $lastEvent = $e;
+        }
     }
 }
