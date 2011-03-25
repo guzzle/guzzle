@@ -321,9 +321,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->storage->save(array(
             'domain' => '.example.com',
-            'cookies' => array(
-                'a=123'
-            )
+            'cookie' => array('a', '123')
         ));
 
         $this->assertEquals(1, count($this->storage->getCookies()));
@@ -338,9 +336,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->storage->save(array(
             'domain' => '.example.com',
-            'cookies' => array(
-                'a=123'
-            )
+            'cookie' => array('a', '123')
         ));
 
         $this->assertEquals(1, count($this->storage->getCookies()));
@@ -355,15 +351,11 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->assertSame($this->storage, $this->storage->save(array(
             'domain' => '.example.com',
-            'cookies' => array(
-                'a=123'
-            )
+            'cookie' => array('a', '123')
         )));
         $this->assertSame($this->storage, $this->storage->save(array(
             'domain' => 'example.com',
-            'cookies' => array(
-                'b=123'
-            )
+            'cookie' => array('b', '123')
         )));
         $this->assertEquals(2, count($this->storage->getCookies()));
         $this->assertEquals(1, $this->plugin->clearCookies('http://example.com'));
@@ -376,33 +368,57 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
     public function testExtractsAndStoresCookies()
     {
         $cookie = array(
-            'domain' => '.example.com',
-            'path' => '/',
-            'max_age' => '86400',
-            'expires' => time() + 86400,
-            'version' => '1',
-            'secure' => true,
-            'port' => array('80', '8081'),
-            'discard' => true,
-            'comment' => NULL,
-            'comment_url' => NULL,
-            'http_only' => false,
-            'cookies' => array(
-                'a=b',
-                'c=d',
+            array(
+                'domain' => '.example.com',
+                'path' => '/',
+                'max_age' => '86400',
+                'expires' => time() + 86400,
+                'version' => '1',
+                'secure' => true,
+                'port' => array('80', '8081'),
+                'discard' => true,
+                'comment' => NULL,
+                'comment_url' => NULL,
+                'http_only' => false,
+                'data' => array(),
+                'cookie' => array('a', 'b')
+            ), array (
+                'domain' => '.example.com',
+                'path' => '/',
+                'max_age' => '86400',
+                'expires' => time() + 86400,
+                'version' => '1',
+                'secure' => true,
+                'port' => array('80','8081'),
+                'discard' => true,
+                'comment' => NULL,
+                'comment_url' => NULL,
+                'http_only' => false,
+                'data' => array(),
+                'cookie' =>
+                array ('c', 'd')
             ),
-            'data' => array(),
         );
 
         $response = Response::factory("HTTP/1.1 200 OK\r\nSet-Cookie: a=b; c=d; port=\"80,8081\"; version=1; Max-Age=86400; domain=.example.com; discard; secure;\r\n\r\n");
         $result = $this->plugin->extractCookies($response);
-        $this->assertEquals(array($cookie), $result);
 
-        $this->assertEquals(1, count($this->storage->getCookies()));
-        $this->assertEquals(array($cookie), $this->storage->getCookies());
+        $this->assertTrue(abs($result[0]['expires'] - $cookie[0]['expires']) < 10, 'Cookie #1 expires dates are too different: ' . $result[0]['expires'] . ' vs ' . $cookie[0]['expires']);
+        $this->assertTrue(abs($result[1]['expires'] - $cookie[1]['expires']) < 10, 'Cookie #2 expires dates are too different: ' . $result[1]['expires'] . ' vs ' . $cookie[1]['expires']);
+        unset($cookie[0]['expires']);
+        unset($cookie[1]['expires']);
+        unset($result[0]['expires']);
+        unset($result[1]['expires']);
+        $this->assertEquals($cookie, $result);
+
+        $this->assertEquals(2, count($this->storage->getCookies()));
+        $result = $this->storage->getCookies();
+        unset($result[0]['expires']);
+        unset($result[1]['expires']);
+        $this->assertEquals($cookie, $result);
         
         // Clear out the currently held cookies
-        $this->assertEquals(1, $this->storage->clear());
+        $this->assertEquals(2, $this->storage->clear());
         $this->assertEquals(0, count($this->storage->getCookies()));
 
         // Create a new request, attach the cookie plugin, set a mock response
@@ -412,8 +428,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request->send();
 
         // Assert that the plugin caught the cookies in the response
-        $this->assertEquals(1, count($this->storage->getCookies()));
-        $this->assertEquals(array($cookie), $this->storage->getCookies());
+        $this->assertEquals(2, count($this->storage->getCookies()));
     }
 
     /**
@@ -426,9 +441,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->storage->save(array(
             'domain' => '.y.example.com',
             'path' => '/acme/',
-            'cookies' => array(
-                'secure=sec'
-            ),
+            'cookie' => array('secure', 'sec'),
             'expires' => Guzzle::getHttpDate('+1 day'),
             'secure' => true
         ));
@@ -438,9 +451,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->storage->save(array(
             'domain' => '.y.example.com',
             'path' => '/acme/',
-            'cookies' => array(
-                'test=port'
-            ),
+            'cookie' => array('test', 'port'),
             'expires' => Guzzle::getHttpDate('+1 day'),
             'secure' => false,
             'port' => array(8192)
@@ -492,10 +503,10 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 200 OK\r\n" .
             "Set-Cookie: IU=deleted; expires=Wed, 03-Mar-2010 02:17:39 GMT; path=/; domain=127.0.0.1\r\n" .
             "Set-Cookie: PH=deleted; expires=Wed, 03-Mar-2010 02:17:39 GMT; path=/; domain=127.0.0.1\r\n" .
-            "Set-Cookie: fpc=d=.Hm.yh4.1XmJWjJfs4orLQzKzPImxklQoxXSHOZATHUSEFciRueW_7704iYUtsXNEXq0M92Px2glMdWypmJ7HIQl6XIUvrZimWjQ3vIdeuRbI.FNQMAfcxu_XN1zSx7l.AcPdKL6guHc2V7hIQFhnjRW0rxm2oHY1P4bGQxFNz7f.tHm12ZD3DbdMDiDy7TBXsuP4DM-&v=2; expires=Fri, 02-Mar-2012 02:17:40 GMT; path=/; domain=127.0.0.1\r\n" .
-            "Set-Cookie: FPCK3=AgBNbvoQAGpGEABZLRAAbFsQAF1tEABkDhAAeO0=; expires=Sat, 02-Apr-2011 02:17:40 GMT; path=/; domain=127.0.0.1\r\n" .
+            "Set-Cookie: fpc=d=.Hm.yh4.1XmJWjJfs4orLQzKzPImxklQoxXSHOZATHUSEFciRueW_7704iYUtsXNEXq0M92Px2glMdWypmJ7HIQl6XIUvrZimWjQ3vIdeuRbI.FNQMAfcxu_XN1zSx7l.AcPdKL6guHc2V7hIQFhnjRW0rxm2oHY1P4bGQxFNz7f.tHm12ZD3DbdMDiDy7TBXsuP4DM-&v=2; expires=Fri, 02-Mar-2019 02:17:40 GMT; path=/; domain=127.0.0.1\r\n" .
+            "Set-Cookie: FPCK3=AgBNbvoQAGpGEABZLRAAbFsQAF1tEABkDhAAeO0=; expires=Sat, 02-Apr-2019 02:17:40 GMT; path=/; domain=127.0.0.1\r\n" .
             "Set-Cookie: CH=deleted; expires=Wed, 03-Mar-2010 02:17:39 GMT; path=/; domain=127.0.0.1\r\n" .
-            "Set-Cookie: CH=AgBNbvoQAAEcEAApuhAAMJcQADQvEAAvGxAALe0QAD6uEAATwhAAC1AQAC8t; expires=Sat, 02-Apr-2011 02:17:40 GMT; path=/; domain=127.0.0.1\r\n" .
+            "Set-Cookie: CH=AgBNbvoQAAEcEAApuhAAMJcQADQvEAAvGxAALe0QAD6uEAATwhAAC1AQAC8t; expires=Sat, 02-Apr-2019 02:17:40 GMT; path=/; domain=127.0.0.1\r\n" .
             "Set-Cookie: fpt=d=_e2d6jLXesxx4AoiC0W7W3YktnpITDTHoJ6vNxF7TU6JEep6Y5BFk7Z9NgHmhiXoB7jGV4uR_GBQtSDOLjflKBUVZ6UgnGmDztoj4GREK30jm1qDgReyhPv7iWaN8e8ZLpUKXtPioOzQekGha1xR8ZqGR25GT7aYQpcxaaY.2ATjTpbm7HmX8tlBIte6mYMwFpIh_krxtofGPH3R337E_aNF3illhunC5SK6I0IfZvHzBXCoxu9fjH6e0IHzyOBY656YMUIElQiDkSd8werkBIRE6LJi6YU8AWgitEpMLisOIQSkqyGiahcPFt_fsD8DmIX2YAdSeVE0KycIqd0Z9aM7mdJ3xNQ4dmOOfcZ83dDrZ.4hvuKN2jB2FQDKuxEjTVO4DmiCCSyYgcs2wh0Lc3RODVKzqAZNMTYltWMELw9JdUyDFD3EGT3ZCnH8NQ6f_AAWffyj92ZMLYfWJnXHSG.DTKlVHj.IsihVT73QzrfoMFIs&v=1; path=/; domain=127.0.0.1\r\n" .
             "Set-Cookie: fpps=deleted; expires=Wed, 03-Mar-2010 02:17:39 GMT; path=/; domain=127.0.0.1\r\n" .
             "Set-Cookie: fpc_s=d=ng6sEJk.1XnLUt1pfJ2kiUon07QEppAUuwW3nk0tYwcHMQ1CijnSGVZHfgvWSXQxE5eW_1hjvDAA4Nu0CSSn2xk9_.DOkKI_fZLLLUrm0hJ41VMbSUTrklw.u5IlTM5JCeK_PDjSjZNkvHMbNYziu8vwd8fMnbecf9bSo3eDDv1boowyLFk_9mnGYBeSI4U86mnm.mnfOHMARxzL6BVMTAblIAml65cR486SHzPVO6KNYvkqh8zP3m0hVIkRaPhzvDjQkDG28HCbMjq745QR2FcCmI4TNJbk7EtJmsBrlL8wvVyX5DiBmP9W990-&v=2; path=/; domain=127.0.0.1\r\n" .

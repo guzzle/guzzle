@@ -55,7 +55,7 @@ class FileCookieJar extends ArrayCookieJar
         }
         // @codeCoverageIgnoreEnd
         
-        fwrite($handle, json_encode($this->cookies));
+        fwrite($handle, json_encode($this->getCookies(null, null, null, true, true)));
         fclose($handle);
     }
 

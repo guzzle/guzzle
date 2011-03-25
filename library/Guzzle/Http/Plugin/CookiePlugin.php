@@ -210,10 +210,7 @@ class CookiePlugin implements Observer
                 }
                 // If this request is eligible for the cookie, then merge it in
                 if ($match) {
-                    foreach ($cookie['cookies'] as $value) {
-                        $parts = explode('=', $value, 2);
-                        $request->addCookie($parts[0], isset($parts[1]) ? $parts[1] : null);
-                    }
+                    $request->addCookie($cookie['cookie'][0], isset($cookie['cookie'][1]) ? $cookie['cookie'][1] : null);
                 }
             }
         }
@@ -235,14 +232,38 @@ class CookiePlugin implements Observer
         if ($cookie) {
             foreach ((array) $cookie as $c) {
                 $cdata = self::parseCookie($c, $response->getRequest());
-                if ($cdata) {
-                    $this->jar->save($cdata);
-                    $cookieData[] = $cdata;
+
+                //@codeCoverageIgnoreStart
+                if (!$cdata) {
+                    continue;
+                }
+                //@codeCoverageIgnoreEnd
+                
+                $cookies = array();
+                // Break up cookie v2 into multiple cookies
+                if (count($cdata['cookies']) == 1) {
+                    $cdata['cookie'] = explode('=', $cdata['cookies'][0], 2);
+                    unset($cdata['cookies']);
+                    $cookies = array($cdata);
+                } else {
+                    foreach ($cdata['cookies'] as $cookie) {
+                        $row = $cdata;
+                        unset($row['cookies']);
+                        $row['cookie'] = explode('=', $cookie, 2);
+                        $cookies[] = $row;
+                    }
+                }
+
+                if (count($cookies)) {
+                    foreach ($cookies as &$c) {
+                        $this->jar->save($c);
+                        $cookieData[] = $c;
+                    }
                 }
             }
         }
 
-        return $cookieData ?: array();
+        return $cookieData;
     }
 
     /**

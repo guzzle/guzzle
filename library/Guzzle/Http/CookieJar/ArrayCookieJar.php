@@ -18,7 +18,7 @@ class ArrayCookieJar implements CookieJarInterface
     /**
      * @var array CSV columns
      */
-    protected $columns = array('comment', 'comment_url', 'cookies', 'data', 'discard', 'domain', 'expires', 'http_only', 'max_age', 'path', 'port', 'secure', 'version');
+    protected $columns = array('comment', 'comment_url', 'cookie', 'data', 'discard', 'domain', 'expires', 'http_only', 'max_age', 'path', 'port', 'secure', 'version');
 
     /**
      * @var array Loaded cookie data
@@ -44,30 +44,12 @@ class ArrayCookieJar implements CookieJarInterface
     public function clear($domain = null, $path = null, $name = null)
     {
         $cookies = $this->getCookies($domain, $path, $name, false, false);
-
         $total = 0;
-
         foreach ($this->cookies as $i => $cookie) {
             foreach ($cookies as $c) {
-
                 if ($c === $cookie) {
-
                     $total++;
                     unset($this->cookies[$i]);
-
-                    // Removing only a single cookie value from a cookie?
-                    if ($name) {
-
-                        $c['cookies'] = array_values(array_filter($c['cookies'], function($v) use ($name) {
-                            $parts = array_map('trim', explode('=', $v, 2));
-
-                            return $parts[0] != trim($name);
-                        }));
-
-                        // Add the modified cookie back into the cookie jar
-                        $this->save($c);
-                    }
-
                 }
             }
         }
@@ -122,7 +104,7 @@ class ArrayCookieJar implements CookieJarInterface
      *
      *      domain  (string) - Domain of the cookie
      *      path    (string) - Path of the cookie
-     *      cookies (array)  - Array of cookie name value pairs (e.g. 'x=123')
+     *      cookie (array)   - Array of cookie name, value (e.g. array('name', '123')
      *      max_age (int)    - Lifetime of the cookie in seconds
      *      expires (int)    - The UNIX timestamp when the cookie expires
      *      version (int)    - Version of the cookie specification. RFC 2965 is 1
@@ -158,16 +140,7 @@ class ArrayCookieJar implements CookieJarInterface
             }
 
             // Check cookie name matches
-            $nameMatch = false;
-            if ($name) {
-                foreach ($cookie['cookies'] as $c) {
-                    $parts = explode('=', $c, 2);
-                    if ($parts[0] == $name) {
-                        $nameMatch = true;
-                        break;
-                    }
-                }
-            }
+            $nameMatch = $name && $cookie['cookie'][0] == $name;
 
             if (!$domain || $domainMatch) {
                 if (!$path || !strcasecmp($path, $cookie['path']) || 0 === stripos($path, $cookie['path'])) {
@@ -191,7 +164,7 @@ class ArrayCookieJar implements CookieJarInterface
      * @parm array $cookieData Cookie information, including the following:
      *      domain  (string, required) - Domain of the cookie
      *      path    (string, required) - Path of the cookie
-     *      cookies                    - Array of cookie names and values as string
+     *      cookie                     - Array of cookie name (0) and value (1)
      *      max_age (int, required)    - Lifetime of the cookie in seconds
      *      version (int)              - Version of the cookie specification. Default is 0. RFC 2965 is 1
      *      secure  (bool)             - If it is a secure cookie
@@ -209,7 +182,7 @@ class ArrayCookieJar implements CookieJarInterface
             throw new \InvalidArgumentException('Cookies require a domain');
         }
 
-        if (!isset($cookieData['cookies'])) {
+        if (!isset($cookieData['cookie']) || !is_array($cookieData['cookie'])) {
             throw new \InvalidArgumentException('Cookies require a names and values');
         }
 
@@ -231,13 +204,35 @@ class ArrayCookieJar implements CookieJarInterface
         }
 
         $alreadyPresent = false;
-        foreach ($this->cookies as $cookie) {
-            foreach ($cookie as $k => $v) {
-                if ($cookieData[$k] != $v) {
+        $keys = array('path', 'max_age', 'domain', 'http_only', 'port', 'secure');
+        foreach ($this->cookies as $i => $cookie) {
+
+            // Check the regular comparison fields
+            foreach ($keys as $k) {
+                if ($cookie[$k] != $cookieData[$k]) {
                     continue 2;
                 }
             }
 
+            // Is it a different cookie value name?
+            if ($cookie['cookie'][0] != $cookieData['cookie'][0]) {
+                continue;
+            }
+
+            // The previously set cookie is a discard cookie and this one is not
+            // so allow the new cookie to be set
+            if (!$cookieData['discard'] && $cookie['discard']) {
+                unset($this->cookies[$i]);
+                continue;
+            }
+
+            // If the new cookie's expiration is further into the future, then
+            // replace the old cookie
+            if ($cookieData['expires'] > $cookie['expires']) {
+                unset($this->cookies[$i]);
+                continue;
+            }
+            
             $alreadyPresent = true;
             break;
         }
@@ -259,7 +254,6 @@ class ArrayCookieJar implements CookieJarInterface
     protected function prune(\Closure $callback)
     {
         $originalCount = count($this->cookies);
-
         $this->cookies = array_filter($this->cookies, $callback);
 
         return $originalCount - count($this->cookies);
