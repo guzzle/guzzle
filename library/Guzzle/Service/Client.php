@@ -31,8 +31,8 @@ use Guzzle\Service\Description\ServiceDescription;
  *  event                   context           description
  *  -----                   -------           -----------
  *  request.create          RequestInterface  Created a new request
- *  command.before_execute  CommandInterface  A command is about to execute
- *  command.after_execute   CommandInterface  A command executed
+ *  command.before_send     CommandInterface  A command is about to execute
+ *  command.after_send      CommandInterface  A command executed
  *  command.create          CommandInterface  A command was created
  *
  * @author  michael@guzzlephp.org

@@ -2,9 +2,11 @@
 
 namespace Guzzle\Service\Command;
 
-use Guzzle\Service\Client;
+use Guzzle\Common\Event\Observer;
+use Guzzle\Common\Event\Subject;
 use Guzzle\Http\Pool\PoolInterface;
 use Guzzle\Http\Pool\Pool;
+use Guzzle\Service\Client;
 use Guzzle\Service\Command\CommandInterface;
 
 /**
@@ -17,7 +19,7 @@ use Guzzle\Service\Command\CommandInterface;
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
-class CommandSet implements \IteratorAggregate, \Countable
+class CommandSet implements \IteratorAggregate, \Countable, Observer
 {
     /**
      * @var array Collections of CommandInterface objects
@@ -98,6 +100,8 @@ class CommandSet implements \IteratorAggregate, \Countable
         // Execute all serial commands
         foreach ($this->getSerialCommands() as $command) {
             $command->execute();
+            // Trigger the result of the command to be processed
+            $command->getResult();
         }
 
         // Execute all batched commands in parallel
@@ -109,16 +113,13 @@ class CommandSet implements \IteratorAggregate, \Countable
             // Prepare each request and send out Client notifications
             foreach ($parallel as $command) {
                 $request = $command->prepare();
+                $request->getParams()->set('command', $command);
+                $request->getEventManager()->attach($this, -99999);
                 $command->getClient()->getEventManager()->notify('command.before_send', $command);
                 $this->pool->add($request);
             }
 
             $this->pool->send();
-
-            // Notify any observers that the requests are complete
-            foreach ($parallel as $command) {
-                $command->getClient()->getEventManager()->notify('command.after_send', $command);
-            }
         }
 
         return $this;
@@ -188,5 +189,24 @@ class CommandSet implements \IteratorAggregate, \Countable
         }));
 
         return $this;
+    }
+
+    /**
+     * Trigger the result of the command to be created as commands complete
+     *
+     * {@inheritdoc}
+     */
+    public function update(Subject $subject, $event, $context = null)
+    {
+        if ($event == 'request.complete' && $subject->getParams()->hasKey('command')) {
+            $command = $subject->getParams()->get('command');
+            // Make sure the command isn't going to send more requests
+            if ($command && $command->isExecuted()) {
+                $subject->getEventManager()->detach($this);
+                $subject->getParams()->remove('command');
+                $command->getResult();
+                $command->getClient()->getEventManager()->notify('command.after_send', $command);
+            }
+        }
     }
 }

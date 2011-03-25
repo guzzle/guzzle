@@ -101,6 +101,7 @@ class CommandSetTest extends AbstractCommandTest
 
     /**
      * @covers Guzzle\Service\Command\CommandSet::execute
+     * @covers Guzzle\Service\Command\CommandSet::update
      */
     public function testExecutesCommands()
     {
@@ -115,7 +116,7 @@ class CommandSetTest extends AbstractCommandTest
         // Set a mock response for each request from the Client
         $client->getEventManager()->attach(function($subject, $event, $context) use ($response) {
             if ($event == 'request.create') {
-                $context->setResponse($response);
+                $context->setResponse($response, true);
             }
         });
 
@@ -126,7 +127,6 @@ class CommandSetTest extends AbstractCommandTest
         $command2->setCanBatch(false);
 
         $commandSet = new CommandSet(array($command1, $command2));
-
         $client->getEventManager()->attach($observer);
         $commandSet->execute();
 
@@ -145,5 +145,10 @@ class CommandSetTest extends AbstractCommandTest
         $this->assertEquals(2, count(array_filter($observer->events, function($e) {
             return $e == 'command.after_send';
         })));
+
+        // make sure the command set was detached as a listener
+        $this->assertFalse($command1->getRequest()->getEventManager()->hasObserver('Guzzle\\Service\\Command\\CommandSet'));
+        // make sure that the command reference was removed
+        $this->assertFalse($command1->getRequest()->getParams()->hasKey('command'));
     }
 }
