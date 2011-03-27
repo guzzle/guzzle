@@ -1,4 +1,8 @@
 <?php
+/**
+ * @package Guzzle PHP <http://www.guzzlephp.org>
+ * @license See the LICENSE file that was distributed with this source code.
+ */
 
 namespace Guzzle\Http\Curl;
 
@@ -18,9 +22,7 @@ class CurlFactory implements CurlFactoryInterface
     private static $instance;
 
     /**
-     * Array of open curl handles {@see CurlHandle}
-     *
-     * @var array
+     * @var array Array of open curl handles {@see CurlHandle}
      */
     protected $handles = array();
 

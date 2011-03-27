@@ -9,17 +9,12 @@ namespace Guzzle\Http\CookieJar;
 use Guzzle\Common\Collection;
 
 /**
- * Persists cookies using a temporary array
+ * Cookie jar that stores cookies an an array
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class ArrayCookieJar implements CookieJarInterface
 {
-    /**
-     * @var array CSV columns
-     */
-    protected $columns = array('comment', 'comment_url', 'cookie', 'data', 'discard', 'domain', 'expires', 'http_only', 'max_age', 'path', 'port', 'secure', 'version');
-
     /**
      * @var array Loaded cookie data
      */

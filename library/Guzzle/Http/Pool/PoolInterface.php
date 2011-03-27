@@ -1,4 +1,8 @@
 <?php
+/**
+ * @package Guzzle PHP <http://www.guzzlephp.org>
+ * @license See the LICENSE file that was distributed with this source code.
+ */
 
 namespace Guzzle\Http\Pool;
 
@@ -34,15 +38,6 @@ interface PoolInterface extends Subject, \Countable
     public function add(RequestInterface $request);
 
     /**
-     * Remove a request from the pool.
-     *
-     * @param RequestInterface $request Request to detach.
-     *
-     * @return RequestInterface Returns the Request object that was removed
-     */
-    public function remove(RequestInterface $request);
-
-    /**
      * Get an array of attached {@see RequestInterface}s.
      *
      * @return array Returns an array of attached requests.
@@ -57,7 +52,16 @@ interface PoolInterface extends Subject, \Countable
     public function getState();
 
     /**
-     * Reset the state of the Pool and remove any attached Requests
+     * Remove a request from the pool.
+     *
+     * @param RequestInterface $request Request to detach.
+     *
+     * @return RequestInterface Returns the Request object that was removed
+     */
+    public function remove(RequestInterface $request);
+
+    /**
+     * Reset the state of the Pool and remove any attached RequestInterface objects
      */
     public function reset();
 
@@ -68,6 +72,9 @@ interface PoolInterface extends Subject, \Countable
      *
      * @return array|bool Returns an array of attached Request objects on
      *      success FALSE on failure.
+     *
+     * @throws PoolRequestException if any requests threw exceptions during the
+     *      transfer.
      */
     public function send();
 }

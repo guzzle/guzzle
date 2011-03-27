@@ -64,7 +64,7 @@ interface CookieJarInterface
      *
      *      domain  (string) - Domain of the cookie
      *      path    (string) - Path of the cookie
-     *      cookies (array)  - Array of cookie name value pairs (e.g. 'x=123')
+     *      cookie  (array)  - Array of cookie name (0) and value (1)
      *      max_age (int)    - Lifetime of the cookie in seconds
      *      expires (int)    - The UNIX timestamp when the cookie expires
      *      version (int)    - Version of the cookie specification. RFC 2965 is 1
@@ -83,7 +83,7 @@ interface CookieJarInterface
      * @parm array $cookieData Cookie information, including the following:
      *      domain  (string, required) - Domain of the cookie
      *      path    (string, required) - Path of the cookie
-     *      cookies                    - Array of cookie names and values as string
+     *      cookie                     - Array of cookie name (0) and value (1)
      *      max_age (int, required)    - Lifetime of the cookie in seconds
      *      version (int)              - Version of the cookie specification. Default is 0. RFC 2965 is 1
      *      secure  (bool)             - If it is a secure cookie
