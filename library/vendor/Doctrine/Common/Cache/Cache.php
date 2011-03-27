@@ -37,7 +37,7 @@ interface Cache
 {
     /**
      * Fetches an entry from the cache.
-     * 
+     *
      * @param string $id cache id The id of the cache entry to fetch.
      * @return string The cached data or FALSE, if no cache entry exists for the given id.
      */
@@ -63,7 +63,7 @@ interface Cache
 
     /**
      * Deletes a cache entry.
-     * 
+     *
      * @param string $id cache id
      * @return boolean TRUE if the cache entry was successfully deleted, FALSE otherwise.
      */

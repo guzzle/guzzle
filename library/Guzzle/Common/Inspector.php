@@ -166,22 +166,16 @@ class Inspector
         preg_match_all('/' . self::GUZZLE_ANNOTATION . '\s+([A-Za-z0-9_\-\.]+)\s*([A-Za-z0-9]+=".+")*/', $doc, $matches);
 
         if (isset($matches[1])) {
-
             foreach ($matches[1] as $index => $match) {
-
                 // Add the matched argument to the array keys
                 $params[$match] = array();
                 if (isset($matches[2])) {
-
                     // Break up the argument attributes by closing quote
                     foreach (explode('" ', $matches[2][$index]) as $part) {
-
                         $attrs = array();
                         // Find the attribute and attribute value
                         preg_match('/([A-Za-z0-9]+)="(.+)"*/', $part, $attrs);
-
                         if (isset($attrs[1]) && isset($attrs[0])) {
-
                             // Sanitize the strings
                             if ($attrs[2][strlen($attrs[2]) - 1] == '"') {
                                 $attrs[2] = substr($attrs[2], 0, strlen($attrs[2]) - 1);

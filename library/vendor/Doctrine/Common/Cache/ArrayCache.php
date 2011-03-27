@@ -57,6 +57,7 @@ class ArrayCache extends AbstractCache
         if (isset($this->data[$id])) {
             return $this->data[$id];
         }
+
         return false;
     }
 
@@ -74,6 +75,7 @@ class ArrayCache extends AbstractCache
     protected function _doSave($id, $data, $lifeTime = 0)
     {
         $this->data[$id] = $data;
+
         return true;
     }
 
@@ -83,6 +85,7 @@ class ArrayCache extends AbstractCache
     protected function _doDelete($id)
     {
         unset($this->data[$id]);
+
         return true;
     }
 }

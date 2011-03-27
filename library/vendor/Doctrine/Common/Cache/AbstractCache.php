@@ -22,7 +22,8 @@ namespace Doctrine\Common\Cache;
 /**
  * Base class for cache driver implementations.
  *
- * @since   2.0
+ * @since 2.0
+ * @author  Benjamin Eberlei <kontakt@beberlei.de>
  * @author  Guilherme Blanco <guilhermeblanco@hotmail.com>
  * @author  Jonathan Wage <jonwage@gmail.com>
  * @author  Roman Borschel <roman@code-factory.org>
@@ -67,8 +68,7 @@ abstract class AbstractCache implements Cache
      */
     public function save($id, $data, $lifeTime = 0)
     {
-        $id = $this->_getNamespacedId($id);
-        return $this->_doSave($id, $data, $lifeTime);
+        return $this->_doSave($this->_getNamespacedId($id), $data, $lifeTime);
     }
 
     /**
@@ -93,9 +93,11 @@ abstract class AbstractCache implements Cache
     public function deleteAll()
     {
         $ids = $this->getIds();
+
         foreach ($ids as $id) {
             $this->delete($id);
         }
+
         return $ids;
     }
 
@@ -108,13 +110,16 @@ abstract class AbstractCache implements Cache
     public function deleteByRegex($regex)
     {
         $deleted = array();
+
         $ids = $this->getIds();
+
         foreach ($ids as $id) {
             if (preg_match($regex, $id)) {
                 $this->delete($id);
                 $deleted[] = $id;
             }
         }
+
         return $deleted;
     }
 
@@ -127,13 +132,17 @@ abstract class AbstractCache implements Cache
     public function deleteByPrefix($prefix)
     {
         $deleted = array();
+
+        $prefix = $this->_getNamespacedId($prefix);
         $ids = $this->getIds();
+
         foreach ($ids as $id) {
             if (strpos($id, $prefix) === 0) {
                 $this->delete($id);
                 $deleted[] = $id;
             }
         }
+
         return $deleted;
     }
 
@@ -146,13 +155,16 @@ abstract class AbstractCache implements Cache
     public function deleteBySuffix($suffix)
     {
         $deleted = array();
+
         $ids = $this->getIds();
+
         foreach ($ids as $id) {
             if (substr($id, -1 * strlen($suffix)) === $suffix) {
                 $this->delete($id);
                 $deleted[] = $id;
             }
         }
+
         return $deleted;
     }
 

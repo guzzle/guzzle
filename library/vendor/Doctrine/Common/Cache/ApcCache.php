@@ -46,8 +46,9 @@ class ApcCache extends AbstractCache
         $keys = array();
 
         foreach ($ci['cache_list'] as $entry) {
-          $keys[] = $entry['info'];
+            $keys[] = $entry['info'];
         }
+
         return $keys;
     }
 
@@ -65,7 +66,9 @@ class ApcCache extends AbstractCache
     protected function _doContains($id)
     {
         $found = false;
+
         apc_fetch($id, $found);
+
         return $found;
     }
 

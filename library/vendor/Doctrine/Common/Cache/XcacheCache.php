@@ -43,14 +43,17 @@ class XcacheCache extends AbstractCache
     {
         $this->_checkAuth();
         $keys = array();
+
         for ($i = 0, $count = xcache_count(XC_TYPE_VAR); $i < $count; $i++) {
             $entries = xcache_list(XC_TYPE_VAR, $i);
+
             if (is_array($entries['cache_list'])) {
                 foreach ($entries['cache_list'] as $entry) {
                     $keys[] = $entry['name'];
                 }
             }
         }
+
         return $keys;
     }
 
@@ -59,7 +62,7 @@ class XcacheCache extends AbstractCache
      */
     protected function _doFetch($id)
     {
-        return $this->_doContains($id) ? unserialize( xcache_get($id) ) : false;
+        return $this->_doContains($id) ? unserialize(xcache_get($id)) : false;
     }
 
     /**
