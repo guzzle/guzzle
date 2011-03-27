@@ -148,19 +148,12 @@ class Inspector
      *
      * @param string $doc DocBlock to parse
      *
-     * @return array Returns an array containing the description of the
-     *      docblock in the 'doc' key and an array of args in the 'args' key.
+     * @return array Returns an associative array of the parsed docblock params
      */
     public function parseDocBlock($doc)
     {
-        $description = '';
         $params = array();
         $matches = array();
-
-        // Try to parse out the first line of the description of the command
-        if (preg_match('/^.*\*\s*(.+)/', $doc, $matches)) {
-            $description = trim(str_replace('*', '', $matches[1]));
-        }
 
         // Get all of the @guzzle annotations from the class
         preg_match_all('/' . self::GUZZLE_ANNOTATION . '\s+([A-Za-z0-9_\-\.]+)\s*([A-Za-z0-9]+=".+")*/', $doc, $matches);
@@ -187,10 +180,7 @@ class Inspector
             }
         }
 
-        return array(
-            'doc' => $description,
-            'args' => $params
-        );
+        return $params;
     }
 
     /**
@@ -208,10 +198,10 @@ class Inspector
     {
         if (!isset($this->cache[$className])) {
             $reflection = new \ReflectionClass($className);
-            $this->cache[$className] = $this->parseDocBlock($reflection);
+            $this->cache[$className] = $this->parseDocBlock($reflection->getDocComment());
         }
 
-        return $this->validateConfig($this->cache[$className]['args'], $config, $strict);
+        return $this->validateConfig($this->cache[$className], $config, $strict);
     }
 
     /**

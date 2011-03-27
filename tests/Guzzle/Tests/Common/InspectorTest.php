@@ -43,8 +43,7 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase implements FilterInterf
      */
     public function testValidatesRequiredArgs()
     {
-        $col = new Collection();
-        Inspector::getInstance()->validateClass(__CLASS__, $col);
+        Inspector::getInstance()->validateClass(__CLASS__, new Collection());
     }
 
     /**
@@ -144,10 +143,6 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase implements FilterInterf
 EOT;
 
         $params = Inspector::getInstance()->parseDocBlock($doc);
-
-        $this->assertEquals('Client for interacting with the Unfuddle webservice', $params['doc']);
-
-        $params = $params['args'];
 
         $this->assertEquals(array(
             'required' => 'true',
