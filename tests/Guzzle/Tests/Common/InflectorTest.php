@@ -32,12 +32,49 @@ class InflectorTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testCamel()
     {
-        $this->assertEquals('camelCase', Inflector::camel('camel_case'));
-        $this->assertEquals('camelCaseWords', Inflector::camel('camel_case_words'));
-        $this->assertEquals('test', Inflector::camel('test'));
+        $this->assertEquals('CamelCase', Inflector::camel('camel_case'));
+        $this->assertEquals('CamelCaseWords', Inflector::camel('camel_case_words'));
+        $this->assertEquals('Test', Inflector::camel('test'));
         $this->assertEquals('Expect100Continue', ucfirst(Inflector::camel('expect100_continue')));
 
         // Get from cache
-        $this->assertEquals('test', Inflector::camel('test', false));
+        $this->assertEquals('Test', Inflector::camel('test', false));
+    }
+
+    /**
+     * @covers Guzzle\Common\Inflector::camel
+     * @covers Guzzle\Common\Inflector::snake
+     * @covers Guzzle\Common\Inflector::getCache
+     */
+    public function testProtectsAgainstCacheOverflow()
+    {
+        $perCachePurge = Inflector::MAX_ENTRIES_PER_CACHE * 0.1;
+
+        $cached = Inflector::getCache();
+        $currentSnake = count($cached['snake']);
+        $currentCamel = count($cached['camel']);
+        unset($cached);
+
+        // Fill each cache with garbage, then make sure it flushes out cached
+        // entries and maintains a cache cap
+        while (++$currentSnake < Inflector::MAX_ENTRIES_PER_CACHE + 1) {
+            Inflector::snake(uniqid());
+        }
+        while (++$currentCamel < Inflector::MAX_ENTRIES_PER_CACHE + 1) {
+            Inflector::camel(uniqid());
+        }
+
+        $cached = Inflector::getCache();
+        $this->assertEquals(Inflector::MAX_ENTRIES_PER_CACHE, count($cached['snake']));
+        $this->assertEquals(Inflector::MAX_ENTRIES_PER_CACHE, count($cached['camel']));
+        unset($cached);
+
+        // Add another element to each cache to remove 10% of the cache
+        Inflector::snake(uniqid());
+        Inflector::camel(uniqid());
+
+        $cached = Inflector::getCache();
+        $this->assertEquals(Inflector::MAX_ENTRIES_PER_CACHE - $perCachePurge + 1, count($cached['snake']));
+        $this->assertEquals(Inflector::MAX_ENTRIES_PER_CACHE - $perCachePurge + 1, count($cached['camel']));
     }
 }
