@@ -367,9 +367,9 @@ class CurlHandle
                 CURLOPT_HTTPAUTH
             );
 
-            // CURLOPT_TIMEOUT_MS was added in v7.16.2
+            // CURLOPT_TIMEOUT_MS was added in v7.16.2 (or 0x071602)
             if (Guzzle::getCurlInfo('version_number') > 464386) {
-                self::$pollute[] = \CURLOPT_TIMEOUT_MS;
+                self::$pollute[] = constant('CURLOPT_TIMEOUT_MS');
             }
         }
         //@codeCoverageIgnoreEnd
