@@ -361,14 +361,13 @@ class CurlHandle
                 CURLOPT_LOW_SPEED_LIMIT,
                 CURLOPT_LOW_SPEED_TIME,
                 CURLOPT_TIMEOUT,
-                CURLOPT_TIMEOUT_MS,
                 CURLOPT_FORBID_REUSE,
                 CURLOPT_RESUME_FROM,
                 CURLOPT_HTTPAUTH
             );
 
             // CURLOPT_TIMEOUT_MS was added in v7.16.2 (or 0x071602)
-            if (Guzzle::getCurlInfo('version_number') > 464386) {
+            if (defined('CURLOPT_TIMEOUT_MS')) {
                 self::$pollute[] = constant('CURLOPT_TIMEOUT_MS');
             }
         }
