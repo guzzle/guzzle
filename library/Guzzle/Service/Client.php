@@ -307,7 +307,7 @@ class Client extends AbstractSubject
     {
         if ($command instanceof CommandInterface) {
 
-            $command->prepare($this);
+            $command->setClient($this)->prepare();
             $this->getEventManager()->notify('command.before_send', $command);
             $command->getRequest()->send();
             $this->getEventManager()->notify('command.after_send', $command);

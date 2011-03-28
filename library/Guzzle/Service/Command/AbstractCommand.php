@@ -58,10 +58,9 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     {
         parent::__construct($parameters);
 
-        $this->apiCommand = $apiCommand;
-
         // Add arguments and validate the command
-        if ($this->apiCommand) {
+        if ($apiCommand) {
+            $this->apiCommand = $apiCommand;
             Inspector::getInstance()->validateConfig($apiCommand->getArgs(), $this, false);
         } else if (!($this instanceof ClosureCommand)) {
             Inspector::getInstance()->validateClass(get_class($this), $this, false);
@@ -225,33 +224,25 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
-     * Prepare the command for executing.
-     *
-     * Create a request object for the command.
-     *
-     * @param Client $client (optional) The client object used to execute the command
+     * Prepare the command for executing and create a request object.
      *
      * @return RequestInterface Returns the generated request
      * @throws RuntimeException if a client object has not been set previously
      *      or in the prepare()
      */
-    public function prepare(Client $client = null)
+    public function prepare()
     {
         if (!$this->isPrepared()) {
-            if ($client) {
-                $this->client = $client;
-            }
-
             if (!$this->client) {
                 throw new \RuntimeException('A Client object must be associated with the command before it can be prepared.');
             }
 
             // Fail on missing required arguments when it is not a ClosureCommand
             if (!($this instanceof ClosureCommand)) {
-                if ($this->getApiCommand() instanceof NullObject) {
-                    Inspector::getInstance()->validateClass(get_class($this), $this, true);
+                if ($this->apiCommand) {
+                    Inspector::getInstance()->validateConfig($this->apiCommand->getArgs(), $this);
                 } else {
-                    Inspector::getInstance()->validateConfig($this->getApiCommand()->getArgs(), $this);
+                    Inspector::getInstance()->validateClass(get_class($this), $this, true);
                 }
             }
             

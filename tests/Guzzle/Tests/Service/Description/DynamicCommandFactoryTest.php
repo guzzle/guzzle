@@ -104,8 +104,7 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
             'bucket' => 'test',
             'key' => 'key'
         ));
-
-        $request = $command->prepare($client);
+        $request = $command->setClient($client)->prepare();
 
         // Ensure that the path values were injected into the path and base_url
         $this->assertEquals('/key', $request->getPath());
@@ -149,7 +148,7 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
             'h' => 'haha'
         ));
 
-        $request = $command->prepare($client);
+        $request = $command->setClient($client)->prepare();
 
         $this->assertEquals(
             "PUT /?test=abc&i=test HTTP/1.1\r\n" .
@@ -171,7 +170,7 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
             'i' => 'does not change the value because it\'s static'
         ));
 
-        $request = $command->prepare($client);
+        $request = $command->setClient($client)->prepare();
         
         $this->assertEquals(
             "PUT /?test=abc&i=test HTTP/1.1\r\n" .

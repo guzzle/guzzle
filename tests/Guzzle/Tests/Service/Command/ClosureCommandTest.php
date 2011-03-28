@@ -68,7 +68,7 @@ class ClosureCommandTest extends \Guzzle\Tests\GuzzleTestCase
         ));
 
         $client = $this->getServiceBuilder()->get('mock');
-        $c->prepare($client);
+        $c->setClient($client)->prepare();
         $this->assertEquals('123', $c->get('testing'));
         $this->assertEquals('http://www.test.com/', $c->getRequest()->getUrl());
     }
@@ -88,6 +88,6 @@ class ClosureCommandTest extends \Guzzle\Tests\GuzzleTestCase
         ));
 
         $client = $this->getServiceBuilder()->get('mock');
-        $c->prepare($client);
+        $c->setClient($client)->prepare();
     }
 }

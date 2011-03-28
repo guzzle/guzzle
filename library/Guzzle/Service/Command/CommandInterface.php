@@ -114,17 +114,13 @@ interface CommandInterface
     public function isExecuted();
 
     /**
-     * Prepare the command for executing.
-     *
-     * Create a request object for the command.
-     *
-     * @param Client $client (optional) The client object used to execute the command
+     * Prepare the command for executing and create a request object.
      *
      * @return RequestInterface Returns the generated request
      * @throws RuntimeException if a client object has not been set previously
      *      or in the prepare()
      */
-    public function prepare(Client $client = null);
+    public function prepare();
 
     /**
      * Get the object that manages the request headers that will be set on any

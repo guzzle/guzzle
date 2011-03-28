@@ -111,9 +111,7 @@ class CommandSet implements \IteratorAggregate, \Countable, Observer
         // Execute all batched commands in parallel
         $parallel = $this->getParallelCommands();
         if (count($parallel)) {
-
             $this->pool->reset();
-
             // Prepare each request and send out Client notifications
             foreach ($parallel as $command) {
                 $request = $command->prepare();
@@ -122,7 +120,6 @@ class CommandSet implements \IteratorAggregate, \Countable, Observer
                 $command->getClient()->getEventManager()->notify('command.before_send', $command);
                 $this->pool->add($request);
             }
-
             $this->pool->send();
         }
 

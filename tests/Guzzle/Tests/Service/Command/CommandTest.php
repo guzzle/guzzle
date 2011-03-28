@@ -102,7 +102,7 @@ class CommandTest extends AbstractCommandTest
         $command = new MockCommand();
         $client = $this->getClient();
 
-        $command->prepare($client);
+        $command->setClient($client)->prepare();
         $this->assertEquals($client, $command->getClient());
         $this->assertTrue($command->isPrepared());
     }
@@ -202,9 +202,7 @@ class CommandTest extends AbstractCommandTest
         $this->assertInstanceOf('Guzzle\Common\Collection', $command->getRequestHeaders());
         $this->assertEquals('123', $command->getRequestHeaders()->get('test'));
 
-        $client = $this->getClient();
-
-        $command->prepare($client);
+        $command->setClient($this->getClient())->prepare();
         $this->assertEquals('123', $command->getRequest()->getHeaders()->get('test'));
     }
 
@@ -228,8 +226,7 @@ class CommandTest extends AbstractCommandTest
 
         $command = new MockCommand(array(), $api);
         $this->assertSame($api, $command->getApiCommand());
-        $client = $this->getClient();
-        $command->prepare($client);
+        $command->setClient($this->getClient())->prepare();
         $this->assertEquals('123', $command->get('test'));
         $this->assertSame($api, $command->getApiCommand($api));
     }
