@@ -368,7 +368,7 @@ class CurlHandle
             );
 
             // CURLOPT_TIMEOUT_MS was added in v7.16.2
-            if (Guzzle::getCurlInfo('version') > '7.16.2') {
+            if (Guzzle::getCurlInfo('version_number') > 464386) {
                 self::$pollute[] = \CURLOPT_TIMEOUT_MS;
             }
         }
