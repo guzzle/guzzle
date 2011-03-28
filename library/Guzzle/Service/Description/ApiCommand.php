@@ -19,42 +19,12 @@ class ApiCommand
     /**
      * @var array Arguments
      */
-    protected $args;
+    protected $args = array();
 
     /**
-     * @var string API action name
+     * @var array Configuration data
      */
-    protected $name;
-
-    /**
-     * @var string HTTP method of the command
-     */
-    protected $method;
-
-    /**
-     * @var int Minimum number of arguments required by the command
-     */
-    protected $minArgs = 0;
-
-    /**
-     * @var string Path routing information of the command to include in the path
-     */
-    protected $path = '';
-
-    /**
-     * @var string Command documentation
-     */
-    protected $doc;
-
-    /**
-     * @var bool Whether or not the command can be sent in a batch request
-     */
-    protected $canBatch = true;
-
-    /**
-     * @var string Concrete class that this ApiCommand is associated with
-     */
-    protected $concreteCommandClass = 'Guzzle\\Service\\Command\\ClosureCommand';
+    protected $config = array();
 
     /**
      * Constructor
@@ -82,19 +52,16 @@ class ApiCommand
      *          prepend - Text to prepend when adding this value to a location
      *          append - Text to append when adding to a location
      */
-    public function __construct($config)
+    public function __construct(array $config)
     {
-        $this->name = isset($config['name']) ? trim($config['name']) : '';
-        $this->doc = isset($config['doc']) ? trim($config['doc']) : '';
-        $this->method = isset($config['method']) ? trim($config['method']) : '';
-        $this->minArgs = isset($config['min_args']) ? min(100, max(0, $config['min_args'])) : '';
-        $this->canBatch = isset($config['can_batch']) ? $config['can_batch'] : '';
-        $this->path = isset($config['path']) ? trim($config['path']) : '';
-        $this->args = array();
-        
-        if (isset($config['class'])) {
-            $this->concreteCommandClass = $config['class'];
-        }
+        $this->config = $config;
+        $this->config['name'] = isset($config['name']) ? trim($config['name']) : '';
+        $this->config['doc'] = isset($config['doc']) ? trim($config['doc']) : '';
+        $this->config['method'] = isset($config['method']) ? trim($config['method']) : '';
+        $this->config['min_args'] = isset($config['min_args']) ? min(100, max(0, $config['min_args'])) : 0;
+        $this->config['can_batch'] = isset($config['can_batch']) ? $config['can_batch'] : '';
+        $this->config['path'] = isset($config['path']) ? trim($config['path']) : '';
+        $this->config['class'] = isset($config['class']) ? trim($config['class']) : 'Guzzle\\Service\\Command\\ClosureCommand';
 
         // Build the argument array
         if (isset($config['args']) && is_array($config['args'])) {
@@ -144,7 +111,7 @@ class ApiCommand
      */
     public function getMethod()
     {
-        return $this->method;
+        return $this->config['method'];
     }
 
     /**
@@ -154,7 +121,7 @@ class ApiCommand
      */
     public function getConcreteClass()
     {
-        return $this->concreteCommandClass;
+        return $this->config['class'];
     }
 
     /**
@@ -164,7 +131,7 @@ class ApiCommand
      */
     public function getName()
     {
-        return $this->name;
+        return $this->config['name'];
     }
 
     /**
@@ -174,7 +141,7 @@ class ApiCommand
      */
     public function getDoc()
     {
-        return $this->doc;
+        return $this->config['doc'];
     }
 
     /**
@@ -184,7 +151,7 @@ class ApiCommand
      */
     public function getMinArgs()
     {
-        return $this->minArgs;
+        return $this->config['min_args'];
     }
 
     /**
@@ -195,7 +162,7 @@ class ApiCommand
      */
     public function getPath()
     {
-        return $this->path;
+        return $this->config['path'];
     }
 
     /**
@@ -205,7 +172,7 @@ class ApiCommand
      */
     public function canBatch()
     {
-        return $this->canBatch;
+        return $this->config['can_batch'];
     }
 
     /**
@@ -220,14 +187,13 @@ class ApiCommand
     public function validate(Collection $config)
     {
         $errors = array();
-
         // Validate that the right number of args has been supplied
-        if ($this->minArgs && count($config) < $this->minArgs) {
-            $errors[] = $this->name . ' requires at least ' . $this->minArgs . ' arguments';
+        if ($this->config['min_args'] && count($config) < $this->config['min_args']) {
+            $errors[] = $this->config['name'] . ' requires at least '
+                . $this->config['min_args'] . ' arguments';
         }
 
         $e = Inspector::getInstance()->validateConfig($this->args, $config, false);
-
         if (is_array($e)) {
             $errors = array_merge($errors, $e);
         }
