@@ -27,25 +27,13 @@ class ServiceBuilder
     protected $clients = array();
 
     /**
-     * @var CacheAdapterInterface Cache adapter to use for Service caching
-     */
-    protected $cache;
-
-    /**
-     * @var int Cache entry TTL
-     */
-    protected $ttl;
-
-    /**
      * Create a new ServiceBuilder using an XML configuration file to configure
      * the registered ServiceBuilder builder objects
      *
      * @param string $filename Full path to the XML configuration file
      * @param CacheAdapterInterface $cacheAdapter (optional) Pass a cache
-     *      adapter to cache the service configuration settings loaded from the
-     *      XML and to cache dynamically built services.
-     * @param int $ttl (optional) How long to cache items in the cache
-     *      adapter (defaults to 24 hours).
+     *      adapter to cache the XML service configuration settings
+     * @param int $ttl (optional) How long to cache the parsed XML data
      *
      * @return ServiceBuilder
      * @throws RuntimeException if the file cannot be openend
@@ -108,10 +96,6 @@ class ServiceBuilder
         }
 
         $builder = new self($config);
-        if ($cacheAdapter) {
-            // Always share the cache
-            $builder->setCache($cacheAdapter, $ttl);
-        }
 
         return $builder;
     }
@@ -127,27 +111,6 @@ class ServiceBuilder
     public function __construct(array $serviceBuilderConfig)
     {
         $this->builderConfig = $serviceBuilderConfig;
-    }
-
-    /**
-     * Set the CacheAdapter to pass to generated builders which will allow the
-     * builders to access the CacheAdapter.  This is helpul for speeding up
-     * the process of parsing and loading dynamically generated clients.
-     *
-     * @param CacheAdapterInterface $cacheAdapter (optional) Pass a cache
-     *      adapter to cache the service configuration settings loaded from the
-     *      XML and to cache dynamically built services.
-     * @param int $ttl (optional) How long to cache items in the cache
-     *      adapter (defaults to 24 hours).
-     *
-     * @return ServiceBuilder
-     */
-    public function setCache(CacheAdapterInterface $cacheAdapter, $ttl = 86400)
-    {
-        $this->cache = $cacheAdapter;
-        $this->ttl = $ttl ?: 86400;
-
-        return $this;
     }
 
     /**

@@ -105,7 +105,6 @@ EOT;
 
     /**
      * @covers Guzzle\Service\ServiceBuilder::factory
-     * @covers Guzzle\Service\ServiceBuilder::setCache
      * @covers Guzzle\Service\ServiceBuilder
      */
     public function testFactoryUsesCacheAdapterWhenAvailable()
@@ -124,9 +123,6 @@ EOT;
 
         $builder = ServiceBuilder::factory($this->tempFile);
         $this->assertEquals($s1, $s2);
-
-        $this->assertSame($s1, $s1->setCache($adapter, 86400));
-        $client = $s1->get('michael.mock');
     }
 
     /**
