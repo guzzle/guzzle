@@ -76,14 +76,17 @@ class RequestFactory
         $message = preg_replace("/([^\r])(\n)\b/", "$1\r\n", $message);
         $parts = explode("\r\n\r\n", $message, 2);
         $headers = array();
-        $scheme = $host = $method = $user = $pass = $query = $port = '';
+        $scheme = $host = $method = $user = $pass = $query = $port = $version = $protocol = '';
         $path = '/';
 
         // Parse each line in the message
         foreach (explode("\r\n", $parts[0]) as $line) {
-            if (preg_match('/^(GET|POST|PUT|HEAD|DELETE|TRACE|OPTIONS)\s+\/*.+\s+[A-Za-z]+\/[0-9]\.[0-9]\s*$/i', $line)) {
-                list($method, $path, $protocol) = array_map('trim', explode(' ', $line, 3));
-                list($protocol, $version) = explode('/', $protocol);
+            $matches = array();
+            if (preg_match('#^(?<method>GET|POST|PUT|HEAD|DELETE|TRACE|OPTIONS)\s+(?<path>/.*)\s+(?<protocol>\w+)/(?<version>\d\.\d)\s*$#i', $line, $matches)) {
+                $method = strtoupper($matches['method']);
+                $protocol = strtoupper($matches['protocol']);
+                $path = $matches['path'];
+                $version = $matches['version'];
                 $scheme = 'http';
             } else if (strpos($line, ':')) {
                 list($key, $value) = explode(':', $line, 2);
@@ -130,8 +133,8 @@ class RequestFactory
         }
 
         return array(
-            'method' => strtoupper($method),
-            'protocol' => strtoupper($protocol),
+            'method' => $method,
+            'protocol' => $protocol,
             'protocol_version' => $version,
             'parts' => array(
                 'scheme' => $scheme,
