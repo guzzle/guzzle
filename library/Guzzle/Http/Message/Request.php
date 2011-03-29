@@ -45,11 +45,6 @@ use Guzzle\Http\Url;
 class Request extends AbstractMessage implements RequestInterface
 {
     /**
-     * @var string Protocol version of the request (1.0, 1.1, etc)
-     */
-    protected $protocolVersion = '1.1';
-
-    /**
      * @var Url HTTP Url
      */
     protected $url;

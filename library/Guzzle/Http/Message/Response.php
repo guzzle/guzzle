@@ -84,21 +84,13 @@ class Response extends AbstractMessage
      */
     protected $protocol = 'HTTP';
 
-    /*
-     * @var string HTTP protocol version
-     */
-    protected $protocolVersion = '1.1';
-
     /**
      * @var array Information about the request
      */
     protected $info = array();
 
     /**
-     * The request object associated with the response.  This value may or
-     * may not be set
-     *
-     * @var RequestInterface
+     * @var RequestInterface Request object that may or may not be set
      */
     protected $request = null;
 

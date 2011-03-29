@@ -31,6 +31,11 @@ abstract class AbstractMessage implements MessageInterface
      */
     protected $cacheControl = null;
 
+    /*
+     * @var string HTTP protocol version of the message
+     */
+    protected $protocolVersion = '1.1';
+
     /**
      * Get application and plugin specific parameters set on the message.  The
      * return object is a reference to the internal object.

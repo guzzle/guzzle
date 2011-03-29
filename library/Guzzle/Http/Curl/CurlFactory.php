@@ -61,22 +61,6 @@ class CurlFactory implements CurlFactoryInterface
     }
 
     /**
-     * Singleton constructor
-     * @codeCoverageIgnore
-     */
-    private function __construct() 
-    {
-    }
-
-    /**
-     * Singleton clone
-     * @codeCoverageIgnore
-     */
-    private function __clone() 
-    {
-    }
-
-    /**
      * Get the number of connections per host
      *
      * @param bool $allocated (optional) Set to TRUE to get all allocated
