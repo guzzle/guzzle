@@ -24,34 +24,59 @@ class EntityBody extends Stream
      * @var bool File types and whether or not they should be Gzipped.
      */
     static protected $extensions = array(
-        'asc' => array('text/plain', true),
-        'avi' => array('video/x-msvideo', false),
-        'bz' => array('application/x-bzip', false),
-        'bz2' => array('application/x-bzip2', false),
-        'flv' => array('video/x-flv', false),
-        'gif' => array('image/gif', false),
-        'gz' => array('application/x-gzip', false),
-        'htm' => array('text/html', true),
-        'html' => array('text/html', true),
-        'ico' => array('image/x-icon', false),
-        'jpg' => array('image/jpeg', false),
-        'mov' => array('video/quicktime', false),
-        'mp3' => array('audio/mpeg', false),
-        'mpeg' => array('video/mpeg', false),
-        'mpg' => array('video/mpeg', false),
-        'ogg' => array('application/ogg', false),
-        'pdf' => array('application/pdf', false),
-        'php' => array('text/x-php', false),
-        'png' => array('image/png', false),
-        'swf' => array('application/x-shockwave-flash', false),
-        'tar' => array('application/x-tar', false),
-        'tif' => array('image/tiff', false),
-        'tiff' => array('image/tiff', false),
-        'txt' => array('text/plain', true),
-        'wav' => array('audio/x-wav', false),
-        'xml' => array('text/xml', true),
-        'xsl' => array('application/xsl+xml', true),
-        'zip' => array('application/zip', false),
+        'ai' => 'application/postscript',
+        'asc' => 'text/plain',
+        'avi' => 'video/x-msvideo',
+        'bmp' => 'image/bmp',
+        'bz' => 'application/x-bzip',
+        'bz2' => 'application/x-bzip2',
+        'cab' => 'application/vnd.ms-cab-compressed',
+        'css' => 'text/css',
+        'doc' => 'application/msword',
+        'eps' => 'application/postscript',
+        'exe' => 'application/x-msdownload',
+        'flv' => 'video/x-flv',
+        'gif' => 'image/gif',
+        'gz' => 'application/x-gzip',
+        'htm' => 'text/html',
+        'html' => 'text/html',
+        'ico' => 'image/vnd.microsoft.icon',
+        'ico' => 'image/x-icon',
+        'jpe' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'jpg' => 'image/jpeg',
+        'js' => 'application/javascript',
+        'json' => 'application/json',
+        'mov' => 'video/quicktime',
+        'mp3' => 'audio/mpeg',
+        'mpeg' => 'video/mpeg',
+        'mpg' => 'video/mpeg',
+        'msi' => 'application/x-msdownload',
+        'ods' => 'application/vnd.oasis.opendocument.spreadsheet',
+        'odt' => 'application/vnd.oasis.opendocument.text',
+        'ogg' => 'application/ogg',
+        'pdf' => 'application/pdf',
+        'php' => 'text/html',
+        'php' => 'text/x-php',
+        'png' => 'image/png',
+        'ppt' => 'application/vnd.ms-powerpoint',
+        'ps' => 'application/postscript',
+        'psd' => 'image/vnd.adobe.photoshop',
+        'qt' => 'video/quicktime',
+        'rar' => 'application/x-rar-compressed',
+        'rtf' => 'application/rtf',
+        'svg' => 'image/svg+xml',
+        'svgz' => 'image/svg+xml',
+        'swf' => 'application/x-shockwave-flash',
+        'tar' => 'application/x-tar',
+        'tif' => 'image/tiff',
+        'tiff' => 'image/tiff',
+        'txt' => 'text/plain',
+        'wav' => 'audio/x-wav',
+        'xls' => 'application/vnd.ms-excel',
+        'xml' => 'application/xml',
+        'xsl' => 'application/xsl+xml',
+        'zip' => 'application/zip'
     );
 
     /**
@@ -79,20 +104,6 @@ class EntityBody extends Stream
         } else {
             throw new HttpException('Invalid data sent to ' . __METHOD__);
         }
-    }
-
-    /**
-     * Get whether or not a file is a text-based file and should be compressed.
-     *
-     * @param string $filename Filename to check
-     *
-     * @return bool Returns TRUE if the file is text-based or FALSE if it is not
-     */
-    public static function shouldCompress($filename)
-    {
-        $ext = strtoLower(pathInfo($filename, PATHINFO_EXTENSION));
-
-        return isset(self::$extensions[$ext]) ? self::$extensions[$ext][1] : false;
     }
 
     /**
@@ -171,7 +182,7 @@ class EntityBody extends Stream
             finfo_close($finfo);
         } else {
             $ext = strtoLower(pathInfo($this->getUri(), PATHINFO_EXTENSION));
-            $mimeType = isset(self::$extensions[$ext]) ? trim(self::$extensions[$ext][0]) : 'application/octet-stream';
+            $mimeType = isset(self::$extensions[$ext]) ? self::$extensions[$ext] : 'application/octet-stream';
         }
 
         return $mimeType;
