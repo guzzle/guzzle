@@ -237,31 +237,6 @@ class EntityBody extends Stream
     }
 
     /**
-     * Read a chunk of data from the EntityBody
-     *
-     * @param int $chunkLength (optional) Maximum chunk length to read
-     * @param int $startPos (optional) Where the seek position was when the last
-     *      chunk was read.  If the seek position is not there, then the stream
-     *      will be seeked to that position before it starts reading.  You
-     *      SHOULD always set the startPos when reading the body for a chunked
-     *      Transfer-Encoding request so that other calls will not interfere
-     *      with the data sent over the wire.
-     *
-     * @return string Returns the hex length of the chunk, followed by a CRLF,
-     *      followed by the chunk of read data
-     */
-    public function readChunked($chunkLength = 4096, $startPos = null)
-    {
-        if ($startPos !== null && ftell($this->stream) != $startPos) {
-            $this->seek($startPos);
-        }
-
-        $data = $this->read($chunkLength);
-
-        return dechex(strlen($data)) . "\r\n" . $data;
-    }
-
-    /**
      * Handles compression or uncompression of stream data
      *
      * @param $filter Name of the filter to use (zlib.deflate or zlib.inflate)

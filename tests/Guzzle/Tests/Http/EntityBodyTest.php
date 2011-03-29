@@ -126,23 +126,4 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $body = EntityBody::factory('testing 123...testing 123');
         $this->assertEquals(md5('testing 123...testing 123'), $body->getContentMd5());
     }
-
-    /**
-     * @covers Guzzle\Http\EntityBody::readChunked
-     */
-    public function testCanReadUsingChunkedTransferEncoding()
-    {
-        $body = EntityBody::factory('this is a test of the Emergency Broadcast System (EBS)');
-        $this->assertEquals(dechex(3) . "\r\n" . 'thi', $body->readChunked(3));
-        $this->assertEquals(dechex(6) . "\r\n" . 's is a', $body->readChunked(6));
-
-        // Jump to a different position in the body (0)
-        $this->assertEquals(dechex(3) . "\r\n" . 'thi', $body->readChunked(3, 0));
-
-        // Read the remainder of the entity body
-        $this->assertEquals(dechex(51) . "\r\n" . 's is a test of the Emergency Broadcast System (EBS)', $body->readChunked(4096));
-
-        // The last chunk must be 0 length followed by CRLF
-        $this->assertEquals(dechex(0) . "\r\n", $body->readChunked(4096));
-    }
 }
