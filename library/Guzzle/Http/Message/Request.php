@@ -172,7 +172,7 @@ class Request extends AbstractMessage implements RequestInterface
         $this->url = clone $this->url;
         $this->curlHandle = $this->response = $this->responseBody = null;
         $this->params->set('queued_response', false);
-        $this->processedResponse = $this->preparedRequest = false;
+        $this->processedResponse = false;
         $this->setState(RequestInterface::STATE_NEW);
     }
 
@@ -601,7 +601,6 @@ class Request extends AbstractMessage implements RequestInterface
                 $this->response = null;
                 $this->responseBody = null;
                 $this->processedResponse = false;
-                $this->preparedRequest = false;
                 $this->getParams()->remove('queued_response');
                 $this->curlOptions->clear();
                 $this->releaseCurlHandle();
