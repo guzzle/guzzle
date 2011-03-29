@@ -266,7 +266,7 @@ class CurlHandle
     public function getOption($option)
     {
         if (is_string($option)) {
-            $option = CurlConstants::getOptionInt($option);
+            $option = constant($option);
         }
 
         return $this->options->get($option, null, true);
@@ -331,7 +331,7 @@ class CurlHandle
     public function setOption($option, $value)
     {
         if (is_string($option)) {
-            $option = CurlConstants::getOptionInt($option);
+            $option = constant($option);
         }
 
         $this->options->set($option, $value);

@@ -215,11 +215,10 @@ class Client extends AbstractSubject
 
         // Add any curl options that might in the config to the request
         foreach ($this->getConfig()->getAll('/^curl\..+/', Collection::MATCH_REGEX) as $key => $value) {
-            $curlOption = CurlConstants::getOptionInt(str_replace('curl.', '', $key));
-            if ($curlOption !== false) {
-                $curlValue = CurlConstants::getValueInt($value);
-                $curlValue = ($curlValue === false) ? $value : $curlValue;
-                $request->getCurlOptions()->set($curlOption, $curlValue);
+            $curlOption = str_replace('curl.', '', $key);
+            if (defined($curlOption)) {
+                $curlValue = defined($value) ? constant($value) : $value;
+                $request->getCurlOptions()->set(constant($curlOption), $curlValue);
             }
         }
 
