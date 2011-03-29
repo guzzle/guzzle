@@ -122,8 +122,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         
         $this->assertSame($response, $r);
         $this->assertInstanceOf('Guzzle\\Http\\Message\\Response', $this->request->getResponse());
-        $this->assertEquals($r, $this->request->getResponse());
-        $this->assertEquals($r, $this->request->send());
+        $this->assertSame($r, $this->request->getResponse());
         $this->assertEquals('complete', $this->request->getState());
     }
 
@@ -364,58 +363,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame($this->request, $this->request->setResponse($response), '-> setResponse() must use a fluent interface');
         $this->assertEquals('complete', $this->request->getState(), '-> setResponse() must change the state of the request to complete');
         $this->assertSame($response, $this->request->getResponse(), '-> setResponse() must set the exact same response that was passed in to it');
-        $this->assertSame($response, $this->request->send(), '-> send() must use the same response unless the state is changed back to new');
-    }
-
-    /**
-     * This test launches a dummy Guzzle\Http\Server\Server object that listens
-     * for incoming requests.  The server allows us to test how cURL sends
-     * requests and receives responses.  We can validate the request structure
-     * and whether or not the response was interpreted correctly.
-     *
-     * @covers Guzzle\Http\Message\Request
-     */
-    public function testRequestCanBeSentUsingSockets()
-    {
-        $this->getServer()->flush();
-
-        $this->getServer()->enqueue(array(
-            "HTTP/1.1 200 OK\r\nContent-Length: 4\r\nExpires: Thu, 01 Dec 1994 16:00:00 GMT\r\nConnection: close\r\n\r\ndata",
-            "HTTP/1.1 404 Not Found\r\nContent-Encoding: application/xml\r\nContent-Length: 48\r\n\r\n<error><mesage>File not found</message></error>"
-        ));
-
-        $request = RequestFactory::get($this->getServer()->getUrl());
-        $response = $request->send();
-        $this->assertEquals('data', $response->getBody(true));
-        $this->assertEquals(200, (int)$response->getStatusCode());
-        $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals(4, $response->getContentLength());
-        $this->assertEquals('Thu, 01 Dec 1994 16:00:00 GMT', $response->getExpires());
-
-        try {
-            $request = RequestFactory::get($this->getServer()->getUrl() . 'index.html');
-            $response = $request->send();
-            $this->fail('Request did not receive a 404 response');
-        } catch (BadResponseException $e) {
-        }
-        
-        $requests = $this->getServer()->getReceivedRequests(true);
-        $messages = $this->getServer()->getReceivedRequests(false);
-        $port = $this->getServer()->getPort();
-
-        $userAgent = Guzzle::getDefaultUserAgent();
-
-        $this->assertEquals('127.0.0.1:' . $port, $requests[0]->getHeader('Host'));
-        $this->assertEquals('127.0.0.1:' . $port, $requests[1]->getHeader('Host'));
-
-        $this->assertEquals('/', $requests[0]->getPath());
-        $this->assertEquals('/index.html', $requests[1]->getPath());
-
-        $parts = explode("\r\n", $messages[0]);
-        $this->assertEquals('GET / HTTP/1.1', $parts[0]);
-
-        $parts = explode("\r\n", $messages[1]);
-        $this->assertEquals('GET /index.html HTTP/1.1', $parts[0]);
     }
 
     /**
@@ -622,7 +569,9 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testRequestCanBeSentUsingCurl()
     {
+        $this->getServer()->flush();
         $this->getServer()->enqueue(array(
+            "HTTP/1.1 200 OK\r\nContent-Length: 4\r\nExpires: Thu, 01 Dec 1994 16:00:00 GMT\r\nConnection: close\r\n\r\ndata",
             "HTTP/1.1 200 OK\r\nContent-Length: 4\r\nExpires: Thu, 01 Dec 1994 16:00:00 GMT\r\nConnection: close\r\n\r\ndata",
             "HTTP/1.1 404 Not Found\r\nContent-Encoding: application/xml\r\nContent-Length: 48\r\n\r\n<error><mesage>File not found</message></error>"
         ));
@@ -635,6 +584,10 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('OK', $response->getReasonPhrase());
         $this->assertEquals(4, $response->getContentLength());
         $this->assertEquals('Thu, 01 Dec 1994 16:00:00 GMT', $response->getExpires());
+
+        // Test that the same handle can be sent twice without setting state to new
+        $response2 = $request->send();
+        $this->assertNotSame($response, $response2);
 
         try {
             $request = RequestFactory::get($this->getServer()->getUrl() . 'index.html');
@@ -651,14 +604,19 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertEquals('127.0.0.1:' . $port, $requests[0]->getHeader('Host'));
         $this->assertEquals('127.0.0.1:' . $port, $requests[1]->getHeader('Host'));
+        $this->assertEquals('127.0.0.1:' . $port, $requests[2]->getHeader('Host'));
 
         $this->assertEquals('/', $requests[0]->getPath());
-        $this->assertEquals('/index.html', $requests[1]->getPath());
+        $this->assertEquals('/', $requests[1]->getPath());
+        $this->assertEquals('/index.html', $requests[2]->getPath());
 
         $parts = explode("\r\n", $messages[0]);
         $this->assertEquals('GET / HTTP/1.1', $parts[0]);
-
+        
         $parts = explode("\r\n", $messages[1]);
+        $this->assertEquals('GET / HTTP/1.1', $parts[0]);
+
+        $parts = explode("\r\n", $messages[2]);
         $this->assertEquals('GET /index.html HTTP/1.1', $parts[0]);
     }
 

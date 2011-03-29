@@ -293,27 +293,28 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function send()
     {
-        if ($this->state == self::STATE_NEW) {
+        if ($this->state != self::STATE_NEW) {
+            $this->setState(self::STATE_NEW);
+        }
+        try {
             try {
-                try {
-                    $this->state = self::STATE_TRANSFER;
-                    $this->getEventManager()->notify('request.before_send');
-                    if (!$this->response && !$this->getParams()->get('queued_response')) {
-                        curl_exec($this->getCurlHandle()->getHandle());
-                    }
-                    $this->setState(self::STATE_COMPLETE);
-                } catch (BadResponseException $e) {
-                    $this->getEventManager()->notify('request.bad_response');
-                    if ($this->response) {
-                        $e->setResponse($this->response);
-                    }
-                    throw $e;
+                $this->state = self::STATE_TRANSFER;
+                $this->getEventManager()->notify('request.before_send');
+                if (!$this->response && !$this->getParams()->get('queued_response')) {
+                    curl_exec($this->getCurlHandle()->getHandle());
                 }
-            } catch (RequestException $e) {
-                $e->setRequest($this);
-                $this->getEventManager()->notify('request.exception', $e);
+                $this->setState(self::STATE_COMPLETE);
+            } catch (BadResponseException $e) {
+                $this->getEventManager()->notify('request.bad_response');
+                if ($this->response) {
+                    $e->setResponse($this->response);
+                }
                 throw $e;
             }
+        } catch (RequestException $e) {
+            $e->setRequest($this);
+            $this->getEventManager()->notify('request.exception', $e);
+            throw $e;
         }
 
         return $this->response;

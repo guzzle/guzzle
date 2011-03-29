@@ -36,6 +36,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Common\Collection::__construct
+     * @covers Guzzle\Common\Collection::getAll
      */
     public function testConstructorCanBeCalledWithParams()
     {
@@ -135,12 +136,19 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Common\Collection::get
+     * @covers Guzzle\Common\Collection::getAll
      */
     public function testGetsValuesByKey()
     {
         $this->assertNull($this->coll->get('test'));
         $this->coll->add('test', 'value');
         $this->assertEquals('value', $this->coll->get('test'));
+        $this->coll->set('test2', 'v2');
+        $this->coll->set('test3', 'v3');
+        $this->assertEquals(array(
+            'test' => 'value',
+            'test2' => 'v2'
+        ), $this->coll->getAll(array('test', 'test2')));
     }
 
     /**

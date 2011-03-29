@@ -130,18 +130,18 @@ class CommandTest extends AbstractCommandTest
         // Set a mock response
         $client->getEventManager()->attach(function($subject, $event, $context) use ($response) {
             if ($event == 'request.create') {
-                $context->setResponse($response);
+                $context->setResponse($response, true);
             }
         });
 
         $command = new MockCommand();
 
-        $this->assertEquals($command, $command->setClient($client));
-        $this->assertEquals($command, $command->execute()); // Implicitly calls prepare
+        $this->assertSame($command, $command->setClient($client));
+        $this->assertSame($command, $command->execute()); // Implicitly calls prepare
 
         $this->assertTrue($command->isPrepared());
         $this->assertTrue($command->isExecuted());
-        $this->assertEquals($response, $command->getResponse());
+        $this->assertSame($response, $command->getResponse());
         $this->assertInstanceOf('Guzzle\\Http\\Message\\Request', $command->getRequest());
         // Make sure that the result was automatically set to a SimpleXMLElement
         $this->assertInstanceOf('SimpleXMLElement', $command->getResult());
