@@ -11,7 +11,6 @@ use Guzzle\Common\Event\Subject;
 use Guzzle\Common\Event\Observer;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\QueryString;
-use Guzzle\Http\MultipartFormData;
 
 /**
  * HTTP request that sends an entity-body in the request message (POST, PUT)
