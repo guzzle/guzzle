@@ -82,7 +82,7 @@ class RequestFactory
         // Parse each line in the message
         foreach (explode("\r\n", $parts[0]) as $line) {
             $matches = array();
-            if (preg_match('#^(?<method>GET|POST|PUT|HEAD|DELETE|TRACE|OPTIONS)\s+(?<path>/.*)\s+(?<protocol>\w+)/(?<version>\d\.\d)\s*$#i', $line, $matches)) {
+            if (preg_match('#^(?P<method>GET|POST|PUT|HEAD|DELETE|TRACE|OPTIONS)\s+(?P<path>/.*)\s+(?P<protocol>\w+)/(?P<version>\d\.\d)\s*$#i', $line, $matches)) {
                 $method = strtoupper($matches['method']);
                 $protocol = strtoupper($matches['protocol']);
                 $path = $matches['path'];
