@@ -1,9 +1,6 @@
 [submodule "vendor/Symfony/Component/ClassLoader"]
 	path = vendor/Symfony/Component/ClassLoader
 	url = https://github.com/symfony/ClassLoader
-[submodule "vendor/Doctrine/Common"]
-	path = vendor/Doctrine/Common
-	url = https://github.com/doctrine/common
 [submodule "vendor/Doctrine"]
 	path = vendor/Doctrine
 	url = https://github.com/doctrine/common
