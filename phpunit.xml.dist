@@ -17,7 +17,7 @@
 
     <filter>
         <whitelist>
-            <directory suffix=".php">./library/Guzzle</directory>
+            <directory suffix=".php">./src/Guzzle</directory>
         </whitelist>
     </filter>
 
