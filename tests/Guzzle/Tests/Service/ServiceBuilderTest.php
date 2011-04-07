@@ -9,6 +9,7 @@ namespace Guzzle\Tests\Service;
 use Doctrine\Common\Cache\ArrayCache;
 use Guzzle\Common\Cache\DoctrineCacheAdapter;
 use Guzzle\Service\ServiceBuilder;
+use Guzzle\Service\Client;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>
@@ -206,5 +207,25 @@ EOT;
 
         $c = $s->get('michael.mock');
         $this->assertType('Guzzle\\Tests\\Service\\Mock\\MockClient', $c);
+    }
+
+    /**
+     * @covers Guzzle\Service\ServiceBuilder::offsetSet
+     * @covers Guzzle\Service\ServiceBuilder::offsetGet
+     * @covers Guzzle\Service\ServiceBuilder::offsetUnset
+     * @covers Guzzle\Service\ServiceBuilder::offsetExists
+     */
+    public function testUsedAsArray()
+    {
+        $b = ServiceBuilder::factory($this->tempFile);
+        $this->assertTrue($b->offsetExists('michael.mock'));
+        $this->assertFalse($b->offsetExists('not_there'));
+        $this->assertType('Guzzle\\Service\\Client', $b['michael.mock']);
+
+        unset($b['michael.mock']);
+        $this->assertFalse($b->offsetExists('michael.mock'));
+
+        $b['michael.mock'] = new Client('http://www.test.com/');
+        $this->assertType('Guzzle\\Service\\Client', $b['michael.mock']);
     }
 }

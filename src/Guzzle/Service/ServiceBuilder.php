@@ -14,7 +14,7 @@ use Guzzle\Common\Cache\CacheAdapterInterface;
  *
  * @author  michael@guzzlephp.org
  */
-class ServiceBuilder
+class ServiceBuilder implements \ArrayAccess
 {
     /**
      * @var array Service builder configuration data
@@ -133,5 +133,60 @@ class ServiceBuilder
         }
 
         return $client;
+    }
+
+    /**
+     * Register a client by name with the service builder
+     *
+     * @param string $offset Name of the client to register
+     * @param Client $value Client to register
+     *
+     * @return ServiceBuilder
+     */
+    public function offsetSet($offset, $value)
+    {
+        $this->builderConfig[$offset] = $value;
+
+        return $this;
+    }
+
+    /**
+     * Remove a registered client by name
+     *
+     * @param string $offset Client to remove by name
+     *
+     * @return ServiceBuilder
+     */
+    public function offsetUnset($offset)
+    {
+        if (isset($this->builderConfig[$offset])) {
+            unset($this->builderConfig[$offset]);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Check if a client is registered with the service builder by name
+     *
+     * @param string $offset Name to check to see if a client exists
+     *
+     * @return bool
+     */
+    public function offsetExists($offset)
+    {
+        return isset($this->builderConfig[$offset]);
+    }
+
+    /**
+     * Get a registered client by name
+     *
+     * @param string $offset Registered client name to retrieve
+     *
+     * @return Client
+     */
+    public function offsetGet($offset)
+    {
+        return $this->get($offset);
     }
 }
