@@ -125,5 +125,14 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $body = EntityBody::factory('testing 123...testing 123');
         $this->assertEquals(md5('testing 123...testing 123'), $body->getContentMd5());
+
+        $server = $this->getServer()->enqueue(
+            "HTTP/1.1 200 OK" . "\r\n" .
+            "Content-Length: 3" . "\r\n\r\n" .
+            "abc"
+        );
+
+        $body = EntityBody::factory(fopen($this->getServer()->getUrl(), 'r'));
+        $this->assertFalse($body->getContentMd5());
     }
 }
