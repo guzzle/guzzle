@@ -199,11 +199,10 @@ class EntityBody extends Stream
      */
     public function getContentMd5($rawOutput = false, $base64Encode = false)
     {
-        if (!$this->isSeekable()) {
+        if (!$this->seek(0)) {
             return false;
         }
 
-        $this->seek(0);
         $ctx = hash_init('md5');
         while ($data = $this->read(1024)) {
             hash_update($ctx, $data);
