@@ -55,46 +55,53 @@ class Md5ValidatorPlugin implements Observer
     public function update(Subject $subject, $event, $context = null)
     {
         /* @var $subject EntityEnclosingRequest */
-        if ($event == 'request.complete' && $subject instanceof RequestInterface) {
-            $contentMd5 = $context->getContentMd5();
-            if ($contentMd5) {
-                $contentEncoding = $context->getContentEncoding();
-                if (!$contentEncoding || $this->contentEncoded) {
-                    // Make sure that the request's size is under the cutoff size
-                    $size = $context->getContentLength() ?: $context->getBody()->getSize();
-                    if ($size && $size < $this->contentLengthCutoff) {
+        if ($event != 'request.complete' || !($subject instanceof RequestInterface)) {
+            return;
+        }
 
-                        switch ($contentEncoding) {
-                            case 'gzip':
-                                $context->getBody()->compress('zlib.deflate');
-                                $hash = $context->getBody()->getContentMd5();
-                                $context->getBody()->uncompress();
-                                break;
-                            case 'compress':
-                                $context->getBody()->compress('bzip2.compress');
-                                $hash = $context->getBody()->getContentMd5();
-                                $context->getBody()->uncompress();
-                                break;
-                            default:
-                                if ($contentEncoding) {
-                                    return;
-                                }
-                                $hash = $context->getBody()->getContentMd5();
-                                break;
-                        }
+        $contentMd5 = $context->getContentMd5();
+        if (!$contentMd5) {
+            return;
+        }
 
-                        if ($contentMd5 !== $hash) {
-                            throw new \UnexpectedValueException(sprintf(
-                                'The response entity body may have been '
-                                . 'modified over the wire.  The Content-MD5 '
-                                . 'received (%s) did not match the calculated '
-                                . 'MD5 hash (%s).',
-                                $contentMd5, $hash
-                            ));
-                        }
-                    }
+        $contentEncoding = $context->getContentEncoding();
+        if ($contentEncoding && !$this->contentEncoded) {
+            return false;
+        }
+
+        // Make sure that the request's size is under the cutoff size
+        $size = $context->getContentLength() ?: $context->getBody()->getSize();
+        if (!$size || $size > $this->contentLengthCutoff) {
+            return;
+        }
+
+        switch ($contentEncoding) {
+            case 'gzip':
+                $context->getBody()->compress('zlib.deflate');
+                $hash = $context->getBody()->getContentMd5();
+                $context->getBody()->uncompress();
+                break;
+            case 'compress':
+                $context->getBody()->compress('bzip2.compress');
+                $hash = $context->getBody()->getContentMd5();
+                $context->getBody()->uncompress();
+                break;
+            default:
+                if ($contentEncoding) {
+                    return;
                 }
-            }
+                $hash = $context->getBody()->getContentMd5();
+                break;
+        }
+
+        if ($contentMd5 !== $hash) {
+            throw new \UnexpectedValueException(sprintf(
+                'The response entity body may have been '
+                . 'modified over the wire.  The Content-MD5 '
+                . 'received (%s) did not match the calculated '
+                . 'MD5 hash (%s).',
+                $contentMd5, $hash
+            ));
         }
     }
 }

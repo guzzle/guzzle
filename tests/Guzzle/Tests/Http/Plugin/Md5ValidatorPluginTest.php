@@ -33,6 +33,10 @@ class Md5ValidatorPluginTest extends \Guzzle\Tests\GuzzleTestCase
         ), 'abc');
 
         $request->getEventManager()->notify('request.complete', $response);
+
+        // Try again with no Content-MD5
+        $response->removeHeader('Content-MD5');
+        $request->getEventManager()->notify('request.complete', $response);
     }
 
     /**
@@ -107,6 +111,12 @@ class Md5ValidatorPluginTest extends \Guzzle\Tests\GuzzleTestCase
             'Content-MD5' => $body->getContentMd5(),
             'Content-Encoding' => 'compress'
         ), 'abc');
+        $request->getEventManager()->notify('request.complete', $response);
+
+        // Try again with encoding and disabled content-encoding checks
+        $request->getEventManager()->detach($plugin);
+        $plugin = new Md5ValidatorPlugin(false);
+        $request->getEventManager()->attach($plugin);
         $request->getEventManager()->notify('request.complete', $response);
     }
 }
