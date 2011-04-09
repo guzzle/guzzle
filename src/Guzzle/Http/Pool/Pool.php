@@ -177,6 +177,7 @@ class Pool extends AbstractSubject implements PoolInterface
         $this->state = self::STATE_SENDING;
 
         foreach ($this->requests as $request) {
+            $request->getEventManager()->notify('request.before_send');
             // Do not send if a manual response is being used.
             if (!$request->getResponse() && !$request->getParams()->get('queued_response')) {
                 curl_multi_add_handle($this->multiHandle, $request->getCurlHandle()->getHandle());

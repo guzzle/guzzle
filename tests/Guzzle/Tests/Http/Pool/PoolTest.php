@@ -158,7 +158,10 @@ class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
         ));
         
         $request1 = new Request('GET', $this->getServer()->getUrl());
+        $request1->getEventManager()->attach($this);
         $request2 = new Request('GET', $this->getServer()->getUrl());
+        $request2->getEventManager()->attach($this);
+        
         $this->pool->add($request1);
         $this->pool->add($request2);
         $this->assertEquals(array($request1, $request2), $this->pool->send());
@@ -173,6 +176,9 @@ class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
         $this->assertTrue($response1->getBody(true) == '' || $response2->getBody(true) == '');
         $this->assertTrue($response1->getStatusCode() == '204' || $response2->getStatusCode() == '204');
         $this->assertNotEquals((string) $response1, (string) $response2);
+
+        $this->assertTrue($this->updates->hasKey('request.before_send') !== false);
+        $this->assertInternalType('array', $this->updates->get('request.before_send'));
     }
 
     /**
