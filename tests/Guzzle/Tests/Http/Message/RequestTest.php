@@ -495,7 +495,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     public function testClonedRequestsUseNewInternalState()
     {
         $p = new ExponentialBackoffPlugin();
-        $this->request->getEventManager()->attach($p);
+        $this->request->getEventManager()->attach($p, 100);
 
         $r = clone $this->request;
 
@@ -508,6 +508,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertNull($r->getParams()->get('queued_response'));
 
         $this->assertTrue($this->request->getEventManager()->hasObserver($p));
+        $this->assertEquals(100, $r->getEventManager()->getPriority($p));
         $this->assertTrue($r->getEventManager()->hasObserver($p));
     }
 
