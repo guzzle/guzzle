@@ -30,7 +30,8 @@ class ServiceBuilder implements \ArrayAccess
      * Create a new ServiceBuilder using an XML configuration file to configure
      * the registered ServiceBuilder builder objects
      *
-     * @param string $filename Full path to the XML configuration file
+     * @param string|SimpleXMLElement $xml An instantiated SimpleXMLElement or
+     *      the full path to a Guzzle XML configuration file
      * @param CacheAdapterInterface $cacheAdapter (optional) Pass a cache
      *      adapter to cache the XML service configuration settings
      * @param int $ttl (optional) How long to cache the parsed XML data
@@ -39,24 +40,25 @@ class ServiceBuilder implements \ArrayAccess
      * @throws RuntimeException if the file cannot be openend
      * @throws LogicException when trying to extend a missing client
      */
-    public static function factory($filename, CacheAdapterInterface $cacheAdapter = null, $ttl = 86400)
+    public static function factory($xml, CacheAdapterInterface $cacheAdapter = null, $ttl = 86400)
     {
-        // Compute the cache key for this service and check if it exists in cache
-        if ($cacheAdapter) {
-            $key = 'guz_service_' . md5($filename);
-            $cached = $cacheAdapter ? $cacheAdapter->fetch($key) : false;
-            if ($cached) {
-                return new self(unserialize($cached));
+        if (is_string($xml)) {
+            if ($cacheAdapter) {
+                // Compute the cache key for this service and check if it exists in cache
+                $key = str_replace('__', '_', 'guz_' . preg_replace('~[^\\pL\d]+~u', '_', strtolower(realpath($xml))));
+                if ($cached = $cacheAdapter->fetch($key)) {
+                    return new self(unserialize($cached));
+                }
             }
-        }
-            
-        // Build the service config from the XML file if the file exists
-        if (!is_file($filename)) {
-            throw new \RuntimeException('Unable to open service configuration file ' . $filename);
+            // Build the service config from the XML file if the file exists
+            if (is_file($xml)) {
+                $xml = new \SimpleXMLElement($xml, null, true);
+            } else {
+                throw new \RuntimeException('Unable to open service configuration file ' . $xml);
+            }
         }
 
         $config = array();
-        $xml = new \SimpleXMLElement($filename, null, true);
 
         // Create a client entry for each client in the XML file
         foreach ($xml->clients->client as $client) {

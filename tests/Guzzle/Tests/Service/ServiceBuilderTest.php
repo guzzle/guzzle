@@ -116,8 +116,11 @@ EOT;
 
         $s1 = ServiceBuilder::factory($this->tempFile, $adapter, 86400);
 
-        // Make sure it added to the cache
-        $this->assertNotEmpty($cache->getIds());
+        // Make sure it added to the cache with a proper cache key
+        $keys = $cache->getIds();
+        $this->assertNotEmpty($keys);
+        $this->assertEquals(0, strpos($keys[0], 'guz_'));
+        $this->assertFalse(strpos($keys[0], '__'));
 
         // Load this one from cache
         $s2 = ServiceBuilder::factory($this->tempFile, $adapter, 86400);
@@ -227,5 +230,16 @@ EOT;
 
         $b['michael.mock'] = new Client('http://www.test.com/');
         $this->assertType('Guzzle\\Service\\Client', $b['michael.mock']);
+    }
+
+    /**
+     * @covers Guzzle\Service\ServiceBuilder::factory
+     */
+    public function testFactoryCanCreateFromXml()
+    {
+        $b = ServiceBuilder::factory(new \SimpleXMLElement($this->xmlConfig));
+        $this->assertTrue($b->offsetExists('michael.mock'));
+        $this->assertTrue($b->offsetExists('billy.mock'));
+        $this->assertTrue($b->offsetExists('billy.testing'));
     }
 }
