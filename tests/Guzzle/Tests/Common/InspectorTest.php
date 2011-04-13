@@ -59,7 +59,7 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase implements FilterInterf
             'b' => 'lol'
         ), array('a'));
 
-        $this->assertType('Guzzle\Common\Collection', $c);
+        $this->assertInstanceOf('Guzzle\Common\Collection', $c);
         $this->assertEquals(array(
             'a' => '123',
             'b' => 'lol',

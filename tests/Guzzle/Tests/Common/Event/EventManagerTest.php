@@ -41,7 +41,7 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
             return true;
         }, -10);
 
-        $this->assertType('Closure', $closure);
+        $this->assertInstanceOf('Closure', $closure);
         $this->assertEquals(array($observer, $closure), $subject->getAttached());
 
         $this->assertEquals(0, $subject->getPriority($observer));
