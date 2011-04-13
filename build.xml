@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="guzzle" default="init">
+
+    <!-- ============================================  -->
+    <!-- Target: init-git                              -->
+    <!-- ============================================  -->
+    <target name="init-git">
+        <echo msg="Initializing git submodules" />
+        <exec command="git submodule init" />
+        <exec command="git submodule update" />
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: init-test                             -->
+    <!-- ============================================  -->
+    <target name="init-test" depends="init-git">
+        <echo msg="Preparing for PHPUnit testing" />
+        <echo msg="Copying ./phpunit.xml.dist to ./phpunit.xml" />
+        <copy file="./phpunit.xml.dist" tofile="./phpunit.xml" />
+    </target>
+
+    <!-- ============================================  -->
+    <!-- (DEFAULT)  Target: int                        -->
+    <!-- ============================================  -->
+    <target name="init">
+        <phingcall target="init-git" />
+        <phingcall target="init-test" />
+    </target>
+
+</project>
