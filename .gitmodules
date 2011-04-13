@@ -4,3 +4,6 @@
 [submodule "vendor/Doctrine"]
 	path = vendor/Doctrine
 	url = https://github.com/doctrine/common
+[submodule "vendor/Monolog"]
+	path = vendor/Monolog
+	url = https://github.com/Seldaek/monolog.git

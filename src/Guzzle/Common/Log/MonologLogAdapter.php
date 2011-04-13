@@ -6,24 +6,27 @@
 
 namespace Guzzle\Common\Log;
 
+use Monolog\Logger;
+
 /**
- * Adapts the Zend_Log class to the Guzzle framework
+ * Monolog log adapter
  *
  * @author Michael Dowling <michael@guzzlephp.org>
+ * @link https://github.com/Seldaek/monolog
  */
-class ZendLogAdapter extends AbstractLogAdapter
+class MonologLogAdapter extends AbstractLogAdapter
 {
     /**
-     * Adapt a Zend_Log object
-     * 
-     * @param Zend_Log $logObject Log object to adapt
+     * Adapt a Monolog Logger object
+     *
+     * @param Logger $logObject Log object to adapt
      * @throws InvalidArgumentException
      */
-    public function __construct($logObject) 
+    public function __construct($logObject)
     {
-        if (!($logObject instanceof \Zend_Log)) {
+        if (!($logObject instanceof Logger)) {
             throw new \InvalidArgumentException(
-                'Object must be an instance of Zend_Log'
+                'Object must be an instance of Monolog\Logger'
             );
         }
 
@@ -35,7 +38,7 @@ class ZendLogAdapter extends AbstractLogAdapter
      */
     public function log($message, $priority = LOG_INFO, $extras = null)
     {
-        $this->log->log($message, $priority, $extras);
+        $this->log->addRecord($priority, $message);
 
         return $this;
     }
