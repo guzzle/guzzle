@@ -14,8 +14,7 @@
     <!-- ============================================  -->
     <!-- Target: init-test                             -->
     <!-- ============================================  -->
-    <target name="init-test" depends="init-git">
-        <echo msg="Preparing for PHPUnit testing" />
+    <target name="init-test">
         <echo msg="Copying ./phpunit.xml.dist to ./phpunit.xml" />
         <copy file="./phpunit.xml.dist" tofile="./phpunit.xml" />
     </target>
@@ -23,16 +22,13 @@
     <!-- ============================================  -->
     <!-- (DEFAULT)  Target: init                       -->
     <!-- ============================================  -->
-    <target name="init">
-        <phingcall target="init-git" />
-        <phingcall target="init-test" />
-    </target>
+    <target name="init" depends="init-git,init-test" />
 
     <!-- ============================================  -->
     <!-- Target: phar                                  -->
     <!-- ============================================  -->
     <target name="phar">
-        <pharpackage destfile="./guzzle.phar" basedir="./">
+        <pharpackage destfile="./guzzle.phar" basedir="./" compression="gzip">
             <fileset dir="./src">
                 <include name="**/**" />
             </fileset>
