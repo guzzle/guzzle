@@ -87,6 +87,7 @@ Features
 * Allows full access to request HTTP headers
 * Responses can be cached and served from cache using the CachePlugin
 * Failed requests can be retried using truncated exponential backoff using the ExponentialBackoffPlugin
+* Entity bodies can be validated automatically using Content-MD5 headers
 * All data sent over the wire can be logged using the LogPlugin
 * Cookie sessions can be maintained between requests using the CookiePlugin
 * Send requests in parallel
@@ -101,8 +102,7 @@ Features
 Guzzle makes writing services an easy task by providing a simple pattern to follow:
 
 #. Extend the default client class
-#. Create a client builder if needed
-#. Create commands for each API action.  Guzzle uses the command pattern.
+#. Create commands for each API action or generate commands dynamically using an XML service description.
 #. Add the service definition to your services.xml file
 
 Most web service clients follow a specific pattern: create a client class, create methods for each action that can be taken on the API, create a cURL handle to transfer an HTTP request to the client, parse the response, implement error handling, and return the result. You've probably had to interact with an API that either doesn't have a PHP client or the currently available PHP clients are not up to an acceptable level of quality. When facing these types of situations, you probably find yourself writing a webservice that lacks most of the advanced features mentioned by Michael. It wouldn't make sense to spend all that time writing those features-- it's just a simple webservice client for just one API... But then you build another client... and another. Suddenly you find yourself with several web service clients to maintain, each client a God class, each reeking of code duplication and lacking most, if not all, of the aforementioned features. Enter Guzzle.
@@ -158,10 +158,7 @@ All requests in the above client would need the basic HTTP authorization added a
 Installing Guzzle
 -----------------
 
-Install Guzzle using pear when using Guzzle in production::
-
-    pear channel-discover pearhub.org
-    pear install pearhub/guzzle
+    git clone http://github.com/guzzle/guzzle
 
 You will need to add Guzzle to your application's autoloader.  Guzzle ships with a few select classes from other vendors, one of which is the Symfony2 universal class loader.  If your application does not already use an autoloader, you can use the autoloader distributed with Guzzle::
 
@@ -171,11 +168,9 @@ You will need to add Guzzle to your application's autoloader.  Guzzle ships with
 
     $classLoader = new \Symfony\Component\ClassLoader\UniversalClassLoader();
     $classLoader->registerNamespaces(array(
-        'Guzzle' => '/path/to/guzzle/library'
+        'Guzzle' => '/path/to/guzzle/src'
     ));
     $classLoader->register();
-
-Substitute '/path/to/' with the full path to your Guzzle installation.  You can find the PEAR installation folder using pear config-get php_dir
 
 Installing services
 -------------------
@@ -195,13 +190,12 @@ Guzzle services are distributed separately from the Guzzle framework.  Guzzle of
 * `Unfuddle <https://github.com/guzzle/guzzle-unfuddle>`_
 * `Cardinal Commerce <https://github.com/guzzle/guzzle-cardinal-commerce>`_
 
-When installing a Guzzle service, check the service's installation instructions for specific examples on how to install the service.  Most services can be installed using a git submodule or, if available, a PEAR package through pearhub.org::
+When installing a Guzzle service, check the service's installation instructions for specific examples on how to install the service.
 
-    pear install pearhub/guzzle-aws # Note: this might not work while we're still finalizing our deployment methods
+Services can be installed using git submodules::
 
-Services can also be installed using git submodules::
-
-    git submodule add git://github.com/guzzle/guzzle-aws.git /path/to/guzzle/library/Guzzle/Service/Aws
+    cd /path/to/guzzle
+    git submodule add git://github.com/guzzle/guzzle-aws.git src/Guzzle/Service/Aws
 
 Autoloading Services
 ~~~~~~~~~~~~~~~~~~~~
@@ -239,22 +233,18 @@ Create a services.xml that your ServiceBuilder will use to create service client
 
 3. Get the Amazon S3 client from the ServiceBuilder and execute a command::
 
-    use Guzzle\Service\Aws\S3\Command\Object\GetObject;
+    $client = $serviceBuilder['test.s3'];
+    $command = $client->getCommand('object.get_object')
+        ->setBucket('mybucket')
+        ->setKey('mykey');
 
-    $client = $serviceBuilder->get('test.s3');
-    $command = new GetObject();
-    $command->setBucket('mybucket')->setKey('mykey');
-
-    // The result of the GetObject command returns the HTTP response object
+    // The result of the GetObject command returns an HTTP response object
     $httpResponse = $client->execute($command);
     echo $httpResponse->getBody();
 
 The GetObject command just returns the HTTP response object when it is executed.  Other commands might return more valuable information when executed::
 
-    use Guzzle\Service\Aws\S3\Command\Bucket\ListBucket;
-
-    $command = new ListBucket();
-    $command->setBucket('mybucket');
+    $command = $client->getCommand('bucket.list_bucket')->setBucket('mybucket');
     $objects = $client->execute($command);
 
     // Iterate over every single object in the bucket
@@ -269,16 +259,6 @@ The GetObject command just returns the HTTP response object when it is executed.
     echo $command->getResponse();
 
 The ListBucket command above returns a BucketIterator which will iterate over the entire contents of a bucket.  As you can see, commands can be as simple or complex as you want.
-
-If the above code samples seem a little verbose to you, you can take some shortcuts in your code by leveraging the Guzzle command factory inherent to each client::
-
-    // Most succinctly
-    $objects = $client->getCommand('bucket.list_bucket', array('bucket' => 'my_bucket'))->execute();
-
-    // The best blend of verbose and succinct
-    $objects = $client->getCommand('bucket.list_bucket')
-        ->setBucket('my_bucket')
-        ->execute();
 
 Send a request and retry using exponential backoff
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -383,4 +363,4 @@ Guzzle can leverage HTTP's caching specifications using the ``Guzzle\Http\Plugin
     // served from cache
     $request->setState('new')->$request->send();
 
-Guzzle doesn't try to reinvent the wheel when it comes to caching or logging.  Plenty of other frameworks, namely the `Zend Framework <http://framework.zend.com/>`_, have excellent solutions in place that you are probably already using in your applications.  Guzzle uses adapters for caching and logging.  Guzzle currently supports log adapters for the Zend Framework and cache adapters for `Doctrine 2.0 <http://www.doctrine-project.org/>`_ and the Zend Framework.
+Guzzle doesn't try to reinvent the wheel when it comes to caching or logging.  Plenty of other frameworks, namely the `Zend Framework <http://framework.zend.com/>`_, have excellent solutions in place that you are probably already using in your applications.  Guzzle uses adapters for caching and logging.  Guzzle currently supports log adapters for the Zend Framework and Monolog, and cache adapters for `Doctrine 2.0 <http://www.doctrine-project.org/>`_ and the Zend Framework.
