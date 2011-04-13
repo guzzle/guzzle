@@ -21,11 +21,30 @@
     </target>
 
     <!-- ============================================  -->
-    <!-- (DEFAULT)  Target: int                        -->
+    <!-- (DEFAULT)  Target: init                       -->
     <!-- ============================================  -->
     <target name="init">
         <phingcall target="init-git" />
         <phingcall target="init-test" />
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: phar                                  -->
+    <!-- ============================================  -->
+    <target name="phar">
+        <pharpackage destfile="./guzzle.phar" basedir="./">
+            <fileset dir="./src">
+                <include name="**/**" />
+            </fileset>
+            <metadata>
+                <element name="version" value="1.0" />
+                <element name="authors">
+                    <element name="Michael Dowling">
+                        <element name="e-mail" value="michael@guzzlephp.org" />
+                    </element>
+                </element>
+            </metadata>
+        </pharpackage>
     </target>
 
 </project>
