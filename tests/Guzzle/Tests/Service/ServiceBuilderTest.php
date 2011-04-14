@@ -209,7 +209,7 @@ EOT;
         ));
 
         $c = $s->get('michael.mock');
-        $this->assertType('Guzzle\\Tests\\Service\\Mock\\MockClient', $c);
+        $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\MockClient', $c);
     }
 
     /**
@@ -223,13 +223,13 @@ EOT;
         $b = ServiceBuilder::factory($this->tempFile);
         $this->assertTrue($b->offsetExists('michael.mock'));
         $this->assertFalse($b->offsetExists('not_there'));
-        $this->assertType('Guzzle\\Service\\Client', $b['michael.mock']);
+        $this->assertInstanceOf('Guzzle\\Service\\Client', $b['michael.mock']);
 
         unset($b['michael.mock']);
         $this->assertFalse($b->offsetExists('michael.mock'));
 
         $b['michael.mock'] = new Client('http://www.test.com/');
-        $this->assertType('Guzzle\\Service\\Client', $b['michael.mock']);
+        $this->assertInstanceOf('Guzzle\\Service\\Client', $b['michael.mock']);
     }
 
     /**

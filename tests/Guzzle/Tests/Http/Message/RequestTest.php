@@ -19,7 +19,6 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\RequestException;
 use Guzzle\Http\Message\BadResponseException;
-use Guzzle\Http\Server;
 use Guzzle\Tests\Common\Mock\MockObserver;
 
 /**

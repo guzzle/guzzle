@@ -9,7 +9,6 @@ namespace Guzzle\Tests\Http\Pool;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Event\Subject;
 use Guzzle\Common\Event\Observer;
-use Guzzle\Http\Server;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Pool\PoolInterface;

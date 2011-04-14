@@ -71,7 +71,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         fwrite($r, 'test');
         $this->assertEquals('test', $h->getStderr(false));
 
-        $this->assertType('Guzzle\\Http\\Url', $h->getUrl());
+        $this->assertInstanceOf('Guzzle\\Http\\Url', $h->getUrl());
         $this->assertEquals($this->getServer()->getUrl(), (string) $h->getUrl());
         $this->assertSame($handle, $h->getHandle());
 

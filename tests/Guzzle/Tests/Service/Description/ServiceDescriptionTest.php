@@ -51,7 +51,7 @@ class ServiceDescriptionTest extends \Guzzle\Tests\GuzzleTestCase
             'key' => 'abc'
         ));
 
-        $this->assertType('Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand', $c);
+        $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand', $c);
         $this->assertEquals('123', $c->get('bucket'));
         $this->assertEquals('abc', $c->get('key'));
 

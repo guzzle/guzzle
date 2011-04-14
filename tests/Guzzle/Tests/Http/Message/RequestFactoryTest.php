@@ -98,7 +98,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $request = RequestFactory::options('http://www.example.com/');
         $this->assertEquals('OPTIONS', $request->getMethod());
-        $this->assertType('Guzzle\\Http\\Message\\Request', $request);
+        $this->assertInstanceOf('Guzzle\\Http\\Message\\Request', $request);
     }
 
     /**

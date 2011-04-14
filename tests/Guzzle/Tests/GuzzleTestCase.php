@@ -7,7 +7,7 @@
 namespace Guzzle\Tests;
 
 use Guzzle\Common\Log\Adapter\ZendLogAdapter;
-use Guzzle\Http\Server;
+use Guzzle\Tests\Http\Server;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Plugin\LogPlugin;

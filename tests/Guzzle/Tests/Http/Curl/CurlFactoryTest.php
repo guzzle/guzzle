@@ -440,7 +440,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $request = RequestFactory::create($method, $url, $headers, $body);
         $handle = $request->getCurlHandle();
-        $this->assertType('Guzzle\\Http\\Curl\\CurlHandle', $handle);
+        $this->assertInstanceOf('Guzzle\\Http\\Curl\\CurlHandle', $handle);
         $o = $request->getCurlOptions()->getAll();
 
         foreach ($options as $key => $value) {

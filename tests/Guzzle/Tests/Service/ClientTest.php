@@ -337,9 +337,9 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame($client, $client->setDescription($this->serviceTest));
         $this->assertSame($this->serviceTest, $client->getDescription());
         // Creates service commands
-        $this->assertType('Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand', $client->getCommand('test_command'));
+        $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand', $client->getCommand('test_command'));
         // Creates concrete commands
-        $this->assertType('Guzzle\\Tests\\Service\\Mock\\Command\\OtherCommand', $client->getCommand('other_command'));
+        $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\Command\\OtherCommand', $client->getCommand('other_command'));
     }
 
     /**

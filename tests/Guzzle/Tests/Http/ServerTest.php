@@ -8,7 +8,7 @@ namespace Guzzle\Tests\Http;
 
 use Guzzle\Common\Event\EventManager;
 use Guzzle\Common\Event\Observer;
-use Guzzle\Http\Server;
+use Guzzle\Tests\Http\Server;
 use Guzzle\Http\Message\BadResponseException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\Request;
@@ -35,9 +35,9 @@ class ServerTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Server::__construct
-     * @covers Guzzle\Http\Server::getPort
-     * @covers Guzzle\Http\Server::getUrl
+     * @covers Guzzle\Tests\Http\Server::__construct
+     * @covers Guzzle\Tests\Http\Server::getPort
+     * @covers Guzzle\Tests\Http\Server::getUrl
      */
     public function testConstructorSetsPort()
     {
@@ -47,7 +47,7 @@ class ServerTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Server::enqueue
+     * @covers Guzzle\Tests\Http\Server::enqueue
      */
     public function testEnqueuesResponses()
     {
@@ -57,7 +57,7 @@ class ServerTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Server
+     * @covers Guzzle\Tests\Http\Server
      */
     public function testServerReceivesRequests()
     {
@@ -84,7 +84,7 @@ class ServerTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Server::isRunning
+     * @covers Guzzle\Tests\Http\Server::isRunning
      * @depends testServerReceivesRequests
      */
     public function testChecksIfAnotherServerIsAlreadyRunning()
@@ -94,7 +94,7 @@ class ServerTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Server::enqueue
+     * @covers Guzzle\Tests\Http\Server::enqueue
      * @expectedException Guzzle\Http\HttpException
      * @expectedExceptionMessage Responses must be strings or implement Response
      */
@@ -104,11 +104,11 @@ class ServerTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Server::start
-     * @covers Guzzle\Http\Server::isRunning
-     * @covers Guzzle\Http\Server::stop
-     * @covers Guzzle\Http\Server::getPort
-     * @covers Guzzle\Http\Server::flush
+     * @covers Guzzle\Tests\Http\Server::start
+     * @covers Guzzle\Tests\Http\Server::isRunning
+     * @covers Guzzle\Tests\Http\Server::stop
+     * @covers Guzzle\Tests\Http\Server::getPort
+     * @covers Guzzle\Tests\Http\Server::flush
      */
     public function testStartsAndStopsListening()
     {
