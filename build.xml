@@ -35,7 +35,8 @@
             alias="Guzzle"
             signature="sha1">
             <fileset dir="./src">
-                <include name="**/**" />
+                <include name="**/*.php" />
+                <exclude name="**/Tests/**" />
             </fileset>
             <metadata>
                 <element name="version" value="1.0" />
