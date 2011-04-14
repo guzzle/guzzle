@@ -1,7 +1,7 @@
-Guzzle
-======
+Guzzle - a PHP framework for building RESTful webservice clients
+================================================================
 
-Guzzle is a PHP framework for building REST webservice clients.  Guzzle provides the tools necessary to quickly build a testable webservice client with complete control over preparing HTTP requests and processing HTTP responses::
+Guzzle is a RESTful web service client framework that enables PHP developers to quickly build testable web service clients utilizing HTTP/1.1 best practices.
 
     <?php
     use Guzzle\Http\Message\RequestFactory;
@@ -192,11 +192,6 @@ Guzzle services are distributed separately from the Guzzle framework.  Guzzle of
 
 When installing a Guzzle service, check the service's installation instructions for specific examples on how to install the service.
 
-Services can be installed using git submodules::
-
-    cd /path/to/guzzle
-    git submodule add git://github.com/guzzle/guzzle-aws.git src/Guzzle/Service/Aws
-
 Autoloading Services
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -220,7 +215,7 @@ Create a services.xml that your ServiceBuilder will use to create service client
                 <param name="secret_key" value="abcd" />
             </client>
             <!-- Concrete Amazon S3 client -->
-            <client name="test.s3" class="Guzzle.Service.Aws.S3.S3Client" extends="test.abstract.aws" />
+            <client name="test.s3" class="Guzzle.Aws.S3.S3Client" extends="test.abstract.aws" />
         </clients>
     </guzzle>
 
