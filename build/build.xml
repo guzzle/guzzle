@@ -7,8 +7,8 @@
     <!-- ============================================  -->
     <target name="init-git">
         <echo msg="Initializing git submodules" />
-        <exec command="git submodule init" />
-        <exec command="git submodule update" />
+        <exec command="git submodule init" dir="./.." />
+        <exec command="git submodule update" dir="./.." />
     </target>
 
     <!-- ============================================  -->
@@ -16,7 +16,7 @@
     <!-- ============================================  -->
     <target name="init-test">
         <echo msg="Copying ./phpunit.xml.dist to ./phpunit.xml" />
-        <copy file="./phpunit.xml.dist" tofile="./phpunit.xml" />
+        <copy file="../phpunit.xml.dist" tofile="../phpunit.xml" />
     </target>
 
     <!-- ============================================  -->
@@ -30,11 +30,11 @@
     <target name="phar">
         <pharpackage
             destfile="./guzzle.phar"
-            basedir="./src" 
-            stub="./autoload-phar.php"
+            basedir="../src"
+            stub="./autoload.php"
             alias="Guzzle"
             signature="sha1">
-            <fileset dir="./src">
+            <fileset dir="../src">
                 <include name="**/*.php" />
                 <exclude name="**/Tests/**" />
             </fileset>

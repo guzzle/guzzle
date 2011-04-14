@@ -11,13 +11,13 @@
 
 spl_autoload_register(function($class) {
     if (0 === strpos($class, 'Guzzle\\')) {
-        $path = 'phar://' . __FILE__ . DIRECTORY_SEPARATOR;
         if ('\\' != DIRECTORY_SEPARATOR) {
-            $class = str_replace('\\', DIRECTORY_SEPARATOR, $class);
+            $class = 'phar://' . __FILE__ . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $class) . '.php';
+        } else {
+            $class = 'phar://' . __FILE__ . DIRECTORY_SEPARATOR . $class . '.php';
         }
-        $path .= $class . '.php';
-        if (file_exists($path)) {
-            require $path;
+        if (file_exists($class)) {
+            require $class;
         }
     }
 });
