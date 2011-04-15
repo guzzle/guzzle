@@ -34,7 +34,6 @@ class Guzzle
      */
     public static function getDefaultUserAgent()
     {
-        // @codeCoverageIgnoreStart
         if (!self::$userAgent) {
             $version = self::getCurlInfo();
             self::$userAgent = sprintf('Guzzle/%s (Language=PHP/%s; curl=%s; Host=%s)',
@@ -44,8 +43,7 @@ class Guzzle
                 $version['host']
             );
         }
-        // @codeCoverageIgnoreEnd
-
+        
         return self::$userAgent;
     }
 
@@ -69,14 +67,12 @@ class Guzzle
      */
     public static function getCurlInfo($type = null)
     {
-        // @codeCoverageIgnoreStart
         if (!self::$curl) {
             self::$curl = curl_version();
             // Check if CURLOPT_FOLLOWLOCATION is available
             self::$curl['follow_location'] = !ini_get('open_basedir');
         }
-        // @codeCoverageIgnoreEnd
-
+        
         if (!$type) {
             return self::$curl;
         } else if (isset(self::$curl[$type])) {

@@ -19,11 +19,10 @@ class GuzzleTest extends GuzzleTestCase
      */
     public function testGetDefaultUserAgent()
     {
+        Guzzle::reset();
         $version = curl_version();
         $agent = sprintf('Guzzle/%s (Language=PHP/%s; curl=%s; Host=%s)', Guzzle::VERSION, \PHP_VERSION, $version['version'], $version['host']);
-
         $this->assertEquals($agent, Guzzle::getDefaultUserAgent());
-
         // Get it from cache this time
         $this->assertEquals($agent, Guzzle::getDefaultUserAgent());
     }
@@ -34,7 +33,6 @@ class GuzzleTest extends GuzzleTestCase
     public function testGetHttpDate()
     {
         $fmt = 'D, d M Y H:i:s \G\M\T';
-
         $this->assertEquals(gmdate($fmt), Guzzle::getHttpDate('now'));
         $this->assertEquals(gmdate($fmt), Guzzle::getHttpDate(strtotime('now')));
         $this->assertEquals(gmdate($fmt, strtotime('+1 day')), Guzzle::getHttpDate('+1 day'));
@@ -76,10 +74,13 @@ class GuzzleTest extends GuzzleTestCase
      */
     public function testCachesCurlInfo()
     {
+        Guzzle::reset();
         $c = curl_version();
-        $this->assertInternalType('array', Guzzle::getCurlInfo());
+        $info = Guzzle::getCurlInfo();
+        $this->assertInternalType('array', $info);
         $this->assertEquals(false, Guzzle::getCurlInfo('ewfewfewfe'));
         $this->assertEquals($c['version'], Guzzle::getCurlInfo('version'));
+        $this->assertSame(Guzzle::getCurlInfo(), $info);
     }
 
     /**
