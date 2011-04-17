@@ -12,7 +12,7 @@ use Guzzle\Common\NullObject;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\Description\ApiCommand;
-use Guzzle\Service\Client;
+use Guzzle\Service\ClientInterface;
 
 /**
  * Command object to handle preparing and processing client requests and
@@ -23,7 +23,7 @@ use Guzzle\Service\Client;
 abstract class AbstractCommand extends Collection implements CommandInterface
 {
     /**
-     * @var Client The client object used to execute the command
+     * @var ClientInterface Client object used to execute the command
      */
     protected $client;
 
@@ -132,7 +132,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     /**
      * Get the client object that will execute the command
      *
-     * @return Client|null
+     * @return ClientInterface|null
      */
     public function getClient()
     {
@@ -142,11 +142,11 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     /**
      * Set the client objec that will execute the command
      *
-     * @param Client $client The client objec that will execute the command
+     * @param ClientInterface $client The client objec that will execute the command
      *
      * @return Command
      */
-    public function setClient(Client $client)
+    public function setClient(ClientInterface $client)
     {
         $this->client = $client;
 

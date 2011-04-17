@@ -7,7 +7,6 @@
 namespace Guzzle\Service;
 
 use Guzzle\Common\Event\AbstractSubject;
-use Guzzle\Service\Client;
 
 /**
  * Iterate over a paginated set of resources that requires subsequent paginated
@@ -28,7 +27,7 @@ use Guzzle\Service\Client;
 abstract class ResourceIterator extends AbstractSubject implements \Iterator, \Countable
 {
     /**
-     * @var Client
+     * @var ClientInterface
      */
     protected $client;
 
@@ -78,9 +77,9 @@ abstract class ResourceIterator extends AbstractSubject implements \Iterator, \C
     protected $data = array();
 
     /**
-     * Constructor. This should only be invoked by a {@see Client} object.
+     * This should only be invoked by a {@see ClientInterface} object.
      *
-     * @param Client $client Client responsible for sending subsquent requests
+     * @param ClientInterface $client Client responsible for sending requests
      *
      * @param array $data Associative array of additional parameters, including
      *      any initial data to be iterated.
@@ -91,7 +90,7 @@ abstract class ResourceIterator extends AbstractSubject implements \Iterator, \C
      *      <li>next_token => The value used to mark the beginning of a subsequent result set.</li>
      *      </ul>
      */
-    public function __construct(Client $client, array $data)
+    public function __construct(ClientInterface $client, array $data)
     {
         $this->client = $client;
         $this->data = $data;

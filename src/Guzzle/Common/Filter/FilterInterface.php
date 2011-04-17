@@ -22,5 +22,5 @@ interface FilterInterface
      *
      * @return bool Returns TRUE on success or FALSE on failure.
      */
-    public function process($command);
+    function process($command);
 }

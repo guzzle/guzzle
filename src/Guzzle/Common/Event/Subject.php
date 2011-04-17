@@ -18,5 +18,5 @@ interface Subject
      *
      * @return EventManager
      */
-    public function getEventManager();
+    function getEventManager();
 }

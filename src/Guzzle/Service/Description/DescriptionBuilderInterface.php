@@ -18,5 +18,5 @@ interface DescriptionBuilderInterface
      *
      * @return ServiceDescription
      */
-    public function build();
+    function build();
 }

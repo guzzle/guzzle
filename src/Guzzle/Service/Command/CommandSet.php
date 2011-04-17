@@ -10,16 +10,16 @@ use Guzzle\Common\Event\Observer;
 use Guzzle\Common\Event\Subject;
 use Guzzle\Http\Pool\PoolInterface;
 use Guzzle\Http\Pool\Pool;
-use Guzzle\Service\Client;
+use Guzzle\Service\ClientInterface;
 use Guzzle\Service\Command\CommandInterface;
 
 /**
  * Container for sending sets of {@see CommandInterface}
- * objects through {@see Client} object.
+ * objects through {@see ClientInterface} object.
  *
  * Commands from different services using different clients can be sent in
- * parallel if each command has an associated {@see Client} before executing
- * the set.
+ * parallel if each command has an associated {@see ClientInterface} before
+ * executing the set.
  *
  * @author Michael Dowling <michael@guzzlephp.org>
  */
@@ -82,11 +82,11 @@ class CommandSet implements \IteratorAggregate, \Countable, Observer
      *
      * @return CommandSet
      * @throws CommandSetException if any of the commands do not have an associated
-     *      {@see Client} object
+     *      {@see ClientInterface} object
      */
     public function execute()
     {
-        // Keep a list of all commands with no Client
+        // Keep a list of all commands with no client
         $invalid = array();
         foreach ($this->commands as $command) {
             if (!$command->getClient()) {
@@ -94,9 +94,9 @@ class CommandSet implements \IteratorAggregate, \Countable, Observer
             }
         }
 
-        // If any commands do not have a Client, then throw an exception
+        // If any commands do not have a client, then throw an exception
         if (count($invalid)) {
-            $e = new CommandSetException('Commands found with no associated Client');
+            $e = new CommandSetException('Commands found with no associated client');
             $e->setCommands($invalid);
             throw $e;
         }
@@ -112,7 +112,7 @@ class CommandSet implements \IteratorAggregate, \Countable, Observer
         $parallel = $this->getParallelCommands();
         if (count($parallel)) {
             $this->pool->reset();
-            // Prepare each request and send out Client notifications
+            // Prepare each request and send out client notifications
             foreach ($parallel as $command) {
                 $request = $command->prepare();
                 $request->getParams()->set('command', $command);

@@ -22,5 +22,5 @@ interface Observer
      *
      * @return null|bool|mixed
      */
-    public function update(Subject $subject, $event, $context = null);
+    function update(Subject $subject, $event, $context = null);
 }

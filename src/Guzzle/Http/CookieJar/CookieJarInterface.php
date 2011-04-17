@@ -29,7 +29,7 @@ interface CookieJarInterface
      *
      * @return int Returns the number of deleted cookies
      */
-    public function clear($domain = null, $path = null, $name = null);
+    function clear($domain = null, $path = null, $name = null);
 
     /**
      * Discard all temporary cookies.
@@ -40,14 +40,14 @@ interface CookieJarInterface
      *
      * @return int Returns the number of deleted cookies
      */
-    public function clearTemporary();
+    function clearTemporary();
 
     /**
      * Delete any expired cookies
      *
      * @return int Returns the number of deleted cookies
      */
-    public function deleteExpired();
+    function deleteExpired();
 
     /**
      * Get all of the matching cookies
@@ -75,7 +75,7 @@ interface CookieJarInterface
      *      port (string)    - CSV list of ports
      *      http_only (bool) - HTTP only cookie
      */
-    public function getCookies($domain = null, $path = null, $name = null, $skipDiscardable = false, $skipExpired = true);
+    function getCookies($domain = null, $path = null, $name = null, $skipDiscardable = false, $skipExpired = true);
 
     /**
      * Save a cookie
@@ -95,5 +95,5 @@ interface CookieJarInterface
      *
      * @return CookieJarInterface
      */
-    public function save(array $cookieData);
+    function save(array $cookieData);
 }

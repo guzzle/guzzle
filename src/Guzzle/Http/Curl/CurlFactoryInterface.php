@@ -22,7 +22,7 @@ interface CurlFactoryInterface
      *
      * @return resource
      */
-    public function getHandle(RequestInterface $request);
+    function getHandle(RequestInterface $request);
 
     /**
      * Release a cURL handle back to the factory
@@ -32,5 +32,5 @@ interface CurlFactoryInterface
      *
      * @return CurlFactoryInterface
      */
-    public function releaseHandle(CurlHandle $handle);
+    function releaseHandle(CurlHandle $handle);
 }

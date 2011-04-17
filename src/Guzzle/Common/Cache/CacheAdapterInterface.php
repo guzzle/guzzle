@@ -27,7 +27,7 @@ interface CacheAdapterInterface
      * @return bool TRUE if a cache entry exists for the given cache id,
      *      FALSE otherwise.
      */
-    public function contains($id);
+    function contains($id);
 
     /**
      * Deletes a cache entry.
@@ -36,7 +36,7 @@ interface CacheAdapterInterface
      *
      * @return bool TRUE on success, FALSE on failure
      */
-    public function delete($id);
+    function delete($id);
 
     /**
      * Fetches an entry from the cache.
@@ -46,14 +46,14 @@ interface CacheAdapterInterface
      * @return string The cached data or FALSE, if no cache entry exists
      *     for the given id.
      */
-    public function fetch($id);
+    function fetch($id);
 
     /**
      * Get the wrapped cache object
      *
      * @return mixed
      */
-    public function getCacheObject();
+    function getCacheObject();
 
     /**
      * Puts data into the cache.
@@ -66,5 +66,5 @@ interface CacheAdapterInterface
      * @return bool TRUE if the entry was successfully stored in the cache,
      *      FALSE otherwise.
      */
-    public function save($id, $data, $lifeTime = false);
+    function save($id, $data, $lifeTime = false);
 }

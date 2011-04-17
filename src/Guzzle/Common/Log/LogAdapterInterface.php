@@ -24,14 +24,14 @@ interface LogAdapterInterface
      * @throws InvalidArgumentException if the supplied object does not implement the
      *      correct interface.
      */
-    public function __construct($logObject);
+    function __construct($logObject);
 
     /**
      * Get the adapted log object
      *
      * @return mixed
      */
-    public function getLogObject();
+    function getLogObject();
 
     /**
      * Log a message at a priority
@@ -42,5 +42,5 @@ interface LogAdapterInterface
      *
      * @return LogAdapterInterface
      */
-    public function log($message, $priority = LOG_INFO, $extras = null);
+    function log($message, $priority = LOG_INFO, $extras = null);
 }

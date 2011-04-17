@@ -22,7 +22,7 @@ interface MessageInterface
      *
      * @return Collection
      */
-    public function getParams();
+    function getParams();
 
     /**
      * Add and merge in an array of HTTP headers.
@@ -31,7 +31,7 @@ interface MessageInterface
      *
      * @return MessageInterface
      */
-    public function addHeaders(array $headers);
+    function addHeaders(array $headers);
 
     /**
      * Retrieve an HTTP header by name
@@ -44,7 +44,7 @@ interface MessageInterface
      * @return string|null Returns the matching HTTP header or NULL if the
      *      header is not found
      */
-    public function getHeader($header, $default = null);
+    function getHeader($header, $default = null);
     
     /**
      * Get all or all matching headers.
@@ -57,7 +57,7 @@ interface MessageInterface
      *      specified, or an array of only the headers matching the values in
      *      the $names array.
      */
-    public function getHeaders(array $headers = null);
+    function getHeaders(array $headers = null);
 
     /**
      * Returns TRUE or FALSE if the specified header is present.
@@ -69,7 +69,7 @@ interface MessageInterface
      *
      * @return bool Returns TRUE if the header is present and FALSE if not set
      */
-    public function hasHeader($header, $caseInsensitive = false);
+    function hasHeader($header, $caseInsensitive = false);
 
     /**
      * Remove a specific HTTP header.
@@ -78,7 +78,7 @@ interface MessageInterface
      *
      * @return MessageInterface
      */
-    public function removeHeader($header);
+    function removeHeader($header);
 
     /**
      * Set an HTTP header
@@ -88,7 +88,7 @@ interface MessageInterface
      *
      * @return MessageInterface
      */
-    public function setHeader($header, $value);
+    function setHeader($header, $value);
 
     /**
      * Overwrite all HTTP headers with the supplied array of headers
@@ -97,14 +97,14 @@ interface MessageInterface
      *
      * @return MessageInterface
      */
-    public function setHeaders(array $headers);
+    function setHeaders(array $headers);
 
     /**
      * Get the raw message headers as a string
      *
      * @return string
      */
-    public function getRawHeaders();
+    function getRawHeaders();
     
     /**
      * Get a Cache-Control directive from the message
@@ -113,7 +113,7 @@ interface MessageInterface
      *
      * @return null|string
      */
-    public function getCacheControlDirective($directive);
+    function getCacheControlDirective($directive);
 
     /**
      * Check if the message has a Cache-Control directive
@@ -122,7 +122,7 @@ interface MessageInterface
      *
      * @return bool
      */
-    public function hasCacheControlDirective($directive);
+    function hasCacheControlDirective($directive);
 
     /**
      * Add a Cache-Control directive on the message
@@ -132,7 +132,7 @@ interface MessageInterface
      *
      * @return MessageInterface
      */
-    public function addCacheControlDirective($directive, $value);
+    function addCacheControlDirective($directive, $value);
 
     /**
      * Remove a Cache-Control directive from the message
@@ -141,5 +141,5 @@ interface MessageInterface
      *
      * @return MessageInterface
      */
-    public function removeCacheControlDirective($directive);
+    function removeCacheControlDirective($directive);
 }

@@ -24,7 +24,7 @@ use Guzzle\Service\Command\CommandSet;
 use Guzzle\Service\Description\ServiceDescription;
 
 /**
- * Client object for executing commands on a webservice.
+ * Client object for executing commands on a web service.
  *
  * Signals emitted:
  *
@@ -37,7 +37,7 @@ use Guzzle\Service\Description\ServiceDescription;
  *
  * @author  michael@guzzlephp.org
  */
-class Client extends AbstractSubject
+class Client extends AbstractSubject implements ClientInterface
 {
     /**
      * @var ServiceDescription Description of the service and possible commands
@@ -357,7 +357,7 @@ class Client extends AbstractSubject
      *
      * @return Client
      */
-    public final function setBaseUrl($url)
+    public function setBaseUrl($url)
     {
         $this->baseUrl = $url;
         if ($this->config || strpos($url, '{{') === false) {
@@ -375,7 +375,7 @@ class Client extends AbstractSubject
      *
      * @return Client
      */
-    public final function setDescription(ServiceDescription $service)
+    public function setDescription(ServiceDescription $service)
     {
         $this->serviceDescription = $service;
 
@@ -387,7 +387,7 @@ class Client extends AbstractSubject
      *
      * @return ServiceDescription|NullObject
      */
-    public final function getDescription()
+    public function getDescription()
     {
         return $this->serviceDescription ?: new NullObject();
     }
@@ -401,7 +401,7 @@ class Client extends AbstractSubject
      *
      * @return Client
      */
-    public final function setUserApplication($appName, $version)
+    public function setUserApplication($appName, $version)
     {
         $this->userApplication = $appName . '/' . ($version ?: '1.0');
 
@@ -445,7 +445,6 @@ class Client extends AbstractSubject
      *      absolute path to override the base path, or a relative path to append
      * @param array|Collection (optional) Parameters to replace from the uri
      *      {{}} injection points.
-     *
      *
      * @return Request
      */

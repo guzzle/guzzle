@@ -25,21 +25,21 @@ interface EntityEnclosingRequestInterface extends RequestInterface, Observer
      *
      * @return EntityEnclosingRequestInterface
      */
-    public function setBody($body);
+    function setBody($body);
 
     /**
      * Get the body of the request if set
      *
      * @return EntityBody|null
      */
-    public function getBody();
+    function getBody();
 
     /**
      * Get the post fields that will be used in the request
      *
      * @return QueryString
      */
-    public function getPostFields();
+    function getPostFields();
 
     /**
      * Returns an array of files that will be sent in the request.
@@ -48,7 +48,7 @@ interface EntityEnclosingRequestInterface extends RequestInterface, Observer
      *
      * @return array
      */
-    public function getPostFiles();
+    function getPostFiles();
 
     /**
      * Add the POST fields to use in the request
@@ -57,7 +57,7 @@ interface EntityEnclosingRequestInterface extends RequestInterface, Observer
      *
      * @return EntityEnclosingRequestInterface
      */
-    public function addPostFields($fields);
+    function addPostFields($fields);
 
     /**
      * Add POST files to use in the upload
@@ -68,5 +68,5 @@ interface EntityEnclosingRequestInterface extends RequestInterface, Observer
      *
      * @throws BodyException if the file cannot be read
      */
-    public function addPostFiles(array $files);
+    function addPostFiles(array $files);
 }

@@ -9,7 +9,7 @@ namespace Guzzle\Service\Command;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Service\Client;
+use Guzzle\Service\ClientInterface;
 use Guzzle\Service\Description\ApiCommand;
 
 /**
@@ -27,28 +27,28 @@ interface CommandInterface
      *      to set on the command
      * @param ApiCommand $apiCommand (optional) Command definition from description
      */
-    public function __construct($parameters = null, ApiCommand $apiCommand = null);
+    function __construct($parameters = null, ApiCommand $apiCommand = null);
 
     /**
      * Get the short form name of the command
      *
      * @return string
      */
-    public function getName();
+    function getName();
 
     /**
      * Get the API command information about the command
      *
      * @return ApiCommand|NullObject
      */
-    public function getApiCommand();
+    function getApiCommand();
 
     /**
      * Get whether or not the command can be batched
      *
      * @return bool
      */
-    public function canBatch();
+    function canBatch();
 
     /**
      * Execute the command
@@ -56,23 +56,23 @@ interface CommandInterface
      * @return Command
      * @throws RuntimeException if a client has not been associated with the command
      */
-    public function execute();
+    function execute();
 
     /**
      * Get the client object that will execute the command
      *
-     * @return Client|null
+     * @return ClientInterface|null
      */
-    public function getClient();
+    function getClient();
 
     /**
      * Set the client objec that will execute the command
      *
-     * @param Client $client The client objec that will execute the command
+     * @param ClientInterface $client The client objec that will execute the command
      *
      * @return Command
      */
-    public function setClient(Client $client);
+    function setClient(ClientInterface $client);
 
     /**
      * Get the request object associated with the command
@@ -80,7 +80,7 @@ interface CommandInterface
      * @return RequestInterface
      * @throws RuntimeException if the command has not been executed
      */
-    public function getRequest();
+    function getRequest();
 
     /**
      * Get the response object associated with the command
@@ -88,7 +88,7 @@ interface CommandInterface
      * @return Response
      * @throws RuntimeException if the command has not been executed
      */
-    public function getResponse();
+    function getResponse();
 
     /**
      * Get the result of the command
@@ -97,21 +97,21 @@ interface CommandInterface
      *      object unless overridden in a subclass
      * @throws RuntimeException if the command has not been executed
      */
-    public function getResult();
+    function getResult();
 
     /**
      * Returns TRUE if the command has been prepared for executing
      *
      * @return bool
      */
-    public function isPrepared();
+    function isPrepared();
 
     /**
      * Returns TRUE if the command has been executed
      *
      * @return bool
      */
-    public function isExecuted();
+    function isExecuted();
 
     /**
      * Prepare the command for executing and create a request object.
@@ -120,7 +120,7 @@ interface CommandInterface
      * @throws RuntimeException if a client object has not been set previously
      *      or in the prepare()
      */
-    public function prepare();
+    function prepare();
 
     /**
      * Get the object that manages the request headers that will be set on any
@@ -128,5 +128,5 @@ interface CommandInterface
      *
      * @return Collection
      */
-    public function getRequestHeaders();
+    function getRequestHeaders();
 }

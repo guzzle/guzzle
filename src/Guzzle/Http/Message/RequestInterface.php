@@ -46,19 +46,19 @@ interface RequestInterface extends MessageInterface, Subject
      * @param array|Collection $headers (optional) HTTP headers
      * @param CurlFactoryInterface $curlFactory (optional) Curl factory object
      */
-    public function __construct($method, $url, $headers = array(), CurlFactoryInterface $curlFactory = null);
+    function __construct($method, $url, $headers = array(), CurlFactoryInterface $curlFactory = null);
 
     /**
      * Clone the request object, leaving off any response that was received
      */
-    public function __clone();
+    function __clone();
 
     /**
      * Get the HTTP request as a string
      *
      * @return string
      */
-    public function __toString();
+    function __toString();
 
     /**
      * Set the URL of the request
@@ -70,7 +70,7 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return RequestInterface
      */
-    public function setUrl($url);
+    function setUrl($url);
 
     /**
      * Send the request
@@ -78,7 +78,7 @@ interface RequestInterface extends MessageInterface, Subject
      * @return Response
      * @throws RequestException on a request error
      */
-    public function send();
+    function send();
 
     /**
      * Get the previously received {@see Response} or NULL if the request has
@@ -86,7 +86,7 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return Response|null
      */
-    public function getResponse();
+    function getResponse();
 
     /**
      * Get the collection of key value pairs that will be used as the query
@@ -94,21 +94,21 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return QueryString
      */
-    public function getQuery();
+    function getQuery();
 
     /**
      * Get the HTTP method of the request
      *
      * @return string
      */
-    public function getMethod();
+    function getMethod();
 
     /**
      * Get the URI scheme of the request (http, https, ftp, etc)
      *
      * @return string
      */
-    public function getScheme();
+    function getScheme();
 
     /**
      * Set the URI scheme of the request (http, https, ftp, etc)
@@ -117,14 +117,14 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return RequestInterface
      */
-    public function setScheme($scheme);
+    function setScheme($scheme);
 
     /**
      * Get the host of the request
      *
      * @return string
      */
-    public function getHost();
+    function getHost();
 
     /**
      * Set the host of the request.  Including a port in the host will modify
@@ -134,7 +134,7 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return RequestInterface
      */
-    public function setHost($host);
+    function setHost($host);
 
     /**
      * Get the HTTP protocol version of the request
@@ -144,7 +144,7 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return string|int
      */
-    public function getProtocolVersion($curlValue = false);
+    function getProtocolVersion($curlValue = false);
 
     /**
      * Set the HTTP protocol version of the request (e.g. 1.1 or 1.0)
@@ -153,14 +153,14 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return RequestInterface
      */
-    public function setProtocolVersion($protocol);
+    function setProtocolVersion($protocol);
 
     /**
      * Get the path of the request (e.g. '/', '/index.html')
      *
      * @return string
      */
-    public function getPath();
+    function getPath();
 
     /**
      * Set the path of the request (e.g. '/', '/index.html')
@@ -169,14 +169,14 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return RequestInterface
      */
-    public function setPath($path);
+    function setPath($path);
 
     /**
      * Get the port that the request will be sent on if it has been set
      *
      * @return int|null
      */
-    public function getPort();
+    function getPort();
 
     /**
      * Set the port that the request will be sent on
@@ -185,14 +185,14 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return RequestInterface
      */
-    public function setPort($port);
+    function setPort($port);
 
     /**
      * Get the username to pass in the URL if set
      *
      * @return string|null
      */
-    public function getUsername();
+    function getUsername();
 
     /**
      * Set HTTP authorization parameters
@@ -206,14 +206,14 @@ interface RequestInterface extends MessageInterface, Subject
      * @see http://www.ietf.org/rfc/rfc2617.txt
      * @throws RequestException
      */
-    public function setAuth($user, $password = '', $scheme = 'Basic');
+    function setAuth($user, $password = '', $scheme = 'Basic');
 
     /**
      * Get the password to pass in the URL if set
      *
      * @return string|null
      */
-    public function getPassword();
+    function getPassword();
 
     /**
      * Get the URI of the request (e.g. '/', '/index.html', '/index.html?q=1)
@@ -221,7 +221,7 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return string
      */
-    public function getResourceUri();
+    function getResourceUri();
 
     /**
      * Get the full URL of the request (e.g. 'http://www.guzzle-project.com/')
@@ -230,14 +230,14 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return string
      */
-    public function getUrl();
+    function getUrl();
 
     /**
      * Get the state of the request.  One of 'complete', 'sending', 'new'
      *
      * @return string
      */
-    public function getState();
+    function getState();
 
     /**
      * Set the state of the request
@@ -246,14 +246,14 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return RequestInterface
      */
-    public function setState($state);
+    function setState($state);
 
     /**
      * Get the cURL options that will be applied when the cURL handle is created
      *
      * @return Collection
      */
-    public function getCurlOptions();
+    function getCurlOptions();
 
     /**
      * Get the cURL handle
@@ -267,7 +267,7 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return CurlHandle|null Returns NULL if no handle should be created
      */
-    public function getCurlHandle();
+    function getCurlHandle();
 
     /**
      * Set the factory that will create cURL handles based on the request
@@ -276,7 +276,7 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return Request
      */
-    public function setCurlFactory(CurlFactoryInterface $factory);
+    function setCurlFactory(CurlFactoryInterface $factory);
 
     /**
      * Method to receive HTTP response headers as they are retrieved
@@ -285,7 +285,7 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return integer Returns the size of the data.
      */
-    public function receiveResponseHeader($data);
+    function receiveResponseHeader($data);
 
     /**
      * Set the EntityBody that will hold the response message's entity body.
@@ -299,14 +299,14 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return Request
      */
-    public function setResponseBody(EntityBody $body);
+    function setResponseBody(EntityBody $body);
 
     /**
      * Determine if the response body is repeatable (readable + seekable)
      *
      * @return bool
      */
-    public function isResponseBodyRepeatable();
+    function isResponseBodyRepeatable();
 
     /**
      * Manually set a response for the request.
@@ -321,7 +321,7 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return RequestInterface Returns a reference to the object.
      */
-    public function setResponse(Response $response, $queued = false);
+    function setResponse(Response $response, $queued = false);
 
     /**
      * Get an array of Cookies or a specific cookie from the request
@@ -334,7 +334,7 @@ interface RequestInterface extends MessageInterface, Subject
      *      not modify the request's cookies.  You will need to set the cookie
      *      back on the request after modifying the object.
      */
-    public function getCookie($name = null);
+    function getCookie($name = null);
 
     /**
      * Set the Cookie header using an array or Cookie object
@@ -343,7 +343,7 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return RequestInterface
      */
-    public function setCookie($cookies);
+    function setCookie($cookies);
 
     /**
      * Add a Cookie value by name to the Cookie header
@@ -353,7 +353,7 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return RequestInterface
      */
-    public function addCookie($name, $value);
+    function addCookie($name, $value);
 
     /**
      * Remove the cookie header or a specific cookie value by name
@@ -363,14 +363,14 @@ interface RequestInterface extends MessageInterface, Subject
      *
      * @return RequestInterface
      */
-    public function removeCookie($name = null);
+    function removeCookie($name = null);
 
     /**
      * Returns whether or not the response served to the request can be cached
      *
      * @return bool
      */
-    public function canCache();
+    function canCache();
 
     /**
      * Setting an onComplete method will override the default behavior of
@@ -388,12 +388,12 @@ interface RequestInterface extends MessageInterface, Subject
      * @return RequestInterface
      * @throws InvalidArgumentException if the method is not callable
      */
-    public function setOnComplete($callable);
+    function setOnComplete($callable);
 
     /**
      * Release the cURL handle if one is claimed
      *
      * @return RequestInterface
      */
-    public function releaseCurlHandle();
+    function releaseCurlHandle();
 }

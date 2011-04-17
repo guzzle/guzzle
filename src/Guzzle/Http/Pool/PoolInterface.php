@@ -35,21 +35,21 @@ interface PoolInterface extends Subject, \Countable
      *
      * @param RequestInterface $request Returns the Request that was added
      */
-    public function add(RequestInterface $request);
+    function add(RequestInterface $request);
 
     /**
      * Get an array of attached {@see RequestInterface}s.
      *
      * @return array Returns an array of attached requests.
      */
-    public function all();
+    function all();
 
     /**
      * Get the current state of the Pool
      *
      * @return string
      */
-    public function getState();
+    function getState();
 
     /**
      * Remove a request from the pool.
@@ -58,12 +58,12 @@ interface PoolInterface extends Subject, \Countable
      *
      * @return RequestInterface Returns the Request object that was removed
      */
-    public function remove(RequestInterface $request);
+    function remove(RequestInterface $request);
 
     /**
      * Reset the state of the Pool and remove any attached RequestInterface objects
      */
-    public function reset();
+    function reset();
 
     /**
      * Send a pool of {@see RequestInterface} requests.
@@ -76,5 +76,5 @@ interface PoolInterface extends Subject, \Countable
      * @throws PoolRequestException if any requests threw exceptions during the
      *      transfer.
      */
-    public function send();
+    function send();
 }
