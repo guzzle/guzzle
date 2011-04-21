@@ -133,5 +133,15 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($r->hasCacheControlDirective('max-age'));
         $r->addCacheControlDirective('must-revalidate');
         $this->assertTrue($r->hasCacheControlDirective('must-revalidate'));
+
+        // Make sure that it works with multiple Cache-Control headers
+        $r->setHeader('Cache-Control', 'must-revalidate, max-age=100');
+        $r->addHeaders(array(
+            'Cache-Control' => 'no-cache'
+        ));
+
+        $this->assertEquals(true, $r->getCacheControlDirective('no-cache'));
+        $this->assertEquals(true, $r->getCacheControlDirective('must-revalidate'));
+        $this->assertEquals(100, $r->getCacheControlDirective('max-age'));
     }
 }
