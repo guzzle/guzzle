@@ -189,4 +189,32 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('multipart/form-data', $request->getHeader('Content-Type'));
         $this->assertEquals(array('file' => '@' . __FILE__), $request->getCurlOptions()->get(CURLOPT_POSTFIELDS));
     }
+
+    /**
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::setBody
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::update
+     */
+    public function testCanSendMultipleRequestsUsingASingleRequestObject()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 201 Created\r\nContent-Length: 0\r\n\r\n",
+        ));
+
+        $request = RequestFactory::put($this->getServer()->getUrl());
+        $request->setBody('test');
+        $request->send();
+        $this->assertEquals(200, $request->getResponse()->getStatusCode());
+
+        $request->setBody(json_encode(array('a' => '1')), 'application/json');
+        $request->send();
+
+        $requests = $this->getServer()->getReceivedRequests(true);
+        $this->assertEquals(2, count($requests));
+        $this->assertEquals(4, $requests[0]->getHeader('Content-Length'));
+        $this->assertNotEquals(4, $requests[1]->getHeader('Content-Length'));
+
+        $this->assertEquals(201, $request->getResponse()->getStatusCode());
+    }
 }

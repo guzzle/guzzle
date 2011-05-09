@@ -6,6 +6,7 @@
 
 namespace Guzzle\Tests\Service\Command;
 
+use Guzzle\Http\Message\Response;
 use Guzzle\Service\Client;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\AbstractCommand;
@@ -158,9 +159,9 @@ class CommandTest extends AbstractCommandTest
         // Set a mock response
         $client->getEventManager()->attach(function($subject, $event, $context) {
             if ($event == 'request.create') {
-                $context->setResponse(new \Guzzle\Http\Message\Response(200, array(
+                $context->setResponse(new Response(200, array(
                     'Content-Type' => 'application/octect-stream'
-                ), 'abc,def,ghi'));
+                ), 'abc,def,ghi'), true);
             }
         });
 

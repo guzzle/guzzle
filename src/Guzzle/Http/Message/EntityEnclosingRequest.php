@@ -60,13 +60,23 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
      *
      * @param string|resource|EntityBody $body Body to use in the entity body
      *      of the request
+     * @param string $contentType (optional) Content-Type to set.  Leave null
+     *      to use an existing Content-Type or to guess the Content-Type
      *
      * @return EntityEnclosingRequest
      * @throws HttpException if an invalid body is provided
      */
-    public function setBody($body)
+    public function setBody($body, $contentType = null)
     {
+        if ($this->body) {
+            // Ensure that a previously set entity body is cleaned up
+            $this->removeHeader('Content-Length');
+        }
+
         $this->body = EntityBody::factory($body);
+        if ($contentType) {
+            $this->setHeader('Content-Type', $contentType);
+        }
         $this->addEvent();
 
         return $this;

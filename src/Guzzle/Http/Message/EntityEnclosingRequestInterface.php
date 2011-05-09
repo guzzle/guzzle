@@ -22,10 +22,12 @@ interface EntityEnclosingRequestInterface extends RequestInterface, Observer
      *
      * @param string|resource|EntityBody $body Body to use in the entity body
      *      of the request
+     * @param string $contentType (optional) Content-Type to set.  Leave null
+     *      to use an existing Content-Type or to guess the Content-Type
      *
      * @return EntityEnclosingRequestInterface
      */
-    function setBody($body);
+    function setBody($body, $contentType = null);
 
     /**
      * Get the body of the request if set
