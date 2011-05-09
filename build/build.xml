@@ -61,33 +61,32 @@
 
         <echo msg="Creating web service client project" />
 
-        <fileset id="no-xml" dir="./template">
+        <fileset id="skeleton" dir="./template">
             <include name="**/**"/>
-            <exclude name="Client-Xml.php"/>
         </fileset>
-        <fileset id="xml" dir="./template">
-            <include name="**/**"/>
-            <exclude name="Client.php"/>
-        </fileset>
-        <if>
-            <equals arg1="${service.xml}" arg2="y" />
-            <then>
-                <property name="service.file_list" value="xml" />
-            </then>
-            <else>
-                <property name="service.file_list" value="no-xml" />
-            </else>
-        </if>
-
+        
         <echo msg="Creating folder for project at ${service.path}" />
         <mkdir dir="${service.path}" />
 
         <echo msg="Copying files to folder" />
         <copy todir="${service.path}" overwrite="true">
-            <fileset refid="${service.file_list}" />
+            <fileset refid="skeleton" />
             <filterchain>
                 <expandproperties />
             </filterchain>
         </copy>
+
+        <echo msg="Cleaning up" />
+        <if>
+            <equals arg1="${service.xml}" arg2="y" />
+            <then>
+                <delete file="${service.path}/Client.php" />
+                <move file="${service.path}/Client-Xml.php" toFile="${service.path}/${service.client_class}.php" />
+            </then>
+            <else>
+                <delete file="${service.path}/Client-Xml.php" />
+                <move file="${service.path}/Client.php" toFile="${service.path}/${service.client_class}.php" />
+            </else>
+        </if>
     </target>
 </project>
