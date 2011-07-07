@@ -1,8 +1,4 @@
 <?php
-/**
- * @package Guzzle PHP <http://www.guzzlephp.org>
- * @license See the LICENSE file that was distributed with this source code.
- */
 
 namespace Guzzle\Common;
 
@@ -74,7 +70,7 @@ class Inflector
     public static function camel($word)
     {
         static $cached = 0;
-        
+
         if (isset(self::$camelCache[$word])) {
             return self::$camelCache[$word];
         }

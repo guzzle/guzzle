@@ -1,8 +1,5 @@
 <?php
 /**
- * @package Guzzle PHP <http://www.guzzlephp.org>
- * @license See the LICENSE file that was distributed with this source code.
- *
  * Autoloader stub for guzzle.phar to autoload Guzzle\* classes.
  *
  * Note: this autoloader does not load other PSR-0 libraries.  If you need to

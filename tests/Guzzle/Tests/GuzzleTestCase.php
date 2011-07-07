@@ -1,8 +1,4 @@
 <?php
-/**
- * @package Guzzle PHP <http://www.guzzlephp.org>
- * @license See the LICENSE file that was distributed with this source code.
- */
 
 namespace Guzzle\Tests;
 
@@ -105,7 +101,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
      */
     public function getMockResponse(Client $client, $filename)
     {
-        
+
         $reflection = new \ReflectionClass(get_class($client));
         $path = str_replace(array(
             str_replace($reflection->getNamespaceName() . '\\', '', $reflection->getName()),
