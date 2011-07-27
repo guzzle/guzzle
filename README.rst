@@ -1,7 +1,7 @@
-Guzzle - a PHP framework for building RESTful webservice clients
-================================================================
+Guzzle - a PHP framework for HTTP and building RESTful webservice clients
+=========================================================================
 
-Guzzle is a RESTful web service client framework that enables PHP developers to quickly build testable web service clients utilizing HTTP/1.1 best practices::
+Guzzle is an HTTP client for PHP that ships with a RESTful web service client framework that will help you quickly build web service clients::
 
     <?php
     use Guzzle\Http\Message\RequestFactory;
