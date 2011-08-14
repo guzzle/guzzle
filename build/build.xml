@@ -7,8 +7,7 @@
     <!-- ============================================  -->
     <target name="init-git">
         <echo msg="Initializing git submodules" />
-        <exec command="git submodule init" dir="./.." />
-        <exec command="git submodule update" dir="./.." />
+        <exec command="git submodule update --init" dir="./.." />
     </target>
 
     <!-- ============================================  -->
@@ -45,6 +44,44 @@
     </target>
 
     <!-- ============================================  -->
+    <!-- Target: service                             -->
+    <!-- ============================================  -->
+    <target name="service">
+        <fail unless="repo" message="You must specify the URL to a git repository" />
+        <fail unless="path" message="You must specify the path to clone the repository" />
+        <property name="exists" value="0" />
+        <available file="../${path}" type="dir" property="exists" value="1"/>
+        <if>
+            <equals arg1="${exists}" arg2="0" />
+            <then>
+                <exec passthru="true" command="git clone ${repo} ${path}" dir="../" checkreturn="true" />
+            </then>
+            <else>
+                <exec passthru="true" command="git fetch origin" dir="../${path}" checkreturn="true" />
+                <exec passthru="true" command="git reset --hard" dir="../${path}" checkreturn="true" />
+            </else>
+        </if>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: all-services                          -->
+    <!-- ============================================  -->
+    <target name="all-services">
+        <phingcall target="service">
+            <property name="repo" value="git://github.com/guzzle/guzzle-aws.git" />
+            <property name="path" value="./src/Guzzle/Aws" />
+        </phingcall>
+        <phingcall target="service">
+            <property name="repo" value="git://github.com/guzzle/guzzle-cardinal-commerce.git" />
+            <property name="path" value="./src/Guzzle/CardinalCommerce" />
+        </phingcall>
+        <phingcall target="service">
+            <property name="repo" value="git://github.com/guzzle/guzzle-unfuddle.git" />
+            <property name="path" value="./src/Guzzle/Unfuddle" />
+        </phingcall>
+    </target>
+
+    <!-- ============================================  -->
     <!-- Target: template                              -->
     <!-- ============================================  -->
     <target name="template">
@@ -64,7 +101,7 @@
         <fileset id="skeleton" dir="./template">
             <include name="**/**"/>
         </fileset>
-        
+
         <echo msg="Creating folder for project at ${service.path}" />
         <mkdir dir="${service.path}" />
 
