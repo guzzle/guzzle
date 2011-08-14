@@ -15,6 +15,31 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
     protected $xmlConfig;
     protected $tempFile;
 
+    protected $arrayData = array(
+        'michael.mock' => array(
+            'class' => 'Guzzle\\Tests\\Service\\Mock\\MockClient',
+            'params' => array(
+                'username' => 'michael',
+                'password' => 'testing123',
+                'subdomain' => 'michael',
+            ),
+        ),
+        'billy.mock' => array(
+            'class' => 'Guzzle\\Tests\\Service\\Mock\\MockClient',
+            'params' => array(
+                'username' => 'billy',
+                'password' => 'passw0rd',
+                'subdomain' => 'billy',
+            ),
+        ),
+        'billy.testing' => array(
+            'extends' => 'billy.mock',
+            'params' => array(
+                'subdomain' => 'test.billy',
+            ),
+        ),
+    );
+
     public function __construct()
     {
         $this->xmlConfig = <<<EOT
@@ -54,7 +79,7 @@ EOT;
      */
     public function testCanBeCreatedUsingAnXmlFile()
     {
-        $builder = ServiceBuilder::factory($this->tempFile);
+        $builder = ServiceBuilder::factory($this->tempFile, null, 86400, 'xml');
         $c = $builder->get('michael.mock');
         $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\MockClient', $c);
     }
@@ -74,7 +99,7 @@ EOT;
      */
     public function testFactoryCanBuildServicesThatExtendOtherServices()
     {
-        $s = ServiceBuilder::factory($this->tempFile);
+        $s = ServiceBuilder::factory($this->tempFile, null, 86400, 'xml');
         $s = $s->get('billy.testing');
         $this->assertEquals('test.billy', $s->getConfig('subdomain'));
         $this->assertEquals('billy', $s->getConfig('username'));
@@ -90,11 +115,11 @@ EOT;
         file_put_contents($tempFile, $xml);
 
         try {
-            ServiceBuilder::factory($tempFile);
+            ServiceBuilder::factory($tempFile, null, 86400, 'xml');
             unlink($tempFile);
             $this->fail('Test did not throw ServiceException');
         } catch (\LogicException $e) {
-            $this->assertEquals('invalid is trying to extend a non-existent or not yet defined service: missing', $e->getMessage());
+            $this->assertEquals('invalid is trying to extend a non-existent service: missing', $e->getMessage());
         }
 
         unlink($tempFile);
@@ -110,7 +135,7 @@ EOT;
         $adapter = new DoctrineCacheAdapter($cache);
         $this->assertEmpty($cache->getIds());
 
-        $s1 = ServiceBuilder::factory($this->tempFile, $adapter, 86400);
+        $s1 = ServiceBuilder::factory($this->tempFile, $adapter, 86400, 'xml');
 
         // Make sure it added to the cache with a proper cache key
         $keys = $cache->getIds();
@@ -119,9 +144,9 @@ EOT;
         $this->assertFalse(strpos($keys[0], '__'));
 
         // Load this one from cache
-        $s2 = ServiceBuilder::factory($this->tempFile, $adapter, 86400);
+        $s2 = ServiceBuilder::factory($this->tempFile, $adapter, 86400, 'xml');
 
-        $builder = ServiceBuilder::factory($this->tempFile);
+        $builder = ServiceBuilder::factory($this->tempFile, null, 86400, 'xml');
         $this->assertEquals($s1, $s2);
     }
 
@@ -132,7 +157,7 @@ EOT;
      */
     public function testThrowsExceptionWhenGettingInvalidClient()
     {
-        ServiceBuilder::factory($this->tempFile)->get('foobar');
+        ServiceBuilder::factory($this->tempFile, null, 86400, 'xml')->get('foobar');
     }
 
     /**
@@ -140,7 +165,7 @@ EOT;
      */
     public function testStoresClientCopy()
     {
-        $builder = ServiceBuilder::factory($this->tempFile);
+        $builder = ServiceBuilder::factory($this->tempFile, null, 86400, 'xml');
         $client = $builder->get('michael.mock');
         $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\MockClient', $client);
         $this->assertEquals('http://127.0.0.1:8124/v1/michael', $client->getBaseUrl());
@@ -216,7 +241,7 @@ EOT;
      */
     public function testUsedAsArray()
     {
-        $b = ServiceBuilder::factory($this->tempFile);
+        $b = ServiceBuilder::factory($this->tempFile, null, 86400, 'xml');
         $this->assertTrue($b->offsetExists('michael.mock'));
         $this->assertFalse($b->offsetExists('not_there'));
         $this->assertInstanceOf('Guzzle\\Service\\Client', $b['michael.mock']);
@@ -237,5 +262,57 @@ EOT;
         $this->assertTrue($b->offsetExists('michael.mock'));
         $this->assertTrue($b->offsetExists('billy.mock'));
         $this->assertTrue($b->offsetExists('billy.testing'));
+    }
+
+    /**
+     * @covers Guzzle\Service\ServiceBuilder::factory
+     */
+    public function testFactoryCanCreateFromJson()
+    {
+        $tmp = sys_get_temp_dir() . 'test.js';
+        file_put_contents($tmp, json_encode($this->arrayData));
+        $b = ServiceBuilder::factory($tmp);
+        unlink($tmp);
+        $s = $b->get('billy.testing');
+        $this->assertEquals('test.billy', $s->getConfig('subdomain'));
+        $this->assertEquals('billy', $s->getConfig('username'));
+    }
+
+    /**
+     * @covers Guzzle\Service\ServiceBuilder::factory
+     */
+    public function testFactoryCanCreateFromArray()
+    {
+        $b = ServiceBuilder::factory($this->arrayData);
+        $s = $b->get('billy.testing');
+        $this->assertEquals('test.billy', $s->getConfig('subdomain'));
+        $this->assertEquals('billy', $s->getConfig('username'));
+    }
+
+    /**
+     * @covers Guzzle\Service\ServiceBuilder::factory
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Unknown file type abc
+     */
+    public function testFactoryValidatesFileExtension()
+    {
+        $tmp = sys_get_temp_dir() . 'test.abc';
+        file_put_contents($tmp, 'data');
+        try {
+            ServiceBuilder::factory($tmp);
+        } catch (\RuntimeException $e) {
+            unlink($tmp);
+            throw $e;
+        }
+    }
+
+    /**
+     * @covers Guzzle\Service\ServiceBuilder::factory
+     * @expectedException InvalidArgumentException
+     * @expectedExceptionMessage $data must be an instance of SimpleXMLElement
+     */
+    public function testFactoryValidatesObjectTypes()
+    {
+        ServiceBuilder::factory(new \stdClass());
     }
 }

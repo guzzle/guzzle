@@ -23,62 +23,91 @@ class ServiceBuilder implements \ArrayAccess
     protected $clients = array();
 
     /**
-     * Create a new ServiceBuilder using an XML configuration file to configure
-     * the registered ServiceBuilder builder objects
+     * Create a new ServiceBuilder using configuration data sourced from an
+     * array, .json|.js file, SimpleXMLElement, or .xml file.
      *
-     * @param string|SimpleXMLElement $xml An instantiated SimpleXMLElement or
-     *      the full path to a Guzzle XML configuration file
+     * @param array|string|SimpleXMLElement $data An instantiated
+     *      SimpleXMLElement containing configuration data, the full path to an
+     *      .xml or .js|.json file, or an associative array of data
      * @param CacheAdapterInterface $cacheAdapter (optional) Pass a cache
-     *      adapter to cache the XML service configuration settings
-     * @param int $ttl (optional) How long to cache the parsed XML data
+     *      adapter to cache the computed service configuration settings
+     * @param int $ttl (optional) How long to cache the parsed service data
+     * @param string $extension (optional) When passing a string of data to load
+     *      from a file, you can set $extension to specify the file type if the
+     *      extension is not the standard extension for the file name (e.g. xml,
+     *      js, json)
      *
      * @return ServiceBuilder
-     * @throws RuntimeException if the file cannot be openend
+     * @throws RuntimeException if a file cannot be openend
      * @throws LogicException when trying to extend a missing client
      */
-    public static function factory($xml, CacheAdapterInterface $cacheAdapter = null, $ttl = 86400)
+    public static function factory($data, CacheAdapterInterface $cacheAdapter = null, $ttl = 86400, $extension = null)
     {
-        if (is_string($xml)) {
-            if ($cacheAdapter) {
-                // Compute the cache key for this service and check if it exists in cache
-                $key = str_replace('__', '_', 'guz_' . preg_replace('~[^\\pL\d]+~u', '_', strtolower(realpath($xml))));
-                if ($cached = $cacheAdapter->fetch($key)) {
-                    return new self(unserialize($cached));
+        $config = array();
+        switch (gettype($data)) {
+            case 'array':
+                $config = $data;
+                break;
+            case 'object':
+                if (!($data instanceof \SimpleXMLElement)) {
+                    throw new \InvalidArgumentException('$data must be an instance of SimpleXMLElement');
                 }
-            }
-            // Build the service config from the XML file if the file exists
-            if (is_file($xml)) {
-                $xml = new \SimpleXMLElement($xml, null, true);
-            } else {
-                throw new \RuntimeException('Unable to open service configuration file ' . $xml);
+                break;
+            case 'string':
+                if ($cacheAdapter) {
+                    // Compute the cache key for this service and check if it exists in cache
+                    $key = str_replace('__', '_', 'guz_' . preg_replace('~[^\\pL\d]+~u', '_', strtolower(realpath($data))));
+                    if ($cached = $cacheAdapter->fetch($key)) {
+                        return new self(unserialize($cached));
+                    }
+                }
+                if (!is_file($data)) {
+                    throw new \RuntimeException('Unable to open service configuration file ' . $data);
+                }
+                $extension = $extension ?: pathinfo($data, PATHINFO_EXTENSION);
+                switch ($extension) {
+                    case 'xml':
+                        $data = new \SimpleXMLElement($data, null, true);
+                        break;
+                    case 'js': case 'json':
+                        $config = json_decode(file_get_contents($data), true);
+                        break;
+                    default:
+                        throw new \RuntimeException('Unknown file type ' . $extension);
+                }
+                break;
+        }
+
+        if ($data instanceof \SimpleXMLElement) {
+            $config = array();
+            foreach ($data->clients->client as $client) {
+                $row = array();
+                $name = (string) $client->attributes()->name;
+                $class = (string) $client->attributes()->class;
+                foreach ($client->param as $param) {
+                    $row[(string) $param->attributes()->name] = (string) $param->attributes()->value;
+                }
+                $config[$name] = array(
+                    'class'   => str_replace('.', '\\', $class),
+                    'extends' => (string) $client->attributes()->extends,
+                    'params'  => $row
+                );
             }
         }
 
-        $config = array();
-
-        // Create a client entry for each client in the XML file
-        foreach ($xml->clients->client as $client) {
-            $row = array();
-            $name = (string) $client->attributes()->name;
-            $class = (string) $client->attributes()->class;
+        // Validate the configuration and handle extensions
+        foreach ($config as $name => &$client) {
             // Check if this client builder extends another client
-            if ($extends = (string) $client->attributes()->extends) {
+            if (isset($client['extends']) && trim($client['extends'])) {
                 // Make sure that the service it's extending has been defined
-                if (!isset($config[$extends])) {
-                    throw new \LogicException($name . ' is trying to extend a non-existent or not yet defined service: ' . $extends);
+                if (!isset($config[$client['extends']])) {
+                    throw new \LogicException($name . ' is trying to extend a non-existent service: ' . $client['extends']);
                 }
-                $class = $class ?: $config[$extends]['class'];
-                $row = $config[$extends]['params'];
+                if (!isset($client['class']) || !$client['class']) {
+                    $client['class'] = $config[$client['extends']]['class'];
+                }
+                $client['params'] = array_merge($config[$client['extends']]['params'], $client['params']);
             }
-            // Add attributes to the row's parameters
-            foreach ($client->param as $param) {
-                $row[(string) $param->attributes()->name] = (string) $param->attributes()->value;
-            }
-            // Add this client builder
-            $config[$name] = array(
-                'class' => str_replace('.', '\\', $class),
-                'params' => $row
-            );
         }
 
         if ($cacheAdapter) {
