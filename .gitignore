@@ -1,3 +1,4 @@
+.DS_STORE
 coverage
 phpunit.xml
 build/guzzle.phar
