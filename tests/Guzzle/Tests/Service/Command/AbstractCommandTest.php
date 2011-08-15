@@ -12,7 +12,7 @@ abstract class AbstractCommandTest extends \Guzzle\Tests\GuzzleTestCase
 {
     protected function getClient()
     {
-        $builder = new XmlDescriptionBuilder(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'test_service.xml');
+        $builder = new XmlDescriptionBuilder(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'TestData' . DIRECTORY_SEPARATOR . 'test_service.xml');
         $service = $builder->build();
         $client =  new Client('http://www.google.com/');
         $client->setDescription($service);

@@ -46,7 +46,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
             ))
         ));
 
-        $builder = new XmlDescriptionBuilder(__DIR__ . DIRECTORY_SEPARATOR . 'test_service.xml');
+        $builder = new XmlDescriptionBuilder(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'TestData' . DIRECTORY_SEPARATOR . 'test_service.xml');
         $this->service = $builder->build();
     }
 

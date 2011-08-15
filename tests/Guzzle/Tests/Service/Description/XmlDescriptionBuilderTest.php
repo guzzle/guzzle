@@ -26,7 +26,7 @@ class XmlDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testBuildsServiceUsingFile()
     {
-        $builder = new XmlDescriptionBuilder(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'test_service.xml');
+        $builder = new XmlDescriptionBuilder(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'TestData' . DIRECTORY_SEPARATOR . 'test_service.xml');
         $service = $builder->build();
         $this->assertTrue($service->hasCommand('search'));
         $this->assertTrue($service->hasCommand('test'));
