@@ -12,7 +12,7 @@
             This value specifies the path to the test services.xml file that
             passes arguments to a service builder
         -->
-        <server name="GUZZLE_SERVICE_FILE" value="./Tests/services.xml" />
+        <server name="GUZZLE_SERVICE_FILE" value="./Tests/TestData/services.xml" />
 
         <!--
             Guzzle tries to figure out the path to mock files automatically.
