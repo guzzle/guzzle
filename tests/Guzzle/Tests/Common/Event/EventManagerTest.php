@@ -24,7 +24,8 @@ class EventManagerTest extends \Guzzle\Tests\GuzzleTestCase implements Observer
     {
         $observer = new MockObserver();
         $mock = new MockSubject();
-        $subject = new EventManager($mock, array($observer));
+        $subject = new EventManager($mock);
+        $subject->attach($observer);
         $this->assertEquals(array($observer), $subject->getAttached());
         $this->assertEquals($mock, $subject->getSubject());
 
