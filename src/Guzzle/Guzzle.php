@@ -11,7 +11,7 @@ use Guzzle\Common\Collection;
  */
 class Guzzle
 {
-    const VERSION = '1.0b';
+    const VERSION = '1.1';
 
     /**
      * @var string Default Guzzle User-Agent header

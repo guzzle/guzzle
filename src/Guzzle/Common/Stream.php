@@ -67,7 +67,6 @@ class Stream
         }
 
         $this->stream = $stream;
-
         $meta = stream_get_meta_data($stream);
         $this->wrapper = isset($meta['wrapper_type']) ? strtolower($meta['wrapper_type']) : '';
         $this->mode = isset($meta['mode']) ? $meta['mode'] : '';
@@ -137,7 +136,7 @@ class Stream
     {
         $meta = stream_get_meta_data($this->stream);
 
-        return (isset($meta['wrapper_data'])) ? $meta['wrapper_data'] : array();
+        return isset($meta['wrapper_data']) ? $meta['wrapper_data'] : array();
     }
 
     /**
@@ -290,7 +289,7 @@ class Stream
      */
     public function read($length)
     {
-        return ($this->isReadable()) ? fread($this->stream, $length) : false;
+        return $this->isReadable() ? fread($this->stream, $length) : false;
     }
 
     /**
@@ -303,7 +302,7 @@ class Stream
      */
     public function write($string)
     {
-        return ($this->isWritable()) ? fwrite($this->stream, $string) : false;
+        return $this->isWritable() ? fwrite($this->stream, $string) : false;
     }
 
     /**
@@ -353,7 +352,7 @@ class Stream
 
         return array(
             'wrapped' => $this->filters,
-            'unwrapped' => (isset($meta['filters'])) ? $meta['filters'] : array()
+            'unwrapped' => isset($meta['filters']) ? $meta['filters'] : array()
         );
     }
 
