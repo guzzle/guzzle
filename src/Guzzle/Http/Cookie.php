@@ -28,7 +28,7 @@ class Cookie extends QueryString
             foreach (explode(';', $cookieString) as $kvp) {
                 $parts = explode('=', $kvp, 2);
                 $key = urldecode(trim($parts[0]));
-                $value = (isset($parts[1])) ? trim($parts[1]) : '';
+                $value = isset($parts[1]) ? trim($parts[1]) : '';
                 $data->add($key, urldecode($value));
             }
         }

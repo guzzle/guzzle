@@ -10,18 +10,14 @@ namespace Guzzle\Http;
  */
 class Url
 {
-    /**#@+
-     * @var string URL parts
-     */
     protected $scheme;
     protected $host;
     protected $port;
     protected $username;
     protected $password;
-    protected $path;
+    protected $path = '/';
     protected $fragment;
-    /**#@+*/
-
+    
     /**
      * @var QueryString Query part of the URL
      */
@@ -89,8 +85,8 @@ class Url
 
             // Only include the port if it is not the default port of the scheme
             if (isset($parts['port'])
-                && !(($scheme == 'http' && (int) $parts['port'] == 80)
-                    || ($scheme == 'https' && (int) $parts['port'] == 443))) {
+                && !(($scheme == 'http' && $parts['port'] == 80)
+                    || ($scheme == 'https' && $parts['port'] == 443))) {
                 $url .= ':' . $parts['port'];
             }
         }
@@ -99,9 +95,8 @@ class Url
             $url .= '/';
         } else {
             if ($parts['path'][0] != '/') {
-                $parts['path'] = '/' . $parts['path'];
+                $url .= '/';
             }
-
             $url .= $parts['path'];
         }
 
@@ -109,7 +104,7 @@ class Url
         if (!empty($parts['query'])) {
             if ($parts['query'][0] != '?') {
                 $url .= array_key_exists('query_prefix', $parts)
-                    ? $parts['query_prefix'] : '?';
+                      ? $parts['query_prefix'] : '?';
             }
             $url .= $parts['query'];
         }
@@ -130,7 +125,7 @@ class Url
      * @param string $password (optional) Password of the URL
      * @param int $port (optional) Port of the URL
      * @param string $path (optional) Path of the URL
-     * @param QueryString $query (optional) Query string of the URL
+     * @param QueryString|array|string $query (optional) Query string of the URL
      * @param string $fragment (optional) Fragment of the URL
      *
      * @throws HttpException
@@ -141,21 +136,13 @@ class Url
         $this->host = $host;
         $this->port = $port;
         $this->username = $username;
-        if ($username && $password) {
-            $this->password = $password;
-        }
-
+        $this->password = $password;
+        $this->fragment = $fragment;
+        $this->setQuery($query ?: new QueryString());
+        
         if ($path) {
             $this->setPath($path);
         }
-
-        if ($query) {
-            $this->query = $query;
-        } else {
-            $this->query = new QueryString();
-        }
-        
-        $this->fragment = $fragment;
     }
 
     /**
@@ -190,7 +177,7 @@ class Url
             'host' => $this->host,
             'port' => $this->port,
             'path' => $this->getPath(),
-            'query' => (string)$this->query,
+            'query' => (string) $this->query,
             'fragment' => $this->fragment,
             'query_prefix' => $this->query->getPrefix()
         );
@@ -280,20 +267,19 @@ class Url
     /**
      * Set the path part of the URL
      *
-     * @param array|string $path Path to set (a path string or array of path
-     *      segments)
+     * @param array|string $path Path string or array of path segments
      *
      * @return Url
      */
     public function setPath($path)
     {
         if (is_array($path)) {
-            $this->path = implode('/', $path);
+            $this->path = '/' . implode('/', $path);
         } else {
             $this->path = $path;
-        }
-        if ($this->path != '*' && substr($this->path, 0, 1) != '/') {
-            $this->path = '/' . $this->path;
+            if ($this->path != '*' && substr($this->path, 0, 1) != '/') {
+                $this->path = '/' . $path;
+            }
         }
 
         return $this;
@@ -308,7 +294,6 @@ class Url
      */
     public function addPath($relativePath)
     {
-        // Only add to the path if necessary
         if (!$relativePath || $relativePath == '/') {
             return $this;
         }
@@ -402,7 +387,7 @@ class Url
     /**
      * Set the query part of the URL
      *
-     * @param QueryString|string $query Query to set
+     * @param QueryString|string|array $query Query to set
      *
      * @return Url
      */
@@ -412,7 +397,9 @@ class Url
             $output = null;
             parse_str($query, $output);
             $this->query = new QueryString($output);
-        } else {
+        } else if (is_array($query)) {
+            $this->query = new QueryString($query);
+        } else if ($query instanceof QueryString) {
             $this->query = $query;
         }
 

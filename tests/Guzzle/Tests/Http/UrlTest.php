@@ -199,4 +199,14 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         )))->getQuery());
         $this->assertEquals('https://b:a@example.com:8080/foo/bar?b=boo#abc', (string)$url);
     }
+
+    /**
+     * @covers Guzzle\Http\Url::setQuery
+     */
+    public function testSetQueryAcceptsArray()
+    {
+        $url = Url::factory('http://www.test.com');
+        $url->setQuery(array('a' => 'b'));
+        $this->assertEquals('http://www.test.com/?a=b', (string) $url);
+    }
 }

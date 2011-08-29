@@ -53,8 +53,7 @@ class QueryString extends Collection
     public static function rawurlencode($string, array $doNotEncode = null)
     {
         $result = rawurlencode($string);
-        if ($doNotEncode === null || !count($doNotEncode)) {
-            
+        if (empty($doNotEncode)) {
             return $result;
         } else {
             $encoded = array();
