@@ -125,7 +125,7 @@ class CurlFactory implements CurlFactoryInterface
 
         return $this;
     }
-    
+
     /**
      * Get a cURL handle for an HTTP request
      *
@@ -171,13 +171,33 @@ class CurlFactory implements CurlFactoryInterface
     public function releaseHandle(CurlHandle $handle, $close = false)
     {
         $handle->unlock();
-
         if ($close && $handle->getHandle()) {
             curl_close($handle->getHandle());
         }
 
         // If the handle was closed then clean() will remove it.  It's also just
         // a good time to clean up the managed requests
+        $this->clean();
+
+        return $this;
+    }
+
+    /**
+     * Release all cURL handles from the factory
+     *
+     * @param bool $close (optional) Set to TRUE to close open handles
+     *
+     * @return CurlFactory
+     */
+    public function releaseAllHandles($close = false)
+    {
+        foreach ($this->handles as $handle) {
+            $handle->unlock();
+            if ($close && $handle->getHandle()) {
+                curl_close($handle->getHandle());
+            }
+        }
+
         $this->clean();
 
         return $this;
@@ -269,7 +289,7 @@ class CurlFactory implements CurlFactoryInterface
         curl_setopt_array($handle, $options);
         $h = new CurlHandle($handle, $options);
         $this->handles[] = $h;
-        
+
         return $h;
     }
 

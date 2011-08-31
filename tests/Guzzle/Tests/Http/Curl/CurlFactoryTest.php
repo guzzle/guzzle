@@ -54,7 +54,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         'CURLOPT_BUFFERSIZE' => CURLOPT_BUFFERSIZE,
         'CURLOPT_CLOSEPOLICY' => CURLOPT_CLOSEPOLICY,
         'CURLOPT_CONNECTTIMEOUT' => CURLOPT_CONNECTTIMEOUT,
-        'CURLOPT_CONNECTTIMEOUT_MS' => CURLOPT_CONNECTTIMEOUT_MS,
+        // 'CURLOPT_CONNECTTIMEOUT_MS' => CURLOPT_CONNECTTIMEOUT_MS,
         'CURLOPT_DNS_CACHE_TIMEOUT' => CURLOPT_DNS_CACHE_TIMEOUT,
         'CURLOPT_FTPSSLAUTH' => CURLOPT_FTPSSLAUTH,
         'CURLOPT_HTTP_VERSION' => CURLOPT_HTTP_VERSION,
@@ -67,17 +67,17 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         'CURLOPT_MAXCONNECTS' => CURLOPT_MAXCONNECTS,
         'CURLOPT_MAXREDIRS' => CURLOPT_MAXREDIRS,
         'CURLOPT_PORT' => CURLOPT_PORT,
-        'CURLOPT_PROTOCOLS' => CURLOPT_PROTOCOLS,
+        // 'CURLOPT_PROTOCOLS' => CURLOPT_PROTOCOLS,
         'CURLOPT_PROXYAUTH' => CURLOPT_PROXYAUTH,
         'CURLOPT_PROXYPORT' => CURLOPT_PROXYPORT,
         'CURLOPT_PROXYTYPE' => CURLOPT_PROXYTYPE,
-        'CURLOPT_REDIR_PROTOCOLS' => CURLOPT_REDIR_PROTOCOLS,
+        // 'CURLOPT_REDIR_PROTOCOLS' => CURLOPT_REDIR_PROTOCOLS,
         'CURLOPT_RESUME_FROM' => CURLOPT_RESUME_FROM,
         'CURLOPT_SSL_VERIFYHOST' => CURLOPT_SSL_VERIFYHOST,
         'CURLOPT_SSLVERSION' => CURLOPT_SSLVERSION,
         'CURLOPT_TIMECONDITION' => CURLOPT_TIMECONDITION,
         'CURLOPT_TIMEOUT' => CURLOPT_TIMEOUT,
-        'CURLOPT_TIMEOUT_MS' => CURLOPT_TIMEOUT_MS,
+        // 'CURLOPT_TIMEOUT_MS' => CURLOPT_TIMEOUT_MS,
         'CURLOPT_TIMEVALUE' => CURLOPT_TIMEVALUE,
         'CURLOPT_CAINFO' => CURLOPT_CAINFO,
         'CURLOPT_CAPATH' => CURLOPT_CAPATH,
@@ -429,6 +429,19 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
+     * @covers Guzzle\Http\Curl\CurlFactory::releaseAllHandles
+     */
+    public function testReleasesAllHandles()
+    {
+        $f = CurlFactory::getInstance();
+        $request = RequestFactory::head($this->getServer()->getUrl());
+        $request->getCurlHandle();
+        $this->assertTrue($f->getConnectionsPerHost(true, '127.0.0.1:8124') > 0);
+        $f->releaseAllHandles(true);
+        $this->assertEquals(0, $f->getConnectionsPerHost(false, '127.0.0.1:8124'));
+    }
+
+    /**
      * @covers Guzzle\Http\Curl\CurlFactory
      * @dataProvider dataProvider
      */
@@ -499,14 +512,19 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $request->setAuth('michael', 'test');
         $h2 = $request->getCurlHandle();
         $request->send();
+
+        // Some versions of curl add headers in different orders so
+        // sort the headers first
+        $check = explode("\r\n", (string) $request);
+        sort($check);
         $this->assertEquals(
-            "GET / HTTP/1.1\r\n" .
             "Accept-Encoding: deflate, gzip\r\n" .
             "Accept: */*\r\n" .
-            "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n" .
+            "Authorization: Basic bWljaGFlbDp0ZXN0\r\n" .
+            "GET / HTTP/1.1\r\n" .
             "Host: " . $host . "\r\n" .
-            "Authorization: Basic bWljaGFlbDp0ZXN0\r\n\r\n",
-            (string) $request
+            "User-Agent: " . Guzzle::getDefaultUserAgent(),
+            trim(implode("\r\n", $check))
         );
 
         $request->setState('new');
@@ -586,10 +604,12 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Curl\CurlFactory
+     * @depends testReleasesAllHandles
      */
     public function testClosesHandlesWhenHandlesAreReleasedAndNeedToBeClosed()
     {
         $f = CurlFactory::getInstance();
+        $f->releaseAllHandles(true);
         $baseline = $f->getConnectionsPerHost(true, '127.0.0.1:8124');
         $request1 = RequestFactory::get($this->getServer()->getUrl());
         $request1->getCurlHandle();
@@ -643,10 +663,12 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Curl\CurlFactory::setMaxIdleTime
      * @covers Guzzle\Http\Curl\CurlFactory::clean
+     * @depends testReleasesAllHandles
      */
     public function testPurgesConnectionsThatAreTooStaleBasedOnMaxIdleTime()
     {
         $f = CurlFactory::getInstance();
+        $f->releaseAllHandles(true);
         $this->assertSame($f, $f->setMaxIdleTime(0));
         $request = RequestFactory::head($this->getServer()->getUrl());
         $request->getCurlHandle();
