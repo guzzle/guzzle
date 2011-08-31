@@ -198,7 +198,7 @@ class CurlFactory implements CurlFactoryInterface
             }
         }
 
-        $this->clean();
+        $this->handles = array();
 
         return $this;
     }

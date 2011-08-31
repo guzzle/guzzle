@@ -434,6 +434,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     public function testReleasesAllHandles()
     {
         $f = CurlFactory::getInstance();
+        $f->releaseAllHandles(true);
         $request = RequestFactory::head($this->getServer()->getUrl());
         $request->getCurlHandle();
         $this->assertTrue($f->getConnectionsPerHost(true, '127.0.0.1:8124') > 0);
@@ -499,46 +500,35 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $request = RequestFactory::get($this->getServer()->getUrl());
         $h1 = $request->getCurlHandle();
         $request->send();
-        $this->assertEquals(
-            "GET / HTTP/1.1\r\n" .
-            "Accept: */*\r\n" .
-            "Accept-Encoding: deflate, gzip\r\n" .
-            "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n" .
-            "Host: " . $host . "\r\n\r\n",
-            (string) $request
-        );
+        $this->assertFalse($this->compareHttpHeaders(array(
+            'Accept' => '*/*',
+            'Accept-Encoding' => 'deflate, gzip',
+            'User-Agent' => Guzzle::getDefaultUserAgent(),
+            'Host' => $host
+        ), $request->getHeaders()->getAll()));
 
         $request->setState('new');
         $request->setAuth('michael', 'test');
         $h2 = $request->getCurlHandle();
         $request->send();
-
-        // Some versions of curl add headers in different orders so
-        // sort the headers first
-        $check = explode("\r\n", (string) $request);
-        sort($check);
-        $this->assertEquals(
-            "Accept-Encoding: deflate, gzip\r\n" .
-            "Accept: */*\r\n" .
-            "Authorization: Basic bWljaGFlbDp0ZXN0\r\n" .
-            "GET / HTTP/1.1\r\n" .
-            "Host: " . $host . "\r\n" .
-            "User-Agent: " . Guzzle::getDefaultUserAgent(),
-            trim(implode("\r\n", $check))
-        );
+        $this->assertFalse($this->compareHttpHeaders(array(
+             'Accept-Encoding' => 'deflate, gzip',
+             'Accept' =>  '*/*',
+             'User-Agent' => Guzzle::getDefaultUserAgent(),
+             'Host' => $host,
+             'Authorization' => 'Basic bWljaGFlbDp0ZXN0'
+        ), $request->getHeaders()->getAll()));
 
         $request->setState('new');
         $request->setAuth(false);
         $h3 = $request->getCurlHandle();
         $request->send();
-        $this->assertEquals(
-            "GET / HTTP/1.1\r\n" .
-            "Accept-Encoding: deflate, gzip\r\n" .
-            "Accept: */*\r\n" .
-            "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n" .
-            "Host: " . $host . "\r\n\r\n",
-            (string) $request
-        );
+        $this->assertFalse($this->compareHttpHeaders(array(
+            'Accept-Encoding' => 'deflate, gzip',
+            'Accept' => '*/*',
+            'User-Agent' => Guzzle::getDefaultUserAgent(),
+            'Host' => $host
+        ), $request->getHeaders()->getAll()));
 
         $this->assertSame($h1, $h2);
         $this->assertSame($h1, $h3);

@@ -111,6 +111,10 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testWrapsErrorsAndInfo()
     {
+        if (!defined('CURLOPT_TIMEOUT_MS')) {
+            $this->markTestSkipped('Update curl');
+        }
+
         $handle = curl_init($this->getServer()->getUrl());
         curl_setopt($handle, CURLOPT_TIMEOUT_MS, 1);
 
