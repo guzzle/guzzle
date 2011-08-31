@@ -137,8 +137,12 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
         $request = RequestFactory::create('POST', $this->getServer()->getUrl());
         $request->addPostFiles(array(__FILE__));
+        $request->addPostFields(array(
+            'test' => 'abc'
+        ));
         $this->assertEquals(array(
-            'file' => '@' . __FILE__
+            'file' => '@' . __FILE__,
+            'test' => 'abc'
         ), $request->getPostFields()->getAll());
         $this->assertEquals(array(
             'file' => __FILE__
@@ -146,7 +150,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request->send();
         
         $this->assertNotNull($request->getHeader('Content-Length'));
-        $this->assertContains('multipart/form-data; boundary=--', $request->getHeader('Content-Type'), '-> cURL must add the boundary');
+        $this->assertContains('multipart/form-data; boundary=', $request->getHeader('Content-Type'), '-> cURL must add the boundary');
     }
 
     /**

@@ -83,7 +83,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         // Add authorization after the fact and see that it was put in the message
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
         $request = RequestFactory::put($this->getServer()->getUrl(), null, 'Data');
-        $request->setAuth('michael', '123', 'Basic');
+        $request->setAuth('michael', '123', CURLAUTH_BASIC);
         $request->send();
         $str = (string) $request;
         $this->assertTrue((bool) strpos($str, 'Authorization: Basic ' . $auth));
