@@ -269,7 +269,7 @@ EOT;
      */
     public function testFactoryCanCreateFromJson()
     {
-        $tmp = sys_get_temp_dir() . 'test.js';
+        $tmp = sys_get_temp_dir() . '/test.js';
         file_put_contents($tmp, json_encode($this->arrayData));
         $b = ServiceBuilder::factory($tmp);
         unlink($tmp);
@@ -296,7 +296,7 @@ EOT;
      */
     public function testFactoryValidatesFileExtension()
     {
-        $tmp = sys_get_temp_dir() . 'test.abc';
+        $tmp = sys_get_temp_dir() . '/test.abc';
         file_put_contents($tmp, 'data');
         try {
             ServiceBuilder::factory($tmp);
