@@ -88,7 +88,7 @@ class ServiceBuilder implements \ArrayAccess
                     $row[(string) $param->attributes()->name] = (string) $param->attributes()->value;
                 }
                 $config[$name] = array(
-                    'class'   => str_replace('.', '\\', $class),
+                    'class'   => $class,
                     'extends' => (string) $client->attributes()->extends,
                     'params'  => $row
                 );
@@ -97,6 +97,9 @@ class ServiceBuilder implements \ArrayAccess
 
         // Validate the configuration and handle extensions
         foreach ($config as $name => &$client) {
+            if (!isset($client['params'])) {
+                $client['params'] = array();
+            }
             // Check if this client builder extends another client
             if (isset($client['extends']) && trim($client['extends'])) {
                 // Make sure that the service it's extending has been defined
@@ -108,6 +111,7 @@ class ServiceBuilder implements \ArrayAccess
                 }
                 $client['params'] = array_merge($config[$client['extends']]['params'], $client['params']);
             }
+            $client['class'] = str_replace('.', '\\', $client['class']);
         }
 
         if ($cacheAdapter) {
