@@ -37,6 +37,14 @@ class CurlFactory implements CurlFactoryInterface
     protected $maxIdleTime = -1;
 
     /**
+     * Array of host as the key and maximum number of handles reuses
+     * as the value per host.
+     *
+     * @var array
+     */
+    protected $maxConnectionReusesPerHost = array();
+
+    /**
      * Singleton method to get a single instance of the default CurlFactory.
      *
      * Because the default curl factory will be most commonly used, it is
@@ -122,6 +130,21 @@ class CurlFactory implements CurlFactoryInterface
     public function setMaxIdleForHost($host, $total)
     {
         $this->maxIdlePerHost[$host] = $total;
+
+        return $this;
+    }
+
+    /**
+     * Set the maximum number of connection reuses for a specific host/port
+     *
+     * @param string $host Host to specify including port
+     * @param int $max Max number of connection reuses per handle
+     *
+     * @return CurlFactory
+     */
+    public function setMaxConnectionReusesForHost($host, $max)
+    {
+        $this->maxConnectionReusesPerHost[$host] = $max;
 
         return $this;
     }
@@ -288,6 +311,10 @@ class CurlFactory implements CurlFactoryInterface
         // Apply the options to the cURL handle.
         curl_setopt_array($handle, $options);
         $h = new CurlHandle($handle, $options);
+        $hostKey = $request->getHost() . ':' . $request->getPort();
+        if (isset($this->maxConnectionReusesPerHost[$hostKey])) {
+            $h->setMaxReuses($this->maxConnectionReusesPerHost[$hostKey]);
+        }
         $this->handles[] = $h;
 
         return $h;

@@ -6,6 +6,7 @@ use Guzzle\Common\Collection;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Curl\CurlHandle;
+use Guzzle\Http\Curl\CurlFactory;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>
@@ -261,5 +262,57 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         // It's the ower of the handle
         $h->checkout($request);
         $this->assertTrue($h->isCompatible($request));
+    }
+
+    /**
+     * @covers Guzzle\Http\Curl\CurlHandle::getUseCount
+     * @covers Guzzle\Http\Curl\CurlHandle::setMaxReuses
+     * @covers Guzzle\Http\Curl\CurlHandle::unlock
+     */
+    public function testClosesAfterMaxConnectionReusesIsExceeded()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+           "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+           "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+           "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+        ));
+
+        CurlFactory::getInstance()->releaseAllHandles(true);
+        $request = RequestFactory::get($this->getServer()->getUrl());
+        $h = $request->getCurlHandle()->setMaxReuses(2);
+        $curlHandle = $h->getHandle();
+        $this->assertEquals(0, $h->getUseCount());
+        
+        $request->send();
+        $this->assertEquals(1, $h->getUseCount());
+        $this->assertSame($curlHandle, $h->getHandle());
+        $request->send();
+        $this->assertEquals(2, $h->getUseCount());
+        $this->assertSame($curlHandle, $h->getHandle());
+        $request->send();
+        $this->assertEquals(0, $h->getUseCount());
+        $this->assertNotSame($curlHandle, $h->getHandle());
+    }
+
+    /**
+     * @covers Guzzle\Http\Curl\CurlHandle::getUseCount
+     * @covers Guzzle\Http\Curl\CurlHandle::setMaxReuses
+     * @covers Guzzle\Http\Curl\CurlHandle::unlock
+     */
+    public function testCanCloseAfterOneConnectionReusesIsExceeded()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+           "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+           "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
+        ));
+
+        CurlFactory::getInstance()->releaseAllHandles(true);
+        $request = RequestFactory::get($this->getServer()->getUrl());
+        $h = $request->getCurlHandle()->setMaxReuses(0);
+        $this->assertNotNull($h->getHandle());
+        $request->send();
+        $this->assertNull($h->getHandle());
     }
 }

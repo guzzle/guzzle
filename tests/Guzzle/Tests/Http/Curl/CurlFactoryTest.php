@@ -676,4 +676,39 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         // Set the default max idle time
         $f->setMaxIdleTime(-1);
     }
+
+    /**
+     * @covers Guzzle\Http\Curl\CurlFactory::setMaxConnectionReusesForHost
+     * @covers Guzzle\Http\Curl\CurlFactory::clean
+     * @covers Guzzle\Http\Curl\CurlFactory::createHandle
+     */
+    public function testClosesConnectionsThatHaveExceededMaxConnectionReuse()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+           "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+           "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+           "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+        ));
+
+        $f = CurlFactory::getInstance();
+        $f->releaseAllHandles(true);
+        $f->setMaxConnectionReusesForHost('127.0.0.1:8124', 1);
+        $request = RequestFactory::get($this->getServer()->getUrl());
+        $h = $request->getCurlHandle();
+        $curlHandle = $h->getHandle();
+        $this->assertEquals(0, $h->getUseCount());
+
+        $request->send();
+        $this->assertEquals(1, $h->getUseCount());
+        $this->assertSame($curlHandle, $h->getHandle());
+        $this->assertEquals(1, $f->getConnectionsPerHost(null, '127.0.0.1:8124'));
+
+        // Send the request again
+        $request->send();
+        // The connection has now been released
+        $this->assertEquals(0, $f->getConnectionsPerHost(null, '127.0.0.1:8124'));
+        $this->assertEquals(0, $h->getUseCount());
+        $this->assertNotSame($curlHandle, $h->getHandle());
+    }
 }

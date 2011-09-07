@@ -41,6 +41,16 @@ class CurlHandle
     protected $stderr;
 
     /**
+     * @var int Number of times the handle has been (re)used
+     */
+    protected $useCount = 0;
+
+    /**
+     * @var int
+     */
+    protected $maxReuses;
+
+    /**
      * @var array Statically cached array of cURL options that pollute handles
      */
     protected static $pollute;
@@ -154,6 +164,30 @@ class CurlHandle
     }
 
     /**
+     * Set the maximum number of times a handle can be reused
+     *
+     * @param int $max Maximum reuse count
+     *
+     * @return CurlHandle
+     */
+    public function setMaxReuses($max)
+    {
+        $this->maxReuses = $max;
+
+        return $this;
+    }
+
+    /**
+     * Get the number of times the handle has been used
+     *
+     * @return int
+     */
+    public function getUseCount()
+    {
+        return $this->useCount;
+    }
+
+    /**
      * Get the stderr output
      *
      * @param bool $asResource (optional) Set to TRUE to get an fopen resource
@@ -210,11 +244,14 @@ class CurlHandle
      */
     public function unlock()
     {
-        if ($this->isAvailable() && ($this->hasProblematicOption() || ($this->owner
-            && ($this->owner->getHeader('Connection', null, true) == 'close'
-            || ($this->owner->getResponse() && $this->owner->getResponse()->getHeader('Connection', null, true) == 'close'))))) {
-            curl_close($this->handle);
-            $this->handle = null;
+        if ($this->isAvailable()) {
+            $this->useCount++;
+            if ((null !== $this->maxReuses && $this->useCount > $this->maxReuses) ||
+                ($this->hasProblematicOption() || ($this->owner && ($this->owner->getHeader('Connection', null, true) == 'close' || ($this->owner->getResponse() && $this->owner->getResponse()->getHeader('Connection', null, true) == 'close'))))) {
+                curl_close($this->handle);
+                $this->handle = null;
+                $this->useCount = 0;
+            }
         }
 
         $this->owner = null;
