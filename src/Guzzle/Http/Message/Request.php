@@ -992,10 +992,18 @@ class Request extends AbstractMessage implements RequestInterface
 
                 if ($headers) {
                     $parsed = RequestFactory::parseMessage($headers);
-                    $this->method = $parsed['method'];
-                    $this->setHost($parsed['parts']['host']);
-                    $this->setPort($parsed['parts']['port']);
-                    $this->setProtocolVersion($parsed['protocol_version']);
+                    if (!empty($parsed['method'])) {
+                        $this->method = $parsed['method'];
+                    }
+                    if (!empty($parsed['parts']['host'])) {
+                        $this->setHost($parsed['parts']['host']);
+                    }
+                    if (!empty($parsed['parts']['port'])) {
+                        $this->setPort($parsed['parts']['port']);
+                    }
+                    if (!empty($parsed['protocol_version'])) {
+                        $this->setProtocolVersion($parsed['protocol_version']);
+                    }
                     $this->headers->clear();
                     foreach ($parsed['headers'] as $name => $value) {
                         $this->setHeader($name, $value);
