@@ -205,6 +205,7 @@ class EntityBody extends Stream
         }
 
         $out = hash_final($ctx, (bool) $rawOutput);
+        $this->seek(0);
         
         return ((bool) $base64Encode && (bool) $rawOutput) ? base64_encode($out) : $out;
     }
