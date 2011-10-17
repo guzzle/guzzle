@@ -38,6 +38,9 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
                 'subdomain' => 'test.billy',
             ),
         ),
+        'missing_params' => array(
+            'extends' => 'billy.mock'
+        )
     );
 
     public function __construct()
@@ -314,5 +317,15 @@ EOT;
     public function testFactoryValidatesObjectTypes()
     {
         ServiceBuilder::factory(new \stdClass());
+    }
+
+    /**
+     * @covers Guzzle\Service\ServiceBuilder::factory
+     */
+    public function testFactoryDoesNotRequireParams()
+    {
+        $b = ServiceBuilder::factory($this->arrayData);
+        $s = $b->get('missing_params');
+        $this->assertEquals('billy', $s->getConfig('username'));
     }
 }

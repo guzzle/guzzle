@@ -34,7 +34,7 @@ class XmlDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($service->hasCommand('geo.id'));
         $this->assertInstanceOf('Guzzle\\Service\\Description\\ApiCommand', $service->getCommand('search'));
         $this->assertInternalType('array', $service->getCommands());
-        $this->assertEquals(4, count($service->getCommands()));
+        $this->assertEquals(5, count($service->getCommands()));
         $this->assertInstanceOf('Guzzle\\Common\\NullObject', $service->getCommand('missing'));
 
         $command = $service->getCommand('test');

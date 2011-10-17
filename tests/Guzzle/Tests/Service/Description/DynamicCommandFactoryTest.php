@@ -187,4 +187,48 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $c = $this->service->createCommand('concrete');
         $this->assertEquals('Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand', get_class($c));
     }
+
+    /**
+     * @covers Guzzle\Service\Description\DynamicCommandFactory::createCommand
+     */
+    public function testUsesAbsolutePaths()
+    {
+        $service = new ServiceDescription(
+            array(
+                new ApiCommand(array(
+                    'name' => 'test_path',
+                    'method' => 'GET',
+                    'path' => '/test',
+                ))
+            )
+        );
+
+        $client = new Client('http://www.test.com/');
+        $client->setDescription($service);
+        $command = $client->getCommand('test_path');
+        $request = $command->prepare();
+        $this->assertEquals('/test', $request->getPath());
+    }
+
+    /**
+     * @covers Guzzle\Service\Description\DynamicCommandFactory::createCommand
+     */
+    public function testUsesRelativePaths()
+    {
+        $service = new ServiceDescription(
+            array(
+                new ApiCommand(array(
+                    'name' => 'test_path',
+                    'method' => 'GET',
+                    'path' => 'test/abc',
+                ))
+            )
+        );
+
+        $client = new Client('http://www.test.com/api/v2');
+        $client->setDescription($service);
+        $command = $client->getCommand('test_path');
+        $request = $command->prepare();
+        $this->assertEquals('/api/v2/test/abc', $request->getPath());
+    }
 }

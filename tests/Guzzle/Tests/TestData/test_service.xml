@@ -41,5 +41,8 @@
             <!-- The request builder will remove '//', so it's okay to always prepend / if needed -->
             <param name="second" type="string" required="true" prepend="/" condition="place_id ~ /[A-Z0-9]/" />
         </command>
+
+        <command name="path" method="GET" path="/test" />
+
     </commands>
 </client>
