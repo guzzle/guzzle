@@ -387,12 +387,6 @@ class CurlFactory implements CurlFactoryInterface
             }
         );
 
-        // If the request is HTTPS, use a trusting SSL connection
-        if ($request->getScheme() == 'https') {
-            $curlOptions[CURLOPT_SSL_VERIFYPEER] = false;
-            $curlOptions[CURLOPT_SSL_VERIFYHOST] = false;
-        }
-
         // @codeCoverageIgnoreStart
         if (Guzzle::getCurlInfo('follow_location')) {
             $curlOptions[CURLOPT_FOLLOWLOCATION] = true;
