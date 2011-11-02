@@ -1,12 +1,5 @@
 <?php
 
-/**
- * This class was generated using the guzzle client template.  Be sure to
- * update the docblocks, factory method, and add a constructor if needed.
- *
- * @TODO Remove this docblock
- */
-
 namespace ${service.namespace};
 
 use Guzzle\Common\Inspector;
@@ -15,8 +8,6 @@ use Guzzle\Service\Client;
 use Guzzle\Service\Description\XmlDescriptionBuilder;
 
 /**
- * @TODO Update description
- *
  * @author ${service.author} <${service.email}>
  */
 class ${service.client_class} extends Client

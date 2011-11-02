@@ -113,12 +113,19 @@
             </filterchain>
         </copy>
 
-        <echo msg="Cleaning up" />
         <if>
             <equals arg1="${service.xml}" arg2="y" />
             <then>
                 <delete file="${service.path}/Client.php" />
                 <move file="${service.path}/Client-Xml.php" toFile="${service.path}/${service.client_class}.php" />
+                <echo file="${service.path}/client.xml">
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;clients&gt;
+  &lt;client&gt;
+    &lt;commands&gt;&lt;/commands&gt;
+  &lt;/client&gt;
+&lt;/clients&gt;
+                </echo>
             </then>
             <else>
                 <delete file="${service.path}/Client-Xml.php" />

@@ -18,3 +18,10 @@ spl_autoload_register(function($class) {
         return true;
     }
 });
+
+// Register services with the GuzzleTestCase
+GuzzleTestCase::setServiceBuilder(\Guzzle\Service\ServiceBuilder::factory(array(
+    'test.${service.short_name}' => array(
+        'class' => '${service.namespace}\${service.client_class}'
+    )
+)));

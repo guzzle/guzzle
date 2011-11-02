@@ -10,6 +10,7 @@ use Guzzle\Http\Plugin\LogPlugin;
 use Guzzle\Service\Client;
 use Guzzle\Service\ServiceBuilder;
 use Guzzle\Tests\Common\Mock\MockFilter;
+use RuntimeException;
 
 /**
  * Base testcase class for all Guzzle testcases.
@@ -44,15 +45,13 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Get the services.xml location and filename
+     * Set the service builder to use for tests
      *
-     * @return string
+     * @param ServiceBuilder $builder Service builder
      */
-    public function getServicesFile()
+    public static function setServiceBuilder(ServiceBuilder $builder)
     {
-        return isset($_SERVER['GUZZLE_SERVICE_FILE'])
-            ? $_SERVER['GUZZLE_SERVICE_FILE']
-            : __DIR__ . DIRECTORY_SEPARATOR . 'TestData' . DIRECTORY_SEPARATOR . 'services.xml';
+        self::$serviceBuilder = $builder;
     }
 
     /**
@@ -63,7 +62,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
     public function getServiceBuilder()
     {
         if (!self::$serviceBuilder) {
-            self::$serviceBuilder = ServiceBuilder::factory($this->getServicesFile());
+            throw new RuntimeException('No service builder has been set via setServiceBuilder()');
         }
 
         return self::$serviceBuilder;

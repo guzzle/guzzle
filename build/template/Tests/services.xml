@@ -1,7 +1,0 @@
-<?xml version="1.0" ?>
-<guzzle>
-    <clients>
-        <client name="test.${service.short_name}" class="${service.namespace}\${service.client_class}">
-        </client>
-    </clients>
-</guzzle>
