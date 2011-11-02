@@ -13,12 +13,6 @@
         <server name="GUZZLE" value="/path/to/guzzle" />
 
         <!--
-          -- This value specifies the path to the test services.xml file that
-          --  passes arguments to a service builder
-          -->
-        <server name="GUZZLE_SERVICE_FILE" value="./Tests/TestData/services.xml" />
-
-        <!--
           -- Guzzle tries to figure out the path to mock files automatically.
           -- Set the following value to "1" if your Guzzle service contains
           -- multiple clients under one service namespace (e.g. Aws\S3, Aws\Sqs)
