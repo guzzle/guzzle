@@ -86,15 +86,9 @@
     <!-- ============================================  -->
     <target name="template">
         <input propertyname="service.path" promptChar=":">Enter the path where you want to install your web service client</input>
-        <input propertyname="service.name" promptChar=":">Enter the name of your client project (e.g. Guzzle AWS)</input>
-        <input propertyname="service.client_class" promptChar=":">Enter the name of your client class (e.g. UnfuddleClient)</input>
-        <input propertyname="service.xml" promptChar=":" defaultValue="n" validArgs="y,n">Will your client use an XML file for dynamic commands?</input>
         <input propertyname="service.short_name" promptChar=":">Enter the short name of your client (e.g. guzzle-aws)</input>
+        <input propertyname="service.client_class" promptChar=":">Enter the name of your client class (e.g. UnfuddleClient)</input>
         <input propertyname="service.namespace" promptChar=":">Enter the root namespace of your client (e.g. Guzzle\Aws)</input>
-        <input propertyname="service.relative_path" promptChar=":">Enter the relative path of where your client should be installed relative to the Guzzle\ namespace folder (e.g. Guzzle/Aws)</input>
-        <input propertyname="service.author" promptChar=":">Enter your full name</input>
-        <input propertyname="service.email" promptChar=":">Enter your email address</input>
-        <input propertyname="service.git_url" promptChar=":" defaultValue="">Enter the URL to the project git repository</input>
 
         <echo msg="Creating web service client project" />
 
@@ -113,24 +107,6 @@
             </filterchain>
         </copy>
 
-        <if>
-            <equals arg1="${service.xml}" arg2="y" />
-            <then>
-                <delete file="${service.path}/Client.php" />
-                <move file="${service.path}/Client-Xml.php" toFile="${service.path}/${service.client_class}.php" />
-                <echo file="${service.path}/client.xml">
-&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
-&lt;clients&gt;
-  &lt;client&gt;
-    &lt;commands&gt;&lt;/commands&gt;
-  &lt;/client&gt;
-&lt;/clients&gt;
-                </echo>
-            </then>
-            <else>
-                <delete file="${service.path}/Client-Xml.php" />
-                <move file="${service.path}/Client.php" toFile="${service.path}/${service.client_class}.php" />
-            </else>
-        </if>
+        <move file="${service.path}/Client.php" toFile="${service.path}/${service.client_class}.php" />
     </target>
 </project>

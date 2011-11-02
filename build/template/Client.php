@@ -5,10 +5,8 @@ namespace ${service.namespace};
 use Guzzle\Common\Inspector;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\Client;
+use Guzzle\Service\Description\XmlDescriptionBuilder;
 
-/**
- * @author ${service.author} <${service.email}>
- */
 class ${service.client_class} extends Client
 {
     /**
@@ -29,6 +27,11 @@ class ${service.client_class} extends Client
 
         $client = new self($config->get('base_url'));
         $client->setConfig($config);
+
+        // Add the XML service description to the client
+        // Uncomment the following two lines to use an XML service description
+        // $builder = new XmlDescriptionBuilder(__DIR__ . DIRECTORY_SEPARATOR . 'client.xml');
+        // $client->setDescription($builder->build());
 
         return $client;
     }
