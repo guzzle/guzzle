@@ -5,3 +5,5 @@ build/guzzle.phar
 src/Guzzle/Aws/
 src/Guzzle/CardinalCommerce/
 src/Guzzle/Unfuddle/
+composer.lock
+vendor/.composer
