@@ -3,13 +3,13 @@
 namespace Guzzle\Tests;
 
 use Guzzle\Common\Log\Adapter\ZendLogAdapter;
-use Guzzle\Tests\Http\Server;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Plugin\LogPlugin;
+use Guzzle\Service\Plugin\MockPlugin;
 use Guzzle\Service\Client;
 use Guzzle\Service\ServiceBuilder;
 use Guzzle\Tests\Common\Mock\MockFilter;
+use Guzzle\Tests\Http\Server;
 use RuntimeException;
 
 /**
@@ -19,10 +19,11 @@ use RuntimeException;
  */
 abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
 {
-    private $requests = array();
-
+    protected static $mockBasePath;
     public static $serviceBuilder;
     public static $server;
+
+    private $requests = array();
     public $mockObserver;
 
     /**
@@ -69,6 +70,18 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Set the mock response base path
+     *
+     * @param string $path Path to mock response folder
+     *
+     * @return GuzzleTestCase
+     */
+    public static function setMockBasePath($path)
+    {
+        self::$mockBasePath = $path;
+    }
+
+    /**
      * Mark a request as being mocked
      *
      * @param RequestInterface $request
@@ -93,50 +106,13 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Get a mock response for a client by mock file name
      *
-     * @param Client $client Client object to modify
-     * @param string $filename Name of the file within the Mock folder of the service
+     * @param string $path Relative path to the mock response file
      *
      * @return Response
      */
-    public function getMockResponse(Client $client, $filename)
+    public function getMockResponse($path)
     {
-
-        $reflection = new \ReflectionClass(get_class($client));
-        $path = str_replace(array(
-            str_replace($reflection->getNamespaceName() . '\\', '', $reflection->getName()),
-            '.php'
-        ), '', $reflection->getFileName());
-
-        // Handle nested mock files
-        if (isset($_SERVER['GUZZLE_SERVICE_MULTI']) && (int) $_SERVER['GUZZLE_SERVICE_MULTI'] == 1) {
-            $parts = explode(DIRECTORY_SEPARATOR, $path);
-            $path = implode(DIRECTORY_SEPARATOR, array_slice($parts, 0, count($parts) - 2))
-                . DIRECTORY_SEPARATOR . 'Tests'
-                . DIRECTORY_SEPARATOR . $parts[count($parts) - 2]
-                . DIRECTORY_SEPARATOR . 'Command'
-                . DIRECTORY_SEPARATOR . 'Mock'
-                . DIRECTORY_SEPARATOR . $filename;
-        } else {
-            // Create the path to the file
-            $path .= DIRECTORY_SEPARATOR . 'Tests' . DIRECTORY_SEPARATOR . 'Command' . DIRECTORY_SEPARATOR . 'Mock' . DIRECTORY_SEPARATOR . $filename;
-        }
-
-        if (!file_exists($path)) {
-            throw new \Exception('Unable to open mock file: ' . $path);
-        }
-
-        $data = file_get_contents($path);
-        $parts = explode("\n\n", $data, 2);
-
-        // Convert \n to \r\n in headers
-        if (!isset($parts[1])) {
-            $data = $parts[0];
-        } else {
-            $data = str_replace("\n", "\r\n", $parts[0]) . "\r\n\r\n" . $parts[1];
-        }
-
-        // Create a response from the mock file
-        return Response::factory($data);
+        return MockPlugin::getMockFile(self::$mockBasePath . DIRECTORY_SEPARATOR . $path);
     }
 
     /**
@@ -148,44 +124,24 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
      * request sent by the client.
      *
      * @param Client $client Client object to modify
-     * @param string $filenames Name of the file within the Mock folder of the service
+     * @param string $paths Path to files within the Mock folder of the service
      */
-    public function setMockResponse(Client $client, $filenames)
+    public function setMockResponse(Client $client, $paths)
     {
         $this->requests = array();
-        $responses = array();
-        foreach ((array) $filenames as $filename) {
-            $responses[] = $this->getMockResponse($client, $filename);
-        }
-
-        // Add a filter to the client to set a mock response on the next request
         $that = $this;
-
-        $that->mockObserver = $client->getEventManager()->attach(function($subject, $event, $context) use (&$responses, $client, $that) {
-            if ($event == 'request.create') {
+        $mock = new MockPlugin(true);
+        $mock->getEventManager()->attach(function($subject, $event, $context) use ($that) {
+            if ($event == 'mock.request') {
                 $that->addMockedRequest($context);
-                // Set the mock response
-                $context->setResponse(array_shift($responses), true);
-                // Detach the filter from the client so it's a one-time use
-                if (count($responses) == 0) {
-                    $subject->getEventManager()->detach($that->mockObserver);
-                }
             }
-        }, 9999);
-    }
+        });
 
-    /**
-     * Enable debug mode on a client by outputting the request and response
-     *
-     * @param Client $client Client to debug
-     *
-     * @return Client
-     */
-    public function enableClientDebug(Client $client)
-    {
-        $adapter = new ZendLogAdapter(new \Zend_Log(new \Zend_Log_Writer_Stream('php://output')));
-        $plugin = new LogPlugin($adapter, LogPlugin::LOG_VERBOSE);
-        $client->attachPlugin($plugin);
+        foreach ((array) $paths as $path) {
+            $mock->addResponse($this->getMockResponse($path));
+        }
+        
+        $client->getEventManager()->attach($mock, 9999);
     }
 
     /**

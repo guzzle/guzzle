@@ -20,7 +20,8 @@ spl_autoload_register(function($class) {
 });
 
 // Register services with the GuzzleTestCase
-GuzzleTestCase::setServiceBuilder(\Guzzle\Service\ServiceBuilder::factory(array(
+\Guzzle\Tests\GuzzleTestCase::setMockBasePath(__DIR__ . DIRECTORY_SEPARATOR . 'mock');
+\Guzzle\Tests\GuzzleTestCase::setServiceBuilder(\Guzzle\Service\ServiceBuilder::factory(array(
     'test.${service.short_name}' => array(
         'class' => '${service.namespace}\${service.client_class}'
     )
