@@ -2,6 +2,7 @@
 coverage
 phpunit.xml
 build/guzzle.phar
+build/guzzle-na.phar
 src/Guzzle/Aws/
 src/Guzzle/CardinalCommerce/
 src/Guzzle/Unfuddle/

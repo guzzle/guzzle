@@ -2,31 +2,19 @@
 
 <project name="guzzle" default="init">
 
-    <!-- ============================================  -->
-    <!-- Target: init-git                              -->
-    <!-- ============================================  -->
-    <target name="init-git">
+    <target name="init-git" description="Initialize git submodules">
         <echo msg="Initializing git submodules" />
         <exec command="git submodule update --init" dir="./.." />
     </target>
 
-    <!-- ============================================  -->
-    <!-- Target: init-test                             -->
-    <!-- ============================================  -->
-    <target name="init-test">
+    <target name="init-test" description="Initialize for unit testing">
         <echo msg="Copying ./phpunit.xml.dist to ./phpunit.xml" />
         <copy file="../phpunit.xml.dist" tofile="../phpunit.xml" />
     </target>
 
-    <!-- ============================================  -->
-    <!-- (DEFAULT)  Target: init                       -->
-    <!-- ============================================  -->
     <target name="init" depends="init-git,init-test" />
 
-    <!-- ============================================  -->
-    <!-- Target: phar                                  -->
-    <!-- ============================================  -->
-    <target name="phar">
+    <target name="phar" description="Create a phar with an autoloader">
         <pharpackage
             destfile="./guzzle.phar"
             basedir="../src"
@@ -38,15 +26,28 @@
                 <exclude name="**/Tests/**" />
             </fileset>
             <metadata>
-                <element name="version" value="1.0" />
+                <element name="version" value="1.0.1" />
             </metadata>
         </pharpackage>
     </target>
 
-    <!-- ============================================  -->
-    <!-- Target: service                             -->
-    <!-- ============================================  -->
-    <target name="service">
+    <target name="phar-na" description="Create a phar with no autoloader">
+        <pharpackage
+            destfile="./guzzle-na.phar"
+            basedir="../src"
+            alias="Guzzle"
+            signature="sha1">
+            <fileset dir="../src">
+                <include name="**/*.php" />
+                <exclude name="**/Tests/**" />
+            </fileset>
+            <metadata>
+                <element name="version" value="1.0.1" />
+            </metadata>
+        </pharpackage>
+    </target>
+
+    <target name="service" description="Clone a Guzzle service">
         <fail unless="repo" message="You must specify the URL to a git repository" />
         <fail unless="path" message="You must specify the path to clone the repository" />
         <property name="exists" value="0" />
@@ -63,10 +64,7 @@
         </if>
     </target>
 
-    <!-- ============================================  -->
-    <!-- Target: all-services                          -->
-    <!-- ============================================  -->
-    <target name="all-services">
+    <target name="all-services" description="Clone all known Guzzle services">
         <phingcall target="service">
             <property name="repo" value="git://github.com/guzzle/guzzle-aws.git" />
             <property name="path" value="./src/Guzzle/Aws" />
@@ -81,10 +79,7 @@
         </phingcall>
     </target>
 
-    <!-- ============================================  -->
-    <!-- Target: template                              -->
-    <!-- ============================================  -->
-    <target name="template">
+    <target name="template" description="Create a client project skeleton">
         <input propertyname="service.path" promptChar=":">Enter the path where you want to install your web service client</input>
         <input propertyname="service.short_name" promptChar=":">Enter the short name of your client (e.g. guzzle-aws)</input>
         <input propertyname="service.client_class" promptChar=":">Enter the name of your client class (e.g. UnfuddleClient)</input>
