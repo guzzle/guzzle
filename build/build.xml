@@ -47,38 +47,6 @@
         </pharpackage>
     </target>
 
-    <target name="service" description="Clone a Guzzle service">
-        <fail unless="repo" message="You must specify the URL to a git repository" />
-        <fail unless="path" message="You must specify the path to clone the repository" />
-        <property name="exists" value="0" />
-        <available file="../${path}" type="dir" property="exists" value="1"/>
-        <if>
-            <equals arg1="${exists}" arg2="0" />
-            <then>
-                <exec passthru="true" command="git clone ${repo} ${path}" dir="../" checkreturn="true" />
-            </then>
-            <else>
-                <exec passthru="true" command="git fetch origin" dir="../${path}" checkreturn="true" />
-                <exec passthru="true" command="git reset --hard" dir="../${path}" checkreturn="true" />
-            </else>
-        </if>
-    </target>
-
-    <target name="all-services" description="Clone all known Guzzle services">
-        <phingcall target="service">
-            <property name="repo" value="git://github.com/guzzle/guzzle-aws.git" />
-            <property name="path" value="./src/Guzzle/Aws" />
-        </phingcall>
-        <phingcall target="service">
-            <property name="repo" value="git://github.com/guzzle/guzzle-cardinal-commerce.git" />
-            <property name="path" value="./src/Guzzle/CardinalCommerce" />
-        </phingcall>
-        <phingcall target="service">
-            <property name="repo" value="git://github.com/guzzle/guzzle-unfuddle.git" />
-            <property name="path" value="./src/Guzzle/Unfuddle" />
-        </phingcall>
-    </target>
-
     <target name="template" description="Create a client project skeleton">
         <input propertyname="service.path" promptChar=":">Enter the path where you want to install your web service client</input>
         <input propertyname="service.short_name" promptChar=":">Enter the short name of your client (e.g. guzzle-aws)</input>
