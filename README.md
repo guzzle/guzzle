@@ -38,7 +38,7 @@ $client = new Client('http://www.example.com/api/v1/key/{{key}}', array(
 
 // Issue a path using a relative URL to the client's base URL
 // Sends to http://www.example.com/api/v1/key/***/users
-$request = $cliet->get('users');
+$request = $client->get('users');
 $response = $request->send();
 
 // Relative URL that overwrites the path of the base URL
@@ -46,7 +46,6 @@ $request = $client->get('/test/123.php?a=b');
 
 // Issue a head request on the base URL
 $response = $client->head()->send();
-
 // Delete user 123
 $response = $client->delete('users/123')->send();
 
