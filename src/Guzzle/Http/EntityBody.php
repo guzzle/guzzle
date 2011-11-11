@@ -78,13 +78,13 @@ class EntityBody extends Stream
     /**
      * Create a new EntityBody based on the input type
      *
-     * @param resource|string|EntityBody $resource Data for the entity body
+     * @param resource|string|EntityBody $resource (optional) Entity body data
      * @param int $size (optional) Size of the data contained in the resource
      *
      * @return EntityBody
      * @throws HttpException if the $resource arg is not a resource or string
      */
-    public static function factory($resource, $size = null)
+    public static function factory($resource = '', $size = null)
     {
         if (is_resource($resource)) {
             
