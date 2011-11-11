@@ -68,12 +68,13 @@ interface ClientInterface extends Subject
      *      override the base path of the client, or a relative path to append
      *      to the base path of the client.  The URI can contain the
      *      querystring as well.
-     * @param array|Collection (optional) Parameters to replace from the uri
-     *      {{}} injection points.
+     * @param array|Collection $headers (optional) HTTP headers
+     * @param string|resource|array|EntityBody $body (optional) Entity body of
+     *      request (POST/PUT) or response (GET)
      *
      * @return RequestInterface
      */
-    function createRequest($method = RequestInterface::GET, $uri = null, $inject = null);
+    function createRequest($method = RequestInterface::GET, $uri = null, $headers = null, $body = null);
 
     /**
      * Prepare a request to be sent from the Client by adding client specific
@@ -169,12 +170,13 @@ interface ClientInterface extends Subject
     /**
      * Create a GET request for the client
      *
-     * @param string $uri (optional) Resource URI of the request.  Use an
+     * @param string $path (optional) Resource URI of the request.  Use an
      *      absolute path to override the base path, or a relative path to append
-     * @param array|Collection (optional) Parameters to replace from the uri
-     *      {{}} injection points.
+     * @param array|Collection $headers (optional) HTTP headers
+     * @param string|resource|array|EntityBody $body (optional) Where to store
+     *      the response entity body
      *
-     * @return Request
+     * @return RequestInterface
      */
     function get($uri = null, $inject = null);
 
@@ -183,58 +185,56 @@ interface ClientInterface extends Subject
      *
      * @param string $uri (optional) Resource URI of the request.  Use an
      *      absolute path to override the base path, or a relative path to append
-     * @param array|Collection (optional) Parameters to replace from the uri
-     *      {{}} injection points.
+     * @param array|Collection $headers (optional) HTTP headers
      *
-     * @return Request
+     * @return RequestInterface
      */
-    function head($uri = null, $inject = null);
+    function head($uri = null, $headers = null);
 
     /**
      * Create a DELETE request for the client
      *
      * @param string $uri (optional) Resource URI of the request.  Use an
      *      absolute path to override the base path, or a relative path to append
-     * @param array|Collection (optional) Parameters to replace from the uri
-     *      {{}} injection points.
+     * @param array|Collection $headers (optional) HTTP headers
      *
-     * @return Request
+     * @return RequestInterface
      */
-    function delete($uri = null, $inject = null);
+    function delete($uri = null, $headers = null);
 
     /**
      * Create a PUT request for the client
      *
      * @param string $uri (optional) Resource URI of the request.  Use an
      *      absolute path to override the base path, or a relative path to append
-     * @param array|Collection (optional) Parameters to replace from the uri
-     *      {{}} injection points.
+     * @param array|Collection $headers (optional) HTTP headers
+     * @param string|resource|array|EntityBody $body Body to send in the request
      *
      * @return EntityEnclosingRequest
      */
-    function put($uri = null, $inject = null);
+    function put($uri = null, $headers = null, $body = null);
 
     /**
      * Create a POST request for the client
      *
      * @param string $uri (optional) Resource URI of the request.  Use an absolute path to
      *      override the base path, or a relative path to append it.
-     * @param array|Collection (optional) Parameters to replace from the uri
-     *      {{}} injection points.
+     * @param array|Collection $headers (optional) HTTP headers
+     * @param array|Collection $postFields (optional) Associative array of POST
+     *      fields to send in the body of the request.  Prefix a value in the
+     *      array with the @ symbol reference a file.
      *
      * @return EntityEnclosingRequest
      */
-    function post($uri = null, $inject = null);
+    function post($uri = null, $headers = null, $postFields = null);
 
     /**
      * Create an OPTIONS request for the client
      *
      * @param string $uri (optional) Resource URI of the request.  Use an
      *      absolute path to override the base path, or relative path to append
-     * @param array|Collection (optional) Parameters to replace from the uri
-     *      {{}} injection points.
      *
-     * @return Request
+     * @return RequestInterface
      */
-    function options($uri = null, $inject = null);
+    function options($uri = null);
 }

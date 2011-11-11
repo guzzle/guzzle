@@ -157,36 +157,27 @@ class Client extends AbstractSubject implements ClientInterface
      *      override the base path of the client, or a relative path to append
      *      to the base path of the client.  The URI can contain the
      *      querystring as well.
-     * @param array|Collection (optional) Parameters to replace from the uri
-     *      {{}} injection points.
+     * @param array|Collection $headers (optional) HTTP headers
+     * @param string|resource|array|EntityBody $body (optional) Entity body of
+     *      request (POST/PUT) or response (GET)
      *
      * @return RequestInterface
      */
-    public function createRequest($method = RequestInterface::GET, $uri = null, $inject = null)
+    public function createRequest($method = RequestInterface::GET, $uri = null, $headers = null, $body = null)
     {
-        // Inject configuration data into the URI if needed
-        if ($inject) {
-            if (is_array($inject)) {
-                $inject = new Collection($inject);
-            }
-            $uri = Guzzle::inject($uri, $inject);
-        }
-
-        if ($uri) {
-            // Use absolute URLs as-is
-            if (strpos($uri, 'http') === 0) {
-                $url = $uri;
-            } else {
-                $this->getBaseUrl();
-                $url = clone $this->injectedBaseUrl;
-                $url = (string) $url->combine($uri);
-            }
-        } else {
+        if (!$uri) {
             $url = $this->getBaseUrl();
+        } else if (strpos($uri, 'http') === 0) {
+            // Use absolute URLs as-is
+            $url = $this->inject($uri);
+        } else {
+            $this->getBaseUrl();
+            $url = clone $this->injectedBaseUrl;
+            $url = (string) $url->combine($this->inject($uri));
         }
 
         return $this->prepareRequest(
-            RequestFactory::create($method, $url)
+            RequestFactory::create($method, $url, $headers, $body)
         );
     }
 
@@ -356,9 +347,7 @@ class Client extends AbstractSubject implements ClientInterface
     public function setBaseUrl($url)
     {
         $this->baseUrl = $url;
-        if ($this->config || strpos($url, '{{') === false) {
-            $this->injectedBaseUrl = Url::factory($this->inject($url));
-        }
+        $this->injectedBaseUrl = Url::factory($this->inject($url));
 
         return $this;
     }
@@ -407,16 +396,17 @@ class Client extends AbstractSubject implements ClientInterface
     /**
      * Create a GET request for the client
      *
-     * @param string $uri (optional) Resource URI of the request.  Use an
+     * @param string $path (optional) Resource URI of the request.  Use an
      *      absolute path to override the base path, or a relative path to append
-     * @param array|Collection (optional) Parameters to replace from the uri
-     *      {{}} injection points.
+     * @param array|Collection $headers (optional) HTTP headers
+     * @param string|resource|array|EntityBody $body (optional) Where to store
+     *      the response entity body
      *
      * @return Request
      */
-    public final function get($uri = null, $inject = null)
+    public final function get($path = null, $headers = null, $body = null)
     {
-        return $this->createRequest('GET', $uri, $inject);
+        return $this->createRequest('GET', $path, $headers, $body);
     }
 
     /**
@@ -424,14 +414,13 @@ class Client extends AbstractSubject implements ClientInterface
      *
      * @param string $uri (optional) Resource URI of the request.  Use an
      *      absolute path to override the base path, or a relative path to append
-     * @param array|Collection (optional) Parameters to replace from the uri
-     *      {{}} injection points.
+     * @param array|Collection $headers (optional) HTTP headers
      *
      * @return Request
      */
-    public final function head($uri = null, $inject = null)
+    public final function head($uri = null, $headers = null)
     {
-        return $this->createRequest('HEAD', $uri, $inject);
+        return $this->createRequest('HEAD', $uri, $headers);
     }
 
     /**
@@ -439,14 +428,13 @@ class Client extends AbstractSubject implements ClientInterface
      *
      * @param string $uri (optional) Resource URI of the request.  Use an
      *      absolute path to override the base path, or a relative path to append
-     * @param array|Collection (optional) Parameters to replace from the uri
-     *      {{}} injection points.
+     * @param array|Collection $headers (optional) HTTP headers
      *
      * @return Request
      */
-    public final function delete($uri = null, $inject = null)
+    public final function delete($uri = null, $headers = null)
     {
-        return $this->createRequest('DELETE', $uri, $inject);
+        return $this->createRequest('DELETE', $uri, $headers);
     }
 
     /**
@@ -454,14 +442,14 @@ class Client extends AbstractSubject implements ClientInterface
      *
      * @param string $uri (optional) Resource URI of the request.  Use an
      *      absolute path to override the base path, or a relative path to append
-     * @param array|Collection (optional) Parameters to replace from the uri
-     *      {{}} injection points.
+     * @param array|Collection $headers (optional) HTTP headers
+     * @param string|resource|array|EntityBody $body Body to send in the request
      *
      * @return EntityEnclosingRequest
      */
-    public final function put($uri = null, $inject = null)
+    public final function put($uri = null, $headers = null, $body = null)
     {
-        return $this->createRequest('PUT', $uri, $inject);
+        return $this->createRequest('PUT', $uri, $headers, $body);
     }
 
     /**
@@ -469,14 +457,16 @@ class Client extends AbstractSubject implements ClientInterface
      *
      * @param string $uri (optional) Resource URI of the request.  Use an absolute path to
      *      override the base path, or a relative path to append it.
-     * @param array|Collection (optional) Parameters to replace from the uri
-     *      {{}} injection points.
+     * @param array|Collection $headers (optional) HTTP headers
+     * @param array|Collection $postFields (optional) Associative array of POST
+     *      fields to send in the body of the request.  Prefix a value in the
+     *      array with the @ symbol reference a file.
      *
      * @return EntityEnclosingRequest
      */
-    public final function post($uri = null, $inject = null)
+    public final function post($uri = null, $headers = null, $postFields = null)
     {
-        return $this->createRequest('POST', $uri, $inject);
+        return $this->createRequest('POST', $uri, $headers, $postFields);
     }
 
     /**
@@ -484,13 +474,11 @@ class Client extends AbstractSubject implements ClientInterface
      *
      * @param string $uri (optional) Resource URI of the request.  Use an
      *      absolute path to override the base path, or relative path to append
-     * @param array|Collection (optional) Parameters to replace from the uri
-     *      {{}} injection points.
      *
      * @return Request
      */
-    public final function options($uri = null, $inject = null)
+    public final function options($uri = null)
     {
-        return $this->createRequest('OPTIONS', $uri, $inject);
+        return $this->createRequest('OPTIONS', $uri);
     }
 }

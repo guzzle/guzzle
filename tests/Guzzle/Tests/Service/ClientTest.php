@@ -377,10 +377,8 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('PUT', $request->getMethod());
 
         // Create a PUT request with injected config
-        $request = $client->createRequest('PUT', '/path/{{a}}?q={{b}}', array(
-            'a' => '1',
-            'b' => '2'
-        ));
+        $client->getConfig()->set('a', 1)->set('b', 2);
+        $request = $client->createRequest('PUT', '/path/{{a}}?q={{b}}');
         $this->assertEquals($request->getUrl(), $this->getServer()->getUrl() . 'path/1?q=2');
 
         // Realtive URL with relative path
@@ -448,5 +446,17 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $client = new Client('');
         $client->getBaseUrl();
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::createRequest
+     */
+    public function testClientInjectsConfigsIntoUrls()
+    {
+        $client = new Client('http://www.test.com/api/v1', array(
+            'test' => '123'
+        ));
+        $request = $client->get('relative/{{test}}');
+        $this->assertEquals('http://www.test.com/api/v1/relative/123', $request->getUrl());
     }
 }
