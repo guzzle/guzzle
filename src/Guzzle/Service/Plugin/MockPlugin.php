@@ -57,12 +57,18 @@ class MockPlugin extends AbstractSubject implements Observer, \Countable
     /**
      * Constructor
      *
+     * @param array $responses (optional) Array of responses to queue
      * @param bool $temporary (optional) Set to TRUE to remove the plugin when
      *      the queue is empty
      */
-    public function __construct($temporary = false)
+    public function __construct(array $responses = null, $temporary = false)
     {
         $this->temporary = $temporary;
+        if ($responses) {
+            foreach ($responses as $response) {
+                $this->addResponse($response);
+            }
+        }
     }
 
     /**

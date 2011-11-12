@@ -22,7 +22,7 @@ class MockPluginTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $plugin = new MockPlugin();
         $this->assertFalse($plugin->isTemporary());
-        $plugin = new MockPlugin(true);
+        $plugin = new MockPlugin(null, true);
         $this->assertTrue($plugin->isTemporary());
     }
     
@@ -160,7 +160,7 @@ class MockPluginTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testDetachesTemporaryWhenEmpty()
     {
-        $p = new MockPlugin(true);
+        $p = new MockPlugin(null, true);
         $p->addResponse(MockPlugin::getMockFile(__DIR__ . '/../../TestData/mock_response'));
         $client = new Client('http://localhost:123/');
         $client->getEventManager()->attach($p, 9999);
@@ -168,5 +168,14 @@ class MockPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request->send();
 
         $this->assertFalse($client->getEventManager()->hasObserver($p));
+    }
+
+    /**
+     * @covers Guzzle\Service\Plugin\MockPlugin::__construct
+     */
+    public function testLoadsResponsesFromConstructor()
+    {
+        $p = new MockPlugin(array(new Response(200)));
+        $this->assertEquals(1, $p->count());
     }
 }
