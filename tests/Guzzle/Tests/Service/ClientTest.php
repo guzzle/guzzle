@@ -5,6 +5,7 @@ namespace Guzzle\Tests\Service;
 use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Log\ClosureLogAdapter;
+use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Plugin\ExponentialBackoffPlugin;
 use Guzzle\Http\Plugin\LogPlugin;
@@ -468,5 +469,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client = new Client();
         $request = $client->get('http://www.google.com/');
         $this->assertEquals('http://www.google.com/', $request->getUrl());
+        $request->setResponse(new Response(200), true);
+        $request->send();
     }
 }
