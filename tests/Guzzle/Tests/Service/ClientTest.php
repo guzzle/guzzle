@@ -459,4 +459,14 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $client->get('relative/{{test}}');
         $this->assertEquals('http://www.test.com/api/v1/relative/123', $request->getUrl());
     }
+
+    /**
+     * @covers Guzzle\Service\Client
+     */
+    public function testAllowsEmptyBaseUrl()
+    {
+        $client = new Client();
+        $request = $client->get('http://www.google.com/');
+        $this->assertEquals('http://www.google.com/', $request->getUrl());
+    }
 }

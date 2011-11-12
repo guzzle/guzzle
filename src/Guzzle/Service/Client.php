@@ -76,10 +76,10 @@ class Client extends AbstractSubject implements ClientInterface
     /**
      * Client constructor
      *
-     * @param string $baseUrl Base URL used to interact with a web service
+     * @param string $baseUrl (optional) Base URL of the web service
      * @param array|Collection $config (optional) Configuration settings
      */
-    public function __construct($baseUrl, $config = null)
+    public function __construct($baseUrl = '', $config = null)
     {
         if ($config) {
             $this->setConfig($config);
