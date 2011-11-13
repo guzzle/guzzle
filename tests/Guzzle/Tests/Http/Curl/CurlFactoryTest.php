@@ -13,6 +13,7 @@ use Guzzle\Http\Url;
 use Guzzle\Tests\Common\Mock\MockObserver;
 
 /**
+ * @group server
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase

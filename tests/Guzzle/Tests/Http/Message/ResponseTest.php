@@ -10,6 +10,7 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 
 /**
+ * @group server
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class ResponseTest extends \Guzzle\Tests\GuzzleTestCase

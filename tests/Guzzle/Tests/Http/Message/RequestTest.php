@@ -18,6 +18,7 @@ use Guzzle\Http\Message\BadResponseException;
 use Guzzle\Tests\Common\Mock\MockObserver;
 
 /**
+ * @group server
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class RequestTest extends \Guzzle\Tests\GuzzleTestCase

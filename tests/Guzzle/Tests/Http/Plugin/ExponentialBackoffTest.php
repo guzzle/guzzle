@@ -8,6 +8,7 @@ use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Pool\Pool;
 
 /**
+ * @group server
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase

@@ -9,6 +9,7 @@ use Guzzle\Http\Curl\CurlHandle;
 use Guzzle\Http\Curl\CurlFactory;
 
 /**
+ * @group server
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase

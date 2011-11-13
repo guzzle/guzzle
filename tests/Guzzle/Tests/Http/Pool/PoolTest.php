@@ -12,6 +12,7 @@ use Guzzle\Http\Pool\Pool;
 use Guzzle\Http\Pool\PoolRequestException;
 
 /**
+ * @group server
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class PoolTest extends \Guzzle\Tests\GuzzleTestCase implements Observer

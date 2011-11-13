@@ -13,6 +13,7 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Http\Plugin\CachePlugin;
 
 /**
+ * @group server
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase

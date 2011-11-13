@@ -11,6 +11,7 @@ use Guzzle\Http\Message\EntityEnclosingRequest;
 use Guzzle\Http\Plugin\LogPlugin;
 
 /**
+ * @group server
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class LogPluginTest extends \Guzzle\Tests\GuzzleTestCase

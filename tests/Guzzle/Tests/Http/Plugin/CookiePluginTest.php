@@ -11,6 +11,7 @@ use Guzzle\Http\Message\Request;
 use Guzzle\Guzzle;
 
 /**
+ * @group server
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase

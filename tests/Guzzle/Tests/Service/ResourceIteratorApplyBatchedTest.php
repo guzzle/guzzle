@@ -7,6 +7,7 @@ use Guzzle\Service\ResourceIterator;
 use Guzzle\Tests\Service\Mock\MockResourceIterator;
 
 /**
+ * @group server
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class ResourceIteratorApplyBatchedTest extends \Guzzle\Tests\GuzzleTestCase

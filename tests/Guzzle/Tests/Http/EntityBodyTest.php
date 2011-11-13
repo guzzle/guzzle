@@ -5,6 +5,7 @@ namespace Guzzle\Tests\Http;
 use Guzzle\Http\EntityBody;
 
 /**
+ * @group server
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase

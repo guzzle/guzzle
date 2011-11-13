@@ -5,6 +5,7 @@ namespace Guzzle\Tests\Common;
 use Guzzle\Common\Stream;
 
 /**
+ * @group server
  * @author Michael Dowling <michael@guzzlephp.org>
  */
 class StreamTest extends \Guzzle\Tests\GuzzleTestCase
