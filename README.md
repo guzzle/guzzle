@@ -94,16 +94,15 @@ Send requests in parallel
 
 ```php
 <?php
-use Guzzle\Http\Pool\Pool;
-use Guzzle\Http\Pool\PoolRequestException;
 
-$pool = new Pool();
-$pool->add($client->get('http://www.google.com/'));
-$pool->add($client->head('http://www.google.com/'));
-$pool->add($client->get('https://www.github.com/'));
+use Guzzle\Service\Client;
 
 try {
-    $pool->send();
+    $responses = $client->batch(array(
+        $client->get('http://www.google.com/'),
+        $client->head('http://www.google.com/'),
+        $client->get('https://www.github.com/')
+    ));
 } catch (PoolRequestException $e) {
     echo "The following requests encountered an exception: \n";
     foreach ($e as $exception) {

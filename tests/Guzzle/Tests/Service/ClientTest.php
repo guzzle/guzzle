@@ -9,12 +9,14 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Plugin\ExponentialBackoffPlugin;
 use Guzzle\Http\Plugin\LogPlugin;
+use Guzzle\Http\Pool\Pool;
 use Guzzle\Service\Description\ApiCommand;
 use Guzzle\Service\Client;
 use Guzzle\Service\Command\CommandSet;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Description\XmlDescriptionBuilder;
 use Guzzle\Service\Description\ServiceDescription;
+use Guzzle\Service\Plugin\MockPlugin;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
 
 /**
@@ -244,13 +246,9 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     public function testExecutesCommandSets()
     {
         $client = new Client('http://www.test.com/');
-
-        // Set a mock response for each request from the Client
-        $client->getEventManager()->attach(function($subject, $event, $context) {
-            if ($event == 'request.create') {
-                $context->setResponse(new \Guzzle\Http\Message\Response(200), true);
-            }
-        });
+        $client->getEventManager()->attach(new MockPlugin(array(
+            new \Guzzle\Http\Message\Response(200)
+        )));
 
         // Create a command set and a command
         $set = new CommandSet();
@@ -472,5 +470,42 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('http://www.google.com/', $request->getUrl());
         $request->setResponse(new Response(200), true);
         $request->send();
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::batch
+     */
+    public function testManagesRequestPool()
+    {
+        $client = new Client('http://localhost/');
+        $plugin = new MockPlugin();
+        $plugin->addResponse(new Response(200));
+        $plugin->addResponse(new Response(200));
+        $client->getEventManager()->attach($plugin);
+
+        $responses = $client->batch(array(
+            $client->get('/'),
+            $client->head('/users')
+        ));
+
+        $this->assertInternalType('array', $responses);
+        $this->assertEquals(2, count($responses));
+        $this->assertEquals(200, $responses[0]->getStatusCode());
+        $this->assertEquals(200, $responses[1]->getStatusCode());
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::setPool
+     * @covers Guzzle\Service\Client::getPool
+     */
+    public function testManagesInternalPoolObject()
+    {
+        $client = new Client();
+        $pool = $client->getPool();
+        $this->assertInstanceOf('Guzzle\\Http\\Pool\\PoolInterface', $pool);
+
+        $client->setPool(new Pool());
+        $this->assertInstanceOf('Guzzle\\Http\\Pool\\PoolInterface', $client->getPool());
+        $this->assertNotSame($pool, $client->getPool());
     }
 }

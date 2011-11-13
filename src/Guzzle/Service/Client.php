@@ -15,6 +15,8 @@ use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Curl\CurlConstants;
+use Guzzle\Http\Pool\PoolInterface;
+use Guzzle\Http\Pool\Pool;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\CommandSet;
 use Guzzle\Service\Description\ServiceDescription;
@@ -59,6 +61,11 @@ class Client extends AbstractSubject implements ClientInterface
      * @var Url Cached injected base URL
      */
     private $injectedBaseUrl;
+
+    /**
+     * @var PoolInterface Pool used internally
+     */
+    private $pool;
 
     /**
      * Basic factory method to create a new client.  Extend this method in
@@ -480,5 +487,53 @@ class Client extends AbstractSubject implements ClientInterface
     public final function options($uri = null)
     {
         return $this->createRequest('OPTIONS', $uri);
+    }
+
+    /**
+     * Sends multiple requests in parallel
+     *
+     * @param array $requests Requests to send in parallel
+     *
+     * @return array Returns the responses
+     */
+    public function batch(array $requests)
+    {
+        $pool = $this->getPool();
+        $pool->reset();
+        foreach ($requests as $request) {
+            $pool->add($request);
+        }
+
+        return array_map(function($request) {
+            return $request->getResponse();
+        }, $pool->send());
+    }
+
+    /**
+     * Set a Pool object to be used internally by the client for batch requests
+     *
+     * @param PoolInterface $pool Pool object to use for batch requests
+     *
+     * @return Client
+     */
+    public function setPool(PoolInterface $pool)
+    {
+        $this->pool = $pool;
+
+        return $this;
+    }
+
+    /**
+     * Get the Pool object used with the client
+     *
+     * @return PoolInterface
+     */
+    public function getPool()
+    {
+        if (!$this->pool) {
+            $this->pool = new Pool();
+        }
+
+        return $this->pool;
     }
 }

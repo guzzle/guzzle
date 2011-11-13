@@ -10,6 +10,7 @@ use Guzzle\Service\Client;
 use Guzzle\Service\DescriptionBuilder\XmlDescriptionBuilder;
 use Guzzle\Service\Command\ConcreteCommandFactory;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
+use Guzzle\Service\Plugin\MockPlugin;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>
@@ -109,12 +110,11 @@ class CommandSetTest extends AbstractCommandTest
             'Content-Type' => 'application/xml'
         ), '<xml><data>123</data></xml>');
 
-        // Set a mock response for each request from the Client
-        $client->getEventManager()->attach(function($subject, $event, $context) use ($response) {
-            if ($event == 'request.create') {
-                $context->setResponse($response, true);
-            }
-        });
+        $client->getEventManager()->attach(new MockPlugin(array(
+            $response,
+            $response,
+            $response
+        )));
 
         $command1 = new MockCommand();
         $command1->setClient($client);

@@ -7,6 +7,7 @@ use Guzzle\Service\Client;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\AbstractCommand;
 use Guzzle\Service\Description\ApiCommand;
+use Guzzle\Service\Plugin\MockPlugin;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
 use Guzzle\Tests\Service\Mock\Command\Sub\Sub;
 
@@ -125,11 +126,9 @@ class CommandTest extends AbstractCommandTest
         ), '<xml><data>123</data></xml>');
 
         // Set a mock response
-        $client->getEventManager()->attach(function($subject, $event, $context) use ($response) {
-            if ($event == 'request.create') {
-                $context->setResponse($response, true);
-            }
-        });
+        $client->getEventManager()->attach(new MockPlugin(array(
+            $response
+        )));
 
         $command = new MockCommand();
 
@@ -152,14 +151,11 @@ class CommandTest extends AbstractCommandTest
     {
         $client = $this->getClient();
 
-        // Set a mock response
-        $client->getEventManager()->attach(function($subject, $event, $context) {
-            if ($event == 'request.create') {
-                $context->setResponse(new Response(200, array(
-                    'Content-Type' => 'application/octect-stream'
-                ), 'abc,def,ghi'), true);
-            }
-        });
+        $client->getEventManager()->attach(new MockPlugin(array(
+            new Response(200, array(
+                'Content-Type' => 'application/octect-stream'
+            ), 'abc,def,ghi')
+        )));
 
         $command = new MockCommand();
         $client->execute($command);

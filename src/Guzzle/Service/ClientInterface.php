@@ -7,6 +7,8 @@ use Guzzle\Common\Collection;
 use Guzzle\Common\Event\Subject;
 use Guzzle\Common\NullObject;
 use Guzzle\Http\Message\RequestInterface;
+use Guzzle\Http\Pool\PoolInterface;
+use Guzzle\Http\Pool\Pool;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\CommandSet;
 use Guzzle\Service\Description\ServiceDescription;
@@ -237,4 +239,29 @@ interface ClientInterface extends Subject
      * @return RequestInterface
      */
     function options($uri = null);
+
+    /**
+     * Sends multiple requests in parallel
+     *
+     * @param array $requests Requests to send in parallel
+     *
+     * @return array Returns the responses
+     */
+    public function batch(array $requests);
+
+    /**
+     * Set a Pool object to be used internally by the client for batch requests
+     *
+     * @param PoolInterface $pool Pool object to use for batch requests
+     *
+     * @return ClientInterface
+     */
+    public function setPool(PoolInterface $pool);
+
+    /**
+     * Get the Pool object used with the client
+     *
+     * @return PoolInterface
+     */
+    public function getPool();
 }
