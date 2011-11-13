@@ -5,7 +5,8 @@ Guzzle is a PHP 5.3+ HTTP client and framework for building web service clients.
 
 - Docs: [www.guzzlephp.org](http://www.guzzlephp.org/)
 - Forum: https://groups.google.com/forum/?hl=en#!forum/guzzle
-- Travis-CI: [![Build Status](https://secure.travis-ci.org/guzzle/guzzle.png)](http://travis-ci.org/guzzle/guzzle)
+
+[![Build Status](https://secure.travis-ci.org/guzzle/guzzle.png)](http://travis-ci.org/guzzle/guzzle)
 
 Features
 --------
