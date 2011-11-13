@@ -74,7 +74,8 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('gzip', $body->getContentEncoding(), '-> getContentEncoding() must return the correct encoding after compressing');
         $this->assertEquals(gzdeflate('testing 123...testing 123'), (string)$body);
         $this->assertTrue($body->getContentLength() < $size);
-        $this->assertEquals('testing 123...testing 123', $body->uncompress());
+        $this->assertTrue($body->uncompress());
+        $this->assertEquals('testing 123...testing 123', (string) $body);
         $this->assertFalse($body->getContentEncoding(), '-> getContentEncoding() must reset to FALSE');
 
         $this->assertTrue($body->compress('bzip2.compress'));

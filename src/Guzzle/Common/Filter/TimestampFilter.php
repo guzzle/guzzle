@@ -14,13 +14,13 @@ class TimestampFilter extends AbstractFilter
      */
     protected function filterCommand($command)
     {
-        if (!is_numeric($command) || false === date('Y-m-d', (float) $command)) {
+        $timestamp = is_numeric($command) ? date('Y-m-d', (int) $command) : false;
+        
+        if (false === $timestamp || '1969-12-31' == $timestamp) {
             if (is_scalar($command)) {
-
                 return 'The supplied value is not a valid timestamp: ' 
                     . (string) $command . ' supplied';
             } else {
-
                 return 'The supplied value is not a valid timestamp: '
                     . gettype($command) . ' supplied';
             }
