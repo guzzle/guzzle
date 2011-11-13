@@ -15,36 +15,40 @@
     <target name="init" depends="init-git,init-test" />
 
     <target name="phar" description="Create a phar with an autoloader">
-        <pharpackage
-            destfile="./guzzle.phar"
-            basedir="../src"
-            stub="./autoload.php"
-            alias="Guzzle"
-            signature="sha1">
-            <fileset dir="../src">
-                <include name="**/*.php" />
-                <exclude name="**/Tests/**" />
-            </fileset>
-            <metadata>
-                <element name="version" value="1.0.1" />
-            </metadata>
-        </pharpackage>
-    </target>
-
-    <target name="phar-na" description="Create a phar with no autoloader">
-        <pharpackage
-            destfile="./guzzle-na.phar"
-            basedir="../src"
-            alias="Guzzle"
-            signature="sha1">
-            <fileset dir="../src">
-                <include name="**/*.php" />
-                <exclude name="**/Tests/**" />
-            </fileset>
-            <metadata>
-                <element name="version" value="1.0.1" />
-            </metadata>
-        </pharpackage>
+        <if>
+            <equals arg1="${autoload}" arg2="false" />
+            <then>
+                <pharpackage
+                    destfile="./guzzle-na.phar"
+                    basedir="../src"
+                    alias="Guzzle"
+                    signature="sha1">
+                    <fileset dir="../src">
+                        <include name="**/*.php" />
+                        <exclude name="**/Tests/**" />
+                    </fileset>
+                    <metadata>
+                        <element name="version" value="1.0.1" />
+                    </metadata>
+                </pharpackage>
+            </then>
+            <else>
+                <pharpackage
+                    destfile="./guzzle.phar"
+                    basedir="../src"
+                    stub="./autoload.php"
+                    alias="Guzzle"
+                    signature="sha1">
+                    <fileset dir="../src">
+                        <include name="**/*.php" />
+                        <exclude name="**/Tests/**" />
+                    </fileset>
+                    <metadata>
+                        <element name="version" value="1.0.1" />
+                    </metadata>
+                </pharpackage>
+            </else>
+        </if>
     </target>
 
     <target name="template" description="Create a client project skeleton">
