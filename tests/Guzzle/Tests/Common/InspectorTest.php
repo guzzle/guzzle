@@ -13,6 +13,7 @@ use Guzzle\Tests\Common\Mock\MockFilter;
 
 /**
  * @author Michael Dowling <michael@guzzlephp.org>
+ * @covers Guzzle\Common\Inspector
  *
  * @guzzle test type="class:Guzzle\Tests\GuzzleTestCase"
  * @guzzle bool_1 default="true" type="boolean"
@@ -284,5 +285,16 @@ The supplied value is not an instance of stdClass: <string:123> supplied", $e->g
         $this->assertEquals("The supplied value is not a string: integer supplied
 Requires that the min argument be >= 2 characters.
 Requires that the max argument be <= 2 characters.", implode("\n", $result));
+    }
+
+    /**
+     * @covers Guzzle\Common\Inspector::parseDocBlock
+     */
+    public function testVerifiesGuzzleAnnotations()
+    {
+        $this->assertEquals(
+            array(),
+            Inspector::getInstance()->parseDocBlock('testing')
+        );
     }
 }

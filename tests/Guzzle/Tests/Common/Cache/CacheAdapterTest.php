@@ -9,6 +9,7 @@ use Doctrine\Common\Cache\ArrayCache;
  * CacheAdapter test case
  *
  * @author Michael Dowling <michael@guzzlephp.org>
+ * @covers Guzzle\Common\Cache\DoctrineCacheAdapter
  */
 class CacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
 {

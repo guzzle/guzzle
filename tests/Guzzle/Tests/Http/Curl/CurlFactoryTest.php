@@ -15,6 +15,7 @@ use Guzzle\Tests\Common\Mock\MockObserver;
 /**
  * @group server
  * @author Michael Dowling <michael@guzzlephp.org>
+ * @covers Guzzle\Http\Curl\CurlFactory
  */
 class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 {
@@ -600,6 +601,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Curl\CurlFactory
+     * @covers Guzzle\Http\Curl\CurlFactory::getConnectionsPerHost
      * @depends testReleasesAllHandles
      */
     public function testClosesHandlesWhenHandlesAreReleasedAndNeedToBeClosed()
@@ -658,6 +660,7 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Curl\CurlFactory::setMaxIdleTime
      * @covers Guzzle\Http\Curl\CurlFactory::clean
+     * @covers Guzzle\Http\Curl\CurlFactory::getConnectionsPerHost
      * @depends testReleasesAllHandles
      */
     public function testPurgesConnectionsThatAreTooStaleBasedOnMaxIdleTime()
@@ -711,5 +714,24 @@ class CurlFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(0, $f->getConnectionsPerHost(null, '127.0.0.1:8124'));
         $this->assertEquals(0, $h->getUseCount());
         $this->assertNotSame($curlHandle, $h->getHandle());
+    }
+
+    /**
+     * @covers Guzzle\Http\Curl\CurlFactory::getConnectionsPerHost
+     */
+    public function testSkipsHostsThatDoNotMatch()
+    {
+        $f = CurlFactory::getInstance();
+        $f->releaseAllHandles(true);
+
+        $request1 = RequestFactory::get('http://www.yahoo.com/');
+        $request1->getCurlHandle();
+        $request2 = RequestFactory::get('http://www.google.com/');
+        $request2->getCurlHandle();
+
+        $this->assertEquals(1, $f->getConnectionsPerHost(null, 'www.yahoo.com:80'));
+        $this->assertEquals(1, $f->getConnectionsPerHost(null, 'www.google.com:80'));
+        $this->assertEquals(0, $f->getConnectionsPerHost(null, 'foo.com:80'));
+        $f->releaseAllHandles(true);
     }
 }

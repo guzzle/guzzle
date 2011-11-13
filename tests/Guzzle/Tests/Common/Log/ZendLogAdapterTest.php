@@ -10,6 +10,8 @@ use Guzzle\Common\Collection;
  * Test class for ZendLogAdapter
  *
  * @author Michael Dowling <michael@guzzlephp.org>
+ * @covers Guzzle\Common\Log\AbstractLogAdapter
+ * @covers Guzzle\Common\Log\ZendLogAdapter
  */
 class ZendLogAdapterTest extends \Guzzle\Tests\GuzzleTestCase
 {

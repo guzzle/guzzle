@@ -50,9 +50,11 @@ class Inspector
      */
     public static function getInstance()
     {
+        // @coveCoverageIgnoreStart
         if (!self::$instance) {
             self::$instance = new self();
         }
+        // @coveCoverageIgnoreEnd
 
         return self::$instance;
     }
@@ -148,7 +150,7 @@ class Inspector
         $matches = array();
         // Get all of the @guzzle annotations from the class
         preg_match_all('/' . self::GUZZLE_ANNOTATION . '\s+([A-Za-z0-9_\-\.]+)\s*([A-Za-z0-9]+=".+")*/', $doc, $matches);
-        if (!isset($matches[1])) {
+        if (empty($matches[1])) {
             return array();
         }
 
