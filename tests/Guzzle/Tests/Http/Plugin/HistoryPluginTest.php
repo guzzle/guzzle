@@ -54,7 +54,6 @@ class HistoryPluginTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $h = new HistoryPlugin();
         $requests = $this->addRequests($h, 1);
-        $requests[0]->send();
         $this->assertEquals(1, count($h));
         $i = $h->getIterator();
         $this->assertEquals(1, count($i));

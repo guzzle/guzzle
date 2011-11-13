@@ -1,0 +1,12 @@
+language: php
+php:
+  - 5.3
+  - 5.4
+before_script:
+  - git submodule update --init
+  - cp phpunit.xml.dist phpunit.xml
+  - ~/.nvm/v0.6.1/bin/node tests/Guzzle/Tests/Http/server.js &
+script: sudo phpunit
+notifications:
+  email:
+    - michael@guzzlephp.org

@@ -14,9 +14,9 @@ class TimestampFilter extends AbstractFilter
      */
     protected function filterCommand($command)
     {
-        $timestamp = is_numeric($command) ? date('Y-m-d', (int) $command) : false;
+        $timestamp = is_numeric($command) && $command > 0 ? date('Y-m-d', (int) $command) : false;
         
-        if (false === $timestamp || '1969-12-31' == $timestamp) {
+        if (false === $timestamp) {
             if (is_scalar($command)) {
                 return 'The supplied value is not a valid timestamp: ' 
                     . (string) $command . ' supplied';

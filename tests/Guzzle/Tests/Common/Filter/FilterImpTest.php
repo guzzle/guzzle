@@ -54,7 +54,7 @@ class FilterImpTest extends \Guzzle\Tests\GuzzleTestCase
         $filter = new Filter\TimestampFilter();
         $this->assertTrue($filter->process(time()));
         $this->assertEquals('The supplied value is not a valid timestamp: abc supplied', $filter->process('abc'));
-        $this->assertEquals('The supplied value is not a valid timestamp: 123 supplied', $filter->process(123));
+        $this->assertEquals('The supplied value is not a valid timestamp: -20 supplied', $filter->process(-20));
         $this->assertEquals('The supplied value is not a valid timestamp: object supplied', $filter->process(new \stdClass()));
     }
 

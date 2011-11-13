@@ -78,8 +78,10 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('testing 123...testing 123', (string) $body);
         $this->assertFalse($body->getContentEncoding(), '-> getContentEncoding() must reset to FALSE');
 
-        $this->assertTrue($body->compress('bzip2.compress'));
-        $this->assertEquals('compress', $body->getContentEncoding(), '-> compress() must set \'compress\' as the Content-Encoding');
+        if (in_array('bzip2.*', stream_get_filters())) {
+            $this->assertTrue($body->compress('bzip2.compress'));
+            $this->assertEquals('compress', $body->getContentEncoding(), '-> compress() must set \'compress\' as the Content-Encoding');
+        }
 
         $this->assertFalse($body->compress('non-existent'), '-> compress() must return false when a non-existent stream filter is used');
 
