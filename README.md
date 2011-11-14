@@ -3,6 +3,7 @@ PHP framework for HTTP and building RESTful webservice clients
 
 Guzzle is a PHP 5.3+ HTTP client and framework for building web service clients.
 
+- Download the phar to get started: http://www.guzzlephp.org/phar
 - Docs: [www.guzzlephp.org](http://www.guzzlephp.org/)
 - Forum: https://groups.google.com/forum/?hl=en#!forum/guzzle
 
