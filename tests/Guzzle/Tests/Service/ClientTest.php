@@ -211,6 +211,26 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Client::execute
+     */
+    public function testExecutesCommandsWithArray()
+    {
+        $client = new Client('http://www.test.com/');
+        $client->getEventManager()->attach(new MockPlugin(array(
+            new \Guzzle\Http\Message\Response(200),
+            new \Guzzle\Http\Message\Response(200)
+        )));
+
+        // Create a command set and a command
+        $set = array(new MockCommand(), new MockCommand());
+        $client->execute($set);
+
+        // Make sure it sent
+        $this->assertTrue($set[0]->isExecuted());
+        $this->assertTrue($set[1]->isExecuted());
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::execute
      * @expectedException Guzzle\Service\Command\CommandSetException
      */
     public function testThrowsExceptionWhenExecutingMixedClientCommandSets()

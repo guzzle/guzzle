@@ -287,7 +287,7 @@ class Client extends AbstractSubject implements ClientInterface
     /**
      * Execute a command and return the response
      *
-     * @param CommandInterface|CommandSet $command The command or set to execute
+     * @param CommandInterface|CommandSet|array $command Command or set to execute
      *
      * @return mixed Returns the result of the executed command's
      *       {@see CommandInterface::getResult} method if a CommandInterface is
@@ -299,16 +299,12 @@ class Client extends AbstractSubject implements ClientInterface
     public function execute($command)
     {
         if ($command instanceof CommandInterface) {
-
             $command->setClient($this)->prepare();
             $this->getEventManager()->notify('command.before_send', $command);
             $command->getRequest()->send();
             $this->getEventManager()->notify('command.after_send', $command);
-
             return $command->getResult();
-
         } else if ($command instanceof CommandSet) {
-
             foreach ($command as $c) {
                 if ($c->getClient() && $c->getClient() !== $this) {
                     throw new Command\CommandSetException(
@@ -318,12 +314,12 @@ class Client extends AbstractSubject implements ClientInterface
                 }
                 $c->setClient($this);
             }
-
             return $command->execute();
-
-        } else {
-            throw new \InvalidArgumentException('Invalid command sent to ' . __METHOD__);
+        } else if (is_array($command)) {
+            return $this->execute(new CommandSet($command));
         }
+
+        throw new \InvalidArgumentException('Invalid command sent to ' . __METHOD__);
     }
 
     /**
