@@ -18,6 +18,12 @@
     <filter>
         <whitelist>
             <directory suffix=".php">./src/Guzzle</directory>
+            <exclude>
+                <directory suffix="Interface.php">./src/Guzzle</directory>
+                <file>./src/Guzzle/Common/Event/Subject.php</file>
+                <file>./src/Guzzle/Common/GuzzleException.php</file>
+                <file>./src/Guzzle/Http/HttpException.php</file>
+            </exclude>
         </whitelist>
     </filter>
 
