@@ -58,11 +58,6 @@ class Client extends AbstractSubject implements ClientInterface
     private $baseUrl;
 
     /**
-     * @var Url Cached injected base URL
-     */
-    private $injectedBaseUrl;
-
-    /**
      * @var PoolInterface Pool used internally
      */
     private $pool;
@@ -178,9 +173,7 @@ class Client extends AbstractSubject implements ClientInterface
             // Use absolute URLs as-is
             $url = $this->inject($uri);
         } else {
-            $this->getBaseUrl();
-            $url = clone $this->injectedBaseUrl;
-            $url = (string) $url->combine($this->inject($uri));
+            $url = (string) Url::factory($this->getBaseUrl())->combine($this->inject($uri));
         }
 
         return $this->prepareRequest(
@@ -350,7 +343,6 @@ class Client extends AbstractSubject implements ClientInterface
     public function setBaseUrl($url)
     {
         $this->baseUrl = $url;
-        $this->injectedBaseUrl = Url::factory($this->inject($url));
 
         return $this;
     }
