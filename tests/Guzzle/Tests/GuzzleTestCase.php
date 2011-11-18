@@ -130,7 +130,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
     {
         $this->requests = array();
         $that = $this;
-        $mock = new MockPlugin(true);
+        $mock = new MockPlugin(array(), true);
         $mock->getEventManager()->attach(function($subject, $event, $context) use ($that) {
             if ($event == 'mock.request') {
                 $that->addMockedRequest($context);
@@ -140,7 +140,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
         foreach ((array) $paths as $path) {
             $mock->addResponse($this->getMockResponse($path));
         }
-        
+
         $client->getEventManager()->attach($mock, 9999);
     }
 
