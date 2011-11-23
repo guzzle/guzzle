@@ -328,4 +328,35 @@ EOT;
         $s = $b->get('missing_params');
         $this->assertEquals('billy', $s->getConfig('username'));
     }
+
+    /**
+     * @covers Guzzle\Service\ServiceBuilder::
+     */
+    public function testBuilderAllowsReferencesBetweenClients()
+    {
+        $builder = ServiceBuilder::factory(array(
+            'a' => array(
+                'class' => 'Guzzle\\Tests\\Service\\Mock\\MockClient',
+                'params' => array(
+                    'other_client' => '$.b',
+                    'username'     => 'x',
+                    'password'     => 'y',
+                    'subdomain'    => 'z'
+                )
+            ),
+            'b' => array(
+                'class' => 'Guzzle\\Tests\\Service\\Mock\\MockClient',
+                'params' => array(
+                    'username'  => '1',
+                    'password'  => '2',
+                    'subdomain' => '3'
+                )
+            )
+        ));
+
+        $client = $builder['a'];
+        $this->assertEquals('x', $client->getConfig('username'));
+        $this->assertSame($builder['b'], $client->getConfig('other_client'));
+        $this->assertEquals('1', $builder['b']->getConfig('username'));
+    }
 }

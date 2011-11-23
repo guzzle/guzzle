@@ -154,6 +154,13 @@ class ServiceBuilder implements \ArrayAccess
             return $this->clients[$name];
         }
 
+        // Convert references to the actual client
+        foreach ($this->builderConfig[$name]['params'] as $k => &$v) {
+            if (0 === strpos($v, '$.')) {
+                $v = $this->get(str_replace('$.', '', $v));
+            }
+        }
+
         $client = call_user_func(
             array($this->builderConfig[$name]['class'], 'factory'),
             $this->builderConfig[$name]['params']
