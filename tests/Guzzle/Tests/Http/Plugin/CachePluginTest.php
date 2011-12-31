@@ -54,7 +54,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
     public function testConstructorSetsValues()
     {
         $plugin = new CachePlugin($this->adapter, true, true, 1200);
-        
+
         $this->assertEquals($this->adapter, $plugin->getCacheAdapter());
     }
 
@@ -76,24 +76,24 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request = RequestFactory::post($this->getServer()->getUrl());
         $request->getEventManager()->attach($plugin);
         $this->assertFalse($request->getEventManager()->hasObserver($plugin));
-        
+
         // Create a new Request
         $request = RequestFactory::get($this->getServer()->getUrl());
         $request->getEventManager()->attach($plugin);
         $this->assertTrue($request->getEventManager()->hasObserver($plugin));
-        
+
         // Send the Request to the test server
         $request->send();
 
         // Calculate the cache key like the cache plugin does
         $key = $plugin->getCacheKey($request);
-        
+
         // Make sure that the cache plugin set the request in cache
         $this->assertNotNull($this->adapter->fetch($key));
 
         // Clear out the requests stored on the server to make sure we didn't send a new request
         $this->getServer()->flush();
-        
+
         // Test that the request is set manually
         // The test server has no more script data, so if it actually sends a
         // request it will fail the test.
@@ -182,7 +182,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Make sure that the encoded request is returned when $raw is false
         $this->assertNotEquals($key, $plugin->getCacheKey($request));
-        
+
         unset($request);
         unset($plugin);
     }
@@ -212,12 +212,12 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
     public function testRequestsCanOverrideTtlUsingCacheParam()
     {
         $plugin = new CachePlugin($this->adapter, true);
-        
+
         $request = new Request('GET', 'http://www.test.com/');
         $request->getParams()->set('cache.override_ttl', 1000);
         $request->getEventManager()->attach($plugin);$request->setResponse(Response::factory("HTTP/1.1 200 OK\r\nCache-Control: max-age=100\r\nContent-Length: 4\r\n\r\nData"), true);
         $request->send();
-        
+
         $request2 = new Request('GET', 'http://www.test.com/');
         $request2->getEventManager()->attach($plugin);
         $response = $request2->send();
@@ -243,7 +243,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request->send();
 
         sleep(1);
-        
+
         // Accept responses that are up to 100 seconds expired
         $request2 = new Request('GET', $server->getUrl() . 'test');
         $request2->getEventManager()->attach($plugin);
@@ -276,7 +276,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Send some responses to the test server for cache validation
         $server = $this->getServer();
-        
+
         // No restrictions
         $request = RequestFactory::get($server->getUrl());
         $response = new Response(200, array('Date' => Guzzle::getHttpDate('now')));
@@ -379,14 +379,14 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         }
 
         $request = RequestFactory::fromMessage("GET / HTTP/1.1\r\nHost: 127.0.0.1:" . $server->getPort() . "\r\n" . $request);
-        
+
         if ($param) {
             $request->getParams()->set('cache.revalidate', $param);
         }
 
-        $response = Response::factory($response);        
+        $response = Response::factory($response);
         $this->assertEquals($can, $plugin->canResponseSatisfyRequest($request, $response));
-        
+
         if ($result) {
             // Get rid of dates
             $this->assertEquals(
@@ -408,7 +408,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $plugin = new CachePlugin($this->adapter, true);
         $server = $this->getServer();
         $server->enqueue("HTTP/1.1 200 OK\r\nCache-Control: max-age=1000\r\nContent-Length: 4\r\n\r\nData");
-        
+
         $request = new Request('GET', $server->getUrl());
         $request->getCurlOptions()->set(\CURLOPT_TIMEOUT, 2);
         $request->getEventManager()->attach($plugin);
@@ -420,6 +420,6 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request->send();
         $request2->send();
 
-        $this->assertEquals('X-Guzzle-Cache', $request2->getResponse()->hasHeader('X-Guzzle-Cache'));
+        $this->assertEquals(true, $request2->getResponse()->hasHeader('X-Guzzle-Cache'));
     }
 }

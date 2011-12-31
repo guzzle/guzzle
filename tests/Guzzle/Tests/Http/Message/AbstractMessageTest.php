@@ -23,7 +23,7 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
     public function setUp()
     {
         parent::setUp();
-        
+
         $this->request = new Request('GET', 'http://www.guzzle-project.com/');
     }
 
@@ -34,7 +34,7 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->assertInstanceOf('Guzzle\\Common\\Collection', $this->request->getParams());
     }
-    
+
     /**
      * @covers Guzzle\Http\Message\AbstractMessage::addHeaders
      */
@@ -87,7 +87,19 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->assertFalse($this->request->hasHeader('Foo'));
         $this->request->setHeader('Foo', 'Bar');
-        $this->assertEquals('Foo', $this->request->hasHeader('Foo'));
+        $this->assertEquals(true, $this->request->hasHeader('Foo'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\AbstractMessage::hasHeader
+     */
+    public function testHasHeaderSearch()
+    {
+        $this->assertFalse($this->request->hasHeader('Foo'));
+        $this->request->setHeader('Foo', 'Bar');
+        $this->assertEquals('Foo', $this->request->hasHeader('Foo', 1));
+        $this->assertEquals('Foo', $this->request->hasHeader('/Foo/', 2));
+        $this->assertEquals(false, $this->request->hasHeader('bar', 1));
     }
 
     /**
@@ -97,7 +109,7 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
     public function testRemoveHeader()
     {
         $this->request->setHeader('Foo', 'Bar');
-        $this->assertEquals('Foo', $this->request->hasHeader('Foo'));
+        $this->assertEquals(true, $this->request->hasHeader('Foo'));
         $this->request->removeHeader('Foo');
         $this->assertFalse($this->request->hasHeader('Foo'));
     }
