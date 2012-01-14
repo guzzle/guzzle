@@ -6,9 +6,6 @@ use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Service\Command\ClosureCommand;
 use Guzzle\Service\Client;
 
-/**
- * @author Michael Dowling <michael@guzzlephp.org>
- */
 class ClosureCommandTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
@@ -34,21 +31,6 @@ class ClosureCommandTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Command\ClosureCommand
-     */
-    public function testCanSetCanBatch()
-    {
-        $c = new ClosureCommand(array(
-            'closure' => function() {},
-            'closure_api' => true
-        ));
-
-        $this->assertTrue($c->canBatch());
-        $this->assertSame($c, $c->setCanBatch(false));
-        $this->assertFalse($c->canBatch());
-    }
-
-    /**
      * @covers Guzzle\Service\Command\ClosureCommand::prepare
      * @covers Guzzle\Service\Command\ClosureCommand::build
      */
@@ -57,7 +39,7 @@ class ClosureCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $c = new ClosureCommand(array(
             'closure' => function($command, $api) {
                 $command->set('testing', '123');
-                $request = RequestFactory::get('http://www.test.com/');
+                $request = RequestFactory::create('GET', 'http://www.test.com/');
                 return $request;
             },
             'closure_api' => true

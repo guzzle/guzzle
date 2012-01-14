@@ -2,7 +2,7 @@
 
 namespace Guzzle\Service\Command;
 
-use Guzzle\Common\Inspector;
+use Guzzle\Service\Inspector;
 use Guzzle\Common\Collection;
 use Guzzle\Common\NullObject;
 use Guzzle\Http\Message\Response;
@@ -13,8 +13,6 @@ use Guzzle\Service\ClientInterface;
 /**
  * Command object to handle preparing and processing client requests and
  * responses of the requests
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 abstract class AbstractCommand extends Collection implements CommandInterface
 {
@@ -32,11 +30,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
      * @var mixed The result of the command
      */
     protected $result;
-
-    /**
-     * @var bool Whether or not the command can be batched
-     */
-    protected $canBatch = true;
 
     /**
      * @var ApiCommand API information about the command
@@ -57,7 +50,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         // Add arguments and validate the command
         if ($apiCommand) {
             $this->apiCommand = $apiCommand;
-            Inspector::getInstance()->validateConfig($apiCommand->getArgs(), $this, false);
+            Inspector::getInstance()->validateConfig($apiCommand->getParams(), $this, false);
         } else if (!($this instanceof ClosureCommand)) {
             Inspector::getInstance()->validateClass(get_class($this), $this, false);
         }
@@ -65,7 +58,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         if (!$this->get('headers') instanceof Collection) {
             $this->set('headers', new Collection());
         }
-        
+
         $this->init();
     }
 
@@ -83,8 +76,8 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             // client that executes the command
             $parts = explode('\\', get_class($this));
             while (array_shift($parts) !== 'Command');
-            
-            return implode('.', array_map(array('Guzzle\\Common\\Inflector', 'snake'), $parts));
+
+            return implode('.', array_map(array('Guzzle\\Service\\Inflector', 'snake'), $parts));
         }
     }
 
@@ -96,16 +89,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     public function getApiCommand()
     {
         return $this->apiCommand ?: new NullObject();
-    }
-
-    /**
-     * Get whether or not the command can be batched
-     *
-     * @return bool
-     */
-    public function canBatch()
-    {
-        return $this->canBatch;
     }
 
     /**
@@ -121,7 +104,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         }
 
         $this->client->execute($this);
-        
+
         return $this;
     }
 
@@ -134,7 +117,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     {
         return $this->client;
     }
-    
+
     /**
      * Set the client objec that will execute the command
      *
@@ -160,7 +143,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         if (!$this->request) {
             throw new \RuntimeException('The command must be prepared before retrieving the request');
         }
-        
+
         return $this->request;
     }
 
@@ -175,7 +158,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         if (!$this->isExecuted()) {
             throw new \RuntimeException('The command must be executed before retrieving the response');
         }
-        
+
         return $this->request->getResponse();
     }
 
@@ -191,7 +174,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         if (!$this->isExecuted()) {
             throw new \RuntimeException('The command must be executed before retrieving the result');
         }
-        
+
         if (null === $this->result) {
             $this->process();
         }
@@ -236,12 +219,12 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             // Fail on missing required arguments when it is not a ClosureCommand
             if (!($this instanceof ClosureCommand)) {
                 if ($this->apiCommand) {
-                    Inspector::getInstance()->validateConfig($this->apiCommand->getArgs(), $this);
+                    Inspector::getInstance()->validateConfig($this->apiCommand->getParams(), $this);
                 } else {
                     Inspector::getInstance()->validateClass(get_class($this), $this, true);
                 }
             }
-            
+
             $this->build();
 
             // Add custom request headers set on the command
@@ -270,10 +253,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     /**
      * Initialize the command (hook to be implemented in subclasses)
      */
-    protected function init()
-    {
-        return;
-    }
+    protected function init() {}
 
     /**
      * Create the request object that will carry out the command

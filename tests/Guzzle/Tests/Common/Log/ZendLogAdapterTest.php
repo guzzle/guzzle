@@ -5,11 +5,10 @@ namespace Guzzle\Tests\Common\Log;
 use Guzzle\Common\Log\LogAdapterInterface;
 use Guzzle\Common\Log\ZendLogAdapter;
 use Guzzle\Common\Collection;
+use Zend\Log\Logger;
+use Zend\Log\Writer\Stream;
 
 /**
- * Test class for ZendLogAdapter
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  * @covers Guzzle\Common\Log\AbstractLogAdapter
  * @covers Guzzle\Common\Log\ZendLogAdapter
  */
@@ -21,7 +20,7 @@ class ZendLogAdapterTest extends \Guzzle\Tests\GuzzleTestCase
     protected $adapter;
 
     /**
-     * @var Zend_Log
+     * @var Logger
      */
     protected $log;
 
@@ -31,7 +30,7 @@ class ZendLogAdapterTest extends \Guzzle\Tests\GuzzleTestCase
      */
     protected function setUp()
     {        
-        $this->log = new \Zend_Log(new \Zend_Log_Writer_Stream('php://output'));
+        $this->log = new Logger(new Stream('php://output'));
         $this->adapter = new ZendLogAdapter($this->log);
     }
 

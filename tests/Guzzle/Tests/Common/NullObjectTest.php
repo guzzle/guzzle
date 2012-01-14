@@ -4,9 +4,6 @@ namespace Guzzle\Tests\Common;
 
 use Guzzle\Common\NullObject;
 
-/**
- * @author Michael Dowling <michael@guzzlephp.org>
- */
 class NullObjectTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**

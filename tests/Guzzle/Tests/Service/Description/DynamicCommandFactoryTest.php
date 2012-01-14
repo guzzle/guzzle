@@ -9,9 +9,6 @@ use Guzzle\Service\Client;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Description\ApiCommand;
 
-/**
- * @author Michael Dowling <michael@guzzlephp.org>
- */
 class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
@@ -26,13 +23,11 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->service = new ServiceDescription(
             array(
-                new ApiCommand(array(
-                    'name' => 'test_command',
+                'test_command' => new ApiCommand(array(
                     'doc' => 'documentationForCommand',
                     'method' => 'HEAD',
-                    'can_batch' => true,
                     'path' => '/{{key}}',
-                    'args' => array(
+                    'params' => array(
                         'bucket' => array(
                             'required' => true,
                             'append' => '.',
@@ -51,11 +46,10 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
                         )
                     )
                 )),
-                new ApiCommand(array(
-                    'name' => 'body',
+                'body' => new ApiCommand(array(
                     'doc' => 'doc',
                     'method' => 'PUT',
-                    'args' => array(
+                    'params' => array(
                         'b' => array(
                             'required' => true,
                             'prepend' => 'begin_body::',
@@ -79,10 +73,9 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
                         )
                     )
                 )),
-                new ApiCommand(array(
-                    'name' => 'concrete',
+                'concrete' => new ApiCommand(array(
                     'class' => 'Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand',
-                    'args' => array()
+                    'params' => array()
                 ))
             )
         );
@@ -95,7 +88,7 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $client = new Client('http://www.example.com/');
         $client->setDescription($this->service);
-        
+
         $command = $this->service->createCommand('test_command', array(
             'bucket' => 'test',
             'key' => 'key'
@@ -109,8 +102,8 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         // Check the complete request
         $this->assertEquals(
             "HEAD /key HTTP/1.1\r\n" .
-            "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n" .
             "Host: www.example.com\r\n" .
+            "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n" .
             "\r\n", (string) $request);
 
         // Make sure the concrete command class is used
@@ -148,17 +141,17 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertEquals(
             "PUT /?test=abc&i=test HTTP/1.1\r\n" .
-            "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n" .
             "Host: www.tazmania.com\r\n" .
-            "X-Custom: haha\r\n" .
-            "Content-Length: 29\r\n" .
+            "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n" .
             "Expect: 100-Continue\r\n" .
+            "Content-Length: 29\r\n" .
+            "X-Custom: haha\r\n" .
             "\r\n" .
             "begin_body::my-data::end_body", (string) $request);
 
         unset($command);
         unset($request);
-        
+
         $command = $this->service->createCommand('body', array(
             'b' => 'my-data',
             'q' => 'abc',
@@ -167,14 +160,14 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         ));
 
         $request = $command->setClient($client)->prepare();
-        
+
         $this->assertEquals(
             "PUT /?test=abc&i=test HTTP/1.1\r\n" .
-            "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n" .
             "Host: www.tazmania.com\r\n" .
-            "X-Custom: haha\r\n" .
-            "Content-Length: 29\r\n" .
+            "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n" .
             "Expect: 100-Continue\r\n" .
+            "Content-Length: 29\r\n" .
+            "X-Custom: haha\r\n" .
             "\r\n" .
             "begin_body::my-data::end_body", (string) $request);
     }
@@ -195,8 +188,7 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $service = new ServiceDescription(
             array(
-                new ApiCommand(array(
-                    'name' => 'test_path',
+                'test_path' => new ApiCommand(array(
                     'method' => 'GET',
                     'path' => '/test',
                 ))
@@ -217,8 +209,7 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $service = new ServiceDescription(
             array(
-                new ApiCommand(array(
-                    'name' => 'test_path',
+                'test_path' => new ApiCommand(array(
                     'method' => 'GET',
                     'path' => 'test/abc',
                 ))

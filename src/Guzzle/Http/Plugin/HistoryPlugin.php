@@ -2,17 +2,15 @@
 
 namespace Guzzle\Http\Plugin;
 
-use Guzzle\Common\Event\Observer;
-use Guzzle\Common\Event\Subject;
+use Guzzle\Common\Event;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Maintains a list of requests and responses sent using a request or client
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
-class HistoryPlugin implements Observer, \IteratorAggregate, \Countable
+class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Countable
 {
     /**
      * @var int The maximum number of requests to maintain in the history
@@ -23,6 +21,14 @@ class HistoryPlugin implements Observer, \IteratorAggregate, \Countable
      * @var array Requests that have passd through the plugin
      */
     protected $requests = array();
+    
+    /**
+     * {@inheritdoc} 
+     */
+    public static function getSubscribedEvents()
+    {
+        return array('request.complete' => 'onRequestComplete');
+    }
 
     /**
      * Add a request to the history
@@ -122,10 +128,8 @@ class HistoryPlugin implements Observer, \IteratorAggregate, \Countable
     /**
      * {@inheritdoc}
      */
-    public function update(Subject $subject, $event, $context = null)
+    public function onRequestComplete(Event $event)
     {
-        if ($event == 'request.complete') {
-            $this->add($subject);
-        }
+        $this->add($event['request']);
     }
 }

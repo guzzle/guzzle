@@ -5,20 +5,18 @@ namespace Guzzle\Tests\Message;
 use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Http\EntityBody;
+use Guzzle\Http\HttpException;
 use Guzzle\Http\Message\BadResponseException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 
 /**
  * @group server
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
-     * The response object to test
-     *
-     * @var Guzzle\Http\Message\Response
+     * @var Response The response object to test
      */
     protected $response;
 
@@ -85,7 +83,7 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         try {
             $response = new Response(200, null, array('foo' => 'bar'));
             $this->fail('Response did not throw exception when passing invalid body');
-        } catch (BadResponseException $e) {
+        } catch (HttpException $e) {
         }
 
         // Make sure the proper exception is thrown when sending invalid code
@@ -645,7 +643,7 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
 
         // When an HTTPS request is sent and the Cache-Control directive does
         // not include a 'public' value, then the response is not to be cached
-        $request = RequestFactory::get('https://www.test.com/');
+        $request = RequestFactory::create('GET', 'https://www.test.com/');
         $response = new Response(200);
         $response->setRequest($request);
         $this->assertFalse($response->canCache());

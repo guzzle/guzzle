@@ -6,8 +6,6 @@ use Guzzle\Common\Collection;
 
 /**
  * Persists cookies using a JSON formatted file
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class FileCookieJar extends ArrayCookieJar
 {
@@ -50,7 +48,7 @@ class FileCookieJar extends ArrayCookieJar
             throw new HttpException('Unable to open file ' . $this->file);
         }
         // @codeCoverageIgnoreEnd
-        
+
         fwrite($handle, json_encode($this->getCookies(null, null, null, true, true)));
         fclose($handle);
     }
@@ -74,7 +72,7 @@ class FileCookieJar extends ArrayCookieJar
         }
 
         fclose($handle);
-        
-        $this->cookies = ($json) ? json_decode($json, true) : array();
+
+        $this->cookies = $json ? json_decode($json, true) : array();
     }
 }

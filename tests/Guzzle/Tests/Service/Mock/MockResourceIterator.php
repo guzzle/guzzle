@@ -4,9 +4,6 @@ namespace Guzzle\Tests\Service\Mock;
 
 use Guzzle\Service\ResourceIterator;
 
-/**
- * @author Michael Dowling <michael@guzzlephp.org>
- */
 class MockResourceIterator extends ResourceIterator
 {
     protected function sendRequest()

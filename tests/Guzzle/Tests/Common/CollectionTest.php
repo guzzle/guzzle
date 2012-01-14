@@ -5,9 +5,6 @@ namespace Guzzle\Tests\Common;
 use Guzzle\Common\Collection;
 use Guzzle\Http\QueryString;
 
-/**
- * @author Michael Dowling <michael@guzzlephp.org>
- */
 class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**

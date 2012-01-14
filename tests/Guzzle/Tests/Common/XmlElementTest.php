@@ -4,10 +4,6 @@ namespace Guzzle\Tests\Common;
 
 use \Guzzle\Common\XmlElement;
 
-/**
- * @author Michael Dowling <michael@guzzlephp.org>
- * @author Harold Asbridge <harold@shoebacca.com>
- */
 class XmlElementTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**

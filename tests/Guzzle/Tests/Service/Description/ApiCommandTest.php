@@ -6,9 +6,6 @@ use Guzzle\Common\Collection;
 use Guzzle\Service\Description\ApiCommand;
 use Guzzle\Service\Description\ServiceDescription;
 
-/**
- * @author Michael Dowling <michael@guzzlephp.org>
- */
 class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
@@ -21,9 +18,7 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
             'doc' => 'doc',
             'method' => 'POST',
             'path' => '/api/v1',
-            'min_args' => 2,
-            'can_batch' => true,
-            'args' => array(
+            'params' => array(
                 'key' => array(
                     'required' => 'true',
                     'type' => 'string',
@@ -42,7 +37,6 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('POST', $c->getMethod());
         $this->assertEquals('/api/v1', $c->getPath());
         $this->assertEquals('Guzzle\\Service\\Command\\ClosureCommand', $c->getConcreteClass());
-        $this->assertEquals(2, $c->getMinArgs());
         $this->assertEquals(array(
             'key' => new Collection(array(
                 'required' => 'true',
@@ -54,22 +48,15 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
                 'type' => 'integer',
                 'default' => 10
             ))
-        ), $c->getArgs());
+        ), $c->getParams());
 
         $this->assertEquals(new Collection(array(
             'required' => 'true',
             'type' => 'integer',
             'default' => 10
-        )), $c->getArg('key_2'));
+        )), $c->getParam('key_2'));
 
-        $this->assertTrue($c->canBatch());
-
-        $this->assertEquals(array(
-            'test requires at least 2 arguments',
-            'Requires that the key argument be supplied.'
-        ), $c->validate(new Collection(array())));
-
-        $this->assertNull($c->getArg('afefwef'));
+        $this->assertNull($c->getParam('afefwef'));
     }
 
     /**
@@ -80,12 +67,33 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $c = new ApiCommand(array(
             'name' => 'test',
             'class' => 'Guzzle\\Service\\Command\ClosureCommand',
-            'args' => array(
+            'params' => array(
                 'p' => new Collection(array(
                     'name' => 'foo'
                 ))
             )
         ));
         $this->assertEquals('Guzzle\\Service\\Command\ClosureCommand', $c->getConcreteClass());
+    }
+
+    /**
+     * @covers Guzzle\Service\Description\ApiCommand::getData
+     */
+    public function testConvertsToArray()
+    {
+        $data = array(
+            'name' => 'test',
+            'class'     => 'Guzzle\\Service\\Command\ClosureCommand',
+            'doc'       => 'test',
+            'method'    => 'PUT',
+            'path'      => '/',
+            'params'    => array(
+                'p' => new Collection(array(
+                    'name' => 'foo'
+                ))
+            )
+        );
+        $c = new ApiCommand($data);
+        $this->assertEquals($data, $c->getData());
     }
 }

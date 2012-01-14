@@ -2,19 +2,17 @@
 
 namespace Guzzle\Http\Plugin;
 
-use Guzzle\Common\Event\Observer;
-use Guzzle\Common\Event\Subject;
+use Guzzle\Common\Event;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Ensures that an the MD5 hash of an entity body matches the Content-MD5
  * header (if set) of an HTTP response.  An exception is thrown if the
  * calculated MD5 does not match the expected MD5.
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
-class Md5ValidatorPlugin implements Observer
+class Md5ValidatorPlugin implements EventSubscriberInterface
 {
     /**
      * @var int Maximum Content-Length in bytes to validate
@@ -25,6 +23,14 @@ class Md5ValidatorPlugin implements Observer
      * @var bool Whether or not to compare when a Content-Encoding is present
      */
     protected $contentEncoded;
+    
+    /**
+     * {@inheritdoc} 
+     */
+    public static function getSubscribedEvents()
+    {
+        return array('request.complete' => 'onRequestComplete');
+    }
 
     /**
      * Constructor
@@ -49,45 +55,42 @@ class Md5ValidatorPlugin implements Observer
      * {@inheritdoc}
      * @throws UnexpectedValueException
      */
-    public function update(Subject $subject, $event, $context = null)
+    public function onRequestComplete(Event $event)
     {
-        /* @var $subject EntityEnclosingRequest */
-        if ($event != 'request.complete' || !($subject instanceof RequestInterface)) {
-            return;
-        }
-
-        $contentMd5 = $context->getContentMd5();
+        $response = $event['response'];
+        
+        $contentMd5 = $response->getContentMd5();
         if (!$contentMd5) {
             return;
         }
 
-        $contentEncoding = $context->getContentEncoding();
+        $contentEncoding = $response->getContentEncoding();
         if ($contentEncoding && !$this->contentEncoded) {
             return false;
         }
 
         // Make sure that the request's size is under the cutoff size
-        $size = $context->getContentLength() ?: $context->getBody()->getSize();
+        $size = $response->getContentLength() ?: $response->getBody()->getSize();
         if (!$size || $size > $this->contentLengthCutoff) {
             return;
         }
 
         switch ($contentEncoding) {
             case 'gzip':
-                $context->getBody()->compress('zlib.deflate');
-                $hash = $context->getBody()->getContentMd5();
-                $context->getBody()->uncompress();
+                $response->getBody()->compress('zlib.deflate');
+                $hash = $response->getBody()->getContentMd5();
+                $response->getBody()->uncompress();
                 break;
             case 'compress':
-                $context->getBody()->compress('bzip2.compress');
-                $hash = $context->getBody()->getContentMd5();
-                $context->getBody()->uncompress();
+                $response->getBody()->compress('bzip2.compress');
+                $hash = $response->getBody()->getContentMd5();
+                $response->getBody()->uncompress();
                 break;
             default:
                 if ($contentEncoding) {
                     return;
                 }
-                $hash = $context->getBody()->getContentMd5();
+                $hash = $response->getBody()->getContentMd5();
                 break;
         }
 

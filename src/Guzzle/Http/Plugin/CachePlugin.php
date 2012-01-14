@@ -4,12 +4,12 @@ namespace Guzzle\Http\Plugin;
 
 use Guzzle\Guzzle;
 use Guzzle\Common\Cache\CacheAdapterInterface;
-use Guzzle\Common\Event\Observer;
-use Guzzle\Common\Event\Subject;
+use Guzzle\Common\Event;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\Request;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Plugin to enable the caching of GET and HEAD requests.  Caching can be done
@@ -17,10 +17,8 @@ use Guzzle\Http\Message\Request;
  * resources with cacheable response headers.  This is a simple implementation
  * of RFC 2616 and should be considered a private transparent proxy cache
  * (authorization and private data can be cached).
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
-class CachePlugin implements Observer
+class CachePlugin implements EventSubscriberInterface
 {
     /**
      * @var CacheAdapter Cache adapter used to write cache data to cache objects
@@ -50,6 +48,17 @@ class CachePlugin implements Observer
         'TE', 'Trailers', 'Transfer-Encoding', 'Upgrade', 'Set-Cookie',
         'Set-Cookie2'
     );
+    
+    /**
+     * {@inheritdoc} 
+     */
+    public static function getSubscribedEvents()
+    {
+        return array(
+            'request.before_send' => 'onRequestBeforeSend',
+            'request.sent'        => 'onRequestSent'
+        );
+    }
 
     /**
      * Construct a new CachePlugin
@@ -91,28 +100,20 @@ class CachePlugin implements Observer
         // Always recalculate when using the raw option
         if (!$key || $raw) {
 
-            // Check to see if the key should be filtered
-            $filter = $request->getParams()->get('cache.key_filter');
-            // The generate the start of the key
-            $key = $request->getScheme() . '&' . $request->getHost() . $request->getPath();
+            // Generate the start of the key
+            $key = $request->getScheme() . '_' . $request->getHost() . $request->getPath();
             $filterHeaders = array('Cache-Control');
             $filterQuery = array();
 
-            if ($filter) {
-                // Parse the filter string
-                foreach (explode(';', $filter) as $part) {
-                    $pieces = array_map('trim', explode('=', $part));
-                    if (!isset($pieces[1])) {
-                        continue;
-                    }
+            // Check to see how and if the key should be filtered
+            foreach (explode(';', $request->getParams()->get('cache.key_filter')) as $part) {
+                $pieces = array_map('trim', explode('=', $part));
+                if (isset($pieces[1])) {
                     $remove = array_map('trim', explode(',', $pieces[1]));
-                    switch ($pieces[0]) {
-                        case 'header':
-                            $filterHeaders = array_merge($filterHeaders, $remove);
-                            break;
-                        case 'query':
-                            $filterQuery = array_merge($filterQuery, $remove);
-                            break;
+                    if ($pieces[0] == 'header') {
+                        $filterHeaders = array_merge($filterHeaders, $remove);
+                    } else if ($pieces[0] == 'query') {
+                        $filterQuery = array_merge($filterQuery, $remove);
                     }
                 }
             }
@@ -128,81 +129,74 @@ class CachePlugin implements Observer
             })->getAll());
 
             if ($raw) {
-                $key = 'gzrq_' . $key . $queryString . '&' . $headerString;
+                $key = strtolower('gz_' . $key . $queryString . '_' . $headerString);
             } else {
-                $key = 'gzrq_' . md5($key . $queryString . '&' . $headerString);
+                $key = strtolower('gz_' . md5($key . $queryString . '_' . $headerString));
                 $request->getParams()->set('cache.key', $key);
             }
         }
 
         return $key;
     }
-
+    
     /**
-     * {@inheritdoc}
-     *
-     * @param RequestInterface $subject Request to process
+     * Check if a response in cache will satisfy the request before sending
+     * 
+     * @param Event $event 
      */
-    public function update(Subject $subject, $event, $context = null)
+    public function onRequestBeforeSend(Event $event)
     {
-        // @codeCoverageIgnoreStart
-        if (!($subject instanceof RequestInterface)) {
-            return;
+        $request = $event['request'];
+        // This request is being prepared
+        $key = spl_object_hash($request);
+        $hashKey = $this->getCacheKey($request);
+        $this->cached[$key] = $hashKey;
+        $cachedData = $this->getCacheAdapter()->fetch($hashKey);
+        // If the cached data was found, then make the request into a
+        // manually set request
+        if ($cachedData) {
+
+            if ($this->serialize) {
+                $cachedData = unserialize($cachedData);
+            }
+
+            unset($this->cached[$key]);
+            $response = new Response($cachedData['c'], $cachedData['h'], $cachedData['b']);
+            $response->setHeader('Age', time() - strtotime($response->getDate() ?: 'now'));
+            $response->setHeader('X-Guzzle-Cache', $hashKey);
+
+            // Validate that the response satisfies the request
+            if ($this->canResponseSatisfyRequest($request, $response)) {
+                $request->setResponse($response);
+            }
         }
-        // @codeCoverageIgnoreEnd
-
-        switch ($event) {
-            case 'event.attach':
-                // If the request is not cacheable, remove this observer
-                if (!$subject->canCache()) {
-                    $subject->getEventManager()->detach($this);
-                }
-                break;
-            case 'request.before_send':
-                // This request is being prepared
-                $key = spl_object_hash($subject);
-                $hashKey = $this->getCacheKey($subject);
-                $this->cached[$key] = $hashKey;
-                $cachedData = $this->getCacheAdapter()->fetch($hashKey);
-                // If the cached data was found, then make the request into a
-                // manually set request
-                if ($cachedData) {
-                    
-                    if ($this->serialize) {
-                        $cachedData = unserialize($cachedData);
+    }
+    
+    /**
+     * If possible, store a response in cache after sending
+     * 
+     * @param Event $event 
+     */
+    public function onRequestSent(Event $event)
+    {
+        $request = $event['request'];
+        $response = $event['response'];
+        if ($response->canCache()) {
+            // The request is complete and now processing the response
+            $key = spl_object_hash($request);
+            if (isset($this->cached[$key])) {
+                if ($response->isSuccessful()) {
+                    if ($request->getParams()->get('cache.override_ttl')) {
+                        $lifetime = $request->getParams()->get('cache.override_ttl');
+                        $response->setHeader('X-Guzzle-Ttl', $lifetime);
+                    } else {
+                        $lifetime = $response->getMaxAge();
                     }
-
-                    unset($this->cached[$key]);
-                    $response = new Response($cachedData['c'], $cachedData['h'], $cachedData['b']);
-                    $response->setHeader('Age', time() - strtotime($response->getDate() ?: 'now'));
-                    $response->setHeader('X-Guzzle-Cache', $hashKey);
-
-                    // Validate that the response satisfies the request
-                    if ($this->canResponseSatisfyRequest($subject, $response)) {
-                        $subject->setResponse($response);
-                    }
+                    $this->saveCache($this->cached[$key], $response, $lifetime);
                 }
-                break;
-            case 'request.sent':
-                $response = $subject->getResponse();
-                if ($response->canCache()) {
-                    // The request is complete and now processing the response
-                    $response = $subject->getResponse();
-                    $key = spl_object_hash($subject);
-                    
-                    if (isset($this->cached[$key]) && $response->isSuccessful()) {
-                        if ($subject->getParams()->get('cache.override_ttl')) {
-                            $lifetime = $subject->getParams()->get('cache.override_ttl');
-                            $response->setHeader('X-Guzzle-Ttl', $lifetime);
-                        } else {
-                            $lifetime = $response->getMaxAge();
-                        }
-                        $this->saveCache($this->cached[$key], $response, $lifetime);
-                    }
-                    // Remove the hashed placeholder from the parameters object
-                    unset($this->cached[$key]);
-                }
-                break;
+                // Remove the hashed placeholder from the parameters object
+                unset($this->cached[$key]);
+            }
         }
     }
 
@@ -217,8 +211,11 @@ class CachePlugin implements Observer
     public function revalidate(RequestInterface $request, Response $response)
     {
         $revalidate = clone $request;
-        $revalidate->getEventManager()->detach($this);
-        $revalidate->setHeader('If-Modified-Since', $response->getDate());
+        $revalidate->getEventDispatcher()->removeSubscriber($this);
+        $revalidate->removeHeader('Pragma')
+                   ->removeHeader('Cache-Control')
+                   ->setHeader('If-Modified-Since', $response->getDate());
+
         if ($response->getEtag()) {
             $revalidate->setHeader('If-None-Match', '"' . $response->getEtag() . '"');
         }
@@ -275,10 +272,9 @@ class CachePlugin implements Observer
         $responseAge = $response->getAge();
 
         // Check the request's max-age header against the age of the response
-        if ($request->hasCacheControlDirective('max-age')) {
-            if ($responseAge > $request->getCacheControlDirective('max-age')) {
-                return false;
-            }
+        if ($request->hasCacheControlDirective('max-age') &&
+            $responseAge > $request->getCacheControlDirective('max-age')) {
+            return false;
         }
 
         // Check the response's max-age header

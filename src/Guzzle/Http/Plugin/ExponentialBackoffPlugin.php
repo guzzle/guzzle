@@ -2,19 +2,17 @@
 
 namespace Guzzle\Http\Plugin;
 
-use \Closure;
-use Guzzle\Common\Event\Observer;
-use Guzzle\Common\Event\Subject;
+use Guzzle\Common\Event;
+use Guzzle\Common\Collection;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Pool\PoolInterface;
+use Guzzle\Http\Curl\CurlMultiInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Plugin to automatically retry failed HTTP requests using truncated
  * exponential backoff.
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
-class ExponentialBackoffPlugin implements Observer
+class ExponentialBackoffPlugin implements EventSubscriberInterface
 {
     const DELAY_PARAM = 'plugins.exponential_backoff.retry_time';
 
@@ -29,14 +27,25 @@ class ExponentialBackoffPlugin implements Observer
     protected $maxRetries;
 
     /**
-     * @var array Request state information
+     * @var Collection Request state information
      */
-    protected $state = array();
+    protected $state;
 
     /**
      * @var Closure
      */
     protected $delayClosure;
+    
+    /**
+     * {@inheritdoc} 
+     */
+    public static function getSubscribedEvents()
+    {
+        return array(
+            'request.sent' => 'onRequestSent',
+            CurlMultiInterface::POLLING_REQUEST => 'onRequestPoll'
+        );
+    }
 
     /**
      * Construct a new exponential backoff plugin
@@ -53,6 +62,7 @@ class ExponentialBackoffPlugin implements Observer
         $this->setMaxRetries($maxRetries);
         $this->failureCodes = $failureCodes ?: array(500, 503);
         $this->delayClosure = $delayClosure ?: array($this, 'calculateWait');
+        $this->state = new Collection();
     }
 
     /**
@@ -117,63 +127,47 @@ class ExponentialBackoffPlugin implements Observer
     {
         return (int) pow(2, $retries);
     }
-
+    
     /**
-     * {@inheritdoc}
+     * Called when a request has been sent
+     * 
+     * @param Event $event 
      */
-    public function update(Subject $subject, $event, $context = null)
+    public function onRequestSent(Event $event)
     {
-        // @codeCoverageIgnoreStart
-        if (!($subject instanceof RequestInterface)) {
-            return;
+        $request = $event['request'];
+        // Called when the request has been sent and isn't finished processing
+        $key = spl_object_hash($request);
+
+        if (in_array($request->getResponse()->getStatusCode(), $this->failureCodes)) {
+            // If this request has been retried too many times, then throw an exception
+            $this->state[$key] = $this->state[$key] + 1;
+            if ($this->state[$key] <= $this->maxRetries) {
+                // Calculate how long to wait until the request should be retried
+                $delay = (int) call_user_func($this->delayClosure, $this->state[$key]);
+                // Send the request again
+                $request->setState(RequestInterface::STATE_TRANSFER);
+                $request->getParams()->set(self::DELAY_PARAM, time() + $delay);
+            }
         }
-        // @codeCoverageIgnoreEnd
-
-        switch ($event) {
-            case PoolInterface::POLLING_REQUEST:
-                // The most frequent event, thus at the top of the switch
-                $delay = $subject->getParams()->get(self::DELAY_PARAM);
-                if ($delay) {
-                    // If the duration of the delay has passed, retry the request using the pool
-                    if (time() >= $delay) {
-                        // Remove the request from the pool and then add it back again
-                        $context->remove($subject);
-                        $context->add($subject);
-                        $subject->getParams()->remove(self::DELAY_PARAM);
-
-                        return true;
-                    }
-                }
-                break;
-            case 'event.attach':
-                // Called when the observer is initially attached to the request
-                $this->state[spl_object_hash($subject)] = 0;
-                break;
-            case 'request.sent':
-                // Called when the request has been sent and isn't finished processing
-                $key = spl_object_hash($subject);
-
-                if (in_array($subject->getResponse()->getStatusCode(), $this->failureCodes)) {
-                    // If this request has been retried too many times, then throw an exception
-                    if (++$this->state[$key] <= $this->maxRetries) {
-                        // Calculate how long to wait until the request should be retried
-                        $delay = (int) call_user_func($this->delayClosure, $this->state[$key]);
-                        // Send the request again
-                        $subject->setState(RequestInterface::STATE_NEW);
-
-                        if ($subject->getParams()->get('pool')) {
-                            // Pooled requests need to be sent via curl
-                            // multi, and the retry will happen after a
-                            // period of polling to prevent pool exclusivity
-                            $subject->getParams()->set(self::DELAY_PARAM, time() + $delay);
-                        } else {
-                            // Wait for a delay then retry the request
-                            sleep($delay);
-                            $subject->send();
-                        }
-                    }
-                }
-                break;
+    }
+    
+    /**
+     * Called when a request is polling in the curl mutli object
+     * 
+     * @param Event $event 
+     */
+    public function onRequestPoll(Event $event)
+    {
+        $request = $event['request'];
+        $delay = $request->getParams()->get(self::DELAY_PARAM);
+        // If the duration of the delay has passed, retry the request using the pool
+        if ($delay && time() >= $delay) {
+            // Remove the request from the pool and then add it back again
+            $multi = $event['curl_multi'];
+            $multi->remove($request);
+            $multi->add($request, true);
+            $request->getParams()->remove(self::DELAY_PARAM);
         }
     }
 }

@@ -4,9 +4,6 @@ namespace Guzzle\Tests\Http;
 
 use Guzzle\Http\Cookie;
 
-/**
- * @author Michael Dowling <michael@guzzlephp.org>
- */
 class CookieTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**

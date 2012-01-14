@@ -6,9 +6,6 @@ use Guzzle\Guzzle;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\CookieJar\FileCookieJar;
 
-/**
- * @author Michael Dowling <michael@guzzlephp.org>
- */
 class FileCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**

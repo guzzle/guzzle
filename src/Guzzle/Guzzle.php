@@ -6,22 +6,15 @@ use Guzzle\Common\Collection;
 
 /**
  * Guzzle information and utility class
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class Guzzle
 {
-    const VERSION = '1.1';
+    const VERSION = '2.0';
 
     /**
-     * @var string Default Guzzle User-Agent header
+     * @var array Guzzle cache
      */
-    protected static $userAgent;
-
-    /**
-     * @var array cURL version information
-     */
-    protected static $curl;
+    protected static $cache;
 
     /**
      * Get the default User-Agent to add to requests sent through the library
@@ -30,17 +23,16 @@ class Guzzle
      */
     public static function getDefaultUserAgent()
     {
-        if (!self::$userAgent) {
-            $version = self::getCurlInfo();
-            self::$userAgent = sprintf('Guzzle/%s (Language=PHP/%s; curl=%s; Host=%s)',
-                Guzzle::VERSION,
+        if (!isset(self::$cache['user_agent'])) {
+            self::$cache['user_agent'] = sprintf('Guzzle/%s (Language=PHP/%s; curl=%s; Host=%s)',
+                self::VERSION,
                 \PHP_VERSION,
-                $version['version'],
-                $version['host']
+                self::getCurlInfo('version'),
+                self::getCurlInfo('host')
             );
         }
-        
-        return self::$userAgent;
+
+        return self::$cache['user_agent'];
     }
 
     /**
@@ -53,7 +45,6 @@ class Guzzle
      *     ssl_version - OpenSSL version number, as a string
      *     libz_version - zlib version number, as a string
      *     host - Information about the host where cURL was built
-     *     age
      *     features - A bitmask of the CURL_VERSION_XXX constants
      *     protocols - An array of protocols names supported by cURL
      *
@@ -63,26 +54,17 @@ class Guzzle
      */
     public static function getCurlInfo($type = null)
     {
-        if (!self::$curl) {
-            self::$curl = @curl_version();
-            // @codeCoverageIgnoreStart
-            if (!self::$curl) {
-                throw new \RuntimeException('Guzzle requires curl');
-            }
-            // @codeCoverageIgnoreEnd
+        if (!isset(self::$cache['curl'])) {
+            self::$cache['curl'] = curl_version();
             // Check if CURLOPT_FOLLOWLOCATION is available
-            self::$curl['follow_location'] = !ini_get('open_basedir');
+            self::$cache['curl']['follow_location'] = !ini_get('open_basedir');
         }
-        
-        if (!$type) {
-            return self::$curl;
-        } else if (isset(self::$curl[$type])) {
-            return self::$curl[$type];
-        } else {
-            return false;
-        }
+
+        return !$type
+            ? self::$cache['curl']
+            : (isset(self::$cache['curl'][$type]) ? self::$cache['curl'][$type] : false);
     }
-    
+
     /**
      * Create an RFC 1123 HTTP-Date from various date values
      *
@@ -114,8 +96,7 @@ class Guzzle
             return $input;
         }
 
-        return preg_replace_callback('/{{\s*([A-Za-z_\-\.0-9]+)\s*}}/',
-            function($matches) use ($config) {
+        return preg_replace_callback('/{{\s*([A-Za-z_\-\.0-9]+)\s*}}/', function($matches) use ($config) {
                 return $config->get(trim($matches[1]));
             }, $input
         );
@@ -126,7 +107,6 @@ class Guzzle
      */
     public static function reset()
     {
-        self::$userAgent = null;
-        self::$curl = null;
+        self::$cache = array();
     }
 }

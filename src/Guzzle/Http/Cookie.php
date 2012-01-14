@@ -7,18 +7,14 @@ use Guzzle\Common\Collection;
 /**
  * Cookie contains cookies and allows the easy access, removal, and
  * string representation of HTTP cookies that will be sent in an HTTP request.
- *
- * This class can be used to generate a Cookie Version 0 request header.
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class Cookie extends QueryString
 {
     /**
      * Create a Cookie by parsing a Cookie HTTP header
-     * 
+     *
      * @param string $cookieString Cookie HTTP header
-     * 
+     *
      * @return Cookie
      */
     public static function factory($cookieString)
@@ -52,7 +48,7 @@ class Cookie extends QueryString
                  $value = array_unique($value);
                  return array(
                     (($encodeFields) ? rawurlencode($key) : $key) => (($encodeValues)
-                        ? array_map(array(__CLASS__, 'rawurlencode'), $value)
+                        ? array_map('rawurlencode', $value)
                         : $value)
                 );
             });

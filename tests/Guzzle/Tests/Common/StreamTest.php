@@ -6,7 +6,6 @@ use Guzzle\Common\Stream;
 
 /**
  * @group server
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class StreamTest extends \Guzzle\Tests\GuzzleTestCase
 {
@@ -20,19 +19,7 @@ class StreamTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Common\Stream::__construct
-     * @covers Guzzle\Common\Stream::getSize
-     * @covers Guzzle\Common\Stream::getUri
-     * @covers Guzzle\Common\Stream::isReadable
-     * @covers Guzzle\Common\Stream::isWritable
-     * @covers Guzzle\Common\Stream::isSeekable
-     * @covers Guzzle\Common\Stream::isLocal
-     * @covers Guzzle\Common\Stream::isConsumed
-     * @covers Guzzle\Common\Stream::getStream
-     * @covers Guzzle\Common\Stream::getWrapper
-     * @covers Guzzle\Common\Stream::getWrapperData
-     * @covers Guzzle\Common\Stream::getFilters
-     * @covers Guzzle\Common\Stream::getStreamType
+     * @covers Guzzle\Common\Stream
      */
     public function testConstructor()
     {
@@ -49,10 +36,6 @@ class StreamTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(4, $stream->getSize());
         $this->assertEquals('php://temp', $stream->getUri());
         $this->assertEquals(array(), $stream->getWrapperData());
-        $this->assertEquals(array(
-            'wrapped' => array(),
-            'unwrapped' => array()
-        ), $stream->getFilters());
         $this->assertFalse($stream->isConsumed());
         unset($stream);
     }
@@ -145,12 +128,9 @@ class StreamTest extends \Guzzle\Tests\GuzzleTestCase
         $size = filesize(__DIR__ . '/../../../bootstrap.php');
         $handle = fopen(__DIR__ . '/../../../bootstrap.php', 'r');
         $stream = new Stream($handle);
-        $stream->addFilter('string.rot13', \STREAM_FILTER_READ);
         $this->assertEquals($handle, $stream->getStream());
         $this->assertEquals($size, $stream->getSize());
         $this->assertEquals($size, $stream->getSize());
-        $stream->addFilter('zlib.inflate', \STREAM_FILTER_READ);
-        $this->assertEquals(false, $stream->getSize());
         unset($stream);
 
         // Make sure that false is returned when the size cannot be determined
@@ -162,45 +142,14 @@ class StreamTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Common\Stream::addFilter
-     * @covers Guzzle\Common\Stream::getFilters
+     * @covers Guzzle\Common\Stream::getMetaData
      */
-    public function testAddFilter()
+    public function testAbstractsMetaData()
     {
         $handle = fopen(__DIR__ . '/../../../bootstrap.php', 'r');
         $stream = new Stream($handle);
-        $stream->addFilter('string.rot13', \STREAM_FILTER_READ);
-        // Prepend this one
-        $stream->addFilter('string.toupper', \STREAM_FILTER_READ, null, true);
-
-        $filters = $stream->getFilters();
-        $this->assertArrayHasKey('wrapped', $filters);
-        $this->assertArrayHasKey('unwrapped', $filters);
-        $this->assertEquals(array(), $filters['unwrapped']);
-        $this->assertArrayHasKey('string.rot13|1', $filters['wrapped']);
-        $this->assertInternalType('resource', $filters['wrapped']['string.rot13|1']);
-
-        unset($stream);
-    }
-
-    /**
-     * @covers Guzzle\Common\Stream::addFilter
-     * @covers Guzzle\Common\Stream::getFilters
-     * @covers Guzzle\Common\Stream::removeFilter
-     */
-    public function testRemoveFilter()
-    {
-        $handle = fopen(__DIR__ . '/../../../bootstrap.php', 'r');
-        $stream = new Stream($handle);
-        $stream->addFilter('string.rot13', \STREAM_FILTER_READ, false);
-        $data = (string)$stream;
-
-        $filters = $stream->getFilters();
-        $this->assertTrue($stream->removeFilter('string.rot13', \STREAM_FILTER_READ));
-        $this->assertNotEquals($filters, $stream->getFilters());
-        $this->assertNotEquals($data, (string)$stream);
-
-        $this->assertFalse($stream->removeFilter('string.rot13', \STREAM_FILTER_READ));
-        unset($stream);
+        $this->assertEquals('plainfile', $stream->getMetaData('wrapper_type'));
+        $this->assertEquals(null, $stream->getMetaData('wrapper_data'));
+        $this->assertInternalType('array', $stream->getMetaData());
     }
 }

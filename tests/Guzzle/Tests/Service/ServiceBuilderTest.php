@@ -2,14 +2,9 @@
 
 namespace Guzzle\Tests\Service;
 
-use Doctrine\Common\Cache\ArrayCache;
-use Guzzle\Common\Cache\DoctrineCacheAdapter;
 use Guzzle\Service\ServiceBuilder;
 use Guzzle\Service\Client;
 
-/**
- * @author Michael Dowling <michael@guzzlephp.org>
- */
 class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
 {
     protected $xmlConfig;
@@ -78,11 +73,21 @@ EOT;
     }
 
     /**
+     * @covers Guzzle\Service\ServiceBuilder::__sleep
+     */
+    public function testAllowsSerialization()
+    {
+        $builder = ServiceBuilder::factory($this->tempFile, 'xml');
+        $cached = unserialize(serialize($builder));
+        $this->assertEquals($cached, $builder);
+    }
+
+    /**
      * @covers Guzzle\Service\ServiceBuilder::factory
      */
     public function testCanBeCreatedUsingAnXmlFile()
     {
-        $builder = ServiceBuilder::factory($this->tempFile, null, 86400, 'xml');
+        $builder = ServiceBuilder::factory($this->tempFile, 'xml');
         $c = $builder->get('michael.mock');
         $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\MockClient', $c);
     }
@@ -90,7 +95,7 @@ EOT;
     /**
      * @covers Guzzle\Service\ServiceBuilder::factory
      * @expectedException RuntimeException
-     * @expectedExceptionMessage Unable to open service configuration file foobarfile
+     * @expectedExceptionMessage Unable to open foobarfile
      */
     public function testFactoryEnsuresItCanOpenFile()
     {
@@ -102,7 +107,7 @@ EOT;
      */
     public function testFactoryCanBuildServicesThatExtendOtherServices()
     {
-        $s = ServiceBuilder::factory($this->tempFile, null, 86400, 'xml');
+        $s = ServiceBuilder::factory($this->tempFile, 'xml');
         $s = $s->get('billy.testing');
         $this->assertEquals('test.billy', $s->getConfig('subdomain'));
         $this->assertEquals('billy', $s->getConfig('username'));
@@ -118,7 +123,7 @@ EOT;
         file_put_contents($tempFile, $xml);
 
         try {
-            ServiceBuilder::factory($tempFile, null, 86400, 'xml');
+            ServiceBuilder::factory($tempFile, 'xml');
             unlink($tempFile);
             $this->fail('Test did not throw ServiceException');
         } catch (\LogicException $e) {
@@ -129,38 +134,13 @@ EOT;
     }
 
     /**
-     * @covers Guzzle\Service\ServiceBuilder::factory
-     * @covers Guzzle\Service\ServiceBuilder
-     */
-    public function testFactoryUsesCacheAdapterWhenAvailable()
-    {
-        $cache = new ArrayCache();
-        $adapter = new DoctrineCacheAdapter($cache);
-        $this->assertEmpty($cache->getIds());
-
-        $s1 = ServiceBuilder::factory($this->tempFile, $adapter, 86400, 'xml');
-
-        // Make sure it added to the cache with a proper cache key
-        $keys = $cache->getIds();
-        $this->assertNotEmpty($keys);
-        $this->assertEquals(0, strpos($keys[0], 'guz_'));
-        $this->assertFalse(strpos($keys[0], '__'));
-
-        // Load this one from cache
-        $s2 = ServiceBuilder::factory($this->tempFile, $adapter, 86400, 'xml');
-
-        $builder = ServiceBuilder::factory($this->tempFile, null, 86400, 'xml');
-        $this->assertEquals($s1, $s2);
-    }
-
-    /**
      * @covers Guzzle\Service\ServiceBuilder::get
      * @expectedException InvalidArgumentException
      * @expectedExceptionMessage No client is registered as foobar
      */
     public function testThrowsExceptionWhenGettingInvalidClient()
     {
-        ServiceBuilder::factory($this->tempFile, null, 86400, 'xml')->get('foobar');
+        ServiceBuilder::factory($this->tempFile, 'xml')->get('foobar');
     }
 
     /**
@@ -168,7 +148,7 @@ EOT;
      */
     public function testStoresClientCopy()
     {
-        $builder = ServiceBuilder::factory($this->tempFile, null, 86400, 'xml');
+        $builder = ServiceBuilder::factory($this->tempFile, 'xml');
         $client = $builder->get('michael.mock');
         $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\MockClient', $client);
         $this->assertEquals('http://127.0.0.1:8124/v1/michael', $client->getBaseUrl());
@@ -244,7 +224,7 @@ EOT;
      */
     public function testUsedAsArray()
     {
-        $b = ServiceBuilder::factory($this->tempFile, null, 86400, 'xml');
+        $b = ServiceBuilder::factory($this->tempFile, 'xml');
         $this->assertTrue($b->offsetExists('michael.mock'));
         $this->assertFalse($b->offsetExists('not_there'));
         $this->assertInstanceOf('Guzzle\\Service\\Client', $b['michael.mock']);
@@ -312,7 +292,7 @@ EOT;
     /**
      * @covers Guzzle\Service\ServiceBuilder::factory
      * @expectedException InvalidArgumentException
-     * @expectedExceptionMessage $data must be an instance of SimpleXMLElement
+     * @expectedExceptionMessage Must pass a file name, array, or SimpleXMLElement
      */
     public function testFactoryValidatesObjectTypes()
     {
@@ -327,5 +307,36 @@ EOT;
         $b = ServiceBuilder::factory($this->arrayData);
         $s = $b->get('missing_params');
         $this->assertEquals('billy', $s->getConfig('username'));
+    }
+
+    /**
+     * @covers Guzzle\Service\ServiceBuilder
+     */
+    public function testBuilderAllowsReferencesBetweenClients()
+    {
+        $builder = ServiceBuilder::factory(array(
+            'a' => array(
+                'class' => 'Guzzle\\Tests\\Service\\Mock\\MockClient',
+                'params' => array(
+                    'other_client' => '{{ b }}',
+                    'username'     => 'x',
+                    'password'     => 'y',
+                    'subdomain'    => 'z'
+                )
+            ),
+            'b' => array(
+                'class' => 'Guzzle\\Tests\\Service\\Mock\\MockClient',
+                'params' => array(
+                    'username'  => '1',
+                    'password'  => '2',
+                    'subdomain' => '3'
+                )
+            )
+        ));
+
+        $client = $builder['a'];
+        $this->assertEquals('x', $client->getConfig('username'));
+        $this->assertSame($builder['b'], $client->getConfig('other_client'));
+        $this->assertEquals('1', $builder['b']->getConfig('username'));
     }
 }

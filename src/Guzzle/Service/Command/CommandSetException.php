@@ -4,8 +4,6 @@ namespace Guzzle\Service\Command;
 
 /**
  * Command Set exception
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class CommandSetException extends \RuntimeException
 {

@@ -6,8 +6,6 @@ use Guzzle\Common\Collection;
 
 /**
  * Cookie jar that stores cookies an an array
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class ArrayCookieJar implements CookieJarInterface
 {
@@ -35,17 +33,10 @@ class ArrayCookieJar implements CookieJarInterface
     public function clear($domain = null, $path = null, $name = null)
     {
         $cookies = $this->getCookies($domain, $path, $name, false, false);
-        $total = 0;
-        foreach ($this->cookies as $i => $cookie) {
-            foreach ($cookies as $c) {
-                if ($c === $cookie) {
-                    $total++;
-                    unset($this->cookies[$i]);
-                }
-            }
-        }
 
-        return $total;
+        return $this->prune(function($cookie) use ($cookies) {
+            return !in_array($cookie, $cookies, true);
+        });
     }
 
     /**
@@ -59,9 +50,7 @@ class ArrayCookieJar implements CookieJarInterface
      */
     public function clearTemporary()
     {
-        $ctime = time();
-
-        return $this->prune(function($cookie) use ($ctime) {
+        return $this->prune(function($cookie) {
             return (!$cookie['discard'] && $cookie['expires']);
         });
     }
@@ -126,7 +115,7 @@ class ArrayCookieJar implements CookieJarInterface
                 if ($domain == $cookie['domain']) {
                     $domainMatch = true;
                 } else if ($cookie['domain'][0] == '.') {
-                    $domainMatch = preg_match('/' . preg_quote($cookie['domain']) . '$/', $domain);
+                    $domainMatch = preg_match('/' . preg_quote($cookie['domain']) . '$/i', $domain);
                 }
             }
 
@@ -223,7 +212,7 @@ class ArrayCookieJar implements CookieJarInterface
                 unset($this->cookies[$i]);
                 continue;
             }
-            
+
             $alreadyPresent = true;
             break;
         }

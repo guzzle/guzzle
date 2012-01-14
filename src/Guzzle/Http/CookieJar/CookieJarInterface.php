@@ -4,8 +4,6 @@ namespace Guzzle\Http\CookieJar;
 
 /**
  * Interface for persisting cookies
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 interface CookieJarInterface
 {

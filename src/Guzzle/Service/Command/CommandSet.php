@@ -2,10 +2,7 @@
 
 namespace Guzzle\Service\Command;
 
-use Guzzle\Common\Event\Observer;
-use Guzzle\Common\Event\Subject;
-use Guzzle\Http\Pool\PoolInterface;
-use Guzzle\Http\Pool\Pool;
+use Guzzle\Common\Event;
 use Guzzle\Service\ClientInterface;
 use Guzzle\Service\Command\CommandInterface;
 
@@ -16,10 +13,8 @@ use Guzzle\Service\Command\CommandInterface;
  * Commands from different services using different clients can be sent in
  * parallel if each command has an associated {@see ClientInterface} before
  * executing the set.
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
-class CommandSet implements \IteratorAggregate, \Countable, Observer
+class CommandSet implements \IteratorAggregate, \Countable
 {
     /**
      * @var array Collections of CommandInterface objects
@@ -27,26 +22,15 @@ class CommandSet implements \IteratorAggregate, \Countable, Observer
     protected $commands = array();
 
     /**
-     * @var PoolInterface Pool used for sending the requests in Parallel
-     */
-    protected $pool;
-
-    /**
      * Constructor
      *
      * @param array $commands (optional) Array of commands to add to the set
-     * @param PoolInterface $pool (optional) Pass a Pool object for executing the
-     *      commands in parallel.  Leave NULL to use the default Pool.
      */
-    public function __construct(array $commands = null, PoolInterface $pool = null)
+    public function __construct(array $commands = null)
     {
-        if ($commands) {
-            foreach ($commands as $command) {
-                $this->addCommand($command);
-            }
+        foreach ((array) $commands as $command) {
+            $this->addCommand($command);
         }
-
-        $this->pool = $pool ?: new Pool();
     }
 
     /**
@@ -83,12 +67,9 @@ class CommandSet implements \IteratorAggregate, \Countable, Observer
     public function execute()
     {
         // Keep a list of all commands with no client
-        $invalid = array();
-        foreach ($this->commands as $command) {
-            if (!$command->getClient()) {
-                $invalid[] = $command;
-            }
-        }
+        $invalid = array_filter($this->commands, function($command) {
+            return !$command->getClient();
+        });
 
         // If any commands do not have a client, then throw an exception
         if (count($invalid)) {
@@ -97,26 +78,25 @@ class CommandSet implements \IteratorAggregate, \Countable, Observer
             throw $e;
         }
 
-        // Execute all serial commands
-        foreach ($this->getSerialCommands() as $command) {
-            $command->execute();
-            // Trigger the result of the command to be processed
-            $command->getResult();
-        }
-
         // Execute all batched commands in parallel
-        $parallel = $this->getParallelCommands();
-        if (count($parallel)) {
-            $this->pool->reset();
+        if (count($this->commands)) {
+            $multis = array();
             // Prepare each request and send out client notifications
-            foreach ($parallel as $command) {
+            foreach ($this->commands as $command) {
                 $request = $command->prepare();
                 $request->getParams()->set('command', $command);
-                $request->getEventManager()->attach($this, -99999);
-                $command->getClient()->getEventManager()->notify('command.before_send', $command);
-                $this->pool->add($request);
+                $request->getEventDispatcher()->addListener('request.complete', array($this, 'update'), -99999);
+                $command->getClient()->dispatch('command.before_send', array(
+                    'command' => $command
+                ));
+                $command->getClient()->getCurlMulti()->add($command->getRequest());
+                if (!in_array($command->getClient()->getCurlMulti(), $multis)) {
+                    $multis[] = $command->getClient()->getCurlMulti();
+                }
             }
-            $this->pool->send();
+            foreach ($multis as $multi) {
+                $multi->send();
+            }
         }
 
         return $this;
@@ -133,27 +113,13 @@ class CommandSet implements \IteratorAggregate, \Countable, Observer
     }
 
     /**
-     * Get all of the attached commands that can be sent in parallel
+     * Get all of the attached commands
      *
      * @return array
      */
-    public function getParallelCommands()
+    public function getCommands()
     {
-        return array_values(array_filter($this->commands, function($value) {
-            return true === $value->canBatch();
-        }));
-    }
-
-    /**
-     * Get all of the attached commands that can not be sent in parallel
-     *
-     * @return array
-     */
-    public function getSerialCommands()
-    {
-        return array_values(array_filter($this->commands, function($value) {
-            return false === $value->canBatch();
-        }));
+        return $this->commands;
     }
 
     /**
@@ -189,21 +155,24 @@ class CommandSet implements \IteratorAggregate, \Countable, Observer
     }
 
     /**
-     * Trigger the result of the command to be created as commands complete
+     * Trigger the result of the command to be created as commands complete and
+     * make sure the command isn't going to send more requests
      *
      * {@inheritdoc}
      */
-    public function update(Subject $subject, $event, $context = null)
+    public function update(Event $event)
     {
-        if ($event == 'request.complete' && $subject->getParams()->hasKey('command')) {
-            $command = $subject->getParams()->get('command');
-            // Make sure the command isn't going to send more requests
-            if ($command && $command->isExecuted()) {
-                $subject->getEventManager()->detach($this);
-                $subject->getParams()->remove('command');
-                $command->getResult();
-                $command->getClient()->getEventManager()->notify('command.after_send', $command);
-            }
+        $request = $event['request'];
+        $command = $request->getParams()->get('command');
+        if ($command && $command->isExecuted()) {
+            $request = $event['request'];
+            $request->getEventDispatcher()->removeListener('request.complete', $this);
+            $request->getParams()->remove('command');
+            // Force the result to be processed
+            $command->getResult();
+            $command->getClient()->dispatch('command.after_send', array(
+                'command' => $command
+            ));
         }
     }
 }

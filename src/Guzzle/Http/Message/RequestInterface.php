@@ -2,27 +2,23 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Common\Event\Subject;
+use Guzzle\Common\HasDispatcherInterface;
+use Guzzle\Http\ClientInterface;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\QueryString;
-use Guzzle\Http\Curl\CurlFactoryInterface;
-use Guzzle\Http\Curl\CurlHandle;
 use Guzzle\Http\Cookie;
 
 /**
  * Generic HTTP request interface
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
-interface RequestInterface extends MessageInterface, Subject
+interface RequestInterface extends MessageInterface, HasDispatcherInterface
 {
     const STATE_NEW = 'new';
     const STATE_COMPLETE = 'complete';
     const STATE_TRANSFER = 'transfer';
-
+    const STATE_ERROR = 'error';
     const AUTH_BASIC = 'Basic';
     const AUTH_DIGEST = 'Digest';
-
     const GET = 'GET';
     const PUT = 'PUT';
     const POST = 'POST';
@@ -40,14 +36,8 @@ interface RequestInterface extends MessageInterface, Subject
      *      header, and URI are parsed from the full URL.  If query string
      *      parameters are present they will be parsed as well.
      * @param array|Collection $headers (optional) HTTP headers
-     * @param CurlFactoryInterface $curlFactory (optional) Curl factory object
      */
-    function __construct($method, $url, $headers = array(), CurlFactoryInterface $curlFactory = null);
-
-    /**
-     * Clone the request object, leaving off any response that was received
-     */
-    function __clone();
+    function __construct($method, $url, $headers = array());
 
     /**
      * Get the HTTP request as a string
@@ -55,6 +45,22 @@ interface RequestInterface extends MessageInterface, Subject
      * @return string
      */
     function __toString();
+
+    /**
+     * Set the client used to transport the request
+     *
+     * @param ClientInterface $client
+     *
+     * @return RequestInterface
+     */
+    function setClient(ClientInterface $client);
+
+    /**
+     * Get the client used to transport the request
+     *
+     * @return ClientInterface $client
+     */
+    function getClient();
 
     /**
      * Set the URL of the request
@@ -252,29 +258,6 @@ interface RequestInterface extends MessageInterface, Subject
     function getCurlOptions();
 
     /**
-     * Get the cURL handle
-     *
-     * This method will only create the cURL handle once.  After calling this
-     * method, subsequent modifications to this request will not ever take
-     * effect or modify the curl handle associated with the request until
-     * ->setState('new') is called, causing a new cURL handle to be given to
-     * the request (using a smart factory, the new handle might be the same
-     * handle).
-     *
-     * @return CurlHandle|null Returns NULL if no handle should be created
-     */
-    function getCurlHandle();
-
-    /**
-     * Set the factory that will create cURL handles based on the request
-     *
-     * @param CurlFactoryInterface $factory Factory used to create cURL handles
-     *
-     * @return Request
-     */
-    function setCurlFactory(CurlFactoryInterface $factory);
-
-    /**
      * Method to receive HTTP response headers as they are retrieved
      *
      * @param string $data Header data.
@@ -385,11 +368,4 @@ interface RequestInterface extends MessageInterface, Subject
      * @throws InvalidArgumentException if the method is not callable
      */
     function setOnComplete($callable);
-
-    /**
-     * Release the cURL handle if one is claimed
-     *
-     * @return RequestInterface
-     */
-    function releaseCurlHandle();
 }

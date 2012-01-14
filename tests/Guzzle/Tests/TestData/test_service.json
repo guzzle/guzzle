@@ -1,0 +1,12 @@
+{
+    "includes": [ "test_service2.json" ],
+    "types": {},
+    "commands": {
+        "test": {
+            "path": "/path"
+        },
+        "concrete": {
+            "extends": "abstract"
+        }
+    }
+}

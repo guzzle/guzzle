@@ -2,13 +2,11 @@
 
 namespace Guzzle\Tests\Service\Mock;
 
-use Guzzle\Common\Inspector;
+use Guzzle\Service\Inspector;
 use Guzzle\Service\Client;
 
 /**
  * Mock Guzzle Service
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class MockClient extends Client
 {

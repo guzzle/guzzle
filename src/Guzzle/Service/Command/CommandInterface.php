@@ -11,8 +11,6 @@ use Guzzle\Service\Description\ApiCommand;
 /**
  * Command object to handle preparing and processing client requests and
  * responses of the requests
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 interface CommandInterface
 {
@@ -38,13 +36,6 @@ interface CommandInterface
      * @return ApiCommand|NullObject
      */
     function getApiCommand();
-
-    /**
-     * Get whether or not the command can be batched
-     *
-     * @return bool
-     */
-    function canBatch();
 
     /**
      * Execute the command

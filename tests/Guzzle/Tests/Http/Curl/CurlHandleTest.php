@@ -2,15 +2,19 @@
 
 namespace Guzzle\Tests\Http\Curl;
 
+use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
+use Guzzle\Common\Event;
+use Guzzle\Http\EntityBody;
+use Guzzle\Http\QueryString;
+use Guzzle\Http\Client;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Curl\CurlHandle;
-use Guzzle\Http\Curl\CurlFactory;
+use Guzzle\Tests\Mock\MockObserver;
 
 /**
  * @group server
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 {
@@ -38,23 +42,19 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
        $ha = new CurlHandle($h, array(
            CURLOPT_URL => $this->getServer()->getUrl()
        ));
-       $this->assertEquals($this->getServer()->getUrl(), $ha->getOption(CURLOPT_URL));
+       $this->assertEquals($this->getServer()->getUrl(), $ha->getOptions()->get(CURLOPT_URL));
 
        $ha = new CurlHandle($h, new Collection(array(
            CURLOPT_URL => $this->getServer()->getUrl()
        )));
-       $this->assertEquals($this->getServer()->getUrl(), $ha->getOption(CURLOPT_URL));
+       $this->assertEquals($this->getServer()->getUrl(), $ha->getOptions()->get(CURLOPT_URL));
     }
 
     /**
      * @covers Guzzle\Http\Curl\CurlHandle::__construct
-     * @covers Guzzle\Http\Curl\CurlHandle::getStderr
      * @covers Guzzle\Http\Curl\CurlHandle::getHandle
      * @covers Guzzle\Http\Curl\CurlHandle::getUrl
      * @covers Guzzle\Http\Curl\CurlHandle::getOptions
-     * @covers Guzzle\Http\Curl\CurlHandle::getOption
-     * @covers Guzzle\Http\Curl\CurlHandle::getIdleTime
-     * @covers Guzzle\Http\Curl\CurlHandle::getOwner
      */
     public function testConstructorInitializesObject()
     {
@@ -62,47 +62,65 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $h = new CurlHandle($handle, array(
             CURLOPT_URL => $this->getServer()->getUrl()
         ));
+        $this->assertSame($handle, $h->getHandle());
+        $this->assertInstanceOf('Guzzle\\Http\\Url', $h->getUrl());
+        $this->assertEquals($this->getServer()->getUrl(), (string) $h->getUrl());
+        $this->assertEquals($this->getServer()->getUrl(), $h->getOptions()->get(CURLOPT_URL));
+    }
 
+    /**
+     * @covers Guzzle\Http\Curl\CurlHandle::getStderr
+     */
+    public function testStoresStdErr()
+    {
+        $h = CurlHandle::factory(RequestFactory::create('GET', 'http://test.com'));
+        $this->assertEquals($h->getStderr(true), $h->getOptions()->get(CURLOPT_STDERR));
         $this->assertInternalType('resource', $h->getStderr(true));
         $this->assertInternalType('string', $h->getStderr(false));
         $r = $h->getStderr(true);
         fwrite($r, 'test');
         $this->assertEquals('test', $h->getStderr(false));
+    }
 
-        $this->assertInstanceOf('Guzzle\\Http\\Url', $h->getUrl());
-        $this->assertEquals($this->getServer()->getUrl(), (string) $h->getUrl());
-        $this->assertSame($handle, $h->getHandle());
+    /**
+     * @covers Guzzle\Http\Curl\CurlHandle::setErrorNo
+     * @covers Guzzle\Http\Curl\CurlHandle::getErrorNo
+     */
+    public function testStoresCurlErrorNumber()
+    {
+        $h = new CurlHandle(curl_init('http://test.com'), array(CURLOPT_URL => 'http://test.com'));
+        $this->assertEquals(CURLE_OK, $h->getErrorNo());
+        $h->setErrorNo(CURLE_OPERATION_TIMEOUTED);
+        $this->assertEquals(CURLE_OPERATION_TIMEOUTED, $h->getErrorNo());
+    }
 
-        $this->assertEquals($this->getServer()->getUrl(), $h->getOption(CURLOPT_URL));
-        $this->assertEquals(array(
-            CURLOPT_VERBOSE => true,
-            CURLOPT_URL => $this->getServer()->getUrl(),
-            CURLOPT_STDERR => $h->getStderr(true)
-        ), $h->getOptions());
-
-        $this->assertTrue($h->getIdleTime() == 0 || $h->getIdleTime() == 1);
-
-        $this->assertNull($h->getOwner());
+    /**
+     * @covers Guzzle\Http\Curl\CurlHandle::getStderr
+     */
+    public function testAccountsForMissingStdErr()
+    {
+        $handle = curl_init('http://www.test.com/');
+        $h = new CurlHandle($handle, array(
+            CURLOPT_URL => 'http://www.test.com/'
+        ));
+        $this->assertNull($h->getStderr(false));
     }
 
     /**
      * @covers Guzzle\Http\Curl\CurlHandle::isAvailable
-     * @covers Guzzle\Http\Curl\CurlHandle::isMyHandle
      */
     public function testDeterminesIfResourceIsAvailable()
     {
         $handle = curl_init($this->getServer()->getUrl());
         $h = new CurlHandle($handle, array());
         $this->assertTrue($h->isAvailable());
-        $this->assertTrue($h->isMyHandle($handle));
 
         // Mess it up by closing the handle
         curl_close($handle);
-
         $this->assertFalse($h->isAvailable());
-        $this->assertFalse($h->isMyHandle($handle));
 
-        unset($handle);
+        // Mess it up by unsetting the handle
+        $handle = null;
         $this->assertFalse($h->isAvailable());
     }
 
@@ -119,16 +137,13 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
         $handle = curl_init($this->getServer()->getUrl());
         curl_setopt($handle, CURLOPT_TIMEOUT_MS, 1);
-
         $h = new CurlHandle($handle, array(
             CURLOPT_TIMEOUT_MS => 1
         ));
-
         @curl_exec($handle);
 
         $this->assertEquals('Timeout was reached', $h->getError());
         $this->assertEquals(CURLE_OPERATION_TIMEOUTED, $h->getErrorNo());
-
         $this->assertEquals($this->getServer()->getUrl(), $h->getInfo(CURLINFO_EFFECTIVE_URL));
         $this->assertInternalType('array', $h->getInfo());
 
@@ -137,183 +152,324 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Curl\CurlHandle::setOption
-     * @covers Guzzle\Http\Curl\CurlHandle::setOptions
-     * @covers Guzzle\Http\Curl\CurlHandle::getOption
+     * @covers Guzzle\Http\Curl\CurlHandle::getOptions
      */
-    public function testWrapsSettingOptions()
+    public function testWrapsCurlOptions()
     {
         $handle = curl_init($this->getServer()->getUrl());
-        $h = new CurlHandle($handle, array());
-        $this->assertSame($h, $h->setOption(CURLOPT_AUTOREFERER, true));
-        $this->assertSame($h, $h->setOption('CURLOPT_BUFFERSIZE', 1024));
-
-        $this->assertEquals(true, $h->getOption(CURLOPT_AUTOREFERER));
-        $this->assertEquals(1024, $h->getOption('CURLOPT_BUFFERSIZE'));
-        $this->assertEquals(1024, $h->getOption(CURLOPT_BUFFERSIZE));
-
-        $handle = curl_init($this->getServer()->getUrl());
-        $h = new CurlHandle($handle, array());
-        $this->assertSame($h, $h->setOptions(array(
+        $h = new CurlHandle($handle, array(
             CURLOPT_AUTOREFERER => true,
-            'CURLOPT_BUFFERSIZE' => 1024
-        )));
+            CURLOPT_BUFFERSIZE => 1024
+        ));
 
-        $this->assertEquals(true, $h->getOption(CURLOPT_AUTOREFERER));
-        $this->assertEquals(1024, $h->getOption('CURLOPT_BUFFERSIZE'));
-        $this->assertEquals(1024, $h->getOption(CURLOPT_BUFFERSIZE));
+        $this->assertEquals(true, $h->getOptions()->get(CURLOPT_AUTOREFERER));
+        $this->assertEquals(1024, $h->getOptions()->get(CURLOPT_BUFFERSIZE));
     }
 
     /**
-     * @covers Guzzle\Http\Curl\CurlHandle::hasProblematicOption
+     * Data provider for factory tests
+     *
+     * @return array
      */
-    public function testTestsForConnectionReuseBasedOnOptions()
+    public function dataProvider()
     {
-        $handle = curl_init($this->getServer()->getUrl());
-        $h = new CurlHandle($handle, array(
-            CURLOPT_URL => $this->getServer()->getUrl()
+        $postBody = new QueryString(array(
+            'file' => '@' . __DIR__ . '/../../../../../phpunit.xml'
         ));
-        $this->assertFalse($h->hasProblematicOption());
-        $h->setOption(CURLOPT_TIMEOUT, 2);
-        $this->assertTrue($h->hasProblematicOption());
+
+        $qs = new QueryString(array(
+            'x' => 'y',
+            'z' => 'a'
+        ));
+
+        $userAgent = Guzzle::getDefaultUserAgent();
+        $auth = base64_encode('michael:123');
+
+        return array(
+            array('GET', 'http://www.google.com/', null, null, array(
+                CURLOPT_RETURNTRANSFER => 0,
+                CURLOPT_HEADER => 0,
+                CURLOPT_FOLLOWLOCATION => 1,
+                CURLOPT_MAXREDIRS => 5,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_USERAGENT => $userAgent,
+                CURLOPT_WRITEFUNCTION => 'callback',
+                CURLOPT_HEADERFUNCTION => 'callback',
+                CURLOPT_PROGRESSFUNCTION => 'callback',
+                CURLOPT_NOPROGRESS => 0,
+                CURLOPT_ENCODING => '',
+                CURLOPT_HTTPHEADER => array('Host: www.google.com', 'User-Agent: ' . $userAgent),
+            )),
+            // Test that custom request methods can be used
+            array('TRACE', 'http://www.google.com/', null, null, array(
+                CURLOPT_CUSTOMREQUEST => 'TRACE'
+            )),
+            array('GET', 'http://127.0.0.1:8080', null, null, array(
+                CURLOPT_RETURNTRANSFER => 0,
+                CURLOPT_HEADER => 0,
+                CURLOPT_FOLLOWLOCATION => 1,
+                CURLOPT_MAXREDIRS => 5,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_USERAGENT => $userAgent,
+                CURLOPT_WRITEFUNCTION => 'callback',
+                CURLOPT_HEADERFUNCTION => 'callback',
+                CURLOPT_PROGRESSFUNCTION => 'callback',
+                CURLOPT_NOPROGRESS => 0,
+                CURLOPT_ENCODING => '',
+                CURLOPT_PORT => 8080,
+                CURLOPT_HTTPHEADER => array('Host: 127.0.0.1:8080', 'User-Agent: ' . $userAgent),
+            )),
+            array('HEAD', 'http://www.google.com/', null, null, array(
+                CURLOPT_RETURNTRANSFER => 0,
+                CURLOPT_HEADER => 0,
+                CURLOPT_FOLLOWLOCATION => 1,
+                CURLOPT_MAXREDIRS => 5,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_USERAGENT => $userAgent,
+                CURLOPT_WRITEFUNCTION => 'callback',
+                CURLOPT_HEADERFUNCTION => 'callback',
+                CURLOPT_PROGRESSFUNCTION => 'callback',
+                CURLOPT_NOPROGRESS => 0,
+                CURLOPT_ENCODING => '',
+                CURLOPT_HTTPHEADER => array('Host: www.google.com', 'User-Agent: ' . $userAgent),
+                CURLOPT_CUSTOMREQUEST => 'HEAD',
+                CURLOPT_NOBODY => 1
+            )),
+            array('GET', 'https://michael:123@www.guzzle-project.com/index.html?q=2', null, null, array(
+                CURLOPT_RETURNTRANSFER => 0,
+                CURLOPT_HEADER => 0,
+                CURLOPT_FOLLOWLOCATION => 1,
+                CURLOPT_MAXREDIRS => 5,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_USERAGENT => $userAgent,
+                CURLOPT_WRITEFUNCTION => 'callback',
+                CURLOPT_HEADERFUNCTION => 'callback',
+                CURLOPT_PROGRESSFUNCTION => 'callback',
+                CURLOPT_NOPROGRESS => 0,
+                CURLOPT_ENCODING => '',
+                CURLOPT_HTTPHEADER => array(
+                    'Host: www.guzzle-project.com',
+                    'Authorization: Basic ' . $auth,
+                    'User-Agent: ' . $userAgent
+                ),
+                CURLOPT_PORT => 443
+            )),
+            array('GET', 'http://www.guzzle-project.com:8080/', array(
+                    'X-Test-Data' => 'Guzzle'
+                ), null, array(
+                CURLOPT_RETURNTRANSFER => 0,
+                CURLOPT_HEADER => 0,
+                CURLOPT_FOLLOWLOCATION => 1,
+                CURLOPT_MAXREDIRS => 5,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_USERAGENT => $userAgent,
+                CURLOPT_WRITEFUNCTION => 'callback',
+                CURLOPT_HEADERFUNCTION => 'callback',
+                CURLOPT_PROGRESSFUNCTION => 'callback',
+                CURLOPT_NOPROGRESS => 0,
+                CURLOPT_ENCODING => '',
+                CURLOPT_HTTPHEADER => array('Host: www.guzzle-project.com:8080', 'X-Test-Data: Guzzle', 'User-Agent: ' . $userAgent),
+                CURLOPT_PORT => 8080
+            )),
+            array('POST', 'http://www.guzzle-project.com/post.php', null, $qs, array(
+                CURLOPT_RETURNTRANSFER => 0,
+                CURLOPT_HEADER => 0,
+                CURLOPT_FOLLOWLOCATION => 1,
+                CURLOPT_MAXREDIRS => 5,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_USERAGENT => $userAgent,
+                CURLOPT_WRITEFUNCTION => 'callback',
+                CURLOPT_HEADERFUNCTION => 'callback',
+                CURLOPT_PROGRESSFUNCTION => 'callback',
+                CURLOPT_NOPROGRESS => 0,
+                CURLOPT_ENCODING => '',
+                CURLOPT_POSTFIELDS => 'x=y&z=a',
+                CURLOPT_HTTPHEADER => array (
+                    'Host: www.guzzle-project.com',
+                    'User-Agent: ' . $userAgent,
+                    'Expect: 100-Continue',
+                    'Content-Type: application/x-www-form-urlencoded'
+                )
+            )),
+            array('PUT', 'http://www.guzzle-project.com/put.php', null, EntityBody::factory(fopen(__DIR__ . '/../../../../../phpunit.xml', 'r+')), array(
+                CURLOPT_RETURNTRANSFER => 0,
+                CURLOPT_HEADER => 0,
+                CURLOPT_FOLLOWLOCATION => 1,
+                CURLOPT_MAXREDIRS => 5,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_USERAGENT => $userAgent,
+                CURLOPT_WRITEFUNCTION => 'callback',
+                CURLOPT_HEADERFUNCTION => 'callback',
+                CURLOPT_READFUNCTION => 'callback',
+                CURLOPT_PROGRESSFUNCTION => 'callback',
+                CURLOPT_NOPROGRESS => 0,
+                CURLOPT_ENCODING => '',
+                CURLOPT_HTTPHEADER => array (
+                    'Host: www.guzzle-project.com',
+                    'User-Agent: ' . $userAgent,
+                    'Expect: 100-Continue',
+                    'Content-Length: ' . filesize(__DIR__ . '/../../../../../phpunit.xml')
+                )
+            )),
+            array('POST', 'http://www.guzzle-project.com/post.php', null, array(
+                'a' => '2'
+            ), array(
+                CURLOPT_RETURNTRANSFER => 0,
+                CURLOPT_HEADER => 0,
+                CURLOPT_FOLLOWLOCATION => 1,
+                CURLOPT_MAXREDIRS => 5,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_USERAGENT => $userAgent,
+                CURLOPT_WRITEFUNCTION => 'callback',
+                CURLOPT_HEADERFUNCTION => 'callback',
+                CURLOPT_PROGRESSFUNCTION => 'callback',
+                CURLOPT_NOPROGRESS => 0,
+                CURLOPT_ENCODING => '',
+                CURLOPT_POST => 1,
+                CURLOPT_POSTFIELDS => 'a=2',
+                CURLOPT_HTTPHEADER => array (
+                    'Host: www.guzzle-project.com',
+                    'User-Agent: ' . $userAgent,
+                    'Expect: 100-Continue',
+                    'Content-Type: application/x-www-form-urlencoded'
+                )
+            )),
+            array('POST', 'http://www.guzzle-project.com/post.php', null, array(
+                'x' => 'y'
+            ), array(
+                CURLOPT_RETURNTRANSFER => 0,
+                CURLOPT_HEADER => 0,
+                CURLOPT_FOLLOWLOCATION => 1,
+                CURLOPT_MAXREDIRS => 5,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_USERAGENT => $userAgent,
+                CURLOPT_WRITEFUNCTION => 'callback',
+                CURLOPT_HEADERFUNCTION => 'callback',
+                CURLOPT_PROGRESSFUNCTION => 'callback',
+                CURLOPT_NOPROGRESS => 0,
+                CURLOPT_ENCODING => '',
+                CURLOPT_POST => 1,
+                CURLOPT_POSTFIELDS => 'x=y',
+                CURLOPT_HTTPHEADER => array (
+                    'Host: www.guzzle-project.com',
+                    'User-Agent: ' . $userAgent,
+                    'Expect: 100-Continue',
+                    'Content-Type: application/x-www-form-urlencoded'
+                )
+            )),
+            array('POST', 'http://www.guzzle-project.com/post.php', null, $postBody, array(
+                CURLOPT_RETURNTRANSFER => 0,
+                CURLOPT_HEADER => 0,
+                CURLOPT_FOLLOWLOCATION => 1,
+                CURLOPT_MAXREDIRS => 5,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_USERAGENT => $userAgent,
+                CURLOPT_WRITEFUNCTION => 'callback',
+                CURLOPT_HEADERFUNCTION => 'callback',
+                CURLOPT_PROGRESSFUNCTION => 'callback',
+                CURLOPT_NOPROGRESS => 0,
+                CURLOPT_ENCODING => '',
+                CURLOPT_POST => 1,
+                CURLOPT_POSTFIELDS => array(
+                    'file' => '@' . __DIR__ . '/../../../../../phpunit.xml'
+                ),
+                CURLOPT_HTTPHEADER => array (
+                    'Host: www.guzzle-project.com',
+                    'User-Agent: ' . $userAgent,
+                    'Expect: 100-Continue',
+                    'Content-Type: multipart/form-data'
+                )
+            )),
+        );
     }
 
     /**
-     * @covers Guzzle\Http\Curl\CurlHandle::checkout
-     * @covers Guzzle\Http\Curl\CurlHandle::unlock
+     * @covers Guzzle\Http\Curl\CurlHandle::factory
+     * @dataProvider dataProvider
      */
-    public function testCanBeClaimedAndUnclaimed()
+    public function testFactoryCreatesCurlBasedOnRequest($method, $url, $headers, $body, $options)
     {
-        $request = RequestFactory::get($this->getServer()->getUrl());
-
-        $handle = curl_init($this->getServer()->getUrl());
-        $h = new CurlHandle($handle, array(
-            CURLOPT_URL => $this->getServer()->getUrl()
-        ));
-
-        $this->assertSame($h, $h->checkout($request));
-        $this->assertEquals(0, $h->getIdleTime());
-        $this->assertSame($request, $h->getOwner());
-
-        $h->unlock();
-        $this->assertTrue($h->isAvailable());
-
-        // Unlock with a Connection: close request
-        $request->setHeader('Connection', 'close');
-        $h->checkout($request);
-        $h->unlock();
-        $this->assertFalse($h->isAvailable());
-
-        // Unlock with a Connection: close response
-        $handle = curl_init($this->getServer()->getUrl());
-        $h = new CurlHandle($handle, array(
-            CURLOPT_URL => $this->getServer()->getUrl()
-        ));
-        $this->assertTrue($h->isAvailable());
-        $request->removeHeader('Connection');
-        $request->setResponse(Response::factory(
-            "HTTP/1.1 200 OK\r\n" .
-            "Connection: close\r\n\r\n"
-        ));
-        $h->checkout($request);
-        $h->unlock();
-        $this->assertFalse($h->isAvailable());
-    }
-
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle::isCompatible
-     */
-    public function testChecksIfRequestIsCompatibleForConnectionReuse()
-    {
-        $request = RequestFactory::get($this->getServer()->getUrl());
-
-        $handle = curl_init($this->getServer()->getUrl());
-        $h = new CurlHandle($handle, array(
-            CURLOPT_URL => $this->getServer()->getUrl()
-        ));
-
-        // Connection reuse match
-        $this->assertTrue($h->isCompatible($request));
-
-        // Different ports
-        $request->setPort(8192);
-        $this->assertFalse($h->isCompatible($request));
-
-        // Different CURLOPT_PORT
-        $request->setPort(80);
-        $request->getCurlOptions()->set(CURLOPT_PORT, 8192);
-        $this->assertFalse($h->isCompatible($request));
-
-        // Different host
-        $request->setPort(80);
-        $request->setHost('google.com');
-        $this->assertFalse($h->isCompatible($request));
-
-        // Different proxy server
-        $request->getCurlOptions()->clear();
-        $request->setUrl($this->getServer()->getUrl());
-        $this->assertTrue($h->isCompatible($request));
-        $request->getCurlOptions()->set(CURLOPT_PROXY, 'tcp://test.com:8080/');
-        $this->assertFalse($h->isCompatible($request));
-
-        // Using the same proxy
-        $h->setOption(CURLOPT_PROXY, 'tcp://test.com:8080/');
-        $this->assertTrue($h->isCompatible($request));
-
-        // It's the ower of the handle
-        $h->checkout($request);
-        $this->assertTrue($h->isCompatible($request));
-    }
-
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle::getUseCount
-     * @covers Guzzle\Http\Curl\CurlHandle::setMaxReuses
-     * @covers Guzzle\Http\Curl\CurlHandle::unlock
-     */
-    public function testClosesAfterMaxConnectionReusesIsExceeded()
-    {
-        $this->getServer()->flush();
-        $this->getServer()->enqueue(array(
-           "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
-           "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
-           "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
-        ));
-
-        CurlFactory::getInstance()->releaseAllHandles(true);
-        $request = RequestFactory::get($this->getServer()->getUrl());
-        $h = $request->getCurlHandle()->setMaxReuses(2);
-        $curlHandle = $h->getHandle();
-        $this->assertEquals(0, $h->getUseCount());
+        $request = RequestFactory::create($method, $url, $headers, $body);
+        $handle = CurlHandle::factory($request);
         
-        $request->send();
-        $this->assertEquals(1, $h->getUseCount());
-        $this->assertSame($curlHandle, $h->getHandle());
-        $request->send();
-        $this->assertEquals(2, $h->getUseCount());
-        $this->assertSame($curlHandle, $h->getHandle());
-        $request->send();
-        $this->assertEquals(0, $h->getUseCount());
-        $this->assertNotSame($curlHandle, $h->getHandle());
+        $this->assertInstanceOf('Guzzle\\Http\\Curl\\CurlHandle', $handle);
+        $o = $request->getParams()->get('curl.last_options');
+
+        $check = 0;
+        foreach ($options as $key => $value) {
+            $check++;
+            $this->assertArrayHasKey($key, $o, '-> Check number ' . $check);
+            if ($key != CURLOPT_HTTPHEADER && $key != CURLOPT_POSTFIELDS && (is_array($o[$key])) || $o[$key] instanceof \Closure) {
+                $this->assertEquals('callback', $value, '-> Check number ' . $check);
+            } else {
+                $this->assertTrue($value == $o[$key], '-> Check number ' . $check . ' - ' . var_export($value, true) . ' != ' . var_export($o[$key], true));
+            }
+        }
+        
+        $request = null;
     }
 
     /**
-     * @covers Guzzle\Http\Curl\CurlHandle::getUseCount
-     * @covers Guzzle\Http\Curl\CurlHandle::setMaxReuses
-     * @covers Guzzle\Http\Curl\CurlHandle::unlock
+     * @covers Guzzle\Http\Curl\CurlHandle
      */
-    public function testCanCloseAfterOneConnectionReusesIsExceeded()
+    public function testFactoryUsesSpecifiedProtocol()
+    {
+        $request = RequestFactory::create('GET', 'http://www.guzzle-project.com/');
+        $request->setProtocolVersion('1.1');
+        $handle = CurlHandle::factory($request);
+        $options = $request->getParams()->get('curl.last_options');
+        $this->assertEquals(CURL_HTTP_VERSION_1_1, $options[CURLOPT_HTTP_VERSION]);
+    }
+
+    /**
+     * @covers Guzzle\Http\Curl\CurlHandle
+     */
+    public function testUploadsPutData()
     {
         $this->getServer()->flush();
-        $this->getServer()->enqueue(array(
-           "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
-           "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
-        ));
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi");
 
-        CurlFactory::getInstance()->releaseAllHandles(true);
-        $request = RequestFactory::get($this->getServer()->getUrl());
-        $h = $request->getCurlHandle()->setMaxReuses(0);
-        $this->assertNotNull($h->getHandle());
+        $request = RequestFactory::create('PUT', $this->getServer()->getUrl());
+        $request->setClient(new Client());
+        $request->setBody(EntityBody::factory('test'), 'text/plain', false);
+        
+        $o = $this->getWildcardObserver($request);
         $request->send();
-        $this->assertNull($h->getHandle());
+
+        // Make sure that the events were dispatched
+        $this->assertTrue($o->has('curl.callback.read'));
+        $this->assertTrue($o->has('curl.callback.write'));
+        $this->assertTrue($o->has('curl.callback.progress'));
+
+        // Make sure that the data was sent through the event
+        $this->assertEquals('test', $o->getData('curl.callback.read', 'read'));
+        $this->assertEquals('hi', $o->getData('curl.callback.write', 'write'));
+
+        // Ensure that the request was received exactly as intended
+        $r = $this->getServer()->getReceivedRequests(true);
+        
+        $this->assertEquals((string) $request, (string) $r[0]);
+    }
+    
+    /**
+     * @covers Guzzle\Http\Curl\CurlHandle
+     */
+    public function testSendsPostRequests()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi");
+        // Create a new request using the same connection and POST
+        $request = RequestFactory::create('POST', $this->getServer()->getUrl());
+        $request->setClient(new Client());
+        $request->addPostFields(array(
+            'a' => 'b',
+            'c' => 'ay! ~This is a test, isn\'t it?'
+        ));
+        $request->send();
+
+        // Make sure that the request was sent correctly
+        $r = $this->getServer()->getReceivedRequests(true);
+
+        $this->assertEquals((string) $request, (string) $r[0]);
     }
 }

@@ -7,9 +7,6 @@ namespace Guzzle\Common;
  *
  * This class extends SimpleXMLElement, to allow adding simpleXMLElemnent child
  * objects to each other.
- *
- * @author Harold Asbridge <harold@shoebacca.com>
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class XmlElement extends \SimpleXMLElement
 {

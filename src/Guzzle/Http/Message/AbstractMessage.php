@@ -7,8 +7,6 @@ use Guzzle\Common\Collection;
 /**
  * HTTP messages consist of request messages that request data from a server,
  * and response messages that carry back data from the server to the client.
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 abstract class AbstractMessage implements MessageInterface
 {
@@ -25,7 +23,7 @@ abstract class AbstractMessage implements MessageInterface
     /**
      * @var array Cache-Control directive information
      */
-    protected $cacheControl = null;
+    private $cacheControl = array();
 
     /*
      * @var string HTTP protocol version of the message
@@ -40,10 +38,6 @@ abstract class AbstractMessage implements MessageInterface
      */
     public function getParams()
     {
-        if (!$this->params) {
-            $this->params = new Collection();
-        }
-
         return $this->params;
     }
 
@@ -68,7 +62,7 @@ abstract class AbstractMessage implements MessageInterface
      * @param string $header Header to retrieve.
      * @param mixed $default (optional) If the header is not found, the passed
      *      $default value will be returned
-     * @param int $match (optional) Bitwise match setting:
+     * @param int $match (optional) Match mode:
      *     0 - Exact match
      *     1 - Case insensitive match
      *     2 - Regular expression match
@@ -86,11 +80,9 @@ abstract class AbstractMessage implements MessageInterface
      *
      * @param array $names (optional) Pass an array of header names to retrieve
      *      only a particular subset of headers.
-     * @param int $match (optional) Bitwise match setting:
-     *      0 - Exact match
-     *      1 - Case insensitive match
-     *      2 - Regular expression match
+     * @param int $match (optional) Match mode
      *
+     * @see AbstractMessage::getHeader
      * @return Collection Returns a collection of all headers if no $headers
      *      array is specified, or a Collection of only the headers matching
      *      the headers in the $headers array.
@@ -105,30 +97,90 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Returns TRUE or FALSE if the specified header is present.
+     * Get a tokenized header as a Collection
+     *
+     * @param string $header Header to retrieve
+     * @param string $token (optional) Token separator
+     * @param int $match (optional) Match mode
+     *
+     * @return Collection|null
+     */
+    public function getTokenizedHeader($header, $token = ';', $match = Collection::MATCH_EXACT)
+    {
+        $value = $this->getHeader($header, $match);
+        if (!$value) {
+            return null;
+        }
+
+        $data = new Collection();
+        foreach ((array) $value as $singleValue) {
+            foreach (explode($token, $singleValue) as $kvp) {
+                $parts = explode('=', $kvp, 2);
+                if (!isset($parts[1])) {
+                    $data[count($data)] = trim($parts[0]);
+                } else {
+                    $data->add(trim($parts[0]), trim($parts[1]));
+                }
+            }
+        }
+
+        return $data->map(function($key, $value) {
+            return is_array($value) ? array_unique($value) : $value;
+        });
+    }
+
+    /**
+     * Set a tokenized header on the request that implodes a Collection of data
+     * into a string separated by a token
+     *
+     * @param string $header Header to set
+     * @param array|Collection $data Header data
+     * @param string $token (optional) Token delimiter
+     *
+     * @return AbstractMessage
+     * @throws InvalidArgumentException if data is not an array or Collection
+     */
+    public function setTokenizedHeader($header, $data, $token = ';')
+    {
+        if (!($data instanceof Collection) && !is_array($data)) {
+            throw new \InvalidArgumentException('Data must be a Collection or array');
+        }
+
+        $values = array();
+        foreach ($data as $key => $value) {
+            foreach ((array) $value as $v) {
+                $values[] = is_int($key) ? $v : $key . '=' . $v;
+            }
+        }
+
+        return $this->setHeader($header, implode($token, $values));
+    }
+
+    /**
+     * Check if the specified header is present.
      *
      * @param string $header The header to check.
-     * @param int $match (optional) Bitwise key match setting:
-     *      0 - Exact match
-     *      1 - Case insensitive match
-     *      2 - Regular expression match
+     * @param int $match (optional) Match mode
      *
-     * @return bool|mixed Returns the matching header or FALSE if no match found
+     * @see AbstractMessage::getHeader
+     * @return bool|mixed Returns TRUE or FALSE if the header is present and using exact matching
+     *     Returns the matching header or FALSE if no match found and using regex or case
+     *     insensitive matching
      */
     public function hasHeader($header, $match = Collection::MATCH_EXACT)
     {
-        return $this->headers->hasKey($header, $match);
+        return $match == Collection::MATCH_EXACT
+            ? false !== $this->headers->hasKey($header, $match)
+            : $this->headers->hasKey($header, $match);
     }
 
     /**
      * Remove a specific HTTP header.
      *
      * @param string $header HTTP header to remove.
-     * @param int $match (optional) Bitwise match setting:
-     *      0 - Exact match
-     *      1 - Case insensitive match
-     *      2 - Regular expression match
+     * @param int $match (optional) Bitwise match setting
      *
+     * @see AbstractMessage::getHeader
      * @return AbstractMessage
      */
     public function removeHeader($header, $match = Collection::MATCH_EXACT)
@@ -228,19 +280,31 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
+     * Check to see if the modified headers need to reset any of the managed
+     * headers like cache-control
+     *
+     * @param string $action One of set or remove
+     * @param string|array $keyOrArray Header or headers that changed
+     */
+    protected function changedHeader($action, $keyOrArray)
+    {
+        if (in_array('Cache-Control', (array) $keyOrArray)) {
+            $this->parseCacheControlDirective();
+        }
+    }
+
+    /**
      * Parse the Cache-Control HTTP header into an array
      */
-    protected function parseCacheControlDirective()
+    private function parseCacheControlDirective()
     {
         $this->cacheControl = array();
-        $cacheControl = $this->getHeader('Cache-Control');
-        if ($cacheControl) {
-            if (is_array($cacheControl)) {
-                $cacheControl = implode(',', $cacheControl);
-            }
-            foreach (explode(',', $cacheControl) as $pieces) {
-                $parts = array_map('trim', explode('=', $pieces));
-                $this->cacheControl[$parts[0]] = isset($parts[1]) ? $parts[1] : true;
+        $tokenized = $this->getTokenizedHeader('Cache-Control', ',') ?: array();
+        foreach ($tokenized as $key => $value) {
+            if (is_numeric($key)) {
+                $this->cacheControl[$value] = true;
+            } else {
+                $this->cacheControl[$key] = $value;
             }
         }
     }
@@ -248,7 +312,7 @@ abstract class AbstractMessage implements MessageInterface
     /**
      * Rebuild the Cache-Control HTTP header using the user-specified values
      */
-    protected function rebuildCacheControlDirective()
+    private function rebuildCacheControlDirective()
     {
         $cacheControl = array();
         foreach ($this->cacheControl as $key => $value) {
@@ -260,19 +324,5 @@ abstract class AbstractMessage implements MessageInterface
         }
 
         $this->headers->set('Cache-Control', implode(', ', $cacheControl));
-    }
-
-    /**
-     * Check to see if the modified headers need to reset any of the managed
-     * headers like cache-control
-     *
-     * @param string $action One of set or remove
-     * @param string|array $keyOrArray Header or headers that changed
-     */
-    protected function changedHeader($action, $keyOrArray)
-    {
-        if (in_array('Cache-Control', (array)$keyOrArray)) {
-            $this->parseCacheControlDirective();
-        }
     }
 }

@@ -2,18 +2,18 @@
 
 namespace Guzzle\Tests\Service\Command;
 
-use Guzzle\Tests\Common\Mock\MockObserver;
-use Guzzle\Http\Pool\Pool;
+use Guzzle\Tests\Mock\MockObserver;
+use Guzzle\Http\Curl\CurlMulti;
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Command\CommandSet;
 use Guzzle\Service\Client;
 use Guzzle\Service\DescriptionBuilder\XmlDescriptionBuilder;
 use Guzzle\Service\Command\ConcreteCommandFactory;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
-use Guzzle\Service\Plugin\MockPlugin;
+use Guzzle\Http\Plugin\MockPlugin;
 
 /**
- * @author Michael Dowling <michael@guzzlephp.org>
+ * @covers Guzzle\Service\Command\CommandSet
  */
 class CommandSetTest extends AbstractCommandTest
 {
@@ -24,9 +24,8 @@ class CommandSetTest extends AbstractCommandTest
      */
     public function test__construct()
     {
-        $pool = new Pool();
         $cmd = new MockCommand();
-        $commandSet = new CommandSet(array($cmd), $pool);
+        $commandSet = new CommandSet(array($cmd));
         $this->assertTrue($commandSet->hasCommand($cmd));
     }
 
@@ -34,8 +33,7 @@ class CommandSetTest extends AbstractCommandTest
      * @covers Guzzle\Service\Command\CommandSet::hasCommand
      * @covers Guzzle\Service\Command\CommandSet::addCommand
      * @covers Guzzle\Service\Command\CommandSet::removeCommand
-     * @covers Guzzle\Service\Command\CommandSet::getParallelCommands
-     * @covers Guzzle\Service\Command\CommandSet::getSerialCommands
+     * @covers Guzzle\Service\Command\CommandSet::getCommands
      * @covers Guzzle\Service\Command\CommandSet::count
      * @covers Guzzle\Service\Command\CommandSet::getIterator
      */
@@ -44,12 +42,11 @@ class CommandSetTest extends AbstractCommandTest
         $commandSet = new CommandSet();
 
         // Check when no commands are set
-        $this->assertEquals(array(), $commandSet->getSerialCommands());
+        $this->assertEquals(array(), $commandSet->getCommands());
 
         // Create some mock commands
         $command1 = new MockCommand();
         $command2 = new MockCommand();
-        $command2->setCanBatch(false);
 
         // Check the fluent interface
         $this->assertEquals($commandSet, $commandSet->addCommand($command1));
@@ -66,9 +63,7 @@ class CommandSetTest extends AbstractCommandTest
         $this->assertInstanceOf('ArrayIterator', $commandSet->getIterator());
         $this->assertEquals(2, count($commandSet->getIterator()));
 
-        // Check that filtering by command type works-- serial vs parallel
-        $this->assertEquals(array($command1), $commandSet->getParallelCommands());
-        $this->assertEquals(array($command2), $commandSet->getSerialCommands());
+        $this->assertEquals(array($command1, $command2), $commandSet->getCommands());
 
         // Remove the command by object
         $commandSet->removeCommand($command1);
@@ -103,14 +98,14 @@ class CommandSetTest extends AbstractCommandTest
     public function testExecutesCommands()
     {
         $client = $this->getClient();
-        $observer = new MockObserver();
+        $observer = $this->getWildcardObserver($client);
 
         // Create a Mock response
         $response = new Response(200, array(
             'Content-Type' => 'application/xml'
         ), '<xml><data>123</data></xml>');
 
-        $client->getEventManager()->attach(new MockPlugin(array(
+        $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(
             $response,
             $response,
             $response
@@ -120,34 +115,30 @@ class CommandSetTest extends AbstractCommandTest
         $command1->setClient($client);
         $command2 = new MockCommand();
         $command2->setClient($client);
-        $command2->setCanBatch(false);
         $command3 = new MockCommand();
         $command3->setClient($client);
 
         $commandSet = new CommandSet(array($command1, $command2, $command3));
-        $client->getEventManager()->attach($observer);
         $commandSet->execute();
 
         $this->assertTrue($command1->isExecuted());
-        $this->assertTrue($command2->isExecuted());
-        $this->assertTrue($command3->isExecuted());
         $this->assertTrue($command1->isPrepared());
+        $this->assertTrue($command2->isExecuted());
         $this->assertTrue($command2->isPrepared());
+        $this->assertTrue($command3->isExecuted());
         $this->assertTrue($command3->isPrepared());
 
         $this->assertEquals($response, $command1->getResponse());
         $this->assertEquals($response, $command2->getResponse());
 
-        $this->assertEquals(3, count(array_filter($observer->events, function($e) {
-            return $e == 'command.before_send';
-        })));
+        $grouped = $observer->getGrouped();
+        $this->assertEquals(3, count($grouped['command.before_send']));
+        $this->assertEquals(3, count($grouped['command.after_send']));
 
-        $this->assertEquals(3, count(array_filter($observer->events, function($e) {
-            return $e == 'command.after_send';
-        })));
+        // make sure the command set was detached as a listener on the request
+        $listeners = $command1->getRequest()->getEventDispatcher()->getListeners('request.complete');
+        $this->assertFalse(in_array($commandSet, $listeners));
 
-        // make sure the command set was detached as a listener
-        $this->assertFalse($command1->getRequest()->getEventManager()->hasObserver('Guzzle\\Service\\Command\\CommandSet'));
         // make sure that the command reference was removed
         $this->assertFalse($command1->getRequest()->getParams()->hasKey('command'));
 

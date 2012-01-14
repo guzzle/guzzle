@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="guzzle" default="phar">
+    <target name="phar" description="Create a phar with an autoloader">
+        <if>
+            <equals arg1="${min}" arg2="true" />
+            <then>
+                <pharpackage
+                    destfile="./guzzle-min.phar"
+                    basedir="."
+                    alias="Guzzle"
+                    signature="md5">
+                    <fileset dir=".">
+                        <include name="src/**/*.php" />
+                    </fileset>
+                    <metadata>
+                        <element name="version" value="2.0.0" />
+                    </metadata>
+                </pharpackage>
+            </then>
+            <else>
+                <pharpackage
+                    destfile="./guzzle.phar"
+                    basedir="."
+                    stub="autoload.php"
+                    alias="Guzzle"
+                    signature="md5">
+                    <fileset dir=".">
+                        <include name="src/**/*.php" />
+                        <include name="vendor/symfony/class-loader/Symfony/Component/ClassLoader/UniversalClassLoader.php" />
+                        <include name="vendor/symfony/event-dispatcher/**/*.php" />
+                        <include name="vendor/symfony/validator/**/*.php" />
+                        <include name="vendor/doctrine/common/lib/Doctrine/Common/Cache/*.php" />
+                        <include name="vendor/monolog/monolog/src/**/*.php" />
+                    </fileset>
+                    <metadata>
+                        <element name="version" value="2.0.0" />
+                    </metadata>
+                </pharpackage>
+            </else>
+        </if>
+    </target>
+</project>

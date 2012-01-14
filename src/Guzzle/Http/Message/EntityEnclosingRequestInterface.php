@@ -2,16 +2,13 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Common\Event\Observer;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\QueryString;
 
 /**
  * HTTP request that sends an entity-body in the request message (POST, PUT)
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
-interface EntityEnclosingRequestInterface extends RequestInterface, Observer
+interface EntityEnclosingRequestInterface extends RequestInterface
 {
     /**
      * Set the body of the request
@@ -20,10 +17,14 @@ interface EntityEnclosingRequestInterface extends RequestInterface, Observer
      *      of the request
      * @param string $contentType (optional) Content-Type to set.  Leave null
      *      to use an existing Content-Type or to guess the Content-Type
+     * @param bool $tryChunkedTransfer (optional) Set to TRUE to try to use
+     *      Tranfer-Encoding chunked
      *
      * @return EntityEnclosingRequestInterface
+     * @throws RequestException if the protocol is < 1.1 and Content-Length can
+     *      not be determined
      */
-    function setBody($body, $contentType = null);
+    function setBody($body, $contentType = null, $tryChunkedTransfer = false);
 
     /**
      * Get the body of the request if set
@@ -33,23 +34,30 @@ interface EntityEnclosingRequestInterface extends RequestInterface, Observer
     function getBody();
 
     /**
+     * Get a POST field from the request
+     *
+     * @param string $field Field to retrive
+     *
+     * @return mixed|null
+     */
+    function getPostField($field);
+
+    /**
      * Get the post fields that will be used in the request
      *
-     * @return QueryString
+     * @return array
      */
     function getPostFields();
 
     /**
-     * Returns an array of files that will be sent in the request.
-     *
-     * The '@' prefix is removed from the files in the return array
+     * Returns an associative array of POST field names and file paths
      *
      * @return array
      */
     function getPostFiles();
 
     /**
-     * Add the POST fields to use in the request
+     * Add POST fields to use in the request
      *
      * @param QueryString|array $fields POST fields
      *
@@ -58,13 +66,31 @@ interface EntityEnclosingRequestInterface extends RequestInterface, Observer
     function addPostFields($fields);
 
     /**
+     * Set a POST field value
+     *
+     * @param string $key Key to set
+     * @param string $value Value to set
+     *
+     * @return EntityEnclosingRequestInterface
+     */
+    function setPostField($key, $value);
+    
+    /**
      * Add POST files to use in the upload
      *
      * @param array $files An array of filenames to POST
      *
      * @return EntityEnclosingRequestInterface
-     *
      * @throws BodyException if the file cannot be read
      */
     function addPostFiles(array $files);
+
+    /**
+     * Remove a POST field or file by name
+     *
+     * @param string $field Name of the POST field or file to remove
+     *
+     * @return EntityEnclosingRequestInterface
+     */
+    function removePostField($field);
 }

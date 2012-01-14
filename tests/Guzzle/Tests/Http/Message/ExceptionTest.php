@@ -7,9 +7,6 @@ use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\RequestException;
 use Guzzle\Http\Message\BadResponseException;
 
-/**
- * @author Michael Dowling <michael@guzzlephp.org>
- */
 class ExceptionTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**

@@ -6,7 +6,6 @@ use Guzzle\Http\EntityBody;
 
 /**
  * @group server
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
 {
@@ -72,7 +71,7 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $size = $body->getContentLength();
         $body->compress();
         $this->assertEquals('gzip', $body->getContentEncoding(), '-> getContentEncoding() must return the correct encoding after compressing');
-        $this->assertEquals(gzdeflate('testing 123...testing 123'), (string)$body);
+        $this->assertEquals(gzdeflate('testing 123...testing 123'), (string) $body);
         $this->assertTrue($body->getContentLength() < $size);
         $this->assertTrue($body->uncompress());
         $this->assertEquals('testing 123...testing 123', (string) $body);

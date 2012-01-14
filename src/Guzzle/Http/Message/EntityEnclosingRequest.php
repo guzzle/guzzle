@@ -3,21 +3,11 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Event\Subject;
-use Guzzle\Common\Event\Observer;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\QueryString;
 
 /**
  * HTTP request that sends an entity-body in the request message (POST, PUT)
- *
- * Signals emitted:
- *
- *  event                        context  description
- *  -----                        -------  -----------
- *  request.prepare_entity_body  null     About to prepare the entity body
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class EntityEnclosingRequest extends Request implements EntityEnclosingRequestInterface
 {
@@ -32,23 +22,25 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     protected $postFields;
 
     /**
+     * {@inheritdoc}
+     */
+    public function __construct($method, $url, $headers = array())
+    {
+        $this->postFields = new QueryString();
+        $this->postFields->setPrefix('');
+        parent::__construct($method, $url, $headers);
+        $this->setHeader('Expect', '100-Continue');
+    }
+
+    /**
      * Get the HTTP request as a string
      *
      * @return string
      */
     public function __toString()
     {
-        // Process the object as it might contain POST fields that need to be
-        // generated into an EntityBody
-        if (!$this->response) {
-            $this->getEventManager()->notify('request.prepare_entity_body');
-        }
-
-        $body = count($this->getPostFields()) && 0 == count($this->getPostFiles())
-            ? (string) $this->getPostFields()
-            : (string) $this->getBody();
-
-        return parent::__toString() . $body;
+        return parent::__toString() 
+            . (count($this->getPostFields()) ? $this->postFields : $this->body);
     }
 
     /**
@@ -58,22 +50,41 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
      *      of the request
      * @param string $contentType (optional) Content-Type to set.  Leave null
      *      to use an existing Content-Type or to guess the Content-Type
+     * @param bool $tryChunkedTransfer (optional) Set to TRUE to try to use
+     *      Tranfer-Encoding chunked
      *
      * @return EntityEnclosingRequest
-     * @throws HttpException if an invalid body is provided
+     * @throws RequestException if the protocol is < 1.1 and Content-Length can
+     *      not be determined
      */
-    public function setBody($body, $contentType = null)
+    public function setBody($body, $contentType = null, $tryChunkedTransfer = false)
     {
-        if ($this->body) {
-            // Ensure that a previously set entity body is cleaned up
-            $this->removeHeader('Content-Length');
-        }
-
         $this->body = EntityBody::factory($body);
+        $this->removeHeader('Content-Length');
+        
         if ($contentType) {
             $this->setHeader('Content-Type', $contentType);
+        } else {
+            $this->removeHeader('Content-Type');
         }
-        $this->addEvent();
+
+        if ($tryChunkedTransfer) {
+            $this->setHeader('Transfer-Encoding', 'chunked');
+        } else {
+            $this->removeHeader('Transfer-Encoding');
+            // Set the Content-Length header if it can be determined
+            $size = $this->body->getContentLength();
+            if ($size !== null && !is_bool($size)) {
+                $this->setHeader('Content-Length', $size);
+            } else if ('1.1' == $this->protocolVersion) {
+                $this->setHeader('Transfer-Encoding', 'chunked');
+            } else {
+                throw new RequestException('Cannot determine entity body '
+                    . 'size and cannot use chunked Transfer-Encoding when '
+                    . 'using HTTP/' . $this->protocolVersion
+                );
+            }
+        }
 
         return $this;
     }
@@ -89,98 +100,39 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * {@inheritdoc}
+     * Get a POST field from the request
+     *
+     * @param string $field Field to retrive
+     *
+     * @return mixed|null
      */
-    public function update(Subject $subject, $event, $context = null)
+    public function getPostField($field)
     {
-        // @codeCoverageIgnoreStart
-        if ($subject !== $this || 
-            !($event == 'request.prepare_entity_body' ||
-              $event == 'request.before_send' ||
-              $event == 'request.curl.before_create')) {
-            return;
-        }
-        // @codeCoverageIgnoreEnd
-
-        $continuePayload = false;
-        
-        if (count($this->getPostFields())) {
-
-            // If there are files, then do a multipart/form-data entity body
-            $this->getCurlOptions()->set(CURLOPT_POST, true);
-            if (count($this->getPostFiles())) {
-                $this->setHeader('Content-Type', 'multipart/form-data');
-                $this->postFields->setEncodeFields(false)->setEncodeValues(false);
-                $this->getCurlOptions()->set(CURLOPT_POSTFIELDS, $this->postFields->getAll());
-                $continuePayload = true;
-            } else {
-                $this->setHeader('Content-Type', 'application/x-www-form-urlencoded');
-                $this->getCurlOptions()->set(CURLOPT_POSTFIELDS, (string) $this->postFields);
-            }
-
-        } else if ($this->body
-            && !$this->getHeader('Transfer-Encoding', null, true)
-            && !$this->hasHeader('Content-Length', true)) {
-
-            $continuePayload = true;
-
-            // Set the Content-Length header if it can be determined
-            $size = $this->body->getContentLength();
-
-            if ($size !== null && !is_bool($size)) {
-                $this->headers->set('Content-Length', $size);
-            } else if ('1.1' == $this->protocolVersion) {
-                $this->setHeader('Transfer-Encoding', 'chunked');
-            } else {
-                throw new RequestException('Cannot determine entity body '
-                    . 'size and cannot use chunked Transfer-Encoding when '
-                    . 'using HTTP/' . $this->protocolVersion
-                );
-            }
-        }
-
-        // Always add the Expect: 100-Continue header when sending an entity
-        // body other than application/x-www-form-urlencoded using HTTP/1.1
-        if ($continuePayload && $this->protocolVersion == '1.1' && $this->body
-            && !$this->getHeader('Expect', null, true)) {
-            $this->setHeader('Expect', '100-Continue');
-        }
+        return $this->postFields->get($field);
     }
 
     /**
      * Get the post fields that will be used in the request
      *
-     * @return QueryString
+     * @return array
      */
     public function getPostFields()
     {
-        if (!$this->postFields) {
-            $this->postFields = new QueryString();
-            $this->postFields->setPrefix('');
-            $this->addEvent();
-        }
-
-        return $this->postFields;
+        return $this->postFields->getAll();
     }
-
+    
     /**
-     * Returns an array of files that will be sent in the request.
-     *
-     * The '@' prefix is removed from the files in the return array
+     * Returns an associative array of POST field names and file paths
      *
      * @return array
      */
     public function getPostFiles()
     {
-        $files = $this->getPostFields()->filter(function($key, $value) {
+        return $this->postFields->filter(function($key, $value) {
             return $value && $value[0] == '@';
+        })->map(function($key, $value) {
+            return str_replace('@', '', $value);
         })->getAll();
-            
-        foreach ($files as $key => &$value) {
-            $value = ($value[0] == '@') ? substr($value, 1) : $value;
-        }
-
-        return $files;
     }
 
     /**
@@ -192,10 +144,24 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
      */
     public function addPostFields($fields)
     {
-        if (!$this->hasHeader('Content-Type')) {
-            $this->setHeader('Content-Type', 'application/x-www-form-urlencoded');
-        }
-        $this->getPostFields()->merge($fields);
+        $this->postFields->merge($fields);
+        $this->processPostFields();
+
+        return $this;
+    }
+
+    /**
+     * Set a POST field value
+     *
+     * @param string $key Key to set
+     * @param string $value Value to set
+     *
+     * @return EntityEnclosingRequest
+     */
+    public function setPostField($key, $value)
+    {
+        $this->postFields->set($key, $value);
+        $this->processPostFields();
 
         return $this;
     }
@@ -206,26 +172,16 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
      * @param array $files An array of filenames to POST
      *
      * @return EntityEnclosingRequest
-     *
      * @throws BodyException if the file cannot be read
      */
     public function addPostFiles(array $files)
     {
-        // Post files have been added, so pass the parameters as an
-        // array.  Passing as an array causes the Content-Type to be
-        // multipart/form-data
-        $this->setHeader('Content-Type', 'multipart/form-data');
-
-        $files = (array) $files;
-        $normalized = array();
-        $total = count($files);
-
-        foreach ($files as $key => $file) {
+        foreach ((array) $files as $key => $file) {
 
             if (is_numeric($key)) {
                 $key = 'file';
             }
-
+            
             $found = ($file[0] == '@')
                 ? is_readable(substr($file, 1))
                 : is_readable($file);
@@ -235,21 +191,41 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
             if ($file[0] != '@') {
                 $file = '@' . $file;
             }
-            $this->getPostFields()->add($key, $file);
+            $this->postFields->add($key, $file);
         }
+
+        $this->processPostFields();
 
         return $this;
     }
 
     /**
-     * Attach the POST request to the parent pre-processing chain
+     * Remove a POST field or file by name
+     *
+     * @param string $field Name of the POST field or file to remove
+     *
+     * @return EntityEnclosingRequest
      */
-    private function addEvent()
+    public function removePostField($field)
     {
-        $sm = $this->getEventManager();
-        if (!$sm->hasObserver($this)) {
-            // Attach to itself at a high priority
-            $sm->attach($this, 9999);
+        $this->postFields->remove($field);
+        $this->processPostFields();
+
+        return $this;
+    }
+
+    /**
+     * Determine what type of request should be sent based on post fields
+     */
+    protected function processPostFields()
+    {
+        if (0 == count($this->getPostFiles())) {
+            $this->setHeader('Content-Type', 'application/x-www-form-urlencoded');
+            $this->getCurlOptions()->set(CURLOPT_POSTFIELDS, (string) $this->postFields);
+        } else {
+            $this->setHeader('Content-Type', 'multipart/form-data');
+            $this->postFields->setEncodeFields(false)->setEncodeValues(false);
+            $this->getCurlOptions()->set(CURLOPT_POSTFIELDS, $this->postFields->getAll());
         }
     }
 }

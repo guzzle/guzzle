@@ -1,7 +1,7 @@
 Guzzle, PHP HTTP client and webservice framework
-===============================================
+================================================
 
-Guzzle is a game changer in the world of PHP HTTP clients. Guzzle allows you to truly reap the benefits of the HTTP/1.1 spec. No other library provides persistent connection management or makes it easier to send requests in parallel.</p>
+Guzzle is a game changer in the world of PHP HTTP clients. Guzzle allows you to truly reap the benefits of the HTTP/1.1 spec. No other library makes it easier to manage persistent connections or send requests in parallel.</p>
 
 In addition to taking the pain out of HTTP, Guzzle provides a lightweight framework for creating web service clients.  Most web service clients follow a specific pattern: create a client class, create methods for each action, create and execute a cURL handle, parse the response, implement error handling, and return the result. Guzzle takes the redundancy out of this process and gives you the tools you need to quickly build a web service client.
 
@@ -37,7 +37,7 @@ HTTP basics
 ```php
 <?php
 
-use Guzzle\Service\Client;
+use Guzzle\Http\Client;
 
 $client = new Client('http://www.example.com/api/v1/key/{{key}}', array(
     'key' => '***'
@@ -102,18 +102,30 @@ Send requests in parallel
 ```php
 <?php
 
-use Guzzle\Service\Client;
-
 try {
-    $responses = $client->batch(array(
-        $client->get('http://www.google.com/'),
-        $client->head('http://www.google.com/'),
-        $client->get('https://www.github.com/')
+    $client = new Guzzle\Http\Client('http://www.myapi.com/api/v1');
+    $responses = $client->send(array(
+        $client->get('users'),
+        $client->head('messages/123'),
+        $client->delete('orders/123')
     ));
-} catch (PoolRequestException $e) {
+} catch (Guzzle\Common\ExceptionCollection $e) {
     echo "The following requests encountered an exception: \n";
     foreach ($e as $exception) {
         echo $exception->getRequest() . "\n" . $exception->getMessage() . "\n";
     }
 }
+```
+
+Testing Guzzle
+--------------
+
+Here's how to install Guzzle from source to run the unit tests:
+
+```
+git clone git@github.com:guzzle/guzzle.git
+cd guzzle
+composer.phar install --install-suggests
+cp phpunit.xml.dist phpunit.xml
+phpunit
 ```

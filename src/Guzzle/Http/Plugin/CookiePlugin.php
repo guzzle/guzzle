@@ -2,23 +2,33 @@
 
 namespace Guzzle\Http\Plugin;
 
-use Guzzle\Common\Event\Observer;
-use Guzzle\Common\Event\Subject;
+use Guzzle\Common\Event;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\CookieJar\CookieJarInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Adds, extracts, and persists cookies between HTTP requests
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
-class CookiePlugin implements Observer
+class CookiePlugin implements EventSubscriberInterface
 {
     /**
      * @var CookieJarInterface
      */
     protected $jar;
+    
+    /**
+     * {@inheritdoc} 
+     */
+    public static function getSubscribedEvents()
+    {
+        return array(
+            'request.before_send'         => 'onRequestBeforeSend',
+            'request.sent'                => 'onRequestSent',
+            'request.receive.status_line' => 'onRequestReceiveStatusLine'
+        );
+    }
 
     /**
      * Create a new CookiePlugin
@@ -222,43 +232,43 @@ class CookiePlugin implements Observer
      */
     public function extractCookies(Response $response)
     {
-        $cookie = $response->getSetCookie();
-        $cookieData = array();
+        if (!$cookie = $response->getSetCookie()) {
+            return array();
+        }
         
-        if ($cookie) {
-            foreach ((array) $cookie as $c) {
-                $cdata = self::parseCookie($c, $response->getRequest());
+        $cookieData = array();
+        foreach ((array) $cookie as $c) {
+            $cdata = self::parseCookie($c, $response->getRequest());
 
-                //@codeCoverageIgnoreStart
-                if (!$cdata) {
-                    continue;
-                }
-                //@codeCoverageIgnoreEnd
-                
-                $cookies = array();
-                // Break up cookie v2 into multiple cookies
-                if (count($cdata['cookies']) == 1) {
-                    $cdata['cookie'] = explode('=', $cdata['cookies'][0], 2);
-                    unset($cdata['cookies']);
-                    $cookies = array($cdata);
-                } else {
-                    foreach ($cdata['cookies'] as $cookie) {
-                        $row = $cdata;
-                        unset($row['cookies']);
-                        $row['cookie'] = explode('=', $cookie, 2);
-                        $cookies[] = $row;
-                    }
-                }
+            //@codeCoverageIgnoreStart
+            if (!$cdata) {
+                continue;
+            }
+            //@codeCoverageIgnoreEnd
 
-                if (count($cookies)) {
-                    foreach ($cookies as &$c) {
-                        $this->jar->save($c);
-                        $cookieData[] = $c;
-                    }
+            $cookies = array();
+            // Break up cookie v2 into multiple cookies
+            if (count($cdata['cookies']) == 1) {
+                $cdata['cookie'] = explode('=', $cdata['cookies'][0], 2);
+                unset($cdata['cookies']);
+                $cookies = array($cdata);
+            } else {
+                foreach ($cdata['cookies'] as $cookie) {
+                    $row = $cdata;
+                    unset($row['cookies']);
+                    $row['cookie'] = explode('=', $cookie, 2);
+                    $cookies[] = $row;
+                }
+            }
+
+            if (count($cookies)) {
+                foreach ($cookies as &$c) {
+                    $this->jar->save($c);
+                    $cookieData[] = $c;
                 }
             }
         }
-
+        
         return $cookieData;
     }
 
@@ -296,28 +306,36 @@ class CookiePlugin implements Observer
     {
         return $this->jar->clearTemporary();
     }
-
+    
     /**
-     * {@inheritdoc}
+     * Add cookies before a request is sent
+     * 
+     * @param Event $event 
      */
-    public function update(Subject $subject, $event, $context = null)
+    public function onRequestBeforeSend(Event $event)
     {
-        // @codeCoverageIgnoreStart
-        if (!($subject instanceof RequestInterface)) {
-            return;
-        }
-        // @codeCoverageIgnoreEnd
-
-        if ($event == 'request.before_send') {
-            // The request is being prepared
-            $this->addCookies($subject);
-        } else if ($event == 'request.sent') {
-            // The response is being processed
-            $this->extractCookies($subject->getResponse());
-        } else if ($event == 'request.receive.status_line') {
-            if ($context['previous_response']) {
-                $this->extractCookies($context['previous_response']);
-            }
+        $this->addCookies($event['request']);
+    }
+    
+    /**
+     * Extract cookies from a sent request
+     * 
+     * @param Event $event 
+     */
+    public function onRequestSent(Event $event)
+    {
+        $this->extractCookies($event['response']);
+    }
+    
+    /**
+     * Extract cookies from a redirect response
+     * 
+     * @param Event $event 
+     */
+    public function onRequestReceiveStatusLine(Event $event)
+    {
+        if ($event['previous_response']) {
+            $this->extractCookies($event['previous_response']);
         }
     }
 }

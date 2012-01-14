@@ -7,9 +7,6 @@ use Guzzle\Http\Message\Request;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Message\Response;
 
-/**
- * @author Michael Dowling <michael@guzzlephp.org>
- */
 class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
@@ -23,7 +20,7 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
     public function setUp()
     {
         parent::setUp();
-        
+
         $this->request = new Request('GET', 'http://www.guzzle-project.com/');
     }
 
@@ -34,7 +31,7 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->assertInstanceOf('Guzzle\\Common\\Collection', $this->request->getParams());
     }
-    
+
     /**
      * @covers Guzzle\Http\Message\AbstractMessage::addHeaders
      */
@@ -87,7 +84,19 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->assertFalse($this->request->hasHeader('Foo'));
         $this->request->setHeader('Foo', 'Bar');
-        $this->assertEquals('Foo', $this->request->hasHeader('Foo'));
+        $this->assertEquals(true, $this->request->hasHeader('Foo'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\AbstractMessage::hasHeader
+     */
+    public function testHasHeaderSearch()
+    {
+        $this->assertFalse($this->request->hasHeader('Foo'));
+        $this->request->setHeader('Foo', 'Bar');
+        $this->assertEquals('Foo', $this->request->hasHeader('Foo', 1));
+        $this->assertEquals('Foo', $this->request->hasHeader('/Foo/', 2));
+        $this->assertEquals(false, $this->request->hasHeader('bar', 1));
     }
 
     /**
@@ -97,7 +106,7 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
     public function testRemoveHeader()
     {
         $this->request->setHeader('Foo', 'Bar');
-        $this->assertEquals('Foo', $this->request->hasHeader('Foo'));
+        $this->assertEquals(true, $this->request->hasHeader('Foo'));
         $this->request->removeHeader('Foo');
         $this->assertFalse($this->request->hasHeader('Foo'));
     }
@@ -139,5 +148,80 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(true, $r->getCacheControlDirective('no-cache'));
         $this->assertEquals(true, $r->getCacheControlDirective('must-revalidate'));
         $this->assertEquals(100, $r->getCacheControlDirective('max-age'));
+    }
+
+    public function tokenizedHeaderProvider()
+    {
+        return array(
+            array('ISO-8859-1,utf-8;q=0.7,*;q=0.7"', ';', array(
+                'ISO-8859-1,utf-8',
+                'q' => array('0.7,*', '0.7"')
+            )),
+            array('gzip,deflate', ',', array('gzip', 'deflate')),
+            array('en-us,en;q=0.5', ';', array(
+                'en-us,en',
+                'q' => '0.5'
+            ))
+        );
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\AbstractMessage::getTokenizedHeader
+     * @dataProvider tokenizedHeaderProvider
+     */
+    public function testConvertsTokenizedHeadersToArray($string, $token, $result)
+    {
+        $r = $this->request;
+        $r->setHeader('test', $string);
+        $this->assertEquals($result, $r->getTokenizedHeader('test', $token)->getAll());
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\AbstractMessage::setTokenizedHeader
+     * @dataProvider tokenizedHeaderProvider
+     */
+    public function testConvertsArrayToTokenizedHeader($string, $token, $result)
+    {
+        $r = $this->request;
+        $r->setTokenizedHeader('test', $result, $token);
+        $this->assertEquals($string, $r->getHeader('test'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\AbstractMessage::setTokenizedHeader
+     * @expectedException InvalidArgumentException
+     */
+    public function testTokenizedHeaderMustBeArrayToSet()
+    {
+        $r = $this->request;
+        $r->setTokenizedHeader('test', false);
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\AbstractMessage::getTokenizedHeader
+     */
+    public function testReturnsNullWhenTokenizedHeaderNotFound()
+    {
+        $r = $this->request;
+        $this->assertNull($r->getTokenizedHeader('foo'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\AbstractMessage::getTokenizedHeader
+     */
+    public function testMultipleTokenizedHeadersAreCombined()
+    {
+        $r = Response::factory(
+            "HTTP/1.1 200 OK\r\n" .
+            "test: ISO-8859-1,utf-8;q=0.7,*;q=0.7\"\r\n" .
+            "test: foo;q=123,*;q=456;q=0.7\"\r\n" .
+            "Content-Length: 0\r\n\r\n"
+        );
+
+        $this->assertEquals(array(
+            0 => 'ISO-8859-1,utf-8',
+            'q' => array('0.7,*', '0.7"', '123,*', '456'),
+            2 => 'foo'
+        ), $r->getTokenizedHeader('test')->getAll());
     }
 }

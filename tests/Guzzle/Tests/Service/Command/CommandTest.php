@@ -7,19 +7,15 @@ use Guzzle\Service\Client;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\AbstractCommand;
 use Guzzle\Service\Description\ApiCommand;
-use Guzzle\Service\Plugin\MockPlugin;
+use Guzzle\Http\Plugin\MockPlugin;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
 use Guzzle\Tests\Service\Mock\Command\Sub\Sub;
 
-/**
- * @author Michael Dowling <michael@guzzlephp.org>
- */
 class CommandTest extends AbstractCommandTest
 {
     /**
      * @covers Guzzle\Service\Command\AbstractCommand::__construct
      * @covers Guzzle\Service\Command\AbstractCommand::init
-     * @covers Guzzle\Service\Command\AbstractCommand::canBatch
      * @covers Guzzle\Service\Command\AbstractCommand::isPrepared
      * @covers Guzzle\Service\Command\AbstractCommand::isExecuted
      */
@@ -27,7 +23,6 @@ class CommandTest extends AbstractCommandTest
     {
         $command = new MockCommand();
         $this->assertEquals('123', $command->get('test'));
-        $this->assertTrue($command->canBatch());
         $this->assertFalse($command->isPrepared());
         $this->assertFalse($command->isExecuted());
     }
@@ -126,7 +121,7 @@ class CommandTest extends AbstractCommandTest
         ), '<xml><data>123</data></xml>');
 
         // Set a mock response
-        $client->getEventManager()->attach(new MockPlugin(array(
+        $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(
             $response
         )));
 
@@ -151,7 +146,7 @@ class CommandTest extends AbstractCommandTest
     {
         $client = $this->getClient();
 
-        $client->getEventManager()->attach(new MockPlugin(array(
+        $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(
             new Response(200, array(
                 'Content-Type' => 'application/octect-stream'
             ), 'abc,def,ghi')
@@ -207,10 +202,8 @@ class CommandTest extends AbstractCommandTest
         $api = new ApiCommand(array(
             'name' => 'foobar',
             'method' => 'POST',
-            'min_args' => 1,
-            'can_batch' => true,
             'class' => 'Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand',
-            'args' => array(
+            'params' => array(
                 'test' => array(
                     'default' => '123',
                     'type' => 'string'

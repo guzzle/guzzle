@@ -4,8 +4,6 @@ namespace Guzzle\Common;
 
 /**
  * Key value pair collection object
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
 {
@@ -16,7 +14,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * @var array Data associated with the object.
      */
-    protected $data = array();
+    protected $data;
 
     /**
      * Constructor
@@ -25,9 +23,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      */
     public function __construct(array $data = null)
     {
-        if ($data) {
-            $this->data = $data;
-        }
+        $this->data = $data ?: array();
     }
 
     /**
@@ -291,8 +287,8 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      */
     public function map(\Closure $closure, array $context = array(), $static = true)
     {
-        $collection = ($static) ? new static() : new self();
-        foreach ($this->getIterator() as $key => $value) {
+        $collection = $static ? new static() : new self();
+        foreach ($this as $key => $value) {
             $collection->add($key, $closure($key, $value, $context));
         }
 
@@ -383,8 +379,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     public function remove($key, $match = self::MATCH_EXACT)
     {
         foreach ((array) $key as $k) {
-            $matched = $this->hasKey($k, $match);
-            if ($matched !== false) {
+            if (false !== $matched = $this->hasKey($k, $match)) {
                 unset($this->data[$matched]);
             }
         }

@@ -4,8 +4,6 @@ namespace Guzzle\Common;
 
 /**
  * OO interface to PHP streams
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class Stream
 {
@@ -15,39 +13,14 @@ class Stream
     protected $stream;
 
     /**
-     * @var bool If the stream is seekable
-     */
-    protected $seekable;
-
-    /**
-     * @var string The stream wrapper type
-     */
-    protected $wrapper;
-
-    /**
-     * @var string The mode in which the stream was opened (r, w, r+, etc)
-     */
-    protected $mode;
-
-    /**
-     * @var string URI of the stream (a filename, URL, etc)
-     */
-    protected $uri;
-
-    /**
-     * @var string Label describing the underlying implementation of the stream
-     */
-    protected $type;
-
-    /**
      * @var int Size of the stream contents in bytes
      */
     protected $size;
 
     /**
-     * @var array Array of filters
+     * @var array Stream cached data
      */
-    protected $filters = array();
+    protected $cache = array();
 
     /**
      * Construct a new Stream
@@ -55,25 +28,18 @@ class Stream
      * @param resource $stream Stream resource to wrap
      * @param int $size (optional) Size of the stream in bytes.  Only pass this
      *      parameter if the size cannot be obtained from the stream.
-     * 
+     *
      * @throws InvalidArgumentException if the stream is not a stream resource
      */
     public function __construct($stream, $size = null)
     {
         if (!is_resource($stream)) {
-            throw new \InvalidArgumentException(
-                'Invalid $stream argument sent to ' . __METHOD__
-            );
+            throw new \InvalidArgumentException('Stream must be a resource');
         }
 
-        $this->stream = $stream;
-        $meta = stream_get_meta_data($stream);
-        $this->wrapper = isset($meta['wrapper_type']) ? strtolower($meta['wrapper_type']) : '';
-        $this->mode = isset($meta['mode']) ? $meta['mode'] : '';
-        $this->seekable = isset($meta['seekable']) ? $meta['seekable'] : false;
-        $this->uri = isset($meta['uri']) ? $meta['uri'] : '';
-        $this->type = isset($meta['stream_type']) ? strtolower($meta['stream_type']) : '';
         $this->size = $size;
+        $this->stream = $stream;
+        $this->rebuildCache();
     }
 
     /**
@@ -84,6 +50,22 @@ class Stream
         if (is_resource($this->stream)) {
             fclose($this->stream);
         }
+    }
+
+    /**
+     * Reprocess stream metadata
+     */
+    protected function rebuildCache()
+    {
+        $meta = stream_get_meta_data($this->stream);
+        $this->cache['wrapper_type'] = isset($meta['wrapper_type']) ? strtolower($meta['wrapper_type']) : '';
+        $this->cache['mode'] = isset($meta['mode']) ? $meta['mode'] : '';
+        $this->cache['seekable'] = isset($meta['seekable']) ? $meta['seekable'] : false;
+        $this->cache['uri'] = isset($meta['uri']) ? $meta['uri'] : '';
+        $this->cache['type'] = isset($meta['stream_type']) ? strtolower($meta['stream_type']) : '';
+        $this->cache['is_local'] = stream_is_local($this->stream);
+        $this->cache['is_readable'] = in_array(str_replace('b', '', $this->cache['mode']), array('r', 'w+', 'r+', 'x+', 'c+'));
+        $this->cache['is_writable'] = str_replace('b', '', $this->cache['mode']) != 'r';
     }
 
     /**
@@ -100,11 +82,24 @@ class Stream
             return '';
         }
 
-        $this->seek(0);
-        $body = stream_get_contents($this->stream);
+        $body = stream_get_contents($this->stream, -1, 0);
         $this->seek(0);
 
         return $body;
+    }
+
+    /**
+     * Get stream metadata
+     *
+     * @param string $key (optional) Specific metdata to retrieve
+     *
+     * @return array|mixed|null
+     */
+    public function getMetaData($key = null)
+    {
+        $meta = stream_get_meta_data($this->stream);
+
+        return !$key ? $meta : (array_key_exists($key, $meta) ? $meta[$key] : null);
     }
 
     /**
@@ -114,7 +109,7 @@ class Stream
      */
     public function getStream()
     {
-        return $this->stream;;
+        return $this->stream;
     }
 
     /**
@@ -124,7 +119,7 @@ class Stream
      */
     public function getWrapper()
     {
-        return $this->wrapper;
+        return $this->cache['wrapper_type'];
     }
 
     /**
@@ -134,9 +129,7 @@ class Stream
      */
     public function getWrapperData()
     {
-        $meta = stream_get_meta_data($this->stream);
-
-        return isset($meta['wrapper_data']) ? $meta['wrapper_data'] : array();
+        return $this->getMetaData('wrapper_data') ?: array();
     }
 
     /**
@@ -146,7 +139,7 @@ class Stream
      */
     public function getStreamType()
     {
-        return $this->type;
+        return $this->cache['type'];
     }
 
     /**
@@ -156,13 +149,11 @@ class Stream
      */
     public function getUri()
     {
-        return $this->uri;
+        return $this->cache['uri'];
     }
 
     /**
      * Get the size of the stream if able
-     *
-     * If any filters are attached to the string, then the size
      *
      * @return int|false
      */
@@ -170,18 +161,6 @@ class Stream
     {
         if ($this->size !== null) {
             return $this->size;
-        }
-
-        // Only get the length if there are no modifying filters attached to
-        // the stream that would modify the stream on the fly
-        $filters = $this->getFilters();
-        $filters = array_keys($filters['wrapped']);
-        if (count(array_filter($filters, function($filter) {
-            $filter = explode('|', $filter);
-            $filter = $filter[0];
-            return !in_array($filter, array('string.rot13', 'string.toupper', 'string.tolower'));
-        }))) {
-            return false;
         }
 
         // If the stream is a file based stream and local, then check the filesize
@@ -196,7 +175,6 @@ class Stream
         } else {
             $size = strlen((string) $this);
             $this->seek(0);
-
             return $size;
         }
     }
@@ -208,7 +186,7 @@ class Stream
      */
     public function isReadable()
     {
-        return in_array(str_replace('b', '', $this->mode), array('r', 'w+', 'r+', 'x+', 'c+'));
+        return $this->cache['is_readable'];
     }
 
     /**
@@ -218,7 +196,7 @@ class Stream
      */
     public function isWritable()
     {
-        return str_replace('b', '', $this->mode) != 'r';
+        return $this->cache['is_writable'];
     }
 
     /**
@@ -238,7 +216,7 @@ class Stream
      */
     public function isLocal()
     {
-        return stream_is_local($this->stream);
+        return $this->cache['is_local'];
     }
 
     /**
@@ -248,7 +226,7 @@ class Stream
      */
     public function isSeekable()
     {
-        return $this->seekable;
+        return $this->cache['seekable'];
     }
 
     /**
@@ -303,79 +281,5 @@ class Stream
     public function write($string)
     {
         return $this->isWritable() ? fwrite($this->stream, $string) : false;
-    }
-
-    /**
-     * Add a filter to the stream
-     *
-     * @param string $filter Name of the filter to append
-     * @param int $readWrite (optional) By default, stream_filter_append() will
-     *      attach the filter to the read filter chain if the file was opened
-     *      for reading (i.e. File Mode: r, and/or +). The filter will also be
-     *      attached to the write filter chain if the file was opened for
-     *      writing (i.e. File Mode: w, a, and/or +). STREAM_FILTER_READ,
-     *      STREAM_FILTER_WRITE, and/or STREAM_FILTER_ALL can also be passed
-     *      to the read_write parameter to override this behavior.
-     * @param array $options (optional) This filter will be added with the
-     *      specified params to the end of the list and will therefore be
-     *      called last during stream operations. To add a filter to the
-     *      beginning of the list, use stream_filter_prepend().
-     * @param bool $prepend (optional) Set to TRUE to prepend the filter.
-     *      Default is to append
-     *
-     * @return Stream
-     */
-    public function addFilter($filter, $readWrite = STREAM_FILTER_ALL, $options = null, $prepend = false)
-    {
-        if ($prepend) {
-            $resource = stream_filter_prepend($this->stream, $filter, $readWrite, $options);
-        } else {
-            $resource = stream_filter_append($this->stream, $filter, $readWrite, $options);
-        }
-
-        $this->filters[$filter . '|' . $readWrite] = $resource;
-
-        return $this;
-    }
-
-    /**
-     * Get an array of filters added to the stream
-     *
-     * @return array Returns an associative array containing the following keys:
-     *      wrapped - Filters that were applied using the helper
-     *          (associative array of [filter name] + [.] + [read write value] => resource
-     *      unwrapped - Filters that were not applied using the helper
-     */
-    public function getFilters()
-    {
-        $meta = stream_get_meta_data($this->stream);
-
-        return array(
-            'wrapped' => $this->filters,
-            'unwrapped' => isset($meta['filters']) ? $meta['filters'] : array()
-        );
-    }
-
-    /**
-     * Remove a filter from the stream
-     *
-     * @param string $filter Filter to remove by name
-     * @param $readWrite int (optional) Which type of filter to remove if
-     *      removing filters by name using a string
-     *
-     * @return bool Returns TRUE on success or FALSE on failure
-     */
-    public function removeFilter($filter, $readWrite = STREAM_FILTER_ALL)
-    {
-        $key = $filter . '|' . $readWrite;
-
-        if (isset($this->filters[$key])) {
-            stream_filter_remove($this->filters[$key]);
-            unset($this->filters[$key]);
-
-            return true;
-        }
-
-        return false;
     }
 }

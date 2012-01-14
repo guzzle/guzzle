@@ -5,9 +5,6 @@ namespace Guzzle\Tests;
 use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
 
-/**
- * @author Michael Dowling <michael@guzzlephp.org>
- */
 class GuzzleTest extends GuzzleTestCase
 {
     /**

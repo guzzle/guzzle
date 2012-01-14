@@ -2,20 +2,20 @@
 
 namespace Guzzle\Tests;
 
+use Guzzle\Common\HasDispatcherInterface;
 use Guzzle\Common\Log\Adapter\ZendLogAdapter;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Service\Plugin\MockPlugin;
+use Guzzle\Http\Plugin\MockPlugin;
 use Guzzle\Service\Client;
 use Guzzle\Service\ServiceBuilder;
-use Guzzle\Tests\Common\Mock\MockFilter;
+use Guzzle\Tests\Mock\MockObserver;
 use Guzzle\Tests\Http\Server;
 use RuntimeException;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Base testcase class for all Guzzle testcases.
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
 {
@@ -34,11 +34,15 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
     public function getServer()
     {
         if (!self::$server) {
+            try {
             self::$server = new Server();
             if (self::$server->isRunning()) {
                 self::$server->flush();
             } else {
                 self::$server->start();
+            }
+            } catch (\Exception $e) {
+                fwrite(STDERR, $e->getMessage());
             }
         }
 
@@ -68,7 +72,51 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
 
         return self::$serviceBuilder;
     }
-
+    
+    /**
+     * Check if an event dispatcher has a subscriber
+     * 
+     * @param HasDispatcherInterface $dispatcher
+     * @param EventSubscriberInterface $subscriber
+     * 
+     * @return bool
+     */
+    protected function hasSubscriber(HasDispatcherInterface $dispatcher, EventSubscriberInterface $subscriber)
+    {
+        $class = get_class($subscriber);
+        $all = array_keys(call_user_func(array($class, 'getSubscribedEvents')));
+        
+        foreach ($all as $i => $event) {
+            foreach ($dispatcher->getEventDispatcher()->getListeners($event) as $e) {
+                if ($e[0] === $subscriber) {
+                    unset($all[$i]);
+                    break;
+                }
+            }
+        }
+        
+        return count($all) == 0;
+    }
+    
+    /**
+     * Get a wildcard observer for an event dispatcher
+     * 
+     * @param HasEventDispatcherInterface $hasEvent
+     * 
+     * @return MockObserver 
+     */
+    public function getWildcardObserver(HasDispatcherInterface $hasDispatcher)
+    {
+        $class = get_class($hasDispatcher);
+        $o = new MockObserver();
+        $events = call_user_func(array($class, 'getAllEvents'));
+        foreach ($events as $event) {
+            $hasDispatcher->getEventDispatcher()->addListener($event, array($o, 'update'));
+        }
+        
+        return $o;
+    }
+    
     /**
      * Set the mock response base path
      *
@@ -130,7 +178,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
     {
         $this->requests = array();
         $that = $this;
-        $mock = new MockPlugin(array(), true);
+        $mock = new MockPlugin(null, true);
         $mock->getEventManager()->attach(function($subject, $event, $context) use ($that) {
             if ($event == 'mock.request') {
                 $that->addMockedRequest($context);
@@ -140,7 +188,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
         foreach ((array) $paths as $path) {
             $mock->addResponse($this->getMockResponse($path));
         }
-
+        
         $client->getEventManager()->attach($mock, 9999);
     }
 

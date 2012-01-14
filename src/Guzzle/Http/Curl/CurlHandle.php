@@ -3,15 +3,12 @@
 namespace Guzzle\Http\Curl;
 
 use Guzzle\Guzzle;
-use Guzzle\Common\Stream\StreamHelper;
 use Guzzle\Common\Collection;
-use Guzzle\Http\Url;
 use Guzzle\Http\Message\RequestInterface;
+use Guzzle\Http\Url;
 
 /**
- * Wrapper for a cURL handle
- *
- * @author Michael Dowling <michael@guzzlephp.org>
+ * Immutable wrapper for a cURL handle
  */
 class CurlHandle
 {
@@ -26,34 +23,116 @@ class CurlHandle
     protected $handle;
 
     /**
-     * @var RequestInterface
+     * @var int CURLE_* error
      */
-    protected $owner;
+    protected $errorNo = CURLE_OK;
 
     /**
-     * @var int Last time this handle was checked out
+     * Factory method to create a new curl handle based on an HTTP request
+     *
+     * @param RequestInterface $request Request
+     *
+     * @return CurlHandle
      */
-    protected $lastUsedAt;
+    public static function factory(RequestInterface $request)
+    {
+        $handle = curl_init();
+        
+        // Array of default cURL options.
+        $curlOptions = array(
+            CURLOPT_URL => $request->getUrl(),
+            CURLOPT_CUSTOMREQUEST => $request->getMethod(),
+            CURLOPT_CONNECTTIMEOUT => 10, // Connect timeout in seconds
+            CURLOPT_RETURNTRANSFER => false, // Streaming the return, so no need
+            CURLOPT_HEADER => false, // Retrieve the received headers
+            CURLOPT_USERAGENT => $request->getHeader('User-Agent', Guzzle::getDefaultUserAgent()),
+            CURLOPT_ENCODING => '', // Supports all encodings
+            CURLOPT_PORT => $request->getPort(),
+            CURLOPT_HTTP_VERSION => $request->getProtocolVersion(true),
+            CURLOPT_NOPROGRESS => false,
+            CURLOPT_STDERR => fopen('php://temp', 'r+'),
+            CURLOPT_VERBOSE => true,
+            CURLOPT_HTTPHEADER => array(),
+            CURLOPT_WRITEFUNCTION => function($curl, $write) use ($request) {
+                $request->dispatch('curl.callback.write', array(
+                    'request' => $request,
+                    'write' => $write
+                ));
+                return $request->getResponse()->getBody()->write($write);
+            },
+            CURLOPT_HEADERFUNCTION => function($curl, $header) use ($request) {
+                return $request->receiveResponseHeader($header);
+            },
+            CURLOPT_READFUNCTION => function($ch, $fd, $length) use ($request) {
+                $read = ($request->getBody()) ? $request->getBody()->read($length) : 0;
+                if ($read) {
+                    $request->dispatch('curl.callback.read', array(
+                        'request' => $request,
+                        'read' => $read
+                    ));
+                }
+                return $read === false || $read === 0 ? '' : $read;
+            },
+            CURLOPT_PROGRESSFUNCTION => function($downloadSize, $downloaded, $uploadSize, $uploaded) use ($request) {
+                $request->dispatch('curl.callback.progress', array(
+                    'request'       => $request,
+                    'download_size' => $downloadSize,
+                    'downloaded'    => $downloaded,
+                    'upload_size'   => $uploadSize,
+                    'uploaded'      => $uploaded
+                ));
+            }
+        );
 
-    /**
-     * @var resource
-     */
-    protected $stderr;
+        // @codeCoverageIgnoreStart
+        if (Guzzle::getCurlInfo('follow_location')) {
+            $curlOptions[CURLOPT_FOLLOWLOCATION] = true;
+            $curlOptions[CURLOPT_MAXREDIRS] = 5;
+        }
+        // @codeCoverageIgnoreEnd
 
-    /**
-     * @var int Number of times the handle has been (re)used
-     */
-    protected $useCount = 0;
+        // Specify settings according to the HTTP method
+        switch ($request->getMethod()) {
+            case 'GET':
+                $curlOptions[CURLOPT_HTTPGET] = true;
+                unset($curlOptions[CURLOPT_READFUNCTION]);
+                break;
+            case 'HEAD':
+                $curlOptions[CURLOPT_NOBODY] = true;
+                unset($curlOptions[CURLOPT_READFUNCTION]);
+                break;
+            case 'POST':
+                $curlOptions[CURLOPT_POST] = true;
+                if (!$request->getBody()) {
+                    unset($curlOptions[CURLOPT_READFUNCTION]);
+                }
+                break;
+            case 'PUT':
+                $curlOptions[CURLOPT_UPLOAD] = true;
+                if ($request->getBody()) {
+                    $curlOptions[CURLOPT_INFILESIZE] = $request->getHeader('Content-Length') ?: -1;
+                }
+                break;
+        }
 
-    /**
-     * @var int
-     */
-    protected $maxReuses;
+        // Add any custom headers to the request
+        foreach ($request->getHeaders() as $key => $value) {
+            if ($key && $value !== '') {
+                $curlOptions[CURLOPT_HTTPHEADER][] = $key . ': ' . $value;
+            }
+        }
 
-    /**
-     * @var array Statically cached array of cURL options that pollute handles
-     */
-    protected static $pollute;
+        // Set custom cURL options
+        foreach ($request->getCurlOptions() as $key => $value) {
+            $curlOptions[$key] = $value;
+        }
+
+        // Apply the options to the cURL handle.
+        curl_setopt_array($handle, $curlOptions);
+        $request->getParams()->set('curl.last_options', $curlOptions);
+
+        return new self($handle, $curlOptions);
+    }
 
     /**
      * Construct a new CurlHandle object that wraps a cURL handle
@@ -68,22 +147,14 @@ class CurlHandle
         if (!is_resource($handle)) {
             throw new \InvalidArgumentException('Invalid handle provided');
         }
-
-        $this->handle = $handle;
-
         if (is_array($options)) {
             $this->options = new Collection($options);
         } else if ($options instanceof Collection) {
-            $this->options = clone $options;
+            $this->options = $options;
         } else {
             throw new \InvalidArgumentException('Expected array or Collection');
         }
-
-        $this->stderr = fopen('php://temp', 'r+');
-        $this->setOption(CURLOPT_STDERR, $this->stderr);
-        $this->setOption(CURLOPT_VERBOSE, true);
-
-        $this->lastUsedAt = time();
+        $this->handle = $handle;
     }
 
     /**
@@ -91,9 +162,16 @@ class CurlHandle
      */
     public function __destruct()
     {
-        if ($this->isAvailable()) {
-            curl_close($this->handle);
-        }
+        $this->close();
+    }
+
+    /**
+     * Close the curl handle
+     */
+    public function close()
+    {
+        @curl_close($this->handle);
+        $this->handle = null;
     }
 
     /**
@@ -103,25 +181,7 @@ class CurlHandle
      */
     public function isAvailable()
     {
-        //@codeCoverageIgnoreStart
-        if (!$this->handle) {
-            return false;
-        }
-        //@codeCoverageIgnoreEnd
-
         return false != @curl_getinfo($this->handle, CURLINFO_EFFECTIVE_URL);
-    }
-
-    /**
-     * Check if the supplied cURL handle is wrapped by this object
-     *
-     * @param resource $handle Handle to check
-     *
-     * @return bool
-     */
-    public function isMyHandle($handle)
-    {
-        return $this->getHandle() === $handle;
     }
 
     /**
@@ -131,7 +191,7 @@ class CurlHandle
      */
     public function getError()
     {
-        return $this->isAvailable() ? @curl_error($this->handle) : '';
+        return @curl_error($this->handle) ?: '';
     }
 
     /**
@@ -141,7 +201,21 @@ class CurlHandle
      */
     public function getErrorNo()
     {
-        return $this->isAvailable() ? @curl_errno($this->handle) : 0;
+        return $this->errorNo ?: @curl_errno($this->handle);
+    }
+
+    /**
+     * Set the curl error number
+     *
+     * @param int $error Error number to set
+     *
+     * @return CurlHandle
+     */
+    public function setErrorNo($error)
+    {
+        $this->errorNo = $error;
+
+        return $this;
     }
 
     /**
@@ -154,37 +228,11 @@ class CurlHandle
      */
     public function getInfo($option = null)
     {
-        if (!$this->isAvailable()) {
-            return null !== $option ? null : array();
+        if (null !== $option) {
+            return @curl_getinfo($this->handle, $option) ?: null;
+        } else {
+            return @curl_getinfo($this->handle) ?: array();
         }
-
-        return null !== $option
-            ? @curl_getinfo($this->handle, $option)
-            : @curl_getinfo($this->handle);
-    }
-
-    /**
-     * Set the maximum number of times a handle can be reused
-     *
-     * @param int $max Maximum reuse count
-     *
-     * @return CurlHandle
-     */
-    public function setMaxReuses($max)
-    {
-        $this->maxReuses = $max;
-
-        return $this;
-    }
-
-    /**
-     * Get the number of times the handle has been used
-     *
-     * @return int
-     */
-    public function getUseCount()
-    {
-        return $this->useCount;
     }
 
     /**
@@ -192,71 +240,24 @@ class CurlHandle
      *
      * @param bool $asResource (optional) Set to TRUE to get an fopen resource
      *
-     * @return string|resource
+     * @return string|resource|null
      */
     public function getStderr($asResource = false)
     {
-        if (!$asResource) {
-            fseek($this->stderr, 0);
-            $e = stream_get_contents($this->stderr);
-            fseek($this->stderr, 0, SEEK_END);
-
-            return $e;
+        $stderr = $this->getOptions()->get(CURLOPT_STDERR);
+        if (!$stderr) {
+            return null;
         }
 
-        return $this->stderr;
-    }
+        if ($asResource) {
+            return $stderr;
+        }
 
-    /**
-     * Get the owner of the curl handle
-     *
-     * @return RequestInterface|null
-     */
-    public function getOwner()
-    {
-        return $this->owner;
-    }
-
-    /**
-     * Set the request that owns this handle
-     *
-     * @param RequestInterface $reqeust Request that owns the handle
-     *
-     * @return CurlHandle
-     */
-    public function checkout(RequestInterface $request)
-    {
-        $this->owner = $request;
-        $this->lastUsedAt = time();
-        ftruncate($this->stderr, 0);
-        fseek($this->stderr, 0);
+        fseek($stderr, 0);
+        $e = stream_get_contents($stderr);
+        fseek($stderr, 0, SEEK_END);
         
-        return $this;
-    }
-
-    /**
-     * Unlock the handle from the request that checked it out
-     *
-     * If the unlocking request should be closed (received a Connection: close
-     * or sent a Connection: close header), the curl connection will be closed.
-     *
-     * @return CurlHandle
-     */
-    public function unlock()
-    {
-        if ($this->isAvailable()) {
-            $this->useCount++;
-            if ((null !== $this->maxReuses && $this->useCount > $this->maxReuses) ||
-                ($this->hasProblematicOption() || ($this->owner && ($this->owner->getHeader('Connection', null, true) == 'close' || ($this->owner->getResponse() && $this->owner->getResponse()->getHeader('Connection', null, true) == 'close'))))) {
-                curl_close($this->handle);
-                $this->handle = null;
-                $this->useCount = 0;
-            }
-        }
-
-        $this->owner = null;
-
-        return $this;
+        return $e;
     }
 
     /**
@@ -270,142 +271,23 @@ class CurlHandle
     }
 
     /**
-     * Get the amount of time that has elapsed since this handle was last used
-     *
-     * @return int
-     */
-    public function getIdleTime()
-    {
-        return time() - $this->lastUsedAt;
-    }
-
-    /**
-     * Build the cURL handle or return the handle if it is already created
+     * Get the wrapped curl handle
      *
      * @return handle|null Returns the cURL handle or null if it was closed
      */
     public function getHandle()
     {
-        return $this->handle && is_resource($this->handle) ? $this->handle : null;
-    }
-    
-    /**
-     * Get a cURL option value
-     * 
-     * @param int|string $option Option to retrieve
-     * 
-     * @return mixed
-     */
-    public function getOption($option)
-    {
-        if (is_string($option)) {
-            $option = constant($option);
-        }
-
-        return $this->options->get($option, null, true);
+        return $this->handle && $this->isAvailable() ? $this->handle : null;
     }
 
     /**
-     * Get all of the cURL options
+     * Get the cURL setopt options of the handle.  Changing values in the return
+     * object will have no effect on the curl handle after it is created.
      *
-     * @param array $keys (optional) Specific keys to retrieve
-     *
-     * @return array
+     * @return Collection
      */
-    public function getOptions(array $keys = null)
+    public function getOptions()
     {
-        return $this->options->getAll($keys);
-    }
-
-    /**
-     * Check if this CurlHandle could be used to serve a request object
-     *
-     * @param RequestInterface $request Request to check
-     *
-     * @return bool Returns TRUE if it can FALSE if not
-     */
-    public function isCompatible(RequestInterface $request)
-    {
-        if ($this->owner === $request || ($this->owner && $this->owner->getCurlHandle() === $this)) {
-            return true;
-        }
-
-        $url = $this->getUrl();
-
-        return $request->getHost() == $url->getHost()
-            && ($request->getPort() == $url->getPort() || $request->getPort() == $this->getOption(CURLOPT_PORT))
-            && $request->getCurlOptions()->get(CURLOPT_PROXY) == $this->getOption(CURLOPT_PROXY);
-    }
-
-    /**
-     * Set multiple options on the cURL handle
-     *
-     * @param array $options Options to set
-     *
-     * @return CurlHandle
-     */
-    public function setOptions(array $options)
-    {
-        foreach ($options as $option => $value) {
-            $this->setOption($option, $value);
-        }
-
-        return $this;
-    }
-
-    /**
-     * Set a cURL options
-     *
-     * @param string|int $option Options to set
-     * @param string|int|bool|null $value Value to set
-     *
-     * @return CurlHandle
-     */
-    public function setOption($option, $value)
-    {
-        if (is_string($option)) {
-            $option = constant($option);
-        }
-
-        $this->options->set($option, $value);
-        
-        // if the handle is open, set the option on the handle
-        if ($this->isAvailable()) {
-            curl_setopt($this->handle, $option, $value);
-        }
-
-        return $this;
-    }
-
-    /**
-     * Check if the handle has a problematic cURL option that would prevent it
-     * from being reused arbitrarily
-     *
-     * @return bool
-     */
-    public function hasProblematicOption()
-    {
-        //@codeCoverageIgnoreStart
-        if (!self::$pollute) {
-            self::$pollute = array(
-                CURLOPT_RANGE,
-                CURLOPT_COOKIEFILE,
-                CURLOPT_COOKIEJAR,
-                CURLOPT_LOW_SPEED_LIMIT,
-                CURLOPT_LOW_SPEED_TIME,
-                CURLOPT_TIMEOUT,
-                CURLOPT_FORBID_REUSE,
-                CURLOPT_RESUME_FROM,
-                CURLOPT_HTTPAUTH
-            );
-
-            // CURLOPT_TIMEOUT_MS was added in v7.16.2 (or 0x071602)
-            if (defined('CURLOPT_TIMEOUT_MS')) {
-                self::$pollute[] = constant('CURLOPT_TIMEOUT_MS');
-            }
-        }
-        //@codeCoverageIgnoreEnd
-
-        return count(array_intersect(self::$pollute, $this->options->getKeys())) > 0;
+        return $this->options;
     }
 }

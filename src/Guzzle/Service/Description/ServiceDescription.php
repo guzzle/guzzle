@@ -3,18 +3,15 @@
 namespace Guzzle\Service\Description;
 
 use Guzzle\Common\NullObject;
-use Guzzle\Service\Command\CommandFactoryInterface;
-use Guzzle\Service\Description\DynamicCommandFactory;
+use Guzzle\Service\Inspector;
 
 /**
  * A ServiceDescription stores service information based on a service document
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class ServiceDescription
 {
     const DEFAULT_COMMAND_CLASS = 'Guzzle\\Service\\Command\\ClosureCommand';
-    
+
     /**
      * @var array Array of ApiCommand objects
      */
@@ -26,6 +23,52 @@ class ServiceDescription
     protected $commandFactory;
 
     /**
+     * Create a ServiceDescription based on an array
+     *
+     * @param array $data Description data
+     *
+     * @return ServiceDescription
+     */
+    public static function factory(array $data)
+    {
+        if (!empty($data['types'])) {
+            foreach ($data['types'] as $name => $type) {
+                $default = array();
+                if (!isset($type['class'])) {
+                    throw new \RuntimeException('Custom types require a class attribute');
+                }
+                foreach ($type as $key => $value) {
+                    if ($key != 'name' && $key != 'class') {
+                        $default[$key] = $value;
+                    }
+                }
+                Inspector::getInstance()->registerConstraint($name, $type['class'], $default);
+            }
+        }
+
+        $commands = array();
+        if (!empty($data['commands'])) {
+            foreach ($data['commands'] as $name => $command) {
+                $name = $command['name'] = isset($command['name']) ? $command['name'] : $name;
+                // Extend other commands
+                if (!empty($command['extends'])) {
+                    if (empty($commands[$command['extends']])) {
+                        throw new \RuntimeException($name . ' extends missing command ' . $command['extends']);
+                    }
+                    $params = array_merge($commands[$command['extends']]->getParams(), !empty($command['params']) ? $command['params'] : array());
+                    $command = array_merge($commands[$command['extends']]->getData(), $command);
+                    $command['params'] = $params;
+                }
+                // Use the default class
+                $command['class'] = isset($command['class']) ? str_replace('.', '\\', $command['class']) : self::DEFAULT_COMMAND_CLASS;
+                $commands[$name] = new ApiCommand($command);
+            }
+        }
+
+        return new self($commands);
+    }
+
+    /**
      * Create a new ServiceDescription
      *
      * @param array $commands (optional) Array of {@see ApiCommand} objects
@@ -35,10 +78,7 @@ class ServiceDescription
     public function __construct(array $commands = array(), CommandFactoryInterface $commandFactory = null)
     {
         $this->commands = $commands;
-        if (!$commandFactory) {
-            $commandFactory = new DynamicCommandFactory();
-        }
-        $this->commandFactory = $commandFactory;
+        $this->commandFactory = $commandFactory ?: new DynamicCommandFactory();
     }
 
     /**
@@ -60,13 +100,7 @@ class ServiceDescription
      */
     public function hasCommand($name)
     {
-        foreach ($this->commands as $command) {
-            if ($command->getName() == $name) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_key_exists($name, $this->commands);
     }
 
     /**
@@ -79,13 +113,7 @@ class ServiceDescription
      */
     public function getCommand($name)
     {
-        foreach ($this->commands as $command) {
-            if ($command->getName() == $name) {
-                return $command;
-            }
-        }
-
-        return new NullObject();
+        return $this->hasCommand($name) ? $this->commands[$name] : new NullObject();
     }
 
     /**

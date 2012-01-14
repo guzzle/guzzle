@@ -4,8 +4,6 @@ namespace Guzzle\Service\Description;
 
 /**
  * Interface for building Guzzle commands.
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 interface CommandFactoryInterface
 {

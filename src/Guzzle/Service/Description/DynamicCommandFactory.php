@@ -4,8 +4,7 @@ namespace Guzzle\Service\Description;
 
 use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
-use Guzzle\Common\Inspector;
-use Guzzle\Http\Message\RequestInterface;
+use Guzzle\Service\Inspector;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;
@@ -14,8 +13,6 @@ use Guzzle\Service\Command\ClosureCommand;
 /**
  * Build Guzzle commands based on a service document using dynamically created
  * commands to implement a service document's specifications.
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class DynamicCommandFactory implements CommandFactoryInterface
 {
@@ -26,24 +23,24 @@ class DynamicCommandFactory implements CommandFactoryInterface
     {
         if ($command->getConcreteClass() != 'Guzzle\\Service\\Command\\ClosureCommand') {
             $class = $command->getConcreteClass();
-            
+
             return new $class($args, $command);
         }
 
         // Build the command based on the service doc and supplied arguments
         return new ClosureCommand(array_merge($args, array(
-            
+
             // Generate a dynamically created command using a closure to
             // prepare the command
             'closure' => function(ClosureCommand $that, ApiCommand $api) {
 
                 // Validate the command with the config options
-                Inspector::getInstance()->validateConfig($api->getArgs(), $that);
+                Inspector::getInstance()->validateConfig($api->getParams(), $that);
 
                 // Get the path values and use the client config settings
                 $pathValues = $that->getClient()->getConfig();
                 $foundPath = false;
-                foreach ($api->getArgs() as $name => $arg) {
+                foreach ($api->getParams() as $name => $arg) {
                     if ($arg->get('location') == 'path') {
                         $pathValues->set($name, $arg->get('prepend') . $that->get($name) . $arg->get('append'));
                         $foundPath = true;
@@ -69,8 +66,8 @@ class DynamicCommandFactory implements CommandFactoryInterface
                 $request = RequestFactory::create($api->getMethod(), $url);
 
                 // Add arguments to the request using the location attribute
-                foreach ($api->getArgs() as $name => $arg) {
-                    
+                foreach ($api->getParams() as $name => $arg) {
+
                     if ($that->get($name)) {
 
                         // Check that a location is set
@@ -88,10 +85,10 @@ class DynamicCommandFactory implements CommandFactoryInterface
                             // Determine the location and key setting location[:key]
                             $parts = explode(':', $location);
                             $place = $parts[0];
-                            
+
                             // If a key is specified (using location:key), use it
                             $key = isset($parts[1]) ? $parts[1] : $name;
-                            
+
                             // Add the parameter to the request
                             switch ($place) {
                                 case 'body':
@@ -107,8 +104,6 @@ class DynamicCommandFactory implements CommandFactoryInterface
                         }
                     }
                 }
-
-                $that->setCanBatch($api->canBatch());
 
                 return $request;
             },

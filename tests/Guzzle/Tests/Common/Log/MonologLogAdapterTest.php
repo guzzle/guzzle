@@ -6,9 +6,6 @@ use Guzzle\Common\Log\MonologLogAdapter;
 use Monolog\Logger;
 use Monolog\Handler\TestHandler;
 
-/**
- * @author Michael Dowling <michael@guzzlephp.org>
- */
 class MonologLogAdapterTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**

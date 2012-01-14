@@ -6,9 +6,6 @@ use Guzzle\Http\QueryString;
 use Guzzle\Http\Url;
 use Guzzle\Http\HttpException;
 
-/**
- * @author Michael Dowling <michael@guzzlephp.org>
- */
 class UrlTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**

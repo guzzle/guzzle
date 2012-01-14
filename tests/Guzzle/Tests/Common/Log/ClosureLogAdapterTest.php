@@ -5,11 +5,6 @@ namespace Guzzle\Tests\Common\Log;
 use Guzzle\Common\Log\LogAdapterInterface;
 use Guzzle\Common\Log\ClosureLogAdapter;
 
-/**
- * Test class for ClosureLogAdapter
- * 
- * @author Michael Dowling <michael@guzzlephp.org>
- */
 class ClosureLogAdapterTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**

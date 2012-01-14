@@ -5,8 +5,6 @@ namespace Guzzle\Http;
 /**
  * Parses and generates URLs based on URL parts.  In favor of performance,
  * URL parts are not validated.
- *
- * @author Michael Dowling <michael@guzzlephp.org>
  */
 class Url
 {
@@ -17,7 +15,7 @@ class Url
     protected $password;
     protected $path = '/';
     protected $fragment;
-    
+
     /**
      * @var QueryString Query part of the URL
      */
@@ -32,16 +30,15 @@ class Url
      */
     public static function factory($url)
     {
-        // Performance improvement to Parse the URL into parts
         $parts = (array) parse_url($url);
-        if (!isset($parts['scheme'])) $parts['scheme'] = null;
-        if (!isset($parts['host'])) $parts['host'] = null;
-        if (!isset($parts['path'])) $parts['path'] = null;
-        if (!isset($parts['port'])) $parts['port'] = null;
-        if (!isset($parts['query'])) $parts['query'] = null;
-        if (!isset($parts['user'])) $parts['user'] = null;
-        if (!isset($parts['pass'])) $parts['pass'] = null;
-        if (!isset($parts['fragment'])) $parts['fragment'] = null;
+        $parts['scheme'] = isset($parts['scheme']) ? $parts['scheme'] : null;
+        $parts['host'] = isset($parts['host']) ? $parts['host'] : null;
+        $parts['path'] = isset($parts['path']) ? $parts['path'] : null;
+        $parts['port'] = isset($parts['port']) ? $parts['port'] : null;
+        $parts['query'] = isset($parts['query']) ? $parts['query'] : null;
+        $parts['user'] = isset($parts['user']) ? $parts['user'] : null;
+        $parts['pass'] = isset($parts['pass']) ? $parts['pass'] : null;
+        $parts['fragment'] = isset($parts['fragment']) ? $parts['fragment'] : null;
 
         if ($parts['query']) {
             $query = array();
@@ -139,7 +136,7 @@ class Url
         $this->password = $password;
         $this->fragment = $fragment;
         $this->setQuery($query ?: new QueryString());
-        
+
         if ($path) {
             $this->setPath($path);
         }
@@ -259,9 +256,9 @@ class Url
             return 80;
         } else if ($this->scheme == 'https') {
             return 443;
-        } else {
-            return null;
         }
+
+        return null;
     }
 
     /**

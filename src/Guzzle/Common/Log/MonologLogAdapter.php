@@ -7,16 +7,12 @@ use Monolog\Logger;
 /**
  * Monolog log adapter
  *
- * @author Michael Dowling <michael@guzzlephp.org>
  * @link https://github.com/Seldaek/monolog
  */
 class MonologLogAdapter extends AbstractLogAdapter
 {
     /**
-     * Adapt a Monolog Logger object
-     *
-     * @param Logger $logObject Log object to adapt
-     * @throws InvalidArgumentException
+     * {@inheritdoc}
      */
     public function __construct($logObject)
     {
@@ -35,7 +31,5 @@ class MonologLogAdapter extends AbstractLogAdapter
     public function log($message, $priority = LOG_INFO, $extras = null)
     {
         $this->log->addRecord($priority, $message);
-
-        return $this;
     }
 }
