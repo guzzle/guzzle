@@ -64,6 +64,9 @@
         "zend/zend-log": "*"
     },
     "autoload": {
-        "psr-0": { "Guzzle": "src/" }
+        "psr-0": {
+            "Guzzle\\Tests": "tests/",
+            "Guzzle": "src/"
+        }
     }
 }
