@@ -10,6 +10,7 @@ Start <strong>truly</strong> consuming HTTP with Guzzle.
 - Download the phar to get started: http://www.guzzlephp.org/phar
 - Docs: [www.guzzlephp.org](http://www.guzzlephp.org/)
 - Forum: https://groups.google.com/forum/?hl=en#!forum/guzzle
+- IRC: [#guzzlephp](irc://irc.freenode.net/#guzzlephp) channel on irc.freenode.net
 
 [![Build Status](https://secure.travis-ci.org/guzzle/guzzle.png)](http://travis-ci.org/guzzle/guzzle)
 
