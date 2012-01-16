@@ -183,4 +183,20 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         // Creates concrete commands
         $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\Command\\OtherCommand', $client->getCommand('other_command'));
     }
+
+    public function testCreatesCommandsFromServiceDescriptions()
+    {
+        $this->getServer()->enqueue(
+            "HTTP/1.1 200 OK\r\n" .
+            "Content-Length: 0\r\n\r\n"
+        );
+        $client = new Mock\MockClient($this->getServer()->getUrl());
+        $client->setDescription($this->service);
+        $command = $client->getCommand('trends.location', array(
+            'woeid' => 123,
+            'acl' => '123'
+        ));
+        $client->execute($command);
+        $this->assertEquals('/trends/123', $command->getRequest()->getPath());
+    }
 }

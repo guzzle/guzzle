@@ -37,7 +37,7 @@
         </command>
 
         <command name="trends.location" method="GET" min_args="1" path="/trends/{{ woeid }}">
-            <param name="woeid" type="integer" required="true"/>
+            <param name="woeid" type="integer" required="true" location="path" />
             <param name="acl" required="true" location="header:X-Amz-Acl" />
         </command>
 
