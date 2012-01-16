@@ -3,6 +3,7 @@
 namespace Guzzle\Tests;
 
 use Guzzle\Common\HasDispatcherInterface;
+use Guzzle\Common\Event;
 use Guzzle\Common\Log\Adapter\ZendLogAdapter;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
@@ -35,12 +36,12 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
     {
         if (!self::$server) {
             try {
-            self::$server = new Server();
-            if (self::$server->isRunning()) {
-                self::$server->flush();
-            } else {
-                self::$server->start();
-            }
+                self::$server = new Server();
+                if (self::$server->isRunning()) {
+                    self::$server->flush();
+                } else {
+                    self::$server->start();
+                }
             } catch (\Exception $e) {
                 fwrite(STDERR, $e->getMessage());
             }
@@ -72,20 +73,20 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
 
         return self::$serviceBuilder;
     }
-    
+
     /**
      * Check if an event dispatcher has a subscriber
-     * 
+     *
      * @param HasDispatcherInterface $dispatcher
      * @param EventSubscriberInterface $subscriber
-     * 
+     *
      * @return bool
      */
     protected function hasSubscriber(HasDispatcherInterface $dispatcher, EventSubscriberInterface $subscriber)
     {
         $class = get_class($subscriber);
         $all = array_keys(call_user_func(array($class, 'getSubscribedEvents')));
-        
+
         foreach ($all as $i => $event) {
             foreach ($dispatcher->getEventDispatcher()->getListeners($event) as $e) {
                 if ($e[0] === $subscriber) {
@@ -94,16 +95,16 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
                 }
             }
         }
-        
+
         return count($all) == 0;
     }
-    
+
     /**
      * Get a wildcard observer for an event dispatcher
-     * 
+     *
      * @param HasEventDispatcherInterface $hasEvent
-     * 
-     * @return MockObserver 
+     *
+     * @return MockObserver
      */
     public function getWildcardObserver(HasDispatcherInterface $hasDispatcher)
     {
@@ -113,10 +114,10 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
         foreach ($events as $event) {
             $hasDispatcher->getEventDispatcher()->addListener($event, array($o, 'update'));
         }
-        
+
         return $o;
     }
-    
+
     /**
      * Set the mock response base path
      *
@@ -179,17 +180,15 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
         $this->requests = array();
         $that = $this;
         $mock = new MockPlugin(null, true);
-        $mock->getEventManager()->attach(function($subject, $event, $context) use ($that) {
-            if ($event == 'mock.request') {
-                $that->addMockedRequest($context);
-            }
+        $mock->getEventDispatcher()->addListener('mock.request', function(Event $event) use ($that) {
+            $that->addMockedRequest($event['request']);
         });
 
         foreach ((array) $paths as $path) {
             $mock->addResponse($this->getMockResponse($path));
         }
-        
-        $client->getEventManager()->attach($mock, 9999);
+
+        $client->getEventDispatcher()->addSubscriber($mock);
     }
 
     /**
