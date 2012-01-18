@@ -801,7 +801,9 @@ class Request extends AbstractMessage implements RequestInterface
      * function myOncompleteFunction(RequestInterface $request, Response $response, \Closure $default);
      *
      * The default onComplete method can be invoked from your custom handler by
-     * calling the $default closure passed to your function.
+     * calling the $default closure passed to your function.  You can override
+     * the response of a request by returning a Response object in your
+     * onComplete callback.
      *
      * @param mixed $callable Method to invoke when a request completes.
      *
