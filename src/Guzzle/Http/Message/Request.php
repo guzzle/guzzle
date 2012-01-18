@@ -177,11 +177,10 @@ class Request extends AbstractMessage implements RequestInterface
      *
      * @param RequestInterface $request Request that completed
      * @param Response $response Response that was received
-     * @param array $default Callable default response processor
      *
      * @throws BadResponseException if the response is not successful
      */
-    public static function onComplete(RequestInterface $request, Response $response, array $default)
+    public static function onComplete(RequestInterface $request, Response $response)
     {
         // Throw an exception if the request was not successful
         if ($response->isClientError() || $response->isServerError()) {
@@ -922,7 +921,10 @@ class Request extends AbstractMessage implements RequestInterface
                 'response' => $this->response
             ));
             // Pass the request to the onComplete handler
-            call_user_func($this->onComplete, $this, $this->response, array(__CLASS__, 'defaultOnComplete'));
+            $result = call_user_func($this->onComplete, $this, $this->response, array(__CLASS__, 'onComplete'));
+            if ($result instanceof Response) {
+                $this->setResponse($result);
+            }
         }
 
         return $this;
