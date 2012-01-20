@@ -320,12 +320,12 @@ class CachePlugin implements EventSubscriberInterface
 
                 // Requests can decline to revalidate against the origin server
                 // by setting the cache.revalidate param to one of:
-                //      never  - To never revalidate and just use what is in cache
-                //      always - To always get a new copy
+                //      never  - To never revalidate and always contact the origin server
+                //      skip   - To skip revalidation and just use what is in cache
                 switch ($request->getParams()->get('cache.revalidate')) {
                     case 'never':
                         return false;
-                    case 'always':
+                    case 'skip':
                         return true;
                 }
 

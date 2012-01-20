@@ -319,7 +319,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
                 "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nDatas",
                 "HTTP/1.1 200 OK\r\nContent-Length: 5\r\nDate: " . Guzzle::getHttpDate('now') . "\r\n\r\nDatas"
             ),
-            // Skips revalidation because the request is accepting the cached copy
+            // Must get a fresh copy because the request is declining revalidation
             array(
                 false,
                 "\r\n\r\n",
@@ -328,14 +328,14 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
                 null,
                 'never'
             ),
-            // Must get a fresh copy because the request is declining revalidation
+            // Skips revalidation because the request is accepting the cached copy
             array(
                 true,
                 "\r\n\r\n",
                 "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\nDate: " . Guzzle::getHttpDate('-3 hours') . "\r\nContent-Length: 4\r\n\r\nData",
                 null,
                 null,
-                'always'
+                'skip'
             ),
             // Throws an exception during revalidation
             array(
