@@ -165,18 +165,20 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             $request->setHeader('User-Agent', $this->userAgent);
         }
 
-        // Add any curl options that might in the config to the request
-        foreach ($this->getConfig()->getAll('/^curl\..+/', Collection::MATCH_REGEX) as $key => $value) {
-            $curlOption = str_replace('curl.', '', $key);
-            if (defined($curlOption)) {
-                $curlValue = defined($value) ? constant($value) : $value;
-                $request->getCurlOptions()->set(constant($curlOption), $curlValue);
+        foreach ($this->getConfig()->getAll() as $key => $value) {
+            // Add any curl options that might in the config to the request
+            if (strpos($key, 'curl.') === 0) {
+                $curlOption = str_replace('curl.', '', $key);
+                if (defined($curlOption)) {
+                    $curlValue = defined($value) ? constant($value) : $value;
+                    $request->getCurlOptions()->set(constant($curlOption), $curlValue);
+                }
             }
-        }
-
-        // Add the cache key filter to requests if one is set on the client
-        if ($this->getConfig('cache.key_filter')) {
-            $request->getParams()->set('cache.key_filter', $this->getConfig('cache.key_filter'));
+            // Add any cache options from the config to the request
+            // Add any curl options that might in the config to the request
+            if (strpos($key, 'cache.') === 0) {
+                $request->getParams()->set($key, $value);
+            }
         }
 
         // Attach client observers to the request
