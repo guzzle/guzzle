@@ -340,7 +340,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
                 $this->dispatch('curl_multi.message', $done);
                 foreach ($this->all() as $request) {
                     $handle = $this->getRequestHandle($request);
-                    if ($handle->getHandle() === $done['handle']) {
+                    if ($handle && $handle->getHandle() === $done['handle']) {
                         try {
                             $this->processResponse($request, $handle, $done);
                         } catch (\Exception $e) {

@@ -557,7 +557,7 @@ class Response extends AbstractMessage
     public function getEtag()
     {
         $etag = $this->headers->get('ETag', null, Collection::MATCH_IGNORE_CASE);
-        
+
         return $etag ? str_replace('"', '', $etag) : null;
     }
 
@@ -796,7 +796,7 @@ class Response extends AbstractMessage
     public function canCache()
     {
         // Check if the response is cacheable based on the code
-        if (!in_array((int)$this->getStatusCode(), $this->cacheResponseCodes)) {
+        if (!in_array((int) $this->getStatusCode(), $this->cacheResponseCodes)) {
             return false;
         }
 

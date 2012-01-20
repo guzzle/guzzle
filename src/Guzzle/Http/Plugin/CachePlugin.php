@@ -9,6 +9,7 @@ use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\Request;
+use Guzzle\Http\Message\BadResponseException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -48,9 +49,9 @@ class CachePlugin implements EventSubscriberInterface
         'TE', 'Trailers', 'Transfer-Encoding', 'Upgrade', 'Set-Cookie',
         'Set-Cookie2'
     );
-    
+
     /**
-     * {@inheritdoc} 
+     * {@inheritdoc}
      */
     public static function getSubscribedEvents()
     {
@@ -65,7 +66,9 @@ class CachePlugin implements EventSubscriberInterface
      *
      * @param CacheAdapterInterface $adapter Cache adapter to write and read cache data
      * @param bool $serialize (optional) Set to TRUE to serialize data before writing
-     * @param int $defaultLifetime (optional) Set the default cache lifetime
+     * @param int $defaultLifetime (optional) The number of seconds that a cache entry
+     *     should be considered fresh when no explicit freshness information is provided
+     *     in a response. Explicit Cache-Control or Expires headers override this value
      */
     public function __construct(CacheAdapterInterface $adapter, $serialize = false, $defaultLifetime = 3600)
     {
@@ -138,11 +141,11 @@ class CachePlugin implements EventSubscriberInterface
 
         return $key;
     }
-    
+
     /**
      * Check if a response in cache will satisfy the request before sending
-     * 
-     * @param Event $event 
+     *
+     * @param Event $event
      */
     public function onRequestBeforeSend(Event $event)
     {
@@ -171,11 +174,11 @@ class CachePlugin implements EventSubscriberInterface
             }
         }
     }
-    
+
     /**
      * If possible, store a response in cache after sending
-     * 
-     * @param Event $event 
+     *
+     * @param Event $event
      */
     public function onRequestSent(Event $event)
     {
@@ -221,40 +224,52 @@ class CachePlugin implements EventSubscriberInterface
         }
 
         try {
+
             $validateResponse = $revalidate->send();
             if ($validateResponse->getStatusCode() == 200) {
                 // The server does not support validation, so use this response
                 $request->setResponse($validateResponse);
                 // Store this response in cache if possible
                 if ($validateResponse->canCache()) {
-                    $this->saveCache($this->getCacheKey($request), $validateResponse);
+                    $this->saveCache($this->getCacheKey($request), $validateResponse, $validateResponse->getMaxAge());
                 }
-
                 return false;
-            } else if ($validateResponse->getStatusCode() == 304) {
+            }
+
+            if ($validateResponse->getStatusCode() == 304) {
                 // Make sure that this response has the same ETage
                 if ($validateResponse->getEtag() != $response->getEtag()) {
                     return false;
-                } else {
-                    // Replace cached headers with any of these headers from the
-                    // origin server that might be more up to date
-                    foreach (array('Date', 'Expires', 'Cache-Control', 'ETag', 'Last-Modified') as $name) {
-                        if ($validateResponse->hasHeader($name)) {
-                            $response->setHeader($name, $validateResponse->getHeader($name));
-                        }
-                    }
-                    // Store the updated response in cache
-                    if ($response->canCache()) {
-                        $this->saveCache($this->getCacheKey($request), $response);
-                    }
-
-                    return true;
                 }
+                // Replace cached headers with any of these headers from the
+                // origin server that might be more up to date
+                $modified = false;
+                foreach (array('Date', 'Expires', 'Cache-Control', 'ETag', 'Last-Modified') as $name) {
+                    if ($validateResponse->hasHeader($name)) {
+                        $modified = true;
+                        $response->setHeader($name, $validateResponse->getHeader($name));
+                    }
+                }
+                // Store the updated response in cache
+                if ($modified && $response->canCache()) {
+                    $this->saveCache($this->getCacheKey($request), $response, $response->getMaxAge());
+                }
+
+                return true;
             }
-        } catch (\Exception $e) {
-            // Don't fail on re-validation attempts
+
+        } catch (BadResponseException $e) {
+
+            // 404 errors mean the resource no longer exists, so remove from
+            // cache, and prevent an additional request by throwing the exception
+            if ($e->getResponse()->getStatusCode() == 404) {
+                $this->getCacheAdapter()->delete($this->getCacheKey($request));
+                throw $e;
+            }
         }
 
+        // Other exceptions encountered in the revalidation request are ignored
+        // in hopes that sending a request to the origin server will fix it
         return false;
     }
 
@@ -305,10 +320,13 @@ class CachePlugin implements EventSubscriberInterface
 
                 // Requests can decline to revalidate against the origin server
                 // by setting the cache.revalidate param to one of:
-                //      accept  - To use what is in cache
-                //      decline - To always get a new copy
-                if ($request->getParams()->get('cache.revalidate')) {
-                    return $request->getParams()->get('cache.revalidate') != 'decline';
+                //      never  - To never revalidate and just use what is in cache
+                //      always - To always get a new copy
+                switch ($request->getParams()->get('cache.revalidate')) {
+                    case 'never':
+                        return false;
+                    case 'always':
+                        return true;
                 }
 
                 return $this->revalidate($request, $response);
