@@ -109,7 +109,6 @@ class CommandTest extends AbstractCommandTest
      * @covers Guzzle\Service\Command\AbstractCommand::prepare
      * @covers Guzzle\Service\Command\AbstractCommand::process
      * @covers Guzzle\Service\Command\AbstractCommand::prepare
-     *
      * @covers Guzzle\Service\Client::execute
      */
     public function testExecute()
@@ -137,6 +136,26 @@ class CommandTest extends AbstractCommandTest
         // Make sure that the result was automatically set to a SimpleXMLElement
         $this->assertInstanceOf('SimpleXMLElement', $command->getResult());
         $this->assertEquals('123', (string)$command->getResult()->data);
+    }
+
+    /**
+     * @covers Guzzle\Service\Command\AbstractCommand::process
+     */
+    public function testConvertsJsonResponsesToArray()
+    {
+        $client = $this->getClient();
+        $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(
+            new \Guzzle\Http\Message\Response(200, array(
+                'Content-Type' => 'application/json'
+                ), '{ "key": "Hi!" }'
+            )
+        )));
+        $command = new MockCommand();
+        $command->setClient($client);
+        $command->execute();
+        $this->assertEquals(array(
+            'key' => 'Hi!'
+        ), $command->getResult());
     }
 
     /**

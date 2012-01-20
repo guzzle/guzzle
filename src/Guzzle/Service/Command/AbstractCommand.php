@@ -266,13 +266,21 @@ abstract class AbstractCommand extends Collection implements CommandInterface
      * Sets the result as the response by default.  If the response is an XML
      * document, this will set the result as a SimpleXMLElement.  If the XML
      * response is invalid, the result will remain the Response, not XML.
+     * If an application/json response is received, the result will automat-
+     * ically become an array.
      */
     protected function process()
     {
         $this->result = $this->getRequest()->getResponse();
 
-        // Is the body an XML document?  If so, set the result to be a SimpleXMLElement
-        if (preg_match('/^\s*(text\/xml|application\/xml).*$/', $this->result->getContentType())) {
+        // Is the body an JSON document?  If so, set the result to be an array
+        if (stripos($this->result->getContentType(), 'application/json') !== false) {
+            $body = trim($this->result->getBody(true));
+            if ($body) {
+                $this->result = json_decode($body, true);
+            }
+        } else if (preg_match('/^\s*(text\/xml|application\/xml).*$/', $this->result->getContentType())) {
+            // Is the body an XML document?  If so, set the result to be a SimpleXMLElement
             // If the body is available, then parse the XML
             $body = trim($this->result->getBody(true));
             if ($body) {
