@@ -51,12 +51,12 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         if ($apiCommand) {
             $this->apiCommand = $apiCommand;
             Inspector::getInstance()->validateConfig($apiCommand->getParams(), $this, false);
-        } else if (!($this instanceof ClosureCommand)) {
+        } else {
             Inspector::getInstance()->validateClass(get_class($this), $this, false);
         }
 
         if (!$this->get('headers') instanceof Collection) {
-            $this->set('headers', new Collection());
+            $this->set('headers', new Collection((array) $this->get('headers')));
         }
 
         $this->init();
@@ -216,13 +216,11 @@ abstract class AbstractCommand extends Collection implements CommandInterface
                 throw new \RuntimeException('A Client object must be associated with the command before it can be prepared.');
             }
 
-            // Fail on missing required arguments when it is not a ClosureCommand
-            if (!($this instanceof ClosureCommand)) {
-                if ($this->apiCommand) {
-                    Inspector::getInstance()->validateConfig($this->apiCommand->getParams(), $this);
-                } else {
-                    Inspector::getInstance()->validateClass(get_class($this), $this, true);
-                }
+            // Fail on missing required arguments
+            if ($this->apiCommand) {
+                Inspector::getInstance()->validateConfig($this->apiCommand->getParams(), $this, true);
+            } else {
+                Inspector::getInstance()->validateClass(get_class($this), $this, true);
             }
 
             $this->build();

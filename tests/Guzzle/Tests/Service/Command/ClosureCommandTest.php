@@ -19,18 +19,6 @@ class ClosureCommandTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Command\ClosureCommand
-     * @expectedException InvalidArgumentException
-     * @expectedExceptionMessage A closure_api value must be passed in the parameters array
-     */
-    public function testConstructorValidatesClosureApi()
-    {
-        $c = new ClosureCommand(array(
-            'closure' => function() {}
-        ));
-    }
-
-    /**
      * @covers Guzzle\Service\Command\ClosureCommand::prepare
      * @covers Guzzle\Service\Command\ClosureCommand::build
      */
@@ -41,8 +29,7 @@ class ClosureCommandTest extends \Guzzle\Tests\GuzzleTestCase
                 $command->set('testing', '123');
                 $request = RequestFactory::create('GET', 'http://www.test.com/');
                 return $request;
-            },
-            'closure_api' => true
+            }
         ));
 
         $client = $this->getServiceBuilder()->get('mock');
@@ -61,8 +48,7 @@ class ClosureCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $c = new ClosureCommand(array(
             'closure' => function($command, $api) {
                 return false;
-            },
-            'closure_api' => true
+            }
         ));
 
         $client = $this->getServiceBuilder()->get('mock');

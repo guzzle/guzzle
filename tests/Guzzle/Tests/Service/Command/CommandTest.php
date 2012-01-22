@@ -214,6 +214,20 @@ class CommandTest extends AbstractCommandTest
     }
 
     /**
+     * @covers Guzzle\Service\Command\AbstractCommand::__construct
+     */
+    public function testCommandsAllowsCustomRequestHeadersAsArray()
+    {
+        $command = new MockCommand(array(
+            'headers' => array(
+                'Foo' => 'Bar'
+            )
+        ));
+        $this->assertInstanceOf('Guzzle\Common\Collection', $command->getRequestHeaders());
+        $this->assertEquals('Bar', $command->getRequestHeaders()->get('Foo'));
+    }
+
+    /**
      * @covers Guzzle\Service\Command\AbstractCommand
      */
     public function testCommandsUsesApiCommand()

@@ -10,7 +10,7 @@ use Guzzle\Service\Inspector;
  */
 class ServiceDescription
 {
-    const DEFAULT_COMMAND_CLASS = 'Guzzle\\Service\\Command\\ClosureCommand';
+    const DEFAULT_COMMAND_CLASS = 'Guzzle\\Service\\Command\\DynamicCommand';
 
     /**
      * @var array Array of ApiCommand objects
@@ -73,12 +73,12 @@ class ServiceDescription
      *
      * @param array $commands (optional) Array of {@see ApiCommand} objects
      * @param CommandFactoryInterface (optional) Command factory to build
-     *      dynamic commands.  Uses the DynamicCommandFactory by default.
+     *      dynamic commands.  Uses the ApiCommandFactory by default.
      */
     public function __construct(array $commands = array(), CommandFactoryInterface $commandFactory = null)
     {
         $this->commands = $commands;
-        $this->commandFactory = $commandFactory ?: new DynamicCommandFactory();
+        $this->commandFactory = $commandFactory ?: new ApiCommandFactory();
     }
 
     /**

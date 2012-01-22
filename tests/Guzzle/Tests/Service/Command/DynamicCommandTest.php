@@ -1,15 +1,16 @@
 <?php
 
-namespace Guzzle\Tests\Service\Description;
+namespace Guzzle\Tests\Service\Command;
 
 use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
-use Guzzle\Service\Description\DynamicCommandFactory;
 use Guzzle\Service\Client;
-use Guzzle\Service\Description\ServiceDescription;
+use Guzzle\Service\Command\DynamicCommand;
 use Guzzle\Service\Description\ApiCommand;
+use Guzzle\Service\Description\ApiCommandFactory;
+use Guzzle\Service\Description\ServiceDescription;
 
-class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
+class DynamicCommandTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
      * @var ServiceDescription
@@ -82,7 +83,16 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Description\DynamicCommandFactory
+     * @covers Guzzle\Service\Command\DynamicCommand
+     * @expectedException InvalidArgumentException
+     */
+    public function testRequiresApiCommand()
+    {
+        $command = new DynamicCommand();
+    }
+
+    /**
+     * @covers Guzzle\Service\Command\DynamicCommand
      */
     public function testBuildsUsingPathParametersAndAppendSlashPrepend()
     {
@@ -105,16 +115,10 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
             "Host: www.example.com\r\n" .
             "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n" .
             "\r\n", (string) $request);
-
-        // Make sure the concrete command class is used
-        $this->assertEquals(
-            'Guzzle\\Service\\Command\\ClosureCommand',
-            get_class($command)
-        );
     }
 
     /**
-     * @covers Guzzle\Service\Description\DynamicCommandFactory
+     * @covers Guzzle\Service\Command\DynamicCommand
      * @expectedException InvalidArgumentException
      */
     public function testValidatesArgs()
@@ -126,7 +130,7 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Description\DynamicCommandFactory
+     * @covers Guzzle\Service\Command\DynamicCommand
      */
     public function testUsesDifferentLocations()
     {
@@ -173,7 +177,7 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Description\DynamicCommandFactory::createCommand
+     * @covers Guzzle\Service\Command\DynamicCommand::build
      */
     public function testBuildsConcreteCommands()
     {
@@ -182,7 +186,7 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Description\DynamicCommandFactory::createCommand
+     * @covers Guzzle\Service\Command\DynamicCommand::build
      */
     public function testUsesAbsolutePaths()
     {
@@ -203,7 +207,7 @@ class DynamicCommandFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Description\DynamicCommandFactory::createCommand
+     * @covers Guzzle\Service\Command\DynamicCommand::build
      */
     public function testUsesRelativePaths()
     {

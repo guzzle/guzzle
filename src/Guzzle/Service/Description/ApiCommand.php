@@ -24,7 +24,7 @@ class ApiCommand
      *
      * @param array $config Array of configuration data using the following keys
      *      string name Name of the command
-     *      tring doc Method documentation
+     *      string doc Method documentation
      *      string method HTTP method of the command
      *      string path (optional) Path routing information of the command to include in the path
      *      string class (optional) Concrete class that implements this command
@@ -52,7 +52,7 @@ class ApiCommand
         $this->config['doc'] = isset($config['doc']) ? trim($config['doc']) : '';
         $this->config['method'] = isset($config['method']) ? trim($config['method']) : '';
         $this->config['path'] = isset($config['path']) ? trim($config['path']) : '';
-        $this->config['class'] = isset($config['class']) ? trim($config['class']) : 'Guzzle\\Service\\Command\\ClosureCommand';
+        $this->config['class'] = isset($config['class']) ? trim($config['class']) : 'Guzzle\\Service\\Command\\DynamicCommand';
 
         if (isset($config['params']) && is_array($config['params'])) {
             foreach ($config['params'] as $paramName => $param) {

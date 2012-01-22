@@ -36,7 +36,7 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('doc', $c->getDoc());
         $this->assertEquals('POST', $c->getMethod());
         $this->assertEquals('/api/v1', $c->getPath());
-        $this->assertEquals('Guzzle\\Service\\Command\\ClosureCommand', $c->getConcreteClass());
+        $this->assertEquals('Guzzle\\Service\\Command\\DynamicCommand', $c->getConcreteClass());
         $this->assertEquals(array(
             'key' => new Collection(array(
                 'required' => 'true',
