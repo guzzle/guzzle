@@ -35,8 +35,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     protected function setUp()
     {
         $this->client = new Client($this->getServer()->getUrl());
-        $this->request = new Request('GET', $this->getServer()->getUrl());
-        $this->request->setClient($this->client);
+        $this->request = $this->client->get();
     }
 
     public function tearDown()
@@ -684,15 +683,15 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Message\Request::onComplete
+     * @covers Guzzle\Http\Message\Request::onRequestError
      */
     public function testThrowsExceptionsWhenUnsuccessfulResponseIsReceivedByDefault()
     {
+        $this->getServer()->flush();
         $this->getServer()->enqueue("HTTP/1.1 404 Not found\r\nContent-Length: 0\r\n\r\n");
 
         try {
-            $request = RequestFactory::create('GET', $this->getServer()->getUrl() . 'index.html');
-            $request->setClient($this->client);
+            $request = $this->client->get('/index.html');
             $response = $request->send();
             $this->fail('Request did not receive a 404 response');
         } catch (BadResponseException $e) {
@@ -704,50 +703,30 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Message\Request::setOnComplete
+     * @covers Guzzle\Http\Message\Request::onRequestError
      */
-    public function testCanSetCustomOnCompleteHandler()
+    public function testCanShortCircuitErrorHandling()
     {
         $request = $this->request;
+        $response = new Response(404);
+        $request->setResponse($response, true);
         $out = '';
         $that = $this;
-        $request->setOnComplete(function($request, $response, $default) use (&$out, $that) {
-            $out .= $request . "\n" . $response . "\n";
-            $that->assertInternalType('array', $default);
-        })->send();
+        $request->getEventDispatcher()->addListener('request.error', function($event) use (&$out, $that) {
+            $out .= $event['request'] . "\n" . $event['response'] . "\n";
+            $event->stopPropagation();
+        });
+        $request->send();
         $this->assertContains((string) $request, $out);
         $this->assertContains((string) $request->getResponse(), $out);
-    }
-
-    /**
-     * @expectedException InvalidArgumentException
-     * @covers Guzzle\Http\Message\Request::setOnComplete
-     */
-    public function testOnCompleteCallbacksAreValidated()
-    {
-        $a = 'abc';
-        $this->request->setOnComplete($a);
-    }
-
-    /**
-     * @covers Guzzle\Http\Message\Request::setOnComplete
-     * @covers Guzzle\Http\Message\Request::processResponse
-     */
-    public function testOnCompleteCallbackReturnValuesAreChecked()
-    {
-        $request = $this->request;
-        $response = new Response(200);
-        $request->setResponse($response, true);
-        $request->setOnComplete(function($request, $response, $default) {
-            return 'foo';
-        })->send();
         $this->assertSame($response, $request->getResponse());
     }
 
     /**
      * @covers Guzzle\Http\Message\Request::processResponse
+     * @covers Guzzle\Http\Message\Request::onRequestError
      */
-    public function testOnCompleteCallbackCanOverrideResponse()
+    public function testCanOverrideUnsuccessfulResponses()
     {
         $this->getServer()->flush();
         $this->getServer()->enqueue(array(
@@ -762,15 +741,18 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $newResponse = null;
 
         $request = $this->request;
-        $request->setOnComplete(function($request, $response, $default) use (&$newResponse) {
-            if ($response->getStatusCode() == 404) {
-                $newRequest = clone $request;
+        $request->getEventDispatcher()->addListener('request.error', function($event) use (&$newResponse) {
+            if ($event['response']->getStatusCode() == 404) {
+                $newRequest = clone $event['request'];
                 $newResponse = $newRequest->send();
-                return $newResponse;
+                // Override the original response and bypass additional response processing
+                $event['response'] = $newResponse;
+                // Call $event['request']->setResponse($newResponse); to re-apply events
+                $event->stopPropagation();
             }
+        });
 
-            return call_user_func($default, $request, $response);
-        })->send();
+        $request->send();
 
         $this->assertEquals(200, $request->getResponse()->getStatusCode());
         $this->assertSame($newResponse, $request->getResponse());

@@ -71,11 +71,6 @@ class Request extends AbstractMessage implements RequestInterface
     protected $password;
 
     /**
-     * @param mixed Callable function used to process the response
-     */
-    protected $onComplete;
-
-    /**
      * @var Collection cURL specific transfer options
      */
     protected $curlOptions;
@@ -86,24 +81,24 @@ class Request extends AbstractMessage implements RequestInterface
     public static function getAllEvents()
     {
         return array(
-            'curl.callback.read',
-            'curl.callback.write',
-            'curl.callback.progress',
+            // Called when receiving or uploading data through cURL
+            'curl.callback.read', 'curl.callback.write', 'curl.callback.progress',
             // About to send the request
             'request.before_send',
             // Sent the request
             'request.sent',
             // Completed HTTP transaction
             'request.complete',
-            'request.exception',
-            'request.failure',
+            // A request received a successful response
             'request.success',
+            // A request received an unsuccessful response
+            'request.error',
+            // An exception is being thrown because of an unsuccessful response
+            'request.exception',
             // Received response status line
             'request.receive.status_line',
             // Received response header
             'request.receive.header',
-            // Received non-success response
-            'request.bad_response',
             // Manually set a response
             'request.set_response'
         );
@@ -138,7 +133,6 @@ class Request extends AbstractMessage implements RequestInterface
         }
 
         $this->cookie = Cookie::factory($this->getHeader('Cookie'));
-        $this->onComplete = array(__CLASS__, 'onComplete');
         $this->setState(self::STATE_NEW);
     }
 
@@ -172,41 +166,29 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Default onComplete method that will throw exceptions if an unsuccessful
-     * response is received.
+     * Default method that will throw exceptions if an unsuccessful response
+     * is received.
      *
-     * @param RequestInterface $request Request that completed
-     * @param Response $response Response that was received
-     *
+     * @param Event $event Received
      * @throws BadResponseException if the response is not successful
      */
-    public static function onComplete(RequestInterface $request, Response $response)
+    public static function onRequestError(Event $event)
     {
-        // Throw an exception if the request was not successful
-        if ($response->isClientError() || $response->isServerError()) {
-            $messageParts = array(
-                '[status code] ' . $response->getStatusCode(),
-                '[reason phrase] ' . $response->getReasonPhrase(),
-                '[url] ' . $request->getUrl(),
-                '[request] ' . (string) $request,
-                '[response] ' . (string) $response
-            );
-            $e = new BadResponseException('Unsuccessful response | ' . implode(' | ', array_filter($messageParts, function($message) {
-                return preg_match('/\[[A-Za-z0-9 ]+\]\s.+/', $message);
-            })));
-            $e->setResponse($response);
-            $e->setRequest($request);
-            $request->dispatch('request.failure', array(
-                'request'   => $request,
-                'exception' => $e
-            ));
-            throw $e;
-        }
-
-        $request->dispatch('request.success', array(
-            'request'  => $request,
-            'response' => $response
+        $e = new BadResponseException('Unsuccessful response | ' . implode(' | ', array(
+            '[status code] ' . $event['response']->getStatusCode(),
+            '[reason phrase] ' . $event['response']->getReasonPhrase(),
+            '[url] ' . $event['request']->getUrl(),
+            '[request] ' . (string) $event['request'],
+            '[response] ' . (string) $event['response']
+        )));
+        $e->setResponse($event['response']);
+        $e->setRequest($event['request']);
+        $event['request']->dispatch('request.exception', array(
+            'request'   => $event['request'],
+            'response'  => $event['response'],
+            'exception' => $e
         ));
+        throw $e;
     }
 
     /**
@@ -621,9 +603,9 @@ class Request extends AbstractMessage implements RequestInterface
             $this->response = new Response($code, null, $this->getResponseBody());
             $this->response->setStatus($code, $status)->setRequest($this);
             $this->dispatch('request.receive.status_line', array(
-                'line' => $data,
-                'status_code' => $code,
-                'reason_phrase' => $status,
+                'line'              => $data,
+                'status_code'       => $code,
+                'reason_phrase'     => $status,
                 'previous_response' => $previousResponse
             ));
         } else if ($length > 2) {
@@ -633,7 +615,7 @@ class Request extends AbstractMessage implements RequestInterface
             ));
             $this->dispatch('request.receive.header', array(
                 'header' => $header,
-                'value' => $value
+                'value'  => $value
             ), true);
         }
 
@@ -666,9 +648,7 @@ class Request extends AbstractMessage implements RequestInterface
             $this->getParams()->set('queued_response', $response);
         }
 
-        $this->dispatch('request.set_response', array(
-            'response' => $this->response
-        ));
+        $this->dispatch('request.set_response', $this->getEventArray());
 
         return $this;
     }
@@ -793,40 +773,12 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Setting an onComplete method will override the default behavior of
-     * throwing an exception when an unsuccessful response is received. The
-     * callable function passed to this method should resemble the following
-     * prototype:
-     *
-     * function myOncompleteFunction(RequestInterface $request, Response $response, \Closure $default);
-     *
-     * The default onComplete method can be invoked from your custom handler by
-     * calling the $default closure passed to your function.  You can override
-     * the response of a request by returning a Response object in your
-     * onComplete callback.
-     *
-     * @param mixed $callable Method to invoke when a request completes.
-     *
-     * @return Request
-     * @throws InvalidArgumentException if the method is not callable
-     */
-    public function setOnComplete($callable)
-    {
-        if (!is_callable($callable)) {
-            throw new \InvalidArgumentException('onComplete method must be callable');
-        }
-
-        $this->onComplete = $callable;
-
-        return $this;
-    }
-
-    /**
      * {@inheritdoc}
      */
     public function setEventDispatcher(EventDispatcherInterface $eventDispatcher)
     {
         $this->eventDispatcher = $eventDispatcher;
+        $this->eventDispatcher->addListener('request.error', array(__CLASS__, 'onRequestError'), -255);
 
         return $this;
     }
@@ -837,7 +789,7 @@ class Request extends AbstractMessage implements RequestInterface
     public function getEventDispatcher()
     {
         if (!$this->eventDispatcher) {
-            $this->eventDispatcher = new EventDispatcher();
+            $this->setEventDispatcher(new EventDispatcher());
         }
 
         return $this->eventDispatcher;
@@ -892,6 +844,19 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
+     * Get an array containing the request and response for event notifications
+     *
+     * @return array
+     */
+    protected function getEventArray()
+    {
+        return array(
+            'request'  => $this,
+            'response' => $this->response
+        );
+    }
+
+    /**
      * Process a received response
      *
      * @throws BadResponseException on unsuccessful responses
@@ -903,29 +868,41 @@ class Request extends AbstractMessage implements RequestInterface
             $this->response = $this->getParams()->get('queued_response');
             $this->responseBody = $this->response->getBody();
             $this->getParams()->remove('queued_response');
-        }
-
-        if (!$this->response) {
+        } else if (!$this->response) {
+            // If no response, then processResponse shouldn't have been called
             $e = new RequestException('Error completing request');
             $e->setRequest($this);
             throw $e;
         }
 
         $this->state = self::STATE_COMPLETE;
-        $this->dispatch('request.sent', array(
-            'request'  => $this,
-            'response' => $this->response
-        ));
+
+        // A request was sent, but we don't know if we'll send more or if the
+        // final response will be a successful response
+        $this->dispatch('request.sent', $this->getEventArray());
 
         // Some response processors will remove the response or reset the state
+        // (example: ExponentialBackoffPlugin)
         if ($this->state == RequestInterface::STATE_COMPLETE) {
-            $this->dispatch('request.complete', array(
-                'response' => $this->response
-            ));
-            // Pass the request to the onComplete handler
-            $result = call_user_func($this->onComplete, $this, $this->response, array(__CLASS__, 'onComplete'));
-            if ($result instanceof Response) {
-                $this->setResponse($result);
+
+            // The request completed, so the HTTP transaction is complete
+            $this->dispatch('request.complete', $this->getEventArray());
+
+            // If the response is bad, allow listeners to modify it or throw
+            // exceptions.  You can change the response by modifying the Event
+            // object in your listeners or calling setResponse() on the request
+            if ($this->response->isError()) {
+                $event = new Event($this->getEventArray());
+                $this->getEventDispatcher()->dispatch('request.error', $event);
+                // Allow events of request.error to quietly change the response
+                if ($event['response'] !== $this->response) {
+                    $this->response = $event['response'];
+                }
+            }
+
+            // If a successful response was received, dispatch an event
+            if ($this->response->isSuccessful()) {
+                $this->dispatch('request.success', $this->getEventArray());
             }
         }
 

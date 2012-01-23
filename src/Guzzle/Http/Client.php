@@ -183,9 +183,6 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 
         // Attach client observers to the request
         $request->setEventDispatcher(clone $this->getEventDispatcher());
-        $request->dispatch('event.attach', array(
-            'listener' => $request
-        ));
 
         $this->dispatch('client.create_request', array(
             'client'  => $this,

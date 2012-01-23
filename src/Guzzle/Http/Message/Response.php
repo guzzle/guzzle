@@ -731,7 +731,7 @@ class Response extends AbstractMessage
      */
     public function isError()
     {
-        return ($this->isClientError() || $this->isServerError());
+        return $this->isClientError() || $this->isServerError();
     }
 
     /**

@@ -350,22 +350,4 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * @return bool
      */
     function canCache();
-
-    /**
-     * Setting an onComplete method will override the default behavior of
-     * throwing an exception when an unsuccessful response is received. The
-     * callable function passed to this method should resemble the following
-     * prototype:
-     *
-     * function myOncompleteFunction(RequestInterface $request, Response $response, \Closure $default);
-     *
-     * The default onComplete method can be invoked from your custom handler by
-     * calling the $default closure passed to your function.
-     *
-     * @param mixed $callable Method to invoke when a request completes.
-     *
-     * @return RequestInterface
-     * @throws InvalidArgumentException if the method is not callable
-     */
-    function setOnComplete($callable);
 }
