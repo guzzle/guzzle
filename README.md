@@ -7,7 +7,7 @@ In addition to taking the pain out of HTTP, Guzzle provides a lightweight framew
 
 Start <strong>truly</strong> consuming HTTP with Guzzle.
 
-- [Download the phar](https://github.com/downloads/guzzle/guzzle/guzzle.phar) and include it in your project
+- [Download the phar](http://guzzlephp.org/guzzle.phar) and include it in your project ([minimal phar](http://guzzlephp.org/guzzle-min.phar))
 - Docs: [www.guzzlephp.org](http://www.guzzlephp.org/)
 - Forum: https://groups.google.com/forum/?hl=en#!forum/guzzle
 - IRC: [#guzzlephp](irc://irc.freenode.net/#guzzlephp) channel on irc.freenode.net
