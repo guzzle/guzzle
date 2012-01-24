@@ -9,7 +9,8 @@ class JsonDescriptionBuilder implements DescriptionBuilderInterface
 {
     public static function parseJsonFile($jsonFile)
     {
-        if (false === $json = file_get_contents($jsonFile)) {
+        $json = file_get_contents($jsonFile);
+        if (false === $json) {
             throw new \RuntimeException('Error loading data from ' . $jsonFile);
         }
 

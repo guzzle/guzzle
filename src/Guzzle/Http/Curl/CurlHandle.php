@@ -170,7 +170,9 @@ class CurlHandle
      */
     public function close()
     {
-        @curl_close($this->handle);
+        if (is_resource($this->handle)) {
+            curl_close($this->handle);
+        }
         $this->handle = null;
     }
 
@@ -181,7 +183,7 @@ class CurlHandle
      */
     public function isAvailable()
     {
-        return false != @curl_getinfo($this->handle, CURLINFO_EFFECTIVE_URL);
+        return is_resource($this->handle) && false != curl_getinfo($this->handle, CURLINFO_EFFECTIVE_URL);
     }
 
     /**
@@ -191,7 +193,7 @@ class CurlHandle
      */
     public function getError()
     {
-        return @curl_error($this->handle) ?: '';
+        return $this->isAvailable() ? curl_error($this->handle) : '';
     }
 
     /**
@@ -201,7 +203,11 @@ class CurlHandle
      */
     public function getErrorNo()
     {
-        return $this->errorNo ?: @curl_errno($this->handle);
+        if ($this->errorNo) {
+            return $this->errorNo;
+        }
+
+        return $this->isAvailable() ? curl_errno($this->handle) : 0;
     }
 
     /**
@@ -228,11 +234,15 @@ class CurlHandle
      */
     public function getInfo($option = null)
     {
-        if (null !== $option) {
-            return @curl_getinfo($this->handle, $option) ?: null;
-        } else {
-            return @curl_getinfo($this->handle) ?: array();
+        if (!is_resource($this->handle)) {
+            return null;
         }
+
+        if (null !== $option) {
+            return curl_getinfo($this->handle, $option) ?: null;
+        }
+
+        return curl_getinfo($this->handle) ?: array();
     }
 
     /**
