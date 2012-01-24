@@ -27,7 +27,8 @@ class RequestFactory
         'content-length', 'content-type', 'date', 'expect', 'from', 'host',
         'if-match', 'if-modified-since', 'if-none-match', 'if-range',
         'if-unmodified-since', 'max-forwards', 'pragma', 'proxy-authorization',
-        'range', 'referer', 'te', 'transfer-encoding', 'upgrade', 'user-agent', 'via', 'warning'
+        'range', 'referer', 'te', 'transfer-encoding', 'upgrade', 'user-agent',
+        'via', 'warning'
     );
 
     /**

@@ -17,18 +17,6 @@ class CookiePlugin implements EventSubscriberInterface
      * @var CookieJarInterface
      */
     protected $jar;
-    
-    /**
-     * {@inheritdoc} 
-     */
-    public static function getSubscribedEvents()
-    {
-        return array(
-            'request.before_send'         => 'onRequestBeforeSend',
-            'request.sent'                => 'onRequestSent',
-            'request.receive.status_line' => 'onRequestReceiveStatusLine'
-        );
-    }
 
     /**
      * Create a new CookiePlugin
@@ -46,6 +34,18 @@ class CookiePlugin implements EventSubscriberInterface
     public function __destruct()
     {
         $this->clearTemporaryCookies();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public static function getSubscribedEvents()
+    {
+        return array(
+            'request.before_send'         => array('onRequestBeforeSend', 100),
+            'request.sent'                => array('onRequestSent', 100),
+            'request.receive.status_line' => 'onRequestReceiveStatusLine'
+        );
     }
 
     /**
@@ -154,7 +154,7 @@ class CookiePlugin implements EventSubscriberInterface
             $value = ($decode && $value && !is_bool($value)) ? urldecode($value) : $value;
 
             if (0 == $foundCookies || !$found) {
-                // If cookies have not yet been retrieved, or this value was 
+                // If cookies have not yet been retrieved, or this value was
                 // not found in the cookie pieces array, treat as a cookie
                 // IF non-cookies have been parsed, then this isn't a cookie,
                 // but it's cookie data.  Cookies must be first, followed by data.
@@ -220,7 +220,7 @@ class CookiePlugin implements EventSubscriberInterface
                 }
             }
         }
-        
+
         return $match && $cookies ? $cookies : array();
     }
 
@@ -235,7 +235,7 @@ class CookiePlugin implements EventSubscriberInterface
         if (!$cookie = $response->getSetCookie()) {
             return array();
         }
-        
+
         $cookieData = array();
         foreach ((array) $cookie as $c) {
             $cdata = self::parseCookie($c, $response->getRequest());
@@ -268,7 +268,7 @@ class CookiePlugin implements EventSubscriberInterface
                 }
             }
         }
-        
+
         return $cookieData;
     }
 
@@ -306,31 +306,31 @@ class CookiePlugin implements EventSubscriberInterface
     {
         return $this->jar->clearTemporary();
     }
-    
+
     /**
      * Add cookies before a request is sent
-     * 
-     * @param Event $event 
+     *
+     * @param Event $event
      */
     public function onRequestBeforeSend(Event $event)
     {
         $this->addCookies($event['request']);
     }
-    
+
     /**
      * Extract cookies from a sent request
-     * 
-     * @param Event $event 
+     *
+     * @param Event $event
      */
     public function onRequestSent(Event $event)
     {
         $this->extractCookies($event['response']);
     }
-    
+
     /**
      * Extract cookies from a redirect response
-     * 
-     * @param Event $event 
+     *
+     * @param Event $event
      */
     public function onRequestReceiveStatusLine(Event $event)
     {

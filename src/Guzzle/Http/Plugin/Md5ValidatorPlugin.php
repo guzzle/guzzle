@@ -23,14 +23,6 @@ class Md5ValidatorPlugin implements EventSubscriberInterface
      * @var bool Whether or not to compare when a Content-Encoding is present
      */
     protected $contentEncoded;
-    
-    /**
-     * {@inheritdoc} 
-     */
-    public static function getSubscribedEvents()
-    {
-        return array('request.complete' => 'onRequestComplete');
-    }
 
     /**
      * Constructor
@@ -53,12 +45,20 @@ class Md5ValidatorPlugin implements EventSubscriberInterface
 
     /**
      * {@inheritdoc}
+     */
+    public static function getSubscribedEvents()
+    {
+        return array('request.complete' => array('onRequestComplete', 255));
+    }
+
+    /**
+     * {@inheritdoc}
      * @throws UnexpectedValueException
      */
     public function onRequestComplete(Event $event)
     {
         $response = $event['response'];
-        
+
         $contentMd5 = $response->getContentMd5();
         if (!$contentMd5) {
             return;
@@ -75,23 +75,18 @@ class Md5ValidatorPlugin implements EventSubscriberInterface
             return;
         }
 
-        switch ($contentEncoding) {
-            case 'gzip':
-                $response->getBody()->compress('zlib.deflate');
-                $hash = $response->getBody()->getContentMd5();
-                $response->getBody()->uncompress();
-                break;
-            case 'compress':
-                $response->getBody()->compress('bzip2.compress');
-                $hash = $response->getBody()->getContentMd5();
-                $response->getBody()->uncompress();
-                break;
-            default:
-                if ($contentEncoding) {
-                    return;
-                }
-                $hash = $response->getBody()->getContentMd5();
-                break;
+        if (!$contentEncoding) {
+            $hash = $response->getBody()->getContentMd5();
+        } else if ($contentEncoding == 'gzip') {
+            $response->getBody()->compress('zlib.deflate');
+            $hash = $response->getBody()->getContentMd5();
+            $response->getBody()->uncompress();
+        } else if ($contentEncoding == 'compress') {
+            $response->getBody()->compress('bzip2.compress');
+            $hash = $response->getBody()->getContentMd5();
+            $response->getBody()->uncompress();
+        } else {
+            return;
         }
 
         if ($contentMd5 !== $hash) {

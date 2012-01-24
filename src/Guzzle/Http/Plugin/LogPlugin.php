@@ -53,19 +53,6 @@ class LogPlugin implements EventSubscriberInterface
      * @var string Cached copy of the hostname
      */
     private $hostname;
-    
-    /**
-     * {@inheritdoc} 
-     */
-    public static function getSubscribedEvents()
-    {
-        return array(
-            'curl.callback.write' => 'onCurlWrite',
-            'curl.callback.read'  => 'onCurlRead',
-            'request.before_send' => 'onRequestBeforeSend',
-            'request.complete'    => 'onRequestComplete'
-        );
-    }
 
     /**
      * Construct a new LogPlugin
@@ -78,6 +65,19 @@ class LogPlugin implements EventSubscriberInterface
         $this->logAdapter = $logAdapter;
         $this->hostname = gethostname();
         $this->setSettings($settings);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public static function getSubscribedEvents()
+    {
+        return array(
+            'curl.callback.write' => array('onCurlWrite', 255),
+            'curl.callback.read'  => array('onCurlRead', 255),
+            'request.before_send' => array('onRequestBeforeSend', 255),
+            'request.complete'    => array('onRequestComplete', 255)
+        );
     }
 
     /**
@@ -103,11 +103,11 @@ class LogPlugin implements EventSubscriberInterface
     {
         return $this->logAdapter;
     }
-    
+
     /**
      * Event triggered when curl data is read from a request
-     * 
-     * @param Event $event 
+     *
+     * @param Event $event
      */
     public function onCurlRead(Event $event)
     {
@@ -117,11 +117,11 @@ class LogPlugin implements EventSubscriberInterface
             $request->getParams()->get('request_wire')->write($event['read']);
         }
     }
-    
+
     /**
      * Event triggered when curl data is written to a response
-     * 
-     * @param Event $event 
+     *
+     * @param Event $event
      */
     public function onCurlWrite(Event $event)
     {
@@ -131,11 +131,11 @@ class LogPlugin implements EventSubscriberInterface
             $request->getParams()->get('response_wire')->write($event['write']);
         }
     }
-    
+
     /**
      * Called before a request is sent
-     * 
-     * @param Event $event 
+     *
+     * @param Event $event
      */
     public function onRequestBeforeSend(Event $event)
     {
@@ -159,11 +159,11 @@ class LogPlugin implements EventSubscriberInterface
             }
         }
     }
-    
+
     /**
      * Triggers the actual log write when a request completes
-     * 
-     * @param Event $event 
+     *
+     * @param Event $event
      */
     public function onRequestComplete(Event $event)
     {

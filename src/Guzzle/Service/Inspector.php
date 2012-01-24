@@ -52,6 +52,38 @@ class Inspector
     protected $validator;
 
     /**
+     * Constructor to create a new Inspector
+     */
+    public function __construct()
+    {
+        $base = 'Symfony\\Component\\Validator\\Constraints\\';
+        $this->constraints = array(
+            'blank'     => array($base . 'Blank', null),
+            'not_blank' => array($base . 'NotBlank', null),
+            'integer'   => array($base . 'Type', array('type' => 'integer')),
+            'float'     => array($base . 'Type', array('type' => 'float')),
+            'string'    => array($base . 'Type', array('type' => 'string')),
+            'date'      => array($base . 'Date', null),
+            'date_time' => array($base . 'DateTime', null),
+            'time'      => array($base . 'Time', null),
+            'boolean'   => array($base . 'Choice', array('choices' => array('true', 'false', '0', '1'))),
+            'country'   => array($base . 'Country', null),
+            'email'     => array($base . 'Email', null),
+            'ip'        => array($base . 'Ip', null),
+            'language'  => array($base . 'Language', null),
+            'locale'    => array($base . 'Locale', null),
+            'url'       => array($base . 'Url', null),
+            'file'      => array($base . 'File', null),
+            'image'     => array($base . 'Image', null),
+            'class'     => array($base . 'Type', null),
+            'type'      => array($base . 'Type', null),
+            'choice'    => array($base . 'Choice', null),
+            'enum'      => array($base . 'Choice', null),
+            'regex'     => array($base . 'Regex', null)
+        );
+    }
+
+    /**
      * Get an instance of the Inspector
      *
      * @return Reflection
@@ -92,38 +124,6 @@ class Inspector
         }
 
         return $collection;
-    }
-
-    /**
-     * Constructor to create a new Inspector
-     */
-    public function __construct()
-    {
-        $base = 'Symfony\\Component\\Validator\\Constraints\\';
-        $this->constraints = array(
-            'blank'     => array($base . 'Blank', null),
-            'not_blank' => array($base . 'NotBlank', null),
-            'integer'   => array($base . 'Type', array('type' => 'integer')),
-            'float'     => array($base . 'Type', array('type' => 'float')),
-            'string'    => array($base . 'Type', array('type' => 'string')),
-            'date'      => array($base . 'Date', null),
-            'date_time' => array($base . 'DateTime', null),
-            'time'      => array($base . 'Time', null),
-            'boolean'   => array($base . 'Choice', array('choices' => array('true', 'false', '0', '1'))),
-            'country'   => array($base . 'Country', null),
-            'email'     => array($base . 'Email', null),
-            'ip'        => array($base . 'Ip', null),
-            'language'  => array($base . 'Language', null),
-            'locale'    => array($base . 'Locale', null),
-            'url'       => array($base . 'Url', null),
-            'file'      => array($base . 'File', null),
-            'image'     => array($base . 'Image', null),
-            'class'     => array($base . 'Type', null),
-            'type'      => array($base . 'Type', null),
-            'choice'    => array($base . 'Choice', null),
-            'enum'      => array($base . 'Choice', null),
-            'regex'     => array($base . 'Regex', null)
-        );
     }
 
     /**

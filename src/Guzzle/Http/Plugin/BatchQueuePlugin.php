@@ -20,24 +20,24 @@ class BatchQueuePlugin implements EventSubscriberInterface, \Countable
     private $queue = array();
 
     /**
-     * {@inheritdoc}
-     */
-    public static function getSubscribedEvents()
-    {
-        return array(
-            'client.create_request' => 'onRequestCreate',
-            'request.before_send' => 'onRequestBeforeSend',
-            'flush' => 'flush'
-        );
-    }
-
-    /**
      * @param int $autoFlushCount (optional) Set to >0 to automatically flush
      *     the queue when the number of requests is > $autoFlushCount
      */
     public function __construct($autoFlushCount = 0)
     {
         $this->autoFlushCount = $autoFlushCount;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public static function getSubscribedEvents()
+    {
+        return array(
+            'client.create_request' => array('onRequestCreate', -255),
+            'request.before_send'   => array('onRequestBeforeSend', 255),
+            'flush'                 => array('flush', -255)
+        );
     }
 
     /**
@@ -74,11 +74,9 @@ class BatchQueuePlugin implements EventSubscriberInterface, \Countable
      */
     public function onRequestCreate(Event $event)
     {
-        if ($event['request']) {
-            $this->queue[] = $event['request'];
-            if ($this->autoFlushCount && count($this->queue) >= $this->autoFlushCount) {
-                $this->flush();
-            }
+        $this->queue[] = $event['request'];
+        if ($this->autoFlushCount && count($this->queue) >= $this->autoFlushCount) {
+            $this->flush();
         }
     }
 
@@ -90,9 +88,7 @@ class BatchQueuePlugin implements EventSubscriberInterface, \Countable
      */
     public function onRequestBeforeSend(Event $event)
     {
-        if ($event['request']) {
-            $this->removeRequest($event['request']);
-        }
+        $this->removeRequest($event['request']);
     }
 
     /**

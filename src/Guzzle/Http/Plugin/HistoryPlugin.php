@@ -21,9 +21,9 @@ class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Co
      * @var array Requests that have passd through the plugin
      */
     protected $requests = array();
-    
+
     /**
-     * {@inheritdoc} 
+     * {@inheritdoc}
      */
     public static function getSubscribedEvents()
     {

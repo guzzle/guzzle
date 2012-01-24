@@ -37,7 +37,7 @@ class CurlHandle
     public static function factory(RequestInterface $request)
     {
         $handle = curl_init();
-        
+
         // Array of default cURL options.
         $curlOptions = array(
             CURLOPT_URL => $request->getUrl(),
@@ -256,7 +256,7 @@ class CurlHandle
         fseek($stderr, 0);
         $e = stream_get_contents($stderr);
         fseek($stderr, 0, SEEK_END);
-        
+
         return $e;
     }
 

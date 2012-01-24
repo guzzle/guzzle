@@ -51,17 +51,6 @@ class CachePlugin implements EventSubscriberInterface
     );
 
     /**
-     * {@inheritdoc}
-     */
-    public static function getSubscribedEvents()
-    {
-        return array(
-            'request.before_send' => 'onRequestBeforeSend',
-            'request.sent'        => 'onRequestSent'
-        );
-    }
-
-    /**
      * Construct a new CachePlugin
      *
      * @param CacheAdapterInterface $adapter Cache adapter to write and read cache data
@@ -75,6 +64,17 @@ class CachePlugin implements EventSubscriberInterface
         $this->adapter = $adapter;
         $this->serialize = (bool) $serialize;
         $this->defaultLifetime = (int) $defaultLifetime;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public static function getSubscribedEvents()
+    {
+        return array(
+            'request.before_send' => array('onRequestBeforeSend', -255),
+            'request.sent'        => array('onRequestSent', 255)
+        );
     }
 
     /**

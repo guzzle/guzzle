@@ -14,14 +14,6 @@ class BasicAuthPlugin implements EventSubscriberInterface
     private $password;
 
     /**
-     * {@inheritdoc}
-     */
-    public static function getSubscribedEvents()
-    {
-        return array('client.create_request' => 'onRequestCreate');
-    }
-
-    /**
      * Constructor
      *
      * @param string $username HTTP basic auth username
@@ -34,13 +26,20 @@ class BasicAuthPlugin implements EventSubscriberInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public static function getSubscribedEvents()
+    {
+        return array('client.create_request' => array('onRequestCreate', 255));
+    }
+
+    /**
      * Add basic auth
      *
      * @param Event $event
      */
     public function onRequestCreate(Event $event)
     {
-        $request = $event['request'];
-        $request->setAuth($this->username, $this->password);
+        $event['request']->setAuth($this->username, $this->password);
     }
 }

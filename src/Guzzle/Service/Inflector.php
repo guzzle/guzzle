@@ -24,18 +24,6 @@ class Inflector
     );
 
     /**
-     * Prune one of the caches
-     *
-     * @param string $cache Name of the cache to prune
-     */
-    private static function pruneCache($cache)
-    {
-        if (count(self::$cache[$cache]) == self::MAX_ENTRIES_PER_CACHE) {
-            self::$cache[$cache] = array_slice(self::$cache[$cache], self::MAX_ENTRIES_PER_CACHE * 0.1);
-        }
-    }
-
-    /**
      * Converts strings from camel case to snake case
      * (e.g. CamelCase camel_case).
      *
@@ -71,5 +59,17 @@ class Inflector
         self::pruneCache('camel');
 
         return self::$cache['camel'][$word] = str_replace(' ', '', ucwords(strtr($word, '_-', '  ')));
+    }
+
+    /**
+     * Prune one of the caches
+     *
+     * @param string $cache Name of the cache to prune
+     */
+    private static function pruneCache($cache)
+    {
+        if (count(self::$cache[$cache]) == self::MAX_ENTRIES_PER_CACHE) {
+            self::$cache[$cache] = array_slice(self::$cache[$cache], self::MAX_ENTRIES_PER_CACHE * 0.1);
+        }
     }
 }

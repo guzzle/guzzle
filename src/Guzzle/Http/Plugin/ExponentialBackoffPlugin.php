@@ -35,17 +35,6 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
      * @var Closure
      */
     protected $delayClosure;
-    
-    /**
-     * {@inheritdoc} 
-     */
-    public static function getSubscribedEvents()
-    {
-        return array(
-            'request.sent' => 'onRequestSent',
-            CurlMultiInterface::POLLING_REQUEST => 'onRequestPoll'
-        );
-    }
 
     /**
      * Construct a new exponential backoff plugin
@@ -63,6 +52,17 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
         $this->failureCodes = $failureCodes ?: array(500, 503);
         $this->delayClosure = $delayClosure ?: array($this, 'calculateWait');
         $this->state = new Collection();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public static function getSubscribedEvents()
+    {
+        return array(
+            'request.sent' => 'onRequestSent',
+            CurlMultiInterface::POLLING_REQUEST => 'onRequestPoll'
+        );
     }
 
     /**
@@ -127,11 +127,11 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
     {
         return (int) pow(2, $retries);
     }
-    
+
     /**
      * Called when a request has been sent
-     * 
-     * @param Event $event 
+     *
+     * @param Event $event
      */
     public function onRequestSent(Event $event)
     {
@@ -151,11 +151,11 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
             }
         }
     }
-    
+
     /**
      * Called when a request is polling in the curl mutli object
-     * 
-     * @param Event $event 
+     *
+     * @param Event $event
      */
     public function onRequestPoll(Event $event)
     {

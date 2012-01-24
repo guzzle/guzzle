@@ -22,17 +22,34 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
      * @var bool Whether or not to remove the plugin when the queue is empty
      */
     protected $temporary = false;
-    
+
     /**
-     * {@inheritdoc} 
+     * Constructor
+     *
+     * @param array $responses (optional) Array of responses to queue
+     * @param bool $temporary (optional) Set to TRUE to remove the plugin when
+     *      the queue is empty
+     */
+    public function __construct(array $responses = null, $temporary = false)
+    {
+        $this->temporary = $temporary;
+        if ($responses) {
+            foreach ($responses as $response) {
+                $this->addResponse($response);
+            }
+        }
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public static function getSubscribedEvents()
     {
         return array('client.create_request' => 'onRequestCreate');
     }
-    
+
     /**
-     * {@inheritdoc} 
+     * {@inheritdoc}
      */
     public static function getAllEvents()
     {
@@ -60,23 +77,6 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
             : $parts[0];
 
         return Response::factory($data);
-    }
-
-    /**
-     * Constructor
-     *
-     * @param array $responses (optional) Array of responses to queue
-     * @param bool $temporary (optional) Set to TRUE to remove the plugin when
-     *      the queue is empty
-     */
-    public function __construct(array $responses = null, $temporary = false)
-    {
-        $this->temporary = $temporary;
-        if ($responses) {
-            foreach ($responses as $response) {
-                $this->addResponse($response);
-            }
-        }
     }
 
     /**
@@ -163,7 +163,7 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
 
     /**
      * Called when a request completes
-     * 
+     *
      * @param Event $event
      */
     public function onRequestCreate(Event $event)
