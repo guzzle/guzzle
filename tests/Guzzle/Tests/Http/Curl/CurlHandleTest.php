@@ -235,7 +235,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_CUSTOMREQUEST => 'HEAD',
                 CURLOPT_NOBODY => 1
             )),
-            array('GET', 'https://michael:123@www.guzzle-project.com/index.html?q=2', null, null, array(
+            array('GET', 'https://michael:123@localhost/index.html?q=2', null, null, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
                 CURLOPT_FOLLOWLOCATION => 1,
@@ -248,13 +248,13 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_NOPROGRESS => 0,
                 CURLOPT_ENCODING => '',
                 CURLOPT_HTTPHEADER => array(
-                    'Host: www.guzzle-project.com',
+                    'Host: localhost',
                     'Authorization: Basic ' . $auth,
                     'User-Agent: ' . $userAgent
                 ),
                 CURLOPT_PORT => 443
             )),
-            array('GET', 'http://www.guzzle-project.com:8080/', array(
+            array('GET', 'http://localhost:8080/', array(
                     'X-Test-Data' => 'Guzzle'
                 ), null, array(
                 CURLOPT_RETURNTRANSFER => 0,
@@ -268,10 +268,10 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_PROGRESSFUNCTION => 'callback',
                 CURLOPT_NOPROGRESS => 0,
                 CURLOPT_ENCODING => '',
-                CURLOPT_HTTPHEADER => array('Host: www.guzzle-project.com:8080', 'X-Test-Data: Guzzle', 'User-Agent: ' . $userAgent),
+                CURLOPT_HTTPHEADER => array('Host: localhost:8080', 'X-Test-Data: Guzzle', 'User-Agent: ' . $userAgent),
                 CURLOPT_PORT => 8080
             )),
-            array('POST', 'http://www.guzzle-project.com/post.php', null, $qs, array(
+            array('POST', 'http://localhost:8124/post.php', null, $qs, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
                 CURLOPT_FOLLOWLOCATION => 1,
@@ -285,13 +285,13 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_ENCODING => '',
                 CURLOPT_POSTFIELDS => 'x=y&z=a',
                 CURLOPT_HTTPHEADER => array (
-                    'Host: www.guzzle-project.com',
+                    'Host: localhost:8124',
                     'User-Agent: ' . $userAgent,
                     'Expect: 100-Continue',
                     'Content-Type: application/x-www-form-urlencoded'
                 )
             )),
-            array('PUT', 'http://www.guzzle-project.com/put.php', null, EntityBody::factory(fopen(__DIR__ . '/../../../../../phpunit.xml', 'r+')), array(
+            array('PUT', 'http://localhost:8124/put.php', null, EntityBody::factory(fopen(__DIR__ . '/../../../../../phpunit.xml', 'r+')), array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
                 CURLOPT_FOLLOWLOCATION => 1,
@@ -304,14 +304,14 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_PROGRESSFUNCTION => 'callback',
                 CURLOPT_NOPROGRESS => 0,
                 CURLOPT_ENCODING => '',
+                CURLOPT_INFILESIZE => filesize(__DIR__ . '/../../../../../phpunit.xml'),
                 CURLOPT_HTTPHEADER => array (
-                    'Host: www.guzzle-project.com',
+                    'Host: localhost:8124',
                     'User-Agent: ' . $userAgent,
-                    'Expect: 100-Continue',
-                    'Content-Length: ' . filesize(__DIR__ . '/../../../../../phpunit.xml')
+                    'Expect: 100-Continue'
                 )
-            )),
-            array('POST', 'http://www.guzzle-project.com/post.php', null, array(
+            ), "PUT /put.php HTTP/1.1\r\nAccept: */*\r\nAccept-Encoding: deflate, gzip\r\nHost: localhost:8124\r\nUser-Agent: {$userAgent}\r\nExpect: 100-Continue\r\nContent-Length: " . filesize(__DIR__ . '/../../../../../phpunit.xml')),
+            array('POST', 'http://localhost:8124/post.php', null, array(
                 'a' => '2'
             ), array(
                 CURLOPT_RETURNTRANSFER => 0,
@@ -328,13 +328,13 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_POST => 1,
                 CURLOPT_POSTFIELDS => 'a=2',
                 CURLOPT_HTTPHEADER => array (
-                    'Host: www.guzzle-project.com',
+                    'Host: localhost:8124',
                     'User-Agent: ' . $userAgent,
                     'Expect: 100-Continue',
                     'Content-Type: application/x-www-form-urlencoded'
                 )
             )),
-            array('POST', 'http://www.guzzle-project.com/post.php', null, array(
+            array('POST', 'http://localhost:8124/post.php', null, array(
                 'x' => 'y'
             ), array(
                 CURLOPT_RETURNTRANSFER => 0,
@@ -351,13 +351,13 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_POST => 1,
                 CURLOPT_POSTFIELDS => 'x=y',
                 CURLOPT_HTTPHEADER => array (
-                    'Host: www.guzzle-project.com',
+                    'Host: localhost:8124',
                     'User-Agent: ' . $userAgent,
                     'Expect: 100-Continue',
                     'Content-Type: application/x-www-form-urlencoded'
                 )
             )),
-            array('POST', 'http://www.guzzle-project.com/post.php', null, $postBody, array(
+            array('POST', 'http://localhost:8124/post.php', null, $postBody, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
                 CURLOPT_FOLLOWLOCATION => 1,
@@ -374,7 +374,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                     'file' => '@' . __DIR__ . '/../../../../../phpunit.xml'
                 ),
                 CURLOPT_HTTPHEADER => array (
-                    'Host: www.guzzle-project.com',
+                    'Host: localhost:8124',
                     'User-Agent: ' . $userAgent,
                     'Expect: 100-Continue',
                     'Content-Type: multipart/form-data'
@@ -387,7 +387,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
      * @covers Guzzle\Http\Curl\CurlHandle::factory
      * @dataProvider dataProvider
      */
-    public function testFactoryCreatesCurlBasedOnRequest($method, $url, $headers, $body, $options)
+    public function testFactoryCreatesCurlBasedOnRequest($method, $url, $headers, $body, $options, $rawRequest = null)
     {
         $request = RequestFactory::create($method, $url, $headers, $body);
         $handle = CurlHandle::factory($request);
@@ -406,6 +406,17 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             }
         }
 
+        if ($rawRequest) {
+            $client = new Client($this->getServer()->getUrl());
+            $request->setClient($client);
+            $this->getServer()->flush();
+            $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
+            $request->send();
+            $requests = $this->getServer()->getReceivedRequests(true);
+            $rawRequest = RequestFactory::fromMessage($rawRequest);
+            $this->assertEquals($rawRequest->getRawHeaders(), $requests[0]->getRawHeaders());
+        }
+
         $request = null;
     }
 
@@ -414,7 +425,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testFactoryUsesSpecifiedProtocol()
     {
-        $request = RequestFactory::create('GET', 'http://www.guzzle-project.com/');
+        $request = RequestFactory::create('GET', 'http://localhost:8124/');
         $request->setProtocolVersion('1.1');
         $handle = CurlHandle::factory($request);
         $options = $request->getParams()->get('curl.last_options');

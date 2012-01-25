@@ -112,9 +112,8 @@ class CurlHandle
                 break;
             case 'PUT':
                 $curlOptions[CURLOPT_UPLOAD] = true;
-                if (!$request->hasHeader('Content-Length')) {
-                    unset($headers['Content-Length']);
-                } else {
+                unset($headers['Content-Length']);
+                if ($request->hasHeader('Content-Length')) {
                     $curlOptions[CURLOPT_INFILESIZE] = $request->getHeader('Content-Length');
                 }
 
