@@ -283,7 +283,6 @@ class CachePlugin implements EventSubscriberInterface
      */
     public function canResponseSatisfyRequest(RequestInterface $request, Response $response)
     {
-        $maxAge = null;
         $responseAge = $response->getAge();
 
         // Check the request's max-age header against the age of the response

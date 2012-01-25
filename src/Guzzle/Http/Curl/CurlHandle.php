@@ -56,7 +56,7 @@ class CurlHandle
             CURLOPT_WRITEFUNCTION => function($curl, $write) use ($request) {
                 $request->dispatch('curl.callback.write', array(
                     'request' => $request,
-                    'write' => $write
+                    'write'   => $write
                 ));
                 return $request->getResponse()->getBody()->write($write);
             },
@@ -64,14 +64,15 @@ class CurlHandle
                 return $request->receiveResponseHeader($header);
             },
             CURLOPT_READFUNCTION => function($ch, $fd, $length) use ($request) {
-                $read = ($request->getBody()) ? $request->getBody()->read($length) : 0;
-                if ($read) {
+                $read = '';
+                if ($request->getBody()) {
+                    $read = $request->getBody()->read($length);
                     $request->dispatch('curl.callback.read', array(
                         'request' => $request,
-                        'read' => $read
+                        'read'    => $read
                     ));
                 }
-                return $read === false || $read === 0 ? '' : $read;
+                return !$read ? '' : $read;
             },
             CURLOPT_PROGRESSFUNCTION => function($downloadSize, $downloaded, $uploadSize, $uploaded) use ($request) {
                 $request->dispatch('curl.callback.progress', array(

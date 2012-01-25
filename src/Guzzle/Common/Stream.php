@@ -57,12 +57,9 @@ class Stream
      */
     protected function rebuildCache()
     {
-        $meta = stream_get_meta_data($this->stream);
-        $this->cache['wrapper_type'] = isset($meta['wrapper_type']) ? strtolower($meta['wrapper_type']) : '';
-        $this->cache['mode'] = isset($meta['mode']) ? $meta['mode'] : '';
-        $this->cache['seekable'] = isset($meta['seekable']) ? $meta['seekable'] : false;
-        $this->cache['uri'] = isset($meta['uri']) ? $meta['uri'] : '';
-        $this->cache['type'] = isset($meta['stream_type']) ? strtolower($meta['stream_type']) : '';
+        $this->cache = stream_get_meta_data($this->stream);
+        $this->cache['stream_type'] = strtolower($this->cache['stream_type']);
+        $this->cache['wrapper_type'] = strtolower($this->cache['wrapper_type']);
         $this->cache['is_local'] = stream_is_local($this->stream);
         $this->cache['is_readable'] = in_array(str_replace('b', '', $this->cache['mode']), array('r', 'w+', 'r+', 'x+', 'c+'));
         $this->cache['is_writable'] = str_replace('b', '', $this->cache['mode']) != 'r';
@@ -139,7 +136,7 @@ class Stream
      */
     public function getStreamType()
     {
-        return $this->cache['type'];
+        return $this->cache['stream_type'];
     }
 
     /**

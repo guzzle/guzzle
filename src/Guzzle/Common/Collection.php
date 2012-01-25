@@ -52,10 +52,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
             $this->data[$key] = $value;
         } else {
             if (!is_array($this->data[$key])) {
-                $this->data[$key] = array(
-                    $this->data[$key],
-                    $value
-                );
+                $this->data[$key] = array($this->data[$key], $value);
             } else {
                 $this->data[$key][] = $value;
             }
@@ -312,8 +309,8 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
             return $this;
         }
 
-        if (count($data)) {
-            if (!count($this->data)) {
+        if (!empty($data)) {
+            if (empty($this->data)) {
                 $this->data = $data;
             } else {
                 foreach ($data as $key => $value) {

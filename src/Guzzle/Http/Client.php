@@ -340,7 +340,9 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     {
         $curlMulti = $this->getCurlMulti();
         $multipleRequests = is_array($requests);
-        $requests = $multipleRequests ? $requests : array($requests);
+        if (!$multipleRequests) {
+            $requests = array($requests);
+        }
 
         foreach ($requests as $request) {
             $curlMulti->add($request);
@@ -352,11 +354,13 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             throw $multipleRequests ? $e : $e->getIterator()->offsetGet(0);
         }
 
-        return !$multipleRequests
-            ? end($requests)->getResponse()
-            : array_map(function($request) {
-                return $request->getResponse();
-            }, $requests);
+        if (!$multipleRequests) {
+            return end($requests)->getResponse();
+        }
+
+        return array_map(function($request) {
+            return $request->getResponse();
+        }, $requests);
     }
 
     /**

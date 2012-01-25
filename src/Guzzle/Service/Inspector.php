@@ -262,7 +262,9 @@ class Inspector
 
         foreach ($params as $name => $arg) {
 
-            $arg = ($arg instanceof Collection) ? $arg : (is_array($arg) ? new Collection($arg) : new Collection());
+            if (is_array($arg)) {
+                $arg = new Collection($arg);
+            }
 
             // Set the default value if it is not set
             if ($arg->get('static') || ($arg->get('default') && !$config->get($name))) {
@@ -296,7 +298,7 @@ class Inspector
             if ($arg->get('type')) {
                 $constraint = $this->getConstraint($arg->get('type'));
                 $result = $this->getValidator()->validateValue($config->get($name), $constraint);
-                if ($result && count($result)) {
+                if (!empty($result)) {
                     $errors = array_merge($errors, array_map(function($message) {
                         return $message->getMessage();
                     }, $result->getIterator()->getArrayCopy()));
@@ -304,13 +306,9 @@ class Inspector
             }
 
             // Run the value through attached filters
-            if ($filters = $arg->get('filters')) {
-                foreach (explode(',', $filters) as $filter) {
-                    if (strpos($filter, '::')) {
-                        $config->set($name, call_user_func(explode('::', $filter), $config->get($name)));
-                    } else {
-                        $config->set($name, call_user_func($filter, $config->get($name)));
-                    }
+            if ($arg->get('filters')) {
+                foreach (explode(',', $arg->get('filters')) as $filter) {
+                    $config->set($name, call_user_func(trim($filter), $config->get($name)));
                 }
             }
 

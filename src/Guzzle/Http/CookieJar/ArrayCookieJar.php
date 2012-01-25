@@ -106,25 +106,21 @@ class ArrayCookieJar implements CookieJarInterface
                 return false;
             }
 
-            $domain = strtolower($domain);
-            $cookie['domain'] = strtolower($cookie['domain']);
-
             // Normalize the domain value
             $domainMatch = false;
             if ($domain && $cookie['domain']) {
-                if ($domain == $cookie['domain']) {
+                if (!strcasecmp($domain, $cookie['domain'])) {
                     $domainMatch = true;
                 } else if ($cookie['domain'][0] == '.') {
                     $domainMatch = preg_match('/' . preg_quote($cookie['domain']) . '$/i', $domain);
                 }
             }
 
-            // Check cookie name matches
-            $nameMatch = $name && $cookie['cookie'][0] == $name;
-
             if (!$domain || $domainMatch) {
+                // Check if path matches
                 if (!$path || !strcasecmp($path, $cookie['path']) || 0 === stripos($path, $cookie['path'])) {
-                    if (!$name || $nameMatch) {
+                    // Check if cookie name matches
+                    if (!$name || $cookie['cookie'][0] == $name) {
                         if (!$skipDiscardable || !$cookie['discard']) {
                             return true;
                         }
@@ -166,24 +162,29 @@ class ArrayCookieJar implements CookieJarInterface
             throw new \InvalidArgumentException('Cookies require a names and values');
         }
 
-        // Extract the expires value and turn it into a UNIX timestamp if needed
-        $cookieData['expires'] = isset($cookieData['expires']) ? (is_numeric($cookieData['expires']) ? $cookieData['expires'] : strtotime($cookieData['expires'])) : null;
-        $cookieData['path'] = isset($cookieData['path']) ? $cookieData['path'] : '/';
-        $cookieData['max_age'] = isset($cookieData['max_age']) ? $cookieData['max_age'] : 0;
-        $cookieData['comment'] = isset($cookieData['comment']) ? $cookieData['comment'] : null;
-        $cookieData['comment_url'] = isset($cookieData['comment_url']) ? $cookieData['comment_url'] : null;
-        $cookieData['port'] = isset($cookieData['port']) ? $cookieData['port'] : array();
-        $cookieData['version'] = isset($cookieData['version']) ? $cookieData['version'] : null;
-        $cookieData['secure'] = array_key_exists('secure', $cookieData) ? $cookieData['secure'] : null;
-        $cookieData['discard'] = array_key_exists('discard', $cookieData) ? $cookieData['discard'] : null;
-        $cookieData['http_only'] = array_key_exists('http_only', $cookieData) ? $cookieData['http_only'] : false;
+        $cookieData = array_merge(array(
+            'path'        => '/',
+            'expires'     => null,
+            'max_age'     => 0,
+            'comment'     => null,
+            'comment_url' => null,
+            'port'        => array(),
+            'version'     => null,
+            'secure'      => null,
+            'discard'     => null,
+            'http_only'   => false
+        ), $cookieData);
 
-        // Calculate the expires date
-        if (!$cookieData['expires'] && $cookieData['max_age']) {
+        // Extract the expires value and turn it into a UNIX timestamp if needed
+        if ($cookieData['expires']) {
+            if (!is_numeric($cookieData['expires'])) {
+                $cookieData['expires'] = strtotime($cookieData['expires']);
+            }
+        } else if ($cookieData['max_age']) {
+            // Calculate the expires date
             $cookieData['expires'] = time() + (int) $cookieData['max_age'];
         }
 
-        $alreadyPresent = false;
         $keys = array('path', 'max_age', 'domain', 'http_only', 'port', 'secure');
         foreach ($this->cookies as $i => $cookie) {
 
@@ -213,13 +214,11 @@ class ArrayCookieJar implements CookieJarInterface
                 continue;
             }
 
-            $alreadyPresent = true;
-            break;
+            // The cookie exists, so no need to continue
+            return $this;
         }
 
-        if (!$alreadyPresent) {
-            $this->cookies[] = $cookieData;
-        }
+        $this->cookies[] = $cookieData;
 
         return $this;
     }

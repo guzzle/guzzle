@@ -178,7 +178,6 @@ class LogPlugin implements EventSubscriberInterface
      */
     private function log(RequestInterface $request, Response $response = null)
     {
-        $priority = $response && !$response->isSuccessful() ? LOG_ERR : LOG_DEBUG;
         $message = '';
 
         if ($this->settings & self::LOG_CONTEXT) {
@@ -209,43 +208,62 @@ class LogPlugin implements EventSubscriberInterface
             }
 
             // Filter cURL's verbose output based on config settings
-            $handle = $request->getParams()->get('curl_handle');
-            if ($handle instanceof CurlHandle) {
-                $stderr = $handle->getStderr(true);
-                rewind($stderr);
-                $addedBody = false;
-                while ($line = fgets($stderr)) {
-                    $first = $line[0];
-                    // * - Debug | < - Downstream | > - Upstream
-                    if ($line[0] == '*' && $this->settings & self::LOG_DEBUG) {
-                        $message .= $line;
-                    } else if ($this->settings & self::LOG_HEADERS) {
-                        $message .= $line;
-                    }
-                    // Add the request body if needed
-                    if ($this->settings & self::LOG_BODY) {
-                        if (trim($line) == '' && !$addedBody && $request instanceof EntityEnclosingRequestInterface) {
-                            $message .= $request->getParams()->get('request_wire')
-                                ? (string) $request->getParams()->get('request_wire') . "\r\n"
-                                : (string) $request->getBody() . "\r\n";
-                            $addedBody = true;
-                        }
-                    }
-                }
-            }
+            $message .= $this->parseCurlLog($request);
 
             // Log the response body if the response is available
             if ($this->settings & self::LOG_BODY && $response) {
-                $message .= $request->getParams()->get('response_wire')
-                    ? (string) $request->getParams()->get('response_wire')
-                    : $response->getBody(true);
+                if ($request->getParams()->get('response_wire')) {
+                    $message .= (string) $request->getParams()->get('response_wire');
+                } else {
+                    $message .= $response->getBody(true);
+                }
             }
         }
 
         // Send the log message to the adapter, adding a category and host
+        $priority = $response && !$response->isSuccessful() ? LOG_ERR : LOG_DEBUG;
         $this->logAdapter->log(trim($message), $priority, array(
             'category' => 'guzzle.request',
-            'host' => $this->hostname
+            'host'     => $this->hostname
         ));
+    }
+
+    /**
+     * Parse cURL log messages
+     *
+     * @param RequestInterface $request Request that has a curl handle
+     *
+     * @return string
+     */
+    protected function parseCurlLog(RequestInterface $request)
+    {
+        $message = '';
+        $handle = $request->getParams()->get('curl_handle');
+        $stderr = $handle->getStderr(true);
+        rewind($stderr);
+        $addedBody = false;
+        while ($line = fgets($stderr)) {
+            // * - Debug | < - Downstream | > - Upstream
+            if ($line[0] == '*') {
+                if ($this->settings & self::LOG_DEBUG) {
+                    $message .= $line;
+                }
+            } else if ($this->settings & self::LOG_HEADERS) {
+                $message .= $line;
+            }
+            // Add the request body if needed
+            if ($this->settings & self::LOG_BODY) {
+                if (trim($line) == '' && $request instanceof EntityEnclosingRequestInterface) {
+                    if ($request->getParams()->get('request_wire')) {
+                        $message .= (string) $request->getParams()->get('request_wire') . "\r\n";
+                    } else {
+                        $message .= (string) $request->getBody() . "\r\n";
+                    }
+                    $addedBody = true;
+                }
+            }
+        }
+
+        return $message;
     }
 }
