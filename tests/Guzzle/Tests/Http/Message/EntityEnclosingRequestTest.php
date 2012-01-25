@@ -61,7 +61,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
             . "Content-Type: application/x-www-form-urlencoded\r\n\r\n"
             . "data=123", (string) $request);
     }
-    
+
     /**
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::__toString
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFiles
@@ -78,7 +78,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $message = (string) $request;
         $this->assertEquals('multipart/form-data', $request->getHeader('Content-Type'));
     }
-    
+
     /**
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::processPostFields
      */
@@ -90,7 +90,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         ));
         $this->assertContains("\r\n\r\ntest=123", (string) $request);
     }
-    
+
     /**
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::processPostFields
      */
@@ -99,8 +99,9 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request = RequestFactory::create('PUT', 'http://www.test.com/');
         $request->setBody(EntityBody::factory('test'));
         $this->assertEquals(4, $request->getHeader('Content-Length'));
+        $this->assertFalse($request->hasHeader('Transfer-Encoding'));
     }
-    
+
     /**
      * Tests using a Transfer-Encoding chunked entity body already set
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::processPostFields
@@ -111,32 +112,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request = RequestFactory::create('PUT', 'http://www.test.com/');
         $request->setBody(EntityBody::factory('test'), null, true);
         $this->assertNull($request->getHeader('Content-Length'));
-    }
-    
-    /**
-     * Tests using a Transfer-Encoding chunked entity body with undeterminable size
-     * @covers Guzzle\Http\Message\EntityEnclosingRequest::processPostFields
-     */
-    public function testUsesChunkedTranserEncodingWhenBodyLengthNotAvailable()
-    {
-        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\nData");
-        $request = RequestFactory::create('PUT', 'http://www.test.com/');
-        $request->setBody(EntityBody::factory(fopen($this->getServer()->getUrl(), 'r')));
-        $this->assertNull($request->getHeader('Content-Length'));
-        $this->assertEquals('chunked', $request->getHeader('Transfer-Encoding'));
-    }
-    
-    /**
-     * Tests making sure HTTP/1.0 has a Content-Length header
-     * @covers Guzzle\Http\Message\EntityEnclosingRequest::processPostFields
-     * @expectedException Guzzle\Http\Message\RequestException
-     */
-    public function testContentLengthIsSetWithHttp1()
-    {
-        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\nData");
-        $request = RequestFactory::create('PUT', 'http://www.test.com/');
-        $request->setProtocolVersion('1.0');
-        $request->setBody(EntityBody::factory(fopen($this->getServer()->getUrl(), 'r')));
+        $this->assertTrue($request->hasHeader('Transfer-Encoding'));
     }
 
     /**
@@ -198,7 +174,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
         $request->send();
-        
+
         $this->assertNotNull($request->getHeader('Content-Length'));
         $this->assertContains('multipart/form-data; boundary=', $request->getHeader('Content-Type'), '-> cURL must add the boundary');
     }
@@ -301,6 +277,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request = new EntityEnclosingRequest('PUT', 'http://test.com/');
         $request->setBody(fopen($this->getServer()->getUrl(), 'r'));
         $this->assertEquals('chunked', $request->getHeader('Transfer-Encoding'));
+        $this->assertFalse($request->hasHeader('Content-Length'));
     }
 
     /**

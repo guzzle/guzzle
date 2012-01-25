@@ -225,6 +225,12 @@ class RequestFactory
                     $request->setBody((string) $body, $request->getHeader('Content-Type'));
                 }
             }
+
+            // Fix chunked transfers based on the passed headers
+            if (isset($headers['Transfer-Encoding']) && $headers['Transfer-Encoding'] == 'chunked') {
+                $request->removeHeader('Content-Length')
+                        ->setHeader('Transfer-Encoding', 'chunked');
+            }
         }
 
         return $request;

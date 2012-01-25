@@ -29,7 +29,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('www.google.com', $request->getHost());
         $this->assertEquals('/', $request->getPath());
         $this->assertEquals('/', $request->getResourceUri());
-        
+
         // Create a GET request with a custom receiving body
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
         $b = EntityBody::factory();
@@ -255,7 +255,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
             'Authorization' => 'basic bWljaGFlbDoxMjM='
         ), $parts['headers']);
         $this->assertEquals('', $parts['body']);
-        
+
         $parts = RequestFactory::parseMessage(
             "get / spydy/1.0\r\n"
         );
@@ -271,5 +271,17 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('', $parts['parts']['query']);
         $this->assertEquals(array(), $parts['headers']);
         $this->assertEquals('', $parts['body']);
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\RequestFactory::create
+     */
+    public function testCreatesProperTransferEncodingRequests()
+    {
+        $request = RequestFactory::create('PUT', 'http://www.google.com/', array(
+            'Transfer-Encoding' => 'chunked'
+        ), 'hello');
+        $this->assertEquals('chunked', $request->getHeader('Transfer-Encoding'));
+        $this->assertFalse($request->hasHeader('Content-Length'));
     }
 }

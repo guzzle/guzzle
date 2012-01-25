@@ -391,7 +391,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $request = RequestFactory::create($method, $url, $headers, $body);
         $handle = CurlHandle::factory($request);
-        
+
         $this->assertInstanceOf('Guzzle\\Http\\Curl\\CurlHandle', $handle);
         $o = $request->getParams()->get('curl.last_options');
 
@@ -405,7 +405,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 $this->assertTrue($value == $o[$key], '-> Check number ' . $check . ' - ' . var_export($value, true) . ' != ' . var_export($o[$key], true));
             }
         }
-        
+
         $request = null;
     }
 
@@ -429,10 +429,10 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->flush();
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi");
 
-        $request = RequestFactory::create('PUT', $this->getServer()->getUrl());
-        $request->setClient(new Client());
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->put('/');
         $request->setBody(EntityBody::factory('test'), 'text/plain', false);
-        
+
         $o = $this->getWildcardObserver($request);
         $request->send();
 
@@ -447,10 +447,49 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Ensure that the request was received exactly as intended
         $r = $this->getServer()->getReceivedRequests(true);
-        
+
         $this->assertEquals((string) $request, (string) $r[0]);
+        $this->assertFalse($r[0]->hasHeader('Transfer-Encoding'));
+        $this->assertEquals(4, $r[0]->getHeader('Content-Length'));
     }
-    
+
+    /**
+     * @covers Guzzle\Http\Curl\CurlHandle
+     */
+    public function testUploadsPutDataUsingChunkedEncodingWhenLengthCannotBeDetermined()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi"
+        ));
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->put('/');
+        $request->setBody(EntityBody::factory(fopen($this->getServer()->getUrl(), 'r')), 'text/plain');
+        $request->send();
+
+        $r = $this->getServer()->getReceivedRequests(true);
+        $this->assertEquals('chunked', $r[1]->getHeader('Transfer-Encoding'));
+        $this->assertFalse($r[1]->hasHeader('Content-Length'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Curl\CurlHandle
+     */
+    public function testUploadsPutDataUsingChunkedEncodingWhenForced()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi");
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->put('/');
+        $request->setBody(EntityBody::factory('hi!'), 'text/plain', true);
+        $request->send();
+
+        $r = $this->getServer()->getReceivedRequests(true);
+        $this->assertEquals('chunked', $r[0]->getHeader('Transfer-Encoding'));
+        $this->assertFalse($r[0]->hasHeader('Content-Length'));
+    }
+
     /**
      * @covers Guzzle\Http\Curl\CurlHandle
      */

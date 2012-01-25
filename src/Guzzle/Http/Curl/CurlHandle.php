@@ -92,6 +92,8 @@ class CurlHandle
         }
         // @codeCoverageIgnoreEnd
 
+        $headers = $request->getHeaders();
+
         // Specify settings according to the HTTP method
         switch ($request->getMethod()) {
             case 'GET':
@@ -110,14 +112,17 @@ class CurlHandle
                 break;
             case 'PUT':
                 $curlOptions[CURLOPT_UPLOAD] = true;
-                if ($request->getBody()) {
-                    $curlOptions[CURLOPT_INFILESIZE] = $request->getHeader('Content-Length') ?: -1;
+                if (!$request->hasHeader('Content-Length')) {
+                    unset($headers['Content-Length']);
+                } else {
+                    $curlOptions[CURLOPT_INFILESIZE] = $request->getHeader('Content-Length');
                 }
+
                 break;
         }
 
         // Add any custom headers to the request
-        foreach ($request->getHeaders() as $key => $value) {
+        foreach ($headers as $key => $value) {
             if ($key && $value !== '') {
                 $curlOptions[CURLOPT_HTTPHEADER][] = $key . ': ' . $value;
             }
