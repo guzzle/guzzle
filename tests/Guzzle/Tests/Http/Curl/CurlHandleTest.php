@@ -173,8 +173,9 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function dataProvider()
     {
+        $testFile = __DIR__ . '/../../../../../phpunit.xml';
         $postBody = new QueryString(array(
-            'file' => '@' . __DIR__ . '/../../../../../phpunit.xml'
+            'file' => '@' . $testFile
         ));
 
         $qs = new QueryString(array(
@@ -184,8 +185,10 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
         $userAgent = Guzzle::getDefaultUserAgent();
         $auth = base64_encode('michael:123');
+        $testFileSize = filesize($testFile);
 
         return array(
+            // Send a regular GET
             array('GET', 'http://www.google.com/', null, null, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
@@ -204,6 +207,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             array('TRACE', 'http://www.google.com/', null, null, array(
                 CURLOPT_CUSTOMREQUEST => 'TRACE'
             )),
+            // Send a GET using a port
             array('GET', 'http://127.0.0.1:8080', null, null, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
@@ -219,6 +223,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_PORT => 8080,
                 CURLOPT_HTTPHEADER => array('Host: 127.0.0.1:8080', 'User-Agent: ' . $userAgent),
             )),
+            // Send a HEAD request
             array('HEAD', 'http://www.google.com/', null, null, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
@@ -235,6 +240,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_CUSTOMREQUEST => 'HEAD',
                 CURLOPT_NOBODY => 1
             )),
+            // Send a GET using basic auth
             array('GET', 'https://michael:123@localhost/index.html?q=2', null, null, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
@@ -254,23 +260,24 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 ),
                 CURLOPT_PORT => 443
             )),
-            array('GET', 'http://localhost:8080/', array(
-                    'X-Test-Data' => 'Guzzle'
+            // Send a GET request with custom headers
+            array('GET', 'http://localhost:8124/', array(
+                    'x-test-data' => 'Guzzle'
                 ), null, array(
-                CURLOPT_RETURNTRANSFER => 0,
-                CURLOPT_HEADER => 0,
-                CURLOPT_FOLLOWLOCATION => 1,
-                CURLOPT_MAXREDIRS => 5,
-                CURLOPT_CONNECTTIMEOUT => 10,
-                CURLOPT_USERAGENT => $userAgent,
-                CURLOPT_WRITEFUNCTION => 'callback',
-                CURLOPT_HEADERFUNCTION => 'callback',
-                CURLOPT_PROGRESSFUNCTION => 'callback',
-                CURLOPT_NOPROGRESS => 0,
-                CURLOPT_ENCODING => '',
-                CURLOPT_HTTPHEADER => array('Host: localhost:8080', 'X-Test-Data: Guzzle', 'User-Agent: ' . $userAgent),
-                CURLOPT_PORT => 8080
+                    CURLOPT_PORT => 8124,
+                    CURLOPT_HTTPHEADER => array(
+                        'Host: localhost:8124',
+                        'x-test-data: Guzzle',
+                        'User-Agent: ' . $userAgent
+                )
+            ), array(
+                '_Accept'          => '*',
+                '_Accept-Encoding' => '*',
+                'Host'             => '*',
+                'User-Agent'       => '*',
+                'x-test-data'      => 'Guzzle'
             )),
+            // Send a POST using a query string
             array('POST', 'http://localhost:8124/post.php', null, $qs, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
@@ -290,8 +297,18 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                     'Expect: 100-Continue',
                     'Content-Type: application/x-www-form-urlencoded'
                 )
+            ), array(
+                '_Accept'          => '*',
+                '_Accept-Encoding' => '*',
+                'Host'             => '*',
+                'User-Agent'       => '*',
+                'Content-Length'   => '7',
+                'Expect'           => '100-Continue',
+                'Content-Type'     => 'application/x-www-form-urlencoded',
+                '!Transfer-Encoding' => null
             )),
-            array('PUT', 'http://localhost:8124/put.php', null, EntityBody::factory(fopen(__DIR__ . '/../../../../../phpunit.xml', 'r+')), array(
+            // Send a PUT using raw data
+            array('PUT', 'http://localhost:8124/put.php', null, EntityBody::factory(fopen($testFile, 'r+')), array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
                 CURLOPT_FOLLOWLOCATION => 1,
@@ -304,15 +321,25 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_PROGRESSFUNCTION => 'callback',
                 CURLOPT_NOPROGRESS => 0,
                 CURLOPT_ENCODING => '',
-                CURLOPT_INFILESIZE => filesize(__DIR__ . '/../../../../../phpunit.xml'),
+                CURLOPT_INFILESIZE => filesize($testFile),
                 CURLOPT_HTTPHEADER => array (
                     'Host: localhost:8124',
                     'User-Agent: ' . $userAgent,
                     'Expect: 100-Continue'
                 )
-            ), "PUT /put.php HTTP/1.1\r\nAccept: */*\r\nAccept-Encoding: deflate, gzip\r\nHost: localhost:8124\r\nUser-Agent: {$userAgent}\r\nExpect: 100-Continue\r\nContent-Length: " . filesize(__DIR__ . '/../../../../../phpunit.xml')),
+            ), array(
+                '_Accept'          => '*',
+                '_Accept-Encoding' => '*',
+                'Host'             => '*',
+                'User-Agent'       => '*',
+                'Expect'           => '100-Continue',
+                'Content-Length'   => $testFileSize,
+                '!Transfer-Encoding' => null
+            )),
+            // Send a POST request using an array of fields
             array('POST', 'http://localhost:8124/post.php', null, array(
-                'a' => '2'
+                'x' => 'y',
+                'a' => 'b'
             ), array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
@@ -326,37 +353,24 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_NOPROGRESS => 0,
                 CURLOPT_ENCODING => '',
                 CURLOPT_POST => 1,
-                CURLOPT_POSTFIELDS => 'a=2',
+                CURLOPT_POSTFIELDS => 'x=y&a=b',
                 CURLOPT_HTTPHEADER => array (
                     'Host: localhost:8124',
                     'User-Agent: ' . $userAgent,
                     'Expect: 100-Continue',
                     'Content-Type: application/x-www-form-urlencoded'
                 )
-            )),
-            array('POST', 'http://localhost:8124/post.php', null, array(
-                'x' => 'y'
             ), array(
-                CURLOPT_RETURNTRANSFER => 0,
-                CURLOPT_HEADER => 0,
-                CURLOPT_FOLLOWLOCATION => 1,
-                CURLOPT_MAXREDIRS => 5,
-                CURLOPT_CONNECTTIMEOUT => 10,
-                CURLOPT_USERAGENT => $userAgent,
-                CURLOPT_WRITEFUNCTION => 'callback',
-                CURLOPT_HEADERFUNCTION => 'callback',
-                CURLOPT_PROGRESSFUNCTION => 'callback',
-                CURLOPT_NOPROGRESS => 0,
-                CURLOPT_ENCODING => '',
-                CURLOPT_POST => 1,
-                CURLOPT_POSTFIELDS => 'x=y',
-                CURLOPT_HTTPHEADER => array (
-                    'Host: localhost:8124',
-                    'User-Agent: ' . $userAgent,
-                    'Expect: 100-Continue',
-                    'Content-Type: application/x-www-form-urlencoded'
-                )
+                '_Accept'          => '*',
+                '_Accept-Encoding' => '*',
+                'Host'             => '*',
+                'User-Agent'       => '*',
+                'Content-Length'   => '7',
+                'Expect'           => '100-Continue',
+                'Content-Type'     => 'application/x-www-form-urlencoded',
+                '!Transfer-Encoding' => null
             )),
+            // Send a POST request using a POST file
             array('POST', 'http://localhost:8124/post.php', null, $postBody, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
@@ -371,7 +385,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_ENCODING => '',
                 CURLOPT_POST => 1,
                 CURLOPT_POSTFIELDS => array(
-                    'file' => '@' . __DIR__ . '/../../../../../phpunit.xml'
+                    'file' => '@' . $testFile
                 ),
                 CURLOPT_HTTPHEADER => array (
                     'Host: localhost:8124',
@@ -379,6 +393,82 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                     'Expect: 100-Continue',
                     'Content-Type: multipart/form-data'
                 )
+            ), array(
+                '_Accept'          => '*',
+                '_Accept-Encoding' => '*',
+                'Host'             => '*',
+                'User-Agent'       => '*',
+                'Content-Length'   => '*',
+                'Expect'           => '100-Continue',
+                'Content-Type'     => 'multipart/form-data; boundary=*',
+                '!Transfer-Encoding' => null
+            )),
+            // Send a POST request with raw POST data and a custom content-type
+            array('POST', 'http://localhost:8124/post.php', array(
+                'Content-Type' => 'application/json'
+            ), '{"hi":"there"}', array(
+                CURLOPT_RETURNTRANSFER => 0,
+                CURLOPT_HEADER => 0,
+                CURLOPT_FOLLOWLOCATION => 1,
+                CURLOPT_MAXREDIRS => 5,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_USERAGENT => $userAgent,
+                CURLOPT_WRITEFUNCTION => 'callback',
+                CURLOPT_HEADERFUNCTION => 'callback',
+                CURLOPT_PROGRESSFUNCTION => 'callback',
+                CURLOPT_NOPROGRESS => 0,
+                CURLOPT_ENCODING => '',
+                CURLOPT_POST => 1,
+                CURLOPT_HTTPHEADER => array (
+                    'Host: localhost:8124',
+                    'Content-Type: application/json',
+                    'User-Agent: ' . $userAgent,
+                    'Expect: 100-Continue',
+                    'Content-Length: 14'
+                ),
+            ), array(
+                '_Accept-Encoding' => '*',
+                '_Accept'          => '*',
+                'Host'             => '*',
+                'User-Agent'       => '*',
+                'Content-Type'     => 'application/json',
+                'Expect'           => '100-Continue',
+                'Content-Length'   => '14',
+                '!Transfer-Encoding' => null
+            )),
+            // Send a POST request with raw POST data, a custom content-type, and use chunked encoding
+            array('POST', 'http://localhost:8124/post.php', array(
+                'Content-Type'      => 'application/json',
+                'Transfer-Encoding' => 'chunked'
+            ), '{"hi":"there"}', array(
+                CURLOPT_RETURNTRANSFER => 0,
+                CURLOPT_HEADER => 0,
+                CURLOPT_FOLLOWLOCATION => 1,
+                CURLOPT_MAXREDIRS => 5,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_USERAGENT => $userAgent,
+                CURLOPT_WRITEFUNCTION => 'callback',
+                CURLOPT_HEADERFUNCTION => 'callback',
+                CURLOPT_PROGRESSFUNCTION => 'callback',
+                CURLOPT_NOPROGRESS => 0,
+                CURLOPT_ENCODING => '',
+                CURLOPT_POST => 1,
+                CURLOPT_HTTPHEADER => array (
+                    'Host: localhost:8124',
+                    'Content-Type: application/json',
+                    'User-Agent: ' . $userAgent,
+                    'Expect: 100-Continue',
+                    'Transfer-Encoding: chunked'
+                ),
+            ), array(
+                '_Accept-Encoding' => '*',
+                '_Accept'          => '*',
+                'Host'             => '*',
+                'User-Agent'       => '*',
+                'Content-Type'     => 'application/json',
+                'Expect'           => '100-Continue',
+                'Transfer-Encoding' => 'chunked',
+                '!Content-Length'  => ''
             )),
         );
     }
@@ -387,7 +477,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
      * @covers Guzzle\Http\Curl\CurlHandle::factory
      * @dataProvider dataProvider
      */
-    public function testFactoryCreatesCurlBasedOnRequest($method, $url, $headers, $body, $options, $rawRequest = null)
+    public function testFactoryCreatesCurlBasedOnRequest($method, $url, $headers, $body, $options, $expectedHeaders = null)
     {
         $request = RequestFactory::create($method, $url, $headers, $body);
         $handle = CurlHandle::factory($request);
@@ -406,15 +496,20 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             }
         }
 
-        if ($rawRequest) {
+        // If we are testing the actual sent headers
+        if ($expectedHeaders) {
+
+            // Send the request to the test server
             $client = new Client($this->getServer()->getUrl());
             $request->setClient($client);
             $this->getServer()->flush();
             $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
             $request->send();
+
+            // Get the request that was sent and create a request that we expected
             $requests = $this->getServer()->getReceivedRequests(true);
-            $rawRequest = RequestFactory::fromMessage($rawRequest);
-            $this->assertEquals($rawRequest->getRawHeaders(), $requests[0]->getRawHeaders());
+
+            $this->assertFalse($this->filterHeaders($expectedHeaders, $requests[0]->getHeaders()->getAll()));
         }
 
         $request = null;

@@ -815,7 +815,7 @@ class Request extends AbstractMessage implements RequestInterface
         if (in_array('Cookie', $keys)) {
             if ($action == 'set') {
                 $this->cookie = Cookie::factory($this->getHeader('Cookie'));
-            } else {
+            } else if ($this->cookie) {
                 $this->cookie->clear();
             }
         }

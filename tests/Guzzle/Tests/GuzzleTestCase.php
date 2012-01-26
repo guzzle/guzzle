@@ -197,19 +197,73 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
      *
      * @param array $actual Actual HTTP header array
      * @param array $expected Expected HTTP headers (allows wildcard values)
+     * @param array $ignore (optional) Headers to ignore from the comparison
+     * @param array $absent (optional) Array of headers that must not be present
      *
      * @return array|false Returns an array of the differences or FALSE if none
      */
-    public function compareHttpHeaders(array $expected, array $actual)
+    public function compareHttpHeaders(array $expected, array $actual, array $ignore = array(), array $absent = array())
     {
         $differences = array();
 
+        // Add information about headers that were present but weren't supposed to be
+        foreach ($absent as $header) {
+            if (isset($actual[$header])) {
+                $differences["unexpected_{$header}"] = $actual[$header];
+            }
+        }
+
+        // Compare the expected and actual HTTP headers in no particular order
         foreach ($actual as $key => $value) {
-            if (!isset($expected[$key]) || ($expected[$key] != '*' && $actual[$key] != $expected[$key])) {
+
+            if (in_array($key, $ignore)) {
+                continue;
+            }
+
+            if (!isset($expected[$key])) {
+                $differences[$key] = $value;
+                continue;
+            }
+
+            // Check values and take wildcards into account
+            $pos = strpos($expected[$key], '*');
+            if (($pos === false && $actual[$key] != $expected[$key]) || $pos > 0 && substr($actual[$key], 0, $pos) != substr($expected[$key], 0, $pos)) {
                 $differences[$key] = $value;
             }
         }
 
         return empty($differences) ? false : $differences;
+    }
+
+    /**
+     * Compare HTTP headers and use special markup to filter values
+     * A header prefixed with '!' means it must not exist
+     * A header prefixed with '_' means it must be ignored
+     * A header value of '*' means anything after the * will be ignored
+     *
+     * @param array $filteredHeaders Array of special headers
+     * @param array $actualHeaders Array of headers to check against
+     *
+     * @return array|false Returns an array of the differences or FALSE if none
+     */
+    public function filterHeaders($filteredHeaders, $actualHeaders)
+    {
+        $expected = array();
+        $ignore = array();
+        $absent = array();
+
+        foreach ($filteredHeaders as $k => $v) {
+            if ($k[0] == '_') {
+                // This header should be ignored
+                $ignore[] = str_replace('_', '', $k);
+            } else if ($k[0] == '!') {
+                // This header must not be present
+                $absent[] = str_replace('!', '', $k);
+            } else {
+                $expected[$k] = $v;
+            }
+        }
+
+        return $this->compareHttpHeaders($expected, $actualHeaders, $ignore, $absent);
     }
 }

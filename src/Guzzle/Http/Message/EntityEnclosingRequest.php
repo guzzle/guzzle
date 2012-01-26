@@ -39,7 +39,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
      */
     public function __toString()
     {
-        return parent::__toString() 
+        return parent::__toString()
             . (count($this->getPostFields()) ? $this->postFields : $this->body);
     }
 
@@ -61,11 +61,9 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     {
         $this->body = EntityBody::factory($body);
         $this->removeHeader('Content-Length');
-        
+
         if ($contentType) {
             $this->setHeader('Content-Type', $contentType);
-        } else {
-            $this->removeHeader('Content-Type');
         }
 
         if ($tryChunkedTransfer) {
@@ -120,7 +118,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     {
         return $this->postFields->getAll();
     }
-    
+
     /**
      * Returns an associative array of POST field names and file paths
      *
@@ -181,7 +179,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
             if (is_numeric($key)) {
                 $key = 'file';
             }
-            
+
             $found = ($file[0] == '@')
                 ? is_readable(substr($file, 1))
                 : is_readable($file);
