@@ -594,6 +594,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $r = $this->getServer()->getReceivedRequests(true);
         $this->assertEquals('chunked', $r[0]->getHeader('Transfer-Encoding'));
         $this->assertFalse($r[0]->hasHeader('Content-Length'));
+        $this->assertEquals('hi!', $r[0]->getBody(true));
     }
 
     /**
