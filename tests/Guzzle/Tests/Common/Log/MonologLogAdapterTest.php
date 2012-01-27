@@ -33,7 +33,7 @@ class MonologLogAdapterTest extends \Guzzle\Tests\GuzzleTestCase
         $log->pushHandler($handler);
         $adapter = new MonologLogAdapter($log);
 
-        $adapter->log('test!', Logger::INFO);
+        $adapter->log('test!', LOG_INFO);
 
         $this->assertTrue($handler->hasInfoRecords());
     }
