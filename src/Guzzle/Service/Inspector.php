@@ -60,8 +60,8 @@ class Inspector
         $this->constraints = array(
             'blank'     => array($base . 'Blank', null),
             'not_blank' => array($base . 'NotBlank', null),
-            'integer'   => array($base . 'Type', array('type' => 'integer')),
-            'float'     => array($base . 'Type', array('type' => 'float')),
+            'integer'   => array($base . 'Type', array('type' => 'numeric')),
+            'float'     => array($base . 'Type', array('type' => 'numeric')),
             'string'    => array($base . 'Type', array('type' => 'string')),
             'date'      => array($base . 'Date', null),
             'date_time' => array($base . 'DateTime', null),
