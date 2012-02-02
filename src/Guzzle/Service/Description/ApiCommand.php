@@ -42,7 +42,7 @@ class ApiCommand
      *          static - Whether or not the param can be changed from this value
      *          prepend - Text to prepend when adding this value to a location
      *          append - Text to append when adding to a location
-     *          filter - Comma separated list of filters to run the value through.  Must be a callable
+     *          filters - Comma separated list of filters to run the value through.  Must be a callable
      *                   Can call static class methods by separating the class and function with ::
      */
     public function __construct(array $config)
