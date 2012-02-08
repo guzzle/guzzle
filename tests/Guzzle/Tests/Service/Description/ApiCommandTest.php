@@ -35,7 +35,7 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('test', $c->getName());
         $this->assertEquals('doc', $c->getDoc());
         $this->assertEquals('POST', $c->getMethod());
-        $this->assertEquals('/api/v1', $c->getPath());
+        $this->assertEquals('/api/v1', $c->getUri());
         $this->assertEquals('Guzzle\\Service\\Command\\DynamicCommand', $c->getConcreteClass());
         $this->assertEquals(array(
             'key' => new Collection(array(
@@ -86,7 +86,7 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
             'class'     => 'Guzzle\\Service\\Command\ClosureCommand',
             'doc'       => 'test',
             'method'    => 'PUT',
-            'path'      => '/',
+            'uri'       => '/',
             'params'    => array(
                 'p' => new Collection(array(
                     'name' => 'foo'

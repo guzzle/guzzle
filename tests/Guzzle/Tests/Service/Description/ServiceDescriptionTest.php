@@ -37,7 +37,7 @@ class ServiceDescriptionTest extends \Guzzle\Tests\GuzzleTestCase
         ));
 
         $c = $d->getCommand('concrete');
-        $this->assertEquals('/test', $c->getPath());
+        $this->assertEquals('/test', $c->getUri());
         $this->assertEquals('GET', $c->getMethod());
         $params = $c->getParams();
         $param = $params['test'];

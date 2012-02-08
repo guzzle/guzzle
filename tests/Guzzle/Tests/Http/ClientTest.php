@@ -5,6 +5,7 @@ namespace Guzzle\Tests\Http;
 use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Log\ClosureLogAdapter;
+use Guzzle\Http\UriTemplate;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Plugin\ExponentialBackoffPlugin;
@@ -101,7 +102,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Client
      */
-    public function testInjectConfig()
+    public function testExpandsUriTemplatesUsingConfig()
     {
         $client = new Client('http://www.google.com/');
         $client->setConfig(array(
@@ -109,7 +110,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
             'key' => 'value',
             'foo' => 'bar'
         ));
-        $this->assertEquals('Testing...api/v1/key/value', $client->inject('Testing...api/{{api}}/key/{{key}}'));
+        $this->assertEquals('Testing...api/v1/key/value', $client->expandTemplate('Testing...api/{api}/key/{{key}}'));
 
         // Make sure that the client properly validates and injects config
         $this->assertEquals('bar', $client->getConfig('foo'));
@@ -428,5 +429,115 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $mock->addResponse(new Response(404));
         $client->getEventDispatcher()->addSubscriber($mock);
         $client->send(array($client->get(), $client->head()));
+    }
+
+    /**
+     * @covers Guzzle\Http\Client
+     */
+    public function testQueryStringsAreNotDoubleEncoded()
+    {
+        $client = new Client('http://test.com', array(
+            'path'  => array('foo', 'bar'),
+            'query' => 'hi there',
+            'data'  => array(
+                'test' => 'a&b'
+            )
+        ));
+
+        $request = $client->get('{/path*}{?query,data*}');
+        $this->assertEquals('http://test.com/foo/bar?query=hi%20there&test=a%26b', $request->getUrl());
+        $this->assertEquals('hi there', $request->getQuery()->get('query'));
+        $this->assertEquals('a&b', $request->getQuery()->get('test'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Client
+     */
+    public function testQueryStringsAreNotDoubleEncodedUsingAbsolutePaths()
+    {
+        $client = new Client('http://test.com', array(
+            'path'  => array('foo', 'bar'),
+            'query' => 'hi there',
+        ));
+        $request = $client->get('http://test.com{?query}');
+        $this->assertEquals('http://test.com/?query=hi%20there', $request->getUrl());
+        $this->assertEquals('hi there', $request->getQuery()->get('query'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Client::setUriTemplate
+     * @covers Guzzle\Http\Client::getUriTemplate
+     */
+    public function testAllowsUriTemplateInjection()
+    {
+        $client = new Client('http://test.com', array(
+            'path'  => array('foo', 'bar'),
+            'query' => 'hi there',
+        ));
+
+        $a = $client->getUriTemplate();
+        $this->assertSame($a, $client->getUriTemplate());
+        $client->setUriTemplate(new UriTemplate());
+        $this->assertNotSame($a, $client->getUriTemplate());
+    }
+
+    /**
+     * @covers Guzzle\Http\Client::expandTemplate
+     */
+    public function testAllowsCustomVariablesWhenExpandingTemplates()
+    {
+        $client = new Client('http://test.com', array(
+            'test' => 'hi',
+        ));
+
+        $uri = $client->expandTemplate('http://{test}{?query*}', array(
+            'query' => array(
+                'han' => 'solo'
+            )
+        ));
+
+        $this->assertEquals('http://hi?han=solo', $uri);
+    }
+
+    /**
+     * @covers Guzzle\Http\Client::createRequest
+     * @expectedException InvalidArgumentException
+     */
+    public function testUriArrayMustContainExactlyTwoElements()
+    {
+        $client = new Client();
+        $client->createRequest('GET', array('haha!'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Client::createRequest
+     * @expectedException InvalidArgumentException
+     */
+    public function testUriArrayMustContainAnArray()
+    {
+        $client = new Client();
+        $client->createRequest('GET', array('haha!', 'test'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Client::createRequest
+     * @covers Guzzle\Http\Client::get
+     * @covers Guzzle\Http\Client::put
+     * @covers Guzzle\Http\Client::post
+     * @covers Guzzle\Http\Client::head
+     * @covers Guzzle\Http\Client::options
+     */
+    public function testUriArrayAllowsCustomTemplateVariables()
+    {
+        $client = new Client();
+        $vars = array(
+            'var' => 'hi'
+        );
+        $this->assertEquals('/hi', (string) $client->createRequest('GET', array('/{var}', $vars))->getUrl());
+        $this->assertEquals('/hi', (string) $client->get(array('/{var}', $vars))->getUrl());
+        $this->assertEquals('/hi', (string) $client->put(array('/{var}', $vars))->getUrl());
+        $this->assertEquals('/hi', (string) $client->post(array('/{var}', $vars))->getUrl());
+        $this->assertEquals('/hi', (string) $client->head(array('/{var}', $vars))->getUrl());
+        $this->assertEquals('/hi', (string) $client->options(array('/{var}', $vars))->getUrl());
     }
 }

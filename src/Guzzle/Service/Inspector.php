@@ -279,7 +279,7 @@ class Inspector
             }
 
             // Inject configuration information into the config value
-            if (is_scalar($config->get($name)) && strpos($config->get($name), '{{') !== false) {
+            if (is_scalar($config->get($name)) && strpos($config->get($name), '{') !== false) {
                 $config->set($name, Guzzle::inject($config->get($name), $config));
             }
 

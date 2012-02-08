@@ -5,6 +5,7 @@ namespace Guzzle\Service\Command;
 use Guzzle\Guzzle;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;
+use Guzzle\Http\UriTemplate;
 use Guzzle\Service\Inspector;
 
 /**
@@ -27,28 +28,25 @@ class DynamicCommand extends AbstractCommand
      */
     protected function build()
     {
-        // Get the path values and use the client config settings
-        $pathValues = $this->getClient()->getConfig();
-        $foundPath = false;
-        foreach ($this->apiCommand->getParams() as $name => $arg) {
-            if ($arg->get('location') == 'path') {
-                $pathValues->set($name, $arg->get('prepend') . $this->get($name) . $arg->get('append'));
-                $foundPath = true;
-            }
-        }
-
-        // Build a custom URL if there are path values
-        if ($foundPath) {
-            $path = str_replace('//', '', Guzzle::inject($this->apiCommand->getPath(), $pathValues));
-        } else {
-            $path = $this->apiCommand->getPath();
-        }
-
-        if (!$path) {
+        if (!$this->apiCommand->getUri()) {
             $url = $this->getClient()->getBaseUrl();
         } else {
+
+            // Get the path values and use the client config settings
+            $variables = $this->getClient()->getConfig()->getAll();
+            foreach ($this->apiCommand->getParams() as $name => $arg) {
+                if (is_scalar($this->get($name))) {
+                    $variables[$name] = $arg->get('prepend') . $this->get($name) . $arg->get('append');
+                }
+            }
+
+            // Expand the URI template using the URI values
+            $template = new UriTemplate($this->apiCommand->getUri());
+            $uri = $template->expand($variables);
+
+            // Merge the client's base URL with the URI template
             $url = Url::factory($this->getClient()->getBaseUrl());
-            $url->combine($path);
+            $url->combine($uri);
             $url = (string) $url;
         }
 
@@ -61,11 +59,7 @@ class DynamicCommand extends AbstractCommand
             if ($this->get($name)) {
 
                 // Check that a location is set
-                $location = $arg->get('location') ?: 'query';
-
-                if ($location == 'path' || $location == 'data') {
-                    continue;
-                }
+                $location = $arg->get('location');
 
                 if ($location) {
 

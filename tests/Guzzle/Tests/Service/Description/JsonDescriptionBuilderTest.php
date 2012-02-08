@@ -22,8 +22,8 @@ class JsonDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $description = JsonDescriptionBuilder::build(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'TestData' . DIRECTORY_SEPARATOR . 'test_service.json');
         $this->assertTrue($description->hasCommand('test'));
         $test = $description->getCommand('test');
-        $this->assertEquals('/path', $test->getPath());
+        $this->assertEquals('/path', $test->getUri());
         $test = $description->getCommand('concrete');
-        $this->assertEquals('/abstract', $test->getPath());
+        $this->assertEquals('/abstract', $test->getUri());
     }
 }

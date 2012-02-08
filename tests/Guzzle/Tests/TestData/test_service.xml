@@ -16,7 +16,7 @@
     <!-- Add commands to the service -->
     <commands>
 
-        <command name="test" method="DELETE" path="{{ bucket }}/{{ key }}{{ format }}" min_args="2">
+        <command name="test" method="DELETE" uri="{{ bucket }}/{{ key }}{{ format }}" min_args="2">
             <doc>Documentation</doc>
             <param name="format" required="false" default="json" type="choice:json,xml" location="path" prepend="." />
             <param name="bucket" required="true" location="path" doc="Bucket location" />
@@ -36,18 +36,18 @@
             <param name="result_type" type="string" required="false"/>
         </command>
 
-        <command name="trends.location" method="GET" min_args="1" path="/trends/{{ woeid }}">
+        <command name="trends.location" method="GET" min_args="1" uri="/trends/{{ woeid }}">
             <param name="woeid" type="integer" required="true" location="path" />
             <param name="acl" required="true" location="header:X-Amz-Acl" />
         </command>
 
-        <command name="geo.id" method="GET" auth_required="true" path="/geo/id/{{ place_id }}">
+        <command name="geo.id" method="GET" auth_required="true" uri="/geo/id/{{ place_id }}">
             <param name="place_id" type="string" required="true" prepend="/" append=".id" />
             <!-- The request builder will remove '//', so it's okay to always prepend / if needed -->
             <param name="second" type="string" required="true" prepend="/" />
         </command>
 
-        <command name="path" method="GET" path="/test" />
+        <command name="path" method="GET" uri="/test" />
 
         <command name="concrete" extends="abstract" />
 

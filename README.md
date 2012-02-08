@@ -31,6 +31,7 @@ Features
 - Subject/Observer signal slot system for unobtrusively modifying request behavior
 - Supports all of the features of libcurl including authentication, redirects, SSL, proxies, etc
 - Web service client framework for building future-proof interfaces to web services
+- Full support for [URI templates](http://tools.ietf.org/html/draft-gregorio-uritemplate-08)
 
 HTTP basics
 -----------
@@ -117,6 +118,44 @@ try {
     }
 }
 ```
+
+URI templates
+-------------
+
+Guzzle supports the entire URI templates RFC.
+
+```php
+<?php
+
+$client = new Guzzle\Http\Client('http://www.myapi.com/api/v1', array(
+    'path' => '/path/to',
+    'a'    => 'hi',
+    'data' => array(
+        'foo'  => 'bar',
+        'mesa' => 'jarjar'
+    )
+));
+
+$request = $client->get('http://www.test.com{+path}{?a,data*}');
+```
+
+The generated request URL would become: ``http://www.test.com/path/to?a=hi&foo=bar&mesa=jarajar``
+
+You can specify URI templates and an array of additional template variables to use when creating requests:
+
+```php
+<?php
+
+$client = new Guzzle\Http\Client('http://test.com', array(
+    'a' => 'hi'
+));
+
+$request = $client->get(array('/{?a,b}', array(
+    'b' => 'there'
+));
+```
+
+The resulting URL would become ``http://test.com?a=hi&b=there``
 
 Testing Guzzle
 --------------

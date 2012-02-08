@@ -46,7 +46,7 @@ class XmlDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         ), $command->getParam('bucket')->getAll());
 
         $this->assertEquals('DELETE', $command->getMethod());
-        $this->assertEquals('{{ bucket }}/{{ key }}{{ format }}', $command->getPath());
+        $this->assertEquals('{{ bucket }}/{{ key }}{{ format }}', $command->getUri());
         $this->assertEquals('Documentation', $command->getDoc());
 
         $this->assertArrayHasKey('custom_filter', Inspector::getInstance()->getRegisteredConstraints());
@@ -59,6 +59,6 @@ class XmlDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $service = XmlDescriptionBuilder::build(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'TestData' . DIRECTORY_SEPARATOR . 'test_service.xml');
         $command = $service->getCommand('concrete');
-        $this->assertEquals('/test', $command->getPath());
+        $this->assertEquals('/test', $command->getUri());
     }
 }

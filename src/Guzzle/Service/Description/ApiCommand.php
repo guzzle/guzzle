@@ -26,7 +26,7 @@ class ApiCommand
      *      string name Name of the command
      *      string doc Method documentation
      *      string method HTTP method of the command
-     *      string path (optional) Path routing information of the command to include in the path
+     *      string uri (optional) URI routing information of the command
      *      string class (optional) Concrete class that implements this command
      *      array params Associative array of parameters for the command with each
      *          parameter containing the following keys:
@@ -51,7 +51,12 @@ class ApiCommand
         $this->config['name'] = isset($config['name']) ? trim($config['name']) : '';
         $this->config['doc'] = isset($config['doc']) ? trim($config['doc']) : '';
         $this->config['method'] = isset($config['method']) ? trim($config['method']) : '';
-        $this->config['path'] = isset($config['path']) ? trim($config['path']) : '';
+        $this->config['uri'] = isset($config['uri']) ? trim($config['uri']) : '';
+        if (!$this->config['uri']) {
+            // Add backwards compatibility with the path attribute
+            $this->config['uri'] = isset($config['path']) ? trim($config['path']) : '';
+        }
+
         $this->config['class'] = isset($config['class']) ? trim($config['class']) : 'Guzzle\\Service\\Command\\DynamicCommand';
 
         if (isset($config['params']) && is_array($config['params'])) {
@@ -136,13 +141,12 @@ class ApiCommand
     }
 
     /**
-     * Get the path routing information to append to the path of the generated
-     * request
+     * Get the URI that will be merged into the generated request
      *
      * @return string
      */
-    public function getPath()
+    public function getUri()
     {
-        return $this->config['path'];
+        return $this->config['uri'];
     }
 }

@@ -50,6 +50,7 @@ class GuzzleTest extends GuzzleTestCase
                 'abc' => 'this'
             )),
             array('_is_a_', '{{ abc }}_is_{{ not_found }}a_{{ 0 }}', array()),
+            array('_is_a_', '{abc}_is_{not_found}a_{{0}}', array()),
         );
     }
 

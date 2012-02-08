@@ -7,6 +7,7 @@ use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Common\ExceptionCollection;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Url;
+use Guzzle\Http\UriTemplate;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactory;
@@ -38,6 +39,11 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      * @var CurlMultiInterface CurlMulti object used internally
      */
     private $curlMulti;
+
+    /**
+     * @var UriTemplate URI template owned by the client
+     */
+    private $uriTemplate;
 
     /**
      * {@inheritdoc}
@@ -107,41 +113,91 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
-     * Inject configuration values into a formatted string with {{param}} as a
-     * parameter delimiter (replace param with the configuration value name)
+     * Expand a URI template using client configuration data
      *
-     * @param string $string String to inject config values into
+     * @param string $template URI template to expand
+     * @param array $variables (optional) Additional variables to use in the expansion
      *
      * @return string
      */
-    public final function inject($string)
+    public function expandTemplate($template, array $variables = null)
     {
-        return Guzzle::inject($string, $this->getConfig());
+        $expansionVars = $this->getConfig()->getAll();
+        if ($variables) {
+            $expansionVars = array_merge($expansionVars, $variables);
+        }
+
+        return $this->getUriTemplate()
+            ->setTemplate($template)
+            ->expand($expansionVars);
+    }
+
+    /**
+     * Set the URI template expander to use with the client
+     *
+     * @param UriTemplate $uriTemplate
+     *
+     * @return Client
+     */
+    public function setUriTemplate(UriTemplate $uriTemplate)
+    {
+        $this->uriTemplate = $uriTemplate;
+
+        return $this;
+    }
+
+    /**
+     * Get the URI template expander used by the client.  A default UriTemplate
+     * object will be created if one does not exist.
+     *
+     * @return UriTemplate
+     */
+    public function getUriTemplate()
+    {
+        if (!$this->uriTemplate) {
+            $this->uriTemplate = new UriTemplate();
+        }
+
+        return $this->uriTemplate;
     }
 
     /**
      * Create and return a new {@see RequestInterface} configured for the client
      *
      * @param string $method (optional) HTTP method.  Defaults to GET
-     * @param string $uri (optional) Resource URI.  Use an absolute path to
-     *      override the base path of the client, or a relative path to append
-     *      to the base path of the client.  The URI can contain the
-     *      querystring as well.
+     * @param string|array $uri (optional) Resource URI.  Use an absolute path
+     *      to override the base path of the client, or a relative path to
+     *      append to the base path of the client.  The URI can contain the
+     *      querystring as well.  Use an array to provide a URI template and
+     *      additional variables to use in the URI template expansion.
      * @param array|Collection $headers (optional) HTTP headers
      * @param string|resource|array|EntityBody $body (optional) Entity body of
      *      request (POST/PUT) or response (GET)
      *
      * @return RequestInterface
+     * @throws InvalidArgumentException if a URI array is passed that does not
+     *     contain exactly two elements: the URI followed by template variables
      */
     public function createRequest($method = RequestInterface::GET, $uri = null, $headers = null, $body = null)
     {
+        if (!is_array($uri)) {
+            $templateVars = null;
+        } else {
+            if (count($uri) != 2 || !is_array($uri[1])) {
+                throw new \InvalidArgumentException('You must provide a URI'
+                    . ' template followed by an array of template variables'
+                    . ' when using an array for a URI template');
+            }
+            list($uri, $templateVars) = $uri;
+        }
+
         if (!$uri) {
             $url = $this->getBaseUrl();
         } else if (strpos($uri, 'http') === 0) {
             // Use absolute URLs as-is
-            $url = $this->inject($uri);
+            $url = $this->expandTemplate($uri, $templateVars);
         } else {
-            $url = Url::factory($this->getBaseUrl())->combine($this->inject($uri));
+            $url = Url::factory($this->getBaseUrl())->combine($this->expandTemplate($uri, $templateVars));
         }
 
         return $this->prepareRequest(
@@ -193,20 +249,20 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
-     * Get the base service endpoint URL with configuration options injected
-     * into the configuration setting.
+     * Get the client's base URL as either an expanded or raw URI template
      *
-     * @param bool $inject (optional) Set to FALSE to get the raw base URL
+     * @param bool $expand (optional) Set to FALSE to get the raw base URL
+     *    without URI template expansion
      *
      * @return string|null
      */
-    public function getBaseUrl($inject = true)
+    public function getBaseUrl($expand = true)
     {
-        return $inject ? $this->inject($this->baseUrl) : $this->baseUrl;
+        return $expand ? $this->expandTemplate($this->baseUrl) : $this->baseUrl;
     }
 
     /**
-     * Set the base service endpoint URL
+     * Set the base URL of the client
      *
      * @param string $url The base service endpoint URL of the webservice
      *
@@ -242,24 +298,28 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * Create a GET request for the client
      *
-     * @param string $path (optional) Resource URI of the request.  Use an
-     *      absolute path to override the base path, or a relative path to append
+     * @param string|array $uri (optional) Resource URI of the request.  Use an
+     *      absolute path to override the base path, or a relative path to
+     *      append.  Use an array to provide a URI template and additional
+     *      variables to use in the URI template expansion.
      * @param array|Collection $headers (optional) HTTP headers
      * @param string|resource|array|EntityBody $body (optional) Where to store
      *      the response entity body
      *
      * @return Request
      */
-    public final function get($path = null, $headers = null, $body = null)
+    public final function get($uri = null, $headers = null, $body = null)
     {
-        return $this->createRequest('GET', $path, $headers, $body);
+        return $this->createRequest('GET', $uri, $headers, $body);
     }
 
     /**
      * Create a HEAD request for the client
      *
-     * @param string $uri (optional) Resource URI of the request.  Use an
-     *      absolute path to override the base path, or a relative path to append
+     * @param string|array $uri (optional) Resource URI of the request.  Use an
+     *      absolute path to override the base path, or a relative path to
+     *      append.  Use an array to provide a URI template and additional
+     *      variables to use in the URI template expansion.
      * @param array|Collection $headers (optional) HTTP headers
      *
      * @return Request
@@ -272,8 +332,10 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * Create a DELETE request for the client
      *
-     * @param string $uri (optional) Resource URI of the request.  Use an
-     *      absolute path to override the base path, or a relative path to append
+     * @param string|array $uri (optional) Resource URI of the request.  Use an
+     *      absolute path to override the base path, or a relative path to
+     *      append.  Use an array to provide a URI template and additional
+     *      variables to use in the URI template expansion.
      * @param array|Collection $headers (optional) HTTP headers
      *
      * @return Request
@@ -286,8 +348,10 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * Create a PUT request for the client
      *
-     * @param string $uri (optional) Resource URI of the request.  Use an
-     *      absolute path to override the base path, or a relative path to append
+     * @param string|array $uri (optional) Resource URI of the request.  Use an
+     *      absolute path to override the base path, or a relative path to
+     *      append.  Use an array to provide a URI template and additional
+     *      variables to use in the URI template expansion.
      * @param array|Collection $headers (optional) HTTP headers
      * @param string|resource|array|EntityBody $body Body to send in the request
      *
@@ -301,8 +365,10 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * Create a POST request for the client
      *
-     * @param string $uri (optional) Resource URI of the request.  Use an absolute path to
-     *      override the base path, or a relative path to append it.
+     * @param string|array $uri (optional) Resource URI of the request.  Use an
+     *      absolute path to override the base path, or a relative path to
+     *      append.  Use an array to provide a URI template and additional
+     *      variables to use in the URI template expansion.
      * @param array|Collection $headers (optional) HTTP headers
      * @param array|Collection|string|EntityBody $postBody (optional) POST
      *      body.  Can be a string, EntityBody, or associative array of POST
@@ -319,8 +385,10 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * Create an OPTIONS request for the client
      *
-     * @param string $uri (optional) Resource URI of the request.  Use an
-     *      absolute path to override the base path, or relative path to append
+     * @param string|array $uri (optional) Resource URI of the request.  Use an
+     *      absolute path to override the base path, or a relative path to
+     *      append.  Use an array to provide a URI template and additional
+     *      variables to use in the URI template expansion.
      *
      * @return Request
      */

@@ -27,16 +27,14 @@ class DynamicCommandTest extends \Guzzle\Tests\GuzzleTestCase
                 'test_command' => new ApiCommand(array(
                     'doc' => 'documentationForCommand',
                     'method' => 'HEAD',
-                    'path' => '/{{key}}',
+                    'uri'    => '{/key}',
                     'params' => array(
                         'bucket' => array(
                             'required' => true,
-                            'append' => '.',
-                            'location' => 'path'
+                            'append' => '.'
                         ),
                         'key' => array(
-                            'location' => 'path',
-                            'prepend' => '/'
+                            'prepend' => 'hi_'
                         ),
                         'acl' => array(
                             'location' => 'query'
@@ -106,12 +104,12 @@ class DynamicCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $command->setClient($client)->prepare();
 
         // Ensure that the path values were injected into the path and base_url
-        $this->assertEquals('/key', $request->getPath());
+        $this->assertEquals('/hi_key', $request->getPath());
         $this->assertEquals('www.example.com', $request->getHost());
 
         // Check the complete request
         $this->assertEquals(
-            "HEAD /key HTTP/1.1\r\n" .
+            "HEAD /hi_key HTTP/1.1\r\n" .
             "Host: www.example.com\r\n" .
             "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n" .
             "\r\n", (string) $request);
