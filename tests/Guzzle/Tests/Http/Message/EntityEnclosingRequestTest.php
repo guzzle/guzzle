@@ -303,4 +303,18 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request->setProtocolVersion('1.0');
         $request->setBody(fopen($this->getServer()->getUrl(), 'r'));
     }
+
+    /**
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::getPostFiles
+     */
+    public function testAllowsNestedPostData()
+    {
+        $request = new EntityEnclosingRequest('POST', 'http://test.com/');
+        $request->addPostFields(array(
+            'a' => array('b', 'c')
+        ));
+        $this->assertEquals(array(
+            'a' => array('b', 'c')
+        ), $request->getPostFields());
+    }
 }

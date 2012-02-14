@@ -127,7 +127,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     public function getPostFiles()
     {
         return $this->postFields->filter(function($key, $value) {
-            return $value && $value[0] == '@';
+            return $value && is_string($value) && $value[0] == '@';
         })->map(function($key, $value) {
             return str_replace('@', '', $value);
         })->getAll();
