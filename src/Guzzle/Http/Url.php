@@ -41,14 +41,35 @@ class Url
         $parts['fragment'] = isset($parts['fragment']) ? $parts['fragment'] : null;
 
         if ($parts['query']) {
-            $query = array();
-            parse_str($parts['query'], $query);
-            $parts['query'] = $query ? new QueryString($query) : null;
+            $parts['query'] = self::parseQuery($parts['query']);
         }
 
         return new self($parts['scheme'], $parts['host'], $parts['user'],
             $parts['pass'], $parts['port'], $parts['path'], $parts['query'],
             $parts['fragment']);
+    }
+
+    /**
+     * Parse a query string into a QueryString object
+     *
+     * @param string $query Query string
+     *
+     * @return QueryString
+     */
+    public static function parseQuery($query)
+    {
+        $q = new QueryString();
+        foreach (explode('&', $query) as $kvp) {
+            $parts = explode('=', $kvp);
+            $key = rawurldecode($parts[0]);
+            if (substr($key, -2) == '[]') {
+                $key = substr($key, 0, -2);
+            }
+            $value = array_key_exists(1, $parts) ? rawurldecode($parts[1]) : null;
+            $q->add($key, $value);
+        }
+
+        return $q;
     }
 
     /**

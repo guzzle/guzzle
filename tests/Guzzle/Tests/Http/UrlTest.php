@@ -39,7 +39,7 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->assertEquals($url, Url::buildUrl($parts));
     }
-    
+
     /**
      * @covers Guzzle\Http\Url::getPort
      */
@@ -205,5 +205,42 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $url = Url::factory('http://www.test.com');
         $url->setQuery(array('a' => 'b'));
         $this->assertEquals('http://www.test.com/?a=b', (string) $url);
+    }
+
+    public function parseQueryProvider()
+    {
+        return array(
+            // Ensure that multiple query string values are allowed per value
+            array('http://www.test.com?q=a&q=b', array(
+                'q' => array('a', 'b')
+            )),
+            // Ensure that PHP array style query string values are parsed
+            array('http://www.test.com?q[]=a&q[]=b', array(
+                'q' => array('a', 'b')
+            )),
+            // Ensure that decimals are allowed in query strings
+            array('http://www.test.com?q.a=a&q.b=b', array(
+                'q.a' => 'a',
+                'q.b' => 'b'
+            )),
+            // Ensure that query string values are percent decoded
+            array('http://www.test.com?q%20a=a%20b', array(
+                'q a' => 'a b'
+            )),
+            // Ensure that values can be set without have a value
+            array('http://www.test.com?q', array(
+                'q' => null
+            )),
+        );
+    }
+
+    /**
+     * @covers Guzzle\Http\Url::parseQuery
+     * @dataProvider parseQueryProvider
+     */
+    public function testParsesQueryStrings($query, $data)
+    {
+        $url = Url::factory($query);
+        $this->assertEquals($data, $url->getQuery()->getAll());
     }
 }
