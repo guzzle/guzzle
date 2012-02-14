@@ -163,4 +163,19 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $this->q->setAggregateFunction(array($this->q, 'aggregateUsingComma'));
         $this->assertEquals('?test=value&test 2=this is a test?&test3=v1,v2,v3', $this->q->__toString());
     }
+
+    /**
+     * @covers \Guzzle\Http\QueryString::__toString
+     * @covers \Guzzle\Http\QueryString::aggregateUsingDuplicates
+     */
+    public function testAllowsMultipleValuesPerKey()
+    {
+        $q = new QueryString();
+        $q->add('facet', 'size');
+        $q->add('facet', 'width');
+        $q->add('facet.field', 'foo');
+        // Use the duplicate aggregator
+        $q->setAggregateFunction(array($this->q, 'aggregateUsingDuplicates'));
+        $this->assertEquals('?facet=size&facet=width&facet.field=foo', $q->__toString());
+    }
 }

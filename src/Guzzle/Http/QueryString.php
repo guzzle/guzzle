@@ -75,13 +75,11 @@ class QueryString extends Collection
      * Aggregate multi-valued parameters by joining the values using a comma
      *
      * <code>
-     *     $queryString = new \Guzzle\Http\QueryString();
-     *     $queryString->setAggregator($queryString->aggregateUsingComma);
-     *     $queryString->replace(array(
+     *     $q = new \Guzzle\Http\QueryString(array(
      *         'value' => array(1, 2, 3)
      *     ));
-     *
-     *     echo $queryString; // outputs: ?value=1,2,3
+     *     $q->setAggregateFunction(array($q, 'aggregateUsingComma'));
+     *     echo $q; // outputs: ?value=1,2,3
      * </code>
      *
      * @param string $key The name of the query string parameter
@@ -94,9 +92,30 @@ class QueryString extends Collection
     public function aggregateUsingComma($key, $value, $encodeFields = false, $encodeValues = false)
     {
         return array(
-            (($encodeFields) ? rawurlencode($key) : $key) => (($encodeValues)
+            $encodeFields ? rawurlencode($key) : $key => $encodeValues
                 ? implode(',', array_map('rawurlencode', $value))
-                : implode(',', $value))
+                : implode(',', $value)
+        );
+    }
+
+    /**
+     * Aggregate multi-valued parameters using duplicate values in a query string
+     *
+     * Example: http://test.com?q=1&q=2
+     *
+     * @param string $key The name of the query string parameter
+     * @param array $values The values of the parameter
+     * @param bool $encodeFields (optional) Set to TRUE to encode field names
+     * @param bool $encodeValues (optional) Set to TRUE to encode values
+     *
+     * @return array Returns an array of the combined values
+     */
+    public function aggregateUsingDuplicates($key, $value, $encodeFields = false, $encodeValues = false)
+    {
+        return array(
+            $encodeFields ? rawurlencode($key) : $key => $encodeValues
+                ? array_map('rawurlencode', $value)
+                : $value
         );
     }
 
