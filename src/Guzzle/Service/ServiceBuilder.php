@@ -22,7 +22,7 @@ class ServiceBuilder implements \ArrayAccess
      * Create a new ServiceBuilder using configuration data sourced from an
      * array, .json|.js file, SimpleXMLElement, or .xml file.
      *
-     * @param array|string|SimpleXMLElement $data An instantiated
+     * @param array|string|\SimpleXMLElement $data An instantiated
      *      SimpleXMLElement containing configuration data, the full path to an
      *      .xml or .js|.json file, or an associative array of data
      * @param string $extension (optional) When passing a string of data to load
@@ -31,8 +31,8 @@ class ServiceBuilder implements \ArrayAccess
      *      js, json)
      *
      * @return ServiceBuilder
-     * @throws RuntimeException if a file cannot be openend
-     * @throws LogicException when trying to extend a missing client
+     * @throws \RuntimeException if a file cannot be openend
+     * @throws \LogicException when trying to extend a missing client
      */
     public static function factory($data, $extension = null)
     {
@@ -114,12 +114,12 @@ class ServiceBuilder implements \ArrayAccess
     /**
      * Get a client using a registered builder
      *
-     * @param $name Name of the registered client to retrieve
+     * @param string $name Name of the registered client to retrieve
      * @param bool $throwAway (optional) Set to TRUE to not store the client
      *     for later retrieval from the ServiceBuilder
      *
      * @return ClientInterface
-     * @throws InvalidArgumentException when a client cannot be found by name
+     * @throws \InvalidArgumentException when a client cannot be found by name
      */
     public function get($name, $throwAway = false)
     {

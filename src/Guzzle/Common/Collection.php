@@ -160,7 +160,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      *
      * @param array|string|int $keys (optional) Pass an array of keys to
      *      retrieve only a particular subset of kvp.
-     * @param int $match (optional) Bitwise key match setting:
+     * @param int $match (optional) Key match setting:
      *      0 - Exact match
      *      1 - Case insensitive match
      *      2 - Regular expression match
@@ -325,7 +325,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * ArrayAccess implementation of offsetExists()
      *
-     * @see hasKey()
+     * @param string $offset Array key
+     *
+     * @return bool
      */
     public function offsetExists($offset)
     {
@@ -335,7 +337,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * ArrayAccess implementation of offsetGet()
      *
-     * @see get()
+     * @param string $offset Array key
+     *
+     * @return null|mixed
      */
     public function offsetGet($offset)
     {
@@ -345,21 +349,22 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * ArrayAccess implementation of offsetGet()
      *
-     * @see set()
+     * @param string $offset Array key
+     * @param mixed $value Value to set
      */
     public function offsetSet($offset, $value)
     {
-        return $this->set($offset, $value);
+        $this->set($offset, $value);
     }
 
     /**
      * ArrayAccess implementation of offsetUnset()
      *
-     * @see remove()
+     * @param string $offset Array key
      */
     public function offsetUnset($offset)
     {
-        return $this->remove($offset);
+        $this->remove($offset);
     }
 
     /**

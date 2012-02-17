@@ -32,7 +32,7 @@ class Inspector
     const GUZZLE_ANNOTATION = '@guzzle';
 
     /**
-     * @var Cached Inspector instance
+     * @var Inspector Cached Inspector instance
      */
     private static $instance;
 
@@ -86,7 +86,7 @@ class Inspector
     /**
      * Get an instance of the Inspector
      *
-     * @return Reflection
+     * @return Inspector
      */
     public static function getInstance()
     {
@@ -107,7 +107,7 @@ class Inspector
      * @param array $required (optional) Required parameter names
      *
      * @return Collection
-     * @throws InvalidArgumentException if a parameter is missing
+     * @throws \InvalidArgumentException if a parameter is missing
      */
     public static function prepareConfig(array $config = null, $defaults = null, $required = null)
     {
@@ -129,7 +129,7 @@ class Inspector
     /**
      * Set the validator to use with the inspector
      *
-     * @param Validator $validator
+     * @param Validator $validator Validator to use with the Inspector
      *
      * @return Inspector
      */
@@ -224,13 +224,12 @@ class Inspector
     /**
      * Validates that a class has all of the required configuration settings
      *
-     * @param string $class Name of the class to use to retrieve args
+     * @param string $className Name of the class to use to retrieve args
      * @param Collection $config Configuration settings
      * @param bool $strict (optional) Set to FALSE to allow missing required fields
      *
      * @return array|bool Returns an array of errors or TRUE on success
-     *
-     * @throws InvalidArgumentException if any args are missing and $strict is TRUE
+     * @throws \InvalidArgumentException if any args are missing and $strict is TRUE
      */
     public function validateClass($className, Collection $config, $strict = true)
     {
@@ -254,7 +253,7 @@ class Inspector
      *
      * @return array|bool Returns an array of errors or TRUE on success
      *
-     * @throws InvalidArgumentException if any args are missing and $strict is TRUE
+     * @throws \InvalidArgumentException if any args are missing and $strict is TRUE
      */
     public function validateConfig(array $params, Collection $config, $strict = true)
     {
@@ -335,7 +334,7 @@ class Inspector
      *
      * @param string $name Name of the constraint to retrieve
      *
-     * @return Contraint
+     * @return Constraint
      */
     public function getConstraint($name)
     {

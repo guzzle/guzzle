@@ -24,7 +24,7 @@ class Client extends HttpClient implements ClientInterface
      * Basic factory method to create a new client.  Extend this method in
      * subclasses to build more complex clients.
      *
-     * @param array|Collection $config (optiona) Configuartion data
+     * @param array|Collection $config (optional) Configuartion data
      *
      * @return Client
      */
@@ -56,7 +56,7 @@ class Client extends HttpClient implements ClientInterface
      * @param array $args (optional) Arguments to pass to the command
      *
      * @return CommandInterface
-     * @throws InvalidArgumentException if no command can be found by name
+     * @throws \InvalidArgumentException if no command can be found by name
      */
     public function getCommand($name, array $args = array())
     {
@@ -107,7 +107,7 @@ class Client extends HttpClient implements ClientInterface
      * @return mixed Returns the result of the executed command's
      *       {@see CommandInterface::getResult} method if a CommandInterface is
      *       passed, or the CommandSet itself if a CommandSet is passed
-     * @throws InvalidArgumentException if an invalid command is passed
+     * @throws \InvalidArgumentException if an invalid command is passed
      * @throws Command\CommandSetException if a set contains commands associated
      *      with other clients
      */
@@ -144,7 +144,7 @@ class Client extends HttpClient implements ClientInterface
     /**
      * Set the service description of the client
      *
-     * @param ServiceDescription $description Service description that describes
+     * @param ServiceDescription $service Service description that describes
      *      all of the commands and information of the client
      *
      * @return Client
