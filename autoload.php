@@ -1,24 +1,15 @@
 <?php
 
-$namespaces = array(
-    'Guzzle' => 'phar://' . __FILE__ . '/src',
-    'Symfony\\Component\\Validator' => 'phar://' . __FILE__ . '/vendor/symfony/validator',
-    'Symfony\\Component\\EventDispatcher' => 'phar://' . __FILE__ . '/vendor/symfony/event-dispatcher',
-    'Doctrine' => 'phar://' . __FILE__ . '/vendor/doctrine/common/lib',
-    'Monolog' => 'phar://' . __FILE__ . '/vendor/monolog/monolog/src'
-);
-
-if (DIRECTORY_SEPARATOR == '/') {
-    require_once 'phar://' . __FILE__ . '/vendor/symfony/class-loader/Symfony/Component/ClassLoader/UniversalClassLoader.php';
-} else {
-    require_once 'phar://' . __FILE__ . '\\vendor\\symfony\\class-loader\\Symfony\\Component\\ClassLoader\\UniversalClassLoader.php';
-    $namespaces = array_filter($namespaces, function($namespace) {
-        return str_replace('phar:\\\\', 'phar://', str_replace('/', '\\', $namespace));
-    });
-}
+require_once 'phar://Guzzle/vendor/symfony/class-loader/Symfony/Component/ClassLoader/UniversalClassLoader.php';
 
 $classLoader = new Symfony\Component\ClassLoader\UniversalClassLoader();
-$classLoader->registerNamespaces($namespaces);
+$classLoader->registerNamespaces(array(
+    'Guzzle' => 'phar://Guzzle/src',
+    'Symfony\\Component\\Validator' => 'phar://Guzzle/vendor/symfony/validator',
+    'Symfony\\Component\\EventDispatcher' => 'phar://Guzzle/vendor/symfony/event-dispatcher',
+    'Doctrine' => 'phar://Guzzle/vendor/doctrine/common/lib',
+    'Monolog' => 'phar://Guzzle/vendor/monolog/monolog/src'
+));
 $classLoader->register();
 
 __HALT_COMPILER();
