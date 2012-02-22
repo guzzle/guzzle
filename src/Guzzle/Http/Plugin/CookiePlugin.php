@@ -314,7 +314,10 @@ class CookiePlugin implements EventSubscriberInterface
      */
     public function onRequestBeforeSend(Event $event)
     {
-        $this->addCookies($event['request']);
+        $request = $event['request'];
+        if($request->getHeader('Cookie') !== false) {
+            $this->addCookies($event['request']);
+        }
     }
 
     /**
