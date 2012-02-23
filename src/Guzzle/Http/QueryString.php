@@ -72,6 +72,38 @@ class QueryString extends Collection
     }
 
     /**
+     * Aggregate mult-valued parameters using PHP style syntax
+     *
+     * @param string $key The name of the query string parameter
+     * @param array $value The values of the parameter
+     * @param bool $encodeFields (optional) Set to TRUE to encode field names
+     * @param bool $encodeValues (optional) Set to TRUE to encode values
+     *
+     * @return array Returns an array of the combined values
+     */
+    public function aggregateUsingPhp($key, array $value, $encodeFields = false, $encodeValues = false)
+    {
+        $ret = array();
+
+        foreach ($value as $k => $v) {
+
+            $k = $key . '[' . $k . ']';
+
+            if (is_array($v)) {
+                $ret = array_merge($ret, $this->aggregateUsingPhp($k, $v, $encodeFields, $encodeValues));
+            } else {
+                if ($encodeFields) {
+                    $k = rawurlencode($k);
+                }
+                $v = $encodeValues ? rawurlencode($v) : $v;
+                $ret[$k] = $v;
+            }
+        }
+
+        return $ret;
+    }
+
+    /**
      * Aggregate multi-valued parameters by joining the values using a comma
      *
      * <code>
@@ -83,13 +115,13 @@ class QueryString extends Collection
      * </code>
      *
      * @param string $key The name of the query string parameter
-     * @param array $values The values of the parameter
+     * @param array $value The values of the parameter
      * @param bool $encodeFields (optional) Set to TRUE to encode field names
      * @param bool $encodeValues (optional) Set to TRUE to encode values
      *
      * @return array Returns an array of the combined values
      */
-    public function aggregateUsingComma($key, $value, $encodeFields = false, $encodeValues = false)
+    public function aggregateUsingComma($key, array $value, $encodeFields = false, $encodeValues = false)
     {
         return array(
             $encodeFields ? rawurlencode($key) : $key => $encodeValues
@@ -104,13 +136,13 @@ class QueryString extends Collection
      * Example: http://test.com?q=1&q=2
      *
      * @param string $key The name of the query string parameter
-     * @param array $values The values of the parameter
+     * @param array $value The values of the parameter
      * @param bool $encodeFields (optional) Set to TRUE to encode field names
      * @param bool $encodeValues (optional) Set to TRUE to encode values
      *
      * @return array Returns an array of the combined values
      */
-    public function aggregateUsingDuplicates($key, $value, $encodeFields = false, $encodeValues = false)
+    public function aggregateUsingDuplicates($key, array $value, $encodeFields = false, $encodeValues = false)
     {
         return array(
             $encodeFields ? rawurlencode($key) : $key => $encodeValues
@@ -291,28 +323,16 @@ class QueryString extends Collection
      */
     protected function encodeData(array $data, $encodeFields = true, $encodeValues = true)
     {
+        if (!$this->aggregator) {
+            $this->aggregator = array($this, 'aggregateUsingPhp');
+        }
+
         $temp = array();
-        foreach($data as $key => &$value) {
-
+        foreach ($data as $key => &$value) {
             if (is_array($value)) {
-
                 $encoded = $this->encodeData($value, $encodeFields, $encodeValues);
-                if ($this->aggregator !== null) {
-                    $temp = array_merge($temp, call_user_func_array($this->aggregator, array($key, $value, $encodeFields, $encodeValues)));
-                } else {
-                    foreach ($encoded as $i => $v) {
-                        $i = (!is_numeric($i)) ? 0 : $i;
-                        if ($encodeFields) {
-                            $k = rawurlencode($key) . "[{$i}]";
-                        } else {
-                            $k = "{$key}[{$i}]";
-                        }
-                        $temp[$k] = $v;
-                    }
-                }
-
+                $temp = array_merge($temp, call_user_func_array($this->aggregator, array($key, $value, $encodeFields, $encodeValues)));
             } else {
-
                 if ($encodeValues && is_string($value) || is_numeric($value)) {
                     $value = rawurlencode($value);
                 }

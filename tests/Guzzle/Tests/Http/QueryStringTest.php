@@ -102,16 +102,16 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     public function testUrlEncode()
     {
         $params = array(
-            'test' => 'value',
+            'test'   => 'value',
             'test 2' => 'this is a test?',
-            'test3' => array('v1', 'v2', 'v3')
+            'test3'  => array('v1', 'v2', 'v3')
         );
         $encoded = array(
-            'test' => 'value',
-            rawurlencode('test 2') => rawurlencode('this is a test?'),
-            'test3[0]' => 'v1',
-            'test3[1]' => 'v2',
-            'test3[2]' => 'v3'
+            'test'         => 'value',
+            'test%202'     => rawurlencode('this is a test?'),
+            'test3%5B0%5D' => 'v1',
+            'test3%5B1%5D' => 'v2',
+            'test3%5B2%5D' => 'v3'
         );
         $this->q->replace($params);
         $this->assertEquals($encoded, $this->q->urlEncode());
@@ -154,7 +154,7 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
             )
         );
         $this->q->replace($params);
-        $this->assertEquals('?test=value&test%202=this%20is%20a%20test%3F&test3[0]=v1&test3[1]=v2&test3[2]=v3', $this->q->__toString());
+        $this->assertEquals('?test=value&test%202=this%20is%20a%20test%3F&test3%5B0%5D=v1&test3%5B1%5D=v2&test3%5B2%5D=v3', $this->q->__toString());
         $this->q->setEncodeFields(false);
         $this->q->setEncodeValues(false);
         $this->assertEquals('?test=value&test 2=this is a test?&test3[0]=v1&test3[1]=v2&test3[2]=v3', $this->q->__toString());
@@ -177,5 +177,29 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         // Use the duplicate aggregator
         $q->setAggregateFunction(array($this->q, 'aggregateUsingDuplicates'));
         $this->assertEquals('?facet=size&facet=width&facet.field=foo', $q->__toString());
+    }
+
+    /**
+     * @covers \Guzzle\Http\QueryString::__toString
+     * @covers \Guzzle\Http\QueryString::encodeData
+     * @covers \Guzzle\Http\QueryString::aggregateUsingPhp
+     */
+    public function testAllowsNestedQueryData()
+    {
+        $this->q->replace(array(
+            'test' => 'value',
+            't' => array(
+                'v1' => 'a',
+                'v2' => 'b',
+                'v3' => array(
+                    'v4' => 'c',
+                    'v5' => 'd',
+                )
+            )
+        ));
+
+        $this->q->setEncodeFields(false);
+        $this->q->setEncodeValues(false);
+        $this->assertEquals('?test=value&t[v1]=a&t[v2]=b&t[v3][v4]=c&t[v3][v5]=d', $this->q->__toString());
     }
 }
