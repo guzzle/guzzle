@@ -577,4 +577,32 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertEquals('test=583551', $request->getHeader('Cookie'));
     }
+
+    /**
+     * @covers Guzzle\Http\Plugin\CookiePlugin::onRequestBeforeSend
+     */
+    public function testCookiesAreNotAddedWhenParamIsSet()
+    {
+        $this->storage->clear();
+        $this->storage->save(array(
+            'domain' => 'example.com',
+            'path' => '/',
+            'cookie' => array('test', 'hi'),
+            'expires' => Guzzle::getHttpDate('+1 day')
+        ));
+
+        $client = new Client('http://example.com');
+        $client->getEventDispatcher()->addSubscriber($this->plugin);
+
+        $request = $client->get();
+        $request->setResponse(new Response(200), true);
+        $request->send();
+        $this->assertEquals('hi', $request->getCookie()->get('test'));
+
+        $request = $client->get();
+        $request->getParams()->set('cookies.disable', true);
+        $request->setResponse(new Response(200), true);
+        $request->send();
+        $this->assertNull($request->getCookie()->get('test'));
+    }
 }

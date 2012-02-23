@@ -315,8 +315,8 @@ class CookiePlugin implements EventSubscriberInterface
     public function onRequestBeforeSend(Event $event)
     {
         $request = $event['request'];
-        if($request->getHeader('Cookie') !== false) {
-            $this->addCookies($event['request']);
+        if (!$request->getParams()->get('cookies.disable')) {
+            $this->addCookies($request);
         }
     }
 
