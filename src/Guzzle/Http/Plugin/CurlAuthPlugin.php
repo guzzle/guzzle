@@ -6,23 +6,27 @@ use Guzzle\Common\Event;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Adds HTTP digest auth to all requests sent from a client
+ * Adds specified curl auth to all requests sent from a client
+ * Defaults to CURLAUTH_BASIC if none supplied
  */
-class DigestAuthPlugin implements EventSubscriberInterface
+class CurlAuthPlugin implements EventSubscriberInterface
 {
     private $username;
     private $password;
-
+    private $scheme;
+    
     /**
      * Constructor
      *
      * @param string $username HTTP basic auth username
      * @param string $password Password
+     * @param int    $scheme   Curl auth scheme
      */
-    public function __construct($username, $password)
+    public function __construct($username, $password, $scheme=CURLAUTH_BASIC)
     {
         $this->username = $username;
         $this->password = $password;
+        $this->scheme = $scheme;
     }
 
     /**
@@ -34,12 +38,12 @@ class DigestAuthPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Add digest auth
+     * Add basic auth
      *
      * @param Event $event
      */
     public function onRequestCreate(Event $event)
     {
-        $event['request']->setAuth($this->username, $this->password, CURLAUTH_DIGEST);
+        $event['request']->setAuth($this->username, $this->password, $this->scheme);
     }
 }
