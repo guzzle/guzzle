@@ -10,16 +10,16 @@ use Guzzle\Http\Client;
  */
 class CurlAuthPluginTest extends \Guzzle\Tests\GuzzleTestCase
 {
-	public function testAddsBasicAuthentication()
-	{
-		$plugin = new CurlAuthPlugin('michael', 'test');
-		$client = new Client('http://www.test.com/');
-		$client->getEventDispatcher()->addSubscriber($plugin);
-		$request = $client->get('/');
-		$this->assertEquals('michael', $request->getUsername());
-		$this->assertEquals('test', $request->getPassword());
-	}
-	
+    public function testAddsBasicAuthentication()
+    {
+        $plugin = new CurlAuthPlugin('michael', 'test');
+        $client = new Client('http://www.test.com/');
+        $client->getEventDispatcher()->addSubscriber($plugin);
+        $request = $client->get('/');
+        $this->assertEquals('michael', $request->getUsername());
+        $this->assertEquals('test', $request->getPassword());
+    }
+
     public function testAddsDigestAuthentication()
     {
         $plugin = new CurlAuthPlugin('julian', 'test', CURLAUTH_DIGEST);
