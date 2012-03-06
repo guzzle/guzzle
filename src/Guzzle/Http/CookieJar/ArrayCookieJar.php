@@ -7,7 +7,7 @@ use Guzzle\Common\Collection;
 /**
  * Cookie jar that stores cookies an an array
  */
-class ArrayCookieJar implements CookieJarInterface
+class ArrayCookieJar implements CookieJarInterface, \Serializable
 {
     /**
      * @var array Loaded cookie data
@@ -221,6 +221,16 @@ class ArrayCookieJar implements CookieJarInterface
         $this->cookies[] = $cookieData;
 
         return $this;
+    }
+
+    public function serialize()
+    {
+        return serialize($this->cookies);
+    }
+
+    public function unserialize($data)
+    {
+        $this->cookies = unserialize($data);
     }
 
     /**
