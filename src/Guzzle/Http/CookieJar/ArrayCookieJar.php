@@ -223,11 +223,19 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
         return $this;
     }
 
+    /**
+     * Serializes the cookie jar
+     *
+     * @return string
+     */
     public function serialize()
     {
         return serialize($this->cookies);
     }
 
+    /**
+     * Unserializes the cookie jar
+     */
     public function unserialize($data)
     {
         $this->cookies = unserialize($data);
