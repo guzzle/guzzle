@@ -27,6 +27,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     const CONNECT = 'CONNECT';
     const OPTIONS = 'OPTIONS';
     const TRACE = 'TRACE';
+    const PATCH = 'PATCH';
 
     /**
      * Create a new request

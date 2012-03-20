@@ -294,6 +294,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      * @covers Guzzle\Http\Client::put
      * @covers Guzzle\Http\Client::post
      * @covers Guzzle\Http\Client::options
+     * @covers Guzzle\Http\Client::patch
      */
     public function testClientHasHelperMethodsForCreatingRequests()
     {
@@ -305,6 +306,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('HEAD', $client->head()->getMethod());
         $this->assertEquals('DELETE', $client->delete()->getMethod());
         $this->assertEquals('OPTIONS', $client->options()->getMethod());
+        $this->assertEquals('PATCH', $client->patch()->getMethod());
         $this->assertEquals($url . 'base/abc', $client->get('abc')->getUrl());
         $this->assertEquals($url . 'zxy', $client->put('/zxy')->getUrl());
         $this->assertEquals($url . 'zxy?a=b', $client->post('/zxy?a=b')->getUrl());

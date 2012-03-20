@@ -72,7 +72,7 @@ class RequestFactory
         // Parse each line in the message
         foreach (explode("\r\n", $parts[0]) as $line) {
             $matches = array();
-            if (!$method && preg_match('#^(?P<method>GET|POST|PUT|HEAD|DELETE|TRACE|OPTIONS)\s+(?P<path>/.*)\s+(?P<protocol>\w+)/(?P<version>\d\.\d)\s*$#i', $line, $matches)) {
+            if (!$method && preg_match('#^(?P<method>[A-Za-z]+)\s+(?P<path>/.*)\s+(?P<protocol>\w+)/(?P<version>\d\.\d)\s*$#i', $line, $matches)) {
                 $method = strtoupper($matches['method']);
                 $protocol = strtoupper($matches['protocol']);
                 $path = $matches['path'];
@@ -206,7 +206,7 @@ class RequestFactory
      */
     public static function create($method, $url, $headers = null, $body = null)
     {
-        if ($method != 'POST' && $method != 'PUT') {
+        if ($method != 'POST' && $method != 'PUT' && $method != 'PATCH') {
             $c = static::$requestClass;
             $request = new $c($method, $url, $headers);
             if ($body) {

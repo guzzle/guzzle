@@ -5,6 +5,7 @@ namespace Guzzle\Http\Curl;
 use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Message\RequestInterface;
+use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Url;
 
 /**
@@ -106,11 +107,9 @@ class CurlHandle
                 break;
             case 'POST':
                 $curlOptions[CURLOPT_POST] = true;
-                if (!$request->getBody()) {
-                    unset($curlOptions[CURLOPT_READFUNCTION]);
-                }
                 break;
             case 'PUT':
+            case 'PATCH':
                 $curlOptions[CURLOPT_UPLOAD] = true;
                 unset($headers['Content-Length']);
                 if ($request->hasHeader('Content-Length')) {
@@ -118,6 +117,19 @@ class CurlHandle
                 }
 
                 break;
+        }
+
+        // If no body is being sent, always send Content-Length of 0
+        if ($request instanceof EntityEnclosingRequestInterface) {
+            if (!$request->getBody() && !count($request->getPostFields())) {
+                $headers['Content-Length'] = 0;
+                unset($headers['Transfer-Encoding']);
+                // Need to remove CURLOPT_UPLOAD to prevent chunked encoding
+                unset($curlOptions[CURLOPT_UPLOAD]);
+                unset($curlOptions[CURLOPT_POST]);
+                // Not reading from a callback when using empty body
+                unset($curlOptions[CURLOPT_READFUNCTION]);
+            }
         }
 
         // Add any custom headers to the request

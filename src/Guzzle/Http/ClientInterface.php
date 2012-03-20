@@ -171,11 +171,25 @@ interface ClientInterface extends HasDispatcherInterface
      *      append.  Use an array to provide a URI template and additional
      *      variables to use in the URI template expansion.
      * @param array|Collection $headers (optional) HTTP headers
-     * @param string|resource|array|EntityBody $body Body to send in the request
+     * @param string|resource|EntityBody $body Body to send in the request
      *
      * @return EntityEnclosingRequest
      */
     function put($uri = null, $headers = null, $body = null);
+
+    /**
+     * Create a PATCH request for the client
+     *
+     * @param string|array $uri (optional) Resource URI of the request.  Use an
+     *      absolute path to override the base path, or a relative path to
+     *      append.  Use an array to provide a URI template and additional
+     *      variables to use in the URI template expansion.
+     * @param array|Collection $headers (optional) HTTP headers
+     * @param string|resource|EntityBody $body Body to send in the request
+     *
+     * @return EntityEnclosingRequest
+     */
+    function patch($uri = null, $headers = null, $body = null);
 
     /**
      * Create a POST request for the client

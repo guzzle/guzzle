@@ -308,7 +308,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      *
      * @return Request
      */
-    public final function get($uri = null, $headers = null, $body = null)
+    public function get($uri = null, $headers = null, $body = null)
     {
         return $this->createRequest('GET', $uri, $headers, $body);
     }
@@ -324,7 +324,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      *
      * @return Request
      */
-    public final function head($uri = null, $headers = null)
+    public function head($uri = null, $headers = null)
     {
         return $this->createRequest('HEAD', $uri, $headers);
     }
@@ -340,7 +340,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      *
      * @return Request
      */
-    public final function delete($uri = null, $headers = null)
+    public function delete($uri = null, $headers = null)
     {
         return $this->createRequest('DELETE', $uri, $headers);
     }
@@ -353,13 +353,30 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      *      append.  Use an array to provide a URI template and additional
      *      variables to use in the URI template expansion.
      * @param array|Collection $headers (optional) HTTP headers
-     * @param string|resource|array|EntityBody $body Body to send in the request
+     * @param string|resource|EntityBody $body Body to send in the request
      *
      * @return EntityEnclosingRequest
      */
-    public final function put($uri = null, $headers = null, $body = null)
+    public function put($uri = null, $headers = null, $body = null)
     {
         return $this->createRequest('PUT', $uri, $headers, $body);
+    }
+
+    /**
+     * Create a PATCH request for the client
+     *
+     * @param string|array $uri (optional) Resource URI of the request.  Use an
+     *      absolute path to override the base path, or a relative path to
+     *      append.  Use an array to provide a URI template and additional
+     *      variables to use in the URI template expansion.
+     * @param array|Collection $headers (optional) HTTP headers
+     * @param string|resource|EntityBody $body Body to send in the request
+     *
+     * @return EntityEnclosingRequest
+     */
+    public function patch($uri = null, $headers = null, $body = null)
+    {
+        return $this->createRequest('PATCH', $uri, $headers, $body);
     }
 
     /**
@@ -377,7 +394,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      *
      * @return EntityEnclosingRequest
      */
-    public final function post($uri = null, $headers = null, $postBody = null)
+    public function post($uri = null, $headers = null, $postBody = null)
     {
         return $this->createRequest('POST', $uri, $headers, $postBody);
     }
@@ -392,7 +409,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      *
      * @return Request
      */
-    public final function options($uri = null)
+    public function options($uri = null)
     {
         return $this->createRequest('OPTIONS', $uri);
     }

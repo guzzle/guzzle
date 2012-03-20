@@ -470,6 +470,60 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 'Transfer-Encoding' => 'chunked',
                 '!Content-Length'  => ''
             )),
+            // Send a POST that does not have a body defined
+            array('POST', 'http://localhost:8124/foo.php', null, null, array(
+                CURLOPT_HTTPHEADER => array (
+                    'Host: localhost:8124',
+                    'User-Agent: ' . $userAgent,
+                    'Expect: 100-Continue',
+                    'Content-Length: 0'
+                )
+            ), array(
+                '_Accept'          => '*',
+                '_Accept-Encoding' => '*',
+                'Host'             => '*',
+                'User-Agent'       => '*',
+                'Content-Length'   => '0',
+                'Expect'           => '100-Continue',
+                'Content-Type'     => 'application/x-www-form-urlencoded',
+                '!Transfer-Encoding' => null
+            )),
+            // Send a PUT that does not have a body defined
+            array('PUT', 'http://localhost:8124/empty-put.php', null, null, array(
+                CURLOPT_HTTPHEADER => array (
+                    'Host: localhost:8124',
+                    'User-Agent: ' . $userAgent,
+                    'Expect: 100-Continue',
+                    'Content-Length: 0'
+                )
+            ), array(
+                '_Accept'          => '*',
+                '_Accept-Encoding' => '*',
+                'Host'             => '*',
+                'User-Agent'       => '*',
+                'Content-Length'   => '0',
+                'Expect'           => '100-Continue',
+                '!Content-Type'     => null,
+                '!Transfer-Encoding' => null
+            )),
+            // Send a PATCH request
+            array('PATCH', 'http://localhost:8124/patch.php', null, 'body', array(
+                CURLOPT_INFILESIZE => 4,
+                CURLOPT_HTTPHEADER => array (
+                    'Host: localhost:8124',
+                    'User-Agent: ' . $userAgent,
+                    'Expect: 100-Continue'
+                )
+            ), array(
+                '_Accept'          => '*',
+                '_Accept-Encoding' => '*',
+                'Host'             => '*',
+                'User-Agent'       => '*',
+                'Content-Length'   => '4',
+                'Expect'           => '100-Continue',
+                '!Content-Type'     => null,
+                '!Transfer-Encoding' => null
+            )),
         );
     }
 
@@ -508,8 +562,10 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
             // Get the request that was sent and create a request that we expected
             $requests = $this->getServer()->getReceivedRequests(true);
+            $this->assertEquals($method, $requests[0]->getMethod());
 
-            $this->assertFalse($this->filterHeaders($expectedHeaders, $requests[0]->getHeaders()->getAll()));
+            $test = $this->filterHeaders($expectedHeaders, $requests[0]->getHeaders()->getAll());
+            $this->assertFalse($test, $test . "\nSent: \n" . $request . "\n\n" . $requests[0]);
         }
 
         $request = null;
