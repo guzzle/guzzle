@@ -17,12 +17,12 @@ Start <strong>truly</strong> consuming HTTP with Guzzle.
 Features
 --------
 
-- Supports GET, HEAD, POST, DELETE, PUT, and OPTIONS
+- Supports GET, HEAD, POST, DELETE, PUT, PATCH, OPTIONS, and any custom verbs
 - Allows full access to request and response headers
 - Persistent connections are implicitly managed by Guzzle, resulting in huge performance benefits
 - Send requests in parallel
 - Cookie sessions can be maintained between requests using the CookiePlugin
-- Allows custom entity bodies to be sent in PUT and POST requests, including sending data from a PHP stream
+- Allows custom entity bodies, including sending data from a PHP stream
 - Responses can be cached and served from cache using the caching reverse proxy plugin
 - Failed requests can be retried using truncated exponential backoff
 - Entity bodies can be validated automatically using Content-MD5 headers
