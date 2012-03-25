@@ -226,7 +226,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             if (strpos($key, 'curl.') === 0) {
                 $curlOption = str_replace('curl.', '', $key);
                 if (defined($curlOption)) {
-                    $curlValue = defined($value) ? constant($value) : $value;
+                    $curlValue = is_string($value) && defined($value) ? constant($value) : $value;
                     $request->getCurlOptions()->set(constant($curlOption), $curlValue);
                 }
             }
