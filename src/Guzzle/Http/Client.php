@@ -21,9 +21,9 @@ use Guzzle\Http\Curl\CurlMulti;
 class Client extends AbstractHasDispatcher implements ClientInterface
 {
     /**
-     * @var string User-Agent header to apply to all requests
+     * @var Collection Default HTTP headers to set on each request
      */
-    protected $userAgent = null;
+    protected $defaultHeaders;
 
     /**
      * @var Collection Parameter object holding configuration data
@@ -63,6 +63,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     {
         $this->setConfig($config ?: new Collection());
         $this->setBaseUrl($baseUrl);
+        $this->defaultHeaders = new Collection();
     }
 
     /**
@@ -110,6 +111,36 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public final function getConfig($key = false)
     {
         return $key ? $this->config->get($key) : $this->config;
+    }
+
+    /**
+     * Get the default HTTP headers to add to each request created by the client
+     *
+     * @return Collection
+     */
+    public function getDefaultHeaders()
+    {
+        return $this->defaultHeaders;
+    }
+
+    /**
+     * Set the default HTTP headers to add to each request created by the client
+     *
+     * @param array|Collection $headers Default HTTP headers
+     *
+     * @return Client
+     */
+    public function setDefaultHeaders($headers)
+    {
+        if ($headers instanceof Collection) {
+            $this->defaultHeaders = $headers;
+        } else if (is_array($headers)) {
+            $this->defaultHeaders = new Collection($headers);
+        } else {
+            throw new \InvalidArgumentException('Headers must be an array or Collection');
+        }
+
+        return $this;
     }
 
     /**
@@ -200,6 +231,18 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             $url = Url::factory($this->getBaseUrl())->combine($this->expandTemplate($uri, $templateVars));
         }
 
+        // If default headers are provided, then merge them into exising headers
+        // If a collision occurs, the header is completely replaced
+        if (count($this->defaultHeaders)) {
+            if ($headers instanceof Collection) {
+                $headers = array_merge($this->defaultHeaders->getAll(), $headers->getAll());
+            } else if (is_array($headers)) {
+                 $headers = array_merge($this->defaultHeaders->getAll(), $headers);
+            } else if ($headers === null) {
+                $headers = $this->defaultHeaders;
+            }
+        }
+
         return $this->prepareRequest(
             RequestFactory::create($method, (string) $url, $headers, $body)
         );
@@ -216,10 +259,6 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function prepareRequest(RequestInterface $request)
     {
         $request->setClient($this);
-
-        if ($this->userAgent) {
-            $request->setHeader('User-Agent', $this->userAgent);
-        }
 
         foreach ($this->getConfig()->getAll() as $key => $value) {
             // Add any curl options that might in the config to the request
@@ -287,10 +326,10 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      */
     public function setUserAgent($userAgent, $includeDefault = false)
     {
-        $this->userAgent = $userAgent;
         if ($includeDefault) {
-            $this->userAgent .= ' ' . Guzzle::getDefaultUserAgent();
+            $userAgent .= ' ' . Guzzle::getDefaultUserAgent();
         }
+        $this->defaultHeaders->set('User-Agent', $userAgent);
 
         return $this;
     }

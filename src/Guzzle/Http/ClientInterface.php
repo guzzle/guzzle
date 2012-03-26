@@ -36,6 +36,22 @@ interface ClientInterface extends HasDispatcherInterface
     function getConfig($key = false);
 
     /**
+     * Get the default HTTP headers to add to each request created by the client
+     *
+     * @return Collection
+     */
+    function getDefaultHeaders();
+
+    /**
+     * Set the default HTTP headers to add to each request created by the client
+     *
+     * @param array|Collection $headers Default HTTP headers
+     *
+     * @return ClientInterface
+     */
+    function setDefaultHeaders($headers);
+
+    /**
      * Set the URI template expander to use with the client
      *
      * @param UriTemplate $uriTemplate

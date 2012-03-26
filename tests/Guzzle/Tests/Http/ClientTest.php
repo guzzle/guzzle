@@ -542,4 +542,46 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('/hi', (string) $client->head(array('/{var}', $vars))->getUrl());
         $this->assertEquals('/hi', (string) $client->options(array('/{var}', $vars))->getUrl());
     }
+
+    /**
+     * @covers Guzzle\Http\Client::setDefaultHeaders
+     * @covers Guzzle\Http\Client::getDefaultHeaders
+     * @covers Guzzle\Http\Client::createRequest
+     */
+    public function testAllowsDefaultHeaders()
+    {
+        $default = array(
+            'X-Test' => 'Hi!'
+        );
+        $other = array(
+            'X-Other' => 'Foo'
+        );
+
+        $client = new Client();
+        $client->setDefaultHeaders($default);
+        $this->assertEquals($default, $client->getDefaultHeaders()->getAll());
+        $client->setDefaultHeaders(new Collection($default));
+        $this->assertEquals($default, $client->getDefaultHeaders()->getAll());
+
+        $request = $client->createRequest('GET', null, $other);
+        $this->assertEquals('Hi!', $request->getHeader('X-Test'));
+        $this->assertEquals('Foo', $request->getHeader('X-Other'));
+
+        $request = $client->createRequest('GET', null, new Collection($other));
+        $this->assertEquals('Hi!', $request->getHeader('X-Test'));
+        $this->assertEquals('Foo', $request->getHeader('X-Other'));
+
+        $request = $client->createRequest('GET');
+        $this->assertEquals('Hi!', $request->getHeader('X-Test'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Client::setDefaultHeaders
+     * @expectedException InvalidArgumentException
+     */
+    public function testValidatesDefaultHeaders()
+    {
+        $client = new Client();
+        $client->setDefaultHeaders('foo');
+    }
 }
