@@ -283,7 +283,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $request = null;
         if ($url) {
-            $request = RequestFactory::create('GET', $url);
+            $request = RequestFactory::getInstance()->create('GET', $url);
         }
 
         foreach ((array) $cookie as $c) {
@@ -520,7 +520,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\rn"
         ));
 
-        $request = RequestFactory::create('GET', $this->getServer()->getUrl());
+        $request = RequestFactory::getInstance()->create('GET', $this->getServer()->getUrl());
         $request->getEventDispatcher()->addSubscriber($this->plugin);
         $request->setClient(new Client());
 

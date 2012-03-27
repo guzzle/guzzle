@@ -73,7 +73,7 @@ class HistoryPluginTest extends \Guzzle\Tests\GuzzleTestCase
     public function testIgnoresUnsentRequests()
     {
         $h = new HistoryPlugin();
-        $request = RequestFactory::create('GET', 'http://localhost/');
+        $request = RequestFactory::getInstance()->create('GET', 'http://localhost/');
         $h->add($request);
         $this->assertEquals(0, count($h));
     }

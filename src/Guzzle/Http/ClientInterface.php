@@ -6,6 +6,7 @@ use Guzzle\Guzzle;
 use Guzzle\Common\HasDispatcherInterface;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Message\RequestInterface;
+use Guzzle\Http\Message\RequestFactoryInterface;
 use Guzzle\Http\Curl\CurlMultiInterface;
 
 /**
@@ -92,20 +93,6 @@ interface ClientInterface extends HasDispatcherInterface
      * @return RequestInterface
      */
     function createRequest($method = RequestInterface::GET, $uri = null, $headers = null, $body = null);
-
-    /**
-     * Prepare a request to be sent from the Client by adding client specific
-     * behaviors and properties to the request.
-     *
-     * This method should only be called when using the default RequestFactory
-     * is not an option and the request sent from the client must be created
-     * manually.
-     *
-     * @param RequestInterface $request Request to prepare for the client
-     *
-     * @return RequestInterface
-     */
-    function prepareRequest(RequestInterface $request);
 
     /**
      * Get the client's base URL as either an expanded or raw URI template
@@ -243,7 +230,7 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @return array Returns the response(s)
      */
-    public function send($requests);
+    function send($requests);
 
     /**
      * Set a curl multi object to be used internally by the client for
@@ -253,5 +240,14 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @return Client
      */
-    public function setCurlMulti(CurlMultiInterface $curlMulti);
+    function setCurlMulti(CurlMultiInterface $curlMulti);
+
+    /**
+     * Set the request factory to use with the client when creating requests
+     *
+     * @param RequestFactoryInterface $factory Request factory
+     *
+     * @return ClientInterface
+     */
+    function setRequestFactory(RequestFactoryInterface $factory);
 }

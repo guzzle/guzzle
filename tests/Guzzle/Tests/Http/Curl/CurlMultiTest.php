@@ -260,7 +260,7 @@ class ExceptionCollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
 
         try {
-            $request = RequestFactory::create('GET', 'http://127.0.0.1:9876/');
+            $request = RequestFactory::getInstance()->create('GET', 'http://127.0.0.1:9876/');
             $request->setClient(new Client());
             $request->getCurlOptions()->set(CURLOPT_FRESH_CONNECT, true);
             $request->getCurlOptions()->set(CURLOPT_TIMEOUT, 0);
@@ -282,7 +282,7 @@ class ExceptionCollectionTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testRemovesQueuedRequests()
     {
-        $request = RequestFactory::create('GET', 'http://127.0.0.1:9876/');
+        $request = RequestFactory::getInstance()->create('GET', 'http://127.0.0.1:9876/');
         $request->setClient(new Client());
         $request->setResponse(new Response(200), true);
         $this->multi->add($request);

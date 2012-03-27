@@ -12,11 +12,11 @@ use Guzzle\Http\Client;
 /**
  * The Server class is used to control a scripted webserver using node.js that
  * will respond to HTTP requests with queued responses.
- * 
+ *
  * Queued responses will be served to requests using a FIFO order.  All requests
  * received by the server are stored on the node.js server and can be retreived
  * by calling {@see Server::getReceivedRequests()}.
- * 
+ *
  * Mock responses that don't require data to be transmitted over HTTP a great
  * for testing.  Mock respones, however, cannot test the actual sending of an
  * HTTP request using cURL.  This test server allows the simulation of any
@@ -81,7 +81,7 @@ class Server
         if (!$this->isRunning()) {
             return false;
         }
-        
+
         return $this->client->delete('guzzle-server/requests')
             ->send()->getStatusCode() == 200;
     }
@@ -121,7 +121,7 @@ class Server
 
         $request = $this->client->put('guzzle-server/responses', null, json_encode($data));
         $response = $request->send();
-        
+
         return $response->getStatusCode() == 200;
     }
 
@@ -184,7 +184,7 @@ class Server
             $data = array_filter(explode(self::REQUEST_DELIMITER, $response->getBody(true)));
             if ($hydrate) {
                 $data = array_map(function($message) {
-                    return RequestFactory::fromMessage($message);
+                    return RequestFactory::getInstance()->fromMessage($message);
                 }, $data);
             }
         }
@@ -231,7 +231,7 @@ class Server
         }
 
         $this->running = false;
-        
+
         return $this->client->delete('guzzle-server')->send()
             ->getStatusCode() == 200;
     }

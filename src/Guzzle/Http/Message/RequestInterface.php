@@ -69,7 +69,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * Warning: Calling this method will modify headers, rewrite the  query
      * string object, and set other data associated with the request.
      *
-     * @param string $url Full URL to set including query string
+     * @param string $url|Url Full URL to set including query string
      *
      * @return RequestInterface
      */

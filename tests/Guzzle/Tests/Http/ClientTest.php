@@ -201,19 +201,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('query=Date', $request->getParams()->get('cache.key_filter'));
     }
 
-    /**
-     * @covers Guzzle\Http\Client::prepareRequest
-     */
-    public function testPreparesRequestsNotCreatedByTheClient()
-    {
-        $exp = new ExponentialBackoffPlugin();
-        $client = new Client($this->getServer()->getUrl());
-        $client->getEventDispatcher()->addSubscriber($exp);
-        $request = RequestFactory::create('GET', $client->getBaseUrl());
-        $this->assertSame($request, $client->prepareRequest($request));
-        $this->assertTrue($this->hasSubscriber($request, $exp));
-    }
-
     public function urlProvider()
     {
         $u = $this->getServer()->getUrl() . 'base/';

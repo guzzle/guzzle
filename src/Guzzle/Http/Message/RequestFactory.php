@@ -11,12 +11,8 @@ use Guzzle\Http\Url;
  * Default HTTP request factory used to create the default
  * Guzzle\Http\Message\Request and Guzzle\Http\Message\EntityEnclosingRequest
  * objects.
- *
- * If you need to extend the Request or EntityEnclosingRequest classes, then
- * this default factory implementation will not work for your client, though
- * you can extend this class with your custom factory.
  */
-class RequestFactory
+class RequestFactory implements RequestFactoryInterface
 {
     /**
      * @var Standard request headers
@@ -42,21 +38,30 @@ class RequestFactory
     protected static $entityEnclosingRequestClass = 'Guzzle\\Http\\Message\\EntityEnclosingRequest';
 
     /**
-     * Parse an HTTP message and return an array of request information
-     *
-     * @param string $message HTTP request message to parse
-     *
-     * @return array|bool Returns FALSE on failure or an array containing the
-     *      following key value pairs:
-     *
-     *      # method: HTTP request method (e.g. GET, HEAD, POST, PUT, etc)
-     *      # protocol - HTTP protocol (e.g. HTTP)
-     *      # protocol_version: HTTP protocol version (e.g. 1.1)
-     *      # parts: array of request parts as seen in parse_url()
-     *      # headers: associative array of request headers
-     *      # body: string containing the request body
+     * @var RequestFactory
      */
-    public static function parseMessage($message)
+    protected static $instance;
+
+    /**
+     * Get a cached instance of the default request factory
+     *
+     * @return RequestFactory
+     */
+    public static function getInstance()
+    {
+        // @codeCoverageIgnoreStart
+        if (!self::$instance) {
+            self::$instance = new self();
+        }
+        // @codeCoverageIgnoreEnd
+
+        return self::$instance;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function parseMessage($message)
     {
         if (!$message) {
             return false;
@@ -141,13 +146,9 @@ class RequestFactory
     }
 
     /**
-     * Create a new request based on an HTTP message
-     *
-     * @param string $message HTTP message as a string
-     *
-     * @return RequestInterface
+     * {@inheritdoc}
      */
-    public static function fromMessage($message)
+    public function fromMessage($message)
     {
         $parsed = self::parseMessage($message);
 
@@ -166,45 +167,18 @@ class RequestFactory
     }
 
     /**
-     * Create a request from URL parts as returned from parse_url()
-     *
-     * @param string $method HTTP method (GET, POST, PUT, HEAD, DELETE, etc)
-     *
-     * @param array $parts URL parts containing the same keys as parse_url()
-     *     # scheme - e.g. http
-     *     # host - e.g. www.guzzle-project.com
-     *     # port - e.g. 80
-     *     # user - e.g. michael
-     *     # pass - e.g. rocks
-     *     # path - e.g. / OR /index.html
-     *     # query - after the question mark ?
-     *
-     * @param array|Collection $headers (optional) HTTP headers
-     * @param string|resource|array|EntityBody $body Body to send in the request
-     * @param string $protocol (optional) Protocol (HTTP, SPYDY, etc)
-     * @param string $protocolVersion (optional) 1.0, 1.1, etc
-     *
-     * @return RequestInterface
+     * {@inheritdoc}
      */
-    public static function fromParts($method, array $parts, $headers = null, $body = null, $protocol = 'HTTP', $protocolVersion = '1.1')
+    public function fromParts($method, array $parts, $headers = null, $body = null, $protocol = 'HTTP', $protocolVersion = '1.1')
     {
         return self::create($method, Url::buildUrl($parts, true), $headers, $body)
                    ->setProtocolVersion($protocolVersion);
     }
 
     /**
-     * Create a new request based on the HTTP method
-     *
-     * @param string $method HTTP method (GET, POST, PUT, HEAD, DELETE, etc)
-     * @param string $url HTTP URL to connect to.  The URI scheme, host header,
-     *      and URI are parsed from the full URL.  If query string parameters
-     *      are present they will be parsed as well.
-     * @param array|Collection $headers (optional) HTTP headers
-     * @param string|resource|array|EntityBody $body Body to send in the request
-     *
-     * @return RequestInterface
+     * {@inheritdoc}
      */
-    public static function create($method, $url, $headers = null, $body = null)
+    public function create($method, $url, $headers = null, $body = null)
     {
         if ($method != 'POST' && $method != 'PUT' && $method != 'PATCH') {
             $c = static::$requestClass;

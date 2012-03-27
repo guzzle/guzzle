@@ -22,7 +22,7 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
     protected function getRequest()
     {
-        return RequestFactory::create('POST', 'http://www.test.com/path?a=b&c=d', null, array(
+        return RequestFactory::getInstance()->create('POST', 'http://www.test.com/path?a=b&c=d', null, array(
             'e' => 'f'
         ));
     }

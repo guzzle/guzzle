@@ -73,7 +73,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testStoresStdErr()
     {
-        $h = CurlHandle::factory(RequestFactory::create('GET', 'http://test.com'));
+        $h = CurlHandle::factory(RequestFactory::getInstance()->create('GET', 'http://test.com'));
         $this->assertEquals($h->getStderr(true), $h->getOptions()->get(CURLOPT_STDERR));
         $this->assertInternalType('resource', $h->getStderr(true));
         $this->assertInternalType('string', $h->getStderr(false));
@@ -533,7 +533,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testFactoryCreatesCurlBasedOnRequest($method, $url, $headers, $body, $options, $expectedHeaders = null)
     {
-        $request = RequestFactory::create($method, $url, $headers, $body);
+        $request = RequestFactory::getInstance()->create($method, $url, $headers, $body);
         $handle = CurlHandle::factory($request);
 
         $this->assertInstanceOf('Guzzle\\Http\\Curl\\CurlHandle', $handle);
@@ -576,7 +576,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testFactoryUsesSpecifiedProtocol()
     {
-        $request = RequestFactory::create('GET', 'http://localhost:8124/');
+        $request = RequestFactory::getInstance()->create('GET', 'http://localhost:8124/');
         $request->setProtocolVersion('1.1');
         $handle = CurlHandle::factory($request);
         $options = $request->getParams()->get('curl.last_options');
@@ -661,7 +661,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->flush();
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi");
         // Create a new request using the same connection and POST
-        $request = RequestFactory::create('POST', $this->getServer()->getUrl());
+        $request = RequestFactory::getInstance()->create('POST', $this->getServer()->getUrl());
         $request->setClient(new Client());
         $request->addPostFields(array(
             'a' => 'b',

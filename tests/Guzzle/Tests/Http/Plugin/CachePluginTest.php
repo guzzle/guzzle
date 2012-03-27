@@ -167,7 +167,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         }
 
         // Create the request
-        $request = RequestFactory::create('GET', $url, $h);
+        $request = RequestFactory::getInstance()->create('GET', $url, $h);
         $request->getParams()->set('cache.key_filter', $filter);
         $request->removeHeader('User-Agent');
 
@@ -183,7 +183,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
     public function testCreatesEncodedKeys()
     {
         $plugin = new CachePlugin($this->adapter, true);
-        $request = RequestFactory::fromMessage(
+        $request = RequestFactory::getInstance()->fromMessage(
             "GET / HTTP/1.1\r\nHost: www.test.com\r\nCache-Control: no-cache, no-store, max-age=120"
         );
 
@@ -270,12 +270,12 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $server = $this->getServer();
 
         // No restrictions
-        $request = RequestFactory::create('GET', $server->getUrl());
+        $request = RequestFactory::getInstance()->create('GET', $server->getUrl());
         $response = new Response(200, array('Date' => Guzzle::getHttpDate('now')));
         $this->assertTrue($plugin->canResponseSatisfyRequest($request, $response));
 
         // Request max-age is less than response age
-        $request = RequestFactory::create('GET', $server->getUrl());
+        $request = RequestFactory::getInstance()->create('GET', $server->getUrl());
         $request->addCacheControlDirective('max-age', 100);
         $response = new Response(200, array('Age' => 10));
         $this->assertTrue($plugin->canResponseSatisfyRequest($request, $response));
@@ -369,7 +369,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
             $server->enqueue($validate);
         }
 
-        $request = RequestFactory::fromMessage("GET / HTTP/1.1\r\nHost: 127.0.0.1:" . $server->getPort() . "\r\n" . $request);
+        $request = RequestFactory::getInstance()->fromMessage("GET / HTTP/1.1\r\nHost: 127.0.0.1:" . $server->getPort() . "\r\n" . $request);
         $response = Response::factory($response);
         $request->setClient(new Client());
 

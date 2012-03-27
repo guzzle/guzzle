@@ -101,7 +101,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
             . "Expect: 100-Continue\r\n"
             . "Content-Length: 4\r\n\r\nData";
 
-        $request = RequestFactory::create('PUT', 'http://www.google.com/path?q=1&v=2', array(
+        $request = RequestFactory::getInstance()->create('PUT', 'http://www.google.com/path?q=1&v=2', array(
             'Authorization' => 'Basic ' . $auth
         ), 'Data');
 
@@ -118,7 +118,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $auth = base64_encode('michael:123');
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
-        $request = RequestFactory::create('PUT', $this->getServer()->getUrl(), null, 'Data')
+        $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl(), null, 'Data')
             ->setClient($this->client)
             ->setAuth('michael', '123', CURLAUTH_BASIC);
         $request->send();
@@ -437,7 +437,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         }
 
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ndata");
-        $request = RequestFactory::create('GET', $this->getServer()->getUrl());
+        $request = RequestFactory::getInstance()->create('GET', $this->getServer()->getUrl());
         $request->setClient($this->client);
         $request->setResponseBody(EntityBody::factory(fopen($file, 'w+')));
         $request->send();
@@ -454,7 +454,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     public function testDeterminesIfResponseBodyRepeatable()
     {
         // The default stream created for responses is seekable
-        $request = RequestFactory::create('GET', 'http://localhost:' . $this->getServer()->getPort());
+        $request = RequestFactory::getInstance()->create('GET', 'http://localhost:' . $this->getServer()->getPort());
         $this->assertTrue($request->isResponseBodyRepeatable());
 
         // This should return false because an HTTP stream is not seekable
@@ -468,23 +468,23 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testDeterminesIfCanCacheRequest()
     {
-        $this->assertTrue(RequestFactory::fromMessage(
+        $this->assertTrue(RequestFactory::getInstance()->fromMessage(
             "GET / HTTP/1.1\r\nHost: www.test.com\r\nCache-Control: no-cache, max-age=120\r\n\r\n"
         )->canCache());
 
-        $this->assertTrue(RequestFactory::fromMessage(
+        $this->assertTrue(RequestFactory::getInstance()->fromMessage(
             "HEAD / HTTP/1.1\r\nHost: www.test.com\r\nCache-Control: no-cache, max-age=120\r\n\r\n"
         )->canCache());
 
-        $this->assertFalse(RequestFactory::fromMessage(
+        $this->assertFalse(RequestFactory::getInstance()->fromMessage(
             "HEAD / HTTP/1.1\r\nHost: www.test.com\r\nCache-Control: no-cache, max-age=120, no-store\r\n\r\n"
         )->canCache());
 
-        $this->assertFalse(RequestFactory::fromMessage(
+        $this->assertFalse(RequestFactory::getInstance()->fromMessage(
             "POST / HTTP/1.1\r\nHost: www.test.com\r\n\r\n"
         )->canCache());
 
-        $this->assertFalse(RequestFactory::fromMessage(
+        $this->assertFalse(RequestFactory::getInstance()->fromMessage(
             "PUT / HTTP/1.1\r\nHost: www.test.com\r\nCache-Control: no-cache, max-age=120\r\n\r\n"
         )->canCache());
     }
@@ -636,7 +636,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 404 Not Found\r\nContent-Encoding: application/xml\r\nContent-Length: 48\r\n\r\n<error><mesage>File not found</message></error>"
         ));
 
-        $request = RequestFactory::create('GET', $this->getServer()->getUrl());
+        $request = RequestFactory::getInstance()->create('GET', $this->getServer()->getUrl());
         $request->setClient($this->client);
         $response = $request->send();
 
@@ -651,7 +651,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertNotSame($response, $response2);
 
         try {
-            $request = RequestFactory::create('GET', $this->getServer()->getUrl() . 'index.html');
+            $request = RequestFactory::getInstance()->create('GET', $this->getServer()->getUrl() . 'index.html');
             $request->setClient($this->client);
             $response = $request->send();
             $this->fail('Request did not receive a 404 response');

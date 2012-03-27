@@ -48,7 +48,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testRequestIncludesBodyInMessage()
     {
-        $request = RequestFactory::create('PUT', 'http://www.guzzle-project.com/', null, 'data');
+        $request = RequestFactory::getInstance()->create('PUT', 'http://www.guzzle-project.com/', null, 'data');
         $this->assertEquals("PUT / HTTP/1.1\r\n"
             . "Host: www.guzzle-project.com\r\n"
             . "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n"
@@ -63,7 +63,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testAddsPostFieldsAndSetsContentLength()
     {
-        $request = RequestFactory::create('POST', 'http://www.guzzle-project.com/', null, array(
+        $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/', null, array(
             'data' => '123'
         ));
         $this->assertEquals("POST / HTTP/1.1\r\n"
@@ -81,7 +81,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testAddsPostFilesAndSetsContentType()
     {
-        $request = RequestFactory::create('POST', 'http://www.test.com/')
+        $request = RequestFactory::getInstance()->create('POST', 'http://www.test.com/')
             ->addPostFiles(array(
                 'file' => __FILE__
             ))->addPostFields(array(
@@ -96,7 +96,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testRequestBodyContainsPostFiles()
     {
-        $request = RequestFactory::create('POST', 'http://www.test.com/');
+        $request = RequestFactory::getInstance()->create('POST', 'http://www.test.com/');
         $request->addPostFields(array(
             'test' => '123'
         ));
@@ -108,7 +108,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testRequestBodyAddsContentLength()
     {
-        $request = RequestFactory::create('PUT', 'http://www.test.com/');
+        $request = RequestFactory::getInstance()->create('PUT', 'http://www.test.com/');
         $request->setBody(EntityBody::factory('test'));
         $this->assertEquals(4, $request->getHeader('Content-Length'));
         $this->assertFalse($request->hasHeader('Transfer-Encoding'));
@@ -121,7 +121,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testRequestBodyDoesNotUseContentLengthWhenChunked()
     {
-        $request = RequestFactory::create('PUT', 'http://www.test.com/');
+        $request = RequestFactory::getInstance()->create('PUT', 'http://www.test.com/');
         $request->setBody(EntityBody::factory('test'), null, true);
         $this->assertNull($request->getHeader('Content-Length'));
         $this->assertTrue($request->hasHeader('Transfer-Encoding'));
@@ -133,7 +133,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testRequestHasMutableBody()
     {
-        $request = RequestFactory::create('PUT', 'http://www.guzzle-project.com/', null, 'data');
+        $request = RequestFactory::getInstance()->create('PUT', 'http://www.guzzle-project.com/', null, 'data');
         $body = $request->getBody();
         $this->assertInstanceOf('Guzzle\\Http\\EntityBody', $body);
         $this->assertSame($body, $request->getBody());
@@ -151,7 +151,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testSetPostFields()
     {
-        $request = RequestFactory::create('POST', 'http://www.guzzle-project.com/');
+        $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/');
         $this->assertInternalType('array', $request->getPostFields());
 
         $fields = new QueryString(array(
@@ -168,7 +168,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testSetPostFiles()
     {
-        $request = RequestFactory::create('POST', $this->getServer()->getUrl())
+        $request = RequestFactory::getInstance()->create('POST', $this->getServer()->getUrl())
             ->setClient(new Client())
             ->addPostFiles(array(__FILE__))
             ->addPostFields(array(
@@ -197,7 +197,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testSetPostFilesThrowsExceptionWhenFileIsNotFound()
     {
-        $request = RequestFactory::create('POST', 'http://www.guzzle-project.com/')
+        $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/')
             ->addPostFiles(array(
                 'file' => 'filenotfound.ini'
             ));
@@ -209,7 +209,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testPostRequestsUseApplicationXwwwForUrlEncodedForArrays()
     {
-        $request = RequestFactory::create('POST', 'http://www.guzzle-project.com/');
+        $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/');
         $request->setPostField('a', 'b');
         $this->assertContains("\r\n\r\na=b", (string) $request);
         $this->assertEquals('application/x-www-form-urlencoded', $request->getHeader('Content-Type'));
@@ -220,7 +220,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testProcessMethodAddsPostCurlOptions()
     {
-        $request = RequestFactory::create('POST', 'http://www.guzzle-project.com/');
+        $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/');
         $request->setPostField('a', 'b');
         $this->assertEquals('application/x-www-form-urlencoded', $request->getHeader('Content-Type'));
         $this->assertEquals('a=b', $request->getCurlOptions()->get(CURLOPT_POSTFIELDS));
@@ -231,7 +231,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testPostRequestsUseMultipartFormDataWithFiles()
     {
-        $request = RequestFactory::create('POST', 'http://www.guzzle-project.com/');
+        $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/');
         $request->addPostFiles(array('file' => __FILE__));
         $this->assertEquals('multipart/form-data', $request->getHeader('Content-Type'));
         $this->assertEquals(array('file' => '@' . __FILE__), $request->getCurlOptions()->get(CURLOPT_POSTFIELDS));
@@ -250,7 +250,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         ));
 
         // Send the first request
-        $request = RequestFactory::create('PUT', $this->getServer()->getUrl())
+        $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl())
             ->setBody('test')
             ->setClient(new Client());
         $request->send();

@@ -449,7 +449,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
 
             // Add request headers to the request exactly as they were sent
             if ($headers) {
-                $parsed = RequestFactory::parseMessage($headers);
+                $parsed = RequestFactory::getInstance()->parseMessage($headers);
                 if (!empty($parsed['headers'])) {
                     $request->setHeaders(array());
                     foreach ($parsed['headers'] as $name => $value) {
