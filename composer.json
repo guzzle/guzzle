@@ -60,7 +60,6 @@
     },
     "suggest": {
         "symfony/class-loader": "*",
-        "doctrine/common": "*",
         "monolog/monolog": "*",
         "zend/zend-cache": "*",
         "zend/zend-log": "*"
