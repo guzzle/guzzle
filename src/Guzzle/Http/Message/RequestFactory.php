@@ -28,19 +28,19 @@ class RequestFactory implements RequestFactoryInterface
     );
 
     /**
+     * @var RequestFactory Singleton instance of the default request factory
+     */
+    protected static $instance;
+
+    /**
      * @var string Class to instantiate for GET, HEAD, and DELETE requests
      */
-    protected static $requestClass = 'Guzzle\\Http\\Message\\Request';
+    protected $requestClass = 'Guzzle\\Http\\Message\\Request';
 
     /**
      * @var string Class to instantiate for POST and PUT requests
      */
-    protected static $entityEnclosingRequestClass = 'Guzzle\\Http\\Message\\EntityEnclosingRequest';
-
-    /**
-     * @var RequestFactory
-     */
-    protected static $instance;
+    protected $entityEnclosingRequestClass = 'Guzzle\\Http\\Message\\EntityEnclosingRequest';
 
     /**
      * Get a cached instance of the default request factory
@@ -150,13 +150,13 @@ class RequestFactory implements RequestFactoryInterface
      */
     public function fromMessage($message)
     {
-        $parsed = self::parseMessage($message);
+        $parsed = $this->parseMessage($message);
 
         if (!$parsed) {
             return false;
         }
 
-        return self::fromParts(
+        return $this->fromParts(
             $parsed['method'],
             $parsed['parts'],
             $parsed['headers'],
@@ -171,8 +171,8 @@ class RequestFactory implements RequestFactoryInterface
      */
     public function fromParts($method, array $parts, $headers = null, $body = null, $protocol = 'HTTP', $protocolVersion = '1.1')
     {
-        return self::create($method, Url::buildUrl($parts, true), $headers, $body)
-                   ->setProtocolVersion($protocolVersion);
+        return $this->create($method, Url::buildUrl($parts, true), $headers, $body)
+                    ->setProtocolVersion($protocolVersion);
     }
 
     /**
@@ -181,13 +181,13 @@ class RequestFactory implements RequestFactoryInterface
     public function create($method, $url, $headers = null, $body = null)
     {
         if ($method != 'POST' && $method != 'PUT' && $method != 'PATCH') {
-            $c = static::$requestClass;
+            $c = $this->requestClass;
             $request = new $c($method, $url, $headers);
             if ($body) {
                 $request->setResponseBody(EntityBody::factory($body));
             }
         } else {
-            $c = static::$entityEnclosingRequestClass;
+            $c = $this->entityEnclosingRequestClass;
             $request = new $c($method, $url, $headers);
 
             if ($body) {
