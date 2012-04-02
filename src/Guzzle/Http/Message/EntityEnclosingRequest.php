@@ -29,7 +29,6 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         $this->postFields = new QueryString();
         $this->postFields->setPrefix('');
         parent::__construct($method, $url, $headers);
-        $this->setHeader('Expect', '100-Continue');
     }
 
     /**
@@ -61,6 +60,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     {
         $this->body = EntityBody::factory($body);
         $this->removeHeader('Content-Length');
+        $this->setHeader('Expect', '100-Continue');
 
         if ($contentType) {
             $this->setHeader('Content-Type', $contentType);
@@ -219,8 +219,10 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     {
         if (0 == count($this->getPostFiles())) {
             $this->setHeader('Content-Type', 'application/x-www-form-urlencoded');
+            $this->removeHeader('Expect');
             $this->getCurlOptions()->set(CURLOPT_POSTFIELDS, (string) $this->postFields);
         } else {
+            $this->setHeader('Expect', '100-Continue');
             $this->setHeader('Content-Type', 'multipart/form-data');
             $this->postFields->setEncodeFields(false)->setEncodeValues(false);
             $this->getCurlOptions()->set(CURLOPT_POSTFIELDS, $this->postFields->getAll());

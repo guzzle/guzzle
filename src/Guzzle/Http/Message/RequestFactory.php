@@ -156,14 +156,19 @@ class RequestFactory implements RequestFactoryInterface
             return false;
         }
 
-        return $this->fromParts(
-            $parsed['method'],
-            $parsed['parts'],
-            $parsed['headers'],
-            $parsed['body'],
-            $parsed['protocol'],
-            $parsed['protocol_version']
-        );
+        $request = $this->fromParts($parsed['method'], $parsed['parts'],
+            $parsed['headers'], $parsed['body'], $parsed['protocol'],
+            $parsed['protocol_version']);
+
+        // EntityEnclosingRequest adds an "Expect: 100-Continue" header when
+        // using a raw request body for PUT or POST requests. This factory
+        // method should accurately reflect the message, so here we are
+        // removing the Expect header if one was not supplied in the message.
+        if (!isset($parsed['headers']['Expect'])) {
+            $request->removeHeader('Expect');
+        }
+
+        return $request;
     }
 
     /**

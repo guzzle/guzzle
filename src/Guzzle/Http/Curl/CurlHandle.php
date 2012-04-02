@@ -54,26 +54,8 @@ class CurlHandle
             CURLOPT_STDERR => fopen('php://temp', 'r+'),
             CURLOPT_VERBOSE => true,
             CURLOPT_HTTPHEADER => array(),
-            CURLOPT_WRITEFUNCTION => function($curl, $write) use ($request) {
-                $request->dispatch('curl.callback.write', array(
-                    'request' => $request,
-                    'write'   => $write
-                ));
-                return $request->getResponse()->getBody()->write($write);
-            },
             CURLOPT_HEADERFUNCTION => function($curl, $header) use ($request) {
                 return $request->receiveResponseHeader($header);
-            },
-            CURLOPT_READFUNCTION => function($ch, $fd, $length) use ($request) {
-                $read = '';
-                if ($request->getBody()) {
-                    $read = $request->getBody()->read($length);
-                    $request->dispatch('curl.callback.read', array(
-                        'request' => $request,
-                        'read'    => $read
-                    ));
-                }
-                return !$read ? '' : $read;
             },
             CURLOPT_PROGRESSFUNCTION => function($downloadSize, $downloaded, $uploadSize, $uploaded) use ($request) {
                 $request->dispatch('curl.callback.progress', array(
@@ -86,6 +68,18 @@ class CurlHandle
             }
         );
 
+        // HEAD requests need no response body, everything else might
+        if ($request->getMethod() != 'HEAD') {
+            $curlOptions[CURLOPT_WRITEFUNCTION] = function($curl, $write) use ($request) {
+                $request->dispatch('curl.callback.write', array(
+                    'request' => $request,
+                    'write'   => $write
+                ));
+                return $request->getResponse()->getBody()->write($write);
+            };
+        }
+
+        // Account for PHP installations with safe_mode or open_basedir enabled
         // @codeCoverageIgnoreStart
         if (Guzzle::getCurlInfo('follow_location')) {
             $curlOptions[CURLOPT_FOLLOWLOCATION] = true;
@@ -99,11 +93,10 @@ class CurlHandle
         switch ($request->getMethod()) {
             case 'GET':
                 $curlOptions[CURLOPT_HTTPGET] = true;
-                unset($curlOptions[CURLOPT_READFUNCTION]);
                 break;
             case 'HEAD':
                 $curlOptions[CURLOPT_NOBODY] = true;
-                unset($curlOptions[CURLOPT_READFUNCTION]);
+                unset($curlOptions[CURLOPT_WRITEFUNCTION]);
                 break;
             case 'POST':
                 $curlOptions[CURLOPT_POST] = true;
@@ -111,16 +104,17 @@ class CurlHandle
             case 'PUT':
             case 'PATCH':
                 $curlOptions[CURLOPT_UPLOAD] = true;
-                unset($headers['Content-Length']);
                 if ($request->hasHeader('Content-Length')) {
+                    unset($headers['Content-Length']);
                     $curlOptions[CURLOPT_INFILESIZE] = $request->getHeader('Content-Length');
                 }
 
                 break;
         }
 
-        // If no body is being sent, always send Content-Length of 0
         if ($request instanceof EntityEnclosingRequestInterface) {
+
+            // If no body is being sent, always send Content-Length of 0
             if (!$request->getBody() && !count($request->getPostFields())) {
                 $headers['Content-Length'] = 0;
                 unset($headers['Transfer-Encoding']);
@@ -129,19 +123,42 @@ class CurlHandle
                 unset($curlOptions[CURLOPT_POST]);
                 // Not reading from a callback when using empty body
                 unset($curlOptions[CURLOPT_READFUNCTION]);
+            } else {
+                // Add a callback for curl to read data to send with the request
+                $curlOptions[CURLOPT_READFUNCTION] = function($ch, $fd, $length) use ($request) {
+                    $read = '';
+                    if ($request->getBody()) {
+                        $read = $request->getBody()->read($length);
+                        $request->dispatch('curl.callback.read', array(
+                            'request' => $request,
+                            'read'    => $read
+                        ));
+                    }
+                    return !$read ? '' : $read;
+                };
             }
-        }
 
-        // Add any custom headers to the request
-        foreach ($headers as $key => $value) {
-            if ($key && $value !== '') {
-                $curlOptions[CURLOPT_HTTPHEADER][] = $key . ': ' . $value;
+            // If the Expect header is not present, prevent curl from adding it
+            if (!$request->hasHeader('Expect')) {
+                $curlOptions[CURLOPT_HTTPHEADER][] = 'Expect:';
             }
         }
 
         // Set custom cURL options
         foreach ($request->getCurlOptions() as $key => $value) {
             $curlOptions[$key] = $value;
+        }
+
+        // Add any custom headers to the request.  Empty headers will not be
+        // added.  Headers explicitly set to NULL _will_ be added.
+        foreach ($headers as $key => $value) {
+            if ($key) {
+                if ($value === null) {
+                    $curlOptions[CURLOPT_HTTPHEADER][] = "{$key}:";
+                } else {
+                    $curlOptions[CURLOPT_HTTPHEADER][] = "{$key}: {$value}";
+                }
+            }
         }
 
         // Apply the options to the cURL handle.

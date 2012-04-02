@@ -26,6 +26,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request = new EntityEnclosingRequest('PUT', 'http://test.com', array(
             'X-Test' => '123'
         ));
+        $request->setBody('Test');
         $this->assertEquals('123', $request->getHeader('X-Test'));
         $this->assertEquals('100-Continue', $request->getHeader('Expect'));
     }
@@ -69,7 +70,6 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals("POST / HTTP/1.1\r\n"
             . "Host: www.guzzle-project.com\r\n"
             . "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n"
-            . "Expect: 100-Continue\r\n"
             . "Content-Type: application/x-www-form-urlencoded\r\n\r\n"
             . "data=123", (string) $request);
     }
@@ -89,6 +89,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
             ));
         $message = (string) $request;
         $this->assertEquals('multipart/form-data', $request->getHeader('Content-Type'));
+        $this->assertEquals('100-Continue', $request->getHeader('Expect'));
     }
 
     /**
