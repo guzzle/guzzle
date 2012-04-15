@@ -26,7 +26,7 @@ class ConcreteClassFactory implements FactoryInterface
     /**
      * {@inheritdoc}
      */
-    public function factory($name, array $args = null)
+    public function factory($name, array $args = array())
     {
         // Determine the class to instantiate based on the namespace of the
         // current client and the default location of commands

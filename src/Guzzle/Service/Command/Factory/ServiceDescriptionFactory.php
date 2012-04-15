@@ -49,7 +49,7 @@ class ServiceDescriptionFactory implements FactoryInterface
     /**
      * {@inheritdoc}
      */
-    public function factory($name, array $args = null)
+    public function factory($name, array $args = array())
     {
         if ($this->description->hasCommand($name)) {
             $command = $this->description->getCommand($name);

@@ -140,7 +140,7 @@ class CompositeFactory implements \IteratorAggregate, \Countable, FactoryInterfa
      *
      * @return CommandInterface
      */
-    public function factory($name, array $args = null)
+    public function factory($name, array $args = array())
     {
         foreach ($this->factories as $factory) {
             $command = $factory->factory($name, $args);

@@ -157,15 +157,35 @@ $request = $client->get(array('/{?a,b}', array(
 
 The resulting URL would become ``http://test.com?a=hi&b=there``
 
-Testing Guzzle
---------------
+Testing and contributing to Guzzle
+----------------------------------
 
-Here's how to install Guzzle from source to run the unit tests:
+You will need to clone the Guzzle repository in order to be able to contribute to Guzzle:
 
 ```
 git clone git@github.com:guzzle/guzzle.git
 cd guzzle
-composer.phar install --install-suggests
+```
+
+Next you will need to make sure PHPUnit is configured, Composer is installed, and you have installed Guzzle's
+testing dependencies.  This can be acheived very simply by using the `test-init` Phing task.  After running
+this task, simply run PHPUnit.
+
+```
+phing test-init
+phpunit
+```
+
+If you do not have Phing installed, you will need to perform the installation steps manually:
+
+```
+# Make sure Composer is installed
+curl -s http://getcomposer.org/installer | php
+
+# Install Guzzle's testing dependencies
+COMPOSER=composer-test.json php composer.phar install
+
+# Now kick off PHPUnit to run the tests
 cp phpunit.xml.dist phpunit.xml
 phpunit
 ```

@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="guzzle" default="package">
 
-    <target name="test-init">
+    <target name="test-init" description="Initialize test dependencies">
         <echo message="Updating composer" />
-        <exec command="COMPOSER=composer-test.json composer.phar install" passthru="true" />
+        <available file="composer.phar" property="composer_exists" value="Yes" />
+        <if>
+            <equals arg1="${composer_exists}" arg2="Yes" />
+            <then></then>
+            <else>
+                <echo message="Installing composer" />
+                <exec command="curl -s http://getcomposer.org/installer | php" passthru="true" />
+            </else>
+        </if>
+        <exec command="COMPOSER=composer-test.json php composer.phar install" passthru="true" />
         <copy file="phpunit.xml.dist" tofile="phpunit.xml" overwrite="false" />
     </target>
 

@@ -8,7 +8,7 @@ namespace Guzzle\Service\Command\Factory;
 class MapFactory implements FactoryInterface
 {
     /**
-     * Associative array mapping command names to classes
+     * @var Associative array mapping command names to classes
      */
     protected $map;
 
@@ -24,7 +24,7 @@ class MapFactory implements FactoryInterface
     /**
      * {@inheritdoc}
      */
-    public function factory($name, array $args = null)
+    public function factory($name, array $args = array())
     {
         if (isset($this->map[$name])) {
             $class = $this->map[$name];
