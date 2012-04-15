@@ -18,11 +18,6 @@ class ServiceDescription
     protected $commands = array();
 
     /**
-     * @var CommandFactoryInterface
-     */
-    protected $commandFactory;
-
-    /**
      * Create a ServiceDescription based on an array
      *
      * @param array $data Description data
@@ -72,13 +67,10 @@ class ServiceDescription
      * Create a new ServiceDescription
      *
      * @param array $commands (optional) Array of {@see ApiCommand} objects
-     * @param CommandFactoryInterface (optional) Command factory to build
-     *      dynamic commands.  Uses the ApiCommandFactory by default.
      */
-    public function __construct(array $commands = array(), CommandFactoryInterface $commandFactory = null)
+    public function __construct(array $commands = array())
     {
         $this->commands = $commands;
-        $this->commandFactory = $commandFactory ?: new ApiCommandFactory();
     }
 
     /**
@@ -114,23 +106,5 @@ class ServiceDescription
     public function getCommand($name)
     {
         return $this->hasCommand($name) ? $this->commands[$name] : new NullObject();
-    }
-
-    /**
-     * Create a webservice command based on the service document
-     *
-     * @param string $command Name of the command to retrieve
-     * @param array $args (optional) Arguments to pass to the command
-     *
-     * @return Command\CommandInterface
-     * @throws InvalidArgumentException if the command was not found in the service doc
-     */
-    public function createCommand($name, array $args = array())
-    {
-        if (!$this->hasCommand($name)) {
-            throw new \InvalidArgumentException($name . ' command not found');
-        }
-
-        return $this->commandFactory->createCommand($this->getCommand($name), $args);
     }
 }

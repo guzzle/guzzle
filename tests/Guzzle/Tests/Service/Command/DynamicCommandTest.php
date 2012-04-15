@@ -6,6 +6,7 @@ use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Service\Client;
 use Guzzle\Service\Command\DynamicCommand;
+use Guzzle\Service\Command\Factory\ServiceDescriptionFactory;
 use Guzzle\Service\Description\ApiCommand;
 use Guzzle\Service\Description\ApiCommandFactory;
 use Guzzle\Service\Description\ServiceDescription;
@@ -16,6 +17,11 @@ class DynamicCommandTest extends \Guzzle\Tests\GuzzleTestCase
      * @var ServiceDescription
      */
     protected $service;
+
+    /**
+     * @var ServiceDescriptionFactory
+     */
+    protected $factory;
 
     /**
      * Setup the service description
@@ -78,6 +84,7 @@ class DynamicCommandTest extends \Guzzle\Tests\GuzzleTestCase
                 ))
             )
         );
+        $this->factory = new ServiceDescriptionFactory($this->service);
     }
 
     /**
@@ -97,7 +104,7 @@ class DynamicCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $client = new Client('http://www.example.com/');
         $client->setDescription($this->service);
 
-        $command = $this->service->createCommand('test_command', array(
+        $command = $this->factory->factory('test_command', array(
             'bucket' => 'test',
             'key' => 'key'
         ));
@@ -123,7 +130,7 @@ class DynamicCommandTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $client = new Client('http://www.fragilerock.com/');
         $client->setDescription($this->service);
-        $command = $this->service->createCommand('test_command', array());
+        $command = $this->factory->factory('test_command', array());
         $client->execute($command);
     }
 
@@ -133,7 +140,7 @@ class DynamicCommandTest extends \Guzzle\Tests\GuzzleTestCase
     public function testUsesDifferentLocations()
     {
         $client = new Client('http://www.tazmania.com/');
-        $command = $this->service->createCommand('body', array(
+        $command = $this->factory->factory('body', array(
             'b' => 'my-data',
             'q' => 'abc',
             'h' => 'haha'
@@ -154,7 +161,7 @@ class DynamicCommandTest extends \Guzzle\Tests\GuzzleTestCase
         unset($command);
         unset($request);
 
-        $command = $this->service->createCommand('body', array(
+        $command = $this->factory->factory('body', array(
             'b' => 'my-data',
             'q' => 'abc',
             'h' => 'haha',
@@ -179,7 +186,7 @@ class DynamicCommandTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testBuildsConcreteCommands()
     {
-        $c = $this->service->createCommand('concrete');
+        $c = $this->factory->factory('concrete');
         $this->assertEquals('Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand', get_class($c));
     }
 

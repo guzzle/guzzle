@@ -4,10 +4,12 @@ namespace Guzzle\Service;
 
 use Guzzle\Service\Inflector;
 use Guzzle\Common\Collection;
-use Guzzle\Common\NullObject;
 use Guzzle\Http\Client as HttpClient;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\CommandSet;
+use Guzzle\Service\Command\Factory\CompositeFactory;
+use Guzzle\Service\Command\Factory\ServiceDescriptionFactory;
+use Guzzle\Service\Command\Factory\FactoryInterface as CommandFactoryInterface;
 use Guzzle\Service\Description\ServiceDescription;
 
 /**
@@ -28,6 +30,11 @@ class Client extends HttpClient implements ClientInterface
      * @var string Setting to use for magic method calls
      */
     protected $magicMethodBehavior = false;
+
+    /**
+     * @var CommandFactoryInterface
+     */
+    protected $commandFactory;
 
     /**
      * Basic factory method to create a new client.  Extend this method in
@@ -111,36 +118,10 @@ class Client extends HttpClient implements ClientInterface
      */
     public function getCommand($name, array $args = array())
     {
-        $command = null;
-
-        // If a service description is present, see if a command is defined
-        if ($this->serviceDescription && $this->serviceDescription->hasCommand($name)) {
-            $command = $this->serviceDescription->createCommand($name, $args);
-        }
-
-        // Check if a concrete command exists using inflection
+        $command = $this->getCommandFactory()->factory($name, $args);
         if (!$command) {
-            // Determine the class to instantiate based on the namespace of the
-            // current client and the default location of commands
-            $prefix = $this->getConfig('command.prefix');
-            if (!$prefix) {
-                // The prefix can be specified in a factory method and is cached
-                $prefix = implode('\\', array_slice(explode('\\', get_class($this)), 0, -1)) . '\\Command\\';
-                $this->getConfig()->set('command.prefix', $prefix);
-            }
-
-            $class = $prefix . str_replace(' ', '\\', ucwords(str_replace('.', ' ', Inflector::camel($name))));
-
-            // Create the concrete command if it exists
-            if (class_exists($class)) {
-                $command = new $class($args);
-            }
+            throw new \InvalidArgumentException("Command was not found matching {$name}");
         }
-
-        if (!$command) {
-            throw new \InvalidArgumentException("$name command could not be found");
-        }
-
         $command->setClient($this);
         $this->dispatch('client.command.create', array(
             'client'  => $this,
@@ -148,6 +129,34 @@ class Client extends HttpClient implements ClientInterface
         ));
 
         return $command;
+    }
+
+    /**
+     * Get the command factory associated with the client
+     *
+     * @return CommandFactoryInterface
+     */
+    public function getCommandFactory()
+    {
+        if (!$this->commandFactory) {
+            $this->commandFactory = CompositeFactory::getDefaultChain($this);
+        }
+
+        return $this->commandFactory;
+    }
+
+    /**
+     * Set the command factory used to create commands by name
+     *
+     * @param CommandFactoryInterface $factory Command factory
+     *
+     * @return Client
+     */
+    public function setCommandFactory(CommandFactoryInterface $factory)
+    {
+        $this->commandFactory = $factory;
+
+        return $this;
     }
 
     /**
@@ -196,13 +205,33 @@ class Client extends HttpClient implements ClientInterface
      * Set the service description of the client
      *
      * @param ServiceDescription $service Service description that describes
-     *      all of the commands and information of the client
+     *     all of the commands and information of the client
+     * @param bool $updateFactory (optional) Set to FALSE to not update the service
+     *     description based command factory if it is not already present on
+     *     the client
      *
      * @return Client
      */
-    public function setDescription(ServiceDescription $service)
+    public function setDescription(ServiceDescription $service, $updateFactory = true)
     {
         $this->serviceDescription = $service;
+
+        // Add the service description factory to the factory chain if it is not set
+        if ($updateFactory) {
+            // Convert non chain factories to a chain factory
+            if (!($this->getCommandFactory() instanceof CompositeFactory)) {
+                $this->commandFactory = new CompositeFactory(array($this->commandFactory));
+            }
+            // Add a service description factory if one does not already exist
+            if (!$this->commandFactory->has('Guzzle\\Service\\Command\\Factory\\ServiceDescriptionFactory')) {
+                // Add the service description factory before the concrete factory
+                $this->commandFactory->add(new ServiceDescriptionFactory($service), 'Guzzle\\Service\\Command\\Factory\\ConcreteClassFactory');
+            } else {
+                // Update an existing service description factory
+                $factory = $this->commandFactory->find('Guzzle\\Service\\Command\\Factory\\ServiceDescriptionFactory');
+                $factory->setServiceDescription($service);
+            }
+        }
 
         return $this;
     }
@@ -210,10 +239,10 @@ class Client extends HttpClient implements ClientInterface
     /**
      * Get the service description of the client
      *
-     * @return ServiceDescription|NullObject
+     * @return ServiceDescription|null
      */
     public function getDescription()
     {
-        return $this->serviceDescription ?: new NullObject();
+        return $this->serviceDescription;
     }
 }

@@ -162,42 +162,85 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      * @covers Guzzle\Service\Client::getCommand
      * @expectedException InvalidArgumentException
      */
-    public function testThrowsExceptionWhenNoCommandFactoryIsSetAndGettingCommand()
+    public function testThrowsExceptionWhenMissingCommand()
     {
-        $client = new Client($this->getServer()->getUrl());
+        $client = new Client();
+
+        $mock = $this->getMock('Guzzle\\Service\\Command\\Factory\\FactoryInterface');
+        $mock->expects($this->any())
+             ->method('factory')
+             ->with($this->equalTo('test'))
+             ->will($this->returnValue(null));
+
+        $client->setCommandFactory($mock);
         $client->getCommand('test');
     }
 
     /**
      * @covers Guzzle\Service\Client::getCommand
+     */
+    public function testCreatesCommandsUsingCommandFactory()
+    {
+        $mockCommand = new MockCommand();
+
+        $client = new Mock\MockClient();
+        $mock = $this->getMock('Guzzle\\Service\\Command\\Factory\\FactoryInterface');
+        $mock->expects($this->any())
+             ->method('factory')
+             ->with($this->equalTo('foo'))
+             ->will($this->returnValue($mockCommand));
+
+        $client->setCommandFactory($mock);
+
+        $command = $client->getCommand('foo', array(
+            'acl' => '123'
+        ));
+
+        $this->assertSame($mockCommand, $command);
+        $this->assertSame($client, $command->getClient());
+    }
+
+    /**
      * @covers Guzzle\Service\Client::getDescription
      * @covers Guzzle\Service\Client::setDescription
      */
-    public function testRetrievesCommandsFromConcreteAndService()
+    public function testOwnsServiceDescription()
     {
-        $client = new Mock\MockClient('http://www.example.com/');
-        $this->assertSame($client, $client->setDescription($this->serviceTest));
-        $this->assertSame($this->serviceTest, $client->getDescription());
-        // Creates service commands
-        $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand', $client->getCommand('test_command'));
-        // Creates concrete commands
-        $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\Command\\OtherCommand', $client->getCommand('other_command'));
+        $client = new Mock\MockClient();
+        $this->assertNull($client->getDescription());
+
+        $description = $this->getMock('Guzzle\\Service\\Description\\ServiceDescription');
+        $this->assertSame($client, $client->setDescription($description));
+        $this->assertSame($description, $client->getDescription());
     }
 
-    public function testCreatesCommandsFromServiceDescriptions()
+    /**
+     * @covers Guzzle\Service\Client::setDescription
+     */
+    public function testSettingServiceDescriptionUpdatesFactories()
     {
-        $this->getServer()->enqueue(
-            "HTTP/1.1 200 OK\r\n" .
-            "Content-Length: 0\r\n\r\n"
-        );
-        $client = new Mock\MockClient($this->getServer()->getUrl());
-        $client->setDescription($this->service);
-        $command = $client->getCommand('trends.location', array(
-            'woeid' => 123,
-            'acl' => '123'
-        ));
-        $client->execute($command);
-        $this->assertEquals('/trends/123', $command->getRequest()->getPath());
+        $client = new Mock\MockClient();
+        $factory = $this->getMockBuilder('Guzzle\\Service\\Command\\Factory\\MapFactory')
+            ->disableOriginalConstructor()
+            ->getMock();
+        $client->setCommandFactory($factory);
+
+        $description = $this->getMock('Guzzle\\Service\\Description\\ServiceDescription');
+        $client->setDescription($description);
+
+        $this->assertNotSame($factory, $client->getCommandFactory());
+        $this->assertInstanceOf('Guzzle\\Service\\Command\\Factory\\CompositeFactory', $client->getCommandFactory());
+        $array = $client->getCommandFactory()->getIterator()->getArrayCopy();
+        $this->assertSame($array[0], $factory);
+        $this->assertInstanceOf('Guzzle\\Service\\Command\\Factory\\ServiceDescriptionFactory', $array[1]);
+        $this->assertSame($description, $array[1]->getServiceDescription());
+
+        $description2 = $this->getMock('Guzzle\\Service\\Description\\ServiceDescription');
+        $client->setDescription($description2);
+        $array = $client->getCommandFactory()->getIterator()->getArrayCopy();
+        $this->assertSame($array[0], $factory);
+        $this->assertInstanceOf('Guzzle\\Service\\Command\\Factory\\ServiceDescriptionFactory', $array[1]);
+        $this->assertSame($description2, $array[1]->getServiceDescription());
     }
 
     /**
@@ -214,7 +257,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      * @covers Guzzle\Service\Client::__call
      * @covers Guzzle\Service\Client::setMagicCallBehavior
      * @expectedException InvalidArgumentException
-     * @expectedExceptionMessage foo command could not be found
+     * @expectedExceptionMessage Command was not found matching foo
      */
     public function testMagicCallBehaviorEnsuresCommandExists()
     {
@@ -245,5 +288,20 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client->setDescription($this->service);
         $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(new Response(200))));
         $this->assertInstanceOf('Guzzle\Http\Message\Response', $client->mockCommand());
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::getCommandFactory
+     * @covers Guzzle\Service\Client::setCommandFactory
+     */
+    public function testOwnsCommandFactory()
+    {
+        $client = new Mock\MockClient();
+        $this->assertInstanceOf('Guzzle\\Service\\Command\\Factory\\CompositeFactory', $client->getCommandFactory());
+        $this->assertSame($client->getCommandFactory(), $client->getCommandFactory());
+
+        $mock = $this->getMock('Guzzle\\Service\\Command\\Factory\\CompositeFactory');
+        $client->setCommandFactory($mock);
+        $this->assertSame($mock, $client->getCommandFactory());
     }
 }
