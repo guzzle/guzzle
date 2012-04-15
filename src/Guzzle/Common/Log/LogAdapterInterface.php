@@ -10,24 +10,6 @@ namespace Guzzle\Common\Log;
 interface LogAdapterInterface
 {
     /**
-     * Create a new LogAdapter
-     *
-     * @param mixed $logObject (optional) The concrete logging implementation
-     *      that will be wrapped by the adapter.
-     *
-     * @throws InvalidArgumentException if the supplied object does not implement the
-     *      correct interface.
-     */
-    function __construct($logObject);
-
-    /**
-     * Get the adapted log object
-     *
-     * @return mixed
-     */
-    function getLogObject();
-
-    /**
      * Log a message at a priority
      *
      * @param string $message Message to log

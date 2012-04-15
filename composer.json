@@ -2,54 +2,18 @@
     "name": "guzzle/guzzle",
     "type": "library",
     "description": "Guzzle is a PHP HTTP client library and framework for building RESTful web service clients",
-    "keywords": ["framework", "http", "rest", "web service"],
+    "keywords": ["framework", "http", "rest", "web service", "curl"],
     "homepage": "http://www.guzzlephp.org/",
     "license": "MIT",
-    "authors": [{
-        "name": "Michael Dowling",
-        "email": "mtdowling@gmail.com",
-        "homepage": "https://github.com/mtdowling"
-    },
-    {
-        "name": "Guzzle Community",
-        "homepage": "https://github.com/guzzle/guzzle/contributors"
-    }],
-    "repositories": [
+    "authors": [
         {
-            "type": "package",
-            "package": {
-                "name": "zend/zend-log",
-                "version": "2.0.0",
-                "autoload": { "psr-0": { "Zend\\Log": "" } },
-                "target-dir": "Zend/Log",
-                "dist": {
-                    "url": "https://github.com/KnpLabs/zend-log/zipball/master",
-                    "type": "zip"
-                },
-                "source": {
-                    "url": "https://github.com/KnpLabs/zend-log.git",
-                    "type": "git",
-                    "reference": "master"
-                }
-            }
+            "name": "Michael Dowling",
+            "email": "mtdowling@gmail.com",
+            "homepage": "https://github.com/mtdowling"
         },
         {
-            "type":"package",
-            "package": {
-                "name": "zend/zend-cache",
-                "version": "2.0.0",
-                "autoload": { "psr-0": { "Zend\\Cache": "" } },
-                "target-dir": "Zend/Cache",
-                "dist": {
-                    "url": "https://github.com/KnpLabs/zend-cache/zipball/master",
-                    "type": "zip"
-                },
-                "source": {
-                    "url": "https://github.com/KnpLabs/zend-cache.git",
-                    "type": "git",
-                    "reference": "master"
-                }
-            }
+            "name": "Guzzle Community",
+            "homepage": "https://github.com/guzzle/guzzle/contributors"
         }
     ],
     "require": {
@@ -57,16 +21,9 @@
         "ext-curl": "*",
         "symfony/event-dispatcher": "*",
         "symfony/validator": "*"
-    },
-    "suggest": {
-        "symfony/class-loader": "*",
-        "monolog/monolog": "*",
-        "zend/zend-cache": "*",
-        "zend/zend-log": "*"
-    },
+    }
     "autoload": {
         "psr-0": {
-            "Guzzle\\Tests": "tests/",
             "Guzzle": "src/"
         }
     }

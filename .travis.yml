@@ -4,8 +4,8 @@ php:
   - 5.4
 before_script:
   - wget --quiet http://getcomposer.org/composer.phar
-  - php composer.phar install --install-suggests 
+  - COMPOSER=composer-test.json php composer.phar install 
   - cp phpunit.xml.dist phpunit.xml
   - ~/.nvm/nvm.sh install v0.6.14
   - ~/.nvm/nvm.sh run v0.6.14 tests/Guzzle/Tests/Http/server.js &
-script: sudo phpunit
+script: sudo phpunit --coverage-text

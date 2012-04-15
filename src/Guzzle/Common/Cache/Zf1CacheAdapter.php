@@ -2,19 +2,17 @@
 
 namespace Guzzle\Common\Cache;
 
-use Doctrine\Common\Cache\Cache;
-
 /**
- * Doctrine 2 cache adapter
+ * Zend Framework 1 cache adapter
  *
- * @link http://www.doctrine-project.org/
+ * @link http://framework.zend.com/manual/en/zend.cache.html
  */
-class DoctrineCacheAdapter extends AbstractCacheAdapter
+class Zf1CacheAdapter extends AbstractCacheAdapter
 {
     /**
-     * {@inheritdoc}
+     * @param Zend_Cache_Backend $cache Cache object to wrap
      */
-    public function __construct(Cache $cache)
+    public function __construct(\Zend_Cache_Backend $cache)
     {
         $this->cache = $cache;
     }
@@ -24,7 +22,7 @@ class DoctrineCacheAdapter extends AbstractCacheAdapter
      */
     public function contains($id, array $options = null)
     {
-        return $this->cache->contains($id);
+        return $this->cache->test($id);
     }
 
     /**
@@ -32,7 +30,7 @@ class DoctrineCacheAdapter extends AbstractCacheAdapter
      */
     public function delete($id, array $options = null)
     {
-        return $this->cache->delete($id);
+        return $this->cache->remove($id);
     }
 
     /**
@@ -40,7 +38,7 @@ class DoctrineCacheAdapter extends AbstractCacheAdapter
      */
     public function fetch($id, array $options = null)
     {
-        return $this->cache->fetch($id);
+        return $this->cache->load($id);
     }
 
     /**
@@ -48,6 +46,6 @@ class DoctrineCacheAdapter extends AbstractCacheAdapter
      */
     public function save($id, $data, $lifeTime = false, array $options = null)
     {
-        return $this->cache->save($id, $data, $lifeTime);
+        return $this->cache->save($data, $id, array(), $lifeTime);
     }
 }

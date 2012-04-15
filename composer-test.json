@@ -1,0 +1,158 @@
+{
+    "name": "guzzle/guzzle",
+    "type": "library",
+    "description": "Guzzle is a PHP HTTP client library and framework for building RESTful web service clients",
+    "keywords": ["framework", "http", "rest", "web service", "curl"],
+    "homepage": "http://www.guzzlephp.org/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Michael Dowling",
+            "email": "mtdowling@gmail.com",
+            "homepage": "https://github.com/mtdowling"
+        },
+        {
+            "name": "Guzzle Community",
+            "homepage": "https://github.com/guzzle/guzzle/contributors"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "package",
+            "package": {
+                "name": "zend/zend-log",
+                "version": "2.0.0beta3",
+                "dist": {
+                    "url": "http://packages.zendframework.com/get/Zend_Log-2.0.0beta3.tgz",
+                    "type": "pear"
+                },
+                "autoload": {
+                    "psr-0": {
+                        "Zend\\Log": "php/"
+                    }
+                }
+            }
+        },
+        {
+            "type":"package",
+            "package": {
+                "name": "zend/zend-cache",
+                "version": "2.0.0beta3",
+                "dist": {
+                    "url": "http://packages.zendframework.com/get/Zend_Cache-2.0.0beta3.tgz",
+                    "type": "pear"
+                },
+                "autoload": {
+                    "psr-0": {
+                        "Zend\\Cache": "php/"
+                    }
+                }
+            }
+        },
+        {
+            "type":"package",
+            "package": {
+                "name": "zend/zend-loader",
+                "version": "2.0.0beta3",
+                "dist": {
+                    "url": "http://packages.zendframework.com/get/Zend_Loader-2.0.0beta3.tgz",
+                    "type": "pear"
+                },
+                "autoload": {
+                    "psr-0": {
+                        "Zend\\Loader": "php/"
+                    }
+                }
+            }
+        },
+        {
+            "type":"package",
+            "package": {
+                "name": "zend/zend-stdlib",
+                "version": "2.0.0beta3",
+                "dist": {
+                    "url": "http://packages.zendframework.com/get/Zend_Stdlib-2.0.0beta3.tgz",
+                    "type": "pear"
+                },
+                "autoload": {
+                    "psr-0": {
+                        "Zend\\Stdlib": "php/"
+                    }
+                }
+            }
+        },
+        {
+            "type":"package",
+            "package": {
+                "name": "zend/zend-eventmanager",
+                "version": "2.0.0beta3",
+                "dist": {
+                    "url": "http://packages.zendframework.com/get/Zend_EventManager-2.0.0beta3.tgz",
+                    "type": "pear"
+                },
+                "autoload": {
+                    "psr-0": {
+                        "Zend\\EventManager": "php/"
+                    }
+                }
+            }
+        },
+        {
+            "type":"package",
+            "package": {
+                "name": "zend/zend-log1",
+                "version": "1.11",
+                "source": {
+                    "url": "http://framework.zend.com/svn",
+                    "type": "svn",
+                    "reference": "framework/standard/trunk/library/Zend/Log/"
+                },
+                "target-dir": "Zend/Log",
+                "autoload": {
+                    "psr-0": {
+                        "Zend_Log": "/"
+                    }
+                }
+            }
+        },
+        {
+            "type":"package",
+            "package": {
+                "name": "zend/zend-cache1",
+                "version": "1.11",
+                "source": {
+                    "url": "http://framework.zend.com/svn",
+                    "type": "svn",
+                    "reference": "framework/standard/trunk/library/Zend/Cache/"
+                },
+                "target-dir": "Zend/Cache",
+                "autoload": {
+                    "psr-0": {
+                        "Zend_Cache": "/"
+                    }
+                }
+            }
+        }
+    ],
+    "require": {
+        "php": ">=5.3.2",
+        "ext-curl": "*",
+        "symfony/event-dispatcher": "*",
+        "symfony/validator": "*",
+        "symfony/class-loader": "*",
+        "monolog/monolog": "*",
+        "zend/zend-cache": "2.0.0beta3",
+        "zend/zend-log": "2.0.0beta3",
+        "zend/zend-loader": "2.0.0beta3",
+        "zend/zend-stdlib": "2.0.0beta3",
+        "zend/zend-eventmanager": "2.0.0beta3",
+        "zend/zend-log1": "1.11",
+        "zend/zend-cache1": "1.11"
+    },
+    "autoload": {
+        "psr-0": {
+            "Guzzle\\Tests": "tests/",
+            "Guzzle": "src/"
+        }
+    }
+}

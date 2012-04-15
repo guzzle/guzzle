@@ -11,4 +11,5 @@ phpunit.xml
 
 # Ignore composer generated files
 composer.lock
+composer-test.lock
 vendor/

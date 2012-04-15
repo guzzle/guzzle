@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="guzzle" default="phar">
-    <target name="phar" description="Create a phar with an autoloader">
+<project name="guzzle" default="package">
+
+    <target name="test-init">
+        <echo message="Updating composer" />
+        <exec command="COMPOSER=composer-test.json composer.phar install" passthru="true" />
+        <copy file="phpunit.xml.dist" tofile="phpunit.xml" overwrite="false" />
+    </target>
+
+    <target name="phar" description="Deprecated phing method name">
+        <phingCall target="package" />
+    </target>
+
+    <target name="package" description="Create a phar with an autoloader">
+        <phingcall target="test-init" />
         <if>
             <equals arg1="${min}" arg2="true" />
             <then>
@@ -8,20 +20,22 @@
                     destfile="./guzzle-min.phar"
                     basedir="."
                     alias="Guzzle"
+                    stub="phar-stub-min.php"
                     signature="md5">
                     <fileset dir=".">
                         <include name="src/**/*.php" />
                     </fileset>
                     <metadata>
-                        <element name="version" value="2.0.0" />
+                        <element name="author" value="Michael Dowling" />
                     </metadata>
                 </pharpackage>
+                <exec command="php -d guzzle_phar=guzzle-min.phar `which phpunit`" passthru="true" />
             </then>
             <else>
                 <pharpackage
                     destfile="./guzzle.phar"
                     basedir="."
-                    stub="autoload.php"
+                    stub="phar-stub.php"
                     alias="Guzzle"
                     signature="md5">
                     <fileset dir=".">
@@ -33,9 +47,10 @@
                         <include name="vendor/monolog/monolog/src/**/*.php" />
                     </fileset>
                     <metadata>
-                        <element name="version" value="2.0.0" />
+                        <element name="author" value="Michael Dowling" />
                     </metadata>
                 </pharpackage>
+                <exec command="php -d guzzle_phar=guzzle.phar `which phpunit`" passthru="true" />
             </else>
         </if>
     </target>

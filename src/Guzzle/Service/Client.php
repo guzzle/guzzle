@@ -15,10 +15,19 @@ use Guzzle\Service\Description\ServiceDescription;
  */
 class Client extends HttpClient implements ClientInterface
 {
+    const MAGIC_CALL_DISABLED = 0;
+    const MAGIC_CALL_RETURN = 1;
+    const MAGIC_CALL_EXECUTE = 2;
+
     /**
      * @var ServiceDescription Description of the service and possible commands
      */
     protected $serviceDescription;
+
+    /**
+     * @var string Setting to use for magic method calls
+     */
+    protected $magicMethodBehavior = false;
 
     /**
      * Basic factory method to create a new client.  Extend this method in
@@ -43,6 +52,48 @@ class Client extends HttpClient implements ClientInterface
             'command.before_send',
             'command.after_send'
         ));
+    }
+
+    /**
+     * Helper method to find and execute a command.  Magic method calls must be
+     * enabled on the client to use this functionality.
+     *
+     * @param string $method Name of the command object to instantiate
+     * @param array  $args   (optional) Arguments to pass to the command
+     *
+     * @return mixed
+     * @throws BadMethodCallException when a command is not found or magic
+     *     methods are disabled
+     */
+    public function __call($method, $args = null)
+    {
+        if ($this->magicMethodBehavior == self::MAGIC_CALL_DISABLED) {
+            throw new \BadMethodCallException("Missing method $method.  Enable"
+                . " magic calls to use magic methods with command names.");
+        }
+
+        $command = $this->getCommand(Inflector::snake($method), $args);
+
+        return $this->magicMethodBehavior == self::MAGIC_CALL_RETURN
+            ? $command
+            : $this->execute($command);
+    }
+
+    /**
+     * Set the behavior for missing methods
+     *
+     * @param int $behavior Behavior to use when a missing method is called.
+     *     Set to Client::MAGIC_CALL_DISABLED to disable magic method calls
+     *     Set to Client::MAGIC_CALL_EXECUTE to execute commands and return the result
+     *     Set to Client::MAGIC_CALL_RETURN to instantiate and return the command
+     *
+     * @return Client
+     */
+    public function setMagicCallBehavior($behavior)
+    {
+        $this->magicMethodBehavior = (int) $behavior;
+
+        return $this;
     }
 
     /**

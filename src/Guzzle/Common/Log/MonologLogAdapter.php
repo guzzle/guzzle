@@ -26,14 +26,8 @@ class MonologLogAdapter extends AbstractLogAdapter
     /**
      * {@inheritdoc}
      */
-    public function __construct($logObject)
+    public function __construct(Logger $logObject)
     {
-        if (!($logObject instanceof Logger)) {
-            throw new \InvalidArgumentException(
-                'Object must be an instance of Monolog\Logger'
-            );
-        }
-
         $this->log = $logObject;
     }
 
