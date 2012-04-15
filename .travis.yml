@@ -8,4 +8,4 @@ before_script:
   - cp phpunit.xml.dist phpunit.xml
   - ~/.nvm/nvm.sh install v0.6.14
   - ~/.nvm/nvm.sh run v0.6.14 tests/Guzzle/Tests/Http/server.js &
-script: sudo phpunit --coverage-text
+script: sudo phpunit
