@@ -21,3 +21,9 @@ require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPAR
 // Add the services file to the default service builder
 $servicesFile = __DIR__ . DIRECTORY_SEPARATOR . 'Guzzle' . DIRECTORY_SEPARATOR . 'Tests' . DIRECTORY_SEPARATOR . 'TestData' . DIRECTORY_SEPARATOR . 'services.xml';
 Guzzle\Tests\GuzzleTestCase::setServiceBuilder(Guzzle\Service\ServiceBuilder::factory($servicesFile));
+
+// Modify the include path so that it can find the Zend Framework
+$paths = array('vendor/zend/zend-cache1', 'vendor/zend/zend-log1');
+set_include_path(implode(PATH_SEPARATOR, array_map(function($path) {
+    return __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . $path;
+}, $paths)) . PATH_SEPARATOR . get_include_path() );
