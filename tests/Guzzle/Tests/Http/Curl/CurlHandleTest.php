@@ -134,16 +134,19 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         if (!defined('CURLOPT_TIMEOUT_MS')) {
             $this->markTestSkipped('Update curl');
         }
+         
+        $settings = array(
+            CURLOPT_PORT => 123,
+            CURLOPT_CONNECTTIMEOUT_MS => 1
+        );
 
         $handle = curl_init($this->getServer()->getUrl());
-        curl_setopt($handle, CURLOPT_TIMEOUT_MS, 1);
-        $h = new CurlHandle($handle, array(
-            CURLOPT_TIMEOUT_MS => 1
-        ));
+        curl_setopt_array($handle, $settings);
+        $h = new CurlHandle($handle, $settings);
         @curl_exec($handle);
 
-        $this->assertEquals('Timeout was reached', $h->getError());
-        $this->assertEquals(CURLE_OPERATION_TIMEOUTED, $h->getErrorNo());
+        $this->assertEquals("couldn't connect to host", $h->getError());
+        $this->assertEquals(CURLE_COULDNT_CONNECT, $h->getErrorNo());
         $this->assertEquals($this->getServer()->getUrl(), $h->getInfo(CURLINFO_EFFECTIVE_URL));
         $this->assertInternalType('array', $h->getInfo());
 
