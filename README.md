@@ -183,7 +183,7 @@ If you do not have Phing installed, you will need to perform the installation st
 curl -s http://getcomposer.org/installer | php
 
 # Install Guzzle's testing dependencies
-COMPOSER=composer-test.json php composer.phar install
+php composer.phar install --dev
 
 # Now kick off PHPUnit to run the tests
 cp phpunit.xml.dist phpunit.xml

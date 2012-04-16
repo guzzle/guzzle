@@ -3,9 +3,9 @@
 error_reporting(E_ALL | E_STRICT);
 
 // Ensure that composer has installed all dependencies
-if (!file_exists(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'composer-test.lock')) {
-    die("Dependencies must be installed using composer:\n\nCOMPOSER=composer-test.json composer.phar install\n\n"
-        . "See https://github.com/composer/composer/blob/master/README.md for help with installing composer\n");
+if (!file_exists(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'composer.lock')) {
+    die("Dependencies must be installed using composer:\n\nphp composer.phar install --dev\n\n"
+        . "See http://getcomposer.org for help with installing composer\n");
 }
 
 require_once 'PHPUnit/TextUI/TestRunner.php';

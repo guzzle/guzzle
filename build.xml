@@ -12,7 +12,7 @@
                 <exec command="curl -s http://getcomposer.org/installer | php" passthru="true" />
             </else>
         </if>
-        <exec command="COMPOSER=composer-test.json php composer.phar install" passthru="true" />
+        <exec command="php composer.phar install --dev" passthru="true" />
         <copy file="phpunit.xml.dist" tofile="phpunit.xml" overwrite="false" />
     </target>
 
