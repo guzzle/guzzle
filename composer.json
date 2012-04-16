@@ -21,7 +21,7 @@
         "ext-curl": "*",
         "symfony/event-dispatcher": "*",
         "symfony/validator": "*"
-    }
+    },
     "autoload": {
         "psr-0": {
             "Guzzle": "src/"
