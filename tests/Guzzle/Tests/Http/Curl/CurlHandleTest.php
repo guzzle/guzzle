@@ -145,8 +145,14 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $h = new CurlHandle($handle, $settings);
         @curl_exec($handle);
 
-        $this->assertEquals("couldn't connect to host", $h->getError());
-        $this->assertEquals(CURLE_COULDNT_CONNECT, $h->getErrorNo());
+        $errors = array(
+            CURLE_COULDNT_CONNECT => "couldn't connect to host",
+            CURLE_OPERATION_TIMEOUTED => 'timeout was reached'
+        );
+
+        $this->assertTrue(in_array(strtolower($h->getError()), $errors));
+        $this->assertTrue($h->getErrorNo() > 0);
+
         $this->assertEquals($this->getServer()->getUrl(), $h->getInfo(CURLINFO_EFFECTIVE_URL));
         $this->assertInternalType('array', $h->getInfo());
 
