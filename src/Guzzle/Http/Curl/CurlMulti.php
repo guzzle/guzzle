@@ -52,6 +52,16 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     protected $exceptions = array();
 
     /**
+     * @var array cURL multi error values and codes
+     */
+    protected $multiErrors = array(
+        CURLM_BAD_HANDLE      => array('CURLM_BAD_HANDLE', 'The passed-in handle is not a valid CURLM handle.'),
+        CURLM_BAD_EASY_HANDLE => array('CURLM_BAD_EASY_HANDLE', "An easy handle was not good/valid. It could mean that it isn't an easy handle at all, or possibly that the handle already is in used by this or another multi handle."),
+        CURLM_OUT_OF_MEMORY   => array('CURLM_OUT_OF_MEMORY', 'You are doomed.'),
+        CURLM_INTERNAL_ERROR  => array('CURLM_INTERNAL_ERROR', 'This can only be returned if libcurl bugs. Please report it to us!')
+    );
+
+    /**
      * @var CurlMulti
      */
     private static $instance;
@@ -105,7 +115,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      */
     public function __construct()
     {
-        $this->multiHandle = curl_multi_init();
+        $this->createMutliHandle();
     }
 
     /**
@@ -175,9 +185,18 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         if ($this->state == self::STATE_SENDING && $this->multiHandle) {
             $handle = $this->getRequestHandle($request) ?: $request->getParams('curl_handle');
             if ($handle instanceof CurlHandle && $handle->getHandle()) {
-                curl_multi_remove_handle($this->multiHandle, $handle->getHandle());
+                $e = null;
+                // If an error occurs here, we still want to do some basic cleanup
+                try {
+                    $this->checkCurlResult(curl_multi_remove_handle($this->multiHandle, $handle->getHandle()));
+                } catch (\Exception $e) {}
                 $handle->close();
                 unset($this->handles[spl_object_hash($request)]);
+                // @codeCoverageIgnoreStart
+                if ($e) {
+                    throw $e;
+                }
+                // @codeCoverageIgnoreEnd
             }
         }
 
@@ -211,8 +230,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         $this->scope = -1;
 
         if ($hard) {
-            curl_multi_close($this->multiHandle);
-            $this->multiHandle = curl_multi_init();
+            $this->createMutliHandle();
         }
     }
 
@@ -294,7 +312,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
                 $request->setState(RequestInterface::STATE_COMPLETE);
             } else {
                 // Add the request's curl handle to the multi handle
-                curl_multi_add_handle($this->multiHandle, $this->createCurlHandle($request)->getHandle());
+                $this->checkCurlResult(curl_multi_add_handle($this->multiHandle, $this->createCurlHandle($request)->getHandle()));
             }
         } catch (\Exception $e) {
             $this->removeErroredRequest($request, $e);
@@ -328,12 +346,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         while ($pendingRequests) {
 
             while ($mrc = curl_multi_exec($this->multiHandle, $active) == CURLM_CALL_MULTI_PERFORM);
-
-            // @codeCoverageIgnoreStart
-            if ($mrc != CURLM_OK) {
-                throw new CurlException('curl_multi_exec returned ' . $mrc);
-            }
-            // @codeCoverageIgnoreEnd
+            $this->checkCurlResult($mrc);
 
             // Get messages from curl handles
             while ($done = curl_multi_info_read($this->multiHandle)) {
@@ -481,5 +494,44 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         $hash = spl_object_hash($request);
 
         return isset($this->handles[$hash]) ? $this->handles[$hash] : null;
+    }
+    
+    /**
+     * Throw an exception for a cURL multi response if needed
+     *
+     * @param int $code Curl response code
+     * @throws CurlException
+     */
+    private function checkCurlResult($code)
+    {
+        if ($code <= 0) {
+            return;
+        }
+        
+        if (isset($this->multiErrors[$code])) {
+            $message = "cURL error: {$code} ({$this->multiErrors[$code][0]}): cURL message: {$this->multiErrors[$code][1]}";
+        } else {
+            $message = 'Unexpected cURL error: ' . $code;
+        }
+        
+        throw new CurlException($message);
+    }
+    
+    /**
+     * Create the new cURL multi handle with error checking
+     */
+    private function createMutliHandle()
+    {
+        if ($this->multiHandle && is_resource($this->multiHandle)) {
+            curl_multi_close($this->multiHandle);
+        }
+        
+        $this->multiHandle = curl_multi_init();
+        
+        // @codeCoverageIgnoreStart
+        if ($this->multiHandle === false) {
+            throw new CurlException('Unable to create multi handle');
+        }
+        // @codeCoverageIgnoreEnd
     }
 }
