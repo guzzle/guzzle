@@ -26,12 +26,12 @@ class EntityBody extends Stream
     public static function factory($resource = '', $size = null)
     {
         if (is_resource($resource)) {
-            return new self($resource, $size);
+            return new static($resource, $size);
         } else if (is_string($resource)) {
             $stream = fopen('php://temp', 'r+');
             fwrite($stream, $resource);
             rewind($stream);
-            return new self($stream);
+            return new static($stream);
         } else if ($resource instanceof self) {
             return $resource;
         }

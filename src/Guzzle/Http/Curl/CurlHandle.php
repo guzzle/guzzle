@@ -165,7 +165,7 @@ class CurlHandle
         curl_setopt_array($handle, $curlOptions);
         $request->getParams()->set('curl.last_options', $curlOptions);
 
-        return new self($handle, $curlOptions);
+        return new static($handle, $curlOptions);
     }
 
     /**

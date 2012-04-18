@@ -29,7 +29,7 @@ class Cookie extends QueryString
             }
         }
 
-        return new self($data->getAll());
+        return new static($data->getAll());
     }
 
     /**

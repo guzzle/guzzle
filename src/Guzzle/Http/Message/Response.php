@@ -135,7 +135,7 @@ class Response extends AbstractMessage
             $headers['Content-Length'] = $body->getSize();
         }
 
-        $response = new self(trim($code), $headers, $body);
+        $response = new static(trim($code), $headers, $body);
         $response->setProtocol($protocol)
                  ->setStatus($code, $status);
 

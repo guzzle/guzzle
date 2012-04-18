@@ -60,7 +60,7 @@ class ServiceDescription
             }
         }
 
-        return new self($commands);
+        return new static($commands);
     }
 
     /**
