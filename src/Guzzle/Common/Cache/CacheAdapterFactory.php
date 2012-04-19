@@ -18,7 +18,7 @@ class CacheAdapterFactory
      */
     public static function factory(array $config)
     {
-        foreach (array('adapter', 'provider') as $required) {
+        foreach (array('cache.adapter', 'cache.provider') as $required) {
             // Validate that the required parameters were set
             if (!isset($config[$required])) {
                 throw new \InvalidArgumentException("{$required} is a required CacheAdapterFactory option");
@@ -31,19 +31,19 @@ class CacheAdapterFactory
         }
 
         // Instantiate the cache provider
-        if (is_string($config['provider'])) {
-            $args = isset($config['provider.args']) ? $config['provider.args'] : null;
-            $config['provider'] = self::createObject($config['provider'], $args);
+        if (is_string($config['cache.provider'])) {
+            $args = isset($config['cache.provider.args']) ? $config['cache.provider.args'] : null;
+            $config['cache.provider'] = self::createObject($config['cache.provider'], $args);
         }
 
         // Instantiate the cache adapter using the provider and options
-        if (is_string($config['adapter'])) {
-            $args = isset($config['adapter.args']) ? $config['adapter.args'] : array();
-            array_unshift($args, $config['provider']);
-            $config['adapter'] = self::createObject($config['adapter'], $args);
+        if (is_string($config['cache.adapter'])) {
+            $args = isset($config['cache.adapter.args']) ? $config['cache.adapter.args'] : array();
+            array_unshift($args, $config['cache.provider']);
+            $config['cache.adapter'] = self::createObject($config['cache.adapter'], $args);
         }
 
-        return $config['adapter'];
+        return $config['cache.adapter'];
     }
 
     /**
