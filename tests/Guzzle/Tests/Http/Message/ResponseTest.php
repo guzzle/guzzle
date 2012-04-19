@@ -323,7 +323,7 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->assertEquals(12, $this->response->getAge(false));
         $this->assertEquals(12, $this->response->getAge(true));
-        
+
         $this->response->removeHeader('Age');
         $this->response->removeHeader('Date');
         $this->assertNull($this->response->getAge());
@@ -492,6 +492,27 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
     public function testGetSetCookie()
     {
         $this->assertEquals('UserID=JohnDoe; Max-Age=3600; Version=1', $this->response->getSetCookie());
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\Response::getSetCookie
+     */
+    public function testGetSetCookieNormalizesHeaders()
+    {
+        $this->response->addHeaders(array(
+            'Set-Cooke' => 'boo',
+            'set-cookie' => 'foo'
+        ));
+
+        $this->assertEquals(array(
+            'UserID=JohnDoe; Max-Age=3600; Version=1',
+            'foo'
+        ), $this->response->getSetCookie());
+
+        $this->response->addHeaders(array(
+            'set-cookie' => 'fubu'
+        ));
+        $this->assertEquals(array('UserID=JohnDoe; Max-Age=3600; Version=1', 'foo', 'fubu'), $this->response->getSetCookie());
     }
 
     /**

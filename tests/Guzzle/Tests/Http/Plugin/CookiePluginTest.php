@@ -511,7 +511,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
             "Set-Cookie: CH=AgBNbvoQAAEcEAApuhAAMJcQADQvEAAvGxAALe0QAD6uEAATwhAAC1AQAC8t; expires=Sat, 02-Apr-2019 02:17:40 GMT; path=/; domain=127.0.0.1\r\n" .
             "Set-Cookie: fpt=d=_e2d6jLXesxx4AoiC0W7W3YktnpITDTHoJ6vNxF7TU6JEep6Y5BFk7Z9NgHmhiXoB7jGV4uR_GBQtSDOLjflKBUVZ6UgnGmDztoj4GREK30jm1qDgReyhPv7iWaN8e8ZLpUKXtPioOzQekGha1xR8ZqGR25GT7aYQpcxaaY.2ATjTpbm7HmX8tlBIte6mYMwFpIh_krxtofGPH3R337E_aNF3illhunC5SK6I0IfZvHzBXCoxu9fjH6e0IHzyOBY656YMUIElQiDkSd8werkBIRE6LJi6YU8AWgitEpMLisOIQSkqyGiahcPFt_fsD8DmIX2YAdSeVE0KycIqd0Z9aM7mdJ3xNQ4dmOOfcZ83dDrZ.4hvuKN2jB2FQDKuxEjTVO4DmiCCSyYgcs2wh0Lc3RODVKzqAZNMTYltWMELw9JdUyDFD3EGT3ZCnH8NQ6f_AAWffyj92ZMLYfWJnXHSG.DTKlVHj.IsihVT73QzrfoMFIs&v=1; path=/; domain=127.0.0.1\r\n" .
             "Set-Cookie: fpps=deleted; expires=Wed, 03-Mar-2010 02:17:39 GMT; path=/; domain=127.0.0.1\r\n" .
-            "Set-Cookie: fpc_s=d=ng6sEJk.1XnLUt1pfJ2kiUon07QEppAUuwW3nk0tYwcHMQ1CijnSGVZHfgvWSXQxE5eW_1hjvDAA4Nu0CSSn2xk9_.DOkKI_fZLLLUrm0hJ41VMbSUTrklw.u5IlTM5JCeK_PDjSjZNkvHMbNYziu8vwd8fMnbecf9bSo3eDDv1boowyLFk_9mnGYBeSI4U86mnm.mnfOHMARxzL6BVMTAblIAml65cR486SHzPVO6KNYvkqh8zP3m0hVIkRaPhzvDjQkDG28HCbMjq745QR2FcCmI4TNJbk7EtJmsBrlL8wvVyX5DiBmP9W990-&v=2; path=/; domain=127.0.0.1\r\n" .
+            "set-cookie: fpc_s=d=ng6sEJk.1XnLUt1pfJ2kiUon07QEppAUuwW3nk0tYwcHMQ1CijnSGVZHfgvWSXQxE5eW_1hjvDAA4Nu0CSSn2xk9_.DOkKI_fZLLLUrm0hJ41VMbSUTrklw.u5IlTM5JCeK_PDjSjZNkvHMbNYziu8vwd8fMnbecf9bSo3eDDv1boowyLFk_9mnGYBeSI4U86mnm.mnfOHMARxzL6BVMTAblIAml65cR486SHzPVO6KNYvkqh8zP3m0hVIkRaPhzvDjQkDG28HCbMjq745QR2FcCmI4TNJbk7EtJmsBrlL8wvVyX5DiBmP9W990-&v=2; path=/; domain=127.0.0.1\r\n" .
             "Content-Length: 0\r\n\r\n"
         );
 
@@ -529,13 +529,11 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         $request->setState('new');
         $request->send();
-
         $this->assertNotNull($request->getHeader('Cookie'));
 
         // Doesn't send expired cookies
         $this->assertEmpty($request->getCookie('IU'));
         $this->assertEmpty($request->getCookie('PH'));
-
         $this->assertNotEmpty($request->getCookie('fpc'));
         $this->assertNotEmpty($request->getCookie('FPCK3'));
         $this->assertNotEmpty($request->getCookie('CH'));

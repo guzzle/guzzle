@@ -94,8 +94,8 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->assertFalse($this->request->hasHeader('Foo'));
         $this->request->setHeader('Foo', 'Bar');
-        $this->assertEquals('Foo', $this->request->hasHeader('Foo', 1));
-        $this->assertEquals('Foo', $this->request->hasHeader('/Foo/', 2));
+        $this->assertEquals(true, $this->request->hasHeader('Foo', 1));
+        $this->assertEquals(true, $this->request->hasHeader('/Foo/', 2));
         $this->assertEquals(false, $this->request->hasHeader('bar', 1));
     }
 
@@ -223,5 +223,72 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
             'q' => array('0.7,*', '0.7"', '123,*', '456'),
             2 => 'foo'
         ), $r->getTokenizedHeader('test')->getAll());
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\AbstractMessage::addHeaders
+     * @covers Guzzle\Http\Message\AbstractMessage::getHeader
+     */
+    public function testAddingHeadersWithMultipleValuesUsesCaseInsensitiveKey()
+    {
+        $response = new Response(200);
+        $response->addHeaders(array(
+            'test' => '123'
+        ));
+        $response->addHeaders(array(
+            'Test' => '456'
+        ));
+        $response->addHeaders(array(
+            'TEST' => '789'
+        ));
+
+        $headers = array(
+            'test' => '123',
+            'Test' => '456',
+            'TEST' => '789'
+        );
+
+        $this->assertEquals($headers, $response->getHeader('test'));
+        $this->assertEquals($headers, $response->getHeader('Test'));
+        $this->assertEquals($headers, $response->getHeader('TEST'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\AbstractMessage::setHeader
+     */
+    public function testSettingHeadersUsesCaseInsensitiveKey()
+    {
+        $response = new Response(200, array(
+            'test' => '123'
+        ));
+        $response->setHeader('TEST', '456');
+        $this->assertEquals('456', $response->getHeader('test'));
+        $this->assertEquals('456', $response->getHeader('TEST'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\AbstractMessage::addHeaders
+     */
+    public function testAddingHeadersPreservesOriginalHeaderCase()
+    {
+        $response = new Response(200, array(
+            'test' => '123'
+        ));
+        $response->addHeaders(array(
+            'test' => '456'
+        ));
+        $response->addHeaders(array(
+            'test' => '789'
+        ));
+        $this->assertEquals(array('123', '456', '789'), $response->getHeader('test'));
+        $response->addHeaders(array(
+            'Test' => 'abc'
+        ));
+
+        // Add a header of a different name
+        $this->assertEquals(array(
+            'test' => array('123', '456', '789'),
+            'Test' => 'abc'
+        ), $response->getHeader('test'));
     }
 }

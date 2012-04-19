@@ -37,10 +37,11 @@ interface MessageInterface
      *     1 - Case insensitive match
      *     2 - Regular expression match
      *
-     * @return string|null Returns the matching HTTP header value or NULL if the
-     *      header is not found
+     * @return string|array|null Returns the matching HTTP header value or NULL if the
+     *     header is not found. If multiple headers are present for the header, then
+     *     an associative array is returned
      */
-    function getHeader($header, $default = null, $match = Collection::MATCH_EXACT);
+    function getHeader($header, $default = null, $match = Collection::MATCH_IGNORE_CASE);
 
     /**
      * Get a tokenized header as a Collection
@@ -51,7 +52,7 @@ interface MessageInterface
      *
      * @return Collection|null
      */
-    function getTokenizedHeader($header, $token = ';', $match = Collection::MATCH_EXACT);
+    function getTokenizedHeader($header, $token = ';', $match = Collection::MATCH_IGNORE_CASE);
 
     /**
      * Set a tokenized header on the request that implodes a Collection of data
@@ -78,7 +79,7 @@ interface MessageInterface
      *      array is specified, or a Collection of only the headers matching
      *      the headers in the $headers array.
      */
-    function getHeaders(array $headers = null, $match = Collection::MATCH_EXACT);
+    function getHeaders(array $headers = null, $match = Collection::MATCH_IGNORE_CASE);
 
     /**
      * Check if the specified header is present.
@@ -87,11 +88,9 @@ interface MessageInterface
      * @param int $match (optional) Match mode
      *
      * @see MessageInterface::getHeader
-     * @return bool|mixed Returns TRUE or FALSE if the header is present and using exact matching
-     *     Returns the matching header or FALSE if no match found and using regex or case
-     *     insensitive matching
+     * @return bool|mixed Returns TRUE or FALSE if the header is present
      */
-    function hasHeader($header, $match = Collection::MATCH_EXACT);
+    function hasHeader($header, $match = Collection::MATCH_IGNORE_CASE);
 
     /**
      * Remove a specific HTTP header.
@@ -102,7 +101,7 @@ interface MessageInterface
      * @see MessageInterface::getHeader
      * @return MessageInterface
      */
-    function removeHeader($header, $match = Collection::MATCH_EXACT);
+    function removeHeader($header, $match = Collection::MATCH_IGNORE_CASE);
 
     /**
      * Set an HTTP header

@@ -123,6 +123,7 @@ class Response extends AbstractMessage
             } else if (strpos($line, ':')) {
                 // Add a header
                 list($key, $value) = array_map('trim', explode(':', $line, 2));
+                // Headers are case insensitive
                 $headers->add($key, $value);
             }
         }
@@ -167,10 +168,9 @@ class Response extends AbstractMessage
         if ($headers) {
             if (!is_array($headers) && !($headers instanceof Collection)) {
                 throw new BadResponseException('Invalid headers argument received');
-            } else {
-                foreach ($headers as $key => $value) {
-                    $this->setHeader($key, $value);
-                }
+            }
+            foreach ($headers as $key => $value) {
+                $this->addHeaders(array($key => $value));
             }
         }
 
@@ -644,7 +644,16 @@ class Response extends AbstractMessage
      */
     public function getSetCookie()
     {
-        return $this->headers->get('/^Set-*Cookie2*$/i', null, Collection::MATCH_REGEX);
+        $normalized = array();
+        foreach ($this->headers->getAll('Set-Cookie', Collection::MATCH_IGNORE_CASE) as $list) {
+            if (is_array($list)) {
+                $normalized = array_merge($normalized, $list);
+            } else {
+                $normalized[] = $list;
+            }
+        }
+
+        return count($normalized) == 1 ? end($normalized) : $normalized;
     }
 
     /**

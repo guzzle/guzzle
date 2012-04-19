@@ -152,11 +152,11 @@ class CurlHandle
         // Add any custom headers to the request.  Empty headers will not be
         // added.  Headers explicitly set to NULL _will_ be added.
         foreach ($headers as $key => $value) {
-            if ($key) {
-                if ($value === null) {
-                    $curlOptions[CURLOPT_HTTPHEADER][] = "{$key}:";
-                } else {
-                    $curlOptions[CURLOPT_HTTPHEADER][] = "{$key}: {$value}";
+            if ($value === null) {
+                $curlOptions[CURLOPT_HTTPHEADER][] = "{$key}:";
+            } else if ($key) {
+                foreach ((array) $value as $val) {
+                    $curlOptions[CURLOPT_HTTPHEADER][] = "{$key}: {$val}";
                 }
             }
         }

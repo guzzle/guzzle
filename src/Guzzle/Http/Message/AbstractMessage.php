@@ -50,7 +50,22 @@ abstract class AbstractMessage implements MessageInterface
      */
     public function addHeaders(array $headers)
     {
-        $this->headers->merge($headers);
+        // Special handling for case-insensitive keys
+        foreach ($headers as $key => $value) {
+            $current = $this->headers->get($key);
+            if (null === $current) {
+                // Simply add the headers=
+                $this->headers->set($key, $value);
+            } else if (is_array($current)) {
+                // Merge in sub arrays as needed
+                $current[] = $value;
+                $this->headers->set($key, $current);
+            } else {
+                // use the default add functionality
+                $this->headers->add($key, $value);
+            }
+        }
+
         $this->changedHeader('set', array_keys($headers));
 
         return $this;
@@ -67,12 +82,20 @@ abstract class AbstractMessage implements MessageInterface
      *     1 - Case insensitive match
      *     2 - Regular expression match
      *
-     * @return string|null Returns the matching HTTP header value or NULL if the
-     *      header is not found
+     * @return string|array|null Returns the matching HTTP header value or NULL if the
+     *     header is not found. If multiple headers are present for the header, then
+     *     an associative array is returned
      */
-    public function getHeader($header, $default = null, $match = Collection::MATCH_EXACT)
+    public function getHeader($header, $default = null, $match = Collection::MATCH_IGNORE_CASE)
     {
-        return $this->headers->get($header, $default, $match);
+        $headers = $this->headers->getAll(array($header), $match);
+        if (!$headers) {
+            return $default;
+        } else if (count($headers) > 1) {
+            return $headers;
+        } else {
+            return end($headers);
+        }
     }
 
     /**
@@ -87,7 +110,7 @@ abstract class AbstractMessage implements MessageInterface
      *      array is specified, or a Collection of only the headers matching
      *      the headers in the $headers array.
      */
-    public function getHeaders(array $headers = null, $match = Collection::MATCH_EXACT)
+    public function getHeaders(array $headers = null, $match = Collection::MATCH_IGNORE_CASE)
     {
         if (!$headers) {
             return clone $this->headers;
@@ -105,9 +128,9 @@ abstract class AbstractMessage implements MessageInterface
      *
      * @return Collection|null
      */
-    public function getTokenizedHeader($header, $token = ';', $match = Collection::MATCH_EXACT)
+    public function getTokenizedHeader($header, $token = ';', $match = Collection::MATCH_IGNORE_CASE)
     {
-        $value = $this->getHeader($header, $match);
+        $value = $this->getHeader($header, null, $match);
         if (!$value) {
             return null;
         }
@@ -163,15 +186,11 @@ abstract class AbstractMessage implements MessageInterface
      * @param int $match (optional) Match mode
      *
      * @see AbstractMessage::getHeader
-     * @return bool|mixed Returns TRUE or FALSE if the header is present and using exact matching
-     *     Returns the matching header or FALSE if no match found and using regex or case
-     *     insensitive matching
+     * @return bool|mixed Returns TRUE or FALSE if the header is present
      */
-    public function hasHeader($header, $match = Collection::MATCH_EXACT)
+    public function hasHeader($header, $match = Collection::MATCH_IGNORE_CASE)
     {
-        return $match == Collection::MATCH_EXACT
-            ? false !== $this->headers->hasKey($header, $match)
-            : $this->headers->hasKey($header, $match);
+        return false !== $this->headers->hasKey($header, $match);
     }
 
     /**
@@ -183,7 +202,7 @@ abstract class AbstractMessage implements MessageInterface
      * @see AbstractMessage::getHeader
      * @return AbstractMessage
      */
-    public function removeHeader($header, $match = Collection::MATCH_EXACT)
+    public function removeHeader($header, $match = Collection::MATCH_IGNORE_CASE)
     {
         $this->headers->remove($header, $match);
         $this->changedHeader('remove', $header);
@@ -201,6 +220,8 @@ abstract class AbstractMessage implements MessageInterface
      */
     public function setHeader($header, $value)
     {
+        // Remove any existing header
+        $this->removeHeader($header);
         $this->headers->set($header, $value);
         $this->changedHeader('set', $header);
 

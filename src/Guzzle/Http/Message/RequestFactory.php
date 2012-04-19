@@ -90,7 +90,15 @@ class RequestFactory implements RequestFactoryInterface
                 if (in_array(strtolower($key), self::$requestHeaders)) {
                     $key = trim(str_replace(' ', '-', ucwords(str_replace('-', ' ', $key))));
                 }
-                $headers[$key] = trim($value);
+                // Headers are case insensitive
+                if (!isset($headers[$key])) {
+                    $headers[$key] = trim($value);
+                } else if (is_array($headers[$key])) {
+                    // Merge into existing headers
+                    $headers[$key][] = $value;
+                } else {
+                    $headers[$key] = array($headers[$key], $value);
+                }
             }
         }
 
@@ -98,7 +106,9 @@ class RequestFactory implements RequestFactoryInterface
         $body = isset($parts[1]) ? $parts[1] : null;
 
         // Check for the Host header
-        $host = isset($headers['Host']) ? $headers['Host'] : '';
+        if (isset($headers['Host'])) {
+            $host = $headers['Host'];
+        }
 
         if (strpos($host, ':')) {
             list($host, $port) = array_map('trim', explode(':', $host));

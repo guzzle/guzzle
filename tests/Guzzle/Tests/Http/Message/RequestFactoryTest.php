@@ -294,4 +294,35 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('chunked', $request->getHeader('Transfer-Encoding'));
         $this->assertFalse($request->hasHeader('Content-Length'));
     }
+
+    /**
+     * @covers Guzzle\Http\Message\RequestFactory::fromMessage
+     * @covers Guzzle\Http\Message\RequestFactory::parseMessage
+     */
+    public function testProperlyDealsWithDuplicateHeaders()
+    {
+        $message = "POST / http/1.1\r\n"
+            . "DATE:Mon, 09 Sep 2011 23:36:00 GMT\r\n"
+            . "host:host.foo.com\r\n"
+            . "ZOO:abc\r\n"
+            . "ZOO:123\r\n"
+            . "ZOO:HI\r\n"
+            . "zoo:456\r\n\r\n";
+
+        $parts = RequestFactory::getInstance()->parseMessage($message);
+
+        $this->assertEquals(array (
+            'DATE' => 'Mon, 09 Sep 2011 23:36:00 GMT',
+            'Host' => 'host.foo.com',
+            'ZOO'  => array('abc', '123', 'HI'),
+            'zoo'  => '456',
+        ), $parts['headers']);
+
+        $request = RequestFactory::getInstance()->fromMessage($message);
+
+        $this->assertEquals(array(
+            'ZOO' => array('abc', '123', 'HI'),
+            'zoo' => '456'
+        ), $request->getHeader('zoo'));
+    }
 }

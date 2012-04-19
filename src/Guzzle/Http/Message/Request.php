@@ -120,14 +120,20 @@ class Request extends AbstractMessage implements RequestInterface
         $this->curlOptions = new Collection();
         $this->params = new Collection();
         $this->setUrl($url);
+
         if ($headers) {
+            // Special handling for multi-value headers
             foreach ($headers as $key => $value) {
-                if ($key == 'Host') {
-                    $this->removeHeader($key);
+                $lkey = strtolower($key);
+                // Deal with collisions with Host and Authorization
+                if ($lkey != 'host' && $lkey != 'authorization') {
+                    $this->addHeaders(array($key => $value));
+                } else {
+                    $this->setHeader($key, $value);
                 }
-                $this->setHeader($key, $value);
             }
         }
+
         if (!$this->hasHeader('User-Agent', true)) {
             $this->setHeader('User-Agent', Guzzle::getDefaultUserAgent());
         }

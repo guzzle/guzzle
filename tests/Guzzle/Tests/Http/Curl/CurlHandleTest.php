@@ -429,9 +429,9 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_POST => 1,
                 CURLOPT_HTTPHEADER => array (
                     'Host: localhost:8124',
-                    'Content-Type: application/json',
                     'User-Agent: ' . $userAgent,
                     'Expect: 100-Continue',
+                    'Content-Type: application/json',
                     'Content-Length: 14'
                 ),
             ), array(
@@ -463,9 +463,9 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_POST => 1,
                 CURLOPT_HTTPHEADER => array (
                     'Host: localhost:8124',
-                    'Content-Type: application/json',
                     'User-Agent: ' . $userAgent,
                     'Expect: 100-Continue',
+                    'Content-Type: application/json',
                     'Transfer-Encoding: chunked'
                 ),
             ), array(
