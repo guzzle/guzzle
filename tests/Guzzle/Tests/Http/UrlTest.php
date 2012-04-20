@@ -91,8 +91,8 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('www.test.com', $url->getHost());
         $this->assertEquals(8081, $url->getPort());
         $this->assertEquals('/path/path2/', $url->getPath());
-        $this->assertEquals('?a=1&b=2', (string)$url->getQuery());
         $this->assertEquals('fragment', $url->getFragment());
+        $this->assertEquals('?a=1&b=2', (string) $url->getQuery());
 
         $this->assertEquals(array(
             'fragment' => 'fragment',
@@ -268,5 +268,25 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $url = Url::factory('http://www.example.com/');
         $url->setPath($path)->normalizePath();
         $this->assertEquals($result, $url->getPath());
+    }
+
+    /**
+     * @covers Guzzle\Http\Url::getQuery
+     * @covers Guzzle\Http\Url::parseUrlUtf8
+     */
+    public function testCanUseUtf8Query()
+    {
+        $url = Url::factory('http://www.example.com?µ=a');
+        $this->assertEquals('a', $url->getQuery()->get('µ'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Url::parseUrlUtf8
+     */
+    public function testParsesUtf8UrlQueryStringsWithFragment()
+    {
+        $url = Url::factory('http://www.example.com?ሴ=a#fragmentishere');
+        $this->assertEquals('a', $url->getQuery()->get('ሴ'));
+        $this->assertEquals('fragmentishere', $url->getFragment());
     }
 }

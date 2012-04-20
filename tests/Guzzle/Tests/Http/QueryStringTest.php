@@ -104,14 +104,16 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $params = array(
             'test'   => 'value',
             'test 2' => 'this is a test?',
-            'test3'  => array('v1', 'v2', 'v3')
+            'test3'  => array('v1', 'v2', 'v3'),
+            'ሴ'      => 'bar'
         );
         $encoded = array(
             'test'         => 'value',
             'test%202'     => rawurlencode('this is a test?'),
             'test3%5B0%5D' => 'v1',
             'test3%5B1%5D' => 'v2',
-            'test3%5B2%5D' => 'v3'
+            'test3%5B2%5D' => 'v3',
+            '%E1%88%B4'    => 'bar'
         );
         $this->q->replace($params);
         $this->assertEquals($encoded, $this->q->urlEncode());

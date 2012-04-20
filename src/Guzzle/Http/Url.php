@@ -30,7 +30,7 @@ class Url
      */
     public static function factory($url)
     {
-        $parts = (array) parse_url($url);
+        $parts = (array) self::parseUrlUtf8($url);
         $parts['scheme'] = isset($parts['scheme']) ? $parts['scheme'] : null;
         $parts['host'] = isset($parts['host']) ? $parts['host'] : null;
         $parts['path'] = isset($parts['path']) ? $parts['path'] : null;
@@ -47,6 +47,31 @@ class Url
         return new self($parts['scheme'], $parts['host'], $parts['user'],
             $parts['pass'], $parts['port'], $parts['path'], $parts['query'],
             $parts['fragment']);
+    }
+
+    /**
+     * Parse a URL using special handling for UTF-8 characters in the query
+     * string if needed
+     *
+     * @param string $url URL to parse
+     *
+     * @return array
+     */
+    public static function parseUrlUtf8($url)
+    {
+        $parts = parse_url($url);
+
+        // need to handle query parsing specially for UTF-8 requirements
+        if (isset($parts['query'])) {
+            $queryPos = strpos($url, '?');
+            if (isset($parts['fragment'])) {
+                $parts['query'] = substr($url, $queryPos + 1, strpos($url, '#') - $queryPos - 1);
+            } else {
+                $parts['query'] = substr($url, $queryPos + 1);
+            }
+        }
+
+        return $parts;
     }
 
     /**

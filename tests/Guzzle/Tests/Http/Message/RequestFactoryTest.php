@@ -325,4 +325,19 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
             'zoo' => '456'
         ), $request->getHeader('zoo'));
     }
+
+    /**
+     * @covers Guzzle\Http\Message\RequestFactory::fromMessage
+     * @covers Guzzle\Http\Message\RequestFactory::parseMessage
+     */
+    public function testProperlyDealsWithDuplicateQueryStringValues()
+    {
+        $message = "POST /?foo=a&foo=b&?µ=c http/1.1\r\n"
+            . "host:host.foo.com\r\n\r\n";
+        $parts = RequestFactory::getInstance()->parseMessage($message);
+        $this->assertEquals('?foo=a&foo=b&?µ=c', $parts['parts']['query']);
+        $request = RequestFactory::getInstance()->fromMessage($message);
+        $this->assertEquals(array('a', 'b'), $request->getQuery()->get('foo'));
+        $this->assertEquals('c', $request->getQuery()->get('?µ'));
+    }
 }
