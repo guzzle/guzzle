@@ -539,14 +539,16 @@ class Request extends AbstractMessage implements RequestInterface
 
     /**
      * Get the full URL of the request (e.g. 'http://www.guzzle-project.com/')
-     *
      * scheme://username:password@domain:port/path?query_string#fragment
      *
-     * @return string
+     * @param bool $asObject (optional) Set to TRUE to retrieve the URL as
+     *     a clone of the URL object owned by the request
+     *
+     * @return string|Url
      */
-    public function getUrl()
+    public function getUrl($asObject = false)
     {
-        return (string) $this->url;
+        return $asObject ? clone $this->url : (string) $this->url;
     }
 
     /**

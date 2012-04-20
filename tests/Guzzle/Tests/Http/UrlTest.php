@@ -243,4 +243,30 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $url = Url::factory($query);
         $this->assertEquals($data, $url->getQuery()->getAll());
     }
+
+    function urlProvider()
+    {
+        return array(
+            array('/foo/..', '/'),
+            array('//foo//..', '/'),
+            array('/foo/../..', '/'),
+            array('/foo/../.', '/'),
+            array('/./foo/..', '/'),
+            array('/./foo', '/foo'),
+            array('/./foo/', '/foo/'),
+            array('/./foo/bar/baz/pho/../..', '/foo/bar'),
+            array('*', '*')
+        );
+    }
+
+    /**
+     * @covers Guzzle\Http\Url::normalizePath
+     * @dataProvider urlProvider
+     */
+    public function testNormalizesPaths($path, $result)
+    {
+        $url = Url::factory('http://www.example.com/');
+        $url->setPath($path)->normalizePath();
+        $this->assertEquals($result, $url->getPath());
+    }
 }

@@ -304,6 +304,56 @@ class Url
     }
 
     /**
+     * Normalize the URL so that double slashes and relative paths are removed
+     *
+     * @return Url
+     */
+    public function normalizePath()
+    {
+        if ($this->path == '*') {
+            return $this;
+        }
+
+        if ($this->path && $this->path != '/') {
+
+            // Replace // and /./ with /
+            $this->path = str_replace(array('/./', '//'), '/', $this->path);
+
+            // Remove trailing relative paths if possible
+            $segments = $this->getPathSegments();
+            $totalSegments = count($segments);
+            $last = end($segments);
+            $trailingSlash = false;
+            if ($last === '') {
+                array_pop($segments);
+                $trailingSlash = true;
+            }
+
+            while ($last == '..' || $last == '.') {
+                if ($last == '..') {
+                    array_pop($segments);
+                    $last = array_pop($segments);
+                }
+                if ($last == '.' || $last == '') {
+                    $last = array_pop($segments);
+                }
+            }
+
+            $this->path = implode('/', $segments);
+            if ($trailingSlash) {
+                $this->path .= '/';
+            }
+        }
+
+        // Must always start with a slash
+        if (substr($this->path, 0, 1) != '/') {
+            $this->path = '/' . $this->path;
+        }
+
+        return $this;
+    }
+
+    /**
      * Add a relative path to the currently set path
      *
      * @param string $relativePath Relative path to add
@@ -341,7 +391,7 @@ class Url
      */
     public function getPathSegments()
     {
-        return array_slice(explode('/', $this->path), 1);
+        return array_slice(explode('/', $this->getPath()), 1);
     }
 
     /**
@@ -459,7 +509,7 @@ class Url
     }
 
     /**
-     * Combine the URL with another URL.  Every part of the second URL supercede
+     * Combine the URL with another URL.  Every part of the second URL supersede
      * the current URL if that part is specified.
      *
      * @param string $url Relative URL to combine with

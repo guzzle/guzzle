@@ -228,12 +228,14 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
 
     /**
      * Get the full URL of the request (e.g. 'http://www.guzzle-project.com/')
+     * scheme://username:password@domain:port/path?query_string#fragment
      *
-     * scheme://username:password@domain:port/path?query_string#anchor
+     * @param bool $asObject (optional) Set to TRUE to retrieve the URL as
+     *     a clone of the URL object owned by the request.
      *
-     * @return string
+     * @return string|Url
      */
-    function getUrl();
+    function getUrl($asObject = false);
 
     /**
      * Get the state of the request.  One of 'complete', 'sending', 'new'
