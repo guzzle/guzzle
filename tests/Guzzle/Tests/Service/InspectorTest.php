@@ -218,11 +218,13 @@ EOT;
             )));
             $this->fail('Expected exception not thrown when params are invalid');
         } catch (\InvalidArgumentException $e) {
-            $this->assertEquals("Validation errors: Requires that the username argument be supplied.  (API username).
-Requires that the password argument be supplied.  (API password).
-Requires that the subdomain argument be supplied.  (Unfuddle project subdomain).
-The value you selected is not a valid choice
-This value should be of type object", $e->getMessage());
+
+            $concat = $e->getMessage();
+            $this->assertContains("Validation errors: Requires that the username argument be supplied.  (API username)", $concat);
+            $this->assertContains("Requires that the password argument be supplied.  (API password)", $concat);
+            $this->assertContains("Requires that the subdomain argument be supplied.  (Unfuddle project subdomain)", $concat);
+            $this->assertContains("The value you selected is not a valid choice", $concat);
+            $this->assertContains("This value should be of type object", $concat);
         }
     }
 
@@ -302,9 +304,10 @@ This value should be of type object", $e->getMessage());
             )
         ), $config, false);
 
-        $this->assertEquals("This value should be of type string
-Requires that the min argument be >= 2 characters.
-Requires that the max argument be <= 2 characters.", implode("\n", $result));
+        $concat = implode("\n", $result);
+        $this->assertContains("This value should be of type string", $concat);
+        $this->assertContains("Requires that the min argument be >= 2 characters", $concat);
+        $this->assertContains("Requires that the max argument be <= 2 characters", $concat);
     }
 
     /**
