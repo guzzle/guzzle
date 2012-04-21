@@ -73,7 +73,8 @@ EOT;
     }
 
     /**
-     * @covers Guzzle\Service\ServiceBuilder::__sleep
+     * @covers Guzzle\Service\ServiceBuilder::serialize
+     * @covers Guzzle\Service\ServiceBuilder::unserialize
      */
     public function testAllowsSerialization()
     {

@@ -6,7 +6,7 @@ namespace Guzzle\Service;
  * Service builder to generate service builders and service clients from
  * configuration settings
  */
-class ServiceBuilder implements \ArrayAccess
+class ServiceBuilder implements \ArrayAccess, \Serializable
 {
     /**
      * @var array Service builder configuration data
@@ -102,13 +102,23 @@ class ServiceBuilder implements \ArrayAccess
     }
 
     /**
-     * Magic method to allow serialization to support caching
+     * Restores the service builder from JSON
+     *
+     * @param string $serialized JSON data to restore from
+     */
+    public function unserialize($serialized)
+    {
+        $this->builderConfig = json_decode($serialized, true);
+    }
+
+    /**
+     * Represents the service builder as a string
      *
      * @return array
      */
-    public function __sleep()
+    public function serialize()
     {
-        return array('builderConfig');
+        return json_encode($this->builderConfig);
     }
 
     /**
