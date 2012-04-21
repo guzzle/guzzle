@@ -708,7 +708,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl());
         $request->setClient(new Client('http://www.example.com', array(
-            'curl.black_list' => array('header.Accept', 'header.Foo', CURLOPT_ENCODING)
+            'curl.blacklist' => array('header.Accept', 'header.Foo', CURLOPT_ENCODING)
         )));
         $handle = CurlHandle::factory($request);
         $headers = $handle->getOptions()->get(CURLOPT_HTTPHEADER);

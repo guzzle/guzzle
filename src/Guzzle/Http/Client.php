@@ -269,7 +269,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 
         foreach ($this->getConfig()->getAll() as $key => $value) {
             // Add any curl options that might in the config to the request
-            if (strpos($key, 'curl.') === 0 && $key != 'curl.black_list') {
+            if (strpos($key, 'curl.') === 0 && $key != 'curl.blacklist') {
                 $curlOption = str_replace('curl.', '', $key);
                 if (defined($curlOption)) {
                     $curlValue = is_string($value) && defined($value) ? constant($value) : $value;
