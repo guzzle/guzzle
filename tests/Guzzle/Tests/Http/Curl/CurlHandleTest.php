@@ -134,7 +134,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         if (!defined('CURLOPT_TIMEOUT_MS')) {
             $this->markTestSkipped('Update curl');
         }
-         
+
         $settings = array(
             CURLOPT_PORT => 123,
             CURLOPT_CONNECTTIMEOUT_MS => 1
@@ -699,5 +699,21 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $headers = $handle->getOptions()->get(CURLOPT_HTTPHEADER);
         $this->assertTrue(in_array('Expect:', $headers));
         $this->assertTrue(in_array('Accept:', $headers));
+    }
+
+    /**
+     * @covers Guzzle\Http\Curl\CurlHandle::factory
+     */
+    public function testHeadersCanBeBlacklisted()
+    {
+        $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl());
+        $request->setClient(new Client('http://www.example.com', array(
+            'curl.black_list' => array('header.Accept', 'header.Foo', CURLOPT_ENCODING)
+        )));
+        $handle = CurlHandle::factory($request);
+        $headers = $handle->getOptions()->get(CURLOPT_HTTPHEADER);
+        $this->assertTrue(in_array('Accept:', $headers));
+        $this->assertTrue(in_array('Foo:', $headers));
+        $this->assertFalse($handle->getOptions()->hasKey(CURLOPT_ENCODING));
     }
 }

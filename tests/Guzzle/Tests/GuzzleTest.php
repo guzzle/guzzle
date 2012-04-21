@@ -14,7 +14,7 @@ class GuzzleTest extends GuzzleTestCase
     {
         Guzzle::reset();
         $version = curl_version();
-        $agent = sprintf('Guzzle/%s (Language=PHP/%s; curl=%s; Host=%s)', Guzzle::VERSION, \PHP_VERSION, $version['version'], $version['host']);
+        $agent = sprintf('Guzzle/%s (PHP=%s; curl=%s; openssl=%s)', Guzzle::VERSION, \PHP_VERSION, $version['version'], $version['ssl_version']);
         $this->assertEquals($agent, Guzzle::getDefaultUserAgent());
         // Get it from cache this time
         $this->assertEquals($agent, Guzzle::getDefaultUserAgent());

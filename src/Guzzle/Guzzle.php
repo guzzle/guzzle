@@ -9,7 +9,7 @@ use Guzzle\Common\Collection;
  */
 class Guzzle
 {
-    const VERSION = '2.0';
+    const VERSION = '2.3.2';
 
     /**
      * @var array Guzzle cache
@@ -24,11 +24,11 @@ class Guzzle
     public static function getDefaultUserAgent()
     {
         if (!isset(self::$cache['user_agent'])) {
-            self::$cache['user_agent'] = sprintf('Guzzle/%s (Language=PHP/%s; curl=%s; Host=%s)',
+            self::$cache['user_agent'] = sprintf('Guzzle/%s (PHP=%s; curl=%s; openssl=%s)',
                 self::VERSION,
                 \PHP_VERSION,
                 self::getCurlInfo('version'),
-                self::getCurlInfo('host')
+                self::getCurlInfo('ssl_version')
             );
         }
 
