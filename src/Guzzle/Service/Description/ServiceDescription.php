@@ -2,8 +2,7 @@
 
 namespace Guzzle\Service\Description;
 
-use Guzzle\Common\NullObject;
-use Guzzle\Service\Inspector;
+use Guzzle\Service\Exception\DescriptionBuilderException;
 
 /**
  * A ServiceDescription stores service information based on a service document
@@ -18,49 +17,24 @@ class ServiceDescription
     protected $commands = array();
 
     /**
-     * Create a ServiceDescription based on an array
-     *
-     * @param array $data Description data
-     *
-     * @return ServiceDescription
+     * {@inheritdoc}
+     * @param string|array $filename File to build or array of command information
+     * @throws DescriptionBuilderException when the type is not recognized
      */
-    public static function factory(array $data)
+    public static function factory($filename)
     {
-        if (!empty($data['types'])) {
-            foreach ($data['types'] as $name => $type) {
-                $default = array();
-                if (!isset($type['class'])) {
-                    throw new \RuntimeException('Custom types require a class attribute');
-                }
-                foreach ($type as $key => $value) {
-                    if ($key != 'name' && $key != 'class') {
-                        $default[$key] = $value;
-                    }
-                }
-                Inspector::getInstance()->registerConstraint($name, $type['class'], $default);
-            }
+        if (is_array($filename)) {
+            return ArrayDescriptionBuilder::build($filename);
         }
 
-        $commands = array();
-        if (!empty($data['commands'])) {
-            foreach ($data['commands'] as $name => $command) {
-                $name = $command['name'] = isset($command['name']) ? $command['name'] : $name;
-                // Extend other commands
-                if (!empty($command['extends'])) {
-                    if (empty($commands[$command['extends']])) {
-                        throw new \RuntimeException($name . ' extends missing command ' . $command['extends']);
-                    }
-                    $params = array_merge($commands[$command['extends']]->getParams(), !empty($command['params']) ? $command['params'] : array());
-                    $command = array_merge($commands[$command['extends']]->getData(), $command);
-                    $command['params'] = $params;
-                }
-                // Use the default class
-                $command['class'] = isset($command['class']) ? str_replace('.', '\\', $command['class']) : self::DEFAULT_COMMAND_CLASS;
-                $commands[$name] = new ApiCommand($command);
-            }
+        $ext = pathinfo($filename, PATHINFO_EXTENSION);
+        if ($ext == 'js' || $ext == 'json') {
+            return JsonDescriptionBuilder::build($filename);
+        } else if ($ext == 'xml') {
+            return XmlDescriptionBuilder::build($filename);
         }
 
-        return new static($commands);
+        throw new DescriptionBuilderException('Unable to load service description due to unknown file extension: ' . $ext);
     }
 
     /**
@@ -100,11 +74,10 @@ class ServiceDescription
      *
      * @param string $name Name of the command
      *
-     * @return ApiCommand|NullObject Returns an ApiCommand on success or a
-     *      NullObject on error
+     * @return ApiCommand|null
      */
     public function getCommand($name)
     {
-        return $this->hasCommand($name) ? $this->commands[$name] : new NullObject();
+        return $this->hasCommand($name) ? $this->commands[$name] : null;
     }
 }

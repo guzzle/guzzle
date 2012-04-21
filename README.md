@@ -111,7 +111,7 @@ try {
         $client->head('messages/123'),
         $client->delete('orders/123')
     ));
-} catch (Guzzle\Common\ExceptionCollection $e) {
+} catch (Guzzle\Common\Exception\ExceptionCollection $e) {
     echo "The following requests encountered an exception: \n";
     foreach ($e as $exception) {
         echo $exception->getRequest() . "\n" . $exception->getMessage() . "\n";

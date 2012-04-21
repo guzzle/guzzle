@@ -104,7 +104,7 @@ class Server
 
             // Create the response object from a string
             if (is_string($response)) {
-                $response = Response::factory($response);
+                $response = Response::fromMessage($response);
             } else if (!($response instanceof Response)) {
                 throw new HttpException(
                     'Responses must be strings or implement Response'
@@ -112,10 +112,10 @@ class Server
             }
 
             $data[] = array(
-                'statusCode' => $response->getStatusCode(),
+                'statusCode'   => $response->getStatusCode(),
                 'reasonPhrase' => $response->getReasonPhrase(),
-                'headers' => $response->getHeaders()->getAll(),
-                'body' => $response->getBody(true)
+                'headers'      => $response->getHeaders()->getAll(),
+                'body'         => $response->getBody(true)
             );
         }
 

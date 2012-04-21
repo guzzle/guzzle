@@ -6,7 +6,7 @@
             <param name="access_key" value="12345" />
             <param name="secret_key" value="abcd" />
         </client>
-        
+
         <client name="test.s3" class="Guzzle.Service.Aws.S3.S3Client" extends="test.abstract.aws">
             <param name="devpay_product_token" value="" />
             <param name="devpay_user_token" value="" />

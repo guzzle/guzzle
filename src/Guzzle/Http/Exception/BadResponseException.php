@@ -1,6 +1,8 @@
 <?php
 
-namespace Guzzle\Http\Message;
+namespace Guzzle\Http\Exception;
+
+use Guzzle\Http\Message\Response;
 
 /**
  * Http request exception thrown when a bad response is received

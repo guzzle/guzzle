@@ -1,16 +1,16 @@
 <?php
 
-namespace Guzzle\Tests\Http\Message;
+namespace Guzzle\Tests\Http\Exception;
 
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\Request;
-use Guzzle\Http\Message\RequestException;
-use Guzzle\Http\Message\BadResponseException;
+use Guzzle\Http\Exception\RequestException;
+use Guzzle\Http\Exception\BadResponseException;
 
 class ExceptionTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
-     * @covers Guzzle\Http\Message\RequestException
+     * @covers Guzzle\Http\Exception\RequestException
      */
     public function testRequestException()
     {
@@ -21,7 +21,7 @@ class ExceptionTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Message\BadResponseException
+     * @covers Guzzle\Http\Exception\BadResponseException
      */
     public function testBadResponseException()
     {

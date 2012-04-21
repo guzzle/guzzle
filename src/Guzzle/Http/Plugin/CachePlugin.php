@@ -5,11 +5,12 @@ namespace Guzzle\Http\Plugin;
 use Guzzle\Guzzle;
 use Guzzle\Common\Cache\CacheAdapterInterface;
 use Guzzle\Common\Event;
+use Guzzle\Common\Collection;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\Request;
-use Guzzle\Http\Message\BadResponseException;
+use Guzzle\Http\Exception\BadResponseException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -127,7 +128,9 @@ class CachePlugin implements EventSubscriberInterface
             });
 
             // Use the filtered headers
-            $headerString = http_build_query($request->getHeaders()->filter(function($key, $value) use ($filterHeaders) {
+            $headerString = http_build_query($request->getHeaders()->map(function($key, $value) {
+                return count($value) == 1 ? $value[0] : $value;
+            })->filter(function($key, $value) use ($filterHeaders) {
                 return !in_array($key, $filterHeaders);
             })->getAll());
 
@@ -155,6 +158,7 @@ class CachePlugin implements EventSubscriberInterface
         $hashKey = $this->getCacheKey($request);
         $this->cached[$key] = $hashKey;
         $cachedData = $this->getCacheAdapter()->fetch($hashKey);
+
         // If the cached data was found, then make the request into a
         // manually set request
         if ($cachedData) {
@@ -166,7 +170,9 @@ class CachePlugin implements EventSubscriberInterface
             unset($this->cached[$key]);
             $response = new Response($cachedData['c'], $cachedData['h'], $cachedData['b']);
             $response->setHeader('Age', time() - strtotime($response->getDate() ?: 'now'));
-            $response->setHeader('X-Guzzle-Cache', $hashKey);
+            if (!$response->hasHeader('X-Guzzle-Cache')) {
+                $response->setHeader('X-Guzzle-Cache', "key={$key}");
+            }
 
             // Validate that the response satisfies the request
             if ($this->canResponseSatisfyRequest($request, $response)) {
@@ -191,7 +197,7 @@ class CachePlugin implements EventSubscriberInterface
                 if ($response->isSuccessful()) {
                     if ($request->getParams()->get('cache.override_ttl')) {
                         $lifetime = $request->getParams()->get('cache.override_ttl');
-                        $response->setHeader('X-Guzzle-Ttl', $lifetime);
+                        $response->setHeader('X-Guzzle-Cache', "key={$key}, ttl={$lifetime}");
                     } else {
                         $lifetime = $response->getMaxAge();
                     }

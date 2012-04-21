@@ -123,7 +123,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Clear all parameters
         $this->coll->clear();
-        
+
         $this->assertEquals($this->coll->getAll(), array());
     }
 
@@ -312,7 +312,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
             'different_key' => 'new value'
         ), $this->coll->getAll());
     }
-    
+
     /**
      * @covers Guzzle\Common\Collection::filter
      */

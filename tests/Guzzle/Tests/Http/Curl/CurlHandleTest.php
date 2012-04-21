@@ -270,13 +270,13 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             )),
             // Send a GET request with custom headers
             array('GET', 'http://localhost:8124/', array(
-                    'x-test-data' => 'Guzzle'
-                ), null, array(
-                    CURLOPT_PORT => 8124,
-                    CURLOPT_HTTPHEADER => array(
-                        'Host: localhost:8124',
-                        'x-test-data: Guzzle',
-                        'User-Agent: ' . $userAgent
+                'x-test-data' => 'Guzzle'
+            ), null, array(
+                CURLOPT_PORT => 8124,
+                CURLOPT_HTTPHEADER => array(
+                    'Host: localhost:8124',
+                    'x-test-data: Guzzle',
+                    'User-Agent: ' . $userAgent
                 )
             ), array(
                 '_Accept'          => '*',
@@ -574,7 +574,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             $requests = $this->getServer()->getReceivedRequests(true);
             $this->assertEquals($method, $requests[0]->getMethod());
 
-            $test = $this->filterHeaders($expectedHeaders, $requests[0]->getHeaders()->getAll());
+            $test = $this->filterHeaders($expectedHeaders, $requests[0]->getHeaders());
             $this->assertFalse($test, $test . "\nSent: \n" . $request . "\n\n" . $requests[0]);
         }
 
@@ -622,7 +622,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertEquals((string) $request, (string) $r[0]);
         $this->assertFalse($r[0]->hasHeader('Transfer-Encoding'));
-        $this->assertEquals(4, $r[0]->getHeader('Content-Length'));
+        $this->assertEquals(4, (string) $r[0]->getHeader('Content-Length'));
     }
 
     /**
@@ -688,22 +688,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Curl\CurlHandle::factory
      */
-    public function testAllowsHeadersSetToNull()
-    {
-        $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl());
-        $request->setClient(new Client());
-        $request->setBody('test');
-        $request->setHeader('Expect', null);
-        $request->setHeader('Accept', null);
-        $handle = CurlHandle::factory($request);
-        $headers = $handle->getOptions()->get(CURLOPT_HTTPHEADER);
-        $this->assertTrue(in_array('Expect:', $headers));
-        $this->assertTrue(in_array('Accept:', $headers));
-    }
-
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle::factory
-     */
     public function testHeadersCanBeBlacklisted()
     {
         $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl());
@@ -715,5 +699,21 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue(in_array('Accept:', $headers));
         $this->assertTrue(in_array('Foo:', $headers));
         $this->assertFalse($handle->getOptions()->hasKey(CURLOPT_ENCODING));
+    }
+
+    /**
+     * @covers Guzzle\Http\Curl\CurlHandle::factory
+     */
+    public function testAllowsHeadersSetToNull()
+    {
+        $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl());
+        $request->setClient(new Client());
+        $request->setBody('test');
+        $request->setHeader('Expect', null);
+        $request->setHeader('Accept', null);
+        $handle = CurlHandle::factory($request);
+        $headers = $handle->getOptions()->get(CURLOPT_HTTPHEADER);
+        $this->assertTrue(in_array('Expect:', $headers));
+        $this->assertTrue(in_array('Accept:', $headers));
     }
 }

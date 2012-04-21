@@ -3,6 +3,7 @@
 namespace Guzzle\Http\Curl;
 
 use Guzzle\Guzzle;
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
@@ -46,7 +47,7 @@ class CurlHandle
             CURLOPT_CONNECTTIMEOUT => 10, // Connect timeout in seconds
             CURLOPT_RETURNTRANSFER => false, // Streaming the return, so no need
             CURLOPT_HEADER => false, // Retrieve the received headers
-            CURLOPT_USERAGENT => $request->getHeader('User-Agent', Guzzle::getDefaultUserAgent()),
+            CURLOPT_USERAGENT => (string) $request->getHeader('User-Agent'),
             CURLOPT_ENCODING => '', // Supports all encodings
             CURLOPT_PORT => $request->getPort(),
             CURLOPT_HTTP_VERSION => $request->getProtocolVersion(true),
@@ -87,7 +88,7 @@ class CurlHandle
         }
         // @codeCoverageIgnoreEnd
 
-        $headers = $request->getHeaders();
+        $headers = $request->getHeaders()->getAll();
 
         // Specify settings according to the HTTP method
         switch ($request->getMethod()) {
@@ -106,7 +107,7 @@ class CurlHandle
                 $curlOptions[CURLOPT_UPLOAD] = true;
                 if ($request->hasHeader('Content-Length')) {
                     unset($headers['Content-Length']);
-                    $curlOptions[CURLOPT_INFILESIZE] = $request->getHeader('Content-Length');
+                    $curlOptions[CURLOPT_INFILESIZE] = (int) (string) $request->getHeader('Content-Length');
                 }
 
                 break;
@@ -149,14 +150,12 @@ class CurlHandle
             $curlOptions[$key] = $value;
         }
 
-        // Add any custom headers to the request.  Empty headers will not be
-        // added.  Headers explicitly set to NULL _will_ be added.
+        // Add any custom headers to the request. Emtpy headers will cause curl to
+        // not send the header at all.
         foreach ($headers as $key => $value) {
-            if ($value === null) {
-                $curlOptions[CURLOPT_HTTPHEADER][] = "{$key}:";
-            } else if ($key) {
+            if ($key) {
                 foreach ((array) $value as $val) {
-                    $curlOptions[CURLOPT_HTTPHEADER][] = "{$key}: {$val}";
+                    $curlOptions[CURLOPT_HTTPHEADER][] = trim("{$key}: {$val}");
                 }
             }
         }
@@ -191,14 +190,14 @@ class CurlHandle
     public function __construct($handle, $options)
     {
         if (!is_resource($handle)) {
-            throw new \InvalidArgumentException('Invalid handle provided');
+            throw new InvalidArgumentException('Invalid handle provided');
         }
         if (is_array($options)) {
             $this->options = new Collection($options);
         } else if ($options instanceof Collection) {
             $this->options = $options;
         } else {
-            throw new \InvalidArgumentException('Expected array or Collection');
+            throw new InvalidArgumentException('Expected array or Collection');
         }
         $this->handle = $handle;
     }

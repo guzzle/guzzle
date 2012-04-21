@@ -4,6 +4,8 @@ namespace Guzzle\Service;
 
 use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
+use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Service\Exception\ValidationException;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidatorFactory;
 use Symfony\Component\Validator\Validator;
@@ -107,7 +109,7 @@ class Inspector
      * @param array $required (optional) Required parameter names
      *
      * @return Collection
-     * @throws \InvalidArgumentException if a parameter is missing
+     * @throws InvalidArgumentException if a parameter is missing
      */
     public static function prepareConfig(array $config = null, $defaults = null, $required = null)
     {
@@ -117,7 +119,7 @@ class Inspector
         }
         foreach ((array) $required as $key) {
             if ($collection->hasKey($key) === false) {
-                throw new \InvalidArgumentException(
+                throw new ValidationException(
                     "Config must contain a '{$key}' key"
                 );
             }
@@ -229,7 +231,7 @@ class Inspector
      * @param bool $strict (optional) Set to FALSE to allow missing required fields
      *
      * @return array|bool Returns an array of errors or TRUE on success
-     * @throws \InvalidArgumentException if any args are missing and $strict is TRUE
+     * @throws InvalidArgumentException if any args are missing and $strict is TRUE
      */
     public function validateClass($className, Collection $config, $strict = true)
     {
@@ -253,7 +255,7 @@ class Inspector
      *
      * @return array|bool Returns an array of errors or TRUE on success
      *
-     * @throws \InvalidArgumentException if any args are missing and $strict is TRUE
+     * @throws InvalidArgumentException if any args are missing and $strict is TRUE
      */
     public function validateConfig(array $params, Collection $config, $strict = true)
     {
@@ -323,7 +325,7 @@ class Inspector
         if (empty($errors)) {
             return true;
         } else if ($strict) {
-            throw new \InvalidArgumentException('Validation errors: ' . implode("\n", $errors));
+            throw new ValidationException('Validation errors: ' . implode("\n", $errors));
         }
 
         return $errors;
@@ -342,7 +344,7 @@ class Inspector
         $name = $parts[0];
 
         if (!isset($this->constraints[$name])) {
-            throw new \InvalidArgumentException($name . ' has not been registered');
+            throw new InvalidArgumentException($name . ' has not been registered');
         }
 
         if (!empty($parts[1])) {

@@ -2,6 +2,8 @@
 
 namespace Guzzle\Service\Description;
 
+use Guzzle\Service\Exception\DescriptionBuilderException;
+
 /**
  * Build service descriptions using a JSON document
  */
@@ -11,7 +13,7 @@ class JsonDescriptionBuilder implements DescriptionBuilderInterface
     {
         $json = file_get_contents($jsonFile);
         if (false === $json) {
-            throw new \RuntimeException('Error loading data from ' . $jsonFile);
+            throw new DescriptionBuilderException('Error loading data from ' . $jsonFile);
         }
 
         $data = json_decode($json, true);

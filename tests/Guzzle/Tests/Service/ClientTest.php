@@ -107,7 +107,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Client::execute
-     * @expectedException Guzzle\Service\Command\CommandSetException
+     * @expectedException Guzzle\Service\Exception\CommandSetException
      */
     public function testThrowsExceptionWhenExecutingMixedClientCommandSets()
     {
@@ -128,7 +128,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Client::execute
-     * @expectedException InvalidArgumentException
+     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
      */
     public function testThrowsExceptionWhenExecutingInvalidCommandSets()
     {

@@ -2,6 +2,7 @@
 
 namespace Guzzle\Service\Command\Factory;
 
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Service\ClientInterface;
 
 /**
@@ -37,7 +38,7 @@ class AliasFactory implements FactoryInterface
         if (isset($this->aliases[$name])) {
             try {
                 return $this->client->getCommand($this->aliases[$name], $args);
-            } catch (\InvalidArgumentException $e) {
+            } catch (InvalidArgumentException $e) {
                 return null;
             }
         }

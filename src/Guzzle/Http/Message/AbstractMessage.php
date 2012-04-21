@@ -3,6 +3,7 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
+use Guzzle\Common\Exception\InvalidArgumentException;
 
 /**
  * HTTP messages consist of request messages that request data from a server,
@@ -11,9 +12,9 @@ use Guzzle\Common\Collection;
 abstract class AbstractMessage implements MessageInterface
 {
     /**
-     * @var Collection Collection of HTTP headers
+     * @var array HTTP headers
      */
-    protected $headers;
+    protected $headers = array();
 
     /**
      * @var Collection Custom message parameters that are extendable by plugins
@@ -42,6 +43,27 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
+     * Add a header to an existing collection of headers.
+     *
+     * @param string $header Header name to add
+     * @param string $value  Value of the header
+     *
+     * @return AbstractMessage
+     */
+    public function addHeader($header, $value)
+    {
+        $key = strtolower($header);
+        if (!isset($this->headers[$key])) {
+            $this->headers[$key] = new Header($header, $value);
+        } else {
+            $this->headers[$key]->add($value, $header);
+        }
+        $this->changedHeader('set', $key);
+
+        return $this;
+    }
+
+    /**
      * Add and merge in an array of HTTP headers.
      *
      * @param array $headers Associative array of header data.
@@ -50,93 +72,161 @@ abstract class AbstractMessage implements MessageInterface
      */
     public function addHeaders(array $headers)
     {
-        // Special handling for case-insensitive keys
         foreach ($headers as $key => $value) {
-            $current = $this->headers->get($key);
-            if (null === $current) {
-                // Simply add the headers=
-                $this->headers->set($key, $value);
-            } else if (is_array($current)) {
-                // Merge in sub arrays as needed
-                $current[] = $value;
-                $this->headers->set($key, $current);
-            } else {
-                // use the default add functionality
-                $this->headers->add($key, $value);
-            }
+            $this->addHeader($key, $value);
         }
-
-        $this->changedHeader('set', array_keys($headers));
 
         return $this;
     }
 
     /**
-     * Retrieve an HTTP header by name
+     * Retrieve an HTTP header by name.  Performs a case-insensitive search of
+     * all headers.
      *
      * @param string $header Header to retrieve.
-     * @param mixed $default (optional) If the header is not found, the passed
-     *      $default value will be returned
-     * @param int $match (optional) Match mode:
-     *     0 - Exact match
-     *     1 - Case insensitive match
-     *     2 - Regular expression match
+     * @param bool   $string (optional) Set to true to get the header as a string
      *
-     * @return string|array|null Returns the matching HTTP header value or NULL if the
-     *     header is not found. If multiple headers are present for the header, then
-     *     an associative array is returned
+     * @return string|Header|null Returns NULL if no matching header is found.
+     *     Returns a string if $string is set to TRUE.  Returns a Header object
+     *     if a matching header is found.
      */
-    public function getHeader($header, $default = null, $match = Collection::MATCH_IGNORE_CASE)
+    public function getHeader($header, $string = false)
     {
-        $headers = $this->headers->getAll(array($header), $match);
-        if (!$headers) {
-            return $default;
-        } else if (count($headers) > 1) {
-            return $headers;
-        } else {
-            return end($headers);
+        $key = strtolower($header);
+        if (!isset($this->headers[$key])) {
+            return null;
         }
+
+        return $string ? (string) $this->headers[$key] : $this->headers[$key];
     }
 
     /**
      * Get all or all matching headers.
      *
      * @param array $names (optional) Pass an array of header names to retrieve
-     *      only a particular subset of headers.
-     * @param int $match (optional) Match mode
+     *     only a particular subset of headers.
      *
-     * @see AbstractMessage::getHeader
-     * @return Collection Returns a collection of all headers if no $headers
-     *      array is specified, or a Collection of only the headers matching
-     *      the headers in the $headers array.
+     * @return Collection Returns a {@see Collection} of all headers if no
+     *      $headers array is specified, or a Collection of only the headers
+     *      matching the headers in the $headers array.
      */
-    public function getHeaders(array $headers = null, $match = Collection::MATCH_IGNORE_CASE)
+    public function getHeaders(array $names = null)
     {
-        if (!$headers) {
-            return clone $this->headers;
-        } else {
-            return new Collection($this->headers->getAll($headers, $match));
+        if (!$names) {
+            $names = array_keys($this->headers);
         }
+
+        $result = array();
+        foreach ($names as $name) {
+            if ($this->hasHeader($name)) {
+                $values = $this->getHeader($name);
+                foreach ($values->raw() as $key => $value) {
+                    $result[$key] = $value;
+                }
+            }
+        }
+
+        return new Collection($result);
+    }
+
+    /**
+     * Set an HTTP header
+     *
+     * @param string $header Name of the header to set.
+     * @param mixed  $value  Value to set.
+     *
+     * @return AbstractMessage
+     */
+    public function setHeader($header, $value)
+    {
+        // Remove any existing header
+        $key = strtolower($header);
+        unset($this->headers[$key]);
+
+        if ($value instanceof Header) {
+            $this->headers[$key] = $value;
+        } else {
+            // Allow for 0, '', and NULL to be set
+            if (!$value) {
+                $value = array($value);
+            }
+            $this->headers[$key] = new Header($header, $value);
+        }
+        $this->changedHeader('set', $key);
+
+        return $this;
+    }
+
+    /**
+     * Overwrite all HTTP headers with the supplied array of headers
+     *
+     * @param array $headers Associative array of header data.
+     *
+     * @return AbstractMessage
+     */
+    public function setHeaders(array $headers)
+    {
+        // Get the keys that are changing
+        $changed = array_keys($this->headers);
+        // Erase the old headers
+        $this->headers = array();
+        // Add the new headers
+        foreach ($headers as $key => $value) {
+            $changed[] = $key;
+            $this->addHeader($key, $value);
+        }
+        // Notify of the changed headers
+        $this->changedHeader('set', array_map('strtolower', array_unique($changed)));
+
+        return $this;
+    }
+
+    /**
+     * Check if the specified header is present.
+     *
+     * @param string $header The header to check.
+     *
+     * @return bool Returns TRUE or FALSE if the header is present
+     */
+    public function hasHeader($header)
+    {
+        return array_key_exists(strtolower($header), $this->headers);
+    }
+
+    /**
+     * Remove a specific HTTP header.
+     *
+     * @param string $header HTTP header to remove.
+     *
+     * @return AbstractMessage
+     */
+    public function removeHeader($header)
+    {
+        $key = strtolower($header);
+        unset($this->headers[$key]);
+        $this->changedHeader('remove', $key);
+
+        return $this;
     }
 
     /**
      * Get a tokenized header as a Collection
      *
      * @param string $header Header to retrieve
-     * @param string $token (optional) Token separator
-     * @param int $match (optional) Match mode
+     * @param string $token  (optional) Token separator
      *
-     * @return Collection|null
+     * @return Collection|null Returns a Collection object containing the
+     *     tokenized values if the header was found.  Returns NULL otherwise.
      */
-    public function getTokenizedHeader($header, $token = ';', $match = Collection::MATCH_IGNORE_CASE)
+    public function getTokenizedHeader($header, $token = ';')
     {
-        $value = $this->getHeader($header, null, $match);
-        if (!$value) {
+        if (!$this->hasHeader($header)) {
             return null;
         }
 
         $data = new Collection();
-        foreach ((array) $value as $singleValue) {
+
+        foreach ($this->getHeader($header) as $singleValue) {
             foreach (explode($token, $singleValue) as $kvp) {
                 $parts = explode('=', $kvp, 2);
                 if (!isset($parts[1])) {
@@ -166,7 +256,7 @@ abstract class AbstractMessage implements MessageInterface
     public function setTokenizedHeader($header, $data, $token = ';')
     {
         if (!($data instanceof Collection) && !is_array($data)) {
-            throw new \InvalidArgumentException('Data must be a Collection or array');
+            throw new InvalidArgumentException('Data must be a Collection or array');
         }
 
         $values = array();
@@ -177,70 +267,6 @@ abstract class AbstractMessage implements MessageInterface
         }
 
         return $this->setHeader($header, implode($token, $values));
-    }
-
-    /**
-     * Check if the specified header is present.
-     *
-     * @param string $header The header to check.
-     * @param int $match (optional) Match mode
-     *
-     * @see AbstractMessage::getHeader
-     * @return bool|mixed Returns TRUE or FALSE if the header is present
-     */
-    public function hasHeader($header, $match = Collection::MATCH_IGNORE_CASE)
-    {
-        return false !== $this->headers->hasKey($header, $match);
-    }
-
-    /**
-     * Remove a specific HTTP header.
-     *
-     * @param string $header HTTP header to remove.
-     * @param int $match (optional) Bitwise match setting
-     *
-     * @see AbstractMessage::getHeader
-     * @return AbstractMessage
-     */
-    public function removeHeader($header, $match = Collection::MATCH_IGNORE_CASE)
-    {
-        $this->headers->remove($header, $match);
-        $this->changedHeader('remove', $header);
-
-        return $this;
-    }
-
-    /**
-     * Set an HTTP header
-     *
-     * @param string $header Name of the header to set.
-     * @param mixed $value Value to set.
-     *
-     * @return AbstractMessage
-     */
-    public function setHeader($header, $value)
-    {
-        // Remove any existing header
-        $this->removeHeader($header);
-        $this->headers->set($header, $value);
-        $this->changedHeader('set', $header);
-
-        return $this;
-    }
-
-    /**
-     * Overwrite all HTTP headers with the supplied array of headers
-     *
-     * @param array $headers Associative array of header data.
-     *
-     * @return AbstractMessage
-     */
-    public function setHeaders(array $headers)
-    {
-        $this->changedHeader('set', $this->getHeaders()->getKeys());
-        $this->headers->replace($headers);
-
-        return $this;
     }
 
     /**
@@ -309,7 +335,7 @@ abstract class AbstractMessage implements MessageInterface
      */
     protected function changedHeader($action, $keyOrArray)
     {
-        if (in_array('Cache-Control', (array) $keyOrArray)) {
+        if (in_array('cache-control', (array) $keyOrArray)) {
             $this->parseCacheControlDirective();
         }
     }
@@ -344,6 +370,25 @@ abstract class AbstractMessage implements MessageInterface
             }
         }
 
-        $this->headers->set('Cache-Control', implode(', ', $cacheControl));
+        $this->headers['cache-control'] = new Header('Cache-Control', implode(', ', $cacheControl));
+    }
+
+    /**
+     * Get headers as a string
+     *
+     * @return string
+     */
+    protected function getHeaderString()
+    {
+        $headers = '';
+        foreach ($this->headers as $key => $value) {
+            foreach ($value->raw() as $k => $v) {
+                foreach ($v as $vv) {
+                    $headers .= "{$k}: {$vv}\r\n";
+                }
+            }
+        }
+
+        return $headers;
     }
 }

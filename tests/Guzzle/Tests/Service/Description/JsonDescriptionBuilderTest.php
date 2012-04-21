@@ -10,7 +10,7 @@ use Guzzle\Service\Description\JsonDescriptionBuilder;
 class JsonDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
-     * @expectedException RuntimeException
+     * @expectedException Guzzle\Service\Exception\DescriptionBuilderException
      */
     public function testThrowsErrorsOnOpenFailure()
     {

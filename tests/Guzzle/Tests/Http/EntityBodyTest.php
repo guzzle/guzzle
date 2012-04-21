@@ -11,7 +11,7 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
      * @covers Guzzle\Http\EntityBody::factory
-     * @expectedException Guzzle\Http\HttpException
+     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
      */
     public function testFactoryThrowsException()
     {

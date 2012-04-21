@@ -2,6 +2,8 @@
 
 namespace Guzzle\Common;
 
+use Guzzle\Common\Exception\InvalidArgumentException;
+
 /**
  * OO interface to PHP streams
  */
@@ -34,7 +36,7 @@ class Stream
     public function __construct($stream, $size = null)
     {
         if (!is_resource($stream)) {
-            throw new \InvalidArgumentException('Stream must be a resource');
+            throw new InvalidArgumentException('Stream must be a resource');
         }
 
         $this->size = $size;

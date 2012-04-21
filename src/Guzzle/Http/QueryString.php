@@ -41,7 +41,7 @@ class QueryString extends Collection
     protected $aggregator = null;
 
     /**
-     * Convert the querystring parameters to a querystring string
+     * Convert the query string parameters to a query string string
      *
      * @return string
      */
@@ -72,7 +72,7 @@ class QueryString extends Collection
     }
 
     /**
-     * Aggregate mult-valued parameters using PHP style syntax
+     * Aggregate multi-valued parameters using PHP style syntax
      *
      * @param string $key The name of the query string parameter
      * @param array $value The values of the parameter

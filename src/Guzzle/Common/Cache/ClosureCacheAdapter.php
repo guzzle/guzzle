@@ -2,6 +2,8 @@
 
 namespace Guzzle\Common\Cache;
 
+use Guzzle\Common\Exception\InvalidArgumentException;
+
 /**
  * Cache adapter that defers to closures for implementation
  */
@@ -28,7 +30,7 @@ class ClosureCacheAdapter implements CacheAdapterInterface
         // Validate each key to ensure it exists and is callable
         foreach (array('contains', 'delete', 'fetch', 'save') as $key) {
             if (!array_key_exists($key, $callables) || !is_callable($callables[$key])) {
-                throw new \InvalidArgumentException(
+                throw new InvalidArgumentException(
                     "callables must contain a callable $key key");
             }
         }

@@ -235,7 +235,13 @@ class Url
      */
     public function setHost($host)
     {
-        $this->host = $host;
+        if (strpos($host, ':') === false) {
+            $this->host = $host;
+        } else {
+            list($host, $port) = explode(':', $host);
+            $this->host = $host;
+            $this->setPort($port);
+        }
 
         return $this;
     }

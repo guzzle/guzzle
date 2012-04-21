@@ -10,12 +10,21 @@ use Guzzle\Common\Collection;
 interface MessageInterface
 {
     /**
-     * Get application and plugin specific parameters set on the message.  The
-     * return object is a reference to the internal object.
+     * Get application and plugin specific parameters set on the message.
      *
      * @return Collection
      */
     function getParams();
+
+    /**
+     * Add a header to an existing collection of headers.
+     *
+     * @param string $header Header name to add
+     * @param string $value  Value of the header
+     *
+     * @return MessageInterface
+     */
+    function addHeader($header, $value);
 
     /**
      * Add and merge in an array of HTTP headers.
@@ -27,36 +36,32 @@ interface MessageInterface
     function addHeaders(array $headers);
 
     /**
-     * Retrieve an HTTP header by name
+     * Retrieve an HTTP header by name.  Performs a case-insensitive search of
+     * all headers.
      *
      * @param string $header Header to retrieve.
-     * @param mixed $default (optional) If the header is not found, the passed
-     *      $default value will be returned
-     * @param int $match (optional) Match mode:
-     *     0 - Exact match
-     *     1 - Case insensitive match
-     *     2 - Regular expression match
+     * @param bool   $string (optional) Set to true to get the header as a string
      *
-     * @return string|array|null Returns the matching HTTP header value or NULL if the
-     *     header is not found. If multiple headers are present for the header, then
-     *     an associative array is returned
+     * @return string|Header|null Returns NULL if no matching header is found.
+     *     Returns a string if $string is set to TRUE.  Returns a Header object
+     *     if a matching header is found.
      */
-    function getHeader($header, $default = null, $match = Collection::MATCH_IGNORE_CASE);
+    function getHeader($header, $string = false);
 
     /**
      * Get a tokenized header as a Collection
      *
      * @param string $header Header to retrieve
-     * @param string $token (optional) Token separator
-     * @param int $match (optional) Match mode
+     * @param string $token  (optional) Token separator
      *
-     * @return Collection|null
+     * @return Collection|null Returns a Collection object containing the
+     *     tokenized values if the header was found.  Returns NULL otherwise.
      */
-    function getTokenizedHeader($header, $token = ';', $match = Collection::MATCH_IGNORE_CASE);
+    function getTokenizedHeader($header, $token = ';');
 
     /**
      * Set a tokenized header on the request that implodes a Collection of data
-     * into a string separated by a token
+     * into a string separated by a token.
      *
      * @param string $header Header to set
      * @param array|Collection $data Header data
@@ -71,43 +76,37 @@ interface MessageInterface
      * Get all or all matching headers.
      *
      * @param array $names (optional) Pass an array of header names to retrieve
-     *      only a particular subset of headers.
-     * @param int $match (optional) Match mode
+     *     only a particular subset of headers.
      *
-     * @see MessageInterface::getHeader
-     * @return Collection Returns a collection of all headers if no $headers
-     *      array is specified, or a Collection of only the headers matching
-     *      the headers in the $headers array.
+     * @return Collection Returns a {@see Collection} of all headers if no
+     *      $headers array is specified, or a Collection of only the headers
+     *      matching the headers in the $headers array.
      */
-    function getHeaders(array $headers = null, $match = Collection::MATCH_IGNORE_CASE);
+    function getHeaders(array $headers = null);
 
     /**
      * Check if the specified header is present.
      *
      * @param string $header The header to check.
-     * @param int $match (optional) Match mode
      *
-     * @see MessageInterface::getHeader
-     * @return bool|mixed Returns TRUE or FALSE if the header is present
+     * @return bool Returns TRUE or FALSE if the header is present
      */
-    function hasHeader($header, $match = Collection::MATCH_IGNORE_CASE);
+    function hasHeader($header);
 
     /**
      * Remove a specific HTTP header.
      *
      * @param string $header HTTP header to remove.
-     * @param int $match (optional) Bitwise match setting
      *
-     * @see MessageInterface::getHeader
      * @return MessageInterface
      */
-    function removeHeader($header, $match = Collection::MATCH_IGNORE_CASE);
+    function removeHeader($header);
 
     /**
      * Set an HTTP header
      *
      * @param string $header Name of the header to set.
-     * @param mixed $value Value to set.
+     * @param mixed  $value  Value to set.
      *
      * @return MessageInterface
      */

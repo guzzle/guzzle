@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Service\Command;
+namespace Guzzle\Service\Exception;
 
 /**
  * Command Set exception

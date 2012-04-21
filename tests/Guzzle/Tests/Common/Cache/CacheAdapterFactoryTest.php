@@ -96,4 +96,16 @@ class CacheAdapterFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertInstanceOf('Guzzle\Common\Cache\DoctrineCacheAdapter', $cache);
         $this->assertInstanceOf('Doctrine\Common\Cache\ApcCache', $cache->getCacheObject());
     }
+
+    /**
+     * @covers Guzzle\Common\Cache\CacheAdapterFactory
+     * @expectedException Guzzle\Common\Exception\RuntimeException
+     */
+    public function testWrapsExceptionsOnObjectCreation()
+    {
+        CacheAdapterFactory::factory(array(
+            'cache.provider' => 'Guzzle\Tests\Mock\ExceptionMock',
+            'cache.adapter'  => 'Guzzle\Tests\Mock\ExceptionMock'
+        ));
+    }
 }

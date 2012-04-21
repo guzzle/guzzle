@@ -2,6 +2,9 @@
 
 namespace Guzzle\Service\Description;
 
+use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Service\Exception\DescriptionBuilderException;
+
 /**
  * Build service descriptions using an XML document
  */
@@ -13,11 +16,12 @@ class XmlDescriptionBuilder implements DescriptionBuilderInterface
      * @param string $file XML filename to parse
      *
      * @return array
+     * @throws InvalidArgumentException
      */
     public static function parseXmlFile($file)
     {
         if (!file_exists($file)) {
-            throw new \InvalidArgumentException('Unable to open ' . $file . ' for reading');
+            throw new DescriptionBuilderException('Unable to open ' . $file . ' for reading');
         }
 
         $xml = new \SimpleXMLElement($file, null, true);

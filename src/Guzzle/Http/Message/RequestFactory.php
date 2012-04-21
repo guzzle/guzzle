@@ -70,7 +70,7 @@ class RequestFactory implements RequestFactoryInterface
         // Normalize new lines in the message
         $message = preg_replace("/([^\r])(\n)\b/", "$1\r\n", $message);
         $parts = explode("\r\n\r\n", $message, 2);
-        $headers = array();
+        $headers = new Collection();
         $scheme = $host = $method = $user = $pass = $query = $port = $version = $protocol = '';
         $path = '/';
 
@@ -88,17 +88,10 @@ class RequestFactory implements RequestFactoryInterface
                 $key = trim($key);
                 // Normalize standard HTTP headers
                 if (in_array(strtolower($key), self::$requestHeaders)) {
-                    $key = trim(str_replace(' ', '-', ucwords(str_replace('-', ' ', $key))));
+                    $key = str_replace(' ', '-', ucwords(str_replace('-', ' ', $key)));
                 }
                 // Headers are case insensitive
-                if (!isset($headers[$key])) {
-                    $headers[$key] = trim($value);
-                } else if (is_array($headers[$key])) {
-                    // Merge into existing headers
-                    $headers[$key][] = $value;
-                } else {
-                    $headers[$key] = array($headers[$key], $value);
-                }
+                $headers->add($key, trim($value));
             }
         }
 
@@ -150,7 +143,7 @@ class RequestFactory implements RequestFactoryInterface
                 'path' => $path,
                 'query' => $query
             ),
-            'headers' => $headers,
+            'headers' => $headers->getAll(),
             'body' => $body
         );
     }
@@ -209,9 +202,9 @@ class RequestFactory implements RequestFactoryInterface
                 if ($method == 'POST' && (is_array($body) || $body instanceof Collection)) {
                     $request->addPostFields($body);
                 } else if (is_resource($body) || $body instanceof EntityBody) {
-                    $request->setBody($body, $request->getHeader('Content-Type'));
+                    $request->setBody($body, (string) $request->getHeader('Content-Type'));
                 } else {
-                    $request->setBody((string) $body, $request->getHeader('Content-Type'));
+                    $request->setBody((string) $body, (string) $request->getHeader('Content-Type'));
                 }
             }
 

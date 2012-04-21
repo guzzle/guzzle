@@ -5,8 +5,12 @@ namespace Guzzle\Http\Message;
 use Guzzle\Guzzle;
 use Guzzle\Common\Event;
 use Guzzle\Common\Collection;
+use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Common\Exception\RuntimeException;
+use Guzzle\Http\Exception\RequestException;
+use Guzzle\Http\Exception\CurlException;
+use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\ClientInterface;
-use Guzzle\Http\CurlException;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Cookie;
 use Guzzle\Http\EntityBody;
@@ -116,7 +120,6 @@ class Request extends AbstractMessage implements RequestInterface
     public function __construct($method, $url, $headers = array())
     {
         $this->method = strtoupper($method);
-        $this->headers = new Collection();
         $this->curlOptions = new Collection();
         $this->params = new Collection();
         $this->setUrl($url);
@@ -126,10 +129,12 @@ class Request extends AbstractMessage implements RequestInterface
             foreach ($headers as $key => $value) {
                 $lkey = strtolower($key);
                 // Deal with collisions with Host and Authorization
-                if ($lkey != 'host' && $lkey != 'authorization') {
-                    $this->addHeaders(array($key => $value));
-                } else {
+                if ($lkey == 'host' || $lkey == 'authorization') {
                     $this->setHeader($key, $value);
+                } else {
+                    foreach ((array) $value as $v) {
+                        $this->addHeader($key, $v);
+                    }
                 }
             }
         }
@@ -153,7 +158,14 @@ class Request extends AbstractMessage implements RequestInterface
         $this->curlOptions = clone $this->curlOptions;
         $this->params = clone $this->params;
         $this->url = clone $this->url;
-        $this->headers = clone $this->headers;
+
+        // Get a clone of the headers
+        $headers = array();
+        foreach ($this->headers as $k => $v) {
+            $headers[$k] = clone $v;
+        }
+        $this->headers = $headers;
+
         $this->response = $this->responseBody = null;
         $this->params->remove('curl_handle')
              ->remove('queued_response')
@@ -231,10 +243,7 @@ class Request extends AbstractMessage implements RequestInterface
         $raw = $this->method . ' ' . $this->getResourceUri();
         $protocolVersion = $this->protocolVersion ?: '1.1';
         $raw = trim($raw) . ' ' . strtoupper(str_replace('https', 'http', $this->url->getScheme())) . '/' . $protocolVersion . "\r\n";
-
-        foreach ($this->headers as $key => $value) {
-            $raw .= $key . ': ' . $value . "\r\n";
-        }
+        $raw .= $this->getHeaderString();
 
         return rtrim($raw, "\r\n");
     }
@@ -256,7 +265,7 @@ class Request extends AbstractMessage implements RequestInterface
         } else if ($url instanceof Url) {
             $this->url = $url;
         } else {
-            throw new \InvalidArgumentException('Invalid URL sent to ' . __METHOD__);
+            throw new InvalidArgumentException('Invalid URL sent to ' . __METHOD__);
         }
 
         $this->setHost($this->url->getHost());
@@ -281,7 +290,7 @@ class Request extends AbstractMessage implements RequestInterface
     public function send()
     {
         if (!$this->client) {
-            throw new \RuntimeException('A client must be set on the request');
+            throw new RuntimeException('A client must be set on the request');
         }
 
         return $this->client->send($this);
@@ -366,13 +375,8 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function setHost($host)
     {
-        $parts = explode(':', $host);
-        $this->url->setHost($parts[0]);
-        if (isset($parts[1])) {
-            $this->setPort($parts[1]);
-        } else {
-            $this->headers->set('Host', $host);
-        }
+        $this->url->setHost($host);
+        $this->setPort($this->url->getPort());
 
         return $this;
     }
@@ -453,12 +457,13 @@ class Request extends AbstractMessage implements RequestInterface
     public function setPort($port)
     {
         $this->url->setPort($port);
+
         // Include the port in the Host header if it is not the default port
         // for the scheme of the URL
         if (($this->url->getScheme() == 'http' && $port != 80) || ($this->url->getScheme() == 'https' && $port != 443)) {
-            $this->headers->set('Host', $this->url->getHost() . ':' . $port);
+            $this->headers['host'] = new Header('Host', $this->url->getHost() . ':' . $port);
         } else {
-            $this->headers->set('Host', $this->url->getHost());
+            $this->headers['host'] = new Header('Host', $this->url->getHost());
         }
 
         return $this;
@@ -527,14 +532,7 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function getResourceUri()
     {
-        $url = $this->url->getPath();
-
-        $query = (string) $this->url->getQuery();
-        if ($query) {
-            $url .= $query;
-        }
-
-        return $url;
+        return $this->url->getPath() . (string) $this->url->getQuery();
     }
 
     /**
@@ -618,9 +616,7 @@ class Request extends AbstractMessage implements RequestInterface
             ));
         } else if ($length > 2) {
             list($header, $value) = array_map('trim', explode(':', trim($data), 2));
-            $this->response->addHeaders(array(
-                $header => $value
-            ));
+            $this->response->addHeader($header, $value);
             $this->dispatch('request.receive.header', array(
                 'header' => $header,
                 'value'  => $value
@@ -647,13 +643,13 @@ class Request extends AbstractMessage implements RequestInterface
     {
         $response->setRequest($this);
 
-        if (!$queued) {
+        if ($queued) {
+            $this->getParams()->set('queued_response', $response);
+        } else {
             $this->getParams()->remove('queued_response');
             $this->response = $response;
             $this->responseBody = $response->getBody();
             $this->processResponse();
-        } else {
-            $this->getParams()->set('queued_response', $response);
         }
 
         $this->dispatch('request.set_response', $this->getEventArray());
@@ -720,10 +716,10 @@ class Request extends AbstractMessage implements RequestInterface
         } else if (is_array($cookies)) {
             $this->cookie->replace($cookies);
         } else {
-            throw new \InvalidArgumentException('Invalid cookie data');
+            throw new InvalidArgumentException('Invalid cookie data');
         }
 
-        $this->headers->set('Cookie', (string) $this->cookie);
+        $this->headers['cookie'] = new Header('Cookie', (string) $this->cookie);
 
         return $this;
     }
@@ -739,7 +735,7 @@ class Request extends AbstractMessage implements RequestInterface
     public function addCookie($name, $value)
     {
         $this->cookie->add($name, $value);
-        $this->headers->set('Cookie', (string) $this->cookie);
+        $this->headers['cookie'] = new Header('Cookie', (string) $this->cookie);
 
         return $this;
     }
@@ -755,7 +751,7 @@ class Request extends AbstractMessage implements RequestInterface
     public function removeCookie($name = null)
     {
         $this->cookie->remove($name);
-        $this->headers->set('Cookie', (string) $this->cookie);
+        $this->headers['cookie'] = new Header('Cookie', (string) $this->cookie);
 
         return $this;
     }
@@ -820,7 +816,8 @@ class Request extends AbstractMessage implements RequestInterface
         $keys = (array) $keyOrArray;
         parent::changedHeader($action, $keys);
 
-        if (in_array('Cookie', $keys)) {
+        // Be sure to get an cookie updates and update the internal Cookie
+        if (in_array('cookie', $keys)) {
             if ($action == 'set') {
                 $this->cookie = Cookie::factory($this->getHeader('Cookie'));
             } else if ($this->cookie) {
@@ -828,12 +825,9 @@ class Request extends AbstractMessage implements RequestInterface
             }
         }
 
-        if (in_array('Host', $keys)) {
-            $parts = explode(':', $this->getHeader('Host'));
-            $this->url->setHost($parts[0]);
-            $this->setPort(!empty($parts[1])
-                ? $parts[1]
-                : ($this->url->getScheme() == 'https' ? 443 : 80));
+        // If the Host header was changed, be sure to update the internal URL
+        if (in_array('host', $keys)) {
+            $this->setHost((string) $this->getHeader('Host'));
         }
     }
 

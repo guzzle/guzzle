@@ -3,6 +3,7 @@
 namespace Guzzle\Http\CookieJar;
 
 use Guzzle\Common\Collection;
+use Guzzle\Common\Exception\InvalidArgumentException;
 
 /**
  * Cookie jar that stores cookies an an array
@@ -155,11 +156,11 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
     public function save(array $cookieData)
     {
         if (!isset($cookieData['domain'])) {
-            throw new \InvalidArgumentException('Cookies require a domain');
+            throw new InvalidArgumentException('Cookies require a domain');
         }
 
         if (!isset($cookieData['cookie']) || !is_array($cookieData['cookie'])) {
-            throw new \InvalidArgumentException('Cookies require a names and values');
+            throw new InvalidArgumentException('Cookies require a names and values');
         }
 
         $cookieData = array_merge(array(

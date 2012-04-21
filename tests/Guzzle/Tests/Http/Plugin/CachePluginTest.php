@@ -208,13 +208,15 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         $request = $client->get('http://www.test.com/');
         $request->getParams()->set('cache.override_ttl', 1000);
-        $request->setResponse(Response::factory("HTTP/1.1 200 OK\r\nCache-Control: max-age=100\r\nContent-Length: 4\r\n\r\nData"), true);
+        $request->setResponse(Response::fromMessage("HTTP/1.1 200 OK\r\nCache-Control: max-age=100\r\nContent-Length: 4\r\n\r\nData"), true);
         $request->send();
 
         $request2 = $client->get('http://www.test.com/');
         $response = $request2->send();
 
-        $this->assertEquals(1000, $response->getHeader('X-Guzzle-Ttl'));
+        $token = $response->getTokenizedHeader('X-Guzzle-Cache', ', ');
+        $this->assertEquals(1000, $token['ttl']);
+        $this->assertEquals('key', $token->hasKey('key'));
     }
 
     /**
@@ -234,7 +236,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $client->get('test');
         // Cache this response for 1000 seconds if it is cacheable
         $request->getParams()->set('cache.override_ttl', 1000);
-        $request->setResponse(Response::factory("HTTP/1.1 200 OK\r\nExpires: " . Guzzle::getHttpDate('-1 second') . "\r\nContent-Length: 4\r\n\r\nData"), true);
+        $request->setResponse(Response::fromMessage("HTTP/1.1 200 OK\r\nExpires: " . Guzzle::getHttpDate('-1 second') . "\r\nContent-Length: 4\r\n\r\nData"), true);
         $request->send();
 
         sleep(1);
@@ -243,13 +245,15 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request2 = $client->get('test');
         $request2->addCacheControlDirective('max-stale', 100);
         $response = $request2->send();
-        $this->assertEquals(1000, $response->getHeader('X-Guzzle-Ttl'));
+        $token = $response->getTokenizedHeader('X-Guzzle-Cache', ', ');
+        $this->assertEquals(1000, $token['ttl']);
 
         // Accepts any stale response
         $request3 = $client->get('test');
         $request3->addCacheControlDirective('max-stale');
         $response = $request3->send();
-        $this->assertEquals(1000, $response->getHeader('X-Guzzle-Ttl'));
+        $token = $response->getTokenizedHeader('X-Guzzle-Cache', ', ');
+        $this->assertEquals(1000, $token['ttl']);
 
         // Will not accept the stale cached entry
         $server->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\nData");
@@ -309,7 +313,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
                 true,
                 "Pragma: no-cache\r\n\r\n",
                 "HTTP/1.1 200 OK\r\nDate: " . Guzzle::getHttpDate('-100 hours') . "\r\nContent-Length: 4\r\n\r\nData",
-                "HTTP/1.1 304 NOT MODIFIED\r\nCache-Control: max-age=2000000\r\n\r\n",
+                "HTTP/1.1 304 NOT MODIFIED\r\nCache-Control: max-age=2000000\r\nContent-Length: 0\r\n\r\n",
             ),
             // Forces revalidation that overwrites what is in cache
             array(
@@ -370,7 +374,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         }
 
         $request = RequestFactory::getInstance()->fromMessage("GET / HTTP/1.1\r\nHost: 127.0.0.1:" . $server->getPort() . "\r\n" . $request);
-        $response = Response::factory($response);
+        $response = Response::fromMessage($response);
         $request->setClient(new Client());
 
         if ($param) {
@@ -399,6 +403,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
     public function testCachesResponsesAndHijacksRequestsWhenApplicable()
     {
         $server = $this->getServer();
+        $server->flush();
         $server->enqueue("HTTP/1.1 200 OK\r\nCache-Control: max-age=1000\r\nContent-Length: 4\r\n\r\nData");
 
         $plugin = new CachePlugin($this->adapter, true);
@@ -406,18 +411,19 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $client->getEventDispatcher()->addSubscriber($plugin);
 
         $request = $client->get();
-        $request->getCurlOptions()->set(\CURLOPT_TIMEOUT, 2);
+        $request->getCurlOptions()->set(CURLOPT_TIMEOUT, 2);
         $request2 = $client->get();
-        $request2->getCurlOptions()->set(\CURLOPT_TIMEOUT, 2);
+        $request2->getCurlOptions()->set(CURLOPT_TIMEOUT, 2);
         $request->send();
         $request2->send();
 
+        $this->assertEquals(1, count($server->getReceivedRequests()));
         $this->assertEquals(true, $request2->getResponse()->hasHeader('X-Guzzle-Cache'));
     }
 
     /**
      * @covers Guzzle\Http\Plugin\CachePlugin::revalidate
-     * @expectedException Guzzle\Http\Message\BadResponseException
+     * @expectedException Guzzle\Http\Exception\BadResponseException
      */
     public function testRemovesMissingEntitesFromCacheWhenRevalidating()
     {

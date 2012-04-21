@@ -3,10 +3,11 @@
 namespace Guzzle\Http\Curl;
 
 use Guzzle\Common\AbstractHasDispatcher;
-use Guzzle\Common\ExceptionCollection;
+use Guzzle\Common\Exception\ExceptionCollection;
+use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactory;
-use Guzzle\Http\Message\RequestException;
+use Guzzle\Http\Exception\RequestException;
 
 /**
  * Send {@see RequestInterface} objects in parallel using curl_multi
@@ -495,7 +496,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
 
         return isset($this->handles[$hash]) ? $this->handles[$hash] : null;
     }
-    
+
     /**
      * Throw an exception for a cURL multi response if needed
      *
@@ -507,16 +508,16 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         if ($code <= 0) {
             return;
         }
-        
+
         if (isset($this->multiErrors[$code])) {
             $message = "cURL error: {$code} ({$this->multiErrors[$code][0]}): cURL message: {$this->multiErrors[$code][1]}";
         } else {
             $message = 'Unexpected cURL error: ' . $code;
         }
-        
+
         throw new CurlException($message);
     }
-    
+
     /**
      * Create the new cURL multi handle with error checking
      */
@@ -525,9 +526,9 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         if ($this->multiHandle && is_resource($this->multiHandle)) {
             curl_multi_close($this->multiHandle);
         }
-        
+
         $this->multiHandle = curl_multi_init();
-        
+
         // @codeCoverageIgnoreStart
         if ($this->multiHandle === false) {
             throw new CurlException('Unable to create multi handle');

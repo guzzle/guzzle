@@ -3,9 +3,10 @@
 namespace Guzzle\Http;
 
 use Guzzle\Guzzle;
-use Guzzle\Common\AbstractHasDispatcher;
-use Guzzle\Common\ExceptionCollection;
 use Guzzle\Common\Collection;
+use Guzzle\Common\AbstractHasDispatcher;
+use Guzzle\Common\Exception\ExceptionCollection;
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Url;
 use Guzzle\Http\UriTemplate;
 use Guzzle\Http\EntityBody;
@@ -98,7 +99,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         } else if (is_array($config)) {
             $this->config = new Collection($config);
         } else {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 'Config must be an array or Collection'
             );
         }
@@ -144,7 +145,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         } else if (is_array($headers)) {
             $this->defaultHeaders = new Collection($headers);
         } else {
-            throw new \InvalidArgumentException('Headers must be an array or Collection');
+            throw new InvalidArgumentException('Headers must be an array or Collection');
         }
 
         return $this;
@@ -222,7 +223,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             $templateVars = null;
         } else {
             if (count($uri) != 2 || !is_array($uri[1])) {
-                throw new \InvalidArgumentException('You must provide a URI'
+                throw new InvalidArgumentException('You must provide a URI'
                     . ' template followed by an array of template variables'
                     . ' when using an array for a URI template');
             }

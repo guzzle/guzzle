@@ -3,8 +3,9 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\EntityBody;
-use Guzzle\Http\HttpException;
+use Guzzle\Http\Exception\BadResponseException;
 
 /**
  * Guzzle HTTP response object
@@ -99,17 +100,16 @@ class Response extends AbstractMessage
      * @param string $message Response message
      *
      * @return Response
-     * @throws HttpException if an empty $message is provided
+     * @throws InvalidArgumentException if an empty $message is provided
      */
-    public static function factory($message)
+    public static function fromMessage($message)
     {
         if (!$message) {
-            throw new HttpException('No response message provided to factory');
+            throw new InvalidArgumentException('No response message provided');
         }
 
         // Normalize line endings
         $message = preg_replace("/([^\r])(\n)\b/", "$1\r\n", $message);
-
         $protocol = $code = $status = '';
         $parts = explode("\r\n\r\n", $message, 2);
         $headers = new Collection();
@@ -148,7 +148,7 @@ class Response extends AbstractMessage
      *
      * @param string $statusCode The response status code (e.g. 200, 404, etc)
      * @param Collection|array $headers (optional) The response headers
-     * @param string|EntityBody $body (optional) The body of the response
+     * @param string|resource|EntityBody $body (optional) The body of the response
      *
      * @throws BadResponseException if an invalid response code is given
      */
@@ -161,9 +161,12 @@ class Response extends AbstractMessage
         }
 
         $this->setStatus($statusCode);
-        $this->body = $body ?: EntityBody::factory();
-        $this->headers = new Collection();
         $this->params = new Collection();
+        if ($body) {
+            $this->body = EntityBody::factory($body);
+        } else {
+            $this->body = EntityBody::factory();
+        }
 
         if ($headers) {
             if (!is_array($headers) && !($headers instanceof Collection)) {
@@ -173,8 +176,6 @@ class Response extends AbstractMessage
                 $this->addHeaders(array($key => $value));
             }
         }
-
-        $this->body = EntityBody::factory($body ?: '');
     }
 
     /**
@@ -327,12 +328,7 @@ class Response extends AbstractMessage
     public function getRawHeaders()
     {
         $headers = 'HTTP/1.1 ' . $this->statusCode . ' ' . $this->reasonPhrase . "\r\n";
-
-        foreach ($this->headers as $key => $value) {
-            foreach ((array) $value as $v) {
-                $headers .= $key . ': ' . $v . "\r\n";
-            }
-        }
+        $headers .= $this->getHeaderString();
 
         return $headers . "\r\n";
     }
@@ -361,12 +357,12 @@ class Response extends AbstractMessage
     /**
      * Get the Accept-Ranges HTTP header
      *
-     * @return string|integer Returns what partial content range types this
+     * @return string Returns what partial content range types this
      *      server supports.
      */
     public function getAcceptRanges()
     {
-        return $this->headers->get('/^Accept-*Ranges$/i', null, Collection::MATCH_REGEX);
+        return $this->getHeader('Accept-Ranges', true);
     }
 
     /**
@@ -380,7 +376,7 @@ class Response extends AbstractMessage
      */
     public function getAge($headerOnly = false)
     {
-        $age = $this->headers->get('Age', null, Collection::MATCH_IGNORE_CASE);
+        $age = $this->getHeader('Age', true);
 
         if (!$headerOnly && $age === null && $this->getDate()) {
             $age = time() - strtotime($this->getDate());
@@ -397,7 +393,7 @@ class Response extends AbstractMessage
      */
     public function getAllow()
     {
-        return $this->headers->get('Allow', null, Collection::MATCH_IGNORE_CASE);
+        return $this->getHeader('Allow', true);
     }
 
     /**
@@ -409,26 +405,27 @@ class Response extends AbstractMessage
      */
     public function isMethodAllowed($method)
     {
-        $allow = $this->getAllow();
-        if (!$allow) {
-            return false;
-        } else {
-            return false !== array_search(
-                strtoupper($method),
-                array_map('trim', array_map('strtoupper', explode(',', $allow)))
-            );
+        $allow = $this->getHeader('Allow');
+        if ($allow) {
+            foreach (explode(',', $allow) as $allowable) {
+                if (!strcasecmp(trim($allowable), $method)) {
+                    return true;
+                }
+            }
         }
+
+        return false;
     }
 
     /**
      * Get the Cache-Control HTTP header
      *
-     * @return string|null Returns a string that tells all caching mechanisms
-     *      from server to client whether they may cache this object.
+     * @return Header|null Returns a Header object that tells all caching
+     *      mechanisms from server to client whether they may cache this object.
      */
     public function getCacheControl()
     {
-        return $this->headers->get('/^Cache-*Control$/i', null, Collection::MATCH_REGEX);
+        return $this->getHeader('Cache-Control');
     }
 
     /**
@@ -438,7 +435,7 @@ class Response extends AbstractMessage
      */
     public function getConnection()
     {
-        return $this->headers->get('Connection', null, Collection::MATCH_IGNORE_CASE);
+        return $this->getHeader('Connection', true);
     }
 
     /**
@@ -449,7 +446,7 @@ class Response extends AbstractMessage
      */
     public function getContentEncoding()
     {
-        return $this->headers->get('/^Content-*Encoding$/i', null, Collection::MATCH_REGEX);
+        return $this->getHeader('Content-Encoding', true);
     }
 
     /**
@@ -459,7 +456,7 @@ class Response extends AbstractMessage
      */
     public function getContentLanguage()
     {
-        return $this->headers->get('/^Content-*Language$/i', null, Collection::MATCH_REGEX);
+        return $this->getHeader('Content-Language', true);
     }
 
     /**
@@ -469,7 +466,7 @@ class Response extends AbstractMessage
      */
     public function getContentLength()
     {
-        return $this->headers->get('/^Content-*Length$/i', null, Collection::MATCH_REGEX);
+        return (int) $this->getHeader('Content-Length', true);
     }
 
     /**
@@ -480,7 +477,7 @@ class Response extends AbstractMessage
      */
     public function getContentLocation()
     {
-        return $this->headers->get('/^Content-*Location$/i', null, Collection::MATCH_REGEX);
+        return $this->getHeader('Content-Location', true);
     }
 
     /**
@@ -490,7 +487,7 @@ class Response extends AbstractMessage
      */
     public function getContentDisposition()
     {
-        return $this->headers->get('/^Content-*Disposition$/i', null, Collection::MATCH_REGEX);
+        return (string) $this->getHeader('Content-Disposition')->setGlue(';');
     }
 
     /**
@@ -501,7 +498,7 @@ class Response extends AbstractMessage
      */
     public function getContentMd5()
     {
-        return $this->headers->get('/^Content-*MD5$/i', null, Collection::MATCH_REGEX);
+        return $this->getHeader('Content-MD5', true);
     }
 
     /**
@@ -512,7 +509,7 @@ class Response extends AbstractMessage
      */
     public function getContentRange()
     {
-        return $this->headers->get('/^Content-*Range$/i', null, Collection::MATCH_REGEX);
+        return $this->getHeader('Content-Range', true);
     }
 
     /**
@@ -522,7 +519,7 @@ class Response extends AbstractMessage
      */
     public function getContentType()
     {
-        return $this->headers->get('/^Content-*Type$/i', null, Collection::MATCH_REGEX);
+        return $this->getHeader('Content-Type', true);
     }
 
     /**
@@ -546,7 +543,7 @@ class Response extends AbstractMessage
      */
     public function getDate()
     {
-        return $this->headers->get('Date', null, Collection::MATCH_IGNORE_CASE);
+        return $this->getHeader('Date', true);
     }
 
     /**
@@ -557,7 +554,7 @@ class Response extends AbstractMessage
      */
     public function getEtag()
     {
-        $etag = $this->headers->get('ETag', null, Collection::MATCH_IGNORE_CASE);
+        $etag = $this->getHeader('ETag', true);
 
         return $etag ? str_replace('"', '', $etag) : null;
     }
@@ -570,7 +567,7 @@ class Response extends AbstractMessage
      */
     public function getExpires()
     {
-        return $this->headers->get('Expires', null, Collection::MATCH_IGNORE_CASE);
+        return $this->getHeader('Expires', true);
     }
 
     /**
@@ -581,7 +578,7 @@ class Response extends AbstractMessage
      */
     public function getLastModified()
     {
-        return $this->headers->get('/^Last-*Modified$/i', null, Collection::MATCH_REGEX);
+        return $this->getHeader('Last-Modified', true);
     }
 
     /**
@@ -592,18 +589,18 @@ class Response extends AbstractMessage
      */
     public function getLocation()
     {
-        return $this->headers->get('Location', null, Collection::MATCH_IGNORE_CASE);
+        return $this->getHeader('Location', true);
     }
 
     /**
      * Get the Pragma HTTP header
      *
-     * @return string|null Returns the implementation-specific headers that may
+     * @return Header|null Returns the implementation-specific headers that may
      *      have various effects anywhere along the request-response chain.
      */
     public function getPragma()
     {
-        return $this->headers->get('Pragma', null, Collection::MATCH_IGNORE_CASE);
+        return $this->getHeader('Pragma');
     }
 
     /**
@@ -613,18 +610,27 @@ class Response extends AbstractMessage
      */
     public function getProxyAuthenticate()
     {
-        return $this->headers->get('/^Proxy-*Authenticate$/i', null, Collection::MATCH_REGEX);
+        return $this->getHeader('Proxy-Authenticate', true);
     }
 
     /**
      * Get the Retry-After HTTP header
      *
-     * @return integer|null If an entity is temporarily unavailable, this
+     * @return int|null If an entity is temporarily unavailable, this
      *      instructs the client to try again after a specified period of time.
      */
     public function getRetryAfter()
     {
-        return $this->headers->get('/^Retry-*After$/i', null, Collection::MATCH_REGEX);
+        $time = $this->getHeader('Retry-After', true);
+        if ($time === null) {
+            return null;
+        }
+
+        if (!is_numeric($time)) {
+            $time = strtotime($time) - time();
+        }
+
+        return (int) $time;
     }
 
     /**
@@ -634,26 +640,17 @@ class Response extends AbstractMessage
      */
     public function getServer()
     {
-        return $this->headers->get('Server', null, Collection::MATCH_IGNORE_CASE);
+        return $this->getHeader('Server', true);
     }
 
     /**
      * Get the Set-Cookie HTTP header
      *
-     * @return string|null An HTTP cookie.
+     * @return Header|null An HTTP cookie.
      */
     public function getSetCookie()
     {
-        $normalized = array();
-        foreach ($this->headers->getAll('Set-Cookie', Collection::MATCH_IGNORE_CASE) as $list) {
-            if (is_array($list)) {
-                $normalized = array_merge($normalized, $list);
-            } else {
-                $normalized[] = $list;
-            }
-        }
-
-        return count($normalized) == 1 ? end($normalized) : $normalized;
+        return $this->getHeader('Set-Cookie');
     }
 
     /**
@@ -665,7 +662,7 @@ class Response extends AbstractMessage
      */
     public function getTrailer()
     {
-        return $this->headers->get('Trailer', null, Collection::MATCH_IGNORE_CASE);
+        return $this->getHeader('Trailer', true);
     }
 
     /**
@@ -676,7 +673,7 @@ class Response extends AbstractMessage
      */
     public function getTransferEncoding()
     {
-        return $this->headers->get('/^Transfer\-*Encoding$/i', null, Collection::MATCH_REGEX);
+        return $this->getHeader('Transfer-Encoding', true);
     }
 
     /**
@@ -688,7 +685,7 @@ class Response extends AbstractMessage
      */
     public function getVary()
     {
-        return $this->headers->get('Vary', null, Collection::MATCH_IGNORE_CASE);
+        return $this->getHeader('Vary', true);
     }
 
     /**
@@ -699,7 +696,7 @@ class Response extends AbstractMessage
      */
     public function getVia()
     {
-        return $this->headers->get('Via', null, Collection::MATCH_IGNORE_CASE);
+        return $this->getHeader('Via', true);
     }
 
     /**
@@ -710,7 +707,7 @@ class Response extends AbstractMessage
      */
     public function getWarning()
     {
-        return $this->headers->get('Warning', null, Collection::MATCH_IGNORE_CASE);
+        return $this->getHeader('Warning', true);
     }
 
     /**
@@ -721,7 +718,7 @@ class Response extends AbstractMessage
      */
     public function getWwwAuthenticate()
     {
-        return $this->headers->get('/^WWW-*Authenticate$/i', null, Collection::MATCH_REGEX);
+        return $this->getHeader('WWW-Authenticate', true);
     }
 
     /**

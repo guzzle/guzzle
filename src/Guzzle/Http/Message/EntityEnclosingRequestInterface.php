@@ -74,7 +74,7 @@ interface EntityEnclosingRequestInterface extends RequestInterface
      * @return EntityEnclosingRequestInterface
      */
     function setPostField($key, $value);
-    
+
     /**
      * Add POST files to use in the upload
      *

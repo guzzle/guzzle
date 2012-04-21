@@ -1,13 +1,15 @@
 <?php
 
-namespace Guzzle\Http\Message;
+namespace Guzzle\Http\Exception;
 
+use Guzzle\Common\Exception\RuntimeException;
+use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\HttpException;
 
 /**
  * Http request exception
  */
-class RequestException extends HttpException
+class RequestException extends RuntimeException implements HttpException
 {
     /**
      * @var RequestInterface

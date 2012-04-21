@@ -8,7 +8,7 @@ use Guzzle\Http\Client;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\RequestFactory;
-use Guzzle\Http\Message\RequestException;
+use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\EntityEnclosingRequest;
 use Guzzle\Http\QueryString;
@@ -111,7 +111,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $request = RequestFactory::getInstance()->create('PUT', 'http://www.test.com/');
         $request->setBody(EntityBody::factory('test'));
-        $this->assertEquals(4, $request->getHeader('Content-Length'));
+        $this->assertEquals(4, (string) $request->getHeader('Content-Length'));
         $this->assertFalse($request->hasHeader('Transfer-Encoding'));
     }
 
@@ -189,12 +189,12 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request->send();
 
         $this->assertNotNull($request->getHeader('Content-Length'));
-        $this->assertContains('multipart/form-data; boundary=', $request->getHeader('Content-Type'), '-> cURL must add the boundary');
+        $this->assertContains('multipart/form-data; boundary=', (string) $request->getHeader('Content-Type'), '-> cURL must add the boundary');
     }
 
     /**
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFiles
-     * @expectedException Guzzle\Http\Message\RequestException
+     * @expectedException Guzzle\Http\Exception\RequestException
      */
     public function testSetPostFilesThrowsExceptionWhenFileIsNotFound()
     {
@@ -265,8 +265,8 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         // Ensure that the same request was sent twice with different bodies
         $requests = $this->getServer()->getReceivedRequests(true);
         $this->assertEquals(2, count($requests));
-        $this->assertEquals(4, $requests[0]->getHeader('Content-Length'));
-        $this->assertEquals(7, $requests[1]->getHeader('Content-Length'));
+        $this->assertEquals(4, $requests[0]->getHeader('Content-Length', true));
+        $this->assertEquals(7, $requests[1]->getHeader('Content-Length', true));
     }
 
     /**
@@ -295,7 +295,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::setBody
-     * @expectedException Guzzle\Http\Message\RequestException
+     * @expectedException Guzzle\Http\Exception\RequestException
      */
     public function testThrowsExceptionWhenContentLengthCannotBeDeterminedAndUsingHttp1()
     {

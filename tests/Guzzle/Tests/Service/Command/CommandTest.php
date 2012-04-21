@@ -210,7 +210,7 @@ class CommandTest extends AbstractCommandTest
         $this->assertEquals('123', $command->getRequestHeaders()->get('test'));
 
         $command->setClient($this->getClient())->prepare();
-        $this->assertEquals('123', $command->getRequest()->getHeaders()->get('test'));
+        $this->assertEquals('123', (string) $command->getRequest()->getHeader('test'));
     }
 
     /**

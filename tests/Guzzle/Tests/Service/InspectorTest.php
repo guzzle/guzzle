@@ -2,8 +2,9 @@
 
 namespace Guzzle\Tests\Common;
 
-use Guzzle\Service\Inspector;
 use Guzzle\Common\Collection;
+use Guzzle\Service\Inspector;
+use Guzzle\Service\Exception\ValidationException;
 use Symfony\Component\Validator\ConstraintValidatorFactory;
 use Symfony\Component\Validator\Validator;
 use Symfony\Component\Validator\Mapping\Loader\StaticMethodLoader;
@@ -33,7 +34,7 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Inspector::validateClass
-     * @expectedException InvalidArgumentException
+     * @expectedException Guzzle\Service\Exception\ValidationException
      */
     public function testValidatesRequiredArgs()
     {
@@ -94,7 +95,7 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase
         try {
             $c = Inspector::prepareConfig(null, null, array('a'));
             $this->fail('Exception not throw when missing config');
-        } catch (\InvalidArgumentException $e) {
+        } catch (ValidationException $e) {
         }
     }
 
@@ -117,7 +118,7 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Inspector::validateClass
-     * @expectedException InvalidArgumentException
+     * @expectedException Guzzle\Service\Exception\ValidationException
      */
     public function testValidatesTypeHints()
     {
@@ -217,7 +218,7 @@ EOT;
                 'api_version' => 'v10'
             )));
             $this->fail('Expected exception not thrown when params are invalid');
-        } catch (\InvalidArgumentException $e) {
+        } catch (ValidationException $e) {
 
             $concat = $e->getMessage();
             $this->assertContains("Validation errors: Requires that the username argument be supplied.  (API username)", $concat);

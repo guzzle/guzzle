@@ -237,7 +237,7 @@ class CookiePlugin implements EventSubscriberInterface
         }
 
         $cookieData = array();
-        foreach ((array) $cookie as $c) {
+        foreach ($cookie as $c) {
             $cdata = self::parseCookie($c, $response->getRequest());
 
             //@codeCoverageIgnoreStart

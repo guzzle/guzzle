@@ -3,6 +3,7 @@
 namespace Guzzle\Service\Command;
 
 use Guzzle\Guzzle;
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;
 use Guzzle\Http\UriTemplate;
@@ -19,7 +20,7 @@ class DynamicCommand extends AbstractCommand
     protected function init()
     {
         if (!$this->apiCommand) {
-            throw new \InvalidArgumentException('An API command must be passed');
+            throw new InvalidArgumentException('An API command must be passed');
         }
     }
 

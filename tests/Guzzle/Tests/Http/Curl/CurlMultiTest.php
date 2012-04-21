@@ -3,7 +3,7 @@
 namespace Guzzle\Tests\Http\Curl;
 
 use Guzzle\Common\Event;
-use Guzzle\Common\ExceptionCollection;;
+use Guzzle\Common\Exception\ExceptionCollection;;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Log\ClosureLogAdapter;
 use Guzzle\Http\Client;
@@ -12,7 +12,7 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Curl\CurlHandle;
 use Guzzle\Http\Curl\CurlMulti;
-use Guzzle\Http\Curl\CurlException;
+use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Plugin\LogPlugin;
 use Guzzle\Tests\Mock\MockMulti;
 
@@ -377,7 +377,7 @@ class ExceptionCollectionTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Curl\CurlMulti
      * @covers Guzzle\Http\Curl\CurlMulti::removeErroredRequest
-     * @expectedException Guzzle\Common\ExceptionCollection
+     * @expectedException Guzzle\Common\Exception\ExceptionCollection
      * @expectedExceptionMessage Thrown before sending!
      */
     public function testCatchesExceptionsBeforeSendingRequests()
@@ -393,7 +393,7 @@ class ExceptionCollectionTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Curl\CurlMulti
      * @covers Guzzle\Http\Curl\CurlMulti::removeErroredRequest
-     * @expectedException Guzzle\Http\Message\BadResponseException
+     * @expectedException Guzzle\Http\Exception\BadResponseException
      */
     public function testCatchesExceptionsWhenRemovingQueuedRequests()
     {
@@ -410,7 +410,7 @@ class ExceptionCollectionTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Curl\CurlMulti
      * @covers Guzzle\Http\Curl\CurlMulti::removeErroredRequest
-     * @expectedException Guzzle\Http\Message\BadResponseException
+     * @expectedException Guzzle\Http\Exception\BadResponseException
      */
     public function testCatchesExceptionsWhenRemovingQueuedRequestsBeforeSending()
     {
@@ -427,7 +427,7 @@ class ExceptionCollectionTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Curl\CurlMulti::send
      * @covers Guzzle\Http\Curl\CurlMulti::removeErroredRequest
-     * @expectedException Guzzle\Common\ExceptionCollection
+     * @expectedException Guzzle\Common\Exception\ExceptionCollection
      * @expectedExceptionMessage test
      */
     public function testCatchesRandomExceptionsThrownDuringPerform()
@@ -486,21 +486,21 @@ class ExceptionCollectionTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertNotContains('Re-using existing connection', $message);
     }
-    
+
     /**
      * @covers Guzzle\Http\Curl\CurlMulti::checkCurlResult
      */
     public function testThrowsMeaningfulExceptionsForCurlMultiErrors()
     {
         $multi = new CurlMulti();
-        
+
         // Set the state of the multi object to sending to trigger the exception
         $reflector = new \ReflectionMethod('Guzzle\Http\Curl\CurlMulti', 'checkCurlResult');
         $reflector->setAccessible(true);
-        
+
         // Successful
         $reflector->invoke($multi, 0);
-        
+
         // Known error
         try {
             $reflector->invoke($multi, CURLM_BAD_HANDLE);
@@ -510,7 +510,7 @@ class ExceptionCollectionTest extends \Guzzle\Tests\GuzzleTestCase
             $this->assertContains('CURLM_BAD_HANDLE', $e->getMessage());
             $this->assertContains(strval(CURLM_BAD_HANDLE), $e->getMessage());
         }
-        
+
         // Unknown error
         try {
             $reflector->invoke($multi, 255);

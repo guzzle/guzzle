@@ -13,8 +13,8 @@ use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
-use Guzzle\Http\Message\RequestException;
-use Guzzle\Http\Message\BadResponseException;
+use Guzzle\Http\Exception\RequestException;
+use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Tests\Mock\MockObserver;
 
 /**
@@ -90,6 +90,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Message\Request::__toString
      * @covers Guzzle\Http\Message\Request::getRawHeaders
+     * @covers Guzzle\Http\Message\AbstractMessage::getHeaderString
      */
     public function testRequestsCanBeConvertedToRawMessageStrings()
     {
@@ -281,11 +282,11 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     public function testRequestHasHost()
     {
         $this->assertEquals('127.0.0.1', $this->request->getHost());
-        $this->assertEquals('127.0.0.1:8124', $this->request->getHeader('Host'));
+        $this->assertEquals('127.0.0.1:8124', (string) $this->request->getHeader('Host'));
 
         $this->assertSame($this->request, $this->request->setHost('www2.google.com'));
         $this->assertEquals('www2.google.com', $this->request->getHost());
-        $this->assertEquals('www2.google.com', $this->request->getHeader('Host'));
+        $this->assertEquals('www2.google.com:8124', (string) $this->request->getHeader('Host'));
 
         $this->assertSame($this->request, $this->request->setHost('www.test.com:8081'));
         $this->assertEquals('www.test.com', $this->request->getHost());
@@ -543,7 +544,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Message\Request::processResponse
-     * @expectedException Guzzle\Http\Message\RequestException
+     * @expectedException Guzzle\Http\Exception\RequestException
      * @expectedExceptionMessage Error completing request
      */
     public function testRequestThrowsExceptionWhenSetToCompleteWithNoResponse()
@@ -558,13 +559,15 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $p = new ExponentialBackoffPlugin();
         $this->request->getEventDispatcher()->addSubscriber($p);
+        $h = $this->request->getHeader('Host');
 
         $r = clone $this->request;
         $this->assertEquals(RequestInterface::STATE_NEW, $r->getState());
         $this->assertNotSame($r->getQuery(), $this->request->getQuery());
         $this->assertNotSame($r->getCurlOptions(), $this->request->getCurlOptions());
         $this->assertNotSame($r->getEventDispatcher(), $this->request->getEventDispatcher());
-        $this->assertNotSame($r->getHeaders(), $this->request->getHeaders());
+        $this->assertEquals($r->getHeaders(), $this->request->getHeaders());
+        $this->assertNotSame($h, $r->getHeader('Host'));
         $this->assertNotSame($r->getParams(), $this->request->getParams());
         $this->assertNull($r->getParams()->get('queued_response'));
 
@@ -580,14 +583,14 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         // Tests setting using headers
         $this->request->setHeader('Host', 'www.abc.com');
         $this->assertEquals('www.abc.com', $this->request->getHost());
-        $this->assertEquals('www.abc.com', $this->request->getHeader('Host'));
-        $this->assertEquals(80, $this->request->getPort());
+        $this->assertEquals('www.abc.com:8124', $this->request->getHeader('Host'));
+        $this->assertEquals(8124, $this->request->getPort());
 
         // Tests setting using setHost()
         $this->request->setHost('abc.com');
         $this->assertEquals('abc.com', $this->request->getHost());
-        $this->assertEquals('abc.com', $this->request->getHeader('Host'));
-        $this->assertEquals(80, $this->request->getPort());
+        $this->assertEquals('abc.com:8124', $this->request->getHeader('Host'));
+        $this->assertEquals(8124, $this->request->getPort());
 
         // Tests setting with a port
         $this->request->setHost('abc.com:8081');
@@ -598,15 +601,15 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         // Tests setting with a port using the Host header
         $this->request->setHeader('Host', 'solr.com:8983');
         $this->assertEquals('solr.com', $this->request->getHost());
-        $this->assertEquals('solr.com:8983', $this->request->getHeader('Host'));
+        $this->assertEquals('solr.com:8983', (string) $this->request->getHeader('Host'));
         $this->assertEquals(8983, $this->request->getPort());
 
         // Tests setting with an inferred 443 port using the Host header
         $this->request->setScheme('https');
         $this->request->setHeader('Host', 'solr.com');
         $this->assertEquals('solr.com', $this->request->getHost());
-        $this->assertEquals('solr.com', $this->request->getHeader('Host'));
-        $this->assertEquals(443, $this->request->getPort());
+        $this->assertEquals('solr.com:8983', (string) $this->request->getHeader('Host'));
+        $this->assertEquals(8983, $this->request->getPort());
     }
 
     /**

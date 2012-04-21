@@ -3,7 +3,7 @@
 namespace Guzzle\Http\Curl;
 
 use Guzzle\Common\HasDispatcherInterface;
-use Guzzle\Common\ExceptionCollection;
+use Guzzle\Common\Exception\ExceptionCollection;
 use Guzzle\Http\Message\RequestInterface;
 
 /**

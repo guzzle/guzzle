@@ -5,6 +5,7 @@ namespace Guzzle\Http\Message;
 use Guzzle\Common\Collection;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\QueryString;
+use Guzzle\Http\Exception\RequestException;
 
 /**
  * HTTP request that sends an entity-body in the request message (POST, PUT)
@@ -63,7 +64,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         $this->setHeader('Expect', '100-Continue');
 
         if ($contentType) {
-            $this->setHeader('Content-Type', $contentType);
+            $this->setHeader('Content-Type', (string) $contentType);
         }
 
         if ($tryChunkedTransfer) {

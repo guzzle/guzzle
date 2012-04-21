@@ -5,6 +5,4 @@ namespace Guzzle\Common;
 /**
  * Guzzle exception
  */
-interface GuzzleExceptionInterface
-{
-}
+interface GuzzleException {}

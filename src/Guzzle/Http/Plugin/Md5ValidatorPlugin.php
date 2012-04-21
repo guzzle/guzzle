@@ -3,6 +3,7 @@
 namespace Guzzle\Http\Plugin;
 
 use Guzzle\Common\Event;
+use Guzzle\Common\Exception\UnexpectedValueException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -90,7 +91,7 @@ class Md5ValidatorPlugin implements EventSubscriberInterface
         }
 
         if ($contentMd5 !== $hash) {
-            throw new \UnexpectedValueException(sprintf(
+            throw new UnexpectedValueException(sprintf(
                 'The response entity body may have been '
                 . 'modified over the wire.  The Content-MD5 '
                 . 'received (%s) did not match the calculated '

@@ -7,6 +7,7 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\ClientInterface;
 use Guzzle\Service\Description\ApiCommand;
+use Guzzle\Service\Exception\CommandException;
 
 /**
  * Command object to handle preparing and processing client requests and
@@ -41,7 +42,7 @@ interface CommandInterface
      * Execute the command
      *
      * @return Command
-     * @throws RuntimeException if a client has not been associated with the command
+     * @throws CommandException if a client has not been associated with the command
      */
     function execute();
 
@@ -65,7 +66,7 @@ interface CommandInterface
      * Get the request object associated with the command
      *
      * @return RequestInterface
-     * @throws RuntimeException if the command has not been executed
+     * @throws CommandException if the command has not been executed
      */
     function getRequest();
 
@@ -73,7 +74,7 @@ interface CommandInterface
      * Get the response object associated with the command
      *
      * @return Response
-     * @throws RuntimeException if the command has not been executed
+     * @throws CommandException if the command has not been executed
      */
     function getResponse();
 
@@ -82,7 +83,7 @@ interface CommandInterface
      *
      * @return Response By default, commands return a Response
      *      object unless overridden in a subclass
-     * @throws RuntimeException if the command has not been executed
+     * @throws CommandException if the command has not been executed
      */
     function getResult();
 
@@ -104,7 +105,7 @@ interface CommandInterface
      * Prepare the command for executing and create a request object.
      *
      * @return RequestInterface Returns the generated request
-     * @throws RuntimeException if a client object has not been set previously
+     * @throws CommandException if a client object has not been set previously
      *      or in the prepare()
      */
     function prepare();

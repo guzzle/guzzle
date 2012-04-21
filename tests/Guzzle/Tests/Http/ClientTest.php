@@ -394,7 +394,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Client::send
-     * @expectedException Guzzle\Http\Message\BadResponseException
+     * @expectedException Guzzle\Http\Exception\BadResponseException
      */
     public function testClientThrowsExceptionForSingleRequest()
     {
@@ -408,7 +408,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Client::send
-     * @expectedException Guzzle\Common\ExceptionCollection
+     * @expectedException Guzzle\Common\Exception\ExceptionCollection
      */
     public function testClientThrowsExceptionForMultipleRequests()
     {

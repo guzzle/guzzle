@@ -310,7 +310,6 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
             . "zoo:456\r\n\r\n";
 
         $parts = RequestFactory::getInstance()->parseMessage($message);
-
         $this->assertEquals(array (
             'DATE' => 'Mon, 09 Sep 2011 23:36:00 GMT',
             'Host' => 'host.foo.com',
@@ -319,11 +318,32 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         ), $parts['headers']);
 
         $request = RequestFactory::getInstance()->fromMessage($message);
-
         $this->assertEquals(array(
             'ZOO' => array('abc', '123', 'HI'),
-            'zoo' => '456'
-        ), $request->getHeader('zoo'));
+            'zoo' => array('456')
+        ), $request->getHeader('zoo')->raw());
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\RequestFactory::fromMessage
+     * @covers Guzzle\Http\Message\RequestFactory::parseMessage
+     * @covers Guzzle\Http\Message\RequestFactory::create
+     */
+    public function testCreatesHttpMessagesWithBodies()
+    {
+        $message = "POST / http/1.1\r\n"
+                 . "Content-Type:application/x-www-form-urlencoded; charset=utf8\r\n"
+                 . "Date:Mon, 09 Sep 2011 23:36:00 GMT\r\n"
+                 . "Host:host.foo.com\r\n\r\n"
+                 . "foo=bar";
+
+        $request = RequestFactory::getInstance()->fromMessage($message);
+        $this->assertEquals('application/x-www-form-urlencoded; charset=utf8', (string) $request->getHeader('Content-Type'));
+
+        $message = "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n";
+        $request = RequestFactory::getInstance()->fromMessage($message);
+        $this->assertTrue($request->hasHeader('Content-Length'));
+        $this->assertEquals(0, (string) $request->getHeader('Content-Length'));
     }
 
     /**

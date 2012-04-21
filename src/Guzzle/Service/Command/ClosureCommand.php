@@ -2,6 +2,8 @@
 
 namespace Guzzle\Service\Command;
 
+use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Common\Exception\UnexpectedValueException;
 use Guzzle\Http\Message\RequestInterface;
 
 /**
@@ -20,7 +22,7 @@ class ClosureCommand extends AbstractCommand
     protected function init()
     {
         if (!$this->get('closure')) {
-            throw new \InvalidArgumentException('A closure must be passed in the parameters array');
+            throw new InvalidArgumentException('A closure must be passed in the parameters array');
         }
     }
 
@@ -35,7 +37,7 @@ class ClosureCommand extends AbstractCommand
         $this->request = $closure($this, $this->apiCommand);
 
         if (!$this->request || !$this->request instanceof RequestInterface) {
-            throw new \UnexpectedValueException('Closure command did not return a RequestInterface object');
+            throw new UnexpectedValueException('Closure command did not return a RequestInterface object');
         }
     }
 }

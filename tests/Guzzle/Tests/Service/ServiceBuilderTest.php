@@ -4,6 +4,7 @@ namespace Guzzle\Tests\Service;
 
 use Guzzle\Service\ServiceBuilder;
 use Guzzle\Service\Client;
+use Guzzle\Service\Exception\ServiceNotFoundException;
 
 class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
 {
@@ -95,7 +96,7 @@ EOT;
 
     /**
      * @covers Guzzle\Service\ServiceBuilder::factory
-     * @expectedException RuntimeException
+     * @expectedException Guzzle\Service\Exception\ServiceBuilderException
      * @expectedExceptionMessage Unable to open foobarfile
      */
     public function testFactoryEnsuresItCanOpenFile()
@@ -127,7 +128,7 @@ EOT;
             ServiceBuilder::factory($tempFile, 'xml');
             unlink($tempFile);
             $this->fail('Test did not throw ServiceException');
-        } catch (\LogicException $e) {
+        } catch (ServiceNotFoundException $e) {
             $this->assertEquals('invalid is trying to extend a non-existent service: missing', $e->getMessage());
         }
 
@@ -136,7 +137,7 @@ EOT;
 
     /**
      * @covers Guzzle\Service\ServiceBuilder::get
-     * @expectedException InvalidArgumentException
+     * @expectedException Guzzle\Service\Exception\ClientNotFoundException
      * @expectedExceptionMessage No client is registered as foobar
      */
     public function testThrowsExceptionWhenGettingInvalidClient()
@@ -292,7 +293,7 @@ EOT;
 
     /**
      * @covers Guzzle\Service\ServiceBuilder::factory
-     * @expectedException InvalidArgumentException
+     * @expectedException Guzzle\Service\Exception\ServiceBuilderException
      * @expectedExceptionMessage Must pass a file name, array, or SimpleXMLElement
      */
     public function testFactoryValidatesObjectTypes()

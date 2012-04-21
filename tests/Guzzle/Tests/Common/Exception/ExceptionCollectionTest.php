@@ -1,8 +1,8 @@
 <?php
 
-namespace Guzzle\Tests\Common;
+namespace Guzzle\Tests\Common\Exception;
 
-use Guzzle\Common\ExceptionCollection;
+use Guzzle\Common\Exception\ExceptionCollection;
 
 class ExceptionCollectionTest extends \Guzzle\Tests\GuzzleTestCase
 {

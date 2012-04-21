@@ -1,11 +1,11 @@
 <?php
 
-namespace Guzzle\Tests\Http\Curl;
+namespace Guzzle\Tests\Http\Exception;
 
-use Guzzle\Http\Curl\CurlException;
+use Guzzle\Http\Exception\CurlException;
 
 /**
- * @covers Guzzle\Http\Curl\CurlException
+ * @covers Guzzle\Http\Exception\CurlException
  */
 class CurlExceptionTest extends \Guzzle\Tests\GuzzleTestCase
 {

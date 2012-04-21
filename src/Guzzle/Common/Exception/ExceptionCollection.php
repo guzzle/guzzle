@@ -1,11 +1,13 @@
 <?php
 
-namespace Guzzle\Common;
+namespace Guzzle\Common\Exception;
+
+use Guzzle\Common\GuzzleException;
 
 /**
  * Collection of exceptions
  */
-class ExceptionCollection extends \Exception implements GuzzleExceptionInterface, \IteratorAggregate, \Countable
+class ExceptionCollection extends \Exception implements GuzzleException, \IteratorAggregate, \Countable
 {
     /**
      * @var array Array of Exceptions

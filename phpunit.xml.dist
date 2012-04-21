@@ -20,7 +20,18 @@
             <directory suffix=".php">./src/Guzzle</directory>
             <exclude>
                 <directory suffix="Interface.php">./src/Guzzle</directory>
+                <file>./src/Guzzle/Common/GuzzleException.php</file>
                 <file>./src/Guzzle/Http/HttpException.php</file>
+                <file>./src/Guzzle/Common/Exception/BadMethodCallException.php</file>
+                <file>./src/Guzzle/Common/Exception/InvalidArgumentException.php</file>
+                <file>./src/Guzzle/Common/Exception/RuntimeException.php</file>
+                <file>./src/Guzzle/Common/Exception/UnexpectedValueException.php</file>
+                <file>./src/Guzzle/Service/Exception/ClientNotFoundException.php</file>
+                <file>./src/Guzzle/Service/Exception/CommandException.php</file>
+                <file>./src/Guzzle/Service/Exception/DescriptionBuilderException.php</file>
+                <file>./src/Guzzle/Service/Exception/ServiceBuilderException.php</file>
+                <file>./src/Guzzle/Service/Exception/ServiceNotFoundException.php</file>
+                <file>./src/Guzzle/Service/Exception/ValidationException.php</file>
             </exclude>
         </whitelist>
     </filter>

@@ -124,7 +124,7 @@ class DynamicCommandTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Command\DynamicCommand
-     * @expectedException InvalidArgumentException
+     * @expectedException Guzzle\Service\Exception\ValidationException
      */
     public function testValidatesArgs()
     {

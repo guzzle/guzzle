@@ -3,6 +3,7 @@
 namespace Guzzle\Service\Command;
 
 use Guzzle\Common\Event;
+use Guzzle\Service\Exception\CommandSetException;
 use Guzzle\Service\ClientInterface;
 use Guzzle\Service\Command\CommandInterface;
 

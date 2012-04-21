@@ -2,6 +2,8 @@
 
 namespace Guzzle\Common\Log;
 
+use Guzzle\Common\Exception\InvalidArgumentException;
+
 /**
  * Allows Closures to be called when messages are logged.  Closures combined
  * with filtering can trigger application events based on log messages.
@@ -14,7 +16,7 @@ class ClosureLogAdapter extends AbstractLogAdapter
     public function __construct($logObject)
     {
         if (!is_callable($logObject)) {
-            throw new \InvalidArgumentException('Object must be callable');
+            throw new InvalidArgumentException('Object must be callable');
         }
 
         $this->log = $logObject;

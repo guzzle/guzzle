@@ -1,8 +1,6 @@
 <?php
 
-namespace Guzzle\Http\Curl;
-
-use Guzzle\Http\Message\BadResponseException;
+namespace Guzzle\Http\Exception;
 
 /**
  * cURL request exception

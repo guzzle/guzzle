@@ -14,7 +14,7 @@ class CurlAuthPlugin implements EventSubscriberInterface
     private $username;
     private $password;
     private $scheme;
-    
+
     /**
      * Constructor
      *

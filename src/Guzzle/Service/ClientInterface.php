@@ -3,6 +3,7 @@
 namespace Guzzle\Service;
 
 use Guzzle\Common\Collection;
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\ClientInterface as HttpClientInterface;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\CommandSet;
@@ -35,7 +36,7 @@ interface ClientInterface extends HttpClientInterface
      * @param array $args (optional) Arguments to pass to the command
      *
      * @return CommandInterface
-     * @throws \InvalidArgumentException if no command can be found by name
+     * @throws InvalidArgumentException if no command can be found by name
      */
     function getCommand($name, array $args = array());
 
@@ -47,7 +48,7 @@ interface ClientInterface extends HttpClientInterface
      * @return mixed Returns the result of the executed command's
      *       {@see CommandInterface::getResult} method if a CommandInterface is
      *       passed, or the CommandSet itself if a CommandSet is passed
-     * @throws \InvalidArgumentException if an invalid command is passed
+     * @throws InvalidArgumentException if an invalid command is passed
      * @throws Command\CommandSetException if a set contains commands associated
      *      with other clients
      */

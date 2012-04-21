@@ -3,6 +3,7 @@
 namespace Guzzle\Http\Plugin;
 
 use Guzzle\Common\Event;
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
@@ -67,7 +68,7 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
     public static function getMockFile($path)
     {
         if (!file_exists($path)) {
-            throw new \InvalidArgumentException('Unable to open mock file: ' . $path);
+            throw new InvalidArgumentException('Unable to open mock file: ' . $path);
         }
 
         $parts = explode("\n\n", file_get_contents($path), 2);
@@ -76,7 +77,7 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
             ? str_replace("\n", "\r\n", $parts[0]) . "\r\n\r\n" . $parts[1]
             : $parts[0];
 
-        return Response::factory($data);
+        return Response::fromMessage($data);
     }
 
     /**
@@ -101,7 +102,7 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
     {
         if (!($response instanceof Response)) {
             if (!is_string($response)) {
-                throw new \InvalidArgumentException('Invalid response');
+                throw new InvalidArgumentException('Invalid response');
             }
             $response = self::getMockFile($response);
         }

@@ -2,9 +2,9 @@
 
 namespace Guzzle\Http;
 
+use Guzzle\Common\GuzzleException;
+
 /**
- * Http exception
+ * Http exception interface
  */
-class HttpException extends \Exception implements \Guzzle\Common\GuzzleExceptionInterface
-{
-}
+interface HttpException extends GuzzleException {}

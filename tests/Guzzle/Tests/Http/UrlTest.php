@@ -289,4 +289,15 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('a', $url->getQuery()->get('ሴ'));
         $this->assertEquals('fragmentishere', $url->getFragment());
     }
+
+    /**
+     * @covers Guzzle\Http\Url::setHost
+     */
+    public function testSettingHostWithPortModifiesPort()
+    {
+        $url = Url::factory('http://www.example.com');
+        $url->setHost('foo:8983');
+        $this->assertEquals('foo', $url->getHost());
+        $this->assertEquals(8983, $url->getPort());
+    }
 }

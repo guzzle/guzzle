@@ -26,4 +26,4 @@ Guzzle\Tests\GuzzleTestCase::setServiceBuilder(Guzzle\Service\ServiceBuilder::fa
 $paths = array('vendor/zend/zend-cache1', 'vendor/zend/zend-log1');
 set_include_path(implode(PATH_SEPARATOR, array_map(function($path) {
     return __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . $path;
-}, $paths)) . PATH_SEPARATOR . get_include_path() );
+}, $paths)) . PATH_SEPARATOR . get_include_path());

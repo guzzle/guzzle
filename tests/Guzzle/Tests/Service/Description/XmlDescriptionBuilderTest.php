@@ -10,7 +10,7 @@ class XmlDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
      * @covers Guzzle\Service\Description\XmlDescriptionBuilder
-     * @expectedException InvalidArgumentException
+     * @expectedException Guzzle\Service\Exception\DescriptionBuilderException
      */
     public function testXmlBuilderThrowsExceptionWhenFileIsNotFound()
     {
@@ -31,7 +31,7 @@ class XmlDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertInstanceOf('Guzzle\\Service\\Description\\ApiCommand', $service->getCommand('search'));
         $this->assertInternalType('array', $service->getCommands());
         $this->assertEquals(7, count($service->getCommands()));
-        $this->assertInstanceOf('Guzzle\\Common\\NullObject', $service->getCommand('missing'));
+        $this->assertNull($service->getCommand('missing'));
 
         $command = $service->getCommand('test');
         $this->assertInstanceOf('Guzzle\\Service\\Description\\ApiCommand', $command);

@@ -3,6 +3,7 @@
 namespace Guzzle\Http;
 
 use Guzzle\Common\Stream;
+use Guzzle\Common\Exception\InvalidArgumentException;
 
 /**
  * Entity body used with an HTTP request or response
@@ -21,7 +22,7 @@ class EntityBody extends Stream
      * @param int $size (optional) Size of the data contained in the resource
      *
      * @return EntityBody
-     * @throws HttpException if the $resource arg is not a resource or string
+     * @throws InvalidArgumentException if the $resource arg is not a resource or string
      */
     public static function factory($resource = '', $size = null)
     {
@@ -36,7 +37,7 @@ class EntityBody extends Stream
             return $resource;
         }
 
-        throw new HttpException('Invalid resource type');
+        throw new InvalidArgumentException('Invalid resource type');
     }
 
     /**

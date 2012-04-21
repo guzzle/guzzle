@@ -397,7 +397,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
             ),
         );
 
-        $response = Response::factory("HTTP/1.1 200 OK\r\nSet-Cookie: a=b; c=d; port=\"80,8081\"; version=1; Max-Age=86400; domain=.example.com; discard; secure;\r\n\r\n");
+        $response = Response::fromMessage("HTTP/1.1 200 OK\r\nSet-Cookie: a=b; c=d; port=\"80,8081\"; version=1; Max-Age=86400; domain=.example.com; discard; secure;\r\n\r\n");
         $result = $this->plugin->extractCookies($response);
 
         $this->assertTrue(abs($result[0]['expires'] - $cookie[0]['expires']) < 10, 'Cookie #1 expires dates are too different: ' . $result[0]['expires'] . ' vs ' . $cookie[0]['expires']);
@@ -470,10 +470,10 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request4->getEventDispatcher()->addSubscriber($this->plugin);
 
         // Set a secure cookie
-        $response1 = Response::factory("HTTP/1.1 200 OK\r\nSet-Cookie: a=b; c=d; Max-Age=86400; domain=.example.com; secure;\r\n\r\n");
+        $response1 = Response::fromMessage("HTTP/1.1 200 OK\r\nSet-Cookie: a=b; c=d; Max-Age=86400; domain=.example.com; secure;\r\n\r\n");
         // Set a regular cookie
-        $response2 = Response::factory("HTTP/1.1 200 OK\r\nSet-Cookie: e=f h; discard; domain=.example.com;\r\n\r\n");
-        $response3 = Response::factory("HTTP/1.1 200 OK\r\n\r\n");
+        $response2 = Response::fromMessage("HTTP/1.1 200 OK\r\nSet-Cookie: e=f h; discard; domain=.example.com;\r\n\r\n");
+        $response3 = Response::fromMessage("HTTP/1.1 200 OK\r\n\r\n");
 
         $request1->setResponse($response1, true);
         $request2->setResponse($response2, true);
@@ -501,7 +501,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->plugin->clearCookies();
 
-        $response = Response::factory(
+        $response = Response::fromMessage(
             "HTTP/1.1 200 OK\r\n" .
             "Set-Cookie: IU=deleted; expires=Wed, 03-Mar-2010 02:17:39 GMT; path=/; domain=127.0.0.1\r\n" .
             "Set-Cookie: PH=deleted; expires=Wed, 03-Mar-2010 02:17:39 GMT; path=/; domain=127.0.0.1\r\n" .

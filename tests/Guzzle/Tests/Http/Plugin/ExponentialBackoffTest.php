@@ -85,7 +85,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
      * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin::onRequestSent
      * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin::onRequestPoll
      * @covers Guzzle\Http\Message\Request
-     * @expectedException Guzzle\Http\Message\BadResponseException
+     * @expectedException Guzzle\Http\Exception\BadResponseException
      */
     public function testAllowsFailureOnMaxRetries()
     {

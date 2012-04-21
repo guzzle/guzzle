@@ -45,7 +45,7 @@ class MockPluginTest extends \Guzzle\Tests\GuzzleTestCase
     public function testIsCountable()
     {
         $plugin = new MockPlugin();
-        $plugin->addResponse(Response::factory("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"));
+        $plugin->addResponse(Response::fromMessage("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"));
         $this->assertEquals(1, count($plugin));
     }
 
@@ -56,7 +56,7 @@ class MockPluginTest extends \Guzzle\Tests\GuzzleTestCase
     public function testCanClearQueue()
     {
         $plugin = new MockPlugin();
-        $plugin->addResponse(Response::factory("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"));
+        $plugin->addResponse(Response::fromMessage("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"));
         $plugin->clearQueue();
         $this->assertEquals(0, count($plugin));
     }
@@ -68,7 +68,7 @@ class MockPluginTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $plugin = new MockPlugin();
         $this->assertInternalType('array', $plugin->getQueue());
-        $plugin->addResponse(Response::factory("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"));
+        $plugin->addResponse(Response::fromMessage("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"));
         $queue = $plugin->getQueue();
         $this->assertInternalType('array', $queue);
         $this->assertEquals(1, count($queue));
@@ -109,7 +109,7 @@ class MockPluginTest extends \Guzzle\Tests\GuzzleTestCase
     public function testAddsResponseObjectsToQueue()
     {
         $p = new MockPlugin();
-        $response = Response::factory("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
+        $response = Response::fromMessage("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
         $p->addResponse($response);
         $this->assertEquals(array($response), $p->getQueue());
     }

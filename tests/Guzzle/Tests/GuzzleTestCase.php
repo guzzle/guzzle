@@ -195,14 +195,14 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
      * Check if an array of HTTP headers matches another array of HTTP headers
      * while taking * into account as a wildcard for header values
      *
-     * @param array $actual Actual HTTP header array
      * @param array $expected Expected HTTP headers (allows wildcard values)
+     * @param array|Collection $actual Actual HTTP header array
      * @param array $ignore (optional) Headers to ignore from the comparison
      * @param array $absent (optional) Array of headers that must not be present
      *
      * @return array|false Returns an array of the differences or FALSE if none
      */
-    public function compareHttpHeaders(array $expected, array $actual, array $ignore = array(), array $absent = array())
+    public function compareHttpHeaders(array $expected, $actual, array $ignore = array(), array $absent = array())
     {
         $differences = array();
 
@@ -227,8 +227,10 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
 
             // Check values and take wildcards into account
             $pos = strpos($expected[$key], '*');
-            if (($pos === false && $actual[$key] != $expected[$key]) || $pos > 0 && substr($actual[$key], 0, $pos) != substr($expected[$key], 0, $pos)) {
-                $differences[$key] = $value;
+            foreach ((array) $actual[$key] as $v) {
+                if (($pos === false && $v != $expected[$key]) || $pos > 0 && substr($v, 0, $pos) != substr($expected[$key], 0, $pos)) {
+                    $differences[$key] = $value;
+                }
             }
         }
 
