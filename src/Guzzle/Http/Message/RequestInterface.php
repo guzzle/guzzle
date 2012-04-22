@@ -142,12 +142,9 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     /**
      * Get the HTTP protocol version of the request
      *
-     * @param bool $curlValue (optional) Set to TRUE to retrieve the cURL value
-     *      for the HTTP protocol version
-     *
-     * @return string|int
+     * @return string
      */
-    function getProtocolVersion($curlValue = false);
+    function getProtocolVersion();
 
     /**
      * Set the HTTP protocol version of the request (e.g. 1.1 or 1.0)

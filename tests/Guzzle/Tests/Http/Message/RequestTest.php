@@ -234,15 +234,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         } catch (BadResponseException $e) {
             $this->assertInstanceOf('Guzzle\\Http\\Message\\RequestInterface', $e->getRequest());
             $this->assertInstanceOf('Guzzle\\Http\\Message\\Response', $e->getResponse());
-
-            $message = "Unsuccessful response | [status code] 404 | "
-                . "[reason phrase] Not Found | [url] http://www.google.com/ | "
-                . "[request] GET / HTTP/1.1\r\nHost: www.google.com\r\n"
-                . "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n\r\n"
-                . " | [response] HTTP/1.1 404 Not Found\r\nContent-Length: 3"
-                . "\r\n\r\nabc";
-
-            $this->assertEquals($message, $e->getMessage());
+            $this->assertContains('Client error response', $e->getMessage());
         }
     }
 
@@ -698,10 +690,9 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
             $response = $request->send();
             $this->fail('Request did not receive a 404 response');
         } catch (BadResponseException $e) {
-            $this->assertContains('Unsuccessful response ', $e->getMessage());
-            $this->assertContains('[status code] 404 | [reason phrase] Not found | [url] http://127.0.0.1:8124/index.html | [request] GET /index.html HTTP/1.1', $e->getMessage());
-            $this->assertContains('Host: 127.0.0.1:8124', $e->getMessage());
-            $this->assertContains(" | [response] HTTP/1.1 404 Not found", $e->getMessage());
+            $this->assertContains('Client error response', $e->getMessage());
+            $this->assertContains('[status code] 404', $e->getMessage());
+            $this->assertContains('[reason phrase] Not found', $e->getMessage());
         }
     }
 

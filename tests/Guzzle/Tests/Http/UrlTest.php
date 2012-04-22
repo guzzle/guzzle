@@ -272,7 +272,7 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Url::getQuery
-     * @covers Guzzle\Http\Url::parseUrlUtf8
+     * @covers Guzzle\Http\Url::parseUrl
      */
     public function testCanUseUtf8Query()
     {
@@ -281,7 +281,7 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Url::parseUrlUtf8
+     * @covers Guzzle\Http\Url::parseUrl
      */
     public function testParsesUtf8UrlQueryStringsWithFragment()
     {

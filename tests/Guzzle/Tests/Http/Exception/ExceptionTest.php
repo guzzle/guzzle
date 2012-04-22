@@ -30,4 +30,37 @@ class ExceptionTest extends \Guzzle\Tests\GuzzleTestCase
         $e->setResponse($response);
         $this->assertEquals($response, $e->getResponse());
     }
+
+    /**
+     * @covers Guzzle\Http\Exception\BadResponseException::factory
+     */
+    public function testCreatesGenericErrorExceptionOnError()
+    {
+        $request = new Request('GET', 'http://www.example.com');
+        $response = new Response(307);
+        $e = BadResponseException::factory($request, $response);
+        $this->assertInstanceOf('Guzzle\Http\Exception\BadResponseException', $e);
+    }
+
+    /**
+     * @covers Guzzle\Http\Exception\BadResponseException::factory
+     */
+    public function testCreatesClientErrorExceptionOnClientError()
+    {
+        $request = new Request('GET', 'http://www.example.com');
+        $response = new Response(404);
+        $e = BadResponseException::factory($request, $response);
+        $this->assertInstanceOf('Guzzle\Http\Exception\ClientErrorResponseException', $e);
+    }
+
+    /**
+     * @covers Guzzle\Http\Exception\BadResponseException::factory
+     */
+    public function testCreatesServerErrorExceptionOnServerError()
+    {
+        $request = new Request('GET', 'http://www.example.com');
+        $response = new Response(503);
+        $e = BadResponseException::factory($request, $response);
+        $this->assertInstanceOf('Guzzle\Http\Exception\ServerErrorResponseException', $e);
+    }
 }

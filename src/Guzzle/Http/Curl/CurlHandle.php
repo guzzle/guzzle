@@ -20,7 +20,7 @@ class CurlHandle
     protected $options;
 
     /**
-     * @var resouce Curl resource handle
+     * @var resource Curl resource handle
      */
     protected $handle;
 
@@ -39,6 +39,8 @@ class CurlHandle
     public static function factory(RequestInterface $request)
     {
         $handle = curl_init();
+        $mediator = new RequestMediator($request);
+        $protocolVersion = $request->getProtocolVersion() === '1.0' ? CURL_HTTP_VERSION_1_0 : CURL_HTTP_VERSION_1_1;
 
         // Array of default cURL options.
         $curlOptions = array(
@@ -50,34 +52,18 @@ class CurlHandle
             CURLOPT_USERAGENT => (string) $request->getHeader('User-Agent'),
             CURLOPT_ENCODING => '', // Supports all encodings
             CURLOPT_PORT => $request->getPort(),
-            CURLOPT_HTTP_VERSION => $request->getProtocolVersion(true),
+            CURLOPT_HTTP_VERSION => $protocolVersion,
             CURLOPT_NOPROGRESS => false,
             CURLOPT_STDERR => fopen('php://temp', 'r+'),
             CURLOPT_VERBOSE => true,
             CURLOPT_HTTPHEADER => array(),
-            CURLOPT_HEADERFUNCTION => function($curl, $header) use ($request) {
-                return $request->receiveResponseHeader($header);
-            },
-            CURLOPT_PROGRESSFUNCTION => function($downloadSize, $downloaded, $uploadSize, $uploaded) use ($request) {
-                $request->dispatch('curl.callback.progress', array(
-                    'request'       => $request,
-                    'download_size' => $downloadSize,
-                    'downloaded'    => $downloaded,
-                    'upload_size'   => $uploadSize,
-                    'uploaded'      => $uploaded
-                ));
-            }
+            CURLOPT_HEADERFUNCTION => array($mediator, 'receiveResponseHeader'),
+            CURLOPT_PROGRESSFUNCTION => array($mediator, 'progress')
         );
 
         // HEAD requests need no response body, everything else might
         if ($request->getMethod() != 'HEAD') {
-            $curlOptions[CURLOPT_WRITEFUNCTION] = function($curl, $write) use ($request) {
-                $request->dispatch('curl.callback.write', array(
-                    'request' => $request,
-                    'write'   => $write
-                ));
-                return $request->getResponse()->getBody()->write($write);
-            };
+            $curlOptions[CURLOPT_WRITEFUNCTION] = array($mediator, 'writeResponseBody');
         }
 
         // Account for PHP installations with safe_mode or open_basedir enabled
@@ -126,17 +112,7 @@ class CurlHandle
                 unset($curlOptions[CURLOPT_READFUNCTION]);
             } else {
                 // Add a callback for curl to read data to send with the request
-                $curlOptions[CURLOPT_READFUNCTION] = function($ch, $fd, $length) use ($request) {
-                    $read = '';
-                    if ($request->getBody()) {
-                        $read = $request->getBody()->read($length);
-                        $request->dispatch('curl.callback.read', array(
-                            'request' => $request,
-                            'read'    => $read
-                        ));
-                    }
-                    return !$read ? '' : $read;
-                };
+                $curlOptions[CURLOPT_READFUNCTION] = array($mediator, 'readRequestBody');
             }
 
             // If the Expect header is not present, prevent curl from adding it

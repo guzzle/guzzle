@@ -270,6 +270,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
      */
     protected function process()
     {
+        // Uses the response object by default
         $this->result = $this->getRequest()->getResponse();
 
         // Is the body an JSON document?  If so, set the result to be an array

@@ -30,7 +30,7 @@ class Url
      */
     public static function factory($url)
     {
-        $parts = (array) self::parseUrlUtf8($url);
+        $parts = (array) self::parseUrl($url);
         $parts['scheme'] = isset($parts['scheme']) ? $parts['scheme'] : null;
         $parts['host'] = isset($parts['host']) ? $parts['host'] : null;
         $parts['path'] = isset($parts['path']) ? $parts['path'] : null;
@@ -50,14 +50,14 @@ class Url
     }
 
     /**
-     * Parse a URL using special handling for UTF-8 characters in the query
-     * string if needed
+     * Parse a URL using special handling for a subset of UTF-8 characters in 
+     * the query string if needed.
      *
      * @param string $url URL to parse
      *
      * @return array
      */
-    public static function parseUrlUtf8($url)
+    public static function parseUrl($url)
     {
         $parts = parse_url($url);
 
@@ -98,7 +98,7 @@ class Url
     }
 
     /**
-     * Buld a URL from parse_url parts.  The generated URL will be a relative
+     * Build a URL from parse_url parts.  The generated URL will be a relative
      * URL if a scheme or host are not provided.
      *
      * @param array $parts Array of parse_url parts

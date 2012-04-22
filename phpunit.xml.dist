@@ -22,6 +22,8 @@
                 <directory suffix="Interface.php">./src/Guzzle</directory>
                 <file>./src/Guzzle/Common/GuzzleException.php</file>
                 <file>./src/Guzzle/Http/HttpException.php</file>
+                <file>./src/Guzzle/Http/Exception/ServerErrorResponseException.php</file>
+                <file>./src/Guzzle/Http/Exception/ClientErrorResponseException.php</file>
                 <file>./src/Guzzle/Common/Exception/BadMethodCallException.php</file>
                 <file>./src/Guzzle/Common/Exception/InvalidArgumentException.php</file>
                 <file>./src/Guzzle/Common/Exception/RuntimeException.php</file>

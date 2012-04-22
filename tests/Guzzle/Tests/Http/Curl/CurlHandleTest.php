@@ -539,6 +539,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Curl\CurlHandle::factory
+     * @covers Guzzle\Http\Curl\RequestMediator
      * @dataProvider dataProvider
      */
     public function testFactoryCreatesCurlBasedOnRequest($method, $url, $headers, $body, $options, $expectedHeaders = null)

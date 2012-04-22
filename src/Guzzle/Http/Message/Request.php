@@ -192,20 +192,13 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public static function onRequestError(Event $event)
     {
-        $e = new BadResponseException('Unsuccessful response | ' . implode(' | ', array(
-            '[status code] ' . $event['response']->getStatusCode(),
-            '[reason phrase] ' . $event['response']->getReasonPhrase(),
-            '[url] ' . $event['request']->getUrl(),
-            '[request] ' . (string) $event['request'],
-            '[response] ' . (string) $event['response']
-        )));
-        $e->setResponse($event['response']);
-        $e->setRequest($event['request']);
+        $e = BadResponseException::factory($event['request'], $event['response']);
         $event['request']->dispatch('request.exception', array(
             'request'   => $event['request'],
             'response'  => $event['response'],
             'exception' => $e
         ));
+
         throw $e;
     }
 
@@ -384,19 +377,11 @@ class Request extends AbstractMessage implements RequestInterface
     /**
      * Get the HTTP protocol version of the request
      *
-     * @param bool $curlValue (optional) Set to TRUE to retrieve the cURL value
-     *      for the HTTP protocol version
-     *
-     * @return string|int
+     * @return string
      */
-    public function getProtocolVersion($curlValue = false)
+    public function getProtocolVersion()
     {
-        if (!$curlValue) {
-            return $this->protocolVersion;
-        } else {
-            return $this->protocolVersion === '1.0'
-                ? CURL_HTTP_VERSION_1_0 : CURL_HTTP_VERSION_1_1;
-        }
+        return $this->protocolVersion;
     }
 
     /**
