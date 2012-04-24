@@ -589,9 +589,19 @@ class Request extends AbstractMessage implements RequestInterface
         $data = preg_replace("/([^\r])(\n)\b/", "$1\r\n", $data);
 
         if (preg_match('/^\HTTP\/1\.[0|1]\s\d{3}\s.+$/', $data)) {
-            $previousResponse = $this->response;
+
             list($dummy, $code, $status) = explode(' ', str_replace("\r\n", '', $data), 3);
-            $this->response = new Response($code, null, $this->getResponseBody());
+
+            // Only download the body of the response to the specified response
+            // body when a successful response is received.
+            if ($code >= 200 && $code < 300) {
+                $body = $this->getResponseBody();
+            } else {
+                $body = EntityBody::factory();
+            }
+
+            $previousResponse = $this->response;
+            $this->response = new Response($code, null, $body);
             $this->response->setStatus($code, $status)->setRequest($this);
             $this->dispatch('request.receive.status_line', array(
                 'line'              => $data,
@@ -599,6 +609,7 @@ class Request extends AbstractMessage implements RequestInterface
                 'reason_phrase'     => $status,
                 'previous_response' => $previousResponse
             ));
+
         } else if ($length > 2) {
             list($header, $value) = array_map('trim', explode(':', trim($data), 2));
             $this->response->addHeader($header, $value);

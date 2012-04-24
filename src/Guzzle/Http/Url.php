@@ -50,7 +50,7 @@ class Url
     }
 
     /**
-     * Parse a URL using special handling for a subset of UTF-8 characters in 
+     * Parse a URL using special handling for a subset of UTF-8 characters in
      * the query string if needed.
      *
      * @param string $url URL to parse

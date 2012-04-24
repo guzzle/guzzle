@@ -40,17 +40,19 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
      * Construct a new exponential backoff plugin
      *
      * @param int $maxRetries (optional) The maximum number of time to retry a request
-     * @param array $failureCodes (optional) Pass a custom list of failure codes.
-     * @param Closure|array $delayClosure (optional) Method used to calculate the
+     * @param array $failureCodes (optional) Pass a custom list of failure codes. This
+     *     can be a list of numeric codes that match the response code, or a list of
+     *     reason phrases that can match the reason phrase of a request.
+     * @param callable $delayFunction (optional) Method used to calculate the
      *      delay between requests.  The method must accept an integer containing
      *      the current number of retries and return an integer representing how
      *      many seconds to delay
      */
-    public function __construct($maxRetries = 3, array $failureCodes = null, $delayClosure = null)
+    public function __construct($maxRetries = 3, array $failureCodes = null, $delayFunction = null)
     {
         $this->setMaxRetries($maxRetries);
         $this->failureCodes = $failureCodes ?: array(500, 503);
-        $this->delayClosure = $delayClosure ?: array($this, 'calculateWait');
+        $this->delayClosure = $delayFunction ?: array($this, 'calculateWait');
         $this->state = new Collection();
     }
 
@@ -135,11 +137,14 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
      */
     public function onRequestSent(Event $event)
     {
-        $request = $event['request'];
         // Called when the request has been sent and isn't finished processing
+        $request = $event['request'];
+        $response = $request->getResponse();
         $key = spl_object_hash($request);
 
-        if (in_array($request->getResponse()->getStatusCode(), $this->failureCodes)) {
+        // Check if the response code or reason phrase is a match the values we expect
+        if (in_array($response->getStatusCode(), $this->failureCodes) ||
+            in_array($response->getReasonPhrase(), $this->failureCodes)) {
             // If this request has been retried too many times, then throw an exception
             $this->state[$key] = $this->state[$key] + 1;
             if ($this->state[$key] <= $this->maxRetries) {

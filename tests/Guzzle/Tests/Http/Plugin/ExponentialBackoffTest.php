@@ -63,9 +63,6 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ndata"
         ));
 
-        // Clear out other requests that have been received by the server
-        $this->getServer()->flush();
-
         $plugin = new ExponentialBackoffPlugin(2, null, array($this, 'delayClosure'));
         $client = new Client($this->getServer()->getUrl());
         $client->getEventDispatcher()->addSubscriber($plugin);
@@ -75,6 +72,32 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
         // Make sure it eventually completed successfully
         $this->assertEquals(200, $request->getResponse()->getStatusCode());
         $this->assertEquals('OK', $request->getResponse()->getReasonPhrase());
+        $this->assertEquals('data', $request->getResponse()->getBody(true));
+
+        // Check that three requests were made to retry this request
+        $this->assertEquals(3, count($this->getServer()->getReceivedRequests(false)));
+    }
+
+    /**
+     * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin
+     */
+    public function testRetriesRequestsUsingReasonPhraseMatch()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 400 FooError\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 400 FooError\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ndata"
+        ));
+
+        $plugin = new ExponentialBackoffPlugin(2, array('FooError'), array($this, 'delayClosure'));
+        $client = new Client($this->getServer()->getUrl());
+        $client->getEventDispatcher()->addSubscriber($plugin);
+        $request = $client->get();
+        $request->send();
+
+        // Make sure it eventually completed successfully
+        $this->assertEquals(200, $request->getResponse()->getStatusCode());
         $this->assertEquals('data', $request->getResponse()->getBody(true));
 
         // Check that three requests were made to retry this request

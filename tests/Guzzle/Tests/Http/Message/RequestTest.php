@@ -201,16 +201,17 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request->setResponse($response, true);
         $request->setState(RequestInterface::STATE_COMPLETE);
         $requestResponse = $request->getResponse();
-        $this->assertEquals($response, $requestResponse);
+        $this->assertSame($response, $requestResponse);
+
         // Try again, making sure it's still the same response
-        $this->assertEquals($requestResponse, $request->getResponse());
+        $this->assertSame($requestResponse, $request->getResponse());
 
         $response = new Response(204);
         $request = new Request('GET', 'http://www.google.com/');
         $request->setResponse($response, true);
         $request->setState('complete');
         $requestResponse = $request->getResponse();
-        $this->assertEquals($response, $requestResponse);
+        $this->assertSame($response, $requestResponse);
         $this->assertInstanceOf('Guzzle\\Http\\EntityBody', $response->getBody());
     }
 
@@ -762,5 +763,23 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertInstanceOf('Guzzle\Http\Url', $request->getUrl(true));
         $this->assertEquals('http://www.example.com/foo?abc=d', $request->getUrl());
         $this->assertEquals('http://www.example.com/foo?abc=d', (string) $request->getUrl(true));
+    }
+
+    /**
+     * Users sometimes want to use a custom stream when receiving a response body.
+     * Because of the various potential for retrying failed requests, the stream
+     * specified by the user should only be written to in the event that a
+     * successful response was received.  Otherwise, a new temp stream is created
+     * to store the body of the failed request.
+     *
+     * @covers Guzzle\Http\Message\Request::receiveResponseHeader
+     */
+    public function testReceivingUnsuccessfulResponseUsesOtherResponseBody()
+    {
+        $request = new Request('GET', $this->getServer()->getUrl());
+        $body = EntityBody::factory();
+        $request->setResponseBody($body);
+        $request->receiveResponseHeader('HTTP/1.1 503 Service Unavailable');
+        $this->assertNotSame($body, $request->getResponse()->getBody());
     }
 }

@@ -126,25 +126,27 @@ class CurlHandle
             $curlOptions[$key] = $value;
         }
 
-        // Add any custom headers to the request. Emtpy headers will cause curl to
-        // not send the header at all.
-        foreach ($headers as $key => $value) {
-            if ($key) {
-                foreach ((array) $value as $val) {
-                    $curlOptions[CURLOPT_HTTPHEADER][] = trim("{$key}: {$val}");
-                }
-            }
-        }
-
         // Check if any headers or cURL options are blacklisted
         $client = $request->getClient();
         if ($client && $client->getConfig('curl.blacklist')) {
             foreach ($client->getConfig('curl.blacklist') as $value) {
                 if (strpos($value, 'header.') === 0) {
-                    $curlOptions[CURLOPT_HTTPHEADER][] = substr($value, 7) . ':';
+                    $blacklistHeader = substr($value, 7);
+                    // Remove headers that may have previously been set
+                    // but are supposed to be blacklisted
+                    unset($headers[$blacklistHeader]);
+                    $headers[$blacklistHeader] = '';
                 } else {
                     unset($curlOptions[$value]);
                 }
+            }
+        }
+
+        // Add any custom headers to the request. Emtpy headers will cause curl to
+        // not send the header at all.
+        foreach ($headers as $key => $value) {
+            foreach ((array) $value as $val) {
+                $curlOptions[CURLOPT_HTTPHEADER][] = trim("{$key}: {$val}");
             }
         }
 

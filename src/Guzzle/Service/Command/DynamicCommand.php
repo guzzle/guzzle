@@ -57,36 +57,31 @@ class DynamicCommand extends AbstractCommand
         // Add arguments to the request using the location attribute
         foreach ($this->apiCommand->getParams() as $name => $arg) {
 
-            if ($this->get($name)) {
+            if (!$this->get($name) || !$arg->get('location')) {
+                continue;
+            }
 
-                // Check that a location is set
-                $location = $arg->get('location');
+            // Create the value based on prepend and append settings
+            $value = $arg->get('prepend') . $this->get($name) . $arg->get('append');
 
-                if ($location) {
+            // Determine the location and key setting location[:key]
+            $parts = explode(':', $arg->get('location'));
+            $place = $parts[0];
 
-                    // Create the value based on prepend and append settings
-                    $value = $arg->get('prepend') . $this->get($name) . $arg->get('append');
+            // If a key is specified (using location:key), use it
+            $key = isset($parts[1]) ? $parts[1] : $name;
 
-                    // Determine the location and key setting location[:key]
-                    $parts = explode(':', $location);
-                    $place = $parts[0];
-
-                    // If a key is specified (using location:key), use it
-                    $key = isset($parts[1]) ? $parts[1] : $name;
-
-                    // Add the parameter to the request
-                    switch ($place) {
-                        case 'body':
-                            $this->request->setBody(EntityBody::factory($value));
-                            break;
-                        case 'header':
-                            $this->request->setHeader($key, $value);
-                            break;
-                        case 'query':
-                            $this->request->getQuery()->set($key, $value);
-                            break;
-                    }
-                }
+            // Add the parameter to the request
+            switch ($place) {
+                case 'body':
+                    $this->request->setBody(EntityBody::factory($value));
+                    break;
+                case 'header':
+                    $this->request->setHeader($key, $value);
+                    break;
+                case 'query':
+                    $this->request->getQuery()->set($key, $value);
+                    break;
             }
         }
     }
