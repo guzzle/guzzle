@@ -329,7 +329,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
      * @covers Guzzle\Http\Message\RequestFactory::parseMessage
      * @covers Guzzle\Http\Message\RequestFactory::create
      */
-    public function testCreatesHttpMessagesWithBodies()
+    public function testCreatesHttpMessagesWithBodiesAndNormalizesLineEndings()
     {
         $message = "POST / http/1.1\r\n"
                  . "Content-Type:application/x-www-form-urlencoded; charset=utf8\r\n"
@@ -339,6 +339,15 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 
         $request = RequestFactory::getInstance()->fromMessage($message);
         $this->assertEquals('application/x-www-form-urlencoded; charset=utf8', (string) $request->getHeader('Content-Type'));
+        $this->assertEquals('foo=bar', (string) $request->getBody());
+
+        $message = "POST / http/1.1\n"
+                 . "Content-Type:application/x-www-form-urlencoded; charset=utf8\n"
+                 . "Date:Mon, 09 Sep 2011 23:36:00 GMT\n"
+                 . "Host:host.foo.com\n\n"
+                 . "foo=bar";
+        $request = RequestFactory::getInstance()->fromMessage($message);
+        $this->assertEquals('foo=bar', (string) $request->getBody());
 
         $message = "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n";
         $request = RequestFactory::getInstance()->fromMessage($message);

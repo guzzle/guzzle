@@ -67,15 +67,23 @@ class RequestFactory implements RequestFactoryInterface
             return false;
         }
 
-        // Normalize new lines in the message
-        $message = preg_replace("/([^\r])(\n)\b/", "$1\r\n", $message);
-        $parts = explode("\r\n\r\n", $message, 2);
         $headers = new Collection();
-        $scheme = $host = $method = $user = $pass = $query = $port = $version = $protocol = '';
+        $scheme = $host = $body = $method = $user = $pass = $query = $port = $version = $protocol = '';
         $path = '/';
 
-        // Parse each line in the message
-        foreach (explode("\r\n", $parts[0]) as $line) {
+        // Inspired by https://github.com/kriswallsmith/Buzz/blob/message-interfaces/lib/Buzz/Message/Parser/Parser.php#L16
+        $lines = preg_split('/(\\r?\\n)/', $message, -1, PREG_SPLIT_DELIM_CAPTURE);
+        for ($i = 0, $c = count($lines); $i < $c; $i += 2) {
+
+            $line = $lines[$i];
+
+            // If two line breaks were encountered, then this is the body
+            if (empty($line)) {
+                $body = implode('', array_slice($lines, $i + 2));
+                break;
+            }
+
+            // Parse message headers
             $matches = array();
             if (!$method && preg_match('#^(?P<method>[A-Za-z]+)\s+(?P<path>/.*)\s+(?P<protocol>\w+)/(?P<version>\d\.\d)\s*$#i', $line, $matches)) {
                 $method = strtoupper($matches['method']);
@@ -94,9 +102,6 @@ class RequestFactory implements RequestFactoryInterface
                 $headers->add($key, trim($value));
             }
         }
-
-        // Check if a body is present in the message
-        $body = isset($parts[1]) ? $parts[1] : null;
 
         // Check for the Host header
         if (isset($headers['Host'])) {
