@@ -9,6 +9,7 @@ use Guzzle\Http\Plugin\ExponentialBackoffPlugin;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\Request;
+use Guzzle\Http\Message\Response;
 use Guzzle\Http\Curl\CurlMulti;
 
 /**
@@ -241,5 +242,33 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Trigger the event
         $plugin->onRequestSent($event);
+    }
+
+    /**
+     * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin::onRequestSent
+     */
+    public function testAllowsCustomFailureMethodsToPuntToDefaultMethod()
+    {
+        $count = 0;
+
+        $plugin = $this->getMockBuilder('Guzzle\Http\Plugin\ExponentialBackoffPlugin')
+            ->setMethods(array('retryRequest'))
+            ->setConstructorArgs(array(2, function() use (&$count) {
+                $count++;
+            }, array($this, 'delayClosure')))
+            ->getMock();
+
+        $plugin->expects($this->once())
+            ->method('retryRequest')
+            ->will($this->returnValue(null));
+
+        $event = new Event(array(
+            'request' => new Request('GET', 'http://test.com'),
+            'response' => new Response(500)
+        ));
+        $event->setName('request.exception');
+
+        $plugin->onRequestSent($event);
+        $this->assertEquals(1, $count);
     }
 }

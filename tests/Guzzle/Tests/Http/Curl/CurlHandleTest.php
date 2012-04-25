@@ -728,4 +728,23 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $handle = CurlHandle::factory($request);
         $handle->updateRequestFromTransfer($request);
     }
+
+    public function testCurlFollowsRedirectsUsingPost()
+    {
+        $this->markTestIncomplete('This is a bug with PHP: https://bugs.php.net/bug.php?id=47204');
+
+        $url = $this->getServer()->getUrl();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 303 See Other\r\nServer: Apache-Coyote/1.1\r\nLocation: {$url}\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
+        ));
+
+        $client = new Client($url);
+        $request = $client->post('/', null, '{}');
+        $request->removeHeader('Expect');
+        $request->send();
+
+        $received = $this->getServer()->getReceivedRequests(true);
+        $this->assertEquals(2, count($received));
+    }
 }
