@@ -280,7 +280,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             if ($body) {
                 $decoded = json_decode($body, true);
                 if (JSON_ERROR_NONE !== json_last_error()) {
-                    throw new JsonException('The response body can not be decoded to json', json_last_error()); 
+                    throw new JsonException('The response body can not be decoded to JSON', json_last_error());
                 }
 
                 $this->result = $decoded;
