@@ -6,7 +6,6 @@ use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Common\Exception\ExceptionCollection;
 use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Exception\RequestException;
 
 /**
@@ -116,6 +115,13 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      */
     public function __construct()
     {
+        // You can get some weird "Too many open files" errors when sending
+        // a large amount of requests in parallel.  These two statements
+        // autoload classes before a system runs out of file descriptors so
+        // that you can get back valuable error messages if you run out.
+        class_exists('Guzzle\Http\Message\Response');
+        class_exists('Guzzle\Http\Exception\CurlException');
+
         $this->createMutliHandle();
     }
 
@@ -425,62 +431,58 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      */
     protected function processResponse(RequestInterface $request, CurlHandle $handle, array $curl)
     {
-        // Check for errors on the handle
-        if (CURLE_OK != $curl['result']) {
-            $handle->setErrorNo($curl['result']);
-            $e = new CurlException('[curl] ' . $handle->getErrorNo() . ': '
-                . $handle->getError() . ' [url] ' . $handle->getUrl()
-                . ' [info] ' . var_export($handle->getInfo(), true)
-                . ' [debug] ' . $handle->getStderr());
-            $e->setRequest($request)
-              ->setError($handle->getError(), $handle->getErrorNo());
-            $handle->close();
-            throw $e;
-        }
-
         // Set the transfer stats on the response
-        $log = $handle->getStderr();
-        if (null !== $log) {
-            $request->getResponse()->setInfo(array_merge(array(
-                'stderr' => $log
-            ), $handle->getInfo()));
+        $handle->updateRequestFromTransfer($request);
 
-            // Parse the cURL stderr output for outgoing requests
-            $headers = '';
-            fseek($handle->getStderr(true), 0);
-            while (($line = fgets($handle->getStderr(true))) !== false) {
-                if ($line && $line[0] == '>') {
-                    $headers = substr(trim($line), 2) . "\r\n";
-                    while (($line = fgets($handle->getStderr(true))) !== false) {
-                        if ($line[0] == '*' || $line[0] == '<') {
-                            break;
-                        } else {
-                            $headers .= trim($line) . "\r\n";
-                        }
-                    }
-                }
+        // Check if a cURL exception occurred, and if so, notify things
+        $e = $this->isCurlException($request, $handle, $curl);
+
+        if ($e) {
+            // Set the state of the request to an error
+            $request->setState(RequestInterface::STATE_ERROR);
+            // Notify things that listen to the request of the failure
+            $request->dispatch('request.exception', array(
+                'request'   => $this,
+                'exception' => $e
+            ));
+            // Allow things to ignore the error if possible
+            if ($request->getState() != RequestInterface::STATE_TRANSFER) {
+                $handle->close();
+                throw $e;
             }
-
-            // Add request headers to the request exactly as they were sent
-            if ($headers) {
-                $parsed = RequestFactory::getInstance()->parseMessage($headers);
-                if (!empty($parsed['headers'])) {
-                    $request->setHeaders(array());
-                    foreach ($parsed['headers'] as $name => $value) {
-                        $request->setHeader($name, $value);
-                    }
-                }
-                if (!empty($parsed['protocol_version'])) {
-                    $request->setProtocolVersion($parsed['protocol_version']);
-                }
+        } else {
+            $request->setState(RequestInterface::STATE_COMPLETE);
+            // Allow things to ignore the error if possible
+            if ($request->getState() != RequestInterface::STATE_TRANSFER) {
+                $this->remove($request);
             }
         }
+    }
 
-        $request->setState(RequestInterface::STATE_COMPLETE);
-
-        if ($request->getState() != RequestInterface::STATE_TRANSFER) {
-            $this->remove($request);
+    /**
+     * Check if a cURL transfer resulted in what should be an exception
+     *
+     * @param RequestInterface $request Request to check
+     * @param CurlHandle $handle Curl handle object
+     * @param array $curl Curl message returned from curl_multi_info_read
+     *
+     * @return Exception|bool
+     */
+    private function isCurlException(RequestInterface $request, CurlHandle $handle, array $curl)
+    {
+        if (CURLE_OK == $curl['result']) {
+            return false;
         }
+
+        $handle->setErrorNo($curl['result']);
+        $e = new CurlException(sprintf('[curl] %s: %s [url] %s [info] %s [debug] %s',
+            $handle->getErrorNo(), $handle->getError(), $handle->getUrl(),
+            var_export($handle->getInfo(), true), $handle->getStderr()));
+
+        $e->setRequest($request)
+          ->setError($handle->getError(), $handle->getErrorNo());
+
+        return $e;
     }
 
     /**

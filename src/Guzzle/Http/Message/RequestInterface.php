@@ -17,8 +17,10 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     const STATE_COMPLETE = 'complete';
     const STATE_TRANSFER = 'transfer';
     const STATE_ERROR = 'error';
+
     const AUTH_BASIC = 'Basic';
     const AUTH_DIGEST = 'Digest';
+
     const GET = 'GET';
     const PUT = 'PUT';
     const POST = 'POST';

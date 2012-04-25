@@ -177,13 +177,15 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
             'api' => 'v1',
             // Adds the option using the curl values
             'curl.CURLOPT_HTTPAUTH' => 'CURLAUTH_DIGEST',
-            'curl.abc' => 'not added'
+            'curl.abc' => 'not added',
+            'curl.blacklist' => 'abc'
         ));
 
         $request = $client->createRequest();
         $options = $request->getCurlOptions();
         $this->assertEquals(CURLAUTH_DIGEST, $options->get(CURLOPT_HTTPAUTH));
         $this->assertNull($options->get('curl.abc'));
+        $this->assertNull($options->get('curl.blacklist'));
     }
 
     /**
@@ -199,6 +201,21 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
         $request = $client->createRequest();
         $this->assertEquals('query=Date', $request->getParams()->get('cache.key_filter'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Client::prepareRequest
+     */
+    public function testClientAddsParamsToRequests()
+    {
+        $client = new Client('http://www.example.com', array(
+            'api' => 'v1',
+            'params.foo' => 'bar',
+            'params.baz' => 'jar',
+        ));
+        $request = $client->createRequest();
+        $this->assertEquals('bar', $request->getParams()->get('foo'));
+        $this->assertEquals('jar', $request->getParams()->get('baz'));
     }
 
     public function urlProvider()

@@ -6,6 +6,7 @@ use Guzzle\Guzzle;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Message\RequestInterface;
+use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Url;
 
@@ -322,5 +323,52 @@ class CurlHandle
     public function getOptions()
     {
         return $this->options;
+    }
+
+    /**
+     * Update a request based on the log messages of the CurlHandle
+     *
+     * @param RequestInterface $request Request to update
+     */
+    public function updateRequestFromTransfer(RequestInterface $request)
+    {
+        $log = $this->getStderr(true);
+
+        if (!$log || !$request->getResponse()) {
+            return;
+        }
+
+        // Update the transfer stats of the response
+        $request->getResponse()->setInfo($this->getInfo());
+
+        // Parse the cURL stderr output for outgoing requests
+        $headers = '';
+        fseek($log, 0);
+        while (($line = fgets($log)) !== false) {
+            if ($line && $line[0] == '>') {
+                $headers = substr(trim($line), 2) . "\r\n";
+                while (($line = fgets($log)) !== false) {
+                    if ($line[0] == '*' || $line[0] == '<') {
+                        break;
+                    } else {
+                        $headers .= trim($line) . "\r\n";
+                    }
+                }
+            }
+        }
+
+        // Add request headers to the request exactly as they were sent
+        if ($headers) {
+            $parsed = RequestFactory::getInstance()->parseMessage($headers);
+            if (!empty($parsed['headers'])) {
+                $request->setHeaders(array());
+                foreach ($parsed['headers'] as $name => $value) {
+                    $request->setHeader($name, $value);
+                }
+            }
+            if (!empty($parsed['protocol_version'])) {
+                $request->setProtocolVersion($parsed['protocol_version']);
+            }
+        }
     }
 }
