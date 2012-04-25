@@ -10,6 +10,7 @@ use Guzzle\Service\Description\ApiCommand;
 use Guzzle\Service\ClientInterface;
 use Guzzle\Service\Inspector;
 use Guzzle\Service\Exception\CommandException;
+use Guzzle\Service\Exception\JsonException;
 
 /**
  * Command object to handle preparing and processing client requests and
@@ -277,7 +278,12 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         if (stripos($this->result->getContentType(), 'application/json') !== false) {
             $body = trim($this->result->getBody(true));
             if ($body) {
-                $this->result = json_decode($body, true);
+                $decoded = json_decode($body, true);
+                if (JSON_ERROR_NONE !== json_last_error()) {
+                    throw new JsonException('The response body can not be decoded to json', json_last_error()); 
+                }
+
+                $this->result = $decoded;
             }
         } else if (preg_match('/^\s*(text\/xml|application\/xml).*$/', $this->result->getContentType())) {
             // Is the body an XML document?  If so, set the result to be a SimpleXMLElement
