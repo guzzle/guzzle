@@ -152,7 +152,8 @@ class Url
             $url .= $parts['query'];
         }
 
-        if (isset($parts['fragment'])) {
+        // Ensure that # is only added to the url if fragment contains anything.
+        if (isset($parts['fragment']) && !empty($parts['fragment'])) {
             $url .= '#' . $parts['fragment'];
         }
 
