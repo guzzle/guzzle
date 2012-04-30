@@ -73,7 +73,7 @@ class OauthPlugin implements EventSubscriberInterface
         $authString = 'OAuth ';
         foreach(array(
             'oauth_consumer_key'     => $this->config['consumer_key'],
-            'oauth_nonce'            => sha1($timestamp),
+            'oauth_nonce'            => $this->generateNonce($event['request'], $timestamp),
             'oauth_signature'        => $this->getSignature($event['request'], $timestamp),
             'oauth_signature_method' => $this->config['signature_method'],
             'oauth_timestamp'        => $timestamp,
@@ -85,6 +85,21 @@ class OauthPlugin implements EventSubscriberInterface
 
         // Add Authorization header
         $event['request']->setHeader('Authorization', substr($authString, 0, -2));
+    }
+
+    /**
+     * Returns a Nonce Based on the Timestamp and URL.  This will allow for
+     * multiple requests in parallel with the same exact timestamp to use
+     * separate nonce's.
+     *
+     * @param RequestInterface $request Request to generate a nonce for
+     * @param int $timestamp Timestamp to use for nonce
+     *
+     * @return string
+     */
+    public function generateNonce(RequestInterface $request, $timestamp)
+    {
+        return sha1($timestamp . $request->getUrl());
     }
 
     /**
@@ -115,7 +130,7 @@ class OauthPlugin implements EventSubscriberInterface
     {
         $params = new Collection(array(
             'oauth_consumer_key'     => $this->config['consumer_key'],
-            'oauth_nonce'            => sha1($timestamp),
+            'oauth_nonce'            => $this->generateNonce($request, $timestamp),
             'oauth_signature_method' => $this->config['signature_method'],
             'oauth_timestamp'        => $timestamp,
             'oauth_token'            => $this->config['token'],
