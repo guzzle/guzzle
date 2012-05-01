@@ -245,12 +245,9 @@ class CommandTest extends AbstractCommandTest
         $this->assertEquals('Bar', $command->getRequestHeaders()->get('Foo'));
     }
 
-    /**
-     * @covers Guzzle\Service\Command\AbstractCommand
-     */
-    public function testCommandsUsesApiCommand()
+    private function getApiCommand()
     {
-        $api = new ApiCommand(array(
+        return new ApiCommand(array(
             'name' => 'foobar',
             'method' => 'POST',
             'class' => 'Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand',
@@ -260,11 +257,54 @@ class CommandTest extends AbstractCommandTest
                     'type' => 'string'
                 )
         )));
+    }
 
+    /**
+     * @covers Guzzle\Service\Command\AbstractCommand
+     */
+    public function testCommandsUsesApiCommand()
+    {
+        $api = $this->getApiCommand();
         $command = new MockCommand(array(), $api);
         $this->assertSame($api, $command->getApiCommand());
         $command->setClient($this->getClient())->prepare();
         $this->assertEquals('123', $command->get('test'));
         $this->assertSame($api, $command->getApiCommand($api));
+    }
+
+    /**
+     * @covers Guzzle\Service\Command\AbstractCommand::__call
+     * @expectedException Guzzle\Common\Exception\BadMethodCallException
+     * @expectedExceptionMessage Magic method calls are disabled for this command.  Consider enabling magic method calls by setting the command.magic_method_call parameter to true.
+     */
+    public function testMissingMethodCallsThrowExceptionsWhenMagicIsDisabled()
+    {
+        $command = new MockCommand(array());
+        $command->setFooBarBaz('123');
+    }
+
+    /**
+     * @covers Guzzle\Service\Command\AbstractCommand::__call
+     * @expectedException Guzzle\Common\Exception\BadMethodCallException
+     * @expectedExceptionMessage Missing method setFoo
+     */
+    public function testMissingMethodCallsThrowExceptionsWhenParameterIsInvalid()
+    {
+        $command = new MockCommand(array(
+            'command.magic_method_call' => true
+        ), $this->getApiCommand());
+        $command->setFoo('bar_baz');
+    }
+
+    /**
+     * @covers Guzzle\Service\Command\AbstractCommand::__call
+     */
+    public function testMissingMethodCallsAllowedWhenEnabled()
+    {
+        $command = new MockCommand(array(
+            'command.magic_method_call' => true
+        ), $this->getApiCommand());
+        $command->setTest('foo');
+        $this->assertEquals('foo', $command->get('test'));
     }
 }

@@ -304,4 +304,19 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client->setCommandFactory($mock);
         $this->assertSame($mock, $client->getCommandFactory());
     }
+
+    /**
+     * @covers Guzzle\Service\Client::getCommand
+     * @depends testMagicCallBehaviorExecuteExecutesCommands
+     */
+    public function testEnablesMagicMethodCallsOnCommandsIfEnabledOnClient()
+    {
+        $client = new Mock\MockClient();
+        $command = $client->getCommand('other_command');
+        $this->assertNull($command->get('command.magic_method_call'));
+
+        $client->setMagicCallBehavior(Client::MAGIC_CALL_EXECUTE);
+        $command = $client->getCommand('other_command');
+        $this->assertTrue($command->get('command.magic_method_call'));
+    }
 }
