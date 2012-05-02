@@ -341,4 +341,42 @@ EOT;
         $this->assertSame($builder['b'], $client->getConfig('other_client'));
         $this->assertEquals('1', $builder['b']->getConfig('username'));
     }
+
+    /**
+     * @covers Guzzle\Service\ServiceBuilder::getAllEvents
+     * @covers Guzzle\Service\ServiceBuilder::get
+     */
+    public function testEmitsEventsWhenClientsAreCreated()
+    {
+        // Ensure that the client signals that it emits an event
+        $this->assertEquals(array('service_builder.create_client'), ServiceBuilder::getAllEvents());
+
+        // Create a test service builder
+        $builder = ServiceBuilder::factory(array(
+            'a' => array(
+                'class' => 'Guzzle\\Tests\\Service\\Mock\\MockClient',
+                'params' => array(
+                    'username'  => 'test',
+                    'password'  => '123',
+                    'subdomain' => 'z'
+                )
+            )
+        ));
+
+        $emits = 0;
+        $emitted = null;
+
+        // Add an event listener to pick up client creation events
+        $builder->getEventDispatcher()->addListener('service_builder.create_client', function($event) use (&$emits, &$emitted) {
+            $emits++;
+            $emitted = $event['client'];
+        });
+
+        // Get the 'a' client by name
+        $client = $builder->get('a');
+
+        // Ensure that the event was emitted once, and that the client was present
+        $this->assertEquals(1, $emits);
+        $this->assertInstanceOf('Guzzle\Tests\Service\Mock\MockClient', $client);
+    }
 }

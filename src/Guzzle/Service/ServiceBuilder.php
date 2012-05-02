@@ -2,6 +2,7 @@
 
 namespace Guzzle\Service;
 
+use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Service\Exception\ServiceBuilderException;
 use Guzzle\Service\Exception\ClientNotFoundException;
 use Guzzle\Service\Exception\ServiceNotFoundException;
@@ -10,7 +11,7 @@ use Guzzle\Service\Exception\ServiceNotFoundException;
  * Service builder to generate service builders and service clients from
  * configuration settings
  */
-class ServiceBuilder implements \ArrayAccess, \Serializable
+class ServiceBuilder extends AbstractHasDispatcher implements \ArrayAccess, \Serializable
 {
     /**
      * @var array Service builder configuration data
@@ -106,6 +107,14 @@ class ServiceBuilder implements \ArrayAccess, \Serializable
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public static function getAllEvents()
+    {
+        return array('service_builder.create_client');
+    }
+
+    /**
      * Restores the service builder from JSON
      *
      * @param string $serialized JSON data to restore from
@@ -160,6 +169,11 @@ class ServiceBuilder implements \ArrayAccess, \Serializable
         if (!$throwAway) {
             $this->clients[$name] = $client;
         }
+
+        // Dispatch an event letting listeners know a client was created
+        $this->dispatch('service_builder.create_client', array(
+            'client' => $client
+        ));
 
         return $client;
     }
