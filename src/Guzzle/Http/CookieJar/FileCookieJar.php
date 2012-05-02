@@ -19,7 +19,7 @@ class FileCookieJar extends ArrayCookieJar
      *
      * @param string $cookieFile File to store the cookie data
      *
-     * @throws HttpException if the file cannot be found or created
+     * @throws \RuntimeException if the file cannot be found or created
      */
     public function __construct($cookieFile)
     {
@@ -38,14 +38,14 @@ class FileCookieJar extends ArrayCookieJar
     /**
      * Save the contents of the data array to the file
      *
-     * @throws HttpException if the file cannot be found or created
+     * @throws \RuntimeException if the file cannot be found or created
      */
     protected function persist()
     {
         $handle = fopen($this->file, 'w+');
         // @codeCoverageIgnoreStart
         if ($handle === false) {
-            throw new HttpException('Unable to open file ' . $this->file);
+            throw new \RuntimeException('Unable to open file ' . $this->file);
         }
         // @codeCoverageIgnoreEnd
 
@@ -62,7 +62,7 @@ class FileCookieJar extends ArrayCookieJar
         $handle = fopen($this->file, 'c+');
         // @codeCoverageIgnoreStart
         if ($handle === false) {
-            throw new HttpException('Unable to open file ' . $this->file);
+            throw new \RuntimeException('Unable to open file ' . $this->file);
         }
         // @codeCoverageIgnoreEnd
 

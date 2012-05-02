@@ -171,8 +171,6 @@ class Url
      * @param string $path (optional) Path of the URL
      * @param QueryString|array|string $query (optional) Query string of the URL
      * @param string $fragment (optional) Fragment of the URL
-     *
-     * @throws HttpException
      */
     public function __construct($scheme, $host, $username = null, $password = null, $port = null, $path = null, QueryString $query = null, $fragment = null)
     {

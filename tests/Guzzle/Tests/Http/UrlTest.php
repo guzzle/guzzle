@@ -4,7 +4,6 @@ namespace Guzzle\Tests\Http;
 
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Url;
-use Guzzle\Http\HttpException;
 
 class UrlTest extends \Guzzle\Tests\GuzzleTestCase
 {
