@@ -5,6 +5,7 @@ namespace Guzzle\Http\Plugin;
 use Guzzle\Common\Event;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Exception\CurlException;
+use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Curl\CurlMultiInterface;
@@ -17,6 +18,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class ExponentialBackoffPlugin implements EventSubscriberInterface
 {
     const DELAY_PARAM = 'plugins.exponential_backoff.retry_time';
+    const RETRY_PARAM = 'plugins.exponential_backoff.retry_count';
 
     /**
      * @var array Array of response codes that must be retried
@@ -27,11 +29,6 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
      * @var int Maximum number of times to retry a request
      */
     protected $maxRetries;
-
-    /**
-     * @var Collection Request state information
-     */
-    protected $state;
 
     /**
      * @var Closure
@@ -58,7 +55,6 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
     {
         $this->setMaxRetries($maxRetries);
         $this->delayClosure = $delayFunction ?: array($this, 'calculateWait');
-        $this->state = new Collection();
         $this->failureCodes = $failureCodes ?: static::getDefaultFailureCodes();
     }
 
@@ -189,7 +185,7 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Called when a request is polling in the curl mutli object
+     * Called when a request is polling in the curl multi object
      *
      * @param Event $event
      */
@@ -199,14 +195,18 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
         $delay = $request->getParams()->get(self::DELAY_PARAM);
 
         // If the duration of the delay has passed, retry the request using the pool
-        if ($delay && time() >= $delay) {
+        if (null !== $delay && microtime(true) >= $delay) {
             // Remove the request from the pool and then add it back again.
             // This is required for cURL to know that we want to retry sending
             // the easy handle.
             $multi = $event['curl_multi'];
             $multi->remove($request);
-            $multi->add($request, true);
             $request->getParams()->remove(self::DELAY_PARAM);
+            // Rewind the request body if possible
+            if ($request instanceof EntityEnclosingRequestInterface) {
+                $request->getBody()->seek(0);
+            }
+            $multi->add($request, true);
         }
     }
 
@@ -217,15 +217,17 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
      */
     protected function retryRequest(RequestInterface $request)
     {
-        $key = spl_object_hash($request);
+        $params = $request->getParams();
+        $retries = ((int) $params->get(self::RETRY_PARAM)) + 1;
+        $params->set(self::RETRY_PARAM, $retries);
+
         // If this request has been retried too many times, then throw an exception
-        $this->state[$key] = $this->state[$key] + 1;
-        if ($this->state[$key] <= $this->maxRetries) {
+        if ($retries <= $this->maxRetries) {
             // Calculate how long to wait until the request should be retried
-            $delay = (int) call_user_func($this->delayClosure, $this->state[$key]);
+            $delay = microtime(true) + call_user_func($this->delayClosure, $retries);
             // Send the request again
             $request->setState(RequestInterface::STATE_TRANSFER);
-            $request->getParams()->set(self::DELAY_PARAM, time() + $delay);
+            $params->set(self::DELAY_PARAM, $delay);
         }
     }
 }

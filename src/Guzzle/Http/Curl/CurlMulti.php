@@ -272,8 +272,9 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
 
         $this->scope--;
 
-        // Don't re-complete if another scope already completed the transfers
-        if ($this->state !== self::STATE_COMPLETE) {
+        // Complete the transfer if this is the bottom scope and the state
+        // of the curl multi handle is not already complete
+        if ($this->state !== self::STATE_COMPLETE && $this->scope == -1) {
             $this->state = self::STATE_COMPLETE;
             $this->dispatch(self::COMPLETE);
             $this->state = self::STATE_IDLE;

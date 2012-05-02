@@ -7,10 +7,11 @@ use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Client;
 use Guzzle\Http\Plugin\ExponentialBackoffPlugin;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\Request;
+use Guzzle\Http\Message\EntityEnclosingRequest;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Curl\CurlMulti;
+use Guzzle\Http\Curl\CurlMultiInterface;
 
 /**
  * @group server
@@ -270,5 +271,40 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         $plugin->onRequestSent($event);
         $this->assertEquals(1, $count);
+    }
+
+    /**
+     * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin::onRequestPoll
+     */
+    public function testSeeksToBeginningOfRequestBodyWhenRetrying()
+    {
+        // Create a mock curl multi object
+        $multi = $this->getMockBuilder('Guzzle\Http\Curl\CurlMulti')
+            ->setMethods(array('remove', 'add'))
+            ->getMock();
+
+        // Create a request with a body
+        $request = new EntityEnclosingRequest('PUT', 'http://www.example.com');
+        $request->setBody('abc');
+        // Set the retry time to be something that will be retried always
+        $request->getParams()->set('plugins.exponential_backoff.retry_time', 2);
+        // Seek to the end of the stream
+        $request->getBody()->seek(3);
+        $this->assertEquals('', $request->getBody()->read(1));
+
+        // Create a plugin that does not delay when retrying
+        $plugin = new ExponentialBackoffPlugin(2, null, array($this, 'delayClosure'));
+
+        // Create an event that is expected for the Poll event
+        $event = new Event(array(
+            'request'    => $request,
+            'curl_multi' => $multi
+        ));
+        $event->setName(CurlMultiInterface::POLLING_REQUEST);
+
+        $plugin->onRequestPoll($event);
+
+        // Ensure that the stream was seeked to 0
+        $this->assertEquals('a', $request->getBody()->read(1));
     }
 }
