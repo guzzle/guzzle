@@ -300,4 +300,14 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('foo', $url->getHost());
         $this->assertEquals(8983, $url->getPort());
     }
+
+    /**
+     * @covers Guzzle\Http\Url::buildUrl
+     */
+    public function testUrlOnlyContainsHashWhenHashIsNotEmpty()
+    {
+        $url = Url::factory('http://www.example.com/');
+        $url->setFragment('');
+        $this->assertEquals('http://www.example.com/', (string) $url);
+    }
 }

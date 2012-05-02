@@ -66,10 +66,10 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $this->getRequest();
         $this->assertEquals(
             // Method and URL
-            'POST&http%3A%2F%2Fwww.test.com%2Fpath%23' .
+            'POST&http%3A%2F%2Fwww.test.com%2Fpath' .
             // Sorted parameters from query string and body
             '&a%3Db%26c%3Dd%26e%3Df%26oauth_consumer_key%3Dfoo' .
-            '%26oauth_nonce%3D29443585e9f85f23306198f7eae8d870c46c53ad%26' .
+            '%26oauth_nonce%3D22c3b010c30c17043c3d2dd3a7aa3ae6c5549b32%26' .
             'oauth_signature_method%3DHMAC-SHA1' .
             '%26oauth_timestamp%3D' . self::TIMESTAMP . '%26oauth_token%3Dcount%26oauth_version%3D1.0',
             $p->getStringToSign($request, self::TIMESTAMP)
@@ -86,10 +86,10 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request->setHeader('Content-Type', 'Foo');
         $this->assertEquals(
             // Method and URL
-            'POST&http%3A%2F%2Fwww.test.com%2Fpath%23' .
+            'POST&http%3A%2F%2Fwww.test.com%2Fpath' .
             // Sorted parameters from query string and body
             '&a%3Db%26c%3Dd%26oauth_consumer_key%3Dfoo' .
-            '%26oauth_nonce%3D29443585e9f85f23306198f7eae8d870c46c53ad%26' .
+            '%26oauth_nonce%3D22c3b010c30c17043c3d2dd3a7aa3ae6c5549b32%26' .
             'oauth_signature_method%3DHMAC-SHA1' .
             '%26oauth_timestamp%3D' . self::TIMESTAMP . '%26oauth_token%3Dcount%26oauth_version%3D1.0',
             $p->getStringToSign($request, self::TIMESTAMP)
@@ -123,8 +123,8 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $this->getRequest();
         $sig = $p->getSignature($request, self::TIMESTAMP);
         $this->assertEquals(
-            '_POST&http%3A%2F%2Fwww.test.com%2Fpath%23&a%3Db%26c%3Dd%26e%3Df%26oauth_consumer_key%3Dfoo' .
-            '%26oauth_nonce%3D29443585e9f85f23306198f7eae8d870c46c53ad%26oauth_signature_method%3DHMAC-SHA1' .
+            '_POST&http%3A%2F%2Fwww.test.com%2Fpath&a%3Db%26c%3Dd%26e%3Df%26oauth_consumer_key%3Dfoo' .
+            '%26oauth_nonce%3D22c3b010c30c17043c3d2dd3a7aa3ae6c5549b32%26oauth_signature_method%3DHMAC-SHA1' .
             '%26oauth_timestamp%3D' . self::TIMESTAMP . '%26oauth_token%3Dcount%26oauth_version%3D1.0|' .
             'bar&dracula_',
             base64_decode($sig)
@@ -146,13 +146,26 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertTrue($event['request']->hasHeader('Authorization'));
         $this->assertEquals('OAuth oauth_consumer_key="foo", '
-            . 'oauth_nonce="29443585e9f85f23306198f7eae8d870c46c53ad", '
-            . 'oauth_signature="IvVzcqLU%2Fk2zzoC7gBRfSnDkMdQ%3D", '
+            . 'oauth_nonce="22c3b010c30c17043c3d2dd3a7aa3ae6c5549b32", '
+            . 'oauth_signature="BqUAsVHc1cYJ3FA9%2BtLMkJnizJk%3D", '
             . 'oauth_signature_method="HMAC-SHA1", '
             . 'oauth_timestamp="' . self::TIMESTAMP . '", '
             . 'oauth_token="count", '
             . 'oauth_version="1.0"',
-            $event['request']->getHeader('Authorization')
+            (string) $event['request']->getHeader('Authorization')
         );
+    }
+
+    /**
+     * @covers Guzzle\Http\Plugin\OauthPlugin::generateNonce
+     */
+    public function testGeneratesUniqueNonce()
+    {
+        $p = new OauthPlugin($this->config);
+        $method = new \ReflectionMethod('Guzzle\Http\Plugin\OauthPlugin', 'generateNonce');
+        $method->setAccessible(true);
+        $request = RequestFactory::getInstance()->create('GET', 'http://www.example.com');
+        $result = $method->invoke($p, $request, 1335936584);
+        $this->assertEquals('29f72fa5fc2893972060b28a0df8623c41cbb5d2', $result);
     }
 }

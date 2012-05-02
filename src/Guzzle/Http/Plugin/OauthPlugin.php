@@ -88,21 +88,6 @@ class OauthPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Returns a Nonce Based on the Timestamp and URL.  This will allow for
-     * multiple requests in parallel with the same exact timestamp to use
-     * separate nonce's.
-     *
-     * @param RequestInterface $request Request to generate a nonce for
-     * @param int $timestamp Timestamp to use for nonce
-     *
-     * @return string
-     */
-    public function generateNonce(RequestInterface $request, $timestamp)
-    {
-        return sha1($timestamp . $request->getUrl());
-    }
-
-    /**
      * Calculate signature for request
      *
      * @param RequestInterface $request Request to generate a signature for
@@ -167,5 +152,20 @@ class OauthPlugin implements EventSubscriberInterface
         return strtoupper($request->getMethod()) . '&'
              . rawurlencode($url) . '&'
              . rawurlencode(implode('&', $parameterString));
+    }
+
+    /**
+     * Returns a Nonce Based on the Timestamp and URL.  This will allow for
+     * multiple requests in parallel with the same exact timestamp to use
+     * separate nonce's.
+     *
+     * @param RequestInterface $request Request to generate a nonce for
+     * @param int $timestamp Timestamp to use for nonce
+     *
+     * @return string
+     */
+    protected function generateNonce(RequestInterface $request, $timestamp)
+    {
+        return sha1($timestamp . $request->getUrl());
     }
 }
