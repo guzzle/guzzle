@@ -81,6 +81,8 @@ class CurlHandle
         switch ($request->getMethod()) {
             case 'GET':
                 $curlOptions[CURLOPT_HTTPGET] = true;
+                // unset the custom request to explicitly use GET
+                unset($curlOptions[CURLOPT_CUSTOMREQUEST]);
                 break;
             case 'HEAD':
                 $curlOptions[CURLOPT_NOBODY] = true;
@@ -88,10 +90,20 @@ class CurlHandle
                 break;
             case 'POST':
                 $curlOptions[CURLOPT_POST] = true;
+                // unset the custom request to explicitly use POST
+                unset($curlOptions[CURLOPT_CUSTOMREQUEST]);
+                // Setting the postfields to ensure the content is sent as: multipart/form-data 
+                $curlOptions[CURLOPT_POSTFIELDS] = (string) $request->getBody();
+                break;
+            case 'DELETE':
+                // Setting the postfields to ensure the content is sent as: multipart/form-data 
+                $curlOptions[CURLOPT_POSTFIELDS] = (string) $request->getBody();
                 break;
             case 'PUT':
             case 'PATCH':
                 $curlOptions[CURLOPT_UPLOAD] = true;
+                // Setting the postfields to ensure the content is sent as: multipart/form-data 
+                $curlOptions[CURLOPT_POSTFIELDS] = (string) $request->getBody();
                 if ($request->hasHeader('Content-Length')) {
                     unset($headers['Content-Length']);
                     $curlOptions[CURLOPT_INFILESIZE] = (int) (string) $request->getHeader('Content-Length');
