@@ -2,7 +2,8 @@
 
 namespace Guzzle\Tests\Http;
 
-use Guzzle\Http\HttpException;
+use Guzzle\Http\Exception\BadResponseException;
+use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
@@ -74,7 +75,7 @@ class Server
      * Flush the received requests from the server
      *
      * @return bool Returns TRUE on success or FALSE on failure
-     * @throws HttpException
+     * @throws RuntimeException
      */
     public function flush()
     {
@@ -95,7 +96,7 @@ class Server
      * @param array|Response $responses A single or array of Responses to queue
      *
      * @return bool Returns TRUE on success or FALSE on failure
-     * @throws HttpException
+     * @throws BadResponseException
      */
     public function enqueue($responses)
     {
@@ -106,7 +107,7 @@ class Server
             if (is_string($response)) {
                 $response = Response::fromMessage($response);
             } else if (!($response instanceof Response)) {
-                throw new HttpException(
+                throw new BadResponseException(
                     'Responses must be strings or implement Response'
                 );
             }
@@ -173,7 +174,7 @@ class Server
      *      requests will be returned as strings.
      *
      * @return array
-     * @throws HttpException
+     * @throws RuntimeException
      */
     public function getReceivedRequests($hydrate = false)
     {
@@ -206,7 +207,7 @@ class Server
             while (!$this->isRunning() && time() - $start < 5);
             // @codeCoverageIgnoreStart
             if (!$this->isRunning()) {
-                throw new HttpException(
+                throw new RuntimeException(
                     'Unable to contact server.js.  Have you installed node.js '
                     . 'v0.5.0+?  The node.js executable, node, must also be in '
                     . 'your path.'
@@ -222,7 +223,7 @@ class Server
      * Stop running the node.js server
      *
      * @return bool Returns TRUE on success or FALSE on failure
-     * @throws HttpException
+     * @throws RuntimeException
      */
     public function stop()
     {
