@@ -6,6 +6,7 @@ use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\EntityBody;
+use Guzzle\Http\HttpException;
 use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
@@ -82,7 +83,7 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         try {
             //$response = new Response(200, null, array('foo' => 'bar'));
             //$this->fail('Response did not throw exception when passing invalid body');
-        } catch(\Exception $e) {
+        } catch (HttpException $e) {
         }
 
         // Make sure the proper exception is thrown when sending invalid code
