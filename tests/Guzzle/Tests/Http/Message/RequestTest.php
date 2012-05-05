@@ -5,7 +5,6 @@ namespace Guzzle\Tests\Http\Message;
 use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Http\EntityBody;
-use Guzzle\Http\HttpException;
 use Guzzle\Http\Url;
 use Guzzle\Http\Client;
 use Guzzle\Http\Plugin\ExponentialBackoffPlugin;
