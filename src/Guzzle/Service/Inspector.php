@@ -259,8 +259,6 @@ class Inspector
                 $configValue = Guzzle::inject($configValue, $config);
             }
 
-            $config->set($name, $configValue);
-
             // Ensure that required arguments are set
             if ($validate && $arg->getRequired() && ($configValue === null || $configValue === '')) {
                 $errors[] = 'Requires that the ' . $name . ' argument be supplied.' . ($arg->getDoc() ? '  (' . $arg->getDoc() . ').' : '');
@@ -268,17 +266,17 @@ class Inspector
             }
 
             // Ensure that the correct data type is being used
-            if ($validate && $this->typeValidation && $argType = $arg->getType()) {
-                if ($configValue !== null) {
-                    $validation = $this->validateConstraint($argType, $configValue);
-                    if ($validation !== true) {
-                        $errors[] = $validation;
-                    }
+            if ($validate && $this->typeValidation && $configValue !== null && $argType = $arg->getType()) {
+                $validation = $this->validateConstraint($argType, $configValue);
+                if ($validation !== true) {
+                    $errors[] = $validation;
+                    continue;
                 }
             }
 
             // Run the value through attached filters
             $configValue = $arg->filter($configValue);
+            $config->set($name, $configValue);
 
             // Check the length values if validating data
             if ($validate) {
