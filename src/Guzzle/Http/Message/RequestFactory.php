@@ -50,12 +50,12 @@ class RequestFactory implements RequestFactoryInterface
     public static function getInstance()
     {
         // @codeCoverageIgnoreStart
-        if (!self::$instance) {
-            self::$instance = new self();
+        if (!static::$instance) {
+            static::$instance = new static();
         }
         // @codeCoverageIgnoreEnd
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
@@ -95,7 +95,7 @@ class RequestFactory implements RequestFactoryInterface
                 list($key, $value) = explode(':', $line, 2);
                 $key = trim($key);
                 // Normalize standard HTTP headers
-                if (in_array(strtolower($key), self::$requestHeaders)) {
+                if (in_array(strtolower($key), static::$requestHeaders)) {
                     $key = str_replace(' ', '-', ucwords(str_replace('-', ' ', $key)));
                 }
                 // Headers are case insensitive
