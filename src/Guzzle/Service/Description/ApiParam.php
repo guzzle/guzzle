@@ -257,5 +257,11 @@ class ApiParam implements \Serializable
         } else {
             $this->filters = array();
         }
+
+        if ($this->required === 'false') {
+            $this->required = false;
+        } elseif ($this->required === 'true') {
+            $this->required = true;
+        }
     }
 }

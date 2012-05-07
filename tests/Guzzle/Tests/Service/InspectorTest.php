@@ -142,27 +142,27 @@ EOT;
         $params = Inspector::getInstance()->parseDocBlock($doc);
 
         $this->assertEquals(array(
-            'required' => 'true',
+            'required' => true,
             'doc' => 'API username',
             'type' => 'string'
         ), array_filter($params['username']->toArray()));
 
         $this->assertEquals(array(
-            'required' => 'true',
+            'required' => true,
             'default' => 'v1',
             'doc' => 'API version',
             'type' => "choice:'v1','v2',v3"
         ), array_filter($params['api_version']->toArray()));
 
         $this->assertEquals(array(
-            'required' => 'true',
+            'required' => true,
             'default' => 'https',
             'doc' => 'HTTP protocol (http or https)',
             'type' => 'string'
         ), array_filter($params['protocol']->toArray()));
 
         $this->assertEquals(array(
-            'required' => 'true',
+            'required' => true,
             'default' => '{{ protocol }}://{{ subdomain }}.unfuddle.com/api/{{ api_version }}/',
             'doc' => 'Unfuddle API base URL',
             'type' => 'string'
