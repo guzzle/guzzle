@@ -18,7 +18,9 @@ class Validation extends \Guzzle\Tests\GuzzleTestCase
                 throw $e;
             }
 
-            $this->assertInstanceOf($exception, $e);
+            if (!($e instanceof $exception)) {
+                throw $e;
+            }
         }
     }
 }
