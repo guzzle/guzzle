@@ -255,7 +255,7 @@ class Inspector
             $configValue = $arg->getValue($config->get($name));
 
             // Inject configuration information into the config value
-            if (is_scalar($configValue)) {
+            if (is_string($configValue)) {
                 $configValue = Guzzle::inject($configValue, $config);
             }
 

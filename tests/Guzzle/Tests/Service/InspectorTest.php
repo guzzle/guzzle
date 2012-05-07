@@ -19,7 +19,7 @@ use Guzzle\Service\Exception\ValidationException;
  * @guzzle timestamp type="time"
  * @guzzle string type="string"
  * @guzzle username required="true" filters="strtolower"
- * @guzzle dynamic default="{{username}}_{{ string }}_{{ does_not_exist }}"
+ * @guzzle dynamic default="{username}_{ string }_{ does_not_exist }"
  * @guzzle test_function type="string" filters="Guzzle\Tests\Common\InspectorTest::strtoupper"
  */
 class InspectorTest extends \Guzzle\Tests\GuzzleTestCase
@@ -134,7 +134,7 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase
  * @guzzle subdomain required="true" doc="Unfuddle project subdomain" type="string"
  * @guzzle api_version required="true" default="v1" doc="API version" type="choice:'v1','v2',v3"
  * @guzzle protocol required="true" default="https" doc="HTTP protocol (http or https)" type="string"
- * @guzzle base_url required="true" default="{{ protocol }}://{{ subdomain }}.unfuddle.com/api/{{ api_version }}/" doc="Unfuddle API base URL" type="string"
+ * @guzzle base_url required="true" default="{ protocol }://{ subdomain }.unfuddle.com/api/{ api_version }/" doc="Unfuddle API base URL" type="string"
  * @guzzle class type="type:object"
  */
 EOT;
@@ -163,7 +163,7 @@ EOT;
 
         $this->assertEquals(array(
             'required' => true,
-            'default' => '{{ protocol }}://{{ subdomain }}.unfuddle.com/api/{{ api_version }}/',
+            'default' => '{ protocol }://{ subdomain }.unfuddle.com/api/{ api_version }/',
             'doc' => 'Unfuddle API base URL',
             'type' => 'string'
         ), array_filter($params['base_url']->toArray()));

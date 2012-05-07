@@ -336,4 +336,16 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
 
         return $this;
     }
+
+    /**
+     * Return a collection value for a match array of a preg_replace function
+     *
+     * @param array $matches preg_replace* matches
+     *
+     * @return mixed
+     */
+    public function getPregMatchValue(array $matches)
+    {
+        return $this->get($matches[1]);
+    }
 }

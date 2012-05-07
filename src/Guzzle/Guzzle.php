@@ -96,10 +96,7 @@ class Guzzle
             return $input;
         }
 
-        return preg_replace_callback('/{{1,2}\s*([A-Za-z_\-\.0-9]+)\s*}{1,2}/', function($matches) use ($config) {
-                return $config->get(trim($matches[1]));
-            }, $input
-        );
+        return preg_replace_callback('/{\s*([A-Za-z_\-\.0-9]+)\s*}/', array($config, 'getPregMatchValue'), $input);
     }
 
     /**
