@@ -6,6 +6,7 @@ use Guzzle\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Service\Exception\ValidationException;
+use Guzzle\Service\Description\ApiParam;
 
 /**
  * Inpects configuration options versus defined parameters, adding default
@@ -200,6 +201,7 @@ class Inspector
                     }
                 }
             }
+            $params[$match] = new ApiParam($params[$match]);
         }
 
         return $params;
@@ -249,76 +251,49 @@ class Inspector
 
         foreach ($params as $name => $arg) {
 
-            if (!($arg instanceof Collection)) {
-                $arg = new Collection($arg);
-            }
-
-            $configValue = $config->get($name);
-
-            // Set the default value if it is not set
-            $staticValue = $arg->get('static');
-            $defaultValue = $arg->get('default');
-
-            if ($staticValue || ($defaultValue && !$configValue)) {
-                $check = $staticValue ?: $defaultValue;
-                if ($check === 'true') {
-                    $config->set($name, true);
-                    $configValue = true;
-                } else if ($check == 'false') {
-                    $config->set($name, false);
-                    $configValue = false;
-                } else {
-                    $config->set($name, $check);
-                    $configValue = $check;
-                }
-            }
+            // Set the default or static value if it is not set
+            $configValue = $arg->getValue($config->get($name));
 
             // Inject configuration information into the config value
-            if (is_scalar($configValue) && strpos($configValue, '{') !== false) {
-                $config->set($name, Guzzle::inject($configValue, $config));
-                $configValue = $config->get($name);
+            if (is_scalar($configValue)) {
+                $configValue = Guzzle::inject($configValue, $config);
             }
+
+            $config->set($name, $configValue);
 
             // Ensure that required arguments are set
-            if ($validate && $arg->get('required') && !$configValue) {
-                $errors[] = 'Requires that the ' . $name . ' argument be supplied.' . ($arg->get('doc') ? '  (' . $arg->get('doc') . ').' : '');
-                continue;
-            }
-
-            // Skip further validation if the arg is not set
-            if ($config->hasKey($name) === false) {
+            if ($validate && $arg->getRequired() && ($configValue === null || $configValue === '')) {
+                $errors[] = 'Requires that the ' . $name . ' argument be supplied.' . ($arg->getDoc() ? '  (' . $arg->getDoc() . ').' : '');
                 continue;
             }
 
             // Ensure that the correct data type is being used
-            if ($validate && $this->typeValidation && $argType = $arg->get('type')) {
-                $validation = $this->validateConstraint($argType, $configValue);
-                if ($validation !== true) {
-                    $errors[] = $validation;
+            if ($validate && $this->typeValidation && $argType = $arg->getType()) {
+                if ($configValue !== null) {
+                    $validation = $this->validateConstraint($argType, $configValue);
+                    if ($validation !== true) {
+                        $errors[] = $validation;
+                    }
                 }
             }
 
             // Run the value through attached filters
-            $argFilters = $arg->get('filters');
-            if ($argFilters) {
-                foreach (explode(',', $argFilters) as $filter) {
-                    $config->set($name, call_user_func(trim($filter), $config->get($name)));
-                }
-                $configValue = $config->get($name);
-            }
+            $configValue = $arg->filter($configValue);
 
             // Check the length values if validating data
             if ($validate) {
-                $argMinLength = $arg->get('min_length');
+                $argMinLength = $arg->getMinLength();
                 if ($argMinLength && strlen($configValue) < $argMinLength) {
-                    $errors[] = 'Requires that the ' . $name . ' argument be >= ' . $arg->get('min_length') . ' characters.';
+                    $errors[] = 'Requires that the ' . $name . ' argument be >= ' . $arg->getMinLength() . ' characters.';
                 }
 
-                $argMaxLength = $arg->get('max_length');
+                $argMaxLength = $arg->getMaxLength();
                 if ($argMaxLength && strlen($configValue) > $argMaxLength) {
-                    $errors[] = 'Requires that the ' . $name . ' argument be <= ' . $arg->get('max_length') . ' characters.';
+                    $errors[] = 'Requires that the ' . $name . ' argument be <= ' . $arg->getMaxLength() . ' characters.';
                 }
             }
+
+            $config->set($name, $configValue);
         }
 
         if (empty($errors)) {

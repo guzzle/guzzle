@@ -43,7 +43,7 @@ class XmlDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
             'required' => true,
             'location' => 'path',
             'doc' => 'Bucket location'
-        ), $command->getParam('bucket')->getAll());
+        ), array_filter($command->getParam('bucket')->toArray()));
 
         $this->assertEquals('DELETE', $command->getMethod());
         $this->assertEquals('{{ bucket }}/{{ key }}{{ format }}', $command->getUri());

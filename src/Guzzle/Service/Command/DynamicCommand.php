@@ -38,7 +38,7 @@ class DynamicCommand extends AbstractCommand
             foreach ($this->apiCommand->getParams() as $name => $arg) {
                 $configValue = $this->get($name);
                 if (is_scalar($configValue)) {
-                    $variables[$name] = $arg->get('prepend') . $configValue . $arg->get('append');
+                    $variables[$name] = $arg->getPrepend() . $configValue . $arg->getAppend();
                 }
             }
 
@@ -59,14 +59,14 @@ class DynamicCommand extends AbstractCommand
         foreach ($this->apiCommand->getParams() as $name => $arg) {
 
             $configValue = $this->get($name);
-            $location = $arg->get('location');
+            $location = $arg->getLocation();
 
             if (!$configValue || !$location) {
                 continue;
             }
 
             // Create the value based on prepend and append settings
-            $value = $arg->get('prepend') . $configValue . $arg->get('append');
+            $value = $arg->getPrepend() . $configValue . $arg->getAppend();
 
             // Determine the location and key setting location[:key]
             $parts = explode(':', $location);

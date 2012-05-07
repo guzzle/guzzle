@@ -4,6 +4,7 @@ namespace Guzzle\Tests\Common;
 
 use Guzzle\Common\Collection;
 use Guzzle\Service\Inspector;
+use Guzzle\Service\Description\ApiParam;
 use Guzzle\Service\Exception\ValidationException;
 
 /**
@@ -144,32 +145,32 @@ EOT;
             'required' => 'true',
             'doc' => 'API username',
             'type' => 'string'
-        ), $params['username']);
+        ), array_filter($params['username']->toArray()));
 
         $this->assertEquals(array(
             'required' => 'true',
             'default' => 'v1',
             'doc' => 'API version',
             'type' => "choice:'v1','v2',v3"
-        ), $params['api_version']);
+        ), array_filter($params['api_version']->toArray()));
 
         $this->assertEquals(array(
             'required' => 'true',
             'default' => 'https',
             'doc' => 'HTTP protocol (http or https)',
             'type' => 'string'
-        ), $params['protocol']);
+        ), array_filter($params['protocol']->toArray()));
 
         $this->assertEquals(array(
             'required' => 'true',
             'default' => '{{ protocol }}://{{ subdomain }}.unfuddle.com/api/{{ api_version }}/',
             'doc' => 'Unfuddle API base URL',
             'type' => 'string'
-        ), $params['base_url']);
+        ), array_filter($params['base_url']->toArray()));
 
         $this->assertEquals(array(
             'type' => "type:object"
-        ), $params['class']);
+        ), array_filter($params['class']->toArray()));
 
         $config = new Collection(array(
             'username' => 'test',
@@ -229,12 +230,14 @@ EOT;
         ));
 
         $this->assertTrue(Inspector::getInstance()->validateConfig(array(
-            'data' => array(
-                'type' => 'mock'
-            ),
-            'test' => array(
-                'type' => 'mock_2'
-            )
+            'data' => new ApiParam(array(
+                'type' => 'mock',
+                'name' => 'data'
+            )),
+            'test' => new ApiParam(array(
+                'type' => 'mock_2',
+                'name' => 'test'
+            ))
         ), $validating, false));
     }
 
@@ -245,9 +248,9 @@ EOT;
     public function testChecksFilterValidity()
     {
         Inspector::getInstance()->validateConfig(array(
-            'data' => array(
+            'data' => new ApiParam(array(
                 'type' => 'invalid'
-            )
+            ))
         ), new Collection(array(
             'data' => 'false'
         )));
@@ -265,17 +268,17 @@ EOT;
         ));
 
         $result = Inspector::getInstance()->validateConfig(array(
-            'data' => array(
+            'data' => new ApiParam(array(
                 'type' => 'string'
-            ),
-            'min' => array(
+            )),
+            'min' => new ApiParam(array(
                 'type' => 'string',
                 'min_length' => 2
-            ),
-            'max' => array(
+            )),
+            'max' => new ApiParam(array(
                 'type' => 'string',
                 'max_length' => 2
-            )
+            ))
         ), $config, false);
 
         $concat = implode("\n", $result);
@@ -320,9 +323,9 @@ EOT;
 
         // Ensure that the type is not validated
         $i->validateConfig(array(
-            'data' => array(
+            'data' => new ApiParam(array(
                 'type' => 'string'
-            )
+            ))
         ), new Collection(array(
             'data' => new \stdClass()
         )), true);
@@ -331,11 +334,26 @@ EOT;
 
         // Ensure that nothing is validated
         $i->validateConfig(array(
-            'data' => array(
+            'data' => new ApiParam(array(
                 'type' => 'string'
-            )
+            ))
         ), new Collection(array(
             'data' => new \stdClass()
         )), true, false);
+    }
+
+    /**
+     * @covers Guzzle\Service\Inspector::validateConfig
+     */
+    public function testSkipsFurtherValidationIfNotSet()
+    {
+        $i = Inspector::getInstance();
+
+        // Ensure that the type is not validated
+        $this->assertEquals(true, $i->validateConfig(array(
+            'data' => new ApiParam(array(
+                'type' => 'string'
+            ))
+        ), new Collection(), true));
     }
 }

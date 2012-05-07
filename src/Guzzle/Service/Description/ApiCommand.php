@@ -85,8 +85,8 @@ class ApiCommand
         $this->class = isset($config['class']) ? trim($config['class']) : self::DEFAULT_COMMAND_CLASS;
 
         if (isset($config['params']) && is_array($config['params'])) {
-            foreach ($config['params'] as $paramName => $param) {
-                $this->params[$paramName] = $param instanceof Collection ? $param : new Collection($param);
+            foreach ($config['params'] as $name => $param) {
+                $this->params[$name] = $param instanceof ApiParam ? $param : new ApiParam($param);
             }
         }
     }
@@ -123,7 +123,7 @@ class ApiCommand
      *
      * @param string $param Parameter to retrieve by name
      *
-     * @return Collection|null
+     * @return ApiParam|null
      */
     public function getParam($param)
     {
