@@ -67,16 +67,15 @@ class ArrayDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
     {
         ServiceDescription::factory(array(
             'types' => array(
-                'slug' => array(
-                    'class' => 'Symfony\\Component\\Validator\\Constraints\\Regex',
-                    'pattern' => '/[0-9a-zA-z_\-]+/'
+                'foo' => array(
+                    'class' => 'Guzzle\\Common\\Validation\\Regex',
+                    'pattern' => '/[0-9]+/'
                 )
             )
         ));
 
-        $regex = Inspector::getInstance()->getConstraint('slug');
-        $this->assertInstanceOf('Symfony\\Component\\Validator\\Constraints\\Regex', $regex);
-        $this->assertEquals('/[0-9a-zA-z_\-]+/', $regex->pattern);
+        $valid = Inspector::getInstance()->validateConstraint('foo', 'abc');
+        $this->assertEquals('abc does not match the regular expression', $valid);
     }
 
     /**

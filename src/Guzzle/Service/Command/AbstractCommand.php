@@ -51,12 +51,12 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     {
         parent::__construct($parameters);
 
-        // Add arguments and validate the command
+        // Add arguments and defaults to the command
         if ($apiCommand) {
             $this->apiCommand = $apiCommand;
-            Inspector::getInstance()->validateConfig($apiCommand->getParams(), $this, false);
+            Inspector::getInstance()->validateConfig($apiCommand->getParams(), $this, false, false);
         } else {
-            Inspector::getInstance()->validateClass(get_class($this), $this, false);
+            Inspector::getInstance()->validateClass(get_class($this), $this, false, false);
         }
 
         if (!$this->get('headers') instanceof Collection) {

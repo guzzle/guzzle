@@ -36,8 +36,9 @@ class DynamicCommand extends AbstractCommand
             // Get the path values and use the client config settings
             $variables = $this->getClient()->getConfig()->getAll();
             foreach ($this->apiCommand->getParams() as $name => $arg) {
-                if (is_scalar($this->get($name))) {
-                    $variables[$name] = $arg->get('prepend') . $this->get($name) . $arg->get('append');
+                $configValue = $this->get($name);
+                if (is_scalar($configValue)) {
+                    $variables[$name] = $arg->get('prepend') . $configValue . $arg->get('append');
                 }
             }
 
@@ -57,15 +58,18 @@ class DynamicCommand extends AbstractCommand
         // Add arguments to the request using the location attribute
         foreach ($this->apiCommand->getParams() as $name => $arg) {
 
-            if (!$this->get($name) || !$arg->get('location')) {
+            $configValue = $this->get($name);
+            $location = $arg->get('location');
+
+            if (!$configValue || !$location) {
                 continue;
             }
 
             // Create the value based on prepend and append settings
-            $value = $arg->get('prepend') . $this->get($name) . $arg->get('append');
+            $value = $arg->get('prepend') . $configValue . $arg->get('append');
 
             // Determine the location and key setting location[:key]
-            $parts = explode(':', $arg->get('location'));
+            $parts = explode(':', $location);
             $place = $parts[0];
 
             // If a key is specified (using location:key), use it

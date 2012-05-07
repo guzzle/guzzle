@@ -140,6 +140,8 @@ class LogPlugin implements EventSubscriberInterface
     public function onRequestBeforeSend(Event $event)
     {
         $request = $event['request'];
+        // Ensure that curl IO events are emitted
+        $request->getParams()->set('curl.emit_io', true);
         // We need to make special handling for content wiring and
         // non-repeatable streams.
         if ($this->settings & self::LOG_BODY) {
@@ -240,26 +242,28 @@ class LogPlugin implements EventSubscriberInterface
         $message = '';
         $handle = $request->getParams()->get('curl_handle');
         $stderr = $handle->getStderr(true);
-        rewind($stderr);
-        $addedBody = false;
-        while ($line = fgets($stderr)) {
-            // * - Debug | < - Downstream | > - Upstream
-            if ($line[0] == '*') {
-                if ($this->settings & self::LOG_DEBUG) {
+        if ($stderr) {
+            rewind($stderr);
+            $addedBody = false;
+            while ($line = fgets($stderr)) {
+                // * - Debug | < - Downstream | > - Upstream
+                if ($line[0] == '*') {
+                    if ($this->settings & self::LOG_DEBUG) {
+                        $message .= $line;
+                    }
+                } else if ($this->settings & self::LOG_HEADERS) {
                     $message .= $line;
                 }
-            } else if ($this->settings & self::LOG_HEADERS) {
-                $message .= $line;
-            }
-            // Add the request body if needed
-            if ($this->settings & self::LOG_BODY) {
-                if (trim($line) == '' && $request instanceof EntityEnclosingRequestInterface) {
-                    if ($request->getParams()->get('request_wire')) {
-                        $message .= (string) $request->getParams()->get('request_wire') . "\r\n";
-                    } else {
-                        $message .= (string) $request->getBody() . "\r\n";
+                // Add the request body if needed
+                if ($this->settings & self::LOG_BODY) {
+                    if (trim($line) == '' && $request instanceof EntityEnclosingRequestInterface) {
+                        if ($request->getParams()->get('request_wire')) {
+                            $message .= (string) $request->getParams()->get('request_wire') . "\r\n";
+                        } else {
+                            $message .= (string) $request->getBody() . "\r\n";
+                        }
+                        $addedBody = true;
                     }
-                    $addedBody = true;
                 }
             }
         }

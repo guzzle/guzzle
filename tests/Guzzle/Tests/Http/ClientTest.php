@@ -192,15 +192,16 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      * @covers Guzzle\Http\Client::createRequest
      * @covers Guzzle\Http\Client::prepareRequest
      */
-    public function testClientAddsCacheKeyFiltersToRequests()
+    public function testClientAddsCustomCurlOptionsToRequests()
     {
         $client = new Client('http://www.test.com/', array(
             'api' => 'v1',
-            'cache.key_filter' => 'query=Date'
+            'curl.disable_wire' => true,
+            'curl.foo' => 'bar'
         ));
-
         $request = $client->createRequest();
-        $this->assertEquals('query=Date', $request->getParams()->get('cache.key_filter'));
+        $this->assertTrue($request->getCurlOptions()->get('disable_wire'));
+        $this->assertEquals('bar', $request->getCurlOptions()->get('foo'));
     }
 
     /**

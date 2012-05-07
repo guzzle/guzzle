@@ -36,6 +36,7 @@ class UriTemplateTest extends \Guzzle\Tests\GuzzleTestCase
             $t[] = $params;
             return $t;
         }, array(
+            array('foo',                 'foo'),
             array('{var}',               'value'),
             array('{hello}',             'Hello%20World%21'),
             array('{+var}',              'value'),
@@ -172,18 +173,6 @@ class UriTemplateTest extends \Guzzle\Tests\GuzzleTestCase
 
         $exp = substr($exp, 1, -1);
         $this->assertEquals($data, $method->invokeArgs($template, array($exp)));
-    }
-
-    /**
-     * @covers Guzzle\Http\UriTemplate::setRegex
-     */
-    public function testAllowsCustomUriTemplateRegex()
-    {
-        $template = new UriTemplate('abc_<$var>');
-        $template->setRegex('/\<\$(.+)\>/');
-        $this->assertEquals('abc_hi', $template->expand(array(
-            'var' => 'hi'
-        )));
     }
 
     public function testAllowsTemplateChange()

@@ -5,10 +5,6 @@ namespace Guzzle\Tests\Common;
 use Guzzle\Common\Collection;
 use Guzzle\Service\Inspector;
 use Guzzle\Service\Exception\ValidationException;
-use Symfony\Component\Validator\ConstraintValidatorFactory;
-use Symfony\Component\Validator\Validator;
-use Symfony\Component\Validator\Mapping\Loader\StaticMethodLoader;
-use Symfony\Component\Validator\Mapping\ClassMetadataFactory;
 
 /**
  * @covers Guzzle\Service\Inspector
@@ -48,28 +44,6 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $inspector = new Inspector();
         $this->assertNotEmpty($inspector->getRegisteredConstraints());
-    }
-
-    /**
-     * @covers Guzzle\Service\Inspector::getValidator
-     */
-    public function testCreatesDefaultValidator()
-    {
-        $inspector = new Inspector();
-        $this->assertInstanceOf('Symfony\Component\Validator\Validator', $inspector->getValidator());
-    }
-
-    /**
-     * @covers Guzzle\Service\Inspector::setValidator
-     */
-    public function testAllowsValidatorInjection()
-    {
-        $inspector = new Inspector();
-        $default = $inspector->getValidator();
-        $validator = new Validator(new ClassMetadataFactory(new StaticMethodLoader()), new ConstraintValidatorFactory());
-        $inspector->setValidator($validator);
-        $this->assertSame($validator, $inspector->getValidator());
-        $this->assertNotSame($default, $inspector->getValidator());
     }
 
     /**
@@ -224,8 +198,8 @@ EOT;
             $this->assertContains("Validation errors: Requires that the username argument be supplied.  (API username)", $concat);
             $this->assertContains("Requires that the password argument be supplied.  (API password)", $concat);
             $this->assertContains("Requires that the subdomain argument be supplied.  (Unfuddle project subdomain)", $concat);
-            $this->assertContains("The value you selected is not a valid choice", $concat);
-            $this->assertContains("This value should be of type object", $concat);
+            $this->assertContains("Value must be one of: v1, v2, v3", $concat);
+            $this->assertContains("Value must be of type object", $concat);
         }
     }
 
@@ -236,7 +210,7 @@ EOT;
      */
     public function testRegistersCustomConstraints()
     {
-        $constraintClass = 'Symfony\\Component\\Validator\\Constraints\\Ip';
+        $constraintClass = 'Guzzle\\Common\\Validation\\Ip';
 
         Inspector::getInstance()->registerConstraint('mock', $constraintClass);
         Inspector::getInstance()->registerConstraint('mock_2', $constraintClass, array(
@@ -248,7 +222,6 @@ EOT;
 
         $this->assertInstanceOf($constraintClass, Inspector::getInstance()->getConstraint('mock'));
         $this->assertInstanceOf($constraintClass, Inspector::getInstance()->getConstraint('mock_2'));
-        $this->assertEquals('4', Inspector::getInstance()->getConstraint('mock_2')->version);
 
         $validating = new Collection(array(
             'data' => '192.168.16.121',
@@ -306,7 +279,7 @@ EOT;
         ), $config, false);
 
         $concat = implode("\n", $result);
-        $this->assertContains("This value should be of type string", $concat);
+        $this->assertContains("Value must be of type string", $concat);
         $this->assertContains("Requires that the min argument be >= 2 characters", $concat);
         $this->assertContains("Requires that the max argument be <= 2 characters", $concat);
     }
@@ -334,5 +307,35 @@ EOT;
         Inspector::getInstance()->validateClass(__CLASS__, $data);
         $this->assertEquals('test', $data->get('username'));
         $this->assertEquals('FOO', $data->get('test_function'));
+    }
+
+    /**
+     * @covers Guzzle\Service\Inspector::setTypeValidation
+     * @covers Guzzle\Service\Inspector::validateConfig
+     */
+    public function testTypeValidationCanBeDisabled()
+    {
+        $i = Inspector::getInstance();
+        $i->setTypeValidation(false);
+
+        // Ensure that the type is not validated
+        $i->validateConfig(array(
+            'data' => array(
+                'type' => 'string'
+            )
+        ), new Collection(array(
+            'data' => new \stdClass()
+        )), true);
+
+        $i->setTypeValidation(true);
+
+        // Ensure that nothing is validated
+        $i->validateConfig(array(
+            'data' => array(
+                'type' => 'string'
+            )
+        ), new Collection(array(
+            'data' => new \stdClass()
+        )), true, false);
     }
 }

@@ -84,10 +84,6 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
             'a' => array('b'),
             'c' => array('d')
         ), $this->mock->getHeaders()->getAll());
-
-        $this->assertEquals(array(
-            'a' => array('b')
-        ), $this->mock->getHeaders(array('a'))->getAll());
     }
 
     /**

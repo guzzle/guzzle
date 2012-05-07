@@ -152,4 +152,14 @@ class StreamTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(null, $stream->getMetaData('wrapper_data'));
         $this->assertInternalType('array', $stream->getMetaData());
     }
+
+    /**
+     * @covers Guzzle\Common\Stream::write
+     */
+    public function testDoesNotAttempToWriteToReadonlyStream()
+    {
+        $handle = fopen(__DIR__ . '/../../../bootstrap.php', 'r');
+        $stream = new Stream($handle);
+        $this->assertEquals(0, $stream->write('foo'));
+    }
 }

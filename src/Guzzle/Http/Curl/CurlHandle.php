@@ -33,6 +33,14 @@ class CurlHandle
     /**
      * Factory method to create a new curl handle based on an HTTP request
      *
+     * There are some helpful options you can set to enable specific behavior:
+     *    - disabled_wire: This is a performance improvement that will disable
+     *         some debugging functionality with cURL.  The functionality
+     *         it disabled allows you to see the exact HTTP request sent over
+     *         the wire.
+     *    - progress: Set to true to enable progress function callbacks. Most
+     *         People don't need this, so it has been disabled by default.
+     *
      * @param RequestInterface $request Request
      *
      * @return CurlHandle
@@ -41,7 +49,7 @@ class CurlHandle
     {
         $handle = curl_init();
         $mediator = new RequestMediator($request);
-        $protocolVersion = $request->getProtocolVersion() === '1.0' ? CURL_HTTP_VERSION_1_0 : CURL_HTTP_VERSION_1_1;
+        $requestCurlOptions = $request->getCurlOptions();
 
         // Array of default cURL options.
         $curlOptions = array(
@@ -53,14 +61,22 @@ class CurlHandle
             CURLOPT_USERAGENT => (string) $request->getHeader('User-Agent'),
             CURLOPT_ENCODING => '', // Supports all encodings
             CURLOPT_PORT => $request->getPort(),
-            CURLOPT_HTTP_VERSION => $protocolVersion,
-            CURLOPT_NOPROGRESS => false,
-            CURLOPT_STDERR => fopen('php://temp', 'r+'),
-            CURLOPT_VERBOSE => true,
+            CURLOPT_HTTP_VERSION => $request->getProtocolVersion() === '1.0' ? CURL_HTTP_VERSION_1_0 : CURL_HTTP_VERSION_1_1,
             CURLOPT_HTTPHEADER => array(),
-            CURLOPT_HEADERFUNCTION => array($mediator, 'receiveResponseHeader'),
-            CURLOPT_PROGRESSFUNCTION => array($mediator, 'progress')
+            CURLOPT_HEADERFUNCTION => array($mediator, 'receiveResponseHeader')
         );
+
+        // Enable the progress function if the 'progress' param was set
+        if ($requestCurlOptions->get('progress')) {
+            $curlOptions[CURLOPT_PROGRESSFUNCTION] = array($mediator, 'progress');
+            $curlOptions[CURLOPT_NOPROGRESS] = false;
+        }
+
+        // Enable curl debug information if the 'debug' param was set
+        if (!$requestCurlOptions->get('disable_wire')) {
+            $curlOptions[CURLOPT_STDERR] = fopen('php://temp', 'r+');
+            $curlOptions[CURLOPT_VERBOSE] = true;
+        }
 
         // HEAD requests need no response body, everything else might
         if ($request->getMethod() != 'HEAD') {
@@ -96,7 +112,6 @@ class CurlHandle
                     unset($headers['Content-Length']);
                     $curlOptions[CURLOPT_INFILESIZE] = (int) (string) $request->getHeader('Content-Length');
                 }
-
                 break;
         }
 
@@ -123,22 +138,27 @@ class CurlHandle
         }
 
         // Set custom cURL options
-        foreach ($request->getCurlOptions() as $key => $value) {
-            $curlOptions[$key] = $value;
+        foreach ($requestCurlOptions as $key => $value) {
+            if (is_numeric($key)) {
+                $curlOptions[$key] = $value;
+            }
         }
 
         // Check if any headers or cURL options are blacklisted
         $client = $request->getClient();
-        if ($client && $client->getConfig('curl.blacklist')) {
-            foreach ($client->getConfig('curl.blacklist') as $value) {
-                if (strpos($value, 'header.') === 0) {
-                    $blacklistHeader = substr($value, 7);
-                    // Remove headers that may have previously been set
-                    // but are supposed to be blacklisted
-                    unset($headers[$blacklistHeader]);
-                    $headers[$blacklistHeader] = '';
-                } else {
-                    unset($curlOptions[$value]);
+        if ($client) {
+            $blacklist = $client->getConfig('curl.blacklist');
+            if ($blacklist) {
+                foreach ($blacklist as $value) {
+                    if (strpos($value, 'header.') === 0) {
+                        $blacklistHeader = substr($value, 7);
+                        // Remove headers that may have previously been set
+                        // but are supposed to be blacklisted
+                        unset($headers[$blacklistHeader]);
+                        $headers[$blacklistHeader] = '';
+                    } else {
+                        unset($curlOptions[$value]);
+                    }
                 }
             }
         }
@@ -207,7 +227,7 @@ class CurlHandle
      */
     public function isAvailable()
     {
-        return is_resource($this->handle) && false != curl_getinfo($this->handle, CURLINFO_EFFECTIVE_URL);
+        return is_resource($this->handle);
     }
 
     /**
@@ -311,7 +331,7 @@ class CurlHandle
      */
     public function getHandle()
     {
-        return $this->handle && $this->isAvailable() ? $this->handle : null;
+        return $this->isAvailable() ? $this->handle : null;
     }
 
     /**

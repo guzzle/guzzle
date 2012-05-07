@@ -101,8 +101,6 @@ class Request extends AbstractMessage implements RequestInterface
             'request.exception',
             // Received response status line
             'request.receive.status_line',
-            // Received response header
-            'request.receive.header',
             // Manually set a response
             'request.set_response'
         );
@@ -253,23 +251,21 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function setUrl($url)
     {
-        if (is_string($url)) {
-            $this->url = Url::factory($url);
-        } else if ($url instanceof Url) {
+        if ($url instanceof Url) {
             $this->url = $url;
         } else {
-            throw new InvalidArgumentException('Invalid URL sent to ' . __METHOD__);
+            $this->url = Url::factory($url);
         }
 
-        $this->setHost($this->url->getHost());
+        // Update the port and host header
         $this->setPort($this->url->getPort());
-        if ($this->url->getUsername() && $this->url->getPassword()) {
-            $this->setAuth($this->url->getUsername(), $this->url->getPassword());
-        }
 
-        // Remove the auth info from the URL
-        $this->url->setUsername(null);
-        $this->url->setPassword(null);
+        if ($this->url->getUsername() || $this->url->getPassword()) {
+            $this->setAuth($this->url->getUsername(), $this->url->getPassword());
+            // Remove the auth info from the URL
+            $this->url->setUsername(null);
+            $this->url->setPassword(null);
+        }
 
         return $this;
     }
@@ -445,7 +441,8 @@ class Request extends AbstractMessage implements RequestInterface
 
         // Include the port in the Host header if it is not the default port
         // for the scheme of the URL
-        if (($this->url->getScheme() == 'http' && $port != 80) || ($this->url->getScheme() == 'https' && $port != 443)) {
+        $scheme = $this->url->getScheme();
+        if (($scheme == 'http' && $port != 80) || ($scheme == 'https' && $port != 443)) {
             $this->headers['host'] = new Header('Host', $this->url->getHost() . ':' . $port);
         } else {
             $this->headers['host'] = new Header('Host', $this->url->getHost());
@@ -584,13 +581,16 @@ class Request extends AbstractMessage implements RequestInterface
     {
         $this->state = self::STATE_TRANSFER;
         $length = strlen($data);
+        $data = str_replace(array("\r", "\n"), '', $data);
 
-        // Normalize line endings
-        $data = preg_replace("/([^\r])(\n)\b/", "$1\r\n", $data);
+        if (strpos($data, ':') !== false) {
 
-        if (preg_match('/^\HTTP\/1\.[0|1]\s\d{3}\s.+$/', $data)) {
+            list($header, $value) = explode(':', $data, 2);
+            $this->response->addHeader(trim($header), trim($value));
 
-            list($dummy, $code, $status) = explode(' ', str_replace("\r\n", '', $data), 3);
+        } else if (strlen($data) > 6) {
+
+            list($dummy, $code, $status) = explode(' ', $data, 3);
 
             // Only download the body of the response to the specified response
             // body when a successful response is received.
@@ -609,14 +609,6 @@ class Request extends AbstractMessage implements RequestInterface
                 'reason_phrase'     => $status,
                 'previous_response' => $previousResponse
             ));
-
-        } else if ($length > 2) {
-            list($header, $value) = array_map('trim', explode(':', trim($data), 2));
-            $this->response->addHeader($header, $value);
-            $this->dispatch('request.receive.header', array(
-                'header' => $header,
-                'value'  => $value
-            ), true);
         }
 
         return $length;
@@ -807,23 +799,20 @@ class Request extends AbstractMessage implements RequestInterface
     /**
      * {@inheritdoc}
      */
-    protected function changedHeader($action, $keyOrArray)
+    protected function changedHeader($action, $header)
     {
-        $keys = (array) $keyOrArray;
-        parent::changedHeader($action, $keys);
+        parent::changedHeader($action, $header);
 
-        // Be sure to get an cookie updates and update the internal Cookie
-        if (in_array('cookie', $keys)) {
-            if ($action == 'set') {
+        if ($header === 'host') {
+            // If the Host header was changed, be sure to update the internal URL
+            $this->setHost((string) $this->getHeader('Host'));
+        } elseif ($header === 'cookie') {
+            // Be sure to get an cookie updates and update the internal Cookie
+            if ($action === 'set') {
                 $this->cookie = Cookie::factory($this->getHeader('Cookie'));
             } else if ($this->cookie) {
                 $this->cookie->clear();
             }
-        }
-
-        // If the Host header was changed, be sure to update the internal URL
-        if (in_array('host', $keys)) {
-            $this->setHost((string) $this->getHeader('Host'));
         }
     }
 
