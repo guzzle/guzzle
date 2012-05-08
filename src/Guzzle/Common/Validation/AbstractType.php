@@ -22,7 +22,7 @@ abstract class  AbstractType extends AbstractConstraint
 
         if (!isset(static::$typeMapping[$type])) {
             throw new InvalidArgumentException("{$type} is not one of the "
-                . 'mapped types: ' . array_keys(self::$typeMapping));
+                . 'mapped types: ' . implode(', ', array_keys(self::$typeMapping)));
         }
 
         $method = static::$typeMapping[$type];
