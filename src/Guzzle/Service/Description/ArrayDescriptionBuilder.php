@@ -40,7 +40,7 @@ class ArrayDescriptionBuilder implements DescriptionBuilderInterface
                         throw new DescriptionBuilderException($name . ' extends missing command ' . $command['extends']);
                     }
                     $params = array_merge($commands[$command['extends']]->getParams(), !empty($command['params']) ? $command['params'] : array());
-                    $command = array_merge($commands[$command['extends']]->getData(), $command);
+                    $command = array_merge($commands[$command['extends']]->toArray(), $command);
                     $command['params'] = $params;
                 }
                 // Use the default class

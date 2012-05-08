@@ -47,16 +47,6 @@ class ApiParamTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($this->data, $p->toArray());
     }
 
-    public function testIsSerializable()
-    {
-        $p = new ApiParam($this->data);
-        $this->assertEquals(json_encode($this->data), $p->serialize());
-
-        $p2 = new ApiParam(array());
-        $p2->unserialize($p->serialize());
-        $this->assertEquals($this->data, $p2->toArray());
-    }
-
     public function testFromArrayConvertsBooleans()
     {
         $d = $this->data;
@@ -115,5 +105,13 @@ class ApiParamTest extends \Guzzle\Tests\GuzzleTestCase
         $d['filters'] = 'strtoupper';
         $p = new ApiParam($d);
         $this->assertEquals('FOO', $p->filter('foo'));
+    }
+
+    public function testUsesArrayByDefaultForFilters()
+    {
+        $d = $this->data;
+        $d['filters'] = null;
+        $p = new ApiParam($d);
+        $this->assertEquals(array(), $p->getFilters());
     }
 }

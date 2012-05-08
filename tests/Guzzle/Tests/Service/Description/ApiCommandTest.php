@@ -78,7 +78,7 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Description\ApiCommand::getData
+     * @covers Guzzle\Service\Description\ApiCommand::toArray
      */
     public function testConvertsToArray()
     {
@@ -95,6 +95,6 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
             )
         );
         $c = new ApiCommand($data);
-        $this->assertEquals($data, $c->getData());
+        $this->assertEquals($data, $c->toArray());
     }
 }

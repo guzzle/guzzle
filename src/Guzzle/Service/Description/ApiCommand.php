@@ -96,7 +96,7 @@ class ApiCommand
      *
      * @return true
      */
-    public function getData()
+    public function toArray()
     {
         return array(
             'name'   => $this->name,

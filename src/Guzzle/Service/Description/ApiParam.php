@@ -5,7 +5,7 @@ namespace Guzzle\Service\Description;
 /**
  * API parameter object used with service descriptions
  */
-class ApiParam implements \Serializable
+class ApiParam
 {
     protected $name;
     protected $type;
@@ -27,7 +27,27 @@ class ApiParam implements \Serializable
      */
     public function __construct(array $data)
     {
-        $this->fromArray($data);
+        // Parse snake_case into camelCase class properties
+        foreach ($data as $key => $value) {
+            if ($key == 'min_length') {
+                $key = 'minLength';
+            } elseif ($key == 'max_length') {
+                $key = 'maxLength';
+            }
+            $this->{$key} = $value;
+        }
+
+        if ($this->filters) {
+            $this->filters = array_map('trim', explode(',', $this->filters));
+        } else {
+            $this->filters = array();
+        }
+
+        if ($this->required === 'false') {
+            $this->required = false;
+        } elseif ($this->required === 'true') {
+            $this->required = true;
+        }
     }
 
     /**
@@ -51,26 +71,6 @@ class ApiParam implements \Serializable
             'append'     => $this->append,
             'filters'    => implode(',', $this->filters)
         );
-    }
-
-    /**
-     * Serialize the parameter
-     *
-     * @return string
-     */
-    public function serialize()
-    {
-        return json_encode($this->toArray());
-    }
-
-    /**
-     * Unserialize the data
-     *
-     * @param string $json JSON data
-     */
-    public function unserialize($json)
-    {
-        $this->fromArray(json_decode($json, true));
     }
 
     /**
@@ -233,35 +233,5 @@ class ApiParam implements \Serializable
     public function getFilters()
     {
         return $this->filters;
-    }
-
-    /**
-     * Set class properties using an array of data
-     *
-     * @param array $data Data array
-     */
-    protected function fromArray(array $data)
-    {
-        // Parse snake_case into camelCase class properties
-        foreach ($data as $key => $value) {
-            if ($key == 'min_length') {
-                $key = 'minLength';
-            } elseif ($key == 'max_length') {
-                $key = 'maxLength';
-            }
-            $this->{$key} = $value;
-        }
-
-        if ($this->filters) {
-            $this->filters = array_map('trim', explode(',', $this->filters));
-        } else {
-            $this->filters = array();
-        }
-
-        if ($this->required === 'false') {
-            $this->required = false;
-        } elseif ($this->required === 'true') {
-            $this->required = true;
-        }
     }
 }
