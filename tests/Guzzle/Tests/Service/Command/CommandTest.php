@@ -127,7 +127,9 @@ class CommandTest extends AbstractCommandTest
         $command = new MockCommand();
 
         $this->assertSame($command, $command->setClient($client));
-        $this->assertSame($command, $command->execute()); // Implicitly calls prepare
+
+        // Returns the result of the command
+        $this->assertInstanceOf('SimpleXMLElement', $command->execute());
 
         $this->assertTrue($command->isPrepared());
         $this->assertTrue($command->isExecuted());
