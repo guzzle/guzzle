@@ -180,4 +180,26 @@ class MockPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $p = new MockPlugin(array(new Response(200)));
         $this->assertEquals(1, $p->count());
     }
+
+    /**
+     * @covers Guzzle\Http\Plugin\MockPlugin::getReceivedRequests
+     * @covers Guzzle\Http\Plugin\MockPlugin::flush
+     */
+    public function testStoresMockedRequests()
+    {
+        $p = new MockPlugin(array(new Response(200), new Response(200)));
+        $client = new Client('http://localhost:123/');
+        $client->getEventDispatcher()->addSubscriber($p, 9999);
+
+        $request1 = $client->get();
+        $request1->send();
+        $this->assertEquals(array($request1), $p->getReceivedRequests());
+
+        $request2 = $client->get();
+        $request2->send();
+        $this->assertEquals(array($request1, $request2), $p->getReceivedRequests());
+
+        $p->flush();
+        $this->assertEquals(array(), $p->getReceivedRequests());
+    }
 }

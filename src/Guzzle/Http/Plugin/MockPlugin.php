@@ -25,6 +25,11 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
     protected $temporary = false;
 
     /**
+     * @var array Array of requests that were mocked
+     */
+    protected $received = array();
+
+    /**
      * Constructor
      *
      * @param array $responses (optional) Array of responses to queue
@@ -163,6 +168,24 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
     }
 
     /**
+     * Clear the array of received requests
+     */
+    public function flush()
+    {
+        $this->received = array();
+    }
+
+    /**
+     * Get an array of requests that were mocked by this plugin
+     *
+     * @return array
+     */
+    public function getReceivedRequests()
+    {
+        return $this->received;
+    }
+
+    /**
      * Called when a request completes
      *
      * @param Event $event
@@ -172,6 +195,7 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
         if (!empty($this->queue)) {
             $request = $event['request'];
             $this->dequeue($request);
+            $this->received[] = $request;
             // Detach the filter from the client so it's a one-time use
             if ($this->temporary && empty($this->queue) && $request->getClient()) {
                 $request->getClient()->getEventDispatcher()->removeSubscriber($this);

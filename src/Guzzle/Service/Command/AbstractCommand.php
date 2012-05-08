@@ -318,8 +318,10 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         // Uses the response object by default
         $this->result = $this->getRequest()->getResponse();
 
+        $contentType = $this->result->getContentType();
+
         // Is the body an JSON document?  If so, set the result to be an array
-        if (stripos($this->result->getContentType(), 'application/json') !== false) {
+        if (stripos($contentType, 'json') !== false) {
             $body = trim($this->result->getBody(true));
             if ($body) {
                 $decoded = json_decode($body, true);
@@ -329,7 +331,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
 
                 $this->result = $decoded;
             }
-        } else if (preg_match('/^\s*(text\/xml|application\/xml).*$/', $this->result->getContentType())) {
+        } if (stripos($contentType, 'xml') !== false) {
             // Is the body an XML document?  If so, set the result to be a SimpleXMLElement
             // If the body is available, then parse the XML
             $body = trim($this->result->getBody(true));
