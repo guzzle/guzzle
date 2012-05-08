@@ -18,7 +18,7 @@ abstract class  AbstractType extends AbstractConstraint
      */
     protected function validateValue($value, array $options = array())
     {
-        $type = (string) $options['type'];
+        $type = $options['type'];
 
         if (!isset(static::$typeMapping[$type])) {
             throw new InvalidArgumentException("{$type} is not one of the "

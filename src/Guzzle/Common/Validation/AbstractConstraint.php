@@ -10,6 +10,7 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 abstract class AbstractConstraint implements ConstraintInterface
 {
     protected $default;
+    protected $required;
 
     /**
      * {@inheritdoc}
