@@ -73,7 +73,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
             $this->removeHeader('Transfer-Encoding');
             // Set the Content-Length header if it can be determined
             $size = $this->body->getContentLength();
-            if ($size !== null && !is_bool($size)) {
+            if ($size !== null && $size !== false) {
                 $this->setHeader('Content-Length', $size);
             } else if ('1.1' == $this->protocolVersion) {
                 $this->setHeader('Transfer-Encoding', 'chunked');

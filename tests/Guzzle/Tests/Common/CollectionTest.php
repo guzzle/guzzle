@@ -47,7 +47,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
     public function testCollectionCanBeConvertingIntoString()
     {
         $data = new Collection();
-        $this->assertEquals('Guzzle\Common\Collection@' . spl_object_hash($data), (string)$data, '-> __toString() must represent the collection');
+        $this->assertEquals('Guzzle\Common\Collection@' . spl_object_hash($data), (string) $data, '-> __toString() must represent the collection');
     }
 
     /**
@@ -162,8 +162,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array('test2'), $this->coll->getKeys());
         $this->coll->add('test3', 'value3');
         $this->assertEquals(array('test2', 'test3'), $this->coll->getKeys());
-        // Test the regex matching capabilities
-        $this->assertEquals(array('test2'), $this->coll->getKeys('/test[0-2]/'));
     }
 
     /**
@@ -173,19 +171,11 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->assertFalse($this->coll->hasKey('test'));
         $this->coll->add('test', 'value');
-        $this->assertEquals('test', $this->coll->hasKey('test'));
+        $this->assertEquals(true, $this->coll->hasKey('test'));
         $this->coll->add('test2', 'value2');
-        $this->assertEquals('test', $this->coll->hasKey('test'));
-        $this->assertEquals('test2', $this->coll->hasKey('test2'));
+        $this->assertEquals(true, $this->coll->hasKey('test'));
+        $this->assertEquals(true, $this->coll->hasKey('test2'));
         $this->assertFalse($this->coll->hasKey('testing'));
-
-        $this->coll->set('ab-c', '123');
-        $this->assertEquals('ab-c', $this->coll->hasKey('/[a-c]{2}\-c/', Collection::MATCH_REGEX));
-        $this->assertFalse($this->coll->hasKey('/[A-C]{2}\-c/', Collection::MATCH_REGEX));
-
-        $this->assertEquals('ab-c', $this->coll->hasKey('AB-C', Collection::MATCH_IGNORE_CASE));
-        $this->assertFalse($this->coll->hasKey('A-C', Collection::MATCH_IGNORE_CASE));
-
         $this->assertEquals(false, $this->coll->hasKey('AB-C', 'junk'));
     }
 
@@ -204,57 +194,9 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Common\Collection::get
-     * @covers Guzzle\Common\Collection::set
-     * @covers Guzzle\Common\Collection::add
-     */
-    public function testCanGetKeyValueByRegexMatch()
-    {
-        $this->coll->set('Testing-Key', 'value');
-        $this->coll->add('Testing-Name', 'value2');
-        $this->assertNull($this->coll->get('testing'));
-        $this->assertEquals('value', $this->coll->get('/testing-Key/i', null, Collection::MATCH_REGEX));
-        $this->assertNull($this->coll->get('/testing-[A-Za-z]+/', null, Collection::MATCH_REGEX));
-        // Retrieves the first matching parameter
-        $this->assertEquals('value', $this->coll->get('/testing-[A-Za-z]+/i', null, Collection::MATCH_REGEX));
-        $this->assertEquals('value2', $this->coll->get('/Testing-[Na-z]+/', null, Collection::MATCH_REGEX));
-    }
-
-    /**
      * @covers Guzzle\Common\Collection::getAll
      */
-    public function testCanGetAllKeysMatchingRegex()
-    {
-        $this->coll->add('Testing-Key', 'value');
-        $this->coll->add('Testing-Name', 'value2');
-        $this->assertEquals(array(), $this->coll->getAll(array('testing')));
-        $this->assertEquals(array(
-            'Testing-Key' => 'value'
-        ), $this->coll->getAll('/testing-Key/i', Collection::MATCH_REGEX));
-        $this->assertEquals(array(
-            'Testing-Name' => 'value2'
-        ), $this->coll->getAll('/[T|t]esting-N[a-z]+/', Collection::MATCH_REGEX));
-        $this->assertEquals(array(
-            'Testing-Key' => 'value',
-            'Testing-Name' => 'value2'
-        ), $this->coll->getAll(array('/testing-Key/i', '/Testing-[Na-z]+/'), Collection::MATCH_REGEX));
-    }
-
-    /**
-     * @covers Guzzle\Common\Collection::get
-     */
-    public function testCanGetValuesByKeyIgnoringCase()
-    {
-        $this->coll->add('tEsT', 'value');
-        $this->assertNull($this->coll->get('test'));
-        $this->assertEquals('value', $this->coll->get('test', null, true));
-        $this->assertEquals('default', $this->coll->get('foo', 'default', true));
-    }
-
-    /**
-     * @covers Guzzle\Common\Collection::getAll
-     */
-    public function testCanGetAllValuesByArrayIgnoringCase()
+    public function testCanGetAllValuesByArray()
     {
         $this->coll->add('foo', 'bar');
         $this->coll->add('tEsT', 'value');
@@ -262,12 +204,12 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->coll->add('key', 'v3');
         $this->assertNull($this->coll->get('test'));
         $this->assertEquals(array(
-            'foo' => 'bar',
-            'tEsT' => 'value',
+            'foo'     => 'bar',
+            'tEsT'    => 'value',
             'tesTing' => 'v2'
         ), $this->coll->getAll(array(
-            'foo', 'test', 'testing'
-        ), true));
+            'foo', 'tesTing', 'tEsT'
+        )));
     }
 
     /**
@@ -415,5 +357,14 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array(
             'a' => '123'
         ), $this->coll->getAll());
+    }
+
+    /**
+     * @covers Guzzle\Common\Collection::getPregMatchValue
+     */
+    public function testReturnsValuesForPregMatch()
+    {
+        $c = new Collection(array('foo' => 'bar'));
+        $this->assertEquals('bar', $c->getPregMatchValue(array(1 => 'foo')));
     }
 }

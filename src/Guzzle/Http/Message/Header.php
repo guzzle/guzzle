@@ -10,6 +10,7 @@ class Header implements \IteratorAggregate, \Countable
     protected $values = array();
     protected $header;
     protected $glue = ', ';
+    protected $stringCache;
 
     /**
      * Construct a new header object
@@ -46,7 +47,11 @@ class Header implements \IteratorAggregate, \Countable
      */
     public function __toString()
     {
-        return implode($this->glue, $this->toArray());
+        if (!$this->stringCache) {
+            $this->stringCache = implode($this->glue, $this->toArray());
+        }
+
+        return $this->stringCache;
     }
 
     /**
@@ -60,12 +65,17 @@ class Header implements \IteratorAggregate, \Countable
      */
     public function add($value, $header = null)
     {
-        $header = $header ?: $this->getName();
-
-        if (!$this->hasExactHeader($header)) {
-            $this->values[$header] = array();
+        if (!$header) {
+            $header = $this->getName();
         }
-        $this->values[$header][] = $value;
+
+        if (!array_key_exists($header, $this->values)) {
+            $this->values[$header] = array($value);
+        } else {
+            $this->values[$header][] = $value;
+        }
+
+        $this->stringCache = null;
 
         return $this;
     }
@@ -90,6 +100,7 @@ class Header implements \IteratorAggregate, \Countable
     public function setGlue($glue)
     {
         $this->glue = $glue;
+        $this->stringCache = null;
 
         return $this;
     }
@@ -111,6 +122,7 @@ class Header implements \IteratorAggregate, \Countable
      */
     public function normalize()
     {
+        $this->stringCache = null;
         $this->values = array(
             $this->getName() => $this->toArray()
         );
@@ -145,10 +157,10 @@ class Header implements \IteratorAggregate, \Countable
      */
     public function hasValue($searchValue, $caseInsensitive = false)
     {
-        foreach ($this->getIterator() as $value) {
-            if ($caseInsensitive && !strcasecmp($value, $searchValue)) {
+        foreach ($this->toArray() as $value) {
+            if ($value == $searchValue) {
                 return true;
-            } elseif ($value == $searchValue) {
+            } elseif ($caseInsensitive && !strcasecmp($value, $searchValue)) {
                 return true;
             }
         }
@@ -163,7 +175,14 @@ class Header implements \IteratorAggregate, \Countable
      */
     public function toArray()
     {
-        return $this->getIterator()->getArrayCopy();
+        $result = array();
+        foreach ($this->values as $values) {
+            foreach ($values as $value) {
+                $result[] = $value;
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -185,7 +204,7 @@ class Header implements \IteratorAggregate, \Countable
      */
     public function count()
     {
-        return count($this->getIterator());
+        return count($this->toArray());
     }
 
     /**
@@ -195,13 +214,6 @@ class Header implements \IteratorAggregate, \Countable
      */
     public function getIterator()
     {
-        $result = array();
-        foreach ($this->values as $values) {
-            foreach ($values as $value) {
-                $result[] = $value;
-            }
-        }
-
-        return new \ArrayIterator($result);
+        return new \ArrayIterator($this->toArray());
     }
 }

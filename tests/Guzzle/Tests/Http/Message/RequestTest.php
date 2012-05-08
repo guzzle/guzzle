@@ -381,12 +381,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertSame($this->request, $this->request->setUrl($u));
         $this->assertEquals($url, $this->request->getUrl());
-
-        try {
-            $this->request->setUrl(10);
-            $this->fail('Expected exception not thrown');
-        } catch (\InvalidArgumentException $e) {
-        }
     }
 
     /**

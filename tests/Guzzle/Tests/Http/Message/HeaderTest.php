@@ -100,4 +100,18 @@ class HeaderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('', (string) $h);
         $this->assertEquals(1, count($h));
     }
+
+    public function testUsesHeaderNameWhenNoneIsSupplied()
+    {
+        $h = new Header('Foo', 'bar', ';');
+        $h->add('baz');
+        $this->assertEquals(array('Foo'), array_keys($h->raw()));
+    }
+
+    public function testCanCheckForExactHeaderValues()
+    {
+        $h = new Header('Foo', 'bar', ';');
+        $this->assertTrue($h->hasExactHeader('Foo'));
+        $this->assertFalse($h->hasExactHeader('foo'));
+    }
 }

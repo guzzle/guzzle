@@ -10,14 +10,39 @@ use Guzzle\Common\Collection;
 class ApiCommand
 {
     /**
+     * @var string Default command class to use when none is specified
+     */
+    const DEFAULT_COMMAND_CLASS = 'Guzzle\\Service\\Command\\DynamicCommand';
+
+    /**
      * @var array Parameters
      */
     protected $params = array();
 
     /**
-     * @var array Configuration data
+     * @var string Name of the command
      */
-    protected $config = array();
+    protected $name;
+
+    /**
+     * @var string Documentation
+     */
+    protected $doc;
+
+    /**
+     * @var string HTTP method
+     */
+    protected $method;
+
+    /**
+     * @var string HTTP URI of the command
+     */
+    protected $uri;
+
+    /**
+     * @var string Class of the command object
+     */
+    protected $class;
 
     /**
      * Constructor
@@ -47,21 +72,21 @@ class ApiCommand
      */
     public function __construct(array $config)
     {
-        $this->config = $config;
-        $this->config['name'] = isset($config['name']) ? trim($config['name']) : '';
-        $this->config['doc'] = isset($config['doc']) ? trim($config['doc']) : '';
-        $this->config['method'] = isset($config['method']) ? trim($config['method']) : '';
-        $this->config['uri'] = isset($config['uri']) ? trim($config['uri']) : '';
-        if (!$this->config['uri']) {
+        $this->name = isset($config['name']) ? trim($config['name']) : '';
+        $this->doc = isset($config['doc']) ? trim($config['doc']) : '';
+        $this->method = isset($config['method']) ? trim($config['method']) : '';
+
+        $this->uri = isset($config['uri']) ? trim($config['uri']) : '';
+        if (!$this->uri) {
             // Add backwards compatibility with the path attribute
-            $this->config['uri'] = isset($config['path']) ? trim($config['path']) : '';
+            $this->uri = isset($config['path']) ? trim($config['path']) : '';
         }
 
-        $this->config['class'] = isset($config['class']) ? trim($config['class']) : 'Guzzle\\Service\\Command\\DynamicCommand';
+        $this->class = isset($config['class']) ? trim($config['class']) : self::DEFAULT_COMMAND_CLASS;
 
         if (isset($config['params']) && is_array($config['params'])) {
-            foreach ($config['params'] as $paramName => $param) {
-                $this->params[$paramName] = $param instanceof Collection ? $param : new Collection($param);
+            foreach ($config['params'] as $name => $param) {
+                $this->params[$name] = $param instanceof ApiParam ? $param : new ApiParam($param);
             }
         }
     }
@@ -71,11 +96,16 @@ class ApiCommand
      *
      * @return true
      */
-    public function getData()
+    public function toArray()
     {
-        return array_merge($this->config, array(
+        return array(
+            'name'   => $this->name,
+            'doc'    => $this->doc,
+            'method' => $this->method,
+            'uri'    => $this->uri,
+            'class'  => $this->class,
             'params' => $this->params
-        ));
+        );
     }
 
     /**
@@ -93,7 +123,7 @@ class ApiCommand
      *
      * @param string $param Parameter to retrieve by name
      *
-     * @return Collection|null
+     * @return ApiParam|null
      */
     public function getParam($param)
     {
@@ -107,7 +137,7 @@ class ApiCommand
      */
     public function getMethod()
     {
-        return $this->config['method'];
+        return $this->method;
     }
 
     /**
@@ -117,7 +147,7 @@ class ApiCommand
      */
     public function getConcreteClass()
     {
-        return $this->config['class'];
+        return $this->class;
     }
 
     /**
@@ -127,7 +157,7 @@ class ApiCommand
      */
     public function getName()
     {
-        return $this->config['name'];
+        return $this->name;
     }
 
     /**
@@ -137,7 +167,7 @@ class ApiCommand
      */
     public function getDoc()
     {
-        return $this->config['doc'];
+        return $this->doc;
     }
 
     /**
@@ -147,6 +177,6 @@ class ApiCommand
      */
     public function getUri()
     {
-        return $this->config['uri'];
+        return $this->uri;
     }
 }

@@ -263,17 +263,16 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
             $request = RequestFactory::getInstance()->create('GET', 'http://127.0.0.1:9876/');
             $request->setClient(new Client());
             $request->getCurlOptions()->set(CURLOPT_FRESH_CONNECT, true);
-            $request->getCurlOptions()->set(CURLOPT_TIMEOUT, 0);
-            $request->getCurlOptions()->set(CURLOPT_CONNECTTIMEOUT, 1);
+            $request->getCurlOptions()->set(CURLOPT_FORBID_REUSE, true);
+            $request->getCurlOptions()->set(CURLOPT_CONNECTTIMEOUT_MS, 5);
             $request->send();
             $this->fail('CurlException not thrown');
         } catch (CurlException $e) {
             $m = $e->getMessage();
-            $this->assertContains('[curl] 7:', $m);
+            $this->assertContains('[curl] ', $m);
             $this->assertContains('[url] http://127.0.0.1:9876/', $m);
             $this->assertContains('[debug] ', $m);
             $this->assertContains('[info] array (', $m);
-            $this->assertContains('Connection refused', $m);
         }
     }
 
@@ -338,6 +337,8 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
             $client->get()
         );
 
+        // Sends 2 new requests in the middle of a CurlMulti loop while other requests
+        // are completing.  This causes the scope of the multi handle to go up.
         $callback = function(Event $event) use ($client) {
             $client->getConfig()->set('called', $client->getConfig('called') + 1);
             $request = $client->get();

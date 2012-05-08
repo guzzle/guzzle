@@ -349,7 +349,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $request = RequestFactory::getInstance()->fromMessage($message);
         $this->assertEquals('foo=bar', (string) $request->getBody());
 
-        $message = "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n";
+        $message = "PUT / HTTP/1.1\r\nContent-Length: 0\r\n\r\n";
         $request = RequestFactory::getInstance()->fromMessage($message);
         $this->assertTrue($request->hasHeader('Content-Length'));
         $this->assertEquals(0, (string) $request->getHeader('Content-Length'));

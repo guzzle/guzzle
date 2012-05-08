@@ -10,9 +10,10 @@ interface DescriptionBuilderInterface
     /**
      * Builds a new ServiceDescription object
      *
-     * @param string $filename File to build
+     * @param string $data File or data string to build from
+     * @param array  $options (options) Options used when building
      *
      * @return ServiceDescription
      */
-    static function build($filename);
+    function build($data, array $options = null);
 }

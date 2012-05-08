@@ -207,8 +207,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
-                CURLOPT_PROGRESSFUNCTION => 'callback',
-                CURLOPT_NOPROGRESS => 0,
                 CURLOPT_ENCODING => '',
                 CURLOPT_HTTPHEADER => array('Host: www.google.com', 'User-Agent: ' . $userAgent),
             )),
@@ -226,8 +224,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
-                CURLOPT_PROGRESSFUNCTION => 'callback',
-                CURLOPT_NOPROGRESS => 0,
                 CURLOPT_ENCODING => '',
                 CURLOPT_PORT => 8080,
                 CURLOPT_HTTPHEADER => array('Host: 127.0.0.1:8080', 'User-Agent: ' . $userAgent),
@@ -241,11 +237,8 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_CONNECTTIMEOUT => 10,
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_HEADERFUNCTION => 'callback',
-                CURLOPT_PROGRESSFUNCTION => 'callback',
-                CURLOPT_NOPROGRESS => 0,
                 CURLOPT_ENCODING => '',
                 CURLOPT_HTTPHEADER => array('Host: www.google.com', 'User-Agent: ' . $userAgent),
-                CURLOPT_CUSTOMREQUEST => 'HEAD',
                 CURLOPT_NOBODY => 1
             )),
             // Send a GET using basic auth
@@ -258,8 +251,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
-                CURLOPT_PROGRESSFUNCTION => 'callback',
-                CURLOPT_NOPROGRESS => 0,
                 CURLOPT_ENCODING => '',
                 CURLOPT_HTTPHEADER => array(
                     'Host: localhost',
@@ -295,8 +286,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
-                CURLOPT_PROGRESSFUNCTION => 'callback',
-                CURLOPT_NOPROGRESS => 0,
                 CURLOPT_ENCODING => '',
                 CURLOPT_POSTFIELDS => 'x=y&z=a',
                 CURLOPT_HTTPHEADER => array (
@@ -326,8 +315,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
                 CURLOPT_READFUNCTION => 'callback',
-                CURLOPT_PROGRESSFUNCTION => 'callback',
-                CURLOPT_NOPROGRESS => 0,
                 CURLOPT_ENCODING => '',
                 CURLOPT_INFILESIZE => filesize($testFile),
                 CURLOPT_HTTPHEADER => array (
@@ -357,8 +344,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
-                CURLOPT_PROGRESSFUNCTION => 'callback',
-                CURLOPT_NOPROGRESS => 0,
                 CURLOPT_ENCODING => '',
                 CURLOPT_POST => 1,
                 CURLOPT_POSTFIELDS => 'x=y&a=b',
@@ -388,8 +373,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
-                CURLOPT_PROGRESSFUNCTION => 'callback',
-                CURLOPT_NOPROGRESS => 0,
                 CURLOPT_ENCODING => '',
                 CURLOPT_POST => 1,
                 CURLOPT_POSTFIELDS => array(
@@ -423,8 +406,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
-                CURLOPT_PROGRESSFUNCTION => 'callback',
-                CURLOPT_NOPROGRESS => 0,
                 CURLOPT_ENCODING => '',
                 CURLOPT_POST => 1,
                 CURLOPT_HTTPHEADER => array (
@@ -457,8 +438,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
-                CURLOPT_PROGRESSFUNCTION => 'callback',
-                CURLOPT_NOPROGRESS => 0,
                 CURLOPT_ENCODING => '',
                 CURLOPT_POST => 1,
                 CURLOPT_HTTPHEADER => array (
@@ -606,18 +585,13 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $client = new Client($this->getServer()->getUrl());
         $request = $client->put('/');
         $request->setBody(EntityBody::factory('test'), 'text/plain', false);
+        $request->getCurlOptions()->set('progress', true);
 
         $o = $this->getWildcardObserver($request);
         $request->send();
 
         // Make sure that the events were dispatched
-        $this->assertTrue($o->has('curl.callback.read'));
-        $this->assertTrue($o->has('curl.callback.write'));
         $this->assertTrue($o->has('curl.callback.progress'));
-
-        // Make sure that the data was sent through the event
-        $this->assertEquals('test', $o->getData('curl.callback.read', 'read'));
-        $this->assertEquals('hi', $o->getData('curl.callback.write', 'write'));
 
         // Ensure that the request was received exactly as intended
         $r = $this->getServer()->getReceivedRequests(true);
@@ -746,5 +720,14 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
         $received = $this->getServer()->getReceivedRequests(true);
         $this->assertEquals(2, count($received));
+    }
+
+    public function testAllowsWireTransferInfoToBeDisabled()
+    {
+        $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl());
+        $request->getCurlOptions()->set('disable_wire', true);
+        $handle = CurlHandle::factory($request);
+        $this->assertNull($handle->getOptions()->get(CURLOPT_STDERR));
+        $this->assertNull($handle->getOptions()->get(CURLOPT_VERBOSE));
     }
 }

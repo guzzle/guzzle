@@ -73,16 +73,11 @@ interface MessageInterface
     function setTokenizedHeader($header, $data, $token = ';');
 
     /**
-     * Get all or all matching headers.
+     * Get all headers as a collection
      *
-     * @param array $names (optional) Pass an array of header names to retrieve
-     *     only a particular subset of headers.
-     *
-     * @return Collection Returns a {@see Collection} of all headers if no
-     *      $headers array is specified, or a Collection of only the headers
-     *      matching the headers in the $headers array.
+     * @return Collection Returns a {@see Collection} of all headers
      */
-    function getHeaders(array $headers = null);
+    function getHeaders();
 
     /**
      * Check if the specified header is present.

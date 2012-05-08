@@ -21,8 +21,7 @@
     "require": {
         "php": ">=5.3.2",
         "ext-curl": "*",
-        "symfony/event-dispatcher": "*",
-        "symfony/validator": "*"
+        "symfony/event-dispatcher": "*"
     },
 
     "autoload": {

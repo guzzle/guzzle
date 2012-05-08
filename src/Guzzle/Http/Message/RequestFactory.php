@@ -84,12 +84,10 @@ class RequestFactory implements RequestFactoryInterface
             }
 
             // Parse message headers
-            $matches = array();
-            if (!$method && preg_match('#^(?P<method>[A-Za-z]+)\s+(?P<path>/.*)\s+(?P<protocol>\w+)/(?P<version>\d\.\d)\s*$#i', $line, $matches)) {
-                $method = strtoupper($matches['method']);
-                $protocol = strtoupper($matches['protocol']);
-                $path = $matches['path'];
-                $version = $matches['version'];
+            if (!$method) {
+                list($method, $path, $proto) = explode(' ', $line);
+                $method = strtoupper($method);
+                list($protocol, $version) = explode('/', strtoupper($proto));
                 $scheme = 'http';
             } else if (strpos($line, ':')) {
                 list($key, $value) = explode(':', $line, 2);

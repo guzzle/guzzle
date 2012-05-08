@@ -42,7 +42,7 @@ class CacheAdapterFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Common\Cache\CacheAdapterFactory::factory
-     * @expectedException InvalidArgumentException
+     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
      * @expectedExceptionMessage cache.adapter is a required CacheAdapterFactory option
      */
     public function testEnsuresRequiredAdapterOption()
@@ -107,5 +107,14 @@ class CacheAdapterFactoryTest extends \Guzzle\Tests\GuzzleTestCase
             'cache.provider' => 'Guzzle\Tests\Mock\ExceptionMock',
             'cache.adapter'  => 'Guzzle\Tests\Mock\ExceptionMock'
         ));
+    }
+
+    /**
+     * @covers Guzzle\Common\Cache\CacheAdapterFactory
+     */
+    public function testCreatesNullCacheAdapterByDefault()
+    {
+        $adapter = CacheAdapterFactory::factory(array());
+        $this->assertInstanceOf('Guzzle\\Common\\Cache\\NullCacheAdapter', $adapter);
     }
 }

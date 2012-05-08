@@ -11,9 +11,24 @@ class UriTemplate
 {
     private $template;
     private $variables;
-    private $regex = '/\{{1,2}([^\}]+)\}{1,2}/';
-    private static $operators = array('+', '#', '.', '/', ';', '?', '&');
+    private static $regex = '/\{{1,2}([^\}]+)\}{1,2}/';
+
+    /**
+     * @var array Hash for quick operator lookups
+     */
+    private static $operatorHash = array(
+        '+' => true, '#' => true, '.' => true, '/' => true, ';' => true,
+        '?' => true, '&' => true
+    );
+
+    /**
+     * @var array Delimiters
+     */
     private static $delims = array(':', '/', '?', '#', '[', ']', '@', '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
+
+    /**
+     * @var array Percent encoded delimiters
+     */
     private static $delimsPct = array('%3A', '%2F', '%3F', '%23', '%5B', '%5D', '%40', '%21', '%24', '%26', '%27', '%28', '%29', '%2A', '%2B', '%2C', '%3B', '%3D');
 
     /**
@@ -59,21 +74,12 @@ class UriTemplate
     {
         $this->variables = $variables;
 
-        return preg_replace_callback($this->regex, array($this, 'expandMatch'), $this->template);
-    }
+        // Check to ensure that the preg_* function is needed
+        if (false === strpos($this->template, '{')) {
+            return $this->template;
+        }
 
-    /**
-     * Set the regular expression used to identify URI templates
-     *
-     * @param string $regex Regular expression
-     *
-     * @return UriTemplate
-     */
-    public function setRegex($regex)
-    {
-        $this->regex = $regex;
-
-        return $this;
+        return preg_replace_callback(self::$regex, array($this, 'expandMatch'), $this->template);
     }
 
     /**
@@ -87,30 +93,34 @@ class UriTemplate
     {
         // Check for URI operators
         $operator = '';
-        if (in_array($expression[0], self::$operators)) {
+
+        if (isset(self::$operatorHash[$expression[0]])) {
             $operator = $expression[0];
             $expression = substr($expression, 1);
         }
 
+        $values = explode(',', $expression);
+        foreach ($values as &$value) {
+            $value = trim($value);
+            $varspec = array();
+            $substrPos = strpos($value, ':');
+            if ($substrPos) {
+                $varspec['value'] = substr($value, 0, $substrPos);
+                $varspec['modifier'] = ':';
+                $varspec['position'] = (int) substr($value, $substrPos + 1);
+            } else if (substr($value, -1) == '*') {
+                $varspec['modifier'] = '*';
+                $varspec['value'] = substr($value, 0, -1);
+            } else {
+                $varspec['value'] = (string) $value;
+                $varspec['modifier'] = '';
+            }
+            $value = $varspec;
+        }
+
         return array(
             'operator' => $operator,
-            'values'   => array_map(function($value) {
-                $value = trim($value);
-                $varspec = array();
-                $substrPos = strpos($value, ':');
-                if ($substrPos) {
-                    $varspec['value'] = substr($value, 0, $substrPos);
-                    $varspec['modifier'] = ':';
-                    $varspec['position'] = (int) substr($value, $substrPos + 1);
-                } else if (substr($value, -1) == '*') {
-                    $varspec['modifier'] = '*';
-                    $varspec['value'] = substr($value, 0, -1);
-                } else {
-                    $varspec['value'] = (string) $value;
-                    $varspec['modifier'] = '';
-                }
-                return $varspec;
-            }, explode(',', $expression))
+            'values'   => $values
         );
     }
 

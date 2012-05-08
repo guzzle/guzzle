@@ -21,9 +21,14 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
     const RETRY_PARAM = 'plugins.exponential_backoff.retry_count';
 
     /**
-     * @var array Array of response codes that must be retried
+     * @var array|callable Hash table of failure codes or PHP callable
      */
     protected $failureCodes;
+
+    /**
+     * @var bool Whether or not the failure codes property is a callable
+     */
+    protected $callableFailureCodes;
 
     /**
      * @var int Maximum number of times to retry a request
@@ -34,6 +39,20 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
      * @var Closure
      */
     protected $delayClosure;
+
+    /**
+     * @var array Array of default failure codes
+     */
+    protected static $defaultFailureCodes = array(500, 503,
+        CURLE_COULDNT_RESOLVE_HOST, CURLE_COULDNT_CONNECT, CURLE_WRITE_ERROR,
+        CURLE_READ_ERROR, CURLE_OPERATION_TIMEOUTED, CURLE_SSL_CONNECT_ERROR,
+        CURLE_HTTP_PORT_FAILED, CURLE_GOT_NOTHING, CURLE_SEND_ERROR,
+        CURLE_RECV_ERROR);
+
+    /**
+     * @var array Hash cache of the default failure codes
+     */
+    protected static $defaultFailureCodesHash;
 
     /**
      * Construct a new exponential backoff plugin
@@ -54,8 +73,19 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
     public function __construct($maxRetries = 3, $failureCodes = null, $delayFunction = null)
     {
         $this->setMaxRetries($maxRetries);
-        $this->delayClosure = $delayFunction ?: array($this, 'calculateWait');
-        $this->failureCodes = $failureCodes ?: static::getDefaultFailureCodes();
+        $this->setFailureCodes($failureCodes);
+
+        if (!$delayFunction) {
+            $this->delayClosure = array($this, 'calculateWait');
+        } else {
+            $this->delayClosure = $delayFunction;
+        }
+
+        // @codeCoverageIgnoreStart
+        if (!self::$defaultFailureCodesHash) {
+            self::$defaultFailureCodesHash = array_fill_keys(self::$defaultFailureCodes, 1);
+        }
+        // @codeCoverageIgnoreEnd
     }
 
     /**
@@ -65,10 +95,7 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
      */
     public static function getDefaultFailureCodes()
     {
-        return array(500, 503, CURLE_COULDNT_RESOLVE_HOST,
-            CURLE_COULDNT_CONNECT, CURLE_WRITE_ERROR, CURLE_READ_ERROR,
-            CURLE_OPERATION_TIMEOUTED, CURLE_SSL_CONNECT_ERROR, CURLE_HTTP_PORT_FAILED,
-            CURLE_GOT_NOTHING, CURLE_SEND_ERROR, CURLE_RECV_ERROR);
+        return self::$defaultFailureCodes;
     }
 
     /**
@@ -116,20 +143,28 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
      */
     public function getFailureCodes()
     {
-        return $this->failureCodes;
+        return array_keys($this->failureCodes);
     }
 
     /**
      * Set the HTTP response codes that should be retried using truncated
      * exponential backoff
      *
-     * @param array $codes Array of HTTP response codes
+     * @param mixed $codes Array of HTTP response codes or PHP callable
      *
      * @return ExponentialBackoffPlugin
      */
-    public function setFailureCodes(array $codes)
+    public function setFailureCodes($codes = null)
     {
-        $this->failureCodes = $codes;
+        // Use the default failure codes if no value was provided
+        $this->failureCodes = $codes ?: static::getDefaultFailureCodes();
+        // Determine if the passed failure codes are a PHP callable
+        $this->callableFailureCodes = is_callable($this->failureCodes);
+
+        // Use a hash of codes so that it is faster to lookup errors
+        if (!$this->callableFailureCodes) {
+            $this->failureCodes = array_fill_keys($this->failureCodes, 1);
+        }
 
         return $this;
     }
@@ -159,12 +194,12 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
         $retry = null;
         $failureCodes = $this->failureCodes;
 
-        if (is_callable($this->failureCodes)) {
+        if ($this->callableFailureCodes) {
             // Use a callback to determine if the request should be retried
             $retry = call_user_func($this->failureCodes, $request, $response, $exception);
             // If null is returned, then use the default check
             if ($retry === null) {
-                $failureCodes = self::getDefaultFailureCodes();
+                $failureCodes = self::$defaultFailureCodesHash;
             }
         }
 
@@ -172,10 +207,10 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
         if ($retry === null) {
             if ($exception && $exception instanceof CurlException) {
                 // Handle cURL exceptions
-                $retry = in_array($exception->getErrorNo(), $failureCodes);
+                $retry = isset($failureCodes[$exception->getErrorNo()]);
             } else if ($response) {
-                $retry = in_array($response->getStatusCode(), $failureCodes) ||
-                    in_array($response->getReasonPhrase(), $failureCodes);
+                $retry = isset($failureCodes[$response->getStatusCode()]) ||
+                    isset($failureCodes[$response->getReasonPhrase()]);
             }
         }
 
@@ -199,13 +234,13 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
             // Remove the request from the pool and then add it back again.
             // This is required for cURL to know that we want to retry sending
             // the easy handle.
-            $multi = $event['curl_multi'];
-            $multi->remove($request);
             $request->getParams()->remove(self::DELAY_PARAM);
             // Rewind the request body if possible
             if ($request instanceof EntityEnclosingRequestInterface) {
                 $request->getBody()->seek(0);
             }
+            $multi = $event['curl_multi'];
+            $multi->remove($request);
             $multi->add($request, true);
         }
     }
@@ -224,7 +259,8 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
         // If this request has been retried too many times, then throw an exception
         if ($retries <= $this->maxRetries) {
             // Calculate how long to wait until the request should be retried
-            $delay = microtime(true) + call_user_func($this->delayClosure, $retries);
+            $delay = call_user_func($this->delayClosure, $retries);
+            $delayTime = microtime(true) + $delay;
             // Send the request again
             $request->setState(RequestInterface::STATE_TRANSFER);
             $params->set(self::DELAY_PARAM, $delay);

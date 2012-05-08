@@ -216,7 +216,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         $token = $response->getTokenizedHeader('X-Guzzle-Cache', ', ');
         $this->assertEquals(1000, $token['ttl']);
-        $this->assertEquals('key', $token->hasKey('key'));
+        $this->assertEquals(true, $token->hasKey('key'));
     }
 
     /**

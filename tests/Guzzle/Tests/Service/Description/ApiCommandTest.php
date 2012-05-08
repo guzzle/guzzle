@@ -4,6 +4,7 @@ namespace Guzzle\Tests\Service\Description;
 
 use Guzzle\Common\Collection;
 use Guzzle\Service\Description\ApiCommand;
+use Guzzle\Service\Description\ApiParam;
 use Guzzle\Service\Description\ServiceDescription;
 
 class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
@@ -38,19 +39,19 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('/api/v1', $c->getUri());
         $this->assertEquals('Guzzle\\Service\\Command\\DynamicCommand', $c->getConcreteClass());
         $this->assertEquals(array(
-            'key' => new Collection(array(
+            'key' => new ApiParam(array(
                 'required' => 'true',
                 'type' => 'string',
                 'max_length' => 10
             )),
-            'key_2' => new Collection(array(
+            'key_2' => new ApiParam(array(
                 'required' => 'true',
                 'type' => 'integer',
                 'default' => 10
             ))
         ), $c->getParams());
 
-        $this->assertEquals(new Collection(array(
+        $this->assertEquals(new ApiParam(array(
             'required' => 'true',
             'type' => 'integer',
             'default' => 10
@@ -68,7 +69,7 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
             'name' => 'test',
             'class' => 'Guzzle\\Service\\Command\ClosureCommand',
             'params' => array(
-                'p' => new Collection(array(
+                'p' => new ApiParam(array(
                     'name' => 'foo'
                 ))
             )
@@ -77,7 +78,7 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Description\ApiCommand::getData
+     * @covers Guzzle\Service\Description\ApiCommand::toArray
      */
     public function testConvertsToArray()
     {
@@ -88,12 +89,12 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
             'method'    => 'PUT',
             'uri'       => '/',
             'params'    => array(
-                'p' => new Collection(array(
+                'p' => new ApiParam(array(
                     'name' => 'foo'
                 ))
             )
         );
         $c = new ApiCommand($data);
-        $this->assertEquals($data, $c->getData());
+        $this->assertEquals($data, $c->toArray());
     }
 }

@@ -274,18 +274,16 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             }
             // Add any curl options that might in the config to the request
             if (strpos($key, 'curl.') === 0) {
-                $curlOption = str_replace('curl.', '', $key);
+                $curlOption = substr($key, 5);
+                // Convert constants represented as string to constant int values
                 if (defined($curlOption)) {
-                    $curlValue = is_string($value) && defined($value) ? constant($value) : $value;
-                    $request->getCurlOptions()->set(constant($curlOption), $curlValue);
+                    $value = is_string($value) && defined($value) ? constant($value) : $value;
+                    $curlOption = constant($curlOption);
                 }
-            } elseif (strpos($key, 'cache.') === 0) {
-                // Add any cache options from the config to the request
-                // Add any curl options that might in the config to the request
-                $request->getParams()->set($key, $value);
+                $request->getCurlOptions()->set($curlOption, $value);
             } elseif (strpos($key, 'params.') === 0) {
                 // Add request specific parameters to all requests (prefix with 'params.')
-                $request->getParams()->set(str_replace('params.', '', $key), $value);
+                $request->getParams()->set(substr($key, 7), $value);
             }
         }
 
