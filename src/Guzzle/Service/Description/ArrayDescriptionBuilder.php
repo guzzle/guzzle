@@ -13,7 +13,7 @@ class ArrayDescriptionBuilder implements DescriptionBuilderInterface
     /**
      * {@inheritdoc}
      */
-    public static function build($data)
+    public function build($data, array $options = null)
     {
         if (!empty($data['types'])) {
             foreach ($data['types'] as $name => $type) {

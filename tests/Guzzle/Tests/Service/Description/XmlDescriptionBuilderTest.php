@@ -14,7 +14,8 @@ class XmlDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testXmlBuilderThrowsExceptionWhenFileIsNotFound()
     {
-        $data = XmlDescriptionBuilder::build('file_not_found');
+        $x = new XmlDescriptionBuilder();
+        $data = $x->build('file_not_found');
     }
 
     /**
@@ -23,7 +24,8 @@ class XmlDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testBuildsServiceUsingFile()
     {
-        $service = XmlDescriptionBuilder::build(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'TestData' . DIRECTORY_SEPARATOR . 'test_service.xml');
+        $x = new XmlDescriptionBuilder();
+        $service = $x->build(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'TestData' . DIRECTORY_SEPARATOR . 'test_service.xml');
         $this->assertTrue($service->hasCommand('search'));
         $this->assertTrue($service->hasCommand('test'));
         $this->assertTrue($service->hasCommand('trends.location'));
@@ -57,7 +59,8 @@ class XmlDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testCanExtendOtherFiles()
     {
-        $service = XmlDescriptionBuilder::build(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'TestData' . DIRECTORY_SEPARATOR . 'test_service.xml');
+        $x = new XmlDescriptionBuilder();
+        $service = $x->build(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'TestData' . DIRECTORY_SEPARATOR . 'test_service.xml');
         $command = $service->getCommand('concrete');
         $this->assertEquals('/test', $command->getUri());
     }

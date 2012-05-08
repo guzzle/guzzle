@@ -15,24 +15,24 @@ class ServiceDescription implements ServiceDescriptionInterface
     protected $commands = array();
 
     /**
+     * @var DescriptionBuilderFactoryInterface
+     */
+    protected static $defaultFactory;
+
+    /**
      * {@inheritdoc}
      * @param string|array $filename File to build or array of command information
-     * @throws DescriptionBuilderException when the type is not recognized
+     * @param array $options (optional) Service description factory options
      */
-    public static function factory($filename)
+    public static function factory($filename, array $options = null)
     {
-        if (is_array($filename)) {
-            return ArrayDescriptionBuilder::build($filename);
+        // @codeCoverageIgnoreStart
+        if (!self::$defaultFactory) {
+            self::$defaultFactory = new ServiceDescriptionFactory();
         }
+        // @codeCoverageIgnoreEnd
 
-        $ext = pathinfo($filename, PATHINFO_EXTENSION);
-        if ($ext == 'js' || $ext == 'json') {
-            return JsonDescriptionBuilder::build($filename);
-        } else if ($ext == 'xml') {
-            return XmlDescriptionBuilder::build($filename);
-        }
-
-        throw new DescriptionBuilderException('Unable to load service description due to unknown file extension: ' . $ext);
+        return self::$defaultFactory->build($filename);
     }
 
     /**

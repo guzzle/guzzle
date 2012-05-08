@@ -9,7 +9,15 @@ use Guzzle\Service\Exception\DescriptionBuilderException;
  */
 class JsonDescriptionBuilder implements DescriptionBuilderInterface
 {
-    public static function parseJsonFile($jsonFile)
+    /**
+     * {@inheritdoc}
+     */
+    public function build($data, array $options = null)
+    {
+        return ServiceDescription::factory($this->parseJsonFile($data));
+    }
+
+    protected function parseJsonFile($jsonFile)
     {
         $json = file_get_contents($jsonFile);
         if (false === $json) {
@@ -24,18 +32,10 @@ class JsonDescriptionBuilder implements DescriptionBuilderInterface
                 if ($path[0] != DIRECTORY_SEPARATOR) {
                     $path = dirname($jsonFile) . DIRECTORY_SEPARATOR . $path;
                 }
-                $data = array_merge_recursive(self::parseJsonFile($path), $data);
+                $data = array_merge_recursive($this->parseJsonFile($path), $data);
             }
         }
 
         return $data;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public static function build($filename)
-    {
-        return ServiceDescription::factory(self::parseJsonFile($filename));
     }
 }

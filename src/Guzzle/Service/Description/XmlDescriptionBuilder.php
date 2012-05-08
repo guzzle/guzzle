@@ -11,6 +11,14 @@ use Guzzle\Service\Exception\DescriptionBuilderException;
 class XmlDescriptionBuilder implements DescriptionBuilderInterface
 {
     /**
+     * {@inheritdoc}
+     */
+    public function build($data, array $options = null)
+    {
+        return ServiceDescription::factory($this->parseXmlFile($data));
+    }
+
+    /**
      * Convert an XML file to an array of service data
      *
      * @param string $file XML filename to parse
@@ -18,7 +26,7 @@ class XmlDescriptionBuilder implements DescriptionBuilderInterface
      * @return array
      * @throws InvalidArgumentException
      */
-    public static function parseXmlFile($file)
+    protected function parseXmlFile($file)
     {
         if (!file_exists($file)) {
             throw new DescriptionBuilderException('Unable to open ' . $file . ' for reading');
@@ -81,13 +89,5 @@ class XmlDescriptionBuilder implements DescriptionBuilderInterface
         }
 
         return $data;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public static function build($filename)
-    {
-        return ServiceDescription::factory(self::parseXmlFile($filename));
     }
 }
