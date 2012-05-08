@@ -24,39 +24,15 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
     public function testConstructorConfiguresDefaults()
     {
         $ri = $this->getMockForAbstractClass('Guzzle\\Service\\ResourceIterator', array(
-            $this->getServiceBuilder()->get('mock'),
+            $this->getServiceBuilder()->get('mock')->getCommand('iterable_command'),
             array(
                 'limit' => 10,
-                'page_size' => 3,
-                'resources' => array('a', 'b', 'c'),
-                'next_token' => 'd'
+                'page_size' => 3
             )
         ), 'MockIterator');
 
-        $this->assertEquals('d', $ri->getNextToken());
-        $this->assertEquals(array('a', 'b', 'c'), $ri->toArray());
-
-        $ri->rewind();
-        $this->assertEquals('a', $ri->current());
-        $ri->next();
-        $this->assertEquals('b', $ri->current());
-        $ri->next();
-        $this->assertEquals('c', $ri->current());
-
-        // It ran out
-        $ri->next();
-        $this->assertEquals('', $ri->current());
-
-        $this->assertEquals(3, count($ri));
-        $this->assertEquals(3, $ri->getPosition());
-
-        // Rewind works?
-        $ri->rewind();
-        $this->assertEquals('a', $ri->current());
-        $ri->next();
-        $this->assertEquals('b', $ri->current());
-        $ri->next();
-        $this->assertEquals('c', $ri->current());
+        $this->assertEquals(false, $ri->getNextToken());
+        $this->assertEquals(false, $ri->current());
     }
 
     /**
@@ -64,25 +40,30 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testSendsRequestsForNextSetOfResources()
     {
+        // Queue up an array of responses for iterating
         $this->getServer()->flush();
         $this->getServer()->enqueue(array(
             "HTTP/1.1 200 OK\r\nContent-Length: 52\r\n\r\n{ \"next_token\": \"g\", \"resources\": [\"d\", \"e\", \"f\"] }",
             "HTTP/1.1 200 OK\r\nContent-Length: 52\r\n\r\n{ \"next_token\": \"j\", \"resources\": [\"g\", \"h\", \"i\"] }",
-            "HTTP/1.1 200 OK\r\nContent-Length: 41\r\n\r\n{ \"next_token\": \"\", \"resources\": [\"j\"] }",
+            "HTTP/1.1 200 OK\r\nContent-Length: 41\r\n\r\n{ \"next_token\": \"\", \"resources\": [\"j\"] }"
         ));
 
-        $ri = new MockResourceIterator($this->getServiceBuilder()->get('mock'), array(
-            'page_size' => 3,
-            'resources' => array('a', 'b', 'c'),
-            'next_token' => 'd'
+        // Create a new resource iterator using the IteraableCommand mock
+        $ri = new MockResourceIterator($this->getServiceBuilder()->get('mock')->getCommand('iterable_command'), array(
+            'page_size' => 3
         ));
 
-        $this->assertEquals(array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'), $ri->toArray());
+        // Ensure that no requests have been sent yet
+        $this->assertEquals(0, count($this->getServer()->getReceivedRequests(false)));
+
+        //$this->assertEquals(array('d', 'e', 'f', 'g', 'h', 'i', 'j'), $ri->toArray());
+        $ri->toArray();
         $requests = $this->getServer()->getReceivedRequests(true);
         $this->assertEquals(3, count($requests));
-        $this->assertEquals(3, $requests[0]->getQuery()->get('count'));
-        $this->assertEquals(3, $requests[1]->getQuery()->get('count'));
-        $this->assertEquals(3, $requests[2]->getQuery()->get('count'));
+
+        $this->assertEquals(3, $requests[0]->getQuery()->get('page_size'));
+        $this->assertEquals(3, $requests[1]->getQuery()->get('page_size'));
+        $this->assertEquals(3, $requests[2]->getQuery()->get('page_size'));
 
         // Reset and resend
         $this->getServer()->flush();
@@ -91,12 +72,13 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 52\r\n\r\n{ \"next_token\": \"j\", \"resources\": [\"g\", \"h\", \"i\"] }",
             "HTTP/1.1 200 OK\r\nContent-Length: 41\r\n\r\n{ \"next_token\": \"\", \"resources\": [\"j\"] }",
         ));
+
         $d = array();
         reset($ri);
         foreach ($ri as $data) {
             $d[] = $data;
         }
-        $this->assertEquals(array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'), $d);
+        $this->assertEquals(array('d', 'e', 'f', 'g', 'h', 'i', 'j'), $d);
     }
 
     /**
@@ -108,20 +90,47 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->enqueue(array(
             "HTTP/1.1 200 OK\r\nContent-Length: 52\r\n\r\n{ \"next_token\": \"g\", \"resources\": [\"d\", \"e\", \"f\"] }",
             "HTTP/1.1 200 OK\r\nContent-Length: 52\r\n\r\n{ \"next_token\": \"j\", \"resources\": [\"g\", \"h\", \"i\"] }",
-            "HTTP/1.1 200 OK\r\nContent-Length: 52\r\n\r\n{ \"next_token\": \"j\", \"resources\": [\"g\", \"h\"] }"
+            "HTTP/1.1 200 OK\r\nContent-Length: 52\r\n\r\n{ \"next_token\": \"j\", \"resources\": [\"j\", \"k\"] }"
         ));
 
-        $ri = new MockResourceIterator($this->getServiceBuilder()->get('mock'), array(
+        $ri = new MockResourceIterator($this->getServiceBuilder()->get('mock')->getCommand('iterable_command'), array(
             'page_size' => 3,
-            'limit' => 8,
-            'resources' => array('a', 'b', 'c'),
-            'next_token' => 'd'
+            'limit' => 7
         ));
 
-        $this->assertEquals(array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'), $ri->toArray());
+        $this->assertEquals(array('d', 'e', 'f', 'g', 'h', 'i', 'j'), $ri->toArray());
         $requests = $this->getServer()->getReceivedRequests(true);
-        $this->assertEquals(2, count($requests));
-        $this->assertEquals(3, $requests[0]->getQuery()->get('count'));
-        $this->assertEquals(2, $requests[1]->getQuery()->get('count'));
+        $this->assertEquals(3, count($requests));
+        $this->assertEquals(3, $requests[0]->getQuery()->get('page_size'));
+        $this->assertEquals(3, $requests[1]->getQuery()->get('page_size'));
+        $this->assertEquals(1, $requests[2]->getQuery()->get('page_size'));
+    }
+
+    /**
+     * @covers Guzzle\Service\ResourceIterator
+     */
+    public function testUseAsArray()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 200 OK\r\nContent-Length: 52\r\n\r\n{ \"next_token\": \"g\", \"resources\": [\"d\", \"e\", \"f\"] }",
+            "HTTP/1.1 200 OK\r\nContent-Length: 52\r\n\r\n{ \"next_token\": \"\", \"resources\": [\"g\", \"h\", \"i\"] }"
+        ));
+
+        $ri = new MockResourceIterator($this->getServiceBuilder()->get('mock')->getCommand('iterable_command'));
+
+        // Ensure that the key is never < 0
+        $this->assertEquals(0, $ri->key());
+        $this->assertEquals(0, count($ri));
+
+        // Ensure that the iterator can be used as KVP array
+        $data = array();
+        foreach ($ri as $key => $value) {
+            $data[$key] = $value;
+        }
+
+        // Ensure that the iterate is countable
+        $this->assertEquals(6, count($ri));
+        $this->assertEquals(array('d', 'e', 'f', 'g', 'h', 'i'), $data);
     }
 }

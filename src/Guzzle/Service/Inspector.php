@@ -269,7 +269,7 @@ class Inspector
             if ($validate && $this->typeValidation && $configValue !== null && $argType = $arg->getType()) {
                 $validation = $this->validateConstraint($argType, $configValue);
                 if ($validation !== true) {
-                    $errors[] = $validation;
+                    $errors[] = $name . ': ' . $validation;
                     continue;
                 }
             }

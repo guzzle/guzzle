@@ -3,6 +3,7 @@
 namespace Guzzle\Service;
 
 use Guzzle\Common\AbstractHasDispatcher;
+use Guzzle\Service\Command\CommandInterface;
 
 /**
  * Iterate over a paginated set of resources that requires subsequent paginated
@@ -11,39 +12,34 @@ use Guzzle\Common\AbstractHasDispatcher;
 abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterator, \Countable
 {
     /**
-     * @var ClientInterface
+     * @var CommandInterface Command used to send requests
      */
-    protected $client;
+    protected $command;
 
     /**
-     * @var mixed Current iterator value
+     * @var CommandInterface First sent command
      */
-    protected $current;
+    protected $originalCommand;
 
     /**
-     * @var array
+     * @var array Currently loaded resources
      */
-    protected $resourceList;
+    protected $resources;
 
     /**
-     * @var int Current index in $resourceList
+     * @var int Total number of resources that have been retrieved
      */
-    protected $currentIndex = -1;
-
-    /**
-     * @var int Current number of resources that have been iterated
-     */
-    protected $pos = -1;
-
-    /**
-     * @var string NextToken/Marker for a subsequent request
-     */
-    protected $nextToken;
+    protected $retrievedCount = 0;
 
     /**
      * @var int Total number of resources that have been iterated
      */
     protected $iteratedCount = 0;
+
+    /**
+     * @var string NextToken/Marker for a subsequent request
+     */
+    protected $nextToken = false;
 
     /**
      * @var int Maximum number of resources to fetch per request
@@ -56,7 +52,7 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterat
     protected $limit;
 
     /**
-     * @var array Initial data passed to the constructor -- used with rewind()
+     * @var array Initial data passed to the constructor
      */
     protected $data = array();
 
@@ -76,43 +72,33 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterat
     /**
      * This should only be invoked by a {@see ClientInterface} object.
      *
-     * @param ClientInterface $client Client responsible for sending requests
+     * @param CommandInterface $command Initial command used for iteration
      *
-     * @param array $data Associative array of additional parameters, including
-     *      any initial data to be iterated.
+     * @param array $data (optional) Associative array of additional parameters,
+     *      including any initial data to be iterated:
      *
-     *      <ul>
-     *      <li>page_size => Max number of results to retrieve per request.</li>
-     *      <li>resources => Initial resources to associate with the iterator.</li>
-     *      <li>next_token => The value used to mark the beginning of a subsequent result set.</li>
-     *      </ul>
+     *      limit: Attempt to limit the maximum number of resources to this amount
+     *      page_size: Attempt to retrieve this number of resources per request
      */
-    public function __construct(ClientInterface $client, array $data)
+    public function __construct(CommandInterface $command, array $data = array())
     {
-        $this->client = $client;
+        // Clone the command to keep track of the originating command for rewind
+        $this->originalCommand = $command;
+
+        // Parse options from the array of options
         $this->data = $data;
-        $this->limit = array_key_exists('limit', $data) ? $data['limit'] : -1;
+        $this->limit = array_key_exists('limit', $data) ? $data['limit'] : 0;
         $this->pageSize = array_key_exists('page_size', $data) ? $data['page_size'] : false;
-        $this->resourceList = array_key_exists('resources', $data) ? $data['resources'] : array();
-        $this->nextToken = array_key_exists('next_token', $data) ? $data['next_token'] : false;
-        $this->retrievedCount = count($this->resourceList);
-        $this->onLoad();
     }
 
     /**
      * Get all of the resources as an array (be careful as this could issue a
      * large number of requests if no limit is specified)
      *
-     * @param bool $rewind (optional) By default, rewind() will be called
-     *
      * @return array
      */
-    public function toArray($rewind = true)
+    public function toArray()
     {
-        if ($rewind) {
-            $this->rewind();
-        }
-
         return iterator_to_array($this, false);
     }
 
@@ -123,15 +109,23 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterat
      */
     public function current()
     {
-        return $this->current;
+        return $this->resources ? current($this->resources) : false;
+    }
+
+    /**
+     * Return the key of the current element.
+     *
+     * @return mixed
+     */
+    public function key()
+    {
+        return max(0, $this->iteratedCount - 1);
     }
 
     /**
      * Return the total number of items that have been retrieved thus far.
      *
-     * Implements Countable
-     *
-     * @return string Returns the total number of items retrieved.
+     * @return int
      */
     public function count()
     {
@@ -139,37 +133,16 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterat
     }
 
     /**
-     * Return the total number of items that have been iterated thus far.
-     *
-     * @return string Returns the total number of items iterated.
-     */
-    public function getPosition()
-    {
-        return $this->pos;
-    }
-
-    /**
-     * Return the key of the current element.
-     *
-     * @return string Returns the current key.
-     */
-    public function key()
-    {
-        // @codeCoverageIgnoreStart
-        return $this->currentIndex;
-        // @codeCoverageIgnoreEnd
-    }
-
-    /**
-     * Rewind the Iterator to the first element.
+     * Rewind the Iterator to the first element and send the original command
      */
     public function rewind()
     {
-        $this->currentIndex = -1;
-        $this->pos = -1;
-        $this->resourceList = $this->data['resources'];
-        $this->nextToken = $this->data['next_token'];
-        $this->retrievedCount = count($this->resourceList);
+        // Use the original command
+        $this->command = clone $this->originalCommand;
+        $this->iteratedCount = 0;
+        $this->retrievedCount = 0;
+        $this->nextToken = false;
+        $this->resources = null;
         $this->next();
     }
 
@@ -180,10 +153,8 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterat
      */
     public function valid()
     {
-        return isset($this->resourceList)
-               && $this->current
-               && ($this->pos < $this->limit || $this->limit == -1)
-               && ($this->currentIndex < count($this->resourceList) || $this->nextToken);
+        return (!$this->resources || $this->current() || $this->nextToken)
+            && (!$this->limit || $this->iteratedCount < $this->limit + 1);
     }
 
     /**
@@ -191,26 +162,39 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterat
      */
     public function next()
     {
-        $this->pos++;
+        $this->iteratedCount++;
 
-        if (!isset($this->resourceList)
-            || ++$this->currentIndex >= count($this->resourceList)
-            && $this->nextToken
-            && ($this->limit == -1 || $this->pos < $this->limit)) {
-                $this->dispatch('resource_iterator.before_send', array(
-                    'iterator'  => $this,
-                    'resources' => $this->resourceList
-                ));
-                $this->sendRequest();
-                $this->dispatch('resource_iterator.after_send', array(
-                    'iterator'  => $this,
-                    'resources' => $this->resourceList
-                ));
+        // Check if a new set of resources needs to be retrieved
+        $sendRequest = false;
+        if (!$this->resources) {
+            $sendRequest = true;
+        } else {
+            // iterate over the internal array
+            $current = next($this->resources);
+            $sendRequest = $current === false && $this->nextToken && (!$this->limit || $this->iteratedCount < $this->limit + 1);
         }
 
-        $this->current = (array_key_exists($this->currentIndex, $this->resourceList))
-            ? $this->resourceList[$this->currentIndex]
-            : null;
+        if ($sendRequest) {
+
+            $this->dispatch('resource_iterator.before_send', array(
+                'iterator'  => $this,
+                'resources' => $this->resources
+            ));
+
+            // Get a new command object from the original command
+            $this->command = clone $this->originalCommand;
+            // Send a request and retrieve the newly loaded resources
+            $this->resources = $this->sendRequest() ?: array();
+            // Add to the number of retrieved resources
+            $this->retrievedCount += count($this->resources);
+            // Ensure that we rewind to the beginning of the array
+            reset($this->resources);
+
+            $this->dispatch('resource_iterator.after_send', array(
+                'iterator'  => $this,
+                'resources' => $this->resources
+            ));
+        }
     }
 
     /**
@@ -224,12 +208,6 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterat
     }
 
     /**
-     * Send a request to retrieve the next page of results.
-     * Hook for sublasses to implement.
-     */
-    abstract protected function sendRequest();
-
-    /**
      * Returns the value that should be specified for the page size for
      * a request that will maintain any hard limits, but still honor the
      * specified pageSize if the number of items retrieved + pageSize < hard
@@ -239,21 +217,18 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterat
      */
     protected function calculatePageSize()
     {
-        if ($this->limit == -1) {
-            return $this->pageSize;
-        } else if ($this->pos + $this->pageSize > $this->limit) {
-            return $this->limit - $this->pos;
+        if ($this->limit && $this->iteratedCount + $this->pageSize > $this->limit) {
+            return 1 + ($this->limit - $this->iteratedCount);
         }
 
-        // @codeCoverageIgnoreStart
-        return $this->pageSize;
-        // @codeCoverageIgnoreEnd
+        return (int) $this->pageSize;
     }
 
     /**
-     * Called when the iterator is constructed.
+     * Send a request to retrieve the next page of results.
+     * Hook for sublasses to implement.
      *
-     * Hook for sub-classes to implement.
+     * @return array Returns the newly loaded resources
      */
-    protected function onLoad() {}
+    abstract protected function sendRequest();
 }

@@ -67,6 +67,15 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
+     * Custom clone behavior
+     */
+    public function __clone()
+    {
+        $this->request = null;
+        $this->result = null;
+    }
+
+    /**
      * Enables magic methods for setting parameters.
      *
      * @param string $method Name of the parameter to set

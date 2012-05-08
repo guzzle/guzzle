@@ -92,8 +92,8 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $client = new Client('http://www.test.com/');
         $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(
-            new \Guzzle\Http\Message\Response(200),
-            new \Guzzle\Http\Message\Response(200)
+            new Response(200),
+            new Response(200)
         )));
 
         // Create a command set and a command
@@ -143,7 +143,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $client = new Client('http://www.test.com/');
         $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(
-            new \Guzzle\Http\Message\Response(200)
+            new Response(200)
         )));
 
         // Create a command set and a command
@@ -318,5 +318,24 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client->setMagicCallBehavior(Client::MAGIC_CALL_EXECUTE);
         $command = $client->getCommand('other_command');
         $this->assertTrue($command->get('command.magic_method_call'));
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::execute
+     */
+    public function testClientResetsRequestsBeforeExecutingCommands()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nHi",
+            "HTTP/1.1 200 OK\r\nContent-Length: 1\r\n\r\nI"
+        ));
+
+        $client = new Mock\MockClient($this->getServer()->getUrl());
+
+        $command = $client->getCommand('mock_command');
+        $client->execute($command);
+        $client->execute($command);
+        $this->assertEquals('I', $command->getResponse()->getBody(true));
     }
 }

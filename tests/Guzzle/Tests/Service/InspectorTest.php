@@ -199,8 +199,8 @@ EOT;
             $this->assertContains("Validation errors: Requires that the username argument be supplied.  (API username)", $concat);
             $this->assertContains("Requires that the password argument be supplied.  (API password)", $concat);
             $this->assertContains("Requires that the subdomain argument be supplied.  (Unfuddle project subdomain)", $concat);
-            $this->assertContains("Value must be one of: v1, v2, v3", $concat);
-            $this->assertContains("Value must be of type object", $concat);
+            $this->assertContains("api_version: Value must be one of: v1, v2, v3", $concat);
+            $this->assertContains("class: Value must be of type object", $concat);
         }
     }
 

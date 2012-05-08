@@ -307,4 +307,22 @@ class CommandTest extends AbstractCommandTest
         $command->setTest('foo');
         $this->assertEquals('foo', $command->get('test'));
     }
+
+    /**
+     * @covers Guzzle\Service\Command\AbstractCommand::__clone
+     */
+    public function testCloneMakesNewRequest()
+    {
+        $client = $this->getClient();
+        $command = new MockCommand(array(
+            'command.magic_method_call' => true
+        ), $this->getApiCommand());
+        $command->setClient($client);
+
+        $command->prepare();
+        $this->assertTrue($command->isPrepared());
+
+        $command2 = clone $command;
+        $this->assertFalse($command2->isPrepared());
+    }
 }

@@ -8,13 +8,17 @@ class MockResourceIterator extends ResourceIterator
 {
     protected function sendRequest()
     {
-        $request = $this->client->createRequest();
-        $request->getQuery()->set('count', $this->calculatePageSize());
-        $data = json_decode($request->send()->getBody(true), true);
+        if ($this->nextToken) {
+            $this->command->set('next_token', $this->nextToken);
+        }
 
-        $this->resourceList = $data['resources'];
+        $this->command->set('page_size', (int) $this->calculatePageSize());
+        $this->command->execute();
+
+        $data = json_decode($this->command->getResponse()->getBody(true), true);
+
         $this->nextToken = $data['next_token'];
-        $this->retrievedCount += count($this->data['resources']);
-        $this->currentIndex = 0;
+
+        return $data['resources'];
     }
 }

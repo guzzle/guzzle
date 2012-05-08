@@ -7,6 +7,7 @@ use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Exception\BadMethodCallException;
 use Guzzle\Http\Client as HttpClient;
+use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\Exception\CommandSetException;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\CommandSet;
@@ -178,14 +179,23 @@ class Client extends HttpClient implements ClientInterface
     public function execute($command)
     {
         if ($command instanceof CommandInterface) {
+
             $command->setClient($this)->prepare();
             $this->dispatch('command.before_send', array(
                 'command' => $command
             ));
-            $command->getRequest()->send();
+
+            $request = $command->getRequest();
+            // Set the state to new if the command was previously executed
+            if ($request->getState() !== RequestInterface::STATE_NEW) {
+                $request->setState(RequestInterface::STATE_NEW);
+            }
+
+            $request->send();
             $this->dispatch('command.after_send', array(
                 'command' => $command
             ));
+
             return $command->getResult();
         } else if ($command instanceof CommandSet) {
             foreach ($command as $c) {
