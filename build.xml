@@ -28,7 +28,7 @@
                 <pharpackage
                     destfile="./guzzle-min.phar"
                     basedir="."
-                    alias="Guzzle"
+                    alias="guzzle"
                     stub="phar-stub-min.php"
                     signature="md5">
                     <fileset dir=".">
@@ -45,13 +45,12 @@
                     destfile="./guzzle.phar"
                     basedir="."
                     stub="phar-stub.php"
-                    alias="Guzzle"
+                    alias="guzzle"
                     signature="md5">
                     <fileset dir=".">
                         <include name="src/**/*.php" />
                         <include name="vendor/symfony/class-loader/Symfony/Component/ClassLoader/UniversalClassLoader.php" />
                         <include name="vendor/symfony/event-dispatcher/**/*.php" />
-                        <include name="vendor/symfony/validator/**/*.php" />
                         <include name="vendor/doctrine/common/lib/Doctrine/Common/Cache/*.php" />
                         <include name="vendor/monolog/monolog/src/**/*.php" />
                     </fileset>
