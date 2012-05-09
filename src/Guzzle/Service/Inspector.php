@@ -67,6 +67,7 @@ class Inspector
             'float'     => array($base . 'Numeric', null),
             'string'    => array($base . 'Type', array('type' => 'string')),
             'file'      => array($base . 'Type', array('type' => 'file')),
+            'array'     => array($base . 'Type', array('type' => 'array')),
             'bool'      => array($base . 'Bool', null),
             'boolean'   => array($base . 'Bool', null),
             'email'     => array($base . 'Email', null),

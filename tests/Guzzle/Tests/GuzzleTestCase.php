@@ -173,7 +173,9 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
      * request sent by the client.
      *
      * @param Client $client Client object to modify
-     * @param string $paths Path to files within the Mock folder of the service
+     * @param string $paths  Path to files within the Mock folder of the service
+     *
+     * @return MockPlugin returns the created mock plugin
      */
     public function setMockResponse(Client $client, $paths)
     {
@@ -189,6 +191,8 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
         }
 
         $client->getEventDispatcher()->addSubscriber($mock);
+
+        return $mock;
     }
 
     /**
