@@ -337,17 +337,19 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
             $client->get()
         );
 
+        $sendHeadFunction = function($event) use ($client) {
+            $client->head()->send();
+        };
+
         // Sends 2 new requests in the middle of a CurlMulti loop while other requests
         // are completing.  This causes the scope of the multi handle to go up.
-        $callback = function(Event $event) use ($client) {
+        $callback = function(Event $event) use ($client, $sendHeadFunction) {
             $client->getConfig()->set('called', $client->getConfig('called') + 1);
-            $request = $client->get();
             if ($client->getConfig('called') <= 2) {
-                $request->getEventDispatcher()->addListener('request.complete', function(Event $event) use ($client) {
-                    $client->head()->send();
-                });
+                $request = $client->get();
+                $request->getEventDispatcher()->addListener('request.complete', $sendHeadFunction);
+                $request->send();
             }
-            $request->send();
         };
 
         $requests[0]->getEventDispatcher()->addListener('request.complete', $callback);
@@ -356,7 +358,7 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
 
         $client->send($requests);
 
-        $this->assertEquals(8, count($this->getServer()->getReceivedRequests(false)));
+        $this->assertEquals(7, count($this->getServer()->getReceivedRequests(false)));
     }
 
     /**
