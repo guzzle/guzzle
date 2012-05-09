@@ -5,7 +5,7 @@ namespace Guzzle\Service;
 use Guzzle\Common\AbstractHasDispatcher;
 
 /**
- * Apply a callback to the contents of a {@see ResourceIterator}
+ * Apply a callback to the contents of a {@see ResourceIteratorInterface}
  */
 class ResourceIteratorApplyBatched extends AbstractHasDispatcher
 {
@@ -15,7 +15,7 @@ class ResourceIteratorApplyBatched extends AbstractHasDispatcher
     protected $callback;
 
     /**
-     * @var ResourceIterator
+     * @var ResourceIteratorInterface
      */
     protected $iterator;
 
@@ -45,11 +45,11 @@ class ResourceIteratorApplyBatched extends AbstractHasDispatcher
     /**
      * Constructor
      *
-     * @param ResourceIterator $iterator Resource iterator to apply a callback to
-     * @param array|\Closure $callback Callback method accepting the resource
+     * @param ResourceIteratorInterface $iterator Resource iterator to apply a callback to
+     * @param array|callable $callback Callback method accepting the resource
      *      iterator and an array of the iterator's current resources
      */
-    public function __construct(ResourceIterator $iterator, $callback)
+    public function __construct(ResourceIteratorInterface $iterator, $callback)
     {
         $this->iterator = $iterator;
         $this->callback = $callback;

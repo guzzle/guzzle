@@ -6,10 +6,9 @@ use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Service\Command\CommandInterface;
 
 /**
- * Iterate over a paginated set of resources that requires subsequent paginated
- * calls in order to retrieve an entire set of resources from a service.
+ * {@inheritdoc}
  */
-abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterator, \Countable
+abstract class ResourceIterator extends AbstractHasDispatcher implements ResourceIteratorInterface
 {
     /**
      * @var CommandInterface Command used to send requests
@@ -57,6 +56,12 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterat
     protected $data = array();
 
     /**
+     * @var bool Whether or not the current value is known to be invalid. This
+     *     is set for example when a senRequest() method returns 0 resources.
+     */
+    protected $invalid;
+
+    /**
      * {@inheritdoc}
      */
     public static function getAllEvents()
@@ -74,8 +79,9 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterat
      *
      * @param CommandInterface $command Initial command used for iteration
      *
-     * @param array $data (optional) Associative array of additional parameters,
-     *      including any initial data to be iterated:
+     * @param array $data (optional) Associative array of additional parameters.
+     *      You may specify any number of custom options for an iterator.  Among
+     *      these options, you may also specify the following values:
      *
      *      limit: Attempt to limit the maximum number of resources to this amount
      *      page_size: Attempt to retrieve this number of resources per request
@@ -100,6 +106,55 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterat
     public function toArray()
     {
         return iterator_to_array($this, false);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setLimit($limit)
+    {
+        $this->limit = $limit;
+        $this->resetState();
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setPageSize($pageSize)
+    {
+        $this->pageSize = $pageSize;
+        $this->resetState();
+
+        return $this;
+    }
+
+    /**
+     * Get an option from the iterator
+     *
+     * @param string $key Key of the option to retrieve
+     *
+     * @return mixed|null Returns NULL if not set or the value if set
+     */
+    public function get($key)
+    {
+        return array_key_exists($key, $this->data) ? $this->data[$key] : null;
+    }
+
+    /**
+     * Set an option on the iterator
+     *
+     * @param string $key   Key of the option to set
+     * @param mixed  $value Value to set for the option
+     *
+     * @return ResourceIterator
+     */
+    public function set($key, $value)
+    {
+        $this->data[$key] = $value;
+
+        return $this;
     }
 
     /**
@@ -139,10 +194,7 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterat
     {
         // Use the original command
         $this->command = clone $this->originalCommand;
-        $this->iteratedCount = 0;
-        $this->retrievedCount = 0;
-        $this->nextToken = false;
-        $this->resources = null;
+        $this->resetState();
         $this->next();
     }
 
@@ -153,7 +205,7 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterat
      */
     public function valid()
     {
-        return (!$this->resources || $this->current() || $this->nextToken)
+        return !$this->invalid && (!$this->resources || $this->current() || $this->nextToken)
             && (!$this->limit || $this->iteratedCount < $this->limit + 1);
     }
 
@@ -184,11 +236,18 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterat
             // Get a new command object from the original command
             $this->command = clone $this->originalCommand;
             // Send a request and retrieve the newly loaded resources
-            $this->resources = $this->sendRequest() ?: array();
-            // Add to the number of retrieved resources
-            $this->retrievedCount += count($this->resources);
-            // Ensure that we rewind to the beginning of the array
-            reset($this->resources);
+            $this->resources = $this->sendRequest();
+
+            // If no resources were found, then the last request was not needed
+            // and iteration must stop
+            if (empty($this->resources)) {
+                $this->invalid = true;
+            } else {
+                // Add to the number of retrieved resources
+                $this->retrievedCount += count($this->resources);
+                // Ensure that we rewind to the beginning of the array
+                reset($this->resources);
+            }
 
             $this->dispatch('resource_iterator.after_send', array(
                 'iterator'  => $this,
@@ -222,6 +281,18 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements \Iterat
         }
 
         return (int) $this->pageSize;
+    }
+
+    /**
+     * Reset the internal state of the iterator without triggering a rewind()
+     */
+    protected function resetState()
+    {
+        $this->iteratedCount = 0;
+        $this->retrievedCount = 0;
+        $this->nextToken = false;
+        $this->resources = null;
+        $this->invalid = false;
     }
 
     /**
