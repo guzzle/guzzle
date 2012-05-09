@@ -28,7 +28,6 @@
                 <pharpackage
                     destfile="./guzzle-min.phar"
                     basedir="."
-                    alias="guzzle"
                     stub="phar-stub-min.php"
                     signature="md5">
                     <fileset dir=".">
@@ -45,7 +44,6 @@
                     destfile="./guzzle.phar"
                     basedir="."
                     stub="phar-stub.php"
-                    alias="guzzle"
                     signature="md5">
                     <fileset dir=".">
                         <include name="src/**/*.php" />
