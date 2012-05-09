@@ -14,6 +14,8 @@ use Guzzle\Service\Command\CommandSet;
 use Guzzle\Service\Command\Factory\CompositeFactory;
 use Guzzle\Service\Command\Factory\ServiceDescriptionFactory;
 use Guzzle\Service\Command\Factory\FactoryInterface as CommandFactoryInterface;
+use Guzzle\Service\Resource\ResourceIteratorClassFactory;
+use Guzzle\Service\Resource\ResourceIteratorFactoryInterface;
 use Guzzle\Service\Description\ServiceDescription;
 
 /**
@@ -35,6 +37,11 @@ class Client extends HttpClient implements ClientInterface
      * @var CommandFactoryInterface
      */
     protected $commandFactory;
+
+    /**
+     * @var ResourceIteratorFactoryInterface
+     */
+    protected $resourceIteratorFactory;
 
     /**
      * Basic factory method to create a new client.  Extend this method in
@@ -137,20 +144,6 @@ class Client extends HttpClient implements ClientInterface
     }
 
     /**
-     * Get the command factory associated with the client
-     *
-     * @return CommandFactoryInterface
-     */
-    public function getCommandFactory()
-    {
-        if (!$this->commandFactory) {
-            $this->commandFactory = CompositeFactory::getDefaultChain($this);
-        }
-
-        return $this->commandFactory;
-    }
-
-    /**
      * Set the command factory used to create commands by name
      *
      * @param CommandFactoryInterface $factory Command factory
@@ -162,6 +155,42 @@ class Client extends HttpClient implements ClientInterface
         $this->commandFactory = $factory;
 
         return $this;
+    }
+
+    /**
+     * Set the resource iterator factory associated with the client
+     *
+     * @param ResourceIteratorFactoryInterface $factory Resource iterator factory
+     *
+     * @return Client
+     */
+    public function setResourceIteratorFactory(ResourceIteratorFactoryInterface $factory)
+    {
+        $this->resourceIteratorFactory = $factory;
+
+        return $this;
+    }
+
+    /**
+     * Get a resource iterator from the client.
+     *
+     * @param string|CommandInterface $command Command class or command name.
+     *     Passing a command name will have the client create the command for
+     *     you using $commandOptions array.
+     * @param array $commandOptions (optional) Command options used when
+     *     creating commands.
+     * @param array $iteratorOptions (optional) Iterator options passed to the
+     *     iterator when it is instantiated.
+     *
+     * @return ResourceIteratorInterface
+     */
+    public function getIterator($command, array $commandOptions = null, array $iteratorOptions = array())
+    {
+        if (!($command instanceof CommandInterface)) {
+            $command = $this->getCommand($command, $commandOptions);
+        }
+
+        return $this->getResourceIteratorFactory()->build($command, $iteratorOptions);
     }
 
     /**
@@ -258,5 +287,36 @@ class Client extends HttpClient implements ClientInterface
     public function getDescription()
     {
         return $this->serviceDescription;
+    }
+
+    /**
+     * Get the resource iterator factory associated with the client
+     *
+     * @return ResourceIteratorFactoryInterface
+     */
+    protected function getResourceIteratorFactory()
+    {
+        if (!$this->resourceIteratorFactory) {
+            // Build the default resource iterator factory if one is not set
+            $clientClass = get_class($this);
+            $namespace = substr($clientClass, 0, strrpos($clientClass, '\\')) . '\\Model';
+            $this->resourceIteratorFactory = new ResourceIteratorClassFactory($namespace);
+        }
+
+        return $this->resourceIteratorFactory;
+    }
+
+    /**
+     * Get the command factory associated with the client
+     *
+     * @return CommandFactoryInterface
+     */
+    protected function getCommandFactory()
+    {
+        if (!$this->commandFactory) {
+            $this->commandFactory = CompositeFactory::getDefaultChain($this);
+        }
+
+        return $this->commandFactory;
     }
 }

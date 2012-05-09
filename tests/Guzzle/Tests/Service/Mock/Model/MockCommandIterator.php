@@ -1,10 +1,10 @@
 <?php
 
-namespace Guzzle\Tests\Service\Mock;
+namespace Guzzle\Tests\Service\Mock\Model;
 
-use Guzzle\Service\ResourceIterator;
+use Guzzle\Service\Resource\ResourceIterator;
 
-class MockResourceIterator extends ResourceIterator
+class MockCommandIterator extends ResourceIterator
 {
     protected function sendRequest()
     {

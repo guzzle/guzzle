@@ -16,6 +16,7 @@ use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Description\XmlDescriptionBuilder;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
+use Guzzle\Service\Resource\ResourceIteratorClassFactory;
 
 /**
  * @group server
@@ -228,16 +229,20 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $description = $this->getMock('Guzzle\\Service\\Description\\ServiceDescription');
         $client->setDescription($description);
 
-        $this->assertNotSame($factory, $client->getCommandFactory());
-        $this->assertInstanceOf('Guzzle\\Service\\Command\\Factory\\CompositeFactory', $client->getCommandFactory());
-        $array = $client->getCommandFactory()->getIterator()->getArrayCopy();
+        $cf = $this->readAttribute($client, 'commandFactory');
+        $this->assertNotSame($factory, $cf);
+        $this->assertInstanceOf('Guzzle\\Service\\Command\\Factory\\CompositeFactory', $cf);
+
+        $array = $cf->getIterator()->getArrayCopy();
         $this->assertSame($array[0], $factory);
         $this->assertInstanceOf('Guzzle\\Service\\Command\\Factory\\ServiceDescriptionFactory', $array[1]);
         $this->assertSame($description, $array[1]->getServiceDescription());
 
         $description2 = $this->getMock('Guzzle\\Service\\Description\\ServiceDescription');
         $client->setDescription($description2);
-        $array = $client->getCommandFactory()->getIterator()->getArrayCopy();
+
+        $cf = $this->readAttribute($client, 'commandFactory');
+        $array = $cf->getIterator()->getArrayCopy();
         $this->assertSame($array[0], $factory);
         $this->assertInstanceOf('Guzzle\\Service\\Command\\Factory\\ServiceDescriptionFactory', $array[1]);
         $this->assertSame($description2, $array[1]->getServiceDescription());
@@ -297,12 +302,38 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     public function testOwnsCommandFactory()
     {
         $client = new Mock\MockClient();
-        $this->assertInstanceOf('Guzzle\\Service\\Command\\Factory\\CompositeFactory', $client->getCommandFactory());
-        $this->assertSame($client->getCommandFactory(), $client->getCommandFactory());
+        $method = new \ReflectionMethod($client, 'getCommandFactory');
+        $method->setAccessible(TRUE);
+        $cf1 = $method->invoke($client);
+
+        $cf = $this->readAttribute($client, 'commandFactory');
+        $this->assertInstanceOf('Guzzle\\Service\\Command\\Factory\\CompositeFactory', $cf);
+        $this->assertSame($method->invoke($client), $cf1);
 
         $mock = $this->getMock('Guzzle\\Service\\Command\\Factory\\CompositeFactory');
         $client->setCommandFactory($mock);
-        $this->assertSame($mock, $client->getCommandFactory());
+        $this->assertSame($mock, $this->readAttribute($client, 'commandFactory'));
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::getResourceIteratorFactory
+     * @covers Guzzle\Service\Client::setResourceIteratorFactory
+     */
+    public function testOwnsResourceIteratorFactory()
+    {
+        $client = new Mock\MockClient();
+
+        $method = new \ReflectionMethod($client, 'getResourceIteratorFactory');
+        $method->setAccessible(TRUE);
+        $rf1 = $method->invoke($client);
+
+        $rf = $this->readAttribute($client, 'resourceIteratorFactory');
+        $this->assertInstanceOf('Guzzle\\Service\\Resource\\ResourceIteratorClassFactory', $rf);
+        $this->assertSame($rf1, $rf);
+
+        $rf = new ResourceIteratorClassFactory('Guzzle\Tests\Service\Mock');
+        $client->setResourceIteratorFactory($rf);
+        $this->assertNotSame($rf1, $rf);
     }
 
     /**
@@ -338,4 +369,37 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client->execute($command);
         $this->assertEquals('I', $command->getResponse()->getBody(true));
     }
+
+    /**
+     * @covers Guzzle\Service\Client::getIterator
+     */
+    public function testClientCreatesIterators()
+    {
+        $client = new Mock\MockClient();
+
+        $iterator = $client->getIterator('mock_command', array(
+            'foo' => 'bar'
+        ), array(
+            'limit' => 10
+        ));
+
+        $this->assertInstanceOf('Guzzle\Tests\Service\Mock\Model\MockCommandIterator', $iterator);
+        $this->assertEquals(10, $this->readAttribute($iterator, 'limit'));
+
+        $command = $this->readAttribute($iterator, 'originalCommand');
+        $this->assertEquals('bar', $command->get('foo'));
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::getIterator
+     */
+    public function testClientCreatesIteratorsWithCommands()
+    {
+       $client = new Mock\MockClient();
+       $command = new MockCommand();
+       $iterator = $client->getIterator($command);
+       $this->assertInstanceOf('Guzzle\Tests\Service\Mock\Model\MockCommandIterator', $iterator);
+       $iteratorCommand = $this->readAttribute($iterator, 'originalCommand');
+       $this->assertSame($command, $iteratorCommand);
+   }
 }

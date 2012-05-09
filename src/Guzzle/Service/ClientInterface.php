@@ -9,6 +9,7 @@ use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\CommandSet;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Command\Factory\FactoryInterface as CommandFactoryInterface;
+use Guzzle\Service\Resource\ResourceIteratorFactoryInterface;
 
 /**
  * Client interface for executing commands on a web service.
@@ -79,13 +80,6 @@ interface ClientInterface extends HttpClientInterface
     function getDescription();
 
     /**
-     * Get the command factory associated with the client
-     *
-     * @return CommandFactoryInterface
-     */
-    function getCommandFactory();
-
-    /**
      * Set the command factory used to create commands by name
      *
      * @param CommandFactoryInterface $factory Command factory
@@ -93,4 +87,28 @@ interface ClientInterface extends HttpClientInterface
      * @return ClientInterface
      */
     function setCommandFactory(CommandFactoryInterface $factory);
+
+    /**
+     * Get a resource iterator from the client.
+     *
+     * @param string|CommandInterface $command Command class or command name.
+     *     Passing a command name will have the client create the command for
+     *     you using $commandOptions array.
+     * @param array $commandOptions (optional) Command options used when
+     *     creating commands.
+     * @param array $iteratorOptions (optional) Iterator options passed to the
+     *     iterator when it is instantiated.
+     *
+     * @return ResourceIteratorInterface
+     */
+    function getIterator($command, array $commandOptions = null, array $iteratorOptions = array());
+
+    /**
+     * Set the resource iterator factory associated with the client
+     *
+     * @param ResourceIteratorFactoryInterface $factory Resource iterator factory
+     *
+     * @return ClientInterface
+     */
+    function setResourceIteratorFactory(ResourceIteratorFactoryInterface $factory);
 }

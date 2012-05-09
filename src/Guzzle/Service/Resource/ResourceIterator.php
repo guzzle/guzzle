@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Service;
+namespace Guzzle\Service\Resource;
 
 use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Service\Command\CommandInterface;

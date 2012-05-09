@@ -1,10 +1,10 @@
 <?php
 
-namespace Guzzle\Tests\Service;
+namespace Guzzle\Tests\Service\Resource;
 
-use Guzzle\Service\ResourceIteratorApplyBatched;
-use Guzzle\Service\ResourceIterator;
-use Guzzle\Tests\Service\Mock\MockResourceIterator;
+use Guzzle\Service\Resource\ResourceIteratorApplyBatched;
+use Guzzle\Service\Resource\ResourceIterator;
+use Guzzle\Tests\Service\Mock\Model\MockCommandIterator;
 
 /**
  * @group server
@@ -12,7 +12,7 @@ use Guzzle\Tests\Service\Mock\MockResourceIterator;
 class ResourceIteratorApplyBatchedTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
-     * @covers Guzzle\Service\ResourceIteratorApplyBatched::getAllEvents
+     * @covers Guzzle\Service\Resource\ResourceIteratorApplyBatched::getAllEvents
      */
     public function testDescribesEvents()
     {
@@ -20,7 +20,7 @@ class ResourceIteratorApplyBatchedTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\ResourceIteratorApplyBatched
+     * @covers Guzzle\Service\Resource\ResourceIteratorApplyBatched
      */
     public function testSendsRequestsForNextSetOfResources()
     {
@@ -31,7 +31,7 @@ class ResourceIteratorApplyBatchedTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 41\r\n\r\n{ \"next_token\": \"\", \"resources\": [\"j\"] }",
         ));
 
-        $ri = new MockResourceIterator($this->getServiceBuilder()->get('mock')->getCommand('iterable_command'), array(
+        $ri = new MockCommandIterator($this->getServiceBuilder()->get('mock')->getCommand('iterable_command'), array(
             'page_size' => 3,
             'limit'     => 7
         ));
