@@ -209,12 +209,11 @@ class Client extends HttpClient implements ClientInterface
     {
         if ($command instanceof CommandInterface) {
 
-            $command->setClient($this)->prepare();
+            $request = $command->setClient($this)->prepare();
             $this->dispatch('command.before_send', array(
                 'command' => $command
             ));
 
-            $request = $command->getRequest();
             // Set the state to new if the command was previously executed
             if ($request->getState() !== RequestInterface::STATE_NEW) {
                 $request->setState(RequestInterface::STATE_NEW);

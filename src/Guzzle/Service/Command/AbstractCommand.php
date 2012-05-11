@@ -5,6 +5,7 @@ namespace Guzzle\Service\Command;
 use Guzzle\Common\Collection;
 use Guzzle\Common\NullObject;
 use Guzzle\Common\Exception\BadMethodCallException;
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\Description\ApiCommand;
@@ -41,6 +42,11 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     protected $apiCommand;
 
     /**
+     * @var mixed callable
+     */
+    protected $onComplete;
+
+    /**
      * Constructor
      *
      * @param array|Collection $parameters (optional) Collection of parameters
@@ -59,8 +65,17 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             Inspector::getInstance()->validateClass(get_class($this), $this, false, false);
         }
 
-        if (!$this->get('headers') instanceof Collection) {
-            $this->set('headers', new Collection((array) $this->get('headers')));
+        $headers = $this->get('headers');
+        if (!$headers instanceof Collection) {
+            $this->set('headers', new Collection((array) $headers));
+        }
+
+        // You can set a command.on_complete option in your parameters as a
+        // convenience method for setting an onComplete function
+        $onComplete = $this->get('command.on_complete');
+        if ($onComplete) {
+            $this->remove('command.on_complete');
+            $this->setOnComplete($onComplete);
         }
 
         $this->init();
@@ -138,6 +153,27 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
+     * Specify a callable to execute when the command completes
+     *
+     * @param mixed $callable Callable to execute when the command completes.
+     *     The callable must accept a {@see CommandInterface} object as the
+     *     only argument.
+     *
+     * @return Command
+     * @throws InvalidArgumentException
+     */
+    public function setOnComplete($callable)
+    {
+        if (!is_callable($callable)) {
+            throw new InvalidArgumentException('The onComplete function must be callable');
+        }
+
+        $this->onComplete = $callable;
+
+        return $this;
+    }
+
+    /**
      * Execute the command and return the result
      *
      * @return mixed Returns the result of {@see AbstractCommand::execute}
@@ -149,9 +185,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             throw new CommandException('A Client object must be associated with the command before it can be executed from the context of the command.');
         }
 
-        $this->client->execute($this);
-
-        return $this->getResult();
+        return $this->client->execute($this);
     }
 
     /**
@@ -223,6 +257,10 @@ abstract class AbstractCommand extends Collection implements CommandInterface
 
         if (null === $this->result) {
             $this->process();
+            // Call the onComplete method if one is set
+            if ($this->onComplete) {
+                call_user_func($this->onComplete, $this);
+            }
         }
 
         return $this->result;

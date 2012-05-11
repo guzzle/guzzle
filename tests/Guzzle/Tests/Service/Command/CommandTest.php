@@ -327,4 +327,41 @@ class CommandTest extends AbstractCommandTest
         $command2 = clone $command;
         $this->assertFalse($command2->isPrepared());
     }
+
+    /**
+     * @covers Guzzle\Service\Command\AbstractCommand::setOnComplete
+     * @covers Guzzle\Service\Command\AbstractCommand::__construct
+     * @covers Guzzle\Service\Command\AbstractCommand::getResult
+     */
+    public function testHasOnCompleteMethod()
+    {
+        $that = $this;
+        $called = 0;
+
+        $testFunction = function($command) use (&$called, $that) {
+            $called++;
+            $that->assertInstanceOf('Guzzle\Service\Command\CommandInterface', $command);
+        };
+
+        $client = $this->getClient();
+        $command = new MockCommand(array(
+            'command.on_complete' => $testFunction
+        ), $this->getApiCommand());
+        $command->setClient($client);
+
+        $command->prepare()->setResponse(new Response(200));
+        $command->execute();
+        $this->assertEquals(1, $called);
+    }
+
+    /**
+     * @covers Guzzle\Service\Command\AbstractCommand::setOnComplete
+     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     */
+    public function testOnCompleteMustBeCallable()
+    {
+        $client = $this->getClient();
+        $command = new MockCommand();
+        $command->setOnComplete('foo');
+    }
 }

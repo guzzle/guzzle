@@ -3,6 +3,7 @@
 namespace Guzzle\Service\Command;
 
 use Guzzle\Common\Collection;
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\ClientInterface;
@@ -23,6 +24,18 @@ interface CommandInterface
      * @param ApiCommand $apiCommand (optional) Command definition from description
      */
     function __construct($parameters = null, ApiCommand $apiCommand = null);
+
+    /**
+     * Specify a callable to execute when the command completes
+     *
+     * @param mixed $callable Callable to execute when the command completes.
+     *     The callable must accept a {@see CommandInterface} object as the
+     *     only argument.
+     *
+     * @return CommandInterface
+     * @throws InvalidArgumentException
+     */
+    function setOnComplete($callable);
 
     /**
      * Get the short form name of the command
