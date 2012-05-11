@@ -184,6 +184,24 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     }
 
     /**
+     * Case insensitive search the keys in the collection
+     *
+     * @param string $key Key to search for
+     *
+     * @return false|string Returns false if not found, otherwise returns the key
+     */
+    public function keySearch($key)
+    {
+        foreach (array_keys($this->data) as $k) {
+            if (!strcasecmp($k, $key)) {
+                return $k;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Checks if any keys contains a certain value
      *
      * @param string $value Value to search for

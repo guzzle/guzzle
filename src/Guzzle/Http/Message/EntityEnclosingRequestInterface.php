@@ -45,7 +45,7 @@ interface EntityEnclosingRequestInterface extends RequestInterface
     /**
      * Get the post fields that will be used in the request
      *
-     * @return array
+     * @return QueryString
      */
     function getPostFields();
 

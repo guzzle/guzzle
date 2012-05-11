@@ -113,11 +113,11 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     /**
      * Get the post fields that will be used in the request
      *
-     * @return array
+     * @return QueryString
      */
     public function getPostFields()
     {
-        return $this->postFields->getAll();
+        return $this->postFields;
     }
 
     /**
@@ -127,11 +127,14 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
      */
     public function getPostFiles()
     {
-        return $this->postFields->filter(function($key, $value) {
-            return $value && is_string($value) && $value[0] == '@';
-        })->map(function($key, $value) {
-            return str_replace('@', '', $value);
-        })->getAll();
+        $files = array();
+        foreach ($this->postFields as $key => $value) {
+            if (is_string($value) && $value[0] == '@') {
+                $files[$key] = substr($value, 1);
+            }
+        }
+
+        return $files;
     }
 
     /**
@@ -221,12 +224,10 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         if (0 == count($this->getPostFiles())) {
             $this->setHeader('Content-Type', 'application/x-www-form-urlencoded');
             $this->removeHeader('Expect');
-            $this->getCurlOptions()->set(CURLOPT_POSTFIELDS, (string) $this->postFields);
         } else {
             $this->setHeader('Expect', '100-Continue');
             $this->setHeader('Content-Type', 'multipart/form-data');
             $this->postFields->setEncodeFields(false)->setEncodeValues(false);
-            $this->getCurlOptions()->set(CURLOPT_POSTFIELDS, $this->postFields->getAll());
         }
     }
 }

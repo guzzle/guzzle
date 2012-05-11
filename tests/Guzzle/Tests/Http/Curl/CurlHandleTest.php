@@ -472,7 +472,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 'User-Agent'       => '*',
                 'Content-Length'   => '0',
                 '!Expect'          => null,
-                'Content-Type'     => 'application/x-www-form-urlencoded',
+                '!Content-Type'     => '*',
                 '!Transfer-Encoding' => null
             )),
             // Send a PUT that does not have a body defined
@@ -525,10 +525,21 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     public function testFactoryCreatesCurlBasedOnRequest($method, $url, $headers, $body, $options, $expectedHeaders = null)
     {
         $request = RequestFactory::getInstance()->create($method, $url, $headers, $body);
-        $handle = CurlHandle::factory($request);
+
+        $originalRequest = clone $request;
+        $curlTest = clone $request;
+        $handle = CurlHandle::factory($curlTest);
 
         $this->assertInstanceOf('Guzzle\\Http\\Curl\\CurlHandle', $handle);
-        $o = $request->getParams()->get('curl.last_options');
+        $o = $curlTest->getParams()->get('curl.last_options');
+
+        // Headers are case-insensitive
+        if (isset($o[CURLOPT_HTTPHEADER])) {
+            $o[CURLOPT_HTTPHEADER] = array_map('strtolower', $o[CURLOPT_HTTPHEADER]);
+        }
+        if (isset($options[CURLOPT_HTTPHEADER])) {
+            $options[CURLOPT_HTTPHEADER] = array_map('strtolower', $options[CURLOPT_HTTPHEADER]);
+        }
 
         $check = 0;
         foreach ($options as $key => $value) {
@@ -555,11 +566,14 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             $requests = $this->getServer()->getReceivedRequests(true);
             $this->assertEquals($method, $requests[0]->getMethod());
 
-            $test = $this->filterHeaders($expectedHeaders, $requests[0]->getHeaders());
+            $test = $this->compareHeaders($expectedHeaders, $requests[0]->getHeaders());
             $this->assertFalse($test, $test . "\nSent: \n" . $request . "\n\n" . $requests[0]);
-        }
 
-        $request = null;
+            // Ensure only one Content-Length header is sent
+            if ($request->getHeader('Content-Length')) {
+                $this->assertEquals((string) $request->getHeader('Content-Length'), (string) $requests[0]->getHeader('Content-Length'));
+            }
+        }
     }
 
     /**
@@ -596,7 +610,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         // Ensure that the request was received exactly as intended
         $r = $this->getServer()->getReceivedRequests(true);
 
-        $this->assertEquals((string) $request, (string) $r[0]);
+        $this->assertEquals(strtolower($request), strtolower($r[0]));
         $this->assertFalse($r[0]->hasHeader('Transfer-Encoding'));
         $this->assertEquals(4, (string) $r[0]->getHeader('Content-Length'));
     }
@@ -628,6 +642,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->getServer()->flush();
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi");
+
         $client = new Client($this->getServer()->getUrl());
         $request = $client->put('/');
         $request->setBody(EntityBody::factory('hi!'), 'text/plain', true);
@@ -642,11 +657,11 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Curl\CurlHandle
      */
-    public function testSendsPostRequests()
+    public function testSendsPostRequestsWithFields()
     {
         $this->getServer()->flush();
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi");
-        // Create a new request using the same connection and POST
+
         $request = RequestFactory::getInstance()->create('POST', $this->getServer()->getUrl());
         $request->setClient(new Client());
         $request->addPostFields(array(
@@ -655,10 +670,43 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         ));
         $request->send();
 
+        // Ensure the CURLOPT_POSTFIELDS option was set properly
+        $options = $request->getParams()->get('curl.last_options');
+        $this->assertEquals('a=b&c=ay%21%20~This%20is%20a%20test%2C%20isn%27t%20it%3F', $options[CURLOPT_POSTFIELDS]);
+
         // Make sure that the request was sent correctly
         $r = $this->getServer()->getReceivedRequests(true);
 
-        $this->assertEquals((string) $request, (string) $r[0]);
+        $this->assertEquals(strtolower($request), strtolower($r[0]));
+    }
+
+    /**
+     * @covers Guzzle\Http\Curl\CurlHandle
+     */
+    public function testSendsPostRequestsWithFiles()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi");
+
+        $request = RequestFactory::getInstance()->create('POST', $this->getServer()->getUrl());
+        $request->setClient(new Client());
+        $request->addPostFiles(array(
+            'foo' => __FILE__,
+        ));
+        $request->addPostFields(array(
+            'bar' => 'baz'
+        ));
+        $request->send();
+
+        // Ensure the CURLOPT_POSTFIELDS option was set properly
+        $options = $request->getParams()->get('curl.last_options');
+        $this->assertEquals(array(
+            'foo' => '@' . __FILE__,
+            'bar' => 'baz'
+        ), $options[CURLOPT_POSTFIELDS]);
+
+        // Ensure that a Content-Length header was sent by cURL
+        $this->assertTrue($request->hasHeader('Content-Length'));
     }
 
     /**
@@ -670,11 +718,20 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $request->setClient(new Client('http://www.example.com', array(
             'curl.blacklist' => array('header.Accept', 'header.Foo', CURLOPT_ENCODING)
         )));
+        $request->setHeader('Foo', 'Bar');
         $handle = CurlHandle::factory($request);
         $headers = $handle->getOptions()->get(CURLOPT_HTTPHEADER);
         $this->assertTrue(in_array('Accept:', $headers));
         $this->assertTrue(in_array('Foo:', $headers));
         $this->assertFalse($handle->getOptions()->hasKey(CURLOPT_ENCODING));
+
+        $this->getServer()->flush();
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi");
+        $request->send();
+
+        $r = $this->getServer()->getReceivedRequests(true);
+        $this->assertFalse($r[0]->hasHeader('Accept'));
+        $this->assertFalse($r[0]->hasHeader('Foo'));
     }
 
     /**
@@ -729,5 +786,13 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $handle = CurlHandle::factory($request);
         $this->assertNull($handle->getOptions()->get(CURLOPT_STDERR));
         $this->assertNull($handle->getOptions()->get(CURLOPT_VERBOSE));
+    }
+
+    public function testAddsCustomCurlOptions()
+    {
+        $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl());
+        $request->getCurlOptions()->set(CURLOPT_TIMEOUT, 200);
+        $handle = CurlHandle::factory($request);
+        $this->assertEquals(200, $handle->getOptions()->get(CURLOPT_TIMEOUT));
     }
 }

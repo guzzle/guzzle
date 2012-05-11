@@ -70,19 +70,29 @@ var GuzzleServer = function(port) {
                 var data = that.requests.join("\n----[request]\n");
                 res.writeHead(200, "OK", { "Content-Length": data.length });
                 res.end(data);
-                if (this.log) {
+                if (that.log) {
                     console.log("Sending receiving requests");
                 }
             }
         } else if (req.method == "PUT") {
             if (req.url == "/guzzle-server/responses") {
-                // Received respones to queue
-                that.responses = eval("(" + request.split("\r\n\r\n")[1] + ")");
-                if (this.log) {
-                    console.log("Adding respones:");
-                    console.log(that.responses);
+                if (that.log) {
+                    console.log("Adding responses...");
                 }
-                res.writeHead(200, "OK", { "Content-Length": 0 });
+                // Received respones to queue
+                var data = request.split("\r\n\r\n")[1];
+                if (!data) {
+                    if (that.log) {
+                        console.log("No response data was provided");
+                    }
+                    res.writeHead(500, "NO RESPONSES IN REQUEST", { "Content-Length": 0 });
+                } else {
+                    that.responses = eval("(" + data + ")");
+                    if (that.log) {
+                        console.log(that.responses);
+                    }
+                    res.writeHead(200, "OK", { "Content-Length": 0 });
+                }
                 res.end();
             }
         }

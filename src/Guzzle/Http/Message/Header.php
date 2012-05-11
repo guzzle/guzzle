@@ -11,6 +11,7 @@ class Header implements \IteratorAggregate, \Countable
     protected $header;
     protected $glue = ', ';
     protected $stringCache;
+    protected $arrayCache;
 
     /**
      * Construct a new header object
@@ -76,6 +77,7 @@ class Header implements \IteratorAggregate, \Countable
         }
 
         $this->stringCache = null;
+        $this->arrayCache = null;
 
         return $this;
     }
@@ -123,6 +125,7 @@ class Header implements \IteratorAggregate, \Countable
     public function normalize()
     {
         $this->stringCache = null;
+        $this->arrayCache = null;
         $this->values = array(
             $this->getName() => $this->toArray()
         );
@@ -175,14 +178,16 @@ class Header implements \IteratorAggregate, \Countable
      */
     public function toArray()
     {
-        $result = array();
-        foreach ($this->values as $values) {
-            foreach ($values as $value) {
-                $result[] = $value;
+        if (!$this->arrayCache) {
+            $this->arrayCache = array();
+            foreach ($this->values as $values) {
+                foreach ($values as $value) {
+                    $this->arrayCache[] = $value;
+                }
             }
         }
 
-        return $result;
+        return $this->arrayCache;
     }
 
     /**
