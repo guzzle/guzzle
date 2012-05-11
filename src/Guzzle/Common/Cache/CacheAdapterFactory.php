@@ -24,7 +24,7 @@ class CacheAdapterFactory
         if (!isset($config['cache.adapter']) && !isset($config['cache.provider'])) {
             $config['cache.adapter'] = 'Guzzle\\Common\\Cache\\NullCacheAdapter';
             $config['cache.provider'] = null;
-        } elseif (!isset($options['cache.provider'])) {
+        } elseif (!isset($config['cache.provider'])) { //config array instead of options
             // Validate that the options are valid
             foreach (array('cache.adapter', 'cache.provider') as $required) {
                 if (!isset($config[$required])) {
