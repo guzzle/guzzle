@@ -2,7 +2,6 @@
 
 namespace Guzzle\Tests\Http;
 
-use Guzzle\Common\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Log\ClosureLogAdapter;
 use Guzzle\Http\UriTemplate;
@@ -13,6 +12,7 @@ use Guzzle\Http\Plugin\LogPlugin;
 use Guzzle\Http\Plugin\MockPlugin;
 use Guzzle\Http\Curl\CurlMulti;
 use Guzzle\Http\Client;
+use Guzzle\Http\Utils;
 
 /**
  * @group server
@@ -162,7 +162,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         ));
 
         $this->assertSame($client, $client->setUserAgent('Test/1.0Ab', true));
-        $this->assertEquals('Test/1.0Ab ' . Guzzle::getDefaultUserAgent(), $client->get()->getHeader('User-Agent'));
+        $this->assertEquals('Test/1.0Ab ' . Utils::getDefaultUserAgent(), $client->get()->getHeader('User-Agent'));
         $client->setUserAgent('Test/1.0Ab');
         $this->assertEquals('Test/1.0Ab', $client->get()->getHeader('User-Agent'));
     }

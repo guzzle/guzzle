@@ -2,7 +2,6 @@
 
 namespace Guzzle\Service;
 
-use Guzzle\Common\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Service\Exception\ValidationException;
@@ -257,7 +256,7 @@ class Inspector
 
             // Inject configuration information into the config value
             if (is_string($configValue)) {
-                $configValue = Guzzle::inject($configValue, $config);
+                $configValue = $config->inject($configValue);
             }
 
             // Ensure that required arguments are set

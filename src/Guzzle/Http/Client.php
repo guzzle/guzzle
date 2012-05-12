@@ -7,6 +7,7 @@ use Guzzle\Common\Collection;
 use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Common\Exception\ExceptionCollection;
 use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Http\Utils;
 use Guzzle\Http\Url;
 use Guzzle\Http\UriTemplate;
 use Guzzle\Http\EntityBody;
@@ -338,7 +339,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function setUserAgent($userAgent, $includeDefault = false)
     {
         if ($includeDefault) {
-            $userAgent .= ' ' . Guzzle::getDefaultUserAgent();
+            $userAgent .= ' ' . Utils::getDefaultUserAgent();
         }
         $this->defaultHeaders->set('User-Agent', $userAgent);
 

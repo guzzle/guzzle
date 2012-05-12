@@ -2,8 +2,8 @@
 
 namespace Guzzle\Tests\Http\Message;
 
-use Guzzle\Common\Guzzle;
 use Guzzle\Common\Collection;
+use Guzzle\Http\Utils;
 use Guzzle\Http\Client;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\Request;
@@ -52,7 +52,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request = RequestFactory::getInstance()->create('PUT', 'http://www.guzzle-project.com/', null, 'data');
         $this->assertEquals("PUT / HTTP/1.1\r\n"
             . "Host: www.guzzle-project.com\r\n"
-            . "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n"
+            . "User-Agent: " . Utils::getDefaultUserAgent() . "\r\n"
             . "Expect: 100-Continue\r\n"
             . "Content-Length: 4\r\n\r\n"
             . "data", (string) $request);
@@ -69,7 +69,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         ));
         $this->assertEquals("POST / HTTP/1.1\r\n"
             . "Host: www.guzzle-project.com\r\n"
-            . "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n"
+            . "User-Agent: " . Utils::getDefaultUserAgent() . "\r\n"
             . "Content-Type: application/x-www-form-urlencoded\r\n\r\n"
             . "data=123", (string) $request);
     }

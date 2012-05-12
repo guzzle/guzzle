@@ -2,11 +2,11 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Common\Guzzle;
 use Guzzle\Common\Event;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Exception\RuntimeException;
+use Guzzle\Http\Utils;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Exception\BadResponseException;
@@ -138,7 +138,7 @@ class Request extends AbstractMessage implements RequestInterface
         }
 
         if (!$this->hasHeader('User-Agent', true)) {
-            $this->setHeader('User-Agent', Guzzle::getDefaultUserAgent());
+            $this->setHeader('User-Agent', Utils::getDefaultUserAgent());
         }
 
         $this->cookie = Cookie::factory($this->getHeader('Cookie'));

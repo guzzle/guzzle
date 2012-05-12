@@ -2,10 +2,10 @@
 
 namespace Guzzle\Http\Plugin;
 
-use Guzzle\Common\Guzzle;
 use Guzzle\Common\Cache\CacheAdapterInterface;
 use Guzzle\Common\Event;
 use Guzzle\Common\Collection;
+use Guzzle\Http\Utils;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\Response;
@@ -362,7 +362,7 @@ class CachePlugin implements EventSubscriberInterface
             }
             // Add a Date header to the response if none is set (for validation)
             if (!$response->getDate()) {
-                $response->setHeader('Date', Guzzle::getHttpDate('now'));
+                $response->setHeader('Date', Utils::getHttpDate('now'));
             }
             $data = array(
                 'c' => $response->getStatusCode(),

@@ -9,7 +9,7 @@ use Guzzle\Http\Client;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\Request;
-use Guzzle\Common\Guzzle;
+use Guzzle\Http\Utils;
 
 /**
  * @group server
@@ -440,7 +440,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
             'domain' => '.y.example.com',
             'path' => '/acme/',
             'cookie' => array('secure', 'sec'),
-            'expires' => Guzzle::getHttpDate('+1 day'),
+            'expires' => Utils::getHttpDate('+1 day'),
             'secure' => true
         ));
 
@@ -450,7 +450,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
             'domain' => '.y.example.com',
             'path' => '/acme/',
             'cookie' => array('test', 'port'),
-            'expires' => Guzzle::getHttpDate('+1 day'),
+            'expires' => Utils::getHttpDate('+1 day'),
             'secure' => false,
             'port' => array(8192)
         ));
@@ -586,7 +586,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
             'domain' => 'example.com',
             'path' => '/',
             'cookie' => array('test', 'hi'),
-            'expires' => Guzzle::getHttpDate('+1 day')
+            'expires' => Utils::getHttpDate('+1 day')
         ));
 
         $client = new Client('http://example.com');

@@ -2,7 +2,7 @@
 
 namespace Guzzle\Tests\Http\CookieJar;
 
-use Guzzle\Common\Guzzle;
+use Guzzle\Http\Utils;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\CookieJar\FileCookieJar;
 
@@ -47,7 +47,7 @@ class FileCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
             'path' => '/acme/',
             'cookie' => array('muppet', 'cookie_monster'),
             'comment' => 'Comment goes here...',
-            'expires' => Guzzle::getHttpDate('+1 day')
+            'expires' => Utils::getHttpDate('+1 day')
         ))->save(array(
             'domain' => '.example.com',
             'path' => '/test/acme/',

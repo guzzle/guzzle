@@ -2,9 +2,9 @@
 
 namespace Guzzle\Tests\Http\Curl;
 
-use Guzzle\Common\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Event;
+use Guzzle\Http\Utils;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Client;
@@ -192,7 +192,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             'z' => 'a'
         ));
 
-        $userAgent = Guzzle::getDefaultUserAgent();
+        $userAgent = Utils::getDefaultUserAgent();
         $auth = base64_encode('michael:123');
         $testFileSize = filesize($testFile);
 

@@ -338,6 +338,24 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     }
 
     /**
+     * Inject configuration settings into an input string
+     *
+     * @param string $input Input to inject
+     * @param Collection $config Configuration data to inject into the input
+     *
+     * @return string
+     */
+    public function inject($input)
+    {
+        // Only perform the preg callback if needed
+        if (strpos($input, '{') === false) {
+            return $input;
+        }
+
+        return preg_replace_callback('/{\s*([A-Za-z_\-\.0-9]+)\s*}/', array($this, 'getPregMatchValue'), $input);
+    }
+
+    /**
      * Return a collection value for a match array of a preg_replace function
      *
      * @param array $matches preg_replace* matches

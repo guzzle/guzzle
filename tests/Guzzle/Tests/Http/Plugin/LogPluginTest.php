@@ -2,8 +2,8 @@
 
 namespace Guzzle\Tests\Http\Plugin;
 
-use Guzzle\Common\Guzzle;
 use Guzzle\Common\Log\ClosureLogAdapter;
+use Guzzle\Http\Utils;
 use Guzzle\Http\Client;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\RequestFactory;
@@ -109,7 +109,7 @@ class LogPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Check that the headers were logged
         $this->assertContains("GET / HTTP/1.1\r\n", $message);
-        $this->assertContains("User-Agent: " . Guzzle::getDefaultUserAgent(), $message);
+        $this->assertContains("User-Agent: " . Utils::getDefaultUserAgent(), $message);
         $this->assertContains("Accept: */*\r\n", $message);
         $this->assertContains("Accept-Encoding: deflate, gzip", $message);
         $this->assertContains("Host: 127.0.0.1:", $message);
@@ -136,7 +136,7 @@ class LogPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Check that the headers were logged
         $this->assertContains("PUT / HTTP/1.1\r\n", $message);
-        $this->assertContains("User-Agent: " . Guzzle::getDefaultUserAgent(), $message);
+        $this->assertContains("User-Agent: " . Utils::getDefaultUserAgent(), $message);
         $this->assertContains("Content-Length: 4", $message);
 
         // Make sure the response headers are present with a line between the request and response
@@ -174,7 +174,7 @@ class LogPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Check that the headers were logged
         $this->assertContains("PUT / HTTP/1.1\r\n", $message);
-        $this->assertContains("User-Agent: " . Guzzle::getDefaultUserAgent(), $message);
+        $this->assertContains("User-Agent: " . Utils::getDefaultUserAgent(), $message);
         $this->assertContains("Content-Length: 4", $message);
         // Request payload
         $this->assertContains("\r\nsend", $message);
@@ -205,7 +205,7 @@ class LogPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertContains('127.0.0.1 - "GET / HTTP/1.1" - 404 0 - ', $message);
         $this->assertContains("GET / HTTP/1.1\r\n", $message);
-        $this->assertContains("User-Agent: " . Guzzle::getDefaultUserAgent(), $message);
+        $this->assertContains("User-Agent: " . Utils::getDefaultUserAgent(), $message);
         $this->assertContains("\n< HTTP/1.1 404 Not Found\r\n< Content-Length: 0", $message);
     }
 

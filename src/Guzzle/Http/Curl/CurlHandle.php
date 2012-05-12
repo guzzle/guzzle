@@ -2,7 +2,6 @@
 
 namespace Guzzle\Http\Curl;
 
-use Guzzle\Common\Guzzle;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Message\RequestInterface;
@@ -85,7 +84,7 @@ class CurlHandle
 
         // Account for PHP installations with safe_mode or open_basedir enabled
         // @codeCoverageIgnoreStart
-        if (Guzzle::getCurlInfo('follow_location')) {
+        if (CurlVersion::getInstance()->get('follow_location')) {
             $curlOptions[CURLOPT_FOLLOWLOCATION] = true;
             $curlOptions[CURLOPT_MAXREDIRS] = 5;
         }

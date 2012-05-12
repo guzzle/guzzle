@@ -3,6 +3,7 @@
 namespace Guzzle\Tests\Http\CookieJar;
 
 use Guzzle\Common\Guzzle;
+use Guzzle\Http\Utils;
 use Guzzle\Http\CookieJar\ArrayCookieJar;
 use Guzzle\Http\CookieJar\CookieJarInterface;
 
@@ -49,7 +50,7 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
             'path' => '/acme/',
             'cookie' => array('muppet', 'cookie_monster'),
             'comment' => 'Comment goes here...',
-            'expires' => Guzzle::getHttpDate('+1 day')
+            'expires' => Utils::getHttpDate('+1 day')
         ))->save(array(
             'domain' => '.example.com',
             'path' => '/test/acme/',
@@ -236,7 +237,7 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
         // Add an expired cookie
         $this->jar->save(array(
             'cookie' => array('data', 'abc'),
-            'expires' => Guzzle::getHttpDate('-1 day'),
+            'expires' => Utils::getHttpDate('-1 day'),
             'domain' => '.example.com'
         ));
 

@@ -2,11 +2,11 @@
 
 namespace Guzzle\Tests\Http\Message;
 
-use Guzzle\Common\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;
 use Guzzle\Http\Client;
+use Guzzle\Http\Utils;
 use Guzzle\Http\Plugin\ExponentialBackoffPlugin;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Request;
@@ -97,7 +97,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $message = "PUT /path?q=1&v=2 HTTP/1.1\r\n"
             . "Host: www.google.com\r\n"
             . "Authorization: Basic {$auth}\r\n"
-            . "User-Agent: " . Guzzle::getDefaultUserAgent() . "\r\n"
+            . "User-Agent: " . Utils::getDefaultUserAgent() . "\r\n"
             . "Expect: 100-Continue\r\n"
             . "Content-Length: 4\r\n\r\nData";
 
@@ -651,7 +651,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $messages = $this->getServer()->getReceivedRequests(false);
         $port = $this->getServer()->getPort();
 
-        $userAgent = Guzzle::getDefaultUserAgent();
+        $userAgent = Utils::getDefaultUserAgent();
 
         $this->assertEquals('127.0.0.1:' . $port, $requests[0]->getHeader('Host'));
         $this->assertEquals('127.0.0.1:' . $port, $requests[1]->getHeader('Host'));
