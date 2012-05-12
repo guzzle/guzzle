@@ -393,6 +393,16 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Service\Client::getIterator
      */
+    public function testClientCreatesIteratorsWithNoOptions()
+    {
+        $client = new Mock\MockClient();
+        $iterator = $client->getIterator('mock_command');
+        $this->assertInstanceOf('Guzzle\Tests\Service\Mock\Model\MockCommandIterator', $iterator);
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::getIterator
+     */
     public function testClientCreatesIteratorsWithCommands()
     {
        $client = new Mock\MockClient();

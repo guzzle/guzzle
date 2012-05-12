@@ -187,7 +187,7 @@ class Client extends HttpClient implements ClientInterface
     public function getIterator($command, array $commandOptions = null, array $iteratorOptions = array())
     {
         if (!($command instanceof CommandInterface)) {
-            $command = $this->getCommand($command, $commandOptions);
+            $command = $this->getCommand($command, $commandOptions ?: array());
         }
 
         return $this->getResourceIteratorFactory()->build($command, $iteratorOptions);
