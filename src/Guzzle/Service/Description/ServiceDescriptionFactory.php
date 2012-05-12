@@ -41,7 +41,7 @@ class ServiceDescriptionFactory implements ServiceDescriptionFactoryInterface
             $ext = pathinfo($filename, PATHINFO_EXTENSION);
             if ($ext == 'js' || $ext == 'json') {
                 $builder = 'JsonDescriptionBuilder';
-            } else if ($ext == 'xml') {
+            } elseif ($ext == 'xml') {
                 $builder = 'XmlDescriptionBuilder';
             }
         }

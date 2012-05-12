@@ -251,7 +251,7 @@ class LogPlugin implements EventSubscriberInterface
                     if ($this->settings & self::LOG_DEBUG) {
                         $message .= $line;
                     }
-                } else if ($this->settings & self::LOG_HEADERS) {
+                } elseif ($this->settings & self::LOG_HEADERS) {
                     $message .= $line;
                 }
                 // Add the request body if needed

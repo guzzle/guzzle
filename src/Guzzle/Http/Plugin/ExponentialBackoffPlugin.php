@@ -208,7 +208,7 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
             if ($exception && $exception instanceof CurlException) {
                 // Handle cURL exceptions
                 $retry = isset($failureCodes[$exception->getErrorNo()]);
-            } else if ($response) {
+            } elseif ($response) {
                 $retry = isset($failureCodes[$response->getStatusCode()]) ||
                     isset($failureCodes[$response->getReasonPhrase()]);
             }

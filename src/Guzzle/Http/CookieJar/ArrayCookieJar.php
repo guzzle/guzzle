@@ -112,7 +112,7 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
             if ($domain && $cookie['domain']) {
                 if (!strcasecmp($domain, $cookie['domain'])) {
                     $domainMatch = true;
-                } else if ($cookie['domain'][0] == '.') {
+                } elseif ($cookie['domain'][0] == '.') {
                     $domainMatch = preg_match('/' . preg_quote($cookie['domain']) . '$/i', $domain);
                 }
             }
@@ -181,7 +181,7 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
             if (!is_numeric($cookieData['expires'])) {
                 $cookieData['expires'] = strtotime($cookieData['expires']);
             }
-        } else if ($cookieData['max_age']) {
+        } elseif ($cookieData['max_age']) {
             // Calculate the expires date
             $cookieData['expires'] = time() + (int) $cookieData['max_age'];
         }

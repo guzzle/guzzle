@@ -87,7 +87,7 @@ class ApiParam
             $check = $this->static ?: $this->default;
             if ($check === 'true') {
                 return true;
-            } else if ($check === 'false') {
+            } elseif ($check === 'false') {
                 return false;
             } else {
                 return $check;

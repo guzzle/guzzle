@@ -28,7 +28,7 @@ class BadResponseException extends RequestException
         if ($response->isClientError()) {
             $label = 'Client error response';
             $class = __NAMESPACE__ . '\\ClientErrorResponseException';
-        } else if ($response->isServerError()) {
+        } elseif ($response->isServerError()) {
             $label = 'Server error response';
             $class = __NAMESPACE__ . '\\ServerErrorResponseException';
         } else {

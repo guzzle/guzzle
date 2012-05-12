@@ -103,7 +103,7 @@ class Server
             // Create the response object from a string
             if (is_string($response)) {
                 $response = Response::fromMessage($response);
-            } else if (!($response instanceof Response)) {
+            } elseif (!($response instanceof Response)) {
                 throw new BadResponseException(
                     'Responses must be strings or implement Response'
                 );

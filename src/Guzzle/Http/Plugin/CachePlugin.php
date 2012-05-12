@@ -116,7 +116,7 @@ class CachePlugin implements EventSubscriberInterface
                     $remove = array_map('trim', explode(',', $pieces[1]));
                     if ($pieces[0] == 'header') {
                         $filterHeaders = array_merge($filterHeaders, $remove);
-                    } else if ($pieces[0] == 'query') {
+                    } elseif ($pieces[0] == 'query') {
                         $filterQuery = array_merge($filterQuery, $remove);
                     }
                 }
@@ -304,7 +304,7 @@ class CachePlugin implements EventSubscriberInterface
                 if ($maxStale !== true && $response->getFreshness() < (-1 * $maxStale)) {
                     return false;
                 }
-            } else if ($responseAge > $response->getCacheControlDirective('max-age')) {
+            } elseif ($responseAge > $response->getCacheControlDirective('max-age')) {
                 return false;
             }
         }

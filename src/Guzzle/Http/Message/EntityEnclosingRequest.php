@@ -75,7 +75,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
             $size = $this->body->getContentLength();
             if ($size !== null && $size !== false) {
                 $this->setHeader('Content-Length', $size);
-            } else if ('1.1' == $this->protocolVersion) {
+            } elseif ('1.1' == $this->protocolVersion) {
                 $this->setHeader('Transfer-Encoding', 'chunked');
             } else {
                 throw new RequestException('Cannot determine entity body '

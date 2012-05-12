@@ -89,7 +89,7 @@ class RequestFactory implements RequestFactoryInterface
                 $method = strtoupper($method);
                 list($protocol, $version) = explode('/', strtoupper($proto));
                 $scheme = 'http';
-            } else if (strpos($line, ':')) {
+            } elseif (strpos($line, ':')) {
                 list($key, $value) = explode(':', $line, 2);
                 $key = trim($key);
                 // Normalize standard HTTP headers
@@ -204,7 +204,7 @@ class RequestFactory implements RequestFactoryInterface
             if ($body) {
                 if ($method == 'POST' && (is_array($body) || $body instanceof Collection)) {
                     $request->addPostFields($body);
-                } else if (is_resource($body) || $body instanceof EntityBody) {
+                } elseif (is_resource($body) || $body instanceof EntityBody) {
                     $request->setBody($body, (string) $request->getHeader('Content-Type'));
                 } else {
                     $request->setBody((string) $body, (string) $request->getHeader('Content-Type'));

@@ -27,7 +27,7 @@ class ExceptionCollection extends \Exception implements GuzzleException, \Iterat
             foreach ($e as $exception) {
                 $this->exceptions[] = $exception;
             }
-        } else if ($e instanceof \Exception) {
+        } elseif ($e instanceof \Exception) {
             $this->exceptions[] = $e;
         }
 

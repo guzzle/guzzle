@@ -308,7 +308,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
                 // Requests might decide they don't need to be sent just before
                 // transfer (e.g. CachePlugin)
                 $this->remove($request);
-            } else if ($request->getParams()->get('queued_response')) {
+            } elseif ($request->getParams()->get('queued_response')) {
                 // Queued responses do not need to be sent using curl
                 $this->remove($request);
                 $request->setState(RequestInterface::STATE_COMPLETE);
@@ -354,7 +354,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
             if ($this->count() == 0) {
                 return;
             }
-        } else if (empty($this->requests[$this->scope])) {
+        } elseif (empty($this->requests[$this->scope])) {
             return;
         }
 

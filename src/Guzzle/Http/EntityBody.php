@@ -28,12 +28,12 @@ class EntityBody extends Stream
     {
         if (is_resource($resource)) {
             return new static($resource, $size);
-        } else if (is_string($resource)) {
+        } elseif (is_string($resource)) {
             $stream = fopen('php://temp', 'r+');
             fwrite($stream, $resource);
             rewind($stream);
             return new static($stream);
-        } else if ($resource instanceof self) {
+        } elseif ($resource instanceof self) {
             return $resource;
         }
 

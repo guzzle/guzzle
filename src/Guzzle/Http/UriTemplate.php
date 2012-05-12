@@ -108,7 +108,7 @@ class UriTemplate
                 $varspec['value'] = substr($value, 0, $substrPos);
                 $varspec['modifier'] = ':';
                 $varspec['position'] = (int) substr($value, $substrPos + 1);
-            } else if (substr($value, -1) == '*') {
+            } elseif (substr($value, -1) == '*') {
                 $varspec['modifier'] = '*';
                 $varspec['value'] = substr($value, 0, -1);
             } else {
@@ -142,13 +142,13 @@ class UriTemplate
         if ($parsed['operator'] == '?') {
             $joiner = '&';
             $useQueryString = true;
-        } else if ($parsed['operator'] == '&') {
+        } elseif ($parsed['operator'] == '&') {
             $useQueryString = true;
-        } else if ($parsed['operator'] == '#') {
+        } elseif ($parsed['operator'] == '#') {
             $joiner = ',';
-        } else if ($parsed['operator'] == ';') {
+        } elseif ($parsed['operator'] == ';') {
             $useQueryString = true;
-        } else if ($parsed['operator'] == '' || $parsed['operator'] == '+') {
+        } elseif ($parsed['operator'] == '' || $parsed['operator'] == '+') {
             $joiner = ',';
             $prefix = '';
         }
@@ -179,7 +179,7 @@ class UriTemplate
                     if ($value['modifier'] == '*') {
                         if ($isAssoc) {
                             $var = $key . '=' . $var;
-                        } else if ($key > 0 && $actuallyUseQueryString) {
+                        } elseif ($key > 0 && $actuallyUseQueryString) {
                             $var = $value['value'] . '=' . $var;
                         }
                     }

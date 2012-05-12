@@ -297,7 +297,7 @@ class Inspector
 
         if (empty($errors)) {
             return true;
-        } else if ($strict) {
+        } elseif ($strict) {
             throw new ValidationException('Validation errors: ' . implode("\n", $errors));
         }
 

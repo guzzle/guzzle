@@ -96,7 +96,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         // Set the configuration object
         if ($config instanceof Collection) {
             $this->config = $config;
-        } else if (is_array($config)) {
+        } elseif (is_array($config)) {
             $this->config = new Collection($config);
         } else {
             throw new InvalidArgumentException(
@@ -142,7 +142,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     {
         if ($headers instanceof Collection) {
             $this->defaultHeaders = $headers;
-        } else if (is_array($headers)) {
+        } elseif (is_array($headers)) {
             $this->defaultHeaders = new Collection($headers);
         } else {
             throw new InvalidArgumentException('Headers must be an array or Collection');
@@ -232,7 +232,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 
         if (!$uri) {
             $url = $this->getBaseUrl();
-        } else if (strpos($uri, 'http') === 0) {
+        } elseif (strpos($uri, 'http') === 0) {
             // Use absolute URLs as-is
             $url = $this->expandTemplate($uri, $templateVars);
         } else {
@@ -244,9 +244,9 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         if (count($this->defaultHeaders)) {
             if ($headers instanceof Collection) {
                 $headers = array_merge($this->defaultHeaders->getAll(), $headers->getAll());
-            } else if (is_array($headers)) {
+            } elseif (is_array($headers)) {
                  $headers = array_merge($this->defaultHeaders->getAll(), $headers);
-            } else if ($headers === null) {
+            } elseif ($headers === null) {
                 $headers = $this->defaultHeaders;
             }
         }

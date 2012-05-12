@@ -120,7 +120,7 @@ class Response extends AbstractMessage
             if ($i === 0) {
                 // Check the status line
                 list($protocol, $code, $status) = array_map('trim', explode(' ', $line, 3));
-            } else if (strpos($line, ':')) {
+            } elseif (strpos($line, ':')) {
                 // Add a header
                 list($key, $value) = array_map('trim', explode(':', $line, 2));
                 // Headers are case insensitive
@@ -248,7 +248,7 @@ class Response extends AbstractMessage
     {
         if ($key === null) {
             return $this->info;
-        } else if (array_key_exists($key, $this->info)) {
+        } elseif (array_key_exists($key, $this->info)) {
             return $this->info[$key];
         } else {
             return null;

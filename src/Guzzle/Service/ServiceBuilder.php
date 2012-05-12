@@ -49,14 +49,14 @@ class ServiceBuilder extends AbstractHasDispatcher implements \ArrayAccess, \Ser
             $extension = $extension ?: pathinfo($data, PATHINFO_EXTENSION);
             if ($extension == 'xml') {
                 $data = new \SimpleXMLElement($data, null, true);
-            } else if ($extension == 'js' || $extension == 'json') {
+            } elseif ($extension == 'js' || $extension == 'json') {
                 $config = json_decode(file_get_contents($data), true);
             } else {
                 throw new ServiceBuilderException('Unknown file type ' . $extension);
             }
-        } else if (is_array($data)) {
+        } elseif (is_array($data)) {
             $config = $data;
-        } else if (!($data instanceof \SimpleXMLElement)) {
+        } elseif (!($data instanceof \SimpleXMLElement)) {
             throw new ServiceBuilderException('Must pass a file name, array, or SimpleXMLElement');
         }
 

@@ -232,7 +232,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     {
         if ($data instanceof self) {
             $data = $data->getAll();
-        } else if (!is_array($data)) {
+        } elseif (!is_array($data)) {
             return $this;
         }
 

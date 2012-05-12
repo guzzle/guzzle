@@ -78,11 +78,11 @@ class Md5ValidatorPlugin implements EventSubscriberInterface
 
         if (!$contentEncoding) {
             $hash = $response->getBody()->getContentMd5();
-        } else if ($contentEncoding == 'gzip') {
+        } elseif ($contentEncoding == 'gzip') {
             $response->getBody()->compress('zlib.deflate');
             $hash = $response->getBody()->getContentMd5();
             $response->getBody()->uncompress();
-        } else if ($contentEncoding == 'compress') {
+        } elseif ($contentEncoding == 'compress') {
             $response->getBody()->compress('bzip2.compress');
             $hash = $response->getBody()->getContentMd5();
             $response->getBody()->uncompress();

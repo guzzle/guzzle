@@ -193,7 +193,7 @@ class CurlHandle
         }
         if (is_array($options)) {
             $this->options = new Collection($options);
-        } else if ($options instanceof Collection) {
+        } elseif ($options instanceof Collection) {
             $this->options = $options;
         } else {
             throw new InvalidArgumentException('Expected array or Collection');

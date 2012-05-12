@@ -303,9 +303,9 @@ class Url
     {
         if ($this->port) {
             return $this->port;
-        } else if ($this->scheme == 'http') {
+        } elseif ($this->scheme == 'http') {
             return 80;
-        } else if ($this->scheme == 'https') {
+        } elseif ($this->scheme == 'https') {
             return 443;
         }
 
@@ -495,9 +495,9 @@ class Url
             $output = null;
             parse_str($query, $output);
             $this->query = new QueryString($output);
-        } else if (is_array($query)) {
+        } elseif (is_array($query)) {
             $this->query = new QueryString($query);
-        } else if ($query instanceof QueryString) {
+        } elseif ($query instanceof QueryString) {
             $this->query = $query;
         }
 

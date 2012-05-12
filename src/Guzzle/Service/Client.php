@@ -225,7 +225,7 @@ class Client extends HttpClient implements ClientInterface
             ));
 
             return $command->getResult();
-        } else if ($command instanceof CommandSet) {
+        } elseif ($command instanceof CommandSet) {
             foreach ($command as $c) {
                 if ($c->getClient() && $c->getClient() !== $this) {
                     throw new CommandSetException(
@@ -236,7 +236,7 @@ class Client extends HttpClient implements ClientInterface
                 $c->setClient($this);
             }
             return $command->execute();
-        } else if (is_array($command)) {
+        } elseif (is_array($command)) {
             return $this->execute(new CommandSet($command));
         }
 

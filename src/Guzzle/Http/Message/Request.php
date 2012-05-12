@@ -553,7 +553,7 @@ class Request extends AbstractMessage implements RequestInterface
         $this->state = $state;
         if ($this->state == self::STATE_NEW) {
             $this->responseBody = $this->response = null;
-        } else if ($this->state == self::STATE_COMPLETE) {
+        } elseif ($this->state == self::STATE_COMPLETE) {
             $this->processResponse();
         }
 
@@ -588,7 +588,7 @@ class Request extends AbstractMessage implements RequestInterface
             list($header, $value) = explode(':', $data, 2);
             $this->response->addHeader(trim($header), trim($value));
 
-        } else if (strlen($data) > 6) {
+        } elseif (strlen($data) > 6) {
 
             list($dummy, $code, $status) = explode(' ', $data, 3);
 
@@ -701,7 +701,7 @@ class Request extends AbstractMessage implements RequestInterface
     {
         if ($cookies instanceof Cookie) {
             $this->cookie = $cookies;
-        } else if (is_array($cookies)) {
+        } elseif (is_array($cookies)) {
             $this->cookie->replace($cookies);
         } else {
             throw new InvalidArgumentException('Invalid cookie data');
@@ -810,7 +810,7 @@ class Request extends AbstractMessage implements RequestInterface
             // Be sure to get an cookie updates and update the internal Cookie
             if ($action === 'set') {
                 $this->cookie = Cookie::factory($this->getHeader('Cookie'));
-            } else if ($this->cookie) {
+            } elseif ($this->cookie) {
                 $this->cookie->clear();
             }
         }
@@ -855,7 +855,7 @@ class Request extends AbstractMessage implements RequestInterface
             $this->response = $this->getParams()->get('queued_response');
             $this->responseBody = $this->response->getBody();
             $this->getParams()->remove('queued_response');
-        } else if (!$this->response) {
+        } elseif (!$this->response) {
             // If no response, then processResponse shouldn't have been called
             $e = new RequestException('Error completing request');
             $e->setRequest($this);
