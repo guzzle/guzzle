@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle;
+namespace Guzzle\Common;
 
 use Guzzle\Common\Collection;
 

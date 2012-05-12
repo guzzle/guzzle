@@ -2,7 +2,7 @@
 
 namespace Guzzle\Tests\Http\Curl;
 
-use Guzzle\Guzzle;
+use Guzzle\Common\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Event;
 use Guzzle\Http\EntityBody;

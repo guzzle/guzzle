@@ -2,7 +2,7 @@
 
 namespace Guzzle\Service\Command;
 
-use Guzzle\Guzzle;
+use Guzzle\Common\Guzzle;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;

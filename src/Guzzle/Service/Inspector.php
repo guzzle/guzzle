@@ -2,7 +2,7 @@
 
 namespace Guzzle\Service;
 
-use Guzzle\Guzzle;
+use Guzzle\Common\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Service\Exception\ValidationException;

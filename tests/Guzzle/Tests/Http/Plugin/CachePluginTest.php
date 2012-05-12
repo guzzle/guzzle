@@ -3,7 +3,7 @@
 namespace Guzzle\Tests\Http\Plugin;
 
 use Doctrine\Common\Cache\ArrayCache;
-use Guzzle\Guzzle;
+use Guzzle\Common\Guzzle;
 use Guzzle\Common\Cache\DoctrineCacheAdapter;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Client;

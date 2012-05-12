@@ -2,7 +2,7 @@
 
 namespace Guzzle\Http\Curl;
 
-use Guzzle\Guzzle;
+use Guzzle\Common\Guzzle;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Message\RequestInterface;

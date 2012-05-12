@@ -2,7 +2,7 @@
 
 namespace Guzzle\Tests\Http\CookieJar;
 
-use Guzzle\Guzzle;
+use Guzzle\Common\Guzzle;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\CookieJar\FileCookieJar;
 

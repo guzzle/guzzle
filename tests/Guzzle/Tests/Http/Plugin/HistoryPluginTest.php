@@ -2,7 +2,7 @@
 
 namespace Guzzle\Tests\Http\Plugin;
 
-use Guzzle\Guzzle;
+use Guzzle\Common\Guzzle;
 use Guzzle\Http\Client;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\Request;

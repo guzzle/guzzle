@@ -1,14 +1,14 @@
 <?php
 
-namespace Guzzle\Tests;
+namespace Guzzle\Tests\Common;
 
-use Guzzle\Guzzle;
+use Guzzle\Common\Guzzle;
 use Guzzle\Common\Collection;
 
-class GuzzleTest extends GuzzleTestCase
+class GuzzleTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
-     * @covers Guzzle\Guzzle
+     * @covers Guzzle\Common\Guzzle
      */
     public function testGetDefaultUserAgent()
     {
@@ -21,7 +21,7 @@ class GuzzleTest extends GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Guzzle::getHttpDate
+     * @covers Guzzle\Common\Guzzle::getHttpDate
      */
     public function testGetHttpDate()
     {
@@ -55,7 +55,7 @@ class GuzzleTest extends GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Guzzle::inject
+     * @covers Guzzle\Common\Guzzle::inject
      * @dataProvider dataProvider
      */
     public function testInjectsConfigData($output, $input, $config)
@@ -64,7 +64,7 @@ class GuzzleTest extends GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Guzzle::getCurlInfo
+     * @covers Guzzle\Common\Guzzle::getCurlInfo
      */
     public function testCachesCurlInfo()
     {
@@ -78,8 +78,8 @@ class GuzzleTest extends GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Guzzle::getCurlInfo
-     * @covers Guzzle\Guzzle::reset
+     * @covers Guzzle\Common\Guzzle::getCurlInfo
+     * @covers Guzzle\Common\Guzzle::reset
      */
     public function testDeterminesIfCurlCanFollowLocation()
     {

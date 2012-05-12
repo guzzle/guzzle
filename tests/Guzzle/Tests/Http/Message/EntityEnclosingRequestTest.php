@@ -2,7 +2,7 @@
 
 namespace Guzzle\Tests\Http\Message;
 
-use Guzzle\Guzzle;
+use Guzzle\Common\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Client;
 use Guzzle\Http\EntityBody;

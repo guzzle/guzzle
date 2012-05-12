@@ -2,7 +2,7 @@
 
 namespace Guzzle\Http\Plugin;
 
-use Guzzle\Guzzle;
+use Guzzle\Common\Guzzle;
 use Guzzle\Common\Cache\CacheAdapterInterface;
 use Guzzle\Common\Event;
 use Guzzle\Common\Collection;

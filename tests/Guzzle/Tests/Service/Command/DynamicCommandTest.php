@@ -2,7 +2,7 @@
 
 namespace Guzzle\Tests\Service\Command;
 
-use Guzzle\Guzzle;
+use Guzzle\Common\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Service\Client;
 use Guzzle\Service\Command\DynamicCommand;

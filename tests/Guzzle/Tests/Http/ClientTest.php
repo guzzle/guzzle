@@ -2,7 +2,7 @@
 
 namespace Guzzle\Tests\Http;
 
-use Guzzle\Guzzle;
+use Guzzle\Common\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Log\ClosureLogAdapter;
 use Guzzle\Http\UriTemplate;

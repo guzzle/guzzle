@@ -9,7 +9,7 @@ use Guzzle\Http\Client;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\Request;
-use Guzzle\Guzzle;
+use Guzzle\Common\Guzzle;
 
 /**
  * @group server
