@@ -96,6 +96,16 @@ EOT;
 
     /**
      * @covers Guzzle\Service\ServiceBuilder::factory
+     */
+    public function testCanBeCreatedUsingJson()
+    {
+        $builder = ServiceBuilder::factory(__DIR__ . '/../TestData/services.json');
+        $c = $builder->get('mock');
+        $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\MockClient', $c);
+    }
+
+    /**
+     * @covers Guzzle\Service\ServiceBuilder::factory
      * @expectedException Guzzle\Service\Exception\ServiceBuilderException
      * @expectedExceptionMessage Unable to open foobarfile
      */
