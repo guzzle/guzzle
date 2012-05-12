@@ -7,6 +7,7 @@ use Guzzle\Service\Client;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\AbstractCommand;
 use Guzzle\Service\Description\ApiCommand;
+use Guzzle\Service\Inspector;
 use Guzzle\Http\Plugin\MockPlugin;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
 use Guzzle\Tests\Service\Mock\Command\Sub\Sub;
@@ -363,5 +364,25 @@ class CommandTest extends AbstractCommandTest
         $client = $this->getClient();
         $command = new MockCommand();
         $command->setOnComplete('foo');
+    }
+
+    /**
+     * @covers Guzzle\Service\Command\AbstractCommand::setInspector
+     * @covers Guzzle\Service\Command\AbstractCommand::getInspector
+     */
+    public function testInspectorCanBeInjected()
+    {
+        $instance = Inspector::getInstance();
+        $command = new MockCommand();
+
+        $refObject = new \ReflectionObject($command);
+        $method = $refObject->getMethod('getInspector');
+        $method->setAccessible(true);
+
+        $this->assertSame($instance, $method->invoke($command));
+
+        $newInspector = new Inspector();
+        $command->setInspector($newInspector);
+        $this->assertSame($newInspector, $method->invoke($command));
     }
 }
