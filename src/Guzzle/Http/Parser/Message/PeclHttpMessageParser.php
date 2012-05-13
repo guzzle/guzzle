@@ -5,7 +5,7 @@ namespace Guzzle\Http\Parser\Message;
 /**
  * Pecl HTTP message parser
  */
-class PeclHttpMessageParser implements MessageParserInterface
+class PeclHttpMessageParser extends AbstractMessageParser
 {
     /**
      * {@inheritdoc}
@@ -26,7 +26,7 @@ class PeclHttpMessageParser implements MessageParserInterface
             'body'     => $parts->body
         );
 
-        $parsed['request_url'] = MessageParser::getUrlPartsFromMessage($parts->requestUrl, $parsed);
+        $parsed['request_url'] = $this->getUrlPartsFromMessage($parts->requestUrl, $parsed);
 
         return $parsed;
     }

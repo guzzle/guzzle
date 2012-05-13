@@ -7,7 +7,7 @@ use Guzzle\Http\Parser\Message\MessageParser;
 class MessageParserTest extends MessageParserProvider
 {
     /**
-     * @covers Guzzle\Http\Parser\Message\MessageParser::getUrlPartsFromMessage
+     * @covers Guzzle\Http\Parser\Message\AbstractMessageParser::getUrlPartsFromMessage
      * @covers Guzzle\Http\Parser\Message\MessageParser::parseMessage
      * @covers Guzzle\Http\Parser\Message\MessageParser::parseRequest
      * @dataProvider requestProvider
