@@ -44,15 +44,13 @@ class MessageParser extends AbstractMessageParser
         }
 
         $parts = $this->parseMessage($message);
-
-        // Normalize line endings
         list($protocol, $version) = explode('/', trim($parts['start_line'][0]));
 
         return array(
             'protocol'      => $protocol,
             'version'       => $version,
-            'code'          => trim($parts['start_line'][1]),
-            'reason_phrase' => trim($parts['start_line'][2]),
+            'code'          => $parts['start_line'][1],
+            'reason_phrase' => $parts['start_line'][2],
             'headers'       => $parts['headers'],
             'body'          => $parts['body']
         );

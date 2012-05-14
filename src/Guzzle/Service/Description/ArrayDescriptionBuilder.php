@@ -13,10 +13,10 @@ class ArrayDescriptionBuilder implements DescriptionBuilderInterface
     /**
      * {@inheritdoc}
      */
-    public function build($data, array $options = null)
+    public function build($config, array $options = null)
     {
-        if (!empty($data['types'])) {
-            foreach ($data['types'] as $name => $type) {
+        if (!empty($config['types'])) {
+            foreach ($config['types'] as $name => $type) {
                 $default = array();
                 if (!isset($type['class'])) {
                     throw new DescriptionBuilderException('Custom types require a class attribute');
@@ -31,8 +31,8 @@ class ArrayDescriptionBuilder implements DescriptionBuilderInterface
         }
 
         $commands = array();
-        if (!empty($data['commands'])) {
-            foreach ($data['commands'] as $name => $command) {
+        if (!empty($config['commands'])) {
+            foreach ($config['commands'] as $name => $command) {
                 $name = $command['name'] = isset($command['name']) ? $command['name'] : $name;
                 // Extend other commands
                 if (!empty($command['extends'])) {

@@ -2,6 +2,7 @@
 
 namespace Guzzle\Service\Description;
 
+use Guzzle\Service\JsonLoader;
 use Guzzle\Service\Exception\DescriptionBuilderException;
 
 /**
@@ -10,32 +11,19 @@ use Guzzle\Service\Exception\DescriptionBuilderException;
 class JsonDescriptionBuilder implements DescriptionBuilderInterface
 {
     /**
+     * @var JsonLoader
+     */
+    protected $loader;
+
+    /**
      * {@inheritdoc}
      */
-    public function build($data, array $options = null)
+    public function build($config, array $options = null)
     {
-        return ServiceDescription::factory($this->parseJsonFile($data));
-    }
-
-    protected function parseJsonFile($jsonFile)
-    {
-        $json = file_get_contents($jsonFile);
-        if (false === $json) {
-            throw new DescriptionBuilderException('Error loading data from ' . $jsonFile);
+        if (!$this->loader) {
+            $this->loader = new JsonLoader();
         }
 
-        $data = json_decode($json, true);
-
-        // Handle includes
-        if (!empty($data['includes'])) {
-            foreach ($data['includes'] as $path) {
-                if ($path[0] != DIRECTORY_SEPARATOR) {
-                    $path = dirname($jsonFile) . DIRECTORY_SEPARATOR . $path;
-                }
-                $data = array_merge_recursive($this->parseJsonFile($path), $data);
-            }
-        }
-
-        return $data;
+        return ServiceDescription::factory($this->loader->parseJsonFile($config));
     }
 }

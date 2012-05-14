@@ -11,7 +11,7 @@ use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\HeaderComparison;
 use Guzzle\Http\Plugin\MockPlugin;
 use Guzzle\Service\Client;
-use Guzzle\Service\ServiceBuilder;
+use Guzzle\Service\Builder\ServiceBuilderInterface;
 use Guzzle\Tests\Mock\MockObserver;
 use Guzzle\Tests\Http\Server;
 use RuntimeException;
@@ -57,7 +57,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
      *
      * @param ServiceBuilder $builder Service builder
      */
-    public static function setServiceBuilder(ServiceBuilder $builder)
+    public static function setServiceBuilder(ServiceBuilderInterface $builder)
     {
         self::$serviceBuilder = $builder;
     }
