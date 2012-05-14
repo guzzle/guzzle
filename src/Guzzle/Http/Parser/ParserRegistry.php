@@ -16,9 +16,10 @@ class ParserRegistry
      * @var array Mapping of parser name to default class
      */
     protected static $mapping = array(
-        'message' => 'Guzzle\\Http\\Parser\\Message\\MessageParser',
-        'cookie'  => 'Guzzle\\Http\\Parser\\Cookie\\CookieParser',
-        'url'     => 'Guzzle\\Http\\Parser\\Url\\UrlParser'
+        'message'      => 'Guzzle\\Http\\Parser\\Message\\MessageParser',
+        'cookie'       => 'Guzzle\\Http\\Parser\\Cookie\\CookieParser',
+        'url'          => 'Guzzle\\Http\\Parser\\Url\\UrlParser',
+        'uri_template' => 'Guzzle\\Http\\Parser\\UriTemplate\\UriTemplate',
     );
 
     /**

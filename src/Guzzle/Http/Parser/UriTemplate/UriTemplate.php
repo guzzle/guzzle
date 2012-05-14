@@ -1,13 +1,13 @@
 <?php
 
-namespace Guzzle\Http;
+namespace Guzzle\Http\Parser\UriTemplate;
 
 /**
  * Expands URI templates using an array of variables
  *
  * @link http://tools.ietf.org/html/draft-gregorio-uritemplate-08
  */
-class UriTemplate
+class UriTemplate implements UriTemplateInterface
 {
     private $template;
     private $variables;
@@ -32,46 +32,16 @@ class UriTemplate
     private static $delimsPct = array('%3A', '%2F', '%3F', '%23', '%5B', '%5D', '%40', '%21', '%24', '%26', '%27', '%28', '%29', '%2A', '%2B', '%2C', '%3B', '%3D');
 
     /**
-     * @param string $template (optional) URI template to expand
-     */
-    public function __construct($template = '')
-    {
-        $this->template = $template;
-    }
-
-    /**
-     * Get the URI template
-     *
-     * @return string
-     */
-    public function getTemplate()
-    {
-        return $this->template;
-    }
-
-    /**
-     * Set the URI template
-     *
-     * @param string $template URI template to expand
-     *
-     * @return UriTemplate
-     */
-    public function setTemplate($template)
-    {
-        $this->template = $template;
-
-        return $this;
-    }
-
-    /**
      * Expand the URI template using the supplied variables
      *
-     * @param array $variables Variables to use with the expansion
+     * @param string $template URI Template to expand
+     * @param array  $variables Variables to use with the expansion
      *
      * @return string Returns the expanded template
      */
-    public function expand(array $variables)
+    public function expand($template, array $variables)
     {
+        $this->template = $template;
         $this->variables = $variables;
 
         // Check to ensure that the preg_* function is needed
