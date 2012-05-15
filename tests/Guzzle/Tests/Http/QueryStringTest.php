@@ -204,4 +204,51 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $this->q->setEncodeValues(false);
         $this->assertEquals('?test=value&t[v1]=a&t[v2]=b&t[v3][v4]=c&t[v3][v5]=d', $this->q->__toString());
     }
+
+    public function parseQueryProvider()
+    {
+        return array(
+            // Ensure that multiple query string values are allowed per value
+            array('q=a&q=b', array(
+                'q' => array('a', 'b')
+            )),
+            // Ensure that PHP array style query string values are parsed
+            array('q[]=a&q[]=b', array(
+                'q' => array('a', 'b')
+            )),
+            // Ensure that decimals are allowed in query strings
+            array('q.a=a&q.b=b', array(
+                'q.a' => 'a',
+                'q.b' => 'b'
+            )),
+            // Ensure that query string values are percent decoded
+            array('q%20a=a%20b', array(
+                'q a' => 'a b'
+            )),
+            // Ensure that values can be set without have a value
+            array('q', array(
+                'q' => null
+            )),
+        );
+    }
+
+    /**
+     * @covers Guzzle\Http\QueryString::fromString
+     * @dataProvider parseQueryProvider
+     */
+    public function testParsesQueryStrings($query, $data)
+    {
+        $query = QueryString::fromString($query);
+        $this->assertEquals($data, $query->getAll());
+    }
+
+    /**
+     * @covers Guzzle\Http\QueryString::fromString
+     */
+    public function testProperlyDealsWithDuplicateQueryStringValues()
+    {
+        $query = QueryString::fromString('foo=a&foo=b&?µ=c');
+        $this->assertEquals(array('a', 'b'), $query->get('foo'));
+        $this->assertEquals('c', $query->get('?µ'));
+    }
 }

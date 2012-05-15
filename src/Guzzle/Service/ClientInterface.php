@@ -3,6 +3,7 @@
 namespace Guzzle\Service;
 
 use Guzzle\Common\Collection;
+use Guzzle\Common\FromConfigInterface;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\ClientInterface as HttpClientInterface;
 use Guzzle\Service\Command\CommandInterface;
@@ -14,21 +15,11 @@ use Guzzle\Service\Resource\ResourceIteratorFactoryInterface;
 /**
  * Client interface for executing commands on a web service.
  */
-interface ClientInterface extends HttpClientInterface
+interface ClientInterface extends HttpClientInterface, FromConfigInterface
 {
     const MAGIC_CALL_DISABLED = 0;
     const MAGIC_CALL_RETURN = 1;
     const MAGIC_CALL_EXECUTE = 2;
-
-    /**
-     * Basic factory method to create a new client.  Extend this method in
-     * subclasses to build more complex clients.
-     *
-     * @param array|Collection $config (optional) Configuration data
-     *
-     * @return ClientInterface
-     */
-    static function factory($config);
 
     /**
      * Get a command by name.  First, the client will see if it has a service

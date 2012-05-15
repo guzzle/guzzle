@@ -153,13 +153,13 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
     public function testSetPostFields()
     {
         $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/');
-        $this->assertInternalType('array', $request->getPostFields());
+        $this->assertInstanceOf('Guzzle\\Http\\QueryString', $request->getPostFields());
 
         $fields = new QueryString(array(
             'a' => 'b'
         ));
         $request->addPostFields($fields);
-        $this->assertEquals($fields->getAll(), $request->getPostFields());
+        $this->assertEquals($fields->getAll(), $request->getPostFields()->getAll());
         $this->assertEquals(array(), $request->getPostFiles());
     }
 
@@ -179,7 +179,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array(
             'file' => '@' . __FILE__,
             'test' => 'abc'
-        ), $request->getPostFields());
+        ), $request->getPostFields()->getAll());
 
         $this->assertEquals(array(
             'file' => __FILE__
@@ -219,12 +219,11 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::processPostFields
      */
-    public function testProcessMethodAddsPostCurlOptions()
+    public function testProcessMethodAddsContentType()
     {
         $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/');
         $request->setPostField('a', 'b');
         $this->assertEquals('application/x-www-form-urlencoded', $request->getHeader('Content-Type'));
-        $this->assertEquals('a=b', $request->getCurlOptions()->get(CURLOPT_POSTFIELDS));
     }
 
     /**
@@ -235,7 +234,6 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/');
         $request->addPostFiles(array('file' => __FILE__));
         $this->assertEquals('multipart/form-data', $request->getHeader('Content-Type'));
-        $this->assertEquals(array('file' => '@' . __FILE__), $request->getCurlOptions()->get(CURLOPT_POSTFIELDS));
     }
 
     /**
@@ -316,6 +314,6 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         ));
         $this->assertEquals(array(
             'a' => array('b', 'c')
-        ), $request->getPostFields());
+        ), $request->getPostFields()->getAll());
     }
 }

@@ -1,11 +1,11 @@
 <?php
 
-namespace Guzzle\Tests\Http;
+namespace Guzzle\Tests\Http\Parsers\UriTemplate;
 
-use Guzzle\Http\UriTemplate;
+use Guzzle\Http\Parser\UriTemplate\UriTemplate;
 
 /**
- * @covers Guzzle\Http\UriTemplate
+ * @covers Guzzle\Http\Parser\UriTemplate\UriTemplate
  */
 class UriTemplateTest extends \Guzzle\Tests\GuzzleTestCase
 {
@@ -120,8 +120,7 @@ class UriTemplateTest extends \Guzzle\Tests\GuzzleTestCase
     public function testExpandsUriTemplates($template, $expansion, $params)
     {
         $uri = new UriTemplate($template);
-        $this->assertEquals($template, $uri->getTemplate());
-        $result = $uri->expand($params);
+        $result = $uri->expand($template, $params);
         $this->assertEquals($expansion, $result);
     }
 
@@ -173,12 +172,5 @@ class UriTemplateTest extends \Guzzle\Tests\GuzzleTestCase
 
         $exp = substr($exp, 1, -1);
         $this->assertEquals($data, $method->invokeArgs($template, array($exp)));
-    }
-
-    public function testAllowsTemplateChange()
-    {
-        $template = new UriTemplate('abc_<$var>');
-        $template->setTemplate('foo');
-        $this->assertEquals('foo', $template->getTemplate());
     }
 }

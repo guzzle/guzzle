@@ -8,7 +8,7 @@ use Guzzle\Service\Exception\ValidationException;
 use Guzzle\Service\Description\ApiParam;
 
 /**
- * Inpects configuration options versus defined parameters, adding default
+ * Inspects configuration options versus defined parameters, adding default
  * values where appropriate, performing type validation on config settings, and
  * validating input vs output data.
  *

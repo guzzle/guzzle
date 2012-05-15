@@ -6,7 +6,7 @@ use Guzzle\Common\Guzzle;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;
-use Guzzle\Http\UriTemplate;
+use Guzzle\Http\Parser\ParserRegistry;
 use Guzzle\Service\Inspector;
 
 /**
@@ -43,8 +43,7 @@ class DynamicCommand extends AbstractCommand
             }
 
             // Expand the URI template using the URI values
-            $template = new UriTemplate($this->apiCommand->getUri());
-            $uri = $template->expand($variables);
+            $uri = ParserRegistry::get('uri_template')->expand($this->apiCommand->getUri(), $variables);
 
             // Merge the client's base URL with the URI template
             $url = Url::factory($this->getClient()->getBaseUrl());

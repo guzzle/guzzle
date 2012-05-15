@@ -87,6 +87,33 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
+     * @covers Guzzle\Http\Message\Request::__construct
+     */
+    public function testConstructorHandlesBasicAuth()
+    {
+        $auth = base64_encode('michael:foo');
+        $request = new Request('GET', 'http://www.guzzle-project.com/', array(
+            'Authorization' => 'Basic ' . $auth
+        ));
+        $this->assertEquals('michael', $request->getUserName());
+        $this->assertEquals('foo', $request->getPassword());
+        $this->assertEquals('Basic ' . $auth, (string) $request->getHeader('Authorization'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\Request::__construct
+     */
+    public function testConstructorHandlesNonBasicAuth()
+    {
+        $request = new Request('GET', 'http://www.guzzle-project.com/', array(
+            'Authorization' => 'Foo bar'
+        ));
+        $this->assertNull($request->getUserName());
+        $this->assertNull($request->getPassword());
+        $this->assertEquals('Foo bar', (string) $request->getHeader('Authorization'));
+    }
+
+    /**
      * @covers Guzzle\Http\Message\Request::__toString
      * @covers Guzzle\Http\Message\Request::getRawHeaders
      * @covers Guzzle\Http\Message\AbstractMessage::getHeaderString
@@ -122,6 +149,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
             ->setClient($this->client)
             ->setAuth('michael', '123', CURLAUTH_BASIC);
         $request->send();
+
         $this->assertContains('Authorization: Basic ' . $auth, (string) $request);
     }
 

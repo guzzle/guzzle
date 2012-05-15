@@ -400,4 +400,19 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $collection = new Collection($config);
         $this->assertEquals($output, $collection->inject($input));
     }
+
+    /**
+     * @covers Guzzle\Common\Collection::keySearch
+     */
+    public function testCanSearchByKey()
+    {
+        $collection = new Collection(array(
+            'foo' => 'bar',
+            'BaZ' => 'pho'
+        ));
+
+        $this->assertEquals('foo', $collection->keySearch('FOO'));
+        $this->assertEquals('BaZ', $collection->keySearch('baz'));
+        $this->assertEquals(false, $collection->keySearch('Bar'));
+    }
 }

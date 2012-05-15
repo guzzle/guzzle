@@ -15,24 +15,24 @@ class ServiceDescription implements ServiceDescriptionInterface
     protected $commands = array();
 
     /**
-     * @var DescriptionBuilderFactoryInterface
+     * @var ServiceDescriptionFactoryInterface Factory used in factory method
      */
-    protected static $defaultFactory;
+    protected static $descriptionFactory;
 
     /**
      * {@inheritdoc}
-     * @param string|array $filename File to build or array of command information
+     * @param string|array   $config    File to build or array of command information
      * @param array $options (optional) Service description factory options
      */
-    public static function factory($filename, array $options = null)
+    public static function factory($config, array $options = null)
     {
         // @codeCoverageIgnoreStart
-        if (!self::$defaultFactory) {
-            self::$defaultFactory = new ServiceDescriptionFactory();
+        if (!self::$descriptionFactory) {
+            self::$descriptionFactory = new ServiceDescriptionAbstractFactory();
         }
         // @codeCoverageIgnoreEnd
 
-        return self::$defaultFactory->build($filename);
+        return self::$descriptionFactory->build($config);
     }
 
     /**

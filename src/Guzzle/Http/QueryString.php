@@ -41,6 +41,30 @@ class QueryString extends Collection
     protected $aggregator = null;
 
     /**
+     * Parse a query string into a QueryString object
+     *
+     * @param string $query Query string to parse
+     *
+     * @return QueryString
+     */
+    public static function fromString($query)
+    {
+        $q = new static();
+
+        foreach (explode('&', $query) as $kvp) {
+            $parts = explode('=', $kvp);
+            $key = rawurldecode($parts[0]);
+            if (substr($key, -2) == '[]') {
+                $key = substr($key, 0, -2);
+            }
+            $value = array_key_exists(1, $parts) ? rawurldecode($parts[1]) : null;
+            $q->add($key, $value);
+        }
+
+        return $q;
+    }
+
+    /**
      * Convert the query string parameters to a query string string
      *
      * @return string

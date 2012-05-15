@@ -11,6 +11,8 @@ use Guzzle\Http\Utils;
 use Guzzle\Http\Url;
 use Guzzle\Http\UriTemplate;
 use Guzzle\Http\EntityBody;
+use Guzzle\Http\Parser\ParserRegistry;
+use Guzzle\Http\Parser\UriTemplate\UriTemplateInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\RequestFactoryInterface;
@@ -167,19 +169,17 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             $expansionVars = array_merge($expansionVars, $variables);
         }
 
-        return $this->getUriTemplate()
-            ->setTemplate($template)
-            ->expand($expansionVars);
+        return $this->getUriTemplate()->expand($template, $expansionVars);
     }
 
     /**
      * Set the URI template expander to use with the client
      *
-     * @param UriTemplate $uriTemplate
+     * @param UriTemplateInterface $uriTemplate URI template expander
      *
      * @return Client
      */
-    public function setUriTemplate(UriTemplate $uriTemplate)
+    public function setUriTemplate(UriTemplateInterface $uriTemplate)
     {
         $this->uriTemplate = $uriTemplate;
 
@@ -190,12 +190,12 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      * Get the URI template expander used by the client.  A default UriTemplate
      * object will be created if one does not exist.
      *
-     * @return UriTemplate
+     * @return UriTemplateInterface
      */
     public function getUriTemplate()
     {
         if (!$this->uriTemplate) {
-            $this->uriTemplate = new UriTemplate();
+            $this->uriTemplate = ParserRegistry::get('uri_template');
         }
 
         return $this->uriTemplate;

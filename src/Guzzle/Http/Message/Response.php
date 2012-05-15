@@ -6,6 +6,7 @@ use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Exception\BadResponseException;
+use Guzzle\Http\Parser\ParserRegistry;
 
 /**
  * Guzzle HTTP response object
@@ -99,46 +100,23 @@ class Response extends AbstractMessage
      *
      * @param string $message Response message
      *
-     * @return Response
-     * @throws InvalidArgumentException if an empty $message is provided
+     * @return Response|bool Returns false on error
      */
     public static function fromMessage($message)
     {
-        if (!$message) {
-            throw new InvalidArgumentException('No response message provided');
+        $data = ParserRegistry::get('message')->parseResponse($message);
+        if (!$data) {
+            return false;
         }
 
-        // Normalize line endings
-        $message = preg_replace("/([^\r])(\n)\b/", "$1\r\n", $message);
-        $protocol = $code = $status = '';
-        $parts = explode("\r\n\r\n", $message, 2);
-        $headers = new Collection();
+        // Always set the appropriate Content-Length
+        unset($data['headers']['Content-Length']);
+        unset($data['headers']['content-length']);
+        $data['headers']['Content-Length'] = strlen($data['body']);
 
-        foreach (array_values(array_filter(explode("\r\n", $parts[0]))) as $i => $line) {
-            // Remove newlines from headers
-            $line = implode(' ', explode("\n", $line));
-            if ($i === 0) {
-                // Check the status line
-                list($protocol, $code, $status) = array_map('trim', explode(' ', $line, 3));
-            } elseif (strpos($line, ':')) {
-                // Add a header
-                list($key, $value) = array_map('trim', explode(':', $line, 2));
-                // Headers are case insensitive
-                $headers->add($key, $value);
-            }
-        }
-
-        $body = null;
-
-        if (isset($parts[1]) && $parts[1] != "\n") {
-            $body = EntityBody::factory(trim($parts[1]));
-            // Always set the appropriate Content-Length if Content-Legnth
-            $headers['Content-Length'] = $body->getSize();
-        }
-
-        $response = new static(trim($code), $headers, $body);
-        $response->setProtocol($protocol)
-                 ->setStatus($code, $status);
+        $response = new static($data['code'], $data['headers'], $data['body']);
+        $response->setProtocol($data['protocol'], $data['version'])
+                 ->setStatus($data['code'], $data['reason_phrase']);
 
         return $response;
     }
@@ -162,11 +140,7 @@ class Response extends AbstractMessage
 
         $this->setStatus($statusCode);
         $this->params = new Collection();
-        if ($body) {
-            $this->body = EntityBody::factory($body);
-        } else {
-            $this->body = EntityBody::factory();
-        }
+        $this->body = EntityBody::factory($body ?: '');
 
         if ($headers) {
             if (!is_array($headers) && !($headers instanceof Collection)) {
@@ -204,13 +178,15 @@ class Response extends AbstractMessage
     /**
      * Set the protocol and protocol version of the response
      *
-     * @param string $protocol Response protocol and version (e.g. HTTP/1.1)
+     * @param string $protocol Response protocol
+     * @param string $version  Protocol version
      *
      * @return Response
      */
-    public function setProtocol($protocol)
+    public function setProtocol($protocol, $version)
     {
-        list($this->protocol, $this->protocolVersion) = array_map('trim', explode('/', $protocol, 2));
+        $this->protocol = $protocol;
+        $this->protocolVersion = $version;
 
         return $this;
     }

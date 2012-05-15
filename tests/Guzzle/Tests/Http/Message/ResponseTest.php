@@ -140,11 +140,10 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Message\Response::fromMessage
-     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
      */
     public function testFactoryRequiresMessage()
     {
-        $response = Response::fromMessage('');
+        $this->assertFalse(Response::fromMessage(''));
     }
 
     /**
@@ -756,7 +755,7 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testHandlesProtocols()
     {
-        $this->assertSame($this->response, $this->response->setProtocol('HTTP/1.0'));
+        $this->assertSame($this->response, $this->response->setProtocol('HTTP', '1.0'));
         $this->assertEquals('HTTP', $this->response->getProtocol());
         $this->assertEquals('1.0', $this->response->getProtocolVersion());
     }

@@ -2,6 +2,7 @@
 
 namespace Guzzle\Common\Cache;
 
+use Guzzle\Common\FromConfigInterface;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Exception\RuntimeException;
 
@@ -10,7 +11,7 @@ use Guzzle\Common\Exception\RuntimeException;
  * configuration data.  This can be useful for creating cache adapters
  * in client configuration files.
  */
-class CacheAdapterFactory
+class CacheAdapterFactory implements FromConfigInterface
 {
     /**
      * Create a Guzzle cache adapter based on an array of options
@@ -19,8 +20,12 @@ class CacheAdapterFactory
      *
      * @return CacheAdapterInterface
      */
-    public static function factory(array $config)
+    public static function factory($config)
     {
+        if (!is_array($config)) {
+            throw new InvalidArgumentException('$config must be an array');
+        }
+
         if (!isset($config['cache.adapter']) && !isset($config['cache.provider'])) {
             $config['cache.adapter'] = 'Guzzle\\Common\\Cache\\NullCacheAdapter';
             $config['cache.provider'] = null;

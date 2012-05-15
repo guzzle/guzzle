@@ -8,6 +8,7 @@ use Guzzle\Http\Url;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\QueryString;
+use Guzzle\Http\Parser\Message\MessageParser;
 
 /**
  * @group server
@@ -124,20 +125,20 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $request = RequestFactory::getInstance()->create('POST', 'http://www.google.com/path?q=1&v=2', null, array(
             'a' => 'b'
         ));
-        $this->assertEquals(array('a' => 'b'), $request->getPostFields());
+        $this->assertEquals(array('a' => 'b'), $request->getPostFields()->getAll());
         unset($request);
 
         // Use a collection
         $request = RequestFactory::getInstance()->create('POST', 'http://www.google.com/path?q=1&v=2', null, new Collection(array(
             'a' => 'b'
         )));
-        $this->assertEquals(array('a' => 'b'), $request->getPostFields());
+        $this->assertEquals(array('a' => 'b'), $request->getPostFields()->getAll());
 
         // Use a QueryString
         $request = RequestFactory::getInstance()->create('POST', 'http://www.google.com/path?q=1&v=2', null, new QueryString(array(
             'a' => 'b'
         )));
-        $this->assertEquals(array('a' => 'b'), $request->getPostFields());
+        $this->assertEquals(array('a' => 'b'), $request->getPostFields()->getAll());
 
         $request = RequestFactory::getInstance()->create('POST', 'http://www.test.com/', null, array(
             'a' => 'b',
@@ -147,7 +148,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array(
             'a' => 'b',
             'file' => '@' . __FILE__
-        ), $request->getPostFields());
+        ), $request->getPostFields()->getAll());
 
         $this->assertEquals(array(
             'file' => __FILE__
@@ -186,7 +187,6 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Message\RequestFactory::parseMessage
      * @covers Guzzle\Http\Message\RequestFactory::fromMessage
      * @covers Guzzle\Http\Message\RequestFactory::create
      */
@@ -204,7 +204,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('/path', $request->getPath());
         $this->assertEquals('/path?q=1&v=2', $request->getResourceUri());
         $this->assertInstanceOf('Guzzle\\Http\\EntityBody', $request->getBody());
-        $this->assertEquals('Data', (string)$request->getBody());
+        $this->assertEquals('Data', (string) $request->getBody());
         $this->assertEquals('michael', $request->getUsername());
         $this->assertEquals('123', $request->getPassword());
         $this->assertEquals('8080', $request->getPort());
@@ -240,50 +240,6 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Message\RequestFactory::parseMessage
-     */
-    public function testParsesMessages()
-    {
-        $parts = RequestFactory::getInstance()->parseMessage(
-            "get /testing?q=10&f=3 http/1.1\r\n" .
-            "host: localhost:443\n" .
-            "authorization: basic bWljaGFlbDoxMjM=\r\n\r\n"
-        );
-
-        $this->assertEquals('GET', $parts['method']);
-        $this->assertEquals('HTTP', $parts['protocol']);
-        $this->assertEquals('1.1', $parts['protocol_version']);
-        $this->assertEquals('https', $parts['parts']['scheme']);
-        $this->assertEquals('localhost', $parts['parts']['host']);
-        $this->assertEquals('443', $parts['parts']['port']);
-        $this->assertEquals('michael', $parts['parts']['user']);
-        $this->assertEquals('123', $parts['parts']['pass']);
-        $this->assertEquals('/testing', $parts['parts']['path']);
-        $this->assertEquals('?q=10&f=3', $parts['parts']['query']);
-        $this->assertEquals(array(
-            'Host' => 'localhost:443',
-            'Authorization' => 'basic bWljaGFlbDoxMjM='
-        ), $parts['headers']);
-        $this->assertEquals('', $parts['body']);
-
-        $parts = RequestFactory::getInstance()->parseMessage(
-            "get / spydy/1.0\r\n"
-        );
-        $this->assertEquals('GET', $parts['method']);
-        $this->assertEquals('SPYDY', $parts['protocol']);
-        $this->assertEquals('1.0', $parts['protocol_version']);
-        $this->assertEquals('http', $parts['parts']['scheme']);
-        $this->assertEquals('', $parts['parts']['host']);
-        $this->assertEquals('', $parts['parts']['port']);
-        $this->assertEquals('', $parts['parts']['user']);
-        $this->assertEquals('', $parts['parts']['pass']);
-        $this->assertEquals('/', $parts['parts']['path']);
-        $this->assertEquals('', $parts['parts']['query']);
-        $this->assertEquals(array(), $parts['headers']);
-        $this->assertEquals('', $parts['body']);
-    }
-
-    /**
      * @covers Guzzle\Http\Message\RequestFactory::create
      */
     public function testCreatesProperTransferEncodingRequests()
@@ -297,10 +253,11 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Message\RequestFactory::fromMessage
-     * @covers Guzzle\Http\Message\RequestFactory::parseMessage
      */
     public function testProperlyDealsWithDuplicateHeaders()
     {
+        $parser = new MessageParser();
+
         $message = "POST / http/1.1\r\n"
             . "DATE:Mon, 09 Sep 2011 23:36:00 GMT\r\n"
             . "host:host.foo.com\r\n"
@@ -309,15 +266,16 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
             . "ZOO:HI\r\n"
             . "zoo:456\r\n\r\n";
 
-        $parts = RequestFactory::getInstance()->parseMessage($message);
+        $parts = $parser->parseRequest($message);
         $this->assertEquals(array (
             'DATE' => 'Mon, 09 Sep 2011 23:36:00 GMT',
-            'Host' => 'host.foo.com',
+            'host' => 'host.foo.com',
             'ZOO'  => array('abc', '123', 'HI'),
             'zoo'  => '456',
         ), $parts['headers']);
 
         $request = RequestFactory::getInstance()->fromMessage($message);
+
         $this->assertEquals(array(
             'ZOO' => array('abc', '123', 'HI'),
             'zoo' => array('456')
@@ -326,7 +284,6 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Message\RequestFactory::fromMessage
-     * @covers Guzzle\Http\Message\RequestFactory::parseMessage
      * @covers Guzzle\Http\Message\RequestFactory::create
      */
     public function testCreatesHttpMessagesWithBodiesAndNormalizesLineEndings()
@@ -356,17 +313,23 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Message\RequestFactory::fromMessage
-     * @covers Guzzle\Http\Message\RequestFactory::parseMessage
+     * @covers Guzzle\Http\Message\RequestFactory::create
      */
-    public function testProperlyDealsWithDuplicateQueryStringValues()
+    public function testHandlesChunkedTransferEncoding()
     {
-        $message = "POST /?foo=a&foo=b&?µ=c http/1.1\r\n"
-            . "host:host.foo.com\r\n\r\n";
-        $parts = RequestFactory::getInstance()->parseMessage($message);
-        $this->assertEquals('?foo=a&foo=b&?µ=c', $parts['parts']['query']);
-        $request = RequestFactory::getInstance()->fromMessage($message);
-        $this->assertEquals(array('a', 'b'), $request->getQuery()->get('foo'));
-        $this->assertEquals('c', $request->getQuery()->get('?µ'));
+        $request = RequestFactory::getInstance()->create('PUT', 'http://www.foo.com/', array(
+            'Transfer-Encoding' => 'chunked'
+        ), 'Test');
+        $this->assertFalse($request->hasHeader('Content-Length'));
+        $this->assertEquals('chunked', $request->getHeader('Transfer-Encoding'));
+
+        $request = RequestFactory::getInstance()->create('POST', 'http://www.foo.com/', array(
+            'transfer-encoding' => 'chunked'
+        ), array(
+            'foo' => 'bar'
+        ));
+
+        $this->assertFalse($request->hasHeader('Content-Length'));
+        $this->assertEquals('chunked', $request->getHeader('Transfer-Encoding'));
     }
 }

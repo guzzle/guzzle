@@ -1,17 +1,17 @@
 <?php
 
-namespace Guzzle\Service;
+namespace Guzzle\Service\Builder;
 
 use Guzzle\Common\AbstractHasDispatcher;
+use Guzzle\Service\Builder\ServiceBuilderAbstractFactory;
 use Guzzle\Service\Exception\ServiceBuilderException;
-use Guzzle\Service\Exception\ClientNotFoundException;
 use Guzzle\Service\Exception\ServiceNotFoundException;
 
 /**
  * Service builder to generate service builders and service clients from
  * configuration settings
  */
-class ServiceBuilder extends AbstractHasDispatcher implements \ArrayAccess, \Serializable
+class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInterface, \ArrayAccess, \Serializable
 {
     /**
      * @var array Service builder configuration data
@@ -24,73 +24,33 @@ class ServiceBuilder extends AbstractHasDispatcher implements \ArrayAccess, \Ser
     protected $clients = array();
 
     /**
+     * @var ServiceBuilderAbstractFactory
+     */
+    protected static $defaultFactory;
+
+    /**
      * Create a new ServiceBuilder using configuration data sourced from an
      * array, .json|.js file, SimpleXMLElement, or .xml file.
      *
      * @param array|string|\SimpleXMLElement $data An instantiated
-     *      SimpleXMLElement containing configuration data, the full path to an
-     *      .xml or .js|.json file, or an associative array of data
-     * @param string $extension (optional) When passing a string of data to load
-     *      from a file, you can set $extension to specify the file type if the
-     *      extension is not the standard extension for the file name (e.g. xml,
-     *      js, json)
+     *     SimpleXMLElement containing configuration data, the full path to an
+     *     .xml or .js|.json file, or an associative array of data
+     * @param array $globalParameters (optional) Array of global parameters to
+     *     pass to every service as it is instantiated.
      *
-     * @return ServiceBuilder
-     * @throws ServiceBuilderException if a file cannot be openend
-     * @throws ServiceBuilderException when trying to extend a missing client
+     * @return ServiceBuilderInterface
+     * @throws ServiceBuilderException if a file cannot be opened
+     * @throws ServiceNotFoundException when trying to extend a missing client
      */
-    public static function factory($data, $extension = null)
+    public static function factory($config, array $globalParameters = null)
     {
-        $config = array();
-        if (is_string($data)) {
-            if (!is_readable($data)) {
-                throw new ServiceBuilderException('Unable to open ' . $data);
-            }
-            $extension = $extension ?: pathinfo($data, PATHINFO_EXTENSION);
-            if ($extension == 'xml') {
-                $data = new \SimpleXMLElement($data, null, true);
-            } elseif ($extension == 'js' || $extension == 'json') {
-                $config = json_decode(file_get_contents($data), true);
-            } else {
-                throw new ServiceBuilderException('Unknown file type ' . $extension);
-            }
-        } elseif (is_array($data)) {
-            $config = $data;
-        } elseif (!($data instanceof \SimpleXMLElement)) {
-            throw new ServiceBuilderException('Must pass a file name, array, or SimpleXMLElement');
+        // @codeCoverageIgnoreStart
+        if (!self::$defaultFactory) {
+            self::$defaultFactory = new ServiceBuilderAbstractFactory();
         }
+        // @codeCoverageIgnoreEnd
 
-        if ($data instanceof \SimpleXMLElement) {
-            foreach ($data->clients->client as $client) {
-                $row = array();
-                foreach ($client->param as $param) {
-                    $row[(string) $param->attributes()->name] = (string) $param->attributes()->value;
-                }
-                $config[(string) $client->attributes()->name] = array(
-                    'class'   => (string) $client->attributes()->class,
-                    'extends' => (string) $client->attributes()->extends,
-                    'params'  => $row
-                );
-            }
-        }
-
-        // Validate the configuration and handle extensions
-        foreach ($config as $name => &$client) {
-            $client['params'] = isset($client['params']) ? $client['params'] : array();
-            // Check if this client builder extends another client
-            if (!empty($client['extends'])) {
-                // Make sure that the service it's extending has been defined
-                if (!isset($config[$client['extends']])) {
-                    throw new ServiceNotFoundException($name . ' is trying to extend a non-existent service: ' . $client['extends']);
-                }
-                $client['class'] = empty($client['class'])
-                    ? $config[$client['extends']]['class'] : $client['class'];
-                $client['params'] = array_merge($config[$client['extends']]['params'], $client['params']);
-            }
-            $client['class'] = !isset($client['class']) ? '' : str_replace('.', '\\', $client['class']);
-        }
-
-        return new static($config);
+        return self::$defaultFactory->build($config, $globalParameters);
     }
 
     /**
@@ -98,7 +58,7 @@ class ServiceBuilder extends AbstractHasDispatcher implements \ArrayAccess, \Ser
      *
      * @param array $serviceBuilderConfig Service configuration settings:
      *      name => Name of the service
-     *      class => Builder class used to create clients using dot notation (Guzzle.Service.Aws.S3builder or Guzzle.Service.Builder.DefaultBuilder)
+     *      class => Client class to instantiate using a factory method
      *      params => array of key value pair configuration settings for the builder
      */
     public function __construct(array $serviceBuilderConfig)
@@ -142,12 +102,12 @@ class ServiceBuilder extends AbstractHasDispatcher implements \ArrayAccess, \Ser
      *     for later retrieval from the ServiceBuilder
      *
      * @return ClientInterface
-     * @throws ClientNotFoundException when a client cannot be found by name
+     * @throws ServiceNotFoundException when a client cannot be found by name
      */
     public function get($name, $throwAway = false)
     {
         if (!isset($this->builderConfig[$name])) {
-            throw new ClientNotFoundException('No client is registered as ' . $name);
+            throw new ServiceNotFoundException('No service is registered as ' . $name);
         }
 
         if (!$throwAway && isset($this->clients[$name])) {
@@ -181,12 +141,27 @@ class ServiceBuilder extends AbstractHasDispatcher implements \ArrayAccess, \Ser
     /**
      * Register a client by name with the service builder
      *
+     * @param string $name  Name of the client to register
+     * @param mixed  $value Service to register
+     *
+     * @return ServiceBuilderInterface
+     */
+    public function set($key, $service)
+    {
+        $this->builderConfig[$key] = $service;
+
+        return $this;
+    }
+
+    /**
+     * Register a client by name with the service builder
+     *
      * @param string $offset Name of the client to register
      * @param ClientInterface $value Client to register
      */
     public function offsetSet($offset, $value)
     {
-        $this->builderConfig[$offset] = $value;
+        $this->set($offset, $value);
     }
 
     /**

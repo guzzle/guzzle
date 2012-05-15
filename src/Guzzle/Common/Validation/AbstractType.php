@@ -26,7 +26,7 @@ abstract class  AbstractType extends AbstractConstraint
         }
 
         $method = static::$typeMapping[$type];
-        if (!call_user_func($method, $value)) {
+        if (!$method($value)) {
             return 'Value must be of type ' . $type;
         }
 

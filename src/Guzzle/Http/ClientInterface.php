@@ -7,6 +7,7 @@ use Guzzle\Common\HasDispatcherInterface;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactoryInterface;
+use Guzzle\Http\Parser\UriTemplate\UriTemplateInterface;
 use Guzzle\Http\Curl\CurlMultiInterface;
 
 /**
@@ -55,11 +56,11 @@ interface ClientInterface extends HasDispatcherInterface
     /**
      * Set the URI template expander to use with the client
      *
-     * @param UriTemplate $uriTemplate
+     * @param UriTemplateInterface $uriTemplate URI template expander
      *
      * @return ClientInterface
      */
-    function setUriTemplate(UriTemplate $uriTemplate);
+    function setUriTemplate(UriTemplateInterface $uriTemplate);
 
     /**
      * Get the URI template expander used by the client

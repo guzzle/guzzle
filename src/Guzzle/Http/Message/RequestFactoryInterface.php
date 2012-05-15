@@ -13,23 +13,6 @@ use Guzzle\Http\Url;
 interface RequestFactoryInterface
 {
     /**
-     * Parse an HTTP message and return an array of request information
-     *
-     * @param string $message HTTP request message to parse
-     *
-     * @return array|bool Returns FALSE on failure or an array containing the
-     *      following key value pairs:
-     *
-     *      # method: HTTP request method (e.g. GET, HEAD, POST, PUT, etc)
-     *      # protocol - HTTP protocol (e.g. HTTP)
-     *      # protocol_version: HTTP protocol version (e.g. 1.1)
-     *      # parts: array of request parts as seen in parse_url()
-     *      # headers: associative array of request headers
-     *      # body: string containing the request body
-     */
-    function parseMessage($message);
-
-    /**
      * Create a new request based on an HTTP message
      *
      * @param string $message HTTP message as a string
@@ -43,7 +26,7 @@ interface RequestFactoryInterface
      *
      * @param string $method HTTP method (GET, POST, PUT, HEAD, DELETE, etc)
      *
-     * @param array $parts URL parts containing the same keys as parse_url()
+     * @param array $urlParts URL parts containing the same keys as parse_url()
      *     # scheme - e.g. http
      *     # host - e.g. www.guzzle-project.com
      *     # port - e.g. 80
@@ -59,7 +42,7 @@ interface RequestFactoryInterface
      *
      * @return RequestInterface
      */
-    function fromParts($method, array $parts, $headers = null, $body = null, $protocol = 'HTTP', $protocolVersion = '1.1');
+    function fromParts($method, array $urlParts, $headers = null, $body = null, $protocol = 'HTTP', $protocolVersion = '1.1');
 
     /**
      * Create a new request based on the HTTP method

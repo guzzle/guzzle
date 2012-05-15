@@ -108,14 +108,14 @@ class LogPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertContains('7 guzzle.request', $message);
 
         // Check that the headers were logged
-        $this->assertContains("GET / HTTP/1.1\r\n", $message);
-        $this->assertContains("User-Agent: " . Utils::getDefaultUserAgent(), $message);
-        $this->assertContains("Accept: */*\r\n", $message);
-        $this->assertContains("Accept-Encoding: deflate, gzip", $message);
-        $this->assertContains("Host: 127.0.0.1:", $message);
+        $this->assertContainsIns("GET / HTTP/1.1\r\n", $message);
+        $this->assertContainsIns("User-Agent: " . Utils::getDefaultUserAgent(), $message);
+        $this->assertContainsIns("Accept: */*\r\n", $message);
+        $this->assertContainsIns("Accept-Encoding: deflate, gzip", $message);
+        $this->assertContainsIns("Host: 127.0.0.1:", $message);
 
         // Make sure the response headers are present with a line between the request and response
-        $this->assertContains("\n< HTTP/1.1 200 OK\r\n< Content-Length: 4", $message);
+        $this->assertContainsIns("\n< HTTP/1.1 200 OK\r\n< Content-Length: 4", $message);
     }
 
     public function testLogsRequestAndResponseWireContentAndHeaders()
@@ -136,8 +136,8 @@ class LogPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Check that the headers were logged
         $this->assertContains("PUT / HTTP/1.1\r\n", $message);
-        $this->assertContains("User-Agent: " . Utils::getDefaultUserAgent(), $message);
-        $this->assertContains("Content-Length: 4", $message);
+        $this->assertContainsIns("User-Agent: " . Utils::getDefaultUserAgent(), $message);
+        $this->assertContainsIns("Content-Length: 4", $message);
 
         // Make sure the response headers are present with a line between the request and response
         $this->assertContains("\n< HTTP/1.1 200 OK\r\n< Content-Length: 4", $message);
@@ -174,8 +174,8 @@ class LogPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Check that the headers were logged
         $this->assertContains("PUT / HTTP/1.1\r\n", $message);
-        $this->assertContains("User-Agent: " . Utils::getDefaultUserAgent(), $message);
-        $this->assertContains("Content-Length: 4", $message);
+        $this->assertContainsIns("User-Agent: " . Utils::getDefaultUserAgent(), $message);
+        $this->assertContainsIns("Content-Length: 4", $message);
         // Request payload
         $this->assertContains("\r\nsend", $message);
 
@@ -205,7 +205,7 @@ class LogPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertContains('127.0.0.1 - "GET / HTTP/1.1" - 404 0 - ', $message);
         $this->assertContains("GET / HTTP/1.1\r\n", $message);
-        $this->assertContains("User-Agent: " . Utils::getDefaultUserAgent(), $message);
+        $this->assertContainsIns("User-Agent: " . Utils::getDefaultUserAgent(), $message);
         $this->assertContains("\n< HTTP/1.1 404 Not Found\r\n< Content-Length: 0", $message);
     }
 

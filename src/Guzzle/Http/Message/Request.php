@@ -127,8 +127,16 @@ class Request extends AbstractMessage implements RequestInterface
             foreach ($headers as $key => $value) {
                 $lkey = strtolower($key);
                 // Deal with collisions with Host and Authorization
-                if ($lkey == 'host' || $lkey == 'authorization') {
+                if ($lkey == 'host') {
                     $this->setHeader($key, $value);
+                } elseif ($lkey == 'authorization') {
+                    $parts = explode(' ', $value);
+                    if ($parts[0] == 'Basic' && isset($parts[1])) {
+                        list($user, $pass) = explode(':', base64_decode($parts[1]));
+                        $this->setAuth($user, $pass);
+                    } else {
+                        $this->setHeader($key, $value);
+                    }
                 } else {
                     foreach ((array) $value as $v) {
                         $this->addHeader($key, $v);

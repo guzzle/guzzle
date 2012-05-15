@@ -4,9 +4,16 @@ php:
   - 5.4
 before_script:
   - curl --version
+  - echo 'Installing pecl_http'
+  - wget --quiet http://pecl.php.net/get/pecl_http-1.7.4.tgz
+  - tar -xzf pecl_http-1.7.4.tgz
+  - sh -c "cd pecl_http-1.7.4 && phpize && ./configure && make && sudo make install"
+  - echo "extension=http.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
+  - echo 'Installing composer'
   - wget --quiet http://getcomposer.org/composer.phar
   - php composer.phar install --dev
   - cp phpunit.xml.dist phpunit.xml
+  - echo 'Ensuring the correct version of node is running'
   - ~/.nvm/nvm.sh install v0.6.14
   - ~/.nvm/nvm.sh run v0.6.14 tests/Guzzle/Tests/Http/server.js &
 script: sudo phpunit --debug
