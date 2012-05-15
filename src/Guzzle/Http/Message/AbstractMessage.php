@@ -230,9 +230,13 @@ abstract class AbstractMessage implements MessageInterface
             }
         }
 
-        return $data->map(function($key, $value) {
-            return is_array($value) ? array_unique($value) : $value;
-        });
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $data->set($key, array_unique($value));
+            }
+        }
+
+        return $data;
     }
 
     /**
