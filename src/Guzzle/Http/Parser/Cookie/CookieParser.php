@@ -99,7 +99,7 @@ class CookieParser implements CookieParserInterface
                 // IF non-cookies have been parsed, then this isn't a cookie,
                 // but it's cookie data.  Cookies must be first, followed by data.
                 if ($foundNonCookies == 0) {
-                    $data['cookies'][] = $key . ($value ? ('=' . $value) : '');
+                    $data['cookies'][$key] = $value;
                     $foundCookies++;
                 } else {
                     $data['data'][$key] = $value;

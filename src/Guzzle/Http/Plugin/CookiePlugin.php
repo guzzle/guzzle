@@ -125,14 +125,14 @@ class CookiePlugin implements EventSubscriberInterface
             $cookies = array();
             // Break up cookie v2 into multiple cookies
             if (count($cdata['cookies']) == 1) {
-                $cdata['cookie'] = explode('=', $cdata['cookies'][0], 2);
+                $cdata['cookie'] = array(key($cdata['cookies']), current($cdata['cookies']));
                 unset($cdata['cookies']);
                 $cookies = array($cdata);
             } else {
-                foreach ($cdata['cookies'] as $cookie) {
+                foreach ($cdata['cookies'] as $key => $cookie) {
                     $row = $cdata;
                     unset($row['cookies']);
-                    $row['cookie'] = explode('=', $cookie, 2);
+                    $row['cookie'] = array($key, $cookie);
                     $cookies[] = $row;
                 }
             }
