@@ -24,6 +24,7 @@ class BatchQueuePluginTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Plugin\BatchQueuePlugin::count
      * @covers Guzzle\Http\Plugin\BatchQueuePlugin::onRequestCreate
+     * @covers Guzzle\Http\Plugin\BatchQueuePlugin::addRequest
      */
     public function testAddsRequestToQueue()
     {
@@ -101,6 +102,7 @@ class BatchQueuePluginTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Plugin\BatchQueuePlugin::__construct
      * @covers Guzzle\Http\Plugin\BatchQueuePlugin::onRequestCreate
+     * @covers Guzzle\Http\Plugin\BatchQueuePlugin::addRequest
      */
     public function testImplicitlyFlushesRequests()
     {
@@ -135,6 +137,7 @@ class BatchQueuePluginTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Plugin\BatchQueuePlugin::onRequestCreate
+     * @covers Guzzle\Http\Plugin\BatchQueuePlugin::addRequest
      * @covers Guzzle\Http\Plugin\BatchQueuePlugin::onRequestBeforeSend
      */
     public function testWorksUsingEvents()

@@ -7,7 +7,7 @@ use Guzzle\Http\Message\RequestInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Queues requests and sends them in parallel when a flush event is recevied.
+ * Queues requests and sends them in parallel when a flush event is recievied.
  * You can call the flush() method on the plugin or emit a 'flush' event from
  * the client on which the plugin is attached.
  *
@@ -66,7 +66,6 @@ class BatchQueuePlugin implements EventSubscriberInterface, \Countable
         return $this;
     }
 
-
     /**
      * Add request to the queue
      *
@@ -74,10 +73,24 @@ class BatchQueuePlugin implements EventSubscriberInterface, \Countable
      */
     public function onRequestCreate(Event $event)
     {
-        $this->queue[] = $event['request'];
+        $this->addRequest($event['request']);
+    }
+
+    /**
+     * Add request to the queue
+     *
+     * @param RequestInterface $request Request to add
+     *
+     * @return BatchQueuePlugin
+     */
+    public function addRequest(RequestInterface $request)
+    {
+        $this->queue[] = $request;
         if ($this->autoFlushCount && count($this->queue) >= $this->autoFlushCount) {
             $this->flush();
         }
+
+        return $this;
     }
 
     /**

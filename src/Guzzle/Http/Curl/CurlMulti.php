@@ -145,12 +145,18 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     }
 
     /**
+     * {@inheritdoc}
+     *
      * Adds a request to the next scope (or batch or requests to be sent).  If
      * a request is added using async, then the request is added to the current
      * scope.  This means that the request will be sent and polled if requests
      * are currently being sent, or that the request will be sent in the next
      * send operation.
-     * {@inheritdoc}
+     *
+     * @param RequestInterface $request Request to add
+     * @param bool $async (optional) Set to TRUE to add to the current scope
+     *
+     * @return CurlMutli
      */
     public function add(RequestInterface $request, $async = false)
     {
