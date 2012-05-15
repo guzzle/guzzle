@@ -16,7 +16,7 @@ if (get_cfg_var('guzzle_phar')) {
 }
 
 // Include the composer autoloader
-require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . '.composer' . DIRECTORY_SEPARATOR . 'autoload.php';
+require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
 
 // Add the services file to the default service builder
 $servicesFile = __DIR__ . DIRECTORY_SEPARATOR . 'Guzzle' . DIRECTORY_SEPARATOR . 'Tests' . DIRECTORY_SEPARATOR . 'TestData' . DIRECTORY_SEPARATOR . 'services' . DIRECTORY_SEPARATOR . 'services.xml';
