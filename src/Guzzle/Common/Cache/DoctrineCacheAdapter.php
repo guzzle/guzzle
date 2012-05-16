@@ -12,7 +12,9 @@ use Doctrine\Common\Cache\Cache;
 class DoctrineCacheAdapter extends AbstractCacheAdapter
 {
     /**
-     * {@inheritdoc}
+     * DoctrineCacheAdapter
+     *
+     * @param Cache $cache Doctrine cache object
      */
     public function __construct(Cache $cache)
     {

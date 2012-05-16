@@ -10,7 +10,9 @@ abstract class AbstractCacheAdapter implements CacheAdapterInterface
     protected $cache;
 
     /**
-     * {@inheritdoc}
+     * Get the object owned by the adapter
+     *
+     * @return mixed
      */
     public function getCacheObject()
     {

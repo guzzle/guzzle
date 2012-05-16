@@ -116,9 +116,9 @@ class Inspector
     /**
      * Validate and prepare configuration parameters
      *
-     * @param array $config Configuration values to apply.
-     * @param array $defaults (optional) Default parameters
-     * @param array $required (optional) Required parameter names
+     * @param array $config   Configuration values to apply.
+     * @param array $defaults Default parameters
+     * @param array $required Required parameter names
      *
      * @return Collection
      * @throws InvalidArgumentException if a parameter is missing
@@ -155,9 +155,9 @@ class Inspector
     /**
      * Register a constraint class with a special name
      *
-     * @param string $name Name of the constraint to register
-     * @param string $class Name of the class or object to use when filtering by this name
-     * @param array $default Default values to pass to the constraint
+     * @param string $name    Name of the constraint to register
+     * @param string $class   Name of the class or object to use when filtering by this name
+     * @param array  $default Default values to pass to the constraint
      *
      * @return Inspector
      */
@@ -210,11 +210,12 @@ class Inspector
     /**
      * Validates that a class has all of the required configuration settings
      *
-     * @param string $className Name of the class to use to retrieve args
-     * @param Collection $config Configuration settings
-     * @param bool $strict (optional) Set to FALSE to allow missing required fields
-     * @param bool $validate (optional) Set to TRUE or FALSE to validate data.
-     *     Set to false when you only need to add default values and statics.
+     * @param string     $className Name of the class to use to retrieve args
+     * @param Collection $config    Configuration settings
+     * @param bool       $strict    Set to FALSE to allow missing required fields
+     * @param bool       $validate  Set to TRUE or FALSE to validate data.
+     *                              Set to false when you only need to add
+     *                              default values and statics.
      *
      * @return array|bool Returns an array of errors or TRUE on success
      * @throws InvalidArgumentException if any args are missing and $strict is TRUE
@@ -235,11 +236,12 @@ class Inspector
      * default args to the passed config object if the parameter was not
      * set in the config object.
      *
-     * @param array $params Params to validate
-     * @param Collection $config Configuration settings
-     * @param bool $strict (optional) Set to FALSE to allow missing required fields
-     * @param bool $validate (optional) Set to TRUE or FALSE to validate data.
-     *     Set to false when you only need to add default values and statics.
+     * @param array      $params   Params to validate
+     * @param Collection $config   Configuration settings
+     * @param bool       $strict   Set to FALSE to allow missing required fields
+     * @param bool       $validate Set to TRUE or FALSE to validate data.
+     *                             Set to false when you only need to add
+     *                             default values and statics.
      *
      * @return array|bool Returns an array of errors or TRUE on success
      *
@@ -290,8 +292,6 @@ class Inspector
                     $errors[] = 'Requires that the ' . $name . ' argument be <= ' . $arg->getMaxLength() . ' characters.';
                 }
             }
-
-            $config->set($name, $configValue);
         }
 
         if (empty($errors)) {
@@ -329,8 +329,8 @@ class Inspector
      * Validate a constraint by name: e.g. "type:Guzzle\Common\Collection";
      * type:string; choice:a,b,c; choice:'a','b','c'; etc...
      *
-     * @param string $name Constraint to retrieve with optional CSV args after colon
-     * @param mixed $value Value to validate
+     * @param string $name  Constraint to retrieve with optional CSV args after colon
+     * @param mixed  $value Value to validate
      *
      * @return bool|string Returns TRUE if valid, or an error message if invalid
      */
