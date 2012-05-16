@@ -220,7 +220,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
      *
      * @param string $needle Search string
      * @param string $haystack Search this
-     * @param string $message (optional) Optional failure message
+     * @param string $message Optional failure message
      */
     public function assertContainsIns($needle, $haystack, $message = null)
     {

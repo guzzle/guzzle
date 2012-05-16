@@ -35,7 +35,7 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
      * @param array|string|\SimpleXMLElement $data An instantiated
      *     SimpleXMLElement containing configuration data, the full path to an
      *     .xml or .js|.json file, or an associative array of data
-     * @param array $globalParameters (optional) Array of global parameters to
+     * @param array $globalParameters Array of global parameters to
      *     pass to every service as it is instantiated.
      *
      * @return ServiceBuilderInterface
@@ -98,7 +98,7 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
      * Get a client using a registered builder
      *
      * @param string $name Name of the registered client to retrieve
-     * @param bool $throwAway (optional) Set to TRUE to not store the client
+     * @param bool $throwAway Set to TRUE to not store the client
      *     for later retrieval from the ServiceBuilder
      *
      * @return ClientInterface

@@ -22,7 +22,7 @@ class ServiceDescription implements ServiceDescriptionInterface
     /**
      * {@inheritdoc}
      * @param string|array   $config    File to build or array of command information
-     * @param array $options (optional) Service description factory options
+     * @param array $options Service description factory options
      */
     public static function factory($config, array $options = null)
     {
@@ -38,7 +38,7 @@ class ServiceDescription implements ServiceDescriptionInterface
     /**
      * Create a new ServiceDescription
      *
-     * @param array $commands (optional) Array of {@see ApiCommand} objects
+     * @param array $commands Array of {@see ApiCommand} objects
      */
     public function __construct(array $commands = array())
     {

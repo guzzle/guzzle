@@ -154,7 +154,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      * send operation.
      *
      * @param RequestInterface $request Request to add
-     * @param bool $async (optional) Set to TRUE to add to the current scope
+     * @param bool $async Set to TRUE to add to the current scope
      *
      * @return CurlMutli
      */

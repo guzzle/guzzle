@@ -100,8 +100,8 @@ class QueryString extends Collection
      *
      * @param string $key The name of the query string parameter
      * @param array $value The values of the parameter
-     * @param bool $encodeFields (optional) Set to TRUE to encode field names
-     * @param bool $encodeValues (optional) Set to TRUE to encode values
+     * @param bool $encodeFields Set to TRUE to encode field names
+     * @param bool $encodeValues Set to TRUE to encode values
      *
      * @return array Returns an array of the combined values
      */
@@ -140,8 +140,8 @@ class QueryString extends Collection
      *
      * @param string $key The name of the query string parameter
      * @param array $value The values of the parameter
-     * @param bool $encodeFields (optional) Set to TRUE to encode field names
-     * @param bool $encodeValues (optional) Set to TRUE to encode values
+     * @param bool $encodeFields Set to TRUE to encode field names
+     * @param bool $encodeValues Set to TRUE to encode values
      *
      * @return array Returns an array of the combined values
      */
@@ -161,8 +161,8 @@ class QueryString extends Collection
      *
      * @param string $key The name of the query string parameter
      * @param array $value The values of the parameter
-     * @param bool $encodeFields (optional) Set to TRUE to encode field names
-     * @param bool $encodeValues (optional) Set to TRUE to encode values
+     * @param bool $encodeFields Set to TRUE to encode field names
+     * @param bool $encodeValues Set to TRUE to encode values
      *
      * @return array Returns an array of the combined values
      */
@@ -340,8 +340,8 @@ class QueryString extends Collection
      * aggregator function
      *
      * @param array $data The data to encode
-     * @param bool $encodeFields (optional) Toggle URL encoding of fields
-     * @param bool $encodeValues (optional) Toggle URL encoding of values
+     * @param bool $encodeFields Toggle URL encoding of fields
+     * @param bool $encodeValues Toggle URL encoding of values
      *
      * @return array Returns an array of encoded values and keys
      */

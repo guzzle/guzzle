@@ -113,7 +113,7 @@ class Request extends AbstractMessage implements RequestInterface
      * @param string|Url $url HTTP URL to connect to.  The URI scheme, host
      *      header, and URI are parsed from the full URL.  If query string
      *      parameters are present they will be parsed as well.
-     * @param array|Collection $headers (optional) HTTP headers
+     * @param array|Collection $headers HTTP headers
      */
     public function __construct($method, $url, $headers = array())
     {
@@ -308,7 +308,7 @@ class Request extends AbstractMessage implements RequestInterface
      * Get the collection of key value pairs that will be used as the query
      * string in the request
      *
-     * @param bool $asString (optional) Set to TRUE to get the query as string
+     * @param bool $asString Set to TRUE to get the query as string
      *
      * @return QueryString|string
      */
@@ -482,9 +482,9 @@ class Request extends AbstractMessage implements RequestInterface
     /**
      * Set HTTP authorization parameters
      *
-     * @param string|false $user (optional) User name or false disable authentication
-     * @param string $password (optional) Password
-     * @param string $scheme (optional) Curl authentication scheme to use
+     * @param string|false $user User name or false disable authentication
+     * @param string $password Password
+     * @param string $scheme Curl authentication scheme to use
      *
      * @return Request
      *
@@ -529,7 +529,7 @@ class Request extends AbstractMessage implements RequestInterface
      * Get the full URL of the request (e.g. 'http://www.guzzle-project.com/')
      * scheme://username:password@domain:port/path?query_string#fragment
      *
-     * @param bool $asObject (optional) Set to TRUE to retrieve the URL as
+     * @param bool $asObject Set to TRUE to retrieve the URL as
      *     a clone of the URL object owned by the request
      *
      * @return string|Url
@@ -630,7 +630,7 @@ class Request extends AbstractMessage implements RequestInterface
      * bypass the actual sending of a request.
      *
      * @param Response $response Response object to set
-     * @param bool $queued (optional) Set to TRUE to keep the request in a stat
+     * @param bool $queued Set to TRUE to keep the request in a stat
      *      of not having been sent, but queue the response for send()
      *
      * @return Request Returns a reference to the object.
@@ -685,7 +685,7 @@ class Request extends AbstractMessage implements RequestInterface
     /**
      * Get an array of Cookies or a specific cookie from the request
      *
-     * @param string $name (optional) Cookie to retrieve
+     * @param string $name Cookie to retrieve
      *
      * @return null|string|Cookie Returns null if not found by name, a Cookie
      *      object if no $name is supplied, or the cookie value by name if found
@@ -739,7 +739,7 @@ class Request extends AbstractMessage implements RequestInterface
     /**
      * Remove the cookie header or a specific cookie value by name
      *
-     * @param string $name (optional) Cookie to remove by name.  If no value is
+     * @param string $name Cookie to remove by name.  If no value is
      *      provided, the entire Cookie header is removed from the request
      *
      * @return Request

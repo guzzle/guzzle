@@ -14,7 +14,7 @@ interface CookieParserInterface
      * @param string $cookie Cookie header value to parse
      * @param string $host   Host of an associated request
      * @param string $path   Path of an associated request
-     * @param bool   $decode (optional) Set to FALSE to not urldecode the values
+     * @param bool   $decode Set to FALSE to not urldecode the values
      *
      * @return array|bool Returns FALSE on failure or returns an array of
      *     arrays, with each of the sub arrays including:

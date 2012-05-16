@@ -59,7 +59,7 @@ interface CurlMultiInterface extends HasDispatcherInterface, \Countable
     /**
      * Reset the state of the multi and remove any attached RequestInterface objects
      *
-     * @param bool $hard (optional) Set to TRUE to close any open multi handles
+     * @param bool $hard Set to TRUE to close any open multi handles
      */
     function reset($hard = false);
 

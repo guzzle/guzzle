@@ -19,9 +19,9 @@ interface CommandInterface
     /**
      * Constructor
      *
-     * @param array|Collection $parameters (optional) Collection of parameters
+     * @param array|Collection $parameters Collection of parameters
      *      to set on the command
-     * @param ApiCommand $apiCommand (optional) Command definition from description
+     * @param ApiCommand $apiCommand Command definition from description
      */
     function __construct($parameters = null, ApiCommand $apiCommand = null);
 

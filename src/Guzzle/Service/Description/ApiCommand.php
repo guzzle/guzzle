@@ -51,8 +51,8 @@ class ApiCommand
      *      string name Name of the command
      *      string doc Method documentation
      *      string method HTTP method of the command
-     *      string uri (optional) URI routing information of the command
-     *      string class (optional) Concrete class that implements this command
+     *      string uri URI routing information of the command
+     *      string class Concrete class that implements this command
      *      array params Associative array of parameters for the command with each
      *          parameter containing the following keys:
      *

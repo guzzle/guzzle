@@ -29,9 +29,9 @@ class OauthPlugin implements EventSubscriberInterface
      *     string 'consumer_secret'  Consumer secret
      *     string 'token'            Token
      *     string 'token_secret'     Token secret
-     *     string 'version'          (optional) OAuth version.  Defaults to 1.0
-     *     string 'signature_method' (optional) Custom signature method
-     *     array|Closure 'signature_callback' (optional) Custom signature callback
+     *     string 'version'          OAuth version.  Defaults to 1.0
+     *     string 'signature_method' Custom signature method
+     *     array|Closure 'signature_callback' Custom signature callback
      *         that accepts a string to sign and a signing key
      */
     public function __construct($config)

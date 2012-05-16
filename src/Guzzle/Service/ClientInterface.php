@@ -29,7 +29,7 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
      * are found, an InvalidArgumentException is thrown.
      *
      * @param string $name Name of the command to retrieve
-     * @param array $args (optional) Arguments to pass to the command
+     * @param array $args Arguments to pass to the command
      *
      * @return CommandInterface
      * @throws InvalidArgumentException if no command can be found by name
@@ -55,7 +55,7 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
      *
      * @param ServiceDescription $service Service description that describes
      *     all of the commands and information of the client
-     * @param bool $updateFactory (optional) Set to FALSE to not update the service
+     * @param bool $updateFactory Set to FALSE to not update the service
      *     description based command factory if it is not already present on
      *     the client
      *
@@ -85,9 +85,9 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
      * @param string|CommandInterface $command Command class or command name.
      *     Passing a command name will have the client create the command for
      *     you using $commandOptions array.
-     * @param array $commandOptions (optional) Command options used when
+     * @param array $commandOptions Command options used when
      *     creating commands.
-     * @param array $iteratorOptions (optional) Iterator options passed to the
+     * @param array $iteratorOptions Iterator options passed to the
      *     iterator when it is instantiated.
      *
      * @return ResourceIteratorInterface

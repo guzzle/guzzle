@@ -122,7 +122,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      * Get a specific key value.
      *
      * @param string $key Key to retrieve.
-     * @param mixed $default (optional) If the key is not found, set this
+     * @param mixed $default If the key is not found, set this
      *      value to specify a default
      *
      * @return mixed|null Value of the key or NULL
@@ -139,7 +139,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Get all or a subset of matching key value pairs
      *
-     * @param array $keys (optional) Pass a single key or an array
+     * @param array $keys Pass a single key or an array
      *      of keys to retrieve only a particular subset of kvp.
      *
      * @return array Returns an array of all matching key value pairs
@@ -221,7 +221,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      * return a modified value
      *
      * @param Closure $closure Closure to apply
-     * @param array $context (optional) Context to pass to the closure
+     * @param array $context Context to pass to the closure
      * @param bool $static Set to TRUE to use the same class as the return
      *      rather than returning a Collection object
      *

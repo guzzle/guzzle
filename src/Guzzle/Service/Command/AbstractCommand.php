@@ -54,9 +54,9 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     /**
      * Constructor
      *
-     * @param array|Collection $parameters (optional) Collection of parameters
+     * @param array|Collection $parameters Collection of parameters
      *      to set on the command
-     * @param ApiCommand $apiCommand (optional) Command definition from description
+     * @param ApiCommand $apiCommand Command definition from description
      */
     public function __construct($parameters = null, ApiCommand $apiCommand = null)
     {
@@ -99,7 +99,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
      * Enables magic methods for setting parameters.
      *
      * @param string $method Name of the parameter to set
-     * @param array  $args   (optional) Arguments to pass to the command
+     * @param array  $args   Arguments to pass to the command
      *
      * @return AbstractCommand
      * @throws BadMethodCallException when a parameter doesn't exist

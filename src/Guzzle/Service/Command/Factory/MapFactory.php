@@ -13,7 +13,7 @@ class MapFactory implements FactoryInterface
     protected $map;
 
     /**
-     * @param array $map (optional) Associative array mapping command names to
+     * @param array $map Associative array mapping command names to
      *     classes
      */
     public function __construct(array $map)

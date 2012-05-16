@@ -84,7 +84,7 @@ abstract class AbstractMessage implements MessageInterface
      * all headers.
      *
      * @param string $header Header to retrieve.
-     * @param bool   $string (optional) Set to true to get the header as a string
+     * @param bool   $string Set to true to get the header as a string
      *
      * @return string|Header|null Returns NULL if no matching header is found.
      *     Returns a string if $string is set to TRUE.  Returns a Header object
@@ -206,7 +206,7 @@ abstract class AbstractMessage implements MessageInterface
      * Get a tokenized header as a Collection
      *
      * @param string $header Header to retrieve
-     * @param string $token  (optional) Token separator
+     * @param string $token  Token separator
      *
      * @return Collection|null Returns a Collection object containing the
      *     tokenized values if the header was found.  Returns NULL otherwise.
@@ -245,7 +245,7 @@ abstract class AbstractMessage implements MessageInterface
      *
      * @param string $header Header to set
      * @param array|Collection $data Header data
-     * @param string $token (optional) Token delimiter
+     * @param string $token Token delimiter
      *
      * @return AbstractMessage
      * @throws InvalidArgumentException if data is not an array or Collection
@@ -294,7 +294,7 @@ abstract class AbstractMessage implements MessageInterface
      * Add a Cache-Control directive on the message
      *
      * @param string $directive Directive to set
-     * @param bool|string $value (optional) Value to set
+     * @param bool|string $value Value to set
      *
      * @return AbstractMessage
      */

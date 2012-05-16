@@ -38,7 +38,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * @param string|Url $url HTTP URL to connect to.  The URI scheme, host
      *      header, and URI are parsed from the full URL.  If query string
      *      parameters are present they will be parsed as well.
-     * @param array|Collection $headers (optional) HTTP headers
+     * @param array|Collection $headers HTTP headers
      */
     function __construct($method, $url, $headers = array());
 
@@ -199,9 +199,9 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     /**
      * Set HTTP authorization parameters
      *
-     * @param string|false $user (optional) User name or false disable authentication
-     * @param string $password (optional) Password
-     * @param string $scheme (optional) Authentication scheme to use (Basic, Digest)
+     * @param string|false $user User name or false disable authentication
+     * @param string $password Password
+     * @param string $scheme Authentication scheme to use (Basic, Digest)
      *
      * @return Request
      *
@@ -229,7 +229,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * Get the full URL of the request (e.g. 'http://www.guzzle-project.com/')
      * scheme://username:password@domain:port/path?query_string#fragment
      *
-     * @param bool $asObject (optional) Set to TRUE to retrieve the URL as
+     * @param bool $asObject Set to TRUE to retrieve the URL as
      *     a clone of the URL object owned by the request.
      *
      * @return string|Url
@@ -297,7 +297,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * bypass the actual sending of a request.
      *
      * @param Response $response Response object to set
-     * @param bool $queued (optional) Set to TRUE to keep the request in a stat
+     * @param bool $queued Set to TRUE to keep the request in a stat
      *      of not having been sent, but queue the response for send()
      *
      * @return RequestInterface Returns a reference to the object.
@@ -307,7 +307,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     /**
      * Get an array of Cookies or a specific cookie from the request
      *
-     * @param string $name (optional) Cookie to retrieve
+     * @param string $name Cookie to retrieve
      *
      * @return null|string|Cookie Returns null if not found by name, a Cookie
      *      object if no $name is supplied, or the cookie value by name if found
@@ -339,7 +339,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     /**
      * Remove the cookie header or a specific cookie value by name
      *
-     * @param string $name (optional) Cookie to remove by name.  If no value is
+     * @param string $name Cookie to remove by name.  If no value is
      *      provided, the entire Cookie header is removed from the request
      *
      * @return RequestInterface

@@ -64,7 +64,7 @@ class ResourceIteratorApplyBatched extends AbstractHasDispatcher
      *   before_batch -- Before a batch request is sent if one is sent.  Context is an array of resources
      *   after_batch -- After a batch request is sent if one is sent.  Context is an array of resources
      *
-     * @param int $perBatch (optional) The number of records to batch before executing the callback
+     * @param int $perBatch The number of records to batch before executing the callback
      *
      * @return int Returns the number of resources iterated
      */

@@ -57,15 +57,15 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
     /**
      * Construct a new exponential backoff plugin
      *
-     * @param int $maxRetries (optional) The maximum number of time to retry a request
-     * @param array|callable $failureCodes (optional) Pass a custom list of
+     * @param int $maxRetries The maximum number of time to retry a request
+     * @param array|callable $failureCodes Pass a custom list of
      *     failure codes. This can be a list of numeric codes that match the
      *     response code, a list of reason phrases that can match the reason
      *     phrase of a request, or a list of cURL error code integers.  By
      *     default, this plugin retries 500 and 503 responses as well as
      *     various CURL connection errors.  You can pass in a callable that will
      *     be used to determine if a response failed and must be retried.
-     * @param callable $delayFunction (optional) Method used to calculate the
+     * @param callable $delayFunction Method used to calculate the
      *      delay between requests.  The method must accept an integer containing
      *      the current number of retries and return an integer representing how
      *      many seconds to delay

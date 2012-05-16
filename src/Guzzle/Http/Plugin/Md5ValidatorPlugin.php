@@ -28,12 +28,12 @@ class Md5ValidatorPlugin implements EventSubscriberInterface
     /**
      * Constructor
      *
-     * @param bool $calcContentEncoded (optional) Calculating the MD5 hash of an
+     * @param bool $calcContentEncoded Calculating the MD5 hash of an
      *      entity body where a Content-Encoding was applied is a more expensive
      *      comparison because the entity body will need to be compressed in
      *      order to get the correct hash.  Set to FALSE to not validate
      *      the MD5 hash of an entity body with an applied Content-Encoding.
-     * @param int $contentLengthCutoff (optional) Maximum Content-Length (bytes)
+     * @param int $contentLengthCutoff Maximum Content-Length (bytes)
      *      in which a MD5 hash will be validated.  Any response with a
      *      Content-Length greater than this value will not be validated
      *      because it will be deemed too memory intensive

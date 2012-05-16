@@ -47,7 +47,7 @@ class Client extends HttpClient implements ClientInterface
      * Basic factory method to create a new client.  Extend this method in
      * subclasses to build more complex clients.
      *
-     * @param array|Collection $config (optional) Configuartion data
+     * @param array|Collection $config Configuartion data
      *
      * @return Client
      */
@@ -73,7 +73,7 @@ class Client extends HttpClient implements ClientInterface
      * enabled on the client to use this functionality.
      *
      * @param string $method Name of the command object to instantiate
-     * @param array  $args   (optional) Arguments to pass to the command
+     * @param array  $args   Arguments to pass to the command
      *
      * @return mixed
      * @throws BadMethodCallException when a command is not found or magic
@@ -118,7 +118,7 @@ class Client extends HttpClient implements ClientInterface
      * are found, an InvalidArgumentException is thrown.
      *
      * @param string $name Name of the command to retrieve
-     * @param array $args (optional) Arguments to pass to the command
+     * @param array $args Arguments to pass to the command
      *
      * @return CommandInterface
      * @throws InvalidArgumentException if no command can be found by name
@@ -177,9 +177,9 @@ class Client extends HttpClient implements ClientInterface
      * @param string|CommandInterface $command Command class or command name.
      *     Passing a command name will have the client create the command for
      *     you using $commandOptions array.
-     * @param array $commandOptions (optional) Command options used when
+     * @param array $commandOptions Command options used when
      *     creating commands.
-     * @param array $iteratorOptions (optional) Iterator options passed to the
+     * @param array $iteratorOptions Iterator options passed to the
      *     iterator when it is instantiated.
      *
      * @return ResourceIteratorInterface
@@ -248,7 +248,7 @@ class Client extends HttpClient implements ClientInterface
      *
      * @param ServiceDescription $service Service description that describes
      *     all of the commands and information of the client
-     * @param bool $updateFactory (optional) Set to FALSE to not update the service
+     * @param bool $updateFactory Set to FALSE to not update the service
      *     description based command factory if it is not already present on
      *     the client
      *

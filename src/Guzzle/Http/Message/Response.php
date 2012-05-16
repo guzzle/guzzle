@@ -125,8 +125,8 @@ class Response extends AbstractMessage
      * Construct the response
      *
      * @param string $statusCode The response status code (e.g. 200, 404, etc)
-     * @param Collection|array $headers (optional) The response headers
-     * @param string|resource|EntityBody $body (optional) The body of the response
+     * @param Collection|array $headers The response headers
+     * @param string|resource|EntityBody $body The body of the response
      *
      * @throws BadResponseException if an invalid response code is given
      */
@@ -214,7 +214,7 @@ class Response extends AbstractMessage
     /**
      * Get a cURL transfer information
      *
-     * @param string $key (optional) A single statistic to check
+     * @param string $key A single statistic to check
      *
      * @return array|string|null Returns all stats if no key is set, a single
      *      stat if a key is set, or null if a key is set and not found
@@ -249,7 +249,7 @@ class Response extends AbstractMessage
      * Set the response status
      *
      * @param int $statusCode Response status code to set
-     * @param string $reasonPhrase (optional) Response reason phrase
+     * @param string $reasonPhrase Response reason phrase
      *
      * @return Response
      * @throws BadResponseException when an invalid response code is received
@@ -344,7 +344,7 @@ class Response extends AbstractMessage
     /**
      * Get the Age HTTP header
      *
-     * @param bool $headerOnly (optional) Set to TRUE to only retrieve the
+     * @param bool $headerOnly Set to TRUE to only retrieve the
      *      Age header rather than calculating the age
      *
      * @return integer|null Returns the age the object has been in a proxy cache

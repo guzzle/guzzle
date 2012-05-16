@@ -13,7 +13,7 @@ interface ServiceDescriptionFactoryInterface
      * Create a {@see ServiceDescriptionInterface} object
      *
      * @param string|array $config File to build or array of command information
-     * @param array $options (optional) Factory configuration options.
+     * @param array $options Factory configuration options.
      *     cache.adapter - CacheAdapterInterface used for caching descriptions
      *     cache.description.ttl - TTL for caching built service descriptions
      *

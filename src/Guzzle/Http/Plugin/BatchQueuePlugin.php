@@ -20,7 +20,7 @@ class BatchQueuePlugin implements EventSubscriberInterface, \Countable
     private $queue = array();
 
     /**
-     * @param int $autoFlushCount (optional) Set to >0 to automatically flush
+     * @param int $autoFlushCount Set to >0 to automatically flush
      *     the queue when the number of requests is > $autoFlushCount
      */
     public function __construct($autoFlushCount = 0)

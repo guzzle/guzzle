@@ -37,7 +37,7 @@ class CompositeFactory implements \IteratorAggregate, \Countable, FactoryInterfa
     }
 
     /**
-     * @param array $factories (optional) Array of command factories
+     * @param array $factories Array of command factories
      */
     public function __construct(array $factories = array())
     {
@@ -48,7 +48,7 @@ class CompositeFactory implements \IteratorAggregate, \Countable, FactoryInterfa
      * Add a command factory to the chain
      *
      * @param FactoryInterface $factory Factor to add
-     * @param string|FactoryInterface $before (optional) Insert the new
+     * @param string|FactoryInterface $before Insert the new
      *     command factory before a command factory class or object matching a
      *     class name.
      *
@@ -136,7 +136,7 @@ class CompositeFactory implements \IteratorAggregate, \Countable, FactoryInterfa
      * Create a command using the associated command factories
      *
      * @param string $name Name of the command
-     * @param array  $args (optional) Command arguments
+     * @param array  $args Command arguments
      *
      * @return CommandInterface
      */

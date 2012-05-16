@@ -35,10 +35,10 @@ interface RequestFactoryInterface
      *     # path - e.g. / OR /index.html
      *     # query - after the question mark ?
      *
-     * @param array|Collection $headers (optional) HTTP headers
+     * @param array|Collection $headers HTTP headers
      * @param string|resource|array|EntityBody $body Body to send in the request
-     * @param string $protocol (optional) Protocol (HTTP, SPYDY, etc)
-     * @param string $protocolVersion (optional) 1.0, 1.1, etc
+     * @param string $protocol Protocol (HTTP, SPYDY, etc)
+     * @param string $protocolVersion 1.0, 1.1, etc
      *
      * @return RequestInterface
      */
@@ -51,7 +51,7 @@ interface RequestFactoryInterface
      * @param string $url|Url HTTP URL to connect to.  The URI scheme, host header,
      *      and URI are parsed from the full URL.  If query string parameters
      *      are present they will be parsed as well.
-     * @param array|Collection $headers (optional) HTTP headers
+     * @param array|Collection $headers HTTP headers
      * @param string|resource|array|EntityBody $body Body to send in the request
      *
      * @return RequestInterface

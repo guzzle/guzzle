@@ -79,7 +79,7 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements Resourc
      *
      * @param CommandInterface $command Initial command used for iteration
      *
-     * @param array $data (optional) Associative array of additional parameters.
+     * @param array $data Associative array of additional parameters.
      *      You may specify any number of custom options for an iterator.  Among
      *      these options, you may also specify the following values:
      *

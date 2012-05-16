@@ -58,7 +58,7 @@ class LogPlugin implements EventSubscriberInterface
      * Construct a new LogPlugin
      *
      * @param LogAdapterInterface $logAdapter Adapter object used to log message
-     * @param int $settings (optional) Bitwise settings to use for logging
+     * @param int $settings Bitwise settings to use for logging
      */
     public function __construct(LogAdapterInterface $logAdapter, $settings = self::LOG_CONTEXT)
     {
@@ -83,7 +83,7 @@ class LogPlugin implements EventSubscriberInterface
     /**
      * Change the log settings of the plugin
      *
-     * @param int $settings (optional) Bitwise settings to control what's logged
+     * @param int $settings Bitwise settings to control what's logged
      *
      * @return LogPlugin
      */
@@ -176,7 +176,7 @@ class LogPlugin implements EventSubscriberInterface
      * Log a message based on a request and response
      *
      * @param RequestInterface $request Request to log
-     * @param Response $response (optional) Response to log
+     * @param Response $response Response to log
      */
     private function log(RequestInterface $request, Response $response = null)
     {

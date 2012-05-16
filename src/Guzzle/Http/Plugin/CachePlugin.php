@@ -55,8 +55,8 @@ class CachePlugin implements EventSubscriberInterface
      * Construct a new CachePlugin
      *
      * @param CacheAdapterInterface $adapter Cache adapter to write and read cache data
-     * @param bool $serialize (optional) Set to TRUE to serialize data before writing
-     * @param int $defaultLifetime (optional) The number of seconds that a cache entry
+     * @param bool $serialize Set to TRUE to serialize data before writing
+     * @param int $defaultLifetime The number of seconds that a cache entry
      *     should be considered fresh when no explicit freshness information is provided
      *     in a response. Explicit Cache-Control or Expires headers override this value
      */
@@ -346,7 +346,7 @@ class CachePlugin implements EventSubscriberInterface
      *
      * @param string $key The cache key
      * @param Response $response The response to cache
-     * @param int $lifetime (optional) Amount of seconds to cache
+     * @param int $lifetime Amount of seconds to cache
      *
      * @return int Returns the lifetime of the cached data
      */

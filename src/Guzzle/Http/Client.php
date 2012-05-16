@@ -66,8 +66,8 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * Client constructor
      *
-     * @param string $baseUrl (optional) Base URL of the web service
-     * @param array|Collection $config (optional) Configuration settings
+     * @param string $baseUrl Base URL of the web service
+     * @param array|Collection $config Configuration settings
      */
     public function __construct($baseUrl = '', $config = null)
     {
@@ -158,7 +158,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      * Expand a URI template using client configuration data
      *
      * @param string $template URI template to expand
-     * @param array $variables (optional) Additional variables to use in the expansion
+     * @param array $variables Additional variables to use in the expansion
      *
      * @return string
      */
@@ -204,14 +204,14 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * Create and return a new {@see RequestInterface} configured for the client
      *
-     * @param string $method (optional) HTTP method.  Defaults to GET
-     * @param string|array $uri (optional) Resource URI.  Use an absolute path
+     * @param string $method HTTP method.  Defaults to GET
+     * @param string|array $uri Resource URI.  Use an absolute path
      *      to override the base path of the client, or a relative path to
      *      append to the base path of the client.  The URI can contain the
      *      querystring as well.  Use an array to provide a URI template and
      *      additional variables to use in the URI template expansion.
-     * @param array|Collection $headers (optional) HTTP headers
-     * @param string|resource|array|EntityBody $body (optional) Entity body of
+     * @param array|Collection $headers HTTP headers
+     * @param string|resource|array|EntityBody $body Entity body of
      *      request (POST/PUT) or response (GET)
      *
      * @return RequestInterface
@@ -302,7 +302,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * Get the client's base URL as either an expanded or raw URI template
      *
-     * @param bool $expand (optional) Set to FALSE to get the raw base URL
+     * @param bool $expand Set to FALSE to get the raw base URL
      *    without URI template expansion
      *
      * @return string|null
@@ -331,7 +331,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      * appended to the User-Agent header of all reqeusts.
      *
      * @param string $userAgent User agent string
-     * @param bool $includeDefault (optional) Set to TRUE to append the default
+     * @param bool $includeDefault Set to TRUE to append the default
      *    Guzzle user agent
      *
      * @return Client
@@ -349,12 +349,12 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * Create a GET request for the client
      *
-     * @param string|array $uri (optional) Resource URI of the request.  Use an
+     * @param string|array $uri Resource URI of the request.  Use an
      *      absolute path to override the base path, or a relative path to
      *      append.  Use an array to provide a URI template and additional
      *      variables to use in the URI template expansion.
-     * @param array|Collection $headers (optional) HTTP headers
-     * @param string|resource|array|EntityBody $body (optional) Where to store
+     * @param array|Collection $headers HTTP headers
+     * @param string|resource|array|EntityBody $body Where to store
      *      the response entity body
      *
      * @return Request
@@ -367,11 +367,11 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * Create a HEAD request for the client
      *
-     * @param string|array $uri (optional) Resource URI of the request.  Use an
+     * @param string|array $uri Resource URI of the request.  Use an
      *      absolute path to override the base path, or a relative path to
      *      append.  Use an array to provide a URI template and additional
      *      variables to use in the URI template expansion.
-     * @param array|Collection $headers (optional) HTTP headers
+     * @param array|Collection $headers HTTP headers
      *
      * @return Request
      */
@@ -383,11 +383,11 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * Create a DELETE request for the client
      *
-     * @param string|array $uri (optional) Resource URI of the request.  Use an
+     * @param string|array $uri Resource URI of the request.  Use an
      *      absolute path to override the base path, or a relative path to
      *      append.  Use an array to provide a URI template and additional
      *      variables to use in the URI template expansion.
-     * @param array|Collection $headers (optional) HTTP headers
+     * @param array|Collection $headers HTTP headers
      *
      * @return Request
      */
@@ -399,11 +399,11 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * Create a PUT request for the client
      *
-     * @param string|array $uri (optional) Resource URI of the request.  Use an
+     * @param string|array $uri Resource URI of the request.  Use an
      *      absolute path to override the base path, or a relative path to
      *      append.  Use an array to provide a URI template and additional
      *      variables to use in the URI template expansion.
-     * @param array|Collection $headers (optional) HTTP headers
+     * @param array|Collection $headers HTTP headers
      * @param string|resource|EntityBody $body Body to send in the request
      *
      * @return EntityEnclosingRequest
@@ -416,11 +416,11 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * Create a PATCH request for the client
      *
-     * @param string|array $uri (optional) Resource URI of the request.  Use an
+     * @param string|array $uri Resource URI of the request.  Use an
      *      absolute path to override the base path, or a relative path to
      *      append.  Use an array to provide a URI template and additional
      *      variables to use in the URI template expansion.
-     * @param array|Collection $headers (optional) HTTP headers
+     * @param array|Collection $headers HTTP headers
      * @param string|resource|EntityBody $body Body to send in the request
      *
      * @return EntityEnclosingRequest
@@ -433,12 +433,12 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * Create a POST request for the client
      *
-     * @param string|array $uri (optional) Resource URI of the request.  Use an
+     * @param string|array $uri Resource URI of the request.  Use an
      *      absolute path to override the base path, or a relative path to
      *      append.  Use an array to provide a URI template and additional
      *      variables to use in the URI template expansion.
-     * @param array|Collection $headers (optional) HTTP headers
-     * @param array|Collection|string|EntityBody $postBody (optional) POST
+     * @param array|Collection $headers HTTP headers
+     * @param array|Collection|string|EntityBody $postBody POST
      *      body.  Can be a string, EntityBody, or associative array of POST
      *      fields to send in the body of the request.  Prefix a value in the
      *      array with the @ symbol reference a file.
@@ -453,7 +453,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * Create an OPTIONS request for the client
      *
-     * @param string|array $uri (optional) Resource URI of the request.  Use an
+     * @param string|array $uri Resource URI of the request.  Use an
      *      absolute path to override the base path, or a relative path to
      *      append.  Use an array to provide a URI template and additional
      *      variables to use in the URI template expansion.

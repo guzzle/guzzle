@@ -13,7 +13,7 @@ interface FactoryInterface
      * Create a command by name
      *
      * @param string $name Command to create
-     * @param array  $args (optional) Command arguments
+     * @param array  $args Command arguments
      *
      * @return null|CommandInterface
      */

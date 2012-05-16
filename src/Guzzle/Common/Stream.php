@@ -51,7 +51,7 @@ class Stream
      * Construct a new Stream
      *
      * @param resource $stream Stream resource to wrap
-     * @param int $size (optional) Size of the stream in bytes.  Only pass this
+     * @param int $size Size of the stream in bytes.  Only pass this
      *      parameter if the size cannot be obtained from the stream.
      *
      * @throws InvalidArgumentException if the stream is not a stream resource
@@ -113,7 +113,7 @@ class Stream
     /**
      * Get stream metadata
      *
-     * @param string $key (optional) Specific metdata to retrieve
+     * @param string $key Specific metdata to retrieve
      *
      * @return array|mixed|null
      */
@@ -269,7 +269,7 @@ class Stream
      * Seek to a position in the stream
      *
      * @param int $offset Stream offset
-     * @param int $whence (optional) Where the offset is applied
+     * @param int $whence Where the offset is applied
      *
      * @return bool Returns TRUE on success or FALSE on failure
      * @see http://www.php.net/manual/en/function.fseek.php

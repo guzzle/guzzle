@@ -15,9 +15,9 @@ interface EntityEnclosingRequestInterface extends RequestInterface
      *
      * @param string|resource|EntityBody $body Body to use in the entity body
      *      of the request
-     * @param string $contentType (optional) Content-Type to set.  Leave null
+     * @param string $contentType Content-Type to set.  Leave null
      *      to use an existing Content-Type or to guess the Content-Type
-     * @param bool $tryChunkedTransfer (optional) Set to TRUE to try to use
+     * @param bool $tryChunkedTransfer Set to TRUE to try to use
      *      Tranfer-Encoding chunked
      *
      * @return EntityEnclosingRequestInterface

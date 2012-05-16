@@ -25,7 +25,7 @@ class CommandSet implements \IteratorAggregate, \Countable
     /**
      * Constructor
      *
-     * @param array $commands (optional) Array of commands to add to the set
+     * @param array $commands Array of commands to add to the set
      */
     public function __construct(array $commands = null)
     {

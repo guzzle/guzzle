@@ -18,7 +18,7 @@ class Zf2CacheAdapter extends AbstractCacheAdapter
 
     /**
      * @param Adapter $cache   Zend Framework 2 cache adapter
-     * @param array   $options (optional) Hash of default options for each
+     * @param array   $options Hash of default options for each
      *     cache method.  Array can contain for 'contains', 'delete', 'fetch',
      *     and 'save'.  Each key must map to an associative array of options
      *     to merge into the options argument passed into each respective call.

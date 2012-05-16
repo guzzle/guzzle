@@ -51,8 +51,8 @@ class HeaderComparison
      *
      * @param array $expected Expected HTTP headers (allows wildcard values)
      * @param array|Collection $actual Actual HTTP header array
-     * @param array $ignore (optional) Headers to ignore from the comparison
-     * @param array $absent (optional) Array of headers that must not be present
+     * @param array $ignore Headers to ignore from the comparison
+     * @param array $absent Array of headers that must not be present
      *
      * @return array|false Returns an array of the differences or FALSE if none
      */

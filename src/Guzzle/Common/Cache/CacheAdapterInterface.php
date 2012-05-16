@@ -17,7 +17,7 @@ interface CacheAdapterInterface
      * Test if an entry exists in the cache.
      *
      * @param string $id cache id The cache id of the entry to check for.
-     * @param array  $options (optional) Array of cache adapter options
+     * @param array  $options Array of cache adapter options
      *
      * @return bool TRUE if a cache entry exists for the given cache id,
      *      FALSE otherwise.
@@ -28,7 +28,7 @@ interface CacheAdapterInterface
      * Deletes a cache entry.
      *
      * @param string $id cache id
-     * @param array  $options (optional) Array of cache adapter options
+     * @param array  $options Array of cache adapter options
      *
      * @return bool TRUE on success, FALSE on failure
      */
@@ -38,7 +38,7 @@ interface CacheAdapterInterface
      * Fetches an entry from the cache.
      *
      * @param string $id cache id The id of the cache entry to fetch.
-     * @param array  $options (optional) Array of cache adapter options
+     * @param array  $options Array of cache adapter options
      *
      * @return string The cached data or FALSE, if no cache entry exists
      *     for the given id.
@@ -52,7 +52,7 @@ interface CacheAdapterInterface
      * @param string $data The cache entry/data.
      * @param int    $lifeTime The lifetime. If != false, sets a specific
      *     lifetime for this cache entry (null => infinite lifeTime).
-     * @param array  $options (optional) Array of cache adapter options
+     * @param array  $options Array of cache adapter options
      *
      * @return bool TRUE if the entry was successfully stored in the cache,
      *      FALSE otherwise.

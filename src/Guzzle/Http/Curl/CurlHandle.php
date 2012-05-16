@@ -293,7 +293,7 @@ class CurlHandle
     /**
      * Get cURL curl_getinfo data
      *
-     * @param int $option (optional) Option to retrieve.  Pass null to retrieve
+     * @param int $option Option to retrieve.  Pass null to retrieve
      *      retrieve all data as an array or pass a CURLINFO_* constant
      *
      * @return array|mixed
@@ -314,7 +314,7 @@ class CurlHandle
     /**
      * Get the stderr output
      *
-     * @param bool $asResource (optional) Set to TRUE to get an fopen resource
+     * @param bool $asResource Set to TRUE to get an fopen resource
      *
      * @return string|resource|null
      */

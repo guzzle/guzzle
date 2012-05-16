@@ -47,7 +47,7 @@ class Server
     /**
      * Create a new scripted server
      *
-     * @param int $port (optional) Port to listen on (defaults to 8124)
+     * @param int $port Port to listen on (defaults to 8124)
      */
     public function __construct($port = null)
     {
@@ -167,7 +167,7 @@ class Server
     /**
      * Get all of the received requests
      *
-     * @param bool $hydrate (optional) Set to TRUE to turn the messages into
+     * @param bool $hydrate Set to TRUE to turn the messages into
      *      actual {@see RequestInterface} objects.  If $hydrate is FALSE,
      *      requests will be returned as strings.
      *

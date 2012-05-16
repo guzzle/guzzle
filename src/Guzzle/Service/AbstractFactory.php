@@ -60,7 +60,7 @@ abstract class AbstractFactory
     /**
      * Throw an exception when the abstract factory cannot instantiate anything
      *
-     * @param string $message (optional) Message for the exception
+     * @param string $message Message for the exception
      *
      * @return string
      * @throws Exception
