@@ -316,4 +316,44 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
             'a' => array('b', 'c')
         ), $request->getPostFields()->getAll());
     }
+
+    /**
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFiles
+     */
+    public function testIgnoresEmptyFiles()
+    {
+        $request = new EntityEnclosingRequest('POST', 'http://test.com/');
+        $request->addPostFiles(array(
+            'a' => '',
+            'b' => null,
+            'c' => new \stdClass()
+        ));
+        $this->assertEquals(array(), $request->getPostFiles());
+        $this->assertEquals(array(), $request->getPostFields()->getAll());
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFields
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::getPostFiles
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::getPostFields
+     */
+    public function testHandlesEmptyStrings()
+    {
+        $request = new EntityEnclosingRequest('POST', 'http://test.com/');
+        $request->addPostFields(array(
+            'a' => '',
+            'b' => null,
+            'c' => 'Foo',
+            'd' => '@' . __FILE__
+        ));
+        $this->assertEquals(array(
+            'a' => '',
+            'b' => null,
+            'c' => 'Foo',
+            'd' => '@' . __FILE__
+        ), $request->getPostFields()->getAll());
+        $this->assertEquals(array(
+            'd' => __FILE__
+        ), $request->getPostFiles());
+    }
 }

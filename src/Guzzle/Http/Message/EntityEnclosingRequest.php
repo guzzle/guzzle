@@ -129,7 +129,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     {
         $files = array();
         foreach ($this->postFields as $key => $value) {
-            if (is_string($value) && $value[0] == '@') {
+            if (is_string($value) && substr($value, 0, 1) == '@') {
                 $files[$key] = substr($value, 1);
             }
         }
@@ -174,25 +174,30 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
      * @param array $files An array of filenames to POST
      *
      * @return EntityEnclosingRequest
-     * @throws BodyException if the file cannot be read
+     * @throws RequestException if the file cannot be read
      */
     public function addPostFiles(array $files)
     {
         foreach ((array) $files as $key => $file) {
 
+            if (!is_string($file) || empty($file)) {
+                continue;
+            }
+
+            // Convert non-associative array keys into 'file'
             if (is_numeric($key)) {
                 $key = 'file';
             }
 
-            $found = ($file[0] == '@')
-                ? is_readable(substr($file, 1))
-                : is_readable($file);
-            if (!$found) {
-                throw new RequestException('File cannot be opened for reading: ' . $file);
-            }
+            // PHP's curl bindings require a leading @ for POST files
             if ($file[0] != '@') {
                 $file = '@' . $file;
             }
+
+            if (!is_readable(substr($file, 1))) {
+                throw new RequestException('File cannot be opened for reading: ' . $file);
+            }
+
             $this->postFields->add($key, $file);
         }
 
