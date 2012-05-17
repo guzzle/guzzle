@@ -272,7 +272,7 @@ class Stream
      * @param int $whence Where the offset is applied
      *
      * @return bool Returns TRUE on success or FALSE on failure
-     * @see http://www.php.net/manual/en/function.fseek.php
+     * @link http://www.php.net/manual/en/function.fseek.php
      */
     public function seek($offset, $whence = SEEK_SET)
     {
