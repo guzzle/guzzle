@@ -3,7 +3,6 @@
 namespace Guzzle\Service\Command;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\NullObject;
 use Guzzle\Common\Exception\BadMethodCallException;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\Response;
@@ -62,13 +61,18 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     {
         parent::__construct($parameters);
 
-        // Add arguments and defaults to the command
+        // If this is a concrete command, then add a default ApiCommand object
         if ($apiCommand) {
             $this->apiCommand = $apiCommand;
-            $this->getInspector()->validateConfig($apiCommand->getParams(), $this, false, false);
         } else {
-            $this->getInspector()->validateClass(get_class($this), $this, false, false);
+            $this->apiCommand = new ApiCommand(array(
+                'class'  => __CLASS__,
+                'params' => $this->getInspector()->parseDocblock($this)
+            ));
         }
+
+        // Set default values on the command
+        $this->getInspector()->validateConfig($this->apiCommand->getParams(), $this, false, false);
 
         $headers = $this->get('headers');
         if (!$headers instanceof Collection) {
@@ -150,11 +154,11 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     /**
      * Get the API command information about the command
      *
-     * @return ApiCommand|NullObject
+     * @return ApiCommand
      */
     public function getApiCommand()
     {
-        return $this->apiCommand ?: new NullObject();
+        return $this->apiCommand;
     }
 
     /**
@@ -306,11 +310,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             }
 
             // Fail on missing required arguments
-            if ($this->apiCommand) {
-                $this->getInspector()->validateConfig($this->apiCommand->getParams(), $this, true);
-            } else {
-                $this->getInspector()->validateClass(get_class($this), $this, true);
-            }
+            $this->getInspector()->validateConfig($this->apiCommand->getParams(), $this, true);
 
             $this->build();
 

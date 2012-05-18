@@ -12,7 +12,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * OAuth signing plugin
- * @see http://oauth.net/core/1.0/#rfc.section.9.1.1
+ * @link http://oauth.net/core/1.0/#rfc.section.9.1.1
  */
 class OauthPlugin implements EventSubscriberInterface
 {

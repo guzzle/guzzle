@@ -101,19 +101,6 @@ class Inspector
     }
 
     /**
-     * Enable/disable type validation of configuration settings.  This is
-     * useful for very high performance requirements.
-     *
-     * @param bool $typeValidation Set to TRUE or FALSE
-     *
-     * @return Inspector
-     */
-    public function setTypeValidation($typeValidation)
-    {
-        $this->typeValidation = $typeValidation;
-    }
-
-    /**
      * Validate and prepare configuration parameters
      *
      * @param array $config   Configuration values to apply.
@@ -141,6 +128,19 @@ class Inspector
     }
 
     /**
+     * Enable/disable type validation of configuration settings.  This is
+     * useful for very high performance requirements.
+     *
+     * @param bool $typeValidation Set to TRUE or FALSE
+     *
+     * @return Inspector
+     */
+    public function setTypeValidation($typeValidation)
+    {
+        $this->typeValidation = $typeValidation;
+    }
+
+    /**
      * Get an array of the registered constraints by name
      *
      * @return array
@@ -164,143 +164,6 @@ class Inspector
     public function registerConstraint($name, $class, array $default = array())
     {
         $this->constraints[$name] = array($class, $default);
-    }
-
-    /**
-     * Get the Guzzle arguments from a DocBlock
-     *
-     * @param string $doc DocBlock to parse
-     *
-     * @return array Returns an associative array of the parsed docblock params
-     */
-    public function parseDocBlock($doc)
-    {
-        $matches = array();
-        // Get all of the @guzzle annotations from the class
-        preg_match_all('/' . self::GUZZLE_ANNOTATION . '\s+([A-Za-z0-9_\-\.]+)\s*([A-Za-z0-9]+=".+")*/', $doc, $matches);
-        if (empty($matches[1])) {
-            return array();
-        }
-
-        $params = array();
-        foreach ($matches[1] as $index => $match) {
-            // Add the matched argument to the array keys
-            $params[$match] = array();
-            if (isset($matches[2])) {
-                // Break up the argument attributes by closing quote
-                foreach (explode('" ', $matches[2][$index]) as $part) {
-                    $attrs = array();
-                    // Find the attribute and attribute value
-                    preg_match('/([A-Za-z0-9]+)="(.+)"*/', $part, $attrs);
-                    if (isset($attrs[1]) && isset($attrs[0])) {
-                        // Sanitize the strings
-                        if ($attrs[2][strlen($attrs[2]) - 1] == '"') {
-                            $attrs[2] = substr($attrs[2], 0, strlen($attrs[2]) - 1);
-                        }
-                        $params[$match][$attrs[1]] = $attrs[2];
-                    }
-                }
-            }
-            $params[$match] = new ApiParam($params[$match]);
-        }
-
-        return $params;
-    }
-
-    /**
-     * Validates that a class has all of the required configuration settings
-     *
-     * @param string     $className Name of the class to use to retrieve args
-     * @param Collection $config    Configuration settings
-     * @param bool       $strict    Set to FALSE to allow missing required fields
-     * @param bool       $validate  Set to TRUE or FALSE to validate data.
-     *                              Set to false when you only need to add
-     *                              default values and statics.
-     *
-     * @return array|bool Returns an array of errors or TRUE on success
-     * @throws InvalidArgumentException if any args are missing and $strict is TRUE
-     */
-    public function validateClass($className, Collection $config, $strict = true, $validate = true)
-    {
-        if (!isset($this->cache[$className])) {
-            $reflection = new \ReflectionClass($className);
-            $this->cache[$className] = $this->parseDocBlock($reflection->getDocComment());
-        }
-
-        return $this->validateConfig($this->cache[$className], $config, $strict, $validate);
-    }
-
-    /**
-     * Validates that all required args are included in a config object,
-     * and if not, throws an InvalidArgumentException with a helpful error message.  Adds
-     * default args to the passed config object if the parameter was not
-     * set in the config object.
-     *
-     * @param array      $params   Params to validate
-     * @param Collection $config   Configuration settings
-     * @param bool       $strict   Set to FALSE to allow missing required fields
-     * @param bool       $validate Set to TRUE or FALSE to validate data.
-     *                             Set to false when you only need to add
-     *                             default values and statics.
-     *
-     * @return array|bool Returns an array of errors or TRUE on success
-     *
-     * @throws InvalidArgumentException if any args are missing and $strict is TRUE
-     */
-    public function validateConfig(array $params, Collection $config, $strict = true, $validate = true)
-    {
-        $errors = array();
-
-        foreach ($params as $name => $arg) {
-
-            // Set the default or static value if it is not set
-            $configValue = $arg->getValue($config->get($name));
-
-            // Inject configuration information into the config value
-            if (is_string($configValue)) {
-                $configValue = $config->inject($configValue);
-            }
-
-            // Ensure that required arguments are set
-            if ($validate && $arg->getRequired() && ($configValue === null || $configValue === '')) {
-                $errors[] = 'Requires that the ' . $name . ' argument be supplied.' . ($arg->getDoc() ? '  (' . $arg->getDoc() . ').' : '');
-                continue;
-            }
-
-            // Ensure that the correct data type is being used
-            if ($validate && $this->typeValidation && $configValue !== null && $argType = $arg->getType()) {
-                $validation = $this->validateConstraint($argType, $configValue);
-                if ($validation !== true) {
-                    $errors[] = $name . ': ' . $validation;
-                    continue;
-                }
-            }
-
-            // Run the value through attached filters
-            $configValue = $arg->filter($configValue);
-            $config->set($name, $configValue);
-
-            // Check the length values if validating data
-            if ($validate) {
-                $argMinLength = $arg->getMinLength();
-                if ($argMinLength && strlen($configValue) < $argMinLength) {
-                    $errors[] = 'Requires that the ' . $name . ' argument be >= ' . $arg->getMinLength() . ' characters.';
-                }
-
-                $argMaxLength = $arg->getMaxLength();
-                if ($argMaxLength && strlen($configValue) > $argMaxLength) {
-                    $errors[] = 'Requires that the ' . $name . ' argument be <= ' . $arg->getMaxLength() . ' characters.';
-                }
-            }
-        }
-
-        if (empty($errors)) {
-            return true;
-        } elseif ($strict) {
-            throw new ValidationException('Validation errors: ' . implode("\n", $errors));
-        }
-
-        return $errors;
     }
 
     /**
@@ -350,5 +213,130 @@ class Inspector
         }
 
         return $constraint->validate($value, $args);
+    }
+
+    /**
+     * Get the Guzzle arguments from a DocBlock
+     *
+     * @param Object|string $class Name of a class or object to parse
+     *
+     * @return array Returns an associative array of the parsed docblock params
+     */
+    public function parseDocBlock($class)
+    {
+        if (!is_string($class)) {
+            $class = get_class($class);
+        }
+
+        if (!isset($this->cache[$class])) {
+
+            $reflection = new \ReflectionClass($class);
+            $doc = $reflection->getDocComment();
+
+            // Get all of the @guzzle annotations from the class
+            $matches = array();
+            preg_match_all('/' . self::GUZZLE_ANNOTATION . '\s+([A-Za-z0-9_\-\.]+)\s*([A-Za-z0-9]+=".+")*/', $doc, $matches);
+
+            $params = array();
+            if (!empty($matches[1])) {
+                foreach ($matches[1] as $index => $match) {
+                    // Add the matched argument to the array keys
+                    $params[$match] = array();
+                    if (isset($matches[2])) {
+                        // Break up the argument attributes by closing quote
+                        foreach (explode('" ', $matches[2][$index]) as $part) {
+                            $attrs = array();
+                            // Find the attribute and attribute value
+                            preg_match('/([A-Za-z0-9]+)="(.+)"*/', $part, $attrs);
+                            if (isset($attrs[1]) && isset($attrs[0])) {
+                                // Sanitize the strings
+                                if ($attrs[2][strlen($attrs[2]) - 1] == '"') {
+                                    $attrs[2] = substr($attrs[2], 0, strlen($attrs[2]) - 1);
+                                }
+                                $params[$match][$attrs[1]] = $attrs[2];
+                            }
+                        }
+                    }
+                    $params[$match] = new ApiParam($params[$match]);
+                }
+            }
+
+            $this->cache[$class] = $params;
+        }
+
+        return $this->cache[$class];
+    }
+
+    /**
+     * Validates that all required args are included in a config object,
+     * and if not, throws an InvalidArgumentException with a helpful error message.  Adds
+     * default args to the passed config object if the parameter was not
+     * set in the config object.
+     *
+     * @param array      $params   Params to validate
+     * @param Collection $config   Configuration settings
+     * @param bool       $strict   Set to FALSE to allow missing required fields
+     * @param bool       $validate Set to TRUE or FALSE to validate data.
+     *                             Set to false when you only need to add
+     *                             default values and statics.
+     *
+     * @return array|bool Returns an array of errors or TRUE on success
+     *
+     * @throws InvalidArgumentException if any args are missing and $strict is TRUE
+     */
+    public function validateConfig(array $params, Collection $config, $strict = true, $validate = true)
+    {
+        $errors = array();
+
+        foreach ($params as $name => $arg) {
+
+            // Set the default or static value if it is not set
+            $configValue = $arg->getValue($config->get($name));
+
+            // Inject configuration information into the config value
+            if ($configValue && is_string($configValue)) {
+                $configValue = $config->inject($configValue);
+            }
+
+            // Ensure that required arguments are set
+            if ($validate && $arg->getRequired() && ($configValue === null || $configValue === '')) {
+                $errors[] = 'Requires that the ' . $name . ' argument be supplied.' . ($arg->getDoc() ? '  (' . $arg->getDoc() . ').' : '');
+                continue;
+            }
+
+            // Ensure that the correct data type is being used
+            if ($validate && $this->typeValidation && $configValue !== null && $argType = $arg->getType()) {
+                $validation = $this->validateConstraint($argType, $configValue);
+                if ($validation !== true) {
+                    $errors[] = $name . ': ' . $validation;
+                    continue;
+                }
+            }
+
+            // Run the value through attached filters
+            $configValue = $arg->filter($configValue);
+            $config->set($name, $configValue);
+
+            // Check the length values if validating data
+            if ($validate) {
+                $argMinLength = $arg->getMinLength();
+                if ($argMinLength && strlen($configValue) < $argMinLength) {
+                    $errors[] = 'Requires that the ' . $name . ' argument be >= ' . $arg->getMinLength() . ' characters.';
+                }
+
+                $argMaxLength = $arg->getMaxLength();
+                if ($argMaxLength && strlen($configValue) > $argMaxLength) {
+                    $errors[] = 'Requires that the ' . $name . ' argument be <= ' . $arg->getMaxLength() . ' characters.';
+                }
+            }
+        }
+
+        if (empty($errors)) {
+            return true;
+        } elseif ($strict) {
+            throw new ValidationException('Validation errors: ' . implode("\n", $errors));
+        }
+
+        return $errors;
     }
 }
