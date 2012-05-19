@@ -115,7 +115,7 @@ class BatchQueuePlugin implements EventSubscriberInterface, \Countable
         // Prepare each request for their respective curl multi objects
         while ($request = array_shift($this->queue)) {
             $multi = $request->getClient()->getCurlMulti();
-            $multi->add($request, true);
+            $multi->add($request);
             if (!in_array($multi, $multis)) {
                 $multis[] = $multi;
             }

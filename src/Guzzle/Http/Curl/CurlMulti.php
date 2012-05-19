@@ -147,11 +147,13 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     /**
      * {@inheritdoc}
      *
-     * Adds a request to the next scope (or batch or requests to be sent).  If
-     * a request is added using async, then the request is added to the current
-     * scope.  This means that the request will be sent and polled if requests
-     * are currently being sent, or that the request will be sent in the next
-     * send operation.
+     * Adds a request to a batch of requests to be sent in parallel.
+     *
+     * Async requests adds a request to the current scope to be executed in
+     * parallel with any currently executing cURL handles.  You may only add an
+     * async request while other requests are transferring.  Attempting to add
+     * an async request while no requests are transferring will add the request
+     * normally in the next available scope (typically 0).
      *
      * @param RequestInterface $request Request to add
      * @param bool             $async   Set to TRUE to add to the current scope
@@ -160,8 +162,13 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      */
     public function add(RequestInterface $request, $async = false)
     {
+        if ($async && $this->state != self::STATE_SENDING) {
+            $async = false;
+        }
+
         $this->requestCache = null;
         $scope = $async ? $this->scope : $this->scope + 1;
+
         if (!isset($this->requests[$scope])) {
             $this->requests[$scope] = array();
         }
@@ -170,7 +177,9 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
             'request' => $request
         ));
 
-        if ($this->state == self::STATE_SENDING) {
+        // If requests are currently transferring and this is async, then the
+        // request must be prepared now as the send() method is not called.
+        if ($this->state == self::STATE_SENDING && $async) {
             $this->beforeSend($request);
         }
 
@@ -262,27 +271,29 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     public function send()
     {
         $this->scope++;
+        $this->state = self::STATE_SENDING;
 
-        // Don't prepare for sending again if send() is called while sending
-        if ($this->state != self::STATE_SENDING) {
-            $requests = $this->all();
+        // Only prepare and send requests that are in the current recursion scope
+        // Only enter the main perform() loop if there are requests in scope
+        if (!empty($this->requests[$this->scope])) {
+
             // Any exceptions thrown from this event should break the entire
             // flow of sending requests in parallel to prevent weird errors
             $this->dispatch(self::BEFORE_SEND, array(
-                'requests' => $requests
+                'requests' => $this->requests[$this->scope]
             ));
-            $this->state = self::STATE_SENDING;
-            foreach ($requests as $request) {
+
+            foreach ($this->requests[$this->scope] as $request) {
                 if ($request->getState() != RequestInterface::STATE_TRANSFER) {
                     $this->beforeSend($request);
                 }
             }
-        }
 
-        try {
-            $this->perform();
-        } catch (\Exception $e) {
-            $this->exceptions[] = $e;
+            try {
+                $this->perform();
+            } catch (\Exception $e) {
+                $this->exceptions[] = $e;
+            }
         }
 
         $this->scope--;
@@ -391,8 +402,6 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
 
             $active = $this->executeHandles();
 
-            $curlErrors = false;
-
             // Get messages from curl handles
             while ($done = curl_multi_info_read($this->multiHandle)) {
                 foreach ($this->all() as $request) {
@@ -402,18 +411,10 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
                             $this->processResponse($request, $handle, $done);
                         } catch (\Exception $e) {
                             $this->removeErroredRequest($request, $e);
-                            $curlErrors = true;
                         }
                         break;
                     }
                 }
-            }
-
-            // We need to check if every request has been fulfilled or has
-            // encountered an error when any curl errors are encountered to
-            // avoind an endless loop.
-            if ($curlErrors && empty($this->requestCache)) {
-                break;
             }
 
             // Notify each request as polling and handled queued responses

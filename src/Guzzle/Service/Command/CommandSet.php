@@ -90,7 +90,7 @@ class CommandSet implements \IteratorAggregate, \Countable
                 $command->getClient()->dispatch('command.before_send', array(
                     'command' => $command
                 ));
-                $command->getClient()->getCurlMulti()->add($command->getRequest(), true);
+                $command->getClient()->getCurlMulti()->add($command->getRequest());
                 if (!in_array($command->getClient()->getCurlMulti(), $multis)) {
                     $multis[] = $command->getClient()->getCurlMulti();
                 }

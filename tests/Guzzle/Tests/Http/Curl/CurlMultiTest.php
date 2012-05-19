@@ -560,4 +560,18 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
             $this->assertEquals('Unexpected cURL error: 255', $e->getMessage());
         }
     }
+
+    /**
+     * @covers Guzzle\Http\Curl\curlMulti::add
+     */
+    public function testAddsAsyncRequestsNormallyWhenNotSending()
+    {
+        $multi = new CurlMulti();
+        $request = new Request('GET', 'http://www.google.com/');
+        $multi->add($request, true);
+
+        // Ensure that the request was added at the correct next scope
+        $requests = $this->readAttribute($multi, 'requests');
+        $this->assertEquals(array($request), $requests[0]);
+    }
 }
