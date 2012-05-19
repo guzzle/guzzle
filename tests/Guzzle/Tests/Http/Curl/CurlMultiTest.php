@@ -332,7 +332,6 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
 
         $requests = array(
             $client->get(),
-            $client->get(),
             $client->get()
         );
 
@@ -355,7 +354,7 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
 
         $client->send($requests);
 
-        $this->assertEquals(5, count($this->getServer()->getReceivedRequests(false)));
+        $this->assertEquals(4, count($this->getServer()->getReceivedRequests(false)));
     }
 
     /**

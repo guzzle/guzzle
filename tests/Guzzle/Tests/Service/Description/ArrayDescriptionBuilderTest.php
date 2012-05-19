@@ -26,7 +26,7 @@ class ArrayDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
                     )
                 ),
                 'abstract2' => array(
-                    'path' => '/test',
+                    'uri'     => '/test',
                     'extends' => 'abstract'
                 ),
                 'concrete' => array(

@@ -17,7 +17,7 @@ class ClosureCacheAdapter implements CacheAdapterInterface
     /**
      * @param array $callables Callables to use with each cache adapter method.
      *                         The required array keys are 'contains', 'delete',
-     *                         'fetch', and 'save' where each key maps to a 
+     *                         'fetch', and 'save' where each key maps to a
      *                         closure or callable function.
      *
      *     - contains: Callable that accepts an $id and $options argument

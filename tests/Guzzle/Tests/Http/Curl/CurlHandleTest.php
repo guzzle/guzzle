@@ -11,6 +11,7 @@ use Guzzle\Http\Client;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Curl\CurlHandle;
+use Guzzle\Http\Curl\CurlMulti;
 use Guzzle\Tests\Mock\MockObserver;
 
 /**

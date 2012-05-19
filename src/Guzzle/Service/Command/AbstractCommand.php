@@ -61,13 +61,22 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     {
         parent::__construct($parameters);
 
-        // If this is a concrete command, then add a default ApiCommand object
         if ($apiCommand) {
+
             $this->apiCommand = $apiCommand;
+
         } else {
+
+            // If this is a concrete command, then build an ApiCommand object
+            $className = get_class($this);
+
+            // Determine the name of the command based on the relation to the
+            // client that executes the command
+
             $this->apiCommand = new ApiCommand(array(
-                'class'  => __CLASS__,
-                'params' => $this->getInspector()->parseDocblock($this)
+                'name'   => str_replace('\\_', '.', Inflector::snake(substr($className, strpos($className, 'Command') + 8))),
+                'class'  => $className,
+                'params' => $this->getInspector()->getApiParamsForClass($className)
             ));
         }
 
@@ -139,16 +148,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
      */
     public function getName()
     {
-        if ($this->apiCommand) {
-            return $this->apiCommand->getName();
-        } else {
-            // Determine the name of the command based on the relation to the
-            // client that executes the command
-            $parts = explode('\\', get_class($this));
-            while (array_shift($parts) !== 'Command');
-
-            return implode('.', array_map(array('Guzzle\\Service\\Inflector', 'snake'), $parts));
-        }
+        return $this->apiCommand->getName();
     }
 
     /**

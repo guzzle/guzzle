@@ -43,12 +43,11 @@ class XmlDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array(
             'name' => 'bucket',
             'required' => true,
-            'location' => 'path',
             'doc' => 'Bucket location'
         ), array_filter($command->getParam('bucket')->toArray()));
 
         $this->assertEquals('DELETE', $command->getMethod());
-        $this->assertEquals('{{ bucket }}/{{ key }}{{ format }}', $command->getUri());
+        $this->assertEquals('{ bucket }/{ key }{ format }', $command->getUri());
         $this->assertEquals('Documentation', $command->getDoc());
 
         $this->assertArrayHasKey('custom_filter', Inspector::getInstance()->getRegisteredConstraints());

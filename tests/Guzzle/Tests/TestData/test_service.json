@@ -3,7 +3,7 @@
     "types": {},
     "commands": {
         "test": {
-            "path": "/path"
+            "uri": "/path"
         },
         "concrete": {
             "extends": "abstract"

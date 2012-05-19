@@ -110,12 +110,14 @@ class Inspector
      * @return Collection
      * @throws InvalidArgumentException if a parameter is missing
      */
-    public static function prepareConfig(array $config = null, $defaults = null, $required = null)
+    public static function prepareConfig(array $config = null, array $defaults = null, array $required = null)
     {
-        $collection = new Collection((array) $defaults);
+        $collection = new Collection($defaults);
+
         foreach ((array) $config as $key => $value) {
             $collection->set($key, $value);
         }
+
         foreach ((array) $required as $key) {
             if ($collection->hasKey($key) === false) {
                 throw new ValidationException(
@@ -216,52 +218,17 @@ class Inspector
     }
 
     /**
-     * Get the Guzzle arguments from a DocBlock
+     * Get an array of ApiParam objects for a class using @guzzle annotations
      *
-     * @param Object|string $class Name of a class or object to parse
+     * @param string $class Name of a class to parse
      *
-     * @return array Returns an associative array of the parsed docblock params
+     * @return array Returns an array of ApiParam objects
      */
-    public function parseDocBlock($class)
+    public function getApiParamsForClass($class)
     {
-        if (!is_string($class)) {
-            $class = get_class($class);
-        }
-
         if (!isset($this->cache[$class])) {
-
             $reflection = new \ReflectionClass($class);
-            $doc = $reflection->getDocComment();
-
-            // Get all of the @guzzle annotations from the class
-            $matches = array();
-            preg_match_all('/' . self::GUZZLE_ANNOTATION . '\s+([A-Za-z0-9_\-\.]+)\s*([A-Za-z0-9]+=".+")*/', $doc, $matches);
-
-            $params = array();
-            if (!empty($matches[1])) {
-                foreach ($matches[1] as $index => $match) {
-                    // Add the matched argument to the array keys
-                    $params[$match] = array();
-                    if (isset($matches[2])) {
-                        // Break up the argument attributes by closing quote
-                        foreach (explode('" ', $matches[2][$index]) as $part) {
-                            $attrs = array();
-                            // Find the attribute and attribute value
-                            preg_match('/([A-Za-z0-9]+)="(.+)"*/', $part, $attrs);
-                            if (isset($attrs[1]) && isset($attrs[0])) {
-                                // Sanitize the strings
-                                if ($attrs[2][strlen($attrs[2]) - 1] == '"') {
-                                    $attrs[2] = substr($attrs[2], 0, strlen($attrs[2]) - 1);
-                                }
-                                $params[$match][$attrs[1]] = $attrs[2];
-                            }
-                        }
-                    }
-                    $params[$match] = new ApiParam($params[$match]);
-                }
-            }
-
-            $this->cache[$class] = $params;
+            $this->cache[$class] = $this->parseDocBlock($reflection->getDocComment());
         }
 
         return $this->cache[$class];
@@ -338,5 +305,45 @@ class Inspector
         }
 
         return $errors;
+    }
+
+    /**
+     * Get the Guzzle arguments from a DocBlock
+     *
+     * @param string $doc Docblock to parse
+     *
+     * @return array Returns an associative array of ApiParam objects
+     */
+    protected function parseDocBlock($doc)
+    {
+        // Get all of the @guzzle annotations from the class
+        $matches = array();
+        preg_match_all('/' . self::GUZZLE_ANNOTATION . '\s+([A-Za-z0-9_\-\.]+)\s*([A-Za-z0-9]+=".+")*/', $doc, $matches);
+
+        $params = array();
+        if (!empty($matches[1])) {
+            foreach ($matches[1] as $index => $match) {
+                // Add the matched argument to the array keys
+                $params[$match] = array();
+                if (isset($matches[2])) {
+                    // Break up the argument attributes by closing quote
+                    foreach (explode('" ', $matches[2][$index]) as $part) {
+                        $attrs = array();
+                        // Find the attribute and attribute value
+                        preg_match('/([A-Za-z0-9]+)="(.+)"*/', $part, $attrs);
+                        if (isset($attrs[1]) && isset($attrs[0])) {
+                            // Sanitize the strings
+                            if ($attrs[2][strlen($attrs[2]) - 1] == '"') {
+                                $attrs[2] = substr($attrs[2], 0, strlen($attrs[2]) - 1);
+                            }
+                            $params[$match][$attrs[1]] = $attrs[2];
+                        }
+                    }
+                }
+                $params[$match] = new ApiParam($params[$match]);
+            }
+        }
+
+        return $params;
     }
 }

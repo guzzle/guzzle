@@ -18,7 +18,7 @@ interface CacheAdapterInterface
      * @param string $id      cache id The cache id of the entry to check for.
      * @param array  $options Array of cache adapter options
      *
-     * @return bool Returns TRUE if a cache entry exists for the given cache 
+     * @return bool Returns TRUE if a cache entry exists for the given cache
      *              id, FALSE otherwise.
      */
     function contains($id, array $options = null);

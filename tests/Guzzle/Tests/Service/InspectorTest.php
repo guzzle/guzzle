@@ -30,15 +30,6 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Inspector::validateClass
-     * @expectedException Guzzle\Service\Exception\ValidationException
-     */
-    public function testValidatesRequiredArgs()
-    {
-        Inspector::getInstance()->validateClass(__CLASS__, new Collection());
-    }
-
-    /**
      * @cover Guzzle\Service\Inspector::__constructor
      */
     public function testRegistersDefaultFilters()
@@ -85,26 +76,29 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase
             'float' => 1.23
         ));
 
-        Inspector::getInstance()->validateClass(__CLASS__, $col);
+        $inspector = Inspector::getInstance();
+        $inspector->validateConfig($inspector->getApiParamsForClass(__CLASS__), $col);
+
         $this->assertEquals(false, $col->get('bool_2'));
         $this->assertEquals('user_test_', $col->get('dynamic'));
         $this->assertEquals(1.23, $col->get('float'));
     }
 
     /**
-     * @covers Guzzle\Service\Inspector::validateClass
+     * @covers Guzzle\Service\Inspector::validateConfig
+     * @covers Guzzle\Service\Inspector::getApiParamsForClass
      * @expectedException Guzzle\Service\Exception\ValidationException
      */
     public function testValidatesTypeHints()
     {
-        Inspector::getInstance()->validateClass(__CLASS__, new Collection(array(
+        $inspector = Inspector::getInstance();
+        $inspector->validateConfig($inspector->getApiParamsForClass(__CLASS__), new Collection(array(
             'test' => 'uh oh',
             'username' => 'test'
         )));
     }
 
     /**
-     * @covers Guzzle\Service\Inspector::validateClass
      * @covers Guzzle\Service\Inspector::validateConfig
      */
     public function testConvertsBooleanDefaults()
@@ -114,7 +108,8 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase
             'username' => 'test'
         ));
 
-        Inspector::getInstance()->validateClass(__CLASS__, $c);
+        $inspector = Inspector::getInstance();
+        $inspector->validateConfig($inspector->getApiParamsForClass(__CLASS__), $c);
 
         $this->assertTrue($c->get('bool_1'));
         $this->assertFalse($c->get('bool_2'));
@@ -139,7 +134,11 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase
  */
 EOT;
 
-        $params = Inspector::getInstance()->parseDocBlock($doc);
+        $inspector = new Inspector();
+        $method = new \ReflectionMethod($inspector, 'parseDocBlock');
+        $method->setAccessible(true);
+
+        $params = $method->invoke($inspector, $doc);
 
         $this->assertEquals(array(
             'required' => true,
@@ -292,14 +291,17 @@ EOT;
      */
     public function testVerifiesGuzzleAnnotations()
     {
-        $this->assertEquals(
-            array(),
-            Inspector::getInstance()->parseDocBlock('testing')
-        );
+        $inspector = new Inspector();
+        $method = new \ReflectionMethod($inspector, 'parseDocBlock');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($inspector, 'testing');
+        $this->assertEquals(array(), $result);
     }
 
     /**
      * @covers Guzzle\Service\Inspector::validateConfig
+     * @covers Guzzle\Service\Inspector::getApiParamsForClass
      */
     public function testRunsValuesThroughFilters()
     {
@@ -307,7 +309,10 @@ EOT;
             'username' => 'TEST',
             'test_function'   => 'foo'
         ));
-        Inspector::getInstance()->validateClass(__CLASS__, $data);
+
+        $inspector = Inspector::getInstance();
+        $inspector->validateConfig($inspector->getApiParamsForClass(__CLASS__), $data);
+
         $this->assertEquals('test', $data->get('username'));
         $this->assertEquals('FOO', $data->get('test_function'));
     }

@@ -17,16 +17,6 @@ class DynamicCommand extends AbstractCommand
     /**
      * {@inheritdoc}
      */
-    protected function init()
-    {
-        if (!$this->apiCommand) {
-            throw new InvalidArgumentException('An API command must be passed');
-        }
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     protected function build()
     {
         if (!$this->apiCommand->getUri()) {

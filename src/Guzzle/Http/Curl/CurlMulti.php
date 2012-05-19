@@ -412,7 +412,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
             // We need to check if every request has been fulfilled or has
             // encountered an error when any curl errors are encountered to
             // avoind an endless loop.
-            if ($curlErrors && count($this->requestCache) == 0) {
+            if ($curlErrors && empty($this->requestCache)) {
                 break;
             }
 
