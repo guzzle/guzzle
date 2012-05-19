@@ -1,6 +1,17 @@
 CHANGELOG
 =========
 
+* 2.6.1 (05-19-2012)
+
+ * [BC] Removing 'path' support in service descriptions.  Use 'uri'.
+ * [BC] Guzzle\Service\Inspector::parseDocBlock is now protected. Adding getApiParamsForClass() with cache.
+ * [BC] Removing Guzzle\Common\NullObject.  Use https://github.com/mtdowling/NullObject if you need it.
+ * [BC] Removing Guzzle\Common\XmlElement.
+ * All commands, both dynamic and concrete, have ApiCommand objects.
+ * Adding a fix for CurlMulti so that if all of the connections encounter some sort of curl error, then the loop exits.
+ * Adding checks to EntityEnclosingRequest so that empty POST files and fields are ignored.
+ * Making the method signature of Guzzle\Service\Builder\ServiceBuilder::factory more flexible.
+
 * 2.6.0 (05-15-2012)
 
  * [BC] Moving Guzzle\Service\Builder to Guzzle\Service\Builder\ServiceBuilder
