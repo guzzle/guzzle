@@ -391,6 +391,8 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
 
             $active = $this->executeHandles();
 
+            $curlErrors = false;
+
             // Get messages from curl handles
             while ($done = curl_multi_info_read($this->multiHandle)) {
                 foreach ($this->all() as $request) {
@@ -400,10 +402,18 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
                             $this->processResponse($request, $handle, $done);
                         } catch (\Exception $e) {
                             $this->removeErroredRequest($request, $e);
+                            $curlErrors = true;
                         }
                         break;
                     }
                 }
+            }
+
+            // We need to check if every request has been fulfilled or has
+            // encountered an error when any curl errors are encountered to
+            // avoind an endless loop.
+            if ($curlErrors && count($this->requestCache) == 0) {
+                break;
             }
 
             // Notify each request as polling and handled queued responses
