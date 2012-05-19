@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+* 2.6.2 (05-19-2012)
+
+ * [Http] Better handling of nested scope requests in CurlMulti.  Requests are now always prepares in the send() method rather than the addRequest() method.
+
 * 2.6.1 (05-19-2012)
 
  * [BC] Removing 'path' support in service descriptions.  Use 'uri'.
