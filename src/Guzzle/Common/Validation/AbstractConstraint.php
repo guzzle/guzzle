@@ -37,7 +37,7 @@ abstract class AbstractConstraint implements ConstraintInterface
     /**
      * Perform the actual validation in a concrete class
      *
-     * @param mixed $value Value to validate
+     * @param mixed $value   Value to validate
      * @param array $options Validation options
      *
      * @return bool|string

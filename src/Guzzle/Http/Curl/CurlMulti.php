@@ -154,7 +154,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      * send operation.
      *
      * @param RequestInterface $request Request to add
-     * @param bool $async Set to TRUE to add to the current scope
+     * @param bool             $async   Set to TRUE to add to the current scope
      *
      * @return CurlMutli
      */
@@ -452,7 +452,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     /**
      * Execute and select curl handles until there is activity
      *
-     * @param bool $select Set to TRUE to select the file descriptors
+     * @param bool $select  Set to TRUE to select the file descriptors
      * @param int  $timeout Select timeout in seconds
      *
      * @return int Returns the number of active handles
@@ -484,7 +484,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      * Remove a request that encountered an exception
      *
      * @param RequestInterface $request Request to remove
-     * @param Exception $e Exception encountered
+     * @param Exception        $e       Exception encountered
      */
     protected function removeErroredRequest(RequestInterface $request, \Exception $e)
     {
@@ -501,8 +501,8 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      * Check for errors and fix headers of a request based on a curl response
      *
      * @param RequestInterface $request Request to process
-     * @param CurlHandle $handle Curl handle object
-     * @param array $curl Curl message returned from curl_multi_info_read
+     * @param CurlHandle       $handle  Curl handle object
+     * @param array            $curl    Array returned from curl_multi_info_read
      *
      * @throws CurlException on Curl error
      */
@@ -564,8 +564,8 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      * Check if a cURL transfer resulted in what should be an exception
      *
      * @param RequestInterface $request Request to check
-     * @param CurlHandle $handle Curl handle object
-     * @param array $curl Curl message returned from curl_multi_info_read
+     * @param CurlHandle       $handle  Curl handle object
+     * @param array            $curl    Array returned from curl_multi_info_read
      *
      * @return Exception|bool
      */
@@ -604,6 +604,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      * Throw an exception for a cURL multi response if needed
      *
      * @param int $code Curl response code
+     *
      * @throws CurlException
      */
     private function checkCurlResult($code)

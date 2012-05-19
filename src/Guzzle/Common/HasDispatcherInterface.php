@@ -35,8 +35,8 @@ interface HasDispatcherInterface
     /**
      * Helper to dispatch Guzzle events and set the event name on the event
      *
-     * @param $eventName Name of the event to dispatch
-     * @param array $context Context of the event
+     * @param string $eventName Name of the event to dispatch
+     * @param array  $context   Context of the event
      */
     function dispatch($eventName, array $context = array());
 }

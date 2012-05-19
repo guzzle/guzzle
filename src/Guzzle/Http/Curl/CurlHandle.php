@@ -35,12 +35,14 @@ class CurlHandle
      * Note that the HTTP request may be modified by this method
      *
      * There are some helpful options you can set to enable specific behavior:
+     *
      *    - disabled_wire: This is a performance improvement that will disable
-     *         some debugging functionality with cURL.  The functionality
-     *         it disabled allows you to see the exact HTTP request sent over
-     *         the wire.
-     *    - progress: Set to true to enable progress function callbacks. Most
-     *         People don't need this, so it has been disabled by default.
+     *                     some debugging functionality with cURL.  The
+     *                     functionality it disabled allows you to see the
+     *                     exact HTTP request sent over the wire.
+     *    - progress:      Set to true to enable progress function callbacks.
+     *                     Most people don't need this, so it has been disabled
+     *                     by default.
      *
      * @param RequestInterface $request Request
      *
@@ -203,7 +205,7 @@ class CurlHandle
     /**
      * Construct a new CurlHandle object that wraps a cURL handle
      *
-     * @param resource $handle Configured cURL handle resource
+     * @param resource         $handle  Configured cURL handle resource
      * @param Collection|array $options Curl options to use with the handle
      *
      * @throws InvalidArgumentException
@@ -294,7 +296,8 @@ class CurlHandle
      * Get cURL curl_getinfo data
      *
      * @param int $option Option to retrieve.  Pass null to retrieve
-     *      retrieve all data as an array or pass a CURLINFO_* constant
+     *                    retrieve all data as an array or pass a CURLINFO_*
+     *                    constant
      *
      * @return array|mixed
      */

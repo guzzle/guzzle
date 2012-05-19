@@ -69,9 +69,9 @@ interface CurlMultiInterface extends HasDispatcherInterface, \Countable
      * Calling this method more than once will return FALSE.
      *
      * @return array|bool Returns an array of attached Request objects on
-     *      success FALSE on failure.
+     *                    success FALSE on failure.
      * @throws ExceptionCollection if any requests threw exceptions during the
-     *      transfer.
+     *                             transfer.
      */
     function send();
 }

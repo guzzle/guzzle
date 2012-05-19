@@ -25,8 +25,8 @@ class XmlElement extends \SimpleXMLElement
      *
      * @param string|Element $name
      *
-     * @param string|SimpleXMLElement $value XML data to add
-     * @param string $namespace Namespace of the element
+     * @param string|SimpleXMLElement $value     XML data to add
+     * @param string                  $namespace Namespace of the element
      *
      * @return Element
      */

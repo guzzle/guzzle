@@ -41,8 +41,8 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      * already been added, the key value will be converted into an array
      * and the new value will be pushed to the end of the array.
      *
-     * @param string $key Key to add
-     * @param mixed $value Value to add to the key
+     * @param string $key   Key to add
+     * @param mixed  $value Value to add to the key
      *
      * @return Collection Returns a reference to the object.
      */
@@ -91,8 +91,8 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      * return Boolean TRUE or FALSE for each value.
      *
      * @param Closure $closure Closure evaluation function
-     * @param bool $static Set to TRUE to use the same class as the return
-     *      rather than returning a Collection object
+     * @param bool    $static Set to TRUE to use the same class as the return
+     *                        rather than returning a Collection object
      *
      * @return Collection
      */
@@ -121,9 +121,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Get a specific key value.
      *
-     * @param string $key Key to retrieve.
-     * @param mixed $default If the key is not found, set this
-     *      value to specify a default
+     * @param string $key     Key to retrieve.
+     * @param mixed  $default If the key is not found, set this
+     *                        value to specify a default
      *
      * @return mixed|null Value of the key or NULL
      */
@@ -139,8 +139,8 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Get all or a subset of matching key value pairs
      *
-     * @param array $keys Pass a single key or an array
-     *      of keys to retrieve only a particular subset of kvp.
+     * @param array $keys Pass a single key or an array of keys to retrieve
+     *                    only a particular subset of key value pair.
      *
      * @return array Returns an array of all matching key value pairs
      */
@@ -206,8 +206,8 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      *
      * @param string $value Value to search for
      *
-     * @return mixed Returns the key if the value was found FALSE if
-     *      the value was not found.
+     * @return mixed Returns the key if the value was found FALSE if the value
+     *               was not found.
      */
     public function hasValue($value)
     {
@@ -221,9 +221,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      * return a modified value
      *
      * @param Closure $closure Closure to apply
-     * @param array $context Context to pass to the closure
-     * @param bool $static Set to TRUE to use the same class as the return
-     *      rather than returning a Collection object
+     * @param array   $context Context to pass to the closure
+     * @param bool    $static  Set to TRUE to use the same class as the return
+     *                         rather than returning a Collection object
      *
      * @return Collection
      */
@@ -295,7 +295,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      * ArrayAccess implementation of offsetGet()
      *
      * @param string $offset Array key
-     * @param mixed $value Value to set
+     * @param mixed  $value  Value to set
      */
     public function offsetSet($offset, $value)
     {
@@ -343,8 +343,8 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Set a key value pair
      *
-     * @param string $key Key to set
-     * @param mixed $value Value to set
+     * @param string $key   Key to set
+     * @param mixed  $value Value to set
      *
      * @return Collection Returns a reference to the object
      */
@@ -358,7 +358,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Inject configuration settings into an input string
      *
-     * @param string $input Input to inject
+     * @param string     $input  Input to inject
      * @param Collection $config Configuration data to inject into the input
      *
      * @return string

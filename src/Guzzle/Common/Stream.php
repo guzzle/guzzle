@@ -51,8 +51,9 @@ class Stream
      * Construct a new Stream
      *
      * @param resource $stream Stream resource to wrap
-     * @param int $size Size of the stream in bytes.  Only pass this
-     *      parameter if the size cannot be obtained from the stream.
+     * @param int      $size   Size of the stream in bytes.  Only pass this
+     *                         parameter if the size cannot be obtained from
+     *                         the stream.
      *
      * @throws InvalidArgumentException if the stream is not a stream resource
      */
@@ -285,7 +286,7 @@ class Stream
      * @param int $length Up to length number of bytes read.
      *
      * @return string|bool Returns the data read from the stream or FALSE on
-     *      failure or EOF
+     *                     failure or EOF
      */
     public function read($length)
     {
@@ -298,7 +299,7 @@ class Stream
      * @param string $string The string that is to be written.
      *
      * @return int|bool Returns the number of bytes written to the stream on
-     *      success or FALSE on failure.
+     *                  success or FALSE on failure.
      */
     public function write($string)
     {

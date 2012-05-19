@@ -47,7 +47,7 @@ interface CommandInterface
     /**
      * Get the API command information about the command
      *
-     * @return ApiCommand|NullObject
+     * @return ApiCommand
      */
     function getApiCommand();
 
