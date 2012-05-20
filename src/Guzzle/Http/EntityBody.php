@@ -35,6 +35,8 @@ class EntityBody extends Stream
             return new static($stream);
         } elseif ($resource instanceof self) {
             return $resource;
+        } elseif (is_array($resource)) {
+            return self::factory(http_build_query($resource));
         }
 
         throw new InvalidArgumentException('Invalid resource type');
