@@ -122,7 +122,7 @@ class EntityBody extends Stream
      * Get an MD5 checksum of the stream's contents
      *
      * @param bool $rawOutput    Whether or not to use raw output
-     * @param bool $base64Encode Whether or not to base64 encode raw output 
+     * @param bool $base64Encode Whether or not to base64 encode raw output
      *                           (only if raw output is true)
      *
      * @return bool|string Returns an MD5 string on success or FALSE on failure
