@@ -159,8 +159,8 @@ class CookiePlugin implements EventSubscriberInterface
      * domain is removed.
      *
      * @param string $domain Set to clear only cookies matching a domain
-     * @param string $path Set to clear only cookies matching a domain and path
-     * @param string $name Set to clear only cookies matching a domain, path, and name
+     * @param string $path   Set to clear only cookies matching a domain and path
+     * @param string $name   Set to clear only cookies matching a domain, path, and name
      *
      * @return int Returns the number of deleted cookies
      */

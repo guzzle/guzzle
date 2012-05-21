@@ -2,8 +2,6 @@
 
 namespace Guzzle\Service\Description;
 
-use Guzzle\Service\Exception\DescriptionBuilderException;
-
 /**
  * A ServiceDescription stores service information based on a service document
  */
@@ -21,8 +19,8 @@ class ServiceDescription implements ServiceDescriptionInterface
 
     /**
      * {@inheritdoc}
-     * @param string|array   $config    File to build or array of command information
-     * @param array $options Service description factory options
+     * @param string|array $config  File to build or array of command information
+     * @param array        $options Service description factory options
      */
     public static function factory($config, array $options = null)
     {
@@ -59,6 +57,7 @@ class ServiceDescription implements ServiceDescriptionInterface
             $data['params'] = array_map(function($param) {
                 return $param->toArray();
             }, $data['params']);
+
             return $data;
         }, $this->commands));
     }

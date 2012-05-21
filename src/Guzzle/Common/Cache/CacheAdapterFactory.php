@@ -20,7 +20,7 @@ class CacheAdapterFactory implements FromConfigInterface
      *
      * @return CacheAdapterInterface
      */
-    public static function factory($config)
+    public static function factory($config = array())
     {
         if (!is_array($config)) {
             throw new InvalidArgumentException('$config must be an array');

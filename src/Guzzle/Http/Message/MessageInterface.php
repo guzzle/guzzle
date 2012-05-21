@@ -54,8 +54,7 @@ interface MessageInterface
      * @param string $header Header to retrieve
      * @param string $token  Token separator
      *
-     * @return Collection|null Returns a Collection object containing the
-     *     tokenized values if the header was found.  Returns NULL otherwise.
+     * @return Collection|null
      */
     function getTokenizedHeader($header, $token = ';');
 
@@ -63,9 +62,9 @@ interface MessageInterface
      * Set a tokenized header on the request that implodes a Collection of data
      * into a string separated by a token.
      *
-     * @param string $header Header to set
-     * @param array|Collection $data Header data
-     * @param string $token Token delimiter
+     * @param string           $header Header to set
+     * @param array|Collection $data   Header data
+     * @param string           $token  Token delimiter
      *
      * @return MessageInterface
      * @throws InvalidArgumentException if data is not an array or Collection
@@ -144,8 +143,8 @@ interface MessageInterface
     /**
      * Add a Cache-Control directive on the message
      *
-     * @param string $directive Directive to set
-     * @param bool|string $value Value to set
+     * @param string      $directive Directive to set
+     * @param bool|string $value     Value to set
      *
      * @return MessageInterface
      */

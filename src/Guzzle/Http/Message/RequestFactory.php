@@ -4,7 +4,6 @@ namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
 use Guzzle\Http\EntityBody;
-use Guzzle\Http\QueryString;
 use Guzzle\Http\Url;
 use Guzzle\Http\Parser\ParserRegistry;
 

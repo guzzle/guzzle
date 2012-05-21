@@ -18,5 +18,5 @@ interface FromConfigInterface
      *
      * @return FromConfigInterface
      */
-    static function factory($config);
+    static function factory($config = array());
 }

@@ -133,6 +133,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             // If the parameter exists, set it
             if (array_key_exists($key, $this->apiCommand->getParams())) {
                 $this->set($key, $args[0]);
+
                 return $this;
             }
         }

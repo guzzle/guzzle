@@ -31,8 +31,8 @@ class ResourceIteratorClassFactory implements ResourceIteratorFactoryInterface
     /**
      * Create a resource iterator
      *
-     * @param CommandInterface $data Command used for building the iterator
-     * @param array $options Iterator options.
+     * @param CommandInterface $data    Command used for building the iterator
+     * @param array            $options Iterator options.
      *
      * @return ResourceIteratorInterface
      */

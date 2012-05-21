@@ -23,7 +23,7 @@ class MockClient extends Client
      *
      * @return MockClient
      */
-    public static function factory($config)
+    public static function factory($config = array())
     {
         $config = Inspector::prepareConfig($config, array(
             'base_url' => '{{scheme}}://127.0.0.1:8124/{{api_version}}/{{subdomain}}',

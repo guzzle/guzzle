@@ -18,8 +18,8 @@ class BadResponseException extends RequestException
     /**
      * Factory method to create a new response exception based on the response code.
      *
-     * @param RequestInterface $request Request
-     * @param Response $response Response received
+     * @param RequestInterface $request  Request
+     * @param Response         $response Response received
      *
      * @return BadResponseException
      */

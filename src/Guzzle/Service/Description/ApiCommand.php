@@ -2,7 +2,6 @@
 
 namespace Guzzle\Service\Description;
 
-use Guzzle\Common\Collection;
 
 /**
  * Data object holding the information of an API command

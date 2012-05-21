@@ -16,7 +16,7 @@ class HeaderComparison
      * A header value of '*' means anything after the * will be ignored
      *
      * @param array $filteredHeaders Array of special headers
-     * @param array $actualHeaders Array of headers to check against
+     * @param array $actualHeaders   Array of headers to check against
      *
      * @return array|false Returns an array of the differences or FALSE if none
      */
@@ -49,10 +49,10 @@ class HeaderComparison
      * Check if an array of HTTP headers matches another array of HTTP headers
      * while taking * into account as a wildcard for header values
      *
-     * @param array $expected Expected HTTP headers (allows wildcard values)
-     * @param array|Collection $actual Actual HTTP header array
-     * @param array $ignore Headers to ignore from the comparison
-     * @param array $absent Array of headers that must not be present
+     * @param array            $expected Expected HTTP headers (allows wildcard values)
+     * @param array|Collection $actual   Actual HTTP header array
+     * @param array            $ignore   Headers to ignore from the comparison
+     * @param array            $absent   Array of headers that must not be present
      *
      * @return array|false Returns an array of the differences or FALSE if none
      */
@@ -111,7 +111,7 @@ class HeaderComparison
     /**
      * Case insensitive check if an array have a key
      *
-     * @param string $key Key to check
+     * @param string $key   Key to check
      * @param array  $array Array to check
      *
      * @return bool

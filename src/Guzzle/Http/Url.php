@@ -110,14 +110,14 @@ class Url
     /**
      * Create a new URL from URL parts
      *
-     * @param string $scheme Scheme of the URL
-     * @param string $host Host of the URL
-     * @param string $username Username of the URL
-     * @param string $password Password of the URL
-     * @param int $port Port of the URL
-     * @param string $path Path of the URL
-     * @param QueryString|array|string $query Query string of the URL
-     * @param string $fragment Fragment of the URL
+     * @param string                   $scheme   Scheme of the URL
+     * @param string                   $host     Host of the URL
+     * @param string                   $username Username of the URL
+     * @param string                   $password Password of the URL
+     * @param int                      $port     Port of the URL
+     * @param string                   $path     Path of the URL
+     * @param QueryString|array|string $query    Query string of the URL
+     * @param string                   $fragment Fragment of the URL
      */
     public function __construct($scheme, $host, $username = null, $password = null, $port = null, $path = null, QueryString $query = null, $fragment = null)
     {

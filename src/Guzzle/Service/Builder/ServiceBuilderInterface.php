@@ -14,9 +14,8 @@ interface ServiceBuilderInterface
     /**
      * Get a client using a registered builder
      *
-     * @param string $name Name of the registered client to retrieve
-     * @param bool $throwAway Set to TRUE to not store the client
-     *     for later retrieval from the ServiceBuilder
+     * @param string $name      Name of the registered client to retrieve
+     * @param bool   $throwAway Set to TRUE to not store the client for later retrieval from the ServiceBuilder
      *
      * @return FromConfigInterface
      * @throws ServiceNotFoundException when a client cannot be found by name

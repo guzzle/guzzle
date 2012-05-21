@@ -3,11 +3,9 @@
 namespace Guzzle\Service\Command;
 
 use Guzzle\Common\Guzzle;
-use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;
 use Guzzle\Http\Parser\ParserRegistry;
-use Guzzle\Service\Inspector;
 
 /**
  * A command that creates requests based on ApiCommands

@@ -10,7 +10,7 @@ use Guzzle\Common\AbstractHasDispatcher;
 class ResourceIteratorApplyBatched extends AbstractHasDispatcher
 {
     /**
-     * @var \Closure|array
+     * @var callable|array
      */
     protected $callback;
 
@@ -46,8 +46,8 @@ class ResourceIteratorApplyBatched extends AbstractHasDispatcher
      * Constructor
      *
      * @param ResourceIteratorInterface $iterator Resource iterator to apply a callback to
-     * @param array|callable $callback Callback method accepting the resource
-     *      iterator and an array of the iterator's current resources
+     * @param array|callable            $callback Callback method accepting the resource iterator
+     *                                            and an array of the iterator's current resources
      */
     public function __construct(ResourceIteratorInterface $iterator, $callback)
     {
@@ -59,10 +59,10 @@ class ResourceIteratorApplyBatched extends AbstractHasDispatcher
      * Apply the callback to the contents of the resource iterator
      *
      * Calling this method dispatches four events:
-     *   before_apply -- Before adding a resource to a batch.  Context is the resource
-     *   after_apply -- After adding the resource to a batch.  Context is the resource
-     *   before_batch -- Before a batch request is sent if one is sent.  Context is an array of resources
-     *   after_batch -- After a batch request is sent if one is sent.  Context is an array of resources
+     * - before_apply: Before adding a resource to a batch.  Context is the resource
+     * - after_apply:  After adding the resource to a batch.  Context is the resource
+     * - before_batch: Before a batch request is sent if one is sent.  Context is an array of resources
+     * - after_batch:  After a batch request is sent if one is sent.  Context is an array of resources
      *
      * @param int $perBatch The number of records to batch before executing the callback
      *

@@ -3,7 +3,6 @@
 namespace Guzzle\Service\Builder;
 
 use Guzzle\Service\JsonLoader;
-use Guzzle\Service\Exception\ServiceBuilderException;
 
 /**
  * Creates a ServiceBuilder using a JSON configuration file

@@ -6,7 +6,6 @@ use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Common\Exception\ExceptionCollection;
 use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Exception\RequestException;
 
 /**
  * Send {@see RequestInterface} objects in parallel using curl_multi

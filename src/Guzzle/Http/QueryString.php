@@ -98,10 +98,10 @@ class QueryString extends Collection
     /**
      * Aggregate multi-valued parameters using PHP style syntax
      *
-     * @param string $key The name of the query string parameter
-     * @param array $value The values of the parameter
-     * @param bool $encodeFields Set to TRUE to encode field names
-     * @param bool $encodeValues Set to TRUE to encode values
+     * @param string $key          The name of the query string parameter
+     * @param array  $value        The values of the parameter
+     * @param bool   $encodeFields Set to TRUE to encode field names
+     * @param bool   $encodeValues Set to TRUE to encode values
      *
      * @return array Returns an array of the combined values
      */
@@ -138,10 +138,10 @@ class QueryString extends Collection
      *     echo $q; // outputs: ?value=1,2,3
      * </code>
      *
-     * @param string $key The name of the query string parameter
-     * @param array $value The values of the parameter
-     * @param bool $encodeFields Set to TRUE to encode field names
-     * @param bool $encodeValues Set to TRUE to encode values
+     * @param string $key          The name of the query string parameter
+     * @param array  $value        The values of the parameter
+     * @param bool   $encodeFields Set to TRUE to encode field names
+     * @param bool   $encodeValues Set to TRUE to encode values
      *
      * @return array Returns an array of the combined values
      */
@@ -159,10 +159,10 @@ class QueryString extends Collection
      *
      * Example: http://test.com?q=1&q=2
      *
-     * @param string $key The name of the query string parameter
-     * @param array $value The values of the parameter
-     * @param bool $encodeFields Set to TRUE to encode field names
-     * @param bool $encodeValues Set to TRUE to encode values
+     * @param string $key          The name of the query string parameter
+     * @param array  $value        The values of the parameter
+     * @param bool   $encodeFields Set to TRUE to encode field names
+     * @param bool   $encodeValues Set to TRUE to encode values
      *
      * @return array Returns an array of the combined values
      */
@@ -249,8 +249,7 @@ class QueryString extends Collection
      * Set whether or not field names should be urlencoded when converting
      * the query string object to a string
      *
-     * @param bool $encode Set to TRUE to encode field names, FALSE to not
-     *      encode field names
+     * @param bool $encode Set to TRUE to encode field names, FALSE to not encode field names
      *
      * @return QueryString
      */
@@ -265,8 +264,7 @@ class QueryString extends Collection
      * Set whether or not field values should be urlencoded when converting
      * the query string object to a string
      *
-     * @param bool $encode Set to TRUE to encode field values, FALSE to not
-    *       encode field values
+     * @param bool $encode Set to TRUE to encode field values, FALSE to not encode field values
      *
      * @return QueryString
      */
@@ -280,8 +278,7 @@ class QueryString extends Collection
     /**
      * Set the query string separator
      *
-     * @param string $separator The query string separator that will separate
-     *      fields
+     * @param string $separator The query string separator that will separate fields
      *
      * @return QueryString
      */
@@ -309,8 +306,7 @@ class QueryString extends Collection
     /**
      * Set the query string value separator
      *
-     * @param string $separator The query string separator that will separate
-     *      values from fields
+     * @param string $separator The query string separator that will separate values from fields
      *
      * @return QueryString
      */
@@ -339,9 +335,9 @@ class QueryString extends Collection
      * If an aggregator is set, the values will be converted using the
      * aggregator function
      *
-     * @param array $data The data to encode
-     * @param bool $encodeFields Toggle URL encoding of fields
-     * @param bool $encodeValues Toggle URL encoding of values
+     * @param array $data         The data to encode
+     * @param bool  $encodeFields Toggle URL encoding of fields
+     * @param bool  $encodeValues Toggle URL encoding of values
      *
      * @return array Returns an array of encoded values and keys
      */

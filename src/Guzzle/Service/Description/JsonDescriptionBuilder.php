@@ -3,7 +3,6 @@
 namespace Guzzle\Service\Description;
 
 use Guzzle\Service\JsonLoader;
-use Guzzle\Service\Exception\DescriptionBuilderException;
 
 /**
  * Build service descriptions using a JSON document

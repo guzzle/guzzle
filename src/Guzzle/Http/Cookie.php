@@ -46,6 +46,7 @@ class Cookie extends QueryString
              ->setEncodeValues(false)
              ->setAggregateFunction(function($key, $value, $encodeFields = false, $encodeValues = false) {
                  $value = array_unique($value);
+
                  return array(
                     (($encodeFields) ? rawurlencode($key) : $key) => (($encodeValues)
                         ? array_map('rawurlencode', $value)

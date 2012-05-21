@@ -54,6 +54,7 @@ class ServiceDescriptionFactory implements FactoryInterface
         if ($this->description->hasCommand($name)) {
             $command = $this->description->getCommand($name);
             $class = $command->getConcreteClass();
+
             return new $class($args, $command);
         }
     }

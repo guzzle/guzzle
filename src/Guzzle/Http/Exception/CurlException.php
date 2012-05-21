@@ -13,8 +13,8 @@ class CurlException extends BadResponseException
     /**
      * Set the cURL error message
      *
-     * @param string $error Curl error
-     * @param int $number Curl error number
+     * @param string $error  Curl error
+     * @param int    $number Curl error number
      */
     public function setError($error, $number)
     {

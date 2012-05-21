@@ -88,7 +88,7 @@ class MessageParser extends AbstractMessageParser
 
                 $startLine = explode(' ', $line, 3);
 
-            } else if (strpos($line, ':')) {
+            } elseif (strpos($line, ':')) {
 
                 $parts = explode(':', $line, 2);
                 $key = trim($parts[0]);

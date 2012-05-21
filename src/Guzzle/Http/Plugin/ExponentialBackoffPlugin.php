@@ -3,7 +3,6 @@
 namespace Guzzle\Http\Plugin;
 
 use Guzzle\Common\Event;
-use Guzzle\Common\Collection;
 use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\RequestInterface;
@@ -57,18 +56,20 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
     /**
      * Construct a new exponential backoff plugin
      *
-     * @param int $maxRetries The maximum number of time to retry a request
-     * @param array|callable $failureCodes Pass a custom list of
-     *     failure codes. This can be a list of numeric codes that match the
-     *     response code, a list of reason phrases that can match the reason
-     *     phrase of a request, or a list of cURL error code integers.  By
-     *     default, this plugin retries 500 and 503 responses as well as
-     *     various CURL connection errors.  You can pass in a callable that will
-     *     be used to determine if a response failed and must be retried.
-     * @param callable $delayFunction Method used to calculate the
-     *      delay between requests.  The method must accept an integer containing
-     *      the current number of retries and return an integer representing how
-     *      many seconds to delay
+     * $failureCodes can be a list of numeric codes that match the response
+     * code, a list of reason phrases that can match the reason phrase of a
+     * request, or a list of cURL error code integers.  By default, this 
+     * plugin retries 500 and 503 responses as well as various CURL connection
+     * errors.  You can pass in a callable that will be used to determine if a
+     * response failed and must be retried.
+     *
+     * A custom callback function for $delayFunction must accept an integer 
+     * containing the current number of retries and return an integer 
+     * representing representing how many seconds to delay
+     *
+     * @param int            $maxRetries    The maximum number of time to retry a request
+     * @param array|callable $failureCodes  List of failure codes or function.
+     * @param callable       $delayFunction Method used to calculate the delay between requests.
      */
     public function __construct($maxRetries = 3, $failureCodes = null, $delayFunction = null)
     {

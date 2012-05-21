@@ -57,9 +57,9 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
      * Construct a new service builder
      *
      * @param array $serviceBuilderConfig Service configuration settings:
-     *      name => Name of the service
-     *      class => Client class to instantiate using a factory method
-     *      params => array of key value pair configuration settings for the builder
+     *     - name: Name of the service
+     *     - class: Client class to instantiate using a factory method
+     *     - params: array of key value pair configuration settings for the builder
      */
     public function __construct(array $serviceBuilderConfig)
     {
@@ -97,9 +97,8 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
     /**
      * Get a client using a registered builder
      *
-     * @param string $name Name of the registered client to retrieve
-     * @param bool $throwAway Set to TRUE to not store the client
-     *     for later retrieval from the ServiceBuilder
+     * @param string $name      Name of the registered client to retrieve
+     * @param bool   $throwAway Set to TRUE to not store the client for later retrieval from the ServiceBuilder
      *
      * @return ClientInterface
      * @throws ServiceNotFoundException when a client cannot be found by name
@@ -156,8 +155,8 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
     /**
      * Register a client by name with the service builder
      *
-     * @param string $offset Name of the client to register
-     * @param ClientInterface $value Client to register
+     * @param string          $offset Name of the client to register
+     * @param ClientInterface $value  Client to register
      */
     public function offsetSet($offset, $value)
     {

@@ -78,8 +78,7 @@ class ApiParam
      *
      * @param string $value Value that is currently set
      *
-     * @return mixed Returns the value, a static value if one is present, or a
-     *     default value if nothing is provided.
+     * @return mixed Returns the value, a static value if one is present, or a default value
      */
     public function getValue($value)
     {

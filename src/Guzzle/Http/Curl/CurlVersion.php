@@ -71,6 +71,7 @@ class CurlVersion
     public function get($type)
     {
         $version = $this->getAll();
+
         return isset($version[$type]) ? $version[$type] : false;
     }
 }

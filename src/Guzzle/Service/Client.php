@@ -47,11 +47,11 @@ class Client extends HttpClient implements ClientInterface
      * Basic factory method to create a new client.  Extend this method in
      * subclasses to build more complex clients.
      *
-     * @param array|Collection $config Configuartion data
+     * @param array|Collection $config Configuration data
      *
      * @return Client
      */
-    public static function factory($config)
+    public static function factory($config = array())
     {
         return new static($config['base_url'], $config);
     }
@@ -82,8 +82,9 @@ class Client extends HttpClient implements ClientInterface
     public function __call($method, $args = null)
     {
         if ($this->magicMethodBehavior == self::MAGIC_CALL_DISABLED) {
-            throw new BadMethodCallException("Missing method $method.  Enable"
-                . " magic calls to use magic methods with command names.");
+            throw new BadMethodCallException(
+                "Missing method $method.  Enable magic calls to use magic methods with command names."
+            );
         }
 
         $command = $this->getCommand(Inflector::snake($method), $args);
@@ -97,9 +98,9 @@ class Client extends HttpClient implements ClientInterface
      * Set the behavior for missing methods
      *
      * @param int $behavior Behavior to use when a missing method is called.
-     *     Set to Client::MAGIC_CALL_DISABLED to disable magic method calls
-     *     Set to Client::MAGIC_CALL_EXECUTE to execute commands and return the result
-     *     Set to Client::MAGIC_CALL_RETURN to instantiate and return the command
+     *     - Client::MAGIC_CALL_DISABLED: Disable magic method calls
+     *     - Client::MAGIC_CALL_EXECUTE:  Execute commands and return the result
+     *     - Client::MAGIC_CALL_RETURN:   Instantiate and return the command
      *
      * @return Client
      */
@@ -118,7 +119,7 @@ class Client extends HttpClient implements ClientInterface
      * are found, an InvalidArgumentException is thrown.
      *
      * @param string $name Name of the command to retrieve
-     * @param array $args Arguments to pass to the command
+     * @param array  $args Arguments to pass to the command
      *
      * @return CommandInterface
      * @throws InvalidArgumentException if no command can be found by name
@@ -174,13 +175,9 @@ class Client extends HttpClient implements ClientInterface
     /**
      * Get a resource iterator from the client.
      *
-     * @param string|CommandInterface $command Command class or command name.
-     *     Passing a command name will have the client create the command for
-     *     you using $commandOptions array.
-     * @param array $commandOptions Command options used when
-     *     creating commands.
-     * @param array $iteratorOptions Iterator options passed to the
-     *     iterator when it is instantiated.
+     * @param string|CommandInterface $command         Command class or command name.
+     * @param array                   $commandOptions  Command options used when creating commands.
+     * @param array                   $iteratorOptions Iterator options passed to the iterator when it is instantiated.
      *
      * @return ResourceIteratorInterface
      */
@@ -202,8 +199,7 @@ class Client extends HttpClient implements ClientInterface
      *       {@see CommandInterface::getResult} method if a CommandInterface is
      *       passed, or the CommandSet itself if a CommandSet is passed
      * @throws InvalidArgumentException if an invalid command is passed
-     * @throws CommandSetException if a set contains commands associated
-     *      with other clients
+     * @throws CommandSetException if a set contains commands associated with other clients
      */
     public function execute($command)
     {
@@ -235,6 +231,7 @@ class Client extends HttpClient implements ClientInterface
                 }
                 $c->setClient($this);
             }
+
             return $command->execute();
         } elseif (is_array($command)) {
             return $this->execute(new CommandSet($command));
@@ -246,11 +243,9 @@ class Client extends HttpClient implements ClientInterface
     /**
      * Set the service description of the client
      *
-     * @param ServiceDescription $service Service description that describes
-     *     all of the commands and information of the client
-     * @param bool $updateFactory Set to FALSE to not update the service
-     *     description based command factory if it is not already present on
-     *     the client
+     * @param ServiceDescription $service Service description
+     * @param bool $updateFactory Set to FALSE to not update the service description based
+     *                            command factory if it is not already on the client.
      *
      * @return Client
      */

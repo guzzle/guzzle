@@ -47,10 +47,9 @@ class CompositeFactory implements \IteratorAggregate, \Countable, FactoryInterfa
     /**
      * Add a command factory to the chain
      *
-     * @param FactoryInterface $factory Factor to add
-     * @param string|FactoryInterface $before Insert the new
-     *     command factory before a command factory class or object matching a
-     *     class name.
+     * @param FactoryInterface        $factory Factory to add
+     * @param string|FactoryInterface $before  Insert the new command factory before a command
+     *                                         factory class or object matching a class name.
      *
      * @return CompositeFactory
      */
@@ -98,8 +97,7 @@ class CompositeFactory implements \IteratorAggregate, \Countable, FactoryInterfa
     /**
      * Remove a specific command factory from the chain
      *
-     * @param string|FactoryInterface $factory Factory to remove by
-     *     name or instance
+     * @param string|FactoryInterface $factory Factory to remove by name or instance
      *
      * @return CompositeFactory
      */

@@ -34,7 +34,7 @@ class UriTemplate implements UriTemplateInterface
     /**
      * Expand the URI template using the supplied variables
      *
-     * @param string $template URI Template to expand
+     * @param string $template  URI Template to expand
      * @param array  $variables Variables to use with the expansion
      *
      * @return string Returns the expanded template

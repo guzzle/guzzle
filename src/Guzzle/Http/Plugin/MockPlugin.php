@@ -33,7 +33,7 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
      * Constructor
      *
      * @param array $responses Array of responses to queue
-     * @param bool $temporary Set to TRUE to remove the plugin when
+     * @param bool  $temporary Set to TRUE to remove the plugin when
      *      the queue is empty
      */
     public function __construct(array $responses = null, $temporary = false)
@@ -65,7 +65,7 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
     /**
      * Get a mock response from a file
      *
-     * @param string $file File to retreive a mock response from
+     * @param string $file File to retrieve a mock response from
      *
      * @return Response
      * @throws InvalidArgumentException if the file is not found

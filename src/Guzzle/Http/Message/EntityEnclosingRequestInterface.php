@@ -68,7 +68,7 @@ interface EntityEnclosingRequestInterface extends RequestInterface
     /**
      * Set a POST field value
      *
-     * @param string $key Key to set
+     * @param string $key   Key to set
      * @param string $value Value to set
      *
      * @return EntityEnclosingRequestInterface

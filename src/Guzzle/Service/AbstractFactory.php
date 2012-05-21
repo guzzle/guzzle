@@ -42,6 +42,7 @@ abstract class AbstractFactory
             if ($adapter) {
                 $adapter->save($cacheKey, $result, $ttl);
             }
+
             return $result;
         }
 

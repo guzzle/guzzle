@@ -2,7 +2,6 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Common\Collection;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Exception\RequestException;
@@ -155,7 +154,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     /**
      * Set a POST field value
      *
-     * @param string $key Key to set
+     * @param string $key   Key to set
      * @param string $value Value to set
      *
      * @return EntityEnclosingRequest

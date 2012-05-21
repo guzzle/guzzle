@@ -10,7 +10,7 @@ interface ResourceIteratorFactoryInterface
     /**
      * Create a resource iterator
      *
-     * @param mixed $data Data used by the concrete factory to create iterators
+     * @param mixed $data    Data used by the concrete factory to create iterators
      * @param array $options Iterator options
      *
      * @return ResourceIteratorInterface

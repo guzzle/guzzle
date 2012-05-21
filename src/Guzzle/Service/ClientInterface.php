@@ -2,7 +2,6 @@
 
 namespace Guzzle\Service;
 
-use Guzzle\Common\Collection;
 use Guzzle\Common\FromConfigInterface;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\ClientInterface as HttpClientInterface;
@@ -29,7 +28,7 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
      * are found, an InvalidArgumentException is thrown.
      *
      * @param string $name Name of the command to retrieve
-     * @param array $args Arguments to pass to the command
+     * @param array  $args Arguments to pass to the command
      *
      * @return CommandInterface
      * @throws InvalidArgumentException if no command can be found by name
@@ -53,11 +52,9 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
     /**
      * Set the service description of the client
      *
-     * @param ServiceDescription $service Service description that describes
-     *     all of the commands and information of the client
-     * @param bool $updateFactory Set to FALSE to not update the service
-     *     description based command factory if it is not already present on
-     *     the client
+     * @param ServiceDescription $service Service description
+     * @param bool $updateFactory Set to FALSE to not update the service description based
+     *                            command factory if it is not already on the client.
      *
      * @return ClientInterface
      */
@@ -82,13 +79,9 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
     /**
      * Get a resource iterator from the client.
      *
-     * @param string|CommandInterface $command Command class or command name.
-     *     Passing a command name will have the client create the command for
-     *     you using $commandOptions array.
-     * @param array $commandOptions Command options used when
-     *     creating commands.
-     * @param array $iteratorOptions Iterator options passed to the
-     *     iterator when it is instantiated.
+     * @param string|CommandInterface $command         Command class or command name.
+     * @param array                   $commandOptions  Command options used when creating commands.
+     * @param array                   $iteratorOptions Iterator options passed to the iterator when it is instantiated.
      *
      * @return ResourceIteratorInterface
      */

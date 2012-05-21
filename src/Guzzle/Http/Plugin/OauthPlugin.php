@@ -25,14 +25,13 @@ class OauthPlugin implements EventSubscriberInterface
      * Create a new OAuth 1.0 plugin
      *
      * @param array $config Configuration array containing these parameters:
-     *     string 'consumer_key'     Consumer key
-     *     string 'consumer_secret'  Consumer secret
-     *     string 'token'            Token
-     *     string 'token_secret'     Token secret
-     *     string 'version'          OAuth version.  Defaults to 1.0
-     *     string 'signature_method' Custom signature method
-     *     array|Closure 'signature_callback' Custom signature callback
-     *         that accepts a string to sign and a signing key
+     *     - string 'consumer_key'     Consumer key
+     *     - string 'consumer_secret'  Consumer secret
+     *     - string 'token'            Token
+     *     - string 'token_secret'     Token secret
+     *     - string 'version'          OAuth version.  Defaults to 1.0
+     *     - string 'signature_method' Custom signature method
+     *     - array|Closure 'signature_callback' Custom signature callback that accepts a string to sign and a signing key
      */
     public function __construct($config)
     {
@@ -90,8 +89,8 @@ class OauthPlugin implements EventSubscriberInterface
     /**
      * Calculate signature for request
      *
-     * @param RequestInterface $request Request to generate a signature for
-     * @param int $timestamp Timestamp to use for nonce
+     * @param RequestInterface $request   Request to generate a signature for
+     * @param int              $timestamp Timestamp to use for nonce
      *
      * @return string
      */
@@ -106,8 +105,8 @@ class OauthPlugin implements EventSubscriberInterface
     /**
      * Calculate string to sign
      *
-     * @param RequestInterface $request Request to generate a signature for
-     * @param int $timestamp Timestamp to use for nonce
+     * @param RequestInterface $request   Request to generate a signature for
+     * @param int              $timestamp Timestamp to use for nonce
      *
      * @return string
      */
@@ -159,8 +158,8 @@ class OauthPlugin implements EventSubscriberInterface
      * multiple requests in parallel with the same exact timestamp to use
      * separate nonce's.
      *
-     * @param RequestInterface $request Request to generate a nonce for
-     * @param int $timestamp Timestamp to use for nonce
+     * @param RequestInterface $request   Request to generate a nonce for
+     * @param int              $timestamp Timestamp to use for nonce
      *
      * @return string
      */

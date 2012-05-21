@@ -10,8 +10,8 @@ interface DescriptionBuilderInterface
     /**
      * Builds a new ServiceDescription object
      *
-     * @param string $config File or data string to build from
-     * @param array  $options (options) Options used when building
+     * @param string $config  File or data string to build from
+     * @param array  $options Options used when building
      *
      * @return ServiceDescriptionInterface
      */

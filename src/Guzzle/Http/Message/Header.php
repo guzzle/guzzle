@@ -58,7 +58,7 @@ class Header implements \IteratorAggregate, \Countable
     /**
      * Add a value to the list of header values
      *
-     * @param string $value Value to add
+     * @param string $value  Value to add
      * @param string $header The exact header casing to add with.
      *     Defaults to the name of the header.
      *
@@ -152,7 +152,7 @@ class Header implements \IteratorAggregate, \Countable
     /**
      * Check if the collection of headers has a particular value
      *
-     * @param string $searchValue Value to search for
+     * @param string $searchValue     Value to search for
      * @param bool   $caseInsensitive Set to TRUE to use a case
      *     insensitive search
      *

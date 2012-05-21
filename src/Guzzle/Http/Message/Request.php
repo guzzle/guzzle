@@ -8,7 +8,6 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Http\Utils;
 use Guzzle\Http\Exception\RequestException;
-use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\ClientInterface;
 use Guzzle\Http\QueryString;
@@ -109,8 +108,8 @@ class Request extends AbstractMessage implements RequestInterface
     /**
      * Create a new request
      *
-     * @param string $method HTTP method
-     * @param string|Url $url HTTP URL to connect to.  The URI scheme, host
+     * @param string     $method HTTP method
+     * @param string|Url $url    HTTP URL to connect to.  The URI scheme, host
      *      header, and URI are parsed from the full URL.  If query string
      *      parameters are present they will be parsed as well.
      * @param array|Collection $headers HTTP headers
@@ -482,9 +481,9 @@ class Request extends AbstractMessage implements RequestInterface
     /**
      * Set HTTP authorization parameters
      *
-     * @param string|false $user User name or false disable authentication
-     * @param string $password Password
-     * @param string $scheme Curl authentication scheme to use
+     * @param string|false $user     User name or false disable authentication
+     * @param string       $password Password
+     * @param string       $scheme   Curl authentication scheme to use
      *
      * @return Request
      *
@@ -630,7 +629,7 @@ class Request extends AbstractMessage implements RequestInterface
      * bypass the actual sending of a request.
      *
      * @param Response $response Response object to set
-     * @param bool $queued Set to TRUE to keep the request in a stat
+     * @param bool     $queued   Set to TRUE to keep the request in a stat
      *      of not having been sent, but queue the response for send()
      *
      * @return Request Returns a reference to the object.
@@ -723,7 +722,7 @@ class Request extends AbstractMessage implements RequestInterface
     /**
      * Add a Cookie value by name to the Cookie header
      *
-     * @param string $name Name of the cookie to add
+     * @param string $name  Name of the cookie to add
      * @param string $value Value to set
      *
      * @return Request

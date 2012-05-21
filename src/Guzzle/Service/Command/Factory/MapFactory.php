@@ -28,6 +28,7 @@ class MapFactory implements FactoryInterface
     {
         if (isset($this->map[$name])) {
             $class = $this->map[$name];
+
             return new $class($args);
         }
     }

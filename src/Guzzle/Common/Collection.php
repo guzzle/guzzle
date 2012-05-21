@@ -91,8 +91,8 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      * return Boolean TRUE or FALSE for each value.
      *
      * @param Closure $closure Closure evaluation function
-     * @param bool    $static Set to TRUE to use the same class as the return
-     *                        rather than returning a Collection object
+     * @param bool    $static  Set to TRUE to use the same class as the return
+     *                         rather than returning a Collection object
      *
      * @return Collection
      */

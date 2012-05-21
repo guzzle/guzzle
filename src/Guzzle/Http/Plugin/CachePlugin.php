@@ -4,10 +4,8 @@ namespace Guzzle\Http\Plugin;
 
 use Guzzle\Common\Cache\CacheAdapterInterface;
 use Guzzle\Common\Event;
-use Guzzle\Common\Collection;
 use Guzzle\Http\Utils;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Exception\BadResponseException;
@@ -54,9 +52,9 @@ class CachePlugin implements EventSubscriberInterface
     /**
      * Construct a new CachePlugin
      *
-     * @param CacheAdapterInterface $adapter Cache adapter to write and read cache data
-     * @param bool $serialize Set to TRUE to serialize data before writing
-     * @param int $defaultLifetime The number of seconds that a cache entry
+     * @param CacheAdapterInterface $adapter         Cache adapter to write and read cache data
+     * @param bool                  $serialize       Set to TRUE to serialize data before writing
+     * @param int                   $defaultLifetime The number of seconds that a cache entry
      *     should be considered fresh when no explicit freshness information is provided
      *     in a response. Explicit Cache-Control or Expires headers override this value
      */
@@ -92,7 +90,7 @@ class CachePlugin implements EventSubscriberInterface
      * Calculate the hash key of a request object
      *
      * @param RequestInterface $request Request to hash
-     * @param string $raw Set to TRUE to retrieve the un-encoded string for debugging
+     * @param string           $raw     Set to TRUE to retrieve the un-encoded string for debugging
      *
      * @return string
      */
@@ -212,8 +210,8 @@ class CachePlugin implements EventSubscriberInterface
     /**
      * Revalidate a cached response
      *
-     * @param RequestInterface $request Request to revalidate
-     * @param Response $response Response to revalidate
+     * @param RequestInterface $request  Request to revalidate
+     * @param Response         $response Response to revalidate
      *
      * @return bool
      */
@@ -239,6 +237,7 @@ class CachePlugin implements EventSubscriberInterface
                 if ($validateResponse->canCache()) {
                     $this->saveCache($this->getCacheKey($request), $validateResponse, $validateResponse->getMaxAge());
                 }
+
                 return false;
             }
 
@@ -282,8 +281,8 @@ class CachePlugin implements EventSubscriberInterface
     /**
      * Check if a cache response satisfies a request's caching constraints
      *
-     * @param RequestInterface $request Request to validate
-     * @param Response $response Response to validate
+     * @param RequestInterface $request  Request to validate
+     * @param Response         $response Response to validate
      *
      * @return bool
      */
@@ -344,9 +343,9 @@ class CachePlugin implements EventSubscriberInterface
     /**
      * Save data to the cache adapter
      *
-     * @param string $key The cache key
+     * @param string   $key      The cache key
      * @param Response $response The response to cache
-     * @param int $lifetime Amount of seconds to cache
+     * @param int      $lifetime Amount of seconds to cache
      *
      * @return int Returns the lifetime of the cached data
      */

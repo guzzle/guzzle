@@ -34,8 +34,8 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     /**
      * Create a new request
      *
-     * @param string $method HTTP method
-     * @param string|Url $url HTTP URL to connect to.  The URI scheme, host
+     * @param string     $method HTTP method
+     * @param string|Url $url    HTTP URL to connect to.  The URI scheme, host
      *      header, and URI are parsed from the full URL.  If query string
      *      parameters are present they will be parsed as well.
      * @param array|Collection $headers HTTP headers
@@ -199,9 +199,9 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     /**
      * Set HTTP authorization parameters
      *
-     * @param string|false $user User name or false disable authentication
-     * @param string $password Password
-     * @param string $scheme Authentication scheme to use (Basic, Digest)
+     * @param string|false $user     User name or false disable authentication
+     * @param string       $password Password
+     * @param string       $scheme   Authentication scheme to use (Basic, Digest)
      *
      * @return Request
      *
@@ -297,7 +297,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * bypass the actual sending of a request.
      *
      * @param Response $response Response object to set
-     * @param bool $queued Set to TRUE to keep the request in a stat
+     * @param bool     $queued   Set to TRUE to keep the request in a stat
      *      of not having been sent, but queue the response for send()
      *
      * @return RequestInterface Returns a reference to the object.
@@ -329,7 +329,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     /**
      * Add a Cookie value by name to the Cookie header
      *
-     * @param string $name Name of the cookie to add
+     * @param string $name  Name of the cookie to add
      * @param string $value Value to set
      *
      * @return RequestInterface

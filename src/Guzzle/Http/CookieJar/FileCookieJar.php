@@ -2,7 +2,6 @@
 
 namespace Guzzle\Http\CookieJar;
 
-use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\RuntimeException;
 
 /**
