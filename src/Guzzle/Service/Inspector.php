@@ -271,6 +271,10 @@ class Inspector
                 continue;
             }
 
+            // Run the value through attached filters
+            $configValue = $arg->filter($configValue);
+            $config->set($name, $configValue);
+
             // Ensure that the correct data type is being used
             if ($validate && $this->typeValidation && $configValue !== null && $argType = $arg->getType()) {
                 $validation = $this->validateConstraint($argType, $configValue);
@@ -279,10 +283,6 @@ class Inspector
                     continue;
                 }
             }
-
-            // Run the value through attached filters
-            $configValue = $arg->filter($configValue);
-            $config->set($name, $configValue);
 
             // Check the length values if validating data
             if ($validate) {
