@@ -794,11 +794,6 @@ class Response extends AbstractMessage
             return false;
         }
 
-        // HTTPS responses must send a Cache-Control: public value for caching
-        if ($this->getRequest() && $this->getRequest()->getScheme() == 'https' && !$this->hasCacheControlDirective('public')) {
-            return false;
-        }
-
         return $this->isFresh() || $this->getFreshness() === null || $this->canValidate();
     }
 

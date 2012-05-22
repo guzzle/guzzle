@@ -666,17 +666,6 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
             'Content-Length' => 0
         )), EntityBody::factory($resource, 0))->canCache());
         unlink($tmp);
-
-        // When an HTTPS request is sent and the Cache-Control directive does
-        // not include a 'public' value, then the response is not to be cached
-        $request = RequestFactory::getInstance()->create('GET', 'https://www.test.com/');
-        $response = new Response(200);
-        $response->setRequest($request);
-        $this->assertFalse($response->canCache());
-
-        // This response can be cache because it is public
-        $response->setHeader('Cache-Control', 'public');
-        $this->assertTrue($response->canCache());
     }
 
     /**
