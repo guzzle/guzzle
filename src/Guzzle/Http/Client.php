@@ -226,9 +226,10 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             $templateVars = null;
         } else {
             if (count($uri) != 2 || !is_array($uri[1])) {
-                throw new InvalidArgumentException('You must provide a URI'
-                    . ' template followed by an array of template variables'
-                    . ' when using an array for a URI template');
+                throw new InvalidArgumentException(
+                    'You must provide a URI template followed by an array of template variables '
+                    . 'when using an array for a URI template'
+                );
             }
             list($uri, $templateVars) = $uri;
         }

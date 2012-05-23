@@ -377,7 +377,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_ENCODING => '',
                 CURLOPT_POST => 1,
                 CURLOPT_POSTFIELDS => array(
-                    'file' => '@' . $testFile
+                    'file' => '@' . $testFile . ';type=application/xml'
                 ),
                 CURLOPT_HTTPHEADER => array (
                     'Host: localhost:8124',
@@ -702,7 +702,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         // Ensure the CURLOPT_POSTFIELDS option was set properly
         $options = $request->getParams()->get('curl.last_options');
         $this->assertEquals(array(
-            'foo' => '@' . __FILE__,
+            'foo' => '@' . __FILE__ . ';type=text/x-php',
             'bar' => 'baz'
         ), $options[CURLOPT_POSTFIELDS]);
 
@@ -795,5 +795,27 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $request->getCurlOptions()->set(CURLOPT_TIMEOUT, 200);
         $handle = CurlHandle::factory($request);
         $this->assertEquals(200, $handle->getOptions()->get(CURLOPT_TIMEOUT));
+    }
+
+    public function testSendsPostUploadsWithContentDispositionHeaders()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\n\r\nContent-Length: 0\r\n\r\n");
+
+        $fileToUpload = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'TestData' . DIRECTORY_SEPARATOR . 'test_service.json';
+
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->post();
+        $request->addPostFile('foo', $fileToUpload, 'application/json');
+        $request->addPostFile('foo', __FILE__);
+
+        $request->send();
+        $requests = $this->getServer()->getReceivedRequests(true);
+        $body = (string) $requests[0]->getBody();
+
+        $this->assertContains('Content-Disposition: form-data; name="foo[0]"; filename="', $body);
+        $this->assertContains('Content-Type: application/json', $body);
+        $this->assertContains('Content-Type: text/x-php', $body);
+        $this->assertContains('Content-Disposition: form-data; name="foo[1]"; filename="', $body);
     }
 }

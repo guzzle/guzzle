@@ -22,6 +22,11 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     protected $postFields;
 
     /**
+     * @var array POST files to send with the request
+     */
+    protected $postFiles = array();
+
+    /**
      * {@inheritdoc}
      */
     public function __construct($method, $url, $headers = array())
@@ -38,23 +43,24 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
      */
     public function __toString()
     {
-        return parent::__toString()
-            . (count($this->getPostFields()) ? $this->postFields : $this->body);
+        // Only attempt to inclue the POST data if it's only fields
+        if (count($this->postFields) && empty($this->postFiles)) {
+            return parent::__toString() . (string) $this->postFields;
+        }
+
+        return parent::__toString() . $this->body;
     }
 
     /**
      * Set the body of the request
      *
-     * @param string|resource|EntityBody $body Body to use in the entity body
-     *      of the request
-     * @param string $contentType Content-Type to set.  Leave null
-     *      to use an existing Content-Type or to guess the Content-Type
-     * @param bool $tryChunkedTransfer Set to TRUE to try to use
-     *      Tranfer-Encoding chunked
+     * @param string|resource|EntityBody $body               Body to use in the entity body of the request
+     * @param string                     $contentType        Content-Type to set.  Leave null to use an existing
+     *                                                       Content-Type or to guess the Content-Type
+     * @param bool                       $tryChunkedTransfer Set to TRUE to try to use Transfer-Encoding chunked
      *
      * @return EntityEnclosingRequest
-     * @throws RequestException if the protocol is < 1.1 and Content-Length can
-     *      not be determined
+     * @throws RequestException if the protocol is < 1.1 and Content-Length can not be determined
      */
     public function setBody($body, $contentType = null, $tryChunkedTransfer = false)
     {
@@ -100,7 +106,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     /**
      * Get a POST field from the request
      *
-     * @param string $field Field to retrive
+     * @param string $field Field to retrieve
      *
      * @return mixed|null
      */
@@ -120,38 +126,6 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * Returns an associative array of POST field names and file paths
-     *
-     * @return array
-     */
-    public function getPostFiles()
-    {
-        $files = array();
-        foreach ($this->postFields as $key => $value) {
-            if (is_string($value) && substr($value, 0, 1) == '@') {
-                $files[$key] = substr($value, 1);
-            }
-        }
-
-        return $files;
-    }
-
-    /**
-     * Add POST fields to use in the request
-     *
-     * @param QueryString|array $fields POST fields
-     *
-     * @return EntityEnclosingRequest
-     */
-    public function addPostFields($fields)
-    {
-        $this->postFields->merge($fields);
-        $this->processPostFields();
-
-        return $this;
-    }
-
-    /**
      * Set a POST field value
      *
      * @param string $key   Key to set
@@ -168,38 +142,15 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * Add POST files to use in the upload
+     * Add POST fields to use in the request
      *
-     * @param array $files An array of filenames to POST
+     * @param QueryString|array $fields POST fields
      *
      * @return EntityEnclosingRequest
-     * @throws RequestException if the file cannot be read
      */
-    public function addPostFiles(array $files)
+    public function addPostFields($fields)
     {
-        foreach ((array) $files as $key => $file) {
-
-            if (!is_string($file) || empty($file)) {
-                continue;
-            }
-
-            // Convert non-associative array keys into 'file'
-            if (is_numeric($key)) {
-                $key = 'file';
-            }
-
-            // PHP's curl bindings require a leading @ for POST files
-            if ($file[0] != '@') {
-                $file = '@' . $file;
-            }
-
-            if (!is_readable(substr($file, 1))) {
-                throw new RequestException('File cannot be opened for reading: ' . $file);
-            }
-
-            $this->postFields->add($key, $file);
-        }
-
+        $this->postFields->merge($fields);
         $this->processPostFields();
 
         return $this;
@@ -221,16 +172,149 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
+     * Returns an associative array of POST field names to an array of
+     * (path, Content-Type)
+     *
+     * @return array
+     */
+    public function getPostFiles()
+    {
+        return $this->postFiles;
+    }
+
+    /**
+     * Get a POST file from the request
+     *
+     * @param string $fieldName POST fields to retrieve
+     *
+     * @return array|null Returns an array wrapping an array of (field name, path, and Content-Type)
+     */
+    public function getPostFile($fieldName)
+    {
+        return isset($this->postFiles[$fieldName]) ? $this->postFiles[$fieldName] : null;
+    }
+
+    /**
+     * Remove a POST file from the request
+     *
+     * @param string $fieldName POST file field name to remove
+     *
+     * @return EntityEnclosingRequest
+     */
+    public function removePostFile($fieldName)
+    {
+        unset($this->postFiles[$fieldName]);
+        $this->processPostFields();
+
+        return $this;
+    }
+
+    /**
+     * Add a POST file to the upload
+     *
+     * @param string $fieldName   POST field to use (e.g. file). Used to reference content from the server.
+     * @param string $path        Full path to the file. Do not include the @ symbol.
+     * @param string $contentType Optional Content-Type to add to the Content-Disposition.
+     *                            Default behavior is to guess. Set to false to not specify.
+     * @param bool   $process     Set to false to not process POST fields immediately.
+     *
+     * @return EntityEnclosingRequest
+     * @throws RequestException if the file cannot be read
+     */
+    public function addPostFile($fieldName, $path, $contentType = null, $process = true)
+    {
+        if (!is_string($path)) {
+            throw new RequestException('The path to a file must be a string');
+        }
+
+        // Adding an empty file will cause cURL to error out
+        if (!empty($path)) {
+
+            $fieldName = (string) $fieldName ?: 'file';
+
+            if (!is_readable($path)) {
+                throw new RequestException('File cannot be opened for reading: ' . $path);
+            }
+
+            if ($contentType === null && class_exists('finfo', false)) {
+                $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                $contentType = $finfo->file($path);
+            }
+
+            $row = array(
+                'file' => $path,
+                'type' => $contentType
+            );
+
+            if (!isset($this->postFiles[$fieldName])) {
+                $this->postFiles[$fieldName] = array($row);
+            } else {
+                $this->postFiles[$fieldName][] = $row;
+            }
+
+            if ($process) {
+                $this->processPostFields();
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Add POST files to use in the upload
+     *
+     * @param array $files An array of POST fields => filenames.  If a filename
+     *     is an array, it must contain a 'file' and 'type' key mapping to the
+     *     path to the file and the Content-Type of the file.
+     *
+     * @return EntityEnclosingRequest
+     * @throws RequestException if the file cannot be read
+     */
+    public function addPostFiles(array $files)
+    {
+        foreach ($files as $key => $file) {
+
+            // Convert non-associative array keys into 'file'
+            if (is_numeric($key)) {
+                $key = 'file';
+            }
+
+            // If an array is passed for the file, then it contains
+            // Content-Disposition parameters.
+            if (is_array($file) && array_key_exists('type', $file) && array_key_exists('file', $file)) {
+                $contentType = $file['type'];
+                $file = $file['file'];
+            } elseif (is_string($file)) {
+                $contentType = null;
+            } else {
+                throw new RequestException('File must be a string or array');
+            }
+
+            // Remove the leading @ symbol
+            if (strpos($file, '@') !== false) {
+                $file = substr($file, 1);
+            }
+
+            // Add the POST file and remove any leading @ symbols
+            $this->addPostFile($key, $file, $contentType, false);
+        }
+
+        $this->processPostFields();
+
+        return $this;
+    }
+
+    /**
      * Determine what type of request should be sent based on post fields
      */
     protected function processPostFields()
     {
-        if (0 == count($this->getPostFiles())) {
+        if (empty($this->postFiles)) {
             $this->setHeader('Content-Type', 'application/x-www-form-urlencoded');
             $this->removeHeader('Expect');
         } else {
-            $this->setHeader('Expect', '100-Continue');
-            $this->setHeader('Content-Type', 'multipart/form-data');
+            $this->setHeader('Expect', '100-Continue')
+                 ->setHeader('Content-Type', 'multipart/form-data');
             $this->postFields->setEncodeFields(false)->setEncodeValues(false);
         }
     }

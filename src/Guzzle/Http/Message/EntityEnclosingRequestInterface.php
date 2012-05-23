@@ -13,57 +13,38 @@ interface EntityEnclosingRequestInterface extends RequestInterface
     /**
      * Set the body of the request
      *
-     * @param string|resource|EntityBody $body Body to use in the entity body
-     *      of the request
-     * @param string $contentType Content-Type to set.  Leave null
-     *      to use an existing Content-Type or to guess the Content-Type
-     * @param bool $tryChunkedTransfer Set to TRUE to try to use
-     *      Tranfer-Encoding chunked
+     * @param string|resource|EntityBody $body               Body to use in the entity body of the request
+     * @param string                     $contentType        Content-Type to set.  Leave null to use an existing
+     *                                                       Content-Type or to guess the Content-Type
+     * @param bool                       $tryChunkedTransfer Set to TRUE to try to use Transfer-Encoding chunked
      *
      * @return EntityEnclosingRequestInterface
-     * @throws RequestException if the protocol is < 1.1 and Content-Length can
-     *      not be determined
+     * @throws RequestException if the protocol is < 1.1 and Content-Length can not be determined
      */
-    function setBody($body, $contentType = null, $tryChunkedTransfer = false);
+    public function setBody($body, $contentType = null, $tryChunkedTransfer = false);
 
     /**
      * Get the body of the request if set
      *
      * @return EntityBody|null
      */
-    function getBody();
+    public function getBody();
 
     /**
      * Get a POST field from the request
      *
-     * @param string $field Field to retrive
+     * @param string $field Field to retrieve
      *
      * @return mixed|null
      */
-    function getPostField($field);
+    public function getPostField($field);
 
     /**
      * Get the post fields that will be used in the request
      *
      * @return QueryString
      */
-    function getPostFields();
-
-    /**
-     * Returns an associative array of POST field names and file paths
-     *
-     * @return array
-     */
-    function getPostFiles();
-
-    /**
-     * Add POST fields to use in the request
-     *
-     * @param QueryString|array $fields POST fields
-     *
-     * @return EntityEnclosingRequestInterface
-     */
-    function addPostFields($fields);
+    public function getPostFields();
 
     /**
      * Set a POST field value
@@ -73,17 +54,16 @@ interface EntityEnclosingRequestInterface extends RequestInterface
      *
      * @return EntityEnclosingRequestInterface
      */
-    function setPostField($key, $value);
+    public function setPostField($key, $value);
 
     /**
-     * Add POST files to use in the upload
+     * Add POST fields to use in the request
      *
-     * @param array $files An array of filenames to POST
+     * @param QueryString|array $fields POST fields
      *
      * @return EntityEnclosingRequestInterface
-     * @throws BodyException if the file cannot be read
      */
-    function addPostFiles(array $files);
+    public function addPostFields($fields);
 
     /**
      * Remove a POST field or file by name
@@ -92,5 +72,55 @@ interface EntityEnclosingRequestInterface extends RequestInterface
      *
      * @return EntityEnclosingRequestInterface
      */
-    function removePostField($field);
+    public function removePostField($field);
+
+    /**
+     * Returns an associative array of POST field names to an array of
+     * (path, Content-Type)
+     *
+     * @return array
+     */
+    public function getPostFiles();
+
+    /**
+     * Get a POST file from the request
+     *
+     * @param string $fieldName POST fields to retrieve
+     *
+     * @return array|null Returns an array wrapping an array of (field name, path, and Content-Type)
+     */
+    public function getPostFile($fieldName);
+
+    /**
+     * Remove a POST file from the request
+     *
+     * @param string $fieldName POST file field name to remove
+     *
+     * @return EntityEnclosingRequestInterface
+     */
+    public function removePostFile($fieldName);
+
+    /**
+     * Add a POST file to the upload
+     *
+     * @param string $fieldName   POST field to use (e.g. file). Used to reference content from the server.
+     * @param string $path        Full path to the file. Do not include the @ symbol.
+     * @param string $contentType Optional Content-Type to add to the Content-Disposition.
+     *                            Default behavior is to guess. Set to false to not specify.
+     * @param bool   $process     Set to false to not process POST fields immediately.
+     *
+     * @return EntityEnclosingRequestInterface
+     */
+    public function addPostFile($fieldName, $path, $contentType = null);
+
+    /**
+     * Add POST files to use in the upload
+     *
+     * @param array $files An array of POST fields => filenames.  If a filename
+     *     is an array, it must contain a 'file' and 'type' key mapping to the
+     *     path to the file and the Content-Type of the file.
+     *
+     * @return EntityEnclosingRequestInterface
+     */
+    public function addPostFiles(array $files);
 }

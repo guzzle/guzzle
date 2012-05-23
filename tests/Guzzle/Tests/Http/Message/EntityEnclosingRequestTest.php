@@ -60,6 +60,30 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::__toString
+     */
+    public function testRequestIncludesPostBodyInMessageOnlyWhenNoPostFiles()
+    {
+        $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/', null, array(
+            'foo' => 'bar'
+        ));
+        $this->assertEquals("POST / HTTP/1.1\r\n"
+            . "Host: www.guzzle-project.com\r\n"
+            . "User-Agent: " . Utils::getDefaultUserAgent() . "\r\n"
+            . "Content-Type: application/x-www-form-urlencoded\r\n\r\n"
+            . "foo=bar", (string) $request);
+
+        $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/', null, array(
+            'foo' => '@' . __FILE__
+        ));
+        $this->assertEquals("POST / HTTP/1.1\r\n"
+            . "Host: www.guzzle-project.com\r\n"
+            . "User-Agent: " . Utils::getDefaultUserAgent() . "\r\n"
+            . "Expect: 100-Continue\r\n"
+            . "Content-Type: multipart/form-data\r\n\r\n", (string) $request);
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::__toString
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFields
      */
     public function testAddsPostFieldsAndSetsContentLength()
@@ -177,12 +201,11 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
             ));
 
         $this->assertEquals(array(
-            'file' => '@' . __FILE__,
             'test' => 'abc'
         ), $request->getPostFields()->getAll());
 
         $this->assertEquals(array(
-            'file' => __FILE__
+            'file' => array(array('file' => __FILE__, 'type' => 'text/x-php'))
         ), $request->getPostFiles());
 
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
@@ -194,6 +217,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFiles
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFile
      * @expectedException Guzzle\Http\Exception\RequestException
      */
     public function testSetPostFilesThrowsExceptionWhenFileIsNotFound()
@@ -202,6 +226,63 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
             ->addPostFiles(array(
                 'file' => 'filenotfound.ini'
             ));
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFile
+     * @expectedException Guzzle\Http\Exception\RequestException
+     */
+    public function testThrowsExceptionWhenNonStringsAreAddedToPost()
+    {
+        $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/')
+            ->addPostFile('foo', new \stdClass());
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFile
+     */
+    public function testAllowsContentTypeInPostUploads()
+    {
+        $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/')
+            ->addPostFile('foo', __FILE__, 'text/plain');
+
+        $this->assertEquals(array(
+            array('file' => __FILE__, 'type' => 'text/plain')
+        ), $request->getPostFile('foo'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFile
+     */
+    public function testGuessesContentTypeOfPostUpload()
+    {
+        $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/')
+            ->addPostFile('foo', __FILE__);
+
+        $this->assertEquals(array(
+            array('file' => __FILE__, 'type' => 'text/x-php')
+        ), $request->getPostFile('foo'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFiles
+     */
+    public function testAllowsContentDispositionFieldsInPostUploadsWhenSettingInBulk()
+    {
+        $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/')
+            ->addPostFiles(array(
+                'foo' => array(
+                    'file' => __FILE__,
+                    'type' => 'text/plain'
+                )
+            ));
+
+        $this->assertEquals(array(
+            array(
+                'file' => __FILE__,
+                'type' => 'text/plain'
+            )
+        ), $request->getPostFile('foo'));
     }
 
     /**
@@ -318,23 +399,33 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFiles
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFields
      */
-    public function testIgnoresEmptyFiles()
+    public function testAllowsEmptyFields()
+    {
+        $request = new EntityEnclosingRequest('POST', 'http://test.com/');
+        $request->addPostFields(array(
+            'a' => ''
+        ));
+        $this->assertEquals(array(
+            'a' => ''
+        ), $request->getPostFields()->getAll());
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFiles
+     * @expectedException Guzzle\Http\Exception\RequestException
+     */
+    public function testFailsOnInvalidFiles()
     {
         $request = new EntityEnclosingRequest('POST', 'http://test.com/');
         $request->addPostFiles(array(
-            'a' => '',
-            'b' => null,
-            'c' => new \stdClass()
+            'a' => new \stdClass()
         ));
-        $this->assertEquals(array(), $request->getPostFiles());
-        $this->assertEquals(array(), $request->getPostFields()->getAll());
     }
 
     /**
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFields
-     * @covers Guzzle\Http\Message\EntityEnclosingRequest::getPostFiles
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::getPostFields
      */
     public function testHandlesEmptyStrings()
@@ -343,17 +434,59 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request->addPostFields(array(
             'a' => '',
             'b' => null,
-            'c' => 'Foo',
-            'd' => '@' . __FILE__
+            'c' => 'Foo'
         ));
         $this->assertEquals(array(
             'a' => '',
             'b' => null,
-            'c' => 'Foo',
-            'd' => '@' . __FILE__
+            'c' => 'Foo'
         ), $request->getPostFields()->getAll());
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::getPostFiles
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::getPostFile
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFile
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::removePostFile
+     */
+    public function testHoldsPostFiles()
+    {
+        $request = new EntityEnclosingRequest('POST', 'http://test.com/');
+        $request->addPostFile('foo', __FILE__);
+        $request->addPostFile('foo', __FILE__);
         $this->assertEquals(array(
-            'd' => __FILE__
+            array('file' => __FILE__, 'type' => 'text/x-php'),
+            array('file' => __FILE__, 'type' => 'text/x-php')
+        ), $request->getPostFile('foo'));
+
+        $this->assertEquals(array(
+            'foo' => array(
+                array('file' => __FILE__, 'type' => 'text/x-php'),
+                array('file' => __FILE__, 'type' => 'text/x-php')
+            )
+        ), $request->getPostFiles());
+
+        $request->removePostFile('foo');
+        $this->assertEquals(array(), $request->getPostFiles());
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFiles
+     */
+    public function testAllowsAtPrefixWhenAddingPostFiles()
+    {
+        $request = new EntityEnclosingRequest('POST', 'http://test.com/');
+        $request->addPostFiles(array(
+            'foo' => '@' . __FILE__
+        ));
+
+        $this->assertEquals(array(
+            'foo' => array(
+                array(
+                    'file' => __FILE__,
+                    'type' => 'text/x-php'
+                )
+            )
         ), $request->getPostFiles());
     }
 }

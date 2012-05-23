@@ -103,10 +103,29 @@ class RequestFactory implements RequestFactoryInterface
             $isChunked = (string) $request->getHeader('Transfer-Encoding') == 'chunked';
 
             if ($method == 'POST' && (is_array($body) || $body instanceof Collection)) {
-                $request->addPostFields($body);
+
+                // Normalize PHP style cURL uploads with a leading '@' symbol
+                $files = array();
+                foreach ($body as $key => $value) {
+                    if (is_string($value) && strpos($value, '@') === 0) {
+                        $files[$key] = $value;
+                        unset($body[$key]);
+                    }
+                }
+
+                // Add the fields if they are still present and not all files
+                if (count($body) > 0) {
+                    $request->addPostFields($body);
+                }
+                // Add any files that were prefixed with '@'
+                if (!empty($files)) {
+                    $request->addPostFiles($files);
+                }
+
                 if ($isChunked) {
                     $request->setHeader('Transfer-Encoding', 'chunked');
                 }
+
             } elseif (is_resource($body) || $body instanceof EntityBody) {
                 $request->setBody($body, (string) $request->getHeader('Content-Type'), $isChunked);
             } else {

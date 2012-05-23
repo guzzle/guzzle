@@ -104,10 +104,31 @@ class CurlHandle
                 break;
             case 'POST':
                 $curlOptions[CURLOPT_POST] = true;
+
                 // Special handling for POST specific fields and files
                 if (count($request->getPostFiles())) {
-                    $curlOptions[CURLOPT_POSTFIELDS] = $request->getPostFields()->getAll();
+
+                    $fields = $request->getPostFields()->getAll();
+                    foreach ($request->getPostFiles() as $key => $data) {
+                        $prefixKeys = count($data) > 1;
+                        foreach ($data as $index => $file) {
+                            $path = '@' . $file['file'];
+                            // Add the Content-Type if it's set
+                            if ($file['type']) {
+                                $path .= ";type={$file['type']}";
+                            }
+                            // Allow multiple files in the same key
+                            if ($prefixKeys) {
+                                $fields["{$key}[{$index}]"] = $path;
+                            } else {
+                                $fields[$key] = $path;
+                            }
+                        }
+                    }
+
+                    $curlOptions[CURLOPT_POSTFIELDS] = $fields;
                     $request->removeHeader('Content-Length');
+
                 } elseif (count($request->getPostFields())) {
                     $curlOptions[CURLOPT_POSTFIELDS] = (string) $request->getPostFields();
                     $request->removeHeader('Content-Length');
