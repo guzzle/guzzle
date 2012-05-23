@@ -5,6 +5,7 @@ namespace Guzzle\Tests\Service\Description;
 use Guzzle\Common\Collection;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Description\ApiCommand;
+use Guzzle\Service\Client;
 
 class ServiceDescriptionTest extends \Guzzle\Tests\GuzzleTestCase
 {
@@ -67,5 +68,36 @@ class ServiceDescriptionTest extends \Guzzle\Tests\GuzzleTestCase
         $data = serialize($service);
         $d2 = unserialize($data);
         $this->assertEquals($service, $d2);
+    }
+
+    public function testAllowsForJsonBasedArrayParamsFunctionalTest()
+    {
+        $service = array(
+            'test' => new ApiCommand(array(
+                'method' => 'PUT',
+                'params' => array(
+                    'data'   => array(
+                        'required' => true,
+                        'type'     => 'type:array',
+                        'filters'  => 'json_encode',
+                        'location' => 'body'
+                    )
+                )
+            ))
+        );
+
+        $description = new ServiceDescription($service);
+        $client = new Client();
+        $client->setDescription($description);
+        $command = $client->getCommand('test', array(
+            'data' => array(
+                'foo' => 'bar'
+            )
+        ));
+
+        $request = $command->prepare();
+        $this->assertEquals(json_encode(array(
+            'foo' => 'bar'
+        )), (string) $request->getBody());
     }
 }

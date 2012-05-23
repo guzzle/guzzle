@@ -72,13 +72,12 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $col = new Collection(array(
             'username' => 'user',
-            'string' => 'test',
-            'float' => 1.23
+            'string'   => 'test',
+            'float'    => 1.23
         ));
 
         $inspector = Inspector::getInstance();
-        $inspector->validateConfig($inspector->getApiParamsForClass(__CLASS__), $col);
-
+        $inspector->validateConfig($inspector->getApiParamsForClass(__CLASS__), $col, true);
         $this->assertEquals(false, $col->get('bool_2'));
         $this->assertEquals('user_test_', $col->get('dynamic'));
         $this->assertEquals(1.23, $col->get('float'));
@@ -178,7 +177,14 @@ EOT;
             'api_version' => 'v2'
         ));
 
-        Inspector::getInstance()->validateConfig($params, $config);
+        // Do an idempotent initialization
+        Inspector::getInstance()->initConfig($params, $config);
+        // make sure defaults and statics were added, but configs were not injected
+        $this->assertEquals('{ protocol }://{ subdomain }.unfuddle.com/api/{ api_version }/', $config->get('base_url'));
+        $this->assertEquals('https', $config->get('protocol'));
+
+        // Not do a non-idempotent updated
+        Inspector::getInstance()->validateConfig($params, $config, true);
 
         // make sure the configs were injected
         $this->assertEquals('https://sub.unfuddle.com/api/v2/', $config->get('base_url'));
@@ -311,7 +317,7 @@ EOT;
         ));
 
         $inspector = Inspector::getInstance();
-        $inspector->validateConfig($inspector->getApiParamsForClass(__CLASS__), $data);
+        $inspector->validateConfig($inspector->getApiParamsForClass(__CLASS__), $data, true, true, false);
 
         $this->assertEquals('test', $data->get('username'));
         $this->assertEquals('FOO', $data->get('test_function'));
@@ -334,17 +340,6 @@ EOT;
         ), new Collection(array(
             'data' => new \stdClass()
         )), true);
-
-        $i->setTypeValidation(true);
-
-        // Ensure that nothing is validated
-        $i->validateConfig(array(
-            'data' => new ApiParam(array(
-                'type' => 'string'
-            ))
-        ), new Collection(array(
-            'data' => new \stdClass()
-        )), true, false);
     }
 
     /**
@@ -360,5 +355,31 @@ EOT;
                 'type' => 'string'
             ))
         ), new Collection(), true));
+    }
+
+    /**
+     * @covers Guzzle\Service\Inspector::initConfig
+     */
+    public function testCanInitConfig()
+    {
+        $i = Inspector::getInstance();
+
+        $param = new ApiParam(array(
+            'type'    => 'array',
+            'filters' => 'json_encode'
+        ));
+
+        $config = new Collection(array(
+            'data' => array(
+                'foo' => 'bar'
+            )
+        ));
+
+        $i->initConfig(array(
+            'data' => $param
+        ), $config);
+
+        // Ensure it's still an array
+        $this->assertInternalType('array', $config->get('data'));
     }
 }
