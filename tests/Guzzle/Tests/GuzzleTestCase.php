@@ -34,7 +34,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return Server
      */
-    public function getServer()
+    public static function getServer()
     {
         if (!self::$server) {
             try {
@@ -67,7 +67,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
      *
      * @return ServiceBuilder
      */
-    public function getServiceBuilder()
+    public static function getServiceBuilder()
     {
         if (!self::$serviceBuilder) {
             throw new RuntimeException('No service builder has been set via setServiceBuilder()');

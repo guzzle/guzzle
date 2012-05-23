@@ -87,6 +87,7 @@ class Client extends HttpClient implements ClientInterface
             );
         }
 
+        $args = isset($args[0]) ? $args[0] : array();
         $command = $this->getCommand(Inflector::snake($method), $args);
 
         return $this->magicMethodBehavior == self::MAGIC_CALL_RETURN
