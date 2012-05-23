@@ -72,7 +72,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
 
             // Determine the name of the command based on the relation to the
             // client that executes the command
-
             $this->apiCommand = new ApiCommand(array(
                 'name'   => str_replace('\\_', '.', Inflector::snake(substr($className, strpos($className, 'Command') + 8))),
                 'class'  => $className,
@@ -80,8 +79,8 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             ));
         }
 
-        // Set default values on the command
-        $this->getInspector()->validateConfig($this->apiCommand->getParams(), $this, false, false);
+        // Set default and static values on the command
+        $this->getInspector()->initConfig($this->apiCommand->getParams(), $this);
 
         $headers = $this->get('headers');
         if (!$headers instanceof Collection) {
@@ -310,7 +309,9 @@ abstract class AbstractCommand extends Collection implements CommandInterface
                 throw new CommandException('A Client object must be associated with the command before it can be prepared.');
             }
 
-            // Fail on missing required arguments
+            // Fail on missing required arguments, and change parameters via filters
+            // Perform a non-idempotent validation on the parameters.  Options that
+            // change during validation will persist (e.g. injection, filters).
             $this->getInspector()->validateConfig($this->apiCommand->getParams(), $this, true);
 
             $this->build();
