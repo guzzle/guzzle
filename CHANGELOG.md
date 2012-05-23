@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+* 2.6.3 (05-23-2012)
+
+ * [BC] Guzzle\Common\FromConfigInterface no longer requires any config options.
+ * [BC] Refactoring how POST files are stored on an EntityEnclosingRequest. They are now separate from POST fields.
+ * You can now use an array of data when creating PUT request bodies in the request factory.
+ * Removing the requirement that HTTPS requests needed a Cache-Control: public directive to be cacheable.
+ * [Http] Adding support for Content-Type in multipart POST uploads per upload
+ * [Http] Added support for uploading multiple files using the same name (foo[0], foo[1])
+ * Adding more POST data operations for easier manipulation of POST data.
+ * You can now set empty POST fields.
+ * The body of a request is only shown on EntityEnclosingRequest objects that do not use POST files.
+ * Split the Guzzle\Service\Inspector::validateConfig method into two methods. One to initialize when a command is created, and one to validate.
+ * CS updates
+
 * 2.6.2 (05-19-2012)
 
  * [Http] Better handling of nested scope requests in CurlMulti.  Requests are now always prepares in the send() method rather than the addRequest() method.
