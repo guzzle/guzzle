@@ -41,7 +41,7 @@ class Utils
         if (!self::$userAgent) {
             $curl = CurlVersion::getInstance();
             self::$userAgent = sprintf('Guzzle/%s curl/%s PHP/%s openssl/%s',
-                Version::VERSION, PHP_VERSION, $curl->get('version'),
+                Version::VERSION, $curl->get('version'), PHP_VERSION,
                 $curl->get('ssl_version')
             );
         }
