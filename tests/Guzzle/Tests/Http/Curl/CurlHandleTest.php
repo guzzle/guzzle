@@ -695,7 +695,8 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             'foo' => __FILE__,
         ));
         $request->addPostFields(array(
-            'bar' => 'baz'
+            'bar' => 'baz',
+            'arr' => array('a' => 1, 'b' => 2),
         ));
         $request->send();
 
@@ -703,7 +704,9 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $options = $request->getParams()->get('curl.last_options');
         $this->assertEquals(array(
             'foo' => '@' . __FILE__ . ';type=text/x-php',
-            'bar' => 'baz'
+            'bar' => 'baz',
+            'arr[a]' => '1',
+            'arr[b]' => '2',
         ), $options[CURLOPT_POSTFIELDS]);
 
         // Ensure that a Content-Length header was sent by cURL
