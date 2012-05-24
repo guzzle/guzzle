@@ -15,8 +15,11 @@ class IsInstanceOf extends AbstractConstraint
      */
     protected function validateValue($value, array $options = array())
     {
-        if (!($value instanceof $options['class'])) {
-            return "Value must be an instance of {$options['class']}";
+        // Replace dot notation with namespace separator
+        $class = str_replace('.', '\\', $options['class']);
+
+        if (!($value instanceof $class)) {
+            return "Value must be an instance of {$class}";
         }
 
         return true;
