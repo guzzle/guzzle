@@ -101,6 +101,15 @@ interface CommandInterface
     function getResult();
 
     /**
+     * Set the result of the command
+     *
+     * @param mixed $result Result to set
+     *
+     * @return self
+     */
+    function setResult($result);
+
+    /**
      * Returns TRUE if the command has been prepared for executing
      *
      * @return bool

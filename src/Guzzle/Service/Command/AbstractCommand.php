@@ -276,6 +276,20 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
+     * Set the result of the command
+     *
+     * @param mixed $result Result to set
+     *
+     * @return self
+     */
+    public function setResult($result)
+    {
+        $this->result = $result;
+
+        return $this;
+    }
+
+    /**
      * Returns TRUE if the command has been prepared for executing
      *
      * @return bool
