@@ -30,7 +30,7 @@ class UtilsTest extends \Guzzle\Tests\GuzzleTestCase
         $refProperty->setValue(null, null);
 
         $version = curl_version();
-        $agent = sprintf('Guzzle/%s curl/%s PHP/%s openssl/%s', Version::VERSION, PHP_VERSION, $version['version'], $version['ssl_version']);
+        $agent = sprintf('Guzzle/%s curl/%s PHP/%s openssl/%s', Version::VERSION, $version['version'], PHP_VERSION, $version['ssl_version']);
         $this->assertEquals($agent, Utils::getDefaultUserAgent());
         // Get it from cache this time
         $this->assertEquals($agent, Utils::getDefaultUserAgent());
