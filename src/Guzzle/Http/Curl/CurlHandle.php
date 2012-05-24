@@ -108,7 +108,7 @@ class CurlHandle
                 // Special handling for POST specific fields and files
                 if (count($request->getPostFiles())) {
 
-                    $fields = $request->getPostFields()->getAll();
+                    $fields = $request->getPostFields()->urlEncode();
                     foreach ($request->getPostFiles() as $key => $data) {
                         $prefixKeys = count($data) > 1;
                         foreach ($data as $index => $file) {
