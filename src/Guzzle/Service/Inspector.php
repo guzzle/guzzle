@@ -74,6 +74,7 @@ class Inspector
             'url'       => array($base . 'Url', null),
             'class'     => array($base . 'IsInstanceOf', null),
             'type'      => array($base . 'Type', null),
+            'any_match' => array($base . 'AnyMatch', null),
             'ctype'     => array($base . 'Ctype', null),
             'choice'    => array($base . 'Choice', null),
             'enum'      => array($base . 'Choice', null),
