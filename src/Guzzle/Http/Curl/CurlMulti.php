@@ -526,9 +526,14 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
                 'request'   => $this,
                 'exception' => $e
             ));
+
             // Allow things to ignore the error if possible
-            if ($request->getState() != RequestInterface::STATE_TRANSFER) {
+            $state = $request->getState();
+            if ($state != RequestInterface::STATE_TRANSFER) {
                 $this->remove($request);
+            }
+            // The error was not handled, so fail
+            if ($state == RequestInterface::STATE_ERROR) {
                 throw $e;
             }
         } else {
@@ -579,8 +584,8 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         $e = new CurlException(sprintf('[curl] %s: %s [url] %s [info] %s [debug] %s',
             $handle->getErrorNo(), $handle->getError(), $handle->getUrl(),
             var_export($handle->getInfo(), true), $handle->getStderr()));
-
-        $e->setRequest($request)
+        $e->setCurlHandle($handle)
+          ->setRequest($request)
           ->setError($handle->getError(), $handle->getErrorNo());
 
         return $e;
