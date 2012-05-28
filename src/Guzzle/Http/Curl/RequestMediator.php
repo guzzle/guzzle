@@ -20,12 +20,31 @@ class RequestMediator
     protected $emitIo;
 
     /**
+     * @var CurlHandle
+     */
+    protected $curlHandle;
+
+    /**
      * @param RequestInterface $request Request to mediate
      */
     public function __construct(RequestInterface $request)
     {
         $this->request = $request;
         $this->emitIo = $request->getParams()->get('curl.emit_io');
+    }
+
+    /**
+     * Set the associated CurlHandle object
+     *
+     * @param CurlHandle $handle Curl handle
+     *
+     * @return RequestMediator
+     */
+    public function setCurlHandle(CurlHandle $handle)
+    {
+        $this->curlHandle = $handle;
+
+        return $this;
     }
 
     /**
@@ -53,6 +72,7 @@ class RequestMediator
     {
         $this->request->dispatch('curl.callback.progress', array(
             'request'       => $this->request,
+            'handle'        => $this->curlHandle,
             'download_size' => $downloadSize,
             'downloaded'    => $downloaded,
             'upload_size'   => $uploadSize,

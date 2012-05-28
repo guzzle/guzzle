@@ -485,7 +485,7 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Curl\CurlMulti::send
      */
-    public function testDoesNotThrowExceptionsWhenRequestsRecover()
+    public function testDoesNotThrowExceptionsWhenRequestsRecoverWithRetry()
     {
         $this->getServer()->flush();
         $client = new Client($this->getServer()->getUrl());
@@ -498,6 +498,29 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
         $multi->add($request);
         $multi->send();
         $this->assertEquals(0, count($this->getServer()->getReceivedRequests(false)));
+    }
+
+    /**
+     * @covers Guzzle\Http\Curl\CurlMulti::send
+     */
+    public function testDoesNotThrowExceptionsWhenRequestsRecoverWithSuccess()
+    {
+        // Attempt a port that 99.9% is not listening
+        $client = new Client('http://localhost:123');
+        $request = $client->get();
+        // Ensure it times out quickly if needed
+        $request->getCurlOptions()->set(CURLOPT_TIMEOUT_MS, 1)->set(CURLOPT_CONNECTTIMEOUT_MS, 1);
+
+        $request->getEventDispatcher()->addListener('request.exception', function(Event $event) use (&$count) {
+            $event['request']->setResponse(new Response(200));
+        });
+
+        $multi = new CurlMulti();
+        $multi->add($request);
+        $multi->send();
+
+        // Ensure that the exception was caught, and the response was set manually
+        $this->assertEquals(200, $request->getResponse()->getStatusCode());
     }
 
     /**

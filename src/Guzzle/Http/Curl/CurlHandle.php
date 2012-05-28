@@ -220,7 +220,10 @@ class CurlHandle
             $request->setHeader($key, $value);
         }
 
-        return new static($handle, $curlOptions);
+        $handle = new static($handle, $curlOptions);
+        $mediator->setCurlHandle($handle);
+
+        return $handle;
     }
 
     /**
