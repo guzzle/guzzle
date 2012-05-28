@@ -53,7 +53,11 @@ class DynamicCommand extends AbstractCommand
             }
 
             // Create the value based on prepend and append settings
-            $value = $arg->getPrepend() . $configValue . $arg->getAppend();
+            if ($arg->getPrepend() || $arg->getAppend()) {
+                $value = $arg->getPrepend() . $configValue . $arg->getAppend();
+            } else {
+                $value = $configValue;
+            }
 
             // Determine the location and key setting location[:key]
             $parts = explode(':', $location);
