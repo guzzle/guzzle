@@ -260,7 +260,7 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
         // If this request has been retried too many times, then throw an exception
         if ($retries <= $this->maxRetries) {
             // Calculate how long to wait until the request should be retried
-            $delay = call_user_func($this->delayClosure, $retries);
+            $delay = call_user_func($this->delayClosure, $retries, $request);
             $delayTime = microtime(true) + $delay;
             // Send the request again
             $request->setState(RequestInterface::STATE_TRANSFER);
