@@ -86,12 +86,10 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         } catch (HttpException $e) {
         }
 
-        // Make sure the proper exception is thrown when sending invalid code
-        try {
-            $response = new Response(2);
-            $this->fail('Response did not throw exception when passing invalid $code');
-        } catch (BadResponseException $e) {
-        }
+        // Ensure custom codes can be set
+        $response = new Response(2);
+        $this->assertEquals(2, $response->getStatusCode());
+        $this->assertEquals('', $response->getReasonPhrase());
 
         // Make sure the proper exception is thrown when sending invalid headers
         try {
@@ -220,11 +218,13 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('Testing!', $response->getReasonPhrase());
         $this->assertEquals(204, $response->getStatusCode());
 
-        try {
-            $response->setStatus(2000);
-            $this->fail('Did not throw expected exception when setting an invalid status');
-        } catch (BadResponseException $e) {
-        }
+        $response->setStatus(2000);
+        $this->assertEquals(2000, $response->getStatusCode());
+        $this->assertEquals('', $response->getReasonPhrase());
+
+        $response->setStatus(200, 'Foo');
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('Foo', $response->getReasonPhrase());
     }
 
     /**

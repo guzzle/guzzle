@@ -131,12 +131,6 @@ class Response extends AbstractMessage
      */
     public function __construct($statusCode, $headers = null, $body = null)
     {
-        if (!array_key_exists($statusCode, self::$statusTexts)) {
-            throw new BadResponseException(
-                'Invalid response code: ' . $statusCode
-            );
-        }
-
         $this->setStatus($statusCode);
         $this->params = new Collection();
         $this->body = EntityBody::factory($body ?: '');
@@ -255,14 +249,13 @@ class Response extends AbstractMessage
      */
     public function setStatus($statusCode, $reasonPhrase = '')
     {
-        $statusCode = (int) trim($statusCode);
+        $this->statusCode = (int) $statusCode;
 
-        if (!array_key_exists($statusCode, self::$statusTexts)) {
-            throw new BadResponseException('Invalid response code: ' . $statusCode);
+        if (!$reasonPhrase && array_key_exists($this->statusCode, self::$statusTexts)) {
+            $this->reasonPhrase = self::$statusTexts[$this->statusCode];
+        } else {
+            $this->reasonPhrase = $reasonPhrase;
         }
-
-        $this->statusCode = $statusCode;
-        $this->reasonPhrase = $reasonPhrase ? $reasonPhrase : self::$statusTexts[$statusCode];
 
         return $this;
     }
