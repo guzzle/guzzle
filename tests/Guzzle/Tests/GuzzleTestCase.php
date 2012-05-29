@@ -184,6 +184,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
         $this->requests = array();
         $that = $this;
         $mock = new MockPlugin(null, true);
+        $client->getEventDispatcher()->removeSubscriber($mock);
         $mock->getEventDispatcher()->addListener('mock.request', function(Event $event) use ($that) {
             $that->addMockedRequest($event['request']);
         });

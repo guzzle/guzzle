@@ -10,17 +10,6 @@ use Guzzle\Service\Inspector;
  */
 class AnyMatchTest extends Validation
 {
-    /**
-     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
-     */
-    public function testRequiresInspector()
-    {
-        $c = new AnyMatch();
-        $c->validate('foo', array(
-            'constraints' => 'string'
-        ));
-    }
-
     public function provider()
     {
         $c = 'Guzzle\Common\Validation\AnyMatch';
@@ -34,7 +23,7 @@ class AnyMatchTest extends Validation
         return array(
             array($c, 'a', array('constraints' => 'type:string', 'inspector' => $i), true, null),
             array($c, 'a', array('type:string', 'inspector' => $i), true, null),
-            array($c, 'foo', array('constraints' => 'type:string;type:numeric', 'inspector' => $i), true, null),
+            array($c, 'foo', array('constraints' => 'type:string;type:numeric'), true, null),
             array($c, new \stdClass(), array('constraints' => 'type:string;type:numeric', 'inspector' => $i), 'Value type must match one of type:string OR type:numeric', null),
             array($c, 'foo', array('constraints' => 'type:numeric;type:boolean;ip;email', 'inspector' => $i), 'Value type must match one of type:numeric OR type:boolean OR ip OR email', null),
             array($c, 'http://www.example.com', array('constraints' => 'ip;url', 'inspector' => $i), true, null),
