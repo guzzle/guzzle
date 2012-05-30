@@ -12,7 +12,7 @@ class FileCookieJar extends ArrayCookieJar
     /**
      * @var string filename
      */
-    protected $file;
+    protected $filename;
 
     /**
      * Create a new FileCookieJar object
@@ -23,7 +23,7 @@ class FileCookieJar extends ArrayCookieJar
      */
     public function __construct($cookieFile)
     {
-        $this->file = $cookieFile;
+        $this->filename = $cookieFile;
         $this->load();
     }
 
@@ -42,15 +42,11 @@ class FileCookieJar extends ArrayCookieJar
      */
     protected function persist()
     {
-        $handle = fopen($this->file, 'w+');
-        // @codeCoverageIgnoreStart
-        if ($handle === false) {
-            throw new RuntimeException('Unable to open file ' . $this->file);
+        if (false === file_put_contents($this->filename, json_encode($this->getCookies(null, null, null, true, true)))) {
+            // @codeCoverageIgnoreStart
+            throw new RuntimeException('Unable to open file ' . $this->filename);
+            // @codeCoverageIgnoreEnd
         }
-        // @codeCoverageIgnoreEnd
-
-        fwrite($handle, json_encode($this->getCookies(null, null, null, true, true)));
-        fclose($handle);
     }
 
     /**
@@ -59,19 +55,12 @@ class FileCookieJar extends ArrayCookieJar
      */
     protected function load()
     {
-        $handle = fopen($this->file, 'c+');
-        // @codeCoverageIgnoreStart
-        if ($handle === false) {
-            throw new RuntimeException('Unable to open file ' . $this->file);
+        $json = file_get_contents($this->filename);
+        if (false === $json) {
+            // @codeCoverageIgnoreStart
+            throw new RuntimeException('Unable to open file ' . $this->filename);
+            // @codeCoverageIgnoreEnd
         }
-        // @codeCoverageIgnoreEnd
-
-        $json = '';
-        while ($data = fread($handle, 8096)) {
-            $json .= $data;
-        }
-
-        fclose($handle);
 
         $this->cookies = $json ? json_decode($json, true) : array();
     }
