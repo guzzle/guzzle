@@ -51,6 +51,11 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements Resourc
     protected $limit;
 
     /**
+     * @var int Number of requests sent
+     */
+    protected $requestCount = 0;
+
+    /**
      * @var array Initial data passed to the constructor
      */
     protected $data = array();
@@ -188,6 +193,16 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements Resourc
     }
 
     /**
+     * Get the total number of requests sent
+     *
+     * @return int
+     */
+    public function getRequestCount()
+    {
+        return $this->requestCount;
+    }
+
+    /**
      * Rewind the Iterator to the first element and send the original command
      */
     public function rewind()
@@ -237,6 +252,7 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements Resourc
             $this->command = clone $this->originalCommand;
             // Send a request and retrieve the newly loaded resources
             $this->resources = $this->sendRequest();
+            $this->requestCount++;
 
             // If no resources were found, then the last request was not needed
             // and iteration must stop

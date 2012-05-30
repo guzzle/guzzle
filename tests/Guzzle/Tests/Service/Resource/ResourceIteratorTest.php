@@ -153,6 +153,8 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
         // Ensure that the iterate is countable
         $this->assertEquals(3, count($ri));
         $this->assertEquals(array('d', 'e', 'f'), $data);
+
+        $this->assertEquals(2, $ri->getRequestCount());
     }
 
     /**
