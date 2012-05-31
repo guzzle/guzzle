@@ -54,23 +54,25 @@ class ApiCommand
      *      - class:  Concrete class that implements this command
      *      - params: Associative array of parameters for the command with each
      *                parameter containing the following keys:
-     *                - name:       Parameter name
-     *                - type:       Type of variable (boolean, integer, string,
-     *                              array, class name, etc...)
-     *                - required:   Whether or not the parameter is required
-     *                - default:    Default value
-     *                - doc:        Documentation
-     *                - min_length: Minimum length
-     *                - max_length: Maximum length
-     *                - location:   One of query, path, header, or body
-     *                - static:     Whether or not the param can be changed
-     *                              from this value
-     *                - prepend:    Text to prepend when adding this value
-     *                - append:     Text to append when adding this value
-     *                - filters:    Comma separated list of filters to run the
-     *                              value through.  Must be a callable. Can
-     *                              call static class methods by separating the
-     *                              class and function with ::.
+     *                - name:         Parameter name
+     *                - type:         Type of variable (boolean, integer, string,
+     *                                array, class name, etc...)
+     *                - type_args:    Argument(s) to pass to the type validation
+     *                - required:     Whether or not the parameter is required
+     *                - default:      Default value
+     *                - doc:          Documentation
+     *                - min_length:   Minimum length
+     *                - max_length:   Maximum length
+     *                - location:     One of query, path, header, or body
+     *                - location_key: Location key mapping value (e.g. query string value name)
+     *                - static:       Whether or not the param can be changed
+     *                                from this value
+     *                - prepend:      Text to prepend when adding this value
+     *                - append:       Text to append when adding this value
+     *                - filters:      Comma separated list of filters to run the
+     *                                value through.  Must be a callable. Can
+     *                                call static class methods by separating the
+     *                                class and function with ::.
      */
     public function __construct(array $config)
     {

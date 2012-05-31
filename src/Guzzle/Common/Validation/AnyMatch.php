@@ -27,7 +27,17 @@ class AnyMatch extends AbstractConstraint
 
         $inspector = $options['inspector'];
         foreach (explode(';', $options['constraints']) as $constraint) {
-            if (true === $inspector->validateConstraint(trim($constraint), $value)) {
+
+            // Handle colon separated values
+            if (strpos($constraint, ':')) {
+                list($constraint, $args) = explode(':', $constraint, 2);
+                $args = strpos($args, ',') !== false ? str_getcsv($args, ',', "'") : array($args);
+            } else {
+                $constraint = trim($constraint);
+                $args = null;
+            }
+
+            if (true === $inspector->validateConstraint($constraint, $value, $args)) {
                 return true;
             }
         }

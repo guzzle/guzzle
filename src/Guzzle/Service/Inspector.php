@@ -197,25 +197,17 @@ class Inspector
      *
      * @param string $name  Constraint to retrieve with optional CSV args after colon
      * @param mixed  $value Value to validate
+     * @param array  $args  Optional arguments to pass to the type validation
      *
      * @return bool|string Returns TRUE if valid, or an error message if invalid
      */
-    public function validateConstraint($name, $value)
+    public function validateConstraint($name, $value, array $args = null)
     {
-        $parts = explode(':', $name, 2);
-        $name = $parts[0];
-
-        $constraint = $this->getConstraint($name);
-
-        if (empty($parts[1])) {
-            $args = $this->constraints[$name][1];
-        } elseif (strpos($parts[1], ',')) {
-            $args = str_getcsv($parts[1], ',', "'");
-        } else {
-            $args = array($parts[1]);
+        if (!$args) {
+            $args = isset($this->constraints[$name][1]) ? $this->constraints[$name][1] : array();
         }
 
-        return $constraint->validate($value, $args);
+        return $this->getConstraint($name)->validate($value, $args);
     }
 
     /**
@@ -290,7 +282,7 @@ class Inspector
 
             // Ensure that the correct data type is being used
             if ($this->typeValidation && $configValue !== null && $argType = $arg->getType()) {
-                $validation = $this->validateConstraint($argType, $configValue);
+                $validation = $this->validateConstraint($argType, $configValue, $arg->getTypeArgs());
                 if ($validation !== true) {
                     $errors[] = $name . ': ' . $validation;
                     $config->set($name, $configValue);

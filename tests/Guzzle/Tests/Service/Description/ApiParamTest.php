@@ -10,18 +10,20 @@ use Guzzle\Service\Description\ApiParam;
 class ApiParamTest extends \Guzzle\Tests\GuzzleTestCase
 {
     protected $data = array(
-        'name'       => 'foo',
-        'type'       => 'bar',
-        'required'   => true,
-        'default'    => '123',
-        'doc'        => '456',
-        'min_length' => 2,
-        'max_length' => 5,
-        'location'   => 'body',
-        'static'     => 'static!',
-        'prepend'    => 'before.',
-        'append'     => '.after',
-        'filters'    => 'trim,json_encode'
+        'name'         => 'foo',
+        'type'         => 'bar',
+        'type_args'    => null,
+        'required'     => true,
+        'default'      => '123',
+        'doc'          => '456',
+        'min_length'   => 2,
+        'max_length'   => 5,
+        'location'     => 'body',
+        'location_key' => null,
+        'static'       => 'static!',
+        'prepend'      => 'before.',
+        'append'       => '.after',
+        'filters'      => 'trim,json_encode'
     );
 
     public function testCreatesParamFromArray()
@@ -113,5 +115,40 @@ class ApiParamTest extends \Guzzle\Tests\GuzzleTestCase
         $d['filters'] = null;
         $p = new ApiParam($d);
         $this->assertEquals(array(), $p->getFilters());
+    }
+
+    public function testParsesLocationValue()
+    {
+        $p = new ApiParam(array(
+            'location' => 'foo:bar'
+        ));
+        $this->assertEquals('foo', $p->getLocation());
+        $this->assertEquals('bar', $p->getLocationKey());
+    }
+
+    public function testParsesTypeValues()
+    {
+        $p = new ApiParam(array(
+            'type' => 'foo:baz,bar,boo'
+        ));
+        $this->assertEquals('foo', $p->getType());
+        $this->assertEquals(array('baz', 'bar', 'boo'), $p->getTypeArgs());
+    }
+
+    public function testAllowsExplicitTypeArgs()
+    {
+        $p = new ApiParam(array(
+            'type'      => 'foo',
+            'type_args' => array('baz', 'bar', 'boo')
+        ));
+        $this->assertEquals('foo', $p->getType());
+        $this->assertEquals(array('baz', 'bar', 'boo'), $p->getTypeArgs());
+
+        $p = new ApiParam(array(
+            'type'      => 'foo',
+            'type_args' => 'baz'
+        ));
+        $this->assertEquals('foo', $p->getType());
+        $this->assertEquals(array('baz'), $p->getTypeArgs());
     }
 }

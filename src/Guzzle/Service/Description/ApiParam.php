@@ -9,12 +9,14 @@ class ApiParam
 {
     protected $name;
     protected $type;
+    protected $typeArgs;
     protected $required;
     protected $default;
     protected $doc;
     protected $minLength;
     protected $maxLength;
     protected $location;
+    protected $locationKey;
     protected $static;
     protected $prepend;
     protected $append;
@@ -27,14 +29,23 @@ class ApiParam
      */
     public function __construct(array $data)
     {
-        // Parse snake_case into camelCase class properties
+        // Parse snake_case into camelCase class properties and parse :'d values
         foreach ($data as $key => $value) {
             if ($key == 'min_length') {
-                $key = 'minLength';
+                $this->minLength = $value;
             } elseif ($key == 'max_length') {
-                $key = 'maxLength';
+                $this->maxLength = $value;
+            } elseif ($key == 'location' && strpos($value, ':')) {
+                list($this->location, $this->locationKey) = explode(':', $value, 2);
+            } elseif ($key == 'location_key') {
+                $this->locationKey = $value;
+            } elseif ($key == 'type' && strpos($value, ':')) {
+                list($this->type, $this->typeArgs) = explode(':', $value, 2);
+            } elseif ($key == 'type_args') {
+                $this->typeArgs = $value;
+            } else {
+                $this->{$key} = $value;
             }
-            $this->{$key} = $value;
         }
 
         if ($this->filters) {
@@ -48,6 +59,15 @@ class ApiParam
         } elseif ($this->required === 'true') {
             $this->required = true;
         }
+
+        // Parse CSV type value data into an array
+        if ($this->typeArgs && is_string($this->typeArgs)) {
+            if (strpos($this->typeArgs, ',') !== false) {
+                $this->typeArgs = str_getcsv($this->typeArgs, ',', "'");
+            } else {
+                $this->typeArgs = array($this->typeArgs);
+            }
+        }
     }
 
     /**
@@ -58,18 +78,20 @@ class ApiParam
     public function toArray()
     {
         return array(
-            'name'       => $this->name,
-            'type'       => $this->type,
-            'required'   => $this->required,
-            'default'    => $this->default,
-            'doc'        => $this->doc,
-            'min_length' => $this->minLength,
-            'max_length' => $this->maxLength,
-            'location'   => $this->location,
-            'static'     => $this->static,
-            'prepend'    => $this->prepend,
-            'append'     => $this->append,
-            'filters'    => implode(',', $this->filters)
+            'name'         => $this->name,
+            'type'         => $this->type,
+            'type_args'    => $this->typeArgs,
+            'required'     => $this->required,
+            'default'      => $this->default,
+            'doc'          => $this->doc,
+            'min_length'   => $this->minLength,
+            'max_length'   => $this->maxLength,
+            'location'     => $this->location,
+            'location_key' => $this->locationKey,
+            'static'       => $this->static,
+            'prepend'      => $this->prepend,
+            'append'       => $this->append,
+            'filters'      => implode(',', $this->filters)
         );
     }
 
@@ -135,6 +157,16 @@ class ApiParam
     }
 
     /**
+     * Get the arguments to pass to type constraint
+     *
+     * @return array|null
+     */
+    public function getTypeArgs()
+    {
+        return $this->typeArgs;
+    }
+
+    /**
      * Get if the parameter is required
      *
      * @return bool
@@ -187,11 +219,21 @@ class ApiParam
     /**
      * Get the location of the parameter
      *
-     * @return int|null
+     * @return string|null
      */
     public function getLocation()
     {
         return $this->location;
+    }
+
+    /**
+     * Get the location key mapping of the parameter
+     *
+     * @return string|null
+     */
+    public function getLocationKey()
+    {
+        return $this->locationKey;
     }
 
     /**

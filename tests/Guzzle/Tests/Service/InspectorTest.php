@@ -141,39 +141,41 @@ EOT;
 
         $this->assertEquals(array(
             'required' => true,
-            'doc' => 'API username',
-            'type' => 'string'
+            'doc'      => 'API username',
+            'type'     => 'string'
         ), array_filter($params['username']->toArray()));
 
         $this->assertEquals(array(
-            'required' => true,
-            'default' => 'v1',
-            'doc' => 'API version',
-            'type' => "choice:'v1','v2',v3"
+            'required'  => true,
+            'default'   => 'v1',
+            'doc'       => 'API version',
+            'type'      => 'choice',
+            'type_args' => array('v1', 'v2', 'v3')
         ), array_filter($params['api_version']->toArray()));
 
         $this->assertEquals(array(
             'required' => true,
-            'default' => 'https',
-            'doc' => 'HTTP protocol (http or https)',
-            'type' => 'string'
+            'default'  => 'https',
+            'doc'      => 'HTTP protocol (http or https)',
+            'type'     => 'string'
         ), array_filter($params['protocol']->toArray()));
 
         $this->assertEquals(array(
             'required' => true,
-            'default' => '{ protocol }://{ subdomain }.unfuddle.com/api/{ api_version }/',
-            'doc' => 'Unfuddle API base URL',
-            'type' => 'string'
+            'default'  => '{ protocol }://{ subdomain }.unfuddle.com/api/{ api_version }/',
+            'doc'      => 'Unfuddle API base URL',
+            'type'     => 'string'
         ), array_filter($params['base_url']->toArray()));
 
         $this->assertEquals(array(
-            'type' => "type:object"
+            'type'      => 'type',
+            'type_args' => array('object')
         ), array_filter($params['class']->toArray()));
 
         $config = new Collection(array(
-            'username' => 'test',
-            'password' => 'pass',
-            'subdomain' => 'sub',
+            'username'    => 'test',
+            'password'    => 'pass',
+            'subdomain'   => 'sub',
             'api_version' => 'v2'
         ));
 
