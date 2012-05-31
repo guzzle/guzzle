@@ -11,6 +11,7 @@ use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\EntityEnclosingRequest;
+use Guzzle\Http\Message\PostFile;
 use Guzzle\Http\QueryString;
 
 /**
@@ -205,7 +206,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         ), $request->getPostFields()->getAll());
 
         $this->assertEquals(array(
-            'file' => array(array('file' => __FILE__, 'type' => 'text/x-php'))
+            'file' => array(new PostFile('file', __FILE__, 'text/x-php'))
         ), $request->getPostFiles());
 
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
@@ -218,7 +219,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFiles
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::addPostFile
-     * @expectedException Guzzle\Http\Exception\RequestException
+     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
      */
     public function testSetPostFilesThrowsExceptionWhenFileIsNotFound()
     {
@@ -247,7 +248,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
             ->addPostFile('foo', __FILE__, 'text/plain');
 
         $this->assertEquals(array(
-            array('file' => __FILE__, 'type' => 'text/plain')
+            new PostFile('foo', __FILE__, 'text/plain')
         ), $request->getPostFile('foo'));
     }
 
@@ -260,7 +261,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
             ->addPostFile('foo', __FILE__);
 
         $this->assertEquals(array(
-            array('file' => __FILE__, 'type' => 'text/x-php')
+            new PostFile('foo', __FILE__, 'text/x-php')
         ), $request->getPostFile('foo'));
     }
 
@@ -269,20 +270,13 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testAllowsContentDispositionFieldsInPostUploadsWhenSettingInBulk()
     {
+        $postFile = new PostFile('foo', __FILE__, 'text/x-php');
         $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/')
             ->addPostFiles(array(
-                'foo' => array(
-                    'file' => __FILE__,
-                    'type' => 'text/plain'
-                )
+                'foo' => $postFile
             ));
 
-        $this->assertEquals(array(
-            array(
-                'file' => __FILE__,
-                'type' => 'text/plain'
-            )
-        ), $request->getPostFile('foo'));
+        $this->assertEquals(array($postFile), $request->getPostFile('foo'));
     }
 
     /**
@@ -453,16 +447,16 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $request = new EntityEnclosingRequest('POST', 'http://test.com/');
         $request->addPostFile('foo', __FILE__);
-        $request->addPostFile('foo', __FILE__);
+        $request->addPostFile(new PostFile('foo', __FILE__));
         $this->assertEquals(array(
-            array('file' => __FILE__, 'type' => 'text/x-php'),
-            array('file' => __FILE__, 'type' => 'text/x-php')
+            new PostFile('foo', __FILE__, 'text/x-php'),
+            new PostFile('foo', __FILE__, 'text/x-php')
         ), $request->getPostFile('foo'));
 
         $this->assertEquals(array(
             'foo' => array(
-                array('file' => __FILE__, 'type' => 'text/x-php'),
-                array('file' => __FILE__, 'type' => 'text/x-php')
+                new PostFile('foo', __FILE__, 'text/x-php'),
+                new PostFile('foo', __FILE__, 'text/x-php')
             )
         ), $request->getPostFiles());
 
@@ -482,10 +476,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertEquals(array(
             'foo' => array(
-                array(
-                    'file' => __FILE__,
-                    'type' => 'text/x-php'
-                )
+                new PostFile('foo', __FILE__, 'text/x-php'),
             )
         ), $request->getPostFiles());
     }

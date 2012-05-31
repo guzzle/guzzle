@@ -7,6 +7,7 @@ use Guzzle\Http\Client;
 use Guzzle\Http\Url;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\RequestFactory;
+use Guzzle\Http\Message\PostFile;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Parser\Message\MessageParser;
 
@@ -150,10 +151,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         ), $request->getPostFields()->getAll());
 
         $this->assertEquals(array(
-            'file' => array(array(
-                'file' => __FILE__,
-                'type' => 'text/x-php'
-            ))
+            'file' => array(new PostFile('file', __FILE__, 'text/x-php'))
         ), $request->getPostFiles());
     }
 

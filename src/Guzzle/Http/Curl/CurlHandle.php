@@ -112,17 +112,9 @@ class CurlHandle
                     foreach ($request->getPostFiles() as $key => $data) {
                         $prefixKeys = count($data) > 1;
                         foreach ($data as $index => $file) {
-                            $path = '@' . $file['file'];
-                            // Add the Content-Type if it's set
-                            if ($file['type']) {
-                                $path .= ";type={$file['type']}";
-                            }
                             // Allow multiple files in the same key
-                            if ($prefixKeys) {
-                                $fields["{$key}[{$index}]"] = $path;
-                            } else {
-                                $fields[$key] = $path;
-                            }
+                            $fieldKey = $prefixKeys ? "{$key}[{$index}]" : $key;
+                            $fields[$fieldKey] = $file->getCurlString();
                         }
                     }
 

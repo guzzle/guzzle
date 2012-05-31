@@ -172,8 +172,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * Returns an associative array of POST field names to an array of
-     * (path, Content-Type)
+     * Returns an associative array of POST field names to an array of PostFileInterface objects
      *
      * @return array
      */
@@ -187,7 +186,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
      *
      * @param string $fieldName POST fields to retrieve
      *
-     * @return array|null Returns an array wrapping an array of (field name, path, and Content-Type)
+     * @return PostFileInterface|null Returns an array wrapping PostFileInterface objects
      */
     public function getPostFile($fieldName)
     {
@@ -212,46 +211,34 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     /**
      * Add a POST file to the upload
      *
-     * @param string $fieldName   POST field to use (e.g. file). Used to reference content from the server.
-     * @param string $path        Full path to the file. Do not include the @ symbol.
-     * @param string $contentType Optional Content-Type to add to the Content-Disposition.
-     *                            Default behavior is to guess. Set to false to not specify.
-     * @param bool   $process     Set to false to not process POST fields immediately.
+     * @param string|PostFileUpload $field       POST field to use (e.g. file) or PostFileInterface object.
+     * @param string                $filename    Full path to the file. Do not include the @ symbol.
+     * @param string                $contentType Optional Content-Type to add to the Content-Disposition.
+     *                                           Default behavior is to guess. Set to false to not specify.
+     * @param bool                  $process     Set to false to not process POST fields immediately.
      *
      * @return EntityEnclosingRequest
      * @throws RequestException if the file cannot be read
      */
-    public function addPostFile($fieldName, $path, $contentType = null, $process = true)
+    public function addPostFile($field, $filename = null, $contentType = null, $process = true)
     {
-        if (!is_string($path)) {
+        $data = null;
+
+        if ($field instanceof PostFileInterface) {
+            $data = $field;
+        } elseif (!is_string($filename)) {
             throw new RequestException('The path to a file must be a string');
+        } elseif (!empty($filename)) {
+            // Adding an empty file will cause cURL to error out
+            $data = new PostFile($field, $filename, $contentType);
         }
 
-        // Adding an empty file will cause cURL to error out
-        if (!empty($path)) {
-
-            $fieldName = (string) $fieldName ?: 'file';
-
-            if (!is_readable($path)) {
-                throw new RequestException('File cannot be opened for reading: ' . $path);
-            }
-
-            if ($contentType === null && class_exists('finfo', false)) {
-                $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                $contentType = $finfo->file($path);
-            }
-
-            $row = array(
-                'file' => $path,
-                'type' => $contentType
-            );
-
-            if (!isset($this->postFiles[$fieldName])) {
-                $this->postFiles[$fieldName] = array($row);
+        if ($data) {
+            if (!isset($this->postFiles[$data->getFieldName()])) {
+                $this->postFiles[$data->getFieldName()] = array($data);
             } else {
-                $this->postFiles[$fieldName][] = $row;
+                $this->postFiles[$data->getFieldName()][] = $data;
             }
-
             if ($process) {
                 $this->processPostFields();
             }
@@ -263,9 +250,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     /**
      * Add POST files to use in the upload
      *
-     * @param array $files An array of POST fields => filenames.  If a filename
-     *     is an array, it must contain a 'file' and 'type' key mapping to the
-     *     path to the file and the Content-Type of the file.
+     * @param array $files An array of POST fields => filenames where filename can be a string or PostFileInterfaces
      *
      * @return EntityEnclosingRequest
      * @throws RequestException if the file cannot be read
@@ -273,30 +258,17 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     public function addPostFiles(array $files)
     {
         foreach ($files as $key => $file) {
-
-            // Convert non-associative array keys into 'file'
-            if (is_numeric($key)) {
-                $key = 'file';
-            }
-
-            // If an array is passed for the file, then it contains
-            // Content-Disposition parameters.
-            if (is_array($file) && array_key_exists('type', $file) && array_key_exists('file', $file)) {
-                $contentType = $file['type'];
-                $file = $file['file'];
+            if ($file instanceof PostFileInterface) {
+                $this->addPostFile($file, null, null, false);
             } elseif (is_string($file)) {
-                $contentType = null;
+                // Convert non-associative array keys into 'file'
+                if (is_numeric($key)) {
+                    $key = 'file';
+                }
+                $this->addPostFile($key, $file, null, false);
             } else {
-                throw new RequestException('File must be a string or array');
+                throw new RequestException('File must be a string or instance of PostFileInterface');
             }
-
-            // Remove the leading @ symbol
-            if (strpos($file, '@') !== false) {
-                $file = substr($file, 1);
-            }
-
-            // Add the POST file and remove any leading @ symbols
-            $this->addPostFile($key, $file, $contentType, false);
         }
 
         $this->processPostFields();

@@ -75,8 +75,7 @@ interface EntityEnclosingRequestInterface extends RequestInterface
     public function removePostField($field);
 
     /**
-     * Returns an associative array of POST field names to an array of
-     * (path, Content-Type)
+     * Returns an associative array of POST field names to PostFileInterface objects
      *
      * @return array
      */
@@ -87,7 +86,7 @@ interface EntityEnclosingRequestInterface extends RequestInterface
      *
      * @param string $fieldName POST fields to retrieve
      *
-     * @return array|null Returns an array wrapping an array of (field name, path, and Content-Type)
+     * @return array|null Returns an array wrapping an array of PostFileInterface objects
      */
     public function getPostFile($fieldName);
 
@@ -104,21 +103,19 @@ interface EntityEnclosingRequestInterface extends RequestInterface
      * Add a POST file to the upload
      *
      * @param string $fieldName   POST field to use (e.g. file). Used to reference content from the server.
-     * @param string $path        Full path to the file. Do not include the @ symbol.
+     * @param string $filename    Full path to the file. Do not include the @ symbol.
      * @param string $contentType Optional Content-Type to add to the Content-Disposition.
      *                            Default behavior is to guess. Set to false to not specify.
      * @param bool   $process     Set to false to not process POST fields immediately.
      *
      * @return EntityEnclosingRequestInterface
      */
-    public function addPostFile($fieldName, $path, $contentType = null);
+    public function addPostFile($fieldName, $filename, $contentType = null);
 
     /**
      * Add POST files to use in the upload
      *
-     * @param array $files An array of POST fields => filenames.  If a filename
-     *     is an array, it must contain a 'file' and 'type' key mapping to the
-     *     path to the file and the Content-Type of the file.
+     * @param array $files An array of POST fields => filenames where filename can be a string or PostFileInterface
      *
      * @return EntityEnclosingRequestInterface
      */
