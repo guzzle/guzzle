@@ -53,34 +53,14 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     /**
      * Constructor
      *
-     * @param array|Collection $parameters Collection of parameters
-     *      to set on the command
-     * @param ApiCommand $apiCommand Command definition from description
+     * @param array|Collection $parameters Collection of parameters to set on the command
+     * @param ApiCommand       $apiCommand Command definition from description
      */
     public function __construct($parameters = null, ApiCommand $apiCommand = null)
     {
         parent::__construct($parameters);
-
-        if ($apiCommand) {
-
-            $this->apiCommand = $apiCommand;
-
-        } else {
-
-            // If this is a concrete command, then build an ApiCommand object
-            $className = get_class($this);
-
-            // Determine the name of the command based on the relation to the
-            // client that executes the command
-            $this->apiCommand = new ApiCommand(array(
-                'name'   => str_replace('\\_', '.', Inflector::snake(substr($className, strpos($className, 'Command') + 8))),
-                'class'  => $className,
-                'params' => $this->getInspector()->getApiParamsForClass($className)
-            ));
-        }
-
-        // Set default and static values on the command
-        $this->getInspector()->initConfig($this->apiCommand->getParams(), $this);
+        $this->apiCommand = $apiCommand ?: ApiCommand::fromCommand(get_class($this));
+        $this->initConfig();
 
         $headers = $this->get('headers');
         if (!$headers instanceof Collection) {
@@ -324,10 +304,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             }
 
             // Fail on missing required arguments, and change parameters via filters
-            // Perform a non-idempotent validation on the parameters.  Options that
-            // change during validation will persist (e.g. injection, filters).
-            $this->getInspector()->validateConfig($this->apiCommand->getParams(), $this, true);
-
+            $this->apiCommand->validate($this, $this->getInspector());
             $this->build();
 
             // Add custom request headers set on the command
@@ -428,6 +405,22 @@ abstract class AbstractCommand extends Collection implements CommandInterface
                     $xml = new \SimpleXMLElement($body);
                     $this->result = $xml;
                 } catch (\Exception $e) {}
+            }
+        }
+    }
+
+    /**
+     * Prepare the default and static settings of the command
+     */
+    protected function initConfig()
+    {
+        foreach ($this->apiCommand->getParams() as $name => $arg) {
+            $currentValue = $this->get($name);
+            $configValue = $arg->getValue($currentValue);
+            // If default or static values are set, then this should always be
+            // updated on the config object
+            if ($currentValue !== $configValue) {
+                $this->set($name, $configValue);
             }
         }
     }

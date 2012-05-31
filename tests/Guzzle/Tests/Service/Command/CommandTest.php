@@ -7,6 +7,7 @@ use Guzzle\Service\Client;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\AbstractCommand;
 use Guzzle\Service\Description\ApiCommand;
+use Guzzle\Service\Description\ApiParam;
 use Guzzle\Service\Inspector;
 use Guzzle\Http\Plugin\MockPlugin;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
@@ -399,5 +400,26 @@ class CommandTest extends AbstractCommandTest
         $client->execute($command);
         $command->setResult('foo!');
         $this->assertEquals('foo!', $command->getResult());
+    }
+
+    /**
+     * @covers Guzzle\Service\Command\AbstractCommand::initConfig
+     */
+    public function testCanInitConfig()
+    {
+        $command = $this->getMockBuilder('Guzzle\\Service\\Command\\AbstractCommand')
+            ->setConstructorArgs(array(array(
+                'foo' => 'bar'
+            ), new ApiCommand(array(
+                'params' => array(
+                    'baz' => new ApiParam(array(
+                        'default' => 'baaar'
+                    ))
+                )
+            ))))
+            ->getMockForAbstractClass();
+
+        $this->assertEquals('bar', $command['foo']);
+        $this->assertEquals('baaar', $command['baz']);
     }
 }

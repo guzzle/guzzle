@@ -5,28 +5,24 @@ namespace Guzzle\Tests\Common;
 use Guzzle\Common\Collection;
 use Guzzle\Service\Inspector;
 use Guzzle\Service\Description\ApiParam;
+use Guzzle\Service\Description\ApiCommand;
 use Guzzle\Service\Exception\ValidationException;
 
 /**
  * @covers Guzzle\Service\Inspector
- *
- * @guzzle test type="type:object"
- * @guzzle bool_1 default="true" type="boolean"
- * @guzzle bool_2 default="false"
- * @guzzle float type="float"
- * @guzzle int type="integer"
- * @guzzle date type="date"
- * @guzzle timestamp type="time"
- * @guzzle string type="string"
- * @guzzle username required="true" filters="strtolower"
- * @guzzle dynamic default="{username}_{ string }_{ does_not_exist }"
- * @guzzle test_function type="string" filters="Guzzle\Tests\Common\InspectorTest::strtoupper"
  */
 class InspectorTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    public static function strtoupper($string)
+    /**
+     * @covers Guzzle\Service\Inspector::setTypeValidation
+     * @covers Guzzle\Service\Inspector::getTypeValidation
+     */
+    public function testTypeValidationCanBeToggled()
     {
-        return strtoupper($string);
+        $i = new Inspector();
+        $this->assertTrue($i->getTypeValidation());
+        $i->setTypeValidation(false);
+        $this->assertFalse($i->getTypeValidation());
     }
 
     /**
@@ -36,6 +32,15 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $inspector = new Inspector();
         $this->assertNotEmpty($inspector->getRegisteredConstraints());
+    }
+
+    /**
+     * @covers Guzzle\Service\Inspector
+     * @expectedException InvalidArgumentException
+     */
+    public function testChecksFilterValidity()
+    {
+        Inspector::getInstance()->getConstraint('foooo');
     }
 
     /**
@@ -66,152 +71,6 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Inspector
-     */
-    public function testAddsDefaultAndInjectsConfigs()
-    {
-        $col = new Collection(array(
-            'username' => 'user',
-            'string'   => 'test',
-            'float'    => 1.23
-        ));
-
-        $inspector = Inspector::getInstance();
-        $inspector->validateConfig($inspector->getApiParamsForClass(__CLASS__), $col, true);
-        $this->assertEquals(false, $col->get('bool_2'));
-        $this->assertEquals('user_test_', $col->get('dynamic'));
-        $this->assertEquals(1.23, $col->get('float'));
-    }
-
-    /**
-     * @covers Guzzle\Service\Inspector::validateConfig
-     * @covers Guzzle\Service\Inspector::getApiParamsForClass
-     * @expectedException Guzzle\Service\Exception\ValidationException
-     */
-    public function testValidatesTypeHints()
-    {
-        $inspector = Inspector::getInstance();
-        $inspector->validateConfig($inspector->getApiParamsForClass(__CLASS__), new Collection(array(
-            'test' => 'uh oh',
-            'username' => 'test'
-        )));
-    }
-
-    /**
-     * @covers Guzzle\Service\Inspector::validateConfig
-     */
-    public function testConvertsBooleanDefaults()
-    {
-        $c = new Collection(array(
-            'test' => $this,
-            'username' => 'test'
-        ));
-
-        $inspector = Inspector::getInstance();
-        $inspector->validateConfig($inspector->getApiParamsForClass(__CLASS__), $c);
-
-        $this->assertTrue($c->get('bool_1'));
-        $this->assertFalse($c->get('bool_2'));
-    }
-
-    /**
-     * @covers Guzzle\Service\Inspector
-     */
-    public function testInspectsClassArgs()
-    {
-        $doc = <<<EOT
-/**
- * Client for interacting with the Unfuddle webservice
- *
- * @guzzle username required="true" doc="API username" type="string"
- * @guzzle password required="true" doc="API password" type="string"
- * @guzzle subdomain required="true" doc="Unfuddle project subdomain" type="string"
- * @guzzle api_version required="true" default="v1" doc="API version" type="choice:'v1','v2',v3"
- * @guzzle protocol required="true" default="https" doc="HTTP protocol (http or https)" type="string"
- * @guzzle base_url required="true" default="{ protocol }://{ subdomain }.unfuddle.com/api/{ api_version }/" doc="Unfuddle API base URL" type="string"
- * @guzzle class type="type:object"
- */
-EOT;
-
-        $inspector = new Inspector();
-        $method = new \ReflectionMethod($inspector, 'parseDocBlock');
-        $method->setAccessible(true);
-
-        $params = $method->invoke($inspector, $doc);
-
-        $this->assertEquals(array(
-            'required' => true,
-            'doc'      => 'API username',
-            'type'     => 'string'
-        ), array_filter($params['username']->toArray()));
-
-        $this->assertEquals(array(
-            'required'  => true,
-            'default'   => 'v1',
-            'doc'       => 'API version',
-            'type'      => 'choice',
-            'type_args' => array('v1', 'v2', 'v3')
-        ), array_filter($params['api_version']->toArray()));
-
-        $this->assertEquals(array(
-            'required' => true,
-            'default'  => 'https',
-            'doc'      => 'HTTP protocol (http or https)',
-            'type'     => 'string'
-        ), array_filter($params['protocol']->toArray()));
-
-        $this->assertEquals(array(
-            'required' => true,
-            'default'  => '{ protocol }://{ subdomain }.unfuddle.com/api/{ api_version }/',
-            'doc'      => 'Unfuddle API base URL',
-            'type'     => 'string'
-        ), array_filter($params['base_url']->toArray()));
-
-        $this->assertEquals(array(
-            'type'      => 'type',
-            'type_args' => array('object')
-        ), array_filter($params['class']->toArray()));
-
-        $config = new Collection(array(
-            'username'    => 'test',
-            'password'    => 'pass',
-            'subdomain'   => 'sub',
-            'api_version' => 'v2'
-        ));
-
-        // Do an idempotent initialization
-        Inspector::getInstance()->initConfig($params, $config);
-        // make sure defaults and statics were added, but configs were not injected
-        $this->assertEquals('{ protocol }://{ subdomain }.unfuddle.com/api/{ api_version }/', $config->get('base_url'));
-        $this->assertEquals('https', $config->get('protocol'));
-
-        // Not do a non-idempotent updated
-        Inspector::getInstance()->validateConfig($params, $config, true);
-
-        // make sure the configs were injected
-        $this->assertEquals('https://sub.unfuddle.com/api/v2/', $config->get('base_url'));
-
-        try {
-            Inspector::getInstance()->validateConfig($params, new Collection(array(
-                'base_url' => '',
-                'username' => '',
-                'password' => '',
-                'class' => '123',
-                'api_version' => 'v10'
-            )));
-            $this->fail('Expected exception not thrown when params are invalid');
-        } catch (ValidationException $e) {
-
-            $concat = $e->getMessage();
-            $this->assertContains("Validation errors: Requires that the username argument be supplied.  (API username)", $concat);
-            $this->assertContains("Requires that the password argument be supplied.  (API password)", $concat);
-            $this->assertContains("Requires that the subdomain argument be supplied.  (Unfuddle project subdomain)", $concat);
-            $this->assertContains("api_version: Value must be one of: v1, v2, v3", $concat);
-            $this->assertContains("class: Value must be of type object", $concat);
-        }
-    }
-
-    /**
      * @covers Guzzle\Service\Inspector::registerConstraint
      * @covers Guzzle\Service\Inspector::getConstraint
      * @covers Guzzle\Service\Inspector::getRegisteredConstraints
@@ -231,157 +90,7 @@ EOT;
         $this->assertInstanceOf($constraintClass, Inspector::getInstance()->getConstraint('mock'));
         $this->assertInstanceOf($constraintClass, Inspector::getInstance()->getConstraint('mock_2'));
 
-        $validating = new Collection(array(
-            'data' => '192.168.16.121',
-            'test' => '10.1.1.0'
-        ));
-
-        $this->assertTrue(Inspector::getInstance()->validateConfig(array(
-            'data' => new ApiParam(array(
-                'type' => 'mock',
-                'name' => 'data'
-            )),
-            'test' => new ApiParam(array(
-                'type' => 'mock_2',
-                'name' => 'test'
-            ))
-        ), $validating, false));
-    }
-
-    /**
-     * @covers Guzzle\Service\Inspector
-     * @expectedException InvalidArgumentException
-     */
-    public function testChecksFilterValidity()
-    {
-        Inspector::getInstance()->validateConfig(array(
-            'data' => new ApiParam(array(
-                'type' => 'invalid'
-            ))
-        ), new Collection(array(
-            'data' => 'false'
-        )));
-    }
-
-    /**
-     * @covers Guzzle\Service\Inspector
-     */
-    public function testValidatesArgs()
-    {
-        $config = new Collection(array(
-            'data' => 123,
-            'min' => 'a',
-            'max' => 'aaa'
-        ));
-
-        $result = Inspector::getInstance()->validateConfig(array(
-            'data' => new ApiParam(array(
-                'type' => 'string'
-            )),
-            'min' => new ApiParam(array(
-                'type' => 'string',
-                'min_length' => 2
-            )),
-            'max' => new ApiParam(array(
-                'type' => 'string',
-                'max_length' => 2
-            ))
-        ), $config, false);
-
-        $concat = implode("\n", $result);
-        $this->assertContains("Value must be of type string", $concat);
-        $this->assertContains("Requires that the min argument be >= 2 characters", $concat);
-        $this->assertContains("Requires that the max argument be <= 2 characters", $concat);
-    }
-
-    /**
-     * @covers Guzzle\Service\Inspector::parseDocBlock
-     */
-    public function testVerifiesGuzzleAnnotations()
-    {
-        $inspector = new Inspector();
-        $method = new \ReflectionMethod($inspector, 'parseDocBlock');
-        $method->setAccessible(true);
-
-        $result = $method->invoke($inspector, 'testing');
-        $this->assertEquals(array(), $result);
-    }
-
-    /**
-     * @covers Guzzle\Service\Inspector::validateConfig
-     * @covers Guzzle\Service\Inspector::getApiParamsForClass
-     */
-    public function testRunsValuesThroughFilters()
-    {
-        $data = new Collection(array(
-            'username' => 'TEST',
-            'test_function'   => 'foo'
-        ));
-
-        $inspector = Inspector::getInstance();
-        $inspector->validateConfig($inspector->getApiParamsForClass(__CLASS__), $data, true, true, false);
-
-        $this->assertEquals('test', $data->get('username'));
-        $this->assertEquals('FOO', $data->get('test_function'));
-    }
-
-    /**
-     * @covers Guzzle\Service\Inspector::setTypeValidation
-     * @covers Guzzle\Service\Inspector::validateConfig
-     */
-    public function testTypeValidationCanBeDisabled()
-    {
-        $i = Inspector::getInstance();
-        $i->setTypeValidation(false);
-
-        // Ensure that the type is not validated
-        $i->validateConfig(array(
-            'data' => new ApiParam(array(
-                'type' => 'string'
-            ))
-        ), new Collection(array(
-            'data' => new \stdClass()
-        )), true);
-    }
-
-    /**
-     * @covers Guzzle\Service\Inspector::validateConfig
-     */
-    public function testSkipsFurtherValidationIfNotSet()
-    {
-        $i = Inspector::getInstance();
-
-        // Ensure that the type is not validated
-        $this->assertEquals(true, $i->validateConfig(array(
-            'data' => new ApiParam(array(
-                'type' => 'string'
-            ))
-        ), new Collection(), true));
-    }
-
-    /**
-     * @covers Guzzle\Service\Inspector::initConfig
-     */
-    public function testCanInitConfig()
-    {
-        $i = Inspector::getInstance();
-
-        $param = new ApiParam(array(
-            'type'    => 'array',
-            'filters' => 'json_encode'
-        ));
-
-        $config = new Collection(array(
-            'data' => array(
-                'foo' => 'bar'
-            )
-        ));
-
-        $i->initConfig(array(
-            'data' => $param
-        ), $config);
-
-        // Ensure it's still an array
-        $this->assertInternalType('array', $config->get('data'));
+        $this->assertTrue(Inspector::getInstance()->validateConstraint('mock', '192.168.16.121'));
+        $this->assertTrue(Inspector::getInstance()->validateConstraint('mock_2', '10.1.1.0'));
     }
 }

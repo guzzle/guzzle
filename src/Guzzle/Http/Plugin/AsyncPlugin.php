@@ -63,7 +63,7 @@ class AsyncPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Event emitted when a curl exception occurs. Ignore the exception and 
+     * Event emitted when a curl exception occurs. Ignore the exception and
      * set a mock response.
      *
      * @param Event $event
@@ -79,7 +79,7 @@ class AsyncPlugin implements EventSubscriberInterface
 
     /**
      * Event emitted when a request completes because it took less than 1ms.
-     * Add an X-Guzzle-Async header to notify the caller that there is no 
+     * Add an X-Guzzle-Async header to notify the caller that there is no
      * body in the message.
      *
      * @param Event $event
