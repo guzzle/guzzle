@@ -28,12 +28,13 @@ class AnyMatch extends AbstractConstraint
         $inspector = $options['inspector'];
         foreach (explode(';', $options['constraints']) as $constraint) {
 
+            $constraint = trim($constraint);
+
             // Handle colon separated values
             if (strpos($constraint, ':')) {
                 list($constraint, $args) = explode(':', $constraint, 2);
                 $args = strpos($args, ',') !== false ? str_getcsv($args, ',', "'") : array($args);
             } else {
-                $constraint = trim($constraint);
                 $args = null;
             }
 
