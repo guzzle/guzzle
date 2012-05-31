@@ -1,6 +1,23 @@
 CHANGELOG
 =========
 
+* 2.6.4 (05-30-2012)
+
+ * BC: Cleaning up how POST files are stored in EntityEnclosingRequest objects. Adding PostFile class.
+ * BC: Moving ApiCommand specific functionality from the Inspector and on to the ApiCommand
+ * Bug: Fixing magic method command calls on clients
+ * Bug: Email constraint only validates strings
+ * Bug: Aggregate POST fields when POST files are present in curl handle
+ * Bug: Fixing default User-Agent header
+ * Bug: Only appending or prepending parameters in commands if they are specified
+ * Bug: Not requiring response reason phrases or status codes to match a predefined list of codes
+ * Allowing the use of dot notation for class namespaces when using instance_of constraint
+ * Added any_match validation constraint
+ * Added an AsyncPlugin
+ * Passing request object to the calculateWait method of the ExponentialBackoffPlugin
+ * Allowing the result of a command object to be changed
+ * Parsing location and type sub values when instantiating a service description rather than over and over at runtime
+
 * 2.6.3 (05-23-2012)
 
  * [BC] Guzzle\Common\FromConfigInterface no longer requires any config options.
