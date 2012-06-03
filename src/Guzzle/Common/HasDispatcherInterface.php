@@ -3,6 +3,7 @@
 namespace Guzzle\Common;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Holds an event dispatcher
@@ -39,4 +40,13 @@ interface HasDispatcherInterface
      * @param array  $context   Context of the event
      */
     function dispatch($eventName, array $context = array());
+
+    /**
+     * Add an event subscriber to the dispatcher
+     *
+     * @param EventSubscriberInterface $subscriber Event subscriber
+     *
+     * @return AbstractHasDispatcher
+     */
+    function addSubscriber(EventSubscriberInterface $subscriber);
 }

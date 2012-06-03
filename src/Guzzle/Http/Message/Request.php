@@ -16,6 +16,7 @@ use Guzzle\Http\Url;
 
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * HTTP request class to send requests
@@ -274,7 +275,7 @@ class Request extends AbstractMessage implements RequestInterface
      * Send the request
      *
      * @return Response
-     * @throws RequestException on a request error
+     * @throws RuntimeException if a client is not associated with the request
      */
     public function send()
     {
@@ -481,7 +482,6 @@ class Request extends AbstractMessage implements RequestInterface
      * @return Request
      *
      * @see http://www.ietf.org/rfc/rfc2617.txt
-     * @throws RequestException
      */
     public function setAuth($user, $password = '', $scheme = CURLAUTH_BASIC)
     {
@@ -796,6 +796,17 @@ class Request extends AbstractMessage implements RequestInterface
     {
         $context['request'] = $this;
         $this->getEventDispatcher()->dispatch($eventName, new Event($context));
+    }
+
+    /**
+     * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
+    public function addSubscriber(EventSubscriberInterface $subscriber)
+    {
+        $this->getEventDispatcher()->addSubscriber($subscriber);
+
+        return $this;
     }
 
     /**

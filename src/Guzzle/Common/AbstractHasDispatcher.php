@@ -4,6 +4,7 @@ namespace Guzzle\Common;
 
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Class that holds an event dispatcher
@@ -51,5 +52,15 @@ class AbstractHasDispatcher implements HasDispatcherInterface
     public function dispatch($eventName, array $context = array())
     {
         $this->getEventDispatcher()->dispatch($eventName, new Event($context));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function addSubscriber(EventSubscriberInterface $subscriber)
+    {
+        $this->getEventDispatcher()->addSubscriber($subscriber);
+
+        return $this;
     }
 }
