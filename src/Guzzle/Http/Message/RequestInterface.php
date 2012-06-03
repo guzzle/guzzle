@@ -214,12 +214,12 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     function getPassword();
 
     /**
-     * Get the URI of the request (e.g. '/', '/index.html', '/index.html?q=1)
-     * This is the path plus the query string, fragment
+     * Get the resource part of the the request, including the path, query
+     * string, and fragment
      *
      * @return string
      */
-    function getResourceUri();
+    function getResource();
 
     /**
      * Get the full URL of the request (e.g. 'http://www.guzzle-project.com/')

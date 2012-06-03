@@ -231,7 +231,7 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function getRawHeaders()
     {
-        $raw = $this->method . ' ' . $this->getResourceUri();
+        $raw = $this->method . ' ' . $this->getResource();
         $protocolVersion = $this->protocolVersion ?: '1.1';
         $raw = trim($raw) . ' ' . strtoupper(str_replace('https', 'http', $this->url->getScheme())) . '/' . $protocolVersion . "\r\n";
         $raw .= $this->getHeaderString();
@@ -507,12 +507,12 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the URI of the request (e.g. '/', '/index.html', '/index.html?q=1)
-     * This is the path plus the query string, fragment
+     * Get the resource part of the the request, including the path, query
+     * string, and fragment
      *
      * @return string
      */
-    public function getResourceUri()
+    public function getResource()
     {
         return $this->url->getPath() . (string) $this->url->getQuery();
     }

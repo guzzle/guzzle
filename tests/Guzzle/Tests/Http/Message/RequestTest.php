@@ -385,15 +385,15 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Message\Request::getResourceUri
+     * @covers Guzzle\Http\Message\Request::getResource
      */
     public function testGetResourceUri()
     {
-        $this->assertEquals('/', $this->request->getResourceUri());
+        $this->assertEquals('/', $this->request->getResource());
         $this->request->setPath('/index.html');
-        $this->assertEquals('/index.html', $this->request->getResourceUri());
+        $this->assertEquals('/index.html', $this->request->getResource());
         $this->request->getQuery()->add('v', '1');
-        $this->assertEquals('/index.html?v=1', $this->request->getResourceUri());
+        $this->assertEquals('/index.html?v=1', $this->request->getResource());
     }
 
     /**

@@ -40,7 +40,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('http://www.google.com/', $request->getUrl());
         $this->assertEquals('www.google.com', $request->getHost());
         $this->assertEquals('/', $request->getPath());
-        $this->assertEquals('/', $request->getResourceUri());
+        $this->assertEquals('/', $request->getResource());
 
         // Create a GET request with a custom receiving body
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
@@ -64,7 +64,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('http://www.google.com/path?q=1&v=2', $request->getUrl());
         $this->assertEquals('www.google.com', $request->getHost());
         $this->assertEquals('/path', $request->getPath());
-        $this->assertEquals('/path?q=1&v=2', $request->getResourceUri());
+        $this->assertEquals('/path?q=1&v=2', $request->getResource());
         $this->assertInstanceOf('Guzzle\\Http\\EntityBody', $request->getBody());
         $this->assertEquals('Data', (string) $request->getBody());
         unset($request);
@@ -171,7 +171,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('www.google.com', $request->getHost());
         $this->assertEquals('www.google.com:8080', $request->getHeader('Host'));
         $this->assertEquals('/path', $request->getPath());
-        $this->assertEquals('/path?q=1&v=2', $request->getResourceUri());
+        $this->assertEquals('/path?q=1&v=2', $request->getResource());
         $this->assertInstanceOf('Guzzle\\Http\\EntityBody', $request->getBody());
         $this->assertEquals('Data', (string)$request->getBody());
         $this->assertEquals('michael', $request->getUsername());
@@ -202,7 +202,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('www.google.com', $request->getHost());
         $this->assertEquals('www.google.com:8080', $request->getHeader('Host'));
         $this->assertEquals('/path', $request->getPath());
-        $this->assertEquals('/path?q=1&v=2', $request->getResourceUri());
+        $this->assertEquals('/path?q=1&v=2', $request->getResource());
         $this->assertInstanceOf('Guzzle\\Http\\EntityBody', $request->getBody());
         $this->assertEquals('Data', (string) $request->getBody());
         $this->assertEquals('michael', $request->getUsername());
@@ -221,7 +221,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('http://www.google.com/path?q=1&v=2', $request->getUrl());
         $this->assertEquals('www.google.com', $request->getHost());
         $this->assertEquals('/path', $request->getPath());
-        $this->assertEquals('/path?q=1&v=2', $request->getResourceUri());
+        $this->assertEquals('/path?q=1&v=2', $request->getResource());
         $this->assertInstanceOf('Guzzle\\Http\\EntityBody', $request->getBody());
         $this->assertEquals('Data', (string)$request->getBody());
         $this->assertEquals('michael', $request->getUsername());

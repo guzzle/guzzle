@@ -184,7 +184,7 @@ class LogPlugin implements EventSubscriberInterface
         if ($this->settings & self::LOG_CONTEXT) {
             // Log common contextual information
             $message = $request->getHost() . ' - "' .  $request->getMethod()
-                . ' ' . $request->getResourceUri() . ' '
+                . ' ' . $request->getResource() . ' '
                 . strtoupper($request->getScheme()) . '/'
                 . $request->getProtocolVersion() . '"';
 
