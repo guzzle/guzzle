@@ -6,7 +6,6 @@ use Guzzle\Common\HasDispatcherInterface;
 use Guzzle\Http\ClientInterface;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\QueryString;
-use Guzzle\Http\Cookie;
 
 /**
  * Generic HTTP request interface
@@ -17,9 +16,6 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     const STATE_COMPLETE = 'complete';
     const STATE_TRANSFER = 'transfer';
     const STATE_ERROR = 'error';
-
-    const AUTH_BASIC = 'Basic';
-    const AUTH_DIGEST = 'Digest';
 
     const GET = 'GET';
     const PUT = 'PUT';
@@ -305,26 +301,20 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     function setResponse(Response $response, $queued = false);
 
     /**
-     * Get an array of Cookies or a specific cookie from the request
+     * Get an array of Cookies
+     *
+     * @return array
+     */
+    function getCookies();
+
+    /**
+     * Get a cookie value by name
      *
      * @param string $name Cookie to retrieve
      *
-     * @return null|string|Cookie Returns null if not found by name, a Cookie
-     *      object if no $name is supplied, or the cookie value by name if found
-     *      If a Cookie object is returned, changes to the cookie object does
-     *      not modify the request's cookies.  You will need to set the cookie
-     *      back on the request after modifying the object.
+     * @return null|string
      */
-    function getCookie($name = null);
-
-    /**
-     * Set the Cookie header using an array or Cookie object
-     *
-     * @param array|Cookie $cookies Cookie data to set on the request
-     *
-     * @return RequestInterface
-     */
-    function setCookie($cookies);
+    function getCookie($name);
 
     /**
      * Add a Cookie value by name to the Cookie header
@@ -337,14 +327,13 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     function addCookie($name, $value);
 
     /**
-     * Remove the cookie header or a specific cookie value by name
+     * Remove a specific cookie value by name
      *
-     * @param string $name Cookie to remove by name.  If no value is
-     *      provided, the entire Cookie header is removed from the request
+     * @param string $name Cookie to remove by name
      *
      * @return RequestInterface
      */
-    function removeCookie($name = null);
+    function removeCookie($name);
 
     /**
      * Returns whether or not the response served to the request can be cached

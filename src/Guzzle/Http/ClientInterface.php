@@ -2,7 +2,6 @@
 
 namespace Guzzle\Http;
 
-use Guzzle\Common\Guzzle;
 use Guzzle\Common\HasDispatcherInterface;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Message\RequestInterface;

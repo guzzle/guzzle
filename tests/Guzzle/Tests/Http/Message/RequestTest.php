@@ -509,12 +509,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testHoldsCookies()
     {
-        $cookie = $this->request->getCookie();
-        $this->assertInstanceOf('Guzzle\\Http\\Cookie', $this->request->getCookie());
-
-        // Ensure that the cookie will not affect the request
-        $this->assertNull($this->request->getCookie('test'));
-        $cookie->set('test', 'abc');
         $this->assertNull($this->request->getCookie('test'));
 
         // Set a cookie
@@ -534,26 +528,14 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         // Remove the cookie header
         $this->assertSame($this->request, $this->request->addCookie('test', 'abc'));
         $this->request->removeHeader('Cookie');
-        $this->assertEquals('', (string)$this->request->getCookie());
+        $this->assertEquals('', (string) $this->request->getHeader('Cookie'));
 
-        // Set the cookie using a cookie object
-        $this->assertSame($this->request, $this->request->setCookie($cookie));
-        $this->assertEquals($cookie->getAll(), $this->request->getCookie()->getAll());
-
-        // Set the cookie using an array
-        $this->assertSame($this->request, $this->request->setCookie(array(
-            'test' => 'def'
-        )));
+        // Remove a cookie value
+        $this->request->addCookie('foo', 'bar')->addCookie('baz', 'boo');
+        $this->request->removeCookie('foo');
         $this->assertEquals(array(
-            'test' => 'def'
-        ), $this->request->getCookie()->getAll());
-
-        // Test using an invalid value
-        try {
-            $this->request->setCookie('a');
-            $this->fail('Did not throw expected exception when passing invalid value');
-        } catch (\InvalidArgumentException $e) {
-        }
+            'baz' => 'boo'
+        ), $this->request->getCookies());
     }
 
     /**

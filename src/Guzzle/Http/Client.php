@@ -2,14 +2,12 @@
 
 namespace Guzzle\Http;
 
-use Guzzle\Common\Guzzle;
 use Guzzle\Common\Collection;
 use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Common\Exception\ExceptionCollection;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Utils;
 use Guzzle\Http\Url;
-use Guzzle\Http\UriTemplate;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Parser\ParserRegistry;
 use Guzzle\Http\Parser\UriTemplate\UriTemplateInterface;

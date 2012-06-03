@@ -2,7 +2,6 @@
 
 namespace Guzzle\Service\Command;
 
-use Guzzle\Common\Guzzle;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;
 use Guzzle\Http\Parser\ParserRegistry;

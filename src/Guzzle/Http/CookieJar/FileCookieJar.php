@@ -42,7 +42,7 @@ class FileCookieJar extends ArrayCookieJar
      */
     protected function persist()
     {
-        if (false === file_put_contents($this->filename, json_encode($this->getCookies(null, null, null, true, true)))) {
+        if (false === file_put_contents($this->filename, $this->serialize())) {
             // @codeCoverageIgnoreStart
             throw new RuntimeException('Unable to open file ' . $this->filename);
             // @codeCoverageIgnoreEnd
@@ -51,7 +51,7 @@ class FileCookieJar extends ArrayCookieJar
 
     /**
      * Load the contents of the json formatted file into the data array and
-     * discard the unsaved state of the jar object
+     * discard the unsaved state of the cookieJar object
      */
     protected function load()
     {
@@ -62,6 +62,7 @@ class FileCookieJar extends ArrayCookieJar
             // @codeCoverageIgnoreEnd
         }
 
-        $this->cookies = $json ? json_decode($json, true) : array();
+        $this->unserialize($json);
+        $this->cookies = $this->cookies ?: array();
     }
 }

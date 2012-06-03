@@ -359,11 +359,7 @@ abstract class AbstractMessage implements MessageInterface
     {
         $cacheControl = array();
         foreach ($this->cacheControl as $key => $value) {
-            if ($value === true) {
-                $cacheControl[] = $key;
-            } else {
-                $cacheControl[] = $key . '=' . $value;
-            }
+            $cacheControl[] = ($value === true) ? $key : ($key . '=' . $value);
         }
 
         $this->headers['cache-control'] = new Header('Cache-Control', implode(', ', $cacheControl));

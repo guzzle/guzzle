@@ -33,9 +33,9 @@ class HeaderTest extends \Guzzle\Tests\GuzzleTestCase
     public function testConvertsToString()
     {
         $i = new Header('Zoo', $this->test);
-        $this->assertEquals('foo, Foo, bar', (string) $i);
-        $i->setGlue('; ');
         $this->assertEquals('foo; Foo; bar', (string) $i);
+        $i->setGlue(', ');
+        $this->assertEquals('foo, Foo, bar', (string) $i);
     }
 
     public function testNormalizesCases()
@@ -113,5 +113,14 @@ class HeaderTest extends \Guzzle\Tests\GuzzleTestCase
         $h = new Header('Foo', 'bar', ';');
         $this->assertTrue($h->hasExactHeader('Foo'));
         $this->assertFalse($h->hasExactHeader('foo'));
+    }
+
+    public function testCanRemoveValues()
+    {
+        $h = new Header('Foo', array('Foo', 'baz', 'bar'));
+        $h->removeValue('bar');
+        $this->assertTrue($h->hasValue('Foo'));
+        $this->assertFalse($h->hasValue('bar'));
+        $this->assertTrue($h->hasValue('baz'));
     }
 }

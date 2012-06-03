@@ -9,7 +9,7 @@ class Header implements \IteratorAggregate, \Countable
 {
     protected $values = array();
     protected $header;
-    protected $glue = ', ';
+    protected $glue;
     protected $stringCache;
     protected $arrayCache;
 
@@ -20,7 +20,7 @@ class Header implements \IteratorAggregate, \Countable
      * @param string $values Values of the header
      * @param string $glue   Glue used to combine multiple values into a string
      */
-    public function __construct($header, $values = array(), $glue = ', ')
+    public function __construct($header, $values = array(), $glue = '; ')
     {
         $this->header = $header;
         $this->glue = $glue;
@@ -76,8 +76,7 @@ class Header implements \IteratorAggregate, \Countable
             $this->values[$header][] = $value;
         }
 
-        $this->stringCache = null;
-        $this->arrayCache = null;
+        $this->clearCache();
 
         return $this;
     }
@@ -124,8 +123,7 @@ class Header implements \IteratorAggregate, \Countable
      */
     public function normalize()
     {
-        $this->stringCache = null;
-        $this->arrayCache = null;
+        $this->clearCache();
         $this->values = array(
             $this->getName() => $this->toArray()
         );
@@ -169,6 +167,28 @@ class Header implements \IteratorAggregate, \Countable
         }
 
         return false;
+    }
+
+    /**
+     * Remove a specific value from the header
+     *
+     * @param string $value Value to remove
+     *
+     * @return self
+     */
+    public function removeValue($searchValue)
+    {
+        foreach ($this->values as $key => $values) {
+            foreach ($values as $index => $value) {
+                if ($value == $searchValue) {
+                    unset($this->values[$key][$index]);
+                    $this->clearCache();
+                    break 2;
+                }
+            }
+        }
+
+        return $this;
     }
 
     /**
@@ -220,5 +240,14 @@ class Header implements \IteratorAggregate, \Countable
     public function getIterator()
     {
         return new \ArrayIterator($this->toArray());
+    }
+
+    /**
+     * Clear the internal header cache
+     */
+    private function clearCache()
+    {
+        $this->arrayCache = null;
+        $this->stringCache = null;
     }
 }

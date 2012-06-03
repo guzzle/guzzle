@@ -2,11 +2,15 @@
 
 namespace Guzzle\Tests\Http\CookieJar;
 
-use Guzzle\Common\Guzzle;
-use Guzzle\Http\Utils;
+use Guzzle\Http\Cookie;
 use Guzzle\Http\CookieJar\ArrayCookieJar;
 use Guzzle\Http\CookieJar\CookieJarInterface;
+use Guzzle\Http\Message\Response;
+use Guzzle\Http\Message\Request;
 
+/**
+ * @covers Guzzle\Http\CookieJar\ArrayCookieJar
+ */
 class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
@@ -19,49 +23,17 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
         $this->jar = new ArrayCookieJar();
     }
 
-    /**
-     * Add values to the cookiejar
-     */
-    public static function addCookies(CookieJarInterface $jar)
+    protected function getTestCookies()
     {
-        $jar->save(array(
-            'cookie' => array('foo', 'bar'),
-            'domain' => 'example.com',
-            'path' => '/',
-            'max_age' => '86400',
-            'port' => array(80, 8080),
-            'version' => '1',
-            'secure' => true
-        ))->save(array(
-            'cookie' => array('baz', 'foobar'),
-            'domain' => 'example.com',
-            'path' => '/',
-            'max_age' => '86400',
-            'port' => array(80, 8080),
-            'version' => '1',
-            'secure' => true
-        ))->save(array(
-            'cookie' => array('test', '123'),
-            'domain' => 'www.foobar.com',
-            'path' => '/path/',
-            'discard' => true
-        ))->save(array(
-            'domain' => '.y.example.com',
-            'path' => '/acme/',
-            'cookie' => array('muppet', 'cookie_monster'),
-            'comment' => 'Comment goes here...',
-            'expires' => Utils::getHttpDate('+1 day')
-        ))->save(array(
-            'domain' => '.example.com',
-            'path' => '/test/acme/',
-            'cookie' => array('googoo', 'gaga'),
-            'max_age' => 1500,
-            'version' => 2
-        ));
+        return array(
+            new Cookie(array('name' => 'foo',  'value' => 'bar', 'domain' => 'foo.com', 'path' => '/',    'discard' => true)),
+            new Cookie(array('name' => 'test', 'value' => '123', 'domain' => 'baz.com', 'path' => '/foo', 'expires' => 2)),
+            new Cookie(array('name' => 'you',  'value' => '123', 'domain' => 'bar.com', 'path' => '/boo', 'expires' => time() + 1000))
+        );
     }
 
     /**
-     * Provides test data for cookie jar retrieval
+     * Provides test data for cookie cookieJar retrieval
      */
     public function getCookiesDataProvider()
     {
@@ -79,246 +51,92 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
         );
     }
 
-    /**
-     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
-     */
     public function testStoresAndRetrievesCookies()
     {
-        $j = $this->jar;
-
-        $this->assertSame($j, $j->save(array(
-            'cookie' => array('foo', 'bar'),
-            'domain' => '.example.com',
-            'path' => '/',
-            'max_age' => '86400',
-            'port' => array(80, 8080),
-            'version' => '1',
-            'secure' => true
-        )));
-
-        $this->assertSame($j, $j->save(array(
-            'cookie' => array('baz', 'foobar'),
-            'domain' => '.example.com',
-            'path' => '/',
-            'max_age' => '86400',
-            'port' => array(80, 8080),
-            'version' => '1',
-            'secure' => true
-        )));
-
-        $this->assertSame($j, $j->save(array(
-            'cookie' => array('test', '123'),
-            'domain' => 'www.foobar.com',
-            'path' => '/path/'
-        )));
-
-        $this->assertEquals(array(
-            array (
-                'cookie' => array('foo', 'bar'),
-                'domain' => '.example.com',
-                'path' => '/',
-                'max_age' => '86400',
-                'port' => array(80, 8080),
-                'version' => '1',
-                'secure' => true,
-                'expires' => time() + 86400,
-                'comment' => NULL,
-                'comment_url' => NULL,
-                'discard' => NULL,
-                'http_only' => false
-            ),
-            array (
-                'cookie' => array('baz', 'foobar'),
-                'domain' => '.example.com',
-                'path' => '/',
-                'max_age' => '86400',
-                'port' => array(
-                    0 => 80,
-                    1 => 8080,
-                ),
-                'version' => '1',
-                'secure' => true,
-                'expires' => time() + 86400,
-                'comment' => NULL,
-                'comment_url' => NULL,
-                'discard' => NULL,
-                'http_only' => false
-            ),
-            array (
-                'cookie' => array('test' , '123'),
-                'domain' => 'www.foobar.com',
-                'path' => '/path/',
-                'max_age' => 0,
-                'comment' => NULL,
-                'comment_url' => NULL,
-                'port' => array (),
-                'secure' => NULL,
-                'expires' => null,
-                'discard' => NULL,
-                'version' => null,
-                'http_only' => false
-            ),
-       ), $j->getCookies());
-    }
-
-    /**
-     * Checks if cookies (by name) are present in a cookieJar
-     *
-     * @param array $cookies Cookies from the cookie jar
-     * @param array $names Names to check for
-     *
-     * @return true
-     */
-    protected function hasCookies(array $cookies, array $names)
-    {
-        $remaining = $names;
-        $extra = array();
+        $cookies = $this->getTestCookies();
         foreach ($cookies as $cookie) {
-            $match = false;
-            foreach ($remaining as $ri => $c) {
-                if ($cookie['cookie'][0] == $c) {
-                    unset($remaining[$ri]);
-                    $match = true;
-                }
-            }
-            if (!$match) {
-                $extra[] = $cookie['cookie'][0] . '=' . $cookie['cookie'][1];
-            }
+            $this->assertTrue($this->jar->add($cookie));
         }
 
-        $this->assertTrue(count($remaining) == 0 && count($extra) == 0, 'Unmatched: ' . implode(', ', $remaining) . ' | Extra: ' . implode(', ', $extra));
+        $this->assertEquals(3, count($this->jar));
+        $this->assertEquals(3, count($this->jar->getIterator()));
+        $this->assertEquals($cookies, $this->jar->all(null, null, null, false, false));
     }
 
-    /**
-     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
-     * @dataProvider getCookiesDataProvider
-     */
-    public function testGetCookies(array $matches, $domain = null, $path = null, $name = null, $skipDiscardable = false)
+    public function testRemovesExpiredCookies()
     {
-        self::addCookies($this->jar);
-        $cookies = $this->jar->getCookies($domain, $path, $name, $skipDiscardable);
-        $this->hasCookies($cookies, $matches);
+        $cookies = $this->getTestCookies();
+        foreach ($this->getTestCookies() as $cookie) {
+            $this->jar->add($cookie);
+        }
+        $this->jar->removeExpired();
+        $this->assertEquals(array($cookies[0], $cookies[2]), $this->jar->all());
     }
 
-    /**
-     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
-     */
-    public function testClearsTemporaryCookies()
+    public function testRemovesTemporaryCookies()
     {
-        self::addCookies($this->jar);
-        $this->assertEquals(1, $this->jar->clearTemporary());
-        $this->hasCookies($this->jar->getCookies(), array('foo', 'baz', 'muppet', 'googoo'));
-
-        // Doesn't clear anything out because nothing is temporary
-        $this->assertEquals(0, $this->jar->clearTemporary());
-
-        // Add an expired cookie
-        $this->jar->save(array(
-            'cookie' => array('data', 'abc'),
-            'domain' => '.example.com'
-        ));
-
-        // Filters out expired cookies
-        $this->hasCookies($this->jar->getCookies(), array('foo', 'baz', 'muppet', 'googoo', 'data'));
-
-        // Removes the expired cookie
-        $this->assertEquals(1, $this->jar->clearTemporary());
-        $this->hasCookies($this->jar->getCookies(), array('foo', 'baz', 'muppet', 'googoo'));
+        $cookies = $this->getTestCookies();
+        foreach ($this->getTestCookies() as $cookie) {
+            $this->jar->add($cookie);
+        }
+        $this->jar->removeTemporary();
+        $this->assertEquals(array($cookies[2]), $this->jar->all());
     }
 
-    /**
-     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
-     */
-    public function testClearsExpiredCookies()
+    public function testIsSerializable()
     {
-        self::addCookies($this->jar);
-        $this->assertEquals(0, $this->jar->deleteExpired());
+        $this->assertEquals('[]', $this->jar->serialize());
+        $this->jar->unserialize('[]');
+        $this->assertEquals(array(), $this->jar->all());
 
-        // Add an expired cookie
-        $this->jar->save(array(
-            'cookie' => array('data', 'abc'),
-            'expires' => Utils::getHttpDate('-1 day'),
-            'domain' => '.example.com'
-        ));
+        $cookies = $this->getTestCookies();
+        foreach ($this->getTestCookies() as $cookie) {
+            $this->jar->add($cookie);
+        }
 
-        // Filters out expired cookies
-        $this->hasCookies($this->jar->getCookies(), array('foo', 'baz', 'test', 'muppet', 'googoo'));
+        // Remove discard and expired cookies
+        $serialized = $this->jar->serialize();
+        $data = json_decode($serialized, true);
+        $this->assertEquals(1, count($data));
 
-        $this->assertEquals(1, $this->jar->deleteExpired());
-        $this->assertEquals(0, $this->jar->deleteExpired());
+        $a = new ArrayCookieJar();
+        $a->unserialize($serialized);
+        $this->assertEquals(1, count($a));
     }
 
-    /**
-     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
-     * @expectedException InvalidArgumentException
-     * @expectedExceptionMessage Cookies require a domain
-     */
-    public function testValidatesDomainWhenSaving()
+    public function testRemovesSelectively()
     {
-        $this->jar->save(array());
+        $cookies = $this->getTestCookies();
+        foreach ($this->getTestCookies() as $cookie) {
+            $this->jar->add($cookie);
+        }
+
+        // Remove foo.com cookies
+        $this->jar->remove('foo.com');
+        $this->assertEquals(2, count($this->jar));
+        // Try again, removing no further cookies
+        $this->jar->remove('foo.com');
+        $this->assertEquals(2, count($this->jar));
+
+        // Remove bar.com cookies with path of /boo
+        $this->jar->remove('bar.com', '/boo');
+        $this->assertEquals(1, count($this->jar));
+
+        // Remove cookie by name
+        $this->jar->remove(null, null, 'test');
+        $this->assertEquals(0, count($this->jar));
     }
 
-    /**
-     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
-     * @expectedException InvalidArgumentException
-     * @expectedExceptionMessage Cookies require a names and values
-     */
-    public function testValidatesCookiesArePresentWhenSaving()
+    public function testDoesNotAddIncompleteCookies()
     {
-        $this->jar->save(array(
-            'domain' => '.test.com'
-        ));
-    }
-
-    /**
-     * Provides test data for cookie jar clearing
-     */
-    public function clearCookiesDataProvider()
-    {
-        return array(
-            array(array(), 4, '', '', '', ''),
-            array(array('test', 'muppet', 'googoo'), 1, 'example.com', '', ''),
-            array(array('foo', 'baz', 'test'), 2, 'a.y.example.com', '', ''),
-            array(array('foo', 'baz', 'test', 'googoo'), 1, 'a.y.example.com', '/acme/', ''),
-            // Removes only baz from the cookie that contains two values
-            array(array('test', 'muppet', 'googoo', 'foo'), 1, 'example.com', '/', 'baz'),
-            array(array('foo', 'baz', 'test', 'muppet'), 1, 'www.example.com', '/test/acme/', '')
-        );
-    }
-
-    /**
-     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
-     * @dataProvider clearCookiesDataProvider
-     */
-    public function testClearsCookies($matches, $total, $domain, $path, $name)
-    {
-        self::addCookies($this->jar);
-        $this->jar->clear($domain, $path, $name);
-        $this->hasCookies($this->jar->getCookies(null, null, null, null, false, true), $matches);
-    }
-
-    /**
-     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
-     */
-    public function testDoesNotAddDuplicates()
-    {
-        $this->jar->clear();
-        $this->assertEquals(0, count($this->jar->getCookies()));
-
-        $data = array(
-            'cookie' => array('foo', 'bar'),
-            'domain' => '.example.com',
-            'path' => '/',
-            'max_age' => '86400',
-            'port' => array(80, 8080),
-            'version' => '1',
-            'secure' => true
-        );
-
-        $this->jar->save($data);
-        $this->jar->save($data);
-
-        $this->assertEquals(1, count($this->jar->getCookies()));
+        $this->assertEquals(false, $this->jar->add(new Cookie()));
+        $this->assertEquals(false, $this->jar->add(new Cookie(array(
+            'name' => 'foo'
+        ))));
+        $this->assertEquals(false, $this->jar->add(new Cookie(array(
+            'name'   => 'foo',
+            'domain' => 'foo.com'
+        ))));
     }
 
     /**
@@ -326,54 +144,141 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testOverwritesCookiesThatAreOlderOrDiscardable()
     {
-        $this->jar->clear();
         $t = time() + 1000;
         $data = array(
-            'cookie' => array('foo', 'bar'),
-            'domain' => '.example.com',
-            'path' => '/',
+            'name'    => 'foo',
+            'value'   => 'bar',
+            'domain'  => '.example.com',
+            'path'    => '/',
             'max_age' => '86400',
-            'port' => array(80, 8080),
+            'port'    => array(80, 8080),
             'version' => '1',
-            'secure' => true,
+            'secure'  => true,
             'discard' => true,
             'expires' => $t
         );
 
         // Make sure that the discard cookie is overridden with the non-discard
-        $this->jar->save($data);
+        $this->assertTrue($this->jar->add(new Cookie($data)));
+
         unset($data['discard']);
-        $this->jar->save($data);
-        $this->assertEquals(1, count($this->jar->getCookies()));
-        $c = $this->jar->getCookies();
-        $this->assertEquals(false, $c[0]['discard']);
-        $this->assertEquals($t, $c[0]['expires']);
+        $this->assertTrue($this->jar->add(new Cookie($data)));
+        $this->assertEquals(1, count($this->jar));
+
+        $c = $this->jar->all();
+        $this->assertEquals(false, $c[0]->getDiscard());
 
         // Make sure it doesn't duplicate the cookie
-        $this->jar->save($data);
-        $this->assertEquals(1, count($this->jar->getCookies()));
+        $this->jar->add(new Cookie($data));
+        $this->assertEquals(1, count($this->jar));
 
-        // Make sure the more future-ful expiration date supercedes the other
+        // Make sure the more future-ful expiration date supersede the other
         $data['expires'] = time() + 2000;
-        $this->jar->save($data);
-        $this->assertEquals(1, count($this->jar->getCookies()));
-        $c = $this->jar->getCookies();
-        $this->assertNotEquals($t, $c[0]['expires']);
+        $this->assertTrue($this->jar->add(new Cookie($data)));
+        $this->assertEquals(1, count($this->jar));
+        $c = $this->jar->all();
+        $this->assertNotEquals($t, $c[0]->getExpires());
+    }
+
+    public function testAddsCookiesFromResponseWithNoRequest()
+    {
+        $response = new Response(200, array(
+            'Set-Cookie' => array(
+                "fpc=d=.Hm.yh4.1XmJWjJfs4orLQzKzPImxklQoxXSHOZATHUSEFciRueW_7704iYUtsXNEXq0M92Px2glMdWypmJ7HIQl6XIUvrZimWjQ3vIdeuRbI.FNQMAfcxu_XN1zSx7l.AcPdKL6guHc2V7hIQFhnjRW0rxm2oHY1P4bGQxFNz7f.tHm12ZD3DbdMDiDy7TBXsuP4DM-&v=2; expires=Fri, 02-Mar-2019 02:17:40 GMT; path=/; domain=127.0.0.1",
+                "FPCK3=AgBNbvoQAGpGEABZLRAAbFsQAF1tEABkDhAAeO0=; expires=Sat, 02-Apr-2019 02:17:40 GMT; path=/; domain=127.0.0.1",
+                "CH=deleted; expires=Wed, 03-Mar-2010 02:17:39 GMT; path=/; domain=127.0.0.1",
+                "CH=AgBNbvoQAAEcEAApuhAAMJcQADQvEAAvGxAALe0QAD6uEAATwhAAC1AQAC8t; expires=Sat, 02-Apr-2019 02:17:40 GMT; path=/; domain=127.0.0.1"
+            )
+        ));
+
+        $this->jar->addCookiesFromResponse($response);
+        $this->assertEquals(3, count($this->jar));
+        $this->assertEquals(1, count($this->jar->all(null, null, 'fpc')));
+        $this->assertEquals(1, count($this->jar->all(null, null, 'FPCK3')));
+        $this->assertEquals(1, count($this->jar->all(null, null, 'CH')));
+    }
+
+    public function testAddsCookiesFromResponseWithRequest()
+    {
+        $response = new Response(200, array(
+            'Set-Cookie' => "fpc=d=.Hm.yh4.1XmJWjJfs4orLQzKzPImxklQoxXSHOZATHUSEFciRueW_7704iYUtsXNEXq0M92Px2glMdWypmJ7HIQl6XIUvrZimWjQ3vIdeuRbI.FNQMAfcxu_XN1zSx7l.AcPdKL6guHc2V7hIQFhnjRW0rxm2oHY1P4bGQxFNz7f.tHm12ZD3DbdMDiDy7TBXsuP4DM-&v=2; expires=Fri, 02-Mar-2019 02:17:40 GMT;"
+        ));
+        $response->setRequest(new Request('GET', 'http://www.example.com'));
+        $this->jar->addCookiesFromResponse($response);
+        $this->assertEquals(1, count($this->jar));
+    }
+
+    public function getMatchingCookiesDataProvider()
+    {
+        return array(
+            array('https://example.com', array(0)),
+            array('http://example.com', array()),
+            array('https://example.com:8912', array()),
+            array('https://foo.example.com', array()),
+            array('http://foo.example.com/test/acme/', array(4))
+        );
     }
 
     /**
-     * @covers Guzzle\Http\CookieJar\ArrayCookieJar::serialize
-     * @covers Guzzle\Http\CookieJar\ArrayCookieJar::unserialize
+     * @dataProvider getMatchingCookiesDataProvider
      */
-    public function testSerialization()
+    public function testReturnsCookiesMatchingRequests($url, $cookies)
     {
-        $j = $this->jar;
-        static::addCookies($j);
-        $c = count($j->getCookies());
+        $bag = array(
+            new Cookie(array(
+                'name'    => 'foo',
+                'value'   => 'bar',
+                'domain'  => 'example.com',
+                'path'    => '/',
+                'max_age' => '86400',
+                'port'    => array(443, 8080),
+                'version' => '1',
+                'secure'  => true
+            )),
+            new Cookie(array(
+                'name'    => 'baz',
+                'value'   => 'foobar',
+                'domain'  => 'example.com',
+                'path'    => '/',
+                'max_age' => '86400',
+                'port'    => array(80, 8080),
+                'version' => '1',
+                'secure'  => true
+            )),
+            new Cookie(array(
+                'name'    => 'test',
+                'value'   => '123',
+                'domain'  => 'www.foobar.com',
+                'path'    => '/path/',
+                'discard' => true
+            )),
+            new Cookie(array(
+                'name'    => 'muppet',
+                'value'   => 'cookie_monster',
+                'domain'  => '.y.example.com',
+                'path'    => '/acme/',
+                'comment' => 'Comment goes here...',
+                'expires' => time() + 86400
+            )),
+            new Cookie(array(
+                'name'    => 'googoo',
+                'value'   => 'gaga',
+                'domain'  => '.example.com',
+                'path'    => '/test/acme/',
+                'max_age' => 1500,
+                'version' => 2
+            ))
+        );
 
-        $deflate = serialize($j);
-        $inflate = unserialize($deflate);
+        foreach ($bag as $cookie) {
+            $this->jar->add($cookie);
+        }
 
-        $this->assertEquals($c, count($inflate->getCookies()));
+        $request = new Request('GET', $url);
+        $results = $this->jar->getMatchingCookies($request);
+        $this->assertEquals(count($results), count($cookies));
+        foreach ($cookies as $i) {
+            $this->assertContains($bag[$i], $results);
+        }
     }
 }

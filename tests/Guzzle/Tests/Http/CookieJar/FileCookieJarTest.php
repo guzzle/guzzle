@@ -2,17 +2,11 @@
 
 namespace Guzzle\Tests\Http\CookieJar;
 
-use Guzzle\Http\Utils;
-use Guzzle\Http\Message\Request;
+use Guzzle\Http\Cookie;
 use Guzzle\Http\CookieJar\FileCookieJar;
 
 class FileCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var FileCookieJar
-     */
-    private $jar;
-
     /**
      * @var string
      */
@@ -21,40 +15,6 @@ class FileCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
     public function setUp()
     {
         $this->file = tempnam('/tmp', 'file-cookies');
-        $this->jar = new FileCookieJar($this->file);
-    }
-
-    /**
-     * Add values to the cookiejar
-     */
-    protected function addCookies()
-    {
-        $this->jar->save(array(
-            'cookie' => array('foo', 'bar'),
-            'domain' => 'example.com',
-            'path' => '/',
-            'max_age' => '86400',
-            'port' => array(80, 8080),
-            'version' => '1',
-            'secure' => true
-        ))->save(array(
-            'cookie' => array('test', '123'),
-            'domain' => 'www.foobar.com',
-            'path' => '/path/',
-            'discard' => true
-        ))->save(array(
-            'domain' => '.y.example.com',
-            'path' => '/acme/',
-            'cookie' => array('muppet', 'cookie_monster'),
-            'comment' => 'Comment goes here...',
-            'expires' => Utils::getHttpDate('+1 day')
-        ))->save(array(
-            'domain' => '.example.com',
-            'path' => '/test/acme/',
-            'cookie' => array('googoo', 'gaga'),
-            'max_age' => 1500,
-            'version' => 2
-        ));
     }
 
     /**
@@ -62,9 +22,8 @@ class FileCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testLoadsFromFileFile()
     {
-        unset($this->jar);
-        $this->jar = new FileCookieJar($this->file);
-        $this->assertEquals(array(), $this->jar->getCookies());
+        $jar = new FileCookieJar($this->file);
+        $this->assertEquals(array(), $jar->all());
         unlink($this->file);
     }
 
@@ -73,21 +32,37 @@ class FileCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testPersistsToFileFile()
     {
-        unset($this->jar);
-        $this->jar = new FileCookieJar($this->file);
-        $this->addCookies();
-        $this->assertEquals(4, count($this->jar->getCookies()));
-        unset($this->jar);
+        $jar = new FileCookieJar($this->file);
+        $jar->add(new Cookie(array(
+            'name'    => 'foo',
+            'value'   => 'bar',
+            'domain'  => 'foo.com',
+            'expires' => time() + 1000
+        )));
+        $jar->add(new Cookie(array(
+            'name'    => 'baz',
+            'value'   => 'bar',
+            'domain'  => 'foo.com',
+            'expires' => time() + 1000
+        )));
+        $jar->add(new Cookie(array(
+            'name'    => 'boo',
+            'value'   => 'bar',
+            'domain'  => 'foo.com',
+        )));
+
+        $this->assertEquals(3, count($jar));
+        unset($jar);
 
         // Make sure it wrote to the file
         $contents = file_get_contents($this->file);
         $this->assertNotEmpty($contents);
 
-        // Load the jar from the file
+        // Load the cookieJar from the file
         $jar = new FileCookieJar($this->file);
 
         // Weeds out temporary and session cookies
-        $this->assertEquals(3, count($jar->getCookies()));
+        $this->assertEquals(2, count($jar));
         unset($jar);
         unlink($this->file);
     }

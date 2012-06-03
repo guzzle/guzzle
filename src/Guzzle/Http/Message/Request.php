@@ -11,7 +11,6 @@ use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\ClientInterface;
 use Guzzle\Http\QueryString;
-use Guzzle\Http\Cookie;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;
 
@@ -57,11 +56,6 @@ class Request extends AbstractMessage implements RequestInterface
      * @var string State of the request object
      */
     protected $state;
-
-    /**
-     * @var Cookie Cookies to send with the request
-     */
-    protected $cookie;
 
     /**
      * @param string Auth username
@@ -148,7 +142,6 @@ class Request extends AbstractMessage implements RequestInterface
             $this->setHeader('User-Agent', Utils::getDefaultUserAgent());
         }
 
-        $this->cookie = Cookie::factory($this->getHeader('Cookie'));
         $this->setState(self::STATE_NEW);
     }
 
@@ -682,41 +675,35 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get an array of Cookies or a specific cookie from the request
+     * Get an array of cookies
      *
-     * @param string $name Cookie to retrieve
-     *
-     * @return null|string|Cookie Returns null if not found by name, a Cookie
-     *      object if no $name is supplied, or the cookie value by name if found
-     *      If a Cookie object is returned, changes to the cookie object does
-     *      not modify the request's cookies.  You will need to set the cookie
-     *      back on the request after modifying the object.
+     * @return array
      */
-    public function getCookie($name = null)
+    public function getCookies()
     {
-        return !$name ? clone $this->cookie : $this->cookie->get($name);
+        $cookieData = new Collection();
+        if ($cookies = $this->getHeader('cookie')) {
+            foreach ($cookies as $cookie) {
+                $parts = explode('=', $cookie, 2);
+                $cookieData->add($parts[0], isset($parts[1]) ? $parts[1] : '');
+            }
+        }
+
+        return $cookieData->getAll();
     }
 
     /**
-     * Set the Cookie header using an array or Cookie object
+     * Get a cookie value by name
      *
-     * @param array|Cookie $cookies Cookie data to set on the request
+     * @param string $name Cookie to retrieve
      *
-     * @return Request
+     * @return null|string|array
      */
-    public function setCookie($cookies)
+    public function getCookie($name)
     {
-        if ($cookies instanceof Cookie) {
-            $this->cookie = $cookies;
-        } elseif (is_array($cookies)) {
-            $this->cookie->replace($cookies);
-        } else {
-            throw new InvalidArgumentException('Invalid cookie data');
-        }
+        $cookies = $this->getCookies();
 
-        $this->headers['cookie'] = new Header('Cookie', (string) $this->cookie);
-
-        return $this;
+        return isset($cookies[$name]) ? $cookies[$name] : null;
     }
 
     /**
@@ -729,27 +716,35 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function addCookie($name, $value)
     {
-        $this->cookie->add($name, $value);
-        $this->headers['cookie'] = new Header('Cookie', (string) $this->cookie);
+        if (!$this->hasHeader('cookie')) {
+            $this->setHeader('cookie', "{$name}={$value}");
+        } else {
+            $this->getHeader('cookie')->add("{$name}={$value}");
+        }
 
         return $this;
     }
 
     /**
-     * Remove the cookie header or a specific cookie value by name
+     * Remove a specific cookie value by name
      *
-     * @param string $name Cookie to remove by name.  If no value is
-     *      provided, the entire Cookie header is removed from the request
+     * @param string $name Cookie to remove by name
      *
      * @return Request
      */
-    public function removeCookie($name = null)
+    public function removeCookie($name)
     {
-        $this->cookie->remove($name);
-        $this->headers['cookie'] = new Header('Cookie', (string) $this->cookie);
+        if ($cookie = $this->getHeader('cookie')) {
+            foreach ($cookie as $cookieValue) {
+                if (strpos($cookieValue, $name . '=') === 0) {
+                    $cookie->removeValue($cookieValue);
+                }
+            }
+        }
 
         return $this;
     }
+
 
     /**
      * Returns whether or not the response served to the request can be cached
@@ -813,13 +808,6 @@ class Request extends AbstractMessage implements RequestInterface
         if ($header === 'host') {
             // If the Host header was changed, be sure to update the internal URL
             $this->setHost((string) $this->getHeader('Host'));
-        } elseif ($header === 'cookie') {
-            // Be sure to get an cookie updates and update the internal Cookie
-            if ($action === 'set') {
-                $this->cookie = Cookie::factory($this->getHeader('Cookie'));
-            } elseif ($this->cookie) {
-                $this->cookie->clear();
-            }
         }
     }
 

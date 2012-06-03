@@ -493,7 +493,7 @@ class Zend_Log
 
     /**
      * Add a writer.  A writer is responsible for taking a log
-     * message and writing it out to storage.
+     * message and writing it out to jar.
      *
      * @param  mixed $writer Zend_Log_Writer_Abstract or Config array
      * @return Zend_Log
