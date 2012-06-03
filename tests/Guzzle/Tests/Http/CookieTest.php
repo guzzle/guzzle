@@ -21,7 +21,7 @@ class CookieTest extends \Guzzle\Tests\GuzzleTestCase
         $cookie = new Cookie(array(
            'expires' => 'November 20, 1984'
         ));
-        $this->assertEquals(469785600, $cookie->getExpires());
+        $this->assertTrue(is_numeric($cookie->getExpires()));
     }
 
     public function testAddsExpiresBasedOnMaxAge()
