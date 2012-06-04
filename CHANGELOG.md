@@ -1,6 +1,18 @@
 CHANGELOG
 =========
 
+* 2.6.5 (06-03-2012)
+
+ * BC: Renaming Guzzle\Http\Message\RequestInterface::getResourceUri() to getResource()
+ * BC: Removing unused AUTH_BASIC and AUTH_DIGEST constants from
+ * BC: Guzzle\Http\Cookie is now used to manage Set-Cookie data, not Cookie data
+ * BC: Renaming methods in the CookieJarInterface
+ * Moving almost all cookie logic out of the CookiePlugin and into the Cookie or CookieJar implementations
+ * Making the default glue for HTTP headers ';' instead of ','
+ * Adding a removeValue to Guzzle\Http\Message\Header
+ * Adding getCookies() to request interface.
+ * Making it easier to add event subscribers to HasDispatcherInterface classes. Can now directly call addSubscriber()
+
 * 2.6.4 (05-30-2012)
 
  * BC: Cleaning up how POST files are stored in EntityEnclosingRequest objects. Adding PostFile class.
