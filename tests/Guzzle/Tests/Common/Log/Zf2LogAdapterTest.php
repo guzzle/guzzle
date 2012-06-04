@@ -33,8 +33,10 @@ class Zf2LogAdapterTest extends \Guzzle\Tests\GuzzleTestCase
     protected function setUp()
     {
         $this->stream = fopen('php://temp', 'r+');
-        $this->log = new Logger(new Stream($this->stream));
+        $this->log = new Logger();
+        $this->log->addWriter(new Stream($this->stream));
         $this->adapter = new Zf2LogAdapter($this->log);
+
     }
 
     /**

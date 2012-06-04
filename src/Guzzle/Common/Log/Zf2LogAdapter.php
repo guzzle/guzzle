@@ -22,6 +22,6 @@ class Zf2LogAdapter extends AbstractLogAdapter
      */
     public function log($message, $priority = LOG_INFO, $extras = null)
     {
-        $this->log->log($message, $priority, $extras);
+        $this->log->log($priority, $message, $extras ?: array());
     }
 }

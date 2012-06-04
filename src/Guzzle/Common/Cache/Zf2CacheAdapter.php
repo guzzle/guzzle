@@ -2,7 +2,7 @@
 
 namespace Guzzle\Common\Cache;
 
-use Zend\Cache\Storage\Adapter;
+use Zend\Cache\Storage\Adapter\AdapterInterface;
 
 /**
  * Zend Framework 2 cache adapter
@@ -17,14 +17,14 @@ class Zf2CacheAdapter extends AbstractCacheAdapter
     protected $defaultOptions = array();
 
     /**
-     * @param Adapter $cache   Zend Framework 2 cache adapter
-     * @param array   $options Hash of default options for each cache method.
-     *                         Can contain for 'contains', 'delete', 'fetch',
-     *                         and 'save'.  Each key must map to an
-     *                         associative array of options to merge into the
-     *                         options argument passed into each respective call.
+     * @param AdapterInteface $cache   Zend Framework 2 cache adapter
+     * @param array           $options Hash of default options for each cache method.
+     *                                 Can contain for 'contains', 'delete', 'fetch',
+     *                                 and 'save'.  Each key must map to an
+     *                                 associative array of options to merge into the
+     *                                 options argument passed into each respective call.
      */
-    public function __construct(Adapter $cache, array $defaultOptions = array())
+    public function __construct(AdapterInterface $cache, array $defaultOptions = array())
     {
         $this->cache = $cache;
         $this->defaultOptions = array_merge(array(
