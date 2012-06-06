@@ -99,7 +99,12 @@ class ApiCommand
 
         if (!empty($config['params'])) {
             foreach ($config['params'] as $name => $param) {
-                $this->params[$name] = $param instanceof ApiParam ? $param : new ApiParam($param);
+                if ($param instanceof ApiParam) {
+                    $this->params[$name] = $param;
+                } elseif (is_array($param)) {
+                    $param['name'] = $name;
+                    $this->params[$name] = new ApiParam($param);
+                }
             }
         }
     }

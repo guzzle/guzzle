@@ -60,11 +60,13 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('Guzzle\\Service\\Command\\DynamicCommand', $c->getConcreteClass());
         $this->assertEquals(array(
             'key' => new ApiParam(array(
+                'name' => 'key',
                 'required' => 'true',
                 'type' => 'string',
                 'max_length' => 10
             )),
             'key_2' => new ApiParam(array(
+                'name' => 'key_2',
                 'required' => 'true',
                 'type' => 'integer',
                 'default' => 10
@@ -72,6 +74,7 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
         ), $c->getParams());
 
         $this->assertEquals(new ApiParam(array(
+            'name' => 'key_2',
             'required' => 'true',
             'type' => 'integer',
             'default' => 10
