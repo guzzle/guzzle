@@ -461,7 +461,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function send($requests)
     {
         $curlMulti = $this->getCurlMulti();
-        $multipleRequests = is_array($requests);
+        $multipleRequests = !($requests instanceof RequestInterface);
         if (!$multipleRequests) {
             $requests = array($requests);
         }

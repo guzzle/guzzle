@@ -233,6 +233,14 @@ interface ClientInterface extends HasDispatcherInterface
     function setCurlMulti(CurlMultiInterface $curlMulti);
 
     /**
+     * Get the curl multi object to be used internally by the client for
+     * transferring requests.
+     *
+     * @return CurlMultiInterface
+     */
+    function getCurlMulti();
+
+    /**
      * Set the request factory to use with the client when creating requests
      *
      * @param RequestFactoryInterface $factory Request factory

@@ -10,7 +10,6 @@ use Guzzle\Http\Curl\CurlMulti;
 use Guzzle\Http\Plugin\MockPlugin;
 use Guzzle\Service\Description\ApiCommand;
 use Guzzle\Service\Client;
-use Guzzle\Service\Command\CommandSet;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Description\XmlDescriptionBuilder;
 use Guzzle\Service\Description\ServiceDescription;
@@ -107,55 +106,12 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Client::execute
-     * @expectedException Guzzle\Service\Exception\CommandSetException
-     */
-    public function testThrowsExceptionWhenExecutingMixedClientCommandSets()
-    {
-        $client = new Client('http://www.test.com/');
-        $otherClient = new Client('http://www.test-123.com/');
-
-        // Create a command set and a command
-        $set = new CommandSet();
-        $cmd = new MockCommand();
-        $set->addCommand($cmd);
-
-        // Associate the other client with the command
-        $cmd->setClient($otherClient);
-
-        // Send the set with the wrong client, causing an exception
-        $client->execute($set);
-    }
-
-    /**
-     * @covers Guzzle\Service\Client::execute
      * @expectedException Guzzle\Common\Exception\InvalidArgumentException
      */
-    public function testThrowsExceptionWhenExecutingInvalidCommandSets()
+    public function testThrowsExceptionWhenInvalidCommandIsExecuted()
     {
-        $client = new Client('http://www.test.com/');
+        $client = new Client();
         $client->execute(new \stdClass());
-    }
-
-    /**
-     * @covers Guzzle\Service\Client::execute
-     */
-    public function testExecutesCommandSets()
-    {
-        $client = new Client('http://www.test.com/');
-        $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(
-            new Response(200)
-        )));
-
-        // Create a command set and a command
-        $set = new CommandSet();
-        $cmd = new MockCommand();
-        $set->addCommand($cmd);
-        $this->assertSame($set, $client->execute($set));
-
-        // Make sure it sent
-        $this->assertTrue($cmd->isExecuted());
-        $this->assertTrue($cmd->isPrepared());
-        $this->assertEquals(200, $cmd->getResponse()->getStatusCode());
     }
 
     /**

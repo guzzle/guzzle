@@ -6,7 +6,6 @@ use Guzzle\Common\FromConfigInterface;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\ClientInterface as HttpClientInterface;
 use Guzzle\Service\Command\CommandInterface;
-use Guzzle\Service\Command\CommandSet;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Command\Factory\FactoryInterface as CommandFactoryInterface;
 use Guzzle\Service\Resource\ResourceIteratorFactoryInterface;
@@ -36,16 +35,13 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
     function getCommand($name, array $args = array());
 
     /**
-     * Execute a command and return the response
+     * Execute one or more commands
      *
-     * @param CommandInterface|CommandSet $command The command or set to execute
+     * @param CommandInterface|array $command Command or array of commands to execute
      *
-     * @return mixed Returns the result of the executed command's
-     *       {@see CommandInterface::getResult} method if a CommandInterface is
-     *       passed, or the CommandSet itself if a CommandSet is passed
+     * @return mixed Returns the result of the executed command or an array of
+     *               commands if an array of commands was passed.
      * @throws InvalidArgumentException if an invalid command is passed
-     * @throws Command\CommandSetException if a set contains commands associated
-     *      with other clients
      */
     function execute($command);
 
