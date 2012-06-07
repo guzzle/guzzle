@@ -35,29 +35,31 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
     public function testApiCommandIsDataObject()
     {
         $c = new ApiCommand(array(
-            'name' => 'test',
-            'doc' => 'doc',
-            'method' => 'POST',
-            'uri' => '/api/v1',
+            'name'    => 'test',
+            'doc'     => 'doc',
+            'doc_url' => 'http://www.example.com',
+            'method'  => 'POST',
+            'uri'     => '/api/v1',
             'result_type' => 'array',
             'result_doc'  => 'returns the json_decoded response',
             'deprecated'  => true,
             'params' => array(
                 'key' => array(
-                    'required' => 'true',
-                    'type' => 'string',
+                    'required'   => 'true',
+                    'type'       => 'string',
                     'max_length' => 10
                 ),
                 'key_2' => array(
                     'required' => 'true',
-                    'type' => 'integer',
-                    'default' => 10
+                    'type'     => 'integer',
+                    'default'  => 10
                 )
            )
         ));
 
         $this->assertEquals('test', $c->getName());
         $this->assertEquals('doc', $c->getDoc());
+        $this->assertEquals('http://www.example.com', $c->getDocUrl());
         $this->assertEquals('POST', $c->getMethod());
         $this->assertEquals('/api/v1', $c->getUri());
         $this->assertEquals('array', $c->getResultType());
@@ -115,6 +117,7 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
             'name'      => 'test',
             'class'     => 'Guzzle\\Service\\Command\ClosureCommand',
             'doc'       => 'test',
+            'doc_url'   => 'http://www.example.com',
             'method'    => 'PUT',
             'uri'       => '/',
             'params'    => array(

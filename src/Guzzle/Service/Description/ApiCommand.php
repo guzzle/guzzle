@@ -69,6 +69,11 @@ class ApiCommand
     protected $deprecated;
 
     /**
+     * @var string Reference URL of the command
+     */
+    protected $docUrl;
+
+    /**
      * @var array Cache of parsed Command class ApiCommands
      */
     protected static $apiCommandCache = array();
@@ -79,6 +84,7 @@ class ApiCommand
      * @param array $config Array of configuration data using the following keys
      *    - name:        Name of the command
      *    - doc:         Method documentation
+     *    - doc_url:     URL pointing to an online reference about the command
      *    - method:      HTTP method of the command
      *    - uri:         URI routing information of the command
      *    - class:       Concrete class that implements this command
@@ -111,8 +117,9 @@ class ApiCommand
     {
         $this->name = isset($config['name']) ? trim($config['name']) : null;
         $this->doc = isset($config['doc']) ? trim($config['doc']) : null;
-        $this->method = isset($config['method']) ? trim($config['method']) : null;
-        $this->uri = isset($config['uri']) ? trim($config['uri']) : '';
+        $this->docUrl = isset($config['doc_url']) ? $config['doc_url'] : null;
+        $this->method = isset($config['method']) ? $config['method'] : null;
+        $this->uri = isset($config['uri']) ? $config['uri'] : '';
         $this->class = isset($config['class']) ? trim($config['class']) : self::DEFAULT_COMMAND_CLASS;
         $this->resultType = isset($config['result_type']) ? $config['result_type'] : null;
         $this->resultDoc = isset($config['result_doc']) ? $config['result_doc'] : null;
@@ -196,6 +203,7 @@ class ApiCommand
         return array(
             'name'        => $this->name,
             'doc'         => $this->doc,
+            'doc_url'     => $this->docUrl,
             'method'      => $this->method,
             'uri'         => $this->uri,
             'class'       => $this->class,
@@ -266,6 +274,16 @@ class ApiCommand
     public function getDoc()
     {
         return $this->doc;
+    }
+
+    /**
+     * Get the documentation URL of the command
+     *
+     * @return string|null
+     */
+    public function getDocUrl()
+    {
+        return $this->docUrl;
     }
 
     /**
