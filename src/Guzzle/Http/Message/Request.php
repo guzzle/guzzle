@@ -682,7 +682,7 @@ class Request extends AbstractMessage implements RequestInterface
     public function getCookies()
     {
         $cookieData = new Collection();
-        if ($cookies = $this->getHeader('cookie')) {
+        if ($cookies = $this->getHeader('Cookie')) {
             foreach ($cookies as $cookie) {
                 $parts = explode('=', $cookie, 2);
                 $cookieData->add($parts[0], isset($parts[1]) ? $parts[1] : '');
@@ -716,10 +716,10 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function addCookie($name, $value)
     {
-        if (!$this->hasHeader('cookie')) {
-            $this->setHeader('cookie', "{$name}={$value}");
+        if (!$this->hasHeader('Cookie')) {
+            $this->setHeader('Cookie', "{$name}={$value}");
         } else {
-            $this->getHeader('cookie')->add("{$name}={$value}");
+            $this->getHeader('Cookie')->add("{$name}={$value}");
         }
 
         return $this;
@@ -734,7 +734,7 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function removeCookie($name)
     {
-        if ($cookie = $this->getHeader('cookie')) {
+        if ($cookie = $this->getHeader('Cookie')) {
             foreach ($cookie as $cookieValue) {
                 if (strpos($cookieValue, $name . '=') === 0) {
                     $cookie->removeValue($cookieValue);
