@@ -39,6 +39,9 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
             'doc' => 'doc',
             'method' => 'POST',
             'uri' => '/api/v1',
+            'result_type' => 'array',
+            'result_doc'  => 'returns the json_decoded response',
+            'deprecated'  => true,
             'params' => array(
                 'key' => array(
                     'required' => 'true',
@@ -57,6 +60,9 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('doc', $c->getDoc());
         $this->assertEquals('POST', $c->getMethod());
         $this->assertEquals('/api/v1', $c->getUri());
+        $this->assertEquals('array', $c->getResultType());
+        $this->assertEquals('returns the json_decoded response', $c->getResultDoc());
+        $this->assertTrue($c->isDeprecated());
         $this->assertEquals('Guzzle\\Service\\Command\\DynamicCommand', $c->getConcreteClass());
         $this->assertEquals(array(
             'key' => new ApiParam(array(
@@ -106,7 +112,7 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
     public function testConvertsToArray()
     {
         $data = array(
-            'name' => 'test',
+            'name'      => 'test',
             'class'     => 'Guzzle\\Service\\Command\ClosureCommand',
             'doc'       => 'test',
             'method'    => 'PUT',
@@ -115,7 +121,10 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
                 'p' => new ApiParam(array(
                     'name' => 'foo'
                 ))
-            )
+            ),
+            'result_type' => null,
+            'result_doc'  => null,
+            'deprecated'  => false
         );
         $c = new ApiCommand($data);
         $this->assertEquals($data, $c->toArray());
