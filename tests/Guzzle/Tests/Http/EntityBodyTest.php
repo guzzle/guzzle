@@ -29,15 +29,15 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('php', $body->getWrapper());
         $this->assertEquals('temp', $body->getStreamType());
 
-        $handle = fopen(__DIR__ . '/../../../../phpunit.xml', 'r');
+        $handle = fopen(__DIR__ . '/../../../../phpunit.xml.dist', 'r');
         if (!$handle) {
             $this->fail('Could not open test file');
         }
         $body = EntityBody::factory($handle);
-        $this->assertEquals(__DIR__ . '/../../../../phpunit.xml', $body->getUri());
+        $this->assertEquals(__DIR__ . '/../../../../phpunit.xml.dist', $body->getUri());
         $this->assertTrue($body->isLocal());
-        $this->assertEquals(__DIR__ . '/../../../../phpunit.xml', $body->getUri());
-        $this->assertEquals(filesize(__DIR__ . '/../../../../phpunit.xml'), $body->getContentLength());
+        $this->assertEquals(__DIR__ . '/../../../../phpunit.xml.dist', $body->getUri());
+        $this->assertEquals(filesize(__DIR__ . '/../../../../phpunit.xml.dist'), $body->getContentLength());
 
         // make sure that a body will return as the same object
         $this->assertTrue($body === EntityBody::factory($body));

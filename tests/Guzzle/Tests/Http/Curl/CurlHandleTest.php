@@ -183,7 +183,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function dataProvider()
     {
-        $testFile = __DIR__ . '/../../../../../phpunit.xml';
+        $testFile = __DIR__ . '/../../../../../phpunit.xml.dist';
         $postBody = new QueryString(array(
             'file' => '@' . $testFile
         ));
