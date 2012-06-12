@@ -76,13 +76,7 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
             throw new InvalidArgumentException('Unable to open mock file: ' . $path);
         }
 
-        $parts = explode("\n\n", file_get_contents($path), 2);
-        // Convert \n to \r\n in headers
-        $data = isset($parts[1])
-            ? str_replace("\n", "\r\n", $parts[0]) . "\r\n\r\n" . $parts[1]
-            : $parts[0];
-
-        return Response::fromMessage($data);
+        return Response::fromMessage(file_get_contents($path));
     }
 
     /**
