@@ -156,7 +156,7 @@ class StreamTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Common\Stream::write
      */
-    public function testDoesNotAttempToWriteToReadonlyStream()
+    public function testDoesNotAttemptToWriteToReadonlyStream()
     {
         $handle = fopen(__DIR__ . '/../../../bootstrap.php', 'r');
         $stream = new Stream($handle);

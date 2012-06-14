@@ -81,7 +81,7 @@ class Md5ValidatorPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request->getEventDispatcher()->addSubscriber($plugin);
 
         // Content-MD5 is the MD5 hash of the canonical content after all
-        // content-encoding has been applied.  Because cURL will automaticall
+        // content-encoding has been applied.  Because cURL will automatically
         // decompress entity bodies, we need to re-compress it to calculate.
         $body = EntityBody::factory('abc');
         $body->compress();

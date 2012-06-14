@@ -191,7 +191,7 @@ class CurlHandle
             }
         }
 
-        // Add any custom headers to the request. Emtpy headers will cause curl to
+        // Add any custom headers to the request. Empty headers will cause curl to
         // not send the header at all.
         foreach ($request->getHeaders() as $headerName => $values) {
             foreach ($values as $value) {

@@ -75,9 +75,9 @@ class HeaderComparison
             }
         }
 
-        // Flip the ignore array so it works with the case insenstivie helper
+        // Flip the ignore array so it works with the case insensitive helper
         $ignore = array_flip($ignore);
-        // Allow case-insenstivie comparisons in wildcards
+        // Allow case-insensitive comparisons in wildcards
         $expected = array_change_key_case($expected);
 
         // Compare the expected and actual HTTP headers in no particular order

@@ -67,9 +67,9 @@ interface CommandInterface
     function getClient();
 
     /**
-     * Set the client objec that will execute the command
+     * Set the client object that will execute the command
      *
-     * @param ClientInterface $client The client objec that will execute the command
+     * @param ClientInterface $client The client object that will execute the command
      *
      * @return Command
      */

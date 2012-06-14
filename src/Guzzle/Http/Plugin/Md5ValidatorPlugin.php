@@ -69,7 +69,7 @@ class Md5ValidatorPlugin implements EventSubscriberInterface
             return false;
         }
 
-        // Make sure that the request's size is under the cutoff size
+        // Make sure that the size of the request is under the cutoff size
         $size = $response->getContentLength() ?: $response->getBody()->getSize();
         if (!$size || $size > $this->contentLengthCutoff) {
             return;

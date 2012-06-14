@@ -18,7 +18,7 @@ class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Co
     protected $limit = 10;
 
     /**
-     * @var array Requests that have passd through the plugin
+     * @var array Requests that have passed through the plugin
      */
     protected $requests = array();
 

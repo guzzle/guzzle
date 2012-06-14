@@ -5,7 +5,7 @@ namespace Guzzle\Common\Cache;
 /**
  * Interface for cache adapters.
  *
- * Cache adapters allow Guzzle to utilze various frameworks for caching HTTP
+ * Cache adapters allow Guzzle to utilize various frameworks for caching HTTP
  * responses.
  *
  * @link http://www.doctrine-project.org/ Inspired by Doctrine 2
