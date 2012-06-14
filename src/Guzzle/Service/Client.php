@@ -67,6 +67,7 @@ class Client extends HttpClient implements ClientInterface
     {
         return array_merge(HttpClient::getAllEvents(), array(
             'client.command.create',
+            'command.before_prepare',
             'command.before_send',
             'command.after_send'
         ));
@@ -213,15 +214,11 @@ class Client extends HttpClient implements ClientInterface
         $requests = array();
 
         foreach ($command as $c) {
-            $request = $c->setClient($this)->prepare();
+            $event = array('command' => $c->setClient($this));
+            $this->dispatch('command.before_prepare', $event);
             // Set the state to new if the command was previously executed
-            if ($request->getState() !== RequestInterface::STATE_NEW) {
-                $request->setState(RequestInterface::STATE_NEW);
-            }
-            $requests[] = $request;
-            $this->dispatch('command.before_send', array(
-                'command' => $c
-            ));
+            $requests[] = $c->prepare()->setState(RequestInterface::STATE_NEW);
+            $this->dispatch('command.before_send', $event);
         }
 
         if ($singleCommand) {
@@ -231,9 +228,7 @@ class Client extends HttpClient implements ClientInterface
         }
 
         foreach ($command as $c) {
-            $this->dispatch('command.after_send', array(
-                'command' => $c
-            ));
+            $this->dispatch('command.after_send', array('command' => $c));
         }
 
         return $singleCommand ? end($command)->getResult() : $command;
