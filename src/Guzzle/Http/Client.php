@@ -241,7 +241,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             $url = Url::factory($this->getBaseUrl())->combine($this->expandTemplate($uri, $templateVars));
         }
 
-        // If default headers are provided, then merge them into exising headers
+        // If default headers are provided, then merge them into existing headers
         // If a collision occurs, the header is completely replaced
         if (count($this->defaultHeaders)) {
             if ($headers instanceof Collection) {

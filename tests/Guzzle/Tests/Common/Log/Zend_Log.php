@@ -554,7 +554,7 @@ class Zend_Log
 
         $this->_origErrorHandler = set_error_handler(array($this, 'errorHandler'));
 
-        // Contruct a default map of phpErrors to Zend_Log priorities.
+        // Construct a default map of phpErrors to Zend_Log priorities.
         // Some of the errors are uncatchable, but are included for completeness
         $this->_errorHandlerMap = array(
             E_NOTICE            => Zend_Log::NOTICE,

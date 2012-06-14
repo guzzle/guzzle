@@ -13,7 +13,7 @@
  *
  *      [{ "statusCode": 200, "reasonPhrase": "OK", "headers": {}, "body": "" }]
  *
- *  - Get the recevied requests
+ *  - Get the received requests
  *      GET /guzzle-server/requests
  *      Host: 127.0.0.1:8124
  *
@@ -79,7 +79,7 @@ var GuzzleServer = function(port) {
                 if (that.log) {
                     console.log("Adding responses...");
                 }
-                // Received respones to queue
+                // Received response to queue
                 var data = request.split("\r\n\r\n")[1];
                 if (!data) {
                     if (that.log) {

@@ -36,7 +36,7 @@ class QueryString extends Collection
     protected $encodeValues = true;
 
     /**
-     * @var function A callback fuction for combining multi-valued query string values
+     * @var function A callback function for combining multi-valued query string values
      */
     protected $aggregator = null;
 

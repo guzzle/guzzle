@@ -50,11 +50,11 @@ class MockObserver implements \Countable, EventSubscriberInterface
         return $events;
     }
 
-    public function getData($event, $key, $occurence = 0)
+    public function getData($event, $key, $occurrence = 0)
     {
         $grouped = $this->getGrouped();
         if (isset($grouped[$event])) {
-            return $grouped[$event][$occurence][$key];
+            return $grouped[$event][$occurrence][$key];
         }
 
         return null;

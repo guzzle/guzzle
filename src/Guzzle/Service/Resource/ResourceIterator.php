@@ -313,7 +313,7 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements Resourc
 
     /**
      * Send a request to retrieve the next page of results.
-     * Hook for sublasses to implement.
+     * Hook for subclasses to implement.
      *
      * @return array Returns the newly loaded resources
      */

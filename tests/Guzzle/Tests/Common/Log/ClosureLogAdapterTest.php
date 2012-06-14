@@ -8,7 +8,7 @@ use Guzzle\Common\Log\ClosureLogAdapter;
 class ClosureLogAdapterTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
-     * @var string Variable that the closure will modifiy
+     * @var string Variable that the closure will modify
      */
     public $modified;
 

@@ -48,7 +48,7 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 41\r\n\r\n{ \"next_token\": \"\", \"resources\": [\"j\"] }"
         ));
 
-        // Create a new resource iterator using the IteraableCommand mock
+        // Create a new resource iterator using the IterableCommand mock
         $ri = new MockCommandIterator($this->getServiceBuilder()->get('mock')->getCommand('iterable_command'), array(
             'page_size' => 3
         ));

@@ -10,7 +10,7 @@ if (!file_exists(dirname(__DIR__) . '/composer.lock')) {
 
 require_once 'PHPUnit/TextUI/TestRunner.php';
 
-// Inclue the phar files if testing against the phars
+// Include the phar files if testing against the phars
 if (get_cfg_var('guzzle_phar')) {
     require get_cfg_var('guzzle_phar');
 }

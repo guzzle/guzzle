@@ -474,7 +474,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
                 $this->checkCurlResult($mrc);
             }
 
-        // Poll once if not selecing, or poll until there are no handles with activity
+        // Poll once if not selecting, or poll until there are no handles with activity
         } while ($select && $active && $selectResult == 0);
 
         return $active;
