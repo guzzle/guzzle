@@ -4,6 +4,7 @@ namespace Guzzle\Tests\Service;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\Log\ClosureLogAdapter;
+use Guzzle\Inflection\Inflector;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Curl\CurlMulti;
@@ -292,21 +293,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Client::getCommand
-     * @depends testMagicCallBehaviorExecuteExecutesCommands
-     */
-    public function testEnablesMagicMethodCallsOnCommandsIfEnabledOnClient()
-    {
-        $client = new Mock\MockClient();
-        $command = $client->getCommand('other_command');
-        $this->assertNull($command->get('command.magic_method_call'));
-
-        $client->setMagicCallBehavior(Client::MAGIC_CALL_EXECUTE);
-        $command = $client->getCommand('other_command');
-        $this->assertTrue($command->get('command.magic_method_call'));
-    }
-
-    /**
      * @covers Guzzle\Service\Client::execute
      */
     public function testClientResetsRequestsBeforeExecutingCommands()
@@ -360,11 +346,25 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testClientCreatesIteratorsWithCommands()
     {
-       $client = new Mock\MockClient();
-       $command = new MockCommand();
-       $iterator = $client->getIterator($command);
-       $this->assertInstanceOf('Guzzle\Tests\Service\Mock\Model\MockCommandIterator', $iterator);
-       $iteratorCommand = $this->readAttribute($iterator, 'originalCommand');
-       $this->assertSame($command, $iteratorCommand);
-   }
+        $client = new Mock\MockClient();
+        $command = new MockCommand();
+        $iterator = $client->getIterator($command);
+        $this->assertInstanceOf('Guzzle\Tests\Service\Mock\Model\MockCommandIterator', $iterator);
+        $iteratorCommand = $this->readAttribute($iterator, 'originalCommand');
+        $this->assertSame($command, $iteratorCommand);
+    }
+
+    /**
+     * @covers Guzzle\Service\Client::getInflector
+     * @covers Guzzle\Service\Client::setInflector
+     */
+    public function testClientHoldsInflector()
+    {
+        $client = new Mock\MockClient();
+        $this->assertInstanceOf('Guzzle\Inflection\MemoizingInflector', $client->getInflector());
+
+        $inflector = new Inflector();
+        $client->setInflector($inflector);
+        $this->assertSame($inflector, $client->getInflector());
+    }
 }

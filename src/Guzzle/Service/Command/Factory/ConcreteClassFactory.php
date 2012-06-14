@@ -2,8 +2,9 @@
 
 namespace Guzzle\Service\Command\Factory;
 
+use Guzzle\Inflection\InflectorInterface;
+use Guzzle\Inflection\Inflector;
 use Guzzle\Service\ClientInterface;
-use Guzzle\Service\Inflector;
 
 /**
  * Command factory used to create commands referencing concrete command classes
@@ -16,11 +17,18 @@ class ConcreteClassFactory implements FactoryInterface
     protected $client;
 
     /**
-     * @param ClientInterface $client Client that owns the commands
+     * @var InflectorInterface
      */
-    public function __construct(ClientInterface $client)
+    protected $inflector;
+
+    /**
+     * @param ClientInterface    $client    Client that owns the commands
+     * @param InflectorInterface $inflector Inflector used to resolve class names
+     */
+    public function __construct(ClientInterface $client, InflectorInterface $inflector = null)
     {
         $this->client = $client;
+        $this->inflector = $inflector ?: Inflector::getDefault();
     }
 
     /**
@@ -37,7 +45,7 @@ class ConcreteClassFactory implements FactoryInterface
             $this->client->getConfig()->set('command.prefix', $prefix);
         }
 
-        $class = $prefix . str_replace(' ', '\\', ucwords(str_replace('.', ' ', Inflector::camel($name))));
+        $class = $prefix . str_replace(' ', '\\', ucwords(str_replace('.', ' ', $this->inflector->camel($name))));
 
         // Create the concrete command if it exists
         if (class_exists($class)) {

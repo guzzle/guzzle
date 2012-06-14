@@ -2,10 +2,11 @@
 
 namespace Guzzle\Service;
 
-use Guzzle\Service\Inflector;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Exception\BadMethodCallException;
+use Guzzle\Inflection\InflectorInterface;
+use Guzzle\Inflection\Inflector;
 use Guzzle\Http\Client as HttpClient;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\Command\CommandInterface;
@@ -40,6 +41,11 @@ class Client extends HttpClient implements ClientInterface
      * @var ResourceIteratorFactoryInterface
      */
     protected $resourceIteratorFactory;
+
+    /**
+     * @var InflectorInterface Inflector associated with the service/client
+     */
+    protected $inflector;
 
     /**
      * Basic factory method to create a new client.  Extend this method in
@@ -86,7 +92,7 @@ class Client extends HttpClient implements ClientInterface
         }
 
         $args = isset($args[0]) ? $args[0] : array();
-        $command = $this->getCommand(Inflector::snake($method), $args);
+        $command = $this->getCommand($this->getInflector()->snake($method), $args);
 
         return $this->magicMethodBehavior == self::MAGIC_CALL_RETURN
             ? $command
@@ -125,11 +131,6 @@ class Client extends HttpClient implements ClientInterface
      */
     public function getCommand($name, array $args = array())
     {
-        // Enable magic method calls on commands if it's enabled on the client
-        if ($this->magicMethodBehavior) {
-            $args['command.magic_method_call'] = true;
-        }
-
         $command = $this->getCommandFactory()->factory($name, $args);
         if (!$command) {
             throw new InvalidArgumentException("Command was not found matching {$name}");
@@ -279,6 +280,34 @@ class Client extends HttpClient implements ClientInterface
     public function getDescription()
     {
         return $this->serviceDescription;
+    }
+
+    /**
+     * Set the inflector used with the client
+     *
+     * @param InflectorInterface $inflector Inflection object
+     *
+     * @return Client
+     */
+    public function setInflector(InflectorInterface $inflector)
+    {
+        $this->inflector = $inflector;
+
+        return $this;
+    }
+
+    /**
+     * Get the inflector used with the client
+     *
+     * @return InflectorInterface
+     */
+    public function getInflector()
+    {
+        if (!$this->inflector) {
+            $this->inflector = Inflector::getDefault();
+        }
+
+        return $this->inflector;
     }
 
     /**

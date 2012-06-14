@@ -10,7 +10,6 @@ use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\Description\ApiCommand;
 use Guzzle\Service\ClientInterface;
 use Guzzle\Service\Inspector;
-use Guzzle\Service\Inflector;
 use Guzzle\Service\Exception\CommandException;
 use Guzzle\Service\Exception\JsonException;
 
@@ -85,40 +84,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     {
         $this->request = null;
         $this->result = null;
-    }
-
-    /**
-     * Enables magic methods for setting parameters.
-     *
-     * @param string $method Name of the parameter to set
-     * @param array  $args   Arguments to pass to the command
-     *
-     * @return AbstractCommand
-     * @throws BadMethodCallException when a parameter doesn't exist
-     */
-    public function __call($method, $args = null)
-    {
-        // Ensure magic method call behavior is enabled
-        if (!$this->get('command.magic_method_call')) {
-            throw new BadMethodCallException('Magic method calls are disabled '
-                . 'for this command.  Consider enabling magic method calls by '
-                . 'setting the command.magic_method_call parameter to true.');
-        }
-
-        if ($args && strpos($method, 'set') === 0) {
-            // Convert the method into the snake cased parameter key
-            $key = Inflector::snake(substr($method, 3));
-
-            // If the parameter exists, set it
-            if (array_key_exists($key, $this->apiCommand->getParams())) {
-                $this->set($key, $args[0]);
-
-                return $this;
-            }
-        }
-
-        // If the method is not a set method, or the parameter doesn't exist, fail
-        throw new BadMethodCallException("Missing method {$method}.");
     }
 
     /**

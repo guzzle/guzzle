@@ -3,8 +3,9 @@
 namespace Guzzle\Service\Resource;
 
 use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Inflection\InflectorInterface;
+use Guzzle\Inflection\Inflector;
 use Guzzle\Service\Command\CommandInterface;
-use Guzzle\Service\Inflector;
 
 /**
  * Factory for creating {@see ResourceIteratorInterface} objects using a
@@ -21,11 +22,18 @@ class ResourceIteratorClassFactory implements ResourceIteratorFactoryInterface
     protected $baseNamespace;
 
     /**
-     * @param string $baseNamespace Base namespace of all iterator object.
+     * @var InflectorInterface Inflector used to determine class names
      */
-    public function __construct($baseNamespace)
+    protected $inflector;
+
+    /**
+     * @param string             $baseNamespace Base namespace of all iterator object.
+     * @param InflectorInterface $inflector     Inflector used to resolve class names
+     */
+    public function __construct($baseNamespace, InflectorInterface $inflector = null)
     {
         $this->baseNamespace = $baseNamespace;
+        $this->inflector = $inflector ?: Inflector::getDefault();
     }
 
     /**
@@ -39,13 +47,11 @@ class ResourceIteratorClassFactory implements ResourceIteratorFactoryInterface
     public function build($data, array $options = null)
     {
         if (!($data instanceof CommandInterface)) {
-            throw new InvalidArgumentException('The first argument must be an '
-                . 'instance of CommandInterface');
+            throw new InvalidArgumentException('The first argument must be an instance of CommandInterface');
         }
 
         // Determine the name of the class to load
-        $className = $this->baseNamespace . '\\'
-            . Inflector::camel($data->getName()) . 'Iterator';
+        $className = $this->baseNamespace . '\\' . $this->inflector->camel($data->getName()) . 'Iterator';
 
         return new $className($data, $options);
     }
