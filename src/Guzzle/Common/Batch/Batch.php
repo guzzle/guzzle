@@ -64,7 +64,7 @@ class Batch implements BatchInterface
                     }
                 }
 
-                throw new BatchTransferException($batch, $e);
+                throw new BatchTransferException($batch, $e, $this->transferStrategy, $this->divisionStrategy);
             }
         }
 
