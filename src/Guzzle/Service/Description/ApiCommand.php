@@ -4,8 +4,8 @@ namespace Guzzle\Service\Description;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Inflection\Inflector;
 use Guzzle\Service\Exception\ValidationException;
-use Guzzle\Service\Inflector;
 use Guzzle\Service\Inspector;
 
 /**
@@ -183,8 +183,9 @@ class ApiCommand
                 }
             }
 
+
             self::$apiCommandCache[$className] = new ApiCommand(array(
-                'name'   => str_replace('\\_', '.', Inflector::snake(substr($className, strpos($className, 'Command') + 8))),
+                'name'   => str_replace('\\_', '.', Inflector::getDefault()->snake(substr($className, strpos($className, 'Command') + 8))),
                 'class'  => $className,
                 'params' => $params
             ));

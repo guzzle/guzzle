@@ -4,6 +4,7 @@ namespace Guzzle\Service;
 
 use Guzzle\Common\FromConfigInterface;
 use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Inflection\InflectorInterface;
 use Guzzle\Http\ClientInterface as HttpClientInterface;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Description\ServiceDescription;
@@ -91,4 +92,20 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
      * @return ClientInterface
      */
     function setResourceIteratorFactory(ResourceIteratorFactoryInterface $factory);
+
+    /**
+     * Set the inflector used with the client
+     *
+     * @param InflectorInterface $inflector Inflection object
+     *
+     * @return ClientInterface
+     */
+    function setInflector(InflectorInterface $inflector);
+
+    /**
+     * Get the inflector used with the client
+     *
+     * @return InflectorInterface
+     */
+    function getInflector();
 }
