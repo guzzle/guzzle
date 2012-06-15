@@ -24,6 +24,29 @@ class FlushingBatch extends AbstractBatchDecorator
     }
 
     /**
+     * Set the auto-flush threshold
+     *
+     * @param int $threshold The auto-flush threshold
+     * @return FlushingBatch
+     */
+    public function setThreshold($threshold)
+    {
+        $this->threshold = $threshold;
+
+        return $this;
+    }
+
+    /**
+     * Get the auto-flush threshold
+     *
+     * @return int
+     */
+    public function getThreshold()
+    {
+        return $this->threshold;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function add($item)

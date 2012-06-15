@@ -31,7 +31,9 @@ class FlushingBatchTest extends \Guzzle\Tests\GuzzleTestCase
         $t->expects($this->exactly(2))
             ->method('transfer');
 
-        $flush = new FlushingBatch($batch, 2);
+        $flush = new FlushingBatch($batch, 3);
+        $this->assertEquals(3, $flush->getThreshold());
+        $flush->setThreshold(2);
         $flush->add('foo')->add('baz')->add('bar')->add('bee')->add('boo');
         $this->assertEquals(1, count($flush));
     }
