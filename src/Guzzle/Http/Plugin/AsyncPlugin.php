@@ -21,7 +21,7 @@ class AsyncPlugin implements EventSubscriberInterface
             'request.before_send'    => 'onBeforeSend',
             'request.exception'      => 'onRequestTimeout',
             'request.sent'           => 'onRequestSent',
-            'curl.callback.progress' => 'onCurlProgess'
+            'curl.callback.progress' => 'onCurlProgress'
         );
     }
 
@@ -45,7 +45,7 @@ class AsyncPlugin implements EventSubscriberInterface
      *
      * @param Event $event
      */
-    public function onCurlProgess(Event $event)
+    public function onCurlProgress(Event $event)
     {
         if (!$event['handle']) {
             return;

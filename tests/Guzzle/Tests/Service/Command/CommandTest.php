@@ -189,7 +189,7 @@ class CommandTest extends AbstractCommandTest
 
         $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(
             new Response(200, array(
-                'Content-Type' => 'application/octect-stream'
+                'Content-Type' => 'application/octet-stream'
             ), 'abc,def,ghi')
         )));
 
