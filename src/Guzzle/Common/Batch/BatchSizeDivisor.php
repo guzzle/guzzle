@@ -21,6 +21,30 @@ class BatchSizeDivisor implements BatchDivisorInterface
     }
 
     /**
+     * Set the size of each batch
+     *
+     * @param int $size Size of each batch
+     *
+     * @return BatchSizeDivisor
+     */
+    public function setSize($size)
+    {
+        $this->size = $size;
+
+        return $this;
+    }
+
+    /**
+     * Get the size of each batch
+     *
+     * @return int
+     */
+    public function getSize()
+    {
+        return $this->size;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function createBatches(\SplQueue $queue)
