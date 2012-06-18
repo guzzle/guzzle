@@ -1,18 +1,34 @@
 Guzzle, PHP HTTP client and webservice framework
 ================================================
 
-Guzzle is a game changer in the world of PHP HTTP clients. Guzzle allows you to truly reap the benefits of the HTTP/1.1 spec. No other library makes it easier to manage persistent connections or send requests in parallel.</p>
+Guzzle is a PHP HTTP client and framework for building RESTful web service clients.
 
-In addition to taking the pain out of HTTP, Guzzle provides a lightweight framework for creating web service clients.  Most web service clients follow a specific pattern: create a client class, create methods for each action, create and execute a cURL handle, parse the response, implement error handling, and return the result. Guzzle takes the redundancy out of this process and gives you the tools you need to quickly build a web service client.
+- Extremely powerful API provides all the power of cURL with a simple interface.
+- Truly take advantage of HTTP/1.1 with persistent connections, connection pooling, and parallel requests.
+- Service description DSL allows you build awesome web service clients faster.
+- Symfony2 event-based plugin system allows you to completely modify the behavior of a request.
+- Includes a custom node.js webserver to test your clients.
+- Unit-tested with PHPUnit with 100% code coverage.
 
-Start <strong>truly</strong> consuming HTTP with Guzzle.
+Getting started
+---------------
 
 - [Download the phar](http://guzzlephp.org/guzzle.phar) and include it in your project ([minimal phar](http://guzzlephp.org/guzzle-min.phar))
 - Docs: [www.guzzlephp.org](http://www.guzzlephp.org/)
 - Forum: https://groups.google.com/forum/?hl=en#!forum/guzzle
 - IRC: [#guzzlephp](irc://irc.freenode.net/#guzzlephp) channel on irc.freenode.net
 
-[![Build Status](https://secure.travis-ci.org/guzzle/guzzle.png)](http://travis-ci.org/guzzle/guzzle)
+### Installing via Composer
+
+The recommended way to install Guzzle is through [composer](http://getcomposer.org). You will need to add Guzzle as a dependency in your project's ``composer.json`` file:
+
+    {
+        "require": {
+            "guzzle/guzzle": "*"
+        }
+    }
+
+You can find out more on how to install Composer, configure autloading, and other best-practices for defining dependencies at http://getcomposer.org/doc/00-intro.md
 
 Features
 --------
@@ -20,18 +36,19 @@ Features
 - Supports GET, HEAD, POST, DELETE, PUT, PATCH, OPTIONS, and any custom verbs
 - Allows full access to request and response headers
 - Persistent connections are implicitly managed by Guzzle, resulting in huge performance benefits
-- Send requests in parallel
-- Cookie sessions can be maintained between requests using the CookiePlugin
-- Allows custom entity bodies, including sending data from a PHP stream
-- Responses can be cached and served from cache using the caching reverse proxy plugin
-- Failed requests can be retried using truncated exponential backoff
-- Entity bodies can be validated automatically using Content-MD5 headers
-- All data sent over the wire can be logged using the LogPlugin
-- Automatically requests compressed data and automatically decompresses data
-- Subject/Observer signal slot system for unobtrusively modifying request behavior
-- Supports all of the features of libcurl including authentication, redirects, SSL, proxies, etc
+- [Send requests in parallel](http://guzzlephp.org/tour/http.html#send-http-requests-in-parallel)
+- Cookie sessions can be maintained between requests using the [CookiePlugin](http://guzzlephp.org/tour/http.html#cookie-session-plugin)
+- Allows custom [entity bodies](http://guzzlephp.org/tour/http.html#entity-bodies), including sending data from a PHP stream and downloading data to a PHP stream
+- Responses can be cached and served from cache using the [caching forward proxy plugin](http://guzzlephp.org/tour/http.html#php-based-caching-forward-proxy)
+- Failed requests can be retried using [truncated exponential backoff](http://guzzlephp.org/tour/http.html#truncated-exponential-backoff) with custom retry policies
+- Entity bodies can be validated automatically using Content-MD5 headers and the [MD5 hash validator plugin](http://guzzlephp.org/tour/http.html#md5-hash-validator-plugin)
+- All data sent over the wire can be logged using the [LogPlugin](http://guzzlephp.org/tour/http.html#over-the-wire-logging)
+- Subject/Observer signal slot system for unobtrusively [modifying request behavior](http://guzzlephp.org/guide/http/creating_plugins.html)
+- Supports all of the features of libcurl including authentication, compression, redirects, SSL, proxies, etc
 - Web service client framework for building future-proof interfaces to web services
-- Full support for [URI templates](http://tools.ietf.org/html/draft-gregorio-uritemplate-08)
+- Includes a [service description DSL](http://guzzlephp.org/guide/service/service_descriptions.html) for quickly building webservice clients
+- Full support for [URI templates](http://tools.ietf.org/html/rfc6570)
+- Advanced batching functionality to efficiently send requests or commands in parallel with customizable batch sizes and transfer strategies
 
 HTTP basics
 -----------
@@ -122,7 +139,7 @@ try {
 URI templates
 -------------
 
-Guzzle supports the entire URI templates RFC.
+Guzzle supports the entire [URI templates RFC](http://tools.ietf.org/html/rfc6570).
 
 ```php
 <?php
@@ -157,10 +174,12 @@ $request = $client->get(array('/{?a,b}', array(
 
 The resulting URL would become ``http://test.com?a=hi&b=there``
 
-Testing and contributing to Guzzle
-----------------------------------
+Unit testing
+------------
 
-You will need to clone the Guzzle repository in order to be able to contribute to Guzzle:
+[![Build Status](https://secure.travis-ci.org/guzzle/guzzle.png)](http://travis-ci.org/guzzle/guzzle)
+
+You will first need to clone the GitHub repository:
 
 ```
 git clone git@github.com:guzzle/guzzle.git
@@ -168,8 +187,7 @@ cd guzzle
 ```
 
 Next you will need to make sure PHPUnit is configured, Composer is installed, and you have installed Guzzle's
-testing dependencies.  This can be acheived very simply by using the `test-init` Phing task.  After running
-this task, simply run PHPUnit.
+testing dependencies.  This can be achieved using the `test-init` Phing task.  After running this task, run `phpunit`.
 
 ```
 phing test-init
@@ -179,13 +197,8 @@ phpunit
 If you do not have Phing installed, you will need to perform the installation steps manually:
 
 ```
-# Make sure Composer is installed
 curl -s http://getcomposer.org/installer | php
-
-# Install Guzzle's testing dependencies
 php composer.phar install --dev
-
-# Now kick off PHPUnit to run the tests
 cp phpunit.xml.dist phpunit.xml
 phpunit
 ```
