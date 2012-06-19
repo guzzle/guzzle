@@ -23,7 +23,7 @@ class BatchCommandTransfer implements BatchTransferInterface, BatchDivisorInterf
      *
      * @param int $batchSize Size of each batch
      */
-    public function __construct($batchSize)
+    public function __construct($batchSize = 50)
     {
         $this->batchSize = $batchSize;
     }

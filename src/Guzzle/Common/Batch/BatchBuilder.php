@@ -125,7 +125,7 @@ class BatchBuilder
      *
      * @return BatchBuilder
      */
-    public function transferRequests($batchSize = 30)
+    public function transferRequests($batchSize = 50)
     {
         $className = self::$mapping['request'];
         $this->transferStrategy = new $className($batchSize);
@@ -143,7 +143,7 @@ class BatchBuilder
      *
      * @return BatchBuilder
      */
-    public function transferCommands($batchSize = 30)
+    public function transferCommands($batchSize = 50)
     {
         $className = self::$mapping['command'];
         $this->transferStrategy = new $className($batchSize);
