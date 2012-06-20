@@ -26,21 +26,41 @@ class EntityBody extends Stream
      */
     public static function factory($resource = '', $size = null)
     {
-        if (is_resource($resource)) {
-            return new static($resource, $size);
-        } elseif (is_string($resource)) {
-            $stream = fopen('php://temp', 'r+');
-            fwrite($stream, $resource);
-            rewind($stream);
-
-            return new static($stream);
-        } elseif ($resource instanceof self) {
+        if ($resource instanceof self) {
             return $resource;
-        } elseif (is_array($resource)) {
-            return self::factory(http_build_query($resource));
+        }
+
+        switch (gettype($resource)) {
+            case 'string':
+                return self::fromString($resource);
+            case 'resource':
+                return new static($resource, $size);
+            case 'object':
+                if (method_exists($resource, '__toString')) {
+                    return self::fromString((string) $resource);
+                }
+                break;
+            case 'array':
+                return self::fromString(http_build_query($resource));
         }
 
         throw new InvalidArgumentException('Invalid resource type');
+    }
+
+    /**
+     * Create a new EntityBody from a string
+     *
+     * @param string $string String of data
+     *
+     * @return EntityBody
+     */
+    public static function fromString($string)
+    {
+        $stream = fopen('php://temp', 'r+');
+        fwrite($stream, $string);
+        rewind($stream);
+
+        return new static($stream);
     }
 
     /**

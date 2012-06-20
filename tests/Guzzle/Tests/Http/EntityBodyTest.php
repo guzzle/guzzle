@@ -3,6 +3,7 @@
 namespace Guzzle\Tests\Http;
 
 use Guzzle\Http\EntityBody;
+use Guzzle\Http\QueryString;
 
 /**
  * @group server
@@ -20,6 +21,7 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\EntityBody::factory
+     * @covers Guzzle\Http\EntityBody::fromString
      */
     public function testFactory()
     {
@@ -54,6 +56,24 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $body = EntityBody::factory();
         $this->assertEquals('php', $body->getWrapper());
         $this->assertEquals('temp', $body->getStreamType());
+    }
+
+    /**
+     * @covers Guzzle\Http\EntityBody::factory
+     */
+    public function testFactoryCanCreateFromObject()
+    {
+        $body = EntityBody::factory(new QueryString(array('foo' => 'bar')));
+        $this->assertEquals('?foo=bar', (string) $body);
+    }
+
+    /**
+     * @covers Guzzle\Http\EntityBody::factory
+     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     */
+    public function testFactoryEnsuresObjectsHaveToStringMethod()
+    {
+        EntityBody::factory(new \stdClass('a'));
     }
 
     /**
