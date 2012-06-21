@@ -44,7 +44,10 @@ class ServiceBuilderAbstractFactory extends AbstractFactory implements ServiceBu
             } elseif ($ext == 'xml') {
                 $class = self::XML_FACTORY;
             } else {
-                return;
+                $this->throwException(
+                    "Unable to determine which factory to use based on the file extension of {$config}."
+                    . " Valid file extensions are: .js, .json, .xml"
+                );
             }
         } elseif ($config instanceof \SimpleXMLElement) {
             $class = self::XML_FACTORY;

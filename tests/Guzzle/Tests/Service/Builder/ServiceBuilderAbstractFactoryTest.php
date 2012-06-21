@@ -31,7 +31,7 @@ class ServiceBuilderAbstractFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @expectedException Guzzle\Service\Exception\ServiceBuilderException
-     * @expectedExceptionMessage Unable to build service builder
+     * @expectedExceptionMessage Unable to determine which factory to use based on the file extension of jarJarBinks. Valid file extensions are: .js, .json, .xml
      */
     public function testFactoryEnsuresItCanHandleTheTypeOfFileOrArray()
     {

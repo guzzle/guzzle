@@ -36,13 +36,11 @@ abstract class AbstractFactory
 
         // Get the name of the class to instantiate for the type of data
         $class = $this->getClassName($config);
-
         if ($class) {
             $result = $this->getFactory($class)->build($config, $options);
             if ($adapter) {
                 $adapter->save($cacheKey, $result, $ttl);
             }
-
             return $result;
         }
 
@@ -87,8 +85,7 @@ abstract class AbstractFactory
     protected function getFactory($class)
     {
         if (!isset($this->factories[$class])) {
-            $factory = $class;
-            $this->factories[$class] = new $factory();
+            $this->factories[$class] = new $class();
         }
 
         return $this->factories[$class];

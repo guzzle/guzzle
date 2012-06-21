@@ -191,7 +191,7 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Service\Builder\ServiceBuilder::factory
      * @expectedException Guzzle\Service\Exception\ServiceBuilderException
-     * @expectedExceptionMessage Unable to build service builder
+     * @expectedExceptionMessage Unable to determine which factory to use based on the file extension of
      */
     public function testFactoryValidatesFileExtension()
     {
