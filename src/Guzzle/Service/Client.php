@@ -88,16 +88,13 @@ class Client extends HttpClient implements ClientInterface
     {
         if ($this->magicMethodBehavior == self::MAGIC_CALL_DISABLED) {
             throw new BadMethodCallException(
-                "Missing method $method.  Enable magic calls to use magic methods with command names."
+                "Missing method {$method}.  Enable magic calls to use magic methods with command names."
             );
         }
 
-        $args = isset($args[0]) ? $args[0] : array();
-        $command = $this->getCommand($this->getInflector()->snake($method), $args);
+        $command = $this->getCommand($method, isset($args[0]) ? $args[0] : array());
 
-        return $this->magicMethodBehavior == self::MAGIC_CALL_RETURN
-            ? $command
-            : $this->execute($command);
+        return $this->magicMethodBehavior == self::MAGIC_CALL_RETURN ? $command : $this->execute($command);
     }
 
     /**
