@@ -4,6 +4,7 @@ namespace Guzzle\Tests\Service\Command;
 
 use Guzzle\Common\Collection;
 use Guzzle\Http\Utils;
+use Guzzle\Http\Message\PostFile;
 use Guzzle\Service\Client;
 use Guzzle\Service\Command\DynamicCommand;
 use Guzzle\Service\Command\Factory\ServiceDescriptionFactory;
@@ -221,5 +222,50 @@ class DynamicCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $command = $client->getCommand('test_path');
         $request = $command->prepare();
         $this->assertEquals('/api/v2/test/abc', $request->getPath());
+    }
+
+    /**
+     * @covers Guzzle\Service\Command\DynamicCommand::build
+     */
+    public function testAllowsPostFieldsAndFiles()
+    {
+        $service = new ServiceDescription(
+            array(
+                'post_command' => new ApiCommand(array(
+                    'method' => 'POST',
+                    'uri'    => '/key',
+                    'params' => array(
+                        'test' => array(
+                            'location' => 'post_field'
+                        ),
+                        'test_2' => array(
+                            'location' => 'post_field:foo'
+                        ),
+                        'test_3' => array(
+                            'location' => 'post_file'
+                        )
+                    )
+                ))
+            )
+        );
+
+        $client = new Client('http://www.test.com/api/v2');
+        $client->setDescription($service);
+
+        $command = $client->getCommand('post_command', array(
+            'test'   => 'Hi!',
+            'test_2' => 'There',
+            'test_3' => __FILE__
+        ));
+        $request = $command->prepare();
+        $this->assertEquals('Hi!', $request->getPostField('test'));
+        $this->assertEquals('There', $request->getPostField('foo'));
+        $this->assertInternalType('array', $request->getPostFile('test_3'));
+
+        $command = $client->getCommand('post_command', array(
+            'test_3' => new PostFile('baz', __FILE__)
+        ));
+        $request = $command->prepare();
+        $this->assertInternalType('array', $request->getPostFile('baz'));
     }
 }
