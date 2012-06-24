@@ -3,15 +3,15 @@
 namespace Guzzle\Service\Plugin;
 
 use Guzzle\Common\Event;
-
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Service builder plugin to add plugins to all service clients
+ * Service builder plugin used to add plugins to all clients created by a
+ * {@see Guzzle\Service\Builder\ServiceBuilder}
  *
  * @author Gordon Franke <info@nevalon.de>
  */
-class ServiceBuilderPlugin implements EventSubscriberInterface
+class PluginCollectionPlugin implements EventSubscriberInterface
 {
     /**
      * @var $plugins array plugins to add
@@ -37,9 +37,9 @@ class ServiceBuilderPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Add plugins when client whould create
+     * Adds plugins to clients as they are created by the service builder
      *
-     * @param Event $event
+     * @param Event $event Event emitted
      */
     public function onCreateClient(Event $event)
     {

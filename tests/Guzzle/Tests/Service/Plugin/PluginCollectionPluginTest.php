@@ -3,14 +3,14 @@
 namespace Guzzle\Tests\Service;
 
 use Guzzle\Service\Builder\ServiceBuilder;
-use Guzzle\Service\Plugin\ServiceBuilderPlugin;
+use Guzzle\Service\Plugin\PluginCollectionPlugin;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class ServiceBuilderPluginTest extends \Guzzle\Tests\GuzzleTestCase
+class PluginCollectionPluginTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
-     * @covers Guzzle\Service\Plugin\ServiceBuilderPlugin
+     * @covers Guzzle\Service\Plugin\PluginCollectionPlugin
      */
     public function testPluginPassPluginsThroughToClients()
     {
@@ -32,7 +32,7 @@ class ServiceBuilderPluginTest extends \Guzzle\Tests\GuzzleTestCase
              ->method('getSubscribedEvents')
              ->will($this->returnValue(array('client.create_request' => 'onRequestCreate')));
 
-        $s->addSubscriber(new ServiceBuilderPlugin(array($plugin)));
+        $s->addSubscriber(new PluginCollectionPlugin(array($plugin)));
 
         $c = $s->get('michael.mock');
         $this->assertTrue($c->getEventDispatcher()->hasListeners('client.create_request'));
