@@ -196,11 +196,11 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $client = new Client('http://www.test.com/', array(
             'api' => 'v1',
-            'curl.disable_wire' => true,
+            'curl.debug' => true,
             'curl.foo' => 'bar'
         ));
         $request = $client->createRequest();
-        $this->assertTrue($request->getCurlOptions()->get('disable_wire'));
+        $this->assertTrue($request->getCurlOptions()->get('debug'));
         $this->assertEquals('bar', $request->getCurlOptions()->get('foo'));
     }
 

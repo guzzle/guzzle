@@ -201,6 +201,8 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
                 'test' => 'abc'
             ));
 
+        $request->getCurlOptions()->set('debug', true);
+
         $this->assertEquals(array(
             'test' => 'abc'
         ), $request->getPostFields()->getAll());

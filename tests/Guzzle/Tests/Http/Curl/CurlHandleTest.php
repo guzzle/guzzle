@@ -74,7 +74,9 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testStoresStdErr()
     {
-        $h = CurlHandle::factory(RequestFactory::getInstance()->create('GET', 'http://test.com'));
+        $request = RequestFactory::getInstance()->create('GET', 'http://test.com');
+        $request->getCurlOptions()->set('debug', true);
+        $h = CurlHandle::factory($request);
         $this->assertEquals($h->getStderr(true), $h->getOptions()->get(CURLOPT_STDERR));
         $this->assertInternalType('resource', $h->getStderr(true));
         $this->assertInternalType('string', $h->getStderr(false));
@@ -526,6 +528,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     public function testFactoryCreatesCurlBasedOnRequest($method, $url, $headers, $body, $options, $expectedHeaders = null)
     {
         $request = RequestFactory::getInstance()->create($method, $url, $headers, $body);
+        $request->getCurlOptions()->set('debug', true);
 
         $originalRequest = clone $request;
         $curlTest = clone $request;
@@ -599,6 +602,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
         $client = new Client($this->getServer()->getUrl());
         $request = $client->put('/');
+        $request->getCurlOptions()->set('debug', true);
         $request->setBody(EntityBody::factory('test'), 'text/plain', false);
         $request->getCurlOptions()->set('progress', true);
 
@@ -664,6 +668,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi");
 
         $request = RequestFactory::getInstance()->create('POST', $this->getServer()->getUrl());
+        $request->getCurlOptions()->set('debug', true);
         $request->setClient(new Client());
         $request->addPostFields(array(
             'a' => 'b',
@@ -690,6 +695,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi");
 
         $request = RequestFactory::getInstance()->create('POST', $this->getServer()->getUrl());
+        $request->getCurlOptions()->set('debug', true);
         $request->setClient(new Client());
         $request->addPostFiles(array(
             'foo' => __FILE__,
@@ -783,13 +789,13 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(2, count($received));
     }
 
-    public function testAllowsWireTransferInfoToBeDisabled()
+    public function testAllowsWireTransferInfoToBeEnabled()
     {
         $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl());
-        $request->getCurlOptions()->set('disable_wire', true);
+        $request->getCurlOptions()->set('debug', true);
         $handle = CurlHandle::factory($request);
-        $this->assertNull($handle->getOptions()->get(CURLOPT_STDERR));
-        $this->assertNull($handle->getOptions()->get(CURLOPT_VERBOSE));
+        $this->assertNotNull($handle->getOptions()->get(CURLOPT_STDERR));
+        $this->assertNotNull($handle->getOptions()->get(CURLOPT_VERBOSE));
     }
 
     public function testAddsCustomCurlOptions()

@@ -141,6 +141,7 @@ class LogPlugin implements EventSubscriberInterface
         $request = $event['request'];
         // Ensure that curl IO events are emitted
         $request->getParams()->set('curl.emit_io', true);
+        $request->getCurlOptions()->set('debug', true);
         // We need to make special handling for content wiring and
         // non-repeatable streams.
         if ($this->settings & self::LOG_BODY) {

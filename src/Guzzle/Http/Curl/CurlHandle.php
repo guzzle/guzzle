@@ -77,7 +77,7 @@ class CurlHandle
         }
 
         // Enable curl debug information if the 'debug' param was set
-        if (!$requestCurlOptions->get('disable_wire')) {
+        if ($requestCurlOptions->get('debug')) {
             $curlOptions[CURLOPT_STDERR] = fopen('php://temp', 'r+');
             // @codeCoverageIgnoreStart
             if (false === $curlOptions[CURLOPT_STDERR]) {
