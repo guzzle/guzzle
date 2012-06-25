@@ -584,16 +584,7 @@ class Request extends AbstractMessage implements RequestInterface
         $length = strlen($data);
         $data = str_replace($normalize, '', $data);
 
-        if (strpos($data, ':') !== false) {
-
-            if (!$this->response) {
-                throw new RuntimeException('Received message-header before receiving start-line: ' . $data);
-            }
-
-            list($header, $value) = explode(':', $data, 2);
-            $this->response->addHeader(trim($header), trim($value));
-
-        } elseif (strlen($data) > 6) {
+        if (strpos($data, 'HTTP/') === 0) {
 
             list($dummy, $code, $status) = explode(' ', $data, 3);
 
@@ -614,6 +605,11 @@ class Request extends AbstractMessage implements RequestInterface
                 'reason_phrase'     => $status,
                 'previous_response' => $previousResponse
             ));
+
+        } elseif (strpos($data, ':') !== false) {
+
+            list($header, $value) = explode(':', $data, 2);
+            $this->response->addHeader(trim($header), trim($value));
         }
 
         return $length;
