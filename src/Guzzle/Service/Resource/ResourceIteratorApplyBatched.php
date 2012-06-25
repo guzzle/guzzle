@@ -3,6 +3,9 @@
 namespace Guzzle\Service\Resource;
 
 use Guzzle\Common\AbstractHasDispatcher;
+use Guzzle\Common\Batch\BatchBuilder;
+use Guzzle\Common\Batch\BatchSizeDivisor;
+use Guzzle\Common\Batch\BatchClosureTransfer;
 
 /**
  * Apply a callback to the contents of a {@see ResourceIteratorInterface}
@@ -38,7 +41,9 @@ class ResourceIteratorApplyBatched extends AbstractHasDispatcher
             // About to send a batch of requests to the callback
             'iterator_batch.before_batch',
             // Finished sending a batch of requests to the callback
-            'iterator_batch.after_batch'
+            'iterator_batch.after_batch',
+            // Created the batch object
+            'iterator_batch.created_batch'
         );
     }
 
@@ -58,33 +63,37 @@ class ResourceIteratorApplyBatched extends AbstractHasDispatcher
     /**
      * Apply the callback to the contents of the resource iterator
      *
-     * Calling this method dispatches four events:
-     * - before_apply: Before adding a resource to a batch.  Context is the resource
-     * - after_apply:  After adding the resource to a batch.  Context is the resource
-     * - before_batch: Before a batch request is sent if one is sent.  Context is an array of resources
-     * - after_batch:  After a batch request is sent if one is sent.  Context is an array of resources
+     * @param int $perBatch The number of records to group per batch transfer
      *
-     * @param int $perBatch The number of records to batch before executing the callback
-     *
-     * @return int Returns the number of resources iterated
+     * @return int Returns the number of iterated resources
      */
-    public function apply($perBatch = 20)
+    public function apply($perBatch = 50)
     {
-        if ($this->iterated == 0) {
-            $batched = array();
-            foreach ($this->iterator as $resource) {
-                $batched[] = $resource;
-                if (count($batched) >= $perBatch) {
-                    $this->applyBatch($batched);
-                    $batched = array();
-                }
-                $this->iterated++;
-            }
+        $this->iterated = $this->batches = $batches = 0;
+        $that = $this;
+        $it = $this->iterator;
+        $callback = $this->callback;
 
-            if (count($batched)) {
-                $this->applyBatch($batched);
-            }
+        $batch = BatchBuilder::factory()
+            ->createBatchesWith(new BatchSizeDivisor($perBatch))
+            ->transferWith(new BatchClosureTransfer(function (array $batch) use ($that, $callback, &$batches, $it) {
+                $batches++;
+                $that->dispatch('iterator_batch.before_batch', array('iterator' => $it, 'batch' => $batch));
+                call_user_func_array($callback, array($it, $batch));
+                $that->dispatch('iterator_batch.after_batch', array('iterator' => $it, 'batch' => $batch));
+            }))
+            ->autoFlushAt($perBatch)
+            ->build();
+
+        $this->dispatch('iterator_batch.created_batch', array('batch' => $batch));
+
+        foreach ($this->iterator as $resource) {
+            $this->iterated++;
+            $batch->add($resource);
         }
+
+        $batch->flush();
+        $this->batches = $batches;
 
         return $this->iterated;
     }
@@ -107,29 +116,5 @@ class ResourceIteratorApplyBatched extends AbstractHasDispatcher
     public function getIteratedCount()
     {
         return $this->iterated;
-    }
-
-    /**
-     * Apply the callback to a collection of resources
-     *
-     * @param array $batch
-     */
-    private function applyBatch(array $batch)
-    {
-        $this->batches++;
-
-        $this->dispatch('iterator_batch.before_batch', array(
-            'iterator' => $this,
-            'batch'    => $batch
-        ));
-
-        call_user_func_array($this->callback, array(
-            $this->iterator, $batch
-        ));
-
-        $this->dispatch('iterator_batch.after_batch', array(
-            'iterator' => $this,
-            'batch'    => $batch
-        ));
     }
 }
