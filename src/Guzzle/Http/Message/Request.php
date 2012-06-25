@@ -579,11 +579,16 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function receiveResponseHeader($data)
     {
+        static $normalize = array("\r", "\n");
         $this->state = self::STATE_TRANSFER;
         $length = strlen($data);
-        $data = str_replace(array("\r", "\n"), '', $data);
+        $data = str_replace($normalize, '', $data);
 
         if (strpos($data, ':') !== false) {
+
+            if (!$this->response) {
+                throw new RuntimeException('Received message-header before receiving start-line: ' . $data);
+            }
 
             list($header, $value) = explode(':', $data, 2);
             $this->response->addHeader(trim($header), trim($value));

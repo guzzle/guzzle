@@ -785,4 +785,15 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request->receiveResponseHeader('HTTP/1.1 503 Service Unavailable');
         $this->assertNotSame($body, $request->getResponse()->getBody());
     }
+
+    /**
+     * @covers Guzzle\Http\Message\Request::receiveResponseHeader
+     * @expectedException Guzzle\Common\Exception\RuntimeException
+     * @expectedExceptionMessage Received message-header before receiving start-line: foo: baz
+     */
+    public function testResponseHeaderBeforeStartLineThrowsException()
+    {
+        $request = new Request('GET', $this->getServer()->getUrl());
+        $request->receiveResponseHeader('foo: baz');
+    }
 }
