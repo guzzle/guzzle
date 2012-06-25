@@ -27,7 +27,7 @@ class BatchClosureTransferTest extends \Guzzle\Tests\GuzzleTestCase
         $this->transferStrategy = new BatchClosureTransfer(function (array $batch) use (&$itemsTransferred) {
             $itemsTransferred = $batch;
             return;
-        });;
+        });
     }
 
     public function testTransfersBatch()
@@ -44,5 +44,13 @@ class BatchClosureTransferTest extends \Guzzle\Tests\GuzzleTestCase
         $this->transferStrategy->transfer($batchedItems);
 
         $this->assertNull($this->itemsTransferred);
+    }
+
+    /**
+     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     */
+    public function testEnsuresCallableIsCallable()
+    {
+        $foo = new BatchClosureTransfer('uh oh!');
     }
 }
