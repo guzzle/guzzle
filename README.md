@@ -20,15 +20,33 @@ Getting started
 
 ### Installing via Composer
 
-The recommended way to install Guzzle is through [composer](http://getcomposer.org). You will need to add Guzzle as a dependency in your project's ``composer.json`` file:
+The recommended way to install Guzzle is through [Composer](http://getcomposer.org).
 
-    {
-        "require": {
-            "guzzle/guzzle": "*"
+1. Add ``guzzle/guzzle`` as a dependency in your project's ``composer.json`` file:
+
+        {
+            "require": {
+                "guzzle/guzzle": "*"
+            }
         }
-    }
 
-You can find out more on how to install Composer, configure autloading, and other best-practices for defining dependencies at http://getcomposer.org/doc/00-intro.md
+    Consider tightening your dependencies to a known version when deploying mission critical applications (e.g. ``2.0.*``).
+
+2. Download and install Composer:
+
+        curl -s http://getcomposer.org/installer | php
+
+3. Install your dependencies:
+
+        php composer.phar install
+
+4. Require Composer's autoloader
+
+    Composer also prepares an autoload file that's capable of autoloading all of the classes in any of the libraries that it downloads. To use it, just add the following line to your code's bootstrap process:
+
+        require 'vendor/autoload.php';
+
+You can find out more on how to install Composer, configure autoloading, and other best-practices for defining dependencies at [getcomposer.org](http://getcomposer.org).
 
 Features
 --------
