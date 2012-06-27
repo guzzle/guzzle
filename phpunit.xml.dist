@@ -15,6 +15,10 @@
         </testsuite>
     </testsuites>
 
+    <logging>
+        <log type="junit" target="build/artifacts/logs/junit.xml" logIncompleteSkipped="false" />
+    </logging>
+
     <filter>
         <whitelist>
             <directory suffix=".php">./src/Guzzle</directory>

@@ -313,7 +313,7 @@ class CommandTest extends AbstractCommandTest
         ), $this->getApiCommand());
         $command->setClient($client);
 
-        $command->prepare()->setResponse(new Response(200));
+        $command->prepare()->setResponse(new Response(200), true);
         $command->execute();
         $this->assertEquals(1, $called);
     }

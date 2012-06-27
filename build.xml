@@ -1,63 +1,93 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="guzzle" default="package">
 
-    <target name="test-init" description="Initialize test dependencies">
-        <echo message="Updating composer" />
-        <available file="composer.phar" property="composer_exists" value="Yes" />
-        <if>
-            <equals arg1="${composer_exists}" arg2="Yes" />
-            <then></then>
-            <else>
-                <echo message="Installing composer" />
-                <exec command="curl -s http://getcomposer.org/installer | php" passthru="true" />
-            </else>
-        </if>
-        <exec command="php composer.phar install --dev" passthru="true" />
+    <property name="dir.output" value="${project.basedir}/build/artifacts" />
+
+    <target name="tag">
+        <echo>Not yet implemented</echo>
+    </target>
+
+    <target name="test" description="Run unit tests" depends="test-init">
+        <exec passthru="true" command="phpunit" />
+    </target>
+
+    <target name="test-init" depends="install-dependencies" description="Initialize test dependencies">
         <copy file="phpunit.xml.dist" tofile="phpunit.xml" overwrite="false" />
     </target>
 
-    <target name="phar" description="Deprecated phing method name">
-        <phingCall target="package" />
-    </target>
-
-    <target name="package" description="Create a phar with an autoloader">
-        <phingcall target="test-init" />
+    <target name="install-dependencies">
         <if>
-            <equals arg1="${min}" arg2="true" />
+            <available file="composer.phar" />
             <then>
-                <pharpackage
-                    destfile="./guzzle-min.phar"
-                    basedir="."
-                    stub="phar-stub-min.php"
-                    signature="md5">
-                    <fileset dir=".">
-                        <include name="src/**/*.php" />
-                    </fileset>
-                    <metadata>
-                        <element name="author" value="Michael Dowling" />
-                    </metadata>
-                </pharpackage>
-                <exec command="php -d guzzle_phar=guzzle-min.phar `which phpunit`" passthru="true" />
+                <echo>Composer is installed</echo>
             </then>
             <else>
-                <pharpackage
-                    destfile="./guzzle.phar"
-                    basedir="."
-                    stub="phar-stub.php"
-                    signature="md5">
-                    <fileset dir=".">
-                        <include name="src/**/*.php" />
-                        <include name="vendor/symfony/class-loader/Symfony/Component/ClassLoader/UniversalClassLoader.php" />
-                        <include name="vendor/symfony/event-dispatcher/**/*.php" />
-                        <include name="vendor/doctrine/common/lib/Doctrine/Common/Cache/*.php" />
-                        <include name="vendor/monolog/monolog/src/**/*.php" />
-                    </fileset>
-                    <metadata>
-                        <element name="author" value="Michael Dowling" />
-                    </metadata>
-                </pharpackage>
-                <exec command="php -d guzzle_phar=guzzle.phar `which phpunit`" passthru="true" />
+                <echo message="Installing composer" />
+                <exec command="curl -s http://getcomposer.org/installer | php" passthru="true" />
+                <exec command="php composer.phar install --dev" passthru="true" />
             </else>
         </if>
+    </target>
+
+    <target name="clean-dependencies">
+        <delete dir="${project.basedir}/vendor"/>
+        <delete file="composer.lock" />
+    </target>
+
+    <target name="update-dependencies">
+        <exec command="php composer.phar update --dev" passthru="true" />
+    </target>
+
+    <target name="clean">
+        <delete dir="${dir.output}"/>
+    </target>
+
+    <target name="prepare" depends="clean,test-init">
+        <mkdir dir="${dir.output}"/>
+        <mkdir dir="${dir.output}/logs" />
+    </target>
+
+    <target name="coverage" depends="prepare">
+        <exec passthru="true" command="phpunit --coverage-html=${dir.output}/coverage --coverage-clover=${dir.output}/logs/clover.xml" />
+    </target>
+
+    <target name="view-coverage">
+        <exec passthru="true" command="open ${dir.output}/coverage/index.html" />
+    </target>
+
+    <target name="package" depends="test-init" description="Create a phar with an autoloader">
+        <pharpackage
+            destfile="${dir.output}/guzzle.phar"
+            basedir="."
+            stub="phar-stub.php"
+            signature="md5">
+            <fileset dir=".">
+                <include name="src/**/*.php" />
+                <include name="vendor/symfony/class-loader/Symfony/Component/ClassLoader/UniversalClassLoader.php" />
+                <include name="vendor/symfony/event-dispatcher/**/*.php" />
+                <include name="vendor/doctrine/common/lib/Doctrine/Common/Cache/*.php" />
+                <include name="vendor/monolog/monolog/src/**/*.php" />
+            </fileset>
+            <metadata>
+                <element name="author" value="Michael Dowling" />
+            </metadata>
+        </pharpackage>
+        <exec command="php -d guzzle_phar=${dir.output}/guzzle.phar `which phpunit`" passthru="true" />
+    </target>
+
+    <target name="package-min" depends="test-init" description="Create a minimal phar">
+        <pharpackage
+                destfile="${dir.output}/guzzle-min.phar"
+                basedir="."
+                stub="phar-stub-min.php"
+                signature="md5">
+            <fileset dir=".">
+                <include name="src/**/*.php" />
+            </fileset>
+            <metadata>
+                <element name="author" value="Michael Dowling" />
+            </metadata>
+        </pharpackage>
+        <exec command="php -d guzzle_phar=${dir.output}/guzzle-min.phar `which phpunit`" passthru="true" />
     </target>
 </project>

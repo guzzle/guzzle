@@ -1,7 +1,12 @@
 CHANGELOG
 =========
 
-* 2.7.0 (06-10-2012)
+* 2.7.1 (06-26-2012)
+
+ * Minor patch to update version number in UA string
+ * Updating build process
+
+* 2.7.0 (06-25-2012)
 
  * BC: Inflection classes moved to Guzzle\Inflection. No longer static methods. Can now inject custom inflectors into classes.
  * BC: Removed magic setX methods from commands
