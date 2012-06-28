@@ -85,6 +85,24 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
             'c' => array('d')
         ), $this->mock->getHeaders()->getAll());
     }
+    
+    /**
+     * @covers Guzzle\Http\Message\AbstractMessage::getHeaders
+     * @covers Guzzle\Http\Message\AbstractMessage::getHeader
+     * @covers Guzzle\Http\Message\AbstractMessage::setHeaders
+     */
+    public function testGetHeadersGlued()
+    {
+        $this->assertSame($this->mock, $this->mock->setHeaders(array(
+                'a' => 'b',
+                'c' => 'd'
+        )));
+    
+        $this->assertEquals(array(
+                'a' => 'b',
+                'c' => 'd'
+        ), $this->mock->getHeadersGlued()->getAll());
+    }
 
     /**
      * @covers Guzzle\Http\Message\AbstractMessage::hasHeader
