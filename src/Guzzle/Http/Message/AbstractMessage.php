@@ -118,7 +118,7 @@ abstract class AbstractMessage implements MessageInterface
 
         return new Collection($result);
     }
-    
+
     /**
      * Get all headers as a collection
      *
@@ -127,11 +127,11 @@ abstract class AbstractMessage implements MessageInterface
     public function getHeadersGlued()
     {
         $result = array();
-        
+
         foreach ($this->headers as $header) {
             $result[$header->getName()] = (string) $header;
         }
-        
+
         return new Collection($result);
     }
 
