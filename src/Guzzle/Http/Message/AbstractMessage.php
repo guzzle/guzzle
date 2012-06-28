@@ -120,6 +120,22 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
+     * Get all headers as a collection
+     *
+     * @return Collection Returns a {@see Collection} of all headers
+     */
+    public function getHeadersGlued()
+    {
+        $result = array();
+
+        foreach ($this->headers as $header) {
+            $result[$header->getName()] = (string) $header;
+        }
+
+        return new Collection($result);
+    }
+
+    /**
      * Set an HTTP header
      *
      * @param string $header Name of the header to set.
