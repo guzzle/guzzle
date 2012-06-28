@@ -103,20 +103,43 @@ abstract class AbstractMessage implements MessageInterface
     /**
      * Get all headers as a collection
      *
+     * @param $asObjects Set to true to retrieve a collection of Header objects
+     *
      * @return Collection Returns a {@see Collection} of all headers
      */
-    public function getHeaders()
+    public function getHeaders($asObjects = false)
     {
-        $result = array();
-
-        // Convert all of the headers into a collection
-        foreach ($this->headers as $header) {
-            foreach ($header->raw() as $key => $value) {
-                $result[$key] = $value;
+        if ($asObjects) {
+            $result = $this->headers;
+        } else {
+            $result = array();
+            // Convert all of the headers into a collection
+            foreach ($this->headers as $header) {
+                foreach ($header->raw() as $key => $value) {
+                    $result[$key] = $value;
+                }
             }
         }
 
         return new Collection($result);
+    }
+
+    /**
+     * Get an array of message header lines
+     *
+     * @return array
+     */
+    public function getHeaderLines()
+    {
+        $headers = array();
+        foreach ($this->headers as $value) {
+            $glue = $value->getGlue();
+            foreach ($value->raw() as $key => $v) {
+                $headers[] = rtrim($key . ': ' . implode($glue, $v));
+            }
+        }
+
+        return $headers;
     }
 
     /**
@@ -363,24 +386,5 @@ abstract class AbstractMessage implements MessageInterface
         }
 
         $this->headers['cache-control'] = new Header('Cache-Control', implode(', ', $cacheControl));
-    }
-
-    /**
-     * Get headers as a string
-     *
-     * @return string
-     */
-    protected function getHeaderString()
-    {
-        $headers = '';
-        foreach ($this->headers as $key => $value) {
-            foreach ($value->raw() as $k => $v) {
-                foreach ($v as $vv) {
-                    $headers .= "{$k}: {$vv}\r\n";
-                }
-            }
-        }
-
-        return $headers;
     }
 }

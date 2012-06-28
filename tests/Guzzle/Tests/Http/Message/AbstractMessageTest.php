@@ -84,6 +84,25 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
             'a' => array('b'),
             'c' => array('d')
         ), $this->mock->getHeaders()->getAll());
+
+        foreach ($this->mock->getHeaders(true) as $key => $value) {
+            $this->assertInternalType('string', $key);
+            $this->assertInstanceOf('Guzzle\Http\Message\Header', $value);
+        }
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\AbstractMessage::getHeaderLines
+     */
+    public function testGetHeaderLinesUsesGlue()
+    {
+        $this->mock->setHeaders(array('a' => 'b', 'c' => 'd'));
+        $this->mock->addHeader('a', 'e');
+        $this->mock->getHeader('a')->setGlue('!');
+        $this->assertEquals(array(
+            'a: b!e',
+            'c: d'
+        ), $this->mock->getHeaderLines());
     }
 
     /**

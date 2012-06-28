@@ -296,7 +296,10 @@ class Response extends AbstractMessage
     public function getRawHeaders()
     {
         $headers = 'HTTP/1.1 ' . $this->statusCode . ' ' . $this->reasonPhrase . "\r\n";
-        $headers .= $this->getHeaderString();
+        $lines = $this->getHeaderLines();
+        if (!empty($lines)) {
+            $headers .= implode("\r\n", $lines) . "\r\n";
+        }
 
         return $headers . "\r\n";
     }

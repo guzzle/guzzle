@@ -116,7 +116,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Message\Request::__toString
      * @covers Guzzle\Http\Message\Request::getRawHeaders
-     * @covers Guzzle\Http\Message\AbstractMessage::getHeaderString
+     * @covers Guzzle\Http\Message\AbstractMessage::getHeaderLines
      */
     public function testRequestsCanBeConvertedToRawMessageStrings()
     {

@@ -74,9 +74,18 @@ interface MessageInterface
     /**
      * Get all headers as a collection
      *
+     * @param $asObjects Set to true to retrieve a collection of Header objects
+     *
      * @return Collection Returns a {@see Collection} of all headers
      */
-    function getHeaders();
+    function getHeaders($asObjects = false);
+
+    /**
+     * Get an array of message header lines
+     *
+     * @return array
+     */
+    function getHeaderLines();
 
     /**
      * Check if the specified header is present.
@@ -148,7 +157,7 @@ interface MessageInterface
      *
      * @return MessageInterface
      */
-    function addCacheControlDirective($directive, $value);
+    function addCacheControlDirective($directive, $value = true);
 
     /**
      * Remove a Cache-Control directive from the message

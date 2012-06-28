@@ -199,10 +199,8 @@ class CurlHandle
 
         // Add any custom headers to the request. Empty headers will cause curl to
         // not send the header at all.
-        foreach ($request->getHeaders() as $headerName => $values) {
-            foreach ($values as $value) {
-                $curlOptions[CURLOPT_HTTPHEADER][] = trim("{$headerName}: {$value}");
-            }
+        foreach ($request->getHeaderLines() as $line) {
+            $curlOptions[CURLOPT_HTTPHEADER][] = $line;
         }
 
         // Apply the options to a new cURL handle.

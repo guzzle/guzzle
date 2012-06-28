@@ -232,12 +232,11 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function getRawHeaders()
     {
-        $raw = $this->method . ' ' . $this->getResource();
         $protocolVersion = $this->protocolVersion ?: '1.1';
-        $raw = trim($raw) . ' ' . strtoupper(str_replace('https', 'http', $this->url->getScheme())) . '/' . $protocolVersion . "\r\n";
-        $raw .= $this->getHeaderString();
 
-        return rtrim($raw, "\r\n");
+        return trim($this->method . ' ' . $this->getResource()) . ' '
+            . strtoupper(str_replace('https', 'http', $this->url->getScheme()))
+            . '/' . $protocolVersion . "\r\n" . implode("\r\n", $this->getHeaderLines());
     }
 
     /**
