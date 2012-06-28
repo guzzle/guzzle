@@ -139,8 +139,9 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         }
 
         $settings = array(
-            CURLOPT_PORT => 123,
-            CURLOPT_CONNECTTIMEOUT_MS => 1
+            CURLOPT_PORT              => 123,
+            CURLOPT_CONNECTTIMEOUT_MS => 1,
+            CURLOPT_TIMEOUT_MS        => 1
         );
 
         $handle = curl_init($this->getServer()->getUrl());
@@ -149,7 +150,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         @curl_exec($handle);
 
         $errors = array(
-            CURLE_COULDNT_CONNECT => "couldn't connect to host",
+            CURLE_COULDNT_CONNECT     => "couldn't connect to host",
             CURLE_OPERATION_TIMEOUTED => 'timeout was reached'
         );
 

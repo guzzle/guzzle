@@ -4,7 +4,7 @@ namespace Guzzle\Tests\Http;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\Log\ClosureLogAdapter;
-use Guzzle\Http\Parser\UriTemplate\UriTemplate;
+use Guzzle\Parser\UriTemplate\UriTemplate;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Plugin\ExponentialBackoffPlugin;

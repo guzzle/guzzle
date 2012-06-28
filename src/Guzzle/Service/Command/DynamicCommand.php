@@ -4,7 +4,7 @@ namespace Guzzle\Service\Command;
 
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;
-use Guzzle\Http\Parser\ParserRegistry;
+use Guzzle\Parser\ParserRegistry;
 use Guzzle\Http\Message\PostFileInterface;
 
 /**

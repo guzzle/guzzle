@@ -2,7 +2,7 @@
 
 namespace Guzzle\Http;
 
-use Guzzle\Http\Parser\ParserRegistry;
+use Guzzle\Parser\ParserRegistry;
 
 /**
  * Parses and generates URLs based on URL parts.  In favor of performance,

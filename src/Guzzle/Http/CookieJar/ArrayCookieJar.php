@@ -5,7 +5,7 @@ namespace Guzzle\Http\CookieJar;
 use Guzzle\Http\Cookie;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
-use Guzzle\Http\Parser\ParserRegistry;
+use Guzzle\Parser\ParserRegistry;
 
 /**
  * Cookie cookieJar that stores cookies an an array

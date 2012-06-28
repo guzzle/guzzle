@@ -3,7 +3,7 @@
 namespace Guzzle\Service\Command\Factory;
 
 use Guzzle\Service\Description\ServiceDescription;
-use Guzzle\Inflection\InflectorInterface;
+use Guzzle\Common\Inflection\InflectorInterface;
 
 /**
  * Command factory used to create commands based on service descriptions

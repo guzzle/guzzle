@@ -2,8 +2,8 @@
     "name": "guzzle/guzzle",
     "type": "library",
     "description": "Guzzle is a PHP HTTP client library and framework for building RESTful web service clients",
-    "keywords": ["framework", "http", "rest", "web service", "curl", "client"],
-    "homepage": "http://www.guzzlephp.org/",
+    "keywords": ["framework", "http", "rest", "web service", "curl", "client", "HTTP client"],
+    "homepage": "http://guzzlephp.org/",
     "license": "MIT",
 
     "authors": [
@@ -17,6 +17,12 @@
             "homepage": "https://github.com/guzzle/guzzle/contributors"
         }
     ],
+
+    "replace": {
+        "guzzle/common": "self.version",
+        "guzzle/http": "self.version",
+        "guzzle/parser": "self.version"
+    },
 
     "require": {
         "php": ">=5.3.2",

@@ -1,0 +1,16 @@
+{
+    "name": "guzzle/http",
+    "homepage": "http://guzzlephp.org/",
+    "description": "HTTP libraries used by Guzzle",
+    "keywords": ["http client", "http", "client", "Guzzle", "curl"],
+    "license": "MIT",
+    "require": {
+        "php": ">=5.3.2",
+        "guzzle/common": "*",
+        "symfony/event-dispatcher": "2.*"
+    },
+    "autoload": {
+        "psr-0": { "Guzzle\\Http": "" }
+    },
+    "target-dir": "Guzzle/Http"
+}

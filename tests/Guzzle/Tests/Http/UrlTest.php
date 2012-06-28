@@ -4,7 +4,7 @@ namespace Guzzle\Tests\Http;
 
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Url;
-use Guzzle\Http\Parser\ParserRegistry;
+use Guzzle\Parser\ParserRegistry;
 
 class UrlTest extends \Guzzle\Tests\GuzzleTestCase
 {

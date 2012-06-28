@@ -5,7 +5,7 @@ namespace Guzzle\Http\Message;
 use Guzzle\Common\Collection;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Exception\BadResponseException;
-use Guzzle\Http\Parser\ParserRegistry;
+use Guzzle\Parser\ParserRegistry;
 
 /**
  * Guzzle HTTP response object

@@ -4,7 +4,7 @@ namespace Guzzle\Tests\Service\Command;
 
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Command\Factory\ServiceDescriptionFactory;
-use Guzzle\Inflection\Inflector;
+use Guzzle\Common\Inflection\Inflector;
 
 /**
  * @covers Guzzle\Service\Command\Factory\ServiceDescriptionFactory

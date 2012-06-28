@@ -9,7 +9,7 @@ use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\PostFile;
 use Guzzle\Http\QueryString;
-use Guzzle\Http\Parser\Message\MessageParser;
+use Guzzle\Parser\Message\MessageParser;
 
 /**
  * @group server

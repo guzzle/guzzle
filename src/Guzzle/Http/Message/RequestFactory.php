@@ -5,7 +5,7 @@ namespace Guzzle\Http\Message;
 use Guzzle\Common\Collection;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;
-use Guzzle\Http\Parser\ParserRegistry;
+use Guzzle\Parser\ParserRegistry;
 
 /**
  * Default HTTP request factory used to create the default

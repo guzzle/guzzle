@@ -4,7 +4,7 @@ namespace Guzzle\Tests\Service;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\Log\ClosureLogAdapter;
-use Guzzle\Inflection\Inflector;
+use Guzzle\Common\Inflection\Inflector;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Curl\CurlMulti;
@@ -361,7 +361,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     public function testClientHoldsInflector()
     {
         $client = new Mock\MockClient();
-        $this->assertInstanceOf('Guzzle\Inflection\MemoizingInflector', $client->getInflector());
+        $this->assertInstanceOf('Guzzle\Common\Inflection\MemoizingInflector', $client->getInflector());
 
         $inflector = new Inflector();
         $client->setInflector($inflector);

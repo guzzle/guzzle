@@ -4,7 +4,7 @@ namespace Guzzle\Service\Description;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
-use Guzzle\Inflection\Inflector;
+use Guzzle\Common\Inflection\Inflector;
 use Guzzle\Service\Exception\ValidationException;
 use Guzzle\Service\Inspector;
 

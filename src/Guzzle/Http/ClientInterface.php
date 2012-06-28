@@ -6,7 +6,7 @@ use Guzzle\Common\HasDispatcherInterface;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactoryInterface;
-use Guzzle\Http\Parser\UriTemplate\UriTemplateInterface;
+use Guzzle\Parser\UriTemplate\UriTemplateInterface;
 use Guzzle\Http\Curl\CurlMultiInterface;
 
 /**

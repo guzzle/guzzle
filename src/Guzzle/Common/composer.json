@@ -1,0 +1,15 @@
+{
+    "name": "guzzle/common",
+    "homepage": "http://guzzlephp.org/",
+    "description": "Common libraries used by Guzzle",
+    "keywords": ["common", "cache", "log", "event", "socket", "batch", "inflection", "validation"],
+    "license": "MIT",
+    "require": {
+        "php": ">=5.3.2",
+        "symfony/event-dispatcher": "2.*"
+    },
+    "autoload": {
+        "psr-0": { "Guzzle\\Common": "" }
+    },
+    "target-dir": "Guzzle/Common"
+}
