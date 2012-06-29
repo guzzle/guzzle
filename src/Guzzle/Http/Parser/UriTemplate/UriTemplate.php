@@ -103,6 +103,11 @@ class UriTemplate implements UriTemplateInterface
      */
     private function expandMatch(array $matches)
     {
+        static $rfc1738to3986 = array(
+            '+'   => '%20',
+            '%7e' => '~'
+        );
+
         $parsed = self::parseExpression($matches[1]);
         $replacements = array();
 
@@ -138,17 +143,29 @@ class UriTemplate implements UriTemplateInterface
                 $isAssoc = $this->isAssoc($variable);
                 $kvp = array();
                 foreach ($variable as $key => $var) {
+
                     if ($isAssoc) {
                         $key = rawurlencode($key);
+                        $isNestedArray = is_array($var);
+                    } else {
+                        $isNestedArray = false;
                     }
-                    $var = rawurlencode($var);
-                    if ($parsed['operator'] == '+' || $parsed['operator'] == '#') {
-                        $var = $this->decodeReserved($var);
+
+                    if (!$isNestedArray) {
+                        $var = rawurlencode($var);
+                        if ($parsed['operator'] == '+' || $parsed['operator'] == '#') {
+                            $var = $this->decodeReserved($var);
+                        }
                     }
 
                     if ($value['modifier'] == '*') {
                         if ($isAssoc) {
-                            $var = $key . '=' . $var;
+                            if ($isNestedArray) {
+                                // Nested arrays must allow for deeply nested structures
+                                $var = strtr(http_build_query(array($key => $var)), $rfc1738to3986);
+                            } else {
+                                $var = $key . '=' . $var;
+                            }
                         } elseif ($key > 0 && $actuallyUseQueryString) {
                             $var = $value['value'] . '=' . $var;
                         }
