@@ -110,6 +110,12 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
                 continue;
             }
 
+            // If the value has changed, we better change it
+            if ($cookie->getValue() !== $c->getValue()) {
+                unset($this->cookies[$i]);
+                continue;
+            }
+
             // The cookie exists, so no need to continue
             return false;
         }

@@ -180,6 +180,36 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertNotEquals($t, $c[0]->getExpires());
     }
 
+    /**
+     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
+     */
+    public function testOverwritesCookiesThatHaveChanged()
+    {
+        $t = time() + 1000;
+        $data = array(
+            'name'    => 'foo',
+            'value'   => 'bar',
+            'domain'  => '.example.com',
+            'path'    => '/',
+            'max_age' => '86400',
+            'port'    => array(80, 8080),
+            'version' => '1',
+            'secure'  => true,
+            'discard' => true,
+            'expires' => $t
+        );
+
+        // Make sure that the discard cookie is overridden with the non-discard
+        $this->assertTrue($this->jar->add(new Cookie($data)));
+
+        $data['value'] = 'boo';
+        $this->assertTrue($this->jar->add(new Cookie($data)));
+        $this->assertEquals(1, count($this->jar));
+
+        $c = $this->jar->all();
+        $this->assertEquals('boo', $c[0]->getValue());
+    }
+
     public function testAddsCookiesFromResponseWithNoRequest()
     {
         $response = new Response(200, array(
