@@ -747,7 +747,7 @@ class Request extends AbstractMessage implements RequestInterface
 
 
     /**
-     * Returns whether or not the response served to the request can be cached
+     * Returns whether or not the request can be cached
      *
      * @return bool
      */

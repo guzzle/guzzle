@@ -336,7 +336,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     function removeCookie($name);
 
     /**
-     * Returns whether or not the response served to the request can be cached
+     * Returns whether or not the request can be cached
      *
      * @return bool
      */

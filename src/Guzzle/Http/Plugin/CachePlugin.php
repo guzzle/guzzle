@@ -7,7 +7,6 @@ use Guzzle\Common\Event;
 use Guzzle\Http\Utils;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
-use Guzzle\Http\Message\Request;
 use Guzzle\Http\Exception\BadResponseException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -17,18 +16,19 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * resources with cacheable response headers.  This is a simple implementation
  * of RFC 2616 and should be considered a private transparent proxy cache
  * (authorization and private data can be cached).
+ *
+ * Various params can be set on a request to modify the behavior of the cache plugin:
+ * - cache.key_filter:      Filtered headers and query string parameters to remove from
+ *                          a request when creating a cache key
+ * - cache.filter_strategy: Method to invoke when determining if a request can be cached.
+ *                          Must accept a request object and return boolean.
  */
 class CachePlugin implements EventSubscriberInterface
 {
     /**
-     * @var CacheAdapter Cache adapter used to write cache data to cache objects
+     * @var CacheAdapterInterface Cache adapter used to cache responses
      */
     private $adapter;
-
-    /**
-     * @var bool Whether or not cache items are serialized when storing
-     */
-    private $serialize;
 
     /**
      * @var int Default cached item lifetime if Response headers are not used
@@ -36,33 +36,31 @@ class CachePlugin implements EventSubscriberInterface
     private $defaultLifetime = 3600;
 
     /**
-     * @var array Array of request cache keys to hold until a response is returned
+     * @var array SplObjectStorage of request cache keys to hold until a response is returned
      */
-    private $cached = array();
+    private $cached;
 
     /**
      * @var array Headers are excluded from the caching (see RFC 2616:13.5.1)
      */
     protected $excludeResponseHeaders = array(
         'Connection', 'Keep-Alive', 'Proxy-Authenticate', 'Proxy-Authorization',
-        'TE', 'Trailers', 'Transfer-Encoding', 'Upgrade', 'Set-Cookie',
-        'Set-Cookie2'
+        'TE', 'Trailers', 'Transfer-Encoding', 'Upgrade', 'Set-Cookie', 'Set-Cookie2'
     );
 
     /**
      * Construct a new CachePlugin
      *
      * @param CacheAdapterInterface $adapter         Cache adapter to write and read cache data
-     * @param bool                  $serialize       Set to TRUE to serialize data before writing
-     * @param int                   $defaultLifetime The number of seconds that a cache entry
-     *     should be considered fresh when no explicit freshness information is provided
-     *     in a response. Explicit Cache-Control or Expires headers override this value
+     * @param int                   $defaultLifetime Number of seconds that a cache entry should be considered fresh
+     *                                               when no explicit freshness information is provided in a response.
+     *                                               Explicit Cache-Control or Expires headers override this value.
      */
-    public function __construct(CacheAdapterInterface $adapter, $serialize = false, $defaultLifetime = 3600)
+    public function __construct(CacheAdapterInterface $adapter, $defaultLifetime = 3600)
     {
         $this->adapter = $adapter;
-        $this->serialize = (bool) $serialize;
         $this->defaultLifetime = (int) $defaultLifetime;
+        $this->cached = new \SplObjectStorage();
     }
 
     /**
@@ -74,16 +72,6 @@ class CachePlugin implements EventSubscriberInterface
             'request.before_send' => array('onRequestBeforeSend', -255),
             'request.sent'        => array('onRequestSent', 255)
         );
-    }
-
-    /**
-     * Get the cache adapter object
-     *
-     * @return CacheAdapter
-     */
-    public function getCacheAdapter()
-    {
-        return $this->adapter;
     }
 
     /**
@@ -103,7 +91,7 @@ class CachePlugin implements EventSubscriberInterface
         if (!$key || $raw) {
 
             // Generate the start of the key
-            $key = $request->getScheme() . '_' . $request->getHost() . $request->getPath();
+            $key = $request->getMethod() . '_' . $request->getScheme() . '_' . $request->getHost() . $request->getPath();
             $filterHeaders = array('Cache-Control');
             $filterQuery = array();
 
@@ -151,25 +139,28 @@ class CachePlugin implements EventSubscriberInterface
     public function onRequestBeforeSend(Event $event)
     {
         $request = $event['request'];
-        // This request is being prepared
-        $key = spl_object_hash($request);
+
+        // Only cache cacheable requests
+        if ($cacheFilter = $request->getParams()->get('cache.filter_strategy')) {
+            if (!call_user_func($cacheFilter, $request)) {
+                return;
+            }
+        } elseif (!$request->canCache()) {
+            return;
+        }
+
         $hashKey = $this->getCacheKey($request);
-        $this->cached[$key] = $hashKey;
-        $cachedData = $this->getCacheAdapter()->fetch($hashKey);
+        $this->cached[$request] = $hashKey;
+        $cachedData = $this->adapter->fetch($hashKey);
 
         // If the cached data was found, then make the request into a
         // manually set request
         if ($cachedData) {
-
-            if ($this->serialize) {
-                $cachedData = unserialize($cachedData);
-            }
-
-            unset($this->cached[$key]);
-            $response = new Response($cachedData['c'], $cachedData['h'], $cachedData['b']);
+            unset($this->cached[$request]);
+            $response = new Response($cachedData[0], $cachedData[1], $cachedData[2]);
             $response->setHeader('Age', time() - strtotime($response->getDate() ?: 'now'));
             if (!$response->hasHeader('X-Guzzle-Cache')) {
-                $response->setHeader('X-Guzzle-Cache', "key={$key}");
+                $response->setHeader('X-Guzzle-Cache', "key={$hashKey}");
             }
 
             // Validate that the response satisfies the request
@@ -188,21 +179,20 @@ class CachePlugin implements EventSubscriberInterface
     {
         $request = $event['request'];
         $response = $event['response'];
-        if ($response->canCache()) {
-            // The request is complete and now processing the response
-            $key = spl_object_hash($request);
-            if (isset($this->cached[$key])) {
-                if ($response->isSuccessful()) {
-                    if ($request->getParams()->get('cache.override_ttl')) {
-                        $lifetime = $request->getParams()->get('cache.override_ttl');
-                        $response->setHeader('X-Guzzle-Cache', "key={$key}, ttl={$lifetime}");
-                    } else {
-                        $lifetime = $response->getMaxAge();
-                    }
-                    $this->saveCache($this->cached[$key], $response, $lifetime);
+
+        if ($response->canCache() && isset($this->cached[$request])) {
+
+            $cacheKey = $this->cached[$request];
+            unset($this->cached[$request]);
+
+            if ($response->isSuccessful()) {
+                if ($request->getParams()->get('cache.override_ttl')) {
+                    $lifetime = $request->getParams()->get('cache.override_ttl');
+                    $response->setHeader('X-Guzzle-Cache', "key={$cacheKey}, ttl={$lifetime}");
+                } else {
+                    $lifetime = $response->getMaxAge();
                 }
-                // Remove the hashed placeholder from the parameters object
-                unset($this->cached[$key]);
+                $this->saveCache($cacheKey, $response, $lifetime);
             }
         }
     }
@@ -217,6 +207,8 @@ class CachePlugin implements EventSubscriberInterface
      */
     public function revalidate(RequestInterface $request, Response $response)
     {
+        static $replaceHeaders = array('Date', 'Expires', 'Cache-Control', 'ETag', 'Last-Modified');
+
         $revalidate = clone $request;
         $revalidate->getEventDispatcher()->removeSubscriber($this);
         $revalidate->removeHeader('Pragma')
@@ -249,7 +241,7 @@ class CachePlugin implements EventSubscriberInterface
                 // Replace cached headers with any of these headers from the
                 // origin server that might be more up to date
                 $modified = false;
-                foreach (array('Date', 'Expires', 'Cache-Control', 'ETag', 'Last-Modified') as $name) {
+                foreach ($replaceHeaders as $name) {
                     if ($validateResponse->hasHeader($name)) {
                         $modified = true;
                         $response->setHeader($name, $validateResponse->getHeader($name));
@@ -268,7 +260,7 @@ class CachePlugin implements EventSubscriberInterface
             // 404 errors mean the resource no longer exists, so remove from
             // cache, and prevent an additional request by throwing the exception
             if ($e->getResponse()->getStatusCode() == 404) {
-                $this->getCacheAdapter()->delete($this->getCacheKey($request));
+                $this->adapter->delete($this->getCacheKey($request));
                 throw $e;
             }
         }
@@ -331,9 +323,9 @@ class CachePlugin implements EventSubscriberInterface
                         return false;
                     case 'skip':
                         return true;
+                    default:
+                        return $this->revalidate($request, $response);
                 }
-
-                return $this->revalidate($request, $response);
             }
         }
 
@@ -351,10 +343,8 @@ class CachePlugin implements EventSubscriberInterface
      */
     protected function saveCache($key, Response $response, $lifetime = null)
     {
-        $lifetime = $lifetime ?: $this->defaultLifetime;
-
         // If the data is cacheable, then save it to the cache adapter
-        if ($lifetime) {
+        if ($lifetime = $lifetime ?: $this->defaultLifetime) {
             // Remove excluded headers from the response  (see RFC 2616:13.5.1)
             foreach ($this->excludeResponseHeaders as $header) {
                 $response->removeHeader($header);
@@ -363,15 +353,11 @@ class CachePlugin implements EventSubscriberInterface
             if (!$response->getDate()) {
                 $response->setHeader('Date', Utils::getHttpDate('now'));
             }
-            $data = array(
-                'c' => $response->getStatusCode(),
-                'h' => $response->getHeaders(),
-                'b' => $response->getBody(true)
+            $this->adapter->save(
+                $key,
+                array($response->getStatusCode(), $response->getHeaders(), $response->getBody(true)),
+                $lifetime
             );
-            if ($this->serialize) {
-                $data = serialize($data);
-            }
-            $this->getCacheAdapter()->save($key, $data, $lifetime);
         }
 
         return $lifetime;
