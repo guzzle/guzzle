@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+* 2.7.2 (07-02-2012)
+
+ * BC: Moving things to get ready for subtree splits. Moving Inflection into Common. Moving Guzzle\Http\Parser to Guzzle\Parser.
+ * BC: Removing Guzzle\Common\Batch\Batch::count() and replacing it with isEmpty()
+ * CachePlugin now allows for a custom request parameter function to check if a request can be cached
+ * Bug fix: CachePlugin now only caches GET and HEAD requests by default
+ * Bug fix: Using header glue when transferring headers over the wire
+ * Allowing deeply nested arrays for composite variables in URI templates
+ * Batch divisors can now return iterators or arrays
+
 * 2.7.1 (06-26-2012)
 
  * Minor patch to update version number in UA string
