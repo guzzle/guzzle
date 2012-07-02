@@ -55,13 +55,11 @@ abstract class AbstractBatchDecorator implements BatchInterface
     }
 
     /**
-     * Get the total number of items in the queue
-     *
-     * @return int
+     * {@inheritdoc}
      */
-    public function count()
+    public function isEmpty()
     {
-        return count($this->decoratedBatch);
+        return $this->decoratedBatch->isEmpty();
     }
 
     /**

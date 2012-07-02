@@ -2,31 +2,19 @@
 
 namespace Guzzle\Common\Batch;
 
+use Guzzle\Common\Exception\BatchTransferException;
+
 /**
- * BatchInterface decorator used to buffer exceptions when an exception occurs
- * during a transfer.  The exceptions can then later be processed after a batch
- * flush has completed.
+ * BatchInterface decorator used to buffer exceptions encountered during a
+ * transfer.  The exceptions can then later be processed after a batch flush
+ * has completed.
  */
 class ExceptionBufferingBatch extends AbstractBatchDecorator
 {
     /**
-     * @var array Exceptions encountered
+     * @var array Array of BatchTransferException exceptions
      */
     protected $exceptions = array();
-
-    /**
-     * {@inheritdoc}
-     */
-    public function add($item)
-    {
-        try {
-            $this->decoratedBatch->add($item);
-        } catch (\Exception $e) {
-            $this->exceptions[] = $e;
-        }
-
-        return $this;
-    }
 
     /**
      * {@inheritdoc}
@@ -35,12 +23,14 @@ class ExceptionBufferingBatch extends AbstractBatchDecorator
     {
         $items = array();
 
-        while (count($this->decoratedBatch)) {
+        while (!$this->decoratedBatch->isEmpty()) {
             try {
-                $items = array_merge($items, $this->decoratedBatch->flush());
-            } catch (\Exception $e) {
+                $transferredItems = $this->decoratedBatch->flush();
+            } catch (BatchTransferException $e) {
                 $this->exceptions[] = $e;
+                $transferredItems = $e->getTransferredItems();
             }
+            $items = array_merge($items, $transferredItems);
         }
 
         return $items;
@@ -49,7 +39,7 @@ class ExceptionBufferingBatch extends AbstractBatchDecorator
     /**
      * Get the buffered exceptions
      *
-     * @return array
+     * @return array Array of BatchTransferException objects
      */
     public function getExceptions()
     {

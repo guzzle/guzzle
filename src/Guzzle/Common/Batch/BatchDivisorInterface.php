@@ -13,7 +13,8 @@ interface BatchDivisorInterface
      * @param \SplQueue $queue Queue of items to divide into batches. Items are
      *                         removed from the queue as they are iterated.
      *
-     * @return array Returns an array of batches, each containing an array of items
+     * @return array|\Traversable Returns an array or Traversable object that
+     *                            contains arrays of items to transfer
      */
     function createBatches(\SplQueue $queue);
 }

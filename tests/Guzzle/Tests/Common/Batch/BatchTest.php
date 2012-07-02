@@ -77,7 +77,7 @@ class BatchTest extends \Guzzle\Tests\GuzzleTestCase
             }));
 
         $batch->add('foo')->add('baz')->add('bar')->add('bee')->add('boo');
-        $this->assertEquals(5, count($batch));
+        $this->assertFalse($batch->isEmpty());
 
         try {
             $items = $batch->flush();

@@ -14,6 +14,11 @@ class FlushingBatch extends AbstractBatchDecorator
     protected $threshold;
 
     /**
+     * @var int Current number of items known to be in the queue
+     */
+    protected $currentTotal = 0;
+
+    /**
      * @param BatchInterface $decoratedBatch  BatchInterface that is being decorated
      * @param int            $threshold       Flush when the number in queue matches the threshold
      */
@@ -52,7 +57,8 @@ class FlushingBatch extends AbstractBatchDecorator
     public function add($item)
     {
         $this->decoratedBatch->add($item);
-        if (count($this->decoratedBatch) >= $this->threshold) {
+        if (++$this->currentTotal >= $this->threshold) {
+            $this->currentTotal = 0;
             $this->decoratedBatch->flush();
         }
 

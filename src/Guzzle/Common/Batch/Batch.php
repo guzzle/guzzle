@@ -6,7 +6,14 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Exception\BatchTransferException;
 
 /**
- * Abstract batch
+ * Default batch implementation used to convert queued items into smaller
+ * chunks of batches using a {@see BatchDivisorIterface} and transfers each
+ * batch using a {@see BatchTransferInterface}.
+ *
+ * Any exception encountered during a flush operation will throw a
+ * {@see BatchTransferException} object containing the batch that failed.
+ * After an exception is encountered, you can flush the batch again to attempt
+ * to finish transferring any previously created batches or queued items.
  */
 class Batch implements BatchInterface
 {
@@ -14,6 +21,11 @@ class Batch implements BatchInterface
      * @var \SplQueue Queue of items in the queue
      */
     protected $queue;
+
+    /**
+     * @var array Divided batches to be transferred
+     */
+    protected $dividedBatches;
 
     /**
      * @var BatchTransferInterface
@@ -34,6 +46,7 @@ class Batch implements BatchInterface
         $this->divisionStrategy = $divisionStrategy;
         $this->queue = new \SplQueue();
         $this->queue->setIteratorMode(\SplQueue::IT_MODE_DELETE);
+        $this->dividedBatches = array();
     }
 
     /**
@@ -51,38 +64,48 @@ class Batch implements BatchInterface
      */
     public function flush()
     {
-        $batches = (array) $this->divisionStrategy->createBatches($this->queue);
-        foreach ($batches as $index => $batch) {
-            try {
-                $this->transferStrategy->transfer($batch);
-            } catch (\Exception $e) {
-                // Recover from a transfer exception by adding the items that
-                // have not been transferred back on to the batch
-                for ($i = $index + 1, $total = count($batches); $i < $total; $i++) {
-                    foreach ($batches[$i] as $item) {
-                        $this->add($item);
-                    }
-                }
-
-                throw new BatchTransferException($batch, $e, $this->transferStrategy, $this->divisionStrategy);
-            }
-        }
+        $this->createBatches();
 
         $items = array();
-        foreach ($batches as $batch) {
-            $items = array_merge($items, $batch);
+        foreach ($this->dividedBatches as $batchIndex => $dividedBatch) {
+            while ($dividedBatch->valid()) {
+                $batch = $dividedBatch->current();
+                $dividedBatch->next();
+                try {
+                    $this->transferStrategy->transfer($batch);
+                    $items = array_merge($items, $batch);
+                } catch (\Exception $e) {
+                    throw new BatchTransferException($batch, $items, $e, $this->transferStrategy, $this->divisionStrategy);
+                }
+            }
+            // Keep the divided batch down to a minimum in case of a later exception
+            unset($this->dividedBatches[$batchIndex]);
         }
 
         return $items;
     }
 
     /**
-     * Get the total number of items in the queue
-     *
-     * @return int
+     * {@inheritdoc}
      */
-    public function count()
+    public function isEmpty()
     {
-        return count($this->queue);
+        return count($this->queue) == 0 && count($this->dividedBatches) == 0;
+    }
+
+    /**
+     * Create batches for any queued items
+     */
+    protected function createBatches()
+    {
+        if (count($this->queue)) {
+            if ($batches = $this->divisionStrategy->createBatches($this->queue)) {
+                // Convert arrays into iterators
+                if (is_array($batches)) {
+                    $batches = new \ArrayIterator($batches);
+                }
+                $this->dividedBatches[] = $batches;
+            }
+        }
     }
 }

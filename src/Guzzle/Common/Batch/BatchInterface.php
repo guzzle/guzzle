@@ -8,7 +8,7 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 /**
  * Interface for efficiently transferring items in a queue using batches
  */
-interface BatchInterface extends \Countable
+interface BatchInterface
 {
     /**
      * Add an item to the queue
@@ -25,4 +25,11 @@ interface BatchInterface extends \Countable
      * @return array Returns an array flushed items
      */
     function flush();
+
+    /**
+     * Check if the batch is empty and has further items to transfer
+     *
+     * @return bool
+     */
+    function isEmpty();
 }

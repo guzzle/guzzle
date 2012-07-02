@@ -25,8 +25,8 @@ class AbstractBatchDecoratorTest extends \Guzzle\Tests\GuzzleTestCase
             ->getMockForAbstractClass();
 
         $decoratorA->add('foo');
-        $this->assertEquals(1, count($decoratorB));
-        $this->assertEquals(1, count($batch));
+        $this->assertFalse($decoratorB->isEmpty());
+        $this->assertFalse($batch->isEmpty());
         $this->assertEquals(array($decoratorB, $decoratorA), $decoratorB->getDecorators());
         $this->assertEquals(array(), $decoratorB->flush());
     }
