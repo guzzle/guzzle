@@ -38,17 +38,18 @@
     },
 
     "require-dev": {
+        "symfony/event-dispatcher": "2.1.0beta1",
         "doctrine/common": "*",
         "symfony/class-loader": "*",
         "monolog/monolog": "1.*",
-        "zendframework/zend-cache": "2.0.*",
-        "zendframework/zend-log": "2.0.*",
-        "zendframework/zend-loader": "2.0.*",
-        "zendframework/zend-stdlib": "2.0.*",
-        "zendframework/zend-eventmanager": "2.0.*",
-        "zendframework/zend-servicemanager": "2.0.*",
-        "zend/zend-log1": "1.11",
-        "zend/zend-cache1": "1.11"
+        "zendframework/zend-cache": "2.0.0beta4",
+        "zendframework/zend-log": "2.0.0beta4",
+        "zendframework/zend-loader": "2.0.0beta4",
+        "zendframework/zend-stdlib": "2.0.0beta4",
+        "zendframework/zend-eventmanager": "2.0.0beta4",
+        "zendframework/zend-servicemanager": "2.0.0beta4",
+        "zend/zend-log1": "1.12",
+        "zend/zend-cache1": "1.12"
     },
 
     "repositories": [
@@ -60,7 +61,7 @@
             "type":"package",
             "package": {
                 "name": "zend/zend-log1",
-                "version": "1.11",
+                "version": "1.12",
                 "source": {
                     "url": "http://framework.zend.com/svn",
                     "type": "svn",
@@ -76,7 +77,7 @@
             "type":"package",
             "package": {
                 "name": "zend/zend-cache1",
-                "version": "1.11",
+                "version": "1.12",
                 "source": {
                     "url": "http://framework.zend.com/svn",
                     "type": "svn",
