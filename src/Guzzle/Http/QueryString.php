@@ -357,9 +357,9 @@ class QueryString extends Collection
                     $value = rawurlencode($value);
                 }
                 if ($encodeFields) {
-                    $temp[rawurlencode($key)] = $value;
+                    $temp[rawurlencode($key)] = (string) $value;
                 } else {
-                    $temp[$key] = $value;
+                    $temp[$key] = (string) $value;
                 }
             }
         }
