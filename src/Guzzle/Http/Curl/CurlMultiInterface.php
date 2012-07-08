@@ -7,8 +7,7 @@ use Guzzle\Common\Exception\ExceptionCollection;
 use Guzzle\Http\Message\RequestInterface;
 
 /**
- * Execute a pool of {@see RequestInterface} objects in
- * parallel.
+ * Interface for sending a pool of {@see RequestInterface} objects in parallel
  */
 interface CurlMultiInterface extends HasDispatcherInterface, \Countable
 {
@@ -27,16 +26,16 @@ interface CurlMultiInterface extends HasDispatcherInterface, \Countable
     /**
      * Add a request to the pool.
      *
-     * @param RequestInterface $request Returns the Request that was added
+     * @param RequestInterface $request Request to add
      *
      * @return CurlMultiInterface
      */
     function add(RequestInterface $request);
 
     /**
-     * Get an array of attached {@see RequestInterface}s.
+     * Get an array of attached {@see RequestInterface} objects
      *
-     * @return array Returns an array of attached requests.
+     * @return array
      */
     function all();
 
@@ -50,28 +49,23 @@ interface CurlMultiInterface extends HasDispatcherInterface, \Countable
     /**
      * Remove a request from the pool.
      *
-     * @param RequestInterface $request Request to detach.
+     * @param RequestInterface $request Request to remove
      *
      * @return CurlMultiInterface
      */
     function remove(RequestInterface $request);
 
     /**
-     * Reset the state of the multi and remove any attached RequestInterface objects
+     * Reset the state and remove any attached RequestInterface objects
      *
-     * @param bool $hard Set to TRUE to close any open multi handles
+     * @param bool $hard Set to true to close and reopen any open multi handles
      */
     function reset($hard = false);
 
     /**
      * Send a pool of {@see RequestInterface} requests.
      *
-     * Calling this method more than once will return FALSE.
-     *
-     * @return array|bool Returns an array of attached Request objects on
-     *                    success FALSE on failure.
-     * @throws ExceptionCollection if any requests threw exceptions during the
-     *                             transfer.
+     * @throws ExceptionCollection if any requests threw exceptions during the transfer.
      */
     function send();
 }
