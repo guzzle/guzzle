@@ -153,17 +153,18 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
                 'v1',
                 'v2',
                 'v3'
-            )
+            ),
+            'test4' => null,
         );
         $this->q->replace($params);
-        $this->assertEquals('?test=value&test%202=this%20is%20a%20test%3F&test3%5B0%5D=v1&test3%5B1%5D=v2&test3%5B2%5D=v3', $this->q->__toString());
+        $this->assertEquals('?test=value&test%202=this%20is%20a%20test%3F&test3%5B0%5D=v1&test3%5B1%5D=v2&test3%5B2%5D=v3&test4=', $this->q->__toString());
         $this->q->setEncodeFields(false);
         $this->q->setEncodeValues(false);
-        $this->assertEquals('?test=value&test 2=this is a test?&test3[0]=v1&test3[1]=v2&test3[2]=v3', $this->q->__toString());
+        $this->assertEquals('?test=value&test 2=this is a test?&test3[0]=v1&test3[1]=v2&test3[2]=v3&test4=', $this->q->__toString());
 
         // Use an alternative aggregator
         $this->q->setAggregateFunction(array($this->q, 'aggregateUsingComma'));
-        $this->assertEquals('?test=value&test 2=this is a test?&test3=v1,v2,v3', $this->q->__toString());
+        $this->assertEquals('?test=value&test 2=this is a test?&test3=v1,v2,v3&test4=', $this->q->__toString());
     }
 
     /**
