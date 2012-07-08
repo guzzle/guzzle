@@ -287,7 +287,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         } else {
             $this->setHeader('Expect', '100-Continue')
                  ->setHeader('Content-Type', 'multipart/form-data');
-            $this->postFields->setEncodeFields(false)->setEncodeValues(false);
+            $this->postFields->useUrlEncoding(false);
         }
     }
 }

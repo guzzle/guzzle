@@ -9,7 +9,7 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * The query string object to test
      *
-     * @var \Guzzle\Http\QueryString
+     * @var Guzzle\Http\QueryString
      */
     protected $q;
 
@@ -19,7 +19,7 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers \Guzzle\Http\QueryString::getFieldSeparator
+     * @covers Guzzle\Http\QueryString::getFieldSeparator
      */
     public function testGetFieldSeparator()
     {
@@ -27,7 +27,7 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers \Guzzle\Http\QueryString::getPrefix
+     * @covers Guzzle\Http\QueryString::getPrefix
      */
     public function testGetPrefix()
     {
@@ -35,7 +35,7 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers \Guzzle\Http\QueryString::getValueSeparator
+     * @covers Guzzle\Http\QueryString::getValueSeparator
      */
     public function testGetValueSeparator()
     {
@@ -43,30 +43,18 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers \Guzzle\Http\QueryString::isEncodingFields
-     * @covers \Guzzle\Http\QueryString::setEncodeFields
+     * @covers Guzzle\Http\QueryString::isUrlEncoding
      */
-    public function testIsEncodingFields()
+    public function testIsUrlEncoding()
     {
-        $this->assertTrue($this->q->isEncodingFields());
-        $this->assertEquals($this->q, $this->q->setEncodeFields(false));
-        $this->assertFalse($this->q->isEncodingFields());
+        $this->assertTrue($this->q->isUrlEncoding());
+        $this->assertSame($this->q, $this->q->useUrlEncoding(false));
+        $this->assertFalse($this->q->isUrlEncoding());
     }
 
     /**
-     * @covers \Guzzle\Http\QueryString::isEncodingValues
-     * @covers \Guzzle\Http\QueryString::setEncodeValues
-     */
-    public function testIsEncodingValues()
-    {
-        $this->assertTrue($this->q->isEncodingValues());
-        $this->assertEquals($this->q, $this->q->setEncodeValues(false));
-        $this->assertFalse($this->q->isEncodingValues());
-    }
-
-    /**
-     * @covers \Guzzle\Http\QueryString::setFieldSeparator
-     * @covers \Guzzle\Http\QueryString::setFieldSeparator
+     * @covers Guzzle\Http\QueryString::setFieldSeparator
+     * @covers Guzzle\Http\QueryString::setFieldSeparator
      */
     public function testSetFieldSeparator()
     {
@@ -75,8 +63,8 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers \Guzzle\Http\QueryString::setPrefix
-     * @covers \Guzzle\Http\QueryString::getPrefix
+     * @covers Guzzle\Http\QueryString::setPrefix
+     * @covers Guzzle\Http\QueryString::getPrefix
      */
     public function testSetPrefix()
     {
@@ -85,8 +73,8 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers \Guzzle\Http\QueryString::setValueSeparator
-     * @covers \Guzzle\Http\QueryString::getValueSeparator
+     * @covers Guzzle\Http\QueryString::setValueSeparator
+     * @covers Guzzle\Http\QueryString::getValueSeparator
      */
     public function testSetValueSeparator()
     {
@@ -95,9 +83,9 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers \Guzzle\Http\QueryString::urlEncode
-     * @covers \Guzzle\Http\QueryString::encodeData
-     * @covers \Guzzle\Http\QueryString::replace
+     * @covers Guzzle\Http\QueryString::urlEncode
+     * @covers Guzzle\Http\QueryString::encodeData
+     * @covers Guzzle\Http\QueryString::replace
      */
     public function testUrlEncode()
     {
@@ -118,28 +106,20 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $this->q->replace($params);
         $this->assertEquals($encoded, $this->q->urlEncode());
 
-        // Disable field encoding
-        $testData = array(
-            'test 2' => 'this is a test'
-        );
+        // Disable encoding
+        $testData = array('test 2' => 'this is a test');
         $this->q->replace($testData);
-        $this->q->setEncodeFields(false);
-        $this->assertEquals(array(
-            'test 2' => rawurlencode('this is a test')
-        ), $this->q->urlEncode());
-
-        // Disable encoding of both fields and values
-        $this->q->setEncodeValues(false);
+        $this->q->useUrlEncoding(false);
         $this->assertEquals($testData, $this->q->urlEncode());
     }
 
     /**
-     * @covers \Guzzle\Http\QueryString
-     * @covers \Guzzle\Http\QueryString::__toString
-     * @covers \Guzzle\Http\QueryString::setEncodeFields
-     * @covers \Guzzle\Http\QueryString::replace
-     * @covers \Guzzle\Http\QueryString::setAggregateFunction
-     * @covers \Guzzle\Http\QueryString::encodeData
+     * @covers Guzzle\Http\QueryString
+     * @covers Guzzle\Http\QueryString::__toString
+     * @covers Guzzle\Http\QueryString::useUrlEncoding
+     * @covers Guzzle\Http\QueryString::replace
+     * @covers Guzzle\Http\QueryString::setAggregateFunction
+     * @covers Guzzle\Http\QueryString::urlEncode
      */
     public function testToString()
     {
@@ -147,19 +127,14 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('', $this->q->__toString());
 
         $params = array(
-            'test' => 'value',
+            'test'   => 'value',
             'test 2' => 'this is a test?',
-            'test3' => array(
-                'v1',
-                'v2',
-                'v3'
-            ),
-            'test4' => null,
+            'test3'  => array('v1', 'v2', 'v3'),
+            'test4'  => null,
         );
         $this->q->replace($params);
         $this->assertEquals('?test=value&test%202=this%20is%20a%20test%3F&test3%5B0%5D=v1&test3%5B1%5D=v2&test3%5B2%5D=v3&test4=', $this->q->__toString());
-        $this->q->setEncodeFields(false);
-        $this->q->setEncodeValues(false);
+        $this->q->useUrlEncoding(false);
         $this->assertEquals('?test=value&test 2=this is a test?&test3[0]=v1&test3[1]=v2&test3[2]=v3&test4=', $this->q->__toString());
 
         // Use an alternative aggregator
@@ -168,8 +143,8 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers \Guzzle\Http\QueryString::__toString
-     * @covers \Guzzle\Http\QueryString::aggregateUsingDuplicates
+     * @covers Guzzle\Http\QueryString::__toString
+     * @covers Guzzle\Http\QueryString::aggregateUsingDuplicates
      */
     public function testAllowsMultipleValuesPerKey()
     {
@@ -183,9 +158,9 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers \Guzzle\Http\QueryString::__toString
-     * @covers \Guzzle\Http\QueryString::encodeData
-     * @covers \Guzzle\Http\QueryString::aggregateUsingPhp
+     * @covers Guzzle\Http\QueryString::__toString
+     * @covers Guzzle\Http\QueryString::encodeData
+     * @covers Guzzle\Http\QueryString::aggregateUsingPhp
      */
     public function testAllowsNestedQueryData()
     {
@@ -201,8 +176,7 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
             )
         ));
 
-        $this->q->setEncodeFields(false);
-        $this->q->setEncodeValues(false);
+        $this->q->useUrlEncoding(false);
         $this->assertEquals('?test=value&t[v1]=a&t[v2]=b&t[v3][v4]=c&t[v3][v5]=d', $this->q->__toString());
     }
 
@@ -251,5 +225,25 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $query = QueryString::fromString('foo=a&foo=b&?µ=c');
         $this->assertEquals(array('a', 'b'), $query->get('foo'));
         $this->assertEquals('c', $query->get('?µ'));
+    }
+
+    /**
+     * @covers Guzzle\Http\QueryString::__toString
+     */
+    public function testAllowsBlankQueryStringValues()
+    {
+        $query = QueryString::fromString('foo');
+        $this->assertEquals('?foo=', (string) $query);
+        $query->set('foo', QueryString::BLANK);
+        $this->assertEquals('?foo', (string) $query);
+    }
+
+    /**
+     * @covers Guzzle\Http\QueryString::fromString
+     */
+    public function testFromStringIgnoresQuestionMark()
+    {
+        $query = QueryString::fromString('?foo=baz&bar=boo');
+        $this->assertEquals('?foo=baz&bar=boo', (string) $query);
     }
 }
