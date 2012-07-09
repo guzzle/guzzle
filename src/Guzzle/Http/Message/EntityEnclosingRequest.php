@@ -52,6 +52,19 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function setState($state)
+    {
+        parent::setState($state);
+        if ($state == self::STATE_TRANSFER && !$this->body && !count($this->postFields) && !count($this->postFiles)) {
+            $this->setHeader('Content-Length', 0)->removeHeader('Transfer-Encoding');
+        }
+
+        return $this;
+    }
+
+    /**
      * Set the body of the request
      *
      * @param string|resource|EntityBody $body               Body to use in the entity body of the request
@@ -83,9 +96,8 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
             } elseif ('1.1' == $this->protocolVersion) {
                 $this->setHeader('Transfer-Encoding', 'chunked');
             } else {
-                throw new RequestException('Cannot determine entity body '
-                    . 'size and cannot use chunked Transfer-Encoding when '
-                    . 'using HTTP/' . $this->protocolVersion
+                throw new RequestException(
+                    'Cannot determine Content-Length and cannot use chunked Transfer-Encoding when using HTTP/1.0'
                 );
             }
         }
@@ -215,12 +227,11 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
      * @param string                $filename    Full path to the file. Do not include the @ symbol.
      * @param string                $contentType Optional Content-Type to add to the Content-Disposition.
      *                                           Default behavior is to guess. Set to false to not specify.
-     * @param bool                  $process     Set to false to not process POST fields immediately.
      *
      * @return EntityEnclosingRequest
      * @throws RequestException if the file cannot be read
      */
-    public function addPostFile($field, $filename = null, $contentType = null, $process = true)
+    public function addPostFile($field, $filename = null, $contentType = null)
     {
         $data = null;
 
@@ -239,9 +250,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
             } else {
                 $this->postFiles[$data->getFieldName()][] = $data;
             }
-            if ($process) {
-                $this->processPostFields();
-            }
+            $this->processPostFields();
         }
 
         return $this;
@@ -271,8 +280,6 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
             }
         }
 
-        $this->processPostFields();
-
         return $this;
     }
 
@@ -282,12 +289,9 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     protected function processPostFields()
     {
         if (empty($this->postFiles)) {
-            $this->setHeader('Content-Type', 'application/x-www-form-urlencoded');
-            $this->removeHeader('Expect');
+            $this->removeHeader('Expect')->setHeader('Content-Type', self::URL_ENCODED);
         } else {
-            $this->setHeader('Expect', '100-Continue')
-                 ->setHeader('Content-Type', 'multipart/form-data');
-            $this->postFields->useUrlEncoding(false);
+            $this->setHeader('Expect', '100-Continue')->setHeader('Content-Type', self::MULTIPART);
         }
     }
 }

@@ -33,17 +33,11 @@ class CurlHandle
     /**
      * Factory method to create a new curl handle based on an HTTP request.
      *
-     * Note that the HTTP request may be modified by this method
-     *
      * There are some helpful options you can set to enable specific behavior:
-     *
-     *    - disabled_wire: This is a performance improvement that will disable
-     *                     some debugging functionality with cURL.  The
-     *                     functionality it disabled allows you to see the
-     *                     exact HTTP request sent over the wire.
-     *    - progress:      Set to true to enable progress function callbacks.
-     *                     Most people don't need this, so it has been disabled
-     *                     by default.
+     * - debug:    Set to true to enable cURL debug functionality to track the
+     *             actual headers sent over the wire.  The
+     * - progress: Set to true to enable progress function callbacks. Most
+     *             users do not need this, so it has been disabled by default.
      *
      * @param RequestInterface $request Request
      *
@@ -53,7 +47,7 @@ class CurlHandle
     {
         $mediator = new RequestMediator($request);
         $requestCurlOptions = $request->getCurlOptions();
-        $tempHeaders = array();
+        $tempContentLength = null;
 
         // Array of default cURL options.
         $curlOptions = array(
@@ -114,7 +108,7 @@ class CurlHandle
                 // Special handling for POST specific fields and files
                 if (count($request->getPostFiles())) {
 
-                    $fields = $request->getPostFields()->urlEncode();
+                    $fields = $request->getPostFields()->useUrlEncoding(false)->urlEncode();
                     foreach ($request->getPostFiles() as $key => $data) {
                         $prefixKeys = count($data) > 1;
                         foreach ($data as $index => $file) {
@@ -128,7 +122,7 @@ class CurlHandle
                     $request->removeHeader('Content-Length');
 
                 } elseif (count($request->getPostFields())) {
-                    $curlOptions[CURLOPT_POSTFIELDS] = (string) $request->getPostFields();
+                    $curlOptions[CURLOPT_POSTFIELDS] = (string) $request->getPostFields()->useUrlEncoding(true);
                     $request->removeHeader('Content-Length');
                 }
                 break;
@@ -137,10 +131,10 @@ class CurlHandle
                 $curlOptions[CURLOPT_UPLOAD] = true;
                 // Let cURL handle setting the Content-Length header
                 $contentLength = $request->getHeader('Content-Length');
-                if ($contentLength != null) {
+                if ($contentLength !== null) {
                     $contentLength = (int) (string) $contentLength;
                     $curlOptions[CURLOPT_INFILESIZE] = $contentLength;
-                    $tempHeaders['Content-Length'] = $contentLength;
+                    $tempContentLength = $contentLength;
                     $request->removeHeader('Content-Length');
                 }
                 break;
@@ -156,11 +150,7 @@ class CurlHandle
                     // only if a body was specified
                     $curlOptions[CURLOPT_READFUNCTION] = array($mediator, 'readRequestBody');
                 } else {
-                    // If no body is being sent, always send Content-Length of 0
-                    $request->setHeader('Content-Length', 0);
-                    $request->removeHeader('Transfer-Encoding');
-                    // Need to remove CURLOPT_UPLOAD to prevent chunked encoding
-                    unset($curlOptions[CURLOPT_UPLOAD]);
+                    // Need to remove CURLOPT_POST to prevent chunked encoding
                     unset($curlOptions[CURLOPT_POST]);
                 }
             }
@@ -208,12 +198,8 @@ class CurlHandle
         curl_setopt_array($handle, $curlOptions);
         $request->getParams()->set('curl.last_options', $curlOptions);
 
-        // Some fields need to be removed from the request in order to properly
-        // send a cURL request message.  The fields that were removed for this
-        // purpose (e.g. Content-Length) should be aggregated in this array and
-        // added back to the request. Does not apply to blacklisted headers.
-        foreach ($tempHeaders as $key => $value) {
-            $request->setHeader($key, $value);
+        if ($tempContentLength) {
+            $request->setHeader('Content-Length', $tempContentLength);
         }
 
         $handle = new static($handle, $curlOptions);
@@ -295,7 +281,7 @@ class CurlHandle
             return $this->errorNo;
         }
 
-        return $this->isAvailable() ? curl_errno($this->handle) : 0;
+        return $this->isAvailable() ? curl_errno($this->handle) : CURLE_OK;
     }
 
     /**
@@ -315,9 +301,7 @@ class CurlHandle
     /**
      * Get cURL curl_getinfo data
      *
-     * @param int $option Option to retrieve.  Pass null to retrieve
-     *                    retrieve all data as an array or pass a CURLINFO_*
-     *                    constant
+     * @param int $option Option to retrieve. Pass null to retrieve all data as an array.
      *
      * @return array|mixed
      */

@@ -58,7 +58,7 @@ abstract class AbstractMessage implements MessageInterface
         } else {
             $this->headers[$key]->add($value, $header);
         }
-        $this->changedHeader('set', $key);
+        $this->changedHeader($key);
 
         return $this;
     }
@@ -165,7 +165,7 @@ abstract class AbstractMessage implements MessageInterface
             }
             $this->headers[$key] = new Header($header, $value);
         }
-        $this->changedHeader('set', $key);
+        $this->changedHeader($key);
 
         return $this;
     }
@@ -191,7 +191,7 @@ abstract class AbstractMessage implements MessageInterface
 
         // Notify of the changed headers
         foreach (array_unique($changed) as $header) {
-            $this->changedHeader('set', strtolower($header));
+            $this->changedHeader(strtolower($header));
         }
 
         return $this;
@@ -218,9 +218,9 @@ abstract class AbstractMessage implements MessageInterface
      */
     public function removeHeader($header)
     {
-        $key = strtolower($header);
-        unset($this->headers[$key]);
-        $this->changedHeader('remove', $key);
+        $header = strtolower($header);
+        unset($this->headers[$header]);
+        $this->changedHeader($header);
 
         return $this;
     }
@@ -349,10 +349,9 @@ abstract class AbstractMessage implements MessageInterface
      * Check to see if the modified headers need to reset any of the managed
      * headers like cache-control
      *
-     * @param string $action One of set or remove
      * @param string $header Header that changed
      */
-    protected function changedHeader($action, $header)
+    protected function changedHeader($header)
     {
         if ($header == 'cache-control') {
             $this->parseCacheControlDirective();
@@ -384,7 +383,6 @@ abstract class AbstractMessage implements MessageInterface
         foreach ($this->cacheControl as $key => $value) {
             $cacheControl[] = ($value === true) ? $key : ($key . '=' . $value);
         }
-
-        $this->headers['cache-control'] = new Header('Cache-Control', implode(', ', $cacheControl));
+        $this->headers['cache-control'] = new Header('Cache-Control', $cacheControl, ', ');
     }
 }

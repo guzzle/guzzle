@@ -482,4 +482,14 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
             )
         ), $request->getPostFiles());
     }
+
+    /**
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::setState
+     */
+    public function testSetStateToTransferWithEmptyBodySetsContentLengthToZero()
+    {
+        $request = new EntityEnclosingRequest('POST', 'http://test.com/');
+        $request->setState($request::STATE_TRANSFER);
+        $this->assertEquals('0', (string) $request->getHeader('Content-Length'));
+    }
 }

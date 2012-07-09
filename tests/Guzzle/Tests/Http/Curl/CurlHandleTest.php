@@ -461,42 +461,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 'Transfer-Encoding' => 'chunked',
                 '!Content-Length'  => ''
             )),
-            // Send a POST that does not have a body defined
-            array('POST', 'http://localhost:8124/foo.php', null, null, array(
-                CURLOPT_HTTPHEADER => array (
-                    'Expect:',
-                    'Host: localhost:8124',
-                    'User-Agent: ' . $userAgent,
-                    'Content-Length: 0'
-                )
-            ), array(
-                '_Accept'          => '*',
-                '_Accept-Encoding' => '*',
-                'Host'             => '*',
-                'User-Agent'       => '*',
-                'Content-Length'   => '0',
-                '!Expect'          => null,
-                '!Content-Type'     => '*',
-                '!Transfer-Encoding' => null
-            )),
-            // Send a PUT that does not have a body defined
-            array('PUT', 'http://localhost:8124/empty-put.php', null, null, array(
-                CURLOPT_HTTPHEADER => array (
-                    'Expect:',
-                    'Host: localhost:8124',
-                    'User-Agent: ' . $userAgent,
-                    'Content-Length: 0'
-                )
-            ), array(
-                '_Accept'          => '*',
-                '_Accept-Encoding' => '*',
-                'Host'             => '*',
-                'User-Agent'       => '*',
-                'Content-Length'   => '0',
-                '!Expect'          => null,
-                '!Content-Type'     => null,
-                '!Transfer-Encoding' => null
-            )),
             // Send a PATCH request
             array('PATCH', 'http://localhost:8124/patch.php', null, 'body', array(
                 CURLOPT_INFILESIZE => 4,
@@ -505,18 +469,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                     'User-Agent: ' . $userAgent,
                     'Expect: 100-Continue'
                 )
-            )
-            /*, array(
-                '_Accept'          => '*',
-                '_Accept-Encoding' => '*',
-                'Host'             => '*',
-                'User-Agent'       => '*',
-                'Content-Length'   => '4',
-                'Expect'           => '100-Continue',
-                '!Content-Type'     => null,
-                '!Transfer-Encoding' => null
-            )*/
-            ),
+            ))
         );
     }
 
@@ -710,12 +663,11 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         // Ensure the CURLOPT_POSTFIELDS option was set properly
         $options = $request->getParams()->get('curl.last_options');
         $this->assertEquals(array(
-            'foo' => '@' . __FILE__ . ';type=text/x-php',
-            'bar' => 'baz',
+            'foo'    => '@' . __FILE__ . ';type=text/x-php',
+            'bar'    => 'baz',
             'arr[a]' => '1',
             'arr[b]' => '2',
         ), $options[CURLOPT_POSTFIELDS]);
-
         // Ensure that a Content-Length header was sent by cURL
         $this->assertTrue($request->hasHeader('Content-Length'));
     }
@@ -827,5 +779,26 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertContains('Content-Type: application/json', $body);
         $this->assertContains('Content-Type: text/x-php', $body);
         $this->assertContains('Content-Disposition: form-data; name="foo[1]"; filename="', $body);
+    }
+
+    function requestMethodProvider()
+    {
+        return array(array('POST'), array('PUT'), array('PATCH'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Curl\CurlHandle
+     * @dataProvider requestMethodProvider
+     */
+    public function testSendsRequestsWithNoBodyUsingContentLengthZero($method)
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
+        $client = new Client($this->getServer()->getUrl());
+        $client->createRequest($method)->send();
+        $requests = $this->getServer()->getReceivedRequests(true);
+        $this->assertFalse($requests[0]->hasHeader('Transfer-Encoding'));
+        $this->assertTrue($requests[0]->hasHeader('Content-Length'));
+        $this->assertEquals('0', (string) $requests[0]->getHeader('Content-Length'));
     }
 }

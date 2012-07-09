@@ -812,9 +812,9 @@ class Request extends AbstractMessage implements RequestInterface
     /**
      * {@inheritdoc}
      */
-    protected function changedHeader($action, $header)
+    protected function changedHeader($header)
     {
-        parent::changedHeader($action, $header);
+        parent::changedHeader($header);
 
         if ($header === 'host') {
             // If the Host header was changed, be sure to update the internal URL

@@ -10,6 +10,9 @@ use Guzzle\Http\QueryString;
  */
 interface EntityEnclosingRequestInterface extends RequestInterface
 {
+    const URL_ENCODED = 'application/x-www-form-urlencoded';
+    const MULTIPART = 'multipart/form-data';
+
     /**
      * Set the body of the request
      *
@@ -102,15 +105,14 @@ interface EntityEnclosingRequestInterface extends RequestInterface
     /**
      * Add a POST file to the upload
      *
-     * @param string $fieldName   POST field to use (e.g. file). Used to reference content from the server.
+     * @param string $field       POST field to use (e.g. file). Used to reference content from the server.
      * @param string $filename    Full path to the file. Do not include the @ symbol.
      * @param string $contentType Optional Content-Type to add to the Content-Disposition.
      *                            Default behavior is to guess. Set to false to not specify.
-     * @param bool   $process     Set to false to not process POST fields immediately.
      *
      * @return EntityEnclosingRequestInterface
      */
-    public function addPostFile($fieldName, $filename, $contentType = null);
+    public function addPostFile($field, $filename = null, $contentType = null);
 
     /**
      * Add POST files to use in the upload

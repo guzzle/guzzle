@@ -597,4 +597,20 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
         $requests = $this->readAttribute($multi, 'requests');
         $this->assertEquals(array($request), $requests[0]);
     }
+
+    /**
+     * @covers Guzzle\Http\Curl\CurlMulti::send
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::setState
+     */
+    public function testRequestBeforeSendIncludesContentLengthHeaderIfEmptyBody()
+    {
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
+        $request = new Request('PUT', $this->getServer()->getUrl());
+        $that = $this;
+        $request->getEventDispatcher()->addListener('request.before_send', function ($event) use ($that) {
+            $that->assertEquals(0, $event['request']->getHeader('Content-Length'));
+        });
+        $this->multi->add($request);
+        $this->multi->send();
+    }
 }
