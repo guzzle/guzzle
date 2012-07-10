@@ -714,6 +714,47 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
+     * @covers Guzzle\Http\Curl\CurlHandle::factory
+     *
+     * @dataProvider provideDataForTimeout
+     */
+    public function testCurlTimeoutCanBeOverriden($params, $timeout)
+    {
+        $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl());
+        $request->setClient(new Client('http://www.example.com', $params));
+
+        $handle = CurlHandle::factory($request);
+        $actualTimeout = $handle->getOptions()->get(CURLOPT_CONNECTTIMEOUT);
+        $this->assertEquals($timeout, $actualTimeout);
+    }
+
+    /**
+     * Data provider for testCurlTimeoutCanBeOverriden
+     *
+     * @return array
+     */
+    public function provideDataForTimeout()
+    {
+        return array(
+            // Data set 0
+            // Override the timeout
+            array(
+                array(
+                    'curl.timeout' => 99
+                ),
+                99
+            ),
+
+            // Data set 1
+            // Default of the timeout
+            array(
+                array(),
+                10
+            )
+        );
+    }
+
+    /**
      * @covers Guzzle\Http\Curl\CurlHandle::updateRequestFromTransfer
      */
     public function testEnsuresRequestsHaveResponsesWhenUpdatingFromTransfer()
