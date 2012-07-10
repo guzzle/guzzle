@@ -168,9 +168,10 @@ class CurlHandle
             }
         }
 
-        // Check if any headers or cURL options are blacklisted
+
         $client = $request->getClient();
         if ($client) {
+            // Check if any headers or cURL options are blacklisted
             $blacklist = $client->getConfig('curl.blacklist');
             if ($blacklist) {
                 foreach ($blacklist as $value) {
@@ -184,6 +185,12 @@ class CurlHandle
                         unset($curlOptions[$value]);
                     }
                 }
+            }
+
+            // Override the timeout
+            $timeout = $client->getConfig('curl.timeout');
+            if ($timeout !== null) {
+                $curlOptions[CURLOPT_CONNECTTIMEOUT] = $timeout;
             }
         }
 
