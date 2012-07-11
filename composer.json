@@ -38,7 +38,6 @@
     },
 
     "require-dev": {
-        "symfony/event-dispatcher": "2.1.0beta1",
         "doctrine/common": "*",
         "symfony/class-loader": "*",
         "monolog/monolog": "1.*",
