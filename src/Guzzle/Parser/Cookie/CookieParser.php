@@ -27,7 +27,7 @@ class CookieParser implements CookieParserInterface
     /**
      * {@inheritdoc}
      */
-    public function parseCookie($cookie, $host = null, $path = null, $decode = true)
+    public function parseCookie($cookie, $host = null, $path = null, $decode = false)
     {
         // Explode the cookie string using a series of semicolons
         $pieces = array_filter(array_map('trim', explode(';', $cookie)));
