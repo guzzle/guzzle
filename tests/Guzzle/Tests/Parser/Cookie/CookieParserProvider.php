@@ -29,7 +29,7 @@ class CookieParserProvider extends \Guzzle\Tests\GuzzleTestCase
                     'discard' => NULL,
                     'port' => NULL,
                     'cookies' => array(
-                        'ASIHTTPRequestTestCookie' => 'This is the value'
+                        'ASIHTTPRequestTestCookie' => 'This+is+the+value'
                     ),
                     'comment' => null,
                     'comment_url' => null,
@@ -230,7 +230,7 @@ class CookieParserProvider extends \Guzzle\Tests\GuzzleTestCase
                 'PHPSESSID=123456789+abcd%2Cef; secure; discard; domain=.localdomain; path=/foo/baz; expires=Tue, 21-Nov-2006 08:33:44 GMT;',
                 array(
                     'cookies' => array(
-                        'PHPSESSID' => '123456789 abcd,ef'
+                        'PHPSESSID' => '123456789+abcd%2Cef'
                     ),
                     'domain' => '.localdomain',
                     'path' => '/foo/baz',
