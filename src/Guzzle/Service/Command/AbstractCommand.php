@@ -19,6 +19,9 @@ use Guzzle\Service\Exception\JsonException;
  */
 abstract class AbstractCommand extends Collection implements CommandInterface
 {
+    const HEADERS_OPTION = 'headers';
+    const CURL_OPTIONS = 'curl.options';
+
     /**
      * @var ClientInterface Client object used to execute the command
      */
@@ -61,9 +64,9 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         $this->apiCommand = $apiCommand ?: ApiCommand::fromCommand(get_class($this));
         $this->initConfig();
 
-        $headers = $this->get('headers');
+        $headers = $this->get(self::HEADERS_OPTION);
         if (!$headers instanceof Collection) {
-            $this->set('headers', new Collection((array) $headers));
+            $this->set(self::HEADERS_OPTION, new Collection((array) $headers));
         }
 
         // You can set a command.on_complete option in your parameters as a
@@ -273,11 +276,15 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             $this->build();
 
             // Add custom request headers set on the command
-            $headers = $this->get('headers');
-            if ($headers && $headers instanceof Collection) {
+            if ($headers = $this->get(self::HEADERS_OPTION)) {
                 foreach ($headers as $key => $value) {
                     $this->request->setHeader($key, $value);
                 }
+            }
+
+            // Add custom curl options to requests if set
+            if ($curlOptions = $this->get(self::CURL_OPTIONS)) {
+                $this->request->getCurlOptions()->merge($curlOptions);
             }
         }
 
@@ -292,7 +299,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
      */
     public function getRequestHeaders()
     {
-        return $this->get('headers', new Collection());
+        return $this->get(self::HEADERS_OPTION, new Collection());
     }
 
     /**

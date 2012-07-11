@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http\Message;
 
+use Guzzle\Common\Collection;
 use Guzzle\Common\HasDispatcherInterface;
 use Guzzle\Http\ClientInterface;
 use Guzzle\Http\EntityBody;

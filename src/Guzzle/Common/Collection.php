@@ -254,13 +254,11 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
             return $this;
         }
 
-        if (!empty($data)) {
-            if (empty($this->data)) {
-                $this->data = $data;
-            } else {
-                foreach ($data as $key => $value) {
-                    $this->add($key, $value);
-                }
+        if (empty($this->data)) {
+            $this->data = $data;
+        } else {
+            foreach ($data as $key => $value) {
+                $this->add($key, $value);
             }
         }
 
