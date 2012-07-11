@@ -420,4 +420,30 @@ class CurlHandle
             }
         }
     }
+
+    /**
+     * Parse the configuration and replace curl.* configurators into the
+     * constant based values so it can be used elsewhere
+     *
+     * @param array|Collection $config The configuration we want to parse
+     *
+     * @return array|Collection
+     */
+    public static function parseCurlConfig($config)
+    {
+        $curlOptions = array();
+        foreach ($config as $key => $value) {
+            if (strpos($key, 'curl.') === 0) {
+                $curlOption = substr($key, 5);
+                // Convert constants represented as string to constant int values
+                if (defined($curlOption)) {
+                    $value = is_string($value) && defined($value) ? constant($value) : $value;
+                    $curlOption = constant($curlOption);
+                }
+                $curlOptions[$curlOption] = $value;
+            }
+        }
+
+        return $curlOptions;
+    }
 }

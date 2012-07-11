@@ -392,7 +392,7 @@ class CommandTest extends AbstractCommandTest
     {
         $command = new MockCommand(array(
             'foo' => 'bar',
-            'curl.options' => array(CURLOPT_PROXYPORT => 8080)
+            'curl.CURLOPT_PROXYPORT' => 8080
         ));
         $client = new Client();
         $command->setClient($client);
