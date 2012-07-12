@@ -24,6 +24,7 @@ class UriTemplateTest extends \Guzzle\Tests\GuzzleTestCase
             'path'  => '/foo/bar',
             'x'     => '1024',
             'y'     => '768',
+            'null'  => null,
             'list'  => array('red', 'green', 'blue'),
             'keys'  => array(
                 "semi"  => ';',
@@ -103,6 +104,8 @@ class UriTemplateTest extends \Guzzle\Tests\GuzzleTestCase
             array('{&list*}',            '&list=red&list=green&list=blue'),
             array('{&keys}',             '&keys=semi,%3B,dot,.,comma,%2C'),
             array('{&keys*}',            '&semi=%3B&dot=.&comma=%2C'),
+            array('{.null}',            ''),
+            array('{.null,var}',        '.value'),
             // Test that missing expansions are skipped
             array('test{&missing*}',     'test'),
             // Test that multiple expansions can be set

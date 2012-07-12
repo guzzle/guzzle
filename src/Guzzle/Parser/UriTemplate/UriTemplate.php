@@ -130,7 +130,7 @@ class UriTemplate implements UriTemplateInterface
 
         foreach ($parsed['values'] as $value) {
 
-            if (!array_key_exists($value['value'], $this->variables)) {
+            if (!array_key_exists($value['value'], $this->variables) || $this->variables[$value['value']] === null) {
                 continue;
             }
 

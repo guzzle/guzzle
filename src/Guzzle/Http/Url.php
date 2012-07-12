@@ -271,10 +271,10 @@ class Url
         if (is_array($path)) {
             $this->path = '/' . implode('/', $path);
         } else {
-            $this->path = $path;
-            if ($this->path != '*' && substr($this->path, 0, 1) != '/') {
-                $this->path = '/' . $path;
+            if (substr($path, 0, 1) != '/' && $path != '*') {
+                $path = '/' . $path;
             }
+            $this->path = $path;
         }
 
         return $this;
