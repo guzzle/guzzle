@@ -17,6 +17,7 @@ use Guzzle\Http\Message\RequestFactoryInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Curl\CurlMultiInterface;
 use Guzzle\Http\Curl\CurlMulti;
+use Guzzle\Http\Curl\CurlHandle;
 
 /**
  * HTTP client
@@ -269,21 +270,18 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     protected function prepareRequest(RequestInterface $request)
     {
         $request->setClient($this);
+        $config = $this->getConfig()->getAll();
 
-        foreach ($this->getConfig()->getAll() as $key => $value) {
+        // Add any curl options to the request
+        $curlOptions = CurlHandle::parseCurlConfig($config);
+        $request->getCurlOptions()->merge($curlOptions);
+
+        foreach ($config as $key => $value) {
             if ($key == 'curl.blacklist') {
                 continue;
             }
-            // Add any curl options that might in the config to the request
-            if (strpos($key, 'curl.') === 0) {
-                $curlOption = substr($key, 5);
-                // Convert constants represented as string to constant int values
-                if (defined($curlOption)) {
-                    $value = is_string($value) && defined($value) ? constant($value) : $value;
-                    $curlOption = constant($curlOption);
-                }
-                $request->getCurlOptions()->set($curlOption, $value);
-            } elseif (strpos($key, 'params.') === 0) {
+
+            if (strpos($key, 'params.') === 0) {
                 // Add request specific parameters to all requests (prefix with 'params.')
                 $request->getParams()->set(substr($key, 7), $value);
             }

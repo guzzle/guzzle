@@ -200,6 +200,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
             'curl.foo' => 'bar'
         ));
         $request = $client->createRequest();
+
         $this->assertTrue($request->getCurlOptions()->get('debug'));
         $this->assertEquals('bar', $request->getCurlOptions()->get('foo'));
     }
