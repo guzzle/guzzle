@@ -281,12 +281,9 @@ abstract class AbstractCommand extends Collection implements CommandInterface
                     $this->request->setHeader($key, $value);
                 }
             }
+
             // Add any curl options to the request
-            $curlOptions = CurlHandle::parseCurlConfig($this->getAll());
-            // Override globals
-            foreach ($curlOptions as $key => $value) {
-                $this->request->getCurlOptions()->set($key, $value);
-            }
+            $this->request->getCurlOptions()->merge(CurlHandle::parseCurlConfig($this->getAll()));
         }
 
         return $this->getRequest();

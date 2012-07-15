@@ -427,7 +427,7 @@ class CurlHandle
      *
      * @param array|Collection $config The configuration we want to parse
      *
-     * @return array|Collection
+     * @return array
      */
     public static function parseCurlConfig($config)
     {

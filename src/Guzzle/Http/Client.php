@@ -273,14 +273,9 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         $config = $this->getConfig()->getAll();
 
         // Add any curl options to the request
-        $curlOptions = CurlHandle::parseCurlConfig($config);
-        $request->getCurlOptions()->merge($curlOptions);
+        $request->getCurlOptions()->merge(CurlHandle::parseCurlConfig($config));
 
         foreach ($config as $key => $value) {
-            if ($key == 'curl.blacklist') {
-                continue;
-            }
-
             if (strpos($key, 'params.') === 0) {
                 // Add request specific parameters to all requests (prefix with 'params.')
                 $request->getParams()->set(substr($key, 7), $value);
