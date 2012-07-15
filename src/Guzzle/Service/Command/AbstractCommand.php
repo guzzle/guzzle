@@ -7,6 +7,7 @@ use Guzzle\Common\Exception\BadMethodCallException;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
+use Guzzle\Http\Curl\CurlHandle;
 use Guzzle\Service\Description\ApiCommand;
 use Guzzle\Service\ClientInterface;
 use Guzzle\Service\Inspector;
@@ -20,7 +21,6 @@ use Guzzle\Service\Exception\JsonException;
 abstract class AbstractCommand extends Collection implements CommandInterface
 {
     const HEADERS_OPTION = 'headers';
-    const CURL_OPTIONS = 'curl.options';
 
     /**
      * @var ClientInterface Client object used to execute the command
@@ -281,10 +281,11 @@ abstract class AbstractCommand extends Collection implements CommandInterface
                     $this->request->setHeader($key, $value);
                 }
             }
-
-            // Add custom curl options to requests if set
-            if ($curlOptions = $this->get(self::CURL_OPTIONS)) {
-                $this->request->getCurlOptions()->merge($curlOptions);
+            // Add any curl options to the request
+            $curlOptions = CurlHandle::parseCurlConfig($this->getAll());
+            // Override globals
+            foreach ($curlOptions as $key => $value) {
+                $this->request->getCurlOptions()->set($key, $value);
             }
         }
 

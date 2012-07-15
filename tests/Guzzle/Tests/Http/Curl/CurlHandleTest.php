@@ -700,6 +700,23 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Curl\CurlHandle::factory
      */
+    public function testCurlConfigurationOptionsAreSet()
+    {
+        $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl());
+        $request->setClient(new Client('http://www.example.com'));
+        $request->getCurlOptions()->set(CURLOPT_CONNECTTIMEOUT, 99);
+        $request->getCurlOptions()->set('curl.fake_opt', 99);
+        $request->getCurlOptions()->set(CURLOPT_PORT, 8181);
+        $handle = CurlHandle::factory($request);
+        $this->assertEquals(99, $handle->getOptions()->get(CURLOPT_CONNECTTIMEOUT));
+        $this->assertEquals(8181, $handle->getOptions()->get(CURLOPT_PORT));
+        $this->assertNull($handle->getOptions()->get('curl.fake_opt'));
+        $this->assertNull($handle->getOptions()->get('fake_opt'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Curl\CurlHandle::factory
+     */
     public function testAllowsHeadersSetToNull()
     {
         $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl());
@@ -781,7 +798,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertContains('Content-Disposition: form-data; name="foo[1]"; filename="', $body);
     }
 
-    function requestMethodProvider()
+    public function requestMethodProvider()
     {
         return array(array('POST'), array('PUT'), array('PATCH'));
     }
@@ -800,5 +817,47 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($requests[0]->hasHeader('Transfer-Encoding'));
         $this->assertTrue($requests[0]->hasHeader('Content-Length'));
         $this->assertEquals('0', (string) $requests[0]->getHeader('Content-Length'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Curl\CurlHandle::parseCurlConfig
+     * @dataProvider provideCurlConfig
+     */
+    public function testParseCurlConfigConvertsStringKeysToConstantKeys($options, $expected)
+    {
+        $actual = CurlHandle::parseCurlConfig($options);
+        $this->assertEquals($expected, $actual);
+    }
+
+    /**
+     * Data provider for curl configurations
+     *
+     * @return array
+     */
+    public function provideCurlConfig()
+    {
+        return array(
+            // Data Set #0
+            array(
+                array(
+                    'curl.CURLOPT_PORT' => 10,
+                    'curl.CURLOPT_TIMEOUT' => 99
+                ),
+                array(
+                    CURLOPT_PORT => 10,
+                    CURLOPT_TIMEOUT => 99
+                )
+            ),
+
+            // Date Set #1
+            array(
+                array(
+                    'curl.debug' => true
+                ),
+                array(
+                    'debug' => true
+                )
+            )
+        );
     }
 }
