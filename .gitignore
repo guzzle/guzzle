@@ -17,3 +17,6 @@ vendor/
 
 # Ignore build files
 build/
+
+# Ignore subsplit working directory
+.subsplit
