@@ -59,7 +59,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     /**
      * @var array Queue of handles to remove once everything completes
      */
-    protected $removeHandles = array();
+    protected $removeHandles;
 
     /**
      * @var array cURL multi error values and codes
@@ -191,12 +191,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     public function all()
     {
         if (!$this->requestCache) {
-            $this->requestCache = array();
-            foreach ($this->requests as $scopedRequests) {
-                foreach ($scopedRequests as $request) {
-                    $this->requestCache[] = $request;
-                }
-            }
+            $this->requestCache = empty($this->requests) ? array() : call_user_func_array('array_merge', $this->requests);
         }
 
         return $this->requestCache;
@@ -604,6 +599,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         $this->multiHandle = curl_multi_init();
         $this->handles = new \SplObjectStorage();
         $this->resourceHash = array();
+        $this->removeHandles = array();
 
         // @codeCoverageIgnoreStart
         if ($this->multiHandle === false) {
