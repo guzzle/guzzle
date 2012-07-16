@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+* 2.8.1 (07-16-2012)
+
+ * Loosening Event Dispatcher dependency
+ * POST redirects can now be customized using CURLOPT_POSTREDIR
+
 * 2.8.0 (07-15-2012)
 
  * BC: Guzzle\Http\Query
