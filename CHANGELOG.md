@@ -1,6 +1,19 @@
 CHANGELOG
 =========
 
+* 2.8.0 (07-15-2012)
+
+ * BC: Guzzle\Http\Query
+     * Query strings with empty variables will always show an equal sign unless the variable is set to QueryString::BLANK (e.g. ?acl= vs ?acl)
+     * Changed isEncodingValues() and isEncodingFields() to isUrlEncoding()
+     * Changed setEncodeValues(bool) and setEncodeFields(bool) to useUrlEncoding(bool)
+     * Changed the aggregation functions of QueryString to be static methods
+     * Can now use fromString() with querystrings that have a leading ?
+ * cURL configuration values can be specified in service descriptions using ``curl.`` prefixed parameters
+ * Content-Length is set to 0 before emitting the request.before_send event when sending an empty request body
+ * Cookies are no longer URL decoded by default
+ * Bug: URI template variables set to null are no longer expanded
+
 * 2.7.2 (07-02-2012)
 
  * BC: Moving things to get ready for subtree splits. Moving Inflection into Common. Moving Guzzle\Http\Parser to Guzzle\Parser.
