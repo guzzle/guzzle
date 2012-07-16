@@ -860,4 +860,43 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             )
         );
     }
+
+    /**
+     * @return array
+     */
+    public function postDataProvider()
+    {
+        return array(
+            array(301, false, 'GET'),
+            array(302, false, 'GET'),
+            array(303, false, 'GET'),
+            array(307, false, 'POST'),
+            array(301, 1, 'POST'),
+            array(302, 2, 'POST')
+        );
+    }
+
+    /**
+     * @covers Guzzle\Http\Curl\CurlHandle::factory
+     * @dataProvider postDataProvider
+     */
+    public function testRedirectsPostWithGet($code, $forcePost = false, $method)
+    {
+        $this->getServer()->flush();
+        $port = $this->getServer()->getPort();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 {$code} Foo\r\nLocation: localhost:{$port}\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
+        ));
+
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->post('/', null, array('foo' => 'bar'));
+        if ($forcePost !== false) {
+            $request->getCurlOptions()->set(CURLOPT_POSTREDIR, $forcePost);
+        }
+        $request->send();
+        $received = $this->getServer()->getReceivedRequests(true);
+        $this->assertEquals(2, count($received));
+        $this->assertEquals($method, $received[1]->getMethod());
+    }
 }

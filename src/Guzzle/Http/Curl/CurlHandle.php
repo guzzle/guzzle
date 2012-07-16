@@ -52,7 +52,6 @@ class CurlHandle
         // Array of default cURL options.
         $curlOptions = array(
             CURLOPT_URL => $request->getUrl(),
-            CURLOPT_CUSTOMREQUEST => $request->getMethod(),
             CURLOPT_CONNECTTIMEOUT => 10, // Connect timeout in seconds
             CURLOPT_RETURNTRANSFER => false, // Streaming the return, so no need
             CURLOPT_HEADER => false, // Retrieve the received headers
@@ -128,6 +127,9 @@ class CurlHandle
                 break;
             case 'PUT':
             case 'PATCH':
+                if ($request->getMethod() == 'PATCH') {
+                    $curlOptions[CURLOPT_CUSTOMREQUEST] = 'PATCH';
+                }
                 $curlOptions[CURLOPT_UPLOAD] = true;
                 // Let cURL handle setting the Content-Length header
                 $contentLength = $request->getHeader('Content-Length');
@@ -138,6 +140,8 @@ class CurlHandle
                     $request->removeHeader('Content-Length');
                 }
                 break;
+            default:
+                $curlOptions[CURLOPT_CUSTOMREQUEST] = $request->getMethod();
         }
 
         // Special handling for requests sending raw data
