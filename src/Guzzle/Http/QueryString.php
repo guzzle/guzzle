@@ -57,11 +57,18 @@ class QueryString extends Collection
             }
             foreach (explode('&', $query) as $kvp) {
                 $parts = explode('=', $kvp);
-                $key = rawurldecode($parts[0]);
+                $key   = rawurldecode($parts[0]);
+                $value = '';
+
                 if (substr($key, -2) == '[]') {
                     $key = substr($key, 0, -2);
                 }
-                $q->add($key, isset($parts[1]) ? rawurldecode($parts[1]) : '');
+
+                if (isset($parts[1])) {
+                    $value = rawurldecode(str_replace('+', '%20', $parts[1]));
+                }
+
+                $q->add($key, $value);
             }
         }
 
