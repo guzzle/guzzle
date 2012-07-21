@@ -246,4 +246,13 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $query = QueryString::fromString('?foo=baz&bar=boo');
         $this->assertEquals('?foo=baz&bar=boo', (string) $query);
     }
+
+    /**
+     * @covers Guzzle\Http\QueryString::fromString
+     */
+    public function testConvertsPlusSymbolsToSpaces()
+    {
+        $query = QueryString::fromString('var=foo+bar');
+        $this->assertEquals('foo bar', $query->get('var'));
+    }
 }
