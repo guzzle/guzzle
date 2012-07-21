@@ -297,7 +297,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
      */
     public function getRequestHeaders()
     {
-        return $this->get(self::HEADERS_OPTION, new Collection());
+        return $this->get(self::HEADERS_OPTION);
     }
 
     /**
