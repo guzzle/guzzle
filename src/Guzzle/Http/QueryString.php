@@ -57,18 +57,17 @@ class QueryString extends Collection
             }
             foreach (explode('&', $query) as $kvp) {
                 $parts = explode('=', $kvp);
-                $key   = rawurldecode($parts[0]);
-                $value = '';
+                $key = rawurldecode($parts[0]);
 
                 if (substr($key, -2) == '[]') {
                     $key = substr($key, 0, -2);
                 }
 
-                if (isset($parts[1])) {
-                    $value = rawurldecode(str_replace('+', '%20', $parts[1]));
+                if (empty($parts[1])) {
+                    $q->add($key, '');
+                } else {
+                    $q->add($key, rawurldecode(str_replace('+', '%20', $parts[1])));
                 }
-
-                $q->add($key, $value);
             }
         }
 
@@ -90,16 +89,17 @@ class QueryString extends Collection
         $firstValue = true;
 
         foreach ($this->encodeData($this->data) as $name => $value) {
-            $value = $value !== null ? (array) $value : array(false);
+            $value = $value ? (array) $value : array('');
             foreach ($value as $v) {
-                if (!$firstValue) {
+                if ($firstValue) {
+                    $firstValue = false;
+                } else {
                     $queryString .= $this->fieldSeparator;
                 }
                 $queryString .= $name;
                 if ($v !== self::BLANK) {
                     $queryString .= $this->valueSeparator . $v;
                 }
-                $firstValue = false;
             }
         }
 
