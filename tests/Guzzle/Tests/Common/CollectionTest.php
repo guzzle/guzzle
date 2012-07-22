@@ -42,15 +42,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Common\Collection::__toString
-     */
-    public function testCollectionCanBeConvertingIntoString()
-    {
-        $data = new Collection();
-        $this->assertEquals('Guzzle\Common\Collection@' . spl_object_hash($data), (string) $data, '-> __toString() must represent the collection');
-    }
-
-    /**
      * Test the IteratorAggregate implementation of theCollection object
      *
      * @covers Guzzle\Common\Collection::getIterator

@@ -19,21 +19,11 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      */
     public function __construct(array $data = null)
     {
-        if (!$data) {
-            $this->data = array();
-        } else {
+        if ($data) {
             $this->data = $data;
+        } else {
+            $this->data = array();
         }
-    }
-
-    /**
-     * Convert the object to a string
-     *
-     * @return string
-     */
-    public function __toString()
-    {
-        return __CLASS__ . '@' . spl_object_hash($this);
     }
 
     /**
@@ -50,12 +40,10 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     {
         if (!array_key_exists($key, $this->data)) {
             $this->data[$key] = $value;
+        } elseif (is_array($this->data[$key])) {
+            $this->data[$key][] = $value;
         } else {
-            if (!is_array($this->data[$key])) {
-                $this->data[$key] = array($this->data[$key], $value);
-            } else {
-                $this->data[$key][] = $value;
-            }
+            $this->data[$key] = array($this->data[$key], $value);
         }
 
         return $this;
@@ -129,36 +117,23 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      */
     public function get($key, $default = null)
     {
-        if (array_key_exists($key, $this->data)) {
-            return $this->data[$key];
-        }
-
-        return $default;
+        return array_key_exists($key, $this->data) ? $this->data[$key] : $default;
     }
 
     /**
      * Get all or a subset of matching key value pairs
      *
-     * @param array $keys Pass a single key or an array of keys to retrieve
-     *                    only a particular subset of key value pair.
+     * @param array $keys Pass an array of keys to retrieve only a subset of key value pairs
      *
      * @return array Returns an array of all matching key value pairs
      */
     public function getAll(array $keys = null)
     {
-        if (!$keys) {
+        if ($keys) {
+            return array_intersect_key($this->data, array_flip($keys));
+        } else {
             return $this->data;
         }
-
-        $matches = array();
-        $allKeys = $this->getKeys();
-        foreach ($keys as $key) {
-            if (in_array($key, $allKeys)) {
-                $matches[$key] = $this->data[$key];
-            }
-        }
-
-        return $matches;
     }
 
     /**
