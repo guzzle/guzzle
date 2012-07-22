@@ -662,7 +662,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Ensure the CURLOPT_POSTFIELDS option was set properly
         $options = $request->getParams()->get('curl.last_options');
-        $this->assertContains('@' . __FILE__ . ';type=text/x-php', $options[CURLOPT_POSTFIELDS]);
+        $this->assertContains('@' . __FILE__ . ';type=text/x-', $options[CURLOPT_POSTFIELDS]);
         $this->assertEquals('baz', $options[CURLOPT_POSTFIELDS]['bar']);
         $this->assertEquals('1', $options[CURLOPT_POSTFIELDS]['arr[a]']);
         $this->assertEquals('2', $options[CURLOPT_POSTFIELDS]['arr[b]']);
