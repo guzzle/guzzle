@@ -207,9 +207,11 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
             'test' => 'abc'
         ), $request->getPostFields()->getAll());
 
-        $this->assertEquals(array(
-            'file' => array(new PostFile('file', __FILE__, 'text/x-php'))
-        ), $request->getPostFiles());
+        $files = $request->getPostFiles();
+        $post = $files['file'][0];
+        $this->assertEquals('file', $post->getFieldName());
+        $this->assertContains('text/x-', $post->getContentType());
+        $this->assertEquals(__FILE__, $post->getFilename());
 
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
         $request->send();
@@ -261,10 +263,8 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/')
             ->addPostFile('foo', __FILE__);
-
-        $this->assertEquals(array(
-            new PostFile('foo', __FILE__, 'text/x-php')
-        ), $request->getPostFile('foo'));
+        $file = $request->getPostFile('foo');
+        $this->assertContains('text/x-', $file[0]->getContentType());
     }
 
     /**
@@ -274,9 +274,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $postFile = new PostFile('foo', __FILE__, 'text/x-php');
         $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/')
-            ->addPostFiles(array(
-                'foo' => $postFile
-            ));
+            ->addPostFiles(array('foo' => $postFile));
 
         $this->assertEquals(array($postFile), $request->getPostFile('foo'));
     }
@@ -450,17 +448,12 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request = new EntityEnclosingRequest('POST', 'http://test.com/');
         $request->addPostFile('foo', __FILE__);
         $request->addPostFile(new PostFile('foo', __FILE__));
-        $this->assertEquals(array(
-            new PostFile('foo', __FILE__, 'text/x-php'),
-            new PostFile('foo', __FILE__, 'text/x-php')
-        ), $request->getPostFile('foo'));
 
-        $this->assertEquals(array(
-            'foo' => array(
-                new PostFile('foo', __FILE__, 'text/x-php'),
-                new PostFile('foo', __FILE__, 'text/x-php')
-            )
-        ), $request->getPostFiles());
+        $this->assertArrayHasKey('foo', $request->getPostFiles());
+        $foo = $request->getPostFile('foo');
+        $this->assertEquals(2, count($foo));
+        $this->assertEquals(__FILE__, $foo[0]->getFilename());
+        $this->assertEquals(__FILE__, $foo[1]->getFilename());
 
         $request->removePostFile('foo');
         $this->assertEquals(array(), $request->getPostFiles());
@@ -475,12 +468,8 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request->addPostFiles(array(
             'foo' => '@' . __FILE__
         ));
-
-        $this->assertEquals(array(
-            'foo' => array(
-                new PostFile('foo', __FILE__, 'text/x-php'),
-            )
-        ), $request->getPostFiles());
+        $foo = $request->getPostFile('foo');
+        $this->assertEquals(__FILE__, $foo[0]->getFilename());
     }
 
     /**

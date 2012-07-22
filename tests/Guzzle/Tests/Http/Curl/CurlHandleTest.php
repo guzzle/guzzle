@@ -662,12 +662,10 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Ensure the CURLOPT_POSTFIELDS option was set properly
         $options = $request->getParams()->get('curl.last_options');
-        $this->assertEquals(array(
-            'foo'    => '@' . __FILE__ . ';type=text/x-php',
-            'bar'    => 'baz',
-            'arr[a]' => '1',
-            'arr[b]' => '2',
-        ), $options[CURLOPT_POSTFIELDS]);
+        $this->assertContains('@' . __FILE__ . ';type=text/x-php', $options[CURLOPT_POSTFIELDS]);
+        $this->assertEquals('baz', $options[CURLOPT_POSTFIELDS]['bar']);
+        $this->assertEquals('1', $options[CURLOPT_POSTFIELDS]['arr[a]']);
+        $this->assertEquals('2', $options[CURLOPT_POSTFIELDS]['arr[b]']);
         // Ensure that a Content-Length header was sent by cURL
         $this->assertTrue($request->hasHeader('Content-Length'));
     }
@@ -794,7 +792,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertContains('Content-Disposition: form-data; name="foo[0]"; filename="', $body);
         $this->assertContains('Content-Type: application/json', $body);
-        $this->assertContains('Content-Type: text/x-php', $body);
+        $this->assertContains('Content-Type: text/x-', $body);
         $this->assertContains('Content-Disposition: form-data; name="foo[1]"; filename="', $body);
     }
 

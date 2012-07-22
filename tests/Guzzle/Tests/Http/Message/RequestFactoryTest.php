@@ -150,9 +150,8 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
             'a' => 'b'
         ), $request->getPostFields()->getAll());
 
-        $this->assertEquals(array(
-            'file' => array(new PostFile('file', __FILE__, 'text/x-php'))
-        ), $request->getPostFiles());
+        $files = $request->getPostFiles();
+        $this->assertInstanceOf('Guzzle\Http\Message\PostFile', $files['file'][0]);
     }
 
     /**
