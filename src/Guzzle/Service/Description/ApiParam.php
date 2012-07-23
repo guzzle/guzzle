@@ -49,7 +49,7 @@ class ApiParam
         }
 
         if ($this->filters) {
-            $this->filters = array_map('trim', explode(',', $this->filters));
+            $this->filters = self::parseFilters($this->filters);
         } else {
             $this->filters = array();
         }
@@ -274,5 +274,22 @@ class ApiParam
     public function getFilters()
     {
         return $this->filters;
+    }
+
+    /**
+     * Sanitize and parse a ``filters`` value
+     *
+     * @param string $filter Filter to sanitize
+     *
+     * @return array
+     */
+    protected static function parseFilters($filter)
+    {
+        $filters = explode(',', $filter);
+        foreach ($filters as &$filter) {
+            $filter = trim(str_replace('.', '\\', $filter));
+        }
+
+        return $filters;
     }
 }

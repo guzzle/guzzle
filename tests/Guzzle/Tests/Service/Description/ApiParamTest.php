@@ -151,4 +151,16 @@ class ApiParamTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('foo', $p->getType());
         $this->assertEquals(array('baz'), $p->getTypeArgs());
     }
+
+    public function testAllowsDotNotationForFiltersClasses()
+    {
+        $p = new ApiParam(array(
+            'filters' => 'Mesa.JarJar::binks,Yousa.NoJarJar::binks,Foo\\Baz::bar'
+        ));
+        $this->assertEquals(array(
+            'Mesa\\JarJar::binks',
+            'Yousa\\NoJarJar::binks',
+            'Foo\\Baz::bar'
+        ), $p->getFilters());
+    }
 }
