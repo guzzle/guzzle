@@ -17,7 +17,6 @@ if (get_cfg_var('guzzle_phar')) {
 
 // Include the composer autoloader
 $autoloader = require_once dirname(__DIR__) . '/vendor/autoload.php';
-$autoloader->add('Guzzle\\Tests', __DIR__);
 
 // Add the services file to the default service builder
 $servicesFile = __DIR__ . '/Guzzle/Tests/TestData/services/services.xml';
