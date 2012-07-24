@@ -89,7 +89,7 @@ class QueryString extends Collection
         $firstValue = true;
 
         foreach ($this->encodeData($this->data) as $name => $value) {
-            $value = $value ? (array) $value : array('');
+            $value = $value === null ? array('') : (array) $value;
             foreach ($value as $v) {
                 if ($firstValue) {
                     $firstValue = false;

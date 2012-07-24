@@ -255,4 +255,18 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $query = QueryString::fromString('var=foo+bar');
         $this->assertEquals('foo bar', $query->get('var'));
     }
+
+    /**
+     * @covers Guzzle\Http\QueryString::__toString
+     */
+    public function testAllowsZeroValues()
+    {
+        $query = new QueryString(array(
+            'foo' => 0,
+            'baz' => '0',
+            'bar' => null,
+            'boo' => false
+        ));
+        $this->assertEquals('?foo=0&baz=0&bar=&boo=', (string) $query);
+    }
 }
