@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+* 2.8.2 (07-24-2012)
+
+ * Bug: Query string values set to 0 are no longer dropped from the query string
+ * Bug: A Collection object is no longer created each time a call is made to ``Guzzle\Service\Command\AbstractCommand::getRequestHeaders()``
+ * Bug: ``+`` is now treated as an encoded space when parsing query strings
+ * QueryString and Collection performance improvements
+ * Allowing dot notation for class paths in filters attribute of a service descriptions
+
 * 2.8.1 (07-16-2012)
 
  * Loosening Event Dispatcher dependency
