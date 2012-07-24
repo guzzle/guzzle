@@ -257,6 +257,16 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
+     * @covers Guzzle\Http\QueryString::fromString
+     * @see https://github.com/guzzle/guzzle/issues/108
+     */
+    public function testFromStringDoesntMangleZeroes()
+    {
+        $query = QueryString::fromString('var=0');
+        $this->assertSame('0', $query->get('var'));
+    }
+
+    /**
      * @covers Guzzle\Http\QueryString::__toString
      */
     public function testAllowsZeroValues()
