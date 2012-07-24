@@ -461,6 +461,22 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 'Transfer-Encoding' => 'chunked',
                 '!Content-Length'  => ''
             )),
+            // Send a POST request with no body
+            array('POST', 'http://localhost:8124/post.php', null, '', array(
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_HTTPHEADER => array (
+                    'Expect:',
+                    'Host: localhost:8124',
+                    'User-Agent: ' . $userAgent
+                )
+            ), array(
+                '_Accept'          => '*',
+                '_Accept-Encoding' => '*',
+                'Host'             => '*',
+                'User-Agent'       => '*',
+                'Content-Length'   => '0',
+                '!Transfer-Encoding' => null
+            )),
             // Send a PATCH request
             array('PATCH', 'http://localhost:8124/patch.php', null, 'body', array(
                 CURLOPT_INFILESIZE => 4,

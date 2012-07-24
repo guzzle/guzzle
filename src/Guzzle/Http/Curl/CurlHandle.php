@@ -153,9 +153,10 @@ class CurlHandle
                     // Add a callback for curl to read data to send with the request
                     // only if a body was specified
                     $curlOptions[CURLOPT_READFUNCTION] = array($mediator, 'readRequestBody');
-                } else {
+                } elseif ($request->getMethod() == 'POST') {
                     // Need to remove CURLOPT_POST to prevent chunked encoding
                     unset($curlOptions[CURLOPT_POST]);
+                    $curlOptions[CURLOPT_CUSTOMREQUEST] = 'POST';
                 }
             }
 
