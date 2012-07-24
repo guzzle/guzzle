@@ -63,10 +63,10 @@ class QueryString extends Collection
                     $key = substr($key, 0, -2);
                 }
 
-                if (empty($parts[1])) {
-                    $q->add($key, '');
-                } else {
+                if (array_key_exists(1, $parts)) {
                     $q->add($key, rawurldecode(str_replace('+', '%20', $parts[1])));
+                } else {
+                    $q->add($key, '');
                 }
             }
         }
