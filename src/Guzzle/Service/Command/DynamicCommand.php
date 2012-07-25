@@ -8,7 +8,7 @@ use Guzzle\Parser\ParserRegistry;
 use Guzzle\Http\Message\PostFileInterface;
 
 /**
- * A command that creates requests based on ApiCommands
+ * A command that creates requests based on {see ApiCommandInterface} objects
  */
 class DynamicCommand extends AbstractCommand
 {

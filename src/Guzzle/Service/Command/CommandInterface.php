@@ -7,7 +7,7 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\ClientInterface;
-use Guzzle\Service\Description\ApiCommand;
+use Guzzle\Service\Description\ApiCommandInterface;
 use Guzzle\Service\Exception\CommandException;
 
 /**
@@ -16,15 +16,6 @@ use Guzzle\Service\Exception\CommandException;
  */
 interface CommandInterface
 {
-    /**
-     * Constructor
-     *
-     * @param array|Collection $parameters Collection of parameters
-     *      to set on the command
-     * @param ApiCommand $apiCommand Command definition from description
-     */
-    function __construct($parameters = null, ApiCommand $apiCommand = null);
-
     /**
      * Specify a callable to execute when the command completes
      *
@@ -47,7 +38,7 @@ interface CommandInterface
     /**
      * Get the API command information about the command
      *
-     * @return ApiCommand
+     * @return ApiCommandInterface
      */
     function getApiCommand();
 

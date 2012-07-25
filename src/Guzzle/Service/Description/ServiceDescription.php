@@ -8,7 +8,7 @@ namespace Guzzle\Service\Description;
 class ServiceDescription implements ServiceDescriptionInterface
 {
     /**
-     * @var array Array of ApiCommand objects
+     * @var array Array of {@see ApiCommandInterface} objects
      */
     protected $commands = array();
 
@@ -36,7 +36,7 @@ class ServiceDescription implements ServiceDescriptionInterface
     /**
      * Create a new ServiceDescription
      *
-     * @param array $commands Array of {@see ApiCommand} objects
+     * @param array $commands Array of {@see ApiCommandInterface} objects
      */
     public function __construct(array $commands = array())
     {
