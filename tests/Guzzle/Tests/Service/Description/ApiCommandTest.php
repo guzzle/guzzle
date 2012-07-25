@@ -283,14 +283,7 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $i = Inspector::getInstance();
         $i->setTypeValidation(false);
 
-        $command = new ApiCommand(array(
-            'params' => array(
-                'data' => new ApiParam(array(
-                    'type' => 'string'
-                ))
-            )
-        ));
-
+        $command = $this->getTestCommand();
         $command->validate(new Collection(array(
             'data' => new \stdClass()
         )), $i);
@@ -301,14 +294,7 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testSkipsFurtherValidationIfNotSet()
     {
-        $command = new ApiCommand(array(
-            'params' => array(
-                'data' => new ApiParam(array(
-                    'type' => 'string'
-                ))
-            )
-        ));
-
+        $command = $this->getTestCommand();
         $command->validate(new Collection());
     }
 
@@ -328,5 +314,38 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
         ));
 
         $command->validate(new Collection());
+    }
+
+    /**
+     * @covers Guzzle\Service\Description\ApiCommand::hasParam
+     */
+    public function testDeterminesIfHasParam()
+    {
+        $command = $this->getTestCommand();
+        $this->assertTrue($command->hasParam('data'));
+        $this->assertFalse($command->hasParam('baz'));
+    }
+
+    /**
+     * @covers Guzzle\Service\Description\ApiCommand::getParamNames
+     */
+    public function testReturnsParamNames()
+    {
+        $command = $this->getTestCommand();
+        $this->assertEquals(array('data'), $command->getParamNames());
+    }
+
+    /**
+     * @return ApiCommand
+     */
+    protected function getTestCommand()
+    {
+        return new ApiCommand(array(
+            'params' => array(
+                'data' => new ApiParam(array(
+                    'type' => 'string'
+                ))
+            )
+        ));
     }
 }

@@ -82,7 +82,7 @@ class ServiceDescription implements ServiceDescriptionInterface
     /**
      * Get the API commands of the service
      *
-     * @return array Returns an array of ApiCommand objects
+     * @return array Returns an array of {@see ApiCommandInterface} objects
      */
     public function getCommands()
     {
@@ -106,7 +106,7 @@ class ServiceDescription implements ServiceDescriptionInterface
      *
      * @param string $name Name of the command
      *
-     * @return ApiCommand|null
+     * @return ApiCommandInterface|null
      */
     public function getCommand($name)
     {

@@ -3,7 +3,6 @@
 namespace Guzzle\Service\Description;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Inflection\Inflector;
 use Guzzle\Service\Exception\ValidationException;
 use Guzzle\Service\Inspector;
@@ -11,7 +10,7 @@ use Guzzle\Service\Inspector;
 /**
  * Data object holding the information of an API command
  */
-class ApiCommand
+class ApiCommand implements ApiCommandInterface
 {
     /**
      * @var string Default command class to use when none is specified
@@ -195,9 +194,7 @@ class ApiCommand
     }
 
     /**
-     * Get as an array
-     *
-     * @return true
+     * {@inheritdoc}
      */
     public function toArray()
     {
@@ -216,9 +213,7 @@ class ApiCommand
     }
 
     /**
-     * Get the params of the command
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function getParams()
     {
@@ -226,11 +221,23 @@ class ApiCommand
     }
 
     /**
-     * Get a single parameter of the command
-     *
-     * @param string $param Parameter to retrieve by name
-     *
-     * @return ApiParam|null
+     * {@inheritdoc}
+     */
+    public function getParamNames()
+    {
+        return array_keys($this->params);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function hasParam($name)
+    {
+        return isset($this->params[$name]);
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function getParam($param)
     {
@@ -238,9 +245,7 @@ class ApiCommand
     }
 
     /**
-     * Get the HTTP method of the command
-     *
-     * @return string|null
+     * {@inheritdoc}
      */
     public function getMethod()
     {
@@ -248,9 +253,7 @@ class ApiCommand
     }
 
     /**
-     * Get the concrete command class that implements this command
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getConcreteClass()
     {
@@ -258,9 +261,7 @@ class ApiCommand
     }
 
     /**
-     * Get the name of the command
-     *
-     * @return string|null
+     * {@inheritdoc}
      */
     public function getName()
     {
@@ -268,9 +269,7 @@ class ApiCommand
     }
 
     /**
-     * Get the documentation for the command
-     *
-     * @return string|null
+     * {@inheritdoc}
      */
     public function getDoc()
     {
@@ -278,9 +277,7 @@ class ApiCommand
     }
 
     /**
-     * Get the documentation URL of the command
-     *
-     * @return string|null
+     * {@inheritdoc}
      */
     public function getDocUrl()
     {
@@ -288,9 +285,7 @@ class ApiCommand
     }
 
     /**
-     * Get the type of data stored in the result of the command
-     *
-     * @return string|null
+     * {@inheritdoc}
      */
     public function getResultType()
     {
@@ -298,9 +293,7 @@ class ApiCommand
     }
 
     /**
-     * Get the documentation specific to the result of the command
-     *
-     * @return string|null
+     * {@inheritdoc}
      */
     public function getResultDoc()
     {
@@ -308,9 +301,7 @@ class ApiCommand
     }
 
     /**
-     * Get whether or not the command is deprecated
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function isDeprecated()
     {
@@ -318,9 +309,7 @@ class ApiCommand
     }
 
     /**
-     * Get the URI that will be merged into the generated request
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getUri()
     {
@@ -328,13 +317,7 @@ class ApiCommand
     }
 
     /**
-     * Validates that all required args are included in a config object,
-     * and if not, throws an InvalidArgumentException with a helpful error message.  Adds
-     * default args to the passed config object if the parameter was not
-     * set in the config object.
-     *
-     * @param Collection $config Configuration settings
-     *
+     * {@inheritdoc}
      * @throws ValidationException when validation errors occur
      */
     public function validate(Collection $config, Inspector $inspector = null)

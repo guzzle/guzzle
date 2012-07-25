@@ -12,7 +12,7 @@ interface ServiceDescriptionInterface extends \Serializable
     /**
      * Get the API commands of the service
      *
-     * @return array Returns an array of ApiCommand objects
+     * @return array Returns an array of {@see ApiCommandInterface} objects
      */
     public function getCommands();
 
@@ -30,7 +30,7 @@ interface ServiceDescriptionInterface extends \Serializable
      *
      * @param string $name Name of the command
      *
-     * @return ApiCommand|null
+     * @return ApiCommandInterface|null
      */
     public function getCommand($name);
 }
