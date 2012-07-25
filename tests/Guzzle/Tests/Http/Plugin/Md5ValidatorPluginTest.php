@@ -7,11 +7,11 @@ use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Plugin\Md5ValidatorPlugin;
 
+/**
+ * @covers Guzzle\Http\Plugin\Md5ValidatorPlugin
+ */
 class Md5ValidatorPluginTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @covers Guzzle\Http\Plugin\Md5ValidatorPlugin
-     */
     public function testValidatesMd5()
     {
         $plugin = new Md5ValidatorPlugin();
@@ -37,7 +37,6 @@ class Md5ValidatorPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\Md5ValidatorPlugin
      * @expectedException UnexpectedValueException
      */
     public function testThrowsExceptionOnInvalidMd5()
@@ -54,9 +53,6 @@ class Md5ValidatorPluginTest extends \Guzzle\Tests\GuzzleTestCase
         ));
     }
 
-    /**
-     * @covers Guzzle\Http\Plugin\Md5ValidatorPlugin
-     */
     public function testSkipsWhenContentLengthIsTooLarge()
     {
         $plugin = new Md5ValidatorPlugin(false, 1);
@@ -71,9 +67,6 @@ class Md5ValidatorPluginTest extends \Guzzle\Tests\GuzzleTestCase
         ));
     }
 
-    /**
-     * @covers Guzzle\Http\Plugin\Md5ValidatorPlugin
-     */
     public function testProperlyValidatesWhenUsingContentEncoding()
     {
         $plugin = new Md5ValidatorPlugin(true);

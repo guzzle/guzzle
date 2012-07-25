@@ -37,7 +37,7 @@ class Md5ValidatorPlugin implements EventSubscriberInterface
      *      Content-Length greater than this value will not be validated
      *      because it will be deemed too memory intensive
      */
-    public function __construct($contentEncoded = true, $contentLengthCutoff = 2097152)
+    public function __construct($contentEncoded = true, $contentLengthCutoff = false)
     {
         $this->contentLengthCutoff = $contentLengthCutoff;
         $this->contentEncoded = $contentEncoded;
@@ -59,8 +59,7 @@ class Md5ValidatorPlugin implements EventSubscriberInterface
     {
         $response = $event['response'];
 
-        $contentMd5 = $response->getContentMd5();
-        if (!$contentMd5) {
+        if (!$contentMd5 = $response->getContentMd5()) {
             return;
         }
 
@@ -70,9 +69,11 @@ class Md5ValidatorPlugin implements EventSubscriberInterface
         }
 
         // Make sure that the size of the request is under the cutoff size
-        $size = $response->getContentLength() ?: $response->getBody()->getSize();
-        if (!$size || $size > $this->contentLengthCutoff) {
-            return;
+        if ($this->contentLengthCutoff) {
+            $size = $response->getContentLength() ?: $response->getBody()->getSize();
+            if (!$size || $size > $this->contentLengthCutoff) {
+                return;
+            }
         }
 
         if (!$contentEncoding) {
@@ -90,13 +91,10 @@ class Md5ValidatorPlugin implements EventSubscriberInterface
         }
 
         if ($contentMd5 !== $hash) {
-            throw new UnexpectedValueException(sprintf(
-                'The response entity body may have been '
-                . 'modified over the wire.  The Content-MD5 '
-                . 'received (%s) did not match the calculated '
-                . 'MD5 hash (%s).',
-                $contentMd5, $hash
-            ));
+            throw new UnexpectedValueException(
+                "The response entity body may have been modified over the wire.  The Content-MD5 "
+                . "received ({$contentMd5}) did not match the calculated MD5 hash ({$hash})."
+            );
         }
     }
 }

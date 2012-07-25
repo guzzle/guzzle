@@ -551,9 +551,10 @@ class Request extends AbstractMessage implements RequestInterface
     {
         $this->state = $state;
         if ($this->state == self::STATE_NEW) {
-            $this->responseBody = $this->response = null;
+            $this->response = null;
         } elseif ($this->state == self::STATE_COMPLETE) {
             $this->processResponse();
+            $this->responseBody = null;
         }
 
         return $this;
@@ -744,7 +745,6 @@ class Request extends AbstractMessage implements RequestInterface
 
         return $this;
     }
-
 
     /**
      * Returns whether or not the request can be cached

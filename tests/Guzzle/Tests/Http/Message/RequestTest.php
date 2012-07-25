@@ -454,13 +454,16 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ndata");
         $request = RequestFactory::getInstance()->create('GET', $this->getServer()->getUrl());
         $request->setClient($this->client);
-        $request->setResponseBody(EntityBody::factory(fopen($file, 'w+')));
-        $request->send();
+        $entityBody = EntityBody::factory(fopen($file, 'w+'));
+        $request->setResponseBody($entityBody);
+        $response = $request->send();
+        $this->assertSame($entityBody, $response->getBody());
 
         $this->assertTrue(file_exists($file));
+        $this->assertEquals('data', file_get_contents($file));
         unlink($file);
 
-        $this->assertEquals('data', $request->getResponse()->getBody(true));
+        $this->assertEquals('data', $response->getBody(true));
     }
 
     /**
