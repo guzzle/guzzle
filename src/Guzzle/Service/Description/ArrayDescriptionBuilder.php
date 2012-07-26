@@ -36,12 +36,15 @@ class ArrayDescriptionBuilder implements DescriptionBuilderInterface
                 $name = $command['name'] = isset($command['name']) ? $command['name'] : $name;
                 // Extend other commands
                 if (!empty($command['extends'])) {
-                    if (empty($commands[$command['extends']])) {
-                        throw new DescriptionBuilderException($name . ' extends missing command ' . $command['extends']);
+                    foreach ((array) $command['extends'] as $extendedCommand) {
+                        if (empty($commands[$extendedCommand])) {
+                            throw new DescriptionBuilderException("{$name} extends missing command {$extendedCommand}");
+                        }
+                        $toArray = $commands[$extendedCommand]->toArray();
+                        $params = empty($command['params']) ? $toArray['params'] : array_merge($command['params'], $toArray['params']);
+                        $command = array_merge($toArray, $command);
+                        $command['params'] = $params;
                     }
-                    $params = array_merge($commands[$command['extends']]->getParams(), !empty($command['params']) ? $command['params'] : array());
-                    $command = array_merge($commands[$command['extends']]->toArray(), $command);
-                    $command['params'] = $params;
                 }
                 // Use the default class
                 $command['class'] = isset($command['class']) ? str_replace('.', '\\', $command['class']) : ServiceDescription::DEFAULT_COMMAND_CLASS;

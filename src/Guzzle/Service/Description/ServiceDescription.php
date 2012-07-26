@@ -52,13 +52,7 @@ class ServiceDescription implements ServiceDescriptionInterface
     {
         return json_encode(array_map(function($command) {
             // Convert ApiCommands into arrays
-            $data = $command->toArray();
-            // Convert ApiParams into arrays
-            $data['params'] = array_map(function($param) {
-                return $param->toArray();
-            }, $data['params']);
-
-            return $data;
+            return $command->toArray();
         }, $this->commands));
     }
 

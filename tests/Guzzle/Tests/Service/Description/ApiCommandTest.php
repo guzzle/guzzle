@@ -121,16 +121,23 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
             'method'    => 'PUT',
             'uri'       => '/',
             'params'    => array(
-                'p' => new ApiParam(array(
+                'p' => array(
                     'name' => 'foo'
-                ))
+                )
             ),
             'result_type' => null,
             'result_doc'  => null,
             'deprecated'  => false
         );
         $c = new ApiCommand($data);
-        $this->assertEquals($data, $c->toArray());
+        $toArray = $c->toArray();
+        $this->assertArrayHasKey('params', $toArray);
+        $this->assertInternalType('array', $toArray['params']);
+
+        // Normalize the array
+        unset($data['params']);
+        unset($toArray['params']);
+        $this->assertEquals($data, $toArray);
     }
 
     /**

@@ -198,6 +198,11 @@ class ApiCommand implements ApiCommandInterface
      */
     public function toArray()
     {
+        $params = array();
+        foreach ($this->params as $key => $param) {
+            $params[$key] = $param->toArray();
+        }
+
         return array(
             'name'        => $this->name,
             'doc'         => $this->doc,
@@ -205,7 +210,7 @@ class ApiCommand implements ApiCommandInterface
             'method'      => $this->method,
             'uri'         => $this->uri,
             'class'       => $this->class,
-            'params'      => $this->params,
+            'params'      => $params,
             'result_type' => $this->resultType,
             'result_doc'  => $this->resultDoc,
             'deprecated'  => $this->deprecated
