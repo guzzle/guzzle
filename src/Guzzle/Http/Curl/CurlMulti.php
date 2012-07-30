@@ -420,7 +420,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
             if ($active) {
                 // Select the curl handles until there is any activity on any of the open file descriptors
                 // See https://github.com/php/php-src/blob/master/ext/curl/multi.c#L170
-                $active = $this->executeHandles(true, 0.25);
+                $active = $this->executeHandles(true, 0.1);
             } else {
                 // Sleep to prevent eating CPU because no requests are actually pending a select call
                 usleep(500);
