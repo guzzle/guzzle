@@ -120,7 +120,7 @@ class CurlHandle
                     $curlOptions[CURLOPT_POSTFIELDS] = $fields;
                     $request->removeHeader('Content-Length');
 
-                } elseif (count($request->getPostFields())) {
+                } else {
                     $curlOptions[CURLOPT_POSTFIELDS] = (string) $request->getPostFields()->useUrlEncoding(true);
                     $request->removeHeader('Content-Length');
                 }

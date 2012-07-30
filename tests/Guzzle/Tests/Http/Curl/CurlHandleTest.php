@@ -417,7 +417,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                     'User-Agent: ' . $userAgent,
                     'Expect: 100-Continue',
                     'Content-Type: application/json',
-                    'Content-Length: 14'
                 ),
             ), array(
                 '_Accept-Encoding' => '*',
@@ -426,7 +425,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 'User-Agent'       => '*',
                 'Content-Type'     => 'application/json',
                 'Expect'           => '100-Continue',
-                'Content-Length'   => '14',
+                'Content-Length'   => '*',
                 '!Transfer-Encoding' => null
             )),
             // Send a POST request with raw POST data, a custom content-type, and use chunked encoding
@@ -463,7 +462,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             )),
             // Send a POST request with no body
             array('POST', 'http://localhost:8124/post.php', null, '', array(
-                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_POST => 1,
                 CURLOPT_HTTPHEADER => array (
                     'Expect:',
                     'Host: localhost:8124',
@@ -474,6 +473,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 '_Accept-Encoding' => '*',
                 'Host'             => '*',
                 'User-Agent'       => '*',
+                'Content-Type'     => '*',
                 'Content-Length'   => '0',
                 '!Transfer-Encoding' => null
             )),
