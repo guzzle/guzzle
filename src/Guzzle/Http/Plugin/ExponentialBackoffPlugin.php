@@ -237,7 +237,7 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
             // the easy handle.
             $request->getParams()->remove(self::DELAY_PARAM);
             // Rewind the request body if possible
-            if ($request instanceof EntityEnclosingRequestInterface) {
+            if ($request instanceof EntityEnclosingRequestInterface && $request->getBody()) {
                 $request->getBody()->seek(0);
             }
             $multi = $event['curl_multi'];

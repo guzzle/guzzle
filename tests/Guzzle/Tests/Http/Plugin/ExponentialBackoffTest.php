@@ -278,11 +278,6 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testSeeksToBeginningOfRequestBodyWhenRetrying()
     {
-        // Create a mock curl multi object
-        $multi = $this->getMockBuilder('Guzzle\Http\Curl\CurlMulti')
-            ->setMethods(array('remove', 'add'))
-            ->getMock();
-
         // Create a request with a body
         $request = new EntityEnclosingRequest('PUT', 'http://www.example.com');
         $request->setBody('abc');
@@ -294,6 +289,30 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Create a plugin that does not delay when retrying
         $plugin = new ExponentialBackoffPlugin(2, null, array($this, 'delayClosure'));
+        $plugin->onRequestPoll($this->getMockEvent($request));
+        // Ensure that the stream was seeked to 0
+        $this->assertEquals('a', $request->getBody()->read(1));
+    }
+
+    /**
+     * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin::onRequestPoll
+     */
+    public function testDoesNotSeekOnRequestsWithNoBodyWhenRetrying()
+    {
+        // Create a request with a body
+        $request = new EntityEnclosingRequest('PUT', 'http://www.example.com');
+        $request->getParams()->set('plugins.exponential_backoff.retry_time', 2);
+        $plugin = new ExponentialBackoffPlugin(2, null, array($this, 'delayClosure'));
+
+        $plugin->onRequestPoll($this->getMockEvent($request));
+    }
+
+    protected function getMockEvent(RequestInterface $request)
+    {
+        // Create a mock curl multi object
+        $multi = $this->getMockBuilder('Guzzle\Http\Curl\CurlMulti')
+            ->setMethods(array('remove', 'add'))
+            ->getMock();
 
         // Create an event that is expected for the Poll event
         $event = new Event(array(
@@ -302,9 +321,6 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
         ));
         $event->setName(CurlMultiInterface::POLLING_REQUEST);
 
-        $plugin->onRequestPoll($event);
-
-        // Ensure that the stream was seeked to 0
-        $this->assertEquals('a', $request->getBody()->read(1));
+        return $event;
     }
 }
