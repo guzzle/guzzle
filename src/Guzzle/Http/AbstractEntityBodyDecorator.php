@@ -46,6 +46,7 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
 
     /**
      * {@inheritdoc}
+     * @codeCoverageIgnore
      */
     public function compress($filter = 'zlib.deflate')
     {
@@ -54,6 +55,7 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
 
     /**
      * {@inheritdoc}
+     * @codeCoverageIgnore
      */
     public function uncompress($filter = 'zlib.inflate')
     {
@@ -94,6 +96,7 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
 
     /**
      * {@inheritdoc}
+     * @codeCoverageIgnore
      */
     public function getMetaData($key = null)
     {
@@ -190,6 +193,7 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
 
     /**
      * {@inheritdoc}
+     * @codeCoverageIgnore
      */
     public function setSize($size)
     {
@@ -198,6 +202,7 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
 
     /**
      * {@inheritdoc}
+     * @codeCoverageIgnore
      */
     public function seek($offset, $whence = SEEK_SET)
     {
@@ -206,6 +211,7 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
 
     /**
      * {@inheritdoc}
+     * @codeCoverageIgnore
      */
     public function read($length)
     {
@@ -214,6 +220,7 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
 
     /**
      * {@inheritdoc}
+     * @codeCoverageIgnore
      */
     public function write($string)
     {
