@@ -2,7 +2,8 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Http\EntityBody;
+use Guzzle\Http\Exception\RequestException;
+use Guzzle\Http\EntityBodyInterface;
 use Guzzle\Http\QueryString;
 
 /**
@@ -16,10 +17,10 @@ interface EntityEnclosingRequestInterface extends RequestInterface
     /**
      * Set the body of the request
      *
-     * @param string|resource|EntityBody $body               Body to use in the entity body of the request
-     * @param string                     $contentType        Content-Type to set.  Leave null to use an existing
-     *                                                       Content-Type or to guess the Content-Type
-     * @param bool                       $tryChunkedTransfer Set to TRUE to try to use Transfer-Encoding chunked
+     * @param string|resource|EntityBodyInterface $body               Body to use in the entity body of the request
+     * @param string                              $contentType        Content-Type to set. Leave null to use an existing
+     *                                                                Content-Type or to guess the Content-Type
+     * @param bool                                $tryChunkedTransfer Try to use chunked Transfer-Encoding
      *
      * @return EntityEnclosingRequestInterface
      * @throws RequestException if the protocol is < 1.1 and Content-Length can not be determined
@@ -29,7 +30,7 @@ interface EntityEnclosingRequestInterface extends RequestInterface
     /**
      * Get the body of the request if set
      *
-     * @return EntityBody|null
+     * @return EntityBodyInterface|null
      */
     public function getBody();
 

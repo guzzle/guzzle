@@ -4,8 +4,10 @@ namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\HasDispatcherInterface;
+use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\ClientInterface;
-use Guzzle\Http\EntityBody;
+use Guzzle\Http\EntityBodyInterface;
+use Guzzle\Http\Url;
 use Guzzle\Http\QueryString;
 
 /**
@@ -27,17 +29,6 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     const OPTIONS = 'OPTIONS';
     const TRACE = 'TRACE';
     const PATCH = 'PATCH';
-
-    /**
-     * Create a new request
-     *
-     * @param string     $method HTTP method
-     * @param string|Url $url    HTTP URL to connect to.  The URI scheme, host
-     *      header, and URI are parsed from the full URL.  If query string
-     *      parameters are present they will be parsed as well.
-     * @param array|Collection $headers HTTP headers
-     */
-    function __construct($method, $url, $headers = array());
 
     /**
      * Get the HTTP request as a string
@@ -196,9 +187,9 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     /**
      * Set HTTP authorization parameters
      *
-     * @param string|false $user     User name or false disable authentication
-     * @param string       $password Password
-     * @param string       $scheme   Authentication scheme to use (Basic, Digest)
+     * @param string|bool $user     User name or false disable authentication
+     * @param string      $password Password
+     * @param string      $scheme   Authentication scheme to use (Basic, Digest)
      *
      * @return Request
      *
@@ -226,8 +217,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * Get the full URL of the request (e.g. 'http://www.guzzle-project.com/')
      * scheme://username:password@domain:port/path?query_string#fragment
      *
-     * @param bool $asObject Set to TRUE to retrieve the URL as
-     *     a clone of the URL object owned by the request.
+     * @param bool $asObject Set to TRUE to retrieve the URL as a clone of the URL object owned by the request.
      *
      * @return string|Url
      */
@@ -273,11 +263,11 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * example, you can send the entity body to a socket, file, or some other
      * custom stream.
      *
-     * @param EntityBody $body Response body object
+     * @param EntityBodyInterface $body Response body object
      *
      * @return Request
      */
-    function setResponseBody(EntityBody $body);
+    function setResponseBody(EntityBodyInterface $body);
 
     /**
      * Determine if the response body is repeatable (readable + seekable)
@@ -294,8 +284,8 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * bypass the actual sending of a request.
      *
      * @param Response $response Response object to set
-     * @param bool     $queued   Set to TRUE to keep the request in a stat
-     *      of not having been sent, but queue the response for send()
+     * @param bool     $queued   Set to TRUE to keep the request in a stat of not having been sent, but queue the
+     *                           response for send()
      *
      * @return RequestInterface Returns a reference to the object.
      */

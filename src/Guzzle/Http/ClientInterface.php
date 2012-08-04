@@ -4,6 +4,7 @@ namespace Guzzle\Http;
 
 use Guzzle\Common\HasDispatcherInterface;
 use Guzzle\Common\Collection;
+use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactoryInterface;
 use Guzzle\Parser\UriTemplate\UriTemplateInterface;
@@ -17,9 +18,8 @@ interface ClientInterface extends HasDispatcherInterface
     /**
      * Set the configuration object to use with the client
      *
-     * @param array|Collection|string $config Parameters that define how the client
-     *                                        behaves and connects to a webservice.
-     *                                        Pass an array or a Collection object.
+     * @param array|Collection|string $config Parameters that define how the client behaves and connects to a
+     *                                        webservice. Pass an array or a Collection object.
      *
      * @return ClientInterface
      */
@@ -28,10 +28,8 @@ interface ClientInterface extends HasDispatcherInterface
     /**
      * Get a configuration setting or all of the configuration settings
      *
-     * @param bool|string $key Configuration value to retrieve.  Set to FALSE
-     *                         to retrieve all values of the client.  The
-     *                         object return can be modified, and modifications
-     *                         will affect the client's config.
+     * @param bool|string $key Configuration value to retrieve.  Set to FALSE to retrieve all values of the client.
+     *                         The object return can be modified, and modifications will affect the client's config.
      *
      * @return mixed|Collection
      */
@@ -87,14 +85,13 @@ interface ClientInterface extends HasDispatcherInterface
      * contain the query string as well.  Use an array to provide a URI
      * template and additional variables to use in the URI template expansion.
      *
-     * @param string                           $method  HTTP method.  Defaults to GET
-     * @param string|array                     $uri     Resource URI.
-     * @param array|Collection                 $headers HTTP headers
-     * @param string|resource|array|EntityBody $body    Entity body of request (POST/PUT) or response (GET)
+     * @param string                                    $method  HTTP method.  Defaults to GET
+     * @param string|array                              $uri     Resource URI.
+     * @param array|Collection                          $headers HTTP headers
+     * @param string|resource|array|EntityBodyInterface $body    Entity body of request (POST/PUT) or response (GET)
      *
      * @return RequestInterface
-     * @throws InvalidArgumentException if a URI array is passed that does not
-     *                                  contain exactly two elements: the URI
+     * @throws InvalidArgumentException if a URI array is passed that does not contain exactly two elements: the URI
      *                                  followed by template variables
      */
     function createRequest($method = RequestInterface::GET, $uri = null, $headers = null, $body = null);
@@ -132,11 +129,11 @@ interface ClientInterface extends HasDispatcherInterface
     /**
      * Create a GET request for the client
      *
-     * @param string|array                     $uri     Resource URI
-     * @param array|Collection                 $headers HTTP headers
-     * @param string|resource|array|EntityBody $body    Where to store the response entity body
+     * @param string|array                              $uri     Resource URI
+     * @param array|Collection                          $headers HTTP headers
+     * @param string|resource|array|EntityBodyInterface $body    Where to store the response entity body
      *
-     * @return Request
+     * @return RequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
     function get($uri = null, $headers = null, $body = null);
@@ -147,7 +144,7 @@ interface ClientInterface extends HasDispatcherInterface
      * @param string|array     $uri     Resource URI
      * @param array|Collection $headers HTTP headers
      *
-     * @return Request
+     * @return RequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
     function head($uri = null, $headers = null);
@@ -158,7 +155,7 @@ interface ClientInterface extends HasDispatcherInterface
      * @param string|array     $uri     Resource URI
      * @param array|Collection $headers HTTP headers
      *
-     * @return Request
+     * @return RequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
     function delete($uri = null, $headers = null);
@@ -166,11 +163,11 @@ interface ClientInterface extends HasDispatcherInterface
     /**
      * Create a PUT request for the client
      *
-     * @param string|array               $uri     Resource URI
-     * @param array|Collection           $headers HTTP headers
-     * @param string|resource|EntityBody $body    Body to send in the request
+     * @param string|array                        $uri     Resource URI
+     * @param array|Collection                    $headers HTTP headers
+     * @param string|resource|EntityBodyInterface $body    Body to send in the request
      *
-     * @return EntityEnclosingRequest
+     * @return EntityEnclosingRequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
     function put($uri = null, $headers = null, $body = null);
@@ -178,11 +175,11 @@ interface ClientInterface extends HasDispatcherInterface
     /**
      * Create a PATCH request for the client
      *
-     * @param string|array               $uri     Resource URI
-     * @param array|Collection           $headers HTTP headers
-     * @param string|resource|EntityBody $body    Body to send in the request
+     * @param string|array                        $uri     Resource URI
+     * @param array|Collection                    $headers HTTP headers
+     * @param string|resource|EntityBodyInterface $body    Body to send in the request
      *
-     * @return EntityEnclosingRequest
+     * @return EntityEnclosingRequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
     function patch($uri = null, $headers = null, $body = null);
@@ -190,15 +187,14 @@ interface ClientInterface extends HasDispatcherInterface
     /**
      * Create a POST request for the client
      *
-     * @param string|array                       $uri      Resource URI
-     * @param array|Collection                   $headers  HTTP headers
-     * @param array|Collection|string|EntityBody $postBody POST body. Can be a string, EntityBody,
-     *                                                     or associative array of POST fields to
-     *                                                     send in the body of the request.  Prefix
-     *                                                     a value in the array with the @ symbol
-     *                                                     reference a file.
+     * @param string|array                                $uri      Resource URI
+     * @param array|Collection                            $headers  HTTP headers
+     * @param array|Collection|string|EntityBodyInterface $postBody POST body. Can be a string, EntityBody, or
+     *                                                    associative array of POST fields to send in the body of the
+     *                                                    request.  Prefix a value in the array with the @ symbol to
+     *                                                    reference a file.
      *
-     * @return EntityEnclosingRequest
+     * @return EntityEnclosingRequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
     function post($uri = null, $headers = null, $postBody = null);
@@ -208,7 +204,7 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @param string|array $uri Resource URI
      *
-     * @return Request
+     * @return RequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
     function options($uri = null);

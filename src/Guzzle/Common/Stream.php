@@ -5,9 +5,9 @@ namespace Guzzle\Common;
 use Guzzle\Common\Exception\InvalidArgumentException;
 
 /**
- * OO interface to PHP streams
+ * PHP stream implementation
  */
-class Stream
+class Stream implements StreamInterface
 {
     const STREAM_TYPE = 'stream_type';
     const WRAPPER_TYPE = 'wrapper_type';
@@ -51,9 +51,7 @@ class Stream
      * Construct a new Stream
      *
      * @param resource $stream Stream resource to wrap
-     * @param int      $size   Size of the stream in bytes.  Only pass this
-     *                         parameter if the size cannot be obtained from
-     *                         the stream.
+     * @param int      $size   Size of the stream in bytes. Only pass if the size cannot be obtained from the stream.
      *
      * @throws InvalidArgumentException if the stream is not a stream resource
      */
@@ -79,25 +77,7 @@ class Stream
     }
 
     /**
-     * Reprocess stream metadata
-     */
-    protected function rebuildCache()
-    {
-        $this->cache = stream_get_meta_data($this->stream);
-        $this->cache[self::STREAM_TYPE] = strtolower($this->cache[self::STREAM_TYPE]);
-        $this->cache[self::WRAPPER_TYPE] = strtolower($this->cache[self::WRAPPER_TYPE]);
-        $this->cache[self::IS_LOCAL] = stream_is_local($this->stream);
-        $this->cache[self::IS_READABLE] = isset(self::$readWriteHash['read'][$this->cache['mode']]);
-        $this->cache[self::IS_WRITABLE] = isset(self::$readWriteHash['write'][$this->cache['mode']]);
-    }
-
-    /**
-     * Convert the stream to a string if the stream is readable and the stream
-     * is seekable.  This logic is enforced to ensure that outputting the stream
-     * as a string does not affect an actual cURL request using non-repeatable
-     * streams.
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function __toString()
     {
@@ -112,11 +92,7 @@ class Stream
     }
 
     /**
-     * Get stream metadata
-     *
-     * @param string $key Specific metdata to retrieve
-     *
-     * @return array|mixed|null
+     * {@inheritdoc}
      */
     public function getMetaData($key = null)
     {
@@ -126,9 +102,7 @@ class Stream
     }
 
     /**
-     * Get the stream resource
-     *
-     * @return resource
+     * {@inheritdoc}
      */
     public function getStream()
     {
@@ -136,9 +110,7 @@ class Stream
     }
 
     /**
-     * Get the stream wrapper type
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getWrapper()
     {
@@ -146,9 +118,7 @@ class Stream
     }
 
     /**
-     * Wrapper specific data attached to this stream.
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getWrapperData()
     {
@@ -156,9 +126,7 @@ class Stream
     }
 
     /**
-     * Get a label describing the underlying implementation of the stream
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getStreamType()
     {
@@ -166,9 +134,7 @@ class Stream
     }
 
     /**
-     * Get the URI/filename associated with this stream
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getUri()
     {
@@ -176,9 +142,7 @@ class Stream
     }
 
     /**
-     * Get the size of the stream if able
-     *
-     * @return int|false
+     * {@inheritdoc}
      */
     public function getSize()
     {
@@ -203,9 +167,7 @@ class Stream
     }
 
     /**
-     * Check if the stream is readable
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function isReadable()
     {
@@ -213,9 +175,7 @@ class Stream
     }
 
     /**
-     * Check if the stream is writable
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function isWritable()
     {
@@ -223,9 +183,7 @@ class Stream
     }
 
     /**
-     * Check if the stream has been consumed
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function isConsumed()
     {
@@ -233,9 +191,7 @@ class Stream
     }
 
     /**
-     * Check if the stream is a local stream vs a remote stream
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function isLocal()
     {
@@ -243,9 +199,7 @@ class Stream
     }
 
     /**
-     * Check if the string is repeatable
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function isSeekable()
     {
@@ -253,11 +207,7 @@ class Stream
     }
 
     /**
-     * Specify the size of the stream in bytes
-     *
-     * @param int $size Size of the stream contents in bytes
-     *
-     * @return Stream
+     * {@inheritdoc}
      */
     public function setSize($size)
     {
@@ -267,13 +217,7 @@ class Stream
     }
 
     /**
-     * Seek to a position in the stream
-     *
-     * @param int $offset Stream offset
-     * @param int $whence Where the offset is applied
-     *
-     * @return bool Returns TRUE on success or FALSE on failure
-     * @link http://www.php.net/manual/en/function.fseek.php
+     * {@inheritdoc}
      */
     public function seek($offset, $whence = SEEK_SET)
     {
@@ -281,12 +225,7 @@ class Stream
     }
 
     /**
-     * Read data from the stream
-     *
-     * @param int $length Up to length number of bytes read.
-     *
-     * @return string|bool Returns the data read from the stream or FALSE on
-     *                     failure or EOF
+     * {@inheritdoc}
      */
     public function read($length)
     {
@@ -294,12 +233,7 @@ class Stream
     }
 
     /**
-     * Write data to the stream
-     *
-     * @param string $string The string that is to be written.
-     *
-     * @return int|bool Returns the number of bytes written to the stream on
-     *                  success or FALSE on failure.
+     * {@inheritdoc}
      */
     public function write($string)
     {
@@ -311,5 +245,18 @@ class Stream
         $this->size += $bytes;
 
         return $bytes;
+    }
+
+    /**
+     * Reprocess stream metadata
+     */
+    protected function rebuildCache()
+    {
+        $this->cache = stream_get_meta_data($this->stream);
+        $this->cache[self::STREAM_TYPE] = strtolower($this->cache[self::STREAM_TYPE]);
+        $this->cache[self::WRAPPER_TYPE] = strtolower($this->cache[self::WRAPPER_TYPE]);
+        $this->cache[self::IS_LOCAL] = stream_is_local($this->stream);
+        $this->cache[self::IS_READABLE] = isset(self::$readWriteHash['read'][$this->cache['mode']]);
+        $this->cache[self::IS_WRITABLE] = isset(self::$readWriteHash['write'][$this->cache['mode']]);
     }
 }

@@ -3,6 +3,7 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Http\EntityBody;
+use Guzzle\Http\EntityBodyInterface;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Exception\RequestException;
 
@@ -12,7 +13,7 @@ use Guzzle\Http\Exception\RequestException;
 class EntityEnclosingRequest extends Request implements EntityEnclosingRequestInterface
 {
     /**
-     * @var EntityBody $body Body of the request
+     * @var EntityBodyInterface $body Body of the request
      */
     protected $body;
 
@@ -65,15 +66,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * Set the body of the request
-     *
-     * @param string|resource|EntityBody $body               Body to use in the entity body of the request
-     * @param string                     $contentType        Content-Type to set.  Leave null to use an existing
-     *                                                       Content-Type or to guess the Content-Type
-     * @param bool                       $tryChunkedTransfer Set to TRUE to try to use Transfer-Encoding chunked
-     *
-     * @return EntityEnclosingRequest
-     * @throws RequestException if the protocol is < 1.1 and Content-Length can not be determined
+     * {@inheritdoc}
      */
     public function setBody($body, $contentType = null, $tryChunkedTransfer = false)
     {
@@ -106,9 +99,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * Get the body of the request if set
-     *
-     * @return EntityBody|null
+     * {@inheritdoc}
      */
     public function getBody()
     {
@@ -116,11 +107,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * Get a POST field from the request
-     *
-     * @param string $field Field to retrieve
-     *
-     * @return mixed|null
+     * {@inheritdoc}
      */
     public function getPostField($field)
     {
@@ -128,9 +115,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * Get the post fields that will be used in the request
-     *
-     * @return QueryString
+     * {@inheritdoc}
      */
     public function getPostFields()
     {
@@ -138,12 +123,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * Set a POST field value
-     *
-     * @param string $key   Key to set
-     * @param string $value Value to set
-     *
-     * @return EntityEnclosingRequest
+     * {@inheritdoc}
      */
     public function setPostField($key, $value)
     {
@@ -154,11 +134,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * Add POST fields to use in the request
-     *
-     * @param QueryString|array $fields POST fields
-     *
-     * @return EntityEnclosingRequest
+     * {@inheritdoc}
      */
     public function addPostFields($fields)
     {
@@ -169,11 +145,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * Remove a POST field or file by name
-     *
-     * @param string $field Name of the POST field or file to remove
-     *
-     * @return EntityEnclosingRequest
+     * {@inheritdoc}
      */
     public function removePostField($field)
     {
@@ -184,9 +156,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * Returns an associative array of POST field names to an array of PostFileInterface objects
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function getPostFiles()
     {
@@ -194,11 +164,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * Get a POST file from the request
-     *
-     * @param string $fieldName POST fields to retrieve
-     *
-     * @return PostFileInterface|null Returns an array wrapping PostFileInterface objects
+     * {@inheritdoc}
      */
     public function getPostFile($fieldName)
     {
@@ -206,11 +172,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * Remove a POST file from the request
-     *
-     * @param string $fieldName POST file field name to remove
-     *
-     * @return EntityEnclosingRequest
+     * {@inheritdoc}
      */
     public function removePostFile($fieldName)
     {
@@ -221,15 +183,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * Add a POST file to the upload
-     *
-     * @param string|PostFileUpload $field       POST field to use (e.g. file) or PostFileInterface object.
-     * @param string                $filename    Full path to the file. Do not include the @ symbol.
-     * @param string                $contentType Optional Content-Type to add to the Content-Disposition.
-     *                                           Default behavior is to guess. Set to false to not specify.
-     *
-     * @return EntityEnclosingRequest
-     * @throws RequestException if the file cannot be read
+     * {@inheritdoc}
      */
     public function addPostFile($field, $filename = null, $contentType = null)
     {
@@ -257,12 +211,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * Add POST files to use in the upload
-     *
-     * @param array $files An array of POST fields => filenames where filename can be a string or PostFileInterfaces
-     *
-     * @return EntityEnclosingRequest
-     * @throws RequestException if the file cannot be read
+     * {@inheritdoc}
      */
     public function addPostFiles(array $files)
     {

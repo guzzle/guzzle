@@ -74,8 +74,14 @@ class RequestFactory implements RequestFactoryInterface
     /**
      * {@inheritdoc}
      */
-    public function fromParts($method, array $urlParts, $headers = null, $body = null, $protocol = 'HTTP', $protocolVersion = '1.1')
-    {
+    public function fromParts(
+        $method,
+        array $urlParts,
+        $headers = null,
+        $body = null,
+        $protocol = 'HTTP',
+        $protocolVersion = '1.1'
+    ) {
         return $this->create($method, Url::buildUrl($urlParts, true), $headers, $body)
                     ->setProtocolVersion($protocolVersion);
     }

@@ -6,9 +6,6 @@ use Guzzle\Common\Collection;
 use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Common\Exception\ExceptionCollection;
 use Guzzle\Common\Exception\InvalidArgumentException;
-use Guzzle\Http\Utils;
-use Guzzle\Http\Url;
-use Guzzle\Http\EntityBody;
 use Guzzle\Parser\ParserRegistry;
 use Guzzle\Parser\UriTemplate\UriTemplateInterface;
 use Guzzle\Http\Message\RequestInterface;
@@ -45,7 +42,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     private $curlMulti;
 
     /**
-     * @var UriTemplate URI template owned by the client
+     * @var UriTemplateInterface URI template owned by the client
      */
     private $uriTemplate;
 
@@ -85,13 +82,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
-     * Set the configuration object to use with the client
-     *
-     * @param array|Collection|string $config Parameters that define how the client
-     *                                        behaves and connects to a webservice.
-     *                                        Pass an array or a Collection object.
-     *
-     * @return Client
+     * {@inheritdoc}
      */
     public final function setConfig($config)
     {
@@ -110,14 +101,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
-     * Get a configuration setting or all of the configuration settings
-     *
-     * @param bool|string $key Configuration value to retrieve.  Set to FALSE
-     *                         to retrieve all values of the client.  The
-     *                         object return can be modified, and modifications
-     *                         will affect the client's config.
-     *
-     * @return mixed|Collection
+     * {@inheritdoc}
      */
     public final function getConfig($key = false)
     {
@@ -125,9 +109,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
-     * Get the default HTTP headers to add to each request created by the client
-     *
-     * @return Collection
+     * {@inheritdoc}
      */
     public function getDefaultHeaders()
     {
@@ -135,11 +117,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
-     * Set the default HTTP headers to add to each request created by the client
-     *
-     * @param array|Collection $headers Default HTTP headers
-     *
-     * @return Client
+     * {@inheritdoc}
      */
     public function setDefaultHeaders($headers)
     {
@@ -155,12 +133,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
-     * Expand a URI template using client configuration data
-     *
-     * @param string $template  URI template to expand
-     * @param array  $variables Additional variables to use in the expansion
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function expandTemplate($template, array $variables = null)
     {
@@ -173,11 +146,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
-     * Set the URI template expander to use with the client
-     *
-     * @param UriTemplateInterface $uriTemplate URI template expander
-     *
-     * @return Client
+     * {@inheritdoc}
      */
     public function setUriTemplate(UriTemplateInterface $uriTemplate)
     {
@@ -187,10 +156,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
-     * Get the URI template expander used by the client.  A default UriTemplate
-     * object will be created if one does not exist.
-     *
-     * @return UriTemplateInterface
+     * {@inheritdoc}
      */
     public function getUriTemplate()
     {
@@ -202,22 +168,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
-     * Create and return a new {@see RequestInterface} configured for the client.
-     *
-     * Use an absolute path to override the base path of the client, or a
-     * relative path to append to the base path of the client.  The URI can
-     * contain the query string as well.  Use an array to provide a URI
-     * template and additional variables to use in the URI template expansion.
-     *
-     * @param string                           $method  HTTP method.  Defaults to GET
-     * @param string|array                     $uri     Resource URI.
-     * @param array|Collection                 $headers HTTP headers
-     * @param string|resource|array|EntityBody $body    Entity body of request (POST/PUT) or response (GET)
-     *
-     * @return RequestInterface
-     * @throws InvalidArgumentException if a URI array is passed that does not
-     *                                  contain exactly two elements: the URI
-     *                                  followed by template variables
+     * {@inheritdoc}
      */
     public function createRequest($method = RequestInterface::GET, $uri = null, $headers = null, $body = null)
     {
@@ -260,6 +211,155 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function getBaseUrl($expand = true)
+    {
+        return $expand ? $this->expandTemplate($this->baseUrl) : $this->baseUrl;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setBaseUrl($url)
+    {
+        $this->baseUrl = $url;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setUserAgent($userAgent, $includeDefault = false)
+    {
+        if ($includeDefault) {
+            $userAgent .= ' ' . Utils::getDefaultUserAgent();
+        }
+        $this->defaultHeaders->set('User-Agent', $userAgent);
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function get($uri = null, $headers = null, $body = null)
+    {
+        return $this->createRequest('GET', $uri, $headers, $body);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function head($uri = null, $headers = null)
+    {
+        return $this->createRequest('HEAD', $uri, $headers);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function delete($uri = null, $headers = null)
+    {
+        return $this->createRequest('DELETE', $uri, $headers);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function put($uri = null, $headers = null, $body = null)
+    {
+        return $this->createRequest('PUT', $uri, $headers, $body);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function patch($uri = null, $headers = null, $body = null)
+    {
+        return $this->createRequest('PATCH', $uri, $headers, $body);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function post($uri = null, $headers = null, $postBody = null)
+    {
+        return $this->createRequest('POST', $uri, $headers, $postBody);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function options($uri = null)
+    {
+        return $this->createRequest('OPTIONS', $uri);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function send($requests)
+    {
+        $curlMulti = $this->getCurlMulti();
+        $multipleRequests = !($requests instanceof RequestInterface);
+        if (!$multipleRequests) {
+            $requests = array($requests);
+        }
+
+        foreach ($requests as $request) {
+            $curlMulti->add($request);
+        }
+
+        try {
+            $curlMulti->send();
+        } catch (ExceptionCollection $e) {
+            throw $multipleRequests ? $e : $e->getIterator()->offsetGet(0);
+        }
+
+        if (!$multipleRequests) {
+            return end($requests)->getResponse();
+        }
+
+        return array_map(function($request) {
+            return $request->getResponse();
+        }, $requests);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setCurlMulti(CurlMultiInterface $curlMulti)
+    {
+        $this->curlMulti = $curlMulti;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getCurlMulti()
+    {
+        if (!$this->curlMulti) {
+            $this->curlMulti = CurlMulti::getInstance();
+        }
+
+        return $this->curlMulti;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setRequestFactory(RequestFactoryInterface $factory)
+    {
+        $this->requestFactory = $factory;
+
+        return $this;
+    }
+
+    /**
      * Prepare a request to be sent from the Client by adding client specific
      * behaviors and properties to the request.
      *
@@ -291,233 +391,5 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         ));
 
         return $request;
-    }
-
-    /**
-     * Get the client's base URL as either an expanded or raw URI template
-     *
-     * @param bool $expand Set to FALSE to get the raw base URL without URI
-     *                     template expansion
-     *
-     * @return string|null
-     */
-    public function getBaseUrl($expand = true)
-    {
-        return $expand ? $this->expandTemplate($this->baseUrl) : $this->baseUrl;
-    }
-
-    /**
-     * Set the base URL of the client
-     *
-     * @param string $url The base service endpoint URL of the webservice
-     *
-     * @return Client
-     */
-    public function setBaseUrl($url)
-    {
-        $this->baseUrl = $url;
-
-        return $this;
-    }
-
-    /**
-     * Set the name of your application and application version that will be
-     * appended to the User-Agent header of all requests.
-     *
-     * @param string $userAgent      User agent string
-     * @param bool   $includeDefault Set to TRUE to append the default Guzzle use agent
-     *
-     * @return Client
-     */
-    public function setUserAgent($userAgent, $includeDefault = false)
-    {
-        if ($includeDefault) {
-            $userAgent .= ' ' . Utils::getDefaultUserAgent();
-        }
-        $this->defaultHeaders->set('User-Agent', $userAgent);
-
-        return $this;
-    }
-
-    /**
-     * Create a GET request for the client
-     *
-     * @param string|array                     $uri     Resource URI
-     * @param array|Collection                 $headers HTTP headers
-     * @param string|resource|array|EntityBody $body    Where to store the response entity body
-     *
-     * @return Request
-     * @see    Guzzle\Http\Client::createRequest()
-     */
-    public function get($uri = null, $headers = null, $body = null)
-    {
-        return $this->createRequest('GET', $uri, $headers, $body);
-    }
-
-    /**
-     * Create a HEAD request for the client
-     *
-     * @param string|array     $uri     Resource URI
-     * @param array|Collection $headers HTTP headers
-     *
-     * @return Request
-     * @see    Guzzle\Http\Client::createRequest()
-     */
-    public function head($uri = null, $headers = null)
-    {
-        return $this->createRequest('HEAD', $uri, $headers);
-    }
-
-    /**
-     * Create a DELETE request for the client
-     *
-     * @param string|array     $uri     Resource URI
-     * @param array|Collection $headers HTTP headers
-     *
-     * @return Request
-     * @see    Guzzle\Http\Client::createRequest()
-     */
-    public function delete($uri = null, $headers = null)
-    {
-        return $this->createRequest('DELETE', $uri, $headers);
-    }
-
-    /**
-     * Create a PUT request for the client
-     *
-     * @param string|array               $uri     Resource URI
-     * @param array|Collection           $headers HTTP headers
-     * @param string|resource|EntityBody $body    Body to send in the request
-     *
-     * @return EntityEnclosingRequest
-     * @see    Guzzle\Http\Client::createRequest()
-     */
-    public function put($uri = null, $headers = null, $body = null)
-    {
-        return $this->createRequest('PUT', $uri, $headers, $body);
-    }
-
-    /**
-     * Create a PATCH request for the client
-     *
-     * @param string|array               $uri     Resource URI
-     * @param array|Collection           $headers HTTP headers
-     * @param string|resource|EntityBody $body    Body to send in the request
-     *
-     * @return EntityEnclosingRequest
-     * @see    Guzzle\Http\Client::createRequest()
-     */
-    public function patch($uri = null, $headers = null, $body = null)
-    {
-        return $this->createRequest('PATCH', $uri, $headers, $body);
-    }
-
-    /**
-     * Create a POST request for the client
-     *
-     * @param string|array                       $uri      Resource URI
-     * @param array|Collection                   $headers  HTTP headers
-     * @param array|Collection|string|EntityBody $postBody POST body. Can be a string, EntityBody,
-     *                                                     or associative array of POST fields to
-     *                                                     send in the body of the request.  Prefix
-     *                                                     a value in the array with the @ symbol
-     *                                                     reference a file.
-     *
-     * @return EntityEnclosingRequest
-     * @see    Guzzle\Http\Client::createRequest()
-     */
-    public function post($uri = null, $headers = null, $postBody = null)
-    {
-        return $this->createRequest('POST', $uri, $headers, $postBody);
-    }
-
-    /**
-     * Create an OPTIONS request for the client
-     *
-     * @param string|array $uri Resource URI
-     *
-     * @return Request
-     * @see    Guzzle\Http\Client::createRequest()
-     */
-    public function options($uri = null)
-    {
-        return $this->createRequest('OPTIONS', $uri);
-    }
-
-    /**
-     * Sends a single request or an array of requests in parallel
-     *
-     * @param array $requests Request(s) to send
-     *
-     * @return array Returns the response(s)
-     */
-    public function send($requests)
-    {
-        $curlMulti = $this->getCurlMulti();
-        $multipleRequests = !($requests instanceof RequestInterface);
-        if (!$multipleRequests) {
-            $requests = array($requests);
-        }
-
-        foreach ($requests as $request) {
-            $curlMulti->add($request);
-        }
-
-        try {
-            $curlMulti->send();
-        } catch (ExceptionCollection $e) {
-            throw $multipleRequests ? $e : $e->getIterator()->offsetGet(0);
-        }
-
-        if (!$multipleRequests) {
-            return end($requests)->getResponse();
-        }
-
-        return array_map(function($request) {
-            return $request->getResponse();
-        }, $requests);
-    }
-
-    /**
-     * Set a curl multi object to be used internally by the client for
-     * transferring requests.
-     *
-     * @param CurlMultiInterface $curlMulti multi object
-     *
-     * @return Client
-     */
-    public function setCurlMulti(CurlMultiInterface $curlMulti)
-    {
-        $this->curlMulti = $curlMulti;
-
-        return $this;
-    }
-
-    /**
-     * Get the curl multi object used with the client
-     *
-     * @return CurlMultiInterface
-     */
-    public function getCurlMulti()
-    {
-        if (!$this->curlMulti) {
-            $this->curlMulti = CurlMulti::getInstance();
-        }
-
-        return $this->curlMulti;
-    }
-
-    /**
-     * Set the request factory to use with the client when creating requests
-     *
-     * @param RequestFactoryInterface $factory Request factory
-     *
-     * @return Client
-     */
-    public function setRequestFactory(RequestFactoryInterface $factory)
-    {
-        $this->requestFactory = $factory;
-
-        return $this;
     }
 }

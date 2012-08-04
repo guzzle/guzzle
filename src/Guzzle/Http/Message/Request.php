@@ -12,8 +12,8 @@ use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\ClientInterface;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\EntityBody;
+use Guzzle\Http\EntityBodyInterface;
 use Guzzle\Http\Url;
-
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -49,7 +49,7 @@ class Request extends AbstractMessage implements RequestInterface
     protected $response;
 
     /**
-     * @var EntityBody Response body
+     * @var EntityBodyInterface Response body
      */
     protected $responseBody;
 
@@ -103,10 +103,9 @@ class Request extends AbstractMessage implements RequestInterface
     /**
      * Create a new request
      *
-     * @param string     $method HTTP method
-     * @param string|Url $url    HTTP URL to connect to.  The URI scheme, host
-     *      header, and URI are parsed from the full URL.  If query string
-     *      parameters are present they will be parsed as well.
+     * @param string           $method  HTTP method
+     * @param string|Url       $url     HTTP URL to connect to. The URI scheme, host header, and URI are parsed from the
+     *                                  full URL. If query string parameters are present they will be parsed as well.
      * @param array|Collection $headers HTTP headers
      */
     public function __construct($method, $url, $headers = array())
@@ -202,11 +201,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Set the client used to transport the request
-     *
-     * @param ClientInterface $client
-     *
-     * @return Request
+     * {@inheritdoc}
      */
     public function setClient(ClientInterface $client)
     {
@@ -216,9 +211,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the client used to transport the request
-     *
-     * @return ClientInterface $client
+     * {@inheritdoc}
      */
     public function getClient()
     {
@@ -226,9 +219,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the raw message headers as a string
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getRawHeaders()
     {
@@ -240,14 +231,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Set the URL of the request
-     *
-     * Warning: Calling this method will modify headers, rewrite the  query
-     * string object, and set other data associated with the request.
-     *
-     * @param string|Url $url Full URL to set including query string
-     *
-     * @return Request
+     * {@inheritdoc}
      */
     public function setUrl($url)
     {
@@ -271,10 +255,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Send the request
-     *
-     * @return Response
-     * @throws RuntimeException if a client is not associated with the request
+     * {@inheritdoc}
      */
     public function send()
     {
@@ -286,10 +267,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the previously received {@see Response} or NULL if the request has
-     * not been sent
-     *
-     * @return Response|null
+     * {@inheritdoc}
      */
     public function getResponse()
     {
@@ -297,12 +275,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the collection of key value pairs that will be used as the query
-     * string in the request
-     *
-     * @param bool $asString Set to TRUE to get the query as string
-     *
-     * @return QueryString|string
+     * {@inheritdoc}
      */
     public function getQuery($asString = false)
     {
@@ -312,9 +285,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the HTTP method of the request
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getMethod()
     {
@@ -322,9 +293,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the URI scheme of the request (http, https, ftp, etc)
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getScheme()
     {
@@ -332,11 +301,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Set the URI scheme of the request (http, https, ftp, etc)
-     *
-     * @param string $scheme Scheme to set
-     *
-     * @return Request
+     * {@inheritdoc}
      */
     public function setScheme($scheme)
     {
@@ -346,9 +311,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the host of the request
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getHost()
     {
@@ -356,11 +319,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Set the host of the request.
-     *
-     * @param string $host Host to set (e.g. www.yahoo.com, www.yahoo.com)
-     *
-     * @return Request
+     * {@inheritdoc}
      */
     public function setHost($host)
     {
@@ -371,9 +330,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the HTTP protocol version of the request
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getProtocolVersion()
     {
@@ -381,11 +338,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Set the HTTP protocol version of the request (e.g. 1.1 or 1.0)
-     *
-     * @param string $protocol HTTP protocol version to use with the request
-     *
-     * @return Request
+     * {@inheritdoc}
      */
     public function setProtocolVersion($protocol)
     {
@@ -395,9 +348,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the path of the request (e.g. '/', '/index.html')
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getPath()
     {
@@ -405,11 +356,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Set the path of the request (e.g. '/', '/index.html')
-     *
-     * @param string|array $path Path to set or array of segments to implode
-     *
-     * @return Request
+     * {@inheritdoc}
      */
     public function setPath($path)
     {
@@ -419,9 +366,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the port that the request will be sent on if it has been set
-     *
-     * @return int|null
+     * {@inheritdoc}
      */
     public function getPort()
     {
@@ -429,11 +374,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Set the port that the request will be sent on
-     *
-     * @param int $port Port number to set
-     *
-     * @return Request
+     * {@inheritdoc}
      */
     public function setPort($port)
     {
@@ -452,9 +393,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the username to pass in the URL if set
-     *
-     * @return string|null
+     * {@inheritdoc}
      */
     public function getUsername()
     {
@@ -462,9 +401,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the password to pass in the URL if set
-     *
-     * @return string|null
+     * {@inheritdoc}
      */
     public function getPassword()
     {
@@ -472,15 +409,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Set HTTP authorization parameters
-     *
-     * @param string|false $user     User name or false disable authentication
-     * @param string       $password Password
-     * @param string       $scheme   Curl authentication scheme to use
-     *
-     * @return Request
-     *
-     * @see http://www.ietf.org/rfc/rfc2617.txt
+     * {@inheritdoc}
      */
     public function setAuth($user, $password = '', $scheme = CURLAUTH_BASIC)
     {
@@ -506,10 +435,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the resource part of the the request, including the path, query
-     * string, and fragment
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getResource()
     {
@@ -517,13 +443,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the full URL of the request (e.g. 'http://www.guzzle-project.com/')
-     * scheme://username:password@domain:port/path?query_string#fragment
-     *
-     * @param bool $asObject Set to TRUE to retrieve the URL as
-     *     a clone of the URL object owned by the request
-     *
-     * @return string|Url
+     * {@inheritdoc}
      */
     public function getUrl($asObject = false)
     {
@@ -531,9 +451,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the state of the request.  One of 'complete', 'sending', 'new'
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getState()
     {
@@ -541,11 +459,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Set the state of the request
-     *
-     * @param string $state State of the request (complete, sending, or new)
-     *
-     * @return Request
+     * {@inheritdoc}
      */
     public function setState($state)
     {
@@ -561,9 +475,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the cURL options that will be applied when the cURL handle is created
-     *
-     * @return Collection
+     * {@inheritdoc}
      */
     public function getCurlOptions()
     {
@@ -571,11 +483,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Method to receive HTTP response headers as they are retrieved
-     *
-     * @param string $data Header data.
-     *
-     * @return integer Returns the size of the data.
+     * {@inheritdoc}
      */
     public function receiveResponseHeader($data)
     {
@@ -616,17 +524,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Manually set a response for the request.
-     *
-     * This method is useful for specifying a mock response for the request or
-     * setting the response using a cache.  Manually setting a response will
-     * bypass the actual sending of a request.
-     *
-     * @param Response $response Response object to set
-     * @param bool     $queued   Set to TRUE to keep the request in a stat
-     *      of not having been sent, but queue the response for send()
-     *
-     * @return Request Returns a reference to the object.
+     * {@inheritdoc}
      */
     public function setResponse(Response $response, $queued = false)
     {
@@ -647,18 +545,9 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Set the EntityBody that will hold the response message's entity body.
-     *
-     * This method should be invoked when you need to send the response's
-     * entity body somewhere other than the normal php://temp buffer.  For
-     * example, you can send the entity body to a socket, file, or some other
-     * custom stream.
-     *
-     * @param EntityBody $body Response body object
-     *
-     * @return Request
+     * {@inheritdoc}
      */
-    public function setResponseBody(EntityBody $body)
+    public function setResponseBody(EntityBodyInterface $body)
     {
         $this->responseBody = $body;
 
@@ -666,9 +555,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Determine if the response body is repeatable (readable + seekable)
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function isResponseBodyRepeatable()
     {
@@ -676,9 +563,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get an array of cookies
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function getCookies()
     {
@@ -694,11 +579,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get a cookie value by name
-     *
-     * @param string $name Cookie to retrieve
-     *
-     * @return null|string|array
+     * {@inheritdoc}
      */
     public function getCookie($name)
     {
@@ -708,12 +589,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Add a Cookie value by name to the Cookie header
-     *
-     * @param string $name  Name of the cookie to add
-     * @param string $value Value to set
-     *
-     * @return Request
+     * {@inheritdoc}
      */
     public function addCookie($name, $value)
     {
@@ -727,11 +603,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Remove a specific cookie value by name
-     *
-     * @param string $name Cookie to remove by name
-     *
-     * @return Request
+     * {@inheritdoc}
      */
     public function removeCookie($name)
     {
@@ -747,9 +619,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Returns whether or not the request can be cached
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function canCache()
     {
@@ -823,9 +693,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Get the EntityBody that will store the received response entity body
-     *
-     * @return EntityBody
+     * {@inheritdoc}
      */
     protected function getResponseBody()
     {

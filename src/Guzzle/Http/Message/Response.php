@@ -3,6 +3,7 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
+use Guzzle\Http\EntityBodyInterface;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Parser\ParserRegistry;
@@ -60,7 +61,7 @@ class Response extends AbstractMessage
     );
 
     /**
-     * @var EntityBody The response body
+     * @var EntityBodyInterface The response body
      */
     protected $body;
 
@@ -123,9 +124,9 @@ class Response extends AbstractMessage
     /**
      * Construct the response
      *
-     * @param string                     $statusCode The response status code (e.g. 200, 404, etc)
-     * @param Collection|array           $headers    The response headers
-     * @param string|resource|EntityBody $body       The body of the response
+     * @param string                              $statusCode The response status code (e.g. 200, 404, etc)
+     * @param Collection|array                    $headers    The response headers
+     * @param string|resource|EntityBodyInterface $body       The body of the response
      *
      * @throws BadResponseException if an invalid response code is given
      */
@@ -158,10 +159,9 @@ class Response extends AbstractMessage
     /**
      * Get the response entity body
      *
-     * @param bool $asString Set to TRUE to return a string of the body rather
-     *      than a full body object
+     * @param bool $asString Set to TRUE to return a string of the body rather than a full body object
      *
-     * @return EntityBody|string
+     * @return EntityBodyInterface|string
      */
     public function getBody($asString = false)
     {
@@ -209,8 +209,8 @@ class Response extends AbstractMessage
      *
      * @param string $key A single statistic to check
      *
-     * @return array|string|null Returns all stats if no key is set, a single
-     *      stat if a key is set, or null if a key is set and not found
+     * @return array|string|null Returns all stats if no key is set, a single stat if a key is set, or null if a key
+     *                           is set and not found
      * @link http://www.php.net/manual/en/function.curl-getinfo.php
      */
     public function getInfo($key = null)
@@ -305,9 +305,9 @@ class Response extends AbstractMessage
     }
 
     /**
-     * Get the request object that is associated with this response
+     * Get the request object (or null) that is associated with this response
      *
-     * @return null|Request\Request
+     * @return RequestInterface
      */
     public function getRequest()
     {
@@ -328,8 +328,7 @@ class Response extends AbstractMessage
     /**
      * Get the Accept-Ranges HTTP header
      *
-     * @return string Returns what partial content range types this
-     *      server supports.
+     * @return string Returns what partial content range types this server supports.
      */
     public function getAcceptRanges()
     {
@@ -339,11 +338,9 @@ class Response extends AbstractMessage
     /**
      * Get the Age HTTP header
      *
-     * @param bool $headerOnly Set to TRUE to only retrieve the
-     *      Age header rather than calculating the age
+     * @param bool $headerOnly Set to TRUE to only retrieve the Age header rather than calculating the age
      *
-     * @return integer|null Returns the age the object has been in a proxy cache
-     *      in seconds.
+     * @return integer|null Returns the age the object has been in a proxy cache in seconds.
      */
     public function getAge($headerOnly = false)
     {
@@ -359,8 +356,7 @@ class Response extends AbstractMessage
     /**
      * Get the Allow HTTP header
      *
-     * @return string|null Returns valid actions for a specified resource. To
-     *      be used for a 405 Method not allowed.
+     * @return string|null Returns valid actions for a specified resource. To be used for a 405 Method not allowed.
      */
     public function getAllow()
     {
@@ -391,8 +387,8 @@ class Response extends AbstractMessage
     /**
      * Get the Cache-Control HTTP header
      *
-     * @return Header|null Returns a Header object that tells all caching
-     *      mechanisms from server to client whether they may cache this object.
+     * @return Header|null Returns a Header object that tells all caching mechanisms from server to client whether they
+     *                     may cache this object.
      */
     public function getCacheControl()
     {
@@ -412,8 +408,7 @@ class Response extends AbstractMessage
     /**
      * Get the Content-Encoding HTTP header
      *
-     * @return string|null Returns the type of encoding used on the data.  One
-     *      of compress, deflate, gzip, identity.
+     * @return string|null Returns the type of encoding used on the data. One of compress, deflate, gzip, identity.
      */
     public function getContentEncoding()
     {
@@ -443,8 +438,7 @@ class Response extends AbstractMessage
     /**
      * Get the Content-Location HTTP header
      *
-     * @return string|null Returns an alternate location for the returned data
-     *      (e.g /index.htm)
+     * @return string|null Returns an alternate location for the returned data (e.g /index.htm)
      */
     public function getContentLocation()
     {
@@ -464,8 +458,7 @@ class Response extends AbstractMessage
     /**
      * Get the Content-MD5 HTTP header
      *
-     * @return string|null Returns a Base64-encoded binary MD5 sum of the
-     *      content of the response.
+     * @return string|null Returns a Base64-encoded binary MD5 sum of the content of the response.
      */
     public function getContentMd5()
     {
@@ -475,8 +468,7 @@ class Response extends AbstractMessage
     /**
      * Get the Content-Range HTTP header
      *
-     * @return string Returns where in a full body message this partial message
-     *      belongs (e.g. bytes 21010-47021/47022).
+     * @return string Returns where in a full body message this partial message belongs (e.g. bytes 21010-47021/47022).
      */
     public function getContentRange()
     {
@@ -520,8 +512,7 @@ class Response extends AbstractMessage
     /**
      * Get the ETag HTTP header
      *
-     * @return string|null Returns an identifier for a specific version of a
-     *      resource, often a Message digest.
+     * @return string|null Returns an identifier for a specific version of a resource, often a Message digest.
      */
     public function getEtag()
     {
@@ -533,8 +524,7 @@ class Response extends AbstractMessage
     /**
      * Get the Expires HTTP header
      *
-     * @return string|null Returns the date/time after which the response is
-     *      considered stale.
+     * @return string|null Returns the date/time after which the response is considered stale.
      */
     public function getExpires()
     {
@@ -544,8 +534,8 @@ class Response extends AbstractMessage
     /**
      * Get the Last-Modified HTTP header
      *
-     * @return string|null Returns the last modified date for the requested
-     *      object, in RFC 2822 format (e.g. Tue, 15 Nov 1994 12:45:26 GMT)
+     * @return string|null Returns the last modified date for the requested object, in RFC 2822 format
+     *                     (e.g. Tue, 15 Nov 1994 12:45:26 GMT)
      */
     public function getLastModified()
     {
@@ -555,8 +545,7 @@ class Response extends AbstractMessage
     /**
      * Get the Location HTTP header
      *
-     * @return string|null Used in redirection, or when a new resource has been
-     *      created. (e.g. http://www.w3.org/pub/WWW/People.html)
+     * @return string|null Used in redirection, or when a new resource has been created.
      */
     public function getLocation()
     {
@@ -566,8 +555,8 @@ class Response extends AbstractMessage
     /**
      * Get the Pragma HTTP header
      *
-     * @return Header|null Returns the implementation-specific headers that may
-     *      have various effects anywhere along the request-response chain.
+     * @return Header|null Returns the implementation-specific headers that may have various effects anywhere along
+     *                     the request-response chain.
      */
     public function getPragma()
     {
@@ -587,8 +576,8 @@ class Response extends AbstractMessage
     /**
      * Get the Retry-After HTTP header
      *
-     * @return int|null If an entity is temporarily unavailable, this
-     *      instructs the client to try again after a specified period of time.
+     * @return int|null If an entity is temporarily unavailable, this instructs the client to try again after a
+     *                  specified period of time.
      */
     public function getRetryAfter()
     {
@@ -627,9 +616,8 @@ class Response extends AbstractMessage
     /**
      * Get the Trailer HTTP header
      *
-     * @return string|null The Trailer general field value indicates that the
-     *      given set of header fields is present in the trailer of a message
-     *      encoded with chunked transfer-coding.
+     * @return string|null The Trailer general field value indicates that the given set of header fields is present in
+     *                     the trailer of a message encoded with chunked transfer-coding.
      */
     public function getTrailer()
     {
@@ -639,8 +627,8 @@ class Response extends AbstractMessage
     /**
      * Get the Transfer-Encoding HTTP header
      *
-     * @return string|null The form of encoding used to safely transfer the
-     *      entity to the user. Currently defined methods are: chunked
+     * @return string|null The form of encoding used to safely transfer the entity to the user. Currently defined
+     *                     methods are: chunked
      */
     public function getTransferEncoding()
     {
@@ -650,9 +638,8 @@ class Response extends AbstractMessage
     /**
      * Get the Vary HTTP header
      *
-     * @return string|null Tells downstream proxies how to match future request
-     *      headers to decide whether the cached response can be used rather
-     *      than requesting a fresh one from the origin server.
+     * @return string|null Tells downstream proxies how to match future request headers to decide whether the cached
+     *                     response can be used rather than requesting a fresh one from the origin server.
      */
     public function getVary()
     {
@@ -662,8 +649,8 @@ class Response extends AbstractMessage
     /**
      * Get the Via HTTP header
      *
-     * @return string|null Informs the client of proxies through which the
-     *      response was sent. (e.g. 1.0 fred, 1.1 nowhere.com (Apache/1.1))
+     * @return string|null Informs the client of proxies through which the response was sent.
+     *                     (e.g. 1.0 fred, 1.1 nowhere.com (Apache/1.1))
      */
     public function getVia()
     {
@@ -673,8 +660,8 @@ class Response extends AbstractMessage
     /**
      * Get the Warning HTTP header
      *
-     * @return string|null A general warning about possible problems with the
-     *      entity body. (e.g. 199 Miscellaneous warning)
+     * @return string|null A general warning about possible problems with the entity body.
+     *                     (e.g. 199 Miscellaneous warning)
      */
     public function getWarning()
     {
@@ -684,8 +671,8 @@ class Response extends AbstractMessage
     /**
      * Get the WWW-Authenticate HTTP header
      *
-     * @return string|null Indicates the authentication scheme that should be
-     *      used to access the requested entity (e.g. Basic)
+     * @return string|null Indicates the authentication scheme that should be used to access the requested entity
+     *                     (e.g. Basic)
      */
     public function getWwwAuthenticate()
     {
@@ -755,7 +742,7 @@ class Response extends AbstractMessage
     /**
      * Set the request object associated with the response
      *
-     * @param RequestInterface The request object used to generate the response
+     * @param RequestInterface $request The request object used to generate the response
      *
      * @return Response
      */

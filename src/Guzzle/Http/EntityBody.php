@@ -8,7 +8,7 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 /**
  * Entity body used with an HTTP request or response
  */
-class EntityBody extends Stream
+class EntityBody extends Stream implements EntityBodyInterface
 {
     /**
      * @var bool Content-Encoding of the entity body if known
@@ -26,7 +26,7 @@ class EntityBody extends Stream
      */
     public static function factory($resource = '', $size = null)
     {
-        if ($resource instanceof self) {
+        if ($resource instanceof EntityBodyInterface) {
             return $resource;
         }
 
@@ -64,13 +64,7 @@ class EntityBody extends Stream
     }
 
     /**
-     * If the stream is readable, compress the data in the stream using deflate
-     * compression.  The uncompressed stream is then closed, and the compressed
-     * stream then becomes the wrapped stream.
-     *
-     * @param string $filter Compression filter
-     *
-     * @return bool Returns TRUE on success or FALSE on failure
+     * {@inheritdoc}
      */
     public function compress($filter = 'zlib.deflate')
     {
@@ -81,12 +75,7 @@ class EntityBody extends Stream
     }
 
     /**
-     * Uncompress a deflated string.  Once uncompressed, the uncompressed
-     * string is then used as the wrapped stream.
-     *
-     * @param string $filter De-compression filter
-     *
-     * @return bool Returns TRUE on success or FALSE on failure
+     * {@inheritdoc}
      */
     public function uncompress($filter = 'zlib.inflate')
     {
@@ -112,9 +101,7 @@ class EntityBody extends Stream
     }
 
     /**
-     * Get the Content-Length of the entity body if possible (alias of getSize)
-     *
-     * @return int|false
+     * {@inheritdoc}
      */
     public function getContentLength()
     {
@@ -122,10 +109,7 @@ class EntityBody extends Stream
     }
 
     /**
-     * Guess the Content-Type or return the default application/octet-stream
-     *
-     * @return string
-     * @see http://www.php.net/manual/en/function.finfo-open.php
+     * {@inheritdoc}
      */
     public function getContentType()
     {
@@ -139,13 +123,7 @@ class EntityBody extends Stream
     }
 
     /**
-     * Get an MD5 checksum of the stream's contents
-     *
-     * @param bool $rawOutput    Whether or not to use raw output
-     * @param bool $base64Encode Whether or not to base64 encode raw output
-     *                           (only if raw output is true)
-     *
-     * @return bool|string Returns an MD5 string on success or FALSE on failure
+     * {@inheritdoc}
      */
     public function getContentMd5($rawOutput = false, $base64Encode = false)
     {
@@ -165,11 +143,7 @@ class EntityBody extends Stream
     }
 
     /**
-     * Set the type of encoding stream that was used on the entity body
-     *
-     * @param string $streamFilterContentEncoding Stream filter used
-     *
-     * @return EntityBody
+     * {@inheritdoc}
      */
     public function setStreamFilterContentEncoding($streamFilterContentEncoding)
     {
@@ -179,9 +153,7 @@ class EntityBody extends Stream
     }
 
     /**
-     * Get the Content-Encoding of the EntityBody
-     *
-     * @return bool|string
+     * {@inheritdoc}
      */
     public function getContentEncoding()
     {
@@ -192,12 +164,7 @@ class EntityBody extends Stream
     }
 
     /**
-     * Handles compression or uncompression of stream data
-     *
-     * @param string $filter      Name of the filter to use (zlib.deflate or zlib.inflate)
-     * @param int    $offsetStart Number of bytes to skip from start
-     *
-     * @return bool Returns TRUE on success or FALSE on failure
+     * {@inheritdoc}
      */
     protected function handleCompression($filter, $offsetStart = null)
     {
