@@ -18,7 +18,7 @@ class HeaderComparison
      * @param array $filteredHeaders Array of special headers
      * @param array $actualHeaders   Array of headers to check against
      *
-     * @return array|false Returns an array of the differences or FALSE if none
+     * @return array|bool Returns an array of the differences or FALSE if none
      */
     public function compare($filteredHeaders, $actualHeaders)
     {
@@ -54,7 +54,7 @@ class HeaderComparison
      * @param array            $ignore   Headers to ignore from the comparison
      * @param array            $absent   Array of headers that must not be present
      *
-     * @return array|false Returns an array of the differences or FALSE if none
+     * @return array|bool Returns an array of the differences or FALSE if none
      */
     public function compareArray(array $expected, $actual, array $ignore = array(), array $absent = array())
     {

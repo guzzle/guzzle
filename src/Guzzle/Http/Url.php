@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http;
 
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Parser\ParserRegistry;
 
 /**
@@ -298,7 +299,6 @@ class Url
 
             // Remove trailing relative paths if possible
             $segments = $this->getPathSegments();
-            $totalSegments = count($segments);
             $last = end($segments);
             $trailingSlash = false;
             if ($last === '') {

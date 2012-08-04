@@ -16,7 +16,7 @@ class Response extends AbstractMessage
     /**
      * @var array Array of reason phrases and their corresponding status codes
      */
-    static private $statusTexts = array(
+    private static $statusTexts = array(
         100 => 'Continue',
         101 => 'Switching Protocols',
         200 => 'OK',

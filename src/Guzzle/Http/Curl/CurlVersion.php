@@ -55,7 +55,7 @@ class CurlVersion
     /**
      * Get a specific type of curl information
      *
-     * @param $type Version information to retrieve. This value is one of:
+     * @param string $type Version information to retrieve. This value is one of:
      *
      *     - version_number:     cURL 24 bit version number
      *     - version:            cURL version number, as a string

@@ -10,7 +10,7 @@ namespace Guzzle\Common\Cache;
 class Zf1CacheAdapter extends AbstractCacheAdapter
 {
     /**
-     * @param Zend_Cache_Backend $cache Cache object to wrap
+     * @param \Zend_Cache_Backend $cache Cache object to wrap
      */
     public function __construct(\Zend_Cache_Backend $cache)
     {

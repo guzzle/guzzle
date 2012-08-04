@@ -361,7 +361,7 @@ class CurlHandle
     /**
      * Get the wrapped curl handle
      *
-     * @return handle|null Returns the cURL handle or null if it was closed
+     * @return resource|null Returns the cURL handle or null if it was closed
      */
     public function getHandle()
     {

@@ -35,7 +35,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return string
      */
-    function __toString();
+    public function __toString();
 
     /**
      * Set the client used to transport the request
@@ -44,14 +44,14 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return RequestInterface
      */
-    function setClient(ClientInterface $client);
+    public function setClient(ClientInterface $client);
 
     /**
      * Get the client used to transport the request
      *
      * @return ClientInterface $client
      */
-    function getClient();
+    public function getClient();
 
     /**
      * Set the URL of the request
@@ -63,7 +63,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return RequestInterface
      */
-    function setUrl($url);
+    public function setUrl($url);
 
     /**
      * Send the request
@@ -71,7 +71,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * @return Response
      * @throws RequestException on a request error
      */
-    function send();
+    public function send();
 
     /**
      * Get the previously received {@see Response} or NULL if the request has
@@ -79,7 +79,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return Response|null
      */
-    function getResponse();
+    public function getResponse();
 
     /**
      * Get the collection of key value pairs that will be used as the query
@@ -87,21 +87,21 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return QueryString
      */
-    function getQuery();
+    public function getQuery();
 
     /**
      * Get the HTTP method of the request
      *
      * @return string
      */
-    function getMethod();
+    public function getMethod();
 
     /**
      * Get the URI scheme of the request (http, https, ftp, etc)
      *
      * @return string
      */
-    function getScheme();
+    public function getScheme();
 
     /**
      * Set the URI scheme of the request (http, https, ftp, etc)
@@ -110,14 +110,14 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return RequestInterface
      */
-    function setScheme($scheme);
+    public function setScheme($scheme);
 
     /**
      * Get the host of the request
      *
      * @return string
      */
-    function getHost();
+    public function getHost();
 
     /**
      * Set the host of the request.  Including a port in the host will modify
@@ -127,14 +127,14 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return RequestInterface
      */
-    function setHost($host);
+    public function setHost($host);
 
     /**
      * Get the HTTP protocol version of the request
      *
      * @return string
      */
-    function getProtocolVersion();
+    public function getProtocolVersion();
 
     /**
      * Set the HTTP protocol version of the request (e.g. 1.1 or 1.0)
@@ -143,14 +143,14 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return RequestInterface
      */
-    function setProtocolVersion($protocol);
+    public function setProtocolVersion($protocol);
 
     /**
      * Get the path of the request (e.g. '/', '/index.html')
      *
      * @return string
      */
-    function getPath();
+    public function getPath();
 
     /**
      * Set the path of the request (e.g. '/', '/index.html')
@@ -159,14 +159,14 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return RequestInterface
      */
-    function setPath($path);
+    public function setPath($path);
 
     /**
      * Get the port that the request will be sent on if it has been set
      *
      * @return int|null
      */
-    function getPort();
+    public function getPort();
 
     /**
      * Set the port that the request will be sent on
@@ -175,14 +175,14 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return RequestInterface
      */
-    function setPort($port);
+    public function setPort($port);
 
     /**
      * Get the username to pass in the URL if set
      *
      * @return string|null
      */
-    function getUsername();
+    public function getUsername();
 
     /**
      * Set HTTP authorization parameters
@@ -196,14 +196,14 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * @see http://www.ietf.org/rfc/rfc2617.txt
      * @throws RequestException
      */
-    function setAuth($user, $password = '', $scheme = 'Basic');
+    public function setAuth($user, $password = '', $scheme = 'Basic');
 
     /**
      * Get the password to pass in the URL if set
      *
      * @return string|null
      */
-    function getPassword();
+    public function getPassword();
 
     /**
      * Get the resource part of the the request, including the path, query
@@ -211,7 +211,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return string
      */
-    function getResource();
+    public function getResource();
 
     /**
      * Get the full URL of the request (e.g. 'http://www.guzzle-project.com/')
@@ -221,14 +221,14 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return string|Url
      */
-    function getUrl($asObject = false);
+    public function getUrl($asObject = false);
 
     /**
      * Get the state of the request.  One of 'complete', 'sending', 'new'
      *
      * @return string
      */
-    function getState();
+    public function getState();
 
     /**
      * Set the state of the request
@@ -237,14 +237,14 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return RequestInterface
      */
-    function setState($state);
+    public function setState($state);
 
     /**
      * Get the cURL options that will be applied when the cURL handle is created
      *
      * @return Collection
      */
-    function getCurlOptions();
+    public function getCurlOptions();
 
     /**
      * Method to receive HTTP response headers as they are retrieved
@@ -253,7 +253,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return integer Returns the size of the data.
      */
-    function receiveResponseHeader($data);
+    public function receiveResponseHeader($data);
 
     /**
      * Set the EntityBody that will hold the response message's entity body.
@@ -267,14 +267,14 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return Request
      */
-    function setResponseBody(EntityBodyInterface $body);
+    public function setResponseBody(EntityBodyInterface $body);
 
     /**
      * Determine if the response body is repeatable (readable + seekable)
      *
      * @return bool
      */
-    function isResponseBodyRepeatable();
+    public function isResponseBodyRepeatable();
 
     /**
      * Manually set a response for the request.
@@ -289,14 +289,14 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return RequestInterface Returns a reference to the object.
      */
-    function setResponse(Response $response, $queued = false);
+    public function setResponse(Response $response, $queued = false);
 
     /**
      * Get an array of Cookies
      *
      * @return array
      */
-    function getCookies();
+    public function getCookies();
 
     /**
      * Get a cookie value by name
@@ -305,7 +305,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return null|string
      */
-    function getCookie($name);
+    public function getCookie($name);
 
     /**
      * Add a Cookie value by name to the Cookie header
@@ -315,7 +315,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return RequestInterface
      */
-    function addCookie($name, $value);
+    public function addCookie($name, $value);
 
     /**
      * Remove a specific cookie value by name
@@ -324,12 +324,12 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return RequestInterface
      */
-    function removeCookie($name);
+    public function removeCookie($name);
 
     /**
      * Returns whether or not the request can be cached
      *
      * @return bool
      */
-    function canCache();
+    public function canCache();
 }

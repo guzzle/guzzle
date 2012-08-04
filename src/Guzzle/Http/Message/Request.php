@@ -4,13 +4,11 @@ namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Event;
 use Guzzle\Common\Collection;
-use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Http\Utils;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\ClientInterface;
-use Guzzle\Http\QueryString;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\EntityBodyInterface;
 use Guzzle\Http\Url;
@@ -59,12 +57,12 @@ class Request extends AbstractMessage implements RequestInterface
     protected $state;
 
     /**
-     * @param string Auth username
+     * @var string Authentication username
      */
     protected $username;
 
     /**
-     * @param string Auth password
+     * @var string Auth password
      */
     protected $password;
 
@@ -494,7 +492,7 @@ class Request extends AbstractMessage implements RequestInterface
 
         if (strpos($data, 'HTTP/') === 0) {
 
-            list($dummy, $code, $status) = explode(' ', $data, 3);
+            list( , $code, $status) = explode(' ', $data, 3);
 
             // Only download the body of the response to the specified response
             // body when a successful response is received.

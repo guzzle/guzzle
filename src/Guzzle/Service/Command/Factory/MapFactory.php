@@ -8,13 +8,12 @@ namespace Guzzle\Service\Command\Factory;
 class MapFactory implements FactoryInterface
 {
     /**
-     * @var Associative array mapping command names to classes
+     * @var array Associative array mapping command names to classes
      */
     protected $map;
 
     /**
-     * @param array $map Associative array mapping command names to
-     *     classes
+     * @param array $map Associative array mapping command names to classes
      */
     public function __construct(array $map)
     {

@@ -27,7 +27,7 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      *
      * @return CookieJarInterface
      */
-    function remove($domain = null, $path = null, $name = null);
+    public function remove($domain = null, $path = null, $name = null);
 
     /**
      * Discard all temporary cookies.
@@ -38,14 +38,14 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      *
      * @return CookieJarInterface
      */
-    function removeTemporary();
+    public function removeTemporary();
 
     /**
      * Delete any expired cookies
      *
      * @return CookieJarInterface
      */
-    function removeExpired();
+    public function removeExpired();
 
     /**
      * Add a cookie to the cookie cookieJar
@@ -54,14 +54,14 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      *
      * @return bool Returns true on success or false on failure
      */
-    function add(Cookie $cookie);
+    public function add(Cookie $cookie);
 
     /**
      * Add cookies from a {@see Guzzle\Http\Message\Response} object
      *
      * @param Response $response Response object
      */
-    function addCookiesFromResponse(Response $response);
+    public function addCookiesFromResponse(Response $response);
 
     /**
      * Get cookies matching a request object
@@ -70,7 +70,7 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      *
      * @return array
      */
-    function getMatchingCookies(RequestInterface $request);
+    public function getMatchingCookies(RequestInterface $request);
 
     /**
      * Get all of the matching cookies
@@ -83,5 +83,5 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      *
      * @return array Returns an array of Cookie objects
      */
-    function all($domain = null, $path = null, $name = null, $skipDiscardable = false, $skipExpired = true);
+    public function all($domain = null, $path = null, $name = null, $skipDiscardable = false, $skipExpired = true);
 }

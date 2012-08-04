@@ -3,7 +3,6 @@
 namespace Guzzle\Service\Command;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Exception\BadMethodCallException;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
@@ -117,7 +116,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
      *     The callable must accept a {@see CommandInterface} object as the
      *     only argument.
      *
-     * @return Command
+     * @return self
      * @throws InvalidArgumentException
      */
     public function setOnComplete($callable)
@@ -161,7 +160,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
      *
      * @param ClientInterface $client The client object that will execute the command
      *
-     * @return Command
+     * @return self
      */
     public function setClient(ClientInterface $client)
     {

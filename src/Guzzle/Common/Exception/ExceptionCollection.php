@@ -17,7 +17,7 @@ class ExceptionCollection extends \Exception implements GuzzleException, \Iterat
     /**
      * Add exceptions to the collection
      *
-     * @param ExceptionCollection|Exception $e Exception to add
+     * @param ExceptionCollection|\Exception $e Exception to add
      *
      * @return ExceptionCollection;
      */
@@ -51,7 +51,7 @@ class ExceptionCollection extends \Exception implements GuzzleException, \Iterat
     /**
      * Allows array-like iteration over the request exceptions
      *
-     * @return ArrayIterator
+     * @return \ArrayIterator
      */
     public function getIterator()
     {

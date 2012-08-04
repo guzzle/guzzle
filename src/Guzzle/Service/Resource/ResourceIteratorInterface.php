@@ -16,14 +16,14 @@ interface ResourceIteratorInterface extends HasDispatcherInterface, \Iterator, \
      *
      * @return array
      */
-    function toArray();
+    public function toArray();
 
     /**
      * Retrieve the NextToken that can be used in other iterators.
      *
      * @return string Returns a NextToken
      */
-    function getNextToken();
+    public function getNextToken();
 
     /**
      * Attempt to limit the total number of resources returned by the iterator.
@@ -35,7 +35,7 @@ interface ResourceIteratorInterface extends HasDispatcherInterface, \Iterator, \
      *
      * @return ResourceIteratorInterface
      */
-    function setLimit($limit);
+    public function setLimit($limit);
 
     /**
      * Attempt to limit the total number of resources retrieved per request by
@@ -49,7 +49,7 @@ interface ResourceIteratorInterface extends HasDispatcherInterface, \Iterator, \
      *
      * @return ResourceIteratorInterface
      */
-    function setPageSize($pageSize);
+    public function setPageSize($pageSize);
 
     /**
      * Get a data option from the iterator
@@ -58,7 +58,7 @@ interface ResourceIteratorInterface extends HasDispatcherInterface, \Iterator, \
      *
      * @return mixed|null Returns NULL if not set or the value if set
      */
-    function get($key);
+    public function get($key);
 
     /**
      * Set a data option on the iterator
@@ -68,5 +68,5 @@ interface ResourceIteratorInterface extends HasDispatcherInterface, \Iterator, \
      *
      * @return ResourceIteratorInterface
      */
-    function set($key, $value);
+    public function set($key, $value);
 }

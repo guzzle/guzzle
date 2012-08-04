@@ -30,21 +30,21 @@ interface CurlMultiInterface extends HasDispatcherInterface, \Countable
      *
      * @return CurlMultiInterface
      */
-    function add(RequestInterface $request);
+    public function add(RequestInterface $request);
 
     /**
      * Get an array of attached {@see RequestInterface} objects
      *
      * @return array
      */
-    function all();
+    public function all();
 
     /**
      * Get the current state of the Pool
      *
      * @return string
      */
-    function getState();
+    public function getState();
 
     /**
      * Remove a request from the pool.
@@ -53,19 +53,19 @@ interface CurlMultiInterface extends HasDispatcherInterface, \Countable
      *
      * @return CurlMultiInterface
      */
-    function remove(RequestInterface $request);
+    public function remove(RequestInterface $request);
 
     /**
      * Reset the state and remove any attached RequestInterface objects
      *
      * @param bool $hard Set to true to close and reopen any open multi handles
      */
-    function reset($hard = false);
+    public function reset($hard = false);
 
     /**
      * Send a pool of {@see RequestInterface} requests.
      *
      * @throws ExceptionCollection if any requests threw exceptions during the transfer.
      */
-    function send();
+    public function send();
 }

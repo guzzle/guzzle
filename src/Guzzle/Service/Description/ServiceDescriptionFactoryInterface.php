@@ -19,5 +19,5 @@ interface ServiceDescriptionFactoryInterface
      *
      * @throws DescriptionBuilderException when the type is not recognized
      */
-    function build($config, array $options = null);
+    public function build($config, array $options = null);
 }

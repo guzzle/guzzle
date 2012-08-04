@@ -62,7 +62,7 @@ abstract class AbstractFactory
      * @param string $message Message for the exception
      *
      * @return string
-     * @throws Exception
+     * @throws \Exception
      */
     abstract protected function throwException($message = '');
 

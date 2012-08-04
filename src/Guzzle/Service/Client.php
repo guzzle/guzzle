@@ -13,6 +13,7 @@ use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\Factory\CompositeFactory;
 use Guzzle\Service\Command\Factory\ServiceDescriptionFactory;
 use Guzzle\Service\Command\Factory\FactoryInterface as CommandFactoryInterface;
+use Guzzle\Service\Resource\ResourceIteratorInterface;
 use Guzzle\Service\Resource\ResourceIteratorClassFactory;
 use Guzzle\Service\Resource\ResourceIteratorFactoryInterface;
 use Guzzle\Service\Description\ServiceDescription;

@@ -20,7 +20,7 @@ interface ServiceBuilderInterface
      * @return FromConfigInterface
      * @throws ServiceNotFoundException when a client cannot be found by name
      */
-    function get($name, $throwAway = false);
+    public function get($name, $throwAway = false);
 
     /**
      * Register a client by name with the service builder
@@ -30,5 +30,5 @@ interface ServiceBuilderInterface
      *
      * @return ServiceBuilderInterface
      */
-    function set($key, $service);
+    public function set($key, $service);
 }

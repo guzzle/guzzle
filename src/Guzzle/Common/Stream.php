@@ -36,14 +36,14 @@ class Stream implements StreamInterface
      */
     protected static $readWriteHash = array(
         'read' => array(
-            'r' => true, 'w+' => true, 'r+' => true, 'x+' => true, 'c+', 'x+' => true,
-            'rb' => true, 'w+b' => true, 'r+b' => true, 'x+b' => true, 'c+b', 'x+' => true,
-            'rt' => true, 'w+t' => true, 'r+t' => true, 'x+t' => true, 'c+t', 'x+' => true
+            'r' => true, 'w+' => true, 'r+' => true, 'x+' => true, 'c+' => true,
+            'rb' => true, 'w+b' => true, 'r+b' => true, 'x+b' => true, 'c+b' => true,
+            'rt' => true, 'w+t' => true, 'r+t' => true, 'x+t' => true, 'c+t' => true
         ),
         'write' => array(
-            'w' => true, 'w+' => true, 'rw' => true, 'r+' => true, 'x+' => true, 'c+', 'x+' => true,
-            'w+b' => true, 'r+b' => true, 'x+b' => true, 'c+b', 'x+' => true,
-            'w+t' => true, 'r+t' => true, 'x+t' => true, 'c+t', 'x+' => true
+            'w' => true, 'w+' => true, 'rw' => true, 'r+' => true, 'x+' => true, 'c+' => true,
+            'w+b' => true, 'r+b' => true, 'x+b' => true, 'c+b' => true,
+            'w+t' => true, 'r+t' => true, 'x+t' => true, 'c+t' => true
         )
     );
 

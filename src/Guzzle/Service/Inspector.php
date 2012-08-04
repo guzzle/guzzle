@@ -4,6 +4,7 @@ namespace Guzzle\Service;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Common\Validation\ConstraintInterface;
 use Guzzle\Service\Exception\ValidationException;
 
 /**
@@ -24,7 +25,7 @@ class Inspector
     protected $constraints = array();
 
     /**
-     * @var Cache of instantiated constraints
+     * @var array Cache of instantiated constraints
      */
     protected $constraintCache = array();
 

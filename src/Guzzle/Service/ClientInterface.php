@@ -9,6 +9,7 @@ use Guzzle\Http\ClientInterface as HttpClientInterface;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Command\Factory\FactoryInterface as CommandFactoryInterface;
+use Guzzle\Service\Resource\ResourceIteratorInterface;
 use Guzzle\Service\Resource\ResourceIteratorFactoryInterface;
 
 /**
@@ -33,7 +34,7 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
      * @return CommandInterface
      * @throws InvalidArgumentException if no command can be found by name
      */
-    function getCommand($name, array $args = array());
+    public function getCommand($name, array $args = array());
 
     /**
      * Execute one or more commands
@@ -44,7 +45,7 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
      *               commands if an array of commands was passed.
      * @throws InvalidArgumentException if an invalid command is passed
      */
-    function execute($command);
+    public function execute($command);
 
     /**
      * Set the service description of the client
@@ -55,14 +56,14 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
      *
      * @return ClientInterface
      */
-    function setDescription(ServiceDescription $service, $updateFactory = true);
+    public function setDescription(ServiceDescription $service, $updateFactory = true);
 
     /**
      * Get the service description of the client
      *
      * @return ServiceDescription|null
      */
-    function getDescription();
+    public function getDescription();
 
     /**
      * Set the command factory used to create commands by name
@@ -71,7 +72,7 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
      *
      * @return ClientInterface
      */
-    function setCommandFactory(CommandFactoryInterface $factory);
+    public function setCommandFactory(CommandFactoryInterface $factory);
 
     /**
      * Get a resource iterator from the client.
@@ -82,7 +83,7 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
      *
      * @return ResourceIteratorInterface
      */
-    function getIterator($command, array $commandOptions = null, array $iteratorOptions = array());
+    public function getIterator($command, array $commandOptions = null, array $iteratorOptions = array());
 
     /**
      * Set the resource iterator factory associated with the client
@@ -91,7 +92,7 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
      *
      * @return ClientInterface
      */
-    function setResourceIteratorFactory(ResourceIteratorFactoryInterface $factory);
+    public function setResourceIteratorFactory(ResourceIteratorFactoryInterface $factory);
 
     /**
      * Set the inflector used with the client
@@ -100,12 +101,12 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
      *
      * @return ClientInterface
      */
-    function setInflector(InflectorInterface $inflector);
+    public function setInflector(InflectorInterface $inflector);
 
     /**
      * Get the inflector used with the client
      *
      * @return InflectorInterface
      */
-    function getInflector();
+    public function getInflector();
 }

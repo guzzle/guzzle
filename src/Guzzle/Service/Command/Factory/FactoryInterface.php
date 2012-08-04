@@ -17,5 +17,5 @@ interface FactoryInterface
      *
      * @return null|CommandInterface
      */
-    function factory($name, array $args = array());
+    public function factory($name, array $args = array());
 }

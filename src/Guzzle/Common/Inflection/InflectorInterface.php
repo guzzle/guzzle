@@ -15,7 +15,7 @@ interface InflectorInterface
      *
      * @return string
      */
-    function snake($word);
+    public function snake($word);
 
     /**
      * Converts strings from snake_case to upper CamelCase
@@ -24,5 +24,5 @@ interface InflectorInterface
      *
      * @return string
      */
-    function camel($word);
+    public function camel($word);
 }

@@ -352,7 +352,7 @@ class Cookie
     /**
      * Get a specific data point from the extra cookie data
      *
-     * @param $name Name of the data point to retrieve
+     * @param string $name Name of the data point to retrieve
      *
      * @return null|string
      */

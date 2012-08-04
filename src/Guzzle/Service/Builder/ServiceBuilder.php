@@ -3,6 +3,7 @@
 namespace Guzzle\Service\Builder;
 
 use Guzzle\Common\AbstractHasDispatcher;
+use Guzzle\Http\ClientInterface;
 use Guzzle\Service\Builder\ServiceBuilderAbstractFactory;
 use Guzzle\Service\Exception\ServiceBuilderException;
 use Guzzle\Service\Exception\ServiceNotFoundException;
@@ -114,7 +115,7 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
         }
 
         // Convert references to the actual client
-        foreach ($this->builderConfig[$name]['params'] as $k => &$v) {
+        foreach ($this->builderConfig[$name]['params'] as &$v) {
             if (0 === strpos($v, '{') && strlen($v) - 1 == strrpos($v, '}')) {
                 $v = $this->get(trim(str_replace(array('{', '}'), '', $v)));
             }

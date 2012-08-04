@@ -2,6 +2,8 @@
 
 namespace Guzzle\Http\Message;
 
+use Guzzle\Common\Exception\InvalidArgumentException;
+
 /**
  * POST file upload
  */
@@ -14,14 +16,14 @@ interface PostFileInterface
      *
      * @return self
      */
-    function setFieldName($name);
+    public function setFieldName($name);
 
     /**
      * Get the name of the field
      *
      * @return string
      */
-    function getFieldName();
+    public function getFieldName();
 
     /**
      * Set the path to the file
@@ -31,14 +33,14 @@ interface PostFileInterface
      * @return self
      * @throws InvalidArgumentException if the file cannot be read
      */
-    function setFilename($path);
+    public function setFilename($path);
 
     /**
      * Get the full path to the file
      *
      * @return string
      */
-    function getFilename();
+    public function getFilename();
 
     /**
      * Set the Content-Type of the file
@@ -47,19 +49,19 @@ interface PostFileInterface
      *
      * @return self
      */
-    function setContentType($type);
+    public function setContentType($type);
 
     /**
      * Get the Content-Type of the file
      *
      * @return string
      */
-    function getContentType();
+    public function getContentType();
 
     /**
      * Get a cURL ready string for the upload
      *
      * @return string
      */
-    function getCurlString();
+    public function getCurlString();
 }

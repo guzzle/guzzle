@@ -15,7 +15,7 @@ interface HasDispatcherInterface
      *
      * @return array
      */
-    static function getAllEvents();
+    public static function getAllEvents();
 
     /**
      * Set the EventDispatcher of the request
@@ -24,14 +24,14 @@ interface HasDispatcherInterface
      *
      * @return HasDispatcherInterface
      */
-    function setEventDispatcher(EventDispatcherInterface $eventDispatcher);
+    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher);
 
     /**
      * Get the EventDispatcher of the request
      *
      * @return EventDispatcherInterface
      */
-    function getEventDispatcher();
+    public function getEventDispatcher();
 
     /**
      * Helper to dispatch Guzzle events and set the event name on the event
@@ -39,7 +39,7 @@ interface HasDispatcherInterface
      * @param string $eventName Name of the event to dispatch
      * @param array  $context   Context of the event
      */
-    function dispatch($eventName, array $context = array());
+    public function dispatch($eventName, array $context = array());
 
     /**
      * Add an event subscriber to the dispatcher
@@ -48,5 +48,5 @@ interface HasDispatcherInterface
      *
      * @return AbstractHasDispatcher
      */
-    function addSubscriber(EventSubscriberInterface $subscriber);
+    public function addSubscriber(EventSubscriberInterface $subscriber);
 }

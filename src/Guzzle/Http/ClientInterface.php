@@ -4,6 +4,7 @@ namespace Guzzle\Http;
 
 use Guzzle\Common\HasDispatcherInterface;
 use Guzzle\Common\Collection;
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactoryInterface;
@@ -23,7 +24,7 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @return ClientInterface
      */
-    function setConfig($config);
+    public function setConfig($config);
 
     /**
      * Get a configuration setting or all of the configuration settings
@@ -33,14 +34,14 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @return mixed|Collection
      */
-    function getConfig($key = false);
+    public function getConfig($key = false);
 
     /**
      * Get the default HTTP headers to add to each request created by the client
      *
      * @return Collection
      */
-    function getDefaultHeaders();
+    public function getDefaultHeaders();
 
     /**
      * Set the default HTTP headers to add to each request created by the client
@@ -49,7 +50,7 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @return ClientInterface
      */
-    function setDefaultHeaders($headers);
+    public function setDefaultHeaders($headers);
 
     /**
      * Set the URI template expander to use with the client
@@ -58,14 +59,14 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @return ClientInterface
      */
-    function setUriTemplate(UriTemplateInterface $uriTemplate);
+    public function setUriTemplate(UriTemplateInterface $uriTemplate);
 
     /**
      * Get the URI template expander used by the client
      *
-     * @return UriTemplate
+     * @return UriTemplateInterface
      */
-    function getUriTemplate();
+    public function getUriTemplate();
 
     /**
      * Expand a URI template using client configuration data
@@ -75,7 +76,7 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @return string
      */
-    function expandTemplate($template, array $variables = null);
+    public function expandTemplate($template, array $variables = null);
 
     /**
      * Create and return a new {@see RequestInterface} configured for the client.
@@ -94,7 +95,7 @@ interface ClientInterface extends HasDispatcherInterface
      * @throws InvalidArgumentException if a URI array is passed that does not contain exactly two elements: the URI
      *                                  followed by template variables
      */
-    function createRequest($method = RequestInterface::GET, $uri = null, $headers = null, $body = null);
+    public function createRequest($method = RequestInterface::GET, $uri = null, $headers = null, $body = null);
 
     /**
      * Get the client's base URL as either an expanded or raw URI template
@@ -104,7 +105,7 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @return string|null
      */
-    function getBaseUrl($expand = true);
+    public function getBaseUrl($expand = true);
 
     /**
      * Set the base URL of the client
@@ -113,7 +114,7 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @return ClientInterface
      */
-    function setBaseUrl($url);
+    public function setBaseUrl($url);
 
     /**
      * Set the name of your application and application version that will be
@@ -124,7 +125,7 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @return ClientInterface
      */
-    function setUserAgent($userAgent, $includeDefault = false);
+    public function setUserAgent($userAgent, $includeDefault = false);
 
     /**
      * Create a GET request for the client
@@ -136,7 +137,7 @@ interface ClientInterface extends HasDispatcherInterface
      * @return RequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    function get($uri = null, $headers = null, $body = null);
+    public function get($uri = null, $headers = null, $body = null);
 
     /**
      * Create a HEAD request for the client
@@ -147,7 +148,7 @@ interface ClientInterface extends HasDispatcherInterface
      * @return RequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    function head($uri = null, $headers = null);
+    public function head($uri = null, $headers = null);
 
     /**
      * Create a DELETE request for the client
@@ -158,7 +159,7 @@ interface ClientInterface extends HasDispatcherInterface
      * @return RequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    function delete($uri = null, $headers = null);
+    public function delete($uri = null, $headers = null);
 
     /**
      * Create a PUT request for the client
@@ -170,7 +171,7 @@ interface ClientInterface extends HasDispatcherInterface
      * @return EntityEnclosingRequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    function put($uri = null, $headers = null, $body = null);
+    public function put($uri = null, $headers = null, $body = null);
 
     /**
      * Create a PATCH request for the client
@@ -182,7 +183,7 @@ interface ClientInterface extends HasDispatcherInterface
      * @return EntityEnclosingRequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    function patch($uri = null, $headers = null, $body = null);
+    public function patch($uri = null, $headers = null, $body = null);
 
     /**
      * Create a POST request for the client
@@ -197,7 +198,7 @@ interface ClientInterface extends HasDispatcherInterface
      * @return EntityEnclosingRequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    function post($uri = null, $headers = null, $postBody = null);
+    public function post($uri = null, $headers = null, $postBody = null);
 
     /**
      * Create an OPTIONS request for the client
@@ -207,7 +208,7 @@ interface ClientInterface extends HasDispatcherInterface
      * @return RequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    function options($uri = null);
+    public function options($uri = null);
 
     /**
      * Sends a single request or an array of requests in parallel
@@ -216,7 +217,7 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @return array Returns the response(s)
      */
-    function send($requests);
+    public function send($requests);
 
     /**
      * Set a curl multi object to be used internally by the client for
@@ -226,7 +227,7 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @return ClientInterface
      */
-    function setCurlMulti(CurlMultiInterface $curlMulti);
+    public function setCurlMulti(CurlMultiInterface $curlMulti);
 
     /**
      * Get the curl multi object to be used internally by the client for
@@ -234,7 +235,7 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @return CurlMultiInterface
      */
-    function getCurlMulti();
+    public function getCurlMulti();
 
     /**
      * Set the request factory to use with the client when creating requests
@@ -243,5 +244,5 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @return ClientInterface
      */
-    function setRequestFactory(RequestFactoryInterface $factory);
+    public function setRequestFactory(RequestFactoryInterface $factory);
 }

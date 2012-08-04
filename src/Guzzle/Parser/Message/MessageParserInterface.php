@@ -14,7 +14,7 @@ interface MessageParserInterface
      *
      * @return array|bool Returns false if the message is invalid
      */
-    function parseRequest($message);
+    public function parseRequest($message);
 
     /**
      * Parse an HTTP response message into an associative array of parts.
@@ -23,5 +23,5 @@ interface MessageParserInterface
      *
      * @return array|bool Returns false if the message is invalid
      */
-    function parseResponse($message);
+    public function parseResponse($message);
 }

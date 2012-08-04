@@ -26,21 +26,21 @@ interface CommandInterface
      * @return CommandInterface
      * @throws InvalidArgumentException
      */
-    function setOnComplete($callable);
+    public function setOnComplete($callable);
 
     /**
      * Get the short form name of the command
      *
      * @return string
      */
-    function getName();
+    public function getName();
 
     /**
      * Get the API command information about the command
      *
      * @return ApiCommandInterface
      */
-    function getApiCommand();
+    public function getApiCommand();
 
     /**
      * Execute the command and return the result
@@ -48,23 +48,23 @@ interface CommandInterface
      * @return mixed Returns the result of {@see CommandInterface::execute}ß
      * @throws CommandException if a client has not been associated with the command
      */
-    function execute();
+    public function execute();
 
     /**
      * Get the client object that will execute the command
      *
      * @return ClientInterface|null
      */
-    function getClient();
+    public function getClient();
 
     /**
      * Set the client object that will execute the command
      *
      * @param ClientInterface $client The client object that will execute the command
      *
-     * @return Command
+     * @return CommandInterface
      */
-    function setClient(ClientInterface $client);
+    public function setClient(ClientInterface $client);
 
     /**
      * Get the request object associated with the command
@@ -72,7 +72,7 @@ interface CommandInterface
      * @return RequestInterface
      * @throws CommandException if the command has not been executed
      */
-    function getRequest();
+    public function getRequest();
 
     /**
      * Get the response object associated with the command
@@ -80,7 +80,7 @@ interface CommandInterface
      * @return Response
      * @throws CommandException if the command has not been executed
      */
-    function getResponse();
+    public function getResponse();
 
     /**
      * Get the result of the command
@@ -89,7 +89,7 @@ interface CommandInterface
      *      object unless overridden in a subclass
      * @throws CommandException if the command has not been executed
      */
-    function getResult();
+    public function getResult();
 
     /**
      * Set the result of the command
@@ -98,21 +98,21 @@ interface CommandInterface
      *
      * @return self
      */
-    function setResult($result);
+    public function setResult($result);
 
     /**
      * Returns TRUE if the command has been prepared for executing
      *
      * @return bool
      */
-    function isPrepared();
+    public function isPrepared();
 
     /**
      * Returns TRUE if the command has been executed
      *
      * @return bool
      */
-    function isExecuted();
+    public function isExecuted();
 
     /**
      * Prepare the command for executing and create a request object.
@@ -121,7 +121,7 @@ interface CommandInterface
      * @throws CommandException if a client object has not been set previously
      *      or in the prepare()
      */
-    function prepare();
+    public function prepare();
 
     /**
      * Get the object that manages the request headers that will be set on any
@@ -129,5 +129,5 @@ interface CommandInterface
      *
      * @return Collection
      */
-    function getRequestHeaders();
+    public function getRequestHeaders();
 }

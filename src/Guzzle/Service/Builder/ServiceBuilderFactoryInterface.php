@@ -15,5 +15,5 @@ interface ServiceBuilderFactoryInterface
      *
      * @return ServiceBuilderInterface
      */
-    function build($config, array $options = null);
+    public function build($config, array $options = null);
 }

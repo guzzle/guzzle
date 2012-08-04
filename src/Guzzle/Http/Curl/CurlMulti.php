@@ -157,7 +157,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      * @param RequestInterface $request Request to add
      * @param bool             $async   Set to TRUE to add to the current scope
      *
-     * @return CurlMutli
+     * @return self
      */
     public function add(RequestInterface $request, $async = false)
     {
@@ -462,7 +462,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      * Remove a request that encountered an exception
      *
      * @param RequestInterface $request Request to remove
-     * @param Exception        $e       Exception encountered
+     * @param \Exception       $e       Exception encountered
      */
     protected function removeErroredRequest(RequestInterface $request, \Exception $e)
     {
@@ -517,6 +517,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
             }
             // The error was not handled, so fail
             if ($state == RequestInterface::STATE_ERROR) {
+                /** @var $curlException \Exception */
                 throw $curlException;
             }
         }
@@ -548,7 +549,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      * @param CurlHandle       $handle  Curl handle object
      * @param array            $curl    Array returned from curl_multi_info_read
      *
-     * @return Exception|bool
+     * @return \Exception|bool
      */
     private function isCurlException(RequestInterface $request, CurlHandle $handle, array $curl)
     {

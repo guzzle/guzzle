@@ -32,10 +32,7 @@ abstract class AbstractMessage implements MessageInterface
     protected $protocolVersion = '1.1';
 
     /**
-     * Get application and plugin specific parameters set on the message.  The
-     * return object is a reference to the internal object.
-     *
-     * @return Collection
+     * {@inheritdoc}
      */
     public function getParams()
     {
@@ -43,12 +40,7 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Add a header to an existing collection of headers.
-     *
-     * @param string $header Header name to add
-     * @param string $value  Value of the header
-     *
-     * @return AbstractMessage
+     * {@inheritdoc}
      */
     public function addHeader($header, $value)
     {
@@ -64,11 +56,7 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Add and merge in an array of HTTP headers.
-     *
-     * @param array $headers Associative array of header data.
-     *
-     * @return AbstractMessage
+     * {@inheritdoc}
      */
     public function addHeaders(array $headers)
     {
@@ -80,15 +68,7 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Retrieve an HTTP header by name.  Performs a case-insensitive search of
-     * all headers.
-     *
-     * @param string $header Header to retrieve.
-     * @param bool   $string Set to true to get the header as a string
-     *
-     * @return string|Header|null Returns NULL if no matching header is found.
-     *     Returns a string if $string is set to TRUE.  Returns a Header object
-     *     if a matching header is found.
+     * {@inheritdoc}
      */
     public function getHeader($header, $string = false)
     {
@@ -101,11 +81,7 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Get all headers as a collection
-     *
-     * @param $asObjects Set to true to retrieve a collection of Header objects
-     *
-     * @return Collection Returns a {@see Collection} of all headers
+     * {@inheritdoc}
      */
     public function getHeaders($asObjects = false)
     {
@@ -125,9 +101,7 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Get an array of message header lines
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function getHeaderLines()
     {
@@ -143,12 +117,7 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Set an HTTP header
-     *
-     * @param string $header Name of the header to set.
-     * @param mixed  $value  Value to set.
-     *
-     * @return AbstractMessage
+     * {@inheritdoc}
      */
     public function setHeader($header, $value)
     {
@@ -171,11 +140,7 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Overwrite all HTTP headers with the supplied array of headers
-     *
-     * @param array $headers Associative array of header data.
-     *
-     * @return AbstractMessage
+     * {@inheritdoc}
      */
     public function setHeaders(array $headers)
     {
@@ -198,11 +163,7 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Check if the specified header is present.
-     *
-     * @param string $header The header to check.
-     *
-     * @return bool Returns TRUE or FALSE if the header is present
+     * {@inheritdoc}
      */
     public function hasHeader($header)
     {
@@ -210,11 +171,7 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Remove a specific HTTP header.
-     *
-     * @param string $header HTTP header to remove.
-     *
-     * @return AbstractMessage
+     * {@inheritdoc}
      */
     public function removeHeader($header)
     {
@@ -226,12 +183,7 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Get a tokenized header as a Collection
-     *
-     * @param string $header Header to retrieve
-     * @param string $token  Token separator
-     *
-     * @return Collection|null
+     * {@inheritdoc}
      */
     public function getTokenizedHeader($header, $token = ';')
     {
@@ -262,15 +214,7 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Set a tokenized header on the request that implodes a Collection of data
-     * into a string separated by a token
-     *
-     * @param string           $header Header to set
-     * @param array|Collection $data   Header data
-     * @param string           $token  Token delimiter
-     *
-     * @return AbstractMessage
-     * @throws InvalidArgumentException if data is not an array or Collection
+     * {@inheritdoc}
      */
     public function setTokenizedHeader($header, $data, $token = ';')
     {
@@ -289,11 +233,7 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Get a Cache-Control directive from the message
-     *
-     * @param string $directive Directive to retrieve
-     *
-     * @return null|string
+     * {@inheritdoc}
      */
     public function getCacheControlDirective($directive)
     {
@@ -301,11 +241,7 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Check if the message has a Cache-Control directive
-     *
-     * @param string $directive Directive to check
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function hasCacheControlDirective($directive)
     {
@@ -313,12 +249,7 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Add a Cache-Control directive on the message
-     *
-     * @param string      $directive Directive to set
-     * @param bool|string $value     Value to set
-     *
-     * @return AbstractMessage
+     * {@inheritdoc}
      */
     public function addCacheControlDirective($directive, $value = true)
     {
@@ -329,11 +260,7 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Remove a Cache-Control directive from the message
-     *
-     * @param string $directive Directive to remove
-     *
-     * @return AbstractMessage
+     * {@inheritdoc}
      */
     public function removeCacheControlDirective($directive)
     {

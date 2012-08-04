@@ -31,5 +31,5 @@ interface CookieParserInterface
      *     - port (array|str) - Array of ports or null
      *     - http_only (bool) - HTTP only cookie
      */
-    function parseCookie($cookie, $host = null, $path = null, $decode = false);
+    public function parseCookie($cookie, $host = null, $path = null, $decode = false);
 }

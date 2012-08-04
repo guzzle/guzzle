@@ -15,5 +15,5 @@ interface DescriptionBuilderInterface
      *
      * @return ServiceDescriptionInterface
      */
-    function build($config, array $options = null);
+    public function build($config, array $options = null);
 }

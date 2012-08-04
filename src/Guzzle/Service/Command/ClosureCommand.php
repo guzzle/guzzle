@@ -34,6 +34,7 @@ class ClosureCommand extends AbstractCommand
     protected function build()
     {
         $closure = $this->get('closure');
+        /** @var $closure \Closure */
         $this->request = $closure($this, $this->apiCommand);
 
         if (!$this->request || !$this->request instanceof RequestInterface) {

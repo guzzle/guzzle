@@ -2,8 +2,6 @@
 
 namespace Guzzle\Common\Batch;
 
-use Guzzle\Common\HasDispatcherInterface;
-use Guzzle\Common\Exception\InvalidArgumentException;
 
 /**
  * Interface for efficiently transferring items in a queue using batches
@@ -17,19 +15,19 @@ interface BatchInterface
      *
      * @return self
      */
-    function add($item);
+    public function add($item);
 
     /**
      * Flush the batch and transfer the items
      *
      * @return array Returns an array flushed items
      */
-    function flush();
+    public function flush();
 
     /**
      * Check if the batch is empty and has further items to transfer
      *
      * @return bool
      */
-    function isEmpty();
+    public function isEmpty();
 }

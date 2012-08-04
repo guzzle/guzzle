@@ -76,7 +76,7 @@ class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Co
     /**
      * Get the requests in the history
      *
-     * @return ArrayIterator
+     * @return \ArrayIterator
      */
     public function getIterator()
     {

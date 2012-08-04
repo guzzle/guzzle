@@ -244,7 +244,6 @@ class LogPlugin implements EventSubscriberInterface
         $stderr = $handle->getStderr(true);
         if ($stderr) {
             rewind($stderr);
-            $addedBody = false;
             while ($line = fgets($stderr)) {
                 // * - Debug | < - Downstream | > - Upstream
                 if ($line[0] == '*') {
@@ -262,7 +261,6 @@ class LogPlugin implements EventSubscriberInterface
                         } else {
                             $message .= (string) $request->getBody() . "\r\n";
                         }
-                        $addedBody = true;
                     }
                 }
             }

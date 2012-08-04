@@ -15,5 +15,5 @@ interface ResourceIteratorFactoryInterface
      *
      * @return ResourceIteratorInterface
      */
-    function build($data, array $options = null);
+    public function build($data, array $options = null);
 }

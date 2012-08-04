@@ -17,5 +17,5 @@ interface UrlParserInterface
      *     parse_url().  When an array key is missing from this array,
      *     you must fill it in with NULL to avoid warnings in calling code.
      */
-    function parseUrl($url);
+    public function parseUrl($url);
 }

@@ -16,5 +16,5 @@ interface LogAdapterInterface
      * @param integer $priority Priority of message (use the \LOG_* constants of 0 - 7)
      * @param mixed   $extras   Extra information to log in event
      */
-    function log($message, $priority = LOG_INFO, $extras = null);
+    public function log($message, $priority = LOG_INFO, $extras = null);
 }

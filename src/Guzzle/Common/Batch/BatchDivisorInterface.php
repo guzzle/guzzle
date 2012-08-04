@@ -16,5 +16,5 @@ interface BatchDivisorInterface
      * @return array|\Traversable Returns an array or Traversable object that
      *                            contains arrays of items to transfer
      */
-    function createBatches(\SplQueue $queue);
+    public function createBatches(\SplQueue $queue);
 }

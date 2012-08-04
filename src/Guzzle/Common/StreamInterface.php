@@ -64,7 +64,7 @@ interface StreamInterface
     /**
      * Get the size of the stream if able
      *
-     * @return int|false
+     * @return int|bool
      */
     public function getSize();
 

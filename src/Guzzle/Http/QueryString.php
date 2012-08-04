@@ -213,7 +213,7 @@ class QueryString extends Collection
      * Provide a function for combining multi-valued query string parameters
      * into a single or multiple fields
      *
-     * @param callback|null $callback A function or callback array that accepts
+     * @param callable|null $callback A function or callback array that accepts
      *      a $key, $value, $encodeFields, and $encodeValues as arguments and
      *      returns an associative array containing the combined values.  Set
      *      to null to remove any custom aggregator.

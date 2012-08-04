@@ -166,7 +166,7 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
     /**
      * Returns an iterator
      *
-     * @return ArrayIterator
+     * @return \ArrayIterator
      */
     public function getIterator()
     {

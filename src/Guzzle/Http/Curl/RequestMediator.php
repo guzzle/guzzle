@@ -55,7 +55,7 @@ class RequestMediator
      *
      * @return int
      */
-    public function receiveResponseHeader ($curl, $header)
+    public function receiveResponseHeader($curl, $header)
     {
         return $this->request->receiveResponseHeader($header);
     }

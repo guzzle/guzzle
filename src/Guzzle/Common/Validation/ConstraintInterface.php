@@ -13,8 +13,7 @@ interface ConstraintInterface
      * @param mixed $value   The value to validate
      * @param array $options Constraint options
      *
-     * @return bool|string Returns TRUE if valid, or an error message string
-     *                     if the value is not valid.
+     * @return bool|string Returns TRUE if valid, or an error message string if the value is not valid.
      */
-    function validate($value, array $options = null);
+    public function validate($value, array $options = null);
 }

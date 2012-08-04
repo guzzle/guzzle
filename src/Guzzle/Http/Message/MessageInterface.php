@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http\Message;
 
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Collection;
 
 /**
@@ -14,7 +15,7 @@ interface MessageInterface
      *
      * @return Collection
      */
-    function getParams();
+    public function getParams();
 
     /**
      * Add a header to an existing collection of headers.
@@ -24,7 +25,7 @@ interface MessageInterface
      *
      * @return MessageInterface
      */
-    function addHeader($header, $value);
+    public function addHeader($header, $value);
 
     /**
      * Add and merge in an array of HTTP headers.
@@ -33,7 +34,7 @@ interface MessageInterface
      *
      * @return MessageInterface
      */
-    function addHeaders(array $headers);
+    public function addHeaders(array $headers);
 
     /**
      * Retrieve an HTTP header by name.  Performs a case-insensitive search of
@@ -46,7 +47,7 @@ interface MessageInterface
      *     Returns a string if $string is set to TRUE.  Returns a Header object
      *     if a matching header is found.
      */
-    function getHeader($header, $string = false);
+    public function getHeader($header, $string = false);
 
     /**
      * Get a tokenized header as a Collection
@@ -56,7 +57,7 @@ interface MessageInterface
      *
      * @return Collection|null
      */
-    function getTokenizedHeader($header, $token = ';');
+    public function getTokenizedHeader($header, $token = ';');
 
     /**
      * Set a tokenized header on the request that implodes a Collection of data
@@ -69,23 +70,23 @@ interface MessageInterface
      * @return MessageInterface
      * @throws InvalidArgumentException if data is not an array or Collection
      */
-    function setTokenizedHeader($header, $data, $token = ';');
+    public function setTokenizedHeader($header, $data, $token = ';');
 
     /**
      * Get all headers as a collection
      *
-     * @param $asObjects Set to true to retrieve a collection of Header objects
+     * @param bool $asObjects Set to true to retrieve a collection of Header objects
      *
      * @return Collection Returns a {@see Collection} of all headers
      */
-    function getHeaders($asObjects = false);
+    public function getHeaders($asObjects = false);
 
     /**
      * Get an array of message header lines
      *
      * @return array
      */
-    function getHeaderLines();
+    public function getHeaderLines();
 
     /**
      * Check if the specified header is present.
@@ -94,7 +95,7 @@ interface MessageInterface
      *
      * @return bool Returns TRUE or FALSE if the header is present
      */
-    function hasHeader($header);
+    public function hasHeader($header);
 
     /**
      * Remove a specific HTTP header.
@@ -103,7 +104,7 @@ interface MessageInterface
      *
      * @return MessageInterface
      */
-    function removeHeader($header);
+    public function removeHeader($header);
 
     /**
      * Set an HTTP header
@@ -113,7 +114,7 @@ interface MessageInterface
      *
      * @return MessageInterface
      */
-    function setHeader($header, $value);
+    public function setHeader($header, $value);
 
     /**
      * Overwrite all HTTP headers with the supplied array of headers
@@ -122,14 +123,14 @@ interface MessageInterface
      *
      * @return MessageInterface
      */
-    function setHeaders(array $headers);
+    public function setHeaders(array $headers);
 
     /**
      * Get the raw message headers as a string
      *
      * @return string
      */
-    function getRawHeaders();
+    public function getRawHeaders();
 
     /**
      * Get a Cache-Control directive from the message
@@ -138,7 +139,7 @@ interface MessageInterface
      *
      * @return null|string
      */
-    function getCacheControlDirective($directive);
+    public function getCacheControlDirective($directive);
 
     /**
      * Check if the message has a Cache-Control directive
@@ -147,7 +148,7 @@ interface MessageInterface
      *
      * @return bool
      */
-    function hasCacheControlDirective($directive);
+    public function hasCacheControlDirective($directive);
 
     /**
      * Add a Cache-Control directive on the message
@@ -157,7 +158,7 @@ interface MessageInterface
      *
      * @return MessageInterface
      */
-    function addCacheControlDirective($directive, $value = true);
+    public function addCacheControlDirective($directive, $value = true);
 
     /**
      * Remove a Cache-Control directive from the message
@@ -166,5 +167,5 @@ interface MessageInterface
      *
      * @return MessageInterface
      */
-    function removeCacheControlDirective($directive);
+    public function removeCacheControlDirective($directive);
 }

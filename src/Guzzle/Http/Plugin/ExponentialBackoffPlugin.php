@@ -35,7 +35,7 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
     protected $maxRetries;
 
     /**
-     * @var Closure
+     * @var \Closure
      */
     protected $delayClosure;
 

@@ -2,7 +2,6 @@
 
 namespace Guzzle\Common\Validation;
 
-use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Service\Inspector;
 
 /**

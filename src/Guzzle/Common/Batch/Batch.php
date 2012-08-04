@@ -2,7 +2,6 @@
 
 namespace Guzzle\Common\Batch;
 
-use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Exception\BatchTransferException;
 
 /**

@@ -78,9 +78,8 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      * three parameters: (string) $key, (string) $value and
      * return Boolean TRUE or FALSE for each value.
      *
-     * @param Closure $closure Closure evaluation function
-     * @param bool    $static  Set to TRUE to use the same class as the return
-     *                         rather than returning a Collection object
+     * @param \Closure $closure Closure evaluation function
+     * @param bool     $static  Set to TRUE to use the same class as the return rather than returning a Collection
      *
      * @return Collection
      */
@@ -110,8 +109,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      * Get a specific key value.
      *
      * @param string $key     Key to retrieve.
-     * @param mixed  $default If the key is not found, set this
-     *                        value to specify a default
+     * @param mixed  $default If the key is not found, set this value to specify a default
      *
      * @return mixed|null Value of the key or NULL
      */
@@ -163,7 +161,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      *
      * @param string $key Key to search for
      *
-     * @return false|string Returns false if not found, otherwise returns the key
+     * @return bool|string Returns false if not found, otherwise returns the key
      */
     public function keySearch($key)
     {
@@ -181,8 +179,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      *
      * @param string $value Value to search for
      *
-     * @return mixed Returns the key if the value was found FALSE if the value
-     *               was not found.
+     * @return mixed Returns the key if the value was found FALSE if the value was not found.
      */
     public function hasValue($value)
     {
@@ -195,10 +192,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      * three parameters: (string) $key, (string) $value, (array) $context and
      * return a modified value
      *
-     * @param Closure $closure Closure to apply
-     * @param array   $context Context to pass to the closure
-     * @param bool    $static  Set to TRUE to use the same class as the return
-     *                         rather than returning a Collection object
+     * @param \Closure $closure Closure to apply
+     * @param array    $context Context to pass to the closure
+     * @param bool     $static  Set to TRUE to use the same class as the return rather than returning a Collection
      *
      * @return Collection
      */
