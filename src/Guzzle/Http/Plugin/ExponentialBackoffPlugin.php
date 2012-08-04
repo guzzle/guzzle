@@ -264,7 +264,7 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
             $delayTime = microtime(true) + $delay;
             // Send the request again
             $request->setState(RequestInterface::STATE_TRANSFER);
-            $params->set(self::DELAY_PARAM, $delay);
+            $params->set(self::DELAY_PARAM, $delayTime);
         }
     }
 }
