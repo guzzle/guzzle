@@ -162,4 +162,16 @@ class StreamTest extends \Guzzle\Tests\GuzzleTestCase
         $stream = new Stream($handle);
         $this->assertEquals(0, $stream->write('foo'));
     }
+
+    /**
+     * @covers Guzzle\Common\Stream::ftell
+     */
+    public function testProvidesStreamPosition()
+    {
+        $handle = fopen(__DIR__ . '/../../../bootstrap.php', 'r');
+        $stream = new Stream($handle);
+        $stream->read(2);
+        $this->assertSame(ftell($handle), $stream->ftell());
+        $this->assertEquals(2, $stream->ftell());
+    }
 }

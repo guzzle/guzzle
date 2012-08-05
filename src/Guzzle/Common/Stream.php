@@ -248,6 +248,14 @@ class Stream implements StreamInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function ftell()
+    {
+        return ftell($this->stream);
+    }
+
+    /**
      * Reprocess stream metadata
      */
     protected function rebuildCache()

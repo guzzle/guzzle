@@ -226,4 +226,13 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
     {
         return $this->body->write($string);
     }
+
+    /**
+     * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
+    public function ftell()
+    {
+        return $this->body->ftell();
+    }
 }

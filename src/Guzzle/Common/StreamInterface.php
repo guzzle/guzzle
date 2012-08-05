@@ -140,4 +140,11 @@ interface StreamInterface
      * @return int|bool Returns the number of bytes written to the stream on success or FALSE on failure.
      */
     public function write($string);
+
+    /**
+     * Returns the current position of the file read/write pointer
+     *
+     * @return int|bool Returns the position of the file pointer or false on error
+     */
+    public function ftell();
 }
