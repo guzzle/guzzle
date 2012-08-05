@@ -39,6 +39,26 @@ class ReadLimitEntityBody extends AbstractEntityBodyDecorator
     }
 
     /**
+     * Returns the Content-Length of the limited subset of data
+     * {@inheritdoc}
+     */
+    public function getContentLength()
+    {
+        $length = $this->body->getContentLength();
+
+        return $length ? min($this->limit, $length) : $this->limit;
+    }
+
+    /**
+     * Returns the Content-MD5 of the limited subset of data
+     * {@inheritdoc}
+     */
+    public function getContentMd5($rawOutput = false, $base64Encode = false)
+    {
+        return EntityBody::calculateMd5($this, $rawOutput, $base64Encode);
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function seek($offset, $whence = SEEK_SET)

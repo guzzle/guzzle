@@ -15,9 +15,15 @@ class ReadLimitEntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
      */
     protected $body;
 
+    /**
+     * @var EntityBody
+     */
+    protected $decorated;
+
     public function setUp()
     {
-        $this->body = new ReadLimitEntityBody(EntityBody::factory(fopen(__FILE__, 'r')), 10, 3);
+        $this->decorated = EntityBody::factory(fopen(__FILE__, 'r'));
+        $this->body = new ReadLimitEntityBody($this->decorated, 10, 3);
     }
 
     public function testSeeksWhenConstructed()
@@ -51,5 +57,15 @@ class ReadLimitEntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($this->body->isConsumed());
         $this->body->read(1000);
         $this->assertTrue($this->body->isConsumed());
+    }
+
+    public function testContentLengthIsBounded()
+    {
+        $this->assertEquals(10, $this->body->getContentLength());
+    }
+
+    public function testContentMd5IsBasedOnSubsection()
+    {
+        $this->assertNotSame($this->body->getContentMd5(), $this->decorated->getContentMd5());
     }
 }
