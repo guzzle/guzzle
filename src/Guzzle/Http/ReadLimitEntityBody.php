@@ -41,18 +41,12 @@ class ReadLimitEntityBody extends AbstractEntityBodyDecorator
     /**
      * {@inheritdoc}
      */
-    public function isSeekable()
-    {
-        return false;
-    }
-
-    /**
-     * {@inheritdoc}
-     * @throws RuntimeException
-     */
     public function seek($offset, $whence = SEEK_SET)
     {
-        throw new RuntimeException('Cannot call seek when using a ReadLimitEntityBody decorator');
+        // Allow for a bounded seek
+        return $whence == SEEK_SET
+            ? $this->body->seek(min(max($this->offset, $offset), $this->offset + $this->limit))
+            : false;
     }
 
     /**
