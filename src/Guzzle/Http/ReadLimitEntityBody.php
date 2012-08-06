@@ -46,7 +46,9 @@ class ReadLimitEntityBody extends AbstractEntityBodyDecorator
     {
         $length = $this->body->getContentLength();
 
-        return $length ? min($this->limit, $length) : $this->limit;
+        return $length === false
+            ? $this->limit
+            : min($this->limit, min($length, $this->offset + $this->limit) - $this->offset);
     }
 
     /**
