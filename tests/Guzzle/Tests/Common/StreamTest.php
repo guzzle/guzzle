@@ -69,6 +69,19 @@ class StreamTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
+     * @covers Guzzle\Common\Stream::__toString
+     */
+    public function testConvertsToStringAndRestoresCursorPos()
+    {
+        $handle = fopen('php://temp', 'w+');
+        $stream = new Stream($handle);
+        $stream->write('foobazbar');
+        $stream->seek(3);
+        $this->assertEquals('foobazbar', (string) $stream);
+        $this->assertEquals(3, $stream->ftell());
+    }
+
+    /**
      * @covers Guzzle\Common\Stream::isConsumed
      */
     public function testIsConsumed()

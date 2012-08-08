@@ -85,8 +85,9 @@ class Stream implements StreamInterface
             return '';
         }
 
+        $originalPos = $this->ftell();
         $body = stream_get_contents($this->stream, -1, 0);
-        $this->seek(0);
+        $this->seek($originalPos);
 
         return $body;
     }
@@ -160,8 +161,9 @@ class Stream implements StreamInterface
         if (!$this->cache[self::IS_READABLE] || !$this->cache[self::SEEKABLE]) {
             return false;
         } else {
+            $pos = $this->ftell();
             $this->size = strlen((string) $this);
-            $this->seek(0);
+            $this->seek($pos);
             return $this->size;
         }
     }

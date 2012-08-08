@@ -31,6 +31,15 @@ class ReadLimitEntityBody extends AbstractEntityBodyDecorator
     }
 
     /**
+     * Returns only a subset of the decorated entity body when cast as a string
+     * {@inheritdoc}
+     */
+    public function __toString()
+    {
+        return substr((string) $this->body, $this->offset, $this->limit);
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function isConsumed()
@@ -61,13 +70,13 @@ class ReadLimitEntityBody extends AbstractEntityBodyDecorator
     }
 
     /**
+     * Allow for a bounded seek on the read limited entity body
      * {@inheritdoc}
      */
     public function seek($offset, $whence = SEEK_SET)
     {
-        // Allow for a bounded seek
-        return $whence == SEEK_SET
-            ? $this->body->seek(min(max($this->offset, $offset), $this->offset + $this->limit))
+        return $whence === SEEK_SET
+            ? $this->body->seek(max($this->offset, min($this->offset + $this->limit, $offset)))
             : false;
     }
 

@@ -163,7 +163,9 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
      */
     public function getMockResponse($path)
     {
-        return MockPlugin::getMockFile(self::$mockBasePath . DIRECTORY_SEPARATOR . $path);
+        return $path instanceof Response
+            ? $path
+            : MockPlugin::getMockFile(self::$mockBasePath . DIRECTORY_SEPARATOR . $path);
     }
 
     /**

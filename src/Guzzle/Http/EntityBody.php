@@ -89,8 +89,7 @@ class EntityBody extends Stream implements EntityBodyInterface
                 return false;
             }
             // @codeCoverageIgnoreEnd
-            $this->seek(0);
-            if (fread($this->stream, 3) == "\x1f\x8b\x08") {
+            if (stream_get_contents($this->stream, 3, 0) === "\x1f\x8b\x08") {
                 $offsetStart = 10;
             }
         }
@@ -141,6 +140,7 @@ class EntityBody extends Stream implements EntityBodyInterface
      */
     public static function calculateMd5(EntityBodyInterface $body, $rawOutput = false, $base64Encode = false)
     {
+        $pos = $body->ftell();
         if (!$body->seek(0)) {
             return false;
         }
@@ -151,7 +151,7 @@ class EntityBody extends Stream implements EntityBodyInterface
         }
 
         $out = hash_final($ctx, (bool) $rawOutput);
-        $body->seek(0);
+        $body->seek($pos);
 
         return ((bool) $base64Encode && (bool) $rawOutput) ? base64_encode($out) : $out;
     }
@@ -180,7 +180,7 @@ class EntityBody extends Stream implements EntityBodyInterface
     /**
      * {@inheritdoc}
      */
-    protected function handleCompression($filter, $offsetStart = null)
+    protected function handleCompression($filter, $offsetStart = 0)
     {
         // @codeCoverageIgnoreStart
         if (!$this->isReadable() || ($this->isConsumed() && !$this->isSeekable())) {
@@ -194,13 +194,8 @@ class EntityBody extends Stream implements EntityBodyInterface
             return false;
         }
 
-        // Seek to the beginning of the stream if possible
-        $this->seek(0);
-
-        if ($offsetStart) {
-            fread($this->stream, $offsetStart);
-        }
-
+        // Seek to the offset start if possible
+        $this->seek($offsetStart);
         while ($data = fread($this->stream, 8096)) {
             fwrite($handle, $data);
         }

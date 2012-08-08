@@ -170,6 +170,19 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
+     * @covers Guzzle\Http\EntityBody::getContentMd5
+     * @covers Guzzle\Http\EntityBody::calculateMd5
+     */
+    public function testSeeksToOriginalPosAfterMd5()
+    {
+        $body = EntityBody::factory('testing 123');
+        $body->seek(4);
+        $this->assertEquals(md5('testing 123'), $body->getContentMd5());
+        $this->assertEquals(4, $body->ftell());
+        $this->assertEquals('ing 123', $body->read(1000));
+    }
+
+    /**
      * @covers Guzzle\Http\EntityBody::factory
      */
     public function testGetTypeFormBodyFactoring()

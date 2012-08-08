@@ -6,6 +6,7 @@ use Guzzle\Common\Event;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Http\Message\RequestInterface;
+use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\Response;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -30,14 +31,20 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
     protected $received = array();
 
     /**
+     * @var bool Whether or not to consume an entity body when a mock response is served
+     */
+    protected $readBodies;
+
+    /**
      * Constructor
      *
      * @param array $responses Array of responses to queue
-     * @param bool  $temporary Set to TRUE to remove the plugin when
-     *      the queue is empty
+     * @param bool  $temporary Set to TRUE to remove the plugin when the queue is empty
+     * @param bool  $readBodies  Set to TRUE to consume the entity body when a mock is serverd
      */
-    public function __construct(array $responses = null, $temporary = false)
+    public function __construct(array $responses = null, $temporary = false, $readBodies = false)
     {
+        $this->readBodies = $readBodies;
         $this->temporary = $temporary;
         if ($responses) {
             foreach ($responses as $response) {
@@ -77,6 +84,21 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
         }
 
         return Response::fromMessage(file_get_contents($path));
+    }
+
+    /**
+     * Set whether or not to consume the entity body of a request when a mock
+     * response is used
+     *
+     * @param bool $consumeBody Set to true to read and consume entity bodies
+     *
+     * @return self
+     */
+    public function readBodies($readBodies)
+    {
+        $this->readBodies = $readBodies;
+
+        return $this;
     }
 
     /**
@@ -156,7 +178,14 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
             'plugin'  => $this,
             'request' => $request
         ));
+
         $request->setResponse(array_shift($this->queue), true);
+
+        if ($this->readBodies && $request instanceof EntityEnclosingRequestInterface) {
+            $request->getEventDispatcher()->addListener('request.sent', function (Event $event) {
+                while ($data = $event['request']->getBody()->read(8096));
+            });
+        }
 
         return $this;
     }
