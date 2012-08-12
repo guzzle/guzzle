@@ -27,8 +27,7 @@ class ParserRegistry
      *
      * @param string $name Name of the parser to retrieve
      *
-     * @return mixed|null Returns null if the parser is not found or cannot
-     *     be instantiated
+     * @return mixed|null Returns null if the parser is not found or cannot be instantiated
      */
     public static function get($name)
     {
