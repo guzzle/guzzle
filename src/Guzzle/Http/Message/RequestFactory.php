@@ -91,7 +91,7 @@ class RequestFactory implements RequestFactoryInterface
      */
     public function create($method, $url, $headers = null, $body = null)
     {
-        if ($method != 'POST' && $method != 'PUT' && $method != 'PATCH') {
+        if ($method != 'POST' && $method != 'PUT' && $method != 'PATCH' && $method != 'DELETE') {
             $c = $this->requestClass;
             $request = new $c($method, $url, $headers);
             if ($body) {

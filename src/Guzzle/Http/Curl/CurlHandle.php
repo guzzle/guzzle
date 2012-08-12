@@ -125,6 +125,16 @@ class CurlHandle
                     $request->removeHeader('Content-Length');
                 }
                 break;
+            case 'DELETE':
+                // Let cURL handle setting the Content-Length header
+                $contentLength = $request->getHeader('Content-Length');
+                if ($contentLength != null) {
+                    $contentLength = (int) (string) $contentLength;
+                    $curlOptions[CURLOPT_INFILESIZE] = $contentLength;
+                    $tempHeaders['Content-Length'] = $contentLength;
+                    $request->removeHeader('Content-Length');
+                }
+                break;
             case 'PUT':
             case 'PATCH':
                 if ($request->getMethod() == 'PATCH') {
