@@ -39,10 +39,11 @@ class Utils
     public static function getDefaultUserAgent()
     {
         if (!self::$userAgent) {
-            $curl = CurlVersion::getInstance();
-            self::$userAgent = sprintf('Guzzle/%s curl/%s PHP/%s openssl/%s',
-                Version::VERSION, $curl->get('version'), PHP_VERSION,
-                $curl->get('ssl_version')
+            self::$userAgent = sprintf(
+                'Guzzle/%s curl/%s PHP/%s',
+                Version::VERSION,
+                CurlVersion::getInstance()->get('version'),
+                PHP_VERSION
             );
         }
 
