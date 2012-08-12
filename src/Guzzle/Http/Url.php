@@ -499,45 +499,45 @@ class Url
         $absolutePath = $url[0] == '/';
         $url = self::factory($url);
 
-        if ($url->getScheme()) {
-            $this->scheme = $url->getScheme();
+        if ($buffer = $url->getScheme()) {
+            $this->scheme = $buffer;
         }
 
-        if ($url->getHost()) {
-            $this->host = $url->getHost();
+        if ($buffer = $url->getHost()) {
+            $this->host = $buffer;
         }
 
-        if ($url->getPort()) {
-            $this->port = $url->getPort();
+        if ($buffer = $url->getPort()) {
+            $this->port = $buffer;
         }
 
-        if ($url->getUsername()) {
-            $this->username = $url->getUsername();
+        if ($buffer = $url->getUsername()) {
+            $this->username = $buffer;
         }
 
-        if ($url->getPassword()) {
-            $this->password = $url->getPassword();
+        if ($buffer = $url->getPassword()) {
+            $this->password = $buffer;
         }
 
-        if ($url->getFragment()) {
-            $this->fragment = $url->getFragment();
+        if ($buffer = $url->getFragment()) {
+            $this->fragment = $buffer;
         }
 
         if ($absolutePath) {
             // Replace the current URL and query if set
-            if ($url->getPath()) {
-                $this->path = $url->getPath();
+            if ($buffer = $url->getPath()) {
+                $this->path = $buffer;
             }
             if (count($url->getQuery())) {
                 $this->query = clone $url->getQuery();
             }
         } else {
             // Append to the current path and query string
-            if ($url->getPath()) {
-                $this->addPath($url->getPath());
+            if ($buffer = $url->getPath()) {
+                $this->addPath($buffer);
             }
-            if ($url->getQuery()) {
-                $this->query->merge($url->getQuery());
+            if ($buffer = $url->getQuery()) {
+                $this->query->merge($buffer);
             }
         }
 
