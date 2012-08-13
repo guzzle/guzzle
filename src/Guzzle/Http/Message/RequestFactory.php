@@ -91,13 +91,15 @@ class RequestFactory implements RequestFactoryInterface
      */
     public function create($method, $url, $headers = null, $body = null)
     {
-        if ($method != 'POST' && $method != 'PUT' && $method != 'PATCH') {
+        $method = strtoupper($method);
+
+        if ($method == 'GET' || $method == 'HEAD' || $method == 'TRACE' || $method == 'OPTIONS') {
             $c = $this->requestClass;
             $request = new $c($method, $url, $headers);
             if ($body) {
+                // The body is where the response body will be stored
                 $request->setResponseBody(EntityBody::factory($body));
             }
-
             return $request;
         }
 

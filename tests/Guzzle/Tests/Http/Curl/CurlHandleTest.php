@@ -501,7 +501,24 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                     'User-Agent: ' . $userAgent,
                     'Expect: 100-Continue'
                 )
-            ))
+            )),
+            // Send a DELETE request with a body
+            array('DELETE', 'http://localhost:8124/delete.php', null, 'body', array(
+                CURLOPT_CUSTOMREQUEST => 'DELETE',
+                CURLOPT_HTTPHEADER => array (
+                    'Expect:',
+                    'Host: localhost:8124',
+                    'User-Agent: ' . $userAgent,
+                    'Content-Length: 4'
+                )
+            ), array(
+                '_Accept'          => '*',
+                '_Accept-Encoding' => '*',
+                'Host'             => '*',
+                'User-Agent'       => '*',
+                'Content-Length'   => '4',
+                '!Transfer-Encoding' => null
+            )),
         );
     }
 

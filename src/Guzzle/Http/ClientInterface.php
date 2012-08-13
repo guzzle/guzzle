@@ -155,11 +155,12 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @param string|array     $uri     Resource URI
      * @param array|Collection $headers HTTP headers
+     * @param string|resource|EntityBodyInterface $body    Body to send in the request
      *
-     * @return RequestInterface
+     * @return EntityEnclosingRequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    public function delete($uri = null, $headers = null);
+    public function delete($uri = null, $headers = null, $body = null);
 
     /**
      * Create a PUT request for the client

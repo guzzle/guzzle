@@ -259,9 +259,9 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * {@inheritdoc}
      */
-    public function delete($uri = null, $headers = null)
+    public function delete($uri = null, $headers = null, $body = null)
     {
-        return $this->createRequest('DELETE', $uri, $headers);
+        return $this->createRequest('DELETE', $uri, $headers, $body);
     }
 
     /**

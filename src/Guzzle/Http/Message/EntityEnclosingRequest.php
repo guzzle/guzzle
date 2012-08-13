@@ -8,7 +8,7 @@ use Guzzle\Http\QueryString;
 use Guzzle\Http\Exception\RequestException;
 
 /**
- * HTTP request that sends an entity-body in the request message (POST, PUT)
+ * HTTP request that sends an entity-body in the request message (POST, PUT, PATCH, DELETE)
  */
 class EntityEnclosingRequest extends Request implements EntityEnclosingRequestInterface
 {
