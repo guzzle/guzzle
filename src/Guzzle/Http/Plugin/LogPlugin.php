@@ -225,8 +225,10 @@ class LogPlugin implements EventSubscriberInterface
         // Send the log message to the adapter, adding a category and host
         $priority = $response && !$response->isSuccessful() ? LOG_ERR : LOG_DEBUG;
         $this->logAdapter->log(trim($message), $priority, array(
-            'category' => 'guzzle.request',
-            'host'     => $this->hostname
+            'category'  => 'guzzle.request',
+            'host'      => $this->hostname,
+            'request'   => $request,
+            'response'  => $response
         ));
     }
 
