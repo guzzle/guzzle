@@ -103,23 +103,26 @@ class OauthPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Calculate string to sign
+     * Parameters sorted and filtered in order to properly sign a request
      *
      * @param RequestInterface $request   Request to generate a signature for
      * @param int              $timestamp Timestamp to use for nonce
      *
-     * @return string
+     * @return array
      */
-    public function getStringToSign(RequestInterface $request, $timestamp)
+    public function getParamsToSign(RequestInterface $request, $timestamp)
     {
         $params = new Collection(array(
             'oauth_consumer_key'     => $this->config['consumer_key'],
             'oauth_nonce'            => $this->generateNonce($request, $timestamp),
             'oauth_signature_method' => $this->config['signature_method'],
             'oauth_timestamp'        => $timestamp,
-            'oauth_token'            => $this->config['token'],
             'oauth_version'          => $this->config['version']
         ));
+        // Filter out oauth_token during temp token step, as in request_token.
+        if ($this->config['token'] !== false) {
+            $params->add('oauth_token', $this->config['token']);
+        }
 
         // Add query string parameters
         $params->merge($request->getQuery());
@@ -131,6 +134,20 @@ class OauthPlugin implements EventSubscriberInterface
         // Sort params
         $params = $params->getAll();
         ksort($params);
+        return $params;
+    }
+
+    /**
+     * Calculate string to sign
+     *
+     * @param RequestInterface $request   Request to generate a signature for
+     * @param int              $timestamp Timestamp to use for nonce
+     *
+     * @return string
+     */
+    public function getStringToSign(RequestInterface $request, $timestamp)
+    {
+        $params = $this->getParamsToSign($request, $timestamp);
 
         // Build signing string from combined params
         $parameterString = array();
