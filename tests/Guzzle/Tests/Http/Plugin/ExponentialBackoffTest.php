@@ -24,6 +24,14 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
+     * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin::getAllEvents
+     */
+    public function testHasEventList()
+    {
+        $this->assertEquals(1, count(ExponentialBackoffPlugin::getAllEvents()));
+    }
+
+    /**
      * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin
      * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin::__construct
      * @covers Guzzle\Http\Plugin\ExponentialBackoffPlugin::getFailureCodes

@@ -3,10 +3,12 @@
 namespace Guzzle\Http\Plugin;
 
 use Guzzle\Common\Event;
+use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
+use Guzzle\Http\Curl\CurlHandle;
 use Guzzle\Http\Curl\CurlMultiInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -14,10 +16,11 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Plugin to automatically retry failed HTTP requests using truncated
  * exponential backoff.
  */
-class ExponentialBackoffPlugin implements EventSubscriberInterface
+class ExponentialBackoffPlugin extends AbstractHasDispatcher implements EventSubscriberInterface
 {
     const DELAY_PARAM = 'plugins.exponential_backoff.retry_time';
     const RETRY_PARAM = 'plugins.exponential_backoff.retry_count';
+    const RETRY_EVENT = 'plugins.exponential_backoff.retry';
 
     /**
      * @var array|callable Hash table of failure codes or PHP callable
@@ -97,6 +100,14 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
     public static function getDefaultFailureCodes()
     {
         return self::$defaultFailureCodes;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public static function getAllEvents()
+    {
+        return array(self::RETRY_EVENT);
     }
 
     /**
@@ -192,6 +203,7 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
         $request = $event['request'];
         $response = $event['response'];
         $exception = $event['exception'];
+        $handle = null;
         $retry = null;
         $failureCodes = $this->failureCodes;
 
@@ -209,6 +221,7 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
             if ($exception && $exception instanceof CurlException) {
                 // Handle cURL exceptions
                 $retry = isset($failureCodes[$exception->getErrorNo()]);
+                $handle = $exception->getCurlHandle();
             } elseif ($response) {
                 $retry = isset($failureCodes[$response->getStatusCode()]) ||
                     isset($failureCodes[$response->getReasonPhrase()]);
@@ -216,7 +229,7 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
         }
 
         if ($retry) {
-            $this->retryRequest($request);
+            $this->retryRequest($request, $response, $handle);
         }
     }
 
@@ -249,9 +262,11 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
     /**
      * Trigger a request to retry
      *
-     * @param RequestInterface $request Request to retry
+     * @param RequestInterface $request  Request to retry
+     * @param Response         $response Response received
+     * @param CurlHandle       $handle   Curl handle
      */
-    protected function retryRequest(RequestInterface $request)
+    protected function retryRequest(RequestInterface $request, Response $response = null, CurlHandle $handle = null)
     {
         $params = $request->getParams();
         $retries = ((int) $params->get(self::RETRY_PARAM)) + 1;
@@ -265,6 +280,14 @@ class ExponentialBackoffPlugin implements EventSubscriberInterface
             // Send the request again
             $request->setState(RequestInterface::STATE_TRANSFER);
             $params->set(self::DELAY_PARAM, $delayTime);
+
+            $this->dispatch(self::RETRY_EVENT, array(
+                'request'  => $request,
+                'response' => $response,
+                'handle'   => $handle,
+                'retries'  => $retries,
+                'delay'    => $delay
+            ));
         }
     }
 }
