@@ -15,6 +15,10 @@ use Guzzle\Http\Url;
  */
 class CurlHandle
 {
+    const BODY_AS_STRING = 'body_as_string';
+    const PROGRESS = 'progress';
+    const DEBUG = 'debug';
+
     /**
      * @var Collection Curl options
      */
@@ -50,6 +54,7 @@ class CurlHandle
         $tempContentLength = null;
         $method = $request->getMethod();
         $client = $request->getClient();
+        $bodyAsString = $requestCurlOptions->get(self::BODY_AS_STRING);
 
         // Array of default cURL options.
         $curlOptions = array(
@@ -132,17 +137,22 @@ class CurlHandle
             case 'PUT':
             case 'PATCH':
             case 'DELETE':
-                $curlOptions[CURLOPT_UPLOAD] = true;
-                if ($method != 'PUT') {
-                    $curlOptions[CURLOPT_CUSTOMREQUEST] = $method;
-                }
-                // Let cURL handle setting the Content-Length header
-                $contentLength = $request->getHeader('Content-Length');
-                if ($contentLength !== null) {
-                    $contentLength = (int) (string) $contentLength;
-                    $curlOptions[CURLOPT_INFILESIZE] = $contentLength;
-                    $tempContentLength = $contentLength;
-                    $request->removeHeader('Content-Length');
+                $curlOptions[CURLOPT_CUSTOMREQUEST] = $method;
+                if ($bodyAsString) {
+                    // Because this is not a POST but is now going be treated like
+                    // one, the wacky POST redirect options come in to play
+                    $curlOptions[CURLOPT_POSTREDIR] = 3;
+                    // Remove the curl generated Content-Type header if none was set manually
+                    if (!$request->hasHeader('Content-Type')) {
+                        $curlOptions[CURLOPT_HTTPHEADER][] = 'Content-Type:';
+                    }
+                } else {
+                    $curlOptions[CURLOPT_UPLOAD] = true;
+                    // Let cURL handle setting the Content-Length header
+                    if ($tempContentLength = $request->getHeader('Content-Length')) {
+                        $tempContentLength = (int) (string) $tempContentLength;
+                        $curlOptions[CURLOPT_INFILESIZE] = $tempContentLength;
+                    }
                 }
                 break;
             default:
@@ -152,15 +162,29 @@ class CurlHandle
         // Special handling for requests sending raw data
         if ($request instanceof EntityEnclosingRequestInterface) {
             if ($request->getBody()) {
-                // Add a callback for curl to read data to send with the request only if a body was specified
-                $curlOptions[CURLOPT_READFUNCTION] = array($mediator, 'readRequestBody');
-                // Attempt to seek to the start of the stream
-                $request->getBody()->seek(0);
+                if ($bodyAsString) {
+                    $curlOptions[CURLOPT_POSTFIELDS] = (string) $request->getBody();
+                    // Allow curl to add the Content-Length for us to account for the times when
+                    // POST redirects are followed by GET requests
+                    if ($tempContentLength = $request->getHeader('Content-Length')) {
+                        $tempContentLength = (int) (string) $tempContentLength;
+                    }
+                } else {
+                    // Add a callback for curl to read data to send with the request only if a body was specified
+                    $curlOptions[CURLOPT_READFUNCTION] = array($mediator, 'readRequestBody');
+                    // Attempt to seek to the start of the stream
+                    $request->getBody()->seek(0);
+                }
             }
             // If the Expect header is not present, prevent curl from adding it
             if (!$request->hasHeader('Expect')) {
                 $curlOptions[CURLOPT_HTTPHEADER][] = 'Expect:';
             }
+        }
+
+        // If a Content-Length header was specified but we want to allow curl to set one for us
+        if (null !== $tempContentLength) {
+            $request->removeHeader('Content-Length');
         }
 
         // Set custom cURL options

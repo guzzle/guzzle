@@ -9,6 +9,7 @@ use Guzzle\Http\EntityBody;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Client;
 use Guzzle\Http\Message\Response;
+use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Curl\CurlHandle;
 use Guzzle\Http\Curl\CurlMulti;
@@ -788,23 +789,75 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $handle->updateRequestFromTransfer($request);
     }
 
-    public function testCurlFollowsRedirectsUsingPost()
+    /**
+     * @return array
+     */
+    public function redirectWithBodyStringDataProvider()
     {
-        $this->markTestIncomplete('This is a bug with PHP: https://bugs.php.net/bug.php?id=47204');
+        return array(
+            // Sending POSTs on redirects by setting CURLOPT_POSTREDIR
+            array('POST', 'application/x-www-form-urlencoded', array(), 3, 'POST'),
+            // Not sending redirected POSTS, but rather GET (omitting the setting or CURLOPT_POSTREDIR)
+            array('POST', false, array(), null, 'GET'),
+            // Sending PUT on redirect (inherently uses CURLOPT_POSTREDIR because of PUT)
+            array('PUT', false, array(), null, 'PUT'),
+            // Sending PUT on redirect with a custom Content-Type (inherently uses CURLOPT_POSTREDIR)
+            array('PUT', 'foo', array('Content-Type' => 'foo'), null, 'PUT'),
+            // Sending PATCH on redirect
+            array('PATCH', false, array(), null, 'PATCH'),
+            // Sending DELETE on redirect
+            array('DELETE', false, array(), null, 'DELETE')
+        );
+    }
 
+    /**
+     * @dataProvider redirectWithBodyStringDataProvider
+     */
+    public function testCurlFollowsRedirectsUsingStringBody(
+        $method,
+        $contentType,
+        array $headers,
+        $followRedirects,
+        $resultingMethod
+    ) {
         $url = $this->getServer()->getUrl();
+        $this->getServer()->flush();
         $this->getServer()->enqueue(array(
-            "HTTP/1.1 303 See Other\r\nServer: Apache-Coyote/1.1\r\nLocation: {$url}\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 301 See Other\r\nServer: Apache-Coyote/1.1\r\nLocation: {$url}\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
         ));
 
         $client = new Client($url);
-        $request = $client->post('/', null, '{}');
+        $request = $client->createRequest($method, '/test', $headers, '{}');
+        $request->getCurlOptions()->set(CurlHandle::BODY_AS_STRING, true);
+
+        if ($followRedirects !== null) {
+            $request->getCurlOptions()->set(CURLOPT_POSTREDIR, $followRedirects);
+        }
         $request->removeHeader('Expect');
         $request->send();
 
+        // Ensure that 2 requests were sent
         $received = $this->getServer()->getReceivedRequests(true);
         $this->assertEquals(2, count($received));
+
+        // Ensure that the resulting request was sent with the expected method
+        $this->assertEquals($resultingMethod, $received[1]->getMethod());
+
+        // Ensure the body was sent
+        if ($received[1] instanceof EntityEnclosingRequestInterface) {
+            $this->assertEquals('{}', (string) $received[1]->getBody());
+            $this->assertEquals(2, (int) (string) $received[1]->getHeader('Content-Length'));
+        } else {
+            $this->assertNull($received[1]->getHeader('Content-Length'));
+        }
+
+        // Ensure that a POST content-type was not added for non-posts
+        if (!$contentType) {
+            $this->assertNull($received[1]->getHeader('Content-Type'));
+        } else {
+            $this->assertEquals($contentType, (string) $received[1]->getHeader('Content-Type'));
+        }
     }
 
     public function testAllowsWireTransferInfoToBeEnabled()
@@ -933,7 +986,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->flush();
         $port = $this->getServer()->getPort();
         $this->getServer()->enqueue(array(
-            "HTTP/1.1 {$code} Foo\r\nLocation: localhost:{$port}\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 {$code} Foo\r\nLocation: http://localhost:{$port}\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
         ));
 
