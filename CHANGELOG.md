@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+* 2.8.4 (08-15-2012)
+
+    * Bug: Custom delay time calculations are no longer ignored in the ExponentialBackoffPlugin
+    * Added the ability to transfer entity bodies as a string rather than streamed. This gets around curl error 65. Set `body_as_string` in a request's curl options to enable.
+    * Added a StreamInterface, EntityBodyInterface, and added ftell() to Guzzle\Common\Stream
+    * Added an AbstractEntityBodyDecorator and a ReadLimitEntityBody decorator to transfer only a subset of a decorated stream
+    * Stream and EntityBody objects will now return the file position to the previous position after a read required operation (e.g. getContentMd5())
+    * Added additional response status codes
+    * Removed SSL information from the default User-Agent header
+    * DELETE requests can now send an entity body
+    * Added an EventDispatcher to the ExponentialBackoffPlugin and added an ExponentialBackoffLogger to log backoff retries
+    * Added the ability of the MockPlugin to consume mocked request bodies
+    * LogPlugin now exposes request and response objects in the extras array
+
 * 2.8.3 (07-30-2012)
 
     * Bug: Fixed a case where empty POST requests were sent as GET requests
