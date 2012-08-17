@@ -127,13 +127,15 @@ class OauthPlugin implements EventSubscriberInterface
         // Add query string parameters
         $params->merge($request->getQuery());
         // Add POST fields to signing string
-        if ($request instanceof EntityEnclosingRequestInterface && $request->getHeader('Content-Type') == 'application/x-www-form-urlencoded') {
+        if ($request instanceof EntityEnclosingRequestInterface
+            && $request->getHeader('Content-Type') == 'application/x-www-form-urlencoded') {
             $params->merge($request->getPostFields());
         }
 
         // Sort params
         $params = $params->getAll();
         ksort($params);
+
         return $params;
     }
 
