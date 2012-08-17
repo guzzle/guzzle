@@ -16,7 +16,6 @@ class UriTemplateTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $t = array();
 
-        // Level 1 template tests
         $params = array(
             'var'   => 'value',
             'hello' => 'Hello World!',
@@ -30,7 +29,8 @@ class UriTemplateTest extends \Guzzle\Tests\GuzzleTestCase
                 "semi"  => ';',
                 "dot"   => '.',
                 "comma" => ','
-            )
+            ),
+            'empty_keys' => array(),
         );
 
         return array_map(function($t) use ($params) {
@@ -106,6 +106,8 @@ class UriTemplateTest extends \Guzzle\Tests\GuzzleTestCase
             array('{&keys*}',            '&semi=%3B&dot=.&comma=%2C'),
             array('{.null}',            ''),
             array('{.null,var}',        '.value'),
+            array('X{.empty_keys*}',     'X'),
+            array('X{.empty_keys}',      'X'),
             // Test that missing expansions are skipped
             array('test{&missing*}',     'test'),
             // Test that multiple expansions can be set
