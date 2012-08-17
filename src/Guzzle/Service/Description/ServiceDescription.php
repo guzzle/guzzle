@@ -30,7 +30,7 @@ class ServiceDescription implements ServiceDescriptionInterface
         }
         // @codeCoverageIgnoreEnd
 
-        return self::$descriptionFactory->build($config);
+        return self::$descriptionFactory->build($config, $options);
     }
 
     /**
