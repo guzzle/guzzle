@@ -102,6 +102,11 @@ class ExponentialBackoffLogger implements EventSubscriberInterface
                 'connect_time' => $response->getInfo('connect_time'),
                 'total_time'   => $response->getInfo('total_time'),
             ));
+        } elseif ($handle) {
+            $data->merge(array(
+                'connect_time' => $handle->getInfo(CURLINFO_CONNECT_TIME),
+                'total_time'   => $handle->getInfo(CURLINFO_TOTAL_TIME)
+            ));
         }
 
         if ($handle) {

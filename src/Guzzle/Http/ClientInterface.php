@@ -16,6 +16,8 @@ use Guzzle\Http\Curl\CurlMultiInterface;
  */
 interface ClientInterface extends HasDispatcherInterface
 {
+    const CREATE_REQUEST = 'client.create_request';
+
     /**
      * Set the configuration object to use with the client
      *

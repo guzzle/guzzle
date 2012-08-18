@@ -55,7 +55,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      */
     public static function getAllEvents()
     {
-        return array('client.create_request');
+        return array(self::CREATE_REQUEST);
     }
 
     /**
@@ -70,14 +70,6 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         $this->setBaseUrl($baseUrl);
         $this->defaultHeaders = new Collection();
         $this->setRequestFactory(RequestFactory::getInstance());
-    }
-
-    /**
-     * Cast to a string
-     */
-    public function __toString()
-    {
-        return spl_object_hash($this);
     }
 
     /**
@@ -185,7 +177,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 
         if (!$uri) {
             $url = $this->getBaseUrl();
-        } elseif (strpos($uri, 'http') === 0) {
+        } elseif (substr($uri, 0, 4) === 'http') {
             // Use absolute URLs as-is
             $url = $this->expandTemplate($uri, $templateVars);
         } else {
@@ -199,7 +191,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
                 $headers = array_merge($this->defaultHeaders->getAll(), $headers->getAll());
             } elseif (is_array($headers)) {
                  $headers = array_merge($this->defaultHeaders->getAll(), $headers);
-            } elseif ($headers === null) {
+            } else {
                 $headers = $this->defaultHeaders;
             }
         }
@@ -319,11 +311,11 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 
         if (!$multipleRequests) {
             return end($requests)->getResponse();
+        } else {
+            return array_map(function($request) {
+                return $request->getResponse();
+            }, $requests);
         }
-
-        return array_map(function($request) {
-            return $request->getResponse();
-        }, $requests);
     }
 
     /**
@@ -369,12 +361,10 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     protected function prepareRequest(RequestInterface $request)
     {
         $request->setClient($this);
-        $config = $this->getConfig()->getAll();
-
         // Add any curl options to the request
-        $request->getCurlOptions()->merge(CurlHandle::parseCurlConfig($config));
+        $request->getCurlOptions()->merge(CurlHandle::parseCurlConfig($this->config));
 
-        foreach ($config as $key => $value) {
+        foreach ($this->config as $key => $value) {
             if (strpos($key, 'params.') === 0) {
                 // Add request specific parameters to all requests (prefix with 'params.')
                 $request->getParams()->set(substr($key, 7), $value);

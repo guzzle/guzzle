@@ -65,16 +65,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Client::__toString
-     */
-    public function testConvertsToString()
-    {
-        $client = new Client();
-        $hash = spl_object_hash($client);
-        $this->assertEquals($hash, (string) $client);
-    }
-
-    /**
      * @covers Guzzle\Http\Client::__construct
      */
     public function testConstructorCanAcceptConfig()

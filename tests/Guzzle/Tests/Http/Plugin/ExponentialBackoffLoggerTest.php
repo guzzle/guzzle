@@ -4,6 +4,7 @@ namespace Guzzle\Tests\Http\Plugin;
 
 use Guzzle\Common\Event;
 use Guzzle\Common\Log\ClosureLogAdapter;
+use Guzzle\Http\Curl\CurlHandle;
 use Guzzle\Http\Plugin\ExponentialBackoffLogger;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
@@ -38,18 +39,7 @@ class ExponentialBackoffLoggerTest extends \Guzzle\Tests\GuzzleTestCase
             ->method('getInfo')
             ->will($this->returnValue(2));
 
-        $handle = $this->getMockBuilder('Guzzle\Http\Curl\CurlHandle')
-            ->disableOriginalConstructor()
-            ->setMethods(array('getError', 'getErrorNo'))
-            ->getMock();
-
-        $handle->expects($this->once())
-            ->method('getError')
-            ->will($this->returnValue('Foo'));
-
-        $handle->expects($this->once())
-            ->method('getErrorNo')
-            ->will($this->returnValue(30));
+        $handle = $this->getMockHandle();
 
         $event = new Event(array(
             'request'  => $request,
@@ -78,6 +68,18 @@ class ExponentialBackoffLoggerTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals("Foo: Bar, Method: PUT\n", $this->message);
     }
 
+    public function testUsesCurlHandleForTimesWhenResponseNotAvailable()
+    {
+        list($logPlugin, $request, $response) = $this->getMocks();
+        $logPlugin->setTemplate('{method}: {connect_time}, {total_time}');
+        $event = new Event(array(
+            'request' => $request,
+            'handle'  => $this->getMockHandle()
+        ));
+        $logPlugin->onRequestRetry($event);
+        $this->assertEquals("PUT: 2, 2\n", $this->message);
+    }
+
     /**
      * @return array
      */
@@ -95,5 +97,30 @@ class ExponentialBackoffLoggerTest extends \Guzzle\Tests\GuzzleTestCase
         ));
 
         return array($logPlugin, $request, $response);
+    }
+
+    /**
+     * @return CurlHandle
+     */
+    protected function getMockHandle()
+    {
+        $handle = $this->getMockBuilder('Guzzle\Http\Curl\CurlHandle')
+            ->disableOriginalConstructor()
+            ->setMethods(array('getError', 'getErrorNo', 'getInfo'))
+            ->getMock();
+
+        $handle->expects($this->once())
+            ->method('getError')
+            ->will($this->returnValue('Foo'));
+
+        $handle->expects($this->once())
+            ->method('getErrorNo')
+            ->will($this->returnValue(30));
+
+        $handle->expects($this->any())
+            ->method('getInfo')
+            ->will($this->returnValue(2));
+
+        return $handle;
     }
 }
