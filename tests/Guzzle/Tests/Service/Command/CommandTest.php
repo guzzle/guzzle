@@ -2,6 +2,7 @@
 
 namespace Guzzle\Tests\Service\Command;
 
+use Guzzle\Http\Plugin\MockPlugin;
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Client;
 use Guzzle\Service\Command\CommandInterface;
@@ -9,7 +10,6 @@ use Guzzle\Service\Command\AbstractCommand;
 use Guzzle\Service\Description\ApiCommand;
 use Guzzle\Service\Description\ApiParam;
 use Guzzle\Service\Inspector;
-use Guzzle\Http\Plugin\MockPlugin;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
 use Guzzle\Tests\Service\Mock\Command\Sub\Sub;
 
@@ -116,18 +116,11 @@ class CommandTest extends AbstractCommandTest
     public function testExecute()
     {
         $client = $this->getClient();
-
-        $response = new \Guzzle\Http\Message\Response(200, array(
+        $response = new Response(200, array(
             'Content-Type' => 'application/xml'
         ), '<xml><data>123</data></xml>');
-
-        // Set a mock response
-        $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(
-            $response
-        )));
-
+        $this->setMockResponse($client, array($response));
         $command = new MockCommand();
-
         $this->assertSame($command, $command->setClient($client));
 
         // Returns the result of the command
@@ -148,12 +141,12 @@ class CommandTest extends AbstractCommandTest
     public function testConvertsJsonResponsesToArray()
     {
         $client = $this->getClient();
-        $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(
+        $this->setMockResponse($client, array(
             new \Guzzle\Http\Message\Response(200, array(
                 'Content-Type' => 'application/json'
                 ), '{ "key": "Hi!" }'
             )
-        )));
+        ));
         $command = new MockCommand();
         $command->setClient($client);
         $command->execute();
@@ -169,12 +162,12 @@ class CommandTest extends AbstractCommandTest
     public function testConvertsInvalidJsonResponsesToArray()
     {
         $client = $this->getClient();
-        $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(
+        $this->setMockResponse($client, array(
             new \Guzzle\Http\Message\Response(200, array(
                 'Content-Type' => 'application/json'
                 ), '{ "key": "Hi!" }invalid'
             )
-        )));
+        ));
         $command = new MockCommand();
         $command->setClient($client);
         $command->execute();
@@ -186,13 +179,11 @@ class CommandTest extends AbstractCommandTest
     public function testProcessResponseIsNotXml()
     {
         $client = $this->getClient();
-
-        $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(
+        $this->setMockResponse($client, array(
             new Response(200, array(
                 'Content-Type' => 'application/octet-stream'
             ), 'abc,def,ghi')
-        )));
-
+        ));
         $command = new MockCommand();
         $client->execute($command);
 
@@ -398,5 +389,19 @@ class CommandTest extends AbstractCommandTest
         $command->setClient($client);
         $request = $command->prepare();
         $this->assertEquals(8080, $request->getCurlOptions()->get(CURLOPT_PROXYPORT));
+    }
+
+    /**
+     * @covers Guzzle\Service\Command\AbstractCommand::__invoke
+     */
+    public function testIsInvokable()
+    {
+        $client = $this->getClient();
+        $response = new Response(200);
+        $this->setMockResponse($client, array($response));
+        $command = new MockCommand();
+        $command->setClient($client);
+        // Returns the result of the command
+        $this->assertSame($response, $command());
     }
 }

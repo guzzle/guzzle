@@ -131,6 +131,16 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
+     * Execute the command in the same manner as calling a function
+     *
+     * @return mixed Returns the result of {@see AbstractCommand::execute}
+     */
+    public function __invoke()
+    {
+        return $this->execute();
+    }
+
+    /**
      * Execute the command and return the result
      *
      * @return mixed Returns the result of {@see AbstractCommand::execute}

@@ -9,6 +9,9 @@ use Guzzle\Common\Event;
 use Guzzle\Http\Client;
 use Guzzle\Http\Message\Response;
 
+/**
+ * @covers Guzzle\Http\Plugin\OauthPlugin
+ */
 class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
 {
     const TIMESTAMP = '1327274290';
@@ -27,18 +30,12 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         ));
     }
 
-    /**
-     * @covers Guzzle\Http\Plugin\OauthPlugin::getSubscribedEvents
-     */
     public function testSubscribesToEvents()
     {
         $events = OauthPlugin::getSubscribedEvents();
         $this->assertArrayHasKey('request.before_send', $events);
     }
 
-    /**
-     * @covers Guzzle\Http\Plugin\OauthPlugin::__construct
-     */
     public function testAcceptsConfigurationData()
     {
         $p = new OauthPlugin($this->config);
@@ -57,9 +54,6 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('HMAC-SHA1', $config['signature_method']);
     }
 
-    /**
-     * @covers Guzzle\Http\Plugin\OauthPlugin::getStringToSign
-     */
     public function testCreatesStringToSignFromPostRequest()
     {
         $p = new OauthPlugin($this->config);
@@ -76,9 +70,6 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         );
     }
 
-    /**
-     * @covers Guzzle\Http\Plugin\OauthPlugin::getStringToSign
-     */
     public function testCreatesStringToSignFromPostRequestWithCustomContentType()
     {
         $p = new OauthPlugin($this->config);
@@ -97,7 +88,6 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\OauthPlugin::getStringToSign
      * @depends testCreatesStringToSignFromPostRequest
      */
     public function testConvertsBooleansToStrings()
@@ -110,7 +100,6 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Plugin\OauthPlugin::getSignature
      * @depends testCreatesStringToSignFromPostRequest
      */
     public function testSignsStrings()
@@ -131,10 +120,6 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         );
     }
 
-    /**
-     * @covers Guzzle\Http\Plugin\OauthPlugin::onRequestBeforeSend
-     * @covers Guzzle\Http\Plugin\OauthPlugin::__construct
-     */
     public function testSignsOauthRequests()
     {
         $p = new OauthPlugin($this->config);
@@ -156,9 +141,6 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         );
     }
 
-    /**
-     * @covers Guzzle\Http\Plugin\OauthPlugin::generateNonce
-     */
     public function testGeneratesUniqueNonce()
     {
         $p = new OauthPlugin($this->config);
