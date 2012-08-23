@@ -788,4 +788,20 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request->receiveResponseHeader('HTTP/1.1 503 Service Unavailable');
         $this->assertNotSame($body, $request->getResponse()->getBody());
     }
+
+    /**
+     * Many RESTful frameworks omit the text status from the header. That
+     * provides a response like "HTTP/1.1 200". Prevent an Undefined offset
+     * by checking to see how many parts of the status line are provided
+     * before trying to assign them.
+     *
+     * @covers Guzzle\Http\Message\Request::receiveResponseHeader
+     */
+    public function testReceivingShortStatusLineResponse()
+    {
+        $request = new Request('GET', $this->getServer()->getUrl());
+        $request->receiveResponseHeader('HTTP/1.1 200');
+        $this->assertSame(200, $request->getResponse()->getStatusCode());
+        $this->assertSame('OK', $request->getResponse()->getReasonPhrase());
+    }
 }
