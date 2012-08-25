@@ -492,13 +492,9 @@ class Request extends AbstractMessage implements RequestInterface
 
         if (strpos($data, 'HTTP/') === 0) {
 
-            $statusLine = explode(' ', $data, 3);
-            if (isset($statusLine[2])) {
-                list( , $code, $status) = $statusLine;
-            } else {
-                $code = $statusLine[1];
-                $status = '';                
-            }
+            $startLine = explode(' ', $data, 3);
+            $code = $startLine[1];
+            $status = isset($startLine[2]) ? $startLine[2] : '';
 
             // Only download the body of the response to the specified response
             // body when a successful response is received.
