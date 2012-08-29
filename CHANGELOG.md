@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+* 2.8.5 (08-29-2012)
+
+    * Bug: Suppressed empty arrays from URI templates
+    * Bug: Added the missing $options argument from ServiceDescription::factory to enable caching
+    * Added support for HTTP responses that do not contain a reason phrase in the start-line
+    * AbstractCommand commands are now invokable
+    * Added a way to get the data used when signing an Oauth request before a request is sent
+
 * 2.8.4 (08-15-2012)
 
     * Bug: Custom delay time calculations are no longer ignored in the ExponentialBackoffPlugin
