@@ -31,16 +31,16 @@ class ApiParam
     {
         // Parse snake_case into camelCase class properties and parse :'d values
         foreach ($data as $key => $value) {
-            if ($key == 'min_length') {
+            if ($key == 'type' && strpos($value, ':')) {
+                list($this->type, $this->typeArgs) = explode(':', $value, 2);
+            } elseif ($key == 'location' && strpos($value, ':')) {
+                list($this->location, $this->locationKey) = explode(':', $value, 2);
+            } elseif ($key == 'min_length') {
                 $this->minLength = $value;
             } elseif ($key == 'max_length') {
                 $this->maxLength = $value;
-            } elseif ($key == 'location' && strpos($value, ':')) {
-                list($this->location, $this->locationKey) = explode(':', $value, 2);
             } elseif ($key == 'location_key') {
                 $this->locationKey = $value;
-            } elseif ($key == 'type' && strpos($value, ':')) {
-                list($this->type, $this->typeArgs) = explode(':', $value, 2);
             } elseif ($key == 'type_args') {
                 $this->typeArgs = $value;
             } else {
@@ -48,17 +48,8 @@ class ApiParam
             }
         }
 
-        if ($this->filters) {
-            $this->filters = self::parseFilters($this->filters);
-        } else {
-            $this->filters = array();
-        }
-
-        if ($this->required === 'false') {
-            $this->required = false;
-        } elseif ($this->required === 'true') {
-            $this->required = true;
-        }
+        $this->filters = $this->filters ? self::parseFilters($this->filters) : array();
+        $this->required = filter_var($this->required, FILTER_VALIDATE_BOOLEAN);
 
         // Parse CSV type value data into an array
         if ($this->typeArgs && is_string($this->typeArgs)) {
@@ -147,6 +138,20 @@ class ApiParam
     }
 
     /**
+     * Set the name of the parameter
+     *
+     * @param string $name Name to set
+     *
+     * @return self
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
      * Get the type
      *
      * @return string
@@ -154,6 +159,20 @@ class ApiParam
     public function getType()
     {
         return $this->type;
+    }
+
+    /**
+     * Set the type
+     *
+     * @param string $type Type of parameter
+     *
+     * @return self
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
+
+        return $this;
     }
 
     /**
@@ -167,6 +186,20 @@ class ApiParam
     }
 
     /**
+     * Set the arguments to pass to type constraint
+     *
+     * @param array $args Type arguments
+     *
+     * @return self
+     */
+    public function setTypeArgs(array $args)
+    {
+        $this->typeArgs = $args;
+
+        return $this;
+    }
+
+    /**
      * Get if the parameter is required
      *
      * @return bool
@@ -174,6 +207,20 @@ class ApiParam
     public function getRequired()
     {
         return $this->required;
+    }
+
+    /**
+     * Set if the parameter is required
+     *
+     * @param bool $isRequired Whether or not the parameter is required
+     *
+     * @return self
+     */
+    public function setRequired($isRequired)
+    {
+        $this->required = $isRequired;
+
+        return $this;
     }
 
     /**
@@ -187,6 +234,20 @@ class ApiParam
     }
 
     /**
+     * Set the default value of the parameter
+     *
+     * @param string|null $default Default value to set
+     *
+     * @return self
+     */
+    public function setDefault($default)
+    {
+        $this->default = $default;
+
+        return $this;
+    }
+
+    /**
      * Get the docs for the parameter
      *
      * @return string|null
@@ -194,6 +255,20 @@ class ApiParam
     public function getDoc()
     {
         return $this->doc;
+    }
+
+    /**
+     * Set the docs for the parameter
+     *
+     * @param string $docs Documentation
+     *
+     * @return self
+     */
+    public function setDoc($docs)
+    {
+        $this->doc = $docs;
+
+        return $this;
     }
 
     /**
@@ -207,6 +282,20 @@ class ApiParam
     }
 
     /**
+     * Set the minimum allowed length of the parameter
+     *
+     * @param int|null $minLength Minimum length of the parameter
+     *
+     * @return self
+     */
+    public function setMinLength($minLength)
+    {
+        $this->minLength = $minLength;
+
+        return $this;
+    }
+
+    /**
      * Get the maximum allowed length of the parameter
      *
      * @return int|null
@@ -214,6 +303,20 @@ class ApiParam
     public function getMaxLength()
     {
         return $this->maxLength;
+    }
+
+    /**
+     * Set the maximum allowed length of the parameter
+     *
+     * @param int|null $maxLength Maximum length of the parameter
+     *
+     * @return self
+     */
+    public function setMaxLength($maxLength)
+    {
+        $this->maxLength = $maxLength;
+
+        return $this;
     }
 
     /**
@@ -227,6 +330,20 @@ class ApiParam
     }
 
     /**
+     * Set the location of the parameter
+     *
+     * @param string|null $location Location of the paramter
+     *
+     * @return self
+     */
+    public function setLocation($location)
+    {
+        $this->location = $location;
+
+        return $this;
+    }
+
+    /**
      * Get the location key mapping of the parameter
      *
      * @return string|null
@@ -237,13 +354,41 @@ class ApiParam
     }
 
     /**
-     * Get the static value of the parameter
+     * Set the location key mapping of the parameter
      *
-     * @return int|null
+     * @param string|null $key Location key
+     *
+     * @return self
+     */
+    public function setLocationKey($key)
+    {
+        $this->locationKey = $key;
+
+        return $this;
+    }
+
+    /**
+     * Get the static value of the parameter that cannot be changed
+     *
+     * @return mixed|null
      */
     public function getStatic()
     {
         return $this->static;
+    }
+
+    /**
+     * Set the static value of the parameter that cannot be changed
+     *
+     * @param mixed|null $static Static value to set
+     *
+     * @return self
+     */
+    public function setStatic($static)
+    {
+        $this->static = $static;
+
+        return $this;
     }
 
     /**
@@ -257,6 +402,20 @@ class ApiParam
     }
 
     /**
+     * Set the string to prepend to values
+     *
+     * @param string|null $prepend String to prepend to values
+     *
+     * @return self
+     */
+    public function setPrepend($prepend)
+    {
+        $this->prepend = $prepend;
+
+        return $this;
+    }
+
+    /**
      * Get the string to append to values
      *
      * @return string
@@ -267,6 +426,20 @@ class ApiParam
     }
 
     /**
+     * Set the string to append to values
+     *
+     * @param string|null $append String to append to values
+     *
+     * @return self
+     */
+    public function setAppend($append)
+    {
+        $this->append = $append;
+
+        return $this;
+    }
+
+    /**
      * Get an array of filters used by the parameter
      *
      * @return array
@@ -274,6 +447,20 @@ class ApiParam
     public function getFilters()
     {
         return $this->filters;
+    }
+
+    /**
+     * Set the array of filters used by the parameter
+     *
+     * @param array $filters Array of functions to use as filters
+     *
+     * @return self
+     */
+    public function setFilters(array $filters)
+    {
+        $this->filters = $filters;
+
+        return $this;
     }
 
     /**

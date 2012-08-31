@@ -40,7 +40,12 @@ class ServiceDescription implements ServiceDescriptionInterface
      */
     public function __construct(array $commands = array())
     {
-        $this->commands = $commands;
+        foreach ($commands as $name => $command) {
+            if (!$command->getName()) {
+                $command->setName($name);
+            }
+            $this->addCommand($command);
+        }
     }
 
     /**
@@ -105,5 +110,19 @@ class ServiceDescription implements ServiceDescriptionInterface
     public function getCommand($name)
     {
         return $this->hasCommand($name) ? $this->commands[$name] : null;
+    }
+
+    /**
+     * Add a command to the service description
+     *
+     * @param ApiCommandInterface $command Command to add
+     *
+     * @return self
+     */
+    public function addCommand(ApiCommandInterface $command)
+    {
+        $this->commands[$command->getName()] = $command;
+
+        return $this;
     }
 }

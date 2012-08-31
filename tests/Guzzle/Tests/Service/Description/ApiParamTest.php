@@ -163,4 +163,38 @@ class ApiParamTest extends \Guzzle\Tests\GuzzleTestCase
             'Foo\\Baz::bar'
         ), $p->getFilters());
     }
+
+    public function testCanBuildUpParams()
+    {
+        $p = new ApiParam(array());
+        $p->setName('foo')
+            ->setAppend('a')
+            ->setDefault('b')
+            ->setDoc('c')
+            ->setFilters(array('d'))
+            ->setLocation('e')
+            ->setLocationKey('f')
+            ->setMaxLength(2)
+            ->setMinLength(1)
+            ->setPrepend('g')
+            ->setRequired(true)
+            ->setStatic('h')
+            ->setType('i')
+            ->setTypeArgs(array('j'));
+
+        $this->assertEquals('foo', $p->getName());
+        $this->assertEquals('a', $p->getAppend());
+        $this->assertEquals('b', $p->getDefault());
+        $this->assertEquals('c', $p->getDoc());
+        $this->assertEquals(array('d'), $p->getFilters());
+        $this->assertEquals('e', $p->getLocation());
+        $this->assertEquals('f', $p->getLocationKey());
+        $this->assertEquals(2, $p->getMaxLength());
+        $this->assertEquals(1, $p->getMinLength());
+        $this->assertEquals('g', $p->getPrepend());
+        $this->assertEquals(true, $p->getRequired());
+        $this->assertEquals('h', $p->getStatic());
+        $this->assertEquals('i', $p->getType());
+        $this->assertEquals(array('j'), $p->getTypeArgs());
+    }
 }

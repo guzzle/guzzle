@@ -128,7 +128,7 @@ class ApiCommand implements ApiCommandInterface
             foreach ($config['params'] as $name => $param) {
                 if ($param instanceof ApiParam) {
                     $this->params[$name] = $param;
-                } elseif (is_array($param)) {
+                } else {
                     $param['name'] = $name;
                     $this->params[$name] = new ApiParam($param);
                 }
@@ -139,52 +139,56 @@ class ApiCommand implements ApiCommandInterface
     /**
      * Create an ApiCommand object from a class and its docblock
      *
-     * The following is the format for @guzzle arguments:
-     * @guzzle argument_name [default="default value"] [required="true|false"] [type="registered constraint name"] [type_args=""] [doc="Description of argument"]
-     * Example: @guzzle my_argument default="hello" required="true" doc="Set the argument to control the widget..."
+     * Example: @guzzle my_argument default="hello" required="true" doc="Description" type="string"
      *
      * @param string $className Name of the class
      *
      * @return ApiCommand
+     * @link   http://guzzlephp.org/tour/building_services.html#docblock-annotations-for-commands
      */
     public static function fromCommand($className)
     {
         if (!isset(self::$apiCommandCache[$className])) {
 
-            $reflection = new \ReflectionClass($className);
-
             // Get all of the @guzzle annotations from the class
+            $reflection = new \ReflectionClass($className);
             $matches = array();
             $params = array();
-            preg_match_all('/' . self::GUZZLE_ANNOTATION . '\s+([A-Za-z0-9_\-\.]+)\s*([A-Za-z0-9]+=".+")*/', $reflection->getDocComment(), $matches);
 
             // Parse the docblock annotations
-            if (!empty($matches[1])) {
+            if (preg_match_all(
+                '/' . self::GUZZLE_ANNOTATION . '\s+([A-Za-z0-9_\-\.]+)\s*([A-Za-z0-9]+=".+")*/',
+                $reflection->getDocComment(),
+                $matches
+            )) {
+                $attrs = array();
                 foreach ($matches[1] as $index => $match) {
                     // Add the matched argument to the array keys
-                    $params[$match] = array();
+                    $param = array();
                     if (isset($matches[2])) {
                         // Break up the argument attributes by closing quote
                         foreach (explode('" ', $matches[2][$index]) as $part) {
-                            $attrs = array();
                             // Find the attribute and attribute value
-                            preg_match('/([A-Za-z0-9]+)="(.+)"*/', $part, $attrs);
-                            if (isset($attrs[1]) && isset($attrs[0])) {
+                            if (preg_match('/([A-Za-z0-9]+)="(.+)"*/', $part, $attrs)) {
                                 // Sanitize the strings
                                 if ($attrs[2][strlen($attrs[2]) - 1] == '"') {
                                     $attrs[2] = substr($attrs[2], 0, strlen($attrs[2]) - 1);
                                 }
-                                $params[$match][$attrs[1]] = $attrs[2];
+                                $param[$attrs[1]] = $attrs[2];
                             }
                         }
                     }
-                    $params[$match] = new ApiParam($params[$match]);
+                    $params[$match] = new ApiParam($param);
                 }
             }
 
-
+            // Add the command to the cache
             self::$apiCommandCache[$className] = new ApiCommand(array(
-                'name'   => str_replace('\\_', '.', Inflector::getDefault()->snake(substr($className, strpos($className, 'Command') + 8))),
+                'name'   => str_replace(
+                    '\\_',
+                    '.',
+                    Inflector::getDefault()->snake(substr($className, strpos($className, 'Command') + 8))
+                ),
                 'class'  => $className,
                 'params' => $params
             ));
@@ -250,11 +254,39 @@ class ApiCommand implements ApiCommandInterface
     }
 
     /**
+     * Add a parameter to the command
+     *
+     * @param ApiParam $param Parameter to add
+     *
+     * @return self
+     */
+    public function addParam(ApiParam $param)
+    {
+        $this->params[$param->getName()] = $param;
+
+        return $this;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function getMethod()
     {
         return $this->method;
+    }
+
+    /**
+     * Set the method of the command
+     *
+     * @param string $method Method to set
+     *
+     * @return self
+     */
+    public function setMethod($method)
+    {
+        $this->method = $method;
+
+        return $this;
     }
 
     /**
@@ -266,11 +298,39 @@ class ApiCommand implements ApiCommandInterface
     }
 
     /**
+     * Set the concrete class of the command
+     *
+     * @param string $className Concrete class name
+     *
+     * @return self
+     */
+    public function setConcreteClass($className)
+    {
+        $this->class = $className;
+
+        return $this;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function getName()
     {
         return $this->name;
+    }
+
+    /**
+     * Set the name of the command
+     *
+     * @param string $name Name of the command
+     *
+     * @return self
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+
+        return $this;
     }
 
     /**
@@ -282,11 +342,39 @@ class ApiCommand implements ApiCommandInterface
     }
 
     /**
+     * Set the command's documentation
+     *
+     * @param string $doc Command documentation
+     *
+     * @return self
+     */
+    public function setDoc($doc)
+    {
+        $this->doc = $doc;
+
+        return $this;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function getDocUrl()
     {
         return $this->docUrl;
+    }
+
+    /**
+     * Set the URL pointing to additional documentation on the command
+     *
+     * @param string $docUrl Documentation URL
+     *
+     * @return self
+     */
+    public function setDocUrl($docUrl)
+    {
+        $this->docUrl = $docUrl;
+
+        return $this;
     }
 
     /**
@@ -298,11 +386,39 @@ class ApiCommand implements ApiCommandInterface
     }
 
     /**
+     * Set the type of result created by the command
+     *
+     * @param string $resultType Type of result
+     *
+     * @return self
+     */
+    public function setResultType($resultType)
+    {
+        $this->resultType = $resultType;
+
+        return $this;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function getResultDoc()
     {
         return $this->resultDoc;
+    }
+
+    /**
+     * Set the result doc of the command
+     *
+     * @param string $resultDoc Documentation about the result of the command
+     *
+     * @return self
+     */
+    public function setResultDoc($resultDoc)
+    {
+        $this->resultDoc = $resultDoc;
+
+        return $this;
     }
 
     /**
@@ -314,11 +430,39 @@ class ApiCommand implements ApiCommandInterface
     }
 
     /**
+     * Set whether or not the command is deprecated
+     *
+     * @param bool $isDeprecated Set to true to mark as deprecated
+     *
+     * @return self
+     */
+    public function setDeprecated($isDeprecated)
+    {
+        $this->deprecated = $isDeprecated;
+
+        return $this;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function getUri()
     {
         return $this->uri;
+    }
+
+    /**
+     * Set the URI template of the command
+     *
+     * @param string $uri URI template to set
+     *
+     * @return self
+     */
+    public function setUri($uri)
+    {
+        $this->uri = $uri;
+
+        return $this;
     }
 
     /**
