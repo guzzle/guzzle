@@ -182,11 +182,13 @@ class ApiParamTest extends \Guzzle\Tests\GuzzleTestCase
             ->setType('i')
             ->setTypeArgs(array('j'));
 
+        $p->addFilter('foo');
+
         $this->assertEquals('foo', $p->getName());
         $this->assertEquals('a', $p->getAppend());
         $this->assertEquals('b', $p->getDefault());
         $this->assertEquals('c', $p->getDoc());
-        $this->assertEquals(array('d'), $p->getFilters());
+        $this->assertEquals(array('d', 'foo'), $p->getFilters());
         $this->assertEquals('e', $p->getLocation());
         $this->assertEquals('f', $p->getLocationKey());
         $this->assertEquals(2, $p->getMaxLength());

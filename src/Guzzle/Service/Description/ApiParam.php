@@ -464,6 +464,20 @@ class ApiParam
     }
 
     /**
+     * Add a filter to the parameter
+     *
+     * @param string $filter Method to filter the value through
+     *
+     * @return self
+     */
+    public function addFilter($filter)
+    {
+        $this->filters[] = $filter;
+
+        return $this;
+    }
+
+    /**
      * Sanitize and parse a ``filters`` value
      *
      * @param string $filter Filter to sanitize
