@@ -30,8 +30,8 @@ class DynamicCommand extends AbstractCommand
     /**
      * Add a location visitor to the command
      *
-     * @param string                   $location        Location to associate with the visitor
-     * @param LocationVisitorInterface $LocationVisitor Visitor to attach
+     * @param string                   $location Location to associate with the visitor
+     * @param LocationVisitorInterface $visitor  Visitor to attach
      *
      * @return self
      */
