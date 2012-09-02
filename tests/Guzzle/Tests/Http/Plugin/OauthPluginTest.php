@@ -3,11 +3,8 @@
 namespace Guzzle\Tests\Http\Plugin;
 
 use Guzzle\Http\Message\RequestFactory;
-use Guzzle\Http\Plugin\MockPlugin;
 use Guzzle\Http\Plugin\OauthPlugin;
 use Guzzle\Common\Event;
-use Guzzle\Http\Client;
-use Guzzle\Http\Message\Response;
 
 /**
  * @covers Guzzle\Http\Plugin\OauthPlugin

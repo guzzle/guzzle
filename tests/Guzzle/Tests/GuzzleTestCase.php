@@ -2,10 +2,8 @@
 
 namespace Guzzle\Tests;
 
-use Guzzle\Common\Collection;
 use Guzzle\Common\HasDispatcherInterface;
 use Guzzle\Common\Event;
-use Guzzle\Common\Log\Adapter\ZendLogAdapter;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\HeaderComparison;

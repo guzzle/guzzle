@@ -3,8 +3,6 @@
 namespace Guzzle\Tests\Mock;
 
 use Guzzle\Common\Event;
-use Guzzle\Common\Event\EventManager;
-use Guzzle\Common\Event\ObserverInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class MockObserver implements \Countable, EventSubscriberInterface

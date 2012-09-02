@@ -4,7 +4,6 @@ namespace Guzzle\Tests\Http\Plugin;
 
 use Guzzle\Common\Event;
 use Guzzle\Http\EntityBody;
-use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Plugin\MockPlugin;
 use Guzzle\Http\Client;

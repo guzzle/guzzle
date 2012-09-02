@@ -3,13 +3,11 @@
 namespace Guzzle\Tests\Message;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\HttpException;
 use Guzzle\Http\Utils;
 use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\Message\Response;
-use Guzzle\Http\Message\RequestFactory;
 
 /**
  * @group server

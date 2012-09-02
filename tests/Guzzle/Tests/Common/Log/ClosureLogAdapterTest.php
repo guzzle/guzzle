@@ -2,7 +2,6 @@
 
 namespace Guzzle\Tests\Common\Log;
 
-use Guzzle\Common\Log\LogAdapterInterface;
 use Guzzle\Common\Log\ClosureLogAdapter;
 
 class ClosureLogAdapterTest extends \Guzzle\Tests\GuzzleTestCase

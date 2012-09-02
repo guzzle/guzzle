@@ -3,17 +3,13 @@
 namespace Guzzle\Tests\Http\Curl;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Event;
 use Guzzle\Http\Utils;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Client;
-use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Curl\CurlHandle;
-use Guzzle\Http\Curl\CurlMulti;
-use Guzzle\Tests\Mock\MockObserver;
 
 /**
  * @group server

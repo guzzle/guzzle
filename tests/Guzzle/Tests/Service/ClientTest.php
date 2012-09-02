@@ -2,17 +2,11 @@
 
 namespace Guzzle\Tests\Service;
 
-use Guzzle\Common\Collection;
-use Guzzle\Common\Log\ClosureLogAdapter;
 use Guzzle\Common\Inflection\Inflector;
 use Guzzle\Http\Message\Response;
-use Guzzle\Http\Message\RequestFactory;
-use Guzzle\Http\Curl\CurlMulti;
 use Guzzle\Http\Plugin\MockPlugin;
 use Guzzle\Service\Description\ApiCommand;
 use Guzzle\Service\Client;
-use Guzzle\Service\Command\CommandInterface;
-use Guzzle\Service\Description\XmlDescriptionBuilder;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
 use Guzzle\Service\Resource\ResourceIteratorClassFactory;

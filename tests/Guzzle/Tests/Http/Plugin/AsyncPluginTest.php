@@ -5,7 +5,6 @@ namespace Guzzle\Tests\Http\Plugin;
 use Guzzle\Http\Plugin\AsyncPlugin;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactory;
-use Guzzle\Http\Plugin\OauthPlugin;
 use Guzzle\Http\Curl\CurlHandle;
 use Guzzle\Http\Exception\CurlException;
 use Guzzle\Common\Event;

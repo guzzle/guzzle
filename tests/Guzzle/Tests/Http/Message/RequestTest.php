@@ -14,7 +14,6 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Exception\BadResponseException;
-use Guzzle\Tests\Mock\MockObserver;
 
 /**
  * @group server

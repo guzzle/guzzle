@@ -6,8 +6,6 @@ use Guzzle\Common\Collection;
 use Guzzle\Common\Log\ClosureLogAdapter;
 use Guzzle\Parser\UriTemplate\UriTemplate;
 use Guzzle\Http\Message\Response;
-use Guzzle\Http\Message\RequestFactory;
-use Guzzle\Http\Plugin\ExponentialBackoffPlugin;
 use Guzzle\Http\Plugin\LogPlugin;
 use Guzzle\Http\Plugin\MockPlugin;
 use Guzzle\Http\Curl\CurlMulti;

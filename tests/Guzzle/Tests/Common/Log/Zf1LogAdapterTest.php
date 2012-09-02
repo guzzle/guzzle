@@ -2,7 +2,6 @@
 
 namespace Guzzle\Tests\Common\Log;
 
-use Guzzle\Common\Log\LogAdapterInterface;
 use Guzzle\Common\Log\Zf1LogAdapter;
 
 // Until I can figure out how to get this to work with composer, this is the

@@ -2,14 +2,12 @@
 
 namespace Guzzle\Tests\Service\Command;
 
-use Guzzle\Common\Collection;
 use Guzzle\Http\Utils;
 use Guzzle\Http\Message\PostFile;
 use Guzzle\Service\Client;
 use Guzzle\Service\Command\DynamicCommand;
 use Guzzle\Service\Command\Factory\ServiceDescriptionFactory;
 use Guzzle\Service\Description\ApiCommand;
-use Guzzle\Service\Description\ApiCommandFactory;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Command\LocationVisitor\HeaderVisitor;
 

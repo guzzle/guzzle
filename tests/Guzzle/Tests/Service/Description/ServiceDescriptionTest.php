@@ -2,7 +2,6 @@
 
 namespace Guzzle\Tests\Service\Description;
 
-use Guzzle\Common\Collection;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Description\ApiCommand;
 use Guzzle\Service\Client;

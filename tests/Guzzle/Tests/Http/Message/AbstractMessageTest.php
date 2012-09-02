@@ -3,10 +3,8 @@
 namespace Guzzle\Tests\Http\Message;
 
 use Guzzle\Http\Message\Header;
-use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\Request;
 use Guzzle\Common\Collection;
-use Guzzle\Http\Message\Response;
 
 class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
 {

@@ -2,14 +2,12 @@
 
 namespace Guzzle\Tests\Http\Message;
 
-use Guzzle\Common\Collection;
 use Guzzle\Http\Utils;
 use Guzzle\Http\Client;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Exception\RequestException;
-use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\EntityEnclosingRequest;
 use Guzzle\Http\Message\PostFile;
 use Guzzle\Http\QueryString;

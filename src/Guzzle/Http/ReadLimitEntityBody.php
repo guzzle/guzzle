@@ -2,8 +2,6 @@
 
 namespace Guzzle\Http;
 
-use Guzzle\Common\Exception\RuntimeException;
-
 /**
  * EntityBody decorator used to return only a subset of an entity body
  */

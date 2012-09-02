@@ -10,7 +10,6 @@ use Guzzle\Http\Client;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
-use Guzzle\Http\Curl\CurlHandle;
 use Guzzle\Http\Curl\CurlMulti;
 use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Plugin\LogPlugin;

@@ -4,7 +4,6 @@ namespace Guzzle\Tests\Common;
 
 use Guzzle\Common\Batch\ExceptionBufferingBatch;
 use Guzzle\Common\Batch\Batch;
-use Guzzle\Common\Exception\BatchTransferException;
 use Guzzle\Common\Batch\BatchSizeDivisor;
 
 /**

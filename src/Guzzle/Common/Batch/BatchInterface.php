@@ -2,7 +2,6 @@
 
 namespace Guzzle\Common\Batch;
 
-
 /**
  * Interface for efficiently transferring items in a queue using batches
  */

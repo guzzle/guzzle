@@ -4,7 +4,6 @@ namespace Guzzle\Tests\Http;
 
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Url;
-use Guzzle\Parser\ParserRegistry;
 
 class UrlTest extends \Guzzle\Tests\GuzzleTestCase
 {
@@ -185,7 +184,7 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('http://www.test.com/?a=b', (string) $url);
     }
 
-    function urlProvider()
+    public function urlProvider()
     {
         return array(
             array('/foo/..', '/'),

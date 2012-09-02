@@ -6,7 +6,6 @@ use Guzzle\Common\Collection;
 use Guzzle\Service\Inspector;
 use Guzzle\Service\Description\ApiCommand;
 use Guzzle\Service\Description\ApiParam;
-use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Exception\ValidationException;
 
 /**

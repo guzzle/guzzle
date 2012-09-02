@@ -2,7 +2,6 @@
 
 namespace Guzzle\Tests\Common\Log;
 
-use Guzzle\Common\Log\LogAdapterInterface;
 use Guzzle\Common\Log\ArrayLogAdapter;
 
 class ArrayLogAdapterTest extends \Guzzle\Tests\GuzzleTestCase
