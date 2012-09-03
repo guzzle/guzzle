@@ -58,7 +58,7 @@ class CurlHandle
 
         // Array of default cURL options.
         $curlOptions = array(
-            CURLOPT_URL            => $request->getUrl(),
+            CURLOPT_URL            => $request->getClient()->getBaseUrl(),
             CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_RETURNTRANSFER => false,
             CURLOPT_HEADER         => false,
