@@ -35,8 +35,12 @@ class CacheAdapterFactory implements FromConfigInterface
                 if (!isset($config[$required])) {
                     throw new InvalidArgumentException("{$required} is a required CacheAdapterFactory option");
                 }
-                if (is_string($config[$required]) && !class_exists($config[$required])) {
-                    throw new InvalidArgumentException("{$config[$required]} is not a valid class for {$required}");
+                if (is_string($config[$required])) {
+                    // Convert dot notation to namespaces
+                    $config[$required] = str_replace('.', '\\', $config[$required]);
+                    if (!class_exists($config[$required])) {
+                        throw new InvalidArgumentException("{$config[$required]} is not a valid class for {$required}");
+                    }
                 }
             }
             // Instantiate the cache provider

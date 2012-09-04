@@ -39,8 +39,8 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         'cache.adapter' => array(
             'class'  => 'Guzzle\Common\Cache\CacheAdapterFactory',
             'params' => array(
-                'cache.adapter'  => 'Guzzle\Common\Cache\DoctrineCacheAdapter',
-                'cache.provider' => 'Doctrine\Common\Cache\ArrayCache'
+                'cache.adapter'  => 'Guzzle.Common.Cache.DoctrineCacheAdapter',
+                'cache.provider' => 'Doctrine.Common.Cache.ArrayCache'
             )
         ),
         'service_uses_cache' => array(
