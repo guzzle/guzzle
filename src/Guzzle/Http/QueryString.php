@@ -64,7 +64,7 @@ class QueryString extends Collection
                 }
 
                 if (array_key_exists(1, $parts)) {
-                    $q->add($key, rawurldecode(str_replace('+', '%20', $parts[1])));
+                    $q->add($key, rawurldecode(str_replace('+', '%20', implode('=', array_slice($parts, 1)))));
                 } else {
                     $q->add($key, '');
                 }
