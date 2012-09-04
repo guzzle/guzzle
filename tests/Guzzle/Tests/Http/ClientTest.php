@@ -578,4 +578,16 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client = new Client();
         $client->setDefaultHeaders('foo');
     }
+
+    /**
+     * @covers Guzzle\Http\Client
+     */
+    public function testQueryStringsDoubleEqualsSignBehaviour()
+    {
+        $client = new Client();
+
+        $request = $client->get('http://test.com/?query=http://foo.bar/?foo=bar&foo=bar');
+
+        $this->assertEquals('http://test.com/?query=http%3A%2F%2Ffoo.bar%2F%3Ffoo%3Dbar&foo=bar', $request->getUrl());
+    }
 }
