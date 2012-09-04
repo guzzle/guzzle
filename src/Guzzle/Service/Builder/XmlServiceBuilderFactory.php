@@ -26,21 +26,11 @@ class XmlServiceBuilderFactory implements ServiceBuilderFactoryInterface
      */
     protected function parseXmlFile($filename)
     {
-        if ($filename instanceof \SimpleXMLElement) {
-            $xml = $filename;
-        } else {
-            $xml = new \SimpleXMLElement($filename, null, true);
-            $result = array(
-                'services' => array()
-            );
-        }
+        $result = array('services' => array());
+        $xml = $filename instanceof \SimpleXMLElement ? $filename : new \SimpleXMLElement($filename, null, true);
 
         // Account for old style service builder config files
-        if (isset($xml->services)) {
-            $services = $xml->services->service;
-        } else {
-            $services = $xml->clients->client;
-        }
+        $services = isset($xml->services) ? $xml->services->service : $xml->clients->client;
 
         foreach ($services as $service) {
             $row = array();
@@ -67,7 +57,8 @@ class XmlServiceBuilderFactory implements ServiceBuilderFactoryInterface
                 if ($path[0] != DIRECTORY_SEPARATOR) {
                     $path = dirname($filename) . DIRECTORY_SEPARATOR . $path;
                 }
-                $result = array_merge_recursive($this->parseXmlFile($path), $result);
+                // Merge the two configuration files together using union merges
+                $result = ServiceBuilderAbstractFactory::combineConfigs($this->parseXmlFile($path), $result);
             }
         }
 

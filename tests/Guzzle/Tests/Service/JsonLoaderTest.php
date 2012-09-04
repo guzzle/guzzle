@@ -42,4 +42,13 @@ class JsonLoaderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertInternalType('array', $data['services']['mock']);
         $this->assertEquals('bar', $data['services']['foo']['params']['baz']);
     }
+
+    public function testFactoryUsesAliases()
+    {
+        $file = dirname(__DIR__) . '/TestData/services/json1.json';
+        $loader = new JsonLoader();
+        $loader->addAlias('foo', $file);
+        $data = $loader->parseJsonFile('foo');
+        $this->assertEquals('bar', $data['services']['foo']['params']['baz']);
+    }
 }

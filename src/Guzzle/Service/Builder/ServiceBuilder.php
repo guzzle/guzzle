@@ -25,11 +25,6 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
     protected $clients = array();
 
     /**
-     * @var ServiceBuilderAbstractFactory
-     */
-    protected static $defaultFactory;
-
-    /**
      * Create a new ServiceBuilder using configuration data sourced from an
      * array, .json|.js file, SimpleXMLElement, or .xml file.
      *
@@ -45,13 +40,9 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
      */
     public static function factory($config = null, array $globalParameters = null)
     {
-        // @codeCoverageIgnoreStart
-        if (!self::$defaultFactory) {
-            self::$defaultFactory = new ServiceBuilderAbstractFactory();
-        }
-        // @codeCoverageIgnoreEnd
+        $factory = new ServiceBuilderAbstractFactory();
 
-        return self::$defaultFactory->build($config, $globalParameters);
+        return $factory->build($config, $globalParameters);
     }
 
     /**
@@ -116,7 +107,7 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
 
         // Convert references to the actual client
         foreach ($this->builderConfig[$name]['params'] as &$v) {
-            if (0 === strpos($v, '{') && strlen($v) - 1 == strrpos($v, '}')) {
+            if (is_string($v) && 0 === strpos($v, '{') && strlen($v) - 1 == strrpos($v, '}')) {
                 $v = $this->get(trim(str_replace(array('{', '}'), '', $v)));
             }
         }

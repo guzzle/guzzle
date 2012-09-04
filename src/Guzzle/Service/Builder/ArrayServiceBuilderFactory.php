@@ -30,21 +30,25 @@ class ArrayServiceBuilderFactory implements ServiceBuilderFactoryInterface
 
                 // Make sure that the service it's extending has been defined
                 if (!isset($services[$service['extends']])) {
-                    throw new ServiceNotFoundException($name . ' is trying to extend a non-existent service: ' . $service['extends']);
+                    throw new ServiceNotFoundException(
+                        "{$name} is trying to extend a non-existent service: {$service['extends']}"
+                    );
                 }
 
                 $service['class'] = empty($service['class'])
                     ? $services[$service['extends']]['class'] : $service['class'];
 
-                $extendsParams = isset($services[$service['extends']]['params']) ? $services[$service['extends']]['params'] : false;
+                $extendsParams = isset($services[$service['extends']]['params'])
+                    ? $services[$service['extends']]['params'] : false;
+
                 if ($extendsParams) {
-                    $service['params'] = array_merge($extendsParams, $service['params']);
+                    $service['params'] = $service['params'] + $extendsParams;
                 }
             }
 
             // Overwrite default values with global parameter values
             if (!empty($options)) {
-                $service['params'] = array_merge($service['params'], $options);
+                $service['params'] = $options + $service['params'];
             }
 
             $service['class'] = !isset($service['class']) ? '' : str_replace('.', '\\', $service['class']);

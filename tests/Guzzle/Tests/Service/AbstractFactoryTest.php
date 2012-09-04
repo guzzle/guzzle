@@ -4,6 +4,7 @@ namespace Guzzle\Tests\Service;
 
 use Guzzle\Common\Cache\DoctrineCacheAdapter;
 use Guzzle\Service\AbstractFactory;
+use Guzzle\Service\Builder\JsonServiceBuilderFactory;
 use Guzzle\Service\Exception\ServiceBuilderException;
 use Doctrine\Common\Cache\ArrayCache;
 
@@ -15,7 +16,7 @@ class AbstractFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     protected function getFactory()
     {
         return $this->getMockBuilder('Guzzle\Service\AbstractFactory')
-            ->setMethods(array('getCacheTtlKey', 'throwException', 'getClassName'))
+            ->setMethods(array('getCacheTtlKey', 'throwException', 'getFactory'))
             ->getMockForAbstractClass();
     }
 
@@ -27,8 +28,8 @@ class AbstractFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $factory = $this->getFactory();
 
         $factory->expects($this->once())
-            ->method('getClassName')
-            ->will($this->returnValue('Guzzle\Service\Builder\JsonServiceBuilderFactory'));
+            ->method('getFactory')
+            ->will($this->returnValue(new JsonServiceBuilderFactory()));
 
         // Create a service and add it to the cache
         $service = $factory->build($jsonFile, array(
@@ -51,13 +52,8 @@ class AbstractFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $factory = $this->getFactory();
         $factory->expects($this->any())
-            ->method('getClassName')
+            ->method('getFactory')
             ->will($this->returnValue(false));
-
-        // Exceptions are mocked and disabled, so nothing happens here
-        $service = $factory->build('foo');
-
-        // Throw an exception when it's supposed to
         $factory->expects($this->any())
             ->method('throwException')
             ->will($this->throwException(new ServiceBuilderException()));

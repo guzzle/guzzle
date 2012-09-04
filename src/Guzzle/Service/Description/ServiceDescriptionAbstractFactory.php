@@ -29,21 +29,17 @@ class ServiceDescriptionAbstractFactory extends AbstractFactory implements Servi
     /**
      * {@inheritdoc}
      */
-    protected function getClassName($config)
+    protected function getFactory($config)
     {
         if (is_array($config)) {
-            $class = 'ArrayDescriptionBuilder';
+            return new ArrayDescriptionBuilder();
         } else {
             $ext = pathinfo($config, PATHINFO_EXTENSION);
             if ($ext == 'js' || $ext == 'json') {
-                $class = 'JsonDescriptionBuilder';
+                return new JsonDescriptionBuilder();
             } elseif ($ext == 'xml') {
-                $class = 'XmlDescriptionBuilder';
-            } else {
-                return;
+                return new XmlDescriptionBuilder();
             }
         }
-
-        return __NAMESPACE__ . '\\' . $class;
     }
 }

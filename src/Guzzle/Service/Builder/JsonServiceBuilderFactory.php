@@ -7,22 +7,22 @@ use Guzzle\Service\JsonLoader;
 /**
  * Creates a ServiceBuilder using a JSON configuration file
  */
-class JsonServiceBuilderFactory implements ServiceBuilderFactoryInterface
+class JsonServiceBuilderFactory extends JsonLoader implements ServiceBuilderFactoryInterface
 {
-    /**
-     * @var JsonLoader
-     */
-    protected $loader;
-
     /**
      * {@inheritdoc}
      */
     public function build($config, array $options = null)
     {
-        if (!$this->loader) {
-            $this->loader = new JsonLoader();
-        }
+        return ServiceBuilder::factory($this->parseJsonFile($config), $options);
+    }
 
-        return ServiceBuilder::factory($this->loader->parseJsonFile($config), $options);
+    /**
+     * {@inheritdoc}
+     * Adds special handling for JSON configuration merging
+     */
+    protected function mergeJson(array $jsonA, array $jsonB)
+    {
+        return ServiceBuilderAbstractFactory::combineConfigs($jsonA, $jsonB);
     }
 }

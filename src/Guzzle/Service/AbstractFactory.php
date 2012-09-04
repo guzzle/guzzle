@@ -8,11 +8,6 @@ namespace Guzzle\Service;
 abstract class AbstractFactory
 {
     /**
-     * @var array Cache of instantiated factories
-     */
-    protected $factories = array();
-
-    /**
      * {@inheritdoc}
      */
     public function build($config, array $options = null)
@@ -22,29 +17,27 @@ abstract class AbstractFactory
 
         // Check if a cache was provided
         if (isset($options['cache.adapter']) && is_string($config)) {
-
             $adapter = $options['cache.adapter'];
             $ttl = isset($options[$cacheTtlKey]) ? $options[$cacheTtlKey] : 3600;
             $cacheKey = 'guzzle' . crc32($config);
-
             // Check if the instantiated data is in the cache
-            $cached = $adapter->fetch($cacheKey);
-            if ($cached) {
+            if ($cached = $adapter->fetch($cacheKey)) {
                 return $cached;
             }
         }
 
         // Get the name of the class to instantiate for the type of data
-        $class = $this->getClassName($config);
-        if ($class) {
-            $result = $this->getFactory($class)->build($config, $options);
-            if ($adapter) {
-                $adapter->save($cacheKey, $result, $ttl);
-            }
-            return $result;
+        $factory = $this->getFactory($config);
+        if (!$factory || is_string($factory)) {
+            return $this->throwException($factory);
         }
 
-        $this->throwException();
+        $result = $factory->build($config, $options);
+        if ($adapter) {
+            $adapter->save($cacheKey, $result, $ttl);
+        }
+
+        return $result;
     }
 
     /**
@@ -67,27 +60,11 @@ abstract class AbstractFactory
     abstract protected function throwException($message = '');
 
     /**
-     * Get the name of a class to instantiate for the type of data provided
+     * Get a concrete factory based on the data provided
      *
-     * @param mixed $config Data to use to determine a class name
+     * @param mixed $config Data to use to determine the concrete factory
      *
-     * @return mixed
+     * @return mixed|string Returning a string will throw an exception with a specific message
      */
-    abstract protected function getClassName($config);
-
-    /**
-     * Get a factory by object name, or retrieve previously a created factory
-     *
-     * @param string $class Name of the factory class to retrieve
-     *
-     * @return mixed
-     */
-    protected function getFactory($class)
-    {
-        if (!isset($this->factories[$class])) {
-            $this->factories[$class] = new $class();
-        }
-
-        return $this->factories[$class];
-    }
+    abstract protected function getFactory($config);
 }
