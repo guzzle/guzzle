@@ -11,6 +11,11 @@ use Guzzle\Service\Exception\ServiceBuilderException;
 class ServiceBuilderAbstractFactory extends AbstractFactory implements ServiceBuilderFactoryInterface
 {
     /**
+     * @var array Pool of instantiated factories by name
+     */
+    protected $factories = array();
+
+    /**
      * Combines service builder configuration file arrays
      *
      * @param array $a Original data
@@ -51,6 +56,72 @@ class ServiceBuilderAbstractFactory extends AbstractFactory implements ServiceBu
     }
 
     /**
+     * Get an array factory
+     *
+     * @return ArrayServiceBuilderFactory
+     */
+    public function getArrayFactory()
+    {
+        if (!isset($this->factories['array'])) {
+            $this->factories['array'] = new ArrayServiceBuilderFactory();
+        }
+
+        return $this->factories['array'];
+    }
+
+    /**
+     * Get a JSON factory
+     *
+     * @return JsonServiceBuilderFactory
+     */
+    public function getJsonFactory()
+    {
+        if (!isset($this->factories['json'])) {
+            $this->factories['json'] = new JsonServiceBuilderFactory($this->getArrayFactory());
+        }
+
+        return $this->factories['json'];
+    }
+
+    /**
+     * Get a XML factory
+     *
+     * @return XmlServiceBuilderFactory
+     */
+    public function getXmlFactory()
+    {
+        if (!isset($this->factories['xml'])) {
+            $this->factories['xml'] = new XmlServiceBuilderFactory($this->getArrayFactory());
+        }
+
+        return $this->factories['xml'];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function getFactory($config)
+    {
+        if (is_array($config)) {
+            return $this->getArrayFactory();
+        } elseif (is_string($config)) {
+            $ext = pathinfo($config, PATHINFO_EXTENSION);
+            if ($ext == 'js' || $ext == 'json') {
+                return $this->getJsonFactory();
+            } elseif ($ext == 'xml') {
+                return $this->getXmlFactory();
+            }
+            return "Unable to determine which factory to use based on the file extension of {$config}."
+                . " Valid file extensions are: .js, .json, .xml";
+
+        } elseif ($config instanceof \SimpleXMLElement) {
+            return $this->getXmlFactory();
+        }
+
+        return 'Must pass a file name, array, or SimpleXMLElement';
+    }
+
+    /**
      * {@inheritdoc}
      */
     protected function getCacheTtlKey($config)
@@ -64,32 +135,5 @@ class ServiceBuilderAbstractFactory extends AbstractFactory implements ServiceBu
     protected function throwException($message = '')
     {
         throw new ServiceBuilderException($message ?: 'Unable to build service builder');
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function getFactory($config)
-    {
-        if (is_array($config)) {
-            return new ArrayServiceBuilderFactory();
-        } elseif (is_string($config)) {
-            $ext = pathinfo($config, PATHINFO_EXTENSION);
-            if ($ext == 'js' || $ext == 'json') {
-                return new JsonServiceBuilderFactory();
-            } elseif ($ext == 'xml') {
-                return new XmlServiceBuilderFactory();
-            }
-
-            $this->throwException(
-                "Unable to determine which factory to use based on the file extension of {$config}."
-                . " Valid file extensions are: .js, .json, .xml"
-            );
-
-        } elseif ($config instanceof \SimpleXMLElement) {
-            return new XmlServiceBuilderFactory();
-        }
-
-        return 'Must pass a file name, array, or SimpleXMLElement';
     }
 }

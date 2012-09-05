@@ -2,6 +2,7 @@
 
 namespace Guzzle\Tests\Service\Builder;
 
+use Guzzle\Service\Builder\ArrayServiceBuilderFactory;
 use Guzzle\Service\Builder\ServiceBuilder;
 use Guzzle\Service\Builder\JsonServiceBuilderFactory;
 
@@ -13,7 +14,7 @@ class JsonServiceBuilderFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 {
     public function testBuildsServiceBuilders()
     {
-        $j = new JsonServiceBuilderFactory();
+        $j = new JsonServiceBuilderFactory(new ArrayServiceBuilderFactory());
         $file = __DIR__ . '/../../TestData/services/json1.json';
 
         // Initial build

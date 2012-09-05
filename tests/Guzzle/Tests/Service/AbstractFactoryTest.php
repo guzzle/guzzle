@@ -6,6 +6,7 @@ use Guzzle\Common\Cache\DoctrineCacheAdapter;
 use Guzzle\Service\AbstractFactory;
 use Guzzle\Service\Builder\JsonServiceBuilderFactory;
 use Guzzle\Service\Exception\ServiceBuilderException;
+use Guzzle\Service\Builder\ArrayServiceBuilderFactory;
 use Doctrine\Common\Cache\ArrayCache;
 
 /**
@@ -29,7 +30,7 @@ class AbstractFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 
         $factory->expects($this->once())
             ->method('getFactory')
-            ->will($this->returnValue(new JsonServiceBuilderFactory()));
+            ->will($this->returnValue(new JsonServiceBuilderFactory(new ArrayServiceBuilderFactory())));
 
         // Create a service and add it to the cache
         $service = $factory->build($jsonFile, array(

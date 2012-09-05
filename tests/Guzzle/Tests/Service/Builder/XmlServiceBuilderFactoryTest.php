@@ -2,6 +2,7 @@
 
 namespace Guzzle\Tests\Service\Builder;
 
+use Guzzle\Service\Builder\ArrayServiceBuilderFactory;
 use Guzzle\Service\Builder\XmlServiceBuilderFactory;
 
 /**
@@ -12,7 +13,7 @@ class XmlServiceBuilderFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 {
     public function testBuildsServiceBuilders()
     {
-        $xmlFactory = new XmlServiceBuilderFactory();
+        $xmlFactory = new XmlServiceBuilderFactory(new ArrayServiceBuilderFactory);
         $file = __DIR__ . '/../../TestData/services/new_style.xml';
 
         $builder = $xmlFactory->build($file);
@@ -26,7 +27,7 @@ class XmlServiceBuilderFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 
     public function testBuildsServiceBuildersUsingSimpleXmlElement()
     {
-        $xmlFactory = new XmlServiceBuilderFactory();
+        $xmlFactory = new XmlServiceBuilderFactory(new ArrayServiceBuilderFactory);
         $file = __DIR__ . '/../../TestData/services/new_style.xml';
         $xml = new \SimpleXMLElement(file_get_contents($file));
         $xml->includes = null;
@@ -38,7 +39,7 @@ class XmlServiceBuilderFactoryTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testCannotExtendWhenUsingSimpleXMLElement()
     {
-        $xmlFactory = new XmlServiceBuilderFactory();
+        $xmlFactory = new XmlServiceBuilderFactory(new ArrayServiceBuilderFactory());
         $file = __DIR__ . '/../../TestData/services/new_style.xml';
         $xml = new \SimpleXMLElement(file_get_contents($file));
         $xmlFactory->build($xml);

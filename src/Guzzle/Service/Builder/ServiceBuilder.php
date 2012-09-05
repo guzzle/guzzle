@@ -25,6 +25,11 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
     protected $clients = array();
 
     /**
+     * @var ServiceBuilderAbstractFactory Cached instance of the abstract factory
+     */
+    protected static $cachedFactory;
+
+    /**
      * Create a new ServiceBuilder using configuration data sourced from an
      * array, .json|.js file, SimpleXMLElement, or .xml file.
      *
@@ -40,9 +45,13 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
      */
     public static function factory($config = null, array $globalParameters = null)
     {
-        $factory = new ServiceBuilderAbstractFactory();
+        // @codeCoverageIgnoreStart
+        if (!static::$cachedFactory) {
+            static::$cachedFactory = new ServiceBuilderAbstractFactory();
+        }
+        // @codeCoverageIgnoreEnd
 
-        return $factory->build($config, $globalParameters);
+        return self::$cachedFactory->build($config, $globalParameters);
     }
 
     /**
