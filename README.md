@@ -195,7 +195,7 @@ The resulting URL would become ``http://test.com?a=hi&b=there``
 Unit testing
 ------------
 
-[![Build Status](https://secure.travis-ci.org/guzzle/guzzle.png)](http://travis-ci.org/guzzle/guzzle)
+[![Build Status](https://secure.travis-ci.org/guzzle/guzzle.png?branch=master)](http://travis-ci.org/guzzle/guzzle)
 
 You will first need to clone the GitHub repository:
 

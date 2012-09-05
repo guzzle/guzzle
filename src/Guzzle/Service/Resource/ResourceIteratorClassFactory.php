@@ -40,11 +40,11 @@ class ResourceIteratorClassFactory implements ResourceIteratorFactoryInterface
      * Create a resource iterator
      *
      * @param CommandInterface $data    Command used for building the iterator
-     * @param array            $options Iterator options.
+     * @param array            $options Iterator options that are exposed as data.
      *
      * @return ResourceIteratorInterface
      */
-    public function build($data, array $options = null)
+    public function build($data, array $options = array())
     {
         if (!($data instanceof CommandInterface)) {
             throw new InvalidArgumentException('The first argument must be an instance of CommandInterface');
