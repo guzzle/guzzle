@@ -30,7 +30,7 @@ The recommended way to install Guzzle is through [Composer](http://getcomposer.o
             }
         }
 
-    Consider tightening your dependencies to a known version when deploying mission critical applications (e.g. ``2.7.*``).
+    Consider tightening your dependencies to a known version when deploying mission critical applications (e.g. ``2.8.*``).
 
 2. Download and install Composer:
 
