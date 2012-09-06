@@ -4,7 +4,7 @@ namespace Guzzle\Service;
 
 use Guzzle\Common\FromConfigInterface;
 use Guzzle\Common\Exception\InvalidArgumentException;
-use Guzzle\Common\Inflection\InflectorInterface;
+use Guzzle\Inflection\InflectorInterface;
 use Guzzle\Http\ClientInterface as HttpClientInterface;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Description\ServiceDescription;

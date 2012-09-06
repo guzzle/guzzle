@@ -42,40 +42,13 @@ class InspectorTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Inspector::prepareConfig
-     */
-    public function testPreparesConfig()
-    {
-        $c = Inspector::prepareConfig(array(
-            'a' => '123',
-            'base_url' => 'http://www.test.com/'
-        ), array(
-            'a' => 'xyz',
-            'b' => 'lol'
-        ), array('a'));
-
-        $this->assertInstanceOf('Guzzle\Common\Collection', $c);
-        $this->assertEquals(array(
-            'a' => '123',
-            'b' => 'lol',
-            'base_url' => 'http://www.test.com/'
-        ), $c->getAll());
-
-        try {
-            $c = Inspector::prepareConfig(null, null, array('a'));
-            $this->fail('Exception not throw when missing config');
-        } catch (ValidationException $e) {
-        }
-    }
-
-    /**
      * @covers Guzzle\Service\Inspector::registerConstraint
      * @covers Guzzle\Service\Inspector::getConstraint
      * @covers Guzzle\Service\Inspector::getRegisteredConstraints
      */
     public function testRegistersCustomConstraints()
     {
-        $constraintClass = 'Guzzle\\Common\\Validation\\Ip';
+        $constraintClass = 'Guzzle\Validation\Ip';
 
         Inspector::getInstance()->registerConstraint('mock', $constraintClass);
         Inspector::getInstance()->registerConstraint('mock_2', $constraintClass, array(

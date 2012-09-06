@@ -2,7 +2,7 @@
 
 namespace Guzzle\Http;
 
-use Guzzle\Common\Stream;
+use Guzzle\Stream\Stream;
 use Guzzle\Common\Exception\InvalidArgumentException;
 
 /**

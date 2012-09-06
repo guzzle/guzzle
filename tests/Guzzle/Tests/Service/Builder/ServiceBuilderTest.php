@@ -2,7 +2,7 @@
 
 namespace Guzzle\Tests\Service;
 
-use Guzzle\Common\Cache\DoctrineCacheAdapter;
+use Guzzle\Cache\DoctrineCacheAdapter;
 use Guzzle\Service\Builder\ServiceBuilder;
 use Guzzle\Service\Client;
 use Guzzle\Service\Exception\ServiceNotFoundException;
@@ -37,9 +37,9 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
             'extends' => 'billy.mock'
         ),
         'cache.adapter' => array(
-            'class'  => 'Guzzle\Common\Cache\CacheAdapterFactory',
+            'class'  => 'Guzzle\Cache\CacheAdapterFactory',
             'params' => array(
-                'cache.adapter'  => 'Guzzle.Common.Cache.DoctrineCacheAdapter',
+                'cache.adapter'  => 'Guzzle.Cache.DoctrineCacheAdapter',
                 'cache.provider' => 'Doctrine.Common.Cache.ArrayCache'
             )
         ),
@@ -340,7 +340,7 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $builder = ServiceBuilder::factory($this->arrayData);
         $usesCache = $builder['service_uses_cache'];
-        $this->assertInstanceOf('Guzzle\Common\Cache\DoctrineCacheAdapter', $usesCache->getConfig('cache'));
+        $this->assertInstanceOf('Guzzle\Cache\DoctrineCacheAdapter', $usesCache->getConfig('cache'));
     }
 
     public function testServicesCanBeAddedToBuilderAfterInstantiationAndInjectedIntoServices()
@@ -355,7 +355,7 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $builder['cache.adapter'] = $cache;
 
         $this->assertInstanceOf(
-            'Guzzle\Common\Cache\DoctrineCacheAdapter',
+            'Guzzle\Cache\DoctrineCacheAdapter',
             $builder['service_uses_cache']->getConfig('cache')
         );
     }

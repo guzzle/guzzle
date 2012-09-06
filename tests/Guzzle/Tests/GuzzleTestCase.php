@@ -7,7 +7,7 @@ use Guzzle\Common\Event;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\HeaderComparison;
-use Guzzle\Http\Plugin\MockPlugin;
+use Guzzle\Plugin\Mock\MockPlugin;
 use Guzzle\Service\Client;
 use Guzzle\Service\Builder\ServiceBuilderInterface;
 use Guzzle\Tests\Mock\MockObserver;

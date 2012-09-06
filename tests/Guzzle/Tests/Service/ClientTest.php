@@ -2,9 +2,9 @@
 
 namespace Guzzle\Tests\Service;
 
-use Guzzle\Common\Inflection\Inflector;
+use Guzzle\Inflection\Inflector;
 use Guzzle\Http\Message\Response;
-use Guzzle\Http\Plugin\MockPlugin;
+use Guzzle\Plugin\Mock\MockPlugin;
 use Guzzle\Service\Description\ApiCommand;
 use Guzzle\Service\Client;
 use Guzzle\Service\Description\ServiceDescription;
@@ -355,7 +355,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     public function testClientHoldsInflector()
     {
         $client = new Mock\MockClient();
-        $this->assertInstanceOf('Guzzle\Common\Inflection\MemoizingInflector', $client->getInflector());
+        $this->assertInstanceOf('Guzzle\Inflection\MemoizingInflector', $client->getInflector());
 
         $inflector = new Inflector();
         $client->setInflector($inflector);

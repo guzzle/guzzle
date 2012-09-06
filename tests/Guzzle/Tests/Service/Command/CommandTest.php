@@ -2,7 +2,7 @@
 
 namespace Guzzle\Tests\Service\Command;
 
-use Guzzle\Http\Plugin\MockPlugin;
+use Guzzle\Plugin\Mock\MockPlugin;
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Client;
 use Guzzle\Service\Command\CommandInterface;
