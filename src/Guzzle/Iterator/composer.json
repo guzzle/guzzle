@@ -1,0 +1,23 @@
+{
+    "name": "guzzle/iterator",
+    "type": "component",
+    "description": "Provides helpful iterators and iterator decorators",
+    "keywords": ["iterator", "guzzle"],
+    "homepage": "http://guzzlephp.org/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Michael Dowling",
+            "email": "mtdowling@gmail.com",
+            "homepage": "https://github.com/mtdowling"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.2"
+    },
+    "autoload": {
+        "psr-0": {
+            "Guzzle\\Iterator": "src/"
+        }
+    }
+}
