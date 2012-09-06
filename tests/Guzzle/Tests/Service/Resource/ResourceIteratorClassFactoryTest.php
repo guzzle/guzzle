@@ -16,8 +16,20 @@ class ResourceIteratorClassFactoryTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testValidatesCommand()
     {
-        $factory = new ResourceIteratorClassFactory('foo');
+        $factory = new ResourceIteratorClassFactory();
         $factory->build('foo');
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     * @expectedExceptionMessage Iterator was not found matching MockCommandIterator
+     */
+    public function testEnsuresIteratorClassExists()
+    {
+        $factory = new ResourceIteratorClassFactory(array('Foo', 'Bar'));
+        $factory->registerNamespace('Baz');
+        $command = new MockCommand();
+        $iterator = $factory->build($command);
     }
 
     public function testBuildsResourceIterators()

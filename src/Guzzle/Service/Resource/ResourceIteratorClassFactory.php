@@ -17,9 +17,9 @@ use Guzzle\Service\Command\CommandInterface;
 class ResourceIteratorClassFactory implements ResourceIteratorFactoryInterface
 {
     /**
-     * @var string
+     * @var array List of namespaces used to look for classes
      */
-    protected $baseNamespace;
+    protected $namespaces;
 
     /**
      * @var InflectorInterface Inflector used to determine class names
@@ -27,13 +27,27 @@ class ResourceIteratorClassFactory implements ResourceIteratorFactoryInterface
     protected $inflector;
 
     /**
-     * @param string             $baseNamespace Base namespace of all iterator object.
-     * @param InflectorInterface $inflector     Inflector used to resolve class names
+     * @param string|array       $namespaces List of namespaces for iterator objects
+     * @param InflectorInterface $inflector  Inflector used to resolve class names
      */
-    public function __construct($baseNamespace, InflectorInterface $inflector = null)
+    public function __construct($namespaces = array(), InflectorInterface $inflector = null)
     {
-        $this->baseNamespace = $baseNamespace;
+        $this->namespaces = (array) $namespaces;
         $this->inflector = $inflector ?: Inflector::getDefault();
+    }
+
+    /**
+     * Registers a namespace to check for Iterators
+     *
+     * @param string $namespace Namespace which contains Iterator classes
+     *
+     * @return self
+     */
+    public function registerNamespace($namespace)
+    {
+        array_unshift($this->namespaces, $namespace);
+
+        return $this;
     }
 
     /**
@@ -50,8 +64,21 @@ class ResourceIteratorClassFactory implements ResourceIteratorFactoryInterface
             throw new InvalidArgumentException('The first argument must be an instance of CommandInterface');
         }
 
+        $iteratorName = $this->inflector->camel($data->getName()) . 'Iterator';
+
         // Determine the name of the class to load
-        $className = $this->baseNamespace . '\\' . $this->inflector->camel($data->getName()) . 'Iterator';
+        $className = null;
+        foreach ($this->namespaces as $namespace) {
+            $potentialClassName = $namespace . '\\' . $iteratorName;
+            if (class_exists($potentialClassName)) {
+                $className = $potentialClassName;
+                break;
+            }
+        }
+
+        if (!$className) {
+            throw new InvalidArgumentException("Iterator was not found matching {$iteratorName}");
+        }
 
         return new $className($data, $options);
     }
