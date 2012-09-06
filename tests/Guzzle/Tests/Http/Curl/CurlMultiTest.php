@@ -5,14 +5,14 @@ namespace Guzzle\Tests\Http\Curl;
 use Guzzle\Common\Event;
 use Guzzle\Common\Exception\ExceptionCollection;;
 use Guzzle\Common\Collection;
-use Guzzle\Common\Log\ClosureLogAdapter;
+use Guzzle\Log\ClosureLogAdapter;
 use Guzzle\Http\Client;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Curl\CurlMulti;
 use Guzzle\Http\Exception\CurlException;
-use Guzzle\Http\Plugin\LogPlugin;
+use Guzzle\Plugin\Log\LogPlugin;
 use Guzzle\Tests\Mock\MockMulti;
 
 /**

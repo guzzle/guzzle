@@ -2,10 +2,12 @@
 
 namespace Guzzle\Service\Exception;
 
+use Guzzle\Common\Exception\RuntimeException;
+
 /**
  * Command transfer exception when commands do not all use the same client
  */
-class InconsistentClientTransferException extends \RuntimeException
+class InconsistentClientTransferException extends RuntimeException
 {
     /**
      * @var array Commands with an invalid client

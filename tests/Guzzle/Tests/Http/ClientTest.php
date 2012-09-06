@@ -3,11 +3,11 @@
 namespace Guzzle\Tests\Http;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Log\ClosureLogAdapter;
+use Guzzle\Log\ClosureLogAdapter;
 use Guzzle\Parser\UriTemplate\UriTemplate;
 use Guzzle\Http\Message\Response;
-use Guzzle\Http\Plugin\LogPlugin;
-use Guzzle\Http\Plugin\MockPlugin;
+use Guzzle\Plugin\Log\LogPlugin;
+use Guzzle\Plugin\Mock\MockPlugin;
 use Guzzle\Http\Curl\CurlMulti;
 use Guzzle\Http\Client;
 use Guzzle\Http\Utils;

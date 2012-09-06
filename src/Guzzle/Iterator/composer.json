@@ -13,11 +13,11 @@
         }
     ],
     "require": {
-        "php": ">=5.3.2"
+        "php": ">=5.3.2",
+        "guzzle/common": ">=2.8.*"
     },
     "autoload": {
-        "psr-0": {
-            "Guzzle\\Iterator": "src/"
-        }
-    }
+        "psr-0": { "Guzzle\\Iterator": "/" }
+    },
+    "target-dir": "Guzzle/Log"
 }
