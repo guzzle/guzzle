@@ -4,7 +4,7 @@ namespace Guzzle\Service;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
-use Guzzle\Common\Validation\ConstraintInterface;
+use Guzzle\Validation\ConstraintInterface;
 use Guzzle\Service\Exception\ValidationException;
 
 /**
@@ -39,7 +39,7 @@ class Inspector
      */
     public function __construct()
     {
-        $base = 'Guzzle\\Common\\Validation\\';
+        $base = 'Guzzle\\Validation\\';
         $this->constraints = array(
             'blank'     => array($base . 'Blank', null),
             'not_blank' => array($base . 'NotBlank', null),
@@ -83,32 +83,12 @@ class Inspector
     }
 
     /**
-     * Validate and prepare configuration parameters
-     *
-     * @param array $config   Configuration values to apply.
-     * @param array $defaults Default parameters
-     * @param array $required Required parameter names
-     *
-     * @return Collection
-     * @throws InvalidArgumentException if a parameter is missing
+     * @deprecated
+     * @see Guzzle\Common\Collection::fromConfig
      */
     public static function prepareConfig(array $config = null, array $defaults = null, array $required = null)
     {
-        $collection = new Collection($defaults);
-
-        foreach ((array) $config as $key => $value) {
-            $collection->set($key, $value);
-        }
-
-        foreach ((array) $required as $key) {
-            if ($collection->hasKey($key) === false) {
-                throw new ValidationException(
-                    "Config must contain a '{$key}' key"
-                );
-            }
-        }
-
-        return $collection;
+        return Collection::fromConfig($config, $defaults, $required);
     }
 
     /**

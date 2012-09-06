@@ -7,7 +7,7 @@ use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;
 use Guzzle\Http\Client;
 use Guzzle\Http\Utils;
-use Guzzle\Http\Plugin\ExponentialBackoffPlugin;
+use Guzzle\Plugin\Backoff\ExponentialBackoffPlugin;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;

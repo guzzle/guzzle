@@ -3,6 +3,7 @@
 namespace Guzzle\Tests\Common;
 
 use Guzzle\Common\Collection;
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\QueryString;
 
 class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
@@ -405,5 +406,32 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('foo', $collection->keySearch('FOO'));
         $this->assertEquals('BaZ', $collection->keySearch('baz'));
         $this->assertEquals(false, $collection->keySearch('Bar'));
+    }
+
+    /**
+     * @covers Guzzle\Common\Collection::fromConfig
+     */
+    public function testPreparesFromConfig()
+    {
+        $c = Collection::fromConfig(array(
+            'a' => '123',
+            'base_url' => 'http://www.test.com/'
+        ), array(
+            'a' => 'xyz',
+            'b' => 'lol'
+        ), array('a'));
+
+        $this->assertInstanceOf('Guzzle\Common\Collection', $c);
+        $this->assertEquals(array(
+            'a' => '123',
+            'b' => 'lol',
+            'base_url' => 'http://www.test.com/'
+        ), $c->getAll());
+
+        try {
+            $c = Collection::fromConfig(null, null, array('a'));
+            $this->fail('Exception not throw when missing config');
+        } catch (InvalidArgumentException $e) {
+        }
     }
 }

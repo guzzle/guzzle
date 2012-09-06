@@ -2,7 +2,7 @@
 
 namespace Guzzle\Tests\Service;
 
-use Guzzle\Common\Cache\DoctrineCacheAdapter;
+use Guzzle\Cache\DoctrineCacheAdapter;
 use Guzzle\Service\AbstractFactory;
 use Guzzle\Service\Builder\JsonServiceBuilderFactory;
 use Guzzle\Service\Exception\ServiceBuilderException;

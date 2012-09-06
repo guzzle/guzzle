@@ -2,7 +2,7 @@
 
 namespace Guzzle\Http;
 
-use Guzzle\Common\StreamInterface;
+use Guzzle\Stream\StreamInterface;
 
 /**
  * Entity body used with an HTTP request or response

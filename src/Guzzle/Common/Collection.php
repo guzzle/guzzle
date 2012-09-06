@@ -2,6 +2,8 @@
 
 namespace Guzzle\Common;
 
+use Guzzle\Common\Exception\InvalidArgumentException;
+
 /**
  * Key value pair collection object
  */
@@ -24,6 +26,33 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
         } else {
             $this->data = array();
         }
+    }
+
+    /**
+     * Create a new collection from an array, validate the keys, and add default values where missing
+     *
+     * @param array $config   Configuration values to apply.
+     * @param array $defaults Default parameters
+     * @param array $required Required parameter names
+     *
+     * @return self
+     * @throws InvalidArgumentException if a parameter is missing
+     */
+    public static function fromConfig(array $config = null, array $defaults = null, array $required = null)
+    {
+        $collection = new self($defaults);
+
+        foreach ((array) $config as $key => $value) {
+            $collection->set($key, $value);
+        }
+
+        foreach ((array) $required as $key) {
+            if ($collection->hasKey($key) === false) {
+                throw new InvalidArgumentException("Config must contain a '{$key}' key");
+            }
+        }
+
+        return $collection;
     }
 
     /**

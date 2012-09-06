@@ -68,7 +68,7 @@ class ArrayDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         ServiceDescription::factory(array(
             'types' => array(
                 'foo' => array(
-                    'class' => 'Guzzle\\Common\\Validation\\Regex',
+                    'class' => 'Guzzle\\Validation\\Regex',
                     'pattern' => '/[0-9]+/'
                 )
             )
