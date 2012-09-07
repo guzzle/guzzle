@@ -59,7 +59,7 @@ class JsonLoader
         // Handle includes
         if (!empty($data['includes'])) {
             foreach ($data['includes'] as $path) {
-                if ($path[0] != DIRECTORY_SEPARATOR) {
+                if ($path[0] != DIRECTORY_SEPARATOR && !isset($this->aliases[$path])) {
                     $path = dirname($jsonFile) . DIRECTORY_SEPARATOR . $path;
                 }
                 $data = $this->mergeJson($this->parseJsonFile($path), $data);
