@@ -385,4 +385,18 @@ class ApiCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('/foo/bar', $c->getUri());
         $this->assertEquals(array('test'), $c->getParamNames());
     }
+
+    /**
+     * @covers Guzzle\Service\Description\ApiCommand::removeParam
+     */
+    public function testCanRemoveParams()
+    {
+        $c = new ApiCommand(array());
+        $c->addParam(new ApiParam(array(
+            'name' => 'foo'
+        )));
+        $this->assertTrue($c->hasParam('foo'));
+        $c->removeParam('foo');
+        $this->assertFalse($c->hasParam('foo'));
+    }
 }

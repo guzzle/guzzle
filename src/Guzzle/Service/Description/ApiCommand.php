@@ -268,6 +268,20 @@ class ApiCommand implements ApiCommandInterface
     }
 
     /**
+     * Remove a parameter from the command
+     *
+     * @param string $name Name of the parameter to remove
+     *
+     * @return self
+     */
+    public function removeParam($name)
+    {
+        unset($this->params[$name]);
+
+        return $this;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function getMethod()
