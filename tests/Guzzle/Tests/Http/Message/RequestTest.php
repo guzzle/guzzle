@@ -7,7 +7,7 @@ use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;
 use Guzzle\Http\Client;
 use Guzzle\Http\Utils;
-use Guzzle\Plugin\Backoff\BackoffPlugin;
+use Guzzle\Plugin\Async\AsyncPlugin;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
@@ -563,7 +563,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testClonedRequestsUseNewInternalState()
     {
-        $p = new BackoffPlugin();
+        $p = new AsyncPlugin();
         $this->request->getEventDispatcher()->addSubscriber($p);
         $h = $this->request->getHeader('Host');
 
