@@ -8,7 +8,7 @@ use Guzzle\Log\LogAdapterInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Logs exponential backoff retries triggered from the ExponentialBackoffPlugin
+ * Logs backoff retries triggered from the BackoffPlugin
  *
  * Format your log messages using a template that can contain the the following variables:
  *
@@ -43,7 +43,7 @@ class BackoffLogger implements EventSubscriberInterface
     protected $template;
 
     /**
-     * Exponential backoff retry logger
+     * Backoff retry logger
      *
      * @param LogAdapterInterface $logger   Logger used to log the retries
      * @param string              $template Log message template
@@ -59,7 +59,7 @@ class BackoffLogger implements EventSubscriberInterface
      */
     public static function getSubscribedEvents()
     {
-        return array(ExponentialBackoffPlugin::RETRY_EVENT => 'onRequestRetry');
+        return array(BackoffPlugin::RETRY_EVENT => 'onRequestRetry');
     }
 
     /**

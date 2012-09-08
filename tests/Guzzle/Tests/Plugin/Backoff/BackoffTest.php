@@ -5,7 +5,7 @@ namespace Guzzle\Tests\Plugin\Backoff;
 use Guzzle\Common\Event;
 use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Client;
-use Guzzle\Plugin\Backoff\ExponentialBackoffPlugin;
+use Guzzle\Plugin\Backoff\BackoffPlugin;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\EntityEnclosingRequest;
@@ -16,7 +16,7 @@ use Guzzle\Http\Curl\CurlMultiInterface;
 /**
  * @group server
  */
-class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
+class BackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
 {
     public function delayClosure($retries)
     {
@@ -28,7 +28,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testHasEventList()
     {
-        $this->assertEquals(1, count(ExponentialBackoffPlugin::getAllEvents()));
+        $this->assertEquals(1, count(BackoffPlugin::getAllEvents()));
     }
 
     /**
@@ -41,7 +41,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testConstructsCorrectly()
     {
-        $plugin = new ExponentialBackoffPlugin(2, array(500, 503, 502), array($this, 'delayClosure'));
+        $plugin = new BackoffPlugin(2, array(500, 503, 502), array($this, 'delayClosure'));
         $this->assertEquals(2, $plugin->getMaxRetries());
         $this->assertEquals(array(500, 503, 502), $plugin->getFailureCodes());
 
@@ -55,7 +55,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testCalculateWait()
     {
-        $plugin = new ExponentialBackoffPlugin(2);
+        $plugin = new BackoffPlugin(2);
         $this->assertEquals(1, $plugin->calculateWait(0));
         $this->assertEquals(2, $plugin->calculateWait(1));
         $this->assertEquals(4, $plugin->calculateWait(2));
@@ -76,7 +76,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ndata"
         ));
 
-        $plugin = new ExponentialBackoffPlugin(2, null, array($this, 'delayClosure'));
+        $plugin = new BackoffPlugin(2, null, array($this, 'delayClosure'));
         $client = new Client($this->getServer()->getUrl());
         $client->getEventDispatcher()->addSubscriber($plugin);
         $request = $client->get();
@@ -103,7 +103,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ndata"
         ));
 
-        $plugin = new ExponentialBackoffPlugin(2, array('FooError'), array($this, 'delayClosure'));
+        $plugin = new BackoffPlugin(2, array('FooError'), array($this, 'delayClosure'));
         $client = new Client($this->getServer()->getUrl());
         $client->getEventDispatcher()->addSubscriber($plugin);
         $request = $client->get();
@@ -132,7 +132,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\n\r\n"
         ));
 
-        $plugin = new ExponentialBackoffPlugin(2, null, array($this, 'delayClosure'));
+        $plugin = new BackoffPlugin(2, null, array($this, 'delayClosure'));
         $client = new Client($this->getServer()->getUrl());
         $client->getEventDispatcher()->addSubscriber($plugin);
         $request = $client->get();
@@ -142,8 +142,8 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Plugin\Backoff\ExponentialBackoffPlugin::onRequestSent
-     * @covers Guzzle\Plugin\Backoff\ExponentialBackoffPlugin::onRequestPoll
+     * @covers Guzzle\Plugin\Backoff\BackoffPlugin::onRequestSent
+     * @covers Guzzle\Plugin\Backoff\BackoffPlugin::onRequestPoll
      * @covers Guzzle\Http\Curl\CurlMulti
      */
     public function testRetriesPooledRequestsUsingDelayAndPollingEvent()
@@ -156,7 +156,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Need to sleep for one second to make sure that the polling works
         // correctly in the observer
-        $plugin = new ExponentialBackoffPlugin(1, null, function($r) {
+        $plugin = new BackoffPlugin(1, null, function($r) {
             return 1;
         });
 
@@ -173,30 +173,30 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Plugin\Backoff\ExponentialBackoffPlugin::getDefaultFailureCodes
+     * @covers Guzzle\Plugin\Backoff\BackoffPlugin::getDefaultFailureCodes
      */
     public function testReturnsDefaultFailureCodes()
     {
-        $this->assertNotEmpty(ExponentialBackoffPlugin::getDefaultFailureCodes());
+        $this->assertNotEmpty(BackoffPlugin::getDefaultFailureCodes());
     }
 
     /**
-     * @covers Guzzle\Plugin\Backoff\ExponentialBackoffPlugin::__construct
-     * @covers Guzzle\Plugin\Backoff\ExponentialBackoffPlugin::getDefaultFailureCodes
+     * @covers Guzzle\Plugin\Backoff\BackoffPlugin::__construct
+     * @covers Guzzle\Plugin\Backoff\BackoffPlugin::getDefaultFailureCodes
      */
     public function testUsesDefaultFailureCodesByDefault()
     {
-        $p = new ExponentialBackoffPlugin();
-        $this->assertEquals($p->getFailureCodes(), ExponentialBackoffPlugin::getDefaultFailureCodes());
+        $p = new BackoffPlugin();
+        $this->assertEquals($p->getFailureCodes(), BackoffPlugin::getDefaultFailureCodes());
     }
 
     /**
-     * @covers Guzzle\Plugin\Backoff\ExponentialBackoffPlugin::onRequestSent
+     * @covers Guzzle\Plugin\Backoff\BackoffPlugin::onRequestSent
      */
     public function testAllowsCallableFailureCodes()
     {
         $a = 0;
-        $plugin = new ExponentialBackoffPlugin(1, function($request, $response) use (&$a) {
+        $plugin = new BackoffPlugin(1, function($request, $response) use (&$a) {
             // Look for a Foo header
             if ($response->hasHeader('Foo')) {
                 $a = 1;
@@ -224,11 +224,11 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Plugin\Backoff\ExponentialBackoffPlugin::onRequestSent
+     * @covers Guzzle\Plugin\Backoff\BackoffPlugin::onRequestSent
      */
     public function testExponentiallyBacksOffCurlErrors()
     {
-        $plugin = $this->getMock('Guzzle\Plugin\Backoff\ExponentialBackoffPlugin', array('retryRequest'));
+        $plugin = $this->getMock('Guzzle\Plugin\Backoff\BackoffPlugin', array('retryRequest'));
 
         // Mock the retryRequest method so that it does nothing, but ensure
         // that it is called exactly once
@@ -254,13 +254,13 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Plugin\Backoff\ExponentialBackoffPlugin::onRequestSent
+     * @covers Guzzle\Plugin\Backoff\BackoffPlugin::onRequestSent
      */
     public function testAllowsCustomFailureMethodsToPuntToDefaultMethod()
     {
         $count = 0;
 
-        $plugin = $this->getMockBuilder('Guzzle\Plugin\Backoff\ExponentialBackoffPlugin')
+        $plugin = $this->getMockBuilder('Guzzle\Plugin\Backoff\BackoffPlugin')
             ->setMethods(array('retryRequest'))
             ->setConstructorArgs(array(2, function() use (&$count) {
                 $count++;
@@ -282,7 +282,7 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Plugin\Backoff\ExponentialBackoffPlugin::onRequestPoll
+     * @covers Guzzle\Plugin\Backoff\BackoffPlugin::onRequestPoll
      */
     public function testSeeksToBeginningOfRequestBodyWhenRetrying()
     {
@@ -290,27 +290,27 @@ class ExponentialBackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request = new EntityEnclosingRequest('PUT', 'http://www.example.com');
         $request->setBody('abc');
         // Set the retry time to be something that will be retried always
-        $request->getParams()->set('plugins.exponential_backoff.retry_time', 2);
+        $request->getParams()->set('plugins.backoff.retry_time', 2);
         // Seek to the end of the stream
         $request->getBody()->seek(3);
         $this->assertEquals('', $request->getBody()->read(1));
 
         // Create a plugin that does not delay when retrying
-        $plugin = new ExponentialBackoffPlugin(2, null, array($this, 'delayClosure'));
+        $plugin = new BackoffPlugin(2, null, array($this, 'delayClosure'));
         $plugin->onRequestPoll($this->getMockEvent($request));
         // Ensure that the stream was seeked to 0
         $this->assertEquals('a', $request->getBody()->read(1));
     }
 
     /**
-     * @covers Guzzle\Plugin\Backoff\ExponentialBackoffPlugin::onRequestPoll
+     * @covers Guzzle\Plugin\Backoff\BackoffPlugin::onRequestPoll
      */
     public function testDoesNotSeekOnRequestsWithNoBodyWhenRetrying()
     {
         // Create a request with a body
         $request = new EntityEnclosingRequest('PUT', 'http://www.example.com');
-        $request->getParams()->set('plugins.exponential_backoff.retry_time', 2);
-        $plugin = new ExponentialBackoffPlugin(2, null, array($this, 'delayClosure'));
+        $request->getParams()->set('plugins.backoff.retry_time', 2);
+        $plugin = new BackoffPlugin(2, null, array($this, 'delayClosure'));
 
         $plugin->onRequestPoll($this->getMockEvent($request));
     }
