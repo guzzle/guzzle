@@ -49,8 +49,6 @@
         "symfony/event-dispatcher": "2.1.*"
     },
 
-    "minimum-stability": "beta",
-
     "autoload": {
         "psr-0": {
             "Guzzle\\Tests": "tests/",
@@ -62,12 +60,8 @@
         "doctrine/common": "*",
         "symfony/class-loader": "*",
         "monolog/monolog": "1.*",
-        "zendframework/zend-cache": "2.0.0beta4",
-        "zendframework/zend-log": "2.0.0beta4",
-        "zendframework/zend-loader": "2.0.0beta4",
-        "zendframework/zend-stdlib": "2.0.0beta4",
-        "zendframework/zend-eventmanager": "2.0.0beta4",
-        "zendframework/zend-servicemanager": "2.0.0beta4",
+        "zendframework/zend-cache": "2.0.*",
+        "zendframework/zend-log": "2.0.*",
         "zend/zend-log1": "1.12",
         "zend/zend-cache1": "1.12"
     },
