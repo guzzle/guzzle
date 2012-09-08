@@ -22,81 +22,39 @@ class BackoffPlugin extends AbstractHasDispatcher implements EventSubscriberInte
     const RETRY_EVENT = 'plugins.backoff.retry';
 
     /**
-     * @var array|callable Hash table of failure codes or PHP callable
+     * @var BackoffStrategyInterface Backoff strategy
      */
-    protected $failureCodes;
+    protected $strategy;
 
     /**
-     * @var bool Whether or not the failure codes property is a callable
+     * @param BackoffStrategyInterface $strategy The backoff strategy used to determine whether or not to retry and
+     *                                           the amount of delay between retries.
      */
-    protected $callableFailureCodes;
-
-    /**
-     * @var int Maximum number of times to retry a request
-     */
-    protected $maxRetries;
-
-    /**
-     * @var \Closure
-     */
-    protected $delayClosure;
-
-    /**
-     * @var array Array of default failure codes
-     */
-    protected static $defaultFailureCodes = array(500, 503,
-        CURLE_COULDNT_RESOLVE_HOST, CURLE_COULDNT_CONNECT, CURLE_WRITE_ERROR,
-        CURLE_READ_ERROR, CURLE_OPERATION_TIMEOUTED, CURLE_SSL_CONNECT_ERROR,
-        CURLE_HTTP_PORT_FAILED, CURLE_GOT_NOTHING, CURLE_SEND_ERROR,
-        CURLE_RECV_ERROR);
-
-    /**
-     * @var array Hash cache of the default failure codes
-     */
-    protected static $defaultFailureCodesHash;
-
-    /**
-     * $failureCodes can be a list of numeric codes that match the response
-     * code, a list of reason phrases that can match the reason phrase of a
-     * request, or a list of cURL error code integers.  By default, this
-     * plugin retries 500 and 503 responses as well as various CURL connection
-     * errors.  You can pass in a callable that will be used to determine if a
-     * response failed and must be retried.
-     *
-     * A custom callback function for $delayFunction must accept an integer
-     * containing the current number of retries and return an integer
-     * representing representing how many seconds to delay
-     *
-     * @param int            $maxRetries    The maximum number of time to retry a request
-     * @param array|callable $failureCodes  List of failure codes or function.
-     * @param callable       $delayFunction Method used to calculate the delay between requests.
-     */
-    public function __construct($maxRetries = 3, $failureCodes = null, $delayFunction = null)
+    public function __construct(BackoffStrategyInterface $strategy)
     {
-        $this->setMaxRetries($maxRetries);
-        $this->setFailureCodes($failureCodes);
-
-        if (!$delayFunction) {
-            $this->delayClosure = array($this, 'calculateWait');
-        } else {
-            $this->delayClosure = $delayFunction;
-        }
-
-        // @codeCoverageIgnoreStart
-        if (!self::$defaultFailureCodesHash) {
-            self::$defaultFailureCodesHash = array_fill_keys(self::$defaultFailureCodes, 1);
-        }
-        // @codeCoverageIgnoreEnd
+        $this->strategy = $strategy;
     }
 
     /**
-     * Get a default array of codes and cURL errors to retry
+     * Retrieve a basic truncated exponential backoff plugin that will retry HTTP errors and cURL errors
      *
-     * @return array
+     * @param int   $maxRetries Maximum number of retries
+     * @param array $httpCodes  HTTP response codes to retry
+     * @param array $curlCodes  cURL error codes to retry
+     *
+     * @return self
      */
-    public static function getDefaultFailureCodes()
-    {
-        return self::$defaultFailureCodes;
+    public static function getExponentialBackoffInstance(
+        $maxRetries = 3,
+        array $httpCodes = null,
+        array $curlCodes = null
+    ) {
+        $strategy = new HttpBackoffStrategy($httpCodes);
+        $strategy->setNext($curl = new CurlBackoffStrategy($curlCodes));
+        $curl->setNext($truncated = new TruncatedBackoffStrategy($maxRetries));
+        $truncated->setNext(new ExponentialBackoffStrategy());
+
+        return new self($strategy);
     }
 
     /**
@@ -120,75 +78,6 @@ class BackoffPlugin extends AbstractHasDispatcher implements EventSubscriberInte
     }
 
     /**
-     * Set the maximum number of retries the plugin should use before failing
-     * the request
-     *
-     * @param integer $maxRetries The maximum number of retries.
-     *
-     * @return self
-     */
-    public function setMaxRetries($maxRetries)
-    {
-        $this->maxRetries = max(0, (int) $maxRetries);
-
-        return  $this;
-    }
-
-    /**
-     * Get the maximum number of retries the plugin will attempt
-     *
-     * @return integer
-     */
-    public function getMaxRetries()
-    {
-        return $this->maxRetries;
-    }
-
-    /**
-     * Get the HTTP response codes that should be retried
-     *
-     * @return array
-     */
-    public function getFailureCodes()
-    {
-        return array_keys($this->failureCodes);
-    }
-
-    /**
-     * Set the HTTP response codes that should be retried
-     *
-     * @param mixed $codes Array of HTTP response codes or PHP callable
-     *
-     * @return self
-     */
-    public function setFailureCodes($codes = null)
-    {
-        // Use the default failure codes if no value was provided
-        $this->failureCodes = $codes ?: static::getDefaultFailureCodes();
-        // Determine if the passed failure codes are a PHP callable
-        $this->callableFailureCodes = is_callable($this->failureCodes);
-
-        // Use a hash of codes so that it is faster to lookup errors
-        if (!$this->callableFailureCodes) {
-            $this->failureCodes = array_fill_keys($this->failureCodes, 1);
-        }
-
-        return $this;
-    }
-
-    /**
-     * Determine how long to wait
-     *
-     * @param int $retries Number of retries so far
-     *
-     * @return int
-     */
-    public function calculateWait($retries)
-    {
-        return (int) pow(2, $retries);
-    }
-
-    /**
      * Called when a request has been sent  and isn't finished processing
      *
      * @param Event $event
@@ -198,33 +87,25 @@ class BackoffPlugin extends AbstractHasDispatcher implements EventSubscriberInte
         $request = $event['request'];
         $response = $event['response'];
         $exception = $event['exception'];
-        $handle = null;
-        $retry = null;
-        $failureCodes = $this->failureCodes;
 
-        if ($this->callableFailureCodes) {
-            // Use a callback to determine if the request should be retried
-            $retry = call_user_func($this->failureCodes, $request, $response, $exception);
-            // If null is returned, then use the default check
-            if ($retry === null) {
-                $failureCodes = self::$defaultFailureCodesHash;
-            }
-        }
+        $params = $request->getParams();
+        $retries = (int) $params->get(self::RETRY_PARAM);
+        $delay = $this->strategy->getBackoffPeriod($retries, $request, $response, $exception);
 
-        // If a retry method hasn't decided what to do yet, then use the default check
-        if ($retry === null) {
-            if ($exception && $exception instanceof CurlException) {
-                // Handle cURL exceptions
-                $retry = isset($failureCodes[$exception->getErrorNo()]);
-                $handle = $exception->getCurlHandle();
-            } elseif ($response) {
-                $retry = isset($failureCodes[$response->getStatusCode()]) ||
-                    isset($failureCodes[$response->getReasonPhrase()]);
-            }
-        }
-
-        if ($retry) {
-            $this->retryRequest($request, $response, $handle);
+        if ($delay !== false) {
+            $params->set(self::RETRY_PARAM, ++$retries);
+            // Calculate how long to wait until the request should be retried
+            $delayTime = microtime(true) + $delay;
+            // Send the request again
+            $request->setState(RequestInterface::STATE_TRANSFER);
+            $params->set(self::DELAY_PARAM, $delayTime);
+            $this->dispatch(self::RETRY_EVENT, array(
+                'request'  => $request,
+                'response' => $response,
+                'handle'   => $exception ? $exception->getCurlHandle() : null,
+                'retries'  => $retries,
+                'delay'    => $delay
+            ));
         }
     }
 
@@ -251,38 +132,6 @@ class BackoffPlugin extends AbstractHasDispatcher implements EventSubscriberInte
             $multi = $event['curl_multi'];
             $multi->remove($request);
             $multi->add($request, true);
-        }
-    }
-
-    /**
-     * Trigger a request to retry
-     *
-     * @param RequestInterface $request  Request to retry
-     * @param Response         $response Response received
-     * @param CurlHandle       $handle   Curl handle
-     */
-    protected function retryRequest(RequestInterface $request, Response $response = null, CurlHandle $handle = null)
-    {
-        $params = $request->getParams();
-        $retries = ((int) $params->get(self::RETRY_PARAM)) + 1;
-        $params->set(self::RETRY_PARAM, $retries);
-
-        // If this request has been retried too many times, then throw an exception
-        if ($retries <= $this->maxRetries) {
-            // Calculate how long to wait until the request should be retried
-            $delay = call_user_func($this->delayClosure, $retries, $request);
-            $delayTime = microtime(true) + $delay;
-            // Send the request again
-            $request->setState(RequestInterface::STATE_TRANSFER);
-            $params->set(self::DELAY_PARAM, $delayTime);
-
-            $this->dispatch(self::RETRY_EVENT, array(
-                'request'  => $request,
-                'response' => $response,
-                'handle'   => $handle,
-                'retries'  => $retries,
-                'delay'    => $delay
-            ));
         }
     }
 }
