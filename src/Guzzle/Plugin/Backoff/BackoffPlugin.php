@@ -13,14 +13,13 @@ use Guzzle\Http\Curl\CurlMultiInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Plugin to automatically retry failed HTTP requests using truncated
- * exponential backoff.
+ * Plugin to automatically retry failed HTTP requests using a backoff strategy
  */
-class ExponentialBackoffPlugin extends AbstractHasDispatcher implements EventSubscriberInterface
+class BackoffPlugin extends AbstractHasDispatcher implements EventSubscriberInterface
 {
-    const DELAY_PARAM = 'plugins.exponential_backoff.retry_time';
-    const RETRY_PARAM = 'plugins.exponential_backoff.retry_count';
-    const RETRY_EVENT = 'plugins.exponential_backoff.retry';
+    const DELAY_PARAM = 'plugins.backoff.retry_time';
+    const RETRY_PARAM = 'plugins.backoff.retry_count';
+    const RETRY_EVENT = 'plugins.backoff.retry';
 
     /**
      * @var array|callable Hash table of failure codes or PHP callable
@@ -57,8 +56,6 @@ class ExponentialBackoffPlugin extends AbstractHasDispatcher implements EventSub
     protected static $defaultFailureCodesHash;
 
     /**
-     * Construct a new exponential backoff plugin
-     *
      * $failureCodes can be a list of numeric codes that match the response
      * code, a list of reason phrases that can match the reason phrase of a
      * request, or a list of cURL error code integers.  By default, this
@@ -128,7 +125,7 @@ class ExponentialBackoffPlugin extends AbstractHasDispatcher implements EventSub
      *
      * @param integer $maxRetries The maximum number of retries.
      *
-     * @return ExponentialBackoffPlugin
+     * @return self
      */
     public function setMaxRetries($maxRetries)
     {
@@ -148,8 +145,7 @@ class ExponentialBackoffPlugin extends AbstractHasDispatcher implements EventSub
     }
 
     /**
-     * Get the HTTP response codes that should be retried using truncated
-     * exponential backoff
+     * Get the HTTP response codes that should be retried
      *
      * @return array
      */
@@ -159,12 +155,11 @@ class ExponentialBackoffPlugin extends AbstractHasDispatcher implements EventSub
     }
 
     /**
-     * Set the HTTP response codes that should be retried using truncated
-     * exponential backoff
+     * Set the HTTP response codes that should be retried
      *
      * @param mixed $codes Array of HTTP response codes or PHP callable
      *
-     * @return ExponentialBackoffPlugin
+     * @return self
      */
     public function setFailureCodes($codes = null)
     {
@@ -182,7 +177,7 @@ class ExponentialBackoffPlugin extends AbstractHasDispatcher implements EventSub
     }
 
     /**
-     * Determine how long to wait using truncated exponential backoff
+     * Determine how long to wait
      *
      * @param int $retries Number of retries so far
      *
