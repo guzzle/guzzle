@@ -2,11 +2,11 @@
 
 namespace Guzzle\Plugin\Cache;
 
+use Guzzle\Cache\CacheAdapterInterface;
 use Guzzle\Common\Event;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
-use Guzzle\Http\Utils;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -55,37 +55,56 @@ class CachePlugin implements EventSubscriberInterface
      * - int                       default_ttl:   (optional) Default TTL to use when caching if no cache_storage was set
      *                                                       must set to 0 or it will assume the default of 3600 secs.
      *
-     * @param array $options Array of options for the cache plugin
+     * @param array|CacheAdapterInterface|CacheStorageInterface $options Array of options for the cache plugin,
+     *                                                                   cache adapter, or cache storage object.
      *
      * @throws InvalidArgumentException if one of a `adapter` or `storage` option are not set
      */
-    public function __construct(array $options)
+    public function __construct($options)
     {
+        if (!is_array($options)) {
+            if ($options instanceof CacheAdapterInterface) {
+                $options = array('adapter' => $options);
+            } elseif ($options instanceof CacheStorageInterface) {
+                $options = array('storage' => $options);
+            } else {
+                throw new InvalidArgumentException('Invalid options sent to cache plugin');
+            }
+        }
+
         if (!isset($options['storage']) && !isset($options['adapter'])) {
             throw new InvalidArgumentException('A storage or adapter option is required');
         }
 
         // Add a cache storage if a cache adapter was provided
-        if (isset($options['adapter'])) {
+        if (!isset($options['adapter'])) {
+            $this->storage = $options['storage'];
+        } else {
             $this->storage = new DefaultCacheStorage(
                 $options['adapter'],
                 array_key_exists('default_ttl', $options) ? $options['default_ttl'] : 3600
             );
-        } else {
-            $this->storage = $options['storage'];
         }
 
         // Use the provided key provider or the default
-        if (isset($options['key_provider'])) {
-            $this->keyProvider = $options['key_provider'];
-        } else {
+        if (!isset($options['key_provider'])) {
             $this->keyProvider = new DefaultCacheKeyProvider();
+        } else {
+            if (is_callable($options['key_provider'])) {
+                $this->keyProvider = new CallbackCacheKeyProvider($options['key_provider']);
+            } else {
+                $this->keyProvider = $options['key_provider'];
+            }
         }
 
-        if (isset($options['can_cache'])) {
-            $this->canCache = $options['can_cache'];
-        } else {
+        if (!isset($options['can_cache'])) {
             $this->canCache = new DefaultCanCacheStrategy();
+        } else {
+            if (is_callable($options['can_cache'])) {
+                $this->canCache = new CallbackCanCacheStrategy($options['can_cache']);
+            } else {
+                $this->canCache = $options['can_cache'];
+            }
         }
 
         // Use the provided revalidation strategy or the default

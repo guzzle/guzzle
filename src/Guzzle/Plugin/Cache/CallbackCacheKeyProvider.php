@@ -7,7 +7,7 @@ use Guzzle\Http\Message\RequestInterface;
 /**
  * Determines a request's cache key using a callback
  */
-class CallbackCacheProviderStrategy extends AbstractCallbackStrategy implements CacheKeyProviderInterface
+class CallbackCacheKeyProvider extends AbstractCallbackStrategy implements CacheKeyProviderInterface
 {
     /**
      * {@inheritdoc}
