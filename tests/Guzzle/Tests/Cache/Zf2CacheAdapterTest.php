@@ -5,16 +5,12 @@ namespace Guzzle\Tests\Cache;
 use Guzzle\Cache\Zf2CacheAdapter;
 use Zend\Cache\StorageFactory;
 
+/**
+ * @covers Guzzle\Cache\Zf2CacheAdapter
+ */
 class Zf2CacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var StaticBackend
-     */
     private $cache;
-
-    /**
-     * @var ZendCacheAdapter
-     */
     private $adapter;
 
     /**
@@ -39,46 +35,12 @@ class Zf2CacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
         parent::tearDown();
     }
 
-    /**
-     * @covers Guzzle\Cache\Zf2CacheAdapter::__construct
-     */
-    public function testConstructorAddsDefaultOptions()
-    {
-        $default = array(
-            'contains' => array(
-                'namespace' => 'foo'
-            )
-        );
-        $adapter = new Zf2CacheAdapter(StorageFactory::factory(array(
-            'adapter' => 'memory'
-        )), $default);
-
-        // Access the protected property
-        $class = new \ReflectionClass($adapter);
-        $property = $class->getProperty('defaultOptions');
-        $property->setAccessible(true);
-        $defaultOptions = $property->getValue($adapter);
-
-        $this->assertEquals(array_merge($default, array(
-            'delete' => array(),
-            'fetch'  => array(),
-            'save'   => array()
-        )), $defaultOptions);
-    }
-
-    /**
-     * @covers Guzzle\Cache\Zf2CacheAdapter::save
-     * @covers Guzzle\Cache\Zf2CacheAdapter::fetch
-     */
     public function testCachesDataUsingCallables()
     {
         $this->assertTrue($this->adapter->save('test', 'data', 1000));
         $this->assertEquals('data', $this->adapter->fetch('test'));
     }
 
-    /**
-     * @covers Guzzle\Cache\Zf2CacheAdapter::contains
-     */
     public function testChecksIfCacheContainsKeys()
     {
         $this->adapter->save('test', 'data', 1000);
@@ -86,9 +48,6 @@ class Zf2CacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($this->adapter->contains('foo'));
     }
 
-    /**
-     * @covers Guzzle\Cache\Zf2CacheAdapter::delete
-     */
     public function testDeletesFromCacheByKey()
     {
         $this->adapter->save('test', 'data', 1000);

@@ -19,9 +19,11 @@ class Inflector implements InflectorInterface
      */
     public static function getDefault()
     {
+        // @codeCoverageIgnoreStart
         if (!self::$default) {
             self::$default = new MemoizingInflector(new self());
         }
+        // @codeCoverageIgnoreEnd
 
         return self::$default;
     }

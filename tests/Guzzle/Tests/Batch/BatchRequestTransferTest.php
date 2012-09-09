@@ -7,7 +7,7 @@ use Guzzle\Http\Client;
 use Guzzle\Http\Curl\CurlMulti;
 
 /**
- * @covers Guzzle\Http\BatchRequestTransfer
+ * @covers Guzzle\Batch\BatchRequestTransfer
  */
 class BatchRequestTransferTest extends \Guzzle\Tests\GuzzleTestCase
 {

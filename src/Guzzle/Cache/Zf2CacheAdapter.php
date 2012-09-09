@@ -2,7 +2,7 @@
 
 namespace Guzzle\Cache;
 
-use Zend\Cache\Storage\Adapter\AdapterInterface;
+use Zend\Cache\Storage\StorageInterface;
 
 /**
  * Zend Framework 2 cache adapter
@@ -12,26 +12,11 @@ use Zend\Cache\Storage\Adapter\AdapterInterface;
 class Zf2CacheAdapter extends AbstractCacheAdapter
 {
     /**
-     * @var array Associative array of default options per cache method name
+     * @param StorageInterface $cache Zend Framework 2 cache adapter
      */
-    protected $defaultOptions = array();
-
-    /**
-     * @param AdapterInterface $cache          Zend Framework 2 cache adapter
-     * @param array            $defaultOptions Hash of default options for each cache method. Can contain for
-     *                                         'contains', 'delete', 'fetch', and 'save'.  Each key must map to an
-     *                                         associative array of options to merge into the options argument passed
-     *                                         into each respective call.
-     */
-    public function __construct(AdapterInterface $cache, array $defaultOptions = array())
+    public function __construct(StorageInterface $cache)
     {
         $this->cache = $cache;
-        $this->defaultOptions = array_merge(array(
-            'contains' => array(),
-            'delete'   => array(),
-            'fetch'    => array(),
-            'save'     => array()
-        ), $defaultOptions);
     }
 
     /**
@@ -39,11 +24,7 @@ class Zf2CacheAdapter extends AbstractCacheAdapter
      */
     public function contains($id, array $options = null)
     {
-        $options = $options
-            ? array_merge($this->defaultOptions['contains'], $options)
-            : $this->defaultOptions['contains'];
-
-        return $this->cache->hasItem($id, $options);
+        return $this->cache->hasItem($id);
     }
 
     /**
@@ -51,11 +32,7 @@ class Zf2CacheAdapter extends AbstractCacheAdapter
      */
     public function delete($id, array $options = null)
     {
-        $options = $options
-            ? array_merge($this->defaultOptions['delete'], $options)
-            : $this->defaultOptions['delete'];
-
-        return $this->cache->removeItem($id, $options);
+        return $this->cache->removeItem($id);
     }
 
     /**
@@ -63,11 +40,7 @@ class Zf2CacheAdapter extends AbstractCacheAdapter
      */
     public function fetch($id, array $options = null)
     {
-        $options = $options
-            ? array_merge($this->defaultOptions['fetch'], $options)
-            : $this->defaultOptions['fetch'];
-
-        return $this->cache->getItem($id, $options);
+        return $this->cache->getItem($id);
     }
 
     /**
@@ -75,8 +48,6 @@ class Zf2CacheAdapter extends AbstractCacheAdapter
      */
     public function save($id, $data, $lifeTime = false, array $options = null)
     {
-        return $this->cache->setItem($id, $data, array_merge($this->defaultOptions['save'], $options ?: array(), array(
-            'ttl' => $lifeTime
-        )));
+        return $this->cache->setItem($id, $data);
     }
 }

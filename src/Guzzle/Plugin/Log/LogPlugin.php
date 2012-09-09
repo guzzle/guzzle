@@ -202,8 +202,10 @@ class LogPlugin implements EventSubscriberInterface
         }
 
         // Check if we are logging anything that will come from cURL
-        if ($request->getParams()->get('curl_handle') && ($this->settings & self::LOG_DEBUG || $this->settings & self::LOG_HEADERS || $this->settings & self::LOG_BODY)) {
-
+        if ($request->getParams()->get('curl_handle')
+            && ($this->settings & self::LOG_DEBUG
+                || $this->settings & self::LOG_HEADERS || $this->settings & self::LOG_BODY)
+        ) {
             // If context logging too, then add a new line for cleaner messages
             if ($this->settings & self::LOG_CONTEXT) {
                 $message .= "\n";

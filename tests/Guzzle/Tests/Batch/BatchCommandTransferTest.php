@@ -7,7 +7,7 @@ use Guzzle\Service\Client;
 use Guzzle\Tests\Service\Mock\Command\MockCommand as Mc;
 
 /**
- * @covers Guzzle\Service\Command\BatchCommandTransfer
+ * @covers Guzzle\Batch\BatchCommandTransfer
  */
 class BatchCommandTransferTest extends \Guzzle\Tests\GuzzleTestCase
 {
