@@ -2,64 +2,99 @@
 
 namespace Guzzle\Plugin\Cache;
 
-use Guzzle\Cache\CacheAdapterInterface;
 use Guzzle\Common\Event;
-use Guzzle\Http\Utils;
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
-use Guzzle\Http\Exception\BadResponseException;
+use Guzzle\Http\Utils;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Plugin to enable the caching of GET and HEAD requests.  Caching can be done
- * on all requests passing through this plugin or only after retrieving
- * resources with cacheable response headers.  This is a simple implementation
- * of RFC 2616 and should be considered a private transparent proxy cache
- * (authorization and private data can be cached).
+ * Plugin to enable the caching of GET and HEAD requests.  Caching can be done on
+ * all requests passing through this plugin or only after retrieving resources with
+ * cacheable response headers.
  *
- * Various params can be set on a request to modify the behavior of the cache plugin:
- * - cache.key_filter:      Filtered headers and query string parameters to remove from
- *                          a request when creating a cache key
- * - cache.filter_strategy: Method to invoke when determining if a request can be cached.
- *                          Must accept a request object and return boolean.
+ * This is a simple implementation of RFC 2616 and should be considered a private
+ * transparent proxy cache, meaning authorization and private data can be cached.
  */
 class CachePlugin implements EventSubscriberInterface
 {
-    /**
-     * @var CacheAdapterInterface Cache adapter used to cache responses
-     */
-    private $adapter;
-
-    /**
-     * @var int Default cached item lifetime if Response headers are not used
-     */
-    private $defaultLifetime = 3600;
-
     /**
      * @var array SplObjectStorage of request cache keys to hold until a response is returned
      */
     private $cached;
 
     /**
-     * @var array Headers are excluded from the caching (see RFC 2616:13.5.1)
+     * @var CacheKeyProviderInterface Cache key provider
      */
-    protected $excludeResponseHeaders = array(
-        'Connection', 'Keep-Alive', 'Proxy-Authenticate', 'Proxy-Authorization',
-        'TE', 'Trailers', 'Transfer-Encoding', 'Upgrade', 'Set-Cookie', 'Set-Cookie2'
-    );
+    protected $keyProvider;
 
     /**
-     * Construct a new CachePlugin
-     *
-     * @param CacheAdapterInterface $adapter         Cache adapter to write and read cache data
-     * @param int                   $defaultLifetime Number of seconds that a cache entry should be considered fresh
-     *                                               when no explicit freshness information is provided in a response.
-     *                                               Explicit Cache-Control or Expires headers override this value.
+     * @var RevalidationInterface Cache revalidation strategy
      */
-    public function __construct(CacheAdapterInterface $adapter, $defaultLifetime = 3600)
+    protected $revalidation;
+
+    /**
+     * @var CanCacheStrategyInterface Object used to determine if a request can be cached
+     */
+    protected $canCache;
+
+    /**
+     * @var CacheStorageInterface $cache Object used to cache responses
+     */
+    protected $storage;
+
+    /**
+     * Construct a new CachePlugin. Cache options include the following:
+     *
+     * - CacheKeyProviderInterface key_provider:  (optional) Cache key provider
+     * - CacheAdapterInterface     adapter:       (optional) Adapter used to cache objects. Pass this or a cache_storage
+     * - CacheStorageInterface     storage:       (optional) Adapter used to cache responses
+     * - RevalidationInterface     revalidation:  (optional) Cache revalidation strategy
+     * - CanCacheInterface         can_cache:     (optional) Object used to determine if a request can be cached
+     * - int                       default_ttl:   (optional) Default TTL to use when caching if no cache_storage was set
+     *                                                       must set to 0 or it will assume the default of 3600 secs.
+     *
+     * @param array $options Array of options for the cache plugin
+     *
+     * @throws InvalidArgumentException if one of a `adapter` or `storage` option are not set
+     */
+    public function __construct(array $options)
     {
-        $this->adapter = $adapter;
-        $this->defaultLifetime = (int) $defaultLifetime;
+        if (!isset($options['storage']) && !isset($options['adapter'])) {
+            throw new InvalidArgumentException('A storage or adapter option is required');
+        }
+
+        // Add a cache storage if a cache adapter was provided
+        if (isset($options['adapter'])) {
+            $this->storage = new DefaultCacheStorage(
+                $options['adapter'],
+                array_key_exists('default_ttl', $options) ? $options['default_ttl'] : 3600
+            );
+        } else {
+            $this->storage = $options['storage'];
+        }
+
+        // Use the provided key provider or the default
+        if (isset($options['key_provider'])) {
+            $this->keyProvider = $options['key_provider'];
+        } else {
+            $this->keyProvider = new DefaultCacheKeyProvider();
+        }
+
+        if (isset($options['can_cache'])) {
+            $this->canCache = $options['can_cache'];
+        } else {
+            $this->canCache = new DefaultCanCacheStrategy();
+        }
+
+        // Use the provided revalidation strategy or the default
+        if (isset($options['revalidation'])) {
+            $this->revalidation = $options['revalidation'];
+        } else {
+            $this->revalidation = new DefaultRevalidation($this->keyProvider, $this->storage);
+        }
+
         $this->cached = new \SplObjectStorage();
     }
 
@@ -75,63 +110,6 @@ class CachePlugin implements EventSubscriberInterface
     }
 
     /**
-     * Calculate the hash key of a request object
-     *
-     * @param RequestInterface $request Request to hash
-     * @param string           $raw     Set to TRUE to retrieve the un-encoded string for debugging
-     *
-     * @return string
-     */
-    public function getCacheKey(RequestInterface $request, $raw = false)
-    {
-        // See if the key has already been calculated
-        $key = $request->getParams()->get('cache.key');
-
-        // Always recalculate when using the raw option
-        if (!$key || $raw) {
-
-            // Generate the start of the key
-            $key = $request->getMethod() . '_' . $request->getScheme() . '_' . $request->getHost() . $request->getPath();
-            $filterHeaders = array('Cache-Control');
-            $filterQuery = array();
-
-            // Check to see how and if the key should be filtered
-            foreach (explode(';', $request->getParams()->get('cache.key_filter')) as $part) {
-                $pieces = array_map('trim', explode('=', $part));
-                if (isset($pieces[1])) {
-                    $remove = array_map('trim', explode(',', $pieces[1]));
-                    if ($pieces[0] == 'header') {
-                        $filterHeaders = array_merge($filterHeaders, $remove);
-                    } elseif ($pieces[0] == 'query') {
-                        $filterQuery = array_merge($filterQuery, $remove);
-                    }
-                }
-            }
-
-            // Use the filtered query string
-            $queryString = (string) $request->getQuery()->filter(function($key, $value) use ($filterQuery) {
-                return !in_array($key, $filterQuery);
-            });
-
-            // Use the filtered headers
-            $headerString = http_build_query($request->getHeaders()->map(function($key, $value) {
-                return count($value) == 1 ? $value[0] : $value;
-            })->filter(function($key, $value) use ($filterHeaders) {
-                return !in_array($key, $filterHeaders);
-            })->getAll());
-
-            if ($raw) {
-                $key = strtolower('gz_' . $key . $queryString . '_' . $headerString);
-            } else {
-                $key = strtolower('gz_' . md5($key . $queryString . '_' . $headerString));
-                $request->getParams()->set('cache.key', $key);
-            }
-        }
-
-        return $key;
-    }
-
-    /**
      * Check if a response in cache will satisfy the request before sending
      *
      * @param Event $event
@@ -139,23 +117,16 @@ class CachePlugin implements EventSubscriberInterface
     public function onRequestBeforeSend(Event $event)
     {
         $request = $event['request'];
-
-        // Only cache cacheable requests
-        if ($cacheFilter = $request->getParams()->get('cache.filter_strategy')) {
-            if (!call_user_func($cacheFilter, $request)) {
-                return;
-            }
-        } elseif (!$request->canCache()) {
+        if (!$this->canCache->canCache($request)) {
             return;
         }
 
-        $hashKey = $this->getCacheKey($request);
+        $hashKey = $this->keyProvider->getCacheKey($request);
         $this->cached[$request] = $hashKey;
-        $cachedData = $this->adapter->fetch($hashKey);
 
         // If the cached data was found, then make the request into a
         // manually set request
-        if ($cachedData) {
+        if ($cachedData = $this->storage->fetch($hashKey)) {
             unset($this->cached[$request]);
             $response = new Response($cachedData[0], $cachedData[1], $cachedData[2]);
             $response->setHeader('Age', time() - strtotime($response->getDate() ?: 'now'));
@@ -180,94 +151,17 @@ class CachePlugin implements EventSubscriberInterface
         $request = $event['request'];
         $response = $event['response'];
 
-        if ($response->canCache() && isset($this->cached[$request])) {
-
+        if (isset($this->cached[$request])) {
             $cacheKey = $this->cached[$request];
             unset($this->cached[$request]);
-
-            if ($response->isSuccessful()) {
-                if ($request->getParams()->get('cache.override_ttl')) {
-                    $lifetime = $request->getParams()->get('cache.override_ttl');
-                    $response->setHeader('X-Guzzle-Cache', "key={$cacheKey}, ttl={$lifetime}");
-                } else {
-                    $lifetime = $response->getMaxAge();
-                }
-                $this->saveCache($cacheKey, $response, $lifetime);
+            if ($response->isSuccessful() && $response->canCache()) {
+                $this->storage->cache(
+                    $cacheKey,
+                    $response,
+                    $request->getParams()->get('cache.override_ttl') ?: $response->getMaxAge()
+                );
             }
         }
-    }
-
-    /**
-     * Revalidate a cached response
-     *
-     * @param RequestInterface $request  Request to revalidate
-     * @param Response         $response Response to revalidate
-     *
-     * @return bool
-     */
-    public function revalidate(RequestInterface $request, Response $response)
-    {
-        static $replaceHeaders = array('Date', 'Expires', 'Cache-Control', 'ETag', 'Last-Modified');
-
-        $revalidate = clone $request;
-        $revalidate->getEventDispatcher()->removeSubscriber($this);
-        $revalidate->removeHeader('Pragma')
-                   ->removeHeader('Cache-Control')
-                   ->setHeader('If-Modified-Since', $response->getDate());
-
-        if ($response->getEtag()) {
-            $revalidate->setHeader('If-None-Match', '"' . $response->getEtag() . '"');
-        }
-
-        try {
-
-            $validateResponse = $revalidate->send();
-            if ($validateResponse->getStatusCode() == 200) {
-                // The server does not support validation, so use this response
-                $request->setResponse($validateResponse);
-                // Store this response in cache if possible
-                if ($validateResponse->canCache()) {
-                    $this->saveCache($this->getCacheKey($request), $validateResponse, $validateResponse->getMaxAge());
-                }
-
-                return false;
-            }
-
-            if ($validateResponse->getStatusCode() == 304) {
-                // Make sure that this response has the same ETage
-                if ($validateResponse->getEtag() != $response->getEtag()) {
-                    return false;
-                }
-                // Replace cached headers with any of these headers from the
-                // origin server that might be more up to date
-                $modified = false;
-                foreach ($replaceHeaders as $name) {
-                    if ($validateResponse->hasHeader($name)) {
-                        $modified = true;
-                        $response->setHeader($name, $validateResponse->getHeader($name));
-                    }
-                }
-                // Store the updated response in cache
-                if ($modified && $response->canCache()) {
-                    $this->saveCache($this->getCacheKey($request), $response, $response->getMaxAge());
-                }
-
-                return true;
-            }
-
-        } catch (BadResponseException $e) {
-
-            // 404 errors mean the resource no longer exists, so remove from
-            // cache, and prevent an additional request by throwing the exception
-            if ($e->getResponse()->getStatusCode() == 404) {
-                $this->adapter->delete($this->getCacheKey($request));
-                throw $e;
-            }
-        }
-
-        // Other exceptions encountered in the revalidation request are ignored
-        // in hopes that sending a request to the origin server will fix it
-        return false;
     }
 
     /**
@@ -324,42 +218,11 @@ class CachePlugin implements EventSubscriberInterface
                     case 'skip':
                         return true;
                     default:
-                        return $this->revalidate($request, $response);
+                        return $this->revalidation->revalidate($request, $response);
                 }
             }
         }
 
         return true;
-    }
-
-    /**
-     * Save data to the cache adapter
-     *
-     * @param string   $key      The cache key
-     * @param Response $response The response to cache
-     * @param int      $lifetime Amount of seconds to cache
-     *
-     * @return int Returns the lifetime of the cached data
-     */
-    protected function saveCache($key, Response $response, $lifetime = null)
-    {
-        // If the data is cacheable, then save it to the cache adapter
-        if ($lifetime = $lifetime ?: $this->defaultLifetime) {
-            // Remove excluded headers from the response  (see RFC 2616:13.5.1)
-            foreach ($this->excludeResponseHeaders as $header) {
-                $response->removeHeader($header);
-            }
-            // Add a Date header to the response if none is set (for validation)
-            if (!$response->getDate()) {
-                $response->setHeader('Date', Utils::getHttpDate('now'));
-            }
-            $this->adapter->save(
-                $key,
-                array($response->getStatusCode(), $response->getHeaders(), $response->getBody(true)),
-                $lifetime
-            );
-        }
-
-        return $lifetime;
     }
 }
