@@ -4,17 +4,10 @@ namespace Guzzle\Tests\Plugin\Cache;
 
 use Guzzle\Common\Event;
 use Guzzle\Cache\DoctrineCacheAdapter;
-use Guzzle\Http\EntityBody;
-use Guzzle\Http\Client;
-use Guzzle\Http\Utils;
-use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
 use Guzzle\Plugin\Cache\CachePlugin;
 use Guzzle\Plugin\Cache\DefaultCacheStorage;
-use Guzzle\Plugin\Cache\DefaultCacheKeyProvider;
-use Guzzle\Plugin\Cache\DefaultCanCacheStrategy;
-use Guzzle\Plugin\Cache\DefaultRevalidation;
 use Guzzle\Plugin\Cache\CallbackCanCacheStrategy;
 use Doctrine\Common\Cache\ArrayCache;
 
@@ -52,6 +45,38 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
             'Guzzle\Plugin\Cache\RevalidationInterface',
             $this->readAttribute($plugin, 'revalidation')
         );
+    }
+
+    public function testAddsCallbackCollaborators()
+    {
+        $this->assertNotEmpty(CachePlugin::getSubscribedEvents());
+        $plugin = new CachePlugin(array(
+            'storage' => $this->getMockBuilder('Guzzle\Plugin\Cache\CacheStorageInterface')->getMockForAbstractClass(),
+            'can_cache'    => function () {},
+            'key_provider' => function () {}
+        ));
+        $this->assertInstanceOf(
+            'Guzzle\Plugin\Cache\CallbackCacheKeyProvider',
+            $this->readAttribute($plugin, 'keyProvider')
+        );
+        $this->assertInstanceOf(
+            'Guzzle\Plugin\Cache\CallbackCanCacheStrategy',
+            $this->readAttribute($plugin, 'canCache')
+        );
+    }
+
+    public function testCanPassCacheAsOnlyArgumentToConstructor()
+    {
+        $p = new CachePlugin(new DoctrineCacheAdapter(new ArrayCache()));
+        $p = new CachePlugin(new DefaultCacheStorage(new DoctrineCacheAdapter(new ArrayCache())));
+    }
+
+    /**
+     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     */
+    public function testEnsuresArgIsValid()
+    {
+        $p = new CachePlugin(new \stdClass());
     }
 
     public function testUsesCreatedCacheStorage()
