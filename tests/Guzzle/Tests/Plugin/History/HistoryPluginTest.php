@@ -9,7 +9,7 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Plugin\History\HistoryPlugin;
 
 /**
- * @covers Guzzle\Http\Plugin\HistoryPlugin
+ * @covers Guzzle\Plugin\History\HistoryPlugin
  */
 class HistoryPluginTest extends \Guzzle\Tests\GuzzleTestCase
 {

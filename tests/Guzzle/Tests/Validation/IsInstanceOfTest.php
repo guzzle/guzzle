@@ -5,7 +5,7 @@ namespace Guzzle\Tests\Validation;
 use Guzzle\Validation\IsInstanceOf;
 
 /**
- * @covers Guzzle\Common\IsInstanceOf
+ * @covers Guzzle\Validation\IsInstanceOf
  */
 class IsInstanceOfTest extends Validation
 {
