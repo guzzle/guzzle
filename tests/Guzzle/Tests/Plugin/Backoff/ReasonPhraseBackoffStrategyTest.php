@@ -6,7 +6,7 @@ use Guzzle\Plugin\Backoff\ReasonPhraseBackoffStrategy;
 use Guzzle\Http\Message\Response;
 
 /**
- * @covers Guzzle\Plugin\Backoff\ReasonPhraseCodeBackoffStrategy
+ * @covers Guzzle\Plugin\Backoff\ReasonPhraseBackoffStrategy
  * @covers Guzzle\Plugin\Backoff\AbstractErrorCodeBackoffStrategy
  */
 class ReasonPhraseBackoffStrategyTest extends \Guzzle\Tests\GuzzleTestCase
@@ -20,5 +20,12 @@ class ReasonPhraseBackoffStrategyTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(false, $strategy->getBackoffPeriod(0, $request, $response));
         $response->setStatus(200, 'Foo');
         $this->assertEquals(0, $strategy->getBackoffPeriod(0, $request, $response));
+    }
+
+    public function testIgnoresNonErrors()
+    {
+        $strategy = new ReasonPhraseBackoffStrategy();
+        $request = $this->getMock('Guzzle\Http\Message\Request', array(), array(), '', false);
+        $this->assertEquals(false, $strategy->getBackoffPeriod(0, $request));
     }
 }

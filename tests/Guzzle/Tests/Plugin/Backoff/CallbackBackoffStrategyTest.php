@@ -9,6 +9,14 @@ use Guzzle\Plugin\Backoff\CallbackBackoffStrategy;
  */
 class CallbackBackoffStrategyTest extends \Guzzle\Tests\GuzzleTestCase
 {
+    /**
+     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     */
+    public function testEnsuresIsCallable()
+    {
+        $strategy = new CallbackBackoffStrategy(new \stdClass());
+    }
+
     public function testRetriesWithCallable()
     {
         $strategy = new CallbackBackoffStrategy(function () {

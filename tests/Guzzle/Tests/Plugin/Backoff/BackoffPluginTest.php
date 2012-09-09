@@ -19,7 +19,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * @group server
- * @covers Guzzle\Plugin\BackoffPlugin
+ * @covers Guzzle\Plugin\Backoff\BackoffPlugin
  */
 class BackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase implements EventSubscriberInterface
 {

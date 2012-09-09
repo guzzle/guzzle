@@ -36,4 +36,11 @@ class HttpBackoffStrategyTest extends \Guzzle\Tests\GuzzleTestCase
         $response->setStatus(500);
         $this->assertEquals(false, $strategy->getBackoffPeriod(0, $request, $response));
     }
+
+    public function testIgnoresNonErrors()
+    {
+        $strategy = new HttpBackoffStrategy();
+        $request = $this->getMock('Guzzle\Http\Message\Request', array(), array(), '', false);
+        $this->assertEquals(false, $strategy->getBackoffPeriod(0, $request));
+    }
 }
