@@ -16,6 +16,7 @@ class CurlBackoffStrategyTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->assertNotEmpty(CurlBackoffStrategy::getDefaultFailureCodes());
         $strategy = new CurlBackoffStrategy();
+        $this->assertTrue($strategy->makesDecision());
         $request = $this->getMock('Guzzle\Http\Message\Request', array(), array(), '', false);
         $e = new CurlException();
         $e->setError('foo', CURLE_BAD_CALLING_ORDER);

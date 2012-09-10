@@ -15,10 +15,18 @@ class ReasonPhraseBackoffStrategy extends AbstractErrorCodeBackoffStrategy
     /**
      * {@inheritdoc}
      */
+    public function makesDecision()
+    {
+        return true;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     protected function getDelay($retries, RequestInterface $request, Response $response = null, HttpException $e = null)
     {
         if ($response) {
-            return isset($this->errorCodes[$response->getReasonPhrase()]);
+            return isset($this->errorCodes[$response->getReasonPhrase()]) ? true : null;
         }
     }
 }

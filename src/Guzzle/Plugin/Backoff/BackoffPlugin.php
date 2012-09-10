@@ -50,8 +50,8 @@ class BackoffPlugin extends AbstractHasDispatcher implements EventSubscriberInte
         array $curlCodes = null
     ) {
         return new self(new HttpBackoffStrategy($httpCodes,
-            new CurlBackoffStrategy($curlCodes,
-                new TruncatedBackoffStrategy($maxRetries,
+            new TruncatedBackoffStrategy($maxRetries,
+                new CurlBackoffStrategy($curlCodes,
                     new ExponentialBackoffStrategy()
                 )
             )

@@ -41,4 +41,12 @@ abstract class AbstractErrorCodeBackoffStrategy extends AbstractBackoffStrategy
     {
         return static::$defaultErrorCodes;
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function makesDecision()
+    {
+        return true;
+    }
 }

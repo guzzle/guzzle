@@ -53,11 +53,11 @@ class BackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase implements EventSub
         $this->assertInstanceOf('Guzzle\Plugin\Backoff\HttpBackoffStrategy', $strategy);
         $this->assertEquals(array(204 => true), $this->readAttribute($strategy, 'errorCodes'));
         $strategy = $this->readAttribute($strategy, 'next');
-        $this->assertInstanceOf('Guzzle\Plugin\Backoff\CurlBackoffStrategy', $strategy);
-        $this->assertEquals(array(10 => true), $this->readAttribute($strategy, 'errorCodes'));
-        $strategy = $this->readAttribute($strategy, 'next');
         $this->assertInstanceOf('Guzzle\Plugin\Backoff\TruncatedBackoffStrategy', $strategy);
         $this->assertEquals(3, $this->readAttribute($strategy, 'max'));
+        $strategy = $this->readAttribute($strategy, 'next');
+        $this->assertInstanceOf('Guzzle\Plugin\Backoff\CurlBackoffStrategy', $strategy);
+        $this->assertEquals(array(10 => true), $this->readAttribute($strategy, 'errorCodes'));
         $strategy = $this->readAttribute($strategy, 'next');
         $this->assertInstanceOf('Guzzle\Plugin\Backoff\ExponentialBackoffStrategy', $strategy);
     }
@@ -164,7 +164,9 @@ class BackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase implements EventSub
             "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ndata"
         ));
         // Need to sleep for some time ensure that the polling works correctly in the observer
-        $plugin = new BackoffPlugin(new TruncatedBackoffStrategy(1, new ConstantBackoffStrategy(0.5)));
+        $plugin = new BackoffPlugin(new HttpBackoffStrategy(null,
+            new TruncatedBackoffStrategy(1,
+                new ConstantBackoffStrategy(0.5))));
 
         $client = new Client($this->getServer()->getUrl());
         $client->getEventDispatcher()->addSubscriber($plugin);
