@@ -73,9 +73,12 @@ class MessageFormatter
     /**
      * Returns a formatted message
      *
-     * @param RequestInterface $request  Request that was sent
-     * @param Response         $response Response that was received
-     * @param CurlHandle       $handle   Curl handle associated with the message
+     * @param RequestInterface $request    Request that was sent
+     * @param Response         $response   Response that was received
+     * @param CurlHandle       $handle     Curl handle associated with the message
+     * @param array            $customData Associative array of custom template data
+     *
+     * @return string
      */
     public function format(
         RequestInterface $request,

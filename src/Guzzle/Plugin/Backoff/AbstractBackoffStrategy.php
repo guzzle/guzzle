@@ -25,6 +25,16 @@ abstract class AbstractBackoffStrategy implements BackoffStrategyInterface
     }
 
     /**
+     * Get the next backoff strategy in the chain
+     *
+     * @return BackoffStrategyInterface|null
+     */
+    public function getNext()
+    {
+        return $this->next;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function getBackoffPeriod(
@@ -35,9 +45,24 @@ abstract class AbstractBackoffStrategy implements BackoffStrategyInterface
     ) {
         $delay = $this->getDelay($retries, $request, $response, $e);
         if ($delay === false) {
+            // The strategy knows that this must not be retried
             return false;
-        } elseif ($delay === true || $delay === null) {
-            return $this->next ? $this->next->getBackoffPeriod($retries, $request, $response, $e) : 0;
+        } elseif ($delay === null) {
+            // If the strategy is deferring a decision and the next strategy will not make a decision then return false
+            return !$this->next || !$this->next->makesDecision()
+                ? false
+                : $this->next->getBackoffPeriod($retries, $request, $response, $e);
+        } elseif ($delay === true) {
+            // if the strategy knows that it must retry but is deferring to the next to determine the delay
+            if (!$this->next) {
+                return 0;
+            } else {
+                $next = $this->next;
+                while ($next->makesDecision() && $next->getNext()) {
+                    $next = $next->getNext();
+                }
+                return !$next->makesDecision() ? $next->getBackoffPeriod($retries, $request, $response, $e) : 0;
+            }
         } else {
             return $delay;
         }

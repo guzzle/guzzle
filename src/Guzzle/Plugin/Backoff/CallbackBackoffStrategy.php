@@ -18,16 +18,31 @@ class CallbackBackoffStrategy extends AbstractBackoffStrategy
     protected $callback;
 
     /**
+     * @var bool Whether or not this strategy makes a retry decision
+     */
+    protected $decision = false;
+
+    /**
      * @param \Closure|array|mixed     $callback Callable method to invoke
+     * @param bool                     $decision Set to true if this strategy makes a backoff decision
      * @param BackoffStrategyInterface $next     The optional next strategy
      */
-    public function __construct($callback, BackoffStrategyInterface $next = null)
+    public function __construct($callback, $decision, BackoffStrategyInterface $next = null)
     {
         if (!is_callable($callback)) {
             throw new InvalidArgumentException('The callback must be callable');
         }
         $this->callback = $callback;
+        $this->decision = $decision;
         $this->next = $next;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function makesDecision()
+    {
+        return $this->decision;
     }
 
     /**

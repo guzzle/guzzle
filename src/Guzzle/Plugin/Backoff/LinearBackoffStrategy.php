@@ -28,6 +28,14 @@ class LinearBackoffStrategy extends AbstractBackoffStrategy
     /**
      * {@inheritdoc}
      */
+    public function makesDecision()
+    {
+        return false;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     protected function getDelay($retries, RequestInterface $request, Response $response = null, HttpException $e = null)
     {
         return $retries * $this->step;

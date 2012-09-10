@@ -15,6 +15,7 @@ class HttpBackoffStrategyTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->assertNotEmpty(HttpBackoffStrategy::getDefaultFailureCodes());
         $strategy = new HttpBackoffStrategy();
+        $this->assertTrue($strategy->makesDecision());
         $request = $this->getMock('Guzzle\Http\Message\Request', array(), array(), '', false);
 
         $response = new Response(200);

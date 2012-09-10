@@ -23,7 +23,12 @@ class HttpBackoffStrategy extends AbstractErrorCodeBackoffStrategy
     protected function getDelay($retries, RequestInterface $request, Response $response = null, HttpException $e = null)
     {
         if ($response) {
-            return isset($this->errorCodes[$response->getStatusCode()]);
+            //Short circuit the rest of the checks if it was successful
+            if ($response->isSuccessful()) {
+                return false;
+            } else {
+                return isset($this->errorCodes[$response->getStatusCode()]) ? true : null;
+            }
         }
     }
 }
