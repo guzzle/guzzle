@@ -7,6 +7,8 @@ use Guzzle\Common\Event;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
+use Guzzle\Cache\DoctrineCacheAdapter;
+use Doctrine\Common\Cache\ArrayCache;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -58,22 +60,22 @@ class CachePlugin implements EventSubscriberInterface
      * @param array|CacheAdapterInterface|CacheStorageInterface $options Array of options for the cache plugin,
      *                                                                   cache adapter, or cache storage object.
      *
-     * @throws InvalidArgumentException if one of a `adapter` or `storage` option are not set
+     * @throws InvalidArgumentException if no cache is provided and Doctrine cache is not installed
      */
-    public function __construct($options)
+    public function __construct($options = null)
     {
         if (!is_array($options)) {
             if ($options instanceof CacheAdapterInterface) {
                 $options = array('adapter' => $options);
             } elseif ($options instanceof CacheStorageInterface) {
                 $options = array('storage' => $options);
+            } elseif (class_exists('Doctrine\Common\Cache\ArrayCache')) {
+                $options = array('storage' => new DefaultCacheStorage(new DoctrineCacheAdapter(new ArrayCache())));
             } else {
-                throw new InvalidArgumentException('Invalid options sent to cache plugin');
+                // @codeCoverageIgnoreStart
+                throw new InvalidArgumentException('No cache was provided and Doctrine is not installed');
+                // @codeCoverageIgnoreEnd
             }
-        }
-
-        if (!isset($options['storage']) && !isset($options['adapter'])) {
-            throw new InvalidArgumentException('A storage or adapter option is required');
         }
 
         // Add a cache storage if a cache adapter was provided
