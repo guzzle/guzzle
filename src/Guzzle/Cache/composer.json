@@ -1,6 +1,5 @@
 {
     "name": "guzzle/cache",
-    "type": "component",
     "description": "Guzzle cache adapter component",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["cache", "adapter", "zf", "doctrine", "guzzle"],

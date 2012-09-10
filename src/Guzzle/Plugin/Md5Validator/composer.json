@@ -1,6 +1,5 @@
 {
     "name": "guzzle/plugin-md5validator",
-    "type": "component",
     "description": "Guzzle MD5 validator plugin",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["plugin", "guzzle"],

@@ -1,6 +1,5 @@
 {
     "name": "guzzle/plugin-log",
-    "type": "component",
     "description": "Guzzle log plugin for over the wire logging",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["plugin", "log", "guzzle"],

@@ -1,6 +1,5 @@
 {
     "name": "guzzle/plugin-mock",
-    "type": "component",
     "description": "Guzzle Mock plugin",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["mock", "plugin", "guzzle"],

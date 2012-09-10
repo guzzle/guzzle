@@ -1,6 +1,5 @@
 {
     "name": "guzzle/plugin-curlauth",
-    "type": "component",
     "description": "Guzzle cURL authorization plugin",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["plugin", "curl", "guzzle"],
