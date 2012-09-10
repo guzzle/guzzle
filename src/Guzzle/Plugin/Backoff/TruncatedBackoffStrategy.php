@@ -30,8 +30,16 @@ class TruncatedBackoffStrategy extends AbstractBackoffStrategy
     /**
      * {@inheritdoc}
      */
+    public function makesDecision()
+    {
+        return true;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     protected function getDelay($retries, RequestInterface $request, Response $response = null, HttpException $e = null)
     {
-        return $retries < $this->max;
+        return $retries < $this->max ? null : false;
     }
 }

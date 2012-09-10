@@ -55,6 +55,20 @@ class BackoffLogger implements EventSubscriberInterface
     }
 
     /**
+     * Set the template to use for logging
+     *
+     * @param string $template Log message template
+     *
+     * @return self
+     */
+    public function setTemplate($template)
+    {
+        $this->formatter->setTemplate($template);
+
+        return $this;
+    }
+
+    /**
      * Called when a request is being retried
      *
      * @param Event $event Event emitted

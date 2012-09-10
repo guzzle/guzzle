@@ -12,6 +12,7 @@ class ExponentialBackoffStrategyTest extends \Guzzle\Tests\GuzzleTestCase
     public function testRetriesWithExponentialDelay()
     {
         $strategy = new ExponentialBackoffStrategy();
+        $this->assertFalse($strategy->makesDecision());
         $request = $this->getMock('Guzzle\Http\Message\Request', array(), array(), '', false);
         $this->assertEquals(1, $strategy->getBackoffPeriod(0, $request));
         $this->assertEquals(2, $strategy->getBackoffPeriod(1, $request));
