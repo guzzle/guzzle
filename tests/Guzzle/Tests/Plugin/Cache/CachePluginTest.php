@@ -17,13 +17,10 @@ use Doctrine\Common\Cache\ArrayCache;
  */
 class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
-     * @expectedExceptionMessage A storage or adapter option is required
-     */
-    public function testConstructorEnsuresStorageOrAdapterIsSet()
+    public function testAddsDefaultStorage()
     {
-        $plugin = new CachePlugin(array());
+        $plugin = new CachePlugin();
+        $this->assertInstanceOf('Guzzle\Plugin\Cache\CacheStorageInterface', $this->readAttribute($plugin, 'storage'));
     }
 
     public function testAddsDefaultCollaborators()
@@ -69,14 +66,6 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $p = new CachePlugin(new DoctrineCacheAdapter(new ArrayCache()));
         $p = new CachePlugin(new DefaultCacheStorage(new DoctrineCacheAdapter(new ArrayCache())));
-    }
-
-    /**
-     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
-     */
-    public function testEnsuresArgIsValid()
-    {
-        $p = new CachePlugin(new \stdClass());
     }
 
     public function testUsesCreatedCacheStorage()
