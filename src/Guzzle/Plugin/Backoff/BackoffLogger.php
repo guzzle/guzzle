@@ -2,28 +2,20 @@
 
 namespace Guzzle\Plugin\Backoff;
 
-use Guzzle\Common\Event;
 use Guzzle\Common\Collection;
+use Guzzle\Common\Event;
 use Guzzle\Log\LogAdapterInterface;
+use Guzzle\Log\MessageFormatter;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Logs backoff retries triggered from the BackoffPlugin
  *
- * Format your log messages using a template that can contain the the following variables:
+ * Format your log messages using a template that can contain template substitutions found in {@see MessageFormatter}.
+ * In addition to the default template substitutions, there is also:
  *
- * - {ts}:           Timestamp
- * - {method}:       Method of the request
- * - {url}:          URL of the request
- * - {retries}:      Current number of retries for the request
- * - {delay}:        Amount of time the request is being delayed before being retried
- * - {code}:         Status code of the response (if available)
- * - {phrase}:       Reason phrase of the response  (if available)
- * - {curl_error}:   Curl error message (if available)
- * - {curl_code}:    Curl error code (if available)
- * - {connect_time}: Time in seconds it took to establish the connection (if available)
- * - {total_time}:   Total transaction time in seconds for last transfer (if available)
- * - {header_*}:     Replace `*` with the lowercased name of a header to add to the message
+ * - retries: The number of times the request has been retried
+ * - delay:   The amount of time the request is being delayed
  */
 class BackoffLogger implements EventSubscriberInterface
 {
@@ -38,20 +30,20 @@ class BackoffLogger implements EventSubscriberInterface
     protected $logger;
 
     /**
-     * @var string Template used to format log messages
+     * @var MessageFormatter Formatter used to format log messages
      */
-    protected $template;
+    protected $formatter;
 
     /**
      * Backoff retry logger
      *
-     * @param LogAdapterInterface $logger   Logger used to log the retries
-     * @param string              $template Log message template
+     * @param LogAdapterInterface $logger    Logger used to log the retries
+     * @param MessageFormatter    $formatter Formatter used to format log messages
      */
-    public function __construct(LogAdapterInterface $logger, $template = self::DEFAULT_FORMAT)
+    public function __construct(LogAdapterInterface $logger, MessageFormatter $formatter = null)
     {
         $this->logger = $logger;
-        $this->template = $template;
+        $this->formatter = $formatter ?: new MessageFormatter(self::DEFAULT_FORMAT);
     }
 
     /**
@@ -63,62 +55,20 @@ class BackoffLogger implements EventSubscriberInterface
     }
 
     /**
-     * Set the template to use for logging
-     *
-     * @param string $template Log message template
-     *
-     * @return self
-     */
-    public function setTemplate($template)
-    {
-        $this->template = $template;
-
-        return $this;
-    }
-
-    /**
      * Called when a request is being retried
      *
      * @param Event $event Event emitted
      */
     public function onRequestRetry(Event $event)
     {
-        $request = $event['request'];
-        $response = $event['response'];
-        $handle = $event['handle'];
-
-        $data = new Collection(array(
-            'ts'      => gmdate('c'),
-            'method'  => $request->getMethod(),
-            'url'     => $request->getUrl(),
-            'retries' => $event['retries'],
-            'delay'   => $event['delay']
+        $this->logger->log($this->formatter->format(
+            $event['request'],
+            $event['response'],
+            $event['handle'],
+            array(
+                'retries' => $event['retries'],
+                'delay'   => $event['delay']
+            )
         ));
-
-        if ($response) {
-            $data->merge(array(
-                'code'         => $response->getStatusCode(),
-                'phrase'       => $response->getReasonPhrase(),
-                'connect_time' => $response->getInfo('connect_time'),
-                'total_time'   => $response->getInfo('total_time'),
-            ));
-        } elseif ($handle) {
-            $data->merge(array(
-                'connect_time' => $handle->getInfo(CURLINFO_CONNECT_TIME),
-                'total_time'   => $handle->getInfo(CURLINFO_TOTAL_TIME)
-            ));
-        }
-
-        if ($handle) {
-            $data->set('curl_error', $handle->getError());
-            $data->set('curl_code', $handle->getErrorNo());
-        }
-
-        // Add request headers to the possible template values
-        foreach ($request->getHeaders(true) as $header => $value) {
-            $data->set("header_{$header}", (string) $value);
-        }
-
-        $this->logger->log($data->inject($this->template), LOG_INFO, $data);
     }
 }

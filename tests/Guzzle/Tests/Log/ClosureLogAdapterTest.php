@@ -9,21 +9,15 @@ use Guzzle\Log\ClosureLogAdapter;
  */
 class ClosureLogAdapterTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var string Variable that the closure will modify
-     */
-    public $modified;
-
     public function testClosure()
     {
         $that = $this;
-
-        $this->adapter = new ClosureLogAdapter(function($message, $priority, $extras = null) use ($that) {
-            $that->modified = array($message, $priority, $extras);
+        $modified = null;
+        $this->adapter = new ClosureLogAdapter(function($message, $priority, $extras = null) use ($that, &$modified) {
+            $modified = array($message, $priority, $extras);
         });
-
-        $this->adapter->log('test', \LOG_NOTICE, 'localhost');
-        $this->assertEquals(array('test', \LOG_NOTICE, 'localhost'), $this->modified);
+        $this->adapter->log('test', LOG_NOTICE, 'localhost');
+        $this->assertEquals(array('test', LOG_NOTICE, 'localhost'), $modified);
     }
 
     /**
@@ -31,7 +25,6 @@ class ClosureLogAdapterTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testThrowsExceptionWhenNotCallable()
     {
-        $abc = 123;
-        $this->adapter = new ClosureLogAdapter($abc);
+        $this->adapter = new ClosureLogAdapter(123);
     }
 }
