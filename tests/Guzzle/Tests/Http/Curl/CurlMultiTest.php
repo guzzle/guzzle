@@ -12,7 +12,6 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Curl\CurlMulti;
 use Guzzle\Http\Exception\CurlException;
-use Guzzle\Plugin\Log\LogPlugin;
 use Guzzle\Tests\Mock\MockMulti;
 
 /**
@@ -532,12 +531,9 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
         ));
 
+        $stream = fopen('php://temp', 'w+');
         $client = new Client($this->getServer()->getUrl());
-        $message = '';
-        $plugin = new LogPlugin(new ClosureLogAdapter(function($msg) use (&$message) {
-            $message .= $msg . "\n";
-        }), LogPlugin::LOG_VERBOSE);
-        $client->getEventDispatcher()->addSubscriber($plugin);
+        $client->getConfig()->set('curl.CURLOPT_VERBOSE', true)->set('curl.CURLOPT_STDERR', $stream);
 
         $request = $client->get();
         $multi = new CurlMulti();
@@ -547,7 +543,8 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
         $multi->add($request);
         $multi->send();
 
-        $this->assertNotContains('Re-using existing connection', $message);
+        rewind($stream);
+        $this->assertNotContains('Re-using existing connection', stream_get_contents($stream));
     }
 
     /**
