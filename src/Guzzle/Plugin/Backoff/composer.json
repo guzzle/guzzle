@@ -1,6 +1,5 @@
 {
     "name": "guzzle/plugin-backoff",
-    "type": "component",
     "description": "Guzzle backoff retry plugins",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["plugin", "guzzle"],

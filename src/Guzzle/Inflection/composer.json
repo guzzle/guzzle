@@ -1,6 +1,5 @@
 {
     "name": "guzzle/inflection",
-    "type": "component",
     "description": "Guzzle inflection component",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["inflection", "guzzle"],

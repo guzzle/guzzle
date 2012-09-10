@@ -1,6 +1,5 @@
 {
     "name": "guzzle/plugin-cookie",
-    "type": "component",
     "description": "Guzzle cookie plugin",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["plugin", "guzzle"],

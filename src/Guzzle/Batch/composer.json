@@ -1,6 +1,5 @@
 {
     "name": "guzzle/batch",
-    "type": "component",
     "description": "Guzzle batch component for batching requests, commands, or custom transfers",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["batch", "HTTP", "REST", "guzzle"],
