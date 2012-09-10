@@ -144,12 +144,15 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Message\Response::getBody
+     * @covers Guzzle\Http\Message\Response::setBody
      */
     public function testGetBody()
     {
         $body = EntityBody::factory('');
         $response = new Response(403, new Collection(), $body);
         $this->assertEquals($body, $response->getBody());
+        $response->setBody('foo');
+        $this->assertEquals('foo', $response->getBody(true));
     }
 
     /**

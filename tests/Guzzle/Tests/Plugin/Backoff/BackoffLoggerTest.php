@@ -56,30 +56,6 @@ class BackoffLoggerTest extends \Guzzle\Tests\GuzzleTestCase
         );
     }
 
-    public function testLogsEventsWithCustomTemplate()
-    {
-        list($logPlugin, $request, $response) = $this->getMocks();
-        $logPlugin->setTemplate('Foo: {header_foo}, Method: {method}');
-        $event = new Event(array(
-            'request'  => $request,
-            'response' => $response
-        ));
-        $logPlugin->onRequestRetry($event);
-        $this->assertEquals("Foo: Bar, Method: PUT\n", $this->message);
-    }
-
-    public function testUsesCurlHandleForTimesWhenResponseNotAvailable()
-    {
-        list($logPlugin, $request, $response) = $this->getMocks();
-        $logPlugin->setTemplate('{method}: {connect_time}, {total_time}');
-        $event = new Event(array(
-            'request' => $request,
-            'handle'  => $this->getMockHandle()
-        ));
-        $logPlugin->onRequestRetry($event);
-        $this->assertEquals("PUT: 2, 2\n", $this->message);
-    }
-
     /**
      * @return array
      */

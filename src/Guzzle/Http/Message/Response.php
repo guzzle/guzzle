@@ -186,6 +186,20 @@ class Response extends AbstractMessage
     }
 
     /**
+     * Set the response entity body
+     *
+     * @param EntityBodyInterface|string $body Body to set
+     *
+     * @return self
+     */
+    public function setBody($body)
+    {
+        $this->body = EntityBody::factory($body);
+
+        return $this;
+    }
+
+    /**
      * Set the protocol and protocol version of the response
      *
      * @param string $protocol Response protocol
