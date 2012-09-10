@@ -1,6 +1,5 @@
 {
     "name": "guzzle/log",
-    "type": "component",
     "description": "Guzzle log adapter component",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["log", "adapter", "guzzle"],
@@ -17,6 +16,9 @@
     },
     "autoload": {
         "psr-0": { "Guzzle\\Log": "" }
+    },
+    "suggest": {
+        "guzzle/http": "self.version"
     },
     "target-dir": "Guzzle/Log"
 }

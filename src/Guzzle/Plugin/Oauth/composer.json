@@ -1,6 +1,5 @@
 {
     "name": "guzzle/plugin-oauth",
-    "type": "component",
     "description": "Guzzle OAuth plugin",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["oauth", "plugin", "guzzle"],

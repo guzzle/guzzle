@@ -1,6 +1,5 @@
 {
     "name": "guzzle/service",
-    "type": "component",
     "description": "Guzzle service component for abstracting RESTful web services",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["web service", "webservice", "REST", "guzzle"],

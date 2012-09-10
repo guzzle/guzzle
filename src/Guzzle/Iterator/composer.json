@@ -1,6 +1,5 @@
 {
     "name": "guzzle/iterator",
-    "type": "component",
     "description": "Provides helpful iterators and iterator decorators",
     "keywords": ["iterator", "guzzle"],
     "homepage": "http://guzzlephp.org/",

@@ -1,6 +1,5 @@
 {
     "name": "guzzle/validation",
-    "type": "component",
     "description": "Guzzle validation component",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["validation", "validate", "component", "guzzle"],

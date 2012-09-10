@@ -1,6 +1,5 @@
 {
     "name": "guzzle/stream",
-    "type": "component",
     "description": "Guzzle stream wrapper component",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["stream", "component", "guzzle"],

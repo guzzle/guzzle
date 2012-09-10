@@ -1,6 +1,5 @@
 {
     "name": "guzzle/http",
-    "type": "component",
     "description": "HTTP libraries used by Guzzle",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["http client", "http", "client", "Guzzle", "curl"],

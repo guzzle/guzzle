@@ -1,6 +1,5 @@
 {
     "name": "guzzle/plugin-cache",
-    "type": "component",
     "description": "Guzzle HTTP cache plugin",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["plugin", "guzzle"],

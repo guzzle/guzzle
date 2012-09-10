@@ -1,6 +1,5 @@
 {
     "name": "guzzle/plugin",
-    "type": "component",
     "description": "Guzzle plugin component containing all Guzzle HTTP plugins",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["http", "client", "plugin", "extension", "guzzle"],

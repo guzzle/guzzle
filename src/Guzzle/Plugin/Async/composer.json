@@ -1,6 +1,5 @@
 {
     "name": "guzzle/plugin-async",
-    "type": "component",
     "description": "Guzzle async request plugin",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["plugin", "guzzle"],
