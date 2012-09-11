@@ -14,8 +14,6 @@ class CallbackCacheKeyProvider extends AbstractCallbackStrategy implements Cache
      */
     public function getCacheKey(RequestInterface $request)
     {
-        $callback = $this->callback;
-
-        return $callback($request);
+        return call_user_func($this->callback, $request);
     }
 }

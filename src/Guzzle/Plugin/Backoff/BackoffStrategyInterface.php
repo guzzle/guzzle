@@ -27,27 +27,4 @@ interface BackoffStrategyInterface
         Response $response = null,
         HttpException $e = null
     );
-
-    /**
-     * Check if the strategy does filtering and makes decisions on whether or not to retry.
-     * Strategies that return false will never retry if all of the previous strategies in a chain
-     * defer on the backoff decision.
-     *
-     * @return bool
-     */
-    public function makesDecision();
-
-    /**
-     * Set the next backoff strategy in the chain
-     *
-     * @param BackoffStrategyInterface $next Next strategy in the chain
-     */
-    public function setNext(BackoffStrategyInterface $next);
-
-    /**
-     * Get the next backoff strategy in the chain
-     *
-     * @return BackoffStrategyInterface|null
-     */
-    public function getNext();
 }

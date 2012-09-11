@@ -50,8 +50,6 @@ class CallbackBackoffStrategy extends AbstractBackoffStrategy
      */
     protected function getDelay($retries, RequestInterface $request, Response $response = null, HttpException $e = null)
     {
-        $callback = $this->callback;
-
-        return $callback($retries, $request, $response, $e);
+        return call_user_func($this->callback, $retries, $request, $response, $e);
     }
 }

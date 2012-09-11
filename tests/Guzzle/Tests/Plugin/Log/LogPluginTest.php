@@ -45,7 +45,7 @@ class LogPluginTest extends \Guzzle\Tests\GuzzleTestCase
             $output = $message;
         }), '{method} {resource} | {code} {res_body}');
 
-        $p->onRequestComplete(new Event(array(
+        $p->onRequestSent(new Event(array(
             'request'  => new Request('GET', 'http://foo.com'),
             'response' => new Response(200, array(), 'Foo')
         )));

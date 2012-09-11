@@ -63,7 +63,7 @@ class LogPlugin implements EventSubscriberInterface
             'curl.callback.write' => array('onCurlWrite', 255),
             'curl.callback.read'  => array('onCurlRead', 255),
             'request.before_send' => array('onRequestBeforeSend', 255),
-            'request.complete'    => array('onRequestComplete', 255)
+            'request.sent'        => array('onRequestSent', 255)
         );
     }
 
@@ -123,7 +123,7 @@ class LogPlugin implements EventSubscriberInterface
      *
      * @param Event $event
      */
-    public function onRequestComplete(Event $event)
+    public function onRequestSent(Event $event)
     {
         $request = $event['request'];
         $response = $event['response'];
