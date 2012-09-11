@@ -53,7 +53,7 @@ class MessageFormatter
      */
     public function __construct($template = self::DEFAULT_FORMAT)
     {
-        $this->template = $template;
+        $this->template = $template ?: self::DEFAULT_FORMAT;
     }
 
     /**

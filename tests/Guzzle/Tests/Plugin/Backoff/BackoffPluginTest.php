@@ -47,7 +47,7 @@ class BackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase implements EventSub
 
     public function testCreatesDefaultExponentialBackoffPlugin()
     {
-        $plugin = BackoffPlugin::getExponentialBackoffInstance(3, array(204), array(10));
+        $plugin = BackoffPlugin::getExponentialBackoff(3, array(204), array(10));
         $this->assertInstanceOf('Guzzle\Plugin\Backoff\BackoffPlugin', $plugin);
         $strategy = $this->readAttribute($plugin, 'strategy');
         $this->assertInstanceOf('Guzzle\Plugin\Backoff\HttpBackoffStrategy', $strategy);
@@ -136,7 +136,7 @@ class BackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase implements EventSub
         ));
 
         $plugin = new BackoffPlugin(
-            new HttpBackoffStrategy(null, new TruncatedBackoffStrategy(3, new ConstantBackoffStrategy(0)))
+            new HttpBackoffStrategy(null, new TruncatedBackoffStrategy(3, new ConstantBackoffStrategy(0.2)))
         );
 
         $client = new Client($this->getServer()->getUrl());
@@ -150,6 +150,7 @@ class BackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase implements EventSub
 
         // Check that three requests were made to retry this request
         $this->assertEquals(3, count($this->getServer()->getReceivedRequests(false)));
+        $this->assertEquals(2, $request->getParams()->get(BackoffPlugin::RETRY_PARAM));
     }
 
     /**

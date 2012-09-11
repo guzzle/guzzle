@@ -12,14 +12,14 @@ use Guzzle\Http\Exception\HttpException;
 abstract class AbstractBackoffStrategy implements BackoffStrategyInterface
 {
     /**
-     * @var BackoffStrategyInterface Next strategy in the chain
+     * @var AbstractBackoffStrategy Next strategy in the chain
      */
     protected $next;
 
     /**
-     * @param BackoffStrategyInterface $next Next strategy in the chain
+     * @param AbstractBackoffStrategy $next Next strategy in the chain
      */
-    public function setNext(BackoffStrategyInterface $next)
+    public function setNext(AbstractBackoffStrategy $next)
     {
         $this->next = $next;
     }
@@ -27,7 +27,7 @@ abstract class AbstractBackoffStrategy implements BackoffStrategyInterface
     /**
      * Get the next backoff strategy in the chain
      *
-     * @return BackoffStrategyInterface|null
+     * @return AbstractBackoffStrategy|null
      */
     public function getNext()
     {
@@ -67,6 +67,15 @@ abstract class AbstractBackoffStrategy implements BackoffStrategyInterface
             return $delay;
         }
     }
+
+    /**
+     * Check if the strategy does filtering and makes decisions on whether or not to retry.
+     * Strategies that return false will never retry if all of the previous strategies in a chain
+     * defer on the backoff decision.
+     *
+     * @return bool
+     */
+    abstract public function makesDecision();
 
     /**
      * Implement the concrete strategy

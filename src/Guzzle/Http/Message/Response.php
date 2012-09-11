@@ -717,7 +717,7 @@ class Response extends AbstractMessage
      */
     public function isClientError()
     {
-        return substr(strval($this->statusCode), 0, 1) == '4';
+        return $this->statusCode >= 400 && $this->statusCode < 500;
     }
 
     /**
@@ -737,7 +737,7 @@ class Response extends AbstractMessage
      */
     public function isInformational()
     {
-        return substr(strval($this->statusCode), 0, 1) == '1';
+        return $this->statusCode < 200;
     }
 
     /**
@@ -747,7 +747,7 @@ class Response extends AbstractMessage
      */
     public function isRedirect()
     {
-        return substr(strval($this->statusCode), 0, 1) == '3';
+        return $this->statusCode >= 300 && $this->statusCode < 400;
     }
 
     /**
@@ -757,7 +757,7 @@ class Response extends AbstractMessage
      */
     public function isServerError()
     {
-        return substr(strval($this->statusCode), 0, 1) == '5';
+        return $this->statusCode >= 500 && $this->statusCode < 600;
     }
 
     /**
@@ -767,7 +767,7 @@ class Response extends AbstractMessage
      */
     public function isSuccessful()
     {
-        return substr(strval($this->statusCode), 0, 1) == '2' || $this->statusCode == '304';
+        return ($this->statusCode >= 200 && $this->statusCode < 300) || $this->statusCode == 304;
     }
 
     /**
