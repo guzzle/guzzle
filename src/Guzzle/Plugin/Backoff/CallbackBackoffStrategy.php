@@ -20,7 +20,7 @@ class CallbackBackoffStrategy extends AbstractBackoffStrategy
     /**
      * @var bool Whether or not this strategy makes a retry decision
      */
-    protected $decision = false;
+    protected $decision;
 
     /**
      * @param \Closure|array|mixed     $callback Callable method to invoke
@@ -33,7 +33,7 @@ class CallbackBackoffStrategy extends AbstractBackoffStrategy
             throw new InvalidArgumentException('The callback must be callable');
         }
         $this->callback = $callback;
-        $this->decision = $decision;
+        $this->decision = (bool) $decision;
         $this->next = $next;
     }
 

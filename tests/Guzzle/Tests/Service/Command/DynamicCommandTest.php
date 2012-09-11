@@ -283,4 +283,30 @@ class DynamicCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $command->prepare();
         $this->assertEquals('hi', (string) $request->getHeader('test'));
     }
+
+    public function testUsesFiltersCorrectly()
+    {
+        $this->service = new ServiceDescription(array(
+            'test_command' => new ApiCommand(array(
+                'method' => 'HEAD',
+                'params' => array(
+                    'X-Bucket' => array(
+                        'filters'  => 'strtoupper',
+                        'location' => 'header'
+                    )
+                )
+            ))
+        ));
+
+        $client = new Client();
+        $client->setDescription($this->service);
+        $command = $client->getCommand('test_command');
+        $request = $command->prepare();
+        $this->assertFalse($request->hasHeader('X-Bucket'));
+
+        $command = $client->getCommand('test_command');
+        $command['X-Bucket'] = 'abc';
+        $request = $command->prepare();
+        $this->assertEquals('ABC', (string) $request->getHeader('X-Bucket'));
+    }
 }

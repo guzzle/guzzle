@@ -505,8 +505,12 @@ class ApiCommand implements ApiCommandInterface
                 continue;
             }
 
+            if ($configValue === null) {
+                continue;
+            }
+
             // Ensure that the correct data type is being used
-            if ($typeValidation && $configValue !== null && $argType = $arg->getType()) {
+            if ($typeValidation && $argType = $arg->getType()) {
                 $validation = $inspector->validateConstraint($argType, $configValue, $arg->getTypeArgs());
                 if ($validation !== true) {
                     $errors[] = $name . ': ' . $validation;
