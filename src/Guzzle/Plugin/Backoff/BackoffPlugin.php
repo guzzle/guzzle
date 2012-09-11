@@ -94,12 +94,11 @@ class BackoffPlugin extends AbstractHasDispatcher implements EventSubscriberInte
         $delay = $this->strategy->getBackoffPeriod($retries, $request, $response, $exception);
 
         if ($delay !== false) {
-            $params->set(self::RETRY_PARAM, ++$retries);
             // Calculate how long to wait until the request should be retried
-            $delayTime = microtime(true) + $delay;
+            $params->set(self::RETRY_PARAM, ++$retries)
+                ->set(self::DELAY_PARAM, microtime(true) + $delay);
             // Send the request again
             $request->setState(RequestInterface::STATE_TRANSFER);
-            $params->set(self::DELAY_PARAM, $delayTime);
             $this->dispatch(self::RETRY_EVENT, array(
                 'request'  => $request,
                 'response' => $response,
