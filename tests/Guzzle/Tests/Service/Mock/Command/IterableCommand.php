@@ -2,14 +2,24 @@
 
 namespace Guzzle\Tests\Service\Mock\Command;
 
+use Guzzle\Service\Description\ApiCommand;
+
 /**
  * Iterable mock command
- *
- * @guzzle page_size type="integer"
- * @guzzle next_token type="string"
  */
 class IterableCommand extends MockCommand
 {
+    public static function getApi()
+    {
+        return array(
+            'name'   => 'iterable_command',
+            'params' => array(
+                'page_size' => array('type' => 'integer'),
+                'next_token' => array('type' => 'string')
+            )
+        );
+    }
+
     /**
      * {@inheritdoc}
      */

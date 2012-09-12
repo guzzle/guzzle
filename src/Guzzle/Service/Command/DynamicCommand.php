@@ -106,7 +106,7 @@ class DynamicCommand extends AbstractCommand
                         $value = $configValue;
                     }
                     // Apply the parameter value with the location visitor
-                    $this->visitors[$location]->visit($this, $this->request, $arg->getLocationKey() ?: $name, $value);
+                    $this->visitors[$location]->visit($this, $this->request, $arg->getLocationKey(), $value, $arg);
                 }
             }
         }

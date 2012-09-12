@@ -18,11 +18,6 @@ class ApiCommand implements ApiCommandInterface
     const DEFAULT_COMMAND_CLASS = 'Guzzle\\Service\\Command\\DynamicCommand';
 
     /**
-     * @var string Annotation used to specify Guzzle service description info
-     */
-    const GUZZLE_ANNOTATION = '@guzzle';
-
-    /**
      * @var array Parameters
      */
     protected $params = array();
@@ -73,11 +68,6 @@ class ApiCommand implements ApiCommandInterface
     protected $docUrl;
 
     /**
-     * @var array Cache of parsed Command class ApiCommands
-     */
-    protected static $apiCommandCache = array();
-
-    /**
      * Constructor
      *
      * @param array $config Array of configuration data using the following keys
@@ -122,79 +112,21 @@ class ApiCommand implements ApiCommandInterface
         $this->class = isset($config['class']) ? trim($config['class']) : self::DEFAULT_COMMAND_CLASS;
         $this->resultType = isset($config['result_type']) ? $config['result_type'] : null;
         $this->resultDoc = isset($config['result_doc']) ? $config['result_doc'] : null;
-        $this->deprecated = isset($config['deprecated']) && ($config['deprecated'] === 'true' || $config['deprecated'] === true);
+        $this->deprecated = array_key_exists('deprecated', $config) ? $config['deprecated'] : false;
 
         if (!empty($config['params'])) {
             foreach ($config['params'] as $name => $param) {
                 if ($param instanceof ApiParam) {
                     $this->params[$name] = $param;
+                    if (!$param->getName()) {
+                        $param->setName($name);
+                    }
                 } else {
                     $param['name'] = $name;
                     $this->params[$name] = new ApiParam($param);
                 }
             }
         }
-    }
-
-    /**
-     * Create an ApiCommand object from a class and its docblock
-     *
-     * Example: @guzzle my_argument default="hello" required="true" doc="Description" type="string"
-     *
-     * @param string $className Name of the class
-     *
-     * @return ApiCommand
-     * @link   http://guzzlephp.org/tour/building_services.html#docblock-annotations-for-commands
-     */
-    public static function fromCommand($className)
-    {
-        if (!isset(self::$apiCommandCache[$className])) {
-
-            // Get all of the @guzzle annotations from the class
-            $reflection = new \ReflectionClass($className);
-            $matches = array();
-            $params = array();
-
-            // Parse the docblock annotations
-            if (preg_match_all(
-                '/' . self::GUZZLE_ANNOTATION . '\s+([A-Za-z0-9_\-\.]+)\s*([A-Za-z0-9]+=".+")*/',
-                $reflection->getDocComment(),
-                $matches
-            )) {
-                $attrs = array();
-                foreach ($matches[1] as $index => $match) {
-                    // Add the matched argument to the array keys
-                    $param = array();
-                    if (isset($matches[2])) {
-                        // Break up the argument attributes by closing quote
-                        foreach (explode('" ', $matches[2][$index]) as $part) {
-                            // Find the attribute and attribute value
-                            if (preg_match('/([A-Za-z0-9]+)="(.+)"*/', $part, $attrs)) {
-                                // Sanitize the strings
-                                if ($attrs[2][strlen($attrs[2]) - 1] == '"') {
-                                    $attrs[2] = substr($attrs[2], 0, strlen($attrs[2]) - 1);
-                                }
-                                $param[$attrs[1]] = $attrs[2];
-                            }
-                        }
-                    }
-                    $params[$match] = new ApiParam($param);
-                }
-            }
-
-            // Add the command to the cache
-            self::$apiCommandCache[$className] = new ApiCommand(array(
-                'name'   => str_replace(
-                    '\\_',
-                    '.',
-                    Inflector::getDefault()->snake(substr($className, strpos($className, 'Command') + 8))
-                ),
-                'class'  => $className,
-                'params' => $params
-            ));
-        }
-
-        return self::$apiCommandCache[$className];
     }
 
     /**
@@ -487,6 +419,7 @@ class ApiCommand implements ApiCommandInterface
     {
         $inspector = $inspector ?: Inspector::getInstance();
         $typeValidation = $inspector->getTypeValidation();
+        $passedInspector = $typeValidation ? $inspector : null;
         $errors = array();
 
         foreach ($this->params as $name => $arg) {
@@ -499,42 +432,13 @@ class ApiCommand implements ApiCommandInterface
                 $configValue = $config->inject($configValue);
             }
 
-            // Ensure that required arguments are set
-            if ($arg->getRequired() && ($configValue === null || $configValue === '')) {
-                $errors[] = 'Requires that the ' . $name . ' argument be supplied.' . ($arg->getDoc() ? '  (' . $arg->getDoc() . ').' : '');
+            if (!$this->recursiveValidation($arg, $configValue, $errors, $passedInspector)) {
                 continue;
             }
-
-            if ($configValue === null) {
-                continue;
-            }
-
-            // Ensure that the correct data type is being used
-            if ($typeValidation && $argType = $arg->getType()) {
-                $validation = $inspector->validateConstraint($argType, $configValue, $arg->getTypeArgs());
-                if ($validation !== true) {
-                    $errors[] = $name . ': ' . $validation;
-                    $config->set($name, $configValue);
-                    continue;
-                }
-            }
-
-            $configValue = $arg->filter($configValue);
 
             // Update the config value if it changed
-            if (!$configValue !== $currentValue) {
+            if ($configValue !== $currentValue) {
                 $config->set($name, $configValue);
-            }
-
-            // Check the length values if validating data
-            $argMinLength = $arg->getMinLength();
-            if ($argMinLength && strlen($configValue) < $argMinLength) {
-                $errors[] = 'Requires that the ' . $name . ' argument be >= ' . $arg->getMinLength() . ' characters.';
-            }
-
-            $argMaxLength = $arg->getMaxLength();
-            if ($argMaxLength && strlen($configValue) > $argMaxLength) {
-                $errors[] = 'Requires that the ' . $name . ' argument be <= ' . $arg->getMaxLength() . ' characters.';
             }
         }
 
@@ -543,5 +447,72 @@ class ApiCommand implements ApiCommandInterface
             $e->setErrors($errors);
             throw $e;
         }
+    }
+
+    /**
+     * @param ApiParam       $arg          API parameter object being decorated and validated
+     * @param mixed          $configValue  Reference to a configuration value that could be modified
+     * @param array          $errors       Reference to an array of errors found while validating
+     * @param Inspector|bool $inspector    Pass an inspector to perform validation
+     * @param string         $path         Nested path of the validation used for error messages
+     *
+     * @return bool Returns false if the validation failed
+     */
+    protected function recursiveValidation(
+        ApiParam $arg,
+        &$configValue,
+        array &$errors,
+        Inspector $inspector = null,
+        $path = ''
+    ) {
+        // Recursively validate and inject sub structure parameters
+        $structure = $arg->getStructure();
+        if (!empty($structure) && ($arg->getRequired() || !empty($configValue))) {
+            $subPath = $path . '[' . $arg->getName() . ']';
+            foreach ($structure as $param) {
+                $paramName = $param->getName();
+                $value = $param->getValue(is_array($configValue) && array_key_exists($paramName, $configValue)
+                    ? $configValue[$paramName] : null);
+                if ($this->recursiveValidation($param, $value, $errors, $inspector, $subPath) && $value !== null) {
+                    $configValue[$paramName] = $value;
+                }
+            }
+        }
+
+        // Ensure that required arguments are set
+        if ($arg->getRequired() && ($configValue === null || $configValue === '')) {
+            $errors[] = trim(sprintf('%s[%s] is required. %s', $path, $arg->getName(), $arg->getDoc()));
+            return false;
+        }
+
+        if ($configValue === null) {
+            return false;
+        }
+
+        // Ensure that the correct data type is being used
+        if ($inspector && $argType = $arg->getType()) {
+            $validation = $inspector->validateConstraint($argType, $configValue, $arg->getTypeArgs());
+            if ($validation !== true) {
+                $errors[] = $arg->getName() . ': ' . $validation;
+                return false;
+            }
+        }
+
+        $configValue = $arg->filter($configValue);
+
+        // Check the length values if validating data
+        $argMinLength = $arg->getMinLength();
+        if ($argMinLength && strlen($configValue) < $argMinLength) {
+            $errors[] = sprintf('%s[%s] Length must be >= %s', $path, $arg->getName(), $arg->getMinLength());
+            return false;
+        }
+
+        $argMaxLength = $arg->getMaxLength();
+        if ($argMaxLength && strlen($configValue) > $argMaxLength) {
+            $errors[] = sprintf('%s[%s] Length must be <= %s', $path, $arg->getName(), $arg->getMaxLength());
+            return false;
+        }
+
+        return true;
     }
 }

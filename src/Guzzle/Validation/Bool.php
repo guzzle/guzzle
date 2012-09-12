@@ -12,12 +12,19 @@ class Bool implements ConstraintInterface
      */
     public function validate($value, array $options = null)
     {
-        if ($value === true || $value === false || $value === 'true' ||
+        return $value === true || $value === false || $value === 'true' ||
             $value === 'false' || $value === '1' || $value === '0' ||
-            $value === 'on' || $value === 'off' || $value === 1 || $value === 0) {
-            return true;
-        }
+            $value === 'on' || $value === 'off' || $value === 1 || $value === 0
+            ? true
+            : 'Value must be boolean';
+    }
 
-        return 'Value must be boolean';
+    /**
+     * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
+    public static function getDefaultOption()
+    {
+        return null;
     }
 }

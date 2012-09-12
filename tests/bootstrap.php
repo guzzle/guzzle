@@ -19,7 +19,7 @@ if (get_cfg_var('guzzle_phar')) {
 $autoloader = require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 // Add the services file to the default service builder
-$servicesFile = __DIR__ . '/Guzzle/Tests/TestData/services/services.xml';
+$servicesFile = __DIR__ . '/Guzzle/Tests/TestData/services/services.json';
 Guzzle\Tests\GuzzleTestCase::setServiceBuilder(Guzzle\Service\Builder\ServiceBuilder::factory($servicesFile));
 
 // Modify the include path so that it can find the Zend Framework

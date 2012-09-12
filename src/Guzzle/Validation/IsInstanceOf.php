@@ -7,7 +7,7 @@ namespace Guzzle\Validation;
  */
 class IsInstanceOf extends AbstractConstraint
 {
-    protected $default = 'class';
+    protected static $defaultOption = 'class';
     protected $required = 'class';
 
     /**
@@ -16,12 +16,8 @@ class IsInstanceOf extends AbstractConstraint
     protected function validateValue($value, array $options = array())
     {
         // Replace dot notation with namespace separator
-        $class = str_replace('.', '\\', $options['class']);
+        $class = str_replace('.', '\\', $options[self::$defaultOption]);
 
-        if (!($value instanceof $class)) {
-            return "Value must be an instance of {$class}";
-        }
-
-        return true;
+        return $value instanceof $class ? true : "Value must be an instance of {$class}";
     }
 }

@@ -1,12 +1,48 @@
 {
     "includes": [ "test_service2.json" ],
-    "types": {},
+    "types": {
+        "custom_filter": {
+            "class": "Symfony\\Component\\Validator\\Constraints\\Regex"
+        },
+        "slug": {
+            "class": "Symfony\\Component\\Validator\\Constraints\\Regex"
+        }
+    },
     "commands": {
         "test": {
             "uri": "/path"
         },
         "concrete": {
             "extends": "abstract"
+        },
+        "foo_bar": {
+            "uri": "/testing",
+            "params": {
+                "other": {
+                    "location": "json:Other"
+                },
+                "test": {
+                    "type": "array",
+                    "location": "json",
+                    "structure": {
+                        "baz": {
+                            "type": "bool",
+                            "default": true
+                        },
+                        "bar": {
+                            "type": "type",
+                            "type_args": "string",
+                            "filters": [
+                                {
+                                    "method": "",
+                                    "args": ["test", "@value"]
+                                },
+                                "strtoupper"
+                            ]
+                        }
+                    }
+                }
+            }
         }
     }
 }

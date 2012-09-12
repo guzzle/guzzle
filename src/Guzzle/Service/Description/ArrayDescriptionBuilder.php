@@ -52,7 +52,7 @@ class ArrayDescriptionBuilder implements DescriptionBuilderInterface
                     $command['params'] = $originalParams ? array_merge($resolvedParams, $originalParams) : $resolvedParams;
                 }
                 // Use the default class
-                $command['class'] = isset($command['class']) ? str_replace('.', '\\', $command['class']) : ServiceDescription::DEFAULT_COMMAND_CLASS;
+                $command['class'] = isset($command['class']) ? $command['class'] : ServiceDescription::DEFAULT_COMMAND_CLASS;
                 $commands[$name] = new ApiCommand($command);
             }
         }

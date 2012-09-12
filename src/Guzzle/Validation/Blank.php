@@ -12,10 +12,15 @@ class Blank implements ConstraintInterface
      */
     public function validate($value, array $options = null)
     {
-        if ($value !== '' && $value !== null) {
-            return 'Value must be blank';
-        }
+        return $value !== '' && $value !== null ? 'Value must be blank' : true;
+    }
 
-        return true;
+    /**
+     * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
+    public static function getDefaultOption()
+    {
+        return null;
     }
 }

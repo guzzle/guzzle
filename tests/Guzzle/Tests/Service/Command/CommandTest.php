@@ -30,6 +30,17 @@ class CommandTest extends AbstractCommandTest
     }
 
     /**
+     * @covers Guzzle\Service\Command\AbstractCommand::getApi
+     */
+    public function testReturnsDefaultApiParamWhenNoneIsExtended()
+    {
+        $command = $this->getMockBuilder('Guzzle\Service\Command\AbstractCommand')
+            ->disableOriginalConstructor()
+            ->getMockForAbstractClass();
+        $this->assertInstanceOf('Guzzle\Service\Description\ApiCommand', $command::getApi());
+    }
+
+    /**
      * @covers Guzzle\Service\Command\AbstractCommand::getName
      */
     public function testDeterminesShortName()

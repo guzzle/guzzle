@@ -51,7 +51,7 @@ class ArrayServiceBuilderFactory implements ServiceBuilderFactoryInterface
                 $service['params'] = $options + $service['params'];
             }
 
-            $service['class'] = !isset($service['class']) ? '' : str_replace('.', '\\', $service['class']);
+            $service['class'] = isset($service['class']) ? $service['class'] : '';
         }
 
         return new $class($services);

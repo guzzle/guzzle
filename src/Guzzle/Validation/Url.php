@@ -12,13 +12,15 @@ class Url implements ConstraintInterface
      */
     public function validate($value, array $options = null)
     {
-        $value = (string) $value;
-        $valid = filter_var($value, FILTER_VALIDATE_URL);
+        return filter_var((string) $value, FILTER_VALIDATE_URL) ? true : "Value is not a valid URL";
+    }
 
-        if (!$valid) {
-            return "{$value} is not a valid URL";
-        }
-
-        return true;
+    /**
+     * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
+    public static function getDefaultOption()
+    {
+        return null;
     }
 }

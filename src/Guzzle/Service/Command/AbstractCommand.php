@@ -61,7 +61,12 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     public function __construct($parameters = null, ApiCommandInterface $apiCommand = null)
     {
         parent::__construct($parameters);
-        $this->apiCommand = $apiCommand ?: ApiCommand::fromCommand(get_class($this));
+        if ($apiCommand) {
+            $this->apiCommand = $apiCommand;
+        } else {
+            $apiCommand = static::getApi();
+            $this->apiCommand = $apiCommand instanceof ApiCommand ? $apiCommand : new ApiCommand($apiCommand);
+        }
         $this->initConfig();
 
         $headers = $this->get(self::HEADERS_OPTION);
@@ -78,6 +83,19 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         }
 
         $this->init();
+    }
+
+    /**
+     * Get the API command information of the command.
+     *
+     * Override this method in concrete command classes as needed. You can
+     * return an {@see ApiCommand} or an array that will become an ApiCommand.
+     *
+     * @return array|ApiCommand
+     */
+    public static function getApi()
+    {
+        return new ApiCommand(array());
     }
 
     /**

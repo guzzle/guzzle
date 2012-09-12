@@ -4,14 +4,28 @@ namespace Guzzle\Tests\Service\Mock\Command;
 
 /**
  * Other mock Command
- *
- * @guzzle test default="123" required="true" doc="Test argument"
- * @guzzle other
- * @guzzle arg type="string
- * guzzle static static="this is static"
  */
 class OtherCommand extends MockCommand
 {
+    public static function getApi()
+    {
+        return array(
+            'name' => 'other_command',
+            'params' => array(
+                'test' => array(
+                    'default'  => '123',
+                    'required' => true,
+                    'doc'      => 'Test argument'
+                ),
+                'other'  => array(),
+                'arg'    => array('type' => 'string'),
+                'static' => array(
+                    'static' => 'this is static'
+                )
+            )
+        );
+    }
+
     /**
      * {@inheritdoc}
      */
