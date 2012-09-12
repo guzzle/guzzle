@@ -21,11 +21,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      */
     public function __construct(array $data = null)
     {
-        if ($data) {
-            $this->data = $data;
-        } else {
-            $this->data = array();
-        }
+        $this->data = $data ?: array();
     }
 
     /**
@@ -156,11 +152,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      */
     public function getAll(array $keys = null)
     {
-        if ($keys) {
-            return array_intersect_key($this->data, array_flip($keys));
-        } else {
-            return $this->data;
-        }
+        return $keys ? array_intersect_key($this->data, array_flip($keys)) : $this->data;
     }
 
     /**
@@ -364,11 +356,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     public function inject($input)
     {
         // Only perform the preg callback if needed
-        if (strpos($input, '{') === false) {
-            return $input;
-        }
-
-        return preg_replace_callback('/{\s*([A-Za-z_\-\.0-9]+)\s*}/', array($this, 'getPregMatchValue'), $input);
+        return strpos($input, '{') === false
+            ? $input
+            : preg_replace_callback('/{\s*([A-Za-z_\-\.0-9]+)\s*}/', array($this, 'getPregMatchValue'), $input);
     }
 
     /**
