@@ -12,10 +12,15 @@ class Numeric implements ConstraintInterface
      */
     public function validate($value, array $options = null)
     {
-        if (!is_numeric($value)) {
-            return "Value must be numeric";
-        }
+        return is_numeric($value) ? true: 'Value must be numeric';
+    }
 
-        return true;
+    /**
+     * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
+    public static function getDefaultOption()
+    {
+        return null;
     }
 }

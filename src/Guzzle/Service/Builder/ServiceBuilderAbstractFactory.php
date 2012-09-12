@@ -84,20 +84,6 @@ class ServiceBuilderAbstractFactory extends AbstractFactory implements ServiceBu
     }
 
     /**
-     * Get a XML factory
-     *
-     * @return XmlServiceBuilderFactory
-     */
-    public function getXmlFactory()
-    {
-        if (!isset($this->factories['xml'])) {
-            $this->factories['xml'] = new XmlServiceBuilderFactory($this->getArrayFactory());
-        }
-
-        return $this->factories['xml'];
-    }
-
-    /**
      * {@inheritdoc}
      */
     protected function getFactory($config)
@@ -108,17 +94,10 @@ class ServiceBuilderAbstractFactory extends AbstractFactory implements ServiceBu
             $ext = pathinfo($config, PATHINFO_EXTENSION);
             if ($ext == 'js' || $ext == 'json') {
                 return $this->getJsonFactory();
-            } elseif ($ext == 'xml') {
-                return $this->getXmlFactory();
             }
-            return "Unable to determine which factory to use based on the file extension of {$config}."
-                . " Valid file extensions are: .js, .json, .xml";
-
-        } elseif ($config instanceof \SimpleXMLElement) {
-            return $this->getXmlFactory();
         }
 
-        return 'Must pass a file name, array, or SimpleXMLElement';
+        return 'Must pass the name of a .js or .json file or array';
     }
 
     /**

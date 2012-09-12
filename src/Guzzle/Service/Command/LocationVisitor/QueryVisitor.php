@@ -3,6 +3,7 @@
 namespace Guzzle\Service\Command\LocationVisitor;
 
 use Guzzle\Http\Message\RequestInterface;
+use Guzzle\Service\Description\ApiParam;
 use Guzzle\Service\Command\CommandInterface;
 
 /**
@@ -13,8 +14,8 @@ class QueryVisitor extends AbstractVisitor
     /**
      * {@inheritdoc}
      */
-    public function visit(CommandInterface $command, RequestInterface $request, $key, $value)
+    public function visit(CommandInterface $command, RequestInterface $request, $key, $value, ApiParam $param = null)
     {
-        $request->getQuery()->set($key, $value);
+        $request->getQuery()->set($key, is_array($value) ? $this->resolveRecursively($value, $param) : $value);
     }
 }

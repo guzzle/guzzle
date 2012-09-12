@@ -21,6 +21,8 @@ class ApiParam
     protected $prepend;
     protected $append;
     protected $filters;
+    protected $structure = array();
+    protected $parent;
 
     /**
      * Create a new ApiParam using an associative array of data
@@ -29,34 +31,55 @@ class ApiParam
      */
     public function __construct(array $data)
     {
-        // Parse snake_case into camelCase class properties and parse :'d values
-        foreach ($data as $key => $value) {
-            if ($key == 'type' && strpos($value, ':')) {
-                list($this->type, $this->typeArgs) = explode(':', $value, 2);
-            } elseif ($key == 'location' && strpos($value, ':')) {
-                list($this->location, $this->locationKey) = explode(':', $value, 2);
-            } elseif ($key == 'min_length') {
-                $this->minLength = $value;
-            } elseif ($key == 'max_length') {
-                $this->maxLength = $value;
-            } elseif ($key == 'location_key') {
-                $this->locationKey = $value;
-            } elseif ($key == 'type_args') {
-                $this->typeArgs = $value;
+        $this->name = isset($data['name']) ? $data['name'] : null;
+        $this->required = array_key_exists('required', $data) ? $data['required'] : false;
+        $this->default = isset($data['default']) ? $data['default'] : null;
+        $this->doc = isset($data['doc']) ? $data['doc'] : null;
+        $this->static = isset($data['static']) ? $data['static'] : null;
+        $this->prepend = isset($data['prepend']) ? $data['prepend'] : null;
+        $this->append = isset($data['append']) ? $data['append'] : null;
+        $this->minLength = isset($data['min_length']) ? $data['min_length'] : null;
+        $this->maxLength = isset($data['max_length']) ? $data['max_length'] : null;
+        $this->filters = isset($data['filters']) ? (array) $data['filters'] : array();
+
+        if (isset($data['type'])) {
+            if (strpos($data['type'], ':')) {
+                list($this->type, $data['type_args']) = explode(':', $data['type'], 2);
             } else {
-                $this->{$key} = $value;
+                $this->type = $data['type'];
             }
         }
 
-        $this->filters = $this->filters ? self::parseFilters($this->filters) : array();
-        $this->required = filter_var($this->required, FILTER_VALIDATE_BOOLEAN);
+        $this->typeArgs = isset($data['type_args']) ? (array) $data['type_args'] : null;
 
-        // Parse CSV type value data into an array
-        if ($this->typeArgs && is_string($this->typeArgs)) {
-            if (strpos($this->typeArgs, ',') !== false) {
-                $this->typeArgs = str_getcsv($this->typeArgs, ',', "'");
+        if (isset($data['location'])) {
+            if (strpos($data['location'], ':')) {
+                list($this->location, $this->locationKey) = explode(':', $data['location'], 2);
             } else {
-                $this->typeArgs = array($this->typeArgs);
+                $this->location = $data['location'];
+            }
+        }
+
+        if (isset($data['location_key'])) {
+            $this->locationKey = $data['location_key'];
+        }
+
+        // Use the name of the parameter as the location key by default
+        if (!$this->locationKey) {
+            $this->locationKey = $this->name;
+        }
+
+        $this->parent = isset($data['parent']) ? $data['parent'] : null;
+
+        // Create nested structures recursively
+        if (isset($data['structure'])) {
+            foreach ($data['structure'] as $name => $structure) {
+                // Allow the name to be set in the key or in the sub params
+                if (empty($structure['name'])) {
+                    $structure['name'] = $name;
+                }
+                $structure['parent'] = $this;
+                $this->addStructure(new static($structure));
             }
         }
     }
@@ -68,6 +91,11 @@ class ApiParam
      */
     public function toArray()
     {
+        $structure = array();
+        foreach ($this->structure as $name => $struct) {
+            $structure[$name] = $struct->toArray();
+        }
+
         return array(
             'name'         => $this->name,
             'type'         => $this->type,
@@ -82,7 +110,8 @@ class ApiParam
             'static'       => $this->static,
             'prepend'      => $this->prepend,
             'append'       => $this->append,
-            'filters'      => implode(',', $this->filters)
+            'filters'      => $this->filters,
+            'structure'    => $structure
         );
     }
 
@@ -95,18 +124,10 @@ class ApiParam
      */
     public function getValue($value)
     {
-        if ($this->static || ($this->default && !$value)) {
-            $check = $this->static ?: $this->default;
-            if ($check === 'true') {
-                return true;
-            } elseif ($check === 'false') {
-                return false;
-            } else {
-                return $check;
-            }
-        }
-
-        return $value;
+        return $this->static !== null
+            || ($this->default !== null && !$value && ($this->type != 'bool' || $value !== false))
+            ? ($this->static ?: $this->default)
+            : $value;
     }
 
     /**
@@ -118,9 +139,19 @@ class ApiParam
      */
     public function filter($value)
     {
-        if ($this->filters) {
+        if (!empty($this->filters)) {
             foreach ($this->filters as $filter) {
-                $value = call_user_func($filter, $value);
+                if (is_array($filter)) {
+                    // Convert complex filters that hold value place holders
+                    foreach ($filter['args'] as &$data) {
+                        if ($data == '@value') {
+                            $data = $value;
+                        }
+                    }
+                    $value = call_user_func_array($filter['method'], $filter['args']);
+                } else {
+                    $value = call_user_func($filter, $value);
+                }
             }
         }
 
@@ -332,7 +363,7 @@ class ApiParam
     /**
      * Set the location of the parameter
      *
-     * @param string|null $location Location of the paramter
+     * @param string|null $location Location of the parameter
      *
      * @return self
      */
@@ -478,19 +509,73 @@ class ApiParam
     }
 
     /**
-     * Sanitize and parse a ``filters`` value
+     * Get the structure of the parameter or a specific structure element
      *
-     * @param string $filter Filter to sanitize
+     * @param string $paramName Specific parameter to retrieve
      *
-     * @return array
+     * @return array|ApiParam|null
      */
-    protected static function parseFilters($filter)
+    public function getStructure($paramName = null)
     {
-        $filters = explode(',', $filter);
-        foreach ($filters as &$filter) {
-            $filter = trim(str_replace('.', '\\', $filter));
+        return $paramName
+            ? (isset($this->structure[$paramName]) ? $this->structure[$paramName] : null)
+            : $this->structure;
+    }
+
+    /**
+     * Add an element to the structure of the parameter
+     *
+     * @param ApiParam $param Parameter to add
+     *
+     * @return self
+     */
+    public function addStructure(ApiParam $param)
+    {
+        $this->structure[$param->getName()] = $param;
+        $param->setParent($this);
+
+        return $this;
+    }
+
+    /**
+     * Remove the structure of the parameter or a specific element from the structure
+     *
+     * @param string $paramName Specific parameter to remove by name
+     *
+     * @return self
+     */
+    public function removeStructure($paramName = null)
+    {
+        if ($paramName) {
+            unset($this->structure[$paramName]);
+        } else {
+            $this->structure = array();
         }
 
-        return $filters;
+        return $this;
+    }
+
+    /**
+     * Get the parent object (an {@see ApiCommand} or {@see ApiParam}
+     *
+     * @return ApiCommandInterface|ApiParam|null
+     */
+    public function getParent()
+    {
+        return $this->parent;
+    }
+
+    /**
+     * Set the parent object of the parameter
+     *
+     * @param ApiCommandInterface|ApiParam|null $parent Parent container of the parameter
+     *
+     * @return self
+     */
+    public function setParent($parent)
+    {
+        $this->parent = $parent;
+
+        return $this;
     }
 }

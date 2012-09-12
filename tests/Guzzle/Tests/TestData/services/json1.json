@@ -6,7 +6,7 @@
             "secret": "abc"
         },
         "mock": {
-            "class": "Guzzle.Tests.Service.Mock.MockClient",
+            "class": "Guzzle\\Tests\\Service\\Mock\\MockClient",
             "extends": "abstract",
             "params": {
                 "username": "foo",

@@ -37,7 +37,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
             ))
         ));
 
-        $this->service = ServiceDescription::factory(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'TestData' . DIRECTORY_SEPARATOR . 'test_service.xml');
+        $this->service = ServiceDescription::factory(__DIR__ . '/../TestData/test_service.json');
     }
 
     /**

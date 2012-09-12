@@ -16,4 +16,11 @@ interface ConstraintInterface
      * @return bool|string Returns TRUE if valid, or an error message string if the value is not valid.
      */
     public function validate($value, array $options = null);
+
+    /**
+     * Get the array key of the default option
+     *
+     * @return string|null
+     */
+    public static function getDefaultOption();
 }

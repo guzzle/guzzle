@@ -7,7 +7,7 @@ namespace Guzzle\Validation;
  */
 class Regex extends AbstractConstraint
 {
-    protected $default = 'pattern';
+    protected static $defaultOption = 'pattern';
     protected $required = 'pattern';
 
     /**
@@ -15,10 +15,8 @@ class Regex extends AbstractConstraint
      */
     public function validateValue($value, array $options = null)
     {
-        if (!preg_match($options['pattern'], $value)) {
-            return "{$value} does not match the regular expression";
-        }
-
-        return true;
+        return preg_match($options[self::$defaultOption], $value)
+            ? true
+            : "{$value} does not match the regular expression";
     }
 }

@@ -12,10 +12,15 @@ class NotBlank implements ConstraintInterface
      */
     public function validate($value, array $options = null)
     {
-        if ($value === false || (empty($value) && $value !== '0')) {
-            return 'Value must not be blank';
-        }
+        return $value === false || (empty($value) && $value !== '0') ? 'Value must not be blank' : true;
+    }
 
-        return true;
+    /**
+     * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
+    public static function getDefaultOption()
+    {
+        return null;
     }
 }
