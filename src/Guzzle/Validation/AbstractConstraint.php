@@ -9,7 +9,7 @@ use Guzzle\Common\Exception\InvalidArgumentException;
  */
 abstract class AbstractConstraint implements ConstraintInterface
 {
-    protected $default;
+    protected static $defaultOption = null;
     protected $required;
 
     /**
@@ -20,10 +20,10 @@ abstract class AbstractConstraint implements ConstraintInterface
         // Always pass an array to the hook method
         if (!$options) {
             $options = array();
-        } elseif ($this->default && isset($options[0])) {
+        } elseif (static::$defaultOption && isset($options[0])) {
             // Add the default configuration option if an enumerated array
             // is passed
-            $options[$this->default] = $options[0];
+            $options[static::$defaultOption] = $options[0];
         }
 
         // Ensure that required options are present
@@ -32,6 +32,15 @@ abstract class AbstractConstraint implements ConstraintInterface
         }
 
         return $this->validateValue($value, $options);
+    }
+
+    /**
+     * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
+    public static function getDefaultOption()
+    {
+        return static::$defaultOption;
     }
 
     /**

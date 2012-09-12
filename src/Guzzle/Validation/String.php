@@ -12,10 +12,15 @@ class String implements ConstraintInterface
      */
     public function validate($value, array $options = null)
     {
-        if (!is_string($value)) {
-            return 'Value must be a string';
-        }
+        return is_string($value) ? true : 'Value must be a string';
+    }
 
-        return true;
+    /**
+     * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
+    public static function getDefaultOption()
+    {
+        return null;
     }
 }

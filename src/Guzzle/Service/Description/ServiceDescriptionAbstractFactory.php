@@ -37,8 +37,6 @@ class ServiceDescriptionAbstractFactory extends AbstractFactory implements Servi
             $ext = pathinfo($config, PATHINFO_EXTENSION);
             if ($ext == 'js' || $ext == 'json') {
                 return new JsonDescriptionBuilder();
-            } elseif ($ext == 'xml') {
-                return new XmlDescriptionBuilder();
             }
         }
     }

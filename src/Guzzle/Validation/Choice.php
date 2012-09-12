@@ -5,21 +5,17 @@ namespace Guzzle\Validation;
 /**
  * Ensures that a value is one of an array of choices
  */
-class Choice implements ConstraintInterface
+class Choice extends AbstractConstraint
 {
+    protected static $defaultOption = 'options';
+
     /**
      * {@inheritdoc}
      */
-    public function validate($value, array $options = array())
+    public function validateValue($value, array $options = array())
     {
-        if (isset($options['options'])) {
-            $options = $options['options'];
-        }
-
-        if (!in_array($value, $options)) {
-            return "Value must be one of: " . implode(', ', $options);
-        }
-
-        return true;
+        return in_array($value, $options[self::$defaultOption])
+            ? true
+            : "Value must be one of: " . implode(', ', $options[self::$defaultOption]);
     }
 }

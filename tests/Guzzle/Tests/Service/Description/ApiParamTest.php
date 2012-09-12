@@ -19,11 +19,12 @@ class ApiParamTest extends \Guzzle\Tests\GuzzleTestCase
         'min_length'   => 2,
         'max_length'   => 5,
         'location'     => 'body',
-        'location_key' => null,
+        'location_key' => 'foo',
         'static'       => 'static!',
         'prepend'      => 'before.',
         'append'       => '.after',
-        'filters'      => 'trim,json_encode'
+        'filters'      => array('trim', 'json_encode'),
+        'structure'    => array()
     );
 
     public function testCreatesParamFromArray()
@@ -49,19 +50,6 @@ class ApiParamTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($this->data, $p->toArray());
     }
 
-    public function testFromArrayConvertsBooleans()
-    {
-        $d = $this->data;
-
-        $d['required'] = 'false';
-        $p = new ApiParam($d);
-        $this->assertEquals(false, $p->getRequired());
-
-        $d['required'] = 'true';
-        $p = new ApiParam($d);
-        $this->assertEquals(true, $p->getRequired());
-    }
-
     public function testUsesStatic()
     {
         $d = $this->data;
@@ -77,19 +65,6 @@ class ApiParamTest extends \Guzzle\Tests\GuzzleTestCase
         $d['static'] = null;
         $p = new ApiParam($d);
         $this->assertEquals('foo', $p->getValue(null));
-    }
-
-    public function testConvertsBooleanValues()
-    {
-        $d = $this->data;
-
-        $d['static'] = 'true';
-        $p = new ApiParam($d);
-        $this->assertEquals(true, $p->getValue(null));
-
-        $d['static'] = 'false';
-        $p = new ApiParam($d);
-        $this->assertEquals(false, $p->getValue(null));
     }
 
     public function testReturnsYourValue()
@@ -132,7 +107,7 @@ class ApiParamTest extends \Guzzle\Tests\GuzzleTestCase
             'type' => 'foo:baz,bar,boo'
         ));
         $this->assertEquals('foo', $p->getType());
-        $this->assertEquals(array('baz', 'bar', 'boo'), $p->getTypeArgs());
+        $this->assertEquals(array('baz,bar,boo'), $p->getTypeArgs());
     }
 
     public function testAllowsExplicitTypeArgs()
@@ -155,11 +130,11 @@ class ApiParamTest extends \Guzzle\Tests\GuzzleTestCase
     public function testAllowsDotNotationForFiltersClasses()
     {
         $p = new ApiParam(array(
-            'filters' => 'Mesa.JarJar::binks,Yousa.NoJarJar::binks,Foo\\Baz::bar'
+            'filters' => array('Mesa\JarJar::binks', 'Yousa\NoJarJar::binks', 'Foo\Baz::bar')
         ));
         $this->assertEquals(array(
-            'Mesa\\JarJar::binks',
-            'Yousa\\NoJarJar::binks',
+            'Mesa\JarJar::binks',
+            'Yousa\NoJarJar::binks',
             'Foo\\Baz::bar'
         ), $p->getFilters());
     }
@@ -198,5 +173,92 @@ class ApiParamTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('h', $p->getStatic());
         $this->assertEquals('i', $p->getType());
         $this->assertEquals(array('j'), $p->getTypeArgs());
+    }
+
+    public function testAllowsNestedStructures()
+    {
+        $command = $this->getServiceBuilder()->get('mock')->getCommand('mock_command')->getApiCommand();
+        $param = new ApiParam(array(
+            'parent'    => $command,
+            'name'      => 'foo',
+            'type'      => 'array',
+            'location'  => 'query',
+            'structure' => array(
+                'foo' => array(
+                    'type'      => 'array',
+                    'required'  => true,
+                    'structure' => array(
+                        'baz' => array(
+                            'name' => 'baz',
+                            'type' => 'bool',
+                        )
+                    )
+                ),
+                array(
+                    'name'    => 'bar',
+                    'default' => '123'
+                )
+            )
+        ));
+
+        $this->assertSame($command, $param->getParent());
+        $this->assertNotEmpty($param->getStructure());
+        $this->assertInstanceOf('Guzzle\Service\Description\ApiParam', $param->getStructure('foo'));
+        $this->assertSame($param, $param->getStructure('foo')->getParent());
+        $this->assertSame($param->getStructure('foo'), $param->getStructure('foo')->getStructure('baz')->getParent());
+        $this->assertInstanceOf('Guzzle\Service\Description\ApiParam', $param->getStructure('bar'));
+        $this->assertSame($param, $param->getStructure('bar')->getParent());
+
+        $array = $param->toArray();
+        $this->assertInternalType('array', $array['structure']);
+        $this->assertArrayHasKey('foo', $array['structure']);
+        $this->assertArrayHasKey('bar', $array['structure']);
+    }
+
+    public function testAllowsComplexFilters()
+    {
+        $that = $this;
+        $method = function ($a, $b, $c) use ($that) {
+            $that->assertEquals('test', $a);
+            $that->assertEquals('my_value!', $b);
+            $that->assertEquals('bar', $c);
+            return 'abc' . $b;
+        };
+
+        $param = new ApiParam(array(
+            'filters' => array(
+                array(
+                    'method' => $method,
+                    'args'   => array('test', '@value', 'bar')
+                )
+            ),
+        ));
+
+        $this->assertEquals('abcmy_value!', $param->filter('my_value!'));
+    }
+
+    public function testCanChangeParentOfNestedParameter()
+    {
+        $param1 = new ApiParam(array('name' => 'parent'));
+        $param2 = new ApiParam(array('name' => 'child'));
+        $param2->setParent($param1);
+        $this->assertSame($param1, $param2->getParent());
+    }
+
+    public function testCanRemoveFromNestedStructure()
+    {
+        $param1 = new ApiParam(array('name' => 'parent'));
+        $param2 = new ApiParam(array('name' => 'child'));
+        $param1->addStructure($param2);
+        $this->assertSame($param1, $param2->getParent());
+        $this->assertSame($param2, $param1->getStructure('child'));
+
+        // Remove a single child from the structure
+        $param1->removeStructure('child');
+        $this->assertNull($param1->getStructure('child'));
+        // Remove the entire structure
+        $param1->addStructure($param2);
+        $param1->removeStructure();
+        $this->assertNull($param1->getStructure('child'));
     }
 }

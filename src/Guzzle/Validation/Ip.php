@@ -12,12 +12,15 @@ class Ip implements ConstraintInterface
      */
     public function validate($value, array $options = null)
     {
-        $valid = filter_var($value, FILTER_VALIDATE_IP);
+        return filter_var($value, FILTER_VALIDATE_IP) ? true : 'Value is not a valid IP address';
+    }
 
-        if (!$valid) {
-            return 'Value is not a valid IP address';
-        }
-
-        return true;
+    /**
+     * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
+    public static function getDefaultOption()
+    {
+        return null;
     }
 }

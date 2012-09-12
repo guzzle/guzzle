@@ -12,7 +12,7 @@ use Guzzle\Service\Inspector;
  */
 class AnyMatch extends AbstractConstraint
 {
-    protected $default = 'constraints';
+    protected static $defaultOption = 'constraints';
     protected $required = 'constraints';
 
     /**
@@ -25,23 +25,26 @@ class AnyMatch extends AbstractConstraint
         }
 
         $inspector = $options['inspector'];
-        foreach (explode(';', $options['constraints']) as $constraint) {
+        foreach ($options[self::$defaultOption] as $constraint) {
 
-            $constraint = trim($constraint);
-
-            // Handle colon separated values
-            if (strpos($constraint, ':')) {
-                list($constraint, $args) = explode(':', $constraint, 2);
-                $args = strpos($args, ',') !== false ? str_getcsv($args, ',', "'") : array($args);
+            if (is_string($constraint)) {
+                if (strpos($constraint, ':')) {
+                    list($type, $args) = explode(':', $constraint, 2);
+                    $args = (array) $args;
+                } else {
+                    $type = $constraint;
+                    $args = null;
+                }
             } else {
-                $args = null;
+                $type = isset($constraint['type']) ? $constraint['type'] : null;
+                $args = isset($constraint['type_args']) ? $constraint['type_args'] : null;
             }
 
-            if (true === $inspector->validateConstraint($constraint, $value, $args)) {
+            if ($type && $inspector->validateConstraint($type, $value, $args) === true) {
                 return true;
             }
         }
 
-        return 'Value type must match one of ' . implode(' OR ' , explode(';', $options['constraints']));
+        return 'Value does not satisfy complex constraints';
     }
 }

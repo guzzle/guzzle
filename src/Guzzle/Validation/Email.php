@@ -14,12 +14,20 @@ class Email implements ConstraintInterface
     {
         if (is_string($value)) {
             $value = (string) $value;
-            $valid = filter_var($value, FILTER_VALIDATE_EMAIL);
-            if ($valid) {
+            if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
                 return true;
             }
         }
 
         return 'Value is not a valid email address';
+    }
+
+    /**
+     * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
+    public static function getDefaultOption()
+    {
+        return null;
     }
 }
