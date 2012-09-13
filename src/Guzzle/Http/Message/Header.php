@@ -132,10 +132,9 @@ class Header implements \IteratorAggregate, \Countable
 
     /**
      * Check if a particular case variation is present in the header
-     * Example: A header exists on a message for 'Foo', and 'foo'.  The Header
-     * object will contain all of the values of 'Foo' and all of the values of
-     * 'foo'.  You can use this method to check to see if a header was set
-     * using 'foo' (true), 'Foo' (true), 'FOO' (false), etc.
+     * Example: A header exists on a message for 'Foo', and 'foo'. The Header object will contain all of the values of
+     * 'Foo' and all of the values of 'foo'.  You can use this method to check to see if a header was set using
+     * 'foo' (true), 'Foo' (true), 'FOO' (false), etc.
      *
      * @param string $header Exact header to check for
      *
@@ -209,9 +208,8 @@ class Header implements \IteratorAggregate, \Countable
     }
 
     /**
-     * Get the raw data array of the headers.  This array is represented as an
-     * associative array of the various cases that might be stored in the
-     * header and an array of values associated with each case variation.
+     * Get the raw data array of the headers. This array is represented as an associative array of the various cases
+     * that might be stored in the header and an array of values associated with each case variation.
      *
      * @return array
      */

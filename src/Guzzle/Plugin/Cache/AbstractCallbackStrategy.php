@@ -15,7 +15,7 @@ abstract class AbstractCallbackStrategy
     protected $callback;
 
     /**
-     * @param \Closure|array|mixed $callable Callable method to invoke
+     * @param \Closure|array|mixed $callback Callable method to invoke
      *
      * @throws InvalidArgumentException
      */

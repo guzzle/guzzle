@@ -26,8 +26,7 @@ class AsyncPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Event emitted before a request is sent.  Ensure that progress callback
-     * are emitted from the curl handle's request mediator.
+     * Event used to ensure that progress callback are emitted from the curl handle's request mediator.
      *
      * @param Event $event
      */
@@ -38,9 +37,8 @@ class AsyncPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Event emitted when a curl progress function is called.  When the amount
-     * of data uploaded == the amount of data to upload OR any bytes have been
-     * downloaded, then time the request out after 1ms because we're done with
+     * Event emitted when a curl progress function is called. When the amount of data uploaded == the amount of data to
+     * upload OR any bytes have been downloaded, then time the request out after 1ms because we're done with
      * transmitting the request, and tell curl not download a body.
      *
      * @param Event $event
@@ -63,8 +61,7 @@ class AsyncPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Event emitted when a curl exception occurs. Ignore the exception and
-     * set a mock response.
+     * Event emitted when a curl exception occurs. Ignore the exception and set a mock response.
      *
      * @param Event $event
      */
@@ -78,9 +75,8 @@ class AsyncPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Event emitted when a request completes because it took less than 1ms.
-     * Add an X-Guzzle-Async header to notify the caller that there is no
-     * body in the message.
+     * Event emitted when a request completes because it took less than 1ms. Add an X-Guzzle-Async header to notify the
+     * caller that there is no body in the message.
      *
      * @param Event $event
      */

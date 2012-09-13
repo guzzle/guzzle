@@ -6,8 +6,7 @@ use Guzzle\Common\Event;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Adds specified curl auth to all requests sent from a client
- * Defaults to CURLAUTH_BASIC if none supplied
+ * Adds specified curl auth to all requests sent from a client. Defaults to CURLAUTH_BASIC if none supplied.
  */
 class CurlAuthPlugin implements EventSubscriberInterface
 {

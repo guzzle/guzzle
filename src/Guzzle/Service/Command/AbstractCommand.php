@@ -15,8 +15,7 @@ use Guzzle\Service\Exception\CommandException;
 use Guzzle\Service\Exception\JsonException;
 
 /**
- * Command object to handle preparing and processing client requests and
- * responses of the requests
+ * Command object to handle preparing and processing client requests and responses of the requests
  */
 abstract class AbstractCommand extends Collection implements CommandInterface
 {
@@ -86,10 +85,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
-     * Get the API command information of the command.
-     *
-     * Override this method in concrete command classes as needed. You can
-     * return an {@see ApiCommand} or an array that will become an ApiCommand.
+     * Get the API command information of the command. Override this method in concrete command classes as needed.
      *
      * @return array|ApiCommand
      */
@@ -130,9 +126,8 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     /**
      * Specify a callable to execute when the command completes
      *
-     * @param mixed $callable Callable to execute when the command completes.
-     *     The callable must accept a {@see CommandInterface} object as the
-     *     only argument.
+     * @param mixed $callable Callable to execute when the command completes. Must accept a {@see CommandInterface}
+     *                        object as the only argument.
      *
      * @return self
      * @throws InvalidArgumentException
@@ -230,8 +225,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     /**
      * Get the result of the command
      *
-     * @return Response By default, commands return a Response
-     *      object unless overridden in a subclass
+     * @return Response By default, commands return a Response object unless overridden in a subclass
      * @throws CommandException if the command has not been executed
      */
     public function getResult()
@@ -289,8 +283,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
      * Prepare the command for executing and create a request object.
      *
      * @return RequestInterface Returns the generated request
-     * @throws CommandException if a client object has not been set previously
-     *      or in the prepare()
+     * @throws CommandException if a client object has not been set previously  or in the prepare()
      */
     public function prepare()
     {
@@ -318,8 +311,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
-     * Get the object that manages the request headers that will be set on any
-     * outbound requests from the command
+     * Get the object that manages the request headers that will be set on any outbound requests from the command
      *
      * @return Collection
      */
@@ -369,11 +361,9 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     /**
      * Create the result of the command after the request has been completed.
      *
-     * Sets the result as the response by default.  If the response is an XML
-     * document, this will set the result as a SimpleXMLElement.  If the XML
-     * response is invalid, the result will remain the Response, not XML.
-     * If an application/json response is received, the result will automat-
-     * ically become an array.
+     * Sets the result as the response by default. If the response is an XML document, this will set the result as a
+     * SimpleXMLElement. If the XML response is invalid, the result will remain the Response, not XML. If an
+     * application/json response is received, the result will automatically become an array.
      */
     protected function process()
     {
@@ -410,8 +400,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         foreach ($this->apiCommand->getParams() as $name => $arg) {
             $currentValue = $this->get($name);
             $configValue = $arg->getValue($currentValue);
-            // If default or static values are set, then this should always be
-            // updated on the config object
+            // If default or static values are set, then this should always be updated on the config object
             if ($currentValue !== $configValue) {
                 $this->set($name, $configValue);
             }

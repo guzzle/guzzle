@@ -5,9 +5,8 @@ namespace Guzzle\Batch;
 use Guzzle\Batch\Exception\BatchTransferException;
 
 /**
- * BatchInterface decorator used to buffer exceptions encountered during a
- * transfer.  The exceptions can then later be processed after a batch flush
- * has completed.
+ * BatchInterface decorator used to buffer exceptions encountered during a transfer.  The exceptions can then later be
+ * processed after a batch flush has completed.
  */
 class ExceptionBufferingBatch extends AbstractBatchDecorator
 {

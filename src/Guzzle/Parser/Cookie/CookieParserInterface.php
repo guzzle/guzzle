@@ -8,16 +8,14 @@ namespace Guzzle\Parser\Cookie;
 interface CookieParserInterface
 {
     /**
-     * Parse a cookie string as set in a Set-Cookie HTTP header and return an
-     * associative array of data.
+     * Parse a cookie string as set in a Set-Cookie HTTP header and return an associative array of data.
      *
      * @param string $cookie Cookie header value to parse
      * @param string $host   Host of an associated request
      * @param string $path   Path of an associated request
      * @param bool   $decode Set to TRUE to urldecode cookie values
      *
-     * @return array|bool Returns FALSE on failure or returns an array of
-     *     arrays, with each of the sub arrays including:
+     * @return array|bool Returns FALSE on failure or returns an array of arrays, with each of the sub arrays including:
      *     - domain  (string) - Domain of the cookie
      *     - path    (string) - Path of the cookie
      *     - cookies (array)  - Associative array of cookie names and values

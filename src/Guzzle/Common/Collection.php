@@ -52,9 +52,8 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     }
 
     /**
-     * Add a value to a key.  If a key of the same name has
-     * already been added, the key value will be converted into an array
-     * and the new value will be pushed to the end of the array.
+     * Add a value to a key.  If a key of the same name has already been added, the key value will be converted into an
+     * array and the new value will be pushed to the end of the array.
      *
      * @param string $key   Key to add
      * @param mixed  $value Value to add to the key
@@ -97,11 +96,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     }
 
     /**
-     * Iterates over each key value pair in the collection passing them to the
-     * Closure. If the  Closure function returns true, the current value from
-     * input is returned into the result Collection.  The Closure must accept
-     * three parameters: (string) $key, (string) $value and
-     * return Boolean TRUE or FALSE for each value.
+     * Iterates over each key value pair in the collection passing them to the Closure. If the  Closure function returns
+     * true, the current value from input is returned into the result Collection.  The Closure must accept three
+     * parameters: (string) $key, (string) $value and return Boolean TRUE or FALSE for each value.
      *
      * @param \Closure $closure Closure evaluation function
      * @param bool     $static  Set to TRUE to use the same class as the return rather than returning a Collection
@@ -208,10 +205,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     }
 
     /**
-     * Returns a Collection containing all the elements of the collection after
-     * applying the callback function to each one. The Closure should accept
-     * three parameters: (string) $key, (string) $value, (array) $context and
-     * return a modified value
+     * Returns a Collection containing all the elements of the collection after applying the callback function to each
+     * one. The Closure should accept three parameters: (string) $key, (string) $value, (array) $context and return a
+     * modified value
      *
      * @param \Closure $closure Closure to apply
      * @param array    $context Context to pass to the closure
@@ -231,8 +227,6 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
 
     /**
      * Add and merge in a Collection or array of key value pair data.
-     *
-     * Invalid $data arguments will silently fail.
      *
      * @param Collection|array $data Associative array of key value pair data
      *
@@ -348,8 +342,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Inject configuration settings into an input string
      *
-     * @param string     $input  Input to inject
-     * @param Collection $config Configuration data to inject into the input
+     * @param string $input  Input to inject
      *
      * @return string
      */

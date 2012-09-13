@@ -8,8 +8,7 @@ namespace Guzzle\Inflection;
 interface InflectorInterface
 {
     /**
-     * Converts strings from camel case to snake case
-     * (e.g. CamelCase camel_case).
+     * Converts strings from camel case to snake case (e.g. CamelCase camel_case).
      *
      * @param string $word Word to convert to snake case
      *

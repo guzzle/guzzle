@@ -812,8 +812,7 @@ class Response extends AbstractMessage
     }
 
     /**
-     * Gets the number of seconds from the current time in which this response
-     * is still considered fresh as specified in RFC 2616-13
+     * Gets the number of seconds from the current time in which this response is still considered fresh
      *
      * @return int|null Returns the number of seconds
      */
@@ -838,8 +837,7 @@ class Response extends AbstractMessage
     /**
      * Check if the response is considered fresh.
      *
-     * A response is considered fresh when its age is less than the freshness
-     * lifetime (maximum age) of the response.
+     * A response is considered fresh when its age is less than the freshness lifetime (maximum age) of the response.
      *
      * @return bool|null
      */
@@ -851,8 +849,7 @@ class Response extends AbstractMessage
     }
 
     /**
-     * Check if the response can be validated against the origin server using
-     * a conditional GET request.
+     * Check if the response can be validated against the origin server using a conditional GET request.
      *
      * @return bool
      */
@@ -862,14 +859,12 @@ class Response extends AbstractMessage
     }
 
     /**
-     * Get the freshness of the response by returning the difference of the
-     * maximum lifetime of the response and the age of the response
-     * (max-age - age).
+     * Get the freshness of the response by returning the difference of the maximum lifetime of the response and the
+     * age of the response (max-age - age).
      *
-     * Freshness values less than 0 mean that the response is no longer fresh
-     * and is ABS(freshness) seconds expired.  Freshness values of greater than
-     * zer0 is the number of seconds until the response is no longer fresh.
-     * A NULL result means that no freshness information is available.
+     * Freshness values less than 0 mean that the response is no longer fresh and is ABS(freshness) seconds expired.
+     * Freshness values of greater than zero is the number of seconds until the response is no longer fresh. A NULL
+     * result means that no freshness information is available.
      *
      * @return int
      */

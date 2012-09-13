@@ -379,8 +379,7 @@ class Request extends AbstractMessage implements RequestInterface
     {
         $this->url->setPort($port);
 
-        // Include the port in the Host header if it is not the default port
-        // for the scheme of the URL
+        // Include the port in the Host header if it is not the default port for the scheme of the URL
         $scheme = $this->url->getScheme();
         if (($scheme == 'http' && $port != 80) || ($scheme == 'https' && $port != 443)) {
             $this->headers['host'] = new Header('Host', $this->url->getHost() . ':' . $port);
@@ -736,20 +735,17 @@ class Request extends AbstractMessage implements RequestInterface
 
         $this->state = self::STATE_COMPLETE;
 
-        // A request was sent, but we don't know if we'll send more or if the
-        // final response will be a successful response
+        // A request was sent, but we don't know if we'll send more or if the final response will be successful
         $this->dispatch('request.sent', $this->getEventArray());
 
-        // Some response processors will remove the response or reset the state
-        // (example: ExponentialBackoffPlugin)
+        // Some response processors will remove the response or reset the state (example: ExponentialBackoffPlugin)
         if ($this->state == RequestInterface::STATE_COMPLETE) {
 
             // The request completed, so the HTTP transaction is complete
             $this->dispatch('request.complete', $this->getEventArray());
 
-            // If the response is bad, allow listeners to modify it or throw
-            // exceptions.  You can change the response by modifying the Event
-            // object in your listeners or calling setResponse() on the request
+            // If the response is bad, allow listeners to modify it or throw exceptions. You can change the response by
+            // modifying the Event object in your listeners or calling setResponse() on the request
             if ($this->response->isError()) {
                 $event = new Event($this->getEventArray());
                 $this->getEventDispatcher()->dispatch('request.error', $event);

@@ -156,7 +156,6 @@ class Zend_Log
         return $log;
     }
 
-
     /**
      * Construct a writer object based on a configuration array
      *

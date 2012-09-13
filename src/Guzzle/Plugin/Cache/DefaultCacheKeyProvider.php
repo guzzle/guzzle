@@ -5,14 +5,13 @@ namespace Guzzle\Plugin\Cache;
 use Guzzle\Http\Message\RequestInterface;
 
 /**
- * Default cache key strategy that uses all but the body of a request for the
- * key. Add a cache.key_filter parameter to a request to modify what gets cached.
+ * Default cache key strategy that uses all but the body of a request for the key. Add a cache.key_filter parameter to
+ * a request to modify what gets cached.
  *
- * cache.key_filter is a string containing semicolon separated values. Each
- * value contains a comma separated list of things to filter from the key.
- * The currently supported filters are 'header' and 'query'. For example, to
- * filter out the 'X-Foo' header, the 'X-Bar' header, and the 'test' query
- * string value, set the filter to "header=X-Foo,X-Bar; query=test"
+ * cache.key_filter is a string containing semicolon separated values. Each value contains a comma separated list of
+ * things to filter from the key. The currently supported filters are 'header' and 'query'. For example, to filter out
+ * the 'X-Foo' header, the 'X-Bar' header, and the 'test' query string value, set the filter to
+ * "header=X-Foo,X-Bar; query=test"
  */
 class DefaultCacheKeyProvider implements CacheKeyProviderInterface
 {

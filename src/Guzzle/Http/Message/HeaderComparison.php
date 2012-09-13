@@ -46,8 +46,7 @@ class HeaderComparison
     }
 
     /**
-     * Check if an array of HTTP headers matches another array of HTTP headers
-     * while taking * into account as a wildcard for header values
+     * Check if an array of HTTP headers matches another array of HTTP headers while taking * into account as a wildcard
      *
      * @param array            $expected Expected HTTP headers (allows wildcard values)
      * @param array|Collection $actual   Actual HTTP header array

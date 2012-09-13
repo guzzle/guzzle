@@ -96,15 +96,13 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
                 continue;
             }
 
-            // The previously set cookie is a discard cookie and this one is not
-            // so allow the new cookie to be set
+            // The previously set cookie is a discard cookie and this one is not so allow the new cookie to be set
             if (!$cookie->getDiscard() && $c->getDiscard()) {
                 unset($this->cookies[$i]);
                 continue;
             }
 
-            // If the new cookie's expiration is further into the future, then
-            // replace the old cookie
+            // If the new cookie's expiration is further into the future, then replace the old cookie
             if ($cookie->getExpires() > $c->getExpires()) {
                 unset($this->cookies[$i]);
                 continue;
