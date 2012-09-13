@@ -67,11 +67,11 @@ abstract class AbstractBatchDecorator implements BatchInterface
      *
      * @return array
      */
-    public function getDecorators(array $found = array())
+    public function getDecorators()
     {
-        $found[] = $this;
+        $found = array($this);
         if (method_exists($this->decoratedBatch, 'getDecorators')) {
-            return $this->decoratedBatch->getDecorators($found);
+            $found = array_merge($found, $this->decoratedBatch->getDecorators());
         }
 
         return $found;

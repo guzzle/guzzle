@@ -7,8 +7,7 @@ use Guzzle\Service\Description\ApiParam;
 use Guzzle\Service\Command\CommandInterface;
 
 /**
- * Visitor used to apply a parameter to an array that will be serialized as a
- * top level key-value pair in a JSON body
+ * Visitor used to apply a parameter to an array that will be serialized as a top level key-value pair in a JSON body
  */
 class JsonBodyVisitor extends AbstractVisitor
 {
@@ -31,9 +30,8 @@ class JsonBodyVisitor extends AbstractVisitor
     }
 
     /**
-     * Set the Content-Type header to add to the request if JSON is added to
-     * the body. This visitor does not add a Content-Type header unless you
-     * specify one here.
+     * Set the Content-Type header to add to the request if JSON is added to the body. This visitor does not add a
+     * Content-Type header unless you specify one here.
      *
      * @param string $header Header to set when JSON is added (e.g. application/json)
      *

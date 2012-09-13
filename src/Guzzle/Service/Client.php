@@ -49,8 +49,7 @@ class Client extends HttpClient implements ClientInterface
     protected $inflector;
 
     /**
-     * Basic factory method to create a new client.  Extend this method in
-     * subclasses to build more complex clients.
+     * Basic factory method to create a new client. Extend this method in subclasses to build more complex clients.
      *
      * @param array|Collection $config Configuration data
      *
@@ -75,15 +74,13 @@ class Client extends HttpClient implements ClientInterface
     }
 
     /**
-     * Helper method to find and execute a command.  Magic method calls must be
-     * enabled on the client to use this functionality.
+     * Find and execute a command. Magic method calls must be enabled on the client to use this functionality.
      *
      * @param string $method Name of the command object to instantiate
      * @param array  $args   Arguments to pass to the command
      *
      * @return mixed
-     * @throws BadMethodCallException when a command is not found or magic
-     *     methods are disabled
+     * @throws BadMethodCallException when a command is not found or magic methods are disabled
      */
     public function __call($method, $args = null)
     {
@@ -116,11 +113,9 @@ class Client extends HttpClient implements ClientInterface
     }
 
     /**
-     * Get a command by name.  First, the client will see if it has a service
-     * description and if the service description defines a command by the
-     * supplied name.  If no dynamic command is found, the client will look for
-     * a concrete command class exists matching the name supplied.  If neither
-     * are found, an InvalidArgumentException is thrown.
+     * Get a command by name.  First, the client will see if it has a service description and if the service description
+     * defines a command by the supplied name.  If no dynamic command is found, the client will look for a concrete
+     * command class exists matching the name supplied. If neither are found, an InvalidArgumentException is thrown.
      *
      * @param string $name Name of the command to retrieve
      * @param array  $args Arguments to pass to the command
@@ -194,8 +189,7 @@ class Client extends HttpClient implements ClientInterface
      *
      * @param CommandInterface|array $command Command or array of commands to execute
      *
-     * @return mixed Returns the result of the executed command or an array of
-     *               commands if an array of commands was passed.
+     * @return mixed Returns the result of the executed command or an array of commands if executing multiple commands
      * @throws InvalidArgumentException if an invalid command is passed
      */
     public function execute($command)
@@ -235,10 +229,9 @@ class Client extends HttpClient implements ClientInterface
     /**
      * Set the service description of the client
      *
-     * @param ServiceDescription $service Service description
-     * @param bool $updateFactory Set to FALSE to not update the service description based
-     *                            command factory if it is not already on the client.
-     *
+     * @param ServiceDescription $service       Service description
+     * @param bool               $updateFactory Set to false to not update the service description based command factory
+     *                                          if it is not already on the client.
      * @return Client
      */
     public function setDescription(ServiceDescription $service, $updateFactory = true)

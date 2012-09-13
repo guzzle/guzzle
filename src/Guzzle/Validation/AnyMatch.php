@@ -7,8 +7,7 @@ use Guzzle\Service\Inspector;
 /**
  * Ensures that a value passes any of the validation constraints.
  *
- * A 'constraints' and 'inspector' option are required. Filters are separated
- * by semicolons, and passed to an inspector.
+ * A 'constraints' and 'inspector' option are required. Filters are separated by semicolons, and passed to an inspector.
  */
 class AnyMatch extends AbstractConstraint
 {

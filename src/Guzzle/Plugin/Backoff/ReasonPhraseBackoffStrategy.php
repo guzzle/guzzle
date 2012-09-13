@@ -8,7 +8,6 @@ use Guzzle\Http\Exception\HttpException;
 
 /**
  * Strategy used to retry HTTP requests when the response's reason phrase matches one of the registered phrases.
- * If no other strategies are in the chain, it will retry immediately.
  */
 class ReasonPhraseBackoffStrategy extends AbstractErrorCodeBackoffStrategy
 {

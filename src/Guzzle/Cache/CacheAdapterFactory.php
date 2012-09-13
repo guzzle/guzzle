@@ -7,9 +7,8 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Exception\RuntimeException;
 
 /**
- * Generates cache adapters and cache providers objects using an array of
- * configuration data.  This can be useful for creating cache adapters
- * in client configuration files.
+ * Generates cache adapters and cache providers objects using an array of configuration data.  This can be useful for
+ * creating cache adapters in client builder configuration files.
  */
 class CacheAdapterFactory implements FromConfigInterface
 {

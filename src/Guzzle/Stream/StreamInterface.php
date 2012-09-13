@@ -8,10 +8,7 @@ namespace Guzzle\Stream;
 interface StreamInterface
 {
     /**
-     * Convert the stream to a string if the stream is readable and the stream
-     * is seekable.  This logic is enforced to ensure that outputting the stream
-     * as a string does not affect an actual cURL request using non-repeatable
-     * streams.
+     * Convert the stream to a string if the stream is readable and the stream is seekable.
      *
      * @return string
      */
@@ -119,7 +116,7 @@ interface StreamInterface
      * @param int $whence Where the offset is applied
      *
      * @return bool Returns TRUE on success or FALSE on failure
-     * @link http://www.php.net/manual/en/function.fseek.php
+     * @link   http://www.php.net/manual/en/function.fseek.php
      */
     public function seek($offset, $whence = SEEK_SET);
 

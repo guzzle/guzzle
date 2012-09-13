@@ -37,15 +37,13 @@ interface MessageInterface
     public function addHeaders(array $headers);
 
     /**
-     * Retrieve an HTTP header by name.  Performs a case-insensitive search of
-     * all headers.
+     * Retrieve an HTTP header by name. Performs a case-insensitive search of all headers.
      *
      * @param string $header Header to retrieve.
      * @param bool   $string Set to true to get the header as a string
      *
-     * @return string|Header|null Returns NULL if no matching header is found.
-     *     Returns a string if $string is set to TRUE.  Returns a Header object
-     *     if a matching header is found.
+     * @return string|Header|null Returns NULL if no matching header is found. Returns a string if $string is set to
+     *                            TRUE. Returns a Header object if a matching header is found.
      */
     public function getHeader($header, $string = false);
 
@@ -60,8 +58,7 @@ interface MessageInterface
     public function getTokenizedHeader($header, $token = ';');
 
     /**
-     * Set a tokenized header on the request that implodes a Collection of data
-     * into a string separated by a token.
+     * Set a tokenized header on the request that implodes a Collection of data into a string separated by a token.
      *
      * @param string           $header Header to set
      * @param array|Collection $data   Header data

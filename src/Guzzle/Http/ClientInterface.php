@@ -23,7 +23,6 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @param array|Collection|string $config Parameters that define how the client behaves and connects to a
      *                                        webservice. Pass an array or a Collection object.
-     *
      * @return ClientInterface
      */
     public function setConfig($config);
@@ -33,7 +32,6 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @param bool|string $key Configuration value to retrieve.  Set to FALSE to retrieve all values of the client.
      *                         The object return can be modified, and modifications will affect the client's config.
-     *
      * @return mixed|Collection
      */
     public function getConfig($key = false);
@@ -83,10 +81,9 @@ interface ClientInterface extends HasDispatcherInterface
     /**
      * Create and return a new {@see RequestInterface} configured for the client.
      *
-     * Use an absolute path to override the base path of the client, or a
-     * relative path to append to the base path of the client.  The URI can
-     * contain the query string as well.  Use an array to provide a URI
-     * template and additional variables to use in the URI template expansion.
+     * Use an absolute path to override the base path of the client, or a relative path to append to the base path of
+     * the client. The URI can contain the query string as well.  Use an array to provide a URI template and additional
+     * variables to use in the URI template expansion.
      *
      * @param string                                    $method  HTTP method.  Defaults to GET
      * @param string|array                              $uri     Resource URI.
@@ -102,8 +99,7 @@ interface ClientInterface extends HasDispatcherInterface
     /**
      * Get the client's base URL as either an expanded or raw URI template
      *
-     * @param bool $expand Set to FALSE to get the raw base URL without URI
-     *                     template expansion
+     * @param bool $expand Set to FALSE to get the raw base URL without URI template expansion
      *
      * @return string|null
      */
@@ -197,7 +193,6 @@ interface ClientInterface extends HasDispatcherInterface
      *                                                    associative array of POST fields to send in the body of the
      *                                                    request.  Prefix a value in the array with the @ symbol to
      *                                                    reference a file.
-     *
      * @return EntityEnclosingRequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
@@ -223,8 +218,7 @@ interface ClientInterface extends HasDispatcherInterface
     public function send($requests);
 
     /**
-     * Set a curl multi object to be used internally by the client for
-     * transferring requests.
+     * Set a curl multi object to be used internally by the client for transferring requests.
      *
      * @param CurlMultiInterface $curlMulti Multi object
      *
@@ -233,8 +227,7 @@ interface ClientInterface extends HasDispatcherInterface
     public function setCurlMulti(CurlMultiInterface $curlMulti);
 
     /**
-     * Get the curl multi object to be used internally by the client for
-     * transferring requests.
+     * Get the curl multi object to be used internally by the client for transferring requests.
      *
      * @return CurlMultiInterface
      */

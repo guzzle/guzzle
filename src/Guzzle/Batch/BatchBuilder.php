@@ -59,8 +59,7 @@ class BatchBuilder
     }
 
     /**
-     * Automatically flush the batch when the size of the queue reaches a
-     * certain threshold.  Enables the {@see FlushingBatch} decorator.
+     * Automatically flush the batch when the size of the queue reaches a certain threshold. Adds {@see FlushingBatch}.
      *
      * @param $threshold Number of items to allow in the queue before a flush
      *
@@ -74,8 +73,7 @@ class BatchBuilder
     }
 
     /**
-     * Maintain a history of all items that have been transferred using the
-     * batch. Enables the {@see HistoryBatch} decorator.
+     * Maintain a history of all items that have been transferred using the batch. Adds {@see HistoryBatch}.
      *
      * @return BatchBuilder
      */
@@ -87,9 +85,8 @@ class BatchBuilder
     }
 
     /**
-     * Buffer exceptions thrown during transfer so that you can transfer as
-     * much as possible, and after a transfer completes, inspect each exception
-     * that was thrown. Enables the {@see ExceptionBufferingBatch} decorator
+     * Buffer exceptions thrown during transfer so that you can transfer as much as possible, and after a transfer
+     * completes, inspect each exception that was thrown. Enables the {@see ExceptionBufferingBatch} decorator.
      *
      * @return BatchBuilder
      */
@@ -101,8 +98,7 @@ class BatchBuilder
     }
 
     /**
-     * Notify a callable each time a batch flush completes.  Enables the
-     * {@see NotifyingBatch} decorator.
+     * Notify a callable each time a batch flush completes. Enables the {@see NotifyingBatch} decorator.
      *
      * @param mixed $callable Callable function to notify
      *
@@ -117,9 +113,8 @@ class BatchBuilder
     }
 
     /**
-     * Configures the batch to transfer batches of requests. Associates a
-     * {@see \Guzzle\Http\BatchRequestTransfer} object as both the transfer and
-     * divisor strategy.
+     * Configures the batch to transfer batches of requests. Associates a {@see \Guzzle\Http\BatchRequestTransfer}
+     * object as both the transfer and divisor strategy.
      *
      * @param int $batchSize Batch size for each batch of requests
      *
@@ -136,8 +131,7 @@ class BatchBuilder
 
     /**
      * Configures the batch to transfer batches commands. Associates as
-     * {@see \Guzzle\Service\Command\BatchCommandTransfer} as both the transfer
-     * and divisor strategy.
+     * {@see \Guzzle\Service\Command\BatchCommandTransfer} as both the transfer and divisor strategy.
      *
      * @param int $batchSize Batch size for each batch of commands
      *

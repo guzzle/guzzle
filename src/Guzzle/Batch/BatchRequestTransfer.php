@@ -29,8 +29,7 @@ class BatchRequestTransfer implements BatchTransferInterface, BatchDivisorInterf
     }
 
     /**
-     * Creates batches of requests by grouping requests by their associated
-     * curl multi object.
+     * Creates batches of requests by grouping requests by their associated curl multi object.
      *
      * {@inheritdoc}
      */

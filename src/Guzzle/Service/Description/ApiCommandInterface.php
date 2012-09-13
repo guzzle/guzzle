@@ -114,10 +114,9 @@ interface ApiCommandInterface
     public function getUri();
 
     /**
-     * Validates that all required args are included in a config object,
-     * and if not, throws an InvalidArgumentException with a helpful error message.  Adds
-     * default args to the passed config object if the parameter was not
-     * set in the config object.
+     * Validates that all required args are included in a config object, and if not, throws an
+     * InvalidArgumentException with a helpful error message. Adds default args to the passed config object if the
+     * parameter was not set in the config object.
      *
      * @param Collection $config    Configuration settings
      * @param Inspector  $inspector Inspector to use with the validation

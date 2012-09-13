@@ -156,8 +156,7 @@ class Stream implements StreamInterface
             return filesize($this->getUri());
         }
 
-        // Only get the size based on the content if the the stream is readable
-        // and seekable so as to not interfere with actually reading the data
+        // Only get the size based on the content if the the stream is readable and seekable
         if (!$this->cache[self::IS_READABLE] || !$this->cache[self::SEEKABLE]) {
             return false;
         } else {

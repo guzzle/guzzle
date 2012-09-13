@@ -175,9 +175,8 @@ class OauthPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Returns a Nonce Based on the Timestamp and URL.  This will allow for
-     * multiple requests in parallel with the same exact timestamp to use
-     * separate nonce's.
+     * Returns a Nonce Based on the Timestamp and URL. This will allow for multiple requests in parallel with the same
+     * exact timestamp to use separate nonce's.
      *
      * @param RequestInterface $request   Request to generate a nonce for
      * @param int              $timestamp Timestamp to use for nonce

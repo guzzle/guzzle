@@ -3,8 +3,7 @@
 namespace Guzzle\Log;
 
 /**
- * Allows Closures to be called when messages are logged.  Closures combined
- * with filtering can trigger application events based on log messages.
+ * Logs messages using Closures. Closures combined with filtering can trigger application events based on log messages.
  */
 class ClosureLogAdapter extends AbstractLogAdapter
 {

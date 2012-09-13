@@ -7,8 +7,7 @@ use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\ClientInterface;
 
 /**
- * Composite factory used by a client object to create command objects
- * utilizing multiple factories
+ * Composite factory used by a client object to create command objects utilizing multiple factories
  */
 class CompositeFactory implements \IteratorAggregate, \Countable, FactoryInterface
 {
@@ -20,7 +19,9 @@ class CompositeFactory implements \IteratorAggregate, \Countable, FactoryInterfa
     /**
      * Get the default chain to use with clients
      *
-     * @return CompositeFactory
+     * @param ClientInterface $client Client to base the chain on
+     *
+     * @return self
      */
     public static function getDefaultChain(ClientInterface $client)
     {
@@ -48,8 +49,8 @@ class CompositeFactory implements \IteratorAggregate, \Countable, FactoryInterfa
      * Add a command factory to the chain
      *
      * @param FactoryInterface        $factory Factory to add
-     * @param string|FactoryInterface $before  Insert the new command factory before a command
-     *                                         factory class or object matching a class name.
+     * @param string|FactoryInterface $before  Insert the new command factory before a command factory class or object
+     *                                         matching a class name.
      *
      * @return CompositeFactory
      */

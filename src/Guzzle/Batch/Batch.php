@@ -5,14 +5,12 @@ namespace Guzzle\Batch;
 use Guzzle\Batch\Exception\BatchTransferException;
 
 /**
- * Default batch implementation used to convert queued items into smaller
- * chunks of batches using a {@see BatchDivisorIterface} and transfers each
- * batch using a {@see BatchTransferInterface}.
+ * Default batch implementation used to convert queued items into smaller chunks of batches using a
+ * {@see BatchDivisorIterface} and transfers each batch using a {@see BatchTransferInterface}.
  *
- * Any exception encountered during a flush operation will throw a
- * {@see BatchTransferException} object containing the batch that failed.
- * After an exception is encountered, you can flush the batch again to attempt
- * to finish transferring any previously created batches or queued items.
+ * Any exception encountered during a flush operation will throw a {@see BatchTransferException} object containing the
+ * batch that failed. After an exception is encountered, you can flush the batch again to attempt to finish transferring
+ * any previously created batches or queued items.
  */
 class Batch implements BatchInterface
 {
@@ -38,6 +36,7 @@ class Batch implements BatchInterface
 
     /**
      * @param BatchTransferInterface $transferStrategy Strategy used to transfer items
+     * @param BatchDivisorInterface  $divisionStrategy Divisor used to create batches
      */
     public function __construct(BatchTransferInterface $transferStrategy, BatchDivisorInterface $divisionStrategy)
     {

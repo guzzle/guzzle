@@ -8,9 +8,8 @@ use Guzzle\Validation\ConstraintInterface;
 use Guzzle\Service\Exception\ValidationException;
 
 /**
- * Prepares configuration settings with default values and ensures that required
- * values are set.  Holds references to validation constraints and their default
- * values.
+ * Prepares configuration settings with default values and ensures that required values are set. Holds references to
+ * validation constraints and their default values.
  */
 class Inspector
 {
@@ -92,8 +91,7 @@ class Inspector
     }
 
     /**
-     * Enable/disable type validation of configuration settings.  This is
-     * useful for very high performance requirements.
+     * Enable/disable type validation of configuration settings. This is useful for very high performance requirements.
      *
      * @param bool $typeValidation Set to TRUE or FALSE
      *
@@ -163,14 +161,13 @@ class Inspector
     }
 
     /**
-     * Validate a constraint by name: e.g. "type:Guzzle\Common\Collection";
-     * type:string; choice:a,b,c; choice:'a','b','c'; etc...
+     * Validate with a constraint by name
      *
-     * @param string $name  Constraint to retrieve with optional CSV args after colon
+     * @param string $name  Constraint to retrieve
      * @param mixed  $value Value to validate
      * @param array  $args  Optional arguments to pass to the type validation
      *
-     * @return bool|string Returns TRUE if valid, or an error message if invalid
+     * @return bool|string Returns true if valid, or an error message if invalid
      */
     public function validateConstraint($name, $value, array $args = null)
     {

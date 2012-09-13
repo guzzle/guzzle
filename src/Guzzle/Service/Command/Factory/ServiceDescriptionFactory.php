@@ -61,8 +61,7 @@ class ServiceDescriptionFactory implements FactoryInterface
     {
         $command = $this->description->getCommand($name);
 
-        // If an inflector was passed, then attempt to get the command using
-        // snake_case inflection
+        // If an inflector was passed, then attempt to get the command using snake_case inflection
         if (!$command && $this->inflector) {
             $command = $this->description->getCommand($this->inflector->snake($name));
         }

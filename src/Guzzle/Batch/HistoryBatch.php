@@ -3,9 +3,8 @@
 namespace Guzzle\Batch;
 
 /**
- * BatchInterface decorator used to keep a history of items that were added to
- * the batch.  You must clear the history manually to remove items from the
- * history.
+ * BatchInterface decorator used to keep a history of items that were added to the batch.  You must clear the history
+ * manually to remove items from the history.
  */
 class HistoryBatch extends AbstractBatchDecorator
 {

@@ -351,8 +351,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
-     * Prepare a request to be sent from the Client by adding client specific
-     * behaviors and properties to the request.
+     * Prepare a request to be sent from the Client by adding client specific behaviors and properties to the request.
      *
      * @param RequestInterface $request Request to prepare for the client
      *

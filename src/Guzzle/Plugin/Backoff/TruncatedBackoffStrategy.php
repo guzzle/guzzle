@@ -8,7 +8,6 @@ use Guzzle\Http\Exception\HttpException;
 
 /**
  * Strategy that will not retry more than a certain number of times.
- * If this is the only strategy in the chain, then it will retry immediately
  */
 class TruncatedBackoffStrategy extends AbstractBackoffStrategy
 {

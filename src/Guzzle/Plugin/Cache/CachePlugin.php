@@ -12,12 +12,11 @@ use Doctrine\Common\Cache\ArrayCache;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Plugin to enable the caching of GET and HEAD requests.  Caching can be done on
- * all requests passing through this plugin or only after retrieving resources with
- * cacheable response headers.
+ * Plugin to enable the caching of GET and HEAD requests.  Caching can be done on all requests passing through this
+ * plugin or only after retrieving resources with cacheable response headers.
  *
- * This is a simple implementation of RFC 2616 and should be considered a private
- * transparent proxy cache, meaning authorization and private data can be cached.
+ * This is a simple implementation of RFC 2616 and should be considered a private transparent proxy cache, meaning
+ * authorization and private data can be cached.
  */
 class CachePlugin implements EventSubscriberInterface
 {
@@ -224,15 +223,13 @@ class CachePlugin implements EventSubscriberInterface
                 $response->hasCacheControlDirective('must-revalidate') ||
                 $response->hasCacheControlDirective('no-cache')) {
                 // no-cache: When no parameters are present, always revalidate
-                // When parameters are present in no-cache and the request includes
-                // those same parameters, then the response must re-validate
-                // I'll need an example of what fields look like in order to
-                // implement a smarter version of no-cache
+                // When parameters are present in no-cache and the request includes those same parameters, then the
+                // response must re-validate. I'll need an example of what fields look like in order to implement a
+                // smarter version of no-cache
 
-                // Requests can decline to revalidate against the origin server
-                // by setting the cache.revalidate param to one of:
-                //      never  - To never revalidate and always contact the origin server
-                //      skip   - To skip revalidation and just use what is in cache
+                // Requests can decline to revalidate against the origin server by setting the cache.revalidate param:
+                // - never - To never revalidate and always contact the origin server
+                // - skip  - To skip revalidation and just use what is in cache
                 switch ($request->getParams()->get('cache.revalidate')) {
                     case 'never':
                         return false;

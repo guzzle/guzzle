@@ -3,8 +3,7 @@
 namespace Guzzle\Batch;
 
 /**
- * BatchInterface decorator used to add automatic flushing of the queue when the
- * size of the queue reaches a threshold
+ * BatchInterface decorator used to add automatic flushing of the queue when the size of the queue reaches a threshold.
  */
 class FlushingBatch extends AbstractBatchDecorator
 {
@@ -32,6 +31,7 @@ class FlushingBatch extends AbstractBatchDecorator
      * Set the auto-flush threshold
      *
      * @param int $threshold The auto-flush threshold
+     *
      * @return FlushingBatch
      */
     public function setThreshold($threshold)
