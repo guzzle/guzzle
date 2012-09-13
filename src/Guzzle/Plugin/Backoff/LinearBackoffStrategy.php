@@ -7,8 +7,9 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Http\Exception\HttpException;
 
 /**
- * Implements a linear backoff retry strategy. If no strategies are before this in the chain, then all requests
- * will be retried using linear backoff.
+ * Implements a linear backoff retry strategy.
+ *
+ * Warning: If no decision making strategies precede this strategy in the the chain, then all requests will be retried
  */
 class LinearBackoffStrategy extends AbstractBackoffStrategy
 {

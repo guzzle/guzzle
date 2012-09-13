@@ -6,8 +6,7 @@ use Guzzle\Common\Event;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Service builder plugin used to add plugins to all clients created by a
- * {@see Guzzle\Service\Builder\ServiceBuilder}
+ * Service builder plugin used to add plugins to all clients created by a {@see Guzzle\Service\Builder\ServiceBuilder}
  *
  * @author Gordon Franke <info@nevalon.de>
  */

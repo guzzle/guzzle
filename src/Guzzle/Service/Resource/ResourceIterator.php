@@ -61,8 +61,7 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements Resourc
     protected $data = array();
 
     /**
-     * @var bool Whether or not the current value is known to be invalid. This
-     *     is set for example when a senRequest() method returns 0 resources.
+     * @var bool Whether or not the current value is known to be invalid (e.g. when sendRequest() returns 0 resources)
      */
     protected $invalid;
 
@@ -84,12 +83,10 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements Resourc
      *
      * @param CommandInterface $command Initial command used for iteration
      *
-     * @param array $data Associative array of additional parameters.
-     *      You may specify any number of custom options for an iterator.  Among
-     *      these options, you may also specify the following values:
-     *
-     *      limit: Attempt to limit the maximum number of resources to this amount
-     *      page_size: Attempt to retrieve this number of resources per request
+     * @param array $data Associative array of additional parameters. You may specify any number of custom options for
+     *                    an iterator. Among these options, you may also specify the following values:
+     *                    - limit: Attempt to limit the maximum number of resources to this amount
+     *                    - page_size: Attempt to retrieve this number of resources per request
      */
     public function __construct(CommandInterface $command, array $data = array())
     {
@@ -103,8 +100,7 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements Resourc
     }
 
     /**
-     * Get all of the resources as an array (be careful as this could issue a
-     * large number of requests if no limit is specified)
+     * Get all of the resources as an array (Warning: this could issue a large number of requests)
      *
      * @return array
      */
@@ -283,10 +279,8 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements Resourc
     }
 
     /**
-     * Returns the value that should be specified for the page size for
-     * a request that will maintain any hard limits, but still honor the
-     * specified pageSize if the number of items retrieved + pageSize < hard
-     * limit
+     * Returns the value that should be specified for the page size for a request that will maintain any hard limits,
+     * but still honor the specified pageSize if the number of items retrieved + pageSize < hard limit
      *
      * @return int Returns the page size of the next request.
      */
@@ -312,8 +306,7 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements Resourc
     }
 
     /**
-     * Send a request to retrieve the next page of results.
-     * Hook for subclasses to implement.
+     * Send a request to retrieve the next page of results. Hook for subclasses to implement.
      *
      * @return array Returns the newly loaded resources
      */

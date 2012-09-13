@@ -6,8 +6,7 @@ use Guzzle\Common\FromConfigInterface;
 use Guzzle\Service\Exception\ServiceNotFoundException;
 
 /**
- * Service builder to generate service builders and service clients from
- * configuration settings
+ * Service builder to generate service builders and service clients from configuration settings
  */
 interface ServiceBuilderInterface
 {

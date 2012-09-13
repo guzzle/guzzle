@@ -45,9 +45,8 @@ class DynamicCommand extends AbstractCommand
     /**
      * Initialize the command by adding the default visitors.
      *
-     * Override this method if you want to remove default visitor locations,
-     * add custom locations, or change visitors associated with specific
-     * locations.
+     * Override this method if you want to remove default visitor locations, add custom locations, or change visitors
+     * associated with specific locations.
      */
     protected function init()
     {

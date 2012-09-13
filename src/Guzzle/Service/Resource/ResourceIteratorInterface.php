@@ -5,14 +5,12 @@ namespace Guzzle\Service\Resource;
 use Guzzle\Common\HasDispatcherInterface;
 
 /**
- * Iterate over a paginated set of resources that requires subsequent paginated
- * calls in order to retrieve an entire set of resources from a service.
+ * Iterates over a paginated resource using subsequent requests in order to retrieve the entire matching result set
  */
 interface ResourceIteratorInterface extends HasDispatcherInterface, \Iterator, \Countable
 {
     /**
-     * Get all of the resources as an array (be careful as this could issue a
-     * large number of requests if no limit is specified)
+     * Get all of the resources as an array (Warning: this could issue a large number of requests)
      *
      * @return array
      */
@@ -28,8 +26,7 @@ interface ResourceIteratorInterface extends HasDispatcherInterface, \Iterator, \
     /**
      * Attempt to limit the total number of resources returned by the iterator.
      *
-     * You may still receive more items than you specify.  Set to 0 to specify
-     * no limit.
+     * You may still receive more items than you specify. Set to 0 to specify no limit.
      *
      * @param int $limit Limit amount
      *
@@ -38,14 +35,12 @@ interface ResourceIteratorInterface extends HasDispatcherInterface, \Iterator, \
     public function setLimit($limit);
 
     /**
-     * Attempt to limit the total number of resources retrieved per request by
-     * the iterator.
+     * Attempt to limit the total number of resources retrieved per request by  the iterator.
      *
-     * The iterator may return more than you specify in the page size argument
-     * depending on the service and underlying command implementation.  Set to
-     * 0 to specify no page size limitation.
+     * The iterator may return more than you specify in the page size argument depending on the service and underlying
+     * command implementation.  Set to 0 to specify no page size limitation.
      *
-     * @param int $limit Limit amount
+     * @param int $pageSize Limit amount
      *
      * @return ResourceIteratorInterface
      */

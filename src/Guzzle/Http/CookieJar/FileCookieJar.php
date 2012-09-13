@@ -5,7 +5,7 @@ namespace Guzzle\Http\CookieJar;
 use Guzzle\Common\Exception\RuntimeException;
 
 /**
- * Persists cookies using a JSON formatted file
+ * Persists non-session cookies using a JSON formatted file
  */
 class FileCookieJar extends ArrayCookieJar
 {
@@ -50,8 +50,7 @@ class FileCookieJar extends ArrayCookieJar
     }
 
     /**
-     * Load the contents of the json formatted file into the data array and
-     * discard the unsaved state of the cookieJar object
+     * Load the contents of the json formatted file into the data array and discard any unsaved state
      */
     protected function load()
     {

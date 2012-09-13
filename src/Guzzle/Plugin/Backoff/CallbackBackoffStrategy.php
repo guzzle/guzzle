@@ -26,6 +26,8 @@ class CallbackBackoffStrategy extends AbstractBackoffStrategy
      * @param \Closure|array|mixed     $callback Callable method to invoke
      * @param bool                     $decision Set to true if this strategy makes a backoff decision
      * @param BackoffStrategyInterface $next     The optional next strategy
+     *
+     * @throws InvalidArgumentException
      */
     public function __construct($callback, $decision, BackoffStrategyInterface $next = null)
     {

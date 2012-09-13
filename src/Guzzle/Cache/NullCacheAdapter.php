@@ -12,9 +12,7 @@ class NullCacheAdapter extends AbstractCacheAdapter
     /**
      * Empty constructor allows you to pass args to the NullCacheAdapter
      */
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * {@inheritdoc}

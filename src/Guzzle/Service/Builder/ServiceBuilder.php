@@ -9,8 +9,7 @@ use Guzzle\Service\Exception\ServiceBuilderException;
 use Guzzle\Service\Exception\ServiceNotFoundException;
 
 /**
- * Service builder to generate service builders and service clients from
- * configuration settings
+ * Service builder to generate service builders and service clients from configuration settings
  */
 class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInterface, \ArrayAccess, \Serializable
 {
@@ -33,11 +32,8 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
      * Create a new ServiceBuilder using configuration data sourced from an
      * array, .json|.js file, SimpleXMLElement, or .xml file.
      *
-     * @param array|string|\SimpleXMLElement $data An instantiated
-     *     SimpleXMLElement containing configuration data, the full path to an
-     *     .xml or .js|.json file, or an associative array of data
-     * @param array $globalParameters Array of global parameters to
-     *     pass to every service as it is instantiated.
+     * @param array|string $config           The full path to an .xml or .js|.json file, or an associative array
+     * @param array        $globalParameters Array of global parameters to pass to every service as it is instantiated.
      *
      * @return ServiceBuilderInterface
      * @throws ServiceBuilderException if a file cannot be opened
@@ -141,8 +137,8 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
     /**
      * Register a client by name with the service builder
      *
-     * @param string $name  Name of the client to register
-     * @param mixed  $value Service to register
+     * @param string $key     Name of the client to register
+     * @param mixed  $service Service to register
      *
      * @return ServiceBuilderInterface
      */

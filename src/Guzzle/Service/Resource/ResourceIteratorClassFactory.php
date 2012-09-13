@@ -8,11 +8,9 @@ use Guzzle\Inflection\Inflector;
 use Guzzle\Service\Command\CommandInterface;
 
 /**
- * Factory for creating {@see ResourceIteratorInterface} objects using a
- * convention of storing iterator classes under a root namespace using the
- * name of a {@see CommandInterface} object as a convention for determining
- * the name of an iterator class.  The command name is converted to CamelCase
- * and Iterator is appended -- (e.g. camel_case => CamelCaseIterator).
+ * Factory for creating {@see ResourceIteratorInterface} objects using a convention of storing iterator classes under a
+ * root namespace using the name of a {@see CommandInterface} object as a convention for determining the name of an
+ * iterator class. The command name is converted to CamelCase and Iterator is appended (e.g. abc_foo => AbcFoo).
  */
 class ResourceIteratorClassFactory implements ResourceIteratorFactoryInterface
 {

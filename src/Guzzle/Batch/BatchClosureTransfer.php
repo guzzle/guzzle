@@ -23,9 +23,11 @@ class BatchClosureTransfer implements BatchTransferInterface
     /**
      * Constructor used to specify the closure for performing the transfer
      *
-     * @param mixed $callable Callable that performs the transfer. This function
-     *                        should accept two arguments: (array $batch, mixed $context).
+     * @param mixed $callable Callable that performs the transfer. This function should accept two arguments:
+     *                        (array $batch, mixed $context).
      * @param mixed $context  Optional context to pass to the batch divisor
+     *
+     * @throws InvalidArgumentException
      */
     public function __construct($callable, $context = null)
     {

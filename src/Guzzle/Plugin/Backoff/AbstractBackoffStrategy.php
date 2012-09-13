@@ -70,8 +70,9 @@ abstract class AbstractBackoffStrategy implements BackoffStrategyInterface
 
     /**
      * Check if the strategy does filtering and makes decisions on whether or not to retry.
-     * Strategies that return false will never retry if all of the previous strategies in a chain
-     * defer on the backoff decision.
+     *
+     * Strategies that return false will never retry if all of the previous strategies in a chain defer on a backoff
+     * decision.
      *
      * @return bool
      */

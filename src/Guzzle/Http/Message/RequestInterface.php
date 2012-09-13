@@ -56,8 +56,8 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     /**
      * Set the URL of the request
      *
-     * Warning: Calling this method will modify headers, rewrite the  query
-     * string object, and set other data associated with the request.
+     * Warning: Calling this method will modify headers, rewrite the  query string object, and set other data
+     * associated with the request.
      *
      * @param string $url|Url Full URL to set including query string
      *
@@ -258,10 +258,8 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     /**
      * Set the EntityBody that will hold the response message's entity body.
      *
-     * This method should be invoked when you need to send the response's
-     * entity body somewhere other than the normal php://temp buffer.  For
-     * example, you can send the entity body to a socket, file, or some other
-     * custom stream.
+     * This method should be invoked when you need to send the response's entity body somewhere other than the normal
+     * php://temp buffer. For example, you can send the entity body to a socket, file, or some other custom stream.
      *
      * @param EntityBodyInterface $body Response body object
      *
@@ -279,12 +277,11 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     /**
      * Manually set a response for the request.
      *
-     * This method is useful for specifying a mock response for the request or
-     * setting the response using a cache.  Manually setting a response will
-     * bypass the actual sending of a request.
+     * This method is useful for specifying a mock response for the request or setting the response using a cache.
+     * Manually setting a response will bypass the actual sending of a request.
      *
      * @param Response $response Response object to set
-     * @param bool     $queued   Set to TRUE to keep the request in a stat of not having been sent, but queue the
+     * @param bool     $queued   Set to TRUE to keep the request in a state of not having been sent, but queue the
      *                           response for send()
      *
      * @return RequestInterface Returns a reference to the object.

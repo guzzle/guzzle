@@ -121,9 +121,8 @@ class BackoffPlugin extends AbstractHasDispatcher implements EventSubscriberInte
 
         // If the duration of the delay has passed, retry the request using the pool
         if (null !== $delay && microtime(true) >= $delay) {
-            // Remove the request from the pool and then add it back again.
-            // This is required for cURL to know that we want to retry sending
-            // the easy handle.
+            // Remove the request from the pool and then add it back again. This is required for cURL to know that we
+            // want to retry sending the easy handle.
             $request->getParams()->remove(self::DELAY_PARAM);
             // Rewind the request body if possible
             if ($request instanceof EntityEnclosingRequestInterface && $request->getBody()) {

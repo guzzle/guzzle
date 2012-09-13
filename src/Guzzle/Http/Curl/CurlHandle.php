@@ -38,14 +38,13 @@ class CurlHandle
      * Factory method to create a new curl handle based on an HTTP request.
      *
      * There are some helpful options you can set to enable specific behavior:
-     * - debug:    Set to true to enable cURL debug functionality to track the
-     *             actual headers sent over the wire.  The
-     * - progress: Set to true to enable progress function callbacks. Most
-     *             users do not need this, so it has been disabled by default.
+     * - debug:    Set to true to enable cURL debug functionality to track the actual headers sent over the wire.
+     * - progress: Set to true to enable progress function callbacks.
      *
      * @param RequestInterface $request Request
      *
      * @return CurlHandle
+     * @throws RuntimeException
      */
     public static function factory(RequestInterface $request)
     {
@@ -384,8 +383,8 @@ class CurlHandle
     }
 
     /**
-     * Get the cURL setopt options of the handle.  Changing values in the return
-     * object will have no effect on the curl handle after it is created.
+     * Get the cURL setopt options of the handle. Changing values in the return object will have no effect on the curl
+     * handle after it is created.
      *
      * @return Collection
      */
@@ -444,8 +443,7 @@ class CurlHandle
     }
 
     /**
-     * Parse the configuration and replace curl.* configurators into the
-     * constant based values so it can be used elsewhere
+     * Parse the config and replace curl.* configurators into the constant based values so it can be used elsewhere
      *
      * @param array|Collection $config The configuration we want to parse
      *

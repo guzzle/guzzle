@@ -38,9 +38,9 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
     /**
      * Constructor
      *
-     * @param array $responses Array of responses to queue
-     * @param bool  $temporary Set to TRUE to remove the plugin when the queue is empty
-     * @param bool  $readBodies  Set to TRUE to consume the entity body when a mock is serverd
+     * @param array $responses  Array of responses to queue
+     * @param bool  $temporary  Set to TRUE to remove the plugin when the queue is empty
+     * @param bool  $readBodies Set to TRUE to consume the entity body when a mock is serverd
      */
     public function __construct(array $responses = null, $temporary = false, $readBodies = false)
     {

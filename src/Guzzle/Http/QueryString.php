@@ -5,8 +5,7 @@ namespace Guzzle\Http;
 use Guzzle\Common\Collection;
 
 /**
- * Query string object to handle managing query string parameters and
- * aggregating those parameters together as a string.
+ * Query string object to handle managing query string parameters and aggregating those parameters together as a string.
  */
 class QueryString extends Collection
 {
@@ -210,16 +209,12 @@ class QueryString extends Collection
     }
 
     /**
-     * Provide a function for combining multi-valued query string parameters
-     * into a single or multiple fields
+     * Provide a function for combining multi-valued query string parameters into a single or multiple fields
      *
-     * @param callable|null $callback A function or callback array that accepts
-     *      a $key, $value, $encodeFields, and $encodeValues as arguments and
-     *      returns an associative array containing the combined values.  Set
-     *      to null to remove any custom aggregator.
-     *
+     * @param callable|null $callback A function or callback array that accepts a $key, $value, $encodeFields, and
+     *                                $encodeValues as arguments and returns an associative array containing the
+     *                                combined values. Set to null to remove any custom aggregator.
      * @return QueryString
-     *
      * @see \Guzzle\Http\QueryString::aggregateUsingComma()
      */
     public function setAggregateFunction($callback)
@@ -296,10 +291,8 @@ class QueryString extends Collection
     /**
      * Url encode parameter data.
      *
-     * If a parameter value is an array and no aggregator has been set, the
-     * values of the array will be converted into a PHP compatible form array.
-     * If an aggregator is set, the values will be converted using the
-     * aggregator function
+     * If a parameter value is an array and no aggregator has been set, the values of the array will be converted into
+     * a PHP compatible form array. If an aggregator is set, the values will be converted using the aggregator function
      *
      * @param array $data The data to encode
      *
