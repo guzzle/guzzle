@@ -527,10 +527,11 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         // Unset the cookies by setting the Cookie header to null
         $this->request->setHeader('Cookie', null);
         $this->assertNull($this->request->getCookie('test'));
+        $this->request->removeHeader('Cookie');
 
         // Set and remove a cookie
         $this->assertSame($this->request, $this->request->addCookie('test', 'abc'));
-#        $this->assertEquals('abc', $this->request->getCookie('test'));
+        $this->assertEquals('abc', $this->request->getCookie('test'));
         $this->assertSame($this->request, $this->request->removeCookie('test'));
         $this->assertNull($this->request->getCookie('test'));
 
