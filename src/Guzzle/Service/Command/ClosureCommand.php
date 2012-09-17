@@ -32,7 +32,7 @@ class ClosureCommand extends AbstractCommand
     {
         $closure = $this->get('closure');
         /** @var $closure \Closure */
-        $this->request = $closure($this, $this->apiCommand);
+        $this->request = $closure($this, $this->operation);
 
         if (!$this->request || !$this->request instanceof RequestInterface) {
             throw new UnexpectedValueException('Closure command did not return a RequestInterface object');

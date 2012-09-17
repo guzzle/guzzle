@@ -7,9 +7,8 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Service\Client;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\AbstractCommand;
-use Guzzle\Service\Description\ApiCommand;
-use Guzzle\Service\Description\ApiParam;
-use Guzzle\Service\Inspector;
+use Guzzle\Service\Description\Operation;
+use Guzzle\Service\Description\Parameter;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
 use Guzzle\Tests\Service\Mock\Command\Sub\Sub;
 
@@ -30,24 +29,11 @@ class CommandTest extends AbstractCommandTest
     }
 
     /**
-     * @covers Guzzle\Service\Command\AbstractCommand::getApi
-     */
-    public function testReturnsDefaultApiParamWhenNoneIsExtended()
-    {
-        $command = $this->getMockBuilder('Guzzle\Service\Command\AbstractCommand')
-            ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
-        $this->assertInstanceOf('Guzzle\Service\Description\ApiCommand', $command::getApi());
-    }
-
-    /**
      * @covers Guzzle\Service\Command\AbstractCommand::getName
      */
     public function testDeterminesShortName()
     {
-        $api = new ApiCommand(array(
-            'name' => 'foobar'
-        ));
+        $api = new Operation(array('name' => 'foobar'));
         $command = new MockCommand(array(), $api);
         $this->assertEquals('foobar', $command->getName());
 
@@ -242,25 +228,21 @@ class CommandTest extends AbstractCommandTest
      */
     public function testCommandsAllowsCustomRequestHeadersAsArray()
     {
-        $command = new MockCommand(array(
-            'headers' => array(
-                'Foo' => 'Bar'
-            )
-        ));
+        $command = new MockCommand(array('headers' => array('Foo' => 'Bar')));
         $this->assertInstanceOf('Guzzle\Common\Collection', $command->getRequestHeaders());
         $this->assertEquals('Bar', $command->getRequestHeaders()->get('Foo'));
     }
 
-    private function getApiCommand()
+    private function getOperation()
     {
-        return new ApiCommand(array(
-            'name' => 'foobar',
-            'method' => 'POST',
-            'class' => 'Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand',
-            'params' => array(
+        return new Operation(array(
+            'name'       => 'foobar',
+            'httpMethod' => 'POST',
+            'class'      => 'Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand',
+            'parameters' => array(
                 'test' => array(
                     'default' => '123',
-                    'type' => 'string'
+                    'type'    => 'string'
                 )
         )));
     }
@@ -268,14 +250,14 @@ class CommandTest extends AbstractCommandTest
     /**
      * @covers Guzzle\Service\Command\AbstractCommand
      */
-    public function testCommandsUsesApiCommand()
+    public function testCommandsUsesOperation()
     {
-        $api = $this->getApiCommand();
+        $api = $this->getOperation();
         $command = new MockCommand(array(), $api);
-        $this->assertSame($api, $command->getApiCommand());
+        $this->assertSame($api, $command->getOperation());
         $command->setClient($this->getClient())->prepare();
         $this->assertEquals('123', $command->get('test'));
-        $this->assertSame($api, $command->getApiCommand($api));
+        $this->assertSame($api, $command->getOperation($api));
     }
 
     /**
@@ -284,7 +266,7 @@ class CommandTest extends AbstractCommandTest
     public function testCloneMakesNewRequest()
     {
         $client = $this->getClient();
-        $command = new MockCommand(array(), $this->getApiCommand());
+        $command = new MockCommand(array(), $this->getOperation());
         $command->setClient($client);
 
         $command->prepare();
@@ -312,7 +294,7 @@ class CommandTest extends AbstractCommandTest
         $client = $this->getClient();
         $command = new MockCommand(array(
             'command.on_complete' => $testFunction
-        ), $this->getApiCommand());
+        ), $this->getOperation());
         $command->setClient($client);
 
         $command->prepare()->setResponse(new Response(200), true);
@@ -332,26 +314,6 @@ class CommandTest extends AbstractCommandTest
     }
 
     /**
-     * @covers Guzzle\Service\Command\AbstractCommand::setInspector
-     * @covers Guzzle\Service\Command\AbstractCommand::getInspector
-     */
-    public function testInspectorCanBeInjected()
-    {
-        $instance = Inspector::getInstance();
-        $command = new MockCommand();
-
-        $refObject = new \ReflectionObject($command);
-        $method = $refObject->getMethod('getInspector');
-        $method->setAccessible(true);
-
-        $this->assertSame($instance, $method->invoke($command));
-
-        $newInspector = new Inspector();
-        $command->setInspector($newInspector);
-        $this->assertSame($newInspector, $method->invoke($command));
-    }
-
-    /**
      * @covers Guzzle\Service\Command\AbstractCommand::setResult
      */
     public function testCanSetResultManually()
@@ -367,16 +329,16 @@ class CommandTest extends AbstractCommandTest
     }
 
     /**
-     * @covers Guzzle\Service\Command\AbstractCommand::initConfig
+     * @covers Guzzle\Service\Command\AbstractCommand
      */
     public function testCanInitConfig()
     {
         $command = $this->getMockBuilder('Guzzle\\Service\\Command\\AbstractCommand')
             ->setConstructorArgs(array(array(
                 'foo' => 'bar'
-            ), new ApiCommand(array(
-                'params' => array(
-                    'baz' => new ApiParam(array(
+            ), new Operation(array(
+                'parameters' => array(
+                    'baz' => new Parameter(array(
                         'default' => 'baaar'
                     ))
                 )
@@ -414,5 +376,15 @@ class CommandTest extends AbstractCommandTest
         $command->setClient($client);
         // Returns the result of the command
         $this->assertSame($response, $command());
+    }
+
+    /**
+     * @covers Guzzle\Service\Command\AbstractCommand::__construct
+     * @covers Guzzle\Service\Command\AbstractCommand::createOperation
+     */
+    public function testCreatesDefaultOperation()
+    {
+        $command = $this->getMockBuilder('Guzzle\Service\Command\AbstractCommand')->getMockForAbstractClass();
+        $this->assertInstanceOf('Guzzle\Service\Description\Operation', $command->getOperation());
     }
 }

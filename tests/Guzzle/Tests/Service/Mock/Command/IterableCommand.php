@@ -2,27 +2,21 @@
 
 namespace Guzzle\Tests\Service\Mock\Command;
 
-use Guzzle\Service\Description\ApiCommand;
+use Guzzle\Service\Description\Operation;
 
-/**
- * Iterable mock command
- */
 class IterableCommand extends MockCommand
 {
-    public static function getApi()
+    protected function createOperation()
     {
-        return array(
-            'name'   => 'iterable_command',
-            'params' => array(
+        return new Operation(array(
+            'name'       => 'iterable_command',
+            'parameters' => array(
                 'page_size' => array('type' => 'integer'),
                 'next_token' => array('type' => 'string')
             )
-        );
+        ));
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function build()
     {
         $this->request = $this->client->createRequest('GET');

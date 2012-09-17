@@ -3,12 +3,9 @@
 namespace Guzzle\Tests\Plugin\Log;
 
 use Guzzle\Log\ClosureLogAdapter;
-use Guzzle\Http\Utils;
 use Guzzle\Http\Client;
 use Guzzle\Http\EntityBody;
-use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\Request;
-use Guzzle\Http\Message\EntityEnclosingRequest;
 use Guzzle\Http\Message\Response;
 use Guzzle\Plugin\Log\LogPlugin;
 use Guzzle\Common\Event;

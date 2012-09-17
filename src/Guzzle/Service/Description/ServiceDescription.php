@@ -8,9 +8,29 @@ namespace Guzzle\Service\Description;
 class ServiceDescription implements ServiceDescriptionInterface
 {
     /**
-     * @var array Array of {@see ApiCommandInterface} objects
+     * @var array Array of {@see OperationInterface} objects
      */
-    protected $commands = array();
+    protected $operations = array();
+
+    /**
+     * @var array Array of API models
+     */
+    protected $models = array();
+
+    /**
+     * @var string Name of the API
+     */
+    protected $name;
+
+    /**
+     * @var string API version
+     */
+    protected $apiVersion;
+
+    /**
+     * @var string Summary of the API
+     */
+    protected $description;
 
     /**
      * @var ServiceDescriptionFactoryInterface Factory used in factory method
@@ -19,7 +39,7 @@ class ServiceDescription implements ServiceDescriptionInterface
 
     /**
      * {@inheritdoc}
-     * @param string|array $config  File to build or array of command information
+     * @param string|array $config  File to build or array of operation information
      * @param array        $options Service description factory options
      */
     public static function factory($config, array $options = null)
@@ -36,16 +56,11 @@ class ServiceDescription implements ServiceDescriptionInterface
     /**
      * Create a new ServiceDescription
      *
-     * @param array $commands Array of {@see ApiCommandInterface} objects
+     * @param array $config Array of configuration data
      */
-    public function __construct(array $commands = array())
+    public function __construct(array $config = array())
     {
-        foreach ($commands as $name => $command) {
-            if (!$command->getName()) {
-                $command->setName($name);
-            }
-            $this->addCommand($command);
-        }
+        $this->fromArray($config);
     }
 
     /**
@@ -55,10 +70,23 @@ class ServiceDescription implements ServiceDescriptionInterface
      */
     public function serialize()
     {
-        return json_encode(array_map(function($command) {
-            // Convert ApiCommands into arrays
-            return $command->toArray();
-        }, $this->commands));
+        $result = array(
+            'name'        => $this->name,
+            'apiVersion'  => $this->apiVersion,
+            'description' => $this->description,
+            'operations'  => array(),
+        );
+        foreach ($this->operations as $name => $operation) {
+            $result['operations'][$name] = $operation->toArray();
+        }
+        if (!empty($this->models)) {
+            $result['models'] = array();
+            foreach ($this->models as $id => $model) {
+                $result['models'][$id] = $model instanceof Parameter ? $model->toArray(): $model;
+            }
+        }
+
+        return json_encode(array_filter($result));
     }
 
     /**
@@ -68,61 +96,116 @@ class ServiceDescription implements ServiceDescriptionInterface
      */
     public function unserialize($json)
     {
-        $this->commands = array_map(function($data) {
-            // Convert params to ApiParam objects
-            $data['params'] = array_map(function($param) {
-                return new ApiParam($param);
-            }, $data['params']);
-            // Convert commands into ApiCommands
-            return new ApiCommand($data);
-        }, json_decode($json, true));
+        $this->operations = array();
+        $this->fromArray(json_decode($json, true));
     }
 
     /**
-     * Get the API commands of the service
-     *
-     * @return array Returns an array of {@see ApiCommandInterface} objects
+     * {@inheritdoc}
      */
-    public function getCommands()
+    public function getOperations()
     {
-        return $this->commands;
+        return $this->operations;
     }
 
     /**
-     * Check if the service has a command by name
-     *
-     * @param string $name Name of the command to check
-     *
-     * @return bool
+     * {@inheritdoc}
      */
-    public function hasCommand($name)
+    public function hasOperation($name)
     {
-        return array_key_exists($name, $this->commands);
+        return isset($this->operations[$name]);
     }
 
     /**
-     * Get an API command by name
-     *
-     * @param string $name Name of the command
-     *
-     * @return ApiCommandInterface|null
+     * {@inheritdoc}
      */
-    public function getCommand($name)
+    public function getOperation($name)
     {
-        return $this->hasCommand($name) ? $this->commands[$name] : null;
+        return $this->hasOperation($name) ? $this->operations[$name] : null;
     }
 
     /**
-     * Add a command to the service description
+     * Add a operation to the service description
      *
-     * @param ApiCommandInterface $command Command to add
+     * @param OperationInterface $operation Operation to add
      *
      * @return self
      */
-    public function addCommand(ApiCommandInterface $command)
+    public function addOperation(OperationInterface $operation)
     {
-        $this->commands[$command->getName()] = $command;
+        $this->operations[$operation->getName()] = $operation->setServiceDescription($this);
 
         return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getModel($id)
+    {
+        if (isset($this->models[$id])) {
+            if (!($this->models[$id] instanceof Parameter)) {
+                $this->models[$id] = new Parameter($this->models[$id], $this);
+            }
+            return $this->models[$id];
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function hasModel($id)
+    {
+        return isset($this->models[$id]);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getApiVersion()
+    {
+        return $this->apiVersion;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getDescription()
+    {
+        return $this->description;
+    }
+
+    /**
+     * Initialize the state from an array
+     *
+     * @param array $config Configuration data
+     */
+    protected function fromArray(array $config)
+    {
+        if (isset($config['operations'])) {
+            foreach ($config['operations'] as $name => $operation) {
+                if (!($operation instanceof Operation)) {
+                    $operation = new Operation($operation);
+                }
+                if (!$operation->getName()) {
+                   $operation->setName($name);
+                }
+                $this->addOperation($operation);
+            }
+        }
+        $this->models = isset($config['models']) ? (array) $config['models'] : array();
+        $this->apiVersion = isset($config['apiVersion']) ? $config['apiVersion'] : null;
+        $this->name = isset($config['name']) ? $config['name'] : null;
+        $this->description = isset($config['description']) ? $config['description'] : null;
     }
 }

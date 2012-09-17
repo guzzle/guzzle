@@ -2,7 +2,6 @@
 
 namespace Guzzle\Log;
 
-use Guzzle\Common\Collection;
 use Guzzle\Http\Curl\CurlHandle;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;

@@ -49,7 +49,11 @@ class BatchTransferException extends \Exception implements GuzzleException
         $this->transferredItems = $transferredItems;
         $this->transferStrategy = $transferStrategy;
         $this->divisorStrategy = $divisorStrategy;
-        parent::__construct('Exception encountered while transferring batch', $exception->getCode(), $exception);
+        parent::__construct(
+            'Exception encountered while transferring batch: ' . $exception->getMessage(),
+            $exception->getCode(),
+            $exception
+        );
     }
 
     /**

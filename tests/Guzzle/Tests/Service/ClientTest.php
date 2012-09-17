@@ -5,7 +5,7 @@ namespace Guzzle\Tests\Service;
 use Guzzle\Inflection\Inflector;
 use Guzzle\Http\Message\Response;
 use Guzzle\Plugin\Mock\MockPlugin;
-use Guzzle\Service\Description\ApiCommand;
+use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Client;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
@@ -22,7 +22,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     public function setUp()
     {
         $this->serviceTest = new ServiceDescription(array(
-            'test_command' => new ApiCommand(array(
+            'test_command' => new Operation(array(
                 'doc' => 'documentationForCommand',
                 'method' => 'DELETE',
                 'class' => 'Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand',

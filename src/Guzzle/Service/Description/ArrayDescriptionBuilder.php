@@ -2,7 +2,6 @@
 
 namespace Guzzle\Service\Description;
 
-use Guzzle\Service\Inspector;
 use Guzzle\Service\Exception\DescriptionBuilderException;
 
 /**
@@ -15,48 +14,31 @@ class ArrayDescriptionBuilder implements DescriptionBuilderInterface
      */
     public function build($config, array $options = null)
     {
-        if (!empty($config['types'])) {
-            foreach ($config['types'] as $name => $type) {
-                $default = array();
-                if (!isset($type['class'])) {
-                    throw new DescriptionBuilderException('Custom types require a class attribute');
-                }
-                foreach ($type as $key => $value) {
-                    if ($key != 'name' && $key != 'class') {
-                        $default[$key] = $value;
-                    }
-                }
-                Inspector::getInstance()->registerConstraint($name, $type['class'], $default);
-            }
-        }
+        $operations = array();
 
-        $commands = array();
-        if (!empty($config['commands'])) {
-            foreach ($config['commands'] as $name => $command) {
-                $name = $command['name'] = isset($command['name']) ? $command['name'] : $name;
-                // Extend other commands
-                if (!empty($command['extends'])) {
-
-                    $originalParams = empty($command['params']) ? false: $command['params'];
-                    $resolvedParams = array();
-
-                    foreach ((array) $command['extends'] as $extendedCommand) {
-                        if (empty($commands[$extendedCommand])) {
-                            throw new DescriptionBuilderException("{$name} extends missing command {$extendedCommand}");
+        if (!empty($config['operations'])) {
+            foreach ($config['operations'] as $name => $op) {
+                $name = $op['name'] = isset($op['name']) ? $op['name'] : $name;
+                // Extend other operations
+                if (!empty($op['extends'])) {
+                    $original = empty($op['parameters']) ? false: $op['parameters'];
+                    $resolved = array();
+                    foreach ((array) $op['extends'] as $extendedCommand) {
+                        if (empty($operations[$extendedCommand])) {
+                            throw new DescriptionBuilderException("{$name} extends missing operation {$extendedCommand}");
                         }
-                        $toArray = $commands[$extendedCommand]->toArray();
-                        $resolvedParams = empty($resolvedParams) ? $toArray['params'] : array_merge($resolvedParams, $toArray['params']);
-                        $command = array_merge($toArray, $command);
+                        $toArray = $operations[$extendedCommand]->toArray();
+                        $resolved = empty($resolved) ? $toArray['parameters'] : array_merge($resolved, $toArray['parameters']);
+                        $op = array_merge($toArray, $op);
                     }
-
-                    $command['params'] = $originalParams ? array_merge($resolvedParams, $originalParams) : $resolvedParams;
+                    $op['parameters'] = $original ? array_merge($resolved, $original) : $resolved;
                 }
                 // Use the default class
-                $command['class'] = isset($command['class']) ? $command['class'] : ServiceDescription::DEFAULT_COMMAND_CLASS;
-                $commands[$name] = new ApiCommand($command);
+                $op['class'] = isset($op['class']) ? $op['class'] : Operation::DEFAULT_COMMAND_CLASS;
+                $operations[$name] = new Operation($op);
             }
         }
 
-        return new ServiceDescription($commands);
+        return new ServiceDescription(array('operations' => $operations));
     }
 }
