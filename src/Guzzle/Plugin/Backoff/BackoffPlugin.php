@@ -4,11 +4,9 @@ namespace Guzzle\Plugin\Backoff;
 
 use Guzzle\Common\Event;
 use Guzzle\Common\AbstractHasDispatcher;
-use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
-use Guzzle\Http\Curl\CurlHandle;
 use Guzzle\Http\Curl\CurlMultiInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 

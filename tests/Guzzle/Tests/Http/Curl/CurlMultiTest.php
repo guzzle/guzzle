@@ -5,7 +5,6 @@ namespace Guzzle\Tests\Http\Curl;
 use Guzzle\Common\Event;
 use Guzzle\Common\Exception\ExceptionCollection;;
 use Guzzle\Common\Collection;
-use Guzzle\Log\ClosureLogAdapter;
 use Guzzle\Http\Client;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;

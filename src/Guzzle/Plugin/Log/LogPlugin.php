@@ -7,7 +7,6 @@ use Guzzle\Log\LogAdapterInterface;
 use Guzzle\Log\MessageFormatter;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
-use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 

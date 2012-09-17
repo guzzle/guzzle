@@ -2,16 +2,15 @@
 
 namespace Guzzle\Tests\Service\Mock\Command;
 
-/**
- * Other mock Command
- */
+use Guzzle\Service\Description\Operation;
+
 class OtherCommand extends MockCommand
 {
-    public static function getApi()
+    protected function createOperation()
     {
-        return array(
-            'name' => 'other_command',
-            'params' => array(
+        return new Operation(array(
+            'name'       => 'other_command',
+            'parameters' => array(
                 'test' => array(
                     'default'  => '123',
                     'required' => true,
@@ -19,16 +18,11 @@ class OtherCommand extends MockCommand
                 ),
                 'other'  => array(),
                 'arg'    => array('type' => 'string'),
-                'static' => array(
-                    'static' => 'this is static'
-                )
+                'static' => array('static' => true, 'default' => 'this is static')
             )
-        );
+        ));
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function build()
     {
         $this->request = $this->client->getRequest('HEAD');

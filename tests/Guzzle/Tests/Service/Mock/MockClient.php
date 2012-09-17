@@ -2,7 +2,7 @@
 
 namespace Guzzle\Tests\Service\Mock;
 
-use Guzzle\Service\Inspector;
+use Guzzle\Common\Collection;
 use Guzzle\Service\Client;
 
 /**
@@ -25,7 +25,7 @@ class MockClient extends Client
      */
     public static function factory($config = array())
     {
-        $config = Inspector::prepareConfig($config, array(
+        $config = Collection::fromConfig($config, array(
             'base_url' => '{{scheme}}://127.0.0.1:8124/{{api_version}}/{{subdomain}}',
             'scheme' => 'http',
             'api_version' => 'v1'

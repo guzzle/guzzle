@@ -2,11 +2,6 @@
 
 namespace Guzzle\Plugin\Backoff;
 
-use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\Response;
-use Guzzle\Http\Exception\HttpException;
-use Guzzle\Http\Exception\CurlException;
-
 /**
  * Strategy used to retry when certain error codes are encountered
  */
