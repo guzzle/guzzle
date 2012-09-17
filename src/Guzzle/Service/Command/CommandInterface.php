@@ -7,7 +7,7 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\ClientInterface;
-use Guzzle\Service\Description\ApiCommandInterface;
+use Guzzle\Service\Description\OperationInterface;
 use Guzzle\Service\Exception\CommandException;
 
 /**
@@ -16,17 +16,6 @@ use Guzzle\Service\Exception\CommandException;
 interface CommandInterface
 {
     /**
-     * Specify a callable to execute when the command completes
-     *
-     * @param mixed $callable Callable to execute when the command completes. The callable must accept a
-     *                        {@see CommandInterface} object as the only argument.
-     *
-     * @return CommandInterface
-     * @throws InvalidArgumentException
-     */
-    public function setOnComplete($callable);
-
-    /**
      * Get the short form name of the command
      *
      * @return string
@@ -34,11 +23,11 @@ interface CommandInterface
     public function getName();
 
     /**
-     * Get the API command information about the command
+     * Get the API operation information about the command
      *
-     * @return ApiCommandInterface
+     * @return OperationInterface
      */
-    public function getApiCommand();
+    public function getOperation();
 
     /**
      * Execute the command and return the result
@@ -125,4 +114,14 @@ interface CommandInterface
      * @return Collection
      */
     public function getRequestHeaders();
+
+    /**
+     * Specify a callable to execute when the command completes
+     *
+     * @param mixed $callable Callable to execute when the command completes. The callable must accept a
+     *                        {@see CommandInterface} object as the only argument.
+     * @return CommandInterface
+     * @throws InvalidArgumentException
+     */
+    public function setOnComplete($callable);
 }

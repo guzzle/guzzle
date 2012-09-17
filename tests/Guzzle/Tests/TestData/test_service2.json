@@ -1,5 +1,5 @@
 {
-    "commands": {
+    "operations": {
         "abstract": {
             "uri": "/abstract"
         }

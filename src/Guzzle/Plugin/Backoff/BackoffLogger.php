@@ -2,7 +2,6 @@
 
 namespace Guzzle\Plugin\Backoff;
 
-use Guzzle\Common\Collection;
 use Guzzle\Common\Event;
 use Guzzle\Log\LogAdapterInterface;
 use Guzzle\Log\MessageFormatter;

@@ -21,11 +21,11 @@ class JsonDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
     public function testBuildsServiceDescriptions()
     {
         $j = new JsonDescriptionBuilder();
-        $description = $j->build(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'TestData' . DIRECTORY_SEPARATOR . 'test_service.json');
-        $this->assertTrue($description->hasCommand('test'));
-        $test = $description->getCommand('test');
+        $description = $j->build(__DIR__ . '/../../TestData/test_service.json');
+        $this->assertTrue($description->hasOperation('test'));
+        $test = $description->getOperation('test');
         $this->assertEquals('/path', $test->getUri());
-        $test = $description->getCommand('concrete');
+        $test = $description->getOperation('concrete');
         $this->assertEquals('/abstract', $test->getUri());
     }
 }

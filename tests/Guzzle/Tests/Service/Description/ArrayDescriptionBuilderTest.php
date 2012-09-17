@@ -2,7 +2,6 @@
 
 namespace Guzzle\Tests\Service\Description;
 
-use Guzzle\Service\Inspector;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Description\ArrayDescriptionBuilder;
 
@@ -18,29 +17,21 @@ class ArrayDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
     public function testAllowsDeepNestedInheritance()
     {
         $d = ServiceDescription::factory(array(
-            'commands' => array(
+            'operations' => array(
                 'abstract' => array(
-                    'method' => 'GET',
-                    'params' => array(
-                        'test' => array(
-                            'type' => 'string',
-                            'required' => true
-                        )
+                    'httpMethod' => 'GET',
+                    'parameters' => array(
+                        'test' => array('type' => 'string', 'required' => true)
                     )
                 ),
-                'abstract2' => array(
-                    'uri'     => '/test',
-                    'extends' => 'abstract'
-                ),
-                'concrete' => array(
-                    'extends' => 'abstract2'
-                )
+                'abstract2' => array('uri' => '/test', 'extends' => 'abstract'),
+                'concrete'  => array('extends' => 'abstract2')
             )
         ));
 
-        $c = $d->getCommand('concrete');
+        $c = $d->getOperation('concrete');
         $this->assertEquals('/test', $c->getUri());
-        $this->assertEquals('GET', $c->getMethod());
+        $this->assertEquals('GET', $c->getHttpMethod());
         $params = $c->getParams();
         $param = $params['test'];
         $this->assertEquals('string', $param->getType());
@@ -55,7 +46,7 @@ class ArrayDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
     public function testThrowsExceptionWhenExtendingMissingCommand()
     {
         ServiceDescription::factory(array(
-            'commands' => array(
+            'operations' => array(
                 'concrete' => array(
                     'extends' => 'missing'
                 )
@@ -63,41 +54,13 @@ class ArrayDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         ));
     }
 
-    public function testRegistersCustomTypes()
-    {
-        ServiceDescription::factory(array(
-            'types' => array(
-                'foo' => array(
-                    'class' => 'Guzzle\\Validation\\Regex',
-                    'pattern' => '/[0-9]+/'
-                )
-            )
-        ));
-
-        $valid = Inspector::getInstance()->validateConstraint('foo', 'abc');
-        $this->assertEquals('abc does not match the regular expression', $valid);
-    }
-
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Custom types require a class attribute
-     */
-    public function testCustomTypesRequireClassAttribute()
-    {
-        ServiceDescription::factory(array(
-            'types' => array(
-                'slug' => array()
-            )
-        ));
-    }
-
     public function testAllowsMultipleInheritance()
     {
         $description = ServiceDescription::factory(array(
-            'commands' => array(
+            'operations' => array(
                 'a' => array(
-                    'method' => 'GET',
-                    'params' => array(
+                    'httpMethod' => 'GET',
+                    'parameters' => array(
                         'a1' => array(
                             'default'  => 'foo',
                             'required' => true,
@@ -107,32 +70,32 @@ class ArrayDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
                 ),
                 'b' => array(
                     'extends' => 'a',
-                    'params' => array(
+                    'parameters' => array(
                         'b2' => array()
                     )
                 ),
                 'c' => array(
-                    'params' => array(
+                    'parameters' => array(
                         'a1' => array(
-                            'default'  => 'bar',
-                            'required' => true,
-                            'doc'      => 'test'
+                            'default'     => 'bar',
+                            'required'    => true,
+                            'description' => 'test'
                         ),
                         'c3' => array()
                     )
                 ),
                 'd' => array(
-                    'method'  => 'DELETE',
-                    'extends' => array('b', 'c'),
-                    'params'  => array(
+                    'httpMethod' => 'DELETE',
+                    'extends'    => array('b', 'c'),
+                    'parameters' => array(
                         'test' => array()
                     )
                 )
             )
         ));
 
-        $command = $description->getCommand('d');
-        $this->assertEquals('DELETE', $command->getMethod());
+        $command = $description->getOperation('d');
+        $this->assertEquals('DELETE', $command->getHttpMethod());
         $this->assertContains('a1', $command->getParamNames());
         $this->assertContains('b2', $command->getParamNames());
         $this->assertContains('c3', $command->getParamNames());
@@ -140,7 +103,6 @@ class ArrayDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertTrue($command->getParam('a1')->getRequired());
         $this->assertEquals('bar', $command->getParam('a1')->getDefault());
-        $this->assertEquals('test', $command->getParam('a1')->getDoc());
-        $this->assertNull($command->getParam('a1')->getPrepend());
+        $this->assertEquals('test', $command->getParam('a1')->getDescription());
     }
 }

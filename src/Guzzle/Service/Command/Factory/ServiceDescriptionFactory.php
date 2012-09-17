@@ -59,16 +59,16 @@ class ServiceDescriptionFactory implements FactoryInterface
      */
     public function factory($name, array $args = array())
     {
-        $command = $this->description->getCommand($name);
+        $command = $this->description->getOperation($name);
 
         // If an inflector was passed, then attempt to get the command using snake_case inflection
         if (!$command && $this->inflector) {
-            $command = $this->description->getCommand($this->inflector->snake($name));
+            $command = $this->description->getOperation($this->inflector->snake($name));
         }
 
         if ($command) {
-            $class = $command->getConcreteClass();
-            return new $class($args, $command);
+            $class = $command->getClass();
+            return new $class($args, $command, $this->description);
         }
     }
 }

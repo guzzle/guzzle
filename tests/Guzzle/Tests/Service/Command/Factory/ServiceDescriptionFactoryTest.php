@@ -50,7 +50,7 @@ class ServiceDescriptionFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     protected function getDescription()
     {
         return ServiceDescription::factory(array(
-            'commands' => array(
+            'operations' => array(
                 'jar_jar' => array(
                     'class' => 'Guzzle\Tests\Service\Mock\Command\MockCommand'
                 ),
