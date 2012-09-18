@@ -13,6 +13,11 @@ class DefaultProcessor implements ProcessorInterface
     protected static $instance;
 
     /**
+     * @var bool Whether or not integers are converted to strings when an integer is received for a string input
+     */
+    protected $castIntegerToStringType;
+
+    /**
      * Get a cached instance
      *
      * @return self
@@ -25,6 +30,15 @@ class DefaultProcessor implements ProcessorInterface
         }
 
         return self::$instance;
+    }
+
+    /**
+     * @param bool $castIntegerToStringType Set to true to convert integers into strings when a required type is a
+     *                                      string and the input value is an integer. Defaults to true.
+     */
+    public function __construct($castIntegerToStringType = true)
+    {
+        $this->castIntegerToStringType = $castIntegerToStringType;
     }
 
     /**
@@ -50,11 +64,13 @@ class DefaultProcessor implements ProcessorInterface
         // Update the value by adding default or static values
         $value = $param->getValue($value);
 
+        // if the value is null and the parameter is not required or is static, then skip any further recursion
         if ((null === $value && $param->getRequired() == false) || $param->getStatic()) {
             return true;
         }
 
         $errors = array();
+        // If a name is set then update the path so that validation messages are more helpful
         if ($name = $param->getName()) {
             $path .= "[{$name}]";
         }
@@ -89,12 +105,14 @@ class DefaultProcessor implements ProcessorInterface
 
             if ($traverse) {
                 if ($properties = $param->getProperties()) {
+                    // if properties were found, the validate each property of the value
                     foreach ($properties as $property) {
                         $this->validateProperty($property, $value, $path, $depth, $errors);
                     }
                 }
                 $additional = $param->getAdditionalProperties();
                 if ($additional !== true) {
+                    // If additional properties were found, then validate each against the additionalProperties attr.
                     $this->validateAdditionalProperties($additional, $properties, $value, $errors, $path, $depth);
                 }
             }
@@ -105,6 +123,7 @@ class DefaultProcessor implements ProcessorInterface
 
         } elseif ($type == 'array' && $param->getItems() && is_array($value)) {
             foreach ($value as $i => &$item) {
+                // Validate each item in an array against the items attribute of the schema
                 $e = $this->recursiveProcess($param->getItems(), $item, $path . "[{$i}]", $depth + 1);
                 if ($e !== true) {
                     $errors = array_merge($errors, $e);
@@ -112,6 +131,7 @@ class DefaultProcessor implements ProcessorInterface
             }
         }
 
+        // If the value is required and the type is not null, then there is an error if the value is not set
         if ($param->getRequired() && ($value === null || $value === '') && $type != 'null') {
             $message = "{$path} is " . ($param->getType() ? ('a required ' . $param->getType()) : 'required');
             if ($param->getDescription()) {
@@ -120,21 +140,31 @@ class DefaultProcessor implements ProcessorInterface
             $errors[] = $message;
         } else {
 
+            // Validate that the type is correct. If the type is string but an integer was passed, the class can be
+            // instructed to cast the integer to a string to pass validation. This is the default behavior.
             if ($type && (!$type = $this->determineType($param, $value))) {
-                $errors[] = "{$path} must be of type " . implode(' or ', (array) $param->getType());
+                if ($this->castIntegerToStringType && $param->getType() == 'string' && is_integer($value)) {
+                    $value = (string) $value;
+                } else {
+                    $errors[] = "{$path} must be of type " . implode(' or ', (array) $param->getType());
+                }
             }
 
+            // Validate string specific options
             if ($type == 'string') {
+                // Strings can have enums which are a list of predefined values
                 if (($enum = $param->getEnum()) && !in_array($value, $enum)) {
                     $errors[] = "{$path} must be one of " . implode(' or ', array_map(function ($s) {
                         return '"' . addslashes($s) . '"';
                     }, $enum));
                 }
+                // Strings can have a regex pattern that the value must match
                 if (($pattern = $param->getPattern()) && !preg_match($pattern, $value)) {
                     $errors[] = "{$path} must match the following regular expression: {$pattern}";
                 }
             }
 
+            // Validate min attribute contextually based on the value type
             if ($min = $param->getMin()) {
                 if (($type == 'integer' || $type == 'numeric') && $value < $min) {
                     $errors[] = "{$path} must be greater than or equal to {$min}";
@@ -145,24 +175,29 @@ class DefaultProcessor implements ProcessorInterface
                 }
             }
 
+            // Validate max attribute contextually based on the value type
             if ($max = $param->getMax()) {
                 if (($type == 'integer' || $type == 'numeric') && $value > $max) {
                     $errors[] = "{$path} must be less than or equal to {$max}";
                 } elseif ($type == 'string' && strlen($value) > $max) {
-                    $errors[] = "{$path} length must be greater than or equal to {$max}";
+                    $errors[] = "{$path} length must be less than or equal to {$max}";
                 } elseif ($type == 'array' && count($value) > $max) {
                     $errors[] = "{$path} must contain {$max} or fewer elements";
                 }
             }
         }
 
+        // Determine what the response should be
         if (empty($errors)) {
+            // If no errors were found, then filter the value and return true
             $value = $param->filter($value);
             return true;
         } elseif ($depth == 0) {
+            // If errors were found and this is the outer recursive function, then return a sorted list of errors
             sort($errors);
             return $errors;
         } else {
+            // If errors were found in a recursive call, then return them. They will be merged in to the parent scope.
             return $errors;
         }
     }
@@ -188,6 +223,7 @@ class DefaultProcessor implements ProcessorInterface
             }
         }
 
+        // Determine the keys that were specified that were not listed in the properties of the schema
         $diff = array_diff($keys, array_keys($properties));
 
         if (!empty($diff)) {
@@ -201,6 +237,7 @@ class DefaultProcessor implements ProcessorInterface
                     }
                 }
             } else {
+                // if additionalProperties is set to false and there are additionalProperties in the values, then fail
                 $keys = array_keys($value);
                 $errors[] = sprintf('%s[%s] is not an allowed property', $path, reset($keys));
             }
@@ -257,7 +294,6 @@ class DefaultProcessor implements ProcessorInterface
      */
     protected function checkType($type, $value)
     {
-
         if ($type && $type != 'any') {
             switch ($type) {
                 case 'string':

@@ -158,7 +158,7 @@ class OperationTest extends \Guzzle\Tests\GuzzleTestCase
     public function testValidatesArgs()
     {
         $config = new Collection(array(
-            'data' => 123,
+            'data' => false,
             'min'  => 'a',
             'max'  => 'aaa'
         ));
@@ -189,7 +189,7 @@ class OperationTest extends \Guzzle\Tests\GuzzleTestCase
             $concat = implode("\n", $e->getErrors());
             $this->assertContains("[data] must be of type string", $concat);
             $this->assertContains("[min] length must be greater than or equal to 2", $concat);
-            $this->assertContains("[max] length must be greater than or equal to 2", $concat);
+            $this->assertContains("[max] length must be less than or equal to 2", $concat);
         }
     }
 
