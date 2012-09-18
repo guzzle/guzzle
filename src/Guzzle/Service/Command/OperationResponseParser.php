@@ -76,13 +76,15 @@ class OperationResponseParser extends DefaultResponseParser
      */
     public function parse(CommandInterface $command)
     {
+        // Perform processing on the parent which converts JSON to an array and XML to a SimpleXMLElement
         $result = parent::parse($command);
-
-        // Grab the corresponding model from the service description
         $operation = $command->getOperation();
-        if (!$class = $operation->getResponseClass()) {
+
+        if ($operation->getResponseType() != 'model') {
+            // No further processing is needed if the responseType is not model
             return $result;
-        } elseif (!$model = $operation->getServiceDescription()->getModel($class)) {
+        } elseif (!$model = $operation->getServiceDescription()->getModel($operation->getResponseClass())) {
+            // Do not attempt further processing if the model cannot be found
             return $result;
         }
 

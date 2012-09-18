@@ -2,6 +2,8 @@
 
 namespace Guzzle\Service\Command;
 
+use Guzzle\Service\Description\OperationInterface;
+
 /**
  * A command that creates requests based on {@see Guzzle\Service\Description\OperationInterface} objects, and if the
  * matching operation uses a service description model in the responseClass attribute, then this command will marshal
@@ -71,12 +73,9 @@ class OperationCommand extends AbstractCommand
 
         // If no response parser is set, add the default parser if a model matching the responseClass is found
         if (!$this->responseParser) {
-            $responseClass = $this->operation->getResponseClass();
-            if ($responseClass && $this->operation->getServiceDescription()->getModel($responseClass)) {
-                $this->responseParser = OperationResponseParser::getInstance();
-            } else {
-                $this->responseParser = DefaultResponseParser::getInstance();
-            }
+            $this->responseParser = $this->operation->getResponseType() == OperationInterface::TYPE_MODEL
+                ? OperationResponseParser::getInstance()
+                : DefaultResponseParser::getInstance();
         }
     }
 
