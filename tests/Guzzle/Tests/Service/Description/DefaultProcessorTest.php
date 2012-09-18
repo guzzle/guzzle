@@ -192,19 +192,24 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
     public function testChecksTypes()
     {
         $p = new DefaultProcessor();
-        $r = new \ReflectionMethod($p, 'checkType');
+        $r = new \ReflectionMethod($p, 'determineType');
         $r->setAccessible(true);
-        $this->assertTrue($r->invoke($p, '', 'hello'));
-        $this->assertTrue($r->invoke($p, 'any', 'hello'));
-        $this->assertTrue($r->invoke($p, 'string', 'hello'));
-        $this->assertTrue($r->invoke($p, 'integer', 1));
-        $this->assertTrue($r->invoke($p, 'numeric', 1));
-        $this->assertTrue($r->invoke($p, 'numeric', '1'));
-        $this->assertTrue($r->invoke($p, 'boolean', true));
-        $this->assertTrue($r->invoke($p, 'boolean', false));
-        $this->assertFalse($r->invoke($p, 'boolean', 'false'));
-        $this->assertTrue($r->invoke($p, 'null', null));
-        $this->assertTrue($r->invoke($p, 'foo', 'foo'));
+        $this->assertEquals('any', $r->invoke($p, 'any', 'hello'));
+        $this->assertEquals(false, $r->invoke($p, 'foo', 'foo'));
+        $this->assertEquals('string', $r->invoke($p, 'string', 'hello'));
+        $this->assertEquals(false, $r->invoke($p, 'string', false));
+        $this->assertEquals('integer', $r->invoke($p, 'integer', 1));
+        $this->assertEquals(false, $r->invoke($p, 'integer', 'abc'));
+        $this->assertEquals('numeric', $r->invoke($p, 'numeric', 1));
+        $this->assertEquals('numeric', $r->invoke($p, 'numeric', '1'));
+        $this->assertEquals(false, $r->invoke($p, 'numeric', 'a'));
+        $this->assertEquals('boolean', $r->invoke($p, 'boolean', true));
+        $this->assertEquals('boolean', $r->invoke($p, 'boolean', false));
+        $this->assertEquals(false, $r->invoke($p, 'boolean', 'false'));
+        $this->assertEquals('null', $r->invoke($p, 'null', null));
+        $this->assertEquals(false, $r->invoke($p, 'null', 'abc'));
+        $this->assertEquals('array', $r->invoke($p, 'array', array()));
+        $this->assertEquals(false, $r->invoke($p, 'array', 'foo'));
     }
 
     public function testValidatesFalseAdditionalProperties()
