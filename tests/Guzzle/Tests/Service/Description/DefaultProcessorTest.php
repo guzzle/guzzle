@@ -140,7 +140,7 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
             '[foo][bar] is a required string: This is what it does',
             '[foo][baz] must contain 2 or more elements',
             '[foo][baz][0] must be of type string',
-            '[foo][test2] length must be greater than or equal to 2',
+            '[foo][test2] length must be less than or equal to 2',
             '[foo][test3] must be greater than or equal to 100',
             '[foo][test4] must be less than or equal to 10',
             '[foo][test5] must contain 2 or fewer elements',
@@ -279,5 +279,13 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
                 )
             )
         ));
+    }
+
+    public function testIntegersCastToStringWhenTypeMismatch()
+    {
+        $param = new Parameter(array('name' => 'test', 'type' => 'string'));
+        $value = 12;
+        $this->assertTrue($param->process($value));
+        $this->assertEquals('12', $value);
     }
 }
