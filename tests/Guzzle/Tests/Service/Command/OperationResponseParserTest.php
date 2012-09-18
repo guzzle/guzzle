@@ -62,7 +62,7 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $parser = new OperationResponseParser();
         $operation = $this->getDescription()->getOperation('test');
-        $operation->setResponseClass('array');
+        $operation->setResponseClass('Baz')->setResponseType('model');
         $op = new OperationCommand(array(), $operation);
         $op->setResponseParser($parser)->setClient(new Client());
         $op->prepare()->setResponse(new Response(201), true);

@@ -10,6 +10,11 @@ use Guzzle\Service\Exception\ValidationException;
  */
 interface OperationInterface
 {
+    const TYPE_PRIMITIVE = 'primitive';
+    const TYPE_CLASS = 'class';
+    const TYPE_DOCUMENTATION = 'documentation';
+    const TYPE_MODEL = 'model';
+
     /**
      * Get as an array
      *
@@ -108,11 +113,20 @@ interface OperationInterface
     public function getDocumentationUrl();
 
     /**
-     * Get what is returned from the method. Can be a primitive, class name, or model
+     * Get what is returned from the method. Can be a primitive, class name, or model. For example, the responseClass
+     * could be 'array', which would inherently use a responseType of 'primitive'. Using a class name would set a
+     * responseType of 'class'. Specifying a model by ID will use a responseType of 'model'.
      *
      * @return string|null
      */
     public function getResponseClass();
+
+    /**
+     * Get information about how the response is unmarshalled: One of 'primitive', 'class', 'model', or 'documentation'
+     *
+     * @return string
+     */
+    public function getResponseType();
 
     /**
      * Get notes about the response of the operation

@@ -3,6 +3,7 @@
 namespace Guzzle\Service\Description;
 
 use Guzzle\Common\Collection;
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Service\Exception\ValidationException;
 
 /**
@@ -14,6 +15,16 @@ class Operation implements OperationInterface
      * @var string Default command class to use when none is specified
      */
     const DEFAULT_COMMAND_CLASS = 'Guzzle\\Service\\Command\\OperationCommand';
+
+    /**
+     * @var array Hashmap of properties that can be specified. Represented as a hash to speed up constructor.
+     */
+    protected static $properties = array(
+        'class' => true, 'data' => true, 'deprecated' => true, 'documentationUrl' => true,
+        'errorResponses' => true, 'httpMethod' => true, 'name' => true, 'notes' => true,
+        'parameters' => true, 'responseClass' => true, 'responseNotes' => true,
+        'responseType' => true, 'summary' => true, 'uri' => true
+    );
 
     /**
      * @var array Parameters
@@ -61,6 +72,11 @@ class Operation implements OperationInterface
     protected $responseClass;
 
     /**
+     * @var string Type information about the response
+     */
+    protected $responseType;
+
+    /**
      * @var string Information about the response returned by the operation
      */
     protected $responseNotes;
@@ -95,8 +111,15 @@ class Operation implements OperationInterface
      * - summary:            (string) This is a short summary of what the operation does
      * - notes:              (string) A longer text field to explain the behavior of the operation.
      * - documentationUrl:   (string) Reference URL providing more information about the operation
-     * - responseClass:      (string) This is what is returned from the method. Can be a primitive, class name, or model
+     * - responseClass:      (string) This is what is returned from the method. Can be a primitive, PSR-0 compliant
+     *                       class name, or model.
      * - responseNotes:      (string) Information about the response returned by the operation
+     * - responseType:       (string) One of 'primitive', 'class', 'model', or 'documentation'. If not specified, this
+     *                       value will be automatically inferred based on whether or not there is a model matching the
+     *                       name, if a matching class name is found, or set to 'primitive' by default. Set this value
+     *                       to 'documentation' when setting a responseClass that references a model but only for
+     *                       documentation purposes. This prevents Guzzle from having to crawl and normalize the
+     *                       response model.
      * - deprecated:         (bool) Set to true if this is a deprecated command
      * - errorResponses:     (array)  Errors that could occur when executing the command. Array of hashes, each with a
      *                       'code' (the HTTP response code), 'phrase' (response reason phrase or description of the
@@ -110,17 +133,29 @@ class Operation implements OperationInterface
     public function __construct(array $config = array(), ServiceDescriptionInterface $description = null)
     {
         $this->description = $description;
-        foreach ($config as $key => $value) {
+
+        // Get the intersection of the available properties and properties set on the operation
+        foreach (array_intersect_key($config, self::$properties) as $key => $value) {
             $this->{$key} = $value;
         }
 
-        $this->uri = $this->uri ?: '';
         $this->class = $this->class ?: self::DEFAULT_COMMAND_CLASS;
         $this->deprecated = (bool) $this->deprecated;
         $this->errorResponses = $this->errorResponses ?: array();
         $this->data = $this->data ?: array();
 
+        if (!$this->responseClass) {
+            $this->responseClass = 'array';
+            $this->responseType = 'primitive';
+        } elseif ($this->responseType) {
+            $this->setResponseType($this->responseType);
+        } else {
+            $this->inferResponseType();
+        }
+
+        // Parameters need special handling when adding
         if (!empty($config['parameters'])) {
+            $this->parameters = array();
             foreach ($config['parameters'] as $name => $param) {
                 if ($param instanceof Parameter) {
                     $param->setName($name)->setParent($this);
@@ -140,23 +175,19 @@ class Operation implements OperationInterface
      */
     public function toArray()
     {
-        foreach (array(
-            'httpMethod', 'uri', 'class', 'summary', 'notes', 'documentationUrl', 'responseClass',
-            'responseNotes', 'deprecated'
-        ) as $check) {
+        $result = array();
+        // Grab valid properties and filter out values that weren't set
+        foreach (array_keys(self::$properties) as $check) {
             if ($value = $this->{$check}) {
                 $result[$check] = $value;
             }
         }
-        if (!empty($this->data)) {
-            $result['data'] = $this->data;
-        }
+        // Remove the name property
+        unset($result['name']);
+        // Parameters need to be converted to arrays
         $result['parameters'] = array();
         foreach ($this->getParams() as $key => $param) {
             $result['parameters'][$key] = $param->toArray();
-        }
-        if (!empty($this->errorResponses)) {
-            $result['errorResponses'] = $this->errorResponses;
         }
 
         return $result;
@@ -396,7 +427,8 @@ class Operation implements OperationInterface
     }
 
     /**
-     * Set what is returned from the method. Can be a primitive, class name, or model
+     * Set what is returned from the method. Can be a primitive, class name, or model. For example: 'array',
+     * 'Guzzle\\Foo\\Baz', or 'MyModelName' (to reference a model by ID).
      *
      * @param string $responseClass Type of response
      *
@@ -405,6 +437,35 @@ class Operation implements OperationInterface
     public function setResponseClass($responseClass)
     {
         $this->responseClass = $responseClass;
+        $this->inferResponseType();
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getResponseType()
+    {
+        return $this->responseType;
+    }
+
+    /**
+     * Set qualifying information about the responseClass. One of 'primitive', 'class', 'model', or 'documentation'
+     *
+     * @param string $responseType Response type information
+     *
+     * @return self
+     * @throws InvalidArgumentException
+     */
+    public function setResponseType($responseType)
+    {
+        static $types = array(self::TYPE_PRIMITIVE, self::TYPE_CLASS, self::TYPE_MODEL, self::TYPE_DOCUMENTATION);
+        if (!in_array($responseType, $types)) {
+            throw new InvalidArgumentException('responseType must be one of ' . implode(', ', $types));
+        }
+
+        $this->responseType = $responseType;
 
         return $this;
     }
@@ -545,6 +606,24 @@ class Operation implements OperationInterface
             $e = new ValidationException('Validation errors: ' . implode("\n", $errors));
             $e->setErrors($errors);
             throw $e;
+        }
+    }
+
+    /**
+     * Infer the response type from the responseClass value
+     */
+    protected function inferResponseType()
+    {
+        if (!$this->responseClass || $this->responseClass == 'array' || $this->responseClass == 'string'
+            || $this->responseClass == 'boolean' || $this->responseClass == 'integer'
+        ) {
+            $this->responseType = self::TYPE_PRIMITIVE;
+        } elseif ($this->description && $this->description->hasModel($this->responseClass)) {
+            $this->responseType = self::TYPE_MODEL;
+        } elseif (strpos($this->responseClass, '\\') !== false) {
+            $this->responseType = self::TYPE_CLASS;
+        } else {
+            $this->responseType = self::TYPE_PRIMITIVE;
         }
     }
 }
