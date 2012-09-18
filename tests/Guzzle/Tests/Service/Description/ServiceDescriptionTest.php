@@ -154,6 +154,9 @@ class ServiceDescriptionTest extends \Guzzle\Tests\GuzzleTestCase
         $d = new ServiceDescription($data);
         $this->assertEquals('foo', $d->getData('auth'));
         $this->assertEquals('bar', $d->getData('keyParam'));
+        // responseClass and responseType are added by default
+        $data['operations']['foo']['responseClass'] = 'array';
+        $data['operations']['foo']['responseType'] = 'primitive';
         $this->assertEquals($data, json_decode($d->serialize(), true));
     }
 }

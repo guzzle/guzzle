@@ -228,12 +228,9 @@ class ServiceDescription implements ServiceDescriptionInterface
         if (isset($config['operations'])) {
             foreach ($config['operations'] as $name => $operation) {
                 if (!($operation instanceof Operation)) {
-                    $operation = new Operation($operation);
+                    $operation = new Operation($operation, $this);
                 }
-                if (!$operation->getName()) {
-                   $operation->setName($name);
-                }
-                $this->addOperation($operation);
+                $this->addOperation($operation->setName($name));
             }
         }
 

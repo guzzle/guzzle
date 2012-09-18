@@ -61,10 +61,8 @@ class OperationCommandTest extends \Guzzle\Tests\GuzzleTestCase
     public function testParsesResponsesUsingModelParserWhenMatchingModelIsFound()
     {
         $description = new ServiceDescription(array(
-            'operations' => array('foo' => array('responseClass' => 'bar')),
-            'models' => array(
-                'bar' => array()
-            )
+            'operations' => array('foo' => array('responseClass' => 'bar', 'responseType' => 'model')),
+            'models' => array('bar' => array())
         ));
         $op = new OperationCommand(array(),$description->getOperation('foo'));
         $op->setClient(new Client());
