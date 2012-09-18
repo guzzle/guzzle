@@ -18,6 +18,11 @@ class DefaultProcessor implements ProcessorInterface
     protected $castIntegerToStringType;
 
     /**
+     * @var array Errors encountered while validating
+     */
+    protected $errors;
+
+    /**
      * Get a cached instance
      *
      * @return self
@@ -46,15 +51,25 @@ class DefaultProcessor implements ProcessorInterface
      */
     public function process(Parameter $param, &$value)
     {
-        $errors = array();
-        $this->recursiveProcess($param, $value, $errors);
+        $this->errors = array();
+        $this->recursiveProcess($param, $value);
 
-        if (empty($errors)) {
+        if (empty($this->errors)) {
             return true;
         } else {
-            sort($errors);
-            return $errors;
+            sort($this->errors);
+            return false;
         }
+    }
+
+    /**
+     * Get the errors encountered while validating
+     *
+     * @return array
+     */
+    public function getErrors()
+    {
+        return $this->errors ?: array();
     }
 
     /**
@@ -62,13 +77,12 @@ class DefaultProcessor implements ProcessorInterface
      *
      * @param Parameter $param  API parameter being validated
      * @param mixed     $value  Value to validate and process. The value may change during this process.
-     * @param array     $errors Validation errors encountered
      * @param string    $path   Current validation path (used for error reporting)
      * @param int       $depth  Current depth in the validation process
      *
      * @return bool Returns true if valid, or false if invalid
      */
-    protected function recursiveProcess(Parameter $param, &$value, array &$errors, $path = '', $depth = 0)
+    protected function recursiveProcess(Parameter $param, &$value, $path = '', $depth = 0)
     {
         // Update the value by adding default or static values
         $value = $param->getValue($value);
@@ -89,7 +103,7 @@ class DefaultProcessor implements ProcessorInterface
             // Objects are either associative arrays, \ArrayAccess, or some other object
             $instanceOf = $param->getInstanceOf();
             if ($instanceOf && !($value instanceof $instanceOf)) {
-                $errors[] = "{$path} must be an instance of {$instanceOf}";
+                $this->errors[] = "{$path} must be an instance of {$instanceOf}";
             }
 
             // Determine whether or not this "value" has properties and should be traversed
@@ -97,7 +111,7 @@ class DefaultProcessor implements ProcessorInterface
             if (is_array($value)) {
                 // Ensure that the array is associative and not numerically indexed
                 if (isset($value[0])) {
-                    $errors[] = "{$path} must be an associative array of properties. Got a numerically indexed array.";
+                    $this->errors[] = "{$path} must be an associative array of properties. Got a numerically indexed array.";
                 } else {
                     $traverse = true;
                 }
@@ -117,7 +131,7 @@ class DefaultProcessor implements ProcessorInterface
                     foreach ($properties as $property) {
                         $name = $property->getName();
                         $current = isset($value[$name]) ? $value[$name] : null;
-                        if ($this->recursiveProcess($property, $current, $errors, $path, $depth + 1)) {
+                        if ($this->recursiveProcess($property, $current, $path, $depth + 1)) {
                             // Only set the value if it was populated with something
                             if ($current) {
                                 $value[$name] = $current;
@@ -145,12 +159,12 @@ class DefaultProcessor implements ProcessorInterface
                         if ($additional instanceOf Parameter) {
                             foreach ($diff as $key) {
                                 $v = $value[$key];
-                                $this->recursiveProcess($additional, $v, $errors, "{$path}[{$key}]", $depth);
+                                $this->recursiveProcess($additional, $v, "{$path}[{$key}]", $depth);
                             }
                         } else {
                             // if additionalProperties is set to false and there are additionalProperties in the values, then fail
                             $keys = array_keys($value);
-                            $errors[] = sprintf('%s[%s] is not an allowed property', $path, reset($keys));
+                            $this->errors[] = sprintf('%s[%s] is not an allowed property', $path, reset($keys));
                         }
                     }
                 }
@@ -166,7 +180,7 @@ class DefaultProcessor implements ProcessorInterface
         } elseif ($type == 'array' && $param->getItems() && is_array($value)) {
             foreach ($value as $i => &$item) {
                 // Validate each item in an array against the items attribute of the schema
-                $this->recursiveProcess($param->getItems(), $item, $errors, $path . "[{$i}]", $depth + 1);
+                $this->recursiveProcess($param->getItems(), $item, $path . "[{$i}]", $depth + 1);
             }
         }
 
@@ -176,17 +190,17 @@ class DefaultProcessor implements ProcessorInterface
             if ($param->getDescription()) {
                 $message .= ': ' . $param->getDescription();
             }
-            $errors[] = $message;
+            $this->errors[] = $message;
 
         } else {
 
             // Validate that the type is correct. If the type is string but an integer was passed, the class can be
             // instructed to cast the integer to a string to pass validation. This is the default behavior.
-            if ($type && (!$type = $this->determineType($param->getType(), $value))) {
+            if ($type && (!$type = $this->determineType($type, $value))) {
                 if ($this->castIntegerToStringType && $param->getType() == 'string' && is_integer($value)) {
                     $value = (string) $value;
                 } else {
-                    $errors[] = "{$path} must be of type " . implode(' or ', (array) $param->getType());
+                    $this->errors[] = "{$path} must be of type " . implode(' or ', (array) $param->getType());
                 }
             }
 
@@ -194,41 +208,41 @@ class DefaultProcessor implements ProcessorInterface
             if ($type == 'string') {
                 // Strings can have enums which are a list of predefined values
                 if (($enum = $param->getEnum()) && !in_array($value, $enum)) {
-                    $errors[] = "{$path} must be one of " . implode(' or ', array_map(function ($s) {
+                    $this->errors[] = "{$path} must be one of " . implode(' or ', array_map(function ($s) {
                         return '"' . addslashes($s) . '"';
                     }, $enum));
                 }
                 // Strings can have a regex pattern that the value must match
                 if (($pattern = $param->getPattern()) && !preg_match($pattern, $value)) {
-                    $errors[] = "{$path} must match the following regular expression: {$pattern}";
+                    $this->errors[] = "{$path} must match the following regular expression: {$pattern}";
                 }
             }
 
             // Validate min attribute contextually based on the value type
             if ($min = $param->getMin()) {
                 if (($type == 'integer' || $type == 'numeric') && $value < $min) {
-                    $errors[] = "{$path} must be greater than or equal to {$min}";
+                    $this->errors[] = "{$path} must be greater than or equal to {$min}";
                 } elseif ($type == 'string' && strlen($value) < $min) {
-                    $errors[] = "{$path} length must be greater than or equal to {$min}";
+                    $this->errors[] = "{$path} length must be greater than or equal to {$min}";
                 } elseif ($type == 'array' && count($value) < $min) {
-                    $errors[] = "{$path} must contain {$min} or more elements";
+                    $this->errors[] = "{$path} must contain {$min} or more elements";
                 }
             }
 
             // Validate max attribute contextually based on the value type
             if ($max = $param->getMax()) {
                 if (($type == 'integer' || $type == 'numeric') && $value > $max) {
-                    $errors[] = "{$path} must be less than or equal to {$max}";
+                    $this->errors[] = "{$path} must be less than or equal to {$max}";
                 } elseif ($type == 'string' && strlen($value) > $max) {
-                    $errors[] = "{$path} length must be less than or equal to {$max}";
+                    $this->errors[] = "{$path} length must be less than or equal to {$max}";
                 } elseif ($type == 'array' && count($value) > $max) {
-                    $errors[] = "{$path} must contain {$max} or fewer elements";
+                    $this->errors[] = "{$path} must contain {$max} or fewer elements";
                 }
             }
         }
 
         // Determine what the response should be
-        if (empty($errors)) {
+        if (empty($this->errors)) {
             $value = $param->filter($value);
             return true;
         } else {

@@ -182,7 +182,11 @@ class Parameter
      */
     public function process(&$value)
     {
-        return $this->processor->process($this, $value);
+        if (!$this->processor->process($this, $value)) {
+            return $this->processor->getErrors();
+        } else {
+            return true;
+        }
     }
 
     /**
