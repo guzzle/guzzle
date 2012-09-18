@@ -33,6 +33,11 @@ class ServiceDescription implements ServiceDescriptionInterface
     protected $description;
 
     /**
+     * @var array Any extra API data
+     */
+    protected $extraData = array();
+
+    /**
      * @var ServiceDescriptionFactoryInterface Factory used in factory method
      */
     protected static $descriptionFactory;
@@ -70,7 +75,7 @@ class ServiceDescription implements ServiceDescriptionInterface
      */
     public function serialize()
     {
-        $result = array(
+        $result = $this->extraData + array(
             'name'        => $this->name,
             'apiVersion'  => $this->apiVersion,
             'description' => $this->description,
@@ -186,12 +191,40 @@ class ServiceDescription implements ServiceDescriptionInterface
     }
 
     /**
+     * Get an extra API data from the service description
+     *
+     * @param string $key Data key to retrieve
+     *
+     * @return null|mixed
+     */
+    public function getData($key)
+    {
+        return isset($this->extraData[$key]) ? $this->extraData[$key] : null;
+    }
+
+    /**
      * Initialize the state from an array
      *
      * @param array $config Configuration data
      */
     protected function fromArray(array $config)
     {
+        // Keep a list of default keys used in service descriptions that is later used to determine extra data keys
+        $defaultKeys = array('name', 'models', 'apiVersion', 'description');
+        // Pull in the default configuration values
+        foreach ($defaultKeys as $key) {
+            if (isset($config[$key])) {
+                $this->{$key} = $config[$key];
+            }
+        }
+
+        // Ensure that the models and operations properties are always arrays
+        $this->models = (array) $this->models;
+        $this->operations = (array) $this->operations;
+
+        // We want to add operations differently than adding the other properties
+        $defaultKeys[] = 'operations';
+        // Create operations for each operation
         if (isset($config['operations'])) {
             foreach ($config['operations'] as $name => $operation) {
                 if (!($operation instanceof Operation)) {
@@ -203,9 +236,10 @@ class ServiceDescription implements ServiceDescriptionInterface
                 $this->addOperation($operation);
             }
         }
-        $this->models = isset($config['models']) ? (array) $config['models'] : array();
-        $this->apiVersion = isset($config['apiVersion']) ? $config['apiVersion'] : null;
-        $this->name = isset($config['name']) ? $config['name'] : null;
-        $this->description = isset($config['description']) ? $config['description'] : null;
+
+        // Get all of the additional properties of the service description and store them in a data array
+        foreach (array_diff(array_keys($config), $defaultKeys) as $key) {
+            $this->extraData[$key] = $config[$key];
+        }
     }
 }
