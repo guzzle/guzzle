@@ -1,15 +1,15 @@
 <?php
 
-namespace Guzzle\Tests\Http\CookieJar;
+namespace Guzzle\Tests\Plugin\Cookie\CookieJar;
 
-use Guzzle\Http\Cookie;
-use Guzzle\Http\CookieJar\FileCookieJar;
+use Guzzle\Plugin\Cookie\Cookie;
+use Guzzle\Plugin\Cookie\CookieJar\FileCookieJar;
 
+/**
+ * @covers Guzzle\Plugin\Cookie\CookieJar\FileCookieJar
+ */
 class FileCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var string
-     */
     private $file;
 
     public function setUp()
@@ -17,9 +17,6 @@ class FileCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
         $this->file = tempnam('/tmp', 'file-cookies');
     }
 
-    /**
-     * @covers Guzzle\Http\CookieJar\FileCookieJar
-     */
     public function testLoadsFromFileFile()
     {
         $jar = new FileCookieJar($this->file);
@@ -27,9 +24,6 @@ class FileCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
         unlink($this->file);
     }
 
-    /**
-     * @covers Guzzle\Http\CookieJar\FileCookieJar
-     */
     public function testPersistsToFileFile()
     {
         $jar = new FileCookieJar($this->file);
