@@ -62,9 +62,9 @@ class OperationCommandTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $description = new ServiceDescription(array(
             'operations' => array('foo' => array('responseClass' => 'bar', 'responseType' => 'model')),
-            'models' => array('bar' => array())
+            'models'     => array('bar' => array())
         ));
-        $op = new OperationCommand(array(),$description->getOperation('foo'));
+        $op = new OperationCommand(array(), $description->getOperation('foo'));
         $op->setClient(new Client());
         $request = $op->prepare();
         $request->setResponse(new Response(200, array(
@@ -73,5 +73,23 @@ class OperationCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array(
             'Baz' => 'Bar'
         ), $op->execute());
+    }
+
+    public function testAllowsRawResponses()
+    {
+        $description = new ServiceDescription(array(
+            'operations' => array('foo' => array('responseClass' => 'bar', 'responseType' => 'model')),
+            'models'     => array('bar' => array())
+        ));
+        $op = new OperationCommand(array(
+            OperationCommand::RESPONSE_PROCESSING => OperationCommand::TYPE_RAW
+        ), $description->getOperation('foo'));
+        $op->setClient(new Client());
+        $request = $op->prepare();
+        $response = new Response(200, array(
+            'Content-Type' => 'application/xml'
+        ), '<Foo><Baz>Bar</Baz></Foo>');
+        $request->setResponse($response, true);
+        $this->assertSame($response, $op->execute());
     }
 }

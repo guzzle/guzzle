@@ -9,7 +9,7 @@ use Guzzle\Service\Description\Parameter;
 /**
  * Visitor used to apply a parameter to an array that will be serialized as a top level key-value pair in a JSON body
  */
-class JsonBodyVisitor extends AbstractRequestVisitor
+class JsonVisitor extends AbstractRequestVisitor
 {
     /**
      * @var bool Whether or not to add a Content-Type header when JSON is found

@@ -5,7 +5,7 @@ namespace Guzzle\Service\Description;
 /**
  * Default parameter validator
  */
-class DefaultProcessor implements ProcessorInterface
+class SchemaValidator implements ValidatorInterface
 {
     /**
      * @var self Cache instance of the object
@@ -49,7 +49,7 @@ class DefaultProcessor implements ProcessorInterface
     /**
      * {@inheritdoc}
      */
-    public function process(Parameter $param, &$value)
+    public function validate(Parameter $param, &$value)
     {
         $this->errors = array();
         $this->recursiveProcess($param, $value);
@@ -76,9 +76,9 @@ class DefaultProcessor implements ProcessorInterface
      * Recursively validate a parameter
      *
      * @param Parameter $param  API parameter being validated
-     * @param mixed     $value  Value to validate and process. The value may change during this process.
+     * @param mixed     $value  Value to validate and validate. The value may change during this validate.
      * @param string    $path   Current validation path (used for error reporting)
-     * @param int       $depth  Current depth in the validation process
+     * @param int       $depth  Current depth in the validation validate
      *
      * @return bool Returns true if valid, or false if invalid
      */
@@ -212,8 +212,9 @@ class DefaultProcessor implements ProcessorInterface
             }
         }
 
-        // Validate string specific options
+        // Perform type specific validation for strings, arrays, and integers
         if ($type == 'string') {
+
             // Strings can have enums which are a list of predefined values
             if (($enum = $param->getEnum()) && !in_array($value, $enum)) {
                 $this->errors[] = "{$path} must be one of " . implode(' or ', array_map(function ($s) {
@@ -221,30 +222,44 @@ class DefaultProcessor implements ProcessorInterface
                 }, $enum));
             }
             // Strings can have a regex pattern that the value must match
-            if (($pattern = $param->getPattern()) && !preg_match($pattern, $value)) {
+            if (($pattern  = $param->getPattern()) && !preg_match($pattern, $value)) {
                 $this->errors[] = "{$path} must match the following regular expression: {$pattern}";
             }
-        }
 
-        // Validate min attribute contextually based on the value type
-        if ($min = $param->getMin()) {
-            if (($type == 'integer' || $type == 'numeric') && $value < $min) {
-                $this->errors[] = "{$path} must be greater than or equal to {$min}";
-            } elseif ($type == 'string' && strlen($value) < $min) {
-                $this->errors[] = "{$path} length must be greater than or equal to {$min}";
-            } elseif ($type == 'array' && count($value) < $min) {
-                $this->errors[] = "{$path} must contain {$min} or more elements";
+            $strLen = null;
+            if ($min = $param->getMinLength()) {
+                $strLen = strlen($value);
+                if ($strLen < $min) {
+                    $this->errors[] = "{$path} length must be greater than or equal to {$min}";
+                }
             }
-        }
+            if ($max = $param->getMaxLength()) {
+                if (($strLen ?: strlen($value)) > $max) {
+                    $this->errors[] = "{$path} length must be less than or equal to {$max}";
+                }
+            }
 
-        // Validate max attribute contextually based on the value type
-        if ($max = $param->getMax()) {
-            if (($type == 'integer' || $type == 'numeric') && $value > $max) {
+        } elseif ($type == 'array') {
+
+            $size = null;
+            if ($min = $param->getMinItems()) {
+                $size = count($value);
+                if ($size < $min) {
+                    $this->errors[] = "{$path} must contain {$min} or more elements";
+                }
+            }
+            if ($max = $param->getMaxItems()) {
+                if (($size ?: count($value)) > $max) {
+                    $this->errors[] = "{$path} must contain {$max} or fewer elements";
+                }
+            }
+
+        } elseif ($type == 'integer' || $type == 'numeric') {
+            if (($min = $param->getMinimum()) && $value < $min) {
+                $this->errors[] = "{$path} must be greater than or equal to {$min}";
+            }
+            if (($max = $param->getMaximum()) && $value > $max) {
                 $this->errors[] = "{$path} must be less than or equal to {$max}";
-            } elseif ($type == 'string' && strlen($value) > $max) {
-                $this->errors[] = "{$path} length must be less than or equal to {$max}";
-            } elseif ($type == 'array' && count($value) > $max) {
-                $this->errors[] = "{$path} must contain {$max} or fewer elements";
             }
         }
 
