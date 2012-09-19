@@ -16,8 +16,8 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
         'required'        => true,
         'default'         => '123',
         'description'     => '456',
-        'min'             => 2,
-        'max'             => 5,
+        'minLength'       => 2,
+        'maxLength'       => 5,
         'location'        => 'body',
         'static'          => 'static!',
         'filters'         => array('trim', 'json_encode')
@@ -31,8 +31,8 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(true, $p->getRequired());
         $this->assertEquals('123', $p->getDefault());
         $this->assertEquals('456', $p->getDescription());
-        $this->assertEquals(2, $p->getMin());
-        $this->assertEquals(5, $p->getMax());
+        $this->assertEquals(2, $p->getMinLength());
+        $this->assertEquals(5, $p->getMaxLength());
         $this->assertEquals('body', $p->getLocation());
         $this->assertEquals('static!', $p->getStatic());
         $this->assertEquals(array('trim', 'json_encode'), $p->getFilters());
@@ -118,8 +118,12 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
             ->setFilters(array('d'))
             ->setLocation('e')
             ->setRename('f')
-            ->setMax(2)
-            ->setMin(1)
+            ->setMaxLength(1)
+            ->setMinLength(1)
+            ->setMinimum(2)
+            ->setMaximum(2)
+            ->setMinItems(3)
+            ->setMaxItems(3)
             ->setRequired(true)
             ->setStatic(true)
             ->setDefault('h')
@@ -133,8 +137,12 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array('d', 'foo'), $p->getFilters());
         $this->assertEquals('e', $p->getLocation());
         $this->assertEquals('f', $p->getRename());
-        $this->assertEquals(2, $p->getMax());
-        $this->assertEquals(1, $p->getMin());
+        $this->assertEquals(1, $p->getMaxLength());
+        $this->assertEquals(1, $p->getMinLength());
+        $this->assertEquals(2, $p->getMaximum());
+        $this->assertEquals(2, $p->getMinimum());
+        $this->assertEquals(3, $p->getMaxItems());
+        $this->assertEquals(3, $p->getMinItems());
         $this->assertEquals(true, $p->getRequired());
         $this->assertEquals(true, $p->getStatic());
         $this->assertEquals('i', $p->getType());
@@ -217,17 +225,6 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
         $param1->addProperty($param2);
         $param1->removeProperty('child');
         $this->assertNull($param1->getProperty('child'));
-    }
-
-    public function testProcessesValue()
-    {
-        $p = new Parameter(array(
-            'name'     => 'test',
-            'type'     => 'string',
-            'required' => true
-        ));
-        $v = null;
-        $this->assertEquals(array('[test] is a required string'), $p->process($v));
     }
 
     public function testAddsAdditionalProperties()

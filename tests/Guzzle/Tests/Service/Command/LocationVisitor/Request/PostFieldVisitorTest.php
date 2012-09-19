@@ -20,16 +20,16 @@ class PostFieldVisitorTest extends AbstractVisitorTestCase
 
     public function testRecursivelyBuildsPostFields()
     {
-        $command = $this->getNestedCommand('postField');
-        $data = new Collection();
-        $command->validate($data);
+        $command = $this->getCommand('postField');
+        $command->getOperation()->getParam('foo')->setRename('Foo');
+        $request = $command->prepare();
         $visitor = new Visitor();
-        $param = $this->getNestedCommand('postField')->getParam('foo');
-        $visitor->visit($this->command, $this->request, $param->setRename('Foo'), $data['foo']);
-        $visitor->after($this->command, $this->request);
+        $param = $command->getOperation()->getParam('foo');
+        $visitor->visit($command, $request, $param, $command['foo']);
+        $visitor->after($command, $request);
         $this->assertEquals(
             'Foo[test][baz]=1&Foo[test][Jenga_Yall!]=HELLO&Foo[bar]=123',
-            rawurldecode((string) $this->request->getPostFields())
+            rawurldecode((string) $request->getPostFields())
         );
     }
 }

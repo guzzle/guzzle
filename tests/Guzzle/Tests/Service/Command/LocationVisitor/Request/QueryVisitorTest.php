@@ -24,16 +24,15 @@ class QueryVisitorTest extends AbstractVisitorTestCase
      */
     public function testRecursivelyBuildsQueryStrings()
     {
-        $command = $this->getNestedCommand('query');
-        $data = new Collection();
-        $command->validate($data);
+        $command = $this->getCommand('postField');
+        $request = $command->prepare();
         $visitor = new Visitor();
         $param = $this->getNestedCommand('query')->getParam('foo');
-        $visitor->visit($this->command, $this->request, $param->setRename('Foo'), $data['foo']);
-        $visitor->after($this->command, $this->request);
+        $visitor->visit($command, $request, $param->setRename('Foo'), $command['foo']);
+        $visitor->after($command, $request);
         $this->assertEquals(
             '?Foo[test][baz]=1&Foo[test][Jenga_Yall!]=HELLO&Foo[bar]=123',
-            rawurldecode((string) $this->request->getQuery())
+            rawurldecode((string) $request->getQuery())
         );
     }
 }

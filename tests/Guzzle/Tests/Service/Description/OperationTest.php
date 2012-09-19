@@ -32,9 +32,9 @@ class OperationTest extends \Guzzle\Tests\GuzzleTestCase
             'deprecated'         => true,
             'parameters'         => array(
                 'key' => array(
-                    'required' => true,
-                    'type'     => 'string',
-                    'max'      => 10
+                    'required'  => true,
+                    'type'      => 'string',
+                    'maxLength' => 10
                 ),
                 'key_2' => array(
                     'required' => true,
@@ -55,11 +55,11 @@ class OperationTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('Guzzle\\Service\\Command\\OperationCommand', $c->getClass());
         $this->assertEquals(array(
             'key' => new Parameter(array(
-                'name'     => 'key',
-                'required' => true,
-                'type'     => 'string',
-                'max'      => 10,
-                'parent'   => $c
+                'name'      => 'key',
+                'required'  => true,
+                'type'      => 'string',
+                'maxLength' => 10,
+                'parent'    => $c
             )),
             'key_2' => new Parameter(array(
                 'name'     => 'key_2',
@@ -122,98 +122,6 @@ class OperationTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($data, $toArray);
     }
 
-    public function testAddsDefaultAndInjectsConfigs()
-    {
-        $col = new Collection(array(
-            'username' => 'user',
-            'string'   => 'test',
-            'float'    => 1.23
-        ));
-
-        $this->getOperation()->validate($col);
-        $this->assertEquals(false, $col->get('bool_2'));
-        $this->assertEquals(1.23, $col->get('float'));
-    }
-
-    /**
-     * @expectedException Guzzle\Service\Exception\ValidationException
-     */
-    public function testValidatesTypeHints()
-    {
-        $this->getOperation()->validate(new Collection(array(
-            'test' => 'uh oh',
-            'username' => 'test'
-        )));
-    }
-
-    public function testConvertsBooleanDefaults()
-    {
-        $c = new Collection(array(
-            'test' => $this,
-            'username' => 'test'
-        ));
-
-        $this->getOperation()->validate($c);
-        $this->assertTrue($c->get('bool_1'));
-        $this->assertFalse($c->get('bool_2'));
-    }
-
-    public function testValidatesArgs()
-    {
-        $config = new Collection(array(
-            'data' => false,
-            'min'  => 'a',
-            'max'  => 'aaa'
-        ));
-
-        $command = new Operation(array(
-            'parameters' => array(
-                'data' => new Parameter(array(
-                    'name' => 'data',
-                    'type' => 'string'
-                )),
-                'min' => new Parameter(array(
-                    'name' => 'min',
-                    'type' => 'string',
-                    'min'  => 2
-                )),
-                'max' => new Parameter(array(
-                    'name' => 'max',
-                    'type' => 'string',
-                    'max'  => 2
-                ))
-            )
-        ));
-
-        try {
-            $command->validate($config);
-            $this->fail('Did not throw expected exception');
-        } catch (ValidationException $e) {
-            $concat = implode("\n", $e->getErrors());
-            $this->assertContains("[data] must be of type string", $concat);
-            $this->assertContains("[min] length must be greater than or equal to 2", $concat);
-            $this->assertContains("[max] length must be less than or equal to 2", $concat);
-        }
-    }
-
-    public function testRunsValuesThroughFilters()
-    {
-        $data = new Collection(array(
-            'username'      => 'TEST',
-            'test_function' => 'foo'
-        ));
-
-        $this->getOperation()->validate($data);
-        $this->assertEquals('test', $data->get('username'));
-        $this->assertEquals('FOO', $data->get('test_function'));
-    }
-
-    public function testSkipsFurtherValidationIfNotSet()
-    {
-        $command = $this->getTestCommand();
-        $command->validate(new Collection());
-    }
-
     public function testDeterminesIfHasParam()
     {
         $command = $this->getTestCommand();
@@ -273,52 +181,6 @@ class OperationTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($c->hasParam('foo'));
         $c->removeParam('foo');
         $this->assertFalse($c->hasParam('foo'));
-    }
-
-    public function testRecursivelyValidatesAndFormatsInput()
-    {
-        $command = new Operation(array(
-            'parameters' => array(
-                'foo' => new Parameter(array(
-                    'name'      => 'foo',
-                    'type'      => 'object',
-                    'location'  => 'query',
-                    'required'  => true,
-                    'properties' => array(
-                        'baz' => array(
-                            'type'       => 'object',
-                            'required'   => true,
-                            'properties' => array(
-                                'bam' => array(
-                                    'type'    => 'boolean',
-                                    'default' => true
-                                ),
-                                'boo' => array(
-                                    'type'    => 'string',
-                                    'filters' => 'strtoupper',
-                                    'default' => 'mesa'
-                                )
-                            )
-                        ),
-                        'bar' => array(
-                            'default' => '123'
-                        )
-                    )
-                ))
-            )
-        ));
-
-        $input = new Collection();
-        $command->validate($input);
-        $this->assertEquals(array(
-            'foo' => array(
-                'baz' => array(
-                    'bam' => true,
-                    'boo' => 'MESA'
-                ),
-                'bar' => '123'
-            )
-        ), $input->getAll());
     }
 
     public function testAddsNameToParametersIfNeeded()
@@ -394,6 +256,16 @@ class OperationTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('primitive', $o->setResponseClass('boolean')->getResponseType());
         $this->assertEquals('class', $o->setResponseClass(__CLASS__)->getResponseType());
         $this->assertEquals('model', $o->setResponseClass('Foo')->getResponseType());
+    }
+
+    public function testHasResponseType()
+    {
+        $o = new Operation();
+        $this->assertEquals('primitive', $o->getResponseType());
+        $this->assertEquals('model', $o->setResponseType('model')->getResponseType());
+        // infers in the constructor
+        $o = new Operation(array('responseClass' => 'array'));
+        $this->assertEquals('primitive', $o->getResponseType());
     }
 
     /**

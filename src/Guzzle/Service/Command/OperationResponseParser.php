@@ -80,11 +80,13 @@ class OperationResponseParser extends DefaultResponseParser
         $result = parent::parse($command);
         $operation = $command->getOperation();
 
+        // No further processing is needed if the responseType is not model
         if ($operation->getResponseType() != 'model') {
-            // No further processing is needed if the responseType is not model
             return $result;
-        } elseif (!$model = $operation->getServiceDescription()->getModel($operation->getResponseClass())) {
-            // Do not attempt further processing if the model cannot be found
+        }
+
+        // Do not attempt further processing if the model cannot be found
+        if (!$model = $operation->getServiceDescription()->getModel($operation->getResponseClass())) {
             return $result;
         }
 
@@ -96,13 +98,13 @@ class OperationResponseParser extends DefaultResponseParser
         }
 
         $response = $command->getResponse();
-        foreach ($model->getProperties() as $arg) {
+        foreach ($model->getProperties() as $schema) {
             /** @var $arg \Guzzle\Service\Description\Parameter */
-            $location = $arg->getLocation();
+            $location = $schema->getLocation();
             // Visit with the associated visitor
             if (isset($this->visitors[$location])) {
                 // Apply the parameter value with the location visitor
-                $this->visitors[$location]->visit($command, $response, $arg, $result);
+                $this->visitors[$location]->visit($command, $response, $schema, $result);
             }
         }
 

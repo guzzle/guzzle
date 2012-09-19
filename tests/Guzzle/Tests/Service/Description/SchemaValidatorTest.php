@@ -3,35 +3,47 @@
 namespace Guzzle\Tests\Service\Description;
 
 use Guzzle\Service\Description\Parameter;
-use Guzzle\Service\Description\DefaultProcessor;
+use Guzzle\Service\Description\SchemaValidator;
 
 /**
- * @covers Guzzle\Service\Description\DefaultProcessor
+ * @covers Guzzle\Service\Description\SchemaValidator
  */
-class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
+class SchemaValidatorTest extends \Guzzle\Tests\GuzzleTestCase
 {
+    /**
+     * @var SchemaValidator
+     */
+    protected $validator;
+
+    public function setUp()
+    {
+        $this->validator = new SchemaValidator();
+    }
+
     public function testValidatesArrayListsAreNumericallyIndexed()
     {
         $value = array(array(1));
+        $this->assertFalse($this->validator->validate($this->getComplexParam(), $value));
         $this->assertEquals(
             array('[Foo][0] must be an array of properties. Got a numerically indexed array.'),
-            $this->getComplexParam()->process($value)
+            $this->validator->getErrors()
         );
     }
 
     public function testValidatesArrayListsContainProperItems()
     {
         $value = array(true);
+        $this->assertFalse($this->validator->validate($this->getComplexParam(), $value));
         $this->assertEquals(
             array('[Foo][0] must be of type object'),
-            $this->getComplexParam()->process($value)
+            $this->validator->getErrors()
         );
     }
 
     public function testAddsDefaultValuesInLists()
     {
         $value = array(array());
-        $this->assertTrue($this->getComplexParam()->process($value));
+        $this->assertTrue($this->validator->validate($this->getComplexParam(), $value));
         $this->assertEquals(array(array('Bar' => true)), $value);
     }
 
@@ -41,7 +53,7 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
             array('Baz' => 'hello!'),
             array('Bar' => false)
         );
-        $this->assertTrue($this->getComplexParam()->process($value));
+        $this->assertTrue($this->validator->validate($this->getComplexParam(), $value));
         $this->assertEquals(array(
             array(
                 'Baz' => 'hello!',
@@ -67,8 +79,9 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
             'type'       => 'object',
             'instanceOf' => get_class($this)
         ));
-        $this->assertTrue($p->process($this));
-        $this->assertEquals(array('[foo] must be an instance of ' . __CLASS__), $p->process($p));
+        $this->assertTrue($this->validator->validate($p, $this));
+        $this->assertFalse($this->validator->validate($p, $p));
+        $this->assertEquals(array('[foo] must be an instance of ' . __CLASS__), $this->validator->getErrors());
     }
 
     public function testModifiesArrayAccessObjects()
@@ -79,7 +92,7 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
             'properties' => array('bar' => array('default' => 'test'))
         ));
         $a = new \ArrayObject();
-        $this->assertTrue($p->process($a));
+        $this->assertTrue($this->validator->validate($p, $a));
         $this->assertEquals('test', $a['bar']);
     }
 
@@ -97,7 +110,7 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
         $a = new \ArrayObject(array(
             'baz' => $b
         ));
-        $this->assertTrue($p->process($a));
+        $this->assertTrue($this->validator->validate($p, $a));
         $this->assertEquals('test', $a['bar']);
         $this->assertEquals($b, $a['baz']);
     }
@@ -109,16 +122,16 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
             'type'       => 'object',
             'properties' => array(
                 'bar'   => array('type' => 'string', 'required' => true, 'description' => 'This is what it does'),
-                'test'  => array('type' => 'string', 'min' => 2, 'max' => 5),
-                'test2' => array('type' => 'string', 'min' => 2, 'max' => 2),
-                'test3' => array('type' => 'integer', 'min' => 100),
-                'test4' => array('type' => 'integer', 'max' => 10),
-                'test5' => array('type' => 'array', 'max' => 2),
+                'test'  => array('type' => 'string', 'minLength' => 2, 'maxLength' => 5),
+                'test2' => array('type' => 'string', 'minLength' => 2, 'maxLength' => 2),
+                'test3' => array('type' => 'integer', 'minimum' => 100),
+                'test4' => array('type' => 'integer', 'maximum' => 10),
+                'test5' => array('type' => 'array', 'maxItems' => 2),
                 'test6' => array('type' => 'string', 'enum' => array('a', 'bc')),
                 'test7' => array('type' => 'string', 'pattern' => '/[0-9]+/'),
                 'baz' => array(
                     'type'     => 'array',
-                    'min'      => 2,
+                    'minItems' => 2,
                     'required' => true,
                     "items"    => array("type" => "string")
                 )
@@ -136,6 +149,7 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
             'test7' => 'abc'
         );
 
+        $this->assertFalse($this->validator->validate($p, $value));
         $this->assertEquals(array (
             '[foo][bar] is a required string: This is what it does',
             '[foo][baz] must contain 2 or more elements',
@@ -147,7 +161,7 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
             '[foo][test6] must be one of "a" or "bc"',
             '[foo][test7] must match the following regular expression: /[0-9]+/',
             '[foo][test] length must be greater than or equal to 2',
-        ), $p->process($value));
+        ), $this->validator->getErrors());
     }
 
     public function testHandlesNullValuesInArraysWithDefaults()
@@ -167,7 +181,7 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
             )
         ));
         $value = array();
-        $this->assertTrue($p->process($value));
+        $this->assertTrue($this->validator->validate($p, $value));
         $this->assertEquals(array('bar' => array('foo' => 'hi')), $value);
     }
 
@@ -186,12 +200,13 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
             )
         ));
         $value = array();
-        $this->assertEquals(array('[foo][bar] is a required object'), $p->process($value));
+        $this->assertFalse($this->validator->validate($p, $value));
+        $this->assertEquals(array('[foo][bar] is a required object'), $this->validator->getErrors());
     }
 
     public function testChecksTypes()
     {
-        $p = new DefaultProcessor();
+        $p = new SchemaValidator();
         $r = new \ReflectionMethod($p, 'determineType');
         $r->setAccessible(true);
         $this->assertEquals('any', $r->invoke($p, 'any', 'hello'));
@@ -221,9 +236,10 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
             'additionalProperties' => false
         ));
         $value = array('test' => '123');
-        $this->assertEquals(array('[foo][test] is not an allowed property'), $param->process($value));
+        $this->assertFalse($this->validator->validate($param, $value));
+        $this->assertEquals(array('[foo][test] is not an allowed property'), $this->validator->getErrors());
         $value = array('bar' => '123');
-        $this->assertTrue($param->process($value));
+        $this->assertTrue($this->validator->validate($param, $value));
     }
 
     public function testAllowsUndefinedAdditionalProperties()
@@ -234,7 +250,7 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
             'properties' => array('bar' => array('type' => 'string'))
         ));
         $value = array('test' => '123');
-        $this->assertTrue($param->process($value));
+        $this->assertTrue($this->validator->validate($param, $value));
     }
 
     public function testValidatesAdditionalProperties()
@@ -246,7 +262,8 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
             'additionalProperties' => array('type' => 'integer')
         ));
         $value = array('test' => 'foo');
-        $this->assertEquals(array('[foo][test] must be of type integer'), $param->process($value));
+        $this->assertFalse($this->validator->validate($param, $value));
+        $this->assertEquals(array('[foo][test] must be of type integer'), $this->validator->getErrors());
     }
 
     public function testValidatesAdditionalPropertiesThatArrayArrays()
@@ -260,7 +277,16 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
             )
         ));
         $value = array('test' => array(true));
-        $this->assertEquals(array('[foo][test][0] must be of type string'), $param->process($value));
+        $this->assertFalse($this->validator->validate($param, $value));
+        $this->assertEquals(array('[foo][test][0] must be of type string'), $this->validator->getErrors());
+    }
+
+    public function testIntegersCastToStringWhenTypeMismatch()
+    {
+        $param = new Parameter(array('name' => 'test', 'type' => 'string'));
+        $value = 12;
+        $this->assertTrue($this->validator->validate($param, $value));
+        $this->assertEquals('12', $value);
     }
 
     protected function getComplexParam()
@@ -284,13 +310,5 @@ class DefaultProcessorTest extends \Guzzle\Tests\GuzzleTestCase
                 )
             )
         ));
-    }
-
-    public function testIntegersCastToStringWhenTypeMismatch()
-    {
-        $param = new Parameter(array('name' => 'test', 'type' => 'string'));
-        $value = 12;
-        $this->assertTrue($param->process($value));
-        $this->assertEquals('12', $value);
     }
 }

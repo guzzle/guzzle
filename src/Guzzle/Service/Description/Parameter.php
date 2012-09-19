@@ -15,8 +15,12 @@ class Parameter
     protected $required;
     protected $enum;
     protected $pattern;
-    protected $min;
-    protected $max;
+    protected $minimum;
+    protected $maximum;
+    protected $minLength;
+    protected $maxLength;
+    protected $minItems;
+    protected $maxItems;
     protected $default;
     protected $static;
     protected $instanceOf;
@@ -28,7 +32,6 @@ class Parameter
     protected $additionalProperties;
     protected $items;
     protected $parent;
-    protected $processor;
     protected $ref;
 
     /**
@@ -68,12 +71,15 @@ class Parameter
      *                  in the array MUST be valid according to the schema.
      * - pattern:       When the type is a string, you can specify the regex pattern that a value must match
      * - enum:          When the type is a string, you can specify a list of acceptable values
-     * - min:           (int) Minimum length when dealing with a string, minimum elements in an array, or minimum number
-     * - max:           (int) Maximum length when dealing with a string, maximum elements in an array, or maximum number
+     * - minItems:      (int) Minimum number of items allowed in an array
+     * - maxItems:      (int) Maximum number of items allowed in an array
+     * - minLength:     (int) Minimum length of a string
+     * - maxLength:     (int) Maximum length of a string
+     * - minimum:       (int) Minimum value of an integer
+     * - maximum:       (int) Maximum value of an integer
      * - data:          (array) Any additional custom data to use when serializing, validating, etc
      * - $ref:          (string) String referencing a service description model. The parameter is replaced by the
      *                  schema contained in the model.
-     * - processor:     (ProcessorInterface) Custom parameter schema validator and processor
      *
      * @param array                       $data        Array of data as seen in service descriptions
      * @param ServiceDescriptionInterface $description Service description used to resolve models if $ref tags are found
@@ -82,16 +88,17 @@ class Parameter
      */
     public function __construct(array $data = array(), ServiceDescriptionInterface $description = null)
     {
-        // Replace references to models with the actual model dataz
+        // Replace references to models with the actual model data
         if ($description && isset($data['$ref']) && $description->getModel($data['$ref'])) {
             $data = $description->getModel($data['$ref'])->toArray();
         }
 
+        // Pull configuration data into the parameter
         foreach ($data as $key => $value) {
             $this->{$key} = $value;
         }
 
-        $this->required = $this->required ? true : false;
+        $this->required = (bool) $this->required;
         $this->data = (array) $this->data;
 
         if ($this->filters) {
@@ -114,10 +121,6 @@ class Parameter
         } elseif ($this->type == 'array' && $this->items) {
             $this->setItems(new static($this->items, $description));
         }
-
-        if (!$this->processor) {
-            $this->processor = DefaultProcessor::getInstance();
-        }
     }
 
     /**
@@ -129,8 +132,8 @@ class Parameter
     {
         $result = array();
         foreach (array(
-            'required', 'description', 'static', 'type', 'instanceOf', 'location', 'rename', 'pattern', 'min',
-            'max', 'data', 'enum', 'filters'
+            'required', 'description', 'static', 'type', 'instanceOf', 'location', 'rename', 'pattern', 'minimum',
+            'maximum', 'minItems', 'maxItems', 'minLength', 'maxLength', 'data', 'enum', 'filters'
         ) as $c) {
             if ($value = $this->{$c}) {
                 $result[$c] = $value;
@@ -169,24 +172,6 @@ class Parameter
         return $this->static || ($this->default !== null && !$value && ($this->type != 'boolean' || $value !== false))
             ? $this->default
             : $value;
-    }
-
-    /**
-     * Validate a value against the acceptable types, regular expressions, minimum, maximums, instance_of, enums, etc
-     * Add default and static values to the passed in variable.
-     * If the validation completes successfully, run the parameter through its filters.
-     *
-     * @param mixed  $value Value to validate and process. The value may change during this process.
-     *
-     * @return bool|array Returns true if valid, or an array of error messages if invalid
-     */
-    public function process(&$value)
-    {
-        if (!$this->processor->process($this, $value)) {
-            return $this->processor->getErrors();
-        } else {
-            return true;
-        }
     }
 
     /**
@@ -340,49 +325,145 @@ class Parameter
     }
 
     /**
-     * Get the minimum allowed length/size of the parameter
+     * Get the minimum acceptable value for an integer
      *
      * @return int|null
      */
-    public function getMin()
+    public function getMinimum()
     {
-        return $this->min;
+        return $this->minimum;
     }
 
     /**
-     * Set the minimum allowed length/size of the parameter
+     * Set the minimum acceptable value for an integer
      *
-     * @param int|null $min Minimum length/size of the parameter
+     * @param int|null $min Minimum
      *
      * @return self
      */
-    public function setMin($min)
+    public function setMinimum($min)
     {
-        $this->min = $min;
+        $this->minimum = $min;
 
         return $this;
     }
 
     /**
-     * Get the maximum allowed length/size of the parameter
+     * Get the maximum acceptable value for an integer
      *
      * @return int|null
      */
-    public function getMax()
+    public function getMaximum()
     {
-        return $this->max;
+        return $this->maximum;
     }
 
     /**
-     * Set the maximum allowed length/size of the parameter
+     * Set the maximum acceptable value for an integer
      *
-     * @param int|null $max Maximum allowed length/size
+     * @param int $max Maximum
      *
      * @return self
      */
-    public function setMax($max)
+    public function setMaximum($max)
     {
-        $this->max = $max;
+        $this->maximum = $max;
+
+        return $this;
+    }
+
+    /**
+     * Get the minimum allowed length of a string value
+     *
+     * @return int
+     */
+    public function getMinLength()
+    {
+        return $this->minLength;
+    }
+
+    /**
+     * Set the minimum allowed length of a string value
+     *
+     * @param int|null $min Minimum
+     *
+     * @return self
+     */
+    public function setMinLength($min)
+    {
+        $this->minLength = $min;
+
+        return $this;
+    }
+
+    /**
+     * Get the maximum allowed length of a string value
+     *
+     * @return int|null
+     */
+    public function getMaxLength()
+    {
+        return $this->maxLength;
+    }
+
+    /**
+     * Set the maximum allowed length of a string value
+     *
+     * @param int $max Maximum length
+     *
+     * @return self
+     */
+    public function setMaxLength($max)
+    {
+        $this->maxLength = $max;
+
+        return $this;
+    }
+
+    /**
+     * Get the maximum allowed number of items in an array value
+     *
+     * @return int|null
+     */
+    public function getMaxItems()
+    {
+        return $this->maxItems;
+    }
+
+    /**
+     * Set the maximum allowed number of items in an array value
+     *
+     * @param int $max Maximum
+     *
+     * @return self
+     */
+    public function setMaxItems($max)
+    {
+        $this->maxItems = $max;
+
+        return $this;
+    }
+
+    /**
+     * Get the minimum allowed number of items in an array value
+     *
+     * @return int
+     */
+    public function getMinItems()
+    {
+        return $this->minItems;
+    }
+
+    /**
+     * Set the minimum allowed number of items in an array value
+     *
+     * @param int|null $min Minimum
+     *
+     * @return self
+     */
+    public function setMinItems($min)
+    {
+        $this->minItems = $min;
 
         return $this;
     }
