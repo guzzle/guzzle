@@ -130,14 +130,13 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Get a specific key value.
      *
-     * @param string $key     Key to retrieve.
-     * @param mixed  $default If the key is not found, set this value to specify a default
+     * @param string $key Key to retrieve.
      *
      * @return mixed|null Value of the key or NULL
      */
-    public function get($key, $default = null)
+    public function get($key)
     {
-        return array_key_exists($key, $this->data) ? $this->data[$key] : $default;
+        return isset($this->data[$key]) ? $this->data[$key] : null;
     }
 
     /**
