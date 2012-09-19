@@ -3,8 +3,8 @@
 namespace Guzzle\Tests\Plugin\Cookie;
 
 use Guzzle\Common\Event;
-use Guzzle\Http\Cookie;
-use Guzzle\Http\CookieJar\ArrayCookieJar;
+use Guzzle\Plugin\Cookie\Cookie;
+use Guzzle\Plugin\Cookie\CookieJar\ArrayCookieJar;
 use Guzzle\Http\Client;
 use Guzzle\Http\Message\Response;
 use Guzzle\Plugin\Cookie\CookiePlugin;
@@ -18,7 +18,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
     public function testExtractsAndStoresCookies()
     {
         $response = new Response(200);
-        $mock = $this->getMockBuilder('Guzzle\\Http\\CookieJar\\ArrayCookieJar')
+        $mock = $this->getMockBuilder('Guzzle\Plugin\Cookie\CookieJar\ArrayCookieJar')
             ->setMethods(array('addCookiesFromResponse'))
             ->getMock();
 
@@ -39,7 +39,7 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
             'value' => 'bar'
         ));
 
-        $mock = $this->getMockBuilder('Guzzle\\Http\\CookieJar\\ArrayCookieJar')
+        $mock = $this->getMockBuilder('Guzzle\Plugin\Cookie\CookieJar\ArrayCookieJar')
             ->setMethods(array('getMatchingCookies'))
             ->getMock();
 

@@ -3,7 +3,7 @@
 namespace Guzzle\Plugin\Cookie;
 
 use Guzzle\Common\Event;
-use Guzzle\Http\CookieJar\CookieJarInterface;
+use Guzzle\Plugin\Cookie\CookieJar\CookieJarInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

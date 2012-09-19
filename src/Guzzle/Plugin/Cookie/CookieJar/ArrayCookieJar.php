@@ -1,8 +1,8 @@
 <?php
 
-namespace Guzzle\Http\CookieJar;
+namespace Guzzle\Plugin\Cookie\CookieJar;
 
-use Guzzle\Http\Cookie;
+use Guzzle\Plugin\Cookie\Cookie;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Parser\ParserRegistry;

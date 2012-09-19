@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Http\CookieJar;
+namespace Guzzle\Plugin\Cookie\CookieJar;
 
 use Guzzle\Common\Exception\RuntimeException;
 

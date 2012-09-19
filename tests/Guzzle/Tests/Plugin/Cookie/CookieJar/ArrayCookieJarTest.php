@@ -1,14 +1,14 @@
 <?php
 
-namespace Guzzle\Tests\Http\CookieJar;
+namespace Guzzle\Tests\Plugin\Cookie\CookieJar;
 
-use Guzzle\Http\Cookie;
-use Guzzle\Http\CookieJar\ArrayCookieJar;
+use Guzzle\Plugin\Cookie\Cookie;
+use Guzzle\Plugin\Cookie\CookieJar\ArrayCookieJar;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\Request;
 
 /**
- * @covers Guzzle\Http\CookieJar\ArrayCookieJar
+ * @covers Guzzle\Plugin\Cookie\CookieJar\ArrayCookieJar
  */
 class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
 {
@@ -138,9 +138,6 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
         ))));
     }
 
-    /**
-     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
-     */
     public function testOverwritesCookiesThatAreOlderOrDiscardable()
     {
         $t = time() + 1000;
@@ -179,9 +176,6 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertNotEquals($t, $c[0]->getExpires());
     }
 
-    /**
-     * @covers Guzzle\Http\CookieJar\ArrayCookieJar
-     */
     public function testOverwritesCookiesThatHaveChanged()
     {
         $t = time() + 1000;
