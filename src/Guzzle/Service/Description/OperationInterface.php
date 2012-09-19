@@ -3,7 +3,6 @@
 namespace Guzzle\Service\Description;
 
 use Guzzle\Common\Collection;
-use Guzzle\Service\Exception\ValidationException;
 
 /**
  * Interface defining data objects that hold the information of an API operation
@@ -164,15 +163,4 @@ interface OperationInterface
      * @return mixed|null
      */
     public function getData($name);
-
-    /**
-     * Validates that all required args are included in a config object, and if not, throws an
-     * InvalidArgumentException with a helpful error message. Adds default args to the passed config object if the
-     * parameter was not set in the config object.
-     *
-     * @param Collection $config Configuration settings
-     *
-     * @throws ValidationException when validation errors occur
-     */
-    public function validate(Collection $config);
 }

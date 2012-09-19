@@ -186,7 +186,6 @@ class XmlVisitorTest extends AbstractVisitorTestCase
         $param = new Parameter(array('Foo' => array('location' => 'xml', 'type' => 'string')));
         $value = array();
         $request = new EntityEnclosingRequest('POST', 'http://foo.com');
-        $this->assertTrue($param->process($value));
         $visitor = new XmlVisitor();
         $visitor->visit($this->command, $request, $param, $value);
     }
@@ -216,10 +215,15 @@ class XmlVisitorTest extends AbstractVisitorTestCase
             )
         ));
 
-        $param->setParent(new Operation(array('data' => array('ns' => 'https://foo/', 'root' => 'Test'))));
+        $param->setParent(new Operation(array(
+            'data' => array(
+                'ns'   => 'https://foo/',
+                'root' => 'Test'
+            )
+        )));
 
         $value = array('Nodes' => array('foo', 'baz'));
-        $this->assertTrue($param->process($value));
+        $this->assertTrue($this->validator->validate($param, $value));
         $visitor->visit($this->command, $request, $param, $value);
         $visitor->after($this->command, $request);
 

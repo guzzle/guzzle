@@ -7,17 +7,31 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Curl\CurlHandle;
+use Guzzle\Service\ClientInterface;
 use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Description\OperationInterface;
-use Guzzle\Service\ClientInterface;
+use Guzzle\Service\Description\ValidatorInterface;
+use Guzzle\Service\Description\SchemaValidator;
 use Guzzle\Service\Exception\CommandException;
+use Guzzle\Service\Exception\ValidationException;
 
 /**
  * Command object to handle preparing and processing client requests and responses of the requests
  */
 abstract class AbstractCommand extends Collection implements CommandInterface
 {
+    // Option used to specify custom headers to add to the generated request
     const HEADERS_OPTION = 'headers';
+    // Option used to add an onComplete method to a command
+    const ON_COMPLETE = 'command.on_complete';
+    // Option used to disable any pre-sending command validation
+    const DISABLE_VALIDATION = 'command.disable_validation';
+    // Option used to override how a command result will be formatted
+    const RESPONSE_PROCESSING = 'command.response_processing';
+    // Different response types that commands can use
+    const TYPE_RAW = 'raw';
+    const TYPE_NATIVE = 'native';
+    const TYPE_MODEL = 'model';
 
     /**
      * @var ClientInterface Client object used to execute the command
@@ -45,9 +59,14 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     protected $onComplete;
 
     /**
+     * @var ValidatorInterface Validator used to prepare and validate properties against a JSON schema
+     */
+    protected $validator;
+
+    /**
      * Constructor
      *
-     * @param array|Collection    $parameters Collection of parameters to set on the command
+     * @param array|Collection   $parameters Collection of parameters to set on the command
      * @param OperationInterface $operation Command definition from description
      */
     public function __construct($parameters = null, OperationInterface $operation = null)
@@ -72,6 +91,11 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         if ($onComplete = $this->get('command.on_complete')) {
             $this->remove('command.on_complete');
             $this->setOnComplete($onComplete);
+        }
+
+        // If no response processing value was specified, then attempt to use the highest level of processing
+        if (!$this->get(self::RESPONSE_PROCESSING)) {
+            $this->set(self::RESPONSE_PROCESSING, self::TYPE_MODEL);
         }
 
         $this->init();
@@ -134,7 +158,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     public function execute()
     {
         if (!$this->client) {
-            throw new CommandException('A Client object must be associated with the command before it can be executed from the context of the command.');
+            throw new CommandException('A client must be associated with the command before it can be executed.');
         }
 
         return $this->client->execute($this);
@@ -235,11 +259,12 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     {
         if (!$this->isPrepared()) {
             if (!$this->client) {
-                throw new CommandException('A Client object must be associated with the command before it can be prepared.');
+                throw new CommandException('A client must be associated with the command before it can be prepared.');
             }
 
             // Fail on missing required arguments, and change parameters via filters
-            $this->operation->validate($this);
+            $this->validate();
+            // Delegate to the subclass that implements the build method
             $this->build();
 
             // Add custom request headers set on the command
@@ -259,6 +284,21 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
+     * Set the validator used to validate and prepare command parameters and nested JSON schemas. If no validator is
+     * set, then the command will validate using the default {@see SchemaValidator}.
+     *
+     * @param ValidatorInterface $validator Validator used to prepare and validate properties against a JSON schema
+     *
+     * @return self
+     */
+    public function setValidator(ValidatorInterface $validator)
+    {
+        $this->validator = $validator;
+
+        return $this;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function getRequestHeaders()
@@ -267,7 +307,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
-     * Initialize the command (hook to be implemented in subclasses)
+     * Initialize the command (hook that can be implemented in subclasses)
      */
     protected function init() {}
 
@@ -277,7 +317,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     abstract protected function build();
 
     /**
-     * Override this hook to create an operation for concrete commands
+     * Hook used to create an operation for concrete commands that are not associated with a service description
      *
      * @return OperationInterface
      */
@@ -292,6 +332,54 @@ abstract class AbstractCommand extends Collection implements CommandInterface
      */
     protected function process()
     {
-        $this->result = DefaultResponseParser::getInstance()->parse($this);
+        $this->result = $this->get(self::RESPONSE_PROCESSING) != self::TYPE_RAW
+            ? DefaultResponseParser::getInstance()->parse($this)
+            : $this->request->getResponse();
+    }
+
+    /**
+     * Validate and prepare the command based on the schema and rules defined by the command's Operation object
+     *
+     * @throws ValidationException when validation errors occur
+     */
+    protected function validate()
+    {
+        // Do not perform request validation/transformation if it is disable
+        if ($this->get(self::DISABLE_VALIDATION)) {
+            return;
+        }
+
+        $errors = array();
+        $validator = $this->getValidator();
+        foreach ($this->operation->getParams() as $name => $schema) {
+            $value = $this->get($name);
+            if (!$validator->validate($schema, $value)) {
+                $errors = array_merge($errors, $validator->getErrors());
+            } elseif ($value !== $this->get($name)) {
+                // Update the config value if it changed and no validation errors were encountered
+                $this->data[$name] = $value;
+            }
+        }
+
+        if (!empty($errors)) {
+            $e = new ValidationException('Validation errors: ' . implode("\n", $errors));
+            $e->setErrors($errors);
+            throw $e;
+        }
+    }
+
+    /**
+     * Get the validator used to prepare and validate properties. If no validator has been set on the command, then
+     * the default {@see SchemaValidator} will be used.
+     *
+     * @return ValidatorInterface
+     */
+    protected function getValidator()
+    {
+        if (!$this->validator) {
+            $this->validator = SchemaValidator::getInstance();
+        }
+
+        return $this->validator;
     }
 }

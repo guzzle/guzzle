@@ -4,7 +4,6 @@ namespace Guzzle\Service\Description;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
-use Guzzle\Service\Exception\ValidationException;
 
 /**
  * Data object holding the information of an API command
@@ -581,32 +580,6 @@ class Operation implements OperationInterface
         $this->data[$name] = $value;
 
         return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     * @throws ValidationException when validation errors occur
-     */
-    public function validate(Collection $config)
-    {
-        $errors = array();
-        foreach ($this->getParams() as $name => $arg) {
-            $value = $config->get($name);
-            $result = $arg->process($value);
-            if ($result !== true) {
-                $errors = array_merge($errors, $result);
-            }
-            // Update the config value if it changed
-            if ($value !== $config->get($name)) {
-                $config->set($name, $value);
-            }
-        }
-
-        if (!empty($errors)) {
-            $e = new ValidationException('Validation errors: ' . implode("\n", $errors));
-            $e->setErrors($errors);
-            throw $e;
-        }
     }
 
     /**

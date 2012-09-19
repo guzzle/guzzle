@@ -9,6 +9,7 @@ use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\AbstractCommand;
 use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Description\Parameter;
+use Guzzle\Service\Description\SchemaValidator;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
 use Guzzle\Tests\Service\Mock\Command\Sub\Sub;
 
@@ -386,5 +387,43 @@ class CommandTest extends AbstractCommandTest
     {
         $command = $this->getMockBuilder('Guzzle\Service\Command\AbstractCommand')->getMockForAbstractClass();
         $this->assertInstanceOf('Guzzle\Service\Description\Operation', $command->getOperation());
+    }
+
+    public function testAllowsValidatorToBeInjected()
+    {
+        $command = $this->getMockBuilder('Guzzle\Service\Command\AbstractCommand')->getMockForAbstractClass();
+        $v = new SchemaValidator();
+        $command->setValidator($v);
+        $this->assertSame($v, $this->readAttribute($command, 'validator'));
+    }
+
+    public function testCanDisableValidation()
+    {
+        $command = new MockCommand();
+        $command->setClient(new \Guzzle\Service\Client());
+        $v = $this->getMockBuilder('Guzzle\Service\Description\SchemaValidator')
+            ->setMethods(array('validate'))
+            ->getMock();
+        $v->expects($this->never())->method('validate');
+        $command->setValidator($v);
+        $command->set(AbstractCommand::DISABLE_VALIDATION, true);
+        $command->prepare();
+    }
+
+    /**
+     * @expectedException Guzzle\Service\Exception\ValidationException
+     * @expectedExceptionMessage [Foo] Baz
+     */
+    public function testValidatesCommandBeforeSending()
+    {
+        $command = new MockCommand();
+        $command->setClient(new \Guzzle\Service\Client());
+        $v = $this->getMockBuilder('Guzzle\Service\Description\SchemaValidator')
+            ->setMethods(array('validate', 'getErrors'))
+            ->getMock();
+        $v->expects($this->any())->method('validate')->will($this->returnValue(false));
+        $v->expects($this->any())->method('getErrors')->will($this->returnValue(array('[Foo] Baz', '[Bar] Boo')));
+        $command->setValidator($v);
+        $command->prepare();
     }
 }

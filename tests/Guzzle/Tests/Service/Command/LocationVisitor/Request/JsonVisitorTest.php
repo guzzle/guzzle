@@ -3,12 +3,12 @@
 namespace Guzzle\Tests\Service\Command\LocationVisitor\Request;
 
 use Guzzle\Common\Collection;
-use Guzzle\Service\Command\LocationVisitor\Request\JsonBodyVisitor as Visitor;
+use Guzzle\Service\Command\LocationVisitor\Request\JsonVisitor as Visitor;
 
 /**
- * @covers Guzzle\Service\Command\LocationVisitor\Request\JsonBodyVisitor
+ * @covers Guzzle\Service\Command\LocationVisitor\Request\JsonVisitor
  */
-class JsonBodyVisitorTest extends AbstractVisitorTestCase
+class JsonVisitorTest extends AbstractVisitorTestCase
 {
     public function testVisitsLocation()
     {
@@ -34,18 +34,17 @@ class JsonBodyVisitorTest extends AbstractVisitorTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Command\LocationVisitor\Request\JsonBodyVisitor
+     * @covers Guzzle\Service\Command\LocationVisitor\Request\JsonVisitor
      * @covers Guzzle\Service\Command\LocationVisitor\Request\AbstractRequestVisitor::resolveRecursively
      */
     public function testRecursivelyBuildsJsonBodies()
     {
-        $command = $this->getNestedCommand('json');
-        $data = new Collection();
-        $command->validate($data);
+        $command = $this->getCommand('json');
+        $request = $command->prepare();
         $visitor = new Visitor();
         $param = $this->getNestedCommand('json')->getParam('foo');
-        $visitor->visit($this->command, $this->request, $param->setRename('Foo'), $data['foo']);
-        $visitor->after($this->command, $this->request);
-        $this->assertEquals('{"Foo":{"test":{"baz":true,"Jenga_Yall!":"HELLO"},"bar":123}}', (string) $this->request->getBody());
+        $visitor->visit($command, $request, $param->setRename('Foo'), $command['foo']);
+        $visitor->after($command, $request);
+        $this->assertEquals('{"Foo":{"test":{"baz":true,"Jenga_Yall!":"HELLO"},"bar":123}}', (string) $request->getBody());
     }
 }

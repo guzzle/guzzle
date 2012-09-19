@@ -7,7 +7,7 @@ use Guzzle\Parser\ParserRegistry;
 use Guzzle\Service\Command\LocationVisitor\Request\RequestVisitorInterface;
 use Guzzle\Service\Command\LocationVisitor\Request\BodyVisitor;
 use Guzzle\Service\Command\LocationVisitor\Request\HeaderVisitor;
-use Guzzle\Service\Command\LocationVisitor\Request\JsonBodyVisitor;
+use Guzzle\Service\Command\LocationVisitor\Request\JsonVisitor;
 use Guzzle\Service\Command\LocationVisitor\Request\QueryVisitor;
 use Guzzle\Service\Command\LocationVisitor\Request\PostFieldVisitor;
 use Guzzle\Service\Command\LocationVisitor\Request\PostFileVisitor;
@@ -41,7 +41,7 @@ class DefaultRequestSerializer implements RequestSerializerInterface
                 'header'    => new HeaderVisitor(),
                 'query'     => new QueryVisitor(),
                 'body'      => new BodyVisitor(),
-                'json'      => new JsonBodyVisitor(),
+                'json'      => new JsonVisitor(),
                 'postFile'  => new PostFileVisitor(),
                 'postField' => new PostFieldVisitor(),
                 'xml'       => new XmlVisitor(),

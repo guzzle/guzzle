@@ -74,6 +74,7 @@ class OperationCommand extends AbstractCommand
         // If no response parser is set, add the default parser if a model matching the responseClass is found
         if (!$this->responseParser) {
             $this->responseParser = $this->operation->getResponseType() == OperationInterface::TYPE_MODEL
+                && $this->get(self::RESPONSE_PROCESSING) == self::TYPE_MODEL
                 ? OperationResponseParser::getInstance()
                 : DefaultResponseParser::getInstance();
         }
@@ -84,6 +85,11 @@ class OperationCommand extends AbstractCommand
      */
     protected function process()
     {
-        $this->result = $this->responseParser->parse($this);
+        // Do not process the response if 'command.raw_response' is set
+        if ($this->get(self::RESPONSE_PROCESSING) != self::TYPE_RAW) {
+            $this->result = $this->responseParser->parse($this);
+        } else {
+            $this->result = $this->request->getResponse();
+        }
     }
 }
