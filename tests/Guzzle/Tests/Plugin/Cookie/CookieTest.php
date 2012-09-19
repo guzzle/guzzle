@@ -1,11 +1,11 @@
 <?php
 
-namespace Guzzle\Tests\Http;
+namespace Guzzle\Tests\Plugin\Cookie;
 
-use Guzzle\Http\Cookie;
+use Guzzle\Plugin\Cookie\Cookie;
 
 /**
- * @covers Guzzle\Http\Cookie
+ * @covers Guzzle\Plugin\Cookie\Cookie
  */
 class CookieTest extends \Guzzle\Tests\GuzzleTestCase
 {
