@@ -3,15 +3,11 @@
 namespace Guzzle\Tests\Service\Command;
 
 use Guzzle\Service\Command\DefaultRequestSerializer;
-use Guzzle\Service\Command\OperationCommand;
 use Guzzle\Http\Message\EntityEnclosingRequest;
-use Guzzle\Tests\Service\Mock\Command\MockCommand;
 use Guzzle\Service\Client;
-use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Description\Parameter;
 use Guzzle\Service\Command\LocationVisitor\Request\HeaderVisitor;
-use Guzzle\Service\Command\LocationVisitor\Request\BodyVisitor;
 
 /**
  * @covers Guzzle\Service\Command\DefaultRequestSerializer

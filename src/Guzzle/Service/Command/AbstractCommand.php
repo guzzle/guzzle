@@ -200,7 +200,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     public function getResponse()
     {
         if (!$this->isExecuted()) {
-            throw new CommandException('The command must be executed before retrieving the response');
+            $this->execute();
         }
 
         return $this->request->getResponse();
@@ -212,7 +212,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     public function getResult()
     {
         if (!$this->isExecuted()) {
-            throw new CommandException('The command must be executed before retrieving the result');
+            $this->execute();
         }
 
         if (null === $this->result) {
