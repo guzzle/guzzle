@@ -16,6 +16,49 @@ class XmlVisitor extends AbstractResponseVisitor
      */
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value)
     {
+        $name = $param->getName();
+        $key = $param->getKey();
+        if (isset($value[$key])) {
+            $this->recursiveProcess($param, $value[$key]);
+            if ($key != $name) {
+                $value[$name] = $value[$key];
+                unset($value[$key]);
+            }
+        }
+    }
 
+    /**
+     * Recursively process a parameter while applying filters
+     *
+     * @param Parameter $param API parameter being validated
+     * @param mixed     $value Value to validate and process. The value may change during this process.
+     */
+    protected function recursiveProcess(Parameter $param, &$value)
+    {
+        if ($value !== null) {
+            $type = $param->getType();
+            if (is_array($value)) {
+                if ($type == 'array') {
+                    // Convert the node if it was meant to be an array
+                    if (!isset($value[0])) {
+                        $value = array($value);
+                    }
+                    foreach ($value as &$item) {
+                        $this->recursiveProcess($param->getItems(), $item);
+                    }
+                } elseif ($type == 'object' && !isset($value[0])) {
+                    // On the above line, we ensure that the array is associative and not numerically indexed
+                    if ($properties = $param->getProperties()) {
+                        foreach ($properties as $property) {
+                            $name = $property->getName();
+                            if (isset($value[$name])) {
+                                $this->recursiveProcess($property, $value[$name]);
+                            }
+                        }
+                    }
+                }
+            }
+            $value = $param->filter($value);
+        }
     }
 }

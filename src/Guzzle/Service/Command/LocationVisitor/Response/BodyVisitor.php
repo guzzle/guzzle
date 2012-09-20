@@ -16,6 +16,6 @@ class BodyVisitor extends AbstractResponseVisitor
      */
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value)
     {
-        $value[$param->getRename() ?: $param->getName()] = $response->getBody();
+        $value[$param->getKey()] = $response->getBody();
     }
 }
