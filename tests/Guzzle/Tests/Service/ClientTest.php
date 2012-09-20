@@ -210,7 +210,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Client::__call
-     * @covers Guzzle\Service\Client::setMagicCallBehavior
+     * @covers Guzzle\Service\Client::enableMagicMethods
      * @expectedException InvalidArgumentException
      * @expectedExceptionMessage Command was not found matching foo
      */
@@ -218,19 +218,8 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $client = new Mock\MockClient();
         $client->setDescription($this->service);
-        $client->setMagicCallBehavior(Client::MAGIC_CALL_RETURN);
+        $client->enableMagicMethods(true);
         $client->foo();
-    }
-
-    /**
-     * @covers Guzzle\Service\Client::__call
-     */
-    public function testMagicCallBehaviorReturnReturnsCommands()
-    {
-        $client = new Mock\MockClient();
-        $client->setMagicCallBehavior(Client::MAGIC_CALL_RETURN);
-        $client->setDescription($this->service);
-        $this->assertInstanceOf('Guzzle\Tests\Service\Mock\Command\MockCommand', $client->mockCommand());
     }
 
     /**
@@ -239,10 +228,12 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     public function testMagicCallBehaviorExecuteExecutesCommands()
     {
         $client = new Mock\MockClient();
-        $client->setMagicCallBehavior(Client::MAGIC_CALL_EXECUTE);
+        $client->enableMagicMethods(true);
         $client->setDescription($this->service);
         $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(new Response(200))));
-        $this->assertInstanceOf('Guzzle\Http\Message\Response', $client->mockCommand());
+        $cmd = $client->mockCommand();
+        $this->assertInstanceOf('Guzzle\Tests\Service\Mock\Command\MockCommand', $cmd);
+        $this->assertTrue($cmd->isExecuted());
     }
 
     /**

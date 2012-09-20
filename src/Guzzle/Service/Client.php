@@ -29,9 +29,9 @@ class Client extends HttpClient implements ClientInterface
     protected $serviceDescription;
 
     /**
-     * @var string Setting to use for magic method calls
+     * @var bool Whether or not magic methods are enabled
      */
-    protected $magicMethodBehavior = false;
+    protected $enableMagicMethods = false;
 
     /**
      * @var CommandFactoryInterface
@@ -79,35 +79,31 @@ class Client extends HttpClient implements ClientInterface
      * @param string $method Name of the command object to instantiate
      * @param array  $args   Arguments to pass to the command
      *
-     * @return mixed
+     * @return CommandInterface
      * @throws BadMethodCallException when a command is not found or magic methods are disabled
      */
     public function __call($method, $args = null)
     {
-        if ($this->magicMethodBehavior == self::MAGIC_CALL_DISABLED) {
-            throw new BadMethodCallException(
-                "Missing method {$method}.  Enable magic calls to use magic methods with command names."
-            );
+        if (!$this->enableMagicMethods) {
+            throw new BadMethodCallException("Missing method {$method}. This client has not enabled magic methods.");
         }
 
         $command = $this->getCommand($method, isset($args[0]) ? $args[0] : array());
+        $command->execute();
 
-        return $this->magicMethodBehavior == self::MAGIC_CALL_RETURN ? $command : $this->execute($command);
+        return $command;
     }
 
     /**
-     * Set the behavior for missing methods
+     * Specify whether or not magic methods are enabled (disabled by default)
      *
-     * @param int $behavior Behavior to use when a missing method is called.
-     *     - Client::MAGIC_CALL_DISABLED: Disable magic method calls
-     *     - Client::MAGIC_CALL_EXECUTE:  Execute commands and return the result
-     *     - Client::MAGIC_CALL_RETURN:   Instantiate and return the command
+     * @param bool $isEnabled Set to true to enable magic methods or false to disable them
      *
-     * @return Client
+     * @return self
      */
-    public function setMagicCallBehavior($behavior)
+    public function enableMagicMethods($isEnabled)
     {
-        $this->magicMethodBehavior = (int) $behavior;
+        $this->enableMagicMethods = $isEnabled;
 
         return $this;
     }
