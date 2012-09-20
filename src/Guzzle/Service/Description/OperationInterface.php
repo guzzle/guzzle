@@ -2,8 +2,6 @@
 
 namespace Guzzle\Service\Description;
 
-use Guzzle\Common\Collection;
-
 /**
  * Interface defining data objects that hold the information of an API operation
  */

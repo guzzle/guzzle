@@ -2,7 +2,6 @@
 
 namespace Guzzle\Service\Command\LocationVisitor\Response;
 
-use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Description\Parameter;
 use Guzzle\Service\Command\CommandInterface;

@@ -2,11 +2,9 @@
 
 namespace Guzzle\Tests\Service\Description;
 
-use Guzzle\Common\Collection;
 use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Description\Parameter;
 use Guzzle\Service\Description\ServiceDescription;
-use Guzzle\Service\Exception\ValidationException;
 
 /**
  * @covers Guzzle\Service\Description\Operation

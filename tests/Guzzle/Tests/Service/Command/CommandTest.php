@@ -57,22 +57,30 @@ class CommandTest extends AbstractCommandTest
 
     /**
      * @covers Guzzle\Service\Command\AbstractCommand::getResponse
-     * @expectedException RuntimeException
      */
-    public function testGetResponseThrowsExceptionBeforePreparation()
+    public function testGetResponseExecutesCommandsWhenNeeded()
     {
+        $response = new Response(200);
+        $client = $this->getClient();
+        $this->setMockResponse($client, array($response));
         $command = new MockCommand();
-        $command->getResponse();
+        $command->setClient($client);
+        $this->assertSame($response, $command->getResponse());
+        $this->assertSame($response, $command->getResponse());
     }
 
     /**
      * @covers Guzzle\Service\Command\AbstractCommand::getResult
-     * @expectedException RuntimeException
      */
-    public function testGetResultThrowsExceptionBeforePreparation()
+    public function testGetResultExecutesCommandsWhenNeeded()
     {
+        $response = new Response(200);
+        $client = $this->getClient();
+        $this->setMockResponse($client, array($response));
         $command = new MockCommand();
-        $command->getResult();
+        $command->setClient($client);
+        $this->assertSame($response, $command->getResult());
+        $this->assertSame($response, $command->getResult());
     }
 
     /**
