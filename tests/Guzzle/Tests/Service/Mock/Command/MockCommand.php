@@ -19,7 +19,8 @@ class MockCommand extends \Guzzle\Service\Command\AbstractCommand
                 ),
                 '_internal' => array(
                     'default' => 'abc'
-                )
+                ),
+                'foo' => array('filters' => array('strtoupper'))
             )
         ));
     }

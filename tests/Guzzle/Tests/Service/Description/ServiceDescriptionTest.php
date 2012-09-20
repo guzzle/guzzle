@@ -6,6 +6,9 @@ use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Client;
 
+/**
+ * @covers Guzzle\Service\Description\ServiceDescription
+ */
 class ServiceDescriptionTest extends \Guzzle\Tests\GuzzleTestCase
 {
     protected $serviceData;
@@ -28,7 +31,7 @@ class ServiceDescriptionTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Description\ServiceDescription::factory
-     * @covers Guzzle\Service\Description\ArrayDescriptionBuilder::build
+     * @covers Guzzle\Service\Description\ServiceDescriptionLoader::build
      */
     public function testFactoryDelegatesToConcreteFactories()
     {
@@ -36,12 +39,6 @@ class ServiceDescriptionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertInstanceOf('Guzzle\Service\Description\ServiceDescription', ServiceDescription::factory($jsonFile));
     }
 
-    /**
-     * @covers Guzzle\Service\Description\ServiceDescription
-     * @covers Guzzle\Service\Description\ServiceDescription::__construct
-     * @covers Guzzle\Service\Description\ServiceDescription::getOperations
-     * @covers Guzzle\Service\Description\ServiceDescription::getOperation
-     */
     public function testConstructor()
     {
         $service = new ServiceDescription(array('operations' => $this->serviceData));
@@ -50,10 +47,6 @@ class ServiceDescriptionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($service->hasOperation('test_command'));
     }
 
-    /**
-     * @covers Guzzle\Service\Description\ServiceDescription::serialize
-     * @covers Guzzle\Service\Description\ServiceDescription::unserialize
-     */
     public function testIsSerializable()
     {
         $service = new ServiceDescription(array('operations' => $this->serviceData));
