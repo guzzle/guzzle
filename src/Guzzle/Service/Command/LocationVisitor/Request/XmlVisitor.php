@@ -67,7 +67,7 @@ class XmlVisitor extends AbstractRequestVisitor
 
         $node = $xml;
         if ($param->getType() == 'object' || $param->getType() == 'array') {
-            $node = $xml->addChild($param->getRename() ?: $param->getName());
+            $node = $xml->addChild($param->getKey());
         }
 
         $this->addXml($node, $param, $value);
@@ -123,7 +123,7 @@ class XmlVisitor extends AbstractRequestVisitor
                         $this->addXml($child, $property, $v);
                     } else {
                         if ($property->getData('attribute')) {
-                            $xml->addAttribute($property->getRename() ?: $property->getName(), $v, $namespace);
+                            $xml->addAttribute($property->getKey(), $v, $namespace);
                         } else {
                             $xml->addChild($name, $v, $namespace);
                         }

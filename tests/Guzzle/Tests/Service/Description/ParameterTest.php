@@ -316,4 +316,12 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
             )
         ), $p->toArray());
     }
+
+    public function testHasKeyMethod()
+    {
+        $p = new Parameter(array('name' => 'foo', 'rename' => 'bar'));
+        $this->assertEquals('bar', $p->getKey());
+        $p->setRename(null);
+        $this->assertEquals('foo', $p->getKey());
+    }
 }
