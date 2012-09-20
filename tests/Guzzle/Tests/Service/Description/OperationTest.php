@@ -260,12 +260,13 @@ class OperationTest extends \Guzzle\Tests\GuzzleTestCase
 
     public function testHasResponseType()
     {
-        $o = new Operation();
-        $this->assertEquals('primitive', $o->getResponseType());
-        $this->assertEquals('model', $o->setResponseType('model')->getResponseType());
         // infers in the constructor
         $o = new Operation(array('responseClass' => 'array'));
         $this->assertEquals('primitive', $o->getResponseType());
+        // Infers when set
+        $o = new Operation();
+        $this->assertEquals('primitive', $o->getResponseType());
+        $this->assertEquals('model', $o->setResponseType('model')->getResponseType());
     }
 
     /**

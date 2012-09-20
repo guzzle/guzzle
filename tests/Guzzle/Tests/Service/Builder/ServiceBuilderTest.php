@@ -8,6 +8,9 @@ use Guzzle\Service\Client;
 use Guzzle\Service\Exception\ServiceNotFoundException;
 use Doctrine\Common\Cache\ArrayCache;
 
+/**
+ * @covers Guzzle\Service\Builder\ServiceBuilder
+ */
 class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
 {
     protected $arrayData = array(
@@ -54,10 +57,6 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         )
     );
 
-    /**
-     * @covers Guzzle\Service\Builder\ServiceBuilder::serialize
-     * @covers Guzzle\Service\Builder\ServiceBuilder::unserialize
-     */
     public function testAllowsSerialization()
     {
         $builder = ServiceBuilder::factory($this->arrayData);
@@ -65,9 +64,6 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($cached, $builder);
     }
 
-    /**
-     * @covers Guzzle\Service\Builder\ServiceBuilder::factory
-     */
     public function testDelegatesFactoryMethodToAbstractFactory()
     {
         $builder = ServiceBuilder::factory($this->arrayData);
@@ -76,7 +72,6 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Builder\ServiceBuilder::get
      * @expectedException Guzzle\Service\Exception\ServiceNotFoundException
      * @expectedExceptionMessage No service is registered as foobar
      */
@@ -85,9 +80,6 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         ServiceBuilder::factory($this->arrayData)->get('foobar');
     }
 
-    /**
-     * @covers Guzzle\Service\Builder\ServiceBuilder::get
-     */
     public function testStoresClientCopy()
     {
         $builder = ServiceBuilder::factory($this->arrayData);
@@ -114,9 +106,6 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($client2 === $builder->get('billy.mock'));
     }
 
-    /**
-     * @covers Guzzle\Service\Builder\ServiceBuilder
-     */
     public function testBuildersPassOptionsThroughToClients()
     {
         $s = new ServiceBuilder(array(
@@ -136,9 +125,6 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(8080, $c->getConfig('curl.curlopt_proxyport'));
     }
 
-    /**
-     * @covers Guzzle\Service\Builder\ServiceBuilder
-     */
     public function testUsesTheDefaultBuilderWhenNoBuilderIsSpecified()
     {
         $s = new ServiceBuilder(array(
@@ -158,13 +144,6 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertInstanceOf('Guzzle\\Tests\\Service\\Mock\\MockClient', $c);
     }
 
-    /**
-     * @covers Guzzle\Service\Builder\ServiceBuilder::set
-     * @covers Guzzle\Service\Builder\ServiceBuilder::offsetSet
-     * @covers Guzzle\Service\Builder\ServiceBuilder::offsetGet
-     * @covers Guzzle\Service\Builder\ServiceBuilder::offsetUnset
-     * @covers Guzzle\Service\Builder\ServiceBuilder::offsetExists
-     */
     public function testUsedAsArray()
     {
         $b = ServiceBuilder::factory($this->arrayData);
@@ -179,9 +158,6 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertInstanceOf('Guzzle\\Service\\Client', $b['michael.mock']);
     }
 
-    /**
-     * @covers Guzzle\Service\Builder\ServiceBuilder::factory
-     */
     public function testFactoryCanCreateFromJson()
     {
         $tmp = sys_get_temp_dir() . '/test.js';
@@ -193,9 +169,6 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('billy', $s->getConfig('username'));
     }
 
-    /**
-     * @covers Guzzle\Service\Builder\ServiceBuilder::factory
-     */
     public function testFactoryCanCreateFromArray()
     {
         $b = ServiceBuilder::factory($this->arrayData);
@@ -204,36 +177,6 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('billy', $s->getConfig('username'));
     }
 
-    /**
-     * @covers Guzzle\Service\Builder\ServiceBuilder::factory
-     * @expectedException Guzzle\Service\Exception\ServiceBuilderException
-     * @expectedExceptionMessage Must pass the name of a .js or .json file or array
-     */
-    public function testFactoryValidatesFileExtension()
-    {
-        $tmp = sys_get_temp_dir() . '/test.abc';
-        file_put_contents($tmp, 'data');
-        try {
-            ServiceBuilder::factory($tmp);
-        } catch (\RuntimeException $e) {
-            unlink($tmp);
-            throw $e;
-        }
-    }
-
-    /**
-     * @covers Guzzle\Service\Builder\ServiceBuilder::factory
-     * @expectedException Guzzle\Service\Exception\ServiceBuilderException
-     * @expectedExceptionMessage Must pass the name of a .js or .json file or array
-     */
-    public function testFactoryValidatesObjectTypes()
-    {
-        ServiceBuilder::factory(new \stdClass());
-    }
-
-    /**
-     * @covers Guzzle\Service\Builder\ServiceBuilder::factory
-     */
     public function testFactoryDoesNotRequireParams()
     {
         $b = ServiceBuilder::factory($this->arrayData);
@@ -241,9 +184,6 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('billy', $s->getConfig('username'));
     }
 
-    /**
-     * @covers Guzzle\Service\Builder\ServiceBuilder
-     */
     public function testBuilderAllowsReferencesBetweenClients()
     {
         $builder = ServiceBuilder::factory(array(
@@ -272,10 +212,6 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('1', $builder['b']->getConfig('username'));
     }
 
-    /**
-     * @covers Guzzle\Service\Builder\ServiceBuilder::getAllEvents
-     * @covers Guzzle\Service\Builder\ServiceBuilder::get
-     */
     public function testEmitsEventsWhenClientsAreCreated()
     {
         // Ensure that the client signals that it emits an event
@@ -307,9 +243,6 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertInstanceOf('Guzzle\Tests\Service\Mock\MockClient', $client);
     }
 
-    /**
-     * @covers Guzzle\Service\Builder\ServiceBuilder::factory
-     */
     public function testCanAddGlobalParametersToServicesOnLoad()
     {
         $builder = ServiceBuilder::factory($this->arrayData, array(
@@ -323,17 +256,6 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
             $this->assertEquals('fred', $service['params']['username']);
             $this->assertEquals('test', $service['params']['new_value']);
         }
-    }
-
-    public function testDescriptionIsCacheable()
-    {
-        $jsonFile = __DIR__ . '/../../TestData/test_service.json';
-        $adapter = new DoctrineCacheAdapter(new ArrayCache());
-        $builder = ServiceBuilder::factory($jsonFile, array('cache.adapter' => $adapter));
-        // Ensure the cache key was set
-        $this->assertTrue($adapter->contains('guzzle' . crc32($jsonFile)));
-        // Grab the service from the cache
-        $this->assertEquals($builder, ServiceBuilder::factory($jsonFile, array('cache.adapter' => $adapter)));
     }
 
     public function testCacheServiceCanBeCreatedAndInjectedIntoOtherServices()

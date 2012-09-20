@@ -2,17 +2,18 @@
 
 namespace Guzzle\Service\Description;
 
+use Guzzle\Service\AbstractConfigLoader;
 use Guzzle\Service\Exception\DescriptionBuilderException;
 
 /**
- * Build service descriptions using an array of configuration data
+ * Loader for service descriptions
  */
-class ArrayDescriptionBuilder implements DescriptionBuilderInterface
+class ServiceDescriptionLoader extends AbstractConfigLoader
 {
     /**
      * {@inheritdoc}
      */
-    public function build($config, array $options = null)
+    protected function build($config, array $options)
     {
         $operations = array();
 
