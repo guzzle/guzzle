@@ -2,6 +2,7 @@
 
 namespace Guzzle\Service\Builder;
 
+use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Service\Exception\ServiceNotFoundException;
 
 /**
@@ -35,12 +36,12 @@ class ArrayServiceBuilderFactory implements ServiceBuilderFactoryInterface
                     );
                 }
 
-                $service['class'] = empty($service['class'])
-                    ? $services[$service['extends']]['class'] : $service['class'];
-
-                $extendsParams = isset($services[$service['extends']]['params'])
-                    ? $services[$service['extends']]['params'] : false;
-
+                $extended = &$services[$service['extends']];
+                // Use the correct class attribute
+                if (empty($service['class'])) {
+                    $service['class'] = isset($extended['class']) ? $extended['class'] : '';
+                }
+                $extendsParams = isset($extended['params']) ? $extended['params'] : false;
                 if ($extendsParams) {
                     $service['params'] = $service['params'] + $extendsParams;
                 }
