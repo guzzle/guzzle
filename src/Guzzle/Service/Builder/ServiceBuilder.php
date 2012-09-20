@@ -4,7 +4,6 @@ namespace Guzzle\Service\Builder;
 
 use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Http\ClientInterface;
-use Guzzle\Service\Builder\ServiceBuilderAbstractFactory;
 use Guzzle\Service\Exception\ServiceBuilderException;
 use Guzzle\Service\Exception\ServiceNotFoundException;
 
@@ -24,7 +23,7 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
     protected $clients = array();
 
     /**
-     * @var ServiceBuilderAbstractFactory Cached instance of the abstract factory
+     * @var ServiceBuilderLoader Cached instance of the service builder loader
      */
     protected static $cachedFactory;
 
@@ -39,15 +38,15 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
      * @throws ServiceBuilderException if a file cannot be opened
      * @throws ServiceNotFoundException when trying to extend a missing client
      */
-    public static function factory($config = null, array $globalParameters = null)
+    public static function factory($config = null, array $globalParameters = array())
     {
         // @codeCoverageIgnoreStart
         if (!static::$cachedFactory) {
-            static::$cachedFactory = new ServiceBuilderAbstractFactory();
+            static::$cachedFactory = new ServiceBuilderLoader();
         }
         // @codeCoverageIgnoreEnd
 
-        return self::$cachedFactory->build($config, $globalParameters);
+        return self::$cachedFactory->load($config, $globalParameters);
     }
 
     /**

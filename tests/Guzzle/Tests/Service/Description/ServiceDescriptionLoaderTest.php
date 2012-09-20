@@ -3,17 +3,13 @@
 namespace Guzzle\Tests\Service\Description;
 
 use Guzzle\Service\Description\ServiceDescription;
-use Guzzle\Service\Description\ArrayDescriptionBuilder;
+use Guzzle\Service\Description\ServiceDescriptionLoader;
 
 /**
- * @covers Guzzle\Service\Description\ArrayDescriptionBuilder
+ * @covers Guzzle\Service\Description\ServiceDescriptionLoader
  */
-class ArrayDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
+class ServiceDescriptionLoaderTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @covers Guzzle\Service\Description\ServiceDescription::factory
-     * @covers Guzzle\Service\Description\ArrayDescriptionBuilder::build
-     */
     public function testAllowsDeepNestedInheritance()
     {
         $d = ServiceDescription::factory(array(
@@ -39,8 +35,6 @@ class ArrayDescriptionBuilderTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Description\ServiceDescription::factory
-     * @covers Guzzle\Service\Description\ArrayDescriptionBuilder::build
      * @expectedException RuntimeException
      */
     public function testThrowsExceptionWhenExtendingMissingCommand()

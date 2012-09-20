@@ -410,6 +410,16 @@ class CommandTest extends AbstractCommandTest
         $command->prepare();
     }
 
+    public function testValidatorUpdatesCommand()
+    {
+        $command = new MockCommand(array('test' => 123, 'foo' => 'bar'));
+        $command->setClient(new \Guzzle\Service\Client());
+        $command->prepare();
+        $this->assertEquals(123, $command->get('test'));
+        $this->assertEquals('abc', $command->get('_internal'));
+        $this->assertEquals('BAR', $command->get('foo'));
+    }
+
     /**
      * @expectedException Guzzle\Service\Exception\ValidationException
      * @expectedExceptionMessage [Foo] Baz

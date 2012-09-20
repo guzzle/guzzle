@@ -38,24 +38,24 @@ class ServiceDescription implements ServiceDescriptionInterface
     protected $extraData = array();
 
     /**
-     * @var ServiceDescriptionFactoryInterface Factory used in factory method
+     * @var ServiceDescriptionLoader Factory used in factory method
      */
-    protected static $descriptionFactory;
+    protected static $descriptionLoader;
 
     /**
      * {@inheritdoc}
      * @param string|array $config  File to build or array of operation information
      * @param array        $options Service description factory options
      */
-    public static function factory($config, array $options = null)
+    public static function factory($config, array $options = array())
     {
         // @codeCoverageIgnoreStart
-        if (!self::$descriptionFactory) {
-            self::$descriptionFactory = new ServiceDescriptionAbstractFactory();
+        if (!self::$descriptionLoader) {
+            self::$descriptionLoader = new ServiceDescriptionLoader();
         }
         // @codeCoverageIgnoreEnd
 
-        return self::$descriptionFactory->build($config, $options);
+        return self::$descriptionLoader->load($config, $options);
     }
 
     /**
