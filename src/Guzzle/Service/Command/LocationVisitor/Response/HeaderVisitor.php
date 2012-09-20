@@ -16,6 +16,6 @@ class HeaderVisitor extends AbstractResponseVisitor
      */
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value)
     {
-        $value[$param->getRename() ?: $param->getName()] = (string) $response->getHeader($param->getName());
+        $value[$param->getKey()] = (string) $response->getHeader($param->getName());
     }
 }

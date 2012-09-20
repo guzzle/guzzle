@@ -16,6 +16,6 @@ class StatusCodeVisitor extends AbstractResponseVisitor
      */
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value)
     {
-        $value[$param->getRename() ?: $param->getName()] = $response->getStatusCode();
+        $value[$param->getKey()] = $response->getStatusCode();
     }
 }

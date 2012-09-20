@@ -23,15 +23,13 @@ class JsonVisitor extends AbstractResponseVisitor
      */
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value)
     {
-        if (!$param->getData('unfiltered')) {
-            $name = $param->getName();
-            $key = $param->getRename() ?: $name;
-            if (isset($value[$key])) {
-                $this->recursiveProcess($param, $value[$key]);
-                if ($key != $name) {
-                    $value[$name] = $value[$key];
-                    unset($value[$key]);
-                }
+        $name = $param->getName();
+        $key = $param->getKey();
+        if (isset($value[$key])) {
+            $this->recursiveProcess($param, $value[$key]);
+            if ($key != $name) {
+                $value[$name] = $value[$key];
+                unset($value[$key]);
             }
         }
     }

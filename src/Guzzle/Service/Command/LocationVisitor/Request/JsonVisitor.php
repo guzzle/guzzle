@@ -50,7 +50,7 @@ class JsonVisitor extends AbstractRequestVisitor
     public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
         $json = isset($this->data[$command]) ? $this->data[$command] : array();
-        $json[$param->getRename() ?: $param->getName()] = $param && is_array($value)
+        $json[$param->getKey()] = $param && is_array($value)
             ? $this->resolveRecursively($value, $param)
             : $value;
         $this->data[$command] = $json;

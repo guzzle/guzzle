@@ -215,6 +215,16 @@ class Parameter
     }
 
     /**
+     * Get the key of the parameter, where rename will supercede name if it is set
+     *
+     * @return string
+     */
+    public function getKey()
+    {
+        return $this->rename ?: $this->name;
+    }
+
+    /**
      * Set the name of the parameter
      *
      * @param string $name Name to set
