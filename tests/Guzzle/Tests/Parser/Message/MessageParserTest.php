@@ -28,4 +28,41 @@ class MessageParserTest extends MessageParserProvider
         $parser = new MessageParser();
         $this->compareResponseResults($parts, $parser->parseResponse($message));
     }
+
+    /**
+     * @covers Guzzle\Parser\Message\MessageParser::parseRequest
+     */
+    public function testParsesRequestsWithMissingProtocol()
+    {
+        $parser = new MessageParser();
+        $parts = $parser->parseRequest("GET /\r\nHost: Foo.com\r\n\r\n");
+        $this->assertEquals('GET', $parts['method']);
+        $this->assertEquals('HTTP', $parts['protocol']);
+        $this->assertEquals('1.1', $parts['version']);
+    }
+
+    /**
+     * @covers Guzzle\Parser\Message\MessageParser::parseRequest
+     */
+    public function testParsesRequestsWithMissingVersion()
+    {
+        $parser = new MessageParser();
+        $parts = $parser->parseRequest("GET / HTTP\r\nHost: Foo.com\r\n\r\n");
+        $this->assertEquals('GET', $parts['method']);
+        $this->assertEquals('HTTP', $parts['protocol']);
+        $this->assertEquals('1.1', $parts['version']);
+    }
+
+    /**
+     * @covers Guzzle\Parser\Message\MessageParser::parseResponse
+     */
+    public function testParsesResponsesWithMissingReasonPhrase()
+    {
+        $parser = new MessageParser();
+        $parts = $parser->parseResponse("HTTP/1.1 200\r\n\r\n");
+        $this->assertEquals('200', $parts['code']);
+        $this->assertEquals('', $parts['reason_phrase']);
+        $this->assertEquals('HTTP', $parts['protocol']);
+        $this->assertEquals('1.1', $parts['version']);
+    }
 }

@@ -19,11 +19,18 @@ class MessageParser extends AbstractMessageParser
         $parts = $this->parseMessage($message);
 
         // Parse the protocol and protocol version
-        list($protocol, $version) = explode('/', $parts['start_line'][2]);
+        if (isset($parts['start_line'][2])) {
+            $startParts = explode('/', $parts['start_line'][2]);
+            $protocol = strtoupper($startParts[0]);
+            $version = isset($startParts[1]) ? $startParts[1] : '1.1';
+        } else {
+            $protocol = 'HTTP';
+            $version = '1.1';
+        }
 
         $parsed = array(
             'method'   => strtoupper($parts['start_line'][0]),
-            'protocol' => strtoupper($protocol),
+            'protocol' => $protocol,
             'version'  => $version,
             'headers'  => $parts['headers'],
             'body'     => $parts['body']
@@ -50,7 +57,7 @@ class MessageParser extends AbstractMessageParser
             'protocol'      => $protocol,
             'version'       => $version,
             'code'          => $parts['start_line'][1],
-            'reason_phrase' => $parts['start_line'][2],
+            'reason_phrase' => isset($parts['start_line'][2]) ? $parts['start_line'][2] : '',
             'headers'       => $parts['headers'],
             'body'          => $parts['body']
         );
