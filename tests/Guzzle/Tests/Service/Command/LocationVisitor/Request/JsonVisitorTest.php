@@ -2,7 +2,6 @@
 
 namespace Guzzle\Tests\Service\Command\LocationVisitor\Request;
 
-use Guzzle\Common\Collection;
 use Guzzle\Service\Command\LocationVisitor\Request\JsonVisitor as Visitor;
 
 /**

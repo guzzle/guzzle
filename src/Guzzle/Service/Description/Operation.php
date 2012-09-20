@@ -2,7 +2,6 @@
 
 namespace Guzzle\Service\Description;
 
-use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
 
 /**

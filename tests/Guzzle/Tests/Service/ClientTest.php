@@ -233,7 +233,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(new Response(200))));
         $cmd = $client->mockCommand();
         $this->assertInstanceOf('Guzzle\Tests\Service\Mock\Command\MockCommand', $cmd);
-        $this->assertTrue($cmd->isExecuted());
+        $this->assertFalse($cmd->isExecuted());
     }
 
     /**

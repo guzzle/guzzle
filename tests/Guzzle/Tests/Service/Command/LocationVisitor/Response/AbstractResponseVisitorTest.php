@@ -4,7 +4,6 @@ namespace Guzzle\Tests\Service\Command\LocationVisitor\Response;
 
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
 use Guzzle\Http\Message\Response;
-use Guzzle\Service\Command\LocationVisitor\Response\BodyVisitor as Visitor;
 
 abstract class AbstractResponseVisitorTest extends \Guzzle\Tests\GuzzleTestCase
 {
