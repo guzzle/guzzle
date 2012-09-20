@@ -47,6 +47,20 @@ abstract class AbstractConfigLoader implements ConfigLoaderInterface
     }
 
     /**
+     * Remove an alias from the laoder
+     *
+     * @param string $alias Alias to remove
+     *
+     * @return self
+     */
+    public function removeAlias($alias)
+    {
+        unset($this->aliases[$alias]);
+
+        return $this;
+    }
+
+    /**
      * Perform the parsing of a config file and create the end result
      *
      * @param array $config  Configuration data

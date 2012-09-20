@@ -116,6 +116,18 @@ class AbstractConfigLoaderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('bar', $data['services']['foo']['params']['baz']);
     }
 
+    /**
+     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     * @expectedExceptionMessage Unable to open foo for reading
+     */
+    public function testCanRemoveAliases()
+    {
+        $file = dirname(__DIR__) . '/TestData/services/json1.json';
+        $this->loader->addAlias('foo', $file);
+        $this->loader->removeAlias('foo');
+        $this->loader->load('foo');
+    }
+
     public function testCanLoadArraysWithIncludes()
     {
         $file = dirname(__DIR__) . '/TestData/services/json1.json';
