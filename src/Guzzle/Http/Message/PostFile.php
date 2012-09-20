@@ -93,9 +93,11 @@ class PostFile implements PostFileInterface
      */
     public function getCurlString()
     {
+        $disposition = ';filename=' . basename($this->filename);
+
         return $this->contentType
-            ? '@' . $this->filename . ';type=' . $this->contentType
-            : '@' . $this->filename;
+            ? '@' . $this->filename . ';type=' . $this->contentType . $disposition
+            : '@' . $this->filename . $disposition;
     }
 
     /**

@@ -377,7 +377,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_ENCODING => '',
                 CURLOPT_POST => 1,
                 CURLOPT_POSTFIELDS => array(
-                    'file' => '@' . $testFile . ';type=application/xml'
+                    'file' => '@' . $testFile . ';type=application/xml;filename=phpunit.xml.dist'
                 ),
                 CURLOPT_HTTPHEADER => array (
                     'Host: localhost:8124',
