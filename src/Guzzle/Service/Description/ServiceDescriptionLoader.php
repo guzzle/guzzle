@@ -28,18 +28,26 @@ class ServiceDescriptionLoader extends AbstractConfigLoader
                         if (empty($operations[$extendedCommand])) {
                             throw new DescriptionBuilderException("{$name} extends missing operation {$extendedCommand}");
                         }
-                        $toArray = $operations[$extendedCommand]->toArray();
-                        $resolved = empty($resolved) ? $toArray['parameters'] : array_merge($resolved, $toArray['parameters']);
+                        $toArray = $operations[$extendedCommand];
+                        $resolved = empty($resolved)
+                            ? $toArray['parameters']
+                            : array_merge($resolved, $toArray['parameters']);
                         $op = array_merge($toArray, $op);
                     }
                     $op['parameters'] = $original ? array_merge($resolved, $original) : $resolved;
                 }
                 // Use the default class
                 $op['class'] = isset($op['class']) ? $op['class'] : Operation::DEFAULT_COMMAND_CLASS;
-                $operations[$name] = new Operation($op);
+                if (!isset($op['parameters'])) {
+                    $op['parameters'] = array();
+                }
+                $operations[$name] = $op;
             }
         }
 
-        return new ServiceDescription(array('operations' => $operations));
+        return new ServiceDescription(array(
+            'operations' => $operations,
+            'models'     => isset($config['models']) ? $config['models'] : null
+        ));
     }
 }
