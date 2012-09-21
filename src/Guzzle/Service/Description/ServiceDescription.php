@@ -2,6 +2,8 @@
 
 namespace Guzzle\Service\Description;
 
+use Guzzle\Common\Exception\InvalidArgumentException;
+
 /**
  * A ServiceDescription stores service information based on a service document
  */
@@ -81,7 +83,7 @@ class ServiceDescription implements ServiceDescriptionInterface
             'description' => $this->description,
             'operations'  => array(),
         );
-        foreach ($this->operations as $name => $operation) {
+        foreach ($this->getOperations() as $name => $operation) {
             $result['operations'][$name] = $operation->toArray();
         }
         if (!empty($this->models)) {
@@ -110,6 +112,12 @@ class ServiceDescription implements ServiceDescriptionInterface
      */
     public function getOperations()
     {
+        foreach ($this->operations as &$operation) {
+            if (!($operation instanceof Operation)) {
+                $operation = new Operation($operation, $this);
+            }
+        }
+
         return $this->operations;
     }
 
@@ -126,7 +134,16 @@ class ServiceDescription implements ServiceDescriptionInterface
      */
     public function getOperation($name)
     {
-        return $this->hasOperation($name) ? $this->operations[$name] : null;
+        // Lazily retrieve and build operations
+        if (!isset($this->operations[$name])) {
+            return null;
+        }
+
+        if (!($this->operations[$name] instanceof Operation)) {
+            $this->operations[$name] = new Operation($this->operations[$name], $this);
+        }
+
+        return $this->operations[$name];
     }
 
     /**
@@ -148,14 +165,15 @@ class ServiceDescription implements ServiceDescriptionInterface
      */
     public function getModel($id)
     {
-        if (isset($this->models[$id])) {
-            if (!($this->models[$id] instanceof Parameter)) {
-                $this->models[$id] = new Parameter($this->models[$id], $this);
-            }
-            return $this->models[$id];
-        } else {
+        if (!isset($this->models[$id])) {
             return null;
         }
+
+        if (!($this->models[$id] instanceof Parameter)) {
+            $this->models[$id] = new Parameter($this->models[$id], $this);
+        }
+
+        return $this->models[$id];
     }
 
     /**
@@ -164,6 +182,20 @@ class ServiceDescription implements ServiceDescriptionInterface
     public function hasModel($id)
     {
         return isset($this->models[$id]);
+    }
+
+    /**
+     * Add a model to the service description
+     *
+     * @param Parameter $model Model to add
+     *
+     * @return self
+     */
+    public function addModel(Parameter $model)
+    {
+        $this->models[$model->getName()] = $model;
+
+        return $this;
     }
 
     /**
@@ -224,13 +256,15 @@ class ServiceDescription implements ServiceDescriptionInterface
 
         // We want to add operations differently than adding the other properties
         $defaultKeys[] = 'operations';
+
         // Create operations for each operation
         if (isset($config['operations'])) {
             foreach ($config['operations'] as $name => $operation) {
-                if (!($operation instanceof Operation)) {
-                    $operation = new Operation($operation, $this);
+                if (!($operation instanceof Operation) && !is_array($operation)) {
+                    throw new InvalidArgumentException('Invalid operation in service description: '
+                        . gettype($operation));
                 }
-                $this->addOperation($operation->setName($name));
+                $this->operations[$name] = $operation;
             }
         }
 

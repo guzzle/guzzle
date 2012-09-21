@@ -116,10 +116,8 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
             }
         }
 
-        $client = call_user_func(
-            array($this->builderConfig[$name]['class'], 'factory'),
-            $this->builderConfig[$name]['params']
-        );
+        $class = $this->builderConfig[$name]['class'];
+        $client = $class::factory($this->builderConfig[$name]['params']);
 
         if (!$throwAway) {
             $this->clients[$name] = $client;
