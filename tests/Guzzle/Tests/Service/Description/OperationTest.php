@@ -197,15 +197,6 @@ class OperationTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(2, count($command->getErrorResponses()));
     }
 
-    public function testBuildsParametersLazily()
-    {
-        $command = $this->getOperation();
-        $this->assertTrue($command->hasParam('test'));
-        $params = $this->readAttribute($command, 'parameters');
-        $this->assertInternalType('array', $params['test']);
-        $this->assertInstanceOf('Guzzle\Service\Description\Parameter', $command->getParam('test'));
-    }
-
     public function testHasNotes()
     {
         $o = new Operation(array('notes' => 'foo'));

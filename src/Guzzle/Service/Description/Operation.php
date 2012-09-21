@@ -18,10 +18,9 @@ class Operation implements OperationInterface
      * @var array Hashmap of properties that can be specified. Represented as a hash to speed up constructor.
      */
     protected static $properties = array(
-        'class' => true, 'data' => true, 'deprecated' => true, 'documentationUrl' => true,
-        'errorResponses' => true, 'httpMethod' => true, 'name' => true, 'notes' => true,
-        'parameters' => true, 'responseClass' => true, 'responseNotes' => true,
-        'responseType' => true, 'summary' => true, 'uri' => true
+        'name' => true, 'httpMethod' => true, 'uri' => true, 'class' => true, 'responseClass' => true,
+        'responseType' => true, 'responseNotes' => true, 'notes' => true, 'summary' => true, 'documentationUrl' => true,
+        'deprecated' => true, 'data' => true, 'parameters' => true, 'errorResponses' => true
     );
 
     /**
@@ -146,8 +145,10 @@ class Operation implements OperationInterface
             $this->responseClass = 'array';
             $this->responseType = 'primitive';
         } elseif ($this->responseType) {
+            // Set the response type to perform validation
             $this->setResponseType($this->responseType);
         } else {
+            // A response class was set and no response type was set, so guess what the type is
             $this->inferResponseType();
         }
 
@@ -159,10 +160,8 @@ class Operation implements OperationInterface
                     $param->setName($name)->setParent($this);
                     $this->parameters[$name] = $param;
                 } elseif (is_array($param)) {
-                    // Lazily build Parameters when they are requested
                     $param['name'] = $name;
-                    $param['parent'] = $this;
-                    $this->parameters[$name] = $param;
+                    $this->addParam(new Parameter($param, $this->description));
                 }
             }
         }
@@ -184,7 +183,7 @@ class Operation implements OperationInterface
         unset($result['name']);
         // Parameters need to be converted to arrays
         $result['parameters'] = array();
-        foreach ($this->getParams() as $key => $param) {
+        foreach ($this->parameters as $key => $param) {
             $result['parameters'][$key] = $param->toArray();
         }
 
@@ -214,13 +213,6 @@ class Operation implements OperationInterface
      */
     public function getParams()
     {
-        // Convert any lazily created parameter arrays into Parameter objects
-        foreach ($this->parameters as &$param) {
-            if (!($param instanceof Parameter)) {
-                $param = new Parameter($param, $this->description);
-            }
-        }
-
         return $this->parameters;
     }
 
@@ -245,15 +237,7 @@ class Operation implements OperationInterface
      */
     public function getParam($param)
     {
-        if (isset($this->parameters[$param])) {
-            // Lazily convert param arrays into Parameter objects
-            if (!($this->parameters[$param] instanceof Parameter)) {
-                $this->parameters[$param] = new Parameter($this->parameters[$param]);
-            }
-            return $this->parameters[$param];
-        } else {
-            return null;
-        }
+        return isset($this->parameters[$param]) ? $this->parameters[$param] : null;
     }
 
     /**
@@ -266,6 +250,7 @@ class Operation implements OperationInterface
     public function addParam(Parameter $param)
     {
         $this->parameters[$param->getName()] = $param;
+        $param->setParent($this);
 
         return $this;
     }
@@ -458,8 +443,13 @@ class Operation implements OperationInterface
      */
     public function setResponseType($responseType)
     {
-        static $types = array(self::TYPE_PRIMITIVE, self::TYPE_CLASS, self::TYPE_MODEL, self::TYPE_DOCUMENTATION);
-        if (!in_array($responseType, $types)) {
+        static $types = array(
+            self::TYPE_PRIMITIVE => true,
+            self::TYPE_CLASS => true,
+            self::TYPE_MODEL => true,
+            self::TYPE_DOCUMENTATION => true
+        );
+        if (!isset($types[$responseType])) {
             throw new InvalidArgumentException('responseType must be one of ' . implode(', ', $types));
         }
 
