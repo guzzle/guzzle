@@ -785,4 +785,17 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $response = new Response(200);
         $this->assertFalse($response->isMethodAllowed('get'));
     }
+
+    /**
+     * @covers Guzzle\Http\Message\Response::getPreviousResponse
+     * @covers Guzzle\Http\Message\Response::setPreviousResponse
+     */
+    public function testHasPreviousResponse()
+    {
+        $response = new Response(200);
+        $previous = new Response(302);
+        $response->setPreviousResponse($previous);
+        $this->assertSame($previous, $response->getPreviousResponse());
+        $this->assertNull($previous->getPreviousResponse());
+    }
 }

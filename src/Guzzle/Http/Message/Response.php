@@ -113,6 +113,11 @@ class Response extends AbstractMessage
     protected $cacheResponseCodes = array(200, 203, 206, 300, 301, 410);
 
     /**
+     * @var Response If a redirect was issued or an intermediate response was issued
+     */
+    protected $previous;
+
+    /**
      * Create a new Response based on a raw response message
      *
      * @param string $message Response message
@@ -874,5 +879,29 @@ class Response extends AbstractMessage
         $age = $this->getAge();
 
         return $maxAge && $age ? ($maxAge - $age) : null;
+    }
+
+    /**
+     * Get the previous response (e.g. Redirect response)
+     *
+     * @return null|Response
+     */
+    public function getPreviousResponse()
+    {
+        return $this->previous;
+    }
+
+    /**
+     * Set the previous response
+     *
+     * @param Response $response Response to set
+     *
+     * @return self
+     */
+    public function setPreviousResponse(Response $response)
+    {
+        $this->previous = $response;
+
+        return $this;
     }
 }
