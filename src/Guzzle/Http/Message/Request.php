@@ -506,6 +506,9 @@ class Request extends AbstractMessage implements RequestInterface
 
             $previousResponse = $this->response;
             $this->response = new Response($code, null, $body);
+            if ($previousResponse) {
+                $this->response->setPreviousResponse($previousResponse);
+            }
             $this->response->setStatus($code, $status)->setRequest($this);
             $this->dispatch('request.receive.status_line', array(
                 'line'              => $data,
