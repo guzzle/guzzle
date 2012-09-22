@@ -24,8 +24,8 @@ interface ServiceBuilderInterface
     /**
      * Register a client by name with the service builder
      *
-     * @param string $name  Name of the client to register
-     * @param mixed  $value Service to register
+     * @param string $key     Name of the client to register
+     * @param mixed  $service Service to register
      *
      * @return ServiceBuilderInterface
      */

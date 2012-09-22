@@ -10,6 +10,7 @@ use Guzzle\Http\Message\HeaderComparison;
 use Guzzle\Plugin\Mock\MockPlugin;
 use Guzzle\Service\Client;
 use Guzzle\Service\Builder\ServiceBuilderInterface;
+use Guzzle\Service\Builder\ServiceBuilder;
 use Guzzle\Tests\Mock\MockObserver;
 use Guzzle\Tests\Http\Server;
 use RuntimeException;
@@ -53,7 +54,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Set the service builder to use for tests
      *
-     * @param ServiceBuilder $builder Service builder
+     * @param ServiceBuilderInterface $builder Service builder
      */
     public static function setServiceBuilder(ServiceBuilderInterface $builder)
     {
@@ -102,7 +103,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Get a wildcard observer for an event dispatcher
      *
-     * @param HasEventDispatcherInterface $hasEvent
+     * @param HasDispatcherInterface $hasEvent
      *
      * @return MockObserver
      */
@@ -134,6 +135,8 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
      * Mark a request as being mocked
      *
      * @param RequestInterface $request
+     *
+     * @return self
      */
     public function addMockedRequest(RequestInterface $request)
     {
@@ -207,7 +210,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
      * @param array $filteredHeaders Array of special headers
      * @param array $actualHeaders Array of headers to check against
      *
-     * @return array|false Returns an array of the differences or FALSE if none
+     * @return array|bool Returns an array of the differences or FALSE if none
      */
     public function compareHeaders($filteredHeaders, $actualHeaders)
     {
