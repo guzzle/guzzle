@@ -68,7 +68,11 @@ class CurlHandle
             CURLOPT_HTTPHEADER     => array(),
             CURLOPT_HEADERFUNCTION => array($mediator, 'receiveResponseHeader'),
             CURLOPT_HTTP_VERSION   => $request->getProtocolVersion() === '1.0'
-                ? CURL_HTTP_VERSION_1_0 : CURL_HTTP_VERSION_1_1
+                ? CURL_HTTP_VERSION_1_0 : CURL_HTTP_VERSION_1_1,
+            // Verifies the authenticity of the peer's certificate
+            CURLOPT_SSL_VERIFYPEER => 1,
+            // Certificate must indicate that the server is the server to which you meant to connect
+            CURLOPT_SSL_VERIFYHOST => 2
         );
 
         // Enable the progress function if the 'progress' param was set

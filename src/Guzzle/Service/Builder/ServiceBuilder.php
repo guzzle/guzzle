@@ -91,13 +91,7 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
     }
 
     /**
-     * Get a client using a registered builder
-     *
-     * @param string $name      Name of the registered client to retrieve
-     * @param bool   $throwAway Set to TRUE to not store the client for later retrieval from the ServiceBuilder
-     *
-     * @return ClientInterface
-     * @throws ServiceNotFoundException when a client cannot be found by name
+     * {@inheritdoc}
      */
     public function get($name, $throwAway = false)
     {
@@ -132,12 +126,7 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
     }
 
     /**
-     * Register a client by name with the service builder
-     *
-     * @param string $key     Name of the client to register
-     * @param mixed  $service Service to register
-     *
-     * @return ServiceBuilderInterface
+     * {@inheritdoc}
      */
     public function set($key, $service)
     {
