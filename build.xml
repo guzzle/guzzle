@@ -90,4 +90,55 @@
         </pharpackage>
         <exec command="php -d guzzle_phar=${dir.output}/guzzle-min.phar `which phpunit`" passthru="true" />
     </target>
+
+    <target name="build-pear">
+
+        <exec command="git describe --abbrev=0 --tags | tail -c6" outputProperty="version" />
+        <delete file="${dir.output}/guzzle-${version}.xml" />
+        <delete file="${dir.output}/guzzle-${version}.tgz" />
+
+        <pearpkg2 name="guzzle" dir="Guzzle">
+            <option name="outputdirectory" value="${dir.output}/"/>
+            <option name="packagefile" value="guzzle-${version}.xml"/>
+            <option name="packagedirectory" value="${project.basedir}/src/Guzzle"/>
+            <option name="baseinstalldir" value="Guzzle"/>
+            <option name="channel" value="guzzlephp.org/pear"/>
+            <option name="summary" value="Guzzle is a PHP 5.3+ HTTP client and framework for building RESTful web service clients"/>
+            <option name="description" value="PHP HTTP client"/>
+            <option name="apiversion" value="${version}"/>
+            <option name="apistability" value="stable"/>
+            <option name="releaseversion" value="${version}"/>
+            <option name="releasestability" value="stable"/>
+            <option name="license" value="MIT"/>
+            <option name="phpdep" value="5.3.2"/>
+            <option name="pearinstallerdep" value="1.4.6"/>
+            <option name="packagetype" value="php"/>
+            <option name="notes" value="-"/>
+            <mapping name="maintainers">
+                <element>
+                    <element key="handle" value="mtdowling"/>
+                    <element key="name" value="Michael Dowling"/>
+                    <element key="email" value="mtdowling@gmail.com"/>
+                    <element key="role" value="lead"/>
+                </element>
+            </mapping>
+            <option name="date" value="${date}" />
+            <fileset dir="${project.basedir}/src/Guzzle">
+                <include name="**/*.php" />
+            </fileset>
+        </pearpkg2>
+
+        <copy file="${dir.output}/guzzle-${version}.xml" todir="${project.basedir}/src" overwrite="true" />
+
+        <tar destfile="${dir.output}/guzzle-${version}.tgz" compression="gzip" basedir="${project.basedir}/src">
+            <fileset dir="${project.basedir}/src">
+                <include name="**/*.php" />
+                <include name="*.xml" />
+            </fileset>
+        </tar>
+
+        <delete file="${project.basedir}/src/guzzle-${version}.xml" />
+
+    </target>
+
 </project>
