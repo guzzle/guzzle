@@ -457,15 +457,11 @@ class CurlHandle
     {
         $curlOptions = array();
         foreach ($config as $key => $value) {
-            if (strpos($key, 'curl.') === 0) {
-                $curlOption = substr($key, 5);
+            if (!is_numeric($key) && defined($key)) {
                 // Convert constants represented as string to constant int values
-                if (defined($curlOption)) {
-                    $value = is_string($value) && defined($value) ? constant($value) : $value;
-                    $curlOption = constant($curlOption);
-                }
-                $curlOptions[$curlOption] = $value;
+                $key = constant($key);
             }
+            $curlOptions[$key] = is_string($value) && defined($value) ? constant($value) : $value;
         }
 
         return $curlOptions;
