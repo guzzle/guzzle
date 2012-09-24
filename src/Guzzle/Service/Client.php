@@ -23,6 +23,8 @@ use Guzzle\Service\Description\ServiceDescription;
  */
 class Client extends HttpClient implements ClientInterface
 {
+    const COMMAND_PARAMS = 'command.params';
+
     /**
      * @var ServiceDescription Description of the service and possible commands
      */
@@ -118,11 +120,19 @@ class Client extends HttpClient implements ClientInterface
      */
     public function getCommand($name, array $args = array())
     {
-        $command = $this->getCommandFactory()->factory($name, $args);
-        if (!$command) {
+        if (!($command = $this->getCommandFactory()->factory($name, $args))) {
             throw new InvalidArgumentException("Command was not found matching {$name}");
         }
+
         $command->setClient($this);
+
+        // Add global client options to the command
+        if ($command instanceof Collection) {
+            if ($options = $this->getConfig(self::COMMAND_PARAMS)) {
+                $command->merge($options);
+            }
+        }
+
         $this->dispatch('client.command.create', array(
             'client'  => $this,
             'command' => $command

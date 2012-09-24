@@ -20,6 +20,9 @@ use Guzzle\Http\Curl\CurlHandle;
  */
 class Client extends AbstractHasDispatcher implements ClientInterface
 {
+    const REQUEST_PARAMS = 'request.params';
+    const CURL_OPTIONS = 'curl.options';
+
     /**
      * @var Collection Default HTTP headers to set on each request
      */
@@ -360,14 +363,15 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     protected function prepareRequest(RequestInterface $request)
     {
         $request->setClient($this);
-        // Add any curl options to the request
-        $request->getCurlOptions()->merge(CurlHandle::parseCurlConfig($this->config));
 
-        foreach ($this->config as $key => $value) {
-            if (strpos($key, 'params.') === 0) {
-                // Add request specific parameters to all requests (prefix with 'params.')
-                $request->getParams()->set(substr($key, 7), $value);
-            }
+        // Add any curl options to the request
+        if ($options = $this->config->get(self::CURL_OPTIONS)) {
+            $request->getCurlOptions()->merge(CurlHandle::parseCurlConfig($options));
+        }
+
+        // Add request parameters to the request
+        if ($options = $this->config->get(self::REQUEST_PARAMS)) {
+            $request->getParams()->merge($options);
         }
 
         // Attach client observers to the request

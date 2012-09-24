@@ -352,4 +352,18 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client->setInflector($inflector);
         $this->assertSame($inflector, $client->getInflector());
     }
+
+    /**
+     * @covers Guzzle\Service\Client::getCommand
+     */
+    public function testClientAddsGlobalCommandOptions()
+    {
+        $client = new Mock\MockClient('http://www.foo.com', array(
+            Client::COMMAND_PARAMS => array(
+                'mesa' => 'bar'
+            )
+        ));
+        $command = $client->getCommand('mock_command');
+        $this->assertEquals('bar', $command->get('mesa'));
+    }
 }

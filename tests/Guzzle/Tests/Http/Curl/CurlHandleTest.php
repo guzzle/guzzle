@@ -952,26 +952,26 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     public function provideCurlConfig()
     {
         return array(
-            // Data Set #0
+            // Conversion of option name to constant value
             array(
                 array(
-                    'curl.CURLOPT_PORT' => 10,
-                    'curl.CURLOPT_TIMEOUT' => 99
+                    'CURLOPT_PORT' => 10,
+                    'CURLOPT_TIMEOUT' => 99
                 ),
                 array(
                     CURLOPT_PORT => 10,
                     CURLOPT_TIMEOUT => 99
                 )
             ),
-
-            // Date Set #1
+            // Keeps non constant options
             array(
-                array(
-                    'curl.debug' => true
-                ),
-                array(
-                    'debug' => true
-                )
+                array('debug' => true),
+                array('debug' => true)
+            ),
+            // Conversion of constant names to constant values
+            array(
+                array('debug' => 'CURLPROXY_HTTP'),
+                array('debug' => CURLPROXY_HTTP)
             )
         );
     }
