@@ -94,14 +94,14 @@
     <target name="build-pear">
 
         <exec command="git describe --abbrev=0 --tags | tail -c6" outputProperty="version" />
-        <delete file="${dir.output}/guzzle-${version}.xml" />
+        <delete file="${project.basedir}/src/package.xml" />
         <delete file="${dir.output}/guzzle-${version}.tgz" />
 
         <pearpkg2 name="guzzle" dir="Guzzle">
-            <option name="outputdirectory" value="${dir.output}/"/>
-            <option name="packagefile" value="guzzle-${version}.xml"/>
-            <option name="packagedirectory" value="${project.basedir}/src/Guzzle"/>
-            <option name="baseinstalldir" value="Guzzle"/>
+            <option name="outputdirectory" value="${project.basedir}/src"/>
+            <option name="packagefile" value="package.xml"/>
+            <option name="packagedirectory" value="${project.basedir}/src"/>
+            <option name="baseinstalldir" value="."/>
             <option name="channel" value="guzzlephp.org/pear"/>
             <option name="summary" value="Guzzle is a PHP 5.3+ HTTP client and framework for building RESTful web service clients"/>
             <option name="description" value="PHP HTTP client"/>
@@ -123,12 +123,10 @@
                 </element>
             </mapping>
             <option name="date" value="${date}" />
-            <fileset dir="${project.basedir}/src/Guzzle">
+            <fileset dir="${project.basedir}/src">
                 <include name="**/*.php" />
             </fileset>
         </pearpkg2>
-
-        <copy file="${dir.output}/guzzle-${version}.xml" todir="${project.basedir}/src" overwrite="true" />
 
         <tar destfile="${dir.output}/guzzle-${version}.tgz" compression="gzip" basedir="${project.basedir}/src">
             <fileset dir="${project.basedir}/src">
@@ -137,7 +135,7 @@
             </fileset>
         </tar>
 
-        <delete file="${project.basedir}/src/guzzle-${version}.xml" />
+        <delete file="${project.basedir}/src/package.xml" />
 
     </target>
 
