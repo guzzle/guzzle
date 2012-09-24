@@ -237,7 +237,7 @@ class CommandTest extends AbstractCommandTest
      */
     public function testCommandsAllowsCustomRequestHeadersAsArray()
     {
-        $command = new MockCommand(array('headers' => array('Foo' => 'Bar')));
+        $command = new MockCommand(array(AbstractCommand::HEADERS_OPTION => array('Foo' => 'Bar')));
         $this->assertInstanceOf('Guzzle\Common\Collection', $command->getRequestHeaders());
         $this->assertEquals('Bar', $command->getRequestHeaders()->get('Foo'));
     }
@@ -365,7 +365,7 @@ class CommandTest extends AbstractCommandTest
     {
         $command = new MockCommand(array(
             'foo' => 'bar',
-            'curl.CURLOPT_PROXYPORT' => 8080
+            'curl.options' => array('CURLOPT_PROXYPORT' => 8080)
         ));
         $client = new Client();
         $command->setClient($client);
