@@ -3,6 +3,10 @@
 
     <property name="dir.output" value="${project.basedir}/build/artifacts" />
 
+    <fileset id="sources" dir="./src">
+        <include name="**"/>
+    </fileset>
+
     <target name="tag">
         <echo>Not yet implemented</echo>
     </target>
@@ -94,14 +98,20 @@
     <target name="build-pear">
 
         <exec command="git describe --abbrev=0 --tags | tail -c6" outputProperty="version" />
-        <delete file="${project.basedir}/src/package.xml" />
+        <delete file="${project.basedir}/src/package2.xml" />
         <delete file="${dir.output}/guzzle-${version}.tgz" />
 
-        <pearpkg2 name="guzzle" dir="Guzzle">
-            <option name="outputdirectory" value="${project.basedir}/src"/>
+        <delete dir="${dir.output}/pear" />
+        <mkdir dir="${dir.output}/pear" />
+        <copy todir="${dir.output}/pear">
+            <fileset refid="sources"/>
+        </copy>
+
+        <pearpkg2 name="Guzzle" dir="${dir.output}/pear">
+            <option name="outputdirectory" value="${dir.output}/pear"/>
             <option name="packagefile" value="package.xml"/>
-            <option name="packagedirectory" value="${project.basedir}/src"/>
-            <option name="baseinstalldir" value="."/>
+            <option name="packagedirectory" value="${dir.output}/pear"/>
+            <option name="baseinstalldir" value="/"/>
             <option name="channel" value="guzzlephp.org/pear"/>
             <option name="summary" value="Guzzle is a PHP 5.3+ HTTP client and framework for building RESTful web service clients"/>
             <option name="description" value="PHP HTTP client"/>
@@ -128,14 +138,9 @@
             </fileset>
         </pearpkg2>
 
-        <tar destfile="${dir.output}/guzzle-${version}.tgz" compression="gzip" basedir="${project.basedir}/src">
-            <fileset dir="${project.basedir}/src">
-                <include name="**/*.php" />
-                <include name="*.xml" />
-            </fileset>
-        </tar>
-
-        <delete file="${project.basedir}/src/package.xml" />
+        <exec dir="${dir.output}/pear" command="pear package" />
+        <delete dir="${dir.output}/pear/Guzzle" />
+        <delete file="${dir.output}/pear/package.xml" />
 
     </target>
 
