@@ -46,8 +46,10 @@ class ServiceDescriptionLoader extends AbstractConfigLoader
         }
 
         return new ServiceDescription(array(
-            'operations' => $operations,
-            'models'     => isset($config['models']) ? $config['models'] : null
+            'operations'  => $operations,
+            'models'      => isset($config['models']) ? $config['models'] : null,
+            'apiVersion'  => isset($config['apiVersion']) ? $config['apiVersion'] : null,
+            'description' => isset($config['description']) ? $config['description'] : null
         ));
     }
 }
