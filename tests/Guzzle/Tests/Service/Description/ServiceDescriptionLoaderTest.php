@@ -99,4 +99,15 @@ class ServiceDescriptionLoaderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('bar', $command->getParam('a1')->getDefault());
         $this->assertEquals('test', $command->getParam('a1')->getDescription());
     }
+
+    public function testAddsOtherFields()
+    {
+        $description = ServiceDescription::factory(array(
+            'operations'  => array(),
+            'description' => 'Foo',
+            'apiVersion'  => 'bar'
+        ));
+        $this->assertEquals('Foo', $description->getDescription());
+        $this->assertEquals('bar', $description->getApiVersion());
+    }
 }

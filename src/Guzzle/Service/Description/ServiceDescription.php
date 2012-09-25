@@ -48,6 +48,8 @@ class ServiceDescription implements ServiceDescriptionInterface
      * {@inheritdoc}
      * @param string|array $config  File to build or array of operation information
      * @param array        $options Service description factory options
+     *
+     * @return self
      */
     public static function factory($config, array $options = array())
     {
