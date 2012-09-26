@@ -62,8 +62,6 @@ class CurlHandle
             CURLOPT_RETURNTRANSFER => false,
             CURLOPT_HEADER         => false,
             CURLOPT_USERAGENT      => (string) $request->getHeader('User-Agent'),
-            // Supports all encodings
-            CURLOPT_ENCODING       => '',
             CURLOPT_PORT           => $request->getPort(),
             CURLOPT_HTTPHEADER     => array(),
             CURLOPT_HEADERFUNCTION => array($mediator, 'receiveResponseHeader'),
@@ -195,6 +193,11 @@ class CurlHandle
             if (is_numeric($key)) {
                 $curlOptions[$key] = $value;
             }
+        }
+
+        // Do not set an Accept header by default
+        if (!isset($curlOptions[CURLOPT_ENCODING])) {
+            $curlOptions[CURLOPT_HTTPHEADER][] = 'Accept:';
         }
 
         // Check if any headers or cURL options are blacklisted
