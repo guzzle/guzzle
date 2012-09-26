@@ -86,7 +86,7 @@ class ServiceDescription implements ServiceDescriptionInterface
             'operations'  => array(),
         );
         foreach ($this->getOperations() as $name => $operation) {
-            $result['operations'][$name] = $operation->toArray();
+            $result['operations'][$operation->getName() ?: $name] = $operation->toArray();
         }
         if (!empty($this->models)) {
             $result['models'] = array();
