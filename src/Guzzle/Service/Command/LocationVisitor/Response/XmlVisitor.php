@@ -51,7 +51,7 @@ class XmlVisitor extends AbstractResponseVisitor
                         // Account for the case of a collection wrapping wrapped nodes: Items => Item[]
                         $value = $value[$param->getItems()->getName()];
                         // If the wrapped node only had one value, then make it an array of nodes
-                        if (!isset($value[0])) {
+                        if (!isset($value[0]) || !is_array($value)) {
                             $value = array($value);
                         }
                     } elseif (!empty($value)) {
