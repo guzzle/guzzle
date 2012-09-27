@@ -324,4 +324,25 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
         $p->setRename(null);
         $this->assertEquals('foo', $p->getKey());
     }
+
+    public function testIncludesNameInToArrayWhenItemsAttriubuteHasName()
+    {
+        $p = new Parameter(array(
+            'type' => 'array',
+            'name' => 'Abc',
+            'items' => array(
+                'name' => 'Foo',
+                'type' => 'object'
+            )
+        ));
+        $result = $p->toArray();
+        $this->assertEquals(array(
+            'type' => 'array',
+            'items' => array(
+                'name' => 'Foo',
+                'type' => 'object',
+                'additionalProperties' => true
+            )
+        ), $result);
+    }
 }

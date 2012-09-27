@@ -21,7 +21,7 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
         $this->assertEquals('test', $value['foo']);
     }
 
-    public function testEnsuresArraysAreInCorrectLocations()
+    public function testEnsuresRepeatedArraysAreInCorrectLocations()
     {
         $visitor = new Visitor();
         $param = new Parameter(array(
@@ -33,13 +33,16 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
                 'type' => 'object',
                 'properties' => array(
                     'Bar' => array('type' => 'string'),
-                    'Baz' => array('type' => 'string')
+                    'Baz' => array('type' => 'string'),
+                    'Bam' => array('type' => 'string')
                 )
             )
         ));
 
         $xml = new \SimpleXMLElement('<Test><Foo><Bar>1</Bar><Baz>2</Baz></Foo></Test>');
         $value = json_decode(json_encode($xml), true);
+        // Set a null value to ensure it is ignored
+        $value['foo'][0]['Bam'] = null;
         $visitor->visit($this->command, $this->response, $param, $value);
         $this->assertEquals(array(
             'foo' => array(
@@ -49,5 +52,51 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
                 )
             )
         ), $value);
+    }
+
+    public function xmlDataProvider()
+    {
+        $param = new Parameter(array(
+            'location' => 'xml',
+            'name'     => 'Items',
+            'type'     => 'array',
+            'items'    => array(
+                'type' => 'object',
+                'name' => 'Item',
+                'properties' => array(
+                    'Bar' => array('type' => 'string'),
+                    'Baz' => array('type' => 'string')
+                )
+            )
+        ));
+
+        return array(
+            array($param, '<Test><Items><Item><Bar>1</Bar></Item><Item><Bar>2</Bar></Item></Items></Test>', array(
+                'Items' => array(
+                    array('Bar' => 1),
+                    array('Bar' => 2)
+                )
+            )),
+            array($param, '<Test><Items><Item><Bar>1</Bar></Item></Items></Test>', array(
+                'Items' => array(
+                    array('Bar' => 1)
+                )
+            )),
+            array($param, '<Test><Items /></Test>', array(
+                'Items' => array()
+            ))
+        );
+    }
+
+    /**
+     * @dataProvider xmlDataProvider
+     */
+    public function testEnsuresWrappedArraysAreInCorrectLocations($param, $xml, $result)
+    {
+        $visitor = new Visitor();
+        $xml = new \SimpleXMLElement($xml);
+        $value = json_decode(json_encode($xml), true);
+        $visitor->visit($this->command, $this->response, $param, $value);
+        $this->assertEquals($result, $value);
     }
 }

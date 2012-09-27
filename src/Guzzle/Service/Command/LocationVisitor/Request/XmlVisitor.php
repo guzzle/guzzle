@@ -99,13 +99,13 @@ class XmlVisitor extends AbstractRequestVisitor
     protected function addXml(\SimpleXMLElement $xml, Parameter $param, $value)
     {
         // Determine the name of the element
-        $node = $param->getRename() ?: $param->getName();
+        $node = $param->getKey();
         // Check if this property has a particular namespace
         $namespace = $param->getData('namespace') ?: null;
 
         if ($param->getType() == 'array') {
             if ($items = $param->getItems()) {
-                $name = $items->getRename();
+                $name = $items->getKey();
                 foreach ($value as $v) {
                     if ($items->getType() == 'object' || $items->getType() == 'array') {
                         $child = $xml->addChild($name, null, $namespace);
