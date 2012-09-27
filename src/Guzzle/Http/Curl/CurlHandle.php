@@ -408,9 +408,7 @@ class CurlHandle
         // Update the transfer stats of the response
         $request->getResponse()->setInfo($this->getInfo());
 
-        $log = $this->getStderr(true);
-
-        if (!$log) {
+        if (!$log = $this->getStderr(true)) {
             return;
         }
 
