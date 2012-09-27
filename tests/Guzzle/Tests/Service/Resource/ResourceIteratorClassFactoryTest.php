@@ -7,6 +7,7 @@ use Guzzle\Tests\Service\Mock\Command\MockCommand;
 
 /**
  * @covers Guzzle\Service\Resource\ResourceIteratorClassFactory
+ * @covers Guzzle\Service\Resource\AbstractResourceIteratorFactory
  */
 class ResourceIteratorClassFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 {
@@ -22,7 +23,7 @@ class ResourceIteratorClassFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @expectedException InvalidArgumentException
-     * @expectedExceptionMessage Iterator was not found matching MockCommandIterator
+     * @expectedExceptionMessage Iterator was not found for mock_command
      */
     public function testEnsuresIteratorClassExists()
     {

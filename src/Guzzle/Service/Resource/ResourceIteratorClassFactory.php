@@ -2,7 +2,6 @@
 
 namespace Guzzle\Service\Resource;
 
-use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Inflection\InflectorInterface;
 use Guzzle\Inflection\Inflector;
 use Guzzle\Service\Command\CommandInterface;
@@ -12,7 +11,7 @@ use Guzzle\Service\Command\CommandInterface;
  * root namespace using the name of a {@see CommandInterface} object as a convention for determining the name of an
  * iterator class. The command name is converted to CamelCase and Iterator is appended (e.g. abc_foo => AbcFoo).
  */
-class ResourceIteratorClassFactory implements ResourceIteratorFactoryInterface
+class ResourceIteratorClassFactory extends AbstractResourceIteratorFactory
 {
     /**
      * @var array List of namespaces used to look for classes
@@ -49,35 +48,20 @@ class ResourceIteratorClassFactory implements ResourceIteratorFactoryInterface
     }
 
     /**
-     * Create a resource iterator
-     *
-     * @param CommandInterface $data    Command used for building the iterator
-     * @param array            $options Iterator options that are exposed as data.
-     *
-     * @return ResourceIteratorInterface
+     * {@inheritdoc}
      */
-    public function build($data, array $options = array())
+    protected function getClassName(CommandInterface $command)
     {
-        if (!($data instanceof CommandInterface)) {
-            throw new InvalidArgumentException('The first argument must be an instance of CommandInterface');
-        }
-
-        $iteratorName = $this->inflector->camel($data->getName()) . 'Iterator';
+        $iteratorName = $this->inflector->camel($command->getName()) . 'Iterator';
 
         // Determine the name of the class to load
-        $className = null;
         foreach ($this->namespaces as $namespace) {
             $potentialClassName = $namespace . '\\' . $iteratorName;
             if (class_exists($potentialClassName)) {
-                $className = $potentialClassName;
-                break;
+                return $potentialClassName;
             }
         }
 
-        if (!$className) {
-            throw new InvalidArgumentException("Iterator was not found matching {$iteratorName}");
-        }
-
-        return new $className($data, $options);
+        return false;
     }
 }
