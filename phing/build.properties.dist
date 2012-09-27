@@ -1,0 +1,11 @@
+# update this if you're working on a fork.
+guzzle.remote=git://github.com/guzzle/guzzle.git
+
+# your git path
+cmd.git=/usr/bin/git
+
+# your composer command
+cmd.composer=/usr/local/bin/composer
+
+# test server start
+cmd.testserver="node"

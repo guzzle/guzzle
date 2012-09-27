@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="../../" default="package-test">
+    
+    <property name="guzzle.remote" value="" />
+    <property name="repo.dir" value="${project.basedir}" />
+    
+    <target name="git-test" depends="find-git">
+        <echo>${guzzle.remote}</echo>
+        <!-- <gitlog paths="${repo.dir}" gitPath="${cmd.git}" repository="git://github.com/claylo/guzzle.git" /> -->
+    </target>
+    
+    <target name="subsplit" depends="find-git">
+        <gitsubsplit 
+            repository="${repo.dir}" 
+            remote="${guzzle.remote}" 
+            heads="modular"
+            base="src"
+            subIndicatorFile="composer.json"
+            gitPath="${cmd.git}" />
+    </target>
+    
+</project>
