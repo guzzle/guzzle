@@ -6,6 +6,7 @@ use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Http\ClientInterface;
 use Guzzle\Service\Exception\ServiceBuilderException;
 use Guzzle\Service\Exception\ServiceNotFoundException;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Service builder to generate service builders and service clients from configuration settings
@@ -26,6 +27,11 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
      * @var ServiceBuilderLoader Cached instance of the service builder loader
      */
     protected static $cachedFactory;
+
+    /**
+     * @var array Plugins to attach to each client created by the service builder
+     */
+    protected $plugins = array();
 
     /**
      * Create a new ServiceBuilder using configuration data sourced from an
@@ -91,6 +97,20 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
     }
 
     /**
+     * Attach a plugin to every client created by the builder
+     *
+     * @param EventSubscriberInterface $plugin Plugin to attach to each client
+     *
+     * @return self
+     */
+    public function addGlobalPlugin(EventSubscriberInterface $plugin)
+    {
+        $this->plugins[] = $plugin;
+
+        return $this;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function get($name, $throwAway = false)
@@ -115,6 +135,10 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
 
         if (!$throwAway) {
             $this->clients[$name] = $client;
+        }
+
+        foreach ($this->plugins as $plugin) {
+            $client->addSubscriber($plugin);
         }
 
         // Dispatch an event letting listeners know a client was created
