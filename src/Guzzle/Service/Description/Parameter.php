@@ -131,10 +131,15 @@ class Parameter
     public function toArray()
     {
         $result = array();
-        foreach (array(
-            'required', 'description', 'static', 'type', 'instanceOf', 'location', 'rename', 'pattern', 'minimum',
-            'maximum', 'minItems', 'maxItems', 'minLength', 'maxLength', 'data', 'enum', 'filters'
-        ) as $c) {
+        $checks = array('required', 'description', 'static', 'type', 'instanceOf', 'location', 'rename', 'pattern',
+            'minimum', 'maximum', 'minItems', 'maxItems', 'minLength', 'maxLength', 'data', 'enum', 'filters');
+
+        // Anything that is in the `Items` attribute of an array *must* include it's name if available
+        if ($this->parent instanceof self && $this->parent->getType() == 'array' && isset($this->name)) {
+            $result['name'] = $this->name;
+        }
+
+        foreach ($checks as $c) {
             if ($value = $this->{$c}) {
                 $result[$c] = $value;
             }
