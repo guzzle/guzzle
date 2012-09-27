@@ -9,8 +9,8 @@
     
     <import file="${dir.imports}/dependencies.xml"/>
     <import file="${dir.imports}/test.xml"/>
-    <import file="${dir.imports}/metrics.xml"/>
-    <import file="${dir.imports}/package.xml"/>
+    <!-- <import file="${dir.imports}/metrics.xml"/> -->
+    <!-- <import file="${dir.imports}/package.xml"/> -->
     
 
     <target name="test" description="Run unit tests" depends="test-init">

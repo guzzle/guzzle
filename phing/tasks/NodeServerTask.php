@@ -61,13 +61,21 @@ class NodeServerTask extends Task
 
     protected function startServer()
     {
-        $serverfile = $this->project->getBasedir() . '/' . $this->serverfile;
+        chdir(__DIR__ . '/../..');
+        $serverfile = $this->serverfile;
+        $cmd = $this->getCmd();
+        
+        // resolve $HOME directory
+        if ($cmd[0] == '~') {
+            $cmd = $_ENV["HOME"] . substr($cmd, 1);
+        }
+        
         $fp = @fsockopen('127.0.0.1', 8124, $errno, $errstr, 1);
         if (! $fp) {
             // need to start node server
-            $this->log('starting node test server');
-            $cmd = escapeshellcmd($start . ' ' . $serverfile);
-            passthru($cmd . ' &> /dev/null &');
+            $cmd = escapeshellcmd($cmd . ' ' . $serverfile);
+            $this->log('starting node test server with '.$cmd);
+            exec($cmd . ' &> /dev/null &');
             sleep(2);
             $fp = @fsockopen('127.0.0.1', 8124, $errno, $errstr, 1);
         }

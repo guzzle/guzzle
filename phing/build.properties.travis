@@ -5,7 +5,7 @@ guzzle.remote=git://github.com/guzzle/guzzle.git
 cmd.git=/usr/bin/git
 
 # your composer command
-cmd.composer="php composer.phar"
+cmd.composer="composer"
 
 # test server start
 cmd.testserver="~/.nvm/nvm.sh run v0.6.14"
