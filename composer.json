@@ -65,6 +65,11 @@
         "zend/zend-log1": "1.12",
         "zend/zend-cache1": "1.12"
     },
+    
+    "config": {
+        "process-timeout": 1400,
+        "bin-dir": "bin"
+    },    
 
     "repositories": [
         {

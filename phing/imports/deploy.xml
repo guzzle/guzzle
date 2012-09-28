@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="../../" default="deploy">
+    
+    <target name="tag" description="tag the primary Guzzle repository">
+        <echo>Not yet implemented</echo>
+        <!--
+        <gittag ...
+        -->
+        
+    </target>
+    
+    <target name="split-tag" description="subtree split and GitHub tag">
+        <echo>Not yet implemented</echo>
+    </target>
+    
+</project>
