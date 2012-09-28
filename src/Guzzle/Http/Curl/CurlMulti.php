@@ -447,7 +447,9 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
             }
 
             if ($selectResult === 0) {
-                while ($mrc = curl_multi_exec($this->multiHandle, $active) == CURLM_CALL_MULTI_PERFORM);
+                do {
+                    $mrc = curl_multi_exec($this->multiHandle, $active);
+                } while ($mrc == CURLM_CALL_MULTI_PERFORM);
                 // Check the return value to ensure an error did not occur
                 $this->checkCurlResult($mrc);
             }
@@ -553,7 +555,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      */
     private function isCurlException(RequestInterface $request, CurlHandle $handle, array $curl)
     {
-        if (CURLE_OK == $curl['result']) {
+        if (CURLM_OK == $curl['result'] || CURLM_CALL_MULTI_PERFORM == $curl['result']) {
             return false;
         }
 
@@ -577,7 +579,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      */
     private function checkCurlResult($code)
     {
-        if ($code != CURLE_OK) {
+        if ($code != CURLM_OK && $code != CURLM_CALL_MULTI_PERFORM) {
             if (isset($this->multiErrors[$code])) {
                 $message = "cURL error: {$code} ({$this->multiErrors[$code][0]}): cURL message: {$this->multiErrors[$code][1]}";
             } else {
