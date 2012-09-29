@@ -185,4 +185,18 @@ class ServiceDescriptionTest extends \Guzzle\Tests\GuzzleTestCase
             'operations' => array('foo' => new \stdClass())
         ));
     }
+
+    public function testHasBaseUrl()
+    {
+        $description = new ServiceDescription(array('baseUrl' => 'http://foo.com'));
+        $this->assertEquals('http://foo.com', $description->getBaseUrl());
+        $description->setBaseUrl('http://foobar.com');
+        $this->assertEquals('http://foobar.com', $description->getBaseUrl());
+    }
+
+    public function testCanUseBasePath()
+    {
+        $description = new ServiceDescription(array('basePath' => 'http://foo.com'));
+        $this->assertEquals('http://foo.com', $description->getBaseUrl());
+    }
 }

@@ -8,6 +8,13 @@ namespace Guzzle\Service\Description;
 interface ServiceDescriptionInterface extends \Serializable
 {
     /**
+     * Get the basePath/baseUrl of the description
+     *
+     * @return string
+     */
+    public function getBaseUrl();
+
+    /**
      * Get the API operations of the service
      *
      * @return array Returns an array of {@see OperationInterface} objects

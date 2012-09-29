@@ -45,6 +45,11 @@ class ServiceDescription implements ServiceDescriptionInterface
     protected static $descriptionLoader;
 
     /**
+     * @var string baseUrl/basePath
+     */
+    protected $baseUrl;
+
+    /**
      * {@inheritdoc}
      * @param string|array $config  File to build or array of operation information
      * @param array        $options Service description factory options
@@ -82,6 +87,7 @@ class ServiceDescription implements ServiceDescriptionInterface
         $result = $this->extraData + array(
             'name'        => $this->name,
             'apiVersion'  => $this->apiVersion,
+            'baseUrl'     => $this->baseUrl,
             'description' => $this->description,
             'operations'  => array(),
         );
@@ -107,6 +113,28 @@ class ServiceDescription implements ServiceDescriptionInterface
     {
         $this->operations = array();
         $this->fromArray(json_decode($json, true));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getBaseUrl()
+    {
+        return $this->baseUrl;
+    }
+
+    /**
+     * Set the baseUrl of the description
+     *
+     * @param string $baseUrl Base URL of each operation
+     *
+     * @return self
+     */
+    public function setBaseUrl($baseUrl)
+    {
+        $this->baseUrl = $baseUrl;
+
+        return $this;
     }
 
     /**
@@ -244,12 +272,17 @@ class ServiceDescription implements ServiceDescriptionInterface
     protected function fromArray(array $config)
     {
         // Keep a list of default keys used in service descriptions that is later used to determine extra data keys
-        $defaultKeys = array('name', 'models', 'apiVersion', 'description');
+        $defaultKeys = array('name', 'models', 'apiVersion', 'baseUrl', 'description');
         // Pull in the default configuration values
         foreach ($defaultKeys as $key) {
             if (isset($config[$key])) {
                 $this->{$key} = $config[$key];
             }
+        }
+
+        // Account for the Swagger name for Guzzle's baseUrl
+        if (isset($config['basePath'])) {
+            $this->baseUrl = $config['basePath'];
         }
 
         // Ensure that the models and operations properties are always arrays
