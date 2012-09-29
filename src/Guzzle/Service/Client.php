@@ -258,6 +258,11 @@ class Client extends HttpClient implements ClientInterface
             }
         }
 
+        // If a baseUrl was set on the description, then update the client
+        if ($baseUrl = $service->getBaseUrl()) {
+            $this->setBaseUrl($baseUrl);
+        }
+
         return $this;
     }
 

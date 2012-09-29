@@ -366,4 +366,12 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $command = $client->getCommand('mock_command');
         $this->assertEquals('bar', $command->get('mesa'));
     }
+
+    public function testSupportsServiceDescriptionBaseUrls()
+    {
+        $description = new ServiceDescription(array('baseUrl' => 'http://foo.com'));
+        $client = new Client();
+        $client->setDescription($description);
+        $this->assertEquals('http://foo.com', $client->getBaseUrl());
+    }
 }
