@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+* 2.8.7 (09-30-2012)
+
+    * Bug: Fixed config file aliases for JSON includes
+    * Bug: Fixed cookie bug on a request object by using CookieParser to parse cookies on requests
+    * Bug: Removing the path to a file when sending a Content-Disposition header on a POST upload
+    * Bug: Hardening request and response parsing to account for missing parts
+    * Bug: Fixed PEAR packaging
+    * Bug: Fixed Request::getInfo
+    * Bug: Fixed cases where CURLM_CALL_MULTI_PERFORM return codes were causing curl transactions to fail
+    * Adding the ability for the namespace Iterator factory to look in multiple directories
+    * Added more getters/setters/removers from service descriptions
+    * Added the ability to remove POST fields from OAuth signatures
+    * OAuth plugin now supports 2-legged OAuth
+
 * 2.8.6 (09-05-2012)
 
     * Added the ability to modify and build service descriptions
