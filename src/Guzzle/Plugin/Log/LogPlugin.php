@@ -5,6 +5,7 @@ namespace Guzzle\Plugin\Log;
 use Guzzle\Common\Event;
 use Guzzle\Log\LogAdapterInterface;
 use Guzzle\Log\MessageFormatter;
+use Guzzle\Log\ClosureLogAdapter;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\Response;
@@ -50,6 +51,20 @@ class LogPlugin implements EventSubscriberInterface
         $this->logAdapter = $logAdapter;
         $this->formatter = $formatter instanceof MessageFormatter ? $formatter : new MessageFormatter($formatter);
         $this->wireBodies = $wireBodies;
+    }
+
+    /**
+     * Get a log plugin that outputs full request, response, and curl error information to stdout
+     *
+     * @param bool $wireBodies Set to false to disable request/response body output when they use are not repeatable
+     *
+     * @return self
+     */
+    public static function getDebugPlugin($wireBodies = true)
+    {
+        return new self(new ClosureLogAdapter(function ($m) {
+            echo $m . PHP_EOL;
+        }), "# Request:\n{request}\n\n# Response:\n{response}\n\n# Errors: {curl_code} {curl_error}", $wireBodies);
     }
 
     /**

@@ -75,4 +75,20 @@ class LogPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertContains("send", $message);
         $this->assertContains("response", $message);
     }
+
+    public function testHasHelpfulStaticFactoryMethod()
+    {
+        $client = new Client();
+        $client->addSubscriber(LogPlugin::getDebugPlugin());
+        $request = $client->put('http://foo.com', array('Content-Type' => 'Foo'), 'Bar');
+        $request->setresponse(new Response(200), true);
+        ob_start();
+        $request->send();
+        $contents = ob_get_clean();
+        $this->assertContains('# Request:', $contents);
+        $this->assertContainsIns('PUT / HTTP/1.1', $contents);
+        $this->assertContains('# Response:', $contents);
+        $this->assertContainsIns('HTTP/1.1 200 OK', $contents);
+        $this->assertContains('# Errors:', $contents);
+    }
 }
