@@ -158,4 +158,14 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $result = $method->invoke($p, $request, 1335936584);
         $this->assertEquals('29f72fa5fc2893972060b28a0df8623c41cbb5d2', $result);
     }
+
+    public function testDoesNotAddFalseyValuesToAuthorization()
+    {
+        unset($this->config['token']);
+        $p = new OauthPlugin($this->config);
+        $event = new Event(array('request' => $this->getRequest(), 'timestamp' => self::TIMESTAMP));
+        $p->onRequestBeforeSend($event);
+        $this->assertTrue($event['request']->hasHeader('Authorization'));
+        $this->assertNotContains('oauth_token=', (string) $event['request']->getHeader('Authorization'));
+    }
 }

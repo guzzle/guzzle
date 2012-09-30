@@ -46,7 +46,7 @@ class OauthPlugin implements EventSubscriberInterface
             }
         ), array(
             'signature_method', 'signature_callback', 'version',
-            'consumer_key', 'consumer_secret', 'token', 'token_secret'
+            'consumer_key', 'consumer_secret'
         ));
     }
 
@@ -80,7 +80,9 @@ class OauthPlugin implements EventSubscriberInterface
             'oauth_token'            => $this->config['token'],
             'oauth_version'          => $this->config['version'],
         ) as $key => $val) {
-            $authString .= $key . '="' . urlencode($val) . '", ';
+            if ($val) {
+                $authString .= $key . '="' . urlencode($val) . '", ';
+            }
         }
 
         // Add Authorization header
