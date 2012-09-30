@@ -184,9 +184,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testClientAllowsFineGrainedSslControlButIsSecureByDefault()
     {
-        $client = new Client('https://www.secure.com/', array(
-            'api' => 'v1'
-        ));
+        $client = new Client('https://www.secure.com/');
 
         // secure by default
         $request = $client->createRequest();
@@ -194,14 +192,26 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($options->get(CURLOPT_SSL_VERIFYPEER));
 
         // set a capath if you prefer
-        $client = new Client('https://www.secure.com/', array(
-            'api' => 'v1'
-        ));
-
+        $client = new Client('https://www.secure.com/');
         $client->setSslVerification(__DIR__);
         $request = $client->createRequest();
         $options = $request->getCurlOptions();
         $this->assertSame(__DIR__, $options->get(CURLOPT_CAPATH));
+    }
+    /**
+     * @covers Guzzle\Http\Client::__construct
+     */
+    public function testConfigSettingsControlSslConfiguration()
+    {
+        // Use the default ca certs on the system
+        $client = new Client('https://www.secure.com/', array('ssl.certificate_authority' => 'system'));
+        $this->assertNull($client->getConfig('curl.options'));
+        // Can set the cacert value as well
+        $client = new Client('https://www.secure.com/', array('ssl.certificate_authority' => false));
+        $options = $client->getConfig('curl.options');
+        $this->assertArrayNotHasKey(CURLOPT_CAINFO, $options);
+        $this->assertSame(false, $options[CURLOPT_SSL_VERIFYPEER]);
+        $this->assertSame(1, $options[CURLOPT_SSL_VERIFYHOST]);
     }
 
     /**
