@@ -8,7 +8,6 @@ use Guzzle\Service\Command\AbstractCommand;
 use Guzzle\Service\Command\OperationResponseParser;
 use Guzzle\Service\Command\OperationCommand;
 use Guzzle\Service\Description\Operation;
-use Guzzle\Service\Description\Parameter;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Command\LocationVisitor\Response\StatusCodeVisitor;
 use Guzzle\Service\Command\LocationVisitor\Response\ReasonPhraseVisitor;

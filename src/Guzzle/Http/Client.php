@@ -70,6 +70,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function __construct($baseUrl = '', $config = null)
     {
         $this->setConfig($config ?: new Collection());
+        $this->setSslVerification();
         $this->setBaseUrl($baseUrl);
         $this->defaultHeaders = new Collection();
         $this->setRequestFactory(RequestFactory::getInstance());
@@ -100,6 +101,43 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     final public function getConfig($key = false)
     {
         return $key ? $this->config->get($key) : $this->config;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    final public function setSslVerification($certificateAuthority = true, $verifyPeer = true, $verifyHost = 2)
+    {
+        $opts = $this->config->get(self::CURL_OPTIONS) ?: array();
+
+        if ($certificateAuthority === true) {
+            // use bundled CA bundle, set secure defaults
+            $opts[CURLOPT_CAINFO] = __DIR__ . '/Resources/cacert.pem';
+            $opts[CURLOPT_SSL_VERIFYPEER] = true;
+            $opts[CURLOPT_SSL_VERIFYHOST] = 2;
+        } elseif ($certificateAuthority === false) {
+            unset($opts[CURLOPT_CAINFO]);
+            $opts[CURLOPT_SSL_VERIFYPEER] = false;
+            $opts[CURLOPT_SSL_VERIFYHOST] = 1;
+        } elseif ($verifyPeer !== true && $verifyPeer !== false && $verifyPeer !== 1 && $verifyPeer !== 0) {
+            throw new InvalidArgumentException('verifyPeer must be 1, 0 or boolean');
+        } elseif ($verifyHost !== 0 && $verifyHost !== 1 && $verifyHost !== 2) {
+            throw new InvalidArgumentException('verifyHost must be 0, 1 or 2');
+        } else {
+            $opts[CURLOPT_SSL_VERIFYPEER] = $verifyPeer;
+            $opts[CURLOPT_SSL_VERIFYHOST] = $verifyHost;
+            if (is_file($certificateAuthority)) {
+                unset($opts[CURLOPT_CAPATH]);
+                $opts[CURLOPT_CAINFO] = $certificateAuthority;
+            } elseif (is_dir($certificateAuthority)) {
+                unset($opts[CURLOPT_CAINFO]);
+                $opts[CURLOPT_CAPATH] = $certificateAuthority;
+            }
+        }
+
+        $this->config->set(self::CURL_OPTIONS, $opts);
+
+        return $this;
     }
 
     /**
@@ -315,9 +353,12 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         if (!$multipleRequests) {
             return end($requests)->getResponse();
         } else {
-            return array_map(function($request) {
-                return $request->getResponse();
-            }, $requests);
+            return array_map(
+                function ($request) {
+                    return $request->getResponse();
+                },
+                $requests
+            );
         }
     }
 
@@ -377,10 +418,13 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         // Attach client observers to the request
         $request->setEventDispatcher(clone $this->getEventDispatcher());
 
-        $this->dispatch('client.create_request', array(
-            'client'  => $this,
-            'request' => $request
-        ));
+        $this->dispatch(
+            'client.create_request',
+            array(
+                'client'  => $this,
+                'request' => $request
+            )
+        );
 
         return $request;
     }
