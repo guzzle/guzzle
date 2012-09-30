@@ -55,11 +55,11 @@ interface ClientInterface extends HasDispatcherInterface
      * @param string|bool $certificateAuthority bool, file path, or directory path
      * @param bool        $verifyPeer           FALSE to stop cURL from verifying the peer's certificate.
      * @param int         $verifyHost           Set the cURL handle's CURLOPT_SSL_VERIFYHOST option
-     * 
+     *
      * @return ClientInterface
      */
     public function setSslVerification($certificateAuthority = true, $verifyPeer = true, $verifyHost = 2);
-    
+
     /**
      * Get the default HTTP headers to add to each request created by the client
      *

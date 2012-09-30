@@ -134,7 +134,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
                 $opts[CURLOPT_CAINFO] = $certificateAuthority;
             }
         }
-                
+
         $this->config->set(self::CURL_OPTIONS, $opts);
 
         return $this;
@@ -353,9 +353,12 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         if (!$multipleRequests) {
             return end($requests)->getResponse();
         } else {
-            return array_map(function($request) {
-                return $request->getResponse();
-            }, $requests);
+            return array_map(
+                function ($request) {
+                    return $request->getResponse();
+                },
+                $requests
+            );
         }
     }
 
@@ -415,10 +418,13 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         // Attach client observers to the request
         $request->setEventDispatcher(clone $this->getEventDispatcher());
 
-        $this->dispatch('client.create_request', array(
-            'client'  => $this,
-            'request' => $request
-        ));
+        $this->dispatch(
+            'client.create_request',
+            array(
+                'client'  => $this,
+                'request' => $request
+            )
+        );
 
         return $request;
     }
