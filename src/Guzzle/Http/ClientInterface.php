@@ -37,7 +37,7 @@ interface ClientInterface extends HasDispatcherInterface
     public function getConfig($key = false);
 
     /**
-     * Set SSL-specific configuration options.
+     * Set SSL verification options.
      *
      * Setting $certificateAuthority to TRUE will result in the bundled
      * cacert.pem being used to verify against the remote host.
@@ -55,11 +55,10 @@ interface ClientInterface extends HasDispatcherInterface
      * @param string|bool $certificateAuthority bool, file path, or directory path
      * @param bool        $verifyPeer           FALSE to stop cURL from verifying the peer's certificate.
      * @param int         $verifyHost           Set the cURL handle's CURLOPT_SSL_VERIFYHOST option
-     * @param int         $version              2 or 3 to manually set the SSL version used
      * 
      * @return ClientInterface
      */
-    public function setSslConfig($certificateAuthority = true, $verifyPeer = true, $verifyHost = 2, $version = null);
+    public function setSslVerification($certificateAuthority = true, $verifyPeer = true, $verifyHost = 2);
     
     /**
      * Get the default HTTP headers to add to each request created by the client

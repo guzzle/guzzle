@@ -70,7 +70,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function __construct($baseUrl = '', $config = null)
     {
         $this->setConfig($config ?: new Collection());
-        $this->setSslConfig();
+        $this->setSslVerification();
         $this->setBaseUrl($baseUrl);
         $this->defaultHeaders = new Collection();
         $this->setRequestFactory(RequestFactory::getInstance());
@@ -106,7 +106,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * {@inheritdoc}
      */
-    final public function setSslConfig($certificateAuthority = true, $verifyPeer = true, $verifyHost = 2, $version = null)
+    final public function setSslVerification($certificateAuthority = true, $verifyPeer = true, $verifyHost = 2)
     {
         $opts = $this->config->get(self::CURL_OPTIONS);
         if (!$opts) {
@@ -134,12 +134,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
                 $opts[CURLOPT_CAINFO] = $certificateAuthority;
             }
         }
-        
-        // don't allow setting an unsupported value
-        if ($version === 2 || $version === 3) {
-            $opts[CURLOPT_SSLVERSION] = $version;
-        }
-        
+                
         $this->config->set(self::CURL_OPTIONS, $opts);
 
         return $this;

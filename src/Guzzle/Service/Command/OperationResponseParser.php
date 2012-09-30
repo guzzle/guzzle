@@ -10,6 +10,7 @@ use Guzzle\Service\Command\LocationVisitor\Response\BodyVisitor;
 use Guzzle\Service\Command\LocationVisitor\Response\JsonVisitor;
 use Guzzle\Service\Command\LocationVisitor\Response\XmlVisitor;
 use Guzzle\Service\Command\LocationVisitor\Response\ResponseVisitorInterface;
+use Guzzle\Service\Resource\Model;
 
 /**
  * Response parser that attempts to marshal responses into an associative array based on models in a service description
@@ -110,6 +111,11 @@ class OperationResponseParser extends DefaultResponseParser
 
         foreach ($this->visitors as $visitor) {
             $visitor->after($command);
+        }
+
+        // Use a model object if it is not disabled on the command
+        if (!$command->get(AbstractCommand::RESPONSE_MODEL_ARRAY)) {
+            $result = new Model($result, $model);
         }
 
         return $result;

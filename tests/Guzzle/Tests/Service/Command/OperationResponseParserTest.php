@@ -4,13 +4,16 @@ namespace Guzzle\Tests\Service\Command;
 
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Client;
+use Guzzle\Service\Command\AbstractCommand;
 use Guzzle\Service\Command\OperationResponseParser;
 use Guzzle\Service\Command\OperationCommand;
 use Guzzle\Service\Description\Operation;
+use Guzzle\Service\Description\Parameter;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Command\LocationVisitor\Response\StatusCodeVisitor;
 use Guzzle\Service\Command\LocationVisitor\Response\ReasonPhraseVisitor;
 use Guzzle\Service\Command\LocationVisitor\Response\BodyVisitor;
+use Guzzle\Service\Resource\Model;
 
 /**
  * @covers Guzzle\Service\Command\OperationResponseParser
@@ -42,7 +45,20 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
         $op = new OperationCommand(array(), $this->getDescription()->getOperation('test'));
         $op->setResponseParser($parser)->setClient(new Client());
         $op->prepare()->setResponse(new Response(200, array('Content-Type' => 'application/xml'), '<F><B>C</B></F>'), true);
+        $this->assertInstanceOf('Guzzle\Service\Resource\Model', $op->execute());
+        $this->assertEquals('C', $op->getResult()->get('B'));
+    }
+
+    public function testUsesRawArraysWhenInstructed()
+    {
+        $parser = new OperationResponseParser();
+        $op = new OperationCommand(array(), $this->getDescription()->getOperation('test'));
+        $op->setResponseParser($parser)->setClient(new Client());
+        $op->prepare()->setResponse(new Response(200, array('Content-Type' => 'application/xml'), '<F><B>C</B></F>'), true);
+        $op->set(AbstractCommand::RESPONSE_MODEL_ARRAY, true);
         $this->assertInternalType('array', $op->execute());
+        $result = $op->getResult();
+        $this->assertEquals('C', $result['B']);
     }
 
     public function testVisitsLocations()

@@ -9,6 +9,7 @@ use Guzzle\Service\Command\OperationCommand;
 use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Command\DefaultRequestSerializer;
+use Guzzle\Service\Resource\Model;
 
 /**
  * @covers Guzzle\Service\Command\OperationCommand
@@ -66,9 +67,9 @@ class OperationCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $request->setResponse(new Response(200, array(
             'Content-Type' => 'application/xml'
         ), '<Foo><Baz>Bar</Baz></Foo>'), true);
-        $this->assertEquals(array(
+        $this->assertEquals(new Model(array(
             'Baz' => 'Bar'
-        ), $op->execute());
+        ), $description->getModel('bar')), $op->execute());
     }
 
     public function testAllowsRawResponses()

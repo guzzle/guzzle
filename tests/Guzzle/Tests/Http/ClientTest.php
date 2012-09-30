@@ -180,7 +180,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     }
     
     /**
-     * @covers Guzzle\Http\Client::setSslConfig
+     * @covers Guzzle\Http\Client::setSslVerification
      */
     public function testClientAllowsFineGrainedSslControlButIsSecureByDefault()
     {
@@ -198,14 +198,14 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
             'api' => 'v1'
         ));
         
-        $client->setSslConfig(__DIR__);
+        $client->setSslVerification(__DIR__);
         $request = $client->createRequest();
         $options = $request->getCurlOptions();
         $this->assertSame(__DIR__, $options->get(CURLOPT_CAPATH));        
     }
 
     /**
-     * @covers Guzzle\Http\Client::setSslConfig
+     * @covers Guzzle\Http\Client::setSslVerification
      */
     public function testClientAllowsUnsafeOperationIfRequested()
     {
@@ -214,7 +214,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
             'api' => 'v1'
         ));
         
-        $client->setSslConfig(false);
+        $client->setSslVerification(false);
         $request = $client->createRequest();
         $options = $request->getCurlOptions();
         $this->assertFalse($options->get(CURLOPT_SSL_VERIFYPEER));
@@ -222,20 +222,19 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     }
     
     /**
-     * @covers Guzzle\Http\Client::setSslConfig
+     * @covers Guzzle\Http\Client::setSslVerification
      */
-    public function testClientAllowsSettingSpecificSslCaInfoAndProtocolVersion()
+    public function testClientAllowsSettingSpecificSslCaInfo()
     {
-        // set a file other than the provided cacert.pem, version 3 only        
+        // set a file other than the provided cacert.pem    
         $client = new Client('https://www.secure.com/', array(
             'api' => 'v1'
         ));
         
-        $client->setSslConfig(__FILE__, true, 2, 3);
+        $client->setSslVerification(__FILE__);
         $request = $client->createRequest();
         $options = $request->getCurlOptions();
         $this->assertSame(__FILE__, $options->get(CURLOPT_CAINFO));
-        $this->assertSame(3, $options->get(CURLOPT_SSLVERSION));        
     }
 
     /**
