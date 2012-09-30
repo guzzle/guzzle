@@ -70,7 +70,12 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function __construct($baseUrl = '', $config = null)
     {
         $this->setConfig($config ?: new Collection());
-        $this->setSslVerification();
+        // Allow ssl.certificate_authority config setting to control the certificate authority used by curl
+        $authority = $this->config->get('ssl.certificate_authority');
+        // Set the config setting to system to use the certificate authority bundle on your system
+        if ($authority != 'system') {
+            $this->setSslVerification($authority !== null ? $authority : true);
+        }
         $this->setBaseUrl($baseUrl);
         $this->defaultHeaders = new Collection();
         $this->setRequestFactory(RequestFactory::getInstance());
