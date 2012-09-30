@@ -70,9 +70,7 @@ class CurlHandle
             // Verifies the authenticity of the peer's certificate
             CURLOPT_SSL_VERIFYPEER => 1,
             // Certificate must indicate that the server is the server to which you meant to connect
-            CURLOPT_SSL_VERIFYHOST => 2,
-            // Default to bundled cacert.pem. This can be overridden
-            CURLOPT_CAINFO         => __DIR__ . '/../../Resources/cacert.pem'
+            CURLOPT_SSL_VERIFYHOST => 2
         );
 
         // Enable the progress function if the 'progress' param was set
