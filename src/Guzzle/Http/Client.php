@@ -70,6 +70,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function __construct($baseUrl = '', $config = null)
     {
         $this->setConfig($config ?: new Collection());
+        $this->setSslConfig();
         $this->setBaseUrl($baseUrl);
         $this->defaultHeaders = new Collection();
         $this->setRequestFactory(RequestFactory::getInstance());
@@ -100,6 +101,48 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     final public function getConfig($key = false)
     {
         return $key ? $this->config->get($key) : $this->config;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    final public function setSslConfig($certificateAuthority = true, $verifyPeer = true, $verifyHost = 2, $version = null)
+    {
+        $opts = $this->config->get(self::CURL_OPTIONS);
+        if (!$opts) {
+            $opts = array();
+        }
+
+        if ($certificateAuthority === true) {
+            // use bundled CA bundle, set secure defaults
+            $opts[CURLOPT_CAINFO] = __DIR__ . '/../Resources/cacert.pem';
+            $opts[CURLOPT_SSL_VERIFYPEER] = true;
+            $opts[CURLOPT_SSL_VERIFYHOST] = 2;
+        } elseif ($certificateAuthority === false) {
+            unset($opts[CURLOPT_CAINFO]);
+            $opts[CURLOPT_SSL_VERIFYPEER] = false;
+            $opts[CURLOPT_SSL_VERIFYHOST] = 1;
+        } else {
+            $opts[CURLOPT_SSL_VERIFYPEER] = $verifyPeer;
+            $opts[CURLOPT_SSL_VERIFYHOST] = $verifyHost;
+
+            if (is_dir($certificateAuthority)) {
+                unset($opts[CURLOPT_CAINFO]);
+                $opts[CURLOPT_CAPATH] = $certificateAuthority;
+            } elseif (is_file($certificateAuthority)) {
+                unset($opts[CURLOPT_CAPATH]);
+                $opts[CURLOPT_CAINFO] = $certificateAuthority;
+            }
+        }
+        
+        // don't allow setting an unsupported value
+        if ($version === 2 || $version === 3) {
+            $opts[CURLOPT_SSLVERSION] = $version;
+        }
+        
+        $this->config->set(self::CURL_OPTIONS, $opts);
+
+        return $this;
     }
 
     /**
