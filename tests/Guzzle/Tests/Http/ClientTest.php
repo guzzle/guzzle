@@ -236,6 +236,32 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $options = $request->getCurlOptions();
         $this->assertSame(__FILE__, $options->get(CURLOPT_CAINFO));
     }
+    
+    /**
+     * @covers Guzzle\Http\Client::setSslVerification
+     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     */
+    public function testClientPreventsInadvertentInsecureVerifyHostSetting()
+    {
+        // set a file other than the provided cacert.pem    
+        $client = new Client('https://www.secure.com/', array(
+            'api' => 'v1'
+        ));
+        $client->setSslVerification(__FILE__, true, true);        
+    }
+
+    /**
+     * @covers Guzzle\Http\Client::setSslVerification
+     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     */
+    public function testClientPreventsInvalidVerifyPeerSetting()
+    {
+        // set a file other than the provided cacert.pem    
+        $client = new Client('https://www.secure.com/', array(
+            'api' => 'v1'
+        ));
+        $client->setSslVerification(__FILE__, 'yes');
+    }
 
     /**
      * @covers Guzzle\Http\Client::prepareRequest
