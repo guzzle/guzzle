@@ -55,6 +55,7 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $p = new OauthPlugin($this->config);
         $request = $this->getRequest();
+        $this->assertContains('&e=f', rawurldecode($p->getStringToSign($request, self::TIMESTAMP)));
         $this->assertEquals(
             // Method and URL
             'POST&http%3A%2F%2Fwww.test.com%2Fpath' .
@@ -65,6 +66,16 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
             '%26oauth_timestamp%3D' . self::TIMESTAMP . '%26oauth_token%3Dcount%26oauth_version%3D1.0',
             $p->getStringToSign($request, self::TIMESTAMP)
         );
+    }
+
+    public function testCreatesStringToSignIgnoringPostFields()
+    {
+        $config = $this->config;
+        $config['disable_post_params'] = true;
+        $p = new OauthPlugin($config);
+        $request = $this->getRequest();
+        $sts = rawurldecode($p->getStringToSign($request, self::TIMESTAMP));
+        $this->assertNotContains('&e=f', $sts);
     }
 
     public function testCreatesStringToSignFromPostRequestWithCustomContentType()
