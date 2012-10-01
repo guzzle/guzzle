@@ -9,6 +9,10 @@ use Guzzle\Service\Description\Parameter;
 
 /**
  * Visitor used to apply a body to a request
+ *
+ * This visitor can use a data parameter of 'expect' to control the Expect header. Set the expect data parameter to
+ * false to disable the expect header, or set the value to an integer so that the expect 100-continue header is only
+ * added if the Content-Length of the entity body is greater than the value.
  */
 class BodyVisitor extends AbstractRequestVisitor
 {
@@ -17,6 +21,19 @@ class BodyVisitor extends AbstractRequestVisitor
      */
     public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
-        $request->setBody(EntityBody::factory($value));
+        $entityBody = EntityBody::factory($value);
+        $request->setBody($entityBody);
+
+        // Allow the `expect` data parameter to be set to remove the Expect header from the request
+        $expectHeader = $param->getData('expect');
+        if (null !== $expectHeader) {
+            if ($expectHeader === false || $expectHeader === 'false') {
+                $request->removeHeader('Expect');
+            } elseif (is_numeric($expectHeader) && $entityBody->getSize()) {
+                if ($entityBody->getSize() < $expectHeader) {
+                    $request->removeHeader('Expect');
+                }
+            }
+        }
     }
 }
