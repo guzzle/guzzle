@@ -114,7 +114,7 @@ class OperationResponseParser extends DefaultResponseParser
         }
 
         // Use a model object if it is not disabled on the command
-        if (!$command->get(AbstractCommand::RESPONSE_MODEL_ARRAY)) {
+        if ($command->get(AbstractCommand::RESPONSE_PROCESSING) != AbstractCommand::TYPE_MODEL_ARRAY) {
             $result = new Model($result, $model);
         }
 
