@@ -52,7 +52,6 @@ class CurlHandle
         $requestCurlOptions = $request->getCurlOptions();
         $tempContentLength = null;
         $method = $request->getMethod();
-        $client = $request->getClient();
         $bodyAsString = $requestCurlOptions->get(self::BODY_AS_STRING);
 
         // Array of default cURL options.
@@ -201,7 +200,7 @@ class CurlHandle
         }
 
         // Check if any headers or cURL options are blacklisted
-        if ($client && ($blacklist = $client->getConfig('curl.blacklist'))) {
+        if ($blacklist = $requestCurlOptions->get('blacklist')) {
             foreach ($blacklist as $value) {
                 if (strpos($value, 'header.') !== 0) {
                     unset($curlOptions[$value]);
