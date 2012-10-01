@@ -46,4 +46,14 @@ class DefaultResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
         $request->setResponse(new Response(200, array('Content-Type' => 'application/json'), '{"Baz":ddw}'), true);
         $op->execute();
     }
+
+    public function testAddsContentTypeWhenExpectsIsSetOnCommand()
+    {
+        $op = new OperationCommand(array(), new Operation());
+        $op['command.expects'] = 'application/json';
+        $op->setClient(new Client());
+        $request = $op->prepare();
+        $request->setResponse(new Response(200, null, '{"Baz":"Bar"}'), true);
+        $this->assertEquals(array('Baz' => 'Bar'), $op->execute());
+    }
 }

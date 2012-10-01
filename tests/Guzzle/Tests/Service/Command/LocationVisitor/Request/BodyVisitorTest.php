@@ -15,5 +15,29 @@ class BodyVisitorTest extends AbstractVisitorTestCase
         $param = $this->getNestedCommand('body')->getParam('foo')->setRename('Foo');
         $visitor->visit($this->command, $this->request, $param, '123');
         $this->assertEquals('123', (string) $this->request->getBody());
+        $this->assertEquals('100-Continue', (string) $this->request->getHeader('Expect'));
+    }
+
+    public function testCanDisableExpectHeader()
+    {
+        $visitor = new Visitor();
+        $param = $this->getNestedCommand('body')->getParam('foo')->setRename('Foo');
+        $param->setData('expect', false);
+        $visitor->visit($this->command, $this->request, $param, '123');
+        $this->assertNull($this->request->getHeader('Expect'));
+    }
+
+    public function testCanSetExpectHeaderBasedOnSize()
+    {
+        $visitor = new Visitor();
+        $param = $this->getNestedCommand('body')->getParam('foo')->setRename('Foo');
+        // The body is less than the cutoff
+        $param->setData('expect', 5);
+        $visitor->visit($this->command, $this->request, $param, '123');
+        $this->assertNull($this->request->getHeader('Expect'));
+        // Now check when the body is greater than the cutoff
+        $param->setData('expect', 2);
+        $visitor->visit($this->command, $this->request, $param, '123');
+        $this->assertEquals('100-Continue', (string) $this->request->getHeader('Expect'));
     }
 }

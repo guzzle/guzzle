@@ -37,6 +37,11 @@ class DefaultResponseParser implements ResponseParserInterface
         // Uses the response object by default
         $result = $command->getRequest()->getResponse();
 
+        // Account for hard coded content-type values specified in service descriptions
+        if ($contentType = $command->get('command.expects')) {
+            $result->setHeader('Content-Type', $contentType);
+        }
+
         if ($contentType = $result->getContentType()) {
             // Is the body an JSON document?  If so, set the result to be an array
             if (stripos($contentType, 'json') !== false) {
