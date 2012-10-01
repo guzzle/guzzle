@@ -29,12 +29,11 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     const DISABLE_VALIDATION = 'command.disable_validation';
     // Option used to override how a command result will be formatted
     const RESPONSE_PROCESSING = 'command.response_processing';
-    // Options to specify that response models should be a raw array rather than a model object
-    const RESPONSE_MODEL_ARRAY = 'command.response_model_array';
     // Different response types that commands can use
     const TYPE_RAW = 'raw';
     const TYPE_NATIVE = 'native';
     const TYPE_MODEL = 'model';
+    const TYPE_MODEL_ARRAY = 'model_array';
 
     /**
      * @var ClientInterface Client object used to execute the command

@@ -22,6 +22,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 {
     const REQUEST_PARAMS = 'request.params';
     const CURL_OPTIONS = 'curl.options';
+    const SSL_CERT_AUTHORITY = 'ssl.certificate_authority';
 
     /**
      * @var Collection Default HTTP headers to set on each request
@@ -71,7 +72,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     {
         $this->setConfig($config ?: new Collection());
         // Allow ssl.certificate_authority config setting to control the certificate authority used by curl
-        $authority = $this->config->get('ssl.certificate_authority');
+        $authority = $this->config->get(self::SSL_CERT_AUTHORITY);
         // Set the config setting to system to use the certificate authority bundle on your system
         if ($authority != 'system') {
             $this->setSslVerification($authority !== null ? $authority : true);
