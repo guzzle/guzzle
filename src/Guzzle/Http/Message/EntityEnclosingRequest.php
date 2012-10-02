@@ -13,6 +13,11 @@ use Guzzle\Http\Exception\RequestException;
 class EntityEnclosingRequest extends Request implements EntityEnclosingRequestInterface
 {
     /**
+     * @var int When the size of the body is greater than 1MB, then send Expect: 100-Continue
+     */
+    protected $expectCutoff = 1048576;
+
+    /**
      * @var EntityBodyInterface $body Body of the request
      */
     protected $body;
@@ -72,10 +77,14 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     {
         $this->body = EntityBody::factory($body);
         $this->removeHeader('Content-Length');
-        $this->setHeader('Expect', '100-Continue');
 
         if ($contentType) {
             $this->setHeader('Content-Type', (string) $contentType);
+        }
+
+        // Always add the Expect 100-Continue header if the body cannot be rewound. This helps with redirects.
+        if (!$this->body->isSeekable() && $this->expectCutoff !== false) {
+            $this->setHeader('Expect', '100-Continue');
         }
 
         if ($tryChunkedTransfer) {
@@ -86,6 +95,9 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
             $size = $this->body->getContentLength();
             if ($size !== null && $size !== false) {
                 $this->setHeader('Content-Length', $size);
+                if ($size > $this->expectCutoff) {
+                    $this->setHeader('Expect', '100-Continue');
+                }
             } elseif ('1.1' == $this->protocolVersion) {
                 $this->setHeader('Transfer-Encoding', 'chunked');
             } else {
@@ -104,6 +116,25 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     public function getBody()
     {
         return $this->body;
+    }
+
+    /**
+     * Set the size that the entity body of the request must exceed before adding the Expect: 100-Continue header.
+     *
+     * @param int|bool $size Cutoff in bytes. Set to false to never send the expect header (even with non-seekable data)
+     *
+     * @return self
+     */
+    public function setExpectHeaderCutoff($size)
+    {
+        $this->expectCutoff = $size;
+        if ($size === false || !$this->body) {
+            $this->removeHeader('Expect');
+        } elseif ($this->body && $this->body->getSize() && $this->body->getSize() > $size) {
+            $this->setHeader('Expect', '100-Continue');
+        }
+
+        return $this;
     }
 
     /**
@@ -240,7 +271,10 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         if (empty($this->postFiles)) {
             $this->removeHeader('Expect')->setHeader('Content-Type', self::URL_ENCODED);
         } else {
-            $this->setHeader('Expect', '100-Continue')->setHeader('Content-Type', self::MULTIPART);
+            $this->setHeader('Content-Type', self::MULTIPART);
+            if ($this->expectCutoff !== false) {
+                $this->setHeader('Expect', '100-Continue');
+            }
         }
     }
 }

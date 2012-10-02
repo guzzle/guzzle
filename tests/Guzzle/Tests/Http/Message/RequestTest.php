@@ -124,7 +124,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
             . "Host: www.google.com\r\n"
             . "Authorization: Basic {$auth}\r\n"
             . "User-Agent: " . Utils::getDefaultUserAgent() . "\r\n"
-            . "Expect: 100-Continue\r\n"
             . "Content-Length: 4\r\n\r\nData";
 
         $request = RequestFactory::getInstance()->create('PUT', 'http://www.google.com/path?q=1&v=2', array(
