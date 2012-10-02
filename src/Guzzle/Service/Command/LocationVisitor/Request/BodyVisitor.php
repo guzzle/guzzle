@@ -35,6 +35,8 @@ class BodyVisitor extends AbstractRequestVisitor
             if (is_numeric($expectHeader) && $entityBody->getSize()) {
                 if ($entityBody->getSize() < $expectHeader) {
                     $request->removeHeader('Expect');
+                } else {
+                    $request->setHeader('Expect', '100-Continue');
                 }
             }
         }
