@@ -25,11 +25,14 @@ class BodyVisitor extends AbstractRequestVisitor
         $request->setBody($entityBody);
 
         // Allow the `expect` data parameter to be set to remove the Expect header from the request
-        $expectHeader = $param->getData('expect');
-        if (null !== $expectHeader) {
-            if ($expectHeader === false || $expectHeader === 'false') {
-                $request->removeHeader('Expect');
-            } elseif (is_numeric($expectHeader) && $entityBody->getSize()) {
+        $expectHeader = $param->getData('expect_header');
+        if ($expectHeader === false) {
+            $request->removeHeader('Expect');
+        } elseif ($expectHeader !== true) {
+            // Default to using a MB as the point in which to start using the expect header
+            $expectHeader = $expectHeader ?: 1048576;
+            // If the expect_header value is numeric then only add if the size is greater than the cutoff
+            if (is_numeric($expectHeader) && $entityBody->getSize()) {
                 if ($entityBody->getSize() < $expectHeader) {
                     $request->removeHeader('Expect');
                 }
