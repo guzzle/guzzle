@@ -209,11 +209,10 @@ class Client extends HttpClient implements ClientInterface
         $requests = array();
 
         foreach ($command as $c) {
-            $event = array('command' => $c->setClient($this));
-            $this->dispatch('command.before_prepare', $event);
+            $c->setClient($this);
             // Set the state to new if the command was previously executed
             $requests[] = $c->prepare()->setState(RequestInterface::STATE_NEW);
-            $this->dispatch('command.before_send', $event);
+            $this->dispatch('command.before_send', array('command' => $c));
         }
 
         if ($singleCommand) {

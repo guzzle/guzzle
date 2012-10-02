@@ -80,9 +80,10 @@ class OperationResponseParser extends DefaultResponseParser
         // Perform processing on the parent which converts JSON to an array and XML to a SimpleXMLElement
         $result = parent::parse($command);
         $operation = $command->getOperation();
+        $processing = $command->get(AbstractCommand::RESPONSE_PROCESSING);
 
-        // No further processing is needed if the responseType is not model
-        if ($operation->getResponseType() != 'model') {
+        // No further processing is needed if the responseType is not model or using native responses
+        if ($processing == AbstractCommand::TYPE_NATIVE || $operation->getResponseType() != 'model') {
             return $result;
         }
 
@@ -114,7 +115,7 @@ class OperationResponseParser extends DefaultResponseParser
         }
 
         // Use a model object if it is not disabled on the command
-        if ($command->get(AbstractCommand::RESPONSE_PROCESSING) != AbstractCommand::TYPE_MODEL_ARRAY) {
+        if ($processing != AbstractCommand::TYPE_MODEL_ARRAY) {
             $result = new Model($result, $model);
         }
 

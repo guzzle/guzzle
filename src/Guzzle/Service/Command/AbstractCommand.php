@@ -264,6 +264,9 @@ abstract class AbstractCommand extends Collection implements CommandInterface
                 throw new CommandException('A client must be associated with the command before it can be prepared.');
             }
 
+            // Notify subscribers of the client that the command is being prepared
+            $this->client->dispatch('command.before_prepare', array('command' => $this));
+
             // Fail on missing required arguments, and change parameters via filters
             $this->validate();
             // Delegate to the subclass that implements the build method

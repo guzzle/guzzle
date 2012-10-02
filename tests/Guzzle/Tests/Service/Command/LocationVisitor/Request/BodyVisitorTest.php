@@ -15,6 +15,16 @@ class BodyVisitorTest extends AbstractVisitorTestCase
         $param = $this->getNestedCommand('body')->getParam('foo')->setRename('Foo');
         $visitor->visit($this->command, $this->request, $param, '123');
         $this->assertEquals('123', (string) $this->request->getBody());
+        $this->assertNull($this->request->getHeader('Expect'));
+    }
+
+    public function testAddsExpectHeaderWhenSetToTrue()
+    {
+        $visitor = new Visitor();
+        $param = $this->getNestedCommand('body')->getParam('foo')->setRename('Foo');
+        $param->setData('expect_header', true);
+        $visitor->visit($this->command, $this->request, $param, '123');
+        $this->assertEquals('123', (string) $this->request->getBody());
         $this->assertEquals('100-Continue', (string) $this->request->getHeader('Expect'));
     }
 
@@ -22,7 +32,7 @@ class BodyVisitorTest extends AbstractVisitorTestCase
     {
         $visitor = new Visitor();
         $param = $this->getNestedCommand('body')->getParam('foo')->setRename('Foo');
-        $param->setData('expect', false);
+        $param->setData('expect_header', false);
         $visitor->visit($this->command, $this->request, $param, '123');
         $this->assertNull($this->request->getHeader('Expect'));
     }
@@ -32,11 +42,11 @@ class BodyVisitorTest extends AbstractVisitorTestCase
         $visitor = new Visitor();
         $param = $this->getNestedCommand('body')->getParam('foo')->setRename('Foo');
         // The body is less than the cutoff
-        $param->setData('expect', 5);
+        $param->setData('expect_header', 5);
         $visitor->visit($this->command, $this->request, $param, '123');
         $this->assertNull($this->request->getHeader('Expect'));
         // Now check when the body is greater than the cutoff
-        $param->setData('expect', 2);
+        $param->setData('expect_header', 2);
         $visitor->visit($this->command, $this->request, $param, '123');
         $this->assertEquals('100-Continue', (string) $this->request->getHeader('Expect'));
     }
