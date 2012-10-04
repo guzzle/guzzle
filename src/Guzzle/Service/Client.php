@@ -129,7 +129,11 @@ class Client extends HttpClient implements ClientInterface
         // Add global client options to the command
         if ($command instanceof Collection) {
             if ($options = $this->getConfig(self::COMMAND_PARAMS)) {
-                $command->merge($options);
+                foreach ($options as $key => $value) {
+                    if (!$command->hasKey($key)) {
+                        $command->set($key, $value);
+                    }
+                }
             }
         }
 
