@@ -16,7 +16,6 @@ class ServiceDescriptionLoader extends AbstractConfigLoader
     protected function build($config, array $options)
     {
         $operations = array();
-
         if (!empty($config['operations'])) {
             foreach ($config['operations'] as $name => $op) {
                 $name = $op['name'] = isset($op['name']) ? $op['name'] : $name;
@@ -24,6 +23,7 @@ class ServiceDescriptionLoader extends AbstractConfigLoader
                 if (!empty($op['extends'])) {
                     $original = empty($op['parameters']) ? false: $op['parameters'];
                     $resolved = array();
+                    $hasClass = !empty($op['class']);
                     foreach ((array) $op['extends'] as $extendedCommand) {
                         if (empty($operations[$extendedCommand])) {
                             throw new DescriptionBuilderException("{$name} extends missing operation {$extendedCommand}");
@@ -32,12 +32,14 @@ class ServiceDescriptionLoader extends AbstractConfigLoader
                         $resolved = empty($resolved)
                             ? $toArray['parameters']
                             : array_merge($resolved, $toArray['parameters']);
+
                         $op = array_merge($toArray, $op);
+                        if (!$hasClass && isset($toArray['class'])) {
+                            $op['class'] = $toArray['class'];
+                        }
                     }
                     $op['parameters'] = $original ? array_merge($resolved, $original) : $resolved;
                 }
-                // Use the default class
-                $op['class'] = isset($op['class']) ? $op['class'] : Operation::DEFAULT_COMMAND_CLASS;
                 if (!isset($op['parameters'])) {
                     $op['parameters'] = array();
                 }

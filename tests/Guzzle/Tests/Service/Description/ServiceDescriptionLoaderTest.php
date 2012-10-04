@@ -110,4 +110,47 @@ class ServiceDescriptionLoaderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('Foo', $description->getDescription());
         $this->assertEquals('bar', $description->getApiVersion());
     }
+
+    public function testCanLoadNestedExtends()
+    {
+        $description = ServiceDescription::factory(array(
+            'operations'  => array(
+                'root' => array(
+                    'class' => 'foo'
+                ),
+                'foo' => array(
+                    'extends' => 'root',
+                    'parameters' => array(
+                        'baz' => array('type' => 'string')
+                    )
+                ),
+                'foo_2' => array(
+                    'extends' => 'foo',
+                    'parameters' => array(
+                        'bar' => array('type' => 'string')
+                    )
+                ),
+                'foo_3' => array(
+                    'class' => 'bar',
+                    'parameters' => array(
+                        'bar2' => array('type' => 'string')
+                    )
+                ),
+                'foo_4' => array(
+                    'extends' => array('foo_2', 'foo_3'),
+                    'parameters' => array(
+                        'bar3' => array('type' => 'string')
+                    )
+                )
+            )
+        ));
+
+        $this->assertTrue($description->hasOperation('foo_4'));
+        $foo4 = $description->getOperation('foo_4');
+        $this->assertTrue($foo4->hasParam('baz'));
+        $this->assertTrue($foo4->hasParam('bar'));
+        $this->assertTrue($foo4->hasParam('bar2'));
+        $this->assertTrue($foo4->hasParam('bar3'));
+        $this->assertEquals('bar', $foo4->getClass());
+    }
 }

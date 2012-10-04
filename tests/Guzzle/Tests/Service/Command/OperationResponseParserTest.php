@@ -58,18 +58,6 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertInstanceOf('SimpleXMLElement', $op->execute());
     }
 
-    public function testUsesRawArraysWhenInstructed()
-    {
-        $parser = new OperationResponseParser();
-        $op = new OperationCommand(array(), $this->getDescription()->getOperation('test'));
-        $op->setResponseParser($parser)->setClient(new Client());
-        $op->prepare()->setResponse(new Response(200, array('Content-Type' => 'application/xml'), '<F><B>C</B></F>'), true);
-        $op->set(AbstractCommand::RESPONSE_PROCESSING, 'model_array');
-        $this->assertInternalType('array', $op->execute());
-        $result = $op->getResult();
-        $this->assertEquals('C', $result['B']);
-    }
-
     public function testVisitsLocations()
     {
         $parser = new OperationResponseParser();
