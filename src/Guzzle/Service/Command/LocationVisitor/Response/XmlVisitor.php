@@ -17,12 +17,12 @@ class XmlVisitor extends AbstractResponseVisitor
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value)
     {
         $name = $param->getName();
-        $key = $param->getKey();
-        if (isset($value[$key])) {
-            $this->recursiveProcess($param, $value[$key]);
-            if ($key != $name) {
-                $value[$name] = $value[$key];
-                unset($value[$key]);
+        if (isset($value[$name])) {
+            $this->recursiveProcess($param, $value[$name]);
+            $rename = $param->getRename();
+            if ($rename && $rename != $name) {
+                $value[$rename] = $value[$name];
+                unset($value[$name]);
             }
         }
     }
@@ -72,10 +72,19 @@ class XmlVisitor extends AbstractResponseVisitor
                         $name = $property->getName();
                         if (isset($value[$name])) {
                             $this->recursiveProcess($property, $value[$name]);
+                            $rename = $property->getRename();
+                            if ($rename && $rename != $name) {
+                                $value[$rename] = $value[$name];
+                                unset($value[$name]);
+                            }
                         }
                     }
                 }
             }
+
+        } elseif ($type == 'array') {
+            // Cast to an array if the value was a string, but should be an array
+            $value = array($value);
         }
 
         if ($value !== null) {

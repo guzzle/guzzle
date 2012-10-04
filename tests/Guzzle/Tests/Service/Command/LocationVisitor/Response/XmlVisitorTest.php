@@ -14,11 +14,15 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
     public function testCanExtractAndRenameTopLevelXmlValues()
     {
         $visitor = new Visitor();
-        $param = new Parameter(array('location' => 'xml', 'name' => 'foo', 'rename' => 'Bar'));
-        $value = array('Bar' => 'test');
+        $param = new Parameter(array(
+            'location' => 'xml',
+            'name'     => 'foo',
+            'rename'   => 'Bar'
+        ));
+        $value = array('foo' => 'test');
         $visitor->visit($this->command, $this->response, $param, $value);
-        $this->assertArrayHasKey('foo', $value);
-        $this->assertEquals('test', $value['foo']);
+        $this->assertArrayHasKey('Bar', $value);
+        $this->assertEquals('test', $value['Bar']);
     }
 
     public function testEnsuresRepeatedArraysAreInCorrectLocations()
@@ -39,19 +43,38 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             )
         ));
 
-        $xml = new \SimpleXMLElement('<Test><Foo><Bar>1</Bar><Baz>2</Baz></Foo></Test>');
+        $xml = new \SimpleXMLElement('<Test><foo><Bar>1</Bar><Baz>2</Baz></foo></Test>');
         $value = json_decode(json_encode($xml), true);
         // Set a null value to ensure it is ignored
-        $value['foo'][0]['Bam'] = null;
+        //$value['foo'][0]['Bam'] = null;
         $visitor->visit($this->command, $this->response, $param, $value);
         $this->assertEquals(array(
-            'foo' => array(
+            'Foo' => array(
                 array (
                     'Bar' => '1',
                     'Baz' => '2'
                 )
             )
         ), $value);
+    }
+
+    public function testEnsuresFlatArraysAreFlat()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'location' => 'xml',
+            'name'     => 'foo',
+            'type'     => 'array',
+            'items'    => array('type' => 'string')
+        ));
+
+        $value = array('foo' => array('bar', 'baz'));
+        $visitor->visit($this->command, $this->response, $param, $value);
+        $this->assertEquals(array('foo' => array('bar', 'baz')), $value);
+
+        $value = array('foo' => 'bar');
+        $visitor->visit($this->command, $this->response, $param, $value);
+        $this->assertEquals(array('foo' => array('bar')), $value);
     }
 
     public function xmlDataProvider()
@@ -98,5 +121,89 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
         $value = json_decode(json_encode($xml), true);
         $visitor->visit($this->command, $this->response, $param, $value);
         $this->assertEquals($result, $value);
+    }
+
+    public function testCanRenameValues()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'name' => 'instancesSet',
+            'type' => 'array',
+            'location' => 'xml',
+            'rename' => 'TerminatingInstances',
+            'items' => array(
+                'name' => 'item',
+                'type' => 'object',
+                'rename' => 'item',
+                'properties' => array(
+                    'instanceId' => array(
+                        'type' => 'string',
+                        'rename' => 'InstanceId',
+                    ),
+                    'currentState' => array(
+                        'type' => 'object',
+                        'rename' => 'CurrentState',
+                        'properties' => array(
+                            'code' => array(
+                                'type' => 'numeric',
+                                'rename' => 'Code',
+                            ),
+                            'name' => array(
+                                'type' => 'string',
+                                'rename' => 'Name',
+                            ),
+                        ),
+                    ),
+                    'previousState' => array(
+                        'type' => 'object',
+                        'rename' => 'PreviousState',
+                        'properties' => array(
+                            'code' => array(
+                                'type' => 'numeric',
+                                'rename' => 'Code',
+                            ),
+                            'name' => array(
+                                'type' => 'string',
+                                'rename' => 'Name',
+                            ),
+                        ),
+                    ),
+                ),
+            )
+        ));
+
+        $value = array(
+            'instancesSet' => array (
+                'item' => array (
+                    'instanceId' => 'i-3ea74257',
+                    'currentState' => array(
+                        'code' => '32',
+                        'name' => 'shutting-down',
+                    ),
+                    'previousState' => array(
+                        'code' => '16',
+                        'name' => 'running',
+                    ),
+                ),
+            )
+        );
+
+        $visitor->visit($this->command, $this->response, $param, $value);
+
+        $this->assertEquals(array(
+            'TerminatingInstances' => array(
+                array(
+                    'InstanceId' => 'i-3ea74257',
+                    'CurrentState' => array(
+                        'Code' => '32',
+                        'Name' => 'shutting-down',
+                    ),
+                    'PreviousState' => array(
+                        'Code' => '16',
+                        'Name' => 'running',
+                    )
+                )
+            )
+        ), $value);
     }
 }
