@@ -33,7 +33,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     const TYPE_RAW = 'raw';
     const TYPE_NATIVE = 'native';
     const TYPE_MODEL = 'model';
-    const TYPE_MODEL_ARRAY = 'model_array';
 
     /**
      * @var ClientInterface Client object used to execute the command
