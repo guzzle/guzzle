@@ -10,6 +10,7 @@ use Guzzle\Service\Command\LocationVisitor\Response\BodyVisitor;
 use Guzzle\Service\Command\LocationVisitor\Response\JsonVisitor;
 use Guzzle\Service\Command\LocationVisitor\Response\XmlVisitor;
 use Guzzle\Service\Command\LocationVisitor\Response\ResponseVisitorInterface;
+use Guzzle\Service\Description\Parameter;
 use Guzzle\Service\Resource\Model;
 
 /**
@@ -36,7 +37,7 @@ class OperationResponseParser extends DefaultResponseParser
     public static function getInstance()
     {
         if (!self::$instance) {
-            self::$instance = new self(array(
+            self::$instance = new static(array(
                 'statusCode'   => new StatusCodeVisitor(),
                 'reasonPhrase' => new ReasonPhraseVisitor(),
                 'header'       => new HeaderVisitor(),
@@ -100,8 +101,24 @@ class OperationResponseParser extends DefaultResponseParser
         }
 
         $response = $command->getResponse();
+        // Perform transformations on the result using locataion visitors
+        $this->visitResult($model, $command, $response, $result);
+
+        return new Model($result, $model);
+    }
+
+    /**
+     * Perform transformations on the result array
+     *
+     * @param Parameter        $model    Model that defines the structure
+     * @param CommandInterface $command  Command that performed the operation
+     * @param Response         $response Response received
+     * @param array            $result   Result array
+     */
+    protected function visitResult(Parameter $model, CommandInterface $command, Response $response, &$result)
+    {
         foreach ($model->getProperties() as $schema) {
-            /** @var $arg \Guzzle\Service\Description\Parameter */
+            /** @var $arg Parameter */
             $location = $schema->getLocation();
             // Visit with the associated visitor
             if (isset($this->visitors[$location])) {
@@ -113,10 +130,5 @@ class OperationResponseParser extends DefaultResponseParser
         foreach ($this->visitors as $visitor) {
             $visitor->after($command);
         }
-
-        // Use a model object if it is not disabled on the command
-        $result = new Model($result, $model);
-
-        return $result;
     }
 }
