@@ -374,4 +374,17 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client->setDescription($description);
         $this->assertEquals('http://foo.com', $client->getBaseUrl());
     }
+
+    public function testMergesDefaultCommandParamsCorrectly()
+    {
+        $client = new Mock\MockClient('http://www.foo.com', array(
+            Client::COMMAND_PARAMS => array(
+                'mesa' => 'bar',
+                'jar'  => 'jar'
+            )
+        ));
+        $command = $client->getCommand('mock_command', array('jar' => 'test'));
+        $this->assertEquals('bar', $command->get('mesa'));
+        $this->assertEquals('test', $command->get('jar'));
+    }
 }
