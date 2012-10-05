@@ -36,8 +36,8 @@ class OperationResponseParser extends DefaultResponseParser
      */
     public static function getInstance()
     {
-        if (!self::$instance) {
-            self::$instance = new static(array(
+        if (!static::$instance) {
+            static::$instance = new static(array(
                 'statusCode'   => new StatusCodeVisitor(),
                 'reasonPhrase' => new ReasonPhraseVisitor(),
                 'header'       => new HeaderVisitor(),
@@ -47,7 +47,7 @@ class OperationResponseParser extends DefaultResponseParser
             ));
         }
 
-        return self::$instance;
+        return static::$instance;
     }
 
     /**
