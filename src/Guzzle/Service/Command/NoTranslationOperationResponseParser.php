@@ -14,5 +14,10 @@ class NoTranslationOperationResponseParser extends OperationResponseParser
     /**
      * {@inheritdoc}
      */
+    protected static $instance;
+
+    /**
+     * {@inheritdoc}
+     */
     protected function visitResult(Parameter $model, CommandInterface $command, Response $response, &$result) {}
 }
