@@ -12,7 +12,6 @@ use Guzzle\Http\Message\RequestInterface;
 interface CurlMultiInterface extends HasDispatcherInterface, \Countable
 {
     const BEFORE_SEND = 'curl_multi.before_send';
-    const POLLING = 'curl_multi.polling';
     const POLLING_REQUEST = 'curl_multi.polling_request';
     const COMPLETE = 'curl_multi.complete';
     const ADD_REQUEST = 'curl_multi.add_request';
