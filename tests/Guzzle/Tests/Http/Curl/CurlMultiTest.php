@@ -20,12 +20,12 @@ use Guzzle\Tests\Mock\MockMulti;
 class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
-     * @var Guzzle\Http\Curl\CurlMulti
+     * @var \Guzzle\Http\Curl\CurlMulti
      */
     private $multi;
 
     /**
-     * @var Guzzle\Common\Collection
+     * @var \Guzzle\Common\Collection
      */
     private $updates;
 
@@ -92,7 +92,6 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertTrue($mock->has(CurlMulti::ADD_REQUEST));
         $this->assertFalse($mock->has(CurlMulti::REMOVE_REQUEST));
-        $this->assertFalse($mock->has(CurlMulti::POLLING));
         $this->assertFalse($mock->has(CurlMulti::COMPLETE));
     }
 
@@ -283,7 +282,6 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
         $this->multi->add($request);
         $this->multi->send();
         $this->assertTrue($this->mock->has(CurlMulti::ADD_REQUEST));
-        $this->assertTrue($this->mock->has(CurlMulti::POLLING) === false);
         $this->assertTrue($this->mock->has(CurlMulti::COMPLETE) !== false);
     }
 
