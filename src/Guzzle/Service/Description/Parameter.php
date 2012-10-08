@@ -26,7 +26,7 @@ class Parameter
     protected $instanceOf;
     protected $filters;
     protected $location;
-    protected $rename;
+    protected $sentAs;
     protected $data;
     protected $properties = array();
     protected $additionalProperties;
@@ -48,9 +48,9 @@ class Parameter
      * - description:   (string) Documentation of the parameter
      * - location:      (string) The location of a request used to apply a parameter. Custom locations can be registered
      *                  with a command, but the defaults are uri, query, header, body, json, postField, postFile.
-     * - rename:        (string) Allows the customization of where in a location a parameter is applied. If a parameter
-     *                  is named foo, has a location of query, and a rename of 'Bar', the parameter will be added to the
-     *                  query string of a request using `Bar` as the key.
+     * - sentAs:        (string) Specifies how the data being modeled is sent over the wire. For example, you may wish
+     *                  to include certain headers in a response model that have a normalized casing of FooBar, but the
+     *                  actual header is x-foo-bar. In this case, sentAs would be set to x-foo-bar.
      * - filters:       (array) Array of static method names to to run a parameter value through. Each value in the
      *                  array must be a string containing the full class path to a static method or an array of complex
      *                  filter information. You can specify static methods of classes using the full namespace class
@@ -131,7 +131,7 @@ class Parameter
     public function toArray()
     {
         $result = array();
-        $checks = array('required', 'description', 'static', 'type', 'instanceOf', 'location', 'rename', 'pattern',
+        $checks = array('required', 'description', 'static', 'type', 'instanceOf', 'location', 'sentAs', 'pattern',
             'minimum', 'maximum', 'minItems', 'maxItems', 'minLength', 'maxLength', 'data', 'enum', 'filters');
 
         // Anything that is in the `Items` attribute of an array *must* include it's name if available
@@ -220,13 +220,13 @@ class Parameter
     }
 
     /**
-     * Get the key of the parameter, where rename will supercede name if it is set
+     * Get the key of the parameter, where sentAs will supersede name if it is set
      *
      * @return string
      */
-    public function getKey()
+    public function getWireName()
     {
-        return $this->rename ?: $this->name;
+        return $this->sentAs ?: $this->name;
     }
 
     /**
@@ -508,26 +508,26 @@ class Parameter
     }
 
     /**
-     * Get the rename attribute of the parameter that used with locations to rename an attribute when it is being
+     * Get the sentAs attribute of the parameter that used with locations to sentAs an attribute when it is being
      * applied to a location.
      *
      * @return string|null
      */
-    public function getRename()
+    public function getSentAs()
     {
-        return $this->rename;
+        return $this->sentAs;
     }
 
     /**
-     * Set the rename attribute
+     * Set the sentAs attribute
      *
-     * @param string|null $name Rename value
+     * @param string|null $name Name of the value as it is sent over the wire
      *
      * @return self
      */
-    public function setRename($name)
+    public function setSentAs($name)
     {
-        $this->rename = $name;
+        $this->sentAs = $name;
 
         return $this;
     }

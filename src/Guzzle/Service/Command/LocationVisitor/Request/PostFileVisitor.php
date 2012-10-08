@@ -20,7 +20,7 @@ class PostFileVisitor extends AbstractRequestVisitor
         if ($value instanceof PostFileInterface) {
             $request->addPostFile($value);
         } else {
-            $request->addPostFile($param->getKey(), $value);
+            $request->addPostFile($param->getWireName(), $value);
         }
     }
 }

@@ -50,7 +50,7 @@ class XmlVisitorTest extends AbstractVisitorTestCase
                             'location' => 'xml',
                             'items' => array(
                                 'type'   => 'numeric',
-                                'rename' => 'Bar'
+                                'sentAs' => 'Bar'
                             )
                         )
                     )
@@ -85,7 +85,7 @@ class XmlVisitorTest extends AbstractVisitorTestCase
                             'location' => 'xml',
                             'items' => array(
                                 'type'       => 'object',
-                                'rename'     => 'Bar',
+                                'sentAs'     => 'Bar',
                                 'properties' => array('A' => array(), 'B' => array())
                             )
                         )
@@ -210,7 +210,7 @@ class XmlVisitorTest extends AbstractVisitorTestCase
                     'required' => true,
                     'type'     => 'array',
                     'min'      => 1,
-                    'items'    => array('type' => 'string', 'rename' => 'Node')
+                    'items'    => array('type' => 'string', 'sentAs' => 'Node')
                 )
             )
         ));

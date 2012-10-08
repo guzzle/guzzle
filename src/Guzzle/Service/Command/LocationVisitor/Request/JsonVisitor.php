@@ -50,7 +50,7 @@ class JsonVisitor extends AbstractRequestVisitor
     public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
         $json = isset($this->data[$command]) ? $this->data[$command] : array();
-        $json[$param->getKey()] = $param && is_array($value)
+        $json[$param->getWireName()] = $param && is_array($value)
             ? $this->resolveRecursively($value, $param)
             : $value;
         $this->data[$command] = $json;
@@ -64,7 +64,7 @@ class JsonVisitor extends AbstractRequestVisitor
         if (isset($this->data[$command])) {
             $json = $this->data[$command];
             unset($this->data[$command]);
-            $request->setBody(json_encode($json))->removeHeader('Expect');
+            $request->setBody(json_encode($json));
             if ($this->jsonContentType) {
                 $request->setHeader('Content-Type', $this->jsonContentType);
             }

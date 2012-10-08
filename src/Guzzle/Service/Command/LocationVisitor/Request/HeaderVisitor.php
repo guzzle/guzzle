@@ -16,6 +16,6 @@ class HeaderVisitor extends AbstractRequestVisitor
      */
     public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
-        $request->setHeader($param->getKey(), $value);
+        $request->setHeader($param->getWireName(), $value);
     }
 }

@@ -67,7 +67,7 @@ class XmlVisitor extends AbstractRequestVisitor
 
         $node = $xml;
         if ($param->getType() == 'object' || $param->getType() == 'array') {
-            $node = $xml->addChild($param->getKey());
+            $node = $xml->addChild($param->getWireName());
         }
 
         $this->addXml($node, $param, $value);
@@ -82,7 +82,7 @@ class XmlVisitor extends AbstractRequestVisitor
         if (isset($this->data[$command])) {
             $xml = $this->data[$command];
             unset($this->data[$command]);
-            $request->setBody($xml->asXML())->removeHeader('Expect');
+            $request->setBody($xml->asXML());
             if ($this->contentType) {
                 $request->setHeader('Content-Type', $this->contentType);
             }
@@ -99,13 +99,13 @@ class XmlVisitor extends AbstractRequestVisitor
     protected function addXml(\SimpleXMLElement $xml, Parameter $param, $value)
     {
         // Determine the name of the element
-        $node = $param->getKey();
+        $node = $param->getWireName();
         // Check if this property has a particular namespace
         $namespace = $param->getData('namespace') ?: null;
 
         if ($param->getType() == 'array') {
             if ($items = $param->getItems()) {
-                $name = $items->getKey();
+                $name = $items->getWireName();
                 foreach ($value as $v) {
                     if ($items->getType() == 'object' || $items->getType() == 'array') {
                         $child = $xml->addChild($name, null, $namespace);
@@ -119,13 +119,13 @@ class XmlVisitor extends AbstractRequestVisitor
             foreach ($value as $name => $v) {
                 if ($property = $param->getProperty($name)) {
                     if ($property->getType() == 'object' || $property->getType() == 'array') {
-                        $child = $xml->addChild($name);
+                        $child = $xml->addChild($property->getWireName());
                         $this->addXml($child, $property, $v);
                     } else {
                         if ($property->getData('attribute')) {
-                            $xml->addAttribute($property->getKey(), $v, $namespace);
+                            $xml->addAttribute($property->getWireName(), $v, $namespace);
                         } else {
-                            $xml->addChild($name, $v, $namespace);
+                            $xml->addChild($property->getWireName(), $v, $namespace);
                         }
                     }
                 }

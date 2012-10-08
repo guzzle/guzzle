@@ -16,6 +16,6 @@ class ReasonPhraseVisitor extends AbstractResponseVisitor
      */
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value)
     {
-        $value[$param->getKey()] = $response->getReasonPhrase();
+        $value[$param->getName()] = $response->getReasonPhrase();
     }
 }

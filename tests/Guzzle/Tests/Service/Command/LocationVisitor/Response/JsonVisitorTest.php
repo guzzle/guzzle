@@ -32,7 +32,7 @@ class JsonVisitorTest extends AbstractResponseVisitorTest
         $visitor = new Visitor();
         $param = new Parameter(array(
             'name'   => 'foo',
-            'rename' => 'Baz',
+            'sentAs' => 'Baz',
             'type'   => 'string',
         ));
         $this->value = array('Baz' => 'test');

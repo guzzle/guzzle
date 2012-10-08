@@ -17,7 +17,7 @@ class PostFieldVisitor extends AbstractRequestVisitor
     public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
         $request->setPostField(
-            $param->getKey(),
+            $param->getWireName(),
             $param && is_array($value) ? $this->resolveRecursively($value, $param) : $value
         );
     }
