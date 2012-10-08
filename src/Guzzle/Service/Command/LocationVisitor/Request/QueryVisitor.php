@@ -17,7 +17,7 @@ class QueryVisitor extends AbstractRequestVisitor
     public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
         $request->getQuery()->set(
-            $param->getKey(),
+            $param->getWireName(),
             $param && is_array($value) ? $this->resolveRecursively($value, $param) : $value
         );
     }

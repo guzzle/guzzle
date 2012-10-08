@@ -12,7 +12,7 @@ class HeaderVisitorTest extends AbstractVisitorTestCase
     public function testVisitsLocation()
     {
         $visitor = new Visitor();
-        $param = $this->getNestedCommand('header')->getParam('foo')->setRename('test');
+        $param = $this->getNestedCommand('header')->getParam('foo')->setSentAs('test');
         $visitor->visit($this->command, $this->request, $param, '123');
         $this->assertEquals('123', (string) $this->request->getHeader('test'));
     }

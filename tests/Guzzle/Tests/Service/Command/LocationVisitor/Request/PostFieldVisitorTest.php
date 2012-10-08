@@ -13,14 +13,13 @@ class PostFieldVisitorTest extends AbstractVisitorTestCase
     {
         $visitor = new Visitor();
         $param = $this->getNestedCommand('postField')->getParam('foo');
-        $visitor->visit($this->command, $this->request, $param->setRename('test'), '123');
+        $visitor->visit($this->command, $this->request, $param->setSentAs('test'), '123');
         $this->assertEquals('123', (string) $this->request->getPostField('test'));
     }
 
     public function testRecursivelyBuildsPostFields()
     {
         $command = $this->getCommand('postField');
-        $command->getOperation()->getParam('foo')->setRename('Foo');
         $request = $command->prepare();
         $visitor = new Visitor();
         $param = $command->getOperation()->getParam('foo');

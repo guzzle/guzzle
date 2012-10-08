@@ -40,7 +40,7 @@ abstract class AbstractVisitorTestCase extends \Guzzle\Tests\GuzzleTestCase
                 'foo' => new Parameter(array(
                     'type'         => 'object',
                     'location'     => $location,
-                    'location_key' => 'Foo',
+                    'sentAs'       => 'Foo',
                     'required'     => true,
                     'properties'   => array(
                         'test' => array(
@@ -51,11 +51,10 @@ abstract class AbstractVisitorTestCase extends \Guzzle\Tests\GuzzleTestCase
                                     'type'    => 'boolean',
                                     'default' => true
                                 ),
-                                // Add a nested parameter that uses a different location_key than the input key
                                 'jenga' => array(
                                     'type'    => 'string',
                                     'default' => 'hello',
-                                    'rename'  => 'Jenga_Yall!',
+                                    'sentAs'  => 'Jenga_Yall!',
                                     'filters' => array('strtoupper')
                                 )
                             )

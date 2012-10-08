@@ -10,10 +10,9 @@ use Guzzle\Service\Command\CommandInterface;
  * Location visitor used to marshal JSON response data into a formatted array.
  *
  * Allows top level JSON parameters to be inserted into the result of a command. The top level attributes are grabbed
- * from the response's JSON data using the name value by default. If a `rename` property is set on a top level model
- * property, then the value will be grabbed from the JSON response using the `rename` property, but stored in the result
- * array using the `name` key. Filters can be applied to parameters as they are traversed. This allows data to be
- * normalized before returning it to users (for example converting timestamps to DateTime objects).
+ * from the response's JSON data using the name value by default. Filters can be applied to parameters as they are
+ * traversed. This allows data to be normalized before returning it to users (for example converting timestamps to
+ * DateTime objects).
  */
 class JsonVisitor extends AbstractResponseVisitor
 {
@@ -23,7 +22,7 @@ class JsonVisitor extends AbstractResponseVisitor
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value)
     {
         $name = $param->getName();
-        $key = $param->getKey();
+        $key = $param->getWireName();
         if (isset($value[$key])) {
             $this->recursiveProcess($param, $value[$key]);
             if ($key != $name) {

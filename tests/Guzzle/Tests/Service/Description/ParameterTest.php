@@ -90,9 +90,9 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
 
     public function testAllowsSimpleLocationValue()
     {
-        $p = new Parameter(array('name' => 'myname', 'location' => 'foo', 'rename' => 'Hello'));
+        $p = new Parameter(array('name' => 'myname', 'location' => 'foo', 'sentAs' => 'Hello'));
         $this->assertEquals('foo', $p->getLocation());
-        $this->assertEquals('Hello', $p->getRename());
+        $this->assertEquals('Hello', $p->getSentAs());
     }
 
     public function testParsesTypeValues()
@@ -117,7 +117,7 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
             ->setDescription('c')
             ->setFilters(array('d'))
             ->setLocation('e')
-            ->setRename('f')
+            ->setSentAs('f')
             ->setMaxLength(1)
             ->setMinLength(1)
             ->setMinimum(2)
@@ -136,7 +136,7 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('c', $p->getDescription());
         $this->assertEquals(array('d', 'foo'), $p->getFilters());
         $this->assertEquals('e', $p->getLocation());
-        $this->assertEquals('f', $p->getRename());
+        $this->assertEquals('f', $p->getSentAs());
         $this->assertEquals(1, $p->getMaxLength());
         $this->assertEquals(1, $p->getMinLength());
         $this->assertEquals(2, $p->getMaximum());
@@ -319,10 +319,10 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
 
     public function testHasKeyMethod()
     {
-        $p = new Parameter(array('name' => 'foo', 'rename' => 'bar'));
-        $this->assertEquals('bar', $p->getKey());
-        $p->setRename(null);
-        $this->assertEquals('foo', $p->getKey());
+        $p = new Parameter(array('name' => 'foo', 'sentAs' => 'bar'));
+        $this->assertEquals('bar', $p->getWireName());
+        $p->setSentAs(null);
+        $this->assertEquals('foo', $p->getWireName());
     }
 
     public function testIncludesNameInToArrayWhenItemsAttriubuteHasName()

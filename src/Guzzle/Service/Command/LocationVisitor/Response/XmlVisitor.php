@@ -16,13 +16,13 @@ class XmlVisitor extends AbstractResponseVisitor
      */
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value)
     {
-        $name = $param->getName();
-        if (isset($value[$name])) {
-            $this->recursiveProcess($param, $value[$name]);
-            $rename = $param->getRename();
-            if ($rename && $rename != $name) {
-                $value[$rename] = $value[$name];
-                unset($value[$name]);
+        $sentAs = $param->getWireName();
+        if (isset($value[$sentAs])) {
+            $this->recursiveProcess($param, $value[$sentAs]);
+            $name = $param->getName();
+            if ($name != $sentAs) {
+                $value[$name] = $value[$sentAs];
+                unset($value[$sentAs]);
             }
         }
     }
@@ -69,13 +69,13 @@ class XmlVisitor extends AbstractResponseVisitor
                 // On the above line, we ensure that the array is associative and not numerically indexed
                 if ($properties = $param->getProperties()) {
                     foreach ($properties as $property) {
-                        $name = $property->getName();
-                        if (isset($value[$name])) {
-                            $this->recursiveProcess($property, $value[$name]);
-                            $rename = $property->getRename();
-                            if ($rename && $rename != $name) {
-                                $value[$rename] = $value[$name];
-                                unset($value[$name]);
+                        $sentAs = $property->getWireName();
+                        if (isset($value[$sentAs])) {
+                            $this->recursiveProcess($property, $value[$sentAs]);
+                            $name = $property->getName();
+                            if ($name != $sentAs) {
+                                $value[$name] = $value[$sentAs];
+                                unset($value[$sentAs]);
                             }
                         }
                     }

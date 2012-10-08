@@ -17,12 +17,12 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
         $param = new Parameter(array(
             'location' => 'xml',
             'name'     => 'foo',
-            'rename'   => 'Bar'
+            'sentAs'   => 'Bar'
         ));
-        $value = array('foo' => 'test');
+        $value = array('Bar' => 'test');
         $visitor->visit($this->command, $this->response, $param, $value);
-        $this->assertArrayHasKey('Bar', $value);
-        $this->assertEquals('test', $value['Bar']);
+        $this->assertArrayHasKey('foo', $value);
+        $this->assertEquals('test', $value['foo']);
     }
 
     public function testEnsuresRepeatedArraysAreInCorrectLocations()
@@ -31,7 +31,7 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
         $param = new Parameter(array(
             'location' => 'xml',
             'name'     => 'foo',
-            'rename'   => 'Foo',
+            'sentAs'   => 'Foo',
             'type'     => 'array',
             'items'    => array(
                 'type' => 'object',
@@ -43,13 +43,11 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             )
         ));
 
-        $xml = new \SimpleXMLElement('<Test><foo><Bar>1</Bar><Baz>2</Baz></foo></Test>');
+        $xml = new \SimpleXMLElement('<Test><Foo><Bar>1</Bar><Baz>2</Baz></Foo></Test>');
         $value = json_decode(json_encode($xml), true);
-        // Set a null value to ensure it is ignored
-        //$value['foo'][0]['Bam'] = null;
         $visitor->visit($this->command, $this->response, $param, $value);
         $this->assertEquals(array(
-            'Foo' => array(
+            'foo' => array(
                 array (
                     'Bar' => '1',
                     'Baz' => '2'
@@ -127,44 +125,44 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
     {
         $visitor = new Visitor();
         $param = new Parameter(array(
-            'name' => 'instancesSet',
-            'type' => 'array',
+            'name'     => 'TerminatingInstances',
+            'type'     => 'array',
             'location' => 'xml',
-            'rename' => 'TerminatingInstances',
-            'items' => array(
+            'sentAs'   => 'instancesSet',
+            'items'    => array(
                 'name' => 'item',
                 'type' => 'object',
-                'rename' => 'item',
+                'sentAs' => 'item',
                 'properties' => array(
-                    'instanceId' => array(
-                        'type' => 'string',
-                        'rename' => 'InstanceId',
+                    'InstanceId' => array(
+                        'type'   => 'string',
+                        'sentAs' => 'instanceId',
                     ),
-                    'currentState' => array(
-                        'type' => 'object',
-                        'rename' => 'CurrentState',
+                    'CurrentState' => array(
+                        'type'   => 'object',
+                        'sentAs' => 'currentState',
                         'properties' => array(
-                            'code' => array(
+                            'Code' => array(
                                 'type' => 'numeric',
-                                'rename' => 'Code',
+                                'sentAs' => 'code',
                             ),
-                            'name' => array(
+                            'Name' => array(
                                 'type' => 'string',
-                                'rename' => 'Name',
+                                'sentAs' => 'name',
                             ),
                         ),
                     ),
-                    'previousState' => array(
-                        'type' => 'object',
-                        'rename' => 'PreviousState',
+                    'PreviousState' => array(
+                        'type'   => 'object',
+                        'sentAs' => 'previousState',
                         'properties' => array(
-                            'code' => array(
+                            'Code' => array(
                                 'type' => 'numeric',
-                                'rename' => 'Code',
+                                'sentAs' => 'code',
                             ),
-                            'name' => array(
+                            'Name' => array(
                                 'type' => 'string',
-                                'rename' => 'Name',
+                                'sentAs' => 'name',
                             ),
                         ),
                     ),
