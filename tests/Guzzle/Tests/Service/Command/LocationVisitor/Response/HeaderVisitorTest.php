@@ -22,4 +22,28 @@ class HeaderVisitorTest extends AbstractResponseVisitorTest
         $visitor->visit($this->command, $this->response, $param, $this->value);
         $this->assertEquals('text/plain', $this->value['ContentType']);
     }
+
+    public function testVisitsMappedPrefixHeaders()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'location'             => 'header',
+            'name'                 => 'Metadata',
+            'sentAs'               => 'X-Baz-',
+            'type'                 => 'object',
+            'additionalProperties' => array(
+                'type' => 'string'
+            )
+        ));
+        $response = new Response(200, array(
+            'X-Baz-Test'     => 'ABC',
+            'X-Baz-Bar'      => array('123', '456'),
+            'Content-Length' => 3
+        ), 'Foo');
+        $visitor->visit($this->command, $response, $param, $this->value);
+        $this->assertEquals(array(
+            'Test' => 'ABC',
+            'Bar'  => array('123', '456')
+        ), $this->value);
+    }
 }

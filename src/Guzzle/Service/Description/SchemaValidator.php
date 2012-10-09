@@ -2,6 +2,8 @@
 
 namespace Guzzle\Service\Description;
 
+use Guzzle\Common\ToArrayInterface;
+
 /**
  * Default parameter validator
  */
@@ -103,7 +105,7 @@ class SchemaValidator implements ValidatorInterface
 
         if ($type == 'object') {
 
-            // Objects are either associative arrays, \ArrayAccess, or some other object
+            // Objects are either associative arrays, ToArrayInterface, or some other object
             if ($param->getInstanceOf()) {
                 $instance = $param->getInstanceOf();
                 if (!($value instanceof $instance)) {
@@ -114,14 +116,18 @@ class SchemaValidator implements ValidatorInterface
 
             // Determine whether or not this "value" has properties and should be traversed
             $traverse = $temporaryValue = false;
+
+            // Convert the value to an array
+            if (!$valueIsArray && $value instanceof ToArrayInterface) {
+                $value = $value->toArray();
+            }
+
             if ($valueIsArray) {
                 // Ensure that the array is associative and not numerically indexed
                 if (isset($value[0])) {
                     $this->errors[] = "{$path} must be an array of properties. Got a numerically indexed array.";
                     return false;
                 }
-                $traverse = true;
-            } elseif ($value instanceof \ArrayAccess) {
                 $traverse = true;
             } elseif ($value === null) {
                 // Attempt to let the contents be built up by default values if possible
@@ -151,15 +157,7 @@ class SchemaValidator implements ValidatorInterface
                 $additional = $param->getAdditionalProperties();
                 if ($additional !== true) {
                     // If additional properties were found, then validate each against the additionalProperties attr.
-                    if ($valueIsArray) {
-                        $keys = array_keys($value);
-                    } else {
-                        $keys = array();
-                        foreach ($value as $k => $v) {
-                            $keys[] = $k;
-                        }
-                    }
-
+                    $keys = array_keys($value);
                     // Determine the keys that were specified that were not listed in the properties of the schema
                     $diff = array_diff($keys, array_keys($properties));
                     if (!empty($diff)) {
