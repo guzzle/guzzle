@@ -40,5 +40,10 @@ class BodyVisitor extends AbstractRequestVisitor
                 }
             }
         }
+
+        // Add the Content-Encoding header if one is set on the EntityBody
+        if ($encoding = $entityBody->getContentEncoding()) {
+            $request->setHeader('Content-Encoding', $encoding);
+        }
     }
 }
