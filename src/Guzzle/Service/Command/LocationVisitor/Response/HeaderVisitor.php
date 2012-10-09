@@ -16,6 +16,18 @@ class HeaderVisitor extends AbstractResponseVisitor
      */
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value)
     {
-        $value[$param->getName()] = (string) $response->getHeader($param->getWireName());
+        if ($param->getType() == 'object' && $param->getAdditionalProperties() instanceof Parameter) {
+            if ($prefix = $param->getSentAs()) {
+                $len = strlen($prefix);
+                foreach ($response->getHeaders() as $key => $header) {
+                    if (stripos($key, $prefix) === 0) {
+                        // Account for multi-value headers
+                        $value[substr($key, $len)] = count($header) == 1 ? end($header) : $header;
+                    }
+                }
+            }
+        } else {
+            $value[$param->getName()] = (string) $response->getHeader($param->getWireName());
+        }
     }
 }

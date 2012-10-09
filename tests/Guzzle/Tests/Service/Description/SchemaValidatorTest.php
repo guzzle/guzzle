@@ -84,35 +84,36 @@ class SchemaValidatorTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array('[foo] must be an instance of ' . __CLASS__), $this->validator->getErrors());
     }
 
-    public function testModifiesArrayAccessObjects()
+    public function testEnforcesInstanceOfOnlyWhenObject()
     {
         $p = new Parameter(array(
             'name'       => 'foo',
-            'type'       => 'object',
-            'properties' => array('bar' => array('default' => 'test'))
+            'type'       => array('object', 'string'),
+            'instanceOf' => get_class($this)
         ));
-        $a = new \ArrayObject();
-        $this->assertTrue($this->validator->validate($p, $a));
-        $this->assertEquals('test', $a['bar']);
+        $this->assertTrue($this->validator->validate($p, $this));
+        $s = 'test';
+        $this->assertTrue($this->validator->validate($p, $s));
     }
 
-    public function testModifiesNestedArrayAccessObjects()
+    public function testConvertsObjectsToArraysWhenToArrayInterface()
     {
+        $o = $this->getMockBuilder('Guzzle\Common\ToArrayInterface')
+            ->setMethods(array('toArray'))
+            ->getMockForAbstractClass();
+        $o->expects($this->once())
+            ->method('toArray')
+            ->will($this->returnValue(array(
+                'foo' => 'bar'
+            )));
         $p = new Parameter(array(
-            'name'       => 'foo',
+            'name'       => 'test',
             'type'       => 'object',
             'properties' => array(
-                'bar' => array('default' => 'test'),
-                'baz' => array('type' => 'object', 'additionalProperties' => array('type' => 'string'))
+                'foo' => array('required' => 'true')
             )
         ));
-        $b = new \ArrayObject(array('string!'));
-        $a = new \ArrayObject(array(
-            'baz' => $b
-        ));
-        $this->assertTrue($this->validator->validate($p, $a));
-        $this->assertEquals('test', $a['bar']);
-        $this->assertEquals($b, $a['baz']);
+        $this->assertTrue($this->validator->validate($p, $o));
     }
 
     public function testMergesValidationErrorsInPropertiesWithParent()
