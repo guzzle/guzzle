@@ -503,6 +503,18 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Message\Response::getSetCookie
      */
+    public function testGetMultipleSetCookie()
+    {
+        $this->response->addHeader('Set-Cookie', 'UserID=Mike; Max-Age=200');
+        $this->assertEquals(array(
+            'UserID=JohnDoe; Max-Age=3600; Version=1',
+            'UserID=Mike; Max-Age=200',
+        ), $this->response->getSetCookie()->toArray());
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\Response::getSetCookie
+     */
     public function testGetSetCookieNormalizesHeaders()
     {
         $this->response->addHeaders(array(
