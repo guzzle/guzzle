@@ -1,14 +1,14 @@
 <?php
 
-namespace Guzzle\Tests\Plugin\Md5Validator;
+namespace Guzzle\Tests\Plugin\Md5;
 
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\Response;
-use Guzzle\Plugin\Md5Validator\Md5ValidatorPlugin;
+use Guzzle\Plugin\Md5\Md5ValidatorPlugin;
 
 /**
- * @covers Guzzle\Plugin\Md5Validator\Md5ValidatorPlugin
+ * @covers Guzzle\Plugin\Md5\Md5ValidatorPlugin
  */
 class Md5ValidatorPluginTest extends \Guzzle\Tests\GuzzleTestCase
 {

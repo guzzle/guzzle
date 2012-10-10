@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Plugin\Md5Validator;
+namespace Guzzle\Plugin\Md5;
 
 use Guzzle\Common\Event;
 use Guzzle\Common\Exception\UnexpectedValueException;

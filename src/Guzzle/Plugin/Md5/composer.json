@@ -1,6 +1,6 @@
 {
-    "name": "guzzle/plugin-md5validator",
-    "description": "Guzzle MD5 validator plugin",
+    "name": "guzzle/plugin-md5",
+    "description": "Guzzle MD5 plugins",
     "homepage": "http://guzzlephp.org/",
     "keywords": ["plugin", "guzzle"],
     "license": "MIT",
@@ -16,7 +16,7 @@
         "guzzle/http": "self.version"
     },
     "autoload": {
-        "psr-0": { "Guzzle\\Plugin\\Md5Validator": "" }
+        "psr-0": { "Guzzle\\Plugin\\Md5": "" }
     },
-    "target-dir": "Guzzle/Plugin/Md5Validator"
+    "target-dir": "Guzzle/Plugin/Md5"
 }
