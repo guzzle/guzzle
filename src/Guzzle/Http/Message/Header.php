@@ -17,10 +17,10 @@ class Header implements \IteratorAggregate, \Countable
      * Construct a new header object
      *
      * @param string $header Name of the header
-     * @param string $values Values of the header
+     * @param array  $values Values of the header
      * @param string $glue   Glue used to combine multiple values into a string
      */
-    public function __construct($header, $values = array(), $glue = '; ')
+    public function __construct($header, $values = array(), $glue = ', ')
     {
         $this->header = $header;
         $this->glue = $glue;
