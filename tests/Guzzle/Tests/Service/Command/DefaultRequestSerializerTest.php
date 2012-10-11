@@ -74,4 +74,10 @@ class DefaultRequestSerializerTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $this->serializer->prepare($this->command);
         $this->assertEquals('http://foo.com/baz/bar/123', (string) $request->getUrl());
     }
+
+    public function testConstructorAddsVisitors()
+    {
+        $serializer = new DefaultRequestSerializer(array());
+        $this->assertEmpty($this->readAttribute($serializer, 'visitors'));
+    }
 }
