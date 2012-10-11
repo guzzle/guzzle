@@ -1,52 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="guzzle" default="package">
-
+    <!-- set local values, like git location -->
+    <property file="phing/build.properties" override="true" />
+    
     <property name="dir.output" value="${project.basedir}/build/artifacts" />
-
-    <fileset id="sources" dir="./src">
-        <include name="**"/>
-    </fileset>
-
-    <target name="tag">
-        <echo>Not yet implemented</echo>
-    </target>
+    <property name="dir.imports" value="${project.basedir}/phing/imports" />
+    <property name="dir.bin" value="${project.basedir}/bin" />
+    <property name="repo.dir" value="${project.basedir}" />
+    
+    <import file="${dir.imports}/dependencies.xml"/>
+    <import file="${dir.imports}/test.xml"/>
+    <import file="${dir.imports}/deploy.xml"/>
+    <!-- <import file="${dir.imports}/metrics.xml"/> -->
+    
 
     <target name="test" description="Run unit tests" depends="test-init">
         <exec passthru="true" command="phpunit" />
+        <testserver cmd="${cmd.testserver}" action="stop" />
     </target>
 
     <target name="test-init" depends="install-dependencies" description="Initialize test dependencies">
+        <testserver cmd="${cmd.testserver}" action="start" />
         <copy file="phpunit.xml.dist" tofile="phpunit.xml" overwrite="false" />
     </target>
 
-    <target name="install-dependencies">
-        <if>
-            <available file="composer.phar" />
-            <then>
-                <echo>Composer is installed</echo>
-            </then>
-            <else>
-                <echo message="Installing composer" />
-                <exec command="curl -s http://getcomposer.org/installer | php" passthru="true" />
-                <exec command="php composer.phar install --dev" passthru="true" />
-            </else>
-        </if>
-    </target>
-
-    <target name="clean-dependencies">
-        <delete dir="${project.basedir}/vendor"/>
-        <delete file="composer.lock" />
-    </target>
-
-    <target name="update-dependencies">
-        <exec command="php composer.phar update --dev" passthru="true" />
+    <target name="build-init" description="Initialize local phing properties">
+        <copy file="phing/build.properties.dist" tofile="phing/build.properties" overwrite="false" />
     </target>
 
     <target name="clean">
         <delete dir="${dir.output}"/>
     </target>
 
-    <target name="prepare" depends="clean,test-init">
+    <target name="prepare" depends="clean,test-init,build-init">
         <mkdir dir="${dir.output}"/>
         <mkdir dir="${dir.output}/logs" />
     </target>
@@ -94,54 +80,4 @@
         </pharpackage>
         <exec command="php -d guzzle_phar=${dir.output}/guzzle-min.phar `which phpunit`" passthru="true" />
     </target>
-
-    <target name="build-pear">
-
-        <exec command="git describe --abbrev=0 --tags | tail -c6" outputProperty="version" />
-        <delete file="${project.basedir}/src/package2.xml" />
-        <delete file="${dir.output}/guzzle-${version}.tgz" />
-
-        <delete dir="${dir.output}/pear" />
-        <mkdir dir="${dir.output}/pear" />
-        <copy todir="${dir.output}/pear">
-            <fileset refid="sources"/>
-        </copy>
-
-        <pearpkg2 name="Guzzle" dir="${dir.output}/pear">
-            <option name="outputdirectory" value="${dir.output}/pear"/>
-            <option name="packagefile" value="package.xml"/>
-            <option name="packagedirectory" value="${dir.output}/pear"/>
-            <option name="baseinstalldir" value="/"/>
-            <option name="channel" value="guzzlephp.org/pear"/>
-            <option name="summary" value="Guzzle is a PHP 5.3+ HTTP client and framework for building RESTful web service clients"/>
-            <option name="description" value="PHP HTTP client"/>
-            <option name="apiversion" value="${version}"/>
-            <option name="apistability" value="stable"/>
-            <option name="releaseversion" value="${version}"/>
-            <option name="releasestability" value="stable"/>
-            <option name="license" value="MIT"/>
-            <option name="phpdep" value="5.3.2"/>
-            <option name="pearinstallerdep" value="1.4.6"/>
-            <option name="packagetype" value="php"/>
-            <option name="notes" value="-"/>
-            <mapping name="maintainers">
-                <element>
-                    <element key="handle" value="mtdowling"/>
-                    <element key="name" value="Michael Dowling"/>
-                    <element key="email" value="mtdowling@gmail.com"/>
-                    <element key="role" value="lead"/>
-                </element>
-            </mapping>
-            <option name="date" value="${date}" />
-            <fileset dir="${project.basedir}/src">
-                <include name="**/*.php" />
-            </fileset>
-        </pearpkg2>
-
-        <exec dir="${dir.output}/pear" command="pear package" />
-        <delete dir="${dir.output}/pear/Guzzle" />
-        <delete file="${dir.output}/pear/package.xml" />
-
-    </target>
-
 </project>
