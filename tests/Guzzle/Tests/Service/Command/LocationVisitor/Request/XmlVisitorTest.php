@@ -125,6 +125,77 @@ class XmlVisitorTest extends AbstractVisitorTestCase
                 array('Foo' => 'test'),
                 '<Request><Foo xmlns="foo">test</Foo></Request>'
             ),
+            // Flat array at top level
+            array(
+                array(
+                    'parameters' => array(
+                        'Bars' => array(
+                            'type'     => 'array',
+                            'data'     => array('flatArray' => true),
+                            'location' => 'xml',
+                            'items' => array(
+                                'type'       => 'object',
+                                'sentAs'     => 'Bar',
+                                'properties' => array(
+                                    'A' => array(),
+                                    'B' => array()
+                                )
+                            )
+                        ),
+                        'Boos' => array(
+                            'type'     => 'array',
+                            'data'     => array('flatArray' => true),
+                            'location' => 'xml',
+                            'items'  => array(
+                                'sentAs' => 'Boo',
+                                'type' => 'string'
+                            )
+                        )
+                    )
+                ),
+                array(
+                    'Bars' => array(
+                        array('A' => '1', 'B' => '2'),
+                        array('A' => '3', 'B' => '4')
+                    ),
+                    'Boos' => array('test', '123')
+                ),
+                '<Request><Bar><A>1</A><B>2</B></Bar><Bar><A>3</A><B>4</B></Bar><Boo>test</Boo><Boo>123</Boo></Request>'
+            ),
+            // Nested flat arrays
+            array(
+                array(
+                    'parameters' => array(
+                        'Delete' => array(
+                            'type'     => 'object',
+                            'location' => 'xml',
+                            'properties' => array(
+                                'Items' => array(
+                                    'type' => 'array',
+                                    'data' => array('flatArray' => true),
+                                    'items' => array(
+                                        'type'       => 'object',
+                                        'sentAs'     => 'Item',
+                                        'properties' => array(
+                                            'A' => array(),
+                                            'B' => array()
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                ),
+                array(
+                    'Delete' => array(
+                        'Items' => array(
+                            array('A' => '1', 'B' => '2'),
+                            array('A' => '3', 'B' => '4')
+                        )
+                    )
+                ),
+                '<Request><Delete><Item><A>1</A><B>2</B></Item><Item><A>3</A><B>4</B></Item></Delete></Request>'
+            )
         );
     }
 
@@ -179,7 +250,7 @@ class XmlVisitorTest extends AbstractVisitorTestCase
     }
 
     /**
-     * @expectedException Guzzle\Common\Exception\RuntimeException
+     * @expectedException \Guzzle\Common\Exception\RuntimeException
      */
     public function testEnsuresParameterHasParent()
     {

@@ -66,7 +66,7 @@ class XmlVisitor extends AbstractRequestVisitor
         }
 
         $node = $xml;
-        if ($param->getType() == 'object' || $param->getType() == 'array') {
+        if (!$param->getData('flatArray') && ($param->getType() == 'object' || $param->getType() == 'array')) {
             $node = $xml->addChild($param->getWireName());
         }
 
@@ -119,7 +119,8 @@ class XmlVisitor extends AbstractRequestVisitor
             foreach ($value as $name => $v) {
                 if ($property = $param->getProperty($name)) {
                     if ($property->getType() == 'object' || $property->getType() == 'array') {
-                        $child = $xml->addChild($property->getWireName());
+                        // Account for flat arrays, meaning the contents of the array are not wrapped in a container
+                        $child = $property->getData('flatArray') ? $xml : $xml->addChild($property->getWireName());
                         $this->addXml($child, $property, $v);
                     } else {
                         if ($property->getData('attribute')) {
