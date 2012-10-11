@@ -11,7 +11,7 @@
     <taskdef name="composerlint" classname="phing.tasks.ComposerLintTask" />
     <taskdef name="testserver" classname="phing.tasks.NodeServerTask" />
     <taskdef name="guzzlesubsplit" classname="phing.tasks.GuzzleSubSplitTask" />
-    <taskdef name="guzzlepear" classname="phing.tasks.GuzzlePEARPackageTask" />
+    <taskdef name="guzzlepear" classname="phing.tasks.GuzzlePearPharPackageTask" />
     
     <!-- 
     Handle locating composer (global) or composer.phar, and 

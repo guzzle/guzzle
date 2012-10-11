@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<<<<<<< HEAD
 <project name="guzzle" default="package">
+=======
+<project name="guzzle" default="test">
+>>>>>>> refactored build including git subsplit management and PEAR package generation
     <!-- set local values, like git location -->
     <property file="phing/build.properties" override="true" />
     
@@ -45,39 +49,4 @@
         <exec passthru="true" command="open ${dir.output}/coverage/index.html" />
     </target>
 
-    <target name="package" depends="test-init" description="Create a phar with an autoloader">
-        <pharpackage
-            destfile="${dir.output}/guzzle.phar"
-            basedir="."
-            stub="phar-stub.php"
-            signature="md5">
-            <fileset dir=".">
-                <include name="src/**/*.php" />
-                <include name="vendor/symfony/class-loader/Symfony/Component/ClassLoader/UniversalClassLoader.php" />
-                <include name="vendor/symfony/event-dispatcher/**/*.php" />
-                <include name="vendor/doctrine/common/lib/Doctrine/Common/Cache/*.php" />
-                <include name="vendor/monolog/monolog/src/**/*.php" />
-            </fileset>
-            <metadata>
-                <element name="author" value="Michael Dowling" />
-            </metadata>
-        </pharpackage>
-        <exec command="php -d guzzle_phar=${dir.output}/guzzle.phar `which phpunit`" passthru="true" />
-    </target>
-
-    <target name="package-min" depends="test-init" description="Create a minimal phar">
-        <pharpackage
-                destfile="${dir.output}/guzzle-min.phar"
-                basedir="."
-                stub="phar-stub-min.php"
-                signature="md5">
-            <fileset dir=".">
-                <include name="src/**/*.php" />
-            </fileset>
-            <metadata>
-                <element name="author" value="Michael Dowling" />
-            </metadata>
-        </pharpackage>
-        <exec command="php -d guzzle_phar=${dir.output}/guzzle-min.phar `which phpunit`" passthru="true" />
-    </target>
 </project>
