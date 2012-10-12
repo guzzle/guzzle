@@ -188,6 +188,11 @@ class Parameter
      */
     public function filter($value)
     {
+        // Convert Boolean values
+        if ($this->type == 'boolean' && !is_bool($value)) {
+            $value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+        }
+
         if ($this->filters) {
             foreach ($this->filters as $filter) {
                 if (is_array($filter)) {
@@ -533,7 +538,8 @@ class Parameter
     }
 
     /**
-     * Get all of the extra data properties of the parameter or a specific property by name
+     * Retrieve a known property from the parameter by name or a data property by name. When not specific name value
+     * is specified, all data properties will be returned.
      *
      * @param string|null $name Specify a particular property name to retrieve
      *
@@ -541,7 +547,17 @@ class Parameter
      */
     public function getData($name = null)
     {
-        return $name ? (isset($this->data[$name]) ? $this->data[$name] : null) : $this->data;
+        if (!$name) {
+            return $this->data;
+        }
+
+        if (isset($this->data[$name])) {
+            return $this->data[$name];
+        } elseif (isset($this->{$name})) {
+            return $this->{$name};
+        }
+
+        return null;
     }
 
     /**
