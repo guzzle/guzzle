@@ -204,4 +204,49 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             )
         ), $value);
     }
+
+    public function testAddsEmptyArraysWhenValueIsMissing()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'name'     => 'Foo',
+            'type'     => 'array',
+            'location' => 'xml',
+            'items' => array(
+                'type' => 'object',
+                'properties' => array(
+                    'Baz' => array('type' => 'array'),
+                    'Bar' => array(
+                        'type'   => 'object',
+                        'properties' => array(
+                            'Baz' => array('type' => 'array'),
+                         )
+                    )
+                )
+            )
+        ));
+
+        $value = array();
+        $visitor->visit($this->command, $this->response, $param, $value);
+        $this->assertEquals(array(
+            'Foo' => array()
+        ), $value);
+
+        $value = array(
+            'Foo' => array(
+                'Bar' => array()
+            )
+        );
+        $visitor->visit($this->command, $this->response, $param, $value);
+        $this->assertEquals(array(
+            'Foo' => array(
+                array(
+                    'Baz' => array(),
+                    'Bar' => array(
+                        'Baz' => array()
+                    )
+                )
+            )
+        ), $value);
+    }
 }

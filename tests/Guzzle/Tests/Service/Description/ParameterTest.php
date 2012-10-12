@@ -80,6 +80,13 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('FOO', $p->filter('foo'));
     }
 
+    public function testConvertsBooleans()
+    {
+        $p = new Parameter(array('type' => 'boolean'));
+        $this->assertEquals(true, $p->filter('true'));
+        $this->assertEquals(false, $p->filter('false'));
+    }
+
     public function testUsesArrayByDefaultForFilters()
     {
         $d = $this->data;
@@ -259,6 +266,14 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('bar', $p->getData('foo'));
         $p->setData('baz', 'boo');
         $this->assertEquals(array('foo' => 'bar', 'baz' => 'boo'), $p->getData());
+    }
+
+    public function testCanRetrieveKnownPropertiesUsingDataMethod()
+    {
+        $p = new Parameter();
+        $this->assertEquals(null, $p->getData('foo'));
+        $p->setName('test');
+        $this->assertEquals('test', $p->getData('name'));
     }
 
     public function testHasInstanceOf()

@@ -54,9 +54,9 @@ class XmlVisitor extends AbstractRequestVisitor
             $xml = $this->data[$command];
         } elseif ($parent = $param->getParent()) {
             // If no root element was specified, then just wrap the XML in 'Request'
-            $root = $parent->getData('root') ?: 'Request';
+            $root = $parent->getData('xmlRoot') ?: 'Request';
             // Create the wrapping element
-            if ($ns = $parent->getData('ns')) {
+            if ($ns = $parent->getData('xmlNamespace')) {
                 $xml = new \SimpleXMLElement("<{$root} xmlns=\"{$ns}\"/>");
             } else {
                 $xml = new \SimpleXMLElement("<{$root}/>");
@@ -66,7 +66,7 @@ class XmlVisitor extends AbstractRequestVisitor
         }
 
         $node = $xml;
-        if (!$param->getData('flatArray') && ($param->getType() == 'object' || $param->getType() == 'array')) {
+        if (!$param->getData('xmlFlattened') && ($param->getType() == 'object' || $param->getType() == 'array')) {
             $node = $xml->addChild($param->getWireName());
         }
 
@@ -101,7 +101,7 @@ class XmlVisitor extends AbstractRequestVisitor
         // Determine the name of the element
         $node = $param->getWireName();
         // Check if this property has a particular namespace
-        $namespace = $param->getData('namespace') ?: null;
+        $namespace = $param->getData('xmlNamespace') ?: null;
 
         if ($param->getType() == 'array') {
             if ($items = $param->getItems()) {
@@ -120,10 +120,10 @@ class XmlVisitor extends AbstractRequestVisitor
                 if ($property = $param->getProperty($name)) {
                     if ($property->getType() == 'object' || $property->getType() == 'array') {
                         // Account for flat arrays, meaning the contents of the array are not wrapped in a container
-                        $child = $property->getData('flatArray') ? $xml : $xml->addChild($property->getWireName());
+                        $child = $property->getData('xmlFlattened') ? $xml : $xml->addChild($property->getWireName());
                         $this->addXml($child, $property, $v);
                     } else {
-                        if ($property->getData('attribute')) {
+                        if ($property->getData('xmlAttribute')) {
                             $xml->addAttribute($property->getWireName(), $v, $namespace);
                         } else {
                             $xml->addChild($property->getWireName(), $v, $namespace);
@@ -131,7 +131,7 @@ class XmlVisitor extends AbstractRequestVisitor
                     }
                 }
             }
-        } elseif ($param->getData('attribute')) {
+        } elseif ($param->getData('xmlAttribute')) {
             $xml->addAttribute($node, $value, $namespace);
         } else {
             $xml->addChild($node, $value, $namespace);
