@@ -33,6 +33,7 @@ class Parameter
     protected $items;
     protected $parent;
     protected $ref;
+    protected $format;
 
     /**
      * Create a new Parameter using an associative array of data. The array can contain the following information:
@@ -78,6 +79,9 @@ class Parameter
      * - minimum:       (int) Minimum value of an integer
      * - maximum:       (int) Maximum value of an integer
      * - data:          (array) Any additional custom data to use when serializing, validating, etc
+     * - format:        (string) Format used to coax a value into the correct format when serializing or unserializing.
+     *                  You may specify either an array of filters OR a format, but not both.
+     *                  Supported values: date-time, date, time, timestamp, date-time-http, url-encoded, raw-url-encoded
      * - $ref:          (string) String referencing a service description model. The parameter is replaced by the
      *                  schema contained in the model.
      *
@@ -131,8 +135,9 @@ class Parameter
     public function toArray()
     {
         $result = array();
-        $checks = array('required', 'description', 'static', 'type', 'instanceOf', 'location', 'sentAs', 'pattern',
-            'minimum', 'maximum', 'minItems', 'maxItems', 'minLength', 'maxLength', 'data', 'enum', 'filters');
+        $checks = array('required', 'description', 'static', 'type', 'format', 'instanceOf', 'location', 'sentAs',
+            'pattern', 'minimum', 'maximum', 'minItems', 'maxItems', 'minLength', 'maxLength', 'data', 'enum',
+            'filters');
 
         // Anything that is in the `Items` attribute of an array *must* include it's name if available
         if ($this->parent instanceof self && $this->parent->getType() == 'array' && isset($this->name)) {
@@ -180,7 +185,7 @@ class Parameter
     }
 
     /**
-     * Run a value through the filters associated with the parameter
+     * Run a value through the filters OR format attribute associated with the parameter
      *
      * @param mixed $value Value to filter
      *
@@ -209,6 +214,8 @@ class Parameter
                     $value = call_user_func($filter, $value);
                 }
             }
+        } elseif ($this->format) {
+            $value = SchemaFormatter::format($this->format, $value);
         }
 
         return $value;
@@ -849,6 +856,30 @@ class Parameter
     public function setPattern($pattern)
     {
         $this->pattern = $pattern;
+
+        return $this;
+    }
+
+    /**
+     * Get the format attribute of the schema
+     *
+     * @return string
+     */
+    public function getFormat()
+    {
+        return $this->format;
+    }
+
+    /**
+     * Set the format attribute of the schema
+     *
+     * @param string $format Format to set (e.g. date, date-time, timestamp, time, date-time-http)
+     *
+     * @return self
+     */
+    public function setFormat($format)
+    {
+        $this->format = $format;
 
         return $this;
     }

@@ -360,4 +360,27 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
             )
         ), $result);
     }
+
+    public function dateTimeProvider()
+    {
+        $d = 'October 13, 2012 16:15:46 UTC';
+
+        return array(
+            array($d, 'date-time', '2012-10-13T16:15:46Z'),
+            array($d, 'date', '2012-10-13'),
+            array($d, 'timestamp', strtotime($d)),
+            array(new \DateTime($d), 'timestamp', strtotime($d))
+        );
+    }
+
+    /**
+     * @dataProvider dateTimeProvider
+     */
+    public function testAppliesFormat($d, $format, $result)
+    {
+        $p = new Parameter();
+        $p->setFormat($format);
+        $this->assertEquals($format, $p->getFormat());
+        $this->assertEquals($result, $p->filter($d));
+    }
 }
