@@ -28,7 +28,7 @@ class Utils
             $date = strtotime($date);
         }
 
-        return gmdate('D, d M Y H:i:s', $date) . ' GMT';
+        return gmdate('D, d M Y H:i:s \G\M\T', $date);
     }
 
     /**
