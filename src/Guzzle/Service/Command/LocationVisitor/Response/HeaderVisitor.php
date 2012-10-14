@@ -17,12 +17,15 @@ class HeaderVisitor extends AbstractResponseVisitor
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value)
     {
         if ($param->getType() == 'object' && $param->getAdditionalProperties() instanceof Parameter) {
+            // Grab prefixed headers that should be placed into an array with the prefix stripped
             if ($prefix = $param->getSentAs()) {
+                $container = $param->getName();
                 $len = strlen($prefix);
+                // Find all matching headers and place them into the containing element
                 foreach ($response->getHeaders() as $key => $header) {
                     if (stripos($key, $prefix) === 0) {
                         // Account for multi-value headers
-                        $value[substr($key, $len)] = count($header) == 1 ? end($header) : $header;
+                        $value[$container][substr($key, $len)] = count($header) == 1 ? end($header) : $header;
                     }
                 }
             }
