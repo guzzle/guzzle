@@ -5,6 +5,7 @@ namespace Guzzle\Service\Command\LocationVisitor\Request;
 use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\Command\CommandInterface;
+use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Description\Parameter;
 
 /**
@@ -50,24 +51,10 @@ class XmlVisitor extends AbstractRequestVisitor
      */
     public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
-        static $defaultRoot = array('name' => 'Request');
-
         if (isset($this->data[$command])) {
             $xml = $this->data[$command];
         } elseif ($parent = $param->getParent()) {
-            // If no root element was specified, then just wrap the XML in 'Request'
-            $root = $parent->getData('xmlRoot') ?: $defaultRoot;
-            if (empty($root['namespaces'])) {
-                // Create the wrapping element with no namespaces
-                $xml = new \SimpleXMLElement("<{$root['name']}/>");
-            } else {
-                // Create the wrapping element with an array of one or more namespaces
-                $xml = "<{$root['name']} ";
-                foreach ((array) $root['namespaces'] as $prefix => $uri) {
-                    $xml .= is_numeric($prefix) ? "xmlns=\"{$uri}\" " : "xmlns:{$prefix}=\"{$uri}\" ";
-                }
-                $xml = new \SimpleXMLElement($xml . "/>");
-            }
+            $xml = $this->createRootElement($parent);
         } else {
             throw new RuntimeException('Parameter does not have a parent');
         }
@@ -97,6 +84,33 @@ class XmlVisitor extends AbstractRequestVisitor
     }
 
     /**
+     * Create the root XML element to use with a request
+     *
+     * @param Operation $operation Operation object
+     *
+     * @return \SimpleXMLElement
+     */
+    protected function createRootElement(Operation $operation)
+    {
+        static $defaultRoot = array('name' => 'Request');
+        // If no root element was specified, then just wrap the XML in 'Request'
+        $root = $operation->getData('xmlRoot') ?: $defaultRoot;
+
+        // Create the wrapping element with no namespaces if no namespaces were present
+        if (empty($root['namespaces'])) {
+            return new \SimpleXMLElement("<{$root['name']}/>");
+        }
+
+        // Create the wrapping element with an array of one or more namespaces
+        $xml = "<{$root['name']} ";
+        foreach ((array) $root['namespaces'] as $prefix => $uri) {
+            $xml .= is_numeric($prefix) ? "xmlns=\"{$uri}\" " : "xmlns:{$prefix}=\"{$uri}\" ";
+        }
+
+        return new \SimpleXMLElement($xml . "/>");
+    }
+
+    /**
      * Recursively build the XML body
      *
      * @param \SimpleXMLElement $xml   XML to modify
@@ -109,11 +123,35 @@ class XmlVisitor extends AbstractRequestVisitor
         $node = $param->getWireName();
         // Check if this property has a particular namespace
         $namespace = $param->getData('xmlNamespace');
+        // Filter the value
+        $value = $param->filter($value);
 
         if ($param->getType() == 'array') {
-            if ($items = $param->getItems()) {
-                $name = $items->getWireName();
-                foreach ($value as $v) {
+            $this->addXmlArray($xml, $param, $value, $namespace);
+        } elseif ($param->getType() == 'object') {
+            $this->addXmlObject($xml, $param, $value);
+        } elseif ($param->getData('xmlAttribute')) {
+            $xml->addAttribute($node, $value, $namespace);
+        } else {
+            $xml->addChild($node, $value, $namespace);
+        }
+    }
+
+    /**
+     * Add an array to the XML
+     *
+     * @param \SimpleXMLElement $xml       XML to modify
+     * @param Parameter         $param     API Parameter
+     * @param mixed             $value     Value to add
+     * @param string            $namespace Namespace to set on each node
+     */
+    protected function addXmlArray(\SimpleXMLElement $xml, Parameter $param, &$value, $namespace = null)
+    {
+        if ($items = $param->getItems()) {
+            $name = $items->getWireName();
+            foreach ($value as $v) {
+                // Don't add null values
+                if ($v !== null) {
                     if ($items->getType() == 'object' || $items->getType() == 'array') {
                         $child = $xml->addChild($name, null, $namespace);
                         $this->addXml($child, $items, $v);
@@ -122,8 +160,22 @@ class XmlVisitor extends AbstractRequestVisitor
                     }
                 }
             }
-        } elseif ($param->getType() == 'object') {
-            foreach ($value as $name => $v) {
+        }
+    }
+
+    /**
+     * Add an object to the XML
+     *
+     * @param \SimpleXMLElement $xml   XML to modify
+     * @param Parameter         $param API Parameter
+     * @param mixed             $value Value to add
+     */
+    protected function addXmlObject(\SimpleXMLElement $xml, Parameter $param, &$value)
+    {
+        foreach ($value as $name => $v) {
+            // Don't add null values
+            if ($v !== null) {
+                // Continue recursing if a matching property is found
                 if ($property = $param->getProperty($name)) {
                     if ($property->getType() == 'object' || $property->getType() == 'array') {
                         // Account for flat arrays, meaning the contents of the array are not wrapped in a container
@@ -138,10 +190,6 @@ class XmlVisitor extends AbstractRequestVisitor
                     }
                 }
             }
-        } elseif ($param->getData('xmlAttribute')) {
-            $xml->addAttribute($node, $value, $namespace);
-        } else {
-            $xml->addChild($node, $value, $namespace);
         }
     }
 }

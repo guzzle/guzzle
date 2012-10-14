@@ -249,4 +249,18 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             )
         ), $value);
     }
+
+    public function testAddsBooleanWhenValueIsMissing()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'name'     => 'Foo',
+            'type'     => 'boolean',
+            'location' => 'xml'
+        ));
+
+        $value = null;
+        $visitor->visit($this->command, $this->response, $param, $value);
+        $this->assertSame(array('Foo' => false), $value);
+    }
 }

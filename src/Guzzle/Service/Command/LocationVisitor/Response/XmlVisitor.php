@@ -27,6 +27,9 @@ class XmlVisitor extends AbstractResponseVisitor
         } elseif ($param->getType() == 'array') {
             // Use a default array when the value is missing
             $value[$name] = array();
+        } elseif ($param->getType() == 'boolean') {
+            // Use a default value of false when the value is missing
+            $value[$name] = false;
         }
     }
 

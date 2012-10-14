@@ -405,7 +405,91 @@ class XmlVisitorTest extends AbstractVisitorTestCase
         $this->assertEquals('application/xml', (string) $request->getHeader('Content-Type'));
         $this->assertEquals(
             '<?xml version="1.0"?>' . "\n"
-                . '<Hi xmlns:xsi="http://foo.com" xmlns:foo="http://foobar.com"><Foo>test</Foo></Hi>' . "\n",
+            . '<Hi xmlns:xsi="http://foo.com" xmlns:foo="http://foobar.com"><Foo>test</Foo></Hi>' . "\n",
+            (string) $request->getBody()
+        );
+    }
+
+    public function testValuesAreFiltered()
+    {
+        $operation = new Operation(array(
+            'parameters' => array(
+                'Foo' => array(
+                    'location' => 'xml',
+                    'type'     => 'string',
+                    'filters'  => array('strtoupper')
+                ),
+                'Bar' => array(
+                    'location' => 'xml',
+                    'type'     => 'object',
+                    'properties' => array(
+                        'Baz' => array(
+                            'filters'  => array('strtoupper')
+                        )
+                    )
+                )
+            )
+        ));
+
+        $command = $this->getMockBuilder('Guzzle\Service\Command\OperationCommand')
+            ->setConstructorArgs(array(array(
+                'Foo' => 'test',
+                'Bar' => array(
+                    'Baz' => 'abc'
+                )
+            ), $operation))
+            ->getMockForAbstractClass();
+
+        $command->setClient(new Client());
+        $request = $command->prepare();
+        $this->assertEquals(
+            '<?xml version="1.0"?>' . "\n"
+            . '<Request><Foo>TEST</Foo><Bar><Baz>ABC</Baz></Bar></Request>' . "\n",
+            (string) $request->getBody()
+        );
+    }
+
+    public function testSkipsNullValues()
+    {
+        $operation = new Operation(array(
+            'parameters' => array(
+                'Foo' => array(
+                    'location' => 'xml',
+                    'type'     => 'string'
+                ),
+                'Bar' => array(
+                    'location' => 'xml',
+                    'type'     => 'object',
+                    'properties' => array(
+                        'Baz' => array(),
+                        'Bam' => array(),
+                    )
+                ),
+                'Arr' => array(
+                    'type'  => 'array',
+                    'items' => array(
+                        'type' => 'string'
+                    )
+                )
+            )
+        ));
+
+        $command = $this->getMockBuilder('Guzzle\Service\Command\OperationCommand')
+            ->setConstructorArgs(array(array(
+                'Foo' => null,
+                'Bar' => array(
+                    'Bar' => null,
+                    'Bam' => 'test'
+                ),
+                'Arr' => array(null)
+            ), $operation))
+            ->getMockForAbstractClass();
+
+        $command->setClient(new Client());
+        $request = $command->prepare();
+        $this->assertEquals(
+            '<?xml version="1.0"?>' . "\n"
+            . '<Request><Bar><Bam>test</Bam></Bar></Request>' . "\n",
             (string) $request->getBody()
         );
     }

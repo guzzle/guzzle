@@ -42,8 +42,10 @@ class HeaderVisitorTest extends AbstractResponseVisitorTest
         ), 'Foo');
         $visitor->visit($this->command, $response, $param, $this->value);
         $this->assertEquals(array(
-            'Test' => 'ABC',
-            'Bar'  => array('123', '456')
+            'Metadata' => array(
+                'Test' => 'ABC',
+                'Bar'  => array('123', '456')
+            )
         ), $this->value);
     }
 }

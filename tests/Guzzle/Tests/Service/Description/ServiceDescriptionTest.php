@@ -78,7 +78,6 @@ class ServiceDescriptionTest extends \Guzzle\Tests\GuzzleTestCase
                     'parameters' => array(
                         'data'   => array(
                             'required' => true,
-                            'type'     => 'array',
                             'filters'  => 'json_encode',
                             'location' => 'body'
                         )
@@ -88,10 +87,14 @@ class ServiceDescriptionTest extends \Guzzle\Tests\GuzzleTestCase
         ));
         $client = new Client();
         $client->setDescription($description);
-        $command = $client->getCommand('test', array('data' => array('foo' => 'bar')));
+        $command = $client->getCommand('test', array(
+            'data' => array(
+                'foo' => 'bar'
+            )
+        ));
 
         $request = $command->prepare();
-        $this->assertEquals(json_encode(array('foo' => 'bar')), (string) $request->getBody());
+        $this->assertEquals('{"foo":"bar"}', (string) $request->getBody());
     }
 
     public function testContainsModels()
