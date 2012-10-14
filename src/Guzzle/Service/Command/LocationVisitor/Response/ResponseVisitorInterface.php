@@ -25,6 +25,7 @@ interface ResponseVisitorInterface
      * @param Response         $response Response being visited
      * @param Parameter        $param    Parameter being visited
      * @param mixed            $value    Result associative array value being updated by reference
+     * @param mixed            $context  Parsing context
      */
-    public function visit(CommandInterface $command, Response $response, Parameter $param, &$value);
+    public function visit(CommandInterface $command, Response $response, Parameter $param, &$value, $context =  null);
 }

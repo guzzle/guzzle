@@ -19,7 +19,7 @@ class JsonVisitor extends AbstractResponseVisitor
     /**
      * {@inheritdoc}
      */
-    public function visit(CommandInterface $command, Response $response, Parameter $param, &$value)
+    public function visit(CommandInterface $command, Response $response, Parameter $param, &$value, $context =  null)
     {
         $name = $param->getName();
         $key = $param->getWireName();

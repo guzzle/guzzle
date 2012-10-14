@@ -2,6 +2,8 @@
 
 namespace Guzzle\Service\Command;
 
+use Guzzle\Http\EntityBodyInterface;
+use Guzzle\Http\Message\Response;
 use Guzzle\Service\Exception\JsonException;
 
 /**
@@ -34,32 +36,50 @@ class DefaultResponseParser implements ResponseParserInterface
      */
     public function parse(CommandInterface $command)
     {
-        // Uses the response object by default
-        $result = $command->getRequest()->getResponse();
+        $response = $command->getRequest()->getResponse();
 
         // Account for hard coded content-type values specified in service descriptions
         if ($contentType = $command->get('command.expects')) {
-            $result->setHeader('Content-Type', $contentType);
+            $response->setHeader('Content-Type', $contentType);
+        } else {
+            $contentType = (string) $response->getHeader('Content-Type');
         }
 
-        if ($contentType = $result->getContentType()) {
-            // Is the body an JSON document?  If so, set the result to be an array
+        return $this->parseForContentType($command, $response, $contentType);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function parseForContentType(AbstractCommand $command, Response $response, $contentType)
+    {
+        $result = $response;
+
+        if ($body = $result->getBody()) {
             if (stripos($contentType, 'json') !== false) {
-                if ($body = trim($result->getBody(true))) {
-                    $decoded = json_decode($body, true);
-                    if (JSON_ERROR_NONE !== json_last_error()) {
-                        throw new JsonException('The response body can not be decoded to JSON', json_last_error());
-                    }
-                    $result = $decoded;
-                }
+                $result = $this->parseJson($body);
             } if (stripos($contentType, 'xml') !== false) {
-                // Is the body an XML document?  If so, set the result to be a SimpleXMLElement
-                if ($body = trim($result->getBody(true))) {
-                    $result = new \SimpleXMLElement($body);
-                }
+                $result = new \SimpleXMLElement($body);
             }
         }
 
         return $result;
+    }
+
+    /**
+     * Parse a JSON response into an array
+     *
+     * @param EntityBodyInterface $body Body to parse
+     *
+     * @return array
+     */
+    protected function parseJson(EntityBodyInterface $body)
+    {
+        $decoded = json_decode((string) $body, true);
+        if (JSON_ERROR_NONE !== json_last_error()) {
+            throw new JsonException('The response body can not be decoded to JSON', json_last_error());
+        }
+
+        return $decoded;
     }
 }

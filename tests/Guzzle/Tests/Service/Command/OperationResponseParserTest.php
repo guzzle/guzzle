@@ -71,6 +71,18 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('Created', $result['phrase']);
     }
 
+    public function testVisitsLocationsForJsonResponse()
+    {
+        $parser = new OperationResponseParser();
+        $op = new OperationCommand(array(), $this->getDescription()->getOperation('test'));
+        $op->setResponseParser($parser)->setClient(new Client());
+        $op->prepare()->setResponse(new Response(200, array(
+            'Content-Type' => 'application/json'
+        ), '{"baz":"bar"}'), true);
+        $result = $op->execute();
+        $this->assertEquals(array('baz' => 'bar'), $result->toArray());
+    }
+
     public function testSkipsUnkownModels()
     {
         $parser = new OperationResponseParser();
@@ -88,6 +100,7 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
             'operations' => array('test' => array('responseClass' => 'Foo')),
             'models' => array(
                 'Foo' => array(
+                    'name'       => 'Foo',
                     'type'       => 'object',
                     'properties' => array(
                         'baz'    => array('type' => 'string'),
