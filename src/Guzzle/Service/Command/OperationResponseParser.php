@@ -101,7 +101,7 @@ class OperationResponseParser extends DefaultResponseParser
         }
 
         $response = $command->getResponse();
-        // Perform transformations on the result using locataion visitors
+        // Perform transformations on the result using location visitors
         $this->visitResult($model, $command, $response, $result);
 
         return new Model($result, $model);
