@@ -193,11 +193,17 @@ class Parameter
      */
     public function filter($value)
     {
+        // Formats are applied exclusively and supersed filters
+        if ($this->format) {
+            return SchemaFormatter::format($this->format, $value);
+        }
+
         // Convert Boolean values
         if ($this->type == 'boolean' && !is_bool($value)) {
             $value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
         }
 
+        // Apply filters to the value
         if ($this->filters) {
             foreach ($this->filters as $filter) {
                 if (is_array($filter)) {
@@ -214,8 +220,6 @@ class Parameter
                     $value = call_user_func($filter, $value);
                 }
             }
-        } elseif ($this->format) {
-            $value = SchemaFormatter::format($this->format, $value);
         }
 
         return $value;

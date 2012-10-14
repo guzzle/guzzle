@@ -35,6 +35,8 @@ class SchemaFormatter
                 return self::formatTime($value);
             case 'timestamp':
                 return self::formatTimestamp($value);
+            case 'boolean-string':
+                return self::formatBooleanAsString($value);
             case 'raw-url-encoded':
                 return rawurlencode($value);
             case 'url-encoded':
@@ -93,6 +95,18 @@ class SchemaFormatter
     }
 
     /**
+     * Formats a boolean value as a string
+     *
+     * @param string|integer|bool $value Value to convert to a boolean 'true' / 'false' value
+     *
+     * @return string
+     */
+    public static function formatBooleanAsString($value)
+    {
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
+    }
+
+    /**
      * Return a UNIX timestamp in the UTC timezone
      *
      * @param string|integer|\DateTime $value Time value
@@ -111,9 +125,11 @@ class SchemaFormatter
      */
     protected static function getUtcTimeZone()
     {
+        // @codeCoverageIgnoreStart
         if (!self::$utcTimeZone) {
             self::$utcTimeZone = new \DateTimeZone('UTC');
         }
+        // @codeCoverageIgnoreEnd
 
         return self::$utcTimeZone;
     }
