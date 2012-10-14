@@ -21,5 +21,5 @@ abstract class AbstractResponseVisitor implements ResponseVisitorInterface
      * {@inheritdoc}
      * @codeCoverageIgnore
      */
-    public function visit(CommandInterface $command, Response $response, Parameter $param, &$value) {}
+    public function visit(CommandInterface $command, Response $response, Parameter $param, &$value, $context =  null) {}
 }

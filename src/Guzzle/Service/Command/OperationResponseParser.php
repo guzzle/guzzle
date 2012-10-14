@@ -76,35 +76,36 @@ class OperationResponseParser extends DefaultResponseParser
     /**
      * {@inheritdoc}
      */
-    public function parse(CommandInterface $command)
+    public function parseForContentType(AbstractCommand $command, Response $response, $contentType)
     {
-        // Perform processing on the parent which converts JSON to an array and XML to a SimpleXMLElement
-        $result = parent::parse($command);
         $operation = $command->getOperation();
-        $processing = $command->get(AbstractCommand::RESPONSE_PROCESSING);
 
-        // No further processing is needed if the responseType is not model or using native responses
-        if ($processing == AbstractCommand::TYPE_NATIVE || $operation->getResponseType() != 'model') {
-            return $result;
+        $model = $operation->getResponseType() == 'model'
+            && $command->get(AbstractCommand::RESPONSE_PROCESSING) == AbstractCommand::TYPE_MODEL
+            ? $operation->getServiceDescription()->getModel($operation->getResponseClass())
+            : null;
+
+        // No further processing is needed if the responseType is not model or using native responses, or the model
+        // cannot be found
+        if (!$model) {
+            return parent::parseForContentType($command, $response, $contentType);
         }
 
-        // Do not attempt further processing if the model cannot be found
-        if (!$model = $operation->getServiceDescription()->getModel($operation->getResponseClass())) {
-            return $result;
+        $result = null;
+        if ($body = $response->getBody()) {
+            if (stripos($contentType, 'json') !== false) {
+                $result = $this->parseJson($body);
+            } if (stripos($contentType, 'xml') !== false) {
+                $result = json_decode(json_encode(new \SimpleXMLElement((string) $body)), true);
+            }
         }
 
-        // Convert SimpleXMLElement into an array. Now all that parsers need to traverse is an array
-        if ($result instanceof \SimpleXMLElement) {
-            $result = json_decode(json_encode($result), true);
-        } elseif ($result instanceof Response) {
+        if ($result === null) {
             $result = array();
         }
 
-        $response = $command->getResponse();
         // Perform transformations on the result using location visitors
-        $this->visitResult($model, $command, $response, $result);
-
-        return new Model($result, $model);
+        return $this->visitResult($model, $command, $response, $result);
     }
 
     /**
@@ -114,9 +115,17 @@ class OperationResponseParser extends DefaultResponseParser
      * @param CommandInterface $command  Command that performed the operation
      * @param Response         $response Response received
      * @param array            $result   Result array
+     * @param mixed            $context  Parsing context
+     *
+     * @return Model
      */
-    protected function visitResult(Parameter $model, CommandInterface $command, Response $response, &$result)
-    {
+    protected function visitResult(
+        Parameter $model,
+        CommandInterface $command,
+        Response $response,
+        array &$result,
+        $context = null
+    ) {
         foreach ($model->getProperties() as $schema) {
             /** @var $arg Parameter */
             $location = $schema->getLocation();
@@ -130,5 +139,7 @@ class OperationResponseParser extends DefaultResponseParser
         foreach ($this->visitors as $visitor) {
             $visitor->after($command);
         }
+
+        return new Model($result, $model);
     }
 }

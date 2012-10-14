@@ -14,7 +14,7 @@ class HeaderVisitor extends AbstractResponseVisitor
     /**
      * {@inheritdoc}
      */
-    public function visit(CommandInterface $command, Response $response, Parameter $param, &$value)
+    public function visit(CommandInterface $command, Response $response, Parameter $param, &$value, $context =  null)
     {
         if ($param->getType() == 'object' && $param->getAdditionalProperties() instanceof Parameter) {
             // Grab prefixed headers that should be placed into an array with the prefix stripped
