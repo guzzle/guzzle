@@ -3,9 +3,9 @@
 namespace Guzzle\Tests\Service\Command;
 
 use Guzzle\Plugin\Mock\MockPlugin;
+use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Client;
-use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\AbstractCommand;
 use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Description\Parameter;
@@ -429,7 +429,7 @@ class CommandTest extends AbstractCommandTest
     }
 
     /**
-     * @expectedException Guzzle\Service\Exception\ValidationException
+     * @expectedException \Guzzle\Service\Exception\ValidationException
      * @expectedExceptionMessage [Foo] Baz
      */
     public function testValidatesCommandBeforeSending()
@@ -443,5 +443,15 @@ class CommandTest extends AbstractCommandTest
         $v->expects($this->any())->method('getErrors')->will($this->returnValue(array('[Foo] Baz', '[Bar] Boo')));
         $command->setValidator($v);
         $command->prepare();
+    }
+
+    public function testCanChangeResponseBody()
+    {
+        $body = EntityBody::factory();
+        $command = new MockCommand();
+        $command->setClient(new \Guzzle\Service\Client());
+        $command->set(AbstractCommand::RESPONSE_BODY, $body);
+        $request = $command->prepare();
+        $this->assertSame($body, $this->readAttribute($request, 'responseBody'));
     }
 }

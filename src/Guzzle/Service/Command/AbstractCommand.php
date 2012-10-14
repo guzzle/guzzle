@@ -33,6 +33,8 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     const TYPE_RAW = 'raw';
     const TYPE_NATIVE = 'native';
     const TYPE_MODEL = 'model';
+    // Option used to change the entity body used to store a response
+    const RESPONSE_BODY = 'command.response_body';
 
     /**
      * @var ClientInterface Client object used to execute the command
@@ -282,9 +284,14 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             if ($options = $this->get(Client::CURL_OPTIONS)) {
                 $this->request->getCurlOptions()->merge(CurlHandle::parseCurlConfig($options));
             }
+
+            // Set a custom response body
+            if ($responseBody = $this->get(self::RESPONSE_BODY)) {
+                $this->request->setResponseBody($responseBody);
+            }
         }
 
-        return $this->getRequest();
+        return $this->request;
     }
 
     /**
