@@ -18,7 +18,12 @@ class XmlVisitorTest extends AbstractVisitorTestCase
         return array(
             array(
                 array(
-                    'data' => array('xmlNamespace' => 'http://foo.com', 'xmlRoot' => 'test'),
+                    'data' => array(
+                        'xmlRoot' => array(
+                            'name'       => 'test',
+                            'namespaces' => 'http://foo.com'
+                        )
+                    ),
                     'parameters' => array(
                         'Foo' => array('location' => 'xml', 'type' => 'string'),
                         'Baz' => array('location' => 'xml', 'type' => 'string')
@@ -32,7 +37,11 @@ class XmlVisitorTest extends AbstractVisitorTestCase
             // Test with adding attributes and no namespace
             array(
                 array(
-                    'data' => array('xmlRoot' => 'test'),
+                    'data' => array(
+                        'xmlRoot' => array(
+                            'name' => 'test'
+                        )
+                    ),
                     'parameters' => array(
                         'Foo' => array('location' => 'xml', 'type' => 'string', 'data' => array('xmlAttribute' => true))
                     )
@@ -119,11 +128,66 @@ class XmlVisitorTest extends AbstractVisitorTestCase
             array(
                 array(
                     'parameters' => array(
-                        'Foo' => array('location' => 'xml', 'type' => 'string', 'data' => array('xmlNamespace' => 'foo'))
+                        'Foo' => array(
+                            'location' => 'xml',
+                            'type' => 'string',
+                            'data' => array(
+                                'xmlNamespace' => 'http://foo.com'
+                            )
+                        )
                     )
                 ),
                 array('Foo' => 'test'),
-                '<Request><Foo xmlns="foo">test</Foo></Request>'
+                '<Request><Foo xmlns="http://foo.com">test</Foo></Request>'
+            ),
+            // Add attributes with custom namespace prefix
+            array(
+                array(
+                    'parameters' => array(
+                        'Wrap' => array(
+                            'type' => 'object',
+                            'location' => 'xml',
+                            'properties' => array(
+                                'Foo' => array(
+                                    'type' => 'string',
+                                    'sentAs' => 'xsi:baz',
+                                    'data' => array(
+                                        'xmlNamespace' => 'http://foo.com',
+                                        'xmlAttribute' => true
+                                    )
+                                )
+                            )
+                        ),
+                    )
+                ),
+                array('Wrap' => array(
+                    'Foo' => 'test'
+                )),
+                '<Request><Wrap xmlns:xsi="http://foo.com" xsi:baz="test"/></Request>'
+            ),
+            // Add nodes with custom namespace prefix
+            array(
+                array(
+                    'parameters' => array(
+                        'Wrap' => array(
+                            'type' => 'object',
+                            'location' => 'xml',
+                            'properties' => array(
+                                'Foo' => array(
+                                    'type' => 'string',
+                                    'sentAs' => 'xsi:Foo',
+                                    'data' => array(
+                                        'xmlNamespace' => 'http://foobar.com'
+                                    )
+                                )
+                            )
+                        ),
+                    )
+                ),
+                array('Wrap' => array(
+                    'Foo' => 'test'
+                )),
+                '<Request><Wrap><xsi:Foo xmlns:xsi="http://foobar.com">test</xsi:Foo></Wrap></Request>'
             ),
             // Flat array at top level
             array(
@@ -223,8 +287,12 @@ class XmlVisitorTest extends AbstractVisitorTestCase
     {
         $operation = new Operation(array(
             'data' => array(
-                'xmlNamespace' => 'http://foo.com',
-                'xmlRoot'      => 'test'
+                'xmlRoot'      => array(
+                    'name' => 'test',
+                    'namespaces' => array(
+                        'xsi' => 'http://foo.com'
+                    )
+                )
             ),
             'parameters' => array(
                 'Foo' => array('location' => 'xml', 'type' => 'string'),
@@ -244,7 +312,7 @@ class XmlVisitorTest extends AbstractVisitorTestCase
         $this->assertEquals('application/xml', (string) $request->getHeader('Content-Type'));
         $this->assertEquals(
             '<?xml version="1.0"?>' . "\n"
-            . '<test xmlns="http://foo.com"><Foo>test</Foo><Baz>bar</Baz></test>' . "\n",
+            . '<test xmlns:xsi="http://foo.com"><Foo>test</Foo><Baz>bar</Baz></test>' . "\n",
             (string) $request->getBody()
         );
     }
@@ -288,8 +356,12 @@ class XmlVisitorTest extends AbstractVisitorTestCase
 
         $param->setParent(new Operation(array(
             'data' => array(
-                'xmlNamespace' => 'https://foo/',
-                'xmlRoot'      => 'Test'
+                'xmlRoot' => array(
+                    'name' => 'Test',
+                    'namespaces' => array(
+                        'https://foo/'
+                    )
+                )
             )
         )));
 
@@ -301,6 +373,39 @@ class XmlVisitorTest extends AbstractVisitorTestCase
         $this->assertEquals(
             "<?xml version=\"1.0\"?>\n"
             . "<Test xmlns=\"https://foo/\"><Out><Nodes><Node>foo</Node><Node>baz</Node></Nodes></Out></Test>\n",
+            (string) $request->getBody()
+        );
+    }
+
+    public function testCanAddMultipleNamespacesToRoot()
+    {
+        $operation = new Operation(array(
+            'data' => array(
+                'xmlRoot' => array(
+                    'name' => 'Hi',
+                    'namespaces' => array(
+                        'xsi' => 'http://foo.com',
+                        'foo' => 'http://foobar.com'
+                    )
+                )
+            ),
+            'parameters' => array(
+                'Foo' => array('location' => 'xml', 'type' => 'string')
+            )
+        ));
+
+        $command = $this->getMockBuilder('Guzzle\Service\Command\OperationCommand')
+            ->setConstructorArgs(array(array(
+                'Foo' => 'test'
+            ), $operation))
+            ->getMockForAbstractClass();
+
+        $command->setClient(new Client());
+        $request = $command->prepare();
+        $this->assertEquals('application/xml', (string) $request->getHeader('Content-Type'));
+        $this->assertEquals(
+            '<?xml version="1.0"?>' . "\n"
+                . '<Hi xmlns:xsi="http://foo.com" xmlns:foo="http://foobar.com"><Foo>test</Foo></Hi>' . "\n",
             (string) $request->getBody()
         );
     }

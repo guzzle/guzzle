@@ -50,16 +50,23 @@ class XmlVisitor extends AbstractRequestVisitor
      */
     public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
+        static $defaultRoot = array('name' => 'Request');
+
         if (isset($this->data[$command])) {
             $xml = $this->data[$command];
         } elseif ($parent = $param->getParent()) {
             // If no root element was specified, then just wrap the XML in 'Request'
-            $root = $parent->getData('xmlRoot') ?: 'Request';
-            // Create the wrapping element
-            if ($ns = $parent->getData('xmlNamespace')) {
-                $xml = new \SimpleXMLElement("<{$root} xmlns=\"{$ns}\"/>");
+            $root = $parent->getData('xmlRoot') ?: $defaultRoot;
+            if (empty($root['namespaces'])) {
+                // Create the wrapping element with no namespaces
+                $xml = new \SimpleXMLElement("<{$root['name']}/>");
             } else {
-                $xml = new \SimpleXMLElement("<{$root}/>");
+                // Create the wrapping element with an array of one or more namespaces
+                $xml = "<{$root['name']} ";
+                foreach ((array) $root['namespaces'] as $prefix => $uri) {
+                    $xml .= is_numeric($prefix) ? "xmlns=\"{$uri}\" " : "xmlns:{$prefix}=\"{$uri}\" ";
+                }
+                $xml = new \SimpleXMLElement($xml . "/>");
             }
         } else {
             throw new RuntimeException('Parameter does not have a parent');
@@ -101,7 +108,7 @@ class XmlVisitor extends AbstractRequestVisitor
         // Determine the name of the element
         $node = $param->getWireName();
         // Check if this property has a particular namespace
-        $namespace = $param->getData('xmlNamespace') ?: null;
+        $namespace = $param->getData('xmlNamespace');
 
         if ($param->getType() == 'array') {
             if ($items = $param->getItems()) {
@@ -124,9 +131,9 @@ class XmlVisitor extends AbstractRequestVisitor
                         $this->addXml($child, $property, $v);
                     } else {
                         if ($property->getData('xmlAttribute')) {
-                            $xml->addAttribute($property->getWireName(), $v, $namespace);
+                            $xml->addAttribute($property->getWireName(), $v, $property->getData('xmlNamespace'));
                         } else {
-                            $xml->addChild($property->getWireName(), $v, $namespace);
+                            $xml->addChild($property->getWireName(), $v, $property->getData('xmlNamespace'));
                         }
                     }
                 }
