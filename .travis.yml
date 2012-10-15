@@ -14,6 +14,8 @@ before_script:
   - pear install pear.phpunit.de/phploc
   - pear install pear/PHP_CodeSniffer
   - pear install pear.pdepend.org/PHP_Depend
+  - pear install --onlyreqdeps pear/PEAR_PackageFileManager2
+  - pear install --onlyreqdeps pear/PEAR_PackageFileManager2_Plugins
   - phpenv rehash
   - composer install --dev
   - cp phing/build.properties.travis phing/build.properties
