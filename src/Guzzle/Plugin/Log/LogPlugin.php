@@ -54,7 +54,7 @@ class LogPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Get a log plugin that outputs full request, response, and curl error information to stdout
+     * Get a log plugin that outputs full request, response, and curl error information to stderr
      *
      * @param bool $wireBodies Set to false to disable request/response body output when they use are not repeatable
      *
@@ -63,7 +63,7 @@ class LogPlugin implements EventSubscriberInterface
     public static function getDebugPlugin($wireBodies = true)
     {
         return new self(new ClosureLogAdapter(function ($m) {
-            echo $m . PHP_EOL;
+            fwrite(STDERR, $m . PHP_EOL);
         }), "# Request:\n{request}\n\n# Response:\n{response}\n\n# Errors: {curl_code} {curl_error}", $wireBodies);
     }
 
