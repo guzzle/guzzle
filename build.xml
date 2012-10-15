@@ -1,22 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<<<<<<< HEAD
-<project name="guzzle" default="package">
-=======
 <project name="guzzle" default="test">
->>>>>>> refactored build including git subsplit management and PEAR package generation
     <!-- set local values, like git location -->
     <property file="phing/build.properties" override="true" />
-    
+
     <property name="dir.output" value="${project.basedir}/build/artifacts" />
     <property name="dir.imports" value="${project.basedir}/phing/imports" />
     <property name="dir.bin" value="${project.basedir}/bin" />
     <property name="repo.dir" value="${project.basedir}" />
-    
+
     <import file="${dir.imports}/dependencies.xml"/>
     <import file="${dir.imports}/test.xml"/>
     <import file="${dir.imports}/deploy.xml"/>
     <!-- <import file="${dir.imports}/metrics.xml"/> -->
-    
 
     <target name="test" description="Run unit tests" depends="test-init">
         <exec passthru="true" command="phpunit" />
