@@ -1,6 +1,10 @@
 CHANGELOG
 =========
 
+* 2.8.8 (10-15-2012)
+
+    * Bug: Fixed a cookie issue that caused dot prefixed domains to not match where popular browsers did
+
 * 2.8.7 (09-30-2012)
 
     * Bug: Fixed config file aliases for JSON includes
