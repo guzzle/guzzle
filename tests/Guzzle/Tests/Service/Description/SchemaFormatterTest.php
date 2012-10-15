@@ -14,8 +14,6 @@ class SchemaFormatterTest extends \Guzzle\Tests\GuzzleTestCase
         $d = 'October 13, 2012 16:15:46 UTC';
 
         return array(
-            array('test 123', 'url-encoded', 'test+123'),
-            array('test 123', 'raw-url-encoded', 'test%20123'),
             array('foo', 'does-not-exist', 'foo'),
             array($d, 'date-time', '2012-10-13T16:15:46Z'),
             array($d, 'date-time-http', 'Sat, 13 Oct 2012 16:15:46 GMT'),
