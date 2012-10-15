@@ -37,10 +37,6 @@ class SchemaFormatter
                 return self::formatTimestamp($value);
             case 'boolean-string':
                 return self::formatBooleanAsString($value);
-            case 'raw-url-encoded':
-                return rawurlencode($value);
-            case 'url-encoded':
-                return urlencode($value);
             default:
                 return $value;
         }
