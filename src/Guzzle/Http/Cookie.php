@@ -397,26 +397,26 @@ class Cookie
      */
     public function matchesDomain($domain)
     {
-        $cookie_domain = $this->getDomain();
+        $cookieDomain = $this->getDomain();
 
         // Domain not set or exact match.
-        if (!$cookie_domain || !strcasecmp($domain, $cookie_domain)) {
+        if (!$cookieDomain || !strcasecmp($domain, $cookieDomain)) {
             return true;
         }
 
         // . prefix match.
-        if (strpos($cookie_domain, '.') === 0) {
-            $real_domain = substr($cookie_domain, 1);
+        if (strpos($cookieDomain, '.') === 0) {
+            $realDomain = substr($cookieDomain, 1);
 
             // Root domains don't match except for .local.
-            if (!substr_count($real_domain, '.') && strcasecmp($real_domain, 'local')) {
+            if (!substr_count($realDomain, '.') && strcasecmp($realDomain, 'local')) {
                 return false;
             }
 
-            if (substr($domain, -strlen($real_domain)) === $real_domain) {
+            if (substr($domain, -strlen($realDomain)) === $realDomain) {
                 // Match exact or 1 deep subdomain.
-                return !strcasecmp($domain, $real_domain) ||
-                    substr_count(substr($domain, 0, -strlen($real_domain)), '.') === 1;
+                return !strcasecmp($domain, $realDomain) ||
+                    substr_count(substr($domain, 0, -strlen($realDomain)), '.') === 1;
             }
         }
 
