@@ -78,8 +78,10 @@ class OperationResponseParser extends DefaultResponseParser
      */
     public function parseForContentType(AbstractCommand $command, Response $response, $contentType)
     {
-        $operation = $command->getOperation();
+        // Perform that default native processing
+        $result = parent::parseForContentType($command, $response, $contentType);
 
+        $operation = $command->getOperation();
         $model = $operation->getResponseType() == 'model'
             && $command->get(AbstractCommand::RESPONSE_PROCESSING) == AbstractCommand::TYPE_MODEL
             ? $operation->getServiceDescription()->getModel($operation->getResponseClass())
@@ -88,24 +90,19 @@ class OperationResponseParser extends DefaultResponseParser
         // No further processing is needed if the responseType is not model or using native responses, or the model
         // cannot be found
         if (!$model) {
-            return parent::parseForContentType($command, $response, $contentType);
+            return $result;
         }
 
-        $result = null;
-        if ($body = $response->getBody()) {
-            if (stripos($contentType, 'json') !== false) {
-                $result = $this->parseJson($body);
-            } if (stripos($contentType, 'xml') !== false) {
-                $result = json_decode(json_encode(new \SimpleXMLElement((string) $body)), true);
-            }
-        }
-
-        if ($result === null) {
+        if ($result instanceof \SimpleXMLElement) {
+            $result = json_decode(json_encode($result), true);
+        } elseif ($result instanceof Response) {
             $result = array();
         }
 
         // Perform transformations on the result using location visitors
-        return $this->visitResult($model, $command, $response, $result);
+        $this->visitResult($model, $command, $response, $result);
+
+        return new Model($result, $model);
     }
 
     /**
@@ -116,8 +113,6 @@ class OperationResponseParser extends DefaultResponseParser
      * @param Response         $response Response received
      * @param array            $result   Result array
      * @param mixed            $context  Parsing context
-     *
-     * @return Model
      */
     protected function visitResult(
         Parameter $model,
@@ -139,7 +134,5 @@ class OperationResponseParser extends DefaultResponseParser
         foreach ($this->visitors as $visitor) {
             $visitor->after($command);
         }
-
-        return new Model($result, $model);
     }
 }

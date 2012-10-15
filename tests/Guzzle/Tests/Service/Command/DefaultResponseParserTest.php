@@ -36,7 +36,7 @@ class DefaultResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @expectedException Guzzle\Service\Exception\JsonException
+     * @expectedException \Guzzle\Service\Exception\JsonException
      */
     public function testThrowsExceptionWhenParsingJsonFails()
     {
