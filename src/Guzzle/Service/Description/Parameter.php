@@ -48,7 +48,7 @@ class Parameter
      * - static:        (bool) Set to true to specify that the parameter value cannot be changed from the default
      * - description:   (string) Documentation of the parameter
      * - location:      (string) The location of a request used to apply a parameter. Custom locations can be registered
-     *                  with a command, but the defaults are uri, query, header, body, json, postField, postFile.
+     *                  with a command, but the defaults are uri, query, header, body, json, xml, postField, postFile.
      * - sentAs:        (string) Specifies how the data being modeled is sent over the wire. For example, you may wish
      *                  to include certain headers in a response model that have a normalized casing of FooBar, but the
      *                  actual header is x-foo-bar. In this case, sentAs would be set to x-foo-bar.
@@ -81,7 +81,7 @@ class Parameter
      * - data:          (array) Any additional custom data to use when serializing, validating, etc
      * - format:        (string) Format used to coax a value into the correct format when serializing or unserializing.
      *                  You may specify either an array of filters OR a format, but not both.
-     *                  Supported values: date-time, date, time, timestamp, date-time-http, url-encoded, raw-url-encoded
+     *                  Supported values: date-time, date, time, timestamp, date-time-http
      * - $ref:          (string) String referencing a service description model. The parameter is replaced by the
      *                  schema contained in the model.
      *

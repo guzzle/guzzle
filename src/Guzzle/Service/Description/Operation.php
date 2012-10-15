@@ -113,12 +113,9 @@ class Operation implements OperationInterface
      * - responseNotes:      (string) Information about the response returned by the operation
      * - responseType:       (string) One of 'primitive', 'class', 'model', or 'documentation'. If not specified, this
      *                       value will be automatically inferred based on whether or not there is a model matching the
-     *                       name, if a matching class name is found, or set to 'primitive' by default. Set this value
-     *                       to 'documentation' when setting a responseClass that references a model but only for
-     *                       documentation purposes. This prevents Guzzle from having to crawl and normalize the
-     *                       response model.
+     *                       name, if a matching PSR-0 compliant class name is found, or set to 'primitive' by default.
      * - deprecated:         (bool) Set to true if this is a deprecated command
-     * - errorResponses:     (array)  Errors that could occur when executing the command. Array of hashes, each with a
+     * - errorResponses:     (array) Errors that could occur when executing the command. Array of hashes, each with a
      *                       'code' (the HTTP response code), 'phrase' (response reason phrase or description of the
      *                       error), and 'class' (a custom exception class that would be thrown if the error is
      *                       encountered).
