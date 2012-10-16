@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project basedir="../../" default="install-dependencies">
-    
+
     <property name="cmd.composer" value="" />
     <property name="cmd.git" value="" />
     <property name="cmd.testserver" value="" />
-    
+
     <!--
     Our custom tasks
     -->
@@ -12,9 +12,9 @@
     <taskdef name="testserver" classname="phing.tasks.NodeServerTask" />
     <taskdef name="guzzlesubsplit" classname="phing.tasks.GuzzleSubSplitTask" />
     <taskdef name="guzzlepear" classname="phing.tasks.GuzzlePearPharPackageTask" />
-    
-    <!-- 
-    Handle locating composer (global) or composer.phar, and 
+
+    <!--
+    Handle locating composer (global) or composer.phar, and
     if necessary, installing composer.phar locally.
     -->
     <target name="install-composer" description="Installs composer locally if it can't be found in build.properties or global install.">
@@ -38,7 +38,7 @@
                         <property name="cmd.composer" value="${php.interpreter} ${project.basedir}/composer.phar" override="true"/>
                     </then>
                 </elseif>
-                
+
                 <else>
                     <echo message="Installing composer locally" />
                     <exec command="curl -s http://getcomposer.org/installer | php" passthru="true" />
@@ -48,8 +48,8 @@
         </else>
         </if>
         <echo message="cmd.composer is ${cmd.composer}"/>
-    </target>    
-    
+    </target>
+
     <target name="find-git">
         <if>
             <contains string="${cmd.git}" substring="git" />
@@ -62,22 +62,18 @@
         </else>
         </if>
     </target>
-    
-    
-    
+
     <target name="install-dependencies" depends="install-composer">
         <exec command="${cmd.composer} install --dev" passthru="true" />
     </target>
-    
-    
+
     <target name="update-dependencies" depends="install-composer">
         <exec command="${cmd.composer} update --dev" passthru="true" />
     </target>
-    
-    
+
     <target name="clean-dependencies">
         <delete dir="${project.basedir}/vendor"/>
         <delete file="${project.basedir}/composer.lock" />
     </target>
-    
+
 </project>

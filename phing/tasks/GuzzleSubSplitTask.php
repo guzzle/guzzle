@@ -16,12 +16,12 @@ class GuzzleSubSplitTask extends GitBaseTask
     /**
      * What git repository to pull from and publish to
      */
-    protected $remote  = null;
+    protected $remote = null;
 
     /**
      * Publish for comma-separated heads instead of all heads
      */
-    protected $heads  = null;
+    protected $heads = null;
 
     /**
      * Base of the tree RELATIVE TO .subsplit working dir

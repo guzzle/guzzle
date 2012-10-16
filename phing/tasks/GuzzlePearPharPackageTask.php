@@ -11,7 +11,7 @@ require_once 'PEAR/PackageFileManager2.php';
 require_once 'PEAR/PackageFileManager/File.php';
 require_once 'PEAR/Packager.php';
 
-class GuzzlePEARPackageTask extends Task
+class GuzzlePearPharPackageTask extends Task
 {
     private $dir;
     private $version;

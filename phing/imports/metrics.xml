@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project basedir="../../" default="metrics">
-    
+
     <target name="metrics" depends="phploc,pdepend"/>
-    
+
     <target name="phploc" description="Measure project size using PHPLOC">
         <exec command="phploc --log-csv ${dir.output}/logs/phploc.csv ${project.basedir}/src" passthru="true"/>
     </target>
@@ -19,5 +19,5 @@
             <analyzer type="coderank-mode" value="method" />
         </phpdepend>
     </target>
-    
+
 </project>

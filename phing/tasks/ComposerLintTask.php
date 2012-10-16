@@ -10,14 +10,14 @@ require_once 'phing/Task.php';
 
 class ComposerLintTask extends Task
 {
-    protected $dir      = null;
-    protected $file     = null;
+    protected $dir = null;
+    protected $file = null;
     protected $passthru = false;
     protected $composer = null;
-    
+
     /**
      * The setter for the dir
-     * 
+     *
      * @param string $str Directory to crawl recursively for composer files
      */
     public function setDir($str)
@@ -27,7 +27,7 @@ class ComposerLintTask extends Task
 
     /**
      * The setter for the file
-     * 
+     *
      * @param string $str Individual file to validate
      */
     public function setFile($str)
@@ -44,19 +44,19 @@ class ComposerLintTask extends Task
     {
         $this->passthru = (bool) $passthru;
     }
-    
+
     /**
      * Composer to execute. If unset, will attempt composer.phar in project
-     * basedir, and if that fails, will attempt global composer 
+     * basedir, and if that fails, will attempt global composer
      * installation.
-     * 
+     *
      * @param string $str Individual file to validate
      */
     public function setComposer($str)
     {
         $this->file = $str;
     }
-    
+
     /**
      * The init method: do init steps
      */
@@ -64,7 +64,7 @@ class ComposerLintTask extends Task
     {
         // nothing needed here
     }
-    
+
     /**
      * The main entry point
      */
@@ -73,24 +73,24 @@ class ComposerLintTask extends Task
         if ($this->composer === null) {
             $this->findComposer();
         }
-        
+
         $files = array();
         if (!empty($this->file) && file_exists($this->file)) {
             $files[] = $this->file;
         }
-        
+
         if (!empty($this->dir)) {
             $found = $this->findFiles();
             foreach ($found as $file) {
                 $files[] = $this->dir . DIRECTORY_SEPARATOR . $file;
             }
         }
-        
+
         foreach ($files as $file) {
-            
+
             $cmd = $this->composer . ' validate ' . $file;
             $cmd = escapeshellcmd($cmd);
-            
+
             if ($this->passthru) {
                 $retval = null;
                 passthru($cmd, $retval);
@@ -108,14 +108,14 @@ class ComposerLintTask extends Task
                     $this->log($out[0]);
                 }
             }
-            
+
         }
 
     }
-    
+
     /**
      * Find the composer.json files using Phing's directory scanner
-     * 
+     *
      * @return array
      */
     protected function findFiles()
@@ -126,10 +126,10 @@ class ComposerLintTask extends Task
         $ds->scan();
         return $ds->getIncludedFiles();
     }
-    
+
     /**
      * Find composer installation
-     * 
+     *
      */
     protected function findComposer()
     {

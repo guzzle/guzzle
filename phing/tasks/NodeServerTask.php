@@ -10,9 +10,9 @@ require_once 'phing/Task.php';
 
 class NodeServerTask extends Task
 {
-    protected $cmd          = null;
-    protected $action       = 'start';
-    protected $serverfile   = 'tests/Guzzle/Tests/Http/server.js';
+    protected $cmd = null;
+    protected $action = 'start';
+    protected $serverfile = 'tests/Guzzle/Tests/Http/server.js';
 
     /**
      * The setter for the start command
@@ -64,12 +64,12 @@ class NodeServerTask extends Task
         chdir(__DIR__ . '/../..');
         $serverfile = $this->serverfile;
         $cmd = $this->getCmd();
-        
+
         // resolve $HOME directory
         if ($cmd[0] == '~') {
             $cmd = $_ENV["HOME"] . substr($cmd, 1);
         }
-        
+
         $fp = @fsockopen('127.0.0.1', 8124, $errno, $errstr, 1);
         if (! $fp) {
             // need to start node server
