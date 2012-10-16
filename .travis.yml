@@ -16,6 +16,7 @@ before_script:
   - pear install pear.pdepend.org/PHP_Depend
   - pear install bartlett.laurent-laville.org/PHP_CompatInfo
   - pear install pear/PEAR_PackageFileManager2 pear/PEAR_PackageFileManager2_Plugins pear/XML_Serializer-beta
+  - pear install VersionControl_Git-alpha
   - phpenv rehash
   - composer install --dev
   - cp phing/build.properties.travis phing/build.properties
