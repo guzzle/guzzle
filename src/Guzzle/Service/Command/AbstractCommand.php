@@ -7,20 +7,34 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Curl\CurlHandle;
-use Guzzle\Service\Description\ApiCommand;
-use Guzzle\Service\Description\ApiCommandInterface;
+use Guzzle\Service\Client;
 use Guzzle\Service\ClientInterface;
-use Guzzle\Service\Inspector;
+use Guzzle\Service\Description\Operation;
+use Guzzle\Service\Description\OperationInterface;
+use Guzzle\Service\Description\ValidatorInterface;
+use Guzzle\Service\Description\SchemaValidator;
 use Guzzle\Service\Exception\CommandException;
-use Guzzle\Service\Exception\JsonException;
+use Guzzle\Service\Exception\ValidationException;
 
 /**
- * Command object to handle preparing and processing client requests and
- * responses of the requests
+ * Command object to handle preparing and processing client requests and responses of the requests
  */
 abstract class AbstractCommand extends Collection implements CommandInterface
 {
-    const HEADERS_OPTION = 'headers';
+    // Option used to specify custom headers to add to the generated request
+    const HEADERS_OPTION = 'command.headers';
+    // Option used to add an onComplete method to a command
+    const ON_COMPLETE = 'command.on_complete';
+    // Option used to disable any pre-sending command validation
+    const DISABLE_VALIDATION = 'command.disable_validation';
+    // Option used to override how a command result will be formatted
+    const RESPONSE_PROCESSING = 'command.response_processing';
+    // Different response types that commands can use
+    const TYPE_RAW = 'raw';
+    const TYPE_NATIVE = 'native';
+    const TYPE_MODEL = 'model';
+    // Option used to change the entity body used to store a response
+    const RESPONSE_BODY = 'command.response_body';
 
     /**
      * @var ClientInterface Client object used to execute the command
@@ -38,9 +52,9 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     protected $result;
 
     /**
-     * @var ApiCommandInterface API information about the command
+     * @var OperationInterface API information about the command
      */
-    protected $apiCommand;
+    protected $operation;
 
     /**
      * @var mixed callable
@@ -48,33 +62,43 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     protected $onComplete;
 
     /**
-     * @var Inspector
+     * @var ValidatorInterface Validator used to prepare and validate properties against a JSON schema
      */
-    protected $inspector;
+    protected $validator;
 
     /**
      * Constructor
      *
-     * @param array|Collection    $parameters Collection of parameters to set on the command
-     * @param ApiCommandInterface $apiCommand Command definition from description
+     * @param array|Collection   $parameters Collection of parameters to set on the command
+     * @param OperationInterface $operation Command definition from description
      */
-    public function __construct($parameters = null, ApiCommandInterface $apiCommand = null)
+    public function __construct($parameters = null, OperationInterface $operation = null)
     {
         parent::__construct($parameters);
-        $this->apiCommand = $apiCommand ?: ApiCommand::fromCommand(get_class($this));
-        $this->initConfig();
+        $this->operation = $operation ?: $this->createOperation();
+        foreach ($this->operation->getParams() as $name => $arg) {
+            $currentValue = $this->get($name);
+            $configValue = $arg->getValue($currentValue);
+            // If default or static values are set, then this should always be updated on the config object
+            if ($currentValue !== $configValue) {
+                $this->set($name, $configValue);
+            }
+        }
 
         $headers = $this->get(self::HEADERS_OPTION);
         if (!$headers instanceof Collection) {
             $this->set(self::HEADERS_OPTION, new Collection((array) $headers));
         }
 
-        // You can set a command.on_complete option in your parameters as a
-        // convenience method for setting an onComplete function
-        $onComplete = $this->get('command.on_complete');
-        if ($onComplete) {
+        // You can set a command.on_complete option in your parameters to set an onComplete callback
+        if ($onComplete = $this->get('command.on_complete')) {
             $this->remove('command.on_complete');
             $this->setOnComplete($onComplete);
+        }
+
+        // If no response processing value was specified, then attempt to use the highest level of processing
+        if (!$this->get(self::RESPONSE_PROCESSING)) {
+            $this->set(self::RESPONSE_PROCESSING, self::TYPE_MODEL);
         }
 
         $this->init();
@@ -90,34 +114,35 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
-     * Get the short form name of the command
+     * Execute the command in the same manner as calling a function
      *
-     * @return string
+     * @return mixed Returns the result of {@see AbstractCommand::execute}
+     */
+    public function __invoke()
+    {
+        return $this->execute();
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function getName()
     {
-        return $this->apiCommand->getName();
+        return $this->operation->getName();
     }
 
     /**
      * Get the API command information about the command
      *
-     * @return ApiCommandInterface
+     * @return OperationInterface
      */
-    public function getApiCommand()
+    public function getOperation()
     {
-        return $this->apiCommand;
+        return $this->operation;
     }
 
     /**
-     * Specify a callable to execute when the command completes
-     *
-     * @param mixed $callable Callable to execute when the command completes.
-     *     The callable must accept a {@see CommandInterface} object as the
-     *     only argument.
-     *
-     * @return self
-     * @throws InvalidArgumentException
+     * {@inheritdoc}
      */
     public function setOnComplete($callable)
     {
@@ -131,34 +156,19 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
-     * Execute the command in the same manner as calling a function
-     *
-     * @return mixed Returns the result of {@see AbstractCommand::execute}
-     */
-    public function __invoke()
-    {
-        return $this->execute();
-    }
-
-    /**
-     * Execute the command and return the result
-     *
-     * @return mixed Returns the result of {@see AbstractCommand::execute}
-     * @throws CommandException if a client has not been associated with the command
+     * {@inheritdoc}
      */
     public function execute()
     {
         if (!$this->client) {
-            throw new CommandException('A Client object must be associated with the command before it can be executed from the context of the command.');
+            throw new CommandException('A client must be associated with the command before it can be executed.');
         }
 
         return $this->client->execute($this);
     }
 
     /**
-     * Get the client object that will execute the command
-     *
-     * @return ClientInterface|null
+     * {@inheritdoc}
      */
     public function getClient()
     {
@@ -166,11 +176,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
-     * Set the client object that will execute the command
-     *
-     * @param ClientInterface $client The client object that will execute the command
-     *
-     * @return self
+     * {@inheritdoc}
      */
     public function setClient(ClientInterface $client)
     {
@@ -180,10 +186,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
-     * Get the request object associated with the command
-     *
-     * @return RequestInterface
-     * @throws CommandException if the command has not been executed
+     * {@inheritdoc}
      */
     public function getRequest()
     {
@@ -195,31 +198,24 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
-     * Get the response object associated with the command
-     *
-     * @return Response
-     * @throws CommandException if the command has not been executed
+     * {@inheritdoc}
      */
     public function getResponse()
     {
         if (!$this->isExecuted()) {
-            throw new CommandException('The command must be executed before retrieving the response');
+            $this->execute();
         }
 
         return $this->request->getResponse();
     }
 
     /**
-     * Get the result of the command
-     *
-     * @return Response By default, commands return a Response
-     *      object unless overridden in a subclass
-     * @throws CommandException if the command has not been executed
+     * {@inheritdoc}
      */
     public function getResult()
     {
         if (!$this->isExecuted()) {
-            throw new CommandException('The command must be executed before retrieving the result');
+            $this->execute();
         }
 
         if (null === $this->result) {
@@ -234,11 +230,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
-     * Set the result of the command
-     *
-     * @param mixed $result Result to set
-     *
-     * @return self
+     * {@inheritdoc}
      */
     public function setResult($result)
     {
@@ -248,9 +240,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
-     * Returns TRUE if the command has been prepared for executing
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function isPrepared()
     {
@@ -258,9 +248,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
-     * Returns TRUE if the command has been executed
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function isExecuted()
     {
@@ -268,21 +256,21 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
-     * Prepare the command for executing and create a request object.
-     *
-     * @return RequestInterface Returns the generated request
-     * @throws CommandException if a client object has not been set previously
-     *      or in the prepare()
+     * {@inheritdoc}
      */
     public function prepare()
     {
         if (!$this->isPrepared()) {
             if (!$this->client) {
-                throw new CommandException('A Client object must be associated with the command before it can be prepared.');
+                throw new CommandException('A client must be associated with the command before it can be prepared.');
             }
 
+            // Notify subscribers of the client that the command is being prepared
+            $this->client->dispatch('command.before_prepare', array('command' => $this));
+
             // Fail on missing required arguments, and change parameters via filters
-            $this->apiCommand->validate($this, $this->getInspector());
+            $this->validate();
+            // Delegate to the subclass that implements the build method
             $this->build();
 
             // Add custom request headers set on the command
@@ -293,17 +281,36 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             }
 
             // Add any curl options to the request
-            $this->request->getCurlOptions()->merge(CurlHandle::parseCurlConfig($this->getAll()));
+            if ($options = $this->get(Client::CURL_OPTIONS)) {
+                $this->request->getCurlOptions()->merge(CurlHandle::parseCurlConfig($options));
+            }
+
+            // Set a custom response body
+            if ($responseBody = $this->get(self::RESPONSE_BODY)) {
+                $this->request->setResponseBody($responseBody);
+            }
         }
 
-        return $this->getRequest();
+        return $this->request;
     }
 
     /**
-     * Get the object that manages the request headers that will be set on any
-     * outbound requests from the command
+     * Set the validator used to validate and prepare command parameters and nested JSON schemas. If no validator is
+     * set, then the command will validate using the default {@see SchemaValidator}.
      *
-     * @return Collection
+     * @param ValidatorInterface $validator Validator used to prepare and validate properties against a JSON schema
+     *
+     * @return self
+     */
+    public function setValidator(ValidatorInterface $validator)
+    {
+        $this->validator = $validator;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function getRequestHeaders()
     {
@@ -311,35 +318,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     }
 
     /**
-     * Set the Inspector to use with the command
-     *
-     * @param Inspector $inspector Inspector to use for config validation
-     *
-     * @return AbstractCommand
-     */
-    public function setInspector(Inspector $inspector)
-    {
-        $this->inspector = $inspector;
-
-        return $this;
-    }
-
-    /**
-     * Get the Inspector used with the Command
-     *
-     * @return Inspector
-     */
-    protected function getInspector()
-    {
-        if (!$this->inspector) {
-            $this->inspector = Inspector::getInstance();
-        }
-
-        return $this->inspector;
-    }
-
-    /**
-     * Initialize the command (hook to be implemented in subclasses)
+     * Initialize the command (hook that can be implemented in subclasses)
      */
     protected function init() {}
 
@@ -349,54 +328,69 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     abstract protected function build();
 
     /**
-     * Create the result of the command after the request has been completed.
+     * Hook used to create an operation for concrete commands that are not associated with a service description
      *
-     * Sets the result as the response by default.  If the response is an XML
-     * document, this will set the result as a SimpleXMLElement.  If the XML
-     * response is invalid, the result will remain the Response, not XML.
-     * If an application/json response is received, the result will automat-
-     * ically become an array.
+     * @return OperationInterface
+     */
+    protected function createOperation()
+    {
+        return new Operation(array('name' => get_class($this)));
+    }
+
+    /**
+     * Create the result of the command after the request has been completed.
+     * Override this method in subclasses to customize this behavior
      */
     protected function process()
     {
-        // Uses the response object by default
-        $this->result = $this->getRequest()->getResponse();
-        $contentType = $this->result->getContentType();
+        $this->result = $this->get(self::RESPONSE_PROCESSING) != self::TYPE_RAW
+            ? DefaultResponseParser::getInstance()->parse($this)
+            : $this->request->getResponse();
+    }
 
-        // Is the body an JSON document?  If so, set the result to be an array
-        if (stripos($contentType, 'json') !== false) {
-            if ($body = trim($this->result->getBody(true))) {
-                $decoded = json_decode($body, true);
-                if (JSON_ERROR_NONE !== json_last_error()) {
-                    throw new JsonException('The response body can not be decoded to JSON', json_last_error());
-                }
+    /**
+     * Validate and prepare the command based on the schema and rules defined by the command's Operation object
+     *
+     * @throws ValidationException when validation errors occur
+     */
+    protected function validate()
+    {
+        // Do not perform request validation/transformation if it is disable
+        if ($this->get(self::DISABLE_VALIDATION)) {
+            return;
+        }
 
-                $this->result = $decoded;
+        $errors = array();
+        $validator = $this->getValidator();
+        foreach ($this->operation->getParams() as $name => $schema) {
+            $value = $this->get($name);
+            if (!$validator->validate($schema, $value)) {
+                $errors = array_merge($errors, $validator->getErrors());
+            } elseif ($value !== $this->get($name)) {
+                // Update the config value if it changed and no validation errors were encountered
+                $this->data[$name] = $value;
             }
-        } if (stripos($contentType, 'xml') !== false) {
-            // Is the body an XML document?  If so, set the result to be a SimpleXMLElement
-            if ($body = trim($this->result->getBody(true))) {
-                // Silently allow parsing the XML to fail
-                try {
-                    $this->result = new \SimpleXMLElement($body);
-                } catch (\Exception $e) {}
-            }
+        }
+
+        if (!empty($errors)) {
+            $e = new ValidationException('Validation errors: ' . implode("\n", $errors));
+            $e->setErrors($errors);
+            throw $e;
         }
     }
 
     /**
-     * Prepare the default and static settings of the command
+     * Get the validator used to prepare and validate properties. If no validator has been set on the command, then
+     * the default {@see SchemaValidator} will be used.
+     *
+     * @return ValidatorInterface
      */
-    protected function initConfig()
+    protected function getValidator()
     {
-        foreach ($this->apiCommand->getParams() as $name => $arg) {
-            $currentValue = $this->get($name);
-            $configValue = $arg->getValue($currentValue);
-            // If default or static values are set, then this should always be
-            // updated on the config object
-            if ($currentValue !== $configValue) {
-                $this->set($name, $configValue);
-            }
+        if (!$this->validator) {
+            $this->validator = SchemaValidator::getInstance();
         }
+
+        return $this->validator;
     }
 }

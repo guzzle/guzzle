@@ -15,7 +15,7 @@ class UrlParser implements UrlParserInterface
     /**
      * Set whether or not to attempt to handle UTF-8 strings (still WIP)
      *
-     * @param bool $handleUtf Set to TRUE to handle UTF string
+     * @param bool $utf8 Set to TRUE to handle UTF string
      */
     public function setUtf8Support($utf8)
     {

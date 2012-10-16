@@ -2,19 +2,27 @@
 
 namespace Guzzle\Tests\Service\Mock\Command;
 
-/**
- * Other mock Command
- *
- * @guzzle test default="123" required="true" doc="Test argument"
- * @guzzle other
- * @guzzle arg type="string
- * guzzle static static="this is static"
- */
+use Guzzle\Service\Description\Operation;
+
 class OtherCommand extends MockCommand
 {
-    /**
-     * {@inheritdoc}
-     */
+    protected function createOperation()
+    {
+        return new Operation(array(
+            'name'       => 'other_command',
+            'parameters' => array(
+                'test' => array(
+                    'default'  => '123',
+                    'required' => true,
+                    'doc'      => 'Test argument'
+                ),
+                'other'  => array(),
+                'arg'    => array('type' => 'string'),
+                'static' => array('static' => true, 'default' => 'this is static')
+            )
+        ));
+    }
+
     protected function build()
     {
         $this->request = $this->client->getRequest('HEAD');

@@ -2,17 +2,21 @@
 
 namespace Guzzle\Tests\Service\Mock\Command;
 
-/**
- * Iterable mock command
- *
- * @guzzle page_size type="integer"
- * @guzzle next_token type="string"
- */
+use Guzzle\Service\Description\Operation;
+
 class IterableCommand extends MockCommand
 {
-    /**
-     * {@inheritdoc}
-     */
+    protected function createOperation()
+    {
+        return new Operation(array(
+            'name'       => 'iterable_command',
+            'parameters' => array(
+                'page_size' => array('type' => 'integer'),
+                'next_token' => array('type' => 'string')
+            )
+        ));
+    }
+
     protected function build()
     {
         $this->request = $this->client->createRequest('GET');

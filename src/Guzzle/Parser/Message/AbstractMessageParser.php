@@ -10,7 +10,8 @@ abstract class AbstractMessageParser implements MessageParserInterface
     /**
      * Create URL parts from HTTP message parts
      *
-     * @param array $parts HTTP message parts
+     * @param string $requestUrl Associated URL
+     * @param array  $parts      HTTP message parts
      *
      * @return array
      */

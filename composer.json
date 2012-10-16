@@ -19,9 +19,28 @@
     ],
 
     "replace": {
+        "guzzle/batch": "self.version",
+        "guzzle/cache": "self.version",
         "guzzle/common": "self.version",
         "guzzle/http": "self.version",
-        "guzzle/parser": "self.version"
+        "guzzle/inflection": "self.version",
+        "guzzle/iterator": "self.version",
+        "guzzle/log": "self.version",
+        "guzzle/parser": "self.version",
+        "guzzle/plugin": "self.version",
+        "guzzle/plugin-async": "self.version",
+        "guzzle/plugin-backoff": "self.version",
+        "guzzle/plugin-cache": "self.version",
+        "guzzle/plugin-cookie": "self.version",
+        "guzzle/plugin-curlauth": "self.version",
+        "guzzle/plugin-history": "self.version",
+        "guzzle/plugin-log": "self.version",
+        "guzzle/plugin-md5validator": "self.version",
+        "guzzle/plugin-mock": "self.version",
+        "guzzle/plugin-oauth": "self.version",
+        "guzzle/service": "self.version",
+        "guzzle/stream": "self.version",
+        "guzzle/validation": "self.version"
     },
 
     "require": {
@@ -29,8 +48,6 @@
         "ext-curl": "*",
         "symfony/event-dispatcher": "2.1.*"
     },
-
-    "minimum-stability": "beta",
 
     "autoload": {
         "psr-0": {
@@ -43,12 +60,8 @@
         "doctrine/common": "*",
         "symfony/class-loader": "*",
         "monolog/monolog": "1.*",
-        "zendframework/zend-cache": "2.0.0beta4",
-        "zendframework/zend-log": "2.0.0beta4",
-        "zendframework/zend-loader": "2.0.0beta4",
-        "zendframework/zend-stdlib": "2.0.0beta4",
-        "zendframework/zend-eventmanager": "2.0.0beta4",
-        "zendframework/zend-servicemanager": "2.0.0beta4",
+        "zendframework/zend-cache": "2.0.*",
+        "zendframework/zend-log": "2.0.*",
         "zend/zend-log1": "1.12",
         "zend/zend-cache1": "1.12"
     },

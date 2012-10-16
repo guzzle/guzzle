@@ -7,30 +7,74 @@ namespace Guzzle\Service\Description;
  */
 interface ServiceDescriptionInterface extends \Serializable
 {
-    const DEFAULT_COMMAND_CLASS = 'Guzzle\\Service\\Command\\DynamicCommand';
-
     /**
-     * Get the API commands of the service
+     * Get the basePath/baseUrl of the description
      *
-     * @return array Returns an array of {@see ApiCommandInterface} objects
+     * @return string
      */
-    public function getCommands();
+    public function getBaseUrl();
 
     /**
-     * Check if the service has a command by name
+     * Get the API operations of the service
      *
-     * @param string $name Name of the command to check
+     * @return array Returns an array of {@see OperationInterface} objects
+     */
+    public function getOperations();
+
+    /**
+     * Check if the service has an operation by name
+     *
+     * @param string $name Name of the operation to check
      *
      * @return bool
      */
-    public function hasCommand($name);
+    public function hasOperation($name);
 
     /**
-     * Get an API command by name
+     * Get an API operation by name
      *
      * @param string $name Name of the command
      *
-     * @return ApiCommandInterface|null
+     * @return OperationInterface|null
      */
-    public function getCommand($name);
+    public function getOperation($name);
+
+    /**
+     * Get a specific model from the description
+     *
+     * @param string $id ID of the model
+     *
+     * @return Parameter|null
+     */
+    public function getModel($id);
+
+    /**
+     * Check if the description has a specific model by name
+     *
+     * @param string $id ID of the model
+     *
+     * @return bool
+     */
+    public function hasModel($id);
+
+    /**
+     * Get the API version of the service
+     *
+     * @return string
+     */
+    public function getApiVersion();
+
+    /**
+     * Get the name of the API
+     *
+     * @return string
+     */
+    public function getName();
+
+    /**
+     * Get a summary of the purpose of the API
+     *
+     * @return string
+     */
+    public function getDescription();
 }

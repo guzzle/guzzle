@@ -76,10 +76,8 @@ class CookieParser implements CookieParserInterface
                 }
             }
 
-            // If cookies have not yet been retrieved, or this value was
-            // not found in the cookie pieces array, treat as a cookie
-            // IF non-cookies have been parsed, then this isn't a cookie,
-            // but it's cookie data.  Cookies must be first, followed by data.
+            // If cookies have not yet been retrieved, or this value was not found in the pieces array, treat it as a
+            // cookie. IF non-cookies have been parsed, then this isn't a cookie, it's cookie data. Cookies then data.
             $data[$foundNonCookies ? 'data' : 'cookies'][$key] = $value;
         }
 

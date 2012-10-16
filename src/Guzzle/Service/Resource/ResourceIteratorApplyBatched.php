@@ -3,9 +3,9 @@
 namespace Guzzle\Service\Resource;
 
 use Guzzle\Common\AbstractHasDispatcher;
-use Guzzle\Common\Batch\BatchBuilder;
-use Guzzle\Common\Batch\BatchSizeDivisor;
-use Guzzle\Common\Batch\BatchClosureTransfer;
+use Guzzle\Batch\BatchBuilder;
+use Guzzle\Batch\BatchSizeDivisor;
+use Guzzle\Batch\BatchClosureTransfer;
 
 /**
  * Apply a callback to the contents of a {@see ResourceIteratorInterface}

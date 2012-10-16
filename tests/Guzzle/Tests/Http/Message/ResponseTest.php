@@ -144,12 +144,15 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Message\Response::getBody
+     * @covers Guzzle\Http\Message\Response::setBody
      */
     public function testGetBody()
     {
         $body = EntityBody::factory('');
         $response = new Response(403, new Collection(), $body);
         $this->assertEquals($body, $response->getBody());
+        $response->setBody('foo');
+        $this->assertEquals('foo', $response->getBody(true));
     }
 
     /**
@@ -500,6 +503,18 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\Message\Response::getSetCookie
      */
+    public function testGetMultipleSetCookie()
+    {
+        $this->response->addHeader('Set-Cookie', 'UserID=Mike; Max-Age=200');
+        $this->assertEquals(array(
+            'UserID=JohnDoe; Max-Age=3600; Version=1',
+            'UserID=Mike; Max-Age=200',
+        ), $this->response->getSetCookie()->toArray());
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\Response::getSetCookie
+     */
     public function testGetSetCookieNormalizesHeaders()
     {
         $this->response->addHeaders(array(
@@ -781,5 +796,18 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
 
         $response = new Response(200);
         $this->assertFalse($response->isMethodAllowed('get'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\Response::getPreviousResponse
+     * @covers Guzzle\Http\Message\Response::setPreviousResponse
+     */
+    public function testHasPreviousResponse()
+    {
+        $response = new Response(200);
+        $previous = new Response(302);
+        $response->setPreviousResponse($previous);
+        $this->assertSame($previous, $response->getPreviousResponse());
+        $this->assertNull($previous->getPreviousResponse());
     }
 }

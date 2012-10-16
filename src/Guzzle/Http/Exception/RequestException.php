@@ -4,7 +4,6 @@ namespace Guzzle\Http\Exception;
 
 use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\HttpException;
 
 /**
  * Http request exception

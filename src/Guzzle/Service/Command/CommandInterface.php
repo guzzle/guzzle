@@ -7,27 +7,14 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\ClientInterface;
-use Guzzle\Service\Description\ApiCommandInterface;
+use Guzzle\Service\Description\OperationInterface;
 use Guzzle\Service\Exception\CommandException;
 
 /**
- * Command object to handle preparing and processing client requests and
- * responses of the requests
+ * Command object to handle preparing and processing client requests and responses of the requests
  */
 interface CommandInterface
 {
-    /**
-     * Specify a callable to execute when the command completes
-     *
-     * @param mixed $callable Callable to execute when the command completes.
-     *     The callable must accept a {@see CommandInterface} object as the
-     *     only argument.
-     *
-     * @return CommandInterface
-     * @throws InvalidArgumentException
-     */
-    public function setOnComplete($callable);
-
     /**
      * Get the short form name of the command
      *
@@ -36,16 +23,16 @@ interface CommandInterface
     public function getName();
 
     /**
-     * Get the API command information about the command
+     * Get the API operation information about the command
      *
-     * @return ApiCommandInterface
+     * @return OperationInterface
      */
-    public function getApiCommand();
+    public function getOperation();
 
     /**
      * Execute the command and return the result
      *
-     * @return mixed Returns the result of {@see CommandInterface::execute}ß
+     * @return mixed Returns the result of {@see CommandInterface::execute}
      * @throws CommandException if a client has not been associated with the command
      */
     public function execute();
@@ -85,8 +72,7 @@ interface CommandInterface
     /**
      * Get the result of the command
      *
-     * @return Response By default, commands return a Response
-     *      object unless overridden in a subclass
+     * @return Response By default, commands return a Response object unless overridden in a subclass
      * @throws CommandException if the command has not been executed
      */
     public function getResult();
@@ -118,16 +104,24 @@ interface CommandInterface
      * Prepare the command for executing and create a request object.
      *
      * @return RequestInterface Returns the generated request
-     * @throws CommandException if a client object has not been set previously
-     *      or in the prepare()
+     * @throws CommandException if a client object has not been set previously or in the prepare()
      */
     public function prepare();
 
     /**
-     * Get the object that manages the request headers that will be set on any
-     * outbound requests from the command
+     * Get the object that manages the request headers that will be set on any outbound requests from the command
      *
      * @return Collection
      */
     public function getRequestHeaders();
+
+    /**
+     * Specify a callable to execute when the command completes
+     *
+     * @param mixed $callable Callable to execute when the command completes. The callable must accept a
+     *                        {@see CommandInterface} object as the only argument.
+     * @return CommandInterface
+     * @throws InvalidArgumentException
+     */
+    public function setOnComplete($callable);
 }

@@ -17,10 +17,10 @@ class Header implements \IteratorAggregate, \Countable
      * Construct a new header object
      *
      * @param string $header Name of the header
-     * @param string $values Values of the header
+     * @param array  $values Values of the header
      * @param string $glue   Glue used to combine multiple values into a string
      */
-    public function __construct($header, $values = array(), $glue = '; ')
+    public function __construct($header, $values = array(), $glue = ', ')
     {
         $this->header = $header;
         $this->glue = $glue;
@@ -132,10 +132,9 @@ class Header implements \IteratorAggregate, \Countable
 
     /**
      * Check if a particular case variation is present in the header
-     * Example: A header exists on a message for 'Foo', and 'foo'.  The Header
-     * object will contain all of the values of 'Foo' and all of the values of
-     * 'foo'.  You can use this method to check to see if a header was set
-     * using 'foo' (true), 'Foo' (true), 'FOO' (false), etc.
+     * Example: A header exists on a message for 'Foo', and 'foo'. The Header object will contain all of the values of
+     * 'Foo' and all of the values of 'foo'.  You can use this method to check to see if a header was set using
+     * 'foo' (true), 'Foo' (true), 'FOO' (false), etc.
      *
      * @param string $header Exact header to check for
      *
@@ -209,9 +208,8 @@ class Header implements \IteratorAggregate, \Countable
     }
 
     /**
-     * Get the raw data array of the headers.  This array is represented as an
-     * associative array of the various cases that might be stored in the
-     * header and an array of values associated with each case variation.
+     * Get the raw data array of the headers. This array is represented as an associative array of the various cases
+     * that might be stored in the header and an array of values associated with each case variation.
      *
      * @return array
      */

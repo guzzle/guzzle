@@ -5,7 +5,7 @@ namespace Guzzle\Parser\UriTemplate;
 /**
  * Expands URI templates using an array of variables
  *
- * @link http://tools.ietf.org/html/draft-gregorio-uritemplate-08
+ * @link http://tools.ietf.org/html/rfc6570
  */
 interface UriTemplateInterface
 {

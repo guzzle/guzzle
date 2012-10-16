@@ -2,8 +2,6 @@
 
 namespace Guzzle\Common\Exception;
 
-use Guzzle\Common\GuzzleException;
-
 /**
  * Collection of exceptions
  */

@@ -2,14 +2,14 @@
 
 namespace Guzzle\Tests\Service\Command;
 
-use Guzzle\Http\Plugin\MockPlugin;
+use Guzzle\Plugin\Mock\MockPlugin;
+use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Client;
-use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Command\AbstractCommand;
-use Guzzle\Service\Description\ApiCommand;
-use Guzzle\Service\Description\ApiParam;
-use Guzzle\Service\Inspector;
+use Guzzle\Service\Description\Operation;
+use Guzzle\Service\Description\Parameter;
+use Guzzle\Service\Description\SchemaValidator;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
 use Guzzle\Tests\Service\Mock\Command\Sub\Sub;
 
@@ -34,9 +34,7 @@ class CommandTest extends AbstractCommandTest
      */
     public function testDeterminesShortName()
     {
-        $api = new ApiCommand(array(
-            'name' => 'foobar'
-        ));
+        $api = new Operation(array('name' => 'foobar'));
         $command = new MockCommand(array(), $api);
         $this->assertEquals('foobar', $command->getName());
 
@@ -59,22 +57,30 @@ class CommandTest extends AbstractCommandTest
 
     /**
      * @covers Guzzle\Service\Command\AbstractCommand::getResponse
-     * @expectedException RuntimeException
      */
-    public function testGetResponseThrowsExceptionBeforePreparation()
+    public function testGetResponseExecutesCommandsWhenNeeded()
     {
+        $response = new Response(200);
+        $client = $this->getClient();
+        $this->setMockResponse($client, array($response));
         $command = new MockCommand();
-        $command->getResponse();
+        $command->setClient($client);
+        $this->assertSame($response, $command->getResponse());
+        $this->assertSame($response, $command->getResponse());
     }
 
     /**
      * @covers Guzzle\Service\Command\AbstractCommand::getResult
-     * @expectedException RuntimeException
      */
-    public function testGetResultThrowsExceptionBeforePreparation()
+    public function testGetResultExecutesCommandsWhenNeeded()
     {
+        $response = new Response(200);
+        $client = $this->getClient();
+        $this->setMockResponse($client, array($response));
         $command = new MockCommand();
-        $command->getResult();
+        $command->setClient($client);
+        $this->assertSame($response, $command->getResult());
+        $this->assertSame($response, $command->getResult());
     }
 
     /**
@@ -231,25 +237,21 @@ class CommandTest extends AbstractCommandTest
      */
     public function testCommandsAllowsCustomRequestHeadersAsArray()
     {
-        $command = new MockCommand(array(
-            'headers' => array(
-                'Foo' => 'Bar'
-            )
-        ));
+        $command = new MockCommand(array(AbstractCommand::HEADERS_OPTION => array('Foo' => 'Bar')));
         $this->assertInstanceOf('Guzzle\Common\Collection', $command->getRequestHeaders());
         $this->assertEquals('Bar', $command->getRequestHeaders()->get('Foo'));
     }
 
-    private function getApiCommand()
+    private function getOperation()
     {
-        return new ApiCommand(array(
-            'name' => 'foobar',
-            'method' => 'POST',
-            'class' => 'Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand',
-            'params' => array(
+        return new Operation(array(
+            'name'       => 'foobar',
+            'httpMethod' => 'POST',
+            'class'      => 'Guzzle\\Tests\\Service\\Mock\\Command\\MockCommand',
+            'parameters' => array(
                 'test' => array(
                     'default' => '123',
-                    'type' => 'string'
+                    'type'    => 'string'
                 )
         )));
     }
@@ -257,14 +259,14 @@ class CommandTest extends AbstractCommandTest
     /**
      * @covers Guzzle\Service\Command\AbstractCommand
      */
-    public function testCommandsUsesApiCommand()
+    public function testCommandsUsesOperation()
     {
-        $api = $this->getApiCommand();
+        $api = $this->getOperation();
         $command = new MockCommand(array(), $api);
-        $this->assertSame($api, $command->getApiCommand());
+        $this->assertSame($api, $command->getOperation());
         $command->setClient($this->getClient())->prepare();
         $this->assertEquals('123', $command->get('test'));
-        $this->assertSame($api, $command->getApiCommand($api));
+        $this->assertSame($api, $command->getOperation($api));
     }
 
     /**
@@ -273,7 +275,7 @@ class CommandTest extends AbstractCommandTest
     public function testCloneMakesNewRequest()
     {
         $client = $this->getClient();
-        $command = new MockCommand(array(), $this->getApiCommand());
+        $command = new MockCommand(array(), $this->getOperation());
         $command->setClient($client);
 
         $command->prepare();
@@ -301,7 +303,7 @@ class CommandTest extends AbstractCommandTest
         $client = $this->getClient();
         $command = new MockCommand(array(
             'command.on_complete' => $testFunction
-        ), $this->getApiCommand());
+        ), $this->getOperation());
         $command->setClient($client);
 
         $command->prepare()->setResponse(new Response(200), true);
@@ -321,26 +323,6 @@ class CommandTest extends AbstractCommandTest
     }
 
     /**
-     * @covers Guzzle\Service\Command\AbstractCommand::setInspector
-     * @covers Guzzle\Service\Command\AbstractCommand::getInspector
-     */
-    public function testInspectorCanBeInjected()
-    {
-        $instance = Inspector::getInstance();
-        $command = new MockCommand();
-
-        $refObject = new \ReflectionObject($command);
-        $method = $refObject->getMethod('getInspector');
-        $method->setAccessible(true);
-
-        $this->assertSame($instance, $method->invoke($command));
-
-        $newInspector = new Inspector();
-        $command->setInspector($newInspector);
-        $this->assertSame($newInspector, $method->invoke($command));
-    }
-
-    /**
      * @covers Guzzle\Service\Command\AbstractCommand::setResult
      */
     public function testCanSetResultManually()
@@ -356,16 +338,16 @@ class CommandTest extends AbstractCommandTest
     }
 
     /**
-     * @covers Guzzle\Service\Command\AbstractCommand::initConfig
+     * @covers Guzzle\Service\Command\AbstractCommand
      */
     public function testCanInitConfig()
     {
         $command = $this->getMockBuilder('Guzzle\\Service\\Command\\AbstractCommand')
             ->setConstructorArgs(array(array(
                 'foo' => 'bar'
-            ), new ApiCommand(array(
-                'params' => array(
-                    'baz' => new ApiParam(array(
+            ), new Operation(array(
+                'parameters' => array(
+                    'baz' => new Parameter(array(
                         'default' => 'baaar'
                     ))
                 )
@@ -383,7 +365,7 @@ class CommandTest extends AbstractCommandTest
     {
         $command = new MockCommand(array(
             'foo' => 'bar',
-            'curl.CURLOPT_PROXYPORT' => 8080
+            'curl.options' => array('CURLOPT_PROXYPORT' => 8080)
         ));
         $client = new Client();
         $command->setClient($client);
@@ -403,5 +385,73 @@ class CommandTest extends AbstractCommandTest
         $command->setClient($client);
         // Returns the result of the command
         $this->assertSame($response, $command());
+    }
+
+    /**
+     * @covers Guzzle\Service\Command\AbstractCommand::__construct
+     * @covers Guzzle\Service\Command\AbstractCommand::createOperation
+     */
+    public function testCreatesDefaultOperation()
+    {
+        $command = $this->getMockBuilder('Guzzle\Service\Command\AbstractCommand')->getMockForAbstractClass();
+        $this->assertInstanceOf('Guzzle\Service\Description\Operation', $command->getOperation());
+    }
+
+    public function testAllowsValidatorToBeInjected()
+    {
+        $command = $this->getMockBuilder('Guzzle\Service\Command\AbstractCommand')->getMockForAbstractClass();
+        $v = new SchemaValidator();
+        $command->setValidator($v);
+        $this->assertSame($v, $this->readAttribute($command, 'validator'));
+    }
+
+    public function testCanDisableValidation()
+    {
+        $command = new MockCommand();
+        $command->setClient(new \Guzzle\Service\Client());
+        $v = $this->getMockBuilder('Guzzle\Service\Description\SchemaValidator')
+            ->setMethods(array('validate'))
+            ->getMock();
+        $v->expects($this->never())->method('validate');
+        $command->setValidator($v);
+        $command->set(AbstractCommand::DISABLE_VALIDATION, true);
+        $command->prepare();
+    }
+
+    public function testValidatorUpdatesCommand()
+    {
+        $command = new MockCommand(array('test' => 123, 'foo' => 'bar'));
+        $command->setClient(new \Guzzle\Service\Client());
+        $command->prepare();
+        $this->assertEquals(123, $command->get('test'));
+        $this->assertEquals('abc', $command->get('_internal'));
+        $this->assertEquals('BAR', $command->get('foo'));
+    }
+
+    /**
+     * @expectedException \Guzzle\Service\Exception\ValidationException
+     * @expectedExceptionMessage [Foo] Baz
+     */
+    public function testValidatesCommandBeforeSending()
+    {
+        $command = new MockCommand();
+        $command->setClient(new \Guzzle\Service\Client());
+        $v = $this->getMockBuilder('Guzzle\Service\Description\SchemaValidator')
+            ->setMethods(array('validate', 'getErrors'))
+            ->getMock();
+        $v->expects($this->any())->method('validate')->will($this->returnValue(false));
+        $v->expects($this->any())->method('getErrors')->will($this->returnValue(array('[Foo] Baz', '[Bar] Boo')));
+        $command->setValidator($v);
+        $command->prepare();
+    }
+
+    public function testCanChangeResponseBody()
+    {
+        $body = EntityBody::factory();
+        $command = new MockCommand();
+        $command->setClient(new \Guzzle\Service\Client());
+        $command->set(AbstractCommand::RESPONSE_BODY, $body);
+        $request = $command->prepare();
+        $this->assertSame($body, $this->readAttribute($request, 'responseBody'));
     }
 }

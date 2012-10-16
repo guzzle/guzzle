@@ -5,8 +5,8 @@ namespace Guzzle\Service;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Exception\BadMethodCallException;
-use Guzzle\Common\Inflection\InflectorInterface;
-use Guzzle\Common\Inflection\Inflector;
+use Guzzle\Inflection\InflectorInterface;
+use Guzzle\Inflection\Inflector;
 use Guzzle\Http\Client as HttpClient;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\Command\CommandInterface;
@@ -23,15 +23,17 @@ use Guzzle\Service\Description\ServiceDescription;
  */
 class Client extends HttpClient implements ClientInterface
 {
+    const COMMAND_PARAMS = 'command.params';
+
     /**
      * @var ServiceDescription Description of the service and possible commands
      */
     protected $serviceDescription;
 
     /**
-     * @var string Setting to use for magic method calls
+     * @var bool Whether or not magic methods are enabled
      */
-    protected $magicMethodBehavior = false;
+    protected $enableMagicMethods = false;
 
     /**
      * @var CommandFactoryInterface
@@ -49,8 +51,7 @@ class Client extends HttpClient implements ClientInterface
     protected $inflector;
 
     /**
-     * Basic factory method to create a new client.  Extend this method in
-     * subclasses to build more complex clients.
+     * Basic factory method to create a new client. Extend this method in subclasses to build more complex clients.
      *
      * @param array|Collection $config Configuration data
      *
@@ -75,52 +76,41 @@ class Client extends HttpClient implements ClientInterface
     }
 
     /**
-     * Helper method to find and execute a command.  Magic method calls must be
-     * enabled on the client to use this functionality.
+     * Magic method used to retrieve a command. Magic method must be enabled on the client to use this functionality.
      *
      * @param string $method Name of the command object to instantiate
      * @param array  $args   Arguments to pass to the command
      *
-     * @return mixed
-     * @throws BadMethodCallException when a command is not found or magic
-     *     methods are disabled
+     * @return CommandInterface
+     * @throws BadMethodCallException when a command is not found or magic methods are disabled
      */
     public function __call($method, $args = null)
     {
-        if ($this->magicMethodBehavior == self::MAGIC_CALL_DISABLED) {
-            throw new BadMethodCallException(
-                "Missing method {$method}.  Enable magic calls to use magic methods with command names."
-            );
+        if (!$this->enableMagicMethods) {
+            throw new BadMethodCallException("Missing method {$method}. This client has not enabled magic methods.");
         }
 
-        $command = $this->getCommand($method, isset($args[0]) ? $args[0] : array());
-
-        return $this->magicMethodBehavior == self::MAGIC_CALL_RETURN ? $command : $this->execute($command);
+        return $this->getCommand($method, isset($args[0]) ? $args[0] : array());
     }
 
     /**
-     * Set the behavior for missing methods
+     * Specify whether or not magic methods are enabled (disabled by default)
      *
-     * @param int $behavior Behavior to use when a missing method is called.
-     *     - Client::MAGIC_CALL_DISABLED: Disable magic method calls
-     *     - Client::MAGIC_CALL_EXECUTE:  Execute commands and return the result
-     *     - Client::MAGIC_CALL_RETURN:   Instantiate and return the command
+     * @param bool $isEnabled Set to true to enable magic methods or false to disable them
      *
-     * @return Client
+     * @return self
      */
-    public function setMagicCallBehavior($behavior)
+    public function enableMagicMethods($isEnabled)
     {
-        $this->magicMethodBehavior = (int) $behavior;
+        $this->enableMagicMethods = $isEnabled;
 
         return $this;
     }
 
     /**
-     * Get a command by name.  First, the client will see if it has a service
-     * description and if the service description defines a command by the
-     * supplied name.  If no dynamic command is found, the client will look for
-     * a concrete command class exists matching the name supplied.  If neither
-     * are found, an InvalidArgumentException is thrown.
+     * Get a command by name.  First, the client will see if it has a service description and if the service description
+     * defines a command by the supplied name.  If no dynamic command is found, the client will look for a concrete
+     * command class exists matching the name supplied. If neither are found, an InvalidArgumentException is thrown.
      *
      * @param string $name Name of the command to retrieve
      * @param array  $args Arguments to pass to the command
@@ -130,11 +120,23 @@ class Client extends HttpClient implements ClientInterface
      */
     public function getCommand($name, array $args = array())
     {
-        $command = $this->getCommandFactory()->factory($name, $args);
-        if (!$command) {
+        if (!($command = $this->getCommandFactory()->factory($name, $args))) {
             throw new InvalidArgumentException("Command was not found matching {$name}");
         }
+
         $command->setClient($this);
+
+        // Add global client options to the command
+        if ($command instanceof Collection) {
+            if ($options = $this->getConfig(self::COMMAND_PARAMS)) {
+                foreach ($options as $key => $value) {
+                    if (!$command->hasKey($key)) {
+                        $command->set($key, $value);
+                    }
+                }
+            }
+        }
+
         $this->dispatch('client.command.create', array(
             'client'  => $this,
             'command' => $command
@@ -194,8 +196,7 @@ class Client extends HttpClient implements ClientInterface
      *
      * @param CommandInterface|array $command Command or array of commands to execute
      *
-     * @return mixed Returns the result of the executed command or an array of
-     *               commands if an array of commands was passed.
+     * @return mixed Returns the result of the executed command or an array of commands if executing multiple commands
      * @throws InvalidArgumentException if an invalid command is passed
      */
     public function execute($command)
@@ -212,11 +213,10 @@ class Client extends HttpClient implements ClientInterface
         $requests = array();
 
         foreach ($command as $c) {
-            $event = array('command' => $c->setClient($this));
-            $this->dispatch('command.before_prepare', $event);
+            $c->setClient($this);
             // Set the state to new if the command was previously executed
             $requests[] = $c->prepare()->setState(RequestInterface::STATE_NEW);
-            $this->dispatch('command.before_send', $event);
+            $this->dispatch('command.before_send', array('command' => $c));
         }
 
         if ($singleCommand) {
@@ -235,10 +235,9 @@ class Client extends HttpClient implements ClientInterface
     /**
      * Set the service description of the client
      *
-     * @param ServiceDescription $service Service description
-     * @param bool $updateFactory Set to FALSE to not update the service description based
-     *                            command factory if it is not already on the client.
-     *
+     * @param ServiceDescription $service       Service description
+     * @param bool               $updateFactory Set to false to not update the service description based command factory
+     *                                          if it is not already on the client.
      * @return Client
      */
     public function setDescription(ServiceDescription $service, $updateFactory = true)
@@ -260,6 +259,11 @@ class Client extends HttpClient implements ClientInterface
                 $factory = $this->commandFactory->find('Guzzle\\Service\\Command\\Factory\\ServiceDescriptionFactory');
                 $factory->setServiceDescription($service);
             }
+        }
+
+        // If a baseUrl was set on the description, then update the client
+        if ($baseUrl = $service->getBaseUrl()) {
+            $this->setBaseUrl($baseUrl);
         }
 
         return $this;
@@ -313,8 +317,11 @@ class Client extends HttpClient implements ClientInterface
         if (!$this->resourceIteratorFactory) {
             // Build the default resource iterator factory if one is not set
             $clientClass = get_class($this);
-            $namespace = substr($clientClass, 0, strrpos($clientClass, '\\')) . '\\Model';
-            $this->resourceIteratorFactory = new ResourceIteratorClassFactory($namespace);
+            $prefix = substr($clientClass, 0, strrpos($clientClass, '\\'));
+            $this->resourceIteratorFactory = new ResourceIteratorClassFactory(array(
+                "{$prefix}\\Iterator",
+                "{$prefix}\\Model"
+            ));
         }
 
         return $this->resourceIteratorFactory;
