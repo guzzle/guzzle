@@ -1,6 +1,38 @@
 CHANGELOG
 =========
 
+* 3.0.0 (10-15-2012)
+
+    * Rewrote service description format to be based on Swagger
+        * Now based on JSON schema
+        * Added nested input structures and nested response models
+        * Support for JSON and XML input and output models
+        * Renamed `commands` to `operations`
+        * Removed dot class notation
+        * Removed custom types
+    * Broke the project into smaller top-level namespaces to be more component friendly
+    * Removed support for XML configs and descriptions. Use arrays or JSON files.
+    * Removed the Validation component and Inspector
+    * Moved all cookie code to Guzzle\Plugin\Cookie
+    * Magic methods on a Guzzle\Service\Client now return the command un-executed.
+    * Calling getResult() or getResponse() on a command will lazily execute the command if needed.
+    * Now shipping with cURL's CA certs and using it by default
+    * Added previousResponse() method to response objects
+    * No longer sending Accept and Accept-Encoding headers on every request
+    * Only sending an Expect header by default when a payload is greater than 1MB
+    * Added/moved client options:
+        * curl.blacklist to curl.option.blacklist
+        * Added ssl.certificate_authority
+    * Added a Guzzle\Iterator component
+    * Moved plugins from Guzzle\Http\Plugin to Guzzle\Plugin
+    * Added a more robust backoff retry strategy (replaced the ExponentialBackoffPlugin)
+    * Added a more robust caching plugin
+    * Added setBody to response objects
+    * Updating LogPlugin to use a more flexible MessageFormatter
+    * Added a completely revamped build process
+    * Cleaning up Collection class and removing default values from the get method
+    * Fixed ZF2 cache adapters
+
 * 2.8.8 (10-15-2012)
 
     * Bug: Fixed a cookie issue that caused dot prefixed domains to not match where popular browsers did
