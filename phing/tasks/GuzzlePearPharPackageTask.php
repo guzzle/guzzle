@@ -83,9 +83,9 @@ class GuzzlePearPharPackageTask extends Task
             $this->log('building single PEAR package');
             $this->buildSinglePackage();
         } else {
-            $this->log("building PEAR subpackages");
-            $this->createSubPackages();
-            $this->log("building PEAR bundle package");
+            // $this->log("building PEAR subpackages");
+            // $this->createSubPackages();
+            // $this->log("building PEAR bundle package");
             $this->buildSinglePackage();
         }
 
