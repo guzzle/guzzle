@@ -29,6 +29,7 @@
 
     <target name="clean">
         <delete dir="${dir.output}"/>
+        <delete dir="${project.basedir}/build/pearwork"/>
     </target>
 
     <target name="prepare" depends="clean,test-init,build-init">
