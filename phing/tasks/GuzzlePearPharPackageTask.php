@@ -111,7 +111,11 @@ class GuzzlePearPharPackageTask extends Task
         passthru('git clone git@github.com:guzzle/guzzle.github.com');
 
         // add PEAR packages
-        passthru('pirum add guzzle.github.com/pear *.tgz');
+        foreach (scandir($basedir . '/build/pearwork') as $file) {
+            if (substr($file, -4) == '.tgz') {
+                passthru('pirum add guzzle.github.com/pear '.$file);
+            }
+        }
 
         // if we have a new phar, add it
         if ($this->getMakephar() && file_exists($basedir.'/build/artifacts/guzzle.phar')) {
