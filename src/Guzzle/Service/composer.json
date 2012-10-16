@@ -15,8 +15,7 @@
         "php": ">=5.3.2",
         "guzzle/cache": "self.version",
         "guzzle/http": "self.version",
-        "guzzle/inflection": "self.version",
-        "guzzle/validation": "self.version"
+        "guzzle/inflection": "self.version"
     },
     "autoload": {
         "psr-0": { "Guzzle\\Service": "" }

@@ -35,12 +35,11 @@
         "guzzle/plugin-curlauth": "self.version",
         "guzzle/plugin-history": "self.version",
         "guzzle/plugin-log": "self.version",
-        "guzzle/plugin-md5validator": "self.version",
+        "guzzle/plugin-md5": "self.version",
         "guzzle/plugin-mock": "self.version",
         "guzzle/plugin-oauth": "self.version",
         "guzzle/service": "self.version",
-        "guzzle/stream": "self.version",
-        "guzzle/validation": "self.version"
+        "guzzle/stream": "self.version"
     },
 
     "require": {
