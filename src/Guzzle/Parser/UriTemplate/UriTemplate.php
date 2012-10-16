@@ -189,16 +189,13 @@ class UriTemplate implements UriTemplateInterface
                 } else if ($value['modifier'] == '*') {
                     $expanded = implode($joiner, $kvp);
                     if ($isAssoc) {
-                        // Don't prepend the value name when using the explode
-                        // modifier with an associative array
+                        // Don't prepend the value name when using the explode modifier with an associative array
                         $actuallyUseQueryString = false;
                     }
                 } else {
                     if ($isAssoc) {
-                        // When an associative array is encountered and the
-                        // explode modifier is not set, then the result must
-                        // be a comma separated list of keys followed by their
-                        // respective values.
+                        // When an associative array is encountered and the explode modifier is not set, then the
+                        // result must be a comma separated list of keys followed by their respective values.
                         foreach ($kvp as $k => &$v) {
                             $v = $k . ',' . $v;
                         }

@@ -3,11 +3,11 @@
 namespace Guzzle\Tests\Http;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Log\ClosureLogAdapter;
+use Guzzle\Log\ClosureLogAdapter;
 use Guzzle\Parser\UriTemplate\UriTemplate;
 use Guzzle\Http\Message\Response;
-use Guzzle\Http\Plugin\LogPlugin;
-use Guzzle\Http\Plugin\MockPlugin;
+use Guzzle\Plugin\Log\LogPlugin;
+use Guzzle\Plugin\Mock\MockPlugin;
 use Guzzle\Http\Curl\CurlMulti;
 use Guzzle\Http\Client;
 use Guzzle\Http\Utils;
@@ -164,33 +164,113 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client = new Client('http://www.test.com/', array(
             'api' => 'v1',
             // Adds the option using the curl values
-            'curl.CURLOPT_HTTPAUTH' => 'CURLAUTH_DIGEST',
-            'curl.abc' => 'not added',
-            'curl.blacklist' => 'abc'
+            'curl.options' => array(
+                'CURLOPT_HTTPAUTH'     => 'CURLAUTH_DIGEST',
+                'abc'                  => 'foo',
+                'blacklist'            => 'abc',
+                'debug'                => true
+            )
         ));
 
         $request = $client->createRequest();
         $options = $request->getCurlOptions();
         $this->assertEquals(CURLAUTH_DIGEST, $options->get(CURLOPT_HTTPAUTH));
-        $this->assertNull($options->get('curl.abc'));
-        $this->assertNull($options->get('curl.blacklist'));
+        $this->assertEquals('foo', $options->get('abc'));
+        $this->assertEquals('abc', $options->get('blacklist'));
     }
 
     /**
-     * @covers Guzzle\Http\Client::createRequest
-     * @covers Guzzle\Http\Client::prepareRequest
+     * @covers Guzzle\Http\Client::setSslVerification
      */
-    public function testClientAddsCustomCurlOptionsToRequests()
+    public function testClientAllowsFineGrainedSslControlButIsSecureByDefault()
     {
-        $client = new Client('http://www.test.com/', array(
-            'api' => 'v1',
-            'curl.debug' => true,
-            'curl.foo' => 'bar'
-        ));
-        $request = $client->createRequest();
+        $client = new Client('https://www.secure.com/');
 
-        $this->assertTrue($request->getCurlOptions()->get('debug'));
-        $this->assertEquals('bar', $request->getCurlOptions()->get('foo'));
+        // secure by default
+        $request = $client->createRequest();
+        $options = $request->getCurlOptions();
+        $this->assertTrue($options->get(CURLOPT_SSL_VERIFYPEER));
+
+        // set a capath if you prefer
+        $client = new Client('https://www.secure.com/');
+        $client->setSslVerification(__DIR__);
+        $request = $client->createRequest();
+        $options = $request->getCurlOptions();
+        $this->assertSame(__DIR__, $options->get(CURLOPT_CAPATH));
+    }
+    /**
+     * @covers Guzzle\Http\Client::__construct
+     */
+    public function testConfigSettingsControlSslConfiguration()
+    {
+        // Use the default ca certs on the system
+        $client = new Client('https://www.secure.com/', array('ssl.certificate_authority' => 'system'));
+        $this->assertNull($client->getConfig('curl.options'));
+        // Can set the cacert value as well
+        $client = new Client('https://www.secure.com/', array('ssl.certificate_authority' => false));
+        $options = $client->getConfig('curl.options');
+        $this->assertArrayNotHasKey(CURLOPT_CAINFO, $options);
+        $this->assertSame(false, $options[CURLOPT_SSL_VERIFYPEER]);
+        $this->assertSame(1, $options[CURLOPT_SSL_VERIFYHOST]);
+    }
+
+    /**
+     * @covers Guzzle\Http\Client::setSslVerification
+     */
+    public function testClientAllowsUnsafeOperationIfRequested()
+    {
+        // be really unsafe if you insist
+        $client = new Client('https://www.secure.com/', array(
+            'api' => 'v1'
+        ));
+
+        $client->setSslVerification(false);
+        $request = $client->createRequest();
+        $options = $request->getCurlOptions();
+        $this->assertFalse($options->get(CURLOPT_SSL_VERIFYPEER));
+        $this->assertNull($options->get(CURLOPT_CAINFO));
+    }
+
+    /**
+     * @covers Guzzle\Http\Client::setSslVerification
+     */
+    public function testClientAllowsSettingSpecificSslCaInfo()
+    {
+        // set a file other than the provided cacert.pem
+        $client = new Client('https://www.secure.com/', array(
+            'api' => 'v1'
+        ));
+
+        $client->setSslVerification(__FILE__);
+        $request = $client->createRequest();
+        $options = $request->getCurlOptions();
+        $this->assertSame(__FILE__, $options->get(CURLOPT_CAINFO));
+    }
+
+    /**
+     * @covers Guzzle\Http\Client::setSslVerification
+     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     */
+    public function testClientPreventsInadvertentInsecureVerifyHostSetting()
+    {
+        // set a file other than the provided cacert.pem
+        $client = new Client('https://www.secure.com/', array(
+            'api' => 'v1'
+        ));
+        $client->setSslVerification(__FILE__, true, true);
+    }
+
+    /**
+     * @covers Guzzle\Http\Client::setSslVerification
+     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     */
+    public function testClientPreventsInvalidVerifyPeerSetting()
+    {
+        // set a file other than the provided cacert.pem
+        $client = new Client('https://www.secure.com/', array(
+            'api' => 'v1'
+        ));
+        $client->setSslVerification(__FILE__, 'yes');
     }
 
     /**
@@ -200,8 +280,10 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $client = new Client('http://www.example.com', array(
             'api' => 'v1',
-            'params.foo' => 'bar',
-            'params.baz' => 'jar',
+            'request.params' => array(
+                'foo' => 'bar',
+                'baz' => 'jar'
+            )
         ));
         $request = $client->createRequest();
         $this->assertEquals('bar', $request->getParams()->get('foo'));

@@ -6,8 +6,7 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Parser\ParserRegistry;
 
 /**
- * Parses and generates URLs based on URL parts.  In favor of performance,
- * URL parts are not validated.
+ * Parses and generates URLs based on URL parts. In favor of performance, URL parts are not validated.
  */
 class Url
 {
@@ -46,8 +45,7 @@ class Url
     }
 
     /**
-     * Build a URL from parse_url parts.  The generated URL will be a relative
-     * URL if a scheme or host are not provided.
+     * Build a URL from parse_url parts. The generated URL will be a relative URL if a scheme or host are not provided.
      *
      * @param array $parts Array of parse_url parts
      *
@@ -242,8 +240,7 @@ class Url
     }
 
     /**
-     * Get the port part of the URl.  Will return the default port for a given
-     * scheme if a port has not explicitly been set.
+     * Get the port part of the URl. Will return the default port for a given scheme if no port has been set.
      *
      * @return int|null
      */
@@ -486,8 +483,7 @@ class Url
     }
 
     /**
-     * Combine the URL with another URL.  Every part of the second URL supersede
-     * the current URL if that part is specified.
+     * Combine the URL with another URL. Parts specified in the passed URL will supersede parts in the current URL.
      *
      * @param string $url Relative URL to combine with
      *

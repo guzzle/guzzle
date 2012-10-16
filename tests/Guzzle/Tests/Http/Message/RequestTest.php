@@ -7,7 +7,7 @@ use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;
 use Guzzle\Http\Client;
 use Guzzle\Http\Utils;
-use Guzzle\Http\Plugin\ExponentialBackoffPlugin;
+use Guzzle\Plugin\Async\AsyncPlugin;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
@@ -124,7 +124,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
             . "Host: www.google.com\r\n"
             . "Authorization: Basic {$auth}\r\n"
             . "User-Agent: " . Utils::getDefaultUserAgent() . "\r\n"
-            . "Expect: 100-Continue\r\n"
             . "Content-Length: 4\r\n\r\nData";
 
         $request = RequestFactory::getInstance()->create('PUT', 'http://www.google.com/path?q=1&v=2', array(
@@ -176,7 +175,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Message\Request::send
-     * @expectedException RuntimeException
+     * @expectedException \RuntimeException
      * @expectedExceptionMessage A client must be set on the request
      */
     public function testRequestsRequireClients()
@@ -563,7 +562,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testClonedRequestsUseNewInternalState()
     {
-        $p = new ExponentialBackoffPlugin();
+        $p = new AsyncPlugin();
         $this->request->getEventDispatcher()->addSubscriber($p);
         $h = $this->request->getHeader('Host');
 
@@ -810,5 +809,27 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request->receiveResponseHeader('HTTP/1.1 200');
         $this->assertSame(200, $request->getResponse()->getStatusCode());
         $this->assertSame('OK', $request->getResponse()->getReasonPhrase());
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\Request::receiveResponseHeader
+     */
+    public function testAddsPreviousResponseToResponseWhenRedirecting()
+    {
+        $url = $this->getServer()->getUrl();
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 303 SEE OTHER\r\n" .
+            "Content-Length: 0\r\n" .
+            "Location: {$url}/foo\r\n\r\n",
+            "HTTP/1.1 200 OK\r\n" .
+            "Content-Length: 0\r\n\r\n"
+        ));
+
+        $request = $this->request;
+        $request->send();
+        $this->assertEquals(2, count($this->getServer()->getReceivedRequests()));
+        $this->assertEquals(200, $request->getResponse()->getStatusCode());
+        $this->assertEquals(303, $request->getResponse()->getPreviousResponse()->getStatusCode());
     }
 }

@@ -27,7 +27,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         ));
         $request->setBody('Test');
         $this->assertEquals('123', $request->getHeader('X-Test'));
-        $this->assertEquals('100-Continue', $request->getHeader('Expect'));
+        $this->assertNull($request->getHeader('Expect'));
     }
 
     /**
@@ -52,7 +52,6 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals("PUT / HTTP/1.1\r\n"
             . "Host: www.guzzle-project.com\r\n"
             . "User-Agent: " . Utils::getDefaultUserAgent() . "\r\n"
-            . "Expect: 100-Continue\r\n"
             . "Content-Length: 4\r\n\r\n"
             . "data", (string) $request);
     }
@@ -77,8 +76,8 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals("POST / HTTP/1.1\r\n"
             . "Host: www.guzzle-project.com\r\n"
             . "User-Agent: " . Utils::getDefaultUserAgent() . "\r\n"
-            . "Expect: 100-Continue\r\n"
-            . "Content-Type: multipart/form-data\r\n\r\n", (string) $request);
+            . "Content-Type: multipart/form-data\r\n"
+            . "Expect: 100-Continue\r\n\r\n", (string) $request);
     }
 
     /**
@@ -478,5 +477,27 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request = new EntityEnclosingRequest('POST', 'http://test.com/');
         $request->setState($request::STATE_TRANSFER);
         $this->assertEquals('0', (string) $request->getHeader('Content-Length'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::setExpectHeaderCutoff
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::setBody
+     */
+    public function testSettingExpectHeaderCutoffChangesRequest()
+    {
+        $request = new EntityEnclosingRequest('PUT', 'http://test.com/');
+        $request->setHeader('Expect', '100-Continue');
+        $request->setExpectHeaderCutoff(false);
+        $this->assertNull($request->getHeader('Expect'));
+        // There is not body, so remove the expect header
+        $request->setHeader('Expect', '100-Continue');
+        $request->setExpectHeaderCutoff(10);
+        $this->assertNull($request->getHeader('Expect'));
+        // The size is less than the cutoff
+        $request->setBody('foo');
+        $this->assertNull($request->getHeader('Expect'));
+        // The size is greater than the cutoff
+        $request->setBody('foobazbarbamboo');
+        $this->assertNotNull($request->getHeader('Expect'));
     }
 }

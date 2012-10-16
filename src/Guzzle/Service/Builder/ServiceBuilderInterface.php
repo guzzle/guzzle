@@ -6,8 +6,7 @@ use Guzzle\Common\FromConfigInterface;
 use Guzzle\Service\Exception\ServiceNotFoundException;
 
 /**
- * Service builder to generate service builders and service clients from
- * configuration settings
+ * Service builder to generate service builders and service clients from configuration settings
  */
 interface ServiceBuilderInterface
 {
@@ -25,8 +24,8 @@ interface ServiceBuilderInterface
     /**
      * Register a client by name with the service builder
      *
-     * @param string $name  Name of the client to register
-     * @param mixed  $value Service to register
+     * @param string $key     Name of the client to register
+     * @param mixed  $service Service to register
      *
      * @return ServiceBuilderInterface
      */

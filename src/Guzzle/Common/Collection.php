@@ -2,6 +2,8 @@
 
 namespace Guzzle\Common;
 
+use Guzzle\Common\Exception\InvalidArgumentException;
+
 /**
  * Key value pair collection object
  */
@@ -19,17 +21,39 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      */
     public function __construct(array $data = null)
     {
-        if ($data) {
-            $this->data = $data;
-        } else {
-            $this->data = array();
-        }
+        $this->data = $data ?: array();
     }
 
     /**
-     * Add a value to a key.  If a key of the same name has
-     * already been added, the key value will be converted into an array
-     * and the new value will be pushed to the end of the array.
+     * Create a new collection from an array, validate the keys, and add default values where missing
+     *
+     * @param array $config   Configuration values to apply.
+     * @param array $defaults Default parameters
+     * @param array $required Required parameter names
+     *
+     * @return self
+     * @throws InvalidArgumentException if a parameter is missing
+     */
+    public static function fromConfig(array $config = null, array $defaults = null, array $required = null)
+    {
+        $collection = new self($defaults);
+
+        foreach ((array) $config as $key => $value) {
+            $collection->set($key, $value);
+        }
+
+        foreach ((array) $required as $key) {
+            if ($collection->hasKey($key) === false) {
+                throw new InvalidArgumentException("Config must contain a '{$key}' key");
+            }
+        }
+
+        return $collection;
+    }
+
+    /**
+     * Add a value to a key.  If a key of the same name has already been added, the key value will be converted into an
+     * array and the new value will be pushed to the end of the array.
      *
      * @param string $key   Key to add
      * @param mixed  $value Value to add to the key
@@ -72,11 +96,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     }
 
     /**
-     * Iterates over each key value pair in the collection passing them to the
-     * Closure. If the  Closure function returns true, the current value from
-     * input is returned into the result Collection.  The Closure must accept
-     * three parameters: (string) $key, (string) $value and
-     * return Boolean TRUE or FALSE for each value.
+     * Iterates over each key value pair in the collection passing them to the Closure. If the  Closure function returns
+     * true, the current value from input is returned into the result Collection.  The Closure must accept three
+     * parameters: (string) $key, (string) $value and return Boolean TRUE or FALSE for each value.
      *
      * @param \Closure $closure Closure evaluation function
      * @param bool     $static  Set to TRUE to use the same class as the return rather than returning a Collection
@@ -108,14 +130,13 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Get a specific key value.
      *
-     * @param string $key     Key to retrieve.
-     * @param mixed  $default If the key is not found, set this value to specify a default
+     * @param string $key Key to retrieve.
      *
      * @return mixed|null Value of the key or NULL
      */
-    public function get($key, $default = null)
+    public function get($key)
     {
-        return array_key_exists($key, $this->data) ? $this->data[$key] : $default;
+        return isset($this->data[$key]) ? $this->data[$key] : null;
     }
 
     /**
@@ -127,11 +148,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
      */
     public function getAll(array $keys = null)
     {
-        if ($keys) {
-            return array_intersect_key($this->data, array_flip($keys));
-        } else {
-            return $this->data;
-        }
+        return $keys ? array_intersect_key($this->data, array_flip($keys)) : $this->data;
     }
 
     /**
@@ -187,10 +204,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     }
 
     /**
-     * Returns a Collection containing all the elements of the collection after
-     * applying the callback function to each one. The Closure should accept
-     * three parameters: (string) $key, (string) $value, (array) $context and
-     * return a modified value
+     * Returns a Collection containing all the elements of the collection after applying the callback function to each
+     * one. The Closure should accept three parameters: (string) $key, (string) $value, (array) $context and return a
+     * modified value
      *
      * @param \Closure $closure Closure to apply
      * @param array    $context Context to pass to the closure
@@ -210,8 +226,6 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
 
     /**
      * Add and merge in a Collection or array of key value pair data.
-     *
-     * Invalid $data arguments will silently fail.
      *
      * @param Collection|array $data Associative array of key value pair data
      *
@@ -327,19 +341,16 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Inject configuration settings into an input string
      *
-     * @param string     $input  Input to inject
-     * @param Collection $config Configuration data to inject into the input
+     * @param string $input  Input to inject
      *
      * @return string
      */
     public function inject($input)
     {
         // Only perform the preg callback if needed
-        if (strpos($input, '{') === false) {
-            return $input;
-        }
-
-        return preg_replace_callback('/{\s*([A-Za-z_\-\.0-9]+)\s*}/', array($this, 'getPregMatchValue'), $input);
+        return strpos($input, '{') === false
+            ? $input
+            : preg_replace_callback('/{\s*([A-Za-z_\-\.0-9]+)\s*}/', array($this, 'getPregMatchValue'), $input);
     }
 
     /**

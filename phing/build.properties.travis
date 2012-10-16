@@ -1,0 +1,16 @@
+# update this if you're working on a fork.
+guzzle.remote=git@github.com:guzzle/guzzle.git
+
+# github credentials -- only used by GitHub API calls to create subtree repos
+github.basicauth=username:password
+# for the subtree split and testing
+github.org=guzzle
+
+# your git path
+cmd.git=/usr/bin/git
+
+# your composer command
+cmd.composer=composer
+
+# test server start
+cmd.testserver="~/.nvm/nvm.sh run v0.6.14"

@@ -4,7 +4,7 @@ namespace Guzzle\Tests\Service\Command;
 
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Command\Factory\ServiceDescriptionFactory;
-use Guzzle\Common\Inflection\Inflector;
+use Guzzle\Inflection\Inflector;
 
 /**
  * @covers Guzzle\Service\Command\Factory\ServiceDescriptionFactory
@@ -50,7 +50,7 @@ class ServiceDescriptionFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     protected function getDescription()
     {
         return ServiceDescription::factory(array(
-            'commands' => array(
+            'operations' => array(
                 'jar_jar' => array(
                     'class' => 'Guzzle\Tests\Service\Mock\Command\MockCommand'
                 ),

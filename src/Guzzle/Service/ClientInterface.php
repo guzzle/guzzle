@@ -4,7 +4,7 @@ namespace Guzzle\Service;
 
 use Guzzle\Common\FromConfigInterface;
 use Guzzle\Common\Exception\InvalidArgumentException;
-use Guzzle\Common\Inflection\InflectorInterface;
+use Guzzle\Inflection\InflectorInterface;
 use Guzzle\Http\ClientInterface as HttpClientInterface;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Description\ServiceDescription;
@@ -17,16 +17,10 @@ use Guzzle\Service\Resource\ResourceIteratorFactoryInterface;
  */
 interface ClientInterface extends HttpClientInterface, FromConfigInterface
 {
-    const MAGIC_CALL_DISABLED = 0;
-    const MAGIC_CALL_RETURN = 1;
-    const MAGIC_CALL_EXECUTE = 2;
-
     /**
-     * Get a command by name.  First, the client will see if it has a service
-     * description and if the service description defines a command by the
-     * supplied name.  If no dynamic command is found, the client will look for
-     * a concrete command class exists matching the name supplied.  If neither
-     * are found, an InvalidArgumentException is thrown.
+     * Get a command by name.  First, the client will see if it has a service description and if the service description
+     * defines a command by the supplied name.  If no dynamic command is found, the client will look for a concrete
+     * command class exists matching the name supplied. If neither are found, an InvalidArgumentException is thrown.
      *
      * @param string $name Name of the command to retrieve
      * @param array  $args Arguments to pass to the command
@@ -41,8 +35,7 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
      *
      * @param CommandInterface|array $command Command or array of commands to execute
      *
-     * @return mixed Returns the result of the executed command or an array of
-     *               commands if an array of commands was passed.
+     * @return mixed Returns the result of the executed command or an array of commands if executing multiple commands
      * @throws InvalidArgumentException if an invalid command is passed
      */
     public function execute($command);
@@ -50,10 +43,9 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
     /**
      * Set the service description of the client
      *
-     * @param ServiceDescription $service Service description
-     * @param bool $updateFactory Set to FALSE to not update the service description based
-     *                            command factory if it is not already on the client.
-     *
+     * @param ServiceDescription $service       Service description
+     * @param bool               $updateFactory Set to false to not update the service description based command factory
+     *                                          if it is not already on the client.
      * @return ClientInterface
      */
     public function setDescription(ServiceDescription $service, $updateFactory = true);

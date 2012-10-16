@@ -17,6 +17,7 @@ vendor/
 
 # Ignore build files
 build/
+phing/build.properties
 
 # Ignore subsplit working directory
 .subsplit

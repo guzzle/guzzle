@@ -10,14 +10,11 @@ use Guzzle\Http\Message\RequestInterface;
 /**
  * Send {@see RequestInterface} objects in parallel using curl_multi
  *
- * This implementation allows callers to send blocking requests that return back
- * to the caller when their requests complete, regardless of whether or not
- * previously sending requests in the curl_multi object have completed.  The
- * implementation relies on managing the recursion scope in which a caller adds
- * a request to the CurlMulti object, and tracking the requests in the current
- * scope until they complete.  Although the CurlMulti object only tracks whether
- * or not requests in the current scope have completed, it still sends all
- * requests added to the object in parallel.
+ * This implementation allows callers to send blocking requests that return back to the caller when their requests
+ * complete, regardless of whether or not previously sending requests in the curl_multi object have completed.  The
+ * implementation relies on managing the recursion scope in which a caller adds a request to the CurlMulti object, and
+ * tracking the requests in the current scope until they complete.  Although the CurlMulti object only tracks whether
+ * or not requests in the current scope have completed, it still sends all requests added to the object in parallel.
  */
 class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
 {
@@ -123,10 +120,9 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      */
     public function __construct()
     {
-        // You can get some weird "Too many open files" errors when sending
-        // a large amount of requests in parallel.  These two statements
-        // autoload classes before a system runs out of file descriptors so
-        // that you can get back valuable error messages if you run out.
+        // You can get some weird "Too many open files" errors when sending a large amount of requests in parallel.These
+        // two statements autoload classes before a system runs out of file descriptors so that you can get back
+        // valuable error messages if you run out.
         class_exists('Guzzle\Http\Message\Response');
         class_exists('Guzzle\Http\Exception\CurlException');
 
@@ -148,11 +144,9 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      *
      * Adds a request to a batch of requests to be sent in parallel.
      *
-     * Async requests adds a request to the current scope to be executed in
-     * parallel with any currently executing cURL handles.  You may only add an
-     * async request while other requests are transferring.  Attempting to add
-     * an async request while no requests are transferring will add the request
-     * normally in the next available scope (typically 0).
+     * Async requests adds a request to the current scope to be executed in parallel with any currently executing cURL
+     * handles. You may only add an async request while other requests are transferring. Attempting to add an async
+     * request while no requests are transferring will add the request normally in the next available scope (e.g. 0).
      *
      * @param RequestInterface $request Request to add
      * @param bool             $async   Set to TRUE to add to the current scope
@@ -268,8 +262,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         // Only enter the main perform() loop if there are requests in scope
         if (!empty($this->requests[$this->scope])) {
 
-            // Any exceptions thrown from this event should break the entire
-            // flow of sending requests in parallel to prevent weird errors
+            // Any exceptions thrown from this event should break the entire flow of sending requests
             $this->dispatch(self::BEFORE_SEND, array(
                 'requests' => $this->requests[$this->scope]
             ));

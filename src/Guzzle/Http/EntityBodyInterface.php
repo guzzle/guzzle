@@ -2,7 +2,7 @@
 
 namespace Guzzle\Http;
 
-use Guzzle\Common\StreamInterface;
+use Guzzle\Stream\StreamInterface;
 
 /**
  * Entity body used with an HTTP request or response
@@ -10,9 +10,8 @@ use Guzzle\Common\StreamInterface;
 interface EntityBodyInterface extends StreamInterface
 {
     /**
-     * If the stream is readable, compress the data in the stream using deflate
-     * compression.  The uncompressed stream is then closed, and the compressed
-     * stream then becomes the wrapped stream.
+     * If the stream is readable, compress the data in the stream using deflate compression. The uncompressed stream is
+     * then closed, and the compressed stream then becomes the wrapped stream.
      *
      * @param string $filter Compression filter
      *
@@ -21,8 +20,7 @@ interface EntityBodyInterface extends StreamInterface
     public function compress($filter = 'zlib.deflate');
 
     /**
-     * Decompress a deflated string.  Once uncompressed, the uncompressed
-     * string is then used as the wrapped stream.
+     * Decompress a deflated string. Once uncompressed, the uncompressed string is then used as the wrapped stream.
      *
      * @param string $filter De-compression filter
      *

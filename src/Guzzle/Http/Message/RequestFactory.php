@@ -8,9 +8,7 @@ use Guzzle\Http\Url;
 use Guzzle\Parser\ParserRegistry;
 
 /**
- * Default HTTP request factory used to create the default
- * Guzzle\Http\Message\Request and Guzzle\Http\Message\EntityEnclosingRequest
- * objects.
+ * Default HTTP request factory used to create the default {@see Request} and {@see EntityEnclosingRequest} objects.
  */
 class RequestFactory implements RequestFactoryInterface
 {
@@ -60,10 +58,9 @@ class RequestFactory implements RequestFactoryInterface
             $parsed['headers'], $parsed['body'], $parsed['protocol'],
             $parsed['version']);
 
-        // EntityEnclosingRequest adds an "Expect: 100-Continue" header when
-        // using a raw request body for PUT or POST requests. This factory
-        // method should accurately reflect the message, so here we are
-        // removing the Expect header if one was not supplied in the message.
+        // EntityEnclosingRequest adds an "Expect: 100-Continue" header when using a raw request body for PUT or POST
+        // requests. This factory method should accurately reflect the message, so here we are removing the Expect
+        // header if one was not supplied in the message.
         if (!isset($parsed['headers']['Expect']) && !isset($parsed['headers']['expect'])) {
             $request->removeHeader('Expect');
         }

@@ -5,14 +5,12 @@ namespace Guzzle\Tests\Http\Curl;
 use Guzzle\Common\Event;
 use Guzzle\Common\Exception\ExceptionCollection;;
 use Guzzle\Common\Collection;
-use Guzzle\Common\Log\ClosureLogAdapter;
 use Guzzle\Http\Client;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Curl\CurlMulti;
 use Guzzle\Http\Exception\CurlException;
-use Guzzle\Http\Plugin\LogPlugin;
 use Guzzle\Tests\Mock\MockMulti;
 
 /**
@@ -22,12 +20,12 @@ use Guzzle\Tests\Mock\MockMulti;
 class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
-     * @var Guzzle\Http\Curl\CurlMulti
+     * @var \Guzzle\Http\Curl\CurlMulti
      */
     private $multi;
 
     /**
-     * @var Guzzle\Common\Collection
+     * @var \Guzzle\Common\Collection
      */
     private $updates;
 
@@ -94,7 +92,6 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertTrue($mock->has(CurlMulti::ADD_REQUEST));
         $this->assertFalse($mock->has(CurlMulti::REMOVE_REQUEST));
-        $this->assertFalse($mock->has(CurlMulti::POLLING));
         $this->assertFalse($mock->has(CurlMulti::COMPLETE));
     }
 
@@ -285,7 +282,6 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
         $this->multi->add($request);
         $this->multi->send();
         $this->assertTrue($this->mock->has(CurlMulti::ADD_REQUEST));
-        $this->assertTrue($this->mock->has(CurlMulti::POLLING) === false);
         $this->assertTrue($this->mock->has(CurlMulti::COMPLETE) !== false);
     }
 
@@ -532,12 +528,9 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
         ));
 
+        $stream = fopen('php://temp', 'w+');
         $client = new Client($this->getServer()->getUrl());
-        $message = '';
-        $plugin = new LogPlugin(new ClosureLogAdapter(function($msg) use (&$message) {
-            $message .= $msg . "\n";
-        }), LogPlugin::LOG_VERBOSE);
-        $client->getEventDispatcher()->addSubscriber($plugin);
+        $client->getConfig()->set('curl.CURLOPT_VERBOSE', true)->set('curl.CURLOPT_STDERR', $stream);
 
         $request = $client->get();
         $multi = new CurlMulti();
@@ -547,7 +540,8 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
         $multi->add($request);
         $multi->send();
 
-        $this->assertNotContains('Re-using existing connection', $message);
+        rewind($stream);
+        $this->assertNotContains('Re-using existing connection', stream_get_contents($stream));
     }
 
     /**

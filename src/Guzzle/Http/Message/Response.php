@@ -113,6 +113,11 @@ class Response extends AbstractMessage
     protected $cacheResponseCodes = array(200, 203, 206, 300, 301, 410);
 
     /**
+     * @var Response If a redirect was issued or an intermediate response was issued
+     */
+    protected $previous;
+
+    /**
      * Create a new Response based on a raw response message
      *
      * @param string $message Response message
@@ -183,6 +188,20 @@ class Response extends AbstractMessage
     public function getBody($asString = false)
     {
         return $asString ? (string) $this->body : $this->body;
+    }
+
+    /**
+     * Set the response entity body
+     *
+     * @param EntityBodyInterface|string $body Body to set
+     *
+     * @return self
+     */
+    public function setBody($body)
+    {
+        $this->body = EntityBody::factory($body);
+
+        return $this;
     }
 
     /**
@@ -703,7 +722,7 @@ class Response extends AbstractMessage
      */
     public function isClientError()
     {
-        return substr(strval($this->statusCode), 0, 1) == '4';
+        return $this->statusCode >= 400 && $this->statusCode < 500;
     }
 
     /**
@@ -723,7 +742,7 @@ class Response extends AbstractMessage
      */
     public function isInformational()
     {
-        return substr(strval($this->statusCode), 0, 1) == '1';
+        return $this->statusCode < 200;
     }
 
     /**
@@ -733,7 +752,7 @@ class Response extends AbstractMessage
      */
     public function isRedirect()
     {
-        return substr(strval($this->statusCode), 0, 1) == '3';
+        return $this->statusCode >= 300 && $this->statusCode < 400;
     }
 
     /**
@@ -743,7 +762,7 @@ class Response extends AbstractMessage
      */
     public function isServerError()
     {
-        return substr(strval($this->statusCode), 0, 1) == '5';
+        return $this->statusCode >= 500 && $this->statusCode < 600;
     }
 
     /**
@@ -753,7 +772,7 @@ class Response extends AbstractMessage
      */
     public function isSuccessful()
     {
-        return substr(strval($this->statusCode), 0, 1) == '2' || $this->statusCode == '304';
+        return ($this->statusCode >= 200 && $this->statusCode < 300) || $this->statusCode == 304;
     }
 
     /**
@@ -798,8 +817,7 @@ class Response extends AbstractMessage
     }
 
     /**
-     * Gets the number of seconds from the current time in which this response
-     * is still considered fresh as specified in RFC 2616-13
+     * Gets the number of seconds from the current time in which this response is still considered fresh
      *
      * @return int|null Returns the number of seconds
      */
@@ -824,8 +842,7 @@ class Response extends AbstractMessage
     /**
      * Check if the response is considered fresh.
      *
-     * A response is considered fresh when its age is less than the freshness
-     * lifetime (maximum age) of the response.
+     * A response is considered fresh when its age is less than the freshness lifetime (maximum age) of the response.
      *
      * @return bool|null
      */
@@ -837,8 +854,7 @@ class Response extends AbstractMessage
     }
 
     /**
-     * Check if the response can be validated against the origin server using
-     * a conditional GET request.
+     * Check if the response can be validated against the origin server using a conditional GET request.
      *
      * @return bool
      */
@@ -848,14 +864,12 @@ class Response extends AbstractMessage
     }
 
     /**
-     * Get the freshness of the response by returning the difference of the
-     * maximum lifetime of the response and the age of the response
-     * (max-age - age).
+     * Get the freshness of the response by returning the difference of the maximum lifetime of the response and the
+     * age of the response (max-age - age).
      *
-     * Freshness values less than 0 mean that the response is no longer fresh
-     * and is ABS(freshness) seconds expired.  Freshness values of greater than
-     * zer0 is the number of seconds until the response is no longer fresh.
-     * A NULL result means that no freshness information is available.
+     * Freshness values less than 0 mean that the response is no longer fresh and is ABS(freshness) seconds expired.
+     * Freshness values of greater than zero is the number of seconds until the response is no longer fresh. A NULL
+     * result means that no freshness information is available.
      *
      * @return int
      */
@@ -865,5 +879,29 @@ class Response extends AbstractMessage
         $age = $this->getAge();
 
         return $maxAge && $age ? ($maxAge - $age) : null;
+    }
+
+    /**
+     * Get the previous response (e.g. Redirect response)
+     *
+     * @return null|Response
+     */
+    public function getPreviousResponse()
+    {
+        return $this->previous;
+    }
+
+    /**
+     * Set the previous response
+     *
+     * @param Response $response Response to set
+     *
+     * @return self
+     */
+    public function setPreviousResponse(Response $response)
+    {
+        $this->previous = $response;
+
+        return $this;
     }
 }

@@ -18,8 +18,9 @@ class ReadLimitEntityBody extends AbstractEntityBodyDecorator
     protected $offset;
 
     /**
-     * @param int $limit  Total number of bytes to allow to be read from the stream
-     * @param int $offset Position to seek to before reading (only works on seekable streams)
+     * @param EntityBodyInterface $body   Body to wrap
+     * @param int                 $limit  Total number of bytes to allow to be read from the stream
+     * @param int                 $offset Position to seek to before reading (only works on seekable streams)
      */
     public function __construct(EntityBodyInterface $body, $limit, $offset = 0)
     {
