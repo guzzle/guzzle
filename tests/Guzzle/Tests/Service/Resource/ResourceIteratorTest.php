@@ -194,4 +194,17 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
         $ri->setPageSize(10);
         $this->assertEmpty($this->readAttribute($ri, 'resources'));
     }
+
+    public function testWorksWithCustomAppendIterator()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 200 OK\r\n\r\n{ \"next_token\": \"\", \"resources\": [\"d\", \"e\", \"f\"] }"
+        ));
+        $ri = new MockCommandIterator($this->getServiceBuilder()->get('mock')->getCommand('iterable_command'));
+        $a = new \Guzzle\Iterator\AppendIterator();
+        $a->append($ri);
+        $results = iterator_to_array($a, false);
+        $this->assertEquals(4, $ri->calledNext);
+    }
 }

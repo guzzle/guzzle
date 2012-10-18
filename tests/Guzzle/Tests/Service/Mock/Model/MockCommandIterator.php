@@ -6,6 +6,8 @@ use Guzzle\Service\Resource\ResourceIterator;
 
 class MockCommandIterator extends ResourceIterator
 {
+    public $calledNext = 0;
+
     protected function sendRequest()
     {
         if ($this->nextToken) {
@@ -20,5 +22,21 @@ class MockCommandIterator extends ResourceIterator
         $this->nextToken = $data['next_token'];
 
         return $data['resources'];
+    }
+
+    public function next()
+    {
+        $this->calledNext++;
+        parent::next();
+    }
+
+    public function getResources()
+    {
+        return $this->resources;
+    }
+
+    public function getIteratedCount()
+    {
+        return $this->iteratedCount;
     }
 }
