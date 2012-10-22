@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+* 3.0.1 (10-22-2012)
+
+    * Models can now be used like regular collection objects by calling filter, map, etc
+    * Models no longer require a Parameter structure or initial data in the constructor
+    * Added a custom AppendIterator to get around a PHP bug with the `\AppendIterator`
+
 * 3.0.0 (10-15-2012)
 
     * Rewrote service description format to be based on Swagger
