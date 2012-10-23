@@ -14,8 +14,14 @@
     <!-- <import file="${dir.imports}/metrics.xml"/> -->
 
     <target name="test" description="Run unit tests" depends="test-init">
-        <exec passthru="true" command="phpunit" />
-        <testserver cmd="${cmd.testserver}" action="stop" />
+        <trycatch>
+            <try>
+                <exec passthru="true" command="phpunit" checkReturn="true" />
+            </try>
+            <finally>
+                <testserver cmd="${cmd.testserver}" action="stop" />
+            </finally>
+        </trycatch>
     </target>
 
     <target name="test-init" depends="install-dependencies" description="Initialize test dependencies">
