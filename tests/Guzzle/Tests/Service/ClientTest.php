@@ -55,6 +55,14 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
+     * @covers Guzzle\Service\Client::factory
+     */
+    public function testFactoryDoesNotRequireBaseUrl()
+    {
+        $client = Client::factory();
+    }
+
+    /**
      * @covers Guzzle\Service\Client::getAllEvents
      */
     public function testDescribesEvents()

@@ -59,7 +59,7 @@ class Client extends HttpClient implements ClientInterface
      */
     public static function factory($config = array())
     {
-        return new static($config['base_url'], $config);
+        return new static(isset($config['base_url']) ? $config['base_url'] : null, $config);
     }
 
     /**
