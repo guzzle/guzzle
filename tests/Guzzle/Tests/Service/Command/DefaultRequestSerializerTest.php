@@ -80,4 +80,16 @@ class DefaultRequestSerializerTest extends \Guzzle\Tests\GuzzleTestCase
         $serializer = new DefaultRequestSerializer(array());
         $this->assertEmpty($this->readAttribute($serializer, 'visitors'));
     }
+
+    public function testNullParam()
+    {
+        $this->operation->setUri('bar{?limit}');
+        $this->operation->addParam(new Parameter(array(
+            'name' => 'limit',
+            'location' => 'uri',
+            'required' => false,
+        )));
+        $request = $this->serializer->prepare($this->command);
+        $this->assertEquals('http://foo.com/baz/bar', (string) $request->getUrl());
+    }
 }
