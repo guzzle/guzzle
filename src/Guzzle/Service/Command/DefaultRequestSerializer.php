@@ -89,7 +89,7 @@ class DefaultRequestSerializer implements RequestSerializerInterface
             // Get the path values and use the client config settings
             $variables = $client->getConfig()->getAll();
             foreach ($operation->getParams() as $name => $arg) {
-                if ($arg->getLocation() == 'uri') {
+                if ($arg->getLocation() == 'uri' && $command->hasKey($name)) {
                     $variables[$name] = (string) $command->get($name);
                 }
             }
