@@ -33,7 +33,7 @@ class Client extends HttpClient implements ClientInterface
     /**
      * @var bool Whether or not magic methods are enabled
      */
-    protected $enableMagicMethods = false;
+    protected $enableMagicMethods = true;
 
     /**
      * @var CommandFactoryInterface
@@ -76,12 +76,12 @@ class Client extends HttpClient implements ClientInterface
     }
 
     /**
-     * Magic method used to retrieve a command. Magic method must be enabled on the client to use this functionality.
+     * Magic method used to retrieve a command. Magic methods must be enabled on the client to use this functionality.
      *
      * @param string $method Name of the command object to instantiate
      * @param array  $args   Arguments to pass to the command
      *
-     * @return CommandInterface
+     * @return mixed Returns the result of the command
      * @throws BadMethodCallException when a command is not found or magic methods are disabled
      */
     public function __call($method, $args = null)
@@ -90,7 +90,7 @@ class Client extends HttpClient implements ClientInterface
             throw new BadMethodCallException("Missing method {$method}. This client has not enabled magic methods.");
         }
 
-        return $this->getCommand($method, isset($args[0]) ? $args[0] : array());
+        return $this->getCommand($method, isset($args[0]) ? $args[0] : array())->getResult();
     }
 
     /**

@@ -210,9 +210,10 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      * @covers Guzzle\Service\Client::__call
      * @expectedException BadMethodCallException
      */
-    public function testMagicCallBehaviorIsDisabledByDefault()
+    public function testMagicCallBehaviorCanBeDisabled()
     {
         $client = new Client();
+        $client->enableMagicMethods(false);
         $client->foo();
     }
 
@@ -236,12 +237,10 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     public function testMagicCallBehaviorExecuteExecutesCommands()
     {
         $client = new Mock\MockClient();
-        $client->enableMagicMethods(true);
         $client->setDescription($this->service);
         $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(new Response(200))));
-        $cmd = $client->mockCommand();
-        $this->assertInstanceOf('Guzzle\Tests\Service\Mock\Command\MockCommand', $cmd);
-        $this->assertFalse($cmd->isExecuted());
+        $result = $client->mockCommand();
+        $this->assertInstanceOf('Guzzle\Http\Message\Response', $result);
     }
 
     /**
