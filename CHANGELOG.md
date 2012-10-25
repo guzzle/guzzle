@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+* 3.0.2 (10-25-2012)
+
+    * Magic methods are enabled by default on clients
+    * Magic methods return the result of a command
+    * Service clients no longer require a base_url option in the factory
+    * Bug: Fixed an issue with URI templates where null template variables were being expanded
+
 * 3.0.1 (10-22-2012)
 
     * Models can now be used like regular collection objects by calling filter, map, etc
