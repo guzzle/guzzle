@@ -12,6 +12,7 @@ use Guzzle\Common\Event;
 class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
 {
     const TIMESTAMP = '1327274290';
+    const MICROTIME = '1351400847.6402';
 
     protected $config = array(
         'consumer_key'    => 'foo',
@@ -55,7 +56,8 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $p = new OauthPlugin($this->config);
         $request = $this->getRequest();
-        $this->assertContains('&e=f', rawurldecode($p->getStringToSign($request, self::TIMESTAMP)));
+
+        $this->assertContains('&e=f', rawurldecode($p->getStringToSign($request, self::TIMESTAMP, self::MICROTIME)));
         $this->assertEquals(
             // Method and URL
             'POST&http%3A%2F%2Fwww.test.com%2Fpath' .
@@ -64,7 +66,7 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
             '%26oauth_nonce%3D22c3b010c30c17043c3d2dd3a7aa3ae6c5549b32%26' .
             'oauth_signature_method%3DHMAC-SHA1' .
             '%26oauth_timestamp%3D' . self::TIMESTAMP . '%26oauth_token%3Dcount%26oauth_version%3D1.0',
-            $p->getStringToSign($request, self::TIMESTAMP)
+            $p->getStringToSign($request, self::TIMESTAMP, self::MICROTIME)
         );
     }
 
@@ -74,7 +76,7 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $config['disable_post_params'] = true;
         $p = new OauthPlugin($config);
         $request = $this->getRequest();
-        $sts = rawurldecode($p->getStringToSign($request, self::TIMESTAMP));
+        $sts = rawurldecode($p->getStringToSign($request, self::TIMESTAMP, self::MICROTIME));
         $this->assertNotContains('&e=f', $sts);
     }
 
@@ -91,7 +93,7 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
             '%26oauth_nonce%3D22c3b010c30c17043c3d2dd3a7aa3ae6c5549b32%26' .
             'oauth_signature_method%3DHMAC-SHA1' .
             '%26oauth_timestamp%3D' . self::TIMESTAMP . '%26oauth_token%3Dcount%26oauth_version%3D1.0',
-            $p->getStringToSign($request, self::TIMESTAMP)
+            $p->getStringToSign($request, self::TIMESTAMP, '3D22c3b010c30c17043c3d2dd3a7aa3ae6c5549b32')
         );
     }
 
@@ -104,7 +106,7 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $this->getRequest();
         $request->getQuery()->set('a', true);
         $request->getQuery()->set('c', false);
-        $this->assertContains('&a%3Dtrue%26c%3Dfalse', $p->getStringToSign($request, self::TIMESTAMP));
+        $this->assertContains('&a%3Dtrue%26c%3Dfalse', $p->getStringToSign($request, self::TIMESTAMP, self::MICROTIME));
     }
 
     /**
@@ -118,7 +120,7 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
             }
         )));
         $request = $this->getRequest();
-        $sig = $p->getSignature($request, self::TIMESTAMP);
+        $sig = $p->getSignature($request, self::TIMESTAMP, self::MICROTIME);
         $this->assertEquals(
             '_POST&http%3A%2F%2Fwww.test.com%2Fpath&a%3Db%26c%3Dd%26e%3Df%26oauth_consumer_key%3Dfoo' .
             '%26oauth_nonce%3D22c3b010c30c17043c3d2dd3a7aa3ae6c5549b32%26oauth_signature_method%3DHMAC-SHA1' .
