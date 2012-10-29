@@ -190,7 +190,7 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
             'a' => array(
                 'class' => 'Guzzle\Tests\Service\Mock\MockClient',
                 'params' => array(
-                    'other_client' => '{{ b }}',
+                    'other_client' => '{b}',
                     'username'     => 'x',
                     'password'     => 'y',
                     'subdomain'    => 'z'

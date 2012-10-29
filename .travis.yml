@@ -9,6 +9,7 @@ before_script:
   - tar -xzf pecl_http-1.7.4.tgz
   - sh -c "cd pecl_http-1.7.4 && phpize && ./configure && make && sudo make install" > /dev/null
   - echo "extension=http.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
+  - pecl install uri_template-beta
   - pear config-set auto_discover 1
   - pear install pear.phing.info/phing
   - pear install pear.phpunit.de/phploc

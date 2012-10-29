@@ -11,26 +11,23 @@ class ParserRegistryTest extends \Guzzle\Tests\GuzzleTestCase
 {
     public function testStoresObjects()
     {
+        $r = new ParserRegistry();
         $c = new \stdClass();
-        ParserRegistry::set('foo', $c);
-        $this->assertSame($c, ParserRegistry::get('foo'));
+        $r->registerParser('foo', $c);
+        $this->assertSame($c, $r->getParser('foo'));
     }
 
     public function testReturnsNullWhenNotFound()
     {
-        $this->assertNull(ParserRegistry::get('FOO'));
+        $r = new ParserRegistry();
+        $this->assertNull($r->getParser('FOO'));
     }
 
     public function testReturnsLazyLoadedDefault()
     {
-        // Clear out what might be cached
-        $refObject = new \ReflectionClass('Guzzle\Parser\ParserRegistry');
-        $refProperty = $refObject->getProperty('instances');
-        $refProperty->setAccessible(true);
-        $refProperty->setValue(null, array());
-
-        $c = ParserRegistry::get('cookie');
+        $r = new ParserRegistry();
+        $c = $r->getParser('cookie');
         $this->assertInstanceOf('Guzzle\Parser\Cookie\CookieParser', $c);
-        $this->assertSame($c, ParserRegistry::get('cookie'));
+        $this->assertSame($c, $r->getParser('cookie'));
     }
 }

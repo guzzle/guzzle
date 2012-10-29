@@ -22,7 +22,7 @@ class UriTemplate implements UriTemplateInterface
     /**
      * @var string Regex used to parse expressions
      */
-    private static $regex = '/\{{1,2}([^\}]+)\}{1,2}/';
+    private static $regex = '/\{([^\}]+)\}/';
 
     /**
      * @var array Hash for quick operator lookups

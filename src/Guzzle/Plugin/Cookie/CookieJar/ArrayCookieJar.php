@@ -179,7 +179,7 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
         if ($cookieHeader = $response->getSetCookie()) {
 
             $request = $response->getRequest();
-            $parser = ParserRegistry::get('cookie');
+            $parser = ParserRegistry::getInstance()->getParser('cookie');
 
             foreach ($cookieHeader as $cookie) {
 

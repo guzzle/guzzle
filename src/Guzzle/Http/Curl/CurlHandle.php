@@ -435,7 +435,7 @@ class CurlHandle
 
         // Add request headers to the request exactly as they were sent
         if ($headers) {
-            $parsed = ParserRegistry::get('message')->parseRequest($headers);
+            $parsed = ParserRegistry::getInstance()->getParser('message')->parseRequest($headers);
             if (!empty($parsed['headers'])) {
                 $request->setHeaders(array());
                 foreach ($parsed['headers'] as $name => $value) {

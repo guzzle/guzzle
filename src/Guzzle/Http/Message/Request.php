@@ -571,7 +571,7 @@ class Request extends AbstractMessage implements RequestInterface
     public function getCookies()
     {
         if ($cookie = $this->getHeader('Cookie')) {
-            $data = ParserRegistry::get('cookie')->parseCookie($cookie);
+            $data = ParserRegistry::getInstance()->getParser('cookie')->parseCookie($cookie);
             return $data['cookies'];
         }
 

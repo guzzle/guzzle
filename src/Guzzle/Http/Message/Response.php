@@ -126,7 +126,7 @@ class Response extends AbstractMessage
      */
     public static function fromMessage($message)
     {
-        $data = ParserRegistry::get('message')->parseResponse($message);
+        $data = ParserRegistry::getInstance()->getParser('message')->parseResponse($message);
         if (!$data) {
             return false;
         }

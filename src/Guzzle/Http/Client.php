@@ -199,7 +199,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function getUriTemplate()
     {
         if (!$this->uriTemplate) {
-            $this->uriTemplate = ParserRegistry::get('uri_template');
+            $this->uriTemplate = ParserRegistry::getInstance()->getParser('uri_template');
         }
 
         return $this->uriTemplate;

@@ -44,9 +44,9 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         )));
         $this->assertEquals(array('test' => '123'), $client->getConfig()->getAll());
         $this->assertEquals('123', $client->getConfig('test'));
-        $this->assertSame($client, $client->setBaseUrl('http://www.test.com/{{test}}'));
+        $this->assertSame($client, $client->setBaseUrl('http://www.test.com/{test}'));
         $this->assertEquals('http://www.test.com/123', $client->getBaseUrl());
-        $this->assertEquals('http://www.test.com/{{test}}', $client->getBaseUrl(false));
+        $this->assertEquals('http://www.test.com/{test}', $client->getBaseUrl(false));
 
         try {
             $client->setConfig(false);
@@ -98,7 +98,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
             'key' => 'value',
             'foo' => 'bar'
         ));
-        $this->assertEquals('Testing...api/v1/key/value', $client->expandTemplate('Testing...api/{api}/key/{{key}}'));
+        $this->assertEquals('Testing...api/v1/key/value', $client->expandTemplate('Testing...api/{api}/key/{key}'));
 
         // Make sure that the client properly validates and injects config
         $this->assertEquals('bar', $client->getConfig('foo'));
@@ -129,7 +129,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testClientReturnsValidBaseUrls()
     {
-        $client = new Client('http://www.{{foo}}.{{data}}/', array(
+        $client = new Client('http://www.{foo}.{data}/', array(
             'data' => '123',
             'foo' => 'bar'
         ));
@@ -321,9 +321,9 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testAllowsConfigsToBeChangedAndInjectedInBaseUrl()
     {
-        $client = new Client('http://{{a}}/{{b}}');
+        $client = new Client('http://{a}/{b}');
         $this->assertEquals('http:///', $client->getBaseUrl());
-        $this->assertEquals('http://{{a}}/{{b}}', $client->getBaseUrl(false));
+        $this->assertEquals('http://{a}/{b}', $client->getBaseUrl(false));
         $client->setConfig(array(
             'a' => 'test.com',
             'b' => 'index.html'
@@ -359,7 +359,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Create a PUT request with injected config
         $client->getConfig()->set('a', 1)->set('b', 2);
-        $request = $client->createRequest('PUT', '/path/{{a}}?q={{b}}');
+        $request = $client->createRequest('PUT', '/path/{a}?q={b}');
         $this->assertEquals($request->getUrl(), $this->getServer()->getUrl() . 'path/1?q=2');
     }
 
@@ -398,7 +398,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client = new Client('http://www.test.com/api/v1', array(
             'test' => '123'
         ));
-        $request = $client->get('relative/{{test}}');
+        $request = $client->get('relative/{test}');
         $this->assertEquals('http://www.test.com/api/v1/relative/123', $request->getUrl());
     }
 

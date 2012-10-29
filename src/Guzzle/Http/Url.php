@@ -32,7 +32,7 @@ class Url
      */
     public static function factory($url)
     {
-        $parts = ParserRegistry::get('url')->parseUrl($url);
+        $parts = ParserRegistry::getInstance()->getParser('url')->parseUrl($url);
 
         // Convert the query string into a QueryString object
         if ($parts['query']) {

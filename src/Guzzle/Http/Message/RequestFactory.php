@@ -48,7 +48,7 @@ class RequestFactory implements RequestFactoryInterface
      */
     public function fromMessage($message)
     {
-        $parsed = ParserRegistry::get('message')->parseRequest($message);
+        $parsed = ParserRegistry::getInstance()->getParser('message')->parseRequest($message);
 
         if (!$parsed) {
             return false;
