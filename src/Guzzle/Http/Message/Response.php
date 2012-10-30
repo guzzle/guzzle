@@ -131,14 +131,16 @@ class Response extends AbstractMessage
             return false;
         }
 
-        // Always set the appropriate Content-Length
-        unset($data['headers']['Content-Length']);
-        unset($data['headers']['content-length']);
-        $data['headers']['Content-Length'] = strlen($data['body']);
-
         $response = new static($data['code'], $data['headers'], $data['body']);
         $response->setProtocol($data['protocol'], $data['version'])
                  ->setStatus($data['code'], $data['reason_phrase']);
+
+        // Set the appropriate Content-Length if the one set is inaccurate (e.g. setting to X)
+        $contentLength = (string) $response->getHeader('Content-Length');
+        $actualLength = strlen($data['body']);
+        if (strlen($data['body']) > 0 && $contentLength != $actualLength) {
+            $response->setHeader('Content-Length', $actualLength);
+        }
 
         return $response;
     }

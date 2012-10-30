@@ -129,9 +129,21 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('test', $response->getBody(true));
 
         // Make sure that automatic Content-Length works
-        $response = Response::fromMessage("HTTP/1.1 200 OK\r\nContent-Length: x\r\n\r\ntest");
+        $response = Response::fromMessage("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ntest");
         $this->assertEquals(4, $response->getContentLength());
         $this->assertEquals('test', $response->getBody(true));
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\Response::fromMessage
+     */
+    public function testFactoryCanCreateHeadResponses()
+    {
+        $response = Response::fromMessage("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\n");
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('OK', $response->getReasonPhrase());
+        $this->assertEquals(4, $response->getContentLength());
+        $this->assertEquals('', $response->getBody(true));
     }
 
     /**
