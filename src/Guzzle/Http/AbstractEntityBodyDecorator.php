@@ -48,6 +48,24 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
      * {@inheritdoc}
      * @codeCoverageIgnore
      */
+    public function setRewindFunction($callable)
+    {
+        return $this->body->setRewindFunction($callable);
+    }
+
+    /**
+     * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
+    public function rewind()
+    {
+        return $this->body->rewind();
+    }
+
+    /**
+     * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
     public function compress($filter = 'zlib.deflate')
     {
         return $this->body->compress($filter);

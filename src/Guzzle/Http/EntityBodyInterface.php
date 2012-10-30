@@ -10,6 +10,17 @@ use Guzzle\Stream\StreamInterface;
 interface EntityBodyInterface extends StreamInterface
 {
     /**
+     * Specify a custom callback used to rewind a non-seekable stream. This can be useful entity enclosing requests
+     * that are redirected.
+     *
+     * @param mixed $callable Callable to invoke to rewind a non-seekable stream. The callback must accept an
+     *                        EntityBodyInterface object, perform the rewind if possible, and return a boolean
+     *                        representing whether or not the rewind was successful.
+     * @return self
+     */
+    public function setRewindFunction($callable);
+
+    /**
      * If the stream is readable, compress the data in the stream using deflate compression. The uncompressed stream is
      * then closed, and the compressed stream then becomes the wrapped stream.
      *

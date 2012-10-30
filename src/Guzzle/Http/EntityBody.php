@@ -16,6 +16,11 @@ class EntityBody extends Stream implements EntityBodyInterface
     protected $contentEncoding = false;
 
     /**
+     * @var callable Method to invoke for rewinding a stream
+     */
+    protected $rewindFunction;
+
+    /**
      * Create a new EntityBody based on the input type
      *
      * @param resource|string|EntityBody $resource Entity body data
@@ -45,6 +50,30 @@ class EntityBody extends Stream implements EntityBodyInterface
         }
 
         throw new InvalidArgumentException('Invalid resource type');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setRewindFunction($callable)
+    {
+        if (!is_callable($callable)) {
+            throw new InvalidArgumentException('Must specify a callable');
+        }
+
+        $this->rewindFunction = $callable;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function rewind()
+    {
+        return $this->rewindFunction
+            ? call_user_func($this->rewindFunction, $this)
+            : parent::rewind();
     }
 
     /**
@@ -207,6 +236,9 @@ class EntityBody extends Stream implements EntityBodyInterface
         $this->size = $stat['size'];
         $this->rebuildCache();
         $this->seek(0);
+
+        // Remove any existing rewind function as the underlying stream has been replaced
+        $this->rewindFunction = null;
 
         return true;
     }
