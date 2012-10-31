@@ -80,12 +80,10 @@ class Request extends AbstractMessage implements RequestInterface
         return array(
             // Called when receiving or uploading data through cURL
             'curl.callback.read', 'curl.callback.write', 'curl.callback.progress',
-            // About to send the request
-            'request.before_send',
-            // Sent the request
-            'request.sent',
-            // Completed HTTP transaction
-            'request.complete',
+            // Cloning a request
+            'request.clone',
+            // About to send the request, sent request, completed transaction
+            'request.before_send', 'request.sent', 'request.complete',
             // A request received a successful response
             'request.success',
             // A request received an unsuccessful response
@@ -146,6 +144,7 @@ class Request extends AbstractMessage implements RequestInterface
 
     /**
      * Clone the request object, leaving off any response that was received
+     * @see Guzzle\Plugin\Redirect\RedirectPlugin::cloneRequestWithGetMethod
      */
     public function __clone()
     {
@@ -154,20 +153,18 @@ class Request extends AbstractMessage implements RequestInterface
         }
         $this->curlOptions = clone $this->curlOptions;
         $this->params = clone $this->params;
+        // Remove state based parameters from the cloned request
+        $this->params->remove('curl_handle')->remove('queued_response')->remove('curl_multi');
         $this->url = clone $this->url;
-
-        // Get a clone of the headers
-        $headers = array();
-        foreach ($this->headers as $k => $v) {
-            $headers[$k] = clone $v;
-        }
-        $this->headers = $headers;
-
         $this->response = $this->responseBody = null;
-        $this->params->remove('curl_handle')
-             ->remove('queued_response')
-             ->remove('curl_multi');
+
+        // Clone each header
+        foreach ($this->headers as $key => &$value) {
+            $value = clone $value;
+        }
+
         $this->setState(RequestInterface::STATE_NEW);
+        $this->dispatch('request.clone', array('request' => $this));
     }
 
     /**
@@ -498,23 +495,15 @@ class Request extends AbstractMessage implements RequestInterface
 
             // Only download the body of the response to the specified response
             // body when a successful response is received.
-            if ($code >= 200 && $code < 300) {
-                $body = $this->getResponseBody();
-            } else {
-                $body = EntityBody::factory();
-            }
+            $body = $code >= 200 && $code < 300 ? $this->getResponseBody() : EntityBody::factory();
 
-            $previousResponse = $this->response;
             $this->response = new Response($code, null, $body);
-            if ($previousResponse) {
-                $this->response->setPreviousResponse($previousResponse);
-            }
             $this->response->setStatus($code, $status)->setRequest($this);
             $this->dispatch('request.receive.status_line', array(
-                'line'              => $data,
-                'status_code'       => $code,
-                'reason_phrase'     => $status,
-                'previous_response' => $previousResponse
+                'request'       => $this,
+                'line'          => $data,
+                'status_code'   => $code,
+                'reason_phrase' => $status
             ));
 
         } elseif (strpos($data, ':') !== false) {
@@ -531,7 +520,10 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function setResponse(Response $response, $queued = false)
     {
-        $response->setRequest($this);
+        // Never overwrite the request associated with the response (useful for redirect history)
+        if (!$response->getRequest()) {
+            $response->setRequest($this);
+        }
 
         if ($queued) {
             $this->getParams()->set('queued_response', $response);

@@ -144,4 +144,11 @@ interface StreamInterface
      * @return int|bool Returns the position of the file pointer or false on error
      */
     public function ftell();
+
+    /**
+     * Rewind to the beginning of the stream
+     *
+     * @return bool Returns true on success or false on failure
+     */
+    public function rewind();
 }

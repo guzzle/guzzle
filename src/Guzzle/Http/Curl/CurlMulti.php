@@ -352,7 +352,6 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         $wrapper = CurlHandle::factory($request);
         $this->handles->attach($request, $wrapper);
         $this->resourceHash[(int) $wrapper->getHandle()] = $request;
-        $request->getParams()->set('curl_handle', $wrapper);
 
         return $wrapper;
     }

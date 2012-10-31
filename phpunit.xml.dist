@@ -28,6 +28,8 @@
                 <file>./src/Guzzle/Http/Exception/HttpException.php</file>
                 <file>./src/Guzzle/Http/Exception/ServerErrorResponseException.php</file>
                 <file>./src/Guzzle/Http/Exception/ClientErrorResponseException.php</file>
+                <file>./src/Guzzle/Http/Exception/TooManyRedirectsException.php</file>
+                <file>./src/Guzzle/Http/Exception/CouldNotRewindStreamException.php</file>
                 <file>./src/Guzzle/Common/Exception/BadMethodCallException.php</file>
                 <file>./src/Guzzle/Common/Exception/InvalidArgumentException.php</file>
                 <file>./src/Guzzle/Common/Exception/RuntimeException.php</file>

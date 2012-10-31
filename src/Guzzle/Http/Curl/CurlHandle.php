@@ -94,14 +94,6 @@ class CurlHandle
             $curlOptions[CURLOPT_WRITEFUNCTION] = array($mediator, 'writeResponseBody');
         }
 
-        // Account for PHP installations with safe_mode or open_basedir enabled
-        // @codeCoverageIgnoreStart
-        if (CurlVersion::getInstance()->get('follow_location')) {
-            $curlOptions[CURLOPT_FOLLOWLOCATION] = true;
-            $curlOptions[CURLOPT_MAXREDIRS] = 5;
-        }
-        // @codeCoverageIgnoreEnd
-
         // Specify settings according to the HTTP method
         switch ($method) {
             case 'GET':
@@ -139,9 +131,6 @@ class CurlHandle
             case 'DELETE':
                 $curlOptions[CURLOPT_CUSTOMREQUEST] = $method;
                 if ($bodyAsString) {
-                    // Because this is not a POST but is now going be treated like
-                    // one, the wacky POST redirect options come in to play
-                    $curlOptions[CURLOPT_POSTREDIR] = 3;
                     // Remove the curl generated Content-Type header if none was set manually
                     if (!$request->hasHeader('Content-Type')) {
                         $curlOptions[CURLOPT_HTTPHEADER][] = 'Content-Type:';

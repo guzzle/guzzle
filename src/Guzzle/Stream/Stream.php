@@ -257,6 +257,14 @@ class Stream implements StreamInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function rewind()
+    {
+        return $this->seek(0);
+    }
+
+    /**
      * Reprocess stream metadata
      */
     protected function rebuildCache()

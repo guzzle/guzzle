@@ -18,7 +18,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
      * @covers Guzzle\Http\Curl\CurlHandle
-     * @expectedException InvalidArgumentException
+     * @expectedException \InvalidArgumentException
      */
     public function testConstructorExpectsCurlResource()
     {
@@ -220,8 +220,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             array('GET', 'http://www.google.com/', null, null, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_FOLLOWLOCATION => 1,
-                CURLOPT_MAXREDIRS => 5,
                 CURLOPT_CONNECTTIMEOUT => 10,
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
@@ -236,8 +234,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             array('GET', 'http://127.0.0.1:8080', null, null, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_FOLLOWLOCATION => 1,
-                CURLOPT_MAXREDIRS => 5,
                 CURLOPT_CONNECTTIMEOUT => 10,
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
@@ -249,8 +245,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             array('HEAD', 'http://www.google.com/', null, null, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_FOLLOWLOCATION => 1,
-                CURLOPT_MAXREDIRS => 5,
                 CURLOPT_CONNECTTIMEOUT => 10,
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_HEADERFUNCTION => 'callback',
@@ -261,8 +255,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             array('GET', 'https://michael:123@localhost/index.html?q=2', null, null, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_FOLLOWLOCATION => 1,
-                CURLOPT_MAXREDIRS => 5,
                 CURLOPT_CONNECTTIMEOUT => 10,
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
@@ -295,8 +287,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             array('POST', 'http://localhost:8124/post.php', null, $qs, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_FOLLOWLOCATION => 1,
-                CURLOPT_MAXREDIRS => 5,
                 CURLOPT_CONNECTTIMEOUT => 10,
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
@@ -321,8 +311,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             array('PUT', 'http://localhost:8124/put.php', null, EntityBody::factory(fopen($testFile, 'r+')), array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_FOLLOWLOCATION => 1,
-                CURLOPT_MAXREDIRS => 5,
                 CURLOPT_CONNECTTIMEOUT => 10,
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
@@ -349,8 +337,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             ), array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_FOLLOWLOCATION => 1,
-                CURLOPT_MAXREDIRS => 5,
                 CURLOPT_CONNECTTIMEOUT => 10,
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
@@ -376,8 +362,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             array('POST', 'http://localhost:8124/post.php', null, $postBody, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_FOLLOWLOCATION => 1,
-                CURLOPT_MAXREDIRS => 5,
                 CURLOPT_CONNECTTIMEOUT => 10,
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
@@ -407,8 +391,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             ), '{"hi":"there"}', array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_FOLLOWLOCATION => 1,
-                CURLOPT_MAXREDIRS => 5,
                 CURLOPT_CONNECTTIMEOUT => 10,
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
@@ -437,8 +419,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             ), '{"hi":"there"}', array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_FOLLOWLOCATION => 1,
-                CURLOPT_MAXREDIRS => 5,
                 CURLOPT_CONNECTTIMEOUT => 10,
                 CURLOPT_USERAGENT => $userAgent,
                 CURLOPT_WRITEFUNCTION => 'callback',
@@ -783,75 +763,34 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $handle->updateRequestFromTransfer($request);
     }
 
-    /**
-     * @return array
-     */
-    public function redirectWithBodyStringDataProvider()
+    public function testCanSendBodyAsString()
     {
-        return array(
-            // Sending POSTs on redirects by setting CURLOPT_POSTREDIR
-            array('POST', 'application/x-www-form-urlencoded', array(), 3, 'POST'),
-            // Not sending redirected POSTS, but rather GET (omitting the setting or CURLOPT_POSTREDIR)
-            array('POST', false, array(), null, 'GET'),
-            // Sending PUT on redirect (inherently uses CURLOPT_POSTREDIR because of PUT)
-            array('PUT', false, array(), null, 'PUT'),
-            // Sending PUT on redirect with a custom Content-Type (inherently uses CURLOPT_POSTREDIR)
-            array('PUT', 'foo', array('Content-Type' => 'foo'), null, 'PUT'),
-            // Sending PATCH on redirect
-            array('PATCH', false, array(), null, 'PATCH'),
-            // Sending DELETE on redirect
-            array('DELETE', false, array(), null, 'DELETE')
-        );
+        $this->getServer()->flush();
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->put('/', null, 'foo');
+        $request->getCurlOptions()->set('body_as_string', true);
+        $request->send();
+        $requests = $this->getServer()->getReceivedRequests(false);
+        $this->assertContains('PUT /', $requests[0]);
+        $this->assertContains("\nfoo", $requests[0]);
+        $this->assertContains('content-length: 3', $requests[0]);
+        $this->assertNotContains('content-type', $requests[0]);
     }
 
-    /**
-     * @dataProvider redirectWithBodyStringDataProvider
-     */
-    public function testCurlFollowsRedirectsUsingStringBody(
-        $method,
-        $contentType,
-        array $headers,
-        $followRedirects,
-        $resultingMethod
-    ) {
-        $url = $this->getServer()->getUrl();
+    public function testCanSendPostBodyAsString()
+    {
         $this->getServer()->flush();
-        $this->getServer()->enqueue(array(
-            "HTTP/1.1 301 See Other\r\nServer: Apache-Coyote/1.1\r\nLocation: {$url}\r\nContent-Length: 0\r\n\r\n",
-            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
-        ));
-
-        $client = new Client($url);
-        $request = $client->createRequest($method, '/test', $headers, '{}');
-        $request->getCurlOptions()->set(CurlHandle::BODY_AS_STRING, true);
-
-        if ($followRedirects !== null) {
-            $request->getCurlOptions()->set(CURLOPT_POSTREDIR, $followRedirects);
-        }
-        $request->removeHeader('Expect');
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->post('/', null, 'foo');
+        $request->getCurlOptions()->set('body_as_string', true);
         $request->send();
-
-        // Ensure that 2 requests were sent
-        $received = $this->getServer()->getReceivedRequests(true);
-        $this->assertEquals(2, count($received));
-
-        // Ensure that the resulting request was sent with the expected method
-        $this->assertEquals($resultingMethod, $received[1]->getMethod());
-
-        // Ensure the body was sent
-        if ($received[1] instanceof EntityEnclosingRequestInterface) {
-            $this->assertEquals('{}', (string) $received[1]->getBody());
-            $this->assertEquals(2, (int) (string) $received[1]->getHeader('Content-Length'));
-        } else {
-            $this->assertNull($received[1]->getHeader('Content-Length'));
-        }
-
-        // Ensure that a POST content-type was not added for non-posts
-        if (!$contentType) {
-            $this->assertNull($received[1]->getHeader('Content-Type'));
-        } else {
-            $this->assertEquals($contentType, (string) $received[1]->getHeader('Content-Type'));
-        }
+        $requests = $this->getServer()->getReceivedRequests(false);
+        $this->assertContains('POST /', $requests[0]);
+        $this->assertContains("\nfoo", $requests[0]);
+        $this->assertContains('content-length: 3', $requests[0]);
+        $this->assertContains('application/x-www-form-urlencoded', $requests[0]);
     }
 
     public function testAllowsWireTransferInfoToBeEnabled()
@@ -954,45 +893,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 array('debug' => CURLPROXY_HTTP)
             )
         );
-    }
-
-    /**
-     * @return array
-     */
-    public function postDataProvider()
-    {
-        return array(
-            array(301, false, 'GET'),
-            array(302, false, 'GET'),
-            array(303, false, 'GET'),
-            array(307, false, 'POST'),
-            array(301, 1, 'POST'),
-            array(302, 2, 'POST')
-        );
-    }
-
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle::factory
-     * @dataProvider postDataProvider
-     */
-    public function testRedirectsPostWithGet($code, $forcePost = false, $method)
-    {
-        $this->getServer()->flush();
-        $port = $this->getServer()->getPort();
-        $this->getServer()->enqueue(array(
-            "HTTP/1.1 {$code} Foo\r\nLocation: http://localhost:{$port}\r\nContent-Length: 0\r\n\r\n",
-            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
-        ));
-
-        $client = new Client($this->getServer()->getUrl());
-        $request = $client->post('/', null, array('foo' => 'bar'));
-        if ($forcePost !== false) {
-            $request->getCurlOptions()->set(CURLOPT_POSTREDIR, $forcePost);
-        }
-        $request->send();
-        $received = $this->getServer()->getReceivedRequests(true);
-        $this->assertEquals(2, count($received));
-        $this->assertEquals($method, $received[1]->getMethod());
     }
 
     public function testSeeksToBeginningOfStreamWhenSending()

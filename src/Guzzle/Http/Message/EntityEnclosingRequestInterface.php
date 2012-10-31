@@ -123,4 +123,17 @@ interface EntityEnclosingRequestInterface extends RequestInterface
      * @return EntityEnclosingRequestInterface
      */
     public function addPostFiles(array $files);
+
+    /**
+     * Configure how redirects are handled for the request
+     *
+     * @param bool $strict       Set to true to follow strict RFC compliance when redirecting POST requests. Most
+     *                           browsers with follow a 301-302 redirect for a POST request with a GET request. This is
+     *                           the default behavior of Guzzle. Enable strict redirects to redirect these responses
+     *                           with a POST rather than a GET request.
+     * @param int  $maxRedirects Specify the maximum number of allowed redirects. Set to 0 to disable redirects.
+     *
+     * @return self
+     */
+    public function configureRedirects($strict = false, $maxRedirects = 5);
 }

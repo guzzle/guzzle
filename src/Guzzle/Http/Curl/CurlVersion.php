@@ -45,8 +45,6 @@ class CurlVersion
     {
         if (!$this->version) {
             $this->version = curl_version();
-            // Check if CURLOPT_FOLLOWLOCATION is available
-            $this->version['follow_location'] = !ini_get('open_basedir');
         }
 
         return $this->version;
