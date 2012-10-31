@@ -23,6 +23,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     const REQUEST_PARAMS = 'request.params';
     const CURL_OPTIONS = 'curl.options';
     const SSL_CERT_AUTHORITY = 'ssl.certificate_authority';
+    const DISABLE_REDIRECTS = 'client.disable_redirects';
 
     /**
      * @var Collection Default HTTP headers to set on each request
@@ -80,6 +81,10 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         $this->setBaseUrl($baseUrl);
         $this->defaultHeaders = new Collection();
         $this->setRequestFactory(RequestFactory::getInstance());
+        // Redirect by default, but allow for redirects to be globally disabled on a client
+        if (!$this->config->get(self::DISABLE_REDIRECTS)) {
+            $this->addSubscriber(new RedirectPlugin());
+        }
     }
 
     /**

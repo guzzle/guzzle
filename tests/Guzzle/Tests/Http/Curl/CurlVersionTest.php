@@ -12,7 +12,6 @@ class CurlVersionTest extends \Guzzle\Tests\GuzzleTestCase
     public function testCachesCurlInfo()
     {
         $info = curl_version();
-        $info['follow_location'] = !ini_get('open_basedir');
         $instance = CurlVersion::getInstance();
 
         // Clear out the info cache
@@ -26,15 +25,6 @@ class CurlVersionTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertEquals($info['version'], $instance->get('version'));
         $this->assertFalse($instance->get('foo'));
-    }
-
-    public function testDeterminesIfCurlCanFollowLocation()
-    {
-        if (!ini_get('open_basedir')) {
-            $this->assertTrue(CurlVersion::getInstance()->get('follow_location'));
-        } else {
-            $this->assertFalse(CurlVersion::getInstance()->get('follow_location'));
-        }
     }
 
     public function testIsSingleton()

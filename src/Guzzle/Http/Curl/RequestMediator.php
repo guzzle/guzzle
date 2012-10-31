@@ -43,6 +43,7 @@ class RequestMediator
     public function setCurlHandle(CurlHandle $handle)
     {
         $this->curlHandle = $handle;
+        $this->request->getParams()->set('curl_handle', $handle);
 
         return $this;
     }
