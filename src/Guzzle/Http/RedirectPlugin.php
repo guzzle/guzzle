@@ -3,6 +3,7 @@
 namespace Guzzle\Http;
 
 use Guzzle\Common\Event;
+use Guzzle\Http\Url;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
@@ -108,7 +109,15 @@ class RedirectPlugin implements EventSubscriberInterface
             $redirectRequest = clone $request;
         }
 
-        $redirectRequest->setUrl($redirectRequest->getUrl(true)->combine($location));
+        $location = Url::factory($location);
+        // If the location is not absolute, then combine it with the original URL
+        if (!$location->isAbsolute()) {
+            $originalUrl = $redirectRequest->getUrl(true);
+            $originalUrl->getQuery()->clear();
+            $location = $originalUrl->combine((string) $location);
+        }
+
+        $redirectRequest->setUrl($location);
         $redirectRequest->getParams()->set(self::PARENT_REQUEST, $request);
 
         // Rewind the entity body of the request if needed

@@ -126,7 +126,7 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         $client = new Client($this->getServer()->getUrl());
         $request = $client->put();
-        $request->enableStrictRedirects(true);
+        $request->configureRedirects(true);
         $body = EntityBody::factory('foo');
         $body->read(1);
         $request->setBody($body);
@@ -148,7 +148,7 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         $client = new Client($this->getServer()->getUrl());
         $request = $client->put();
-        $request->enableStrictRedirects(true);
+        $request->configureRedirects(true);
         $body = EntityBody::factory(fopen($this->getServer()->getUrl(), 'r'));
         $body->read(1);
         $request->setBody($body)->send();
@@ -160,7 +160,28 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->enqueue(array("HTTP/1.1 301 Foo\r\nLocation: /foo\r\nContent-Length: 0\r\n\r\n"));
         $client = new Client($this->getServer()->getUrl());
         $request = $client->put();
-        $request->getParams()->set(RedirectPlugin::DISABLE, true);
+        $request->configureRedirects(false, 0);
         $this->assertEquals(301, $request->send()->getStatusCode());
+    }
+
+    public function testCanRedirectWithNoLeadingSlashAndQuery()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 301 Moved Permanently\r\nLocation: redirect?foo=bar\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+        ));
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->get('?foo=bar');
+        $request->send();
+        $requests = $this->getServer()->getReceivedRequests(true);
+        $this->assertEquals($this->getServer()->getUrl() . '?foo=bar', $requests[0]->getUrl());
+        $this->assertEquals($this->getServer()->getUrl() . 'redirect?foo=bar', $requests[1]->getUrl());
+        // Ensure that the history on the actual request is correct
+        $this->assertEquals($this->getServer()->getUrl() . '?foo=bar', $request->getUrl());
+        $this->assertEquals(
+            $this->getServer()->getUrl() . 'redirect?foo=bar',
+            $request->getResponse()->getRequest()->getUrl()
+        );
     }
 }

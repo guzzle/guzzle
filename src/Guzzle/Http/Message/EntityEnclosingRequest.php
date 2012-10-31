@@ -141,9 +141,14 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     /**
      * {@inheritdoc}
      */
-    public function enableStrictRedirects($strict)
+    public function configureRedirects($strict = false, $maxRedirects = 5)
     {
         $this->getParams()->set(RedirectPlugin::STRICT_REDIRECTS, $strict);
+        if ($maxRedirects == 0) {
+            $this->getParams()->set(RedirectPlugin::DISABLE, true);
+        } else {
+            $this->getParams()->set(RedirectPlugin::MAX_REDIRECTS, $maxRedirects);
+        }
 
         return $this;
     }
