@@ -153,4 +153,14 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $body->read(1);
         $request->setBody($body)->send();
     }
+
+    public function testRedirectsCanBeDisabledPerRequest()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array("HTTP/1.1 301 Foo\r\nLocation: /foo\r\nContent-Length: 0\r\n\r\n"));
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->put();
+        $request->getParams()->set(RedirectPlugin::DISABLE, true);
+        $this->assertEquals(301, $request->send()->getStatusCode());
+    }
 }

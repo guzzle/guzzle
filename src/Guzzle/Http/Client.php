@@ -23,7 +23,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     const REQUEST_PARAMS = 'request.params';
     const CURL_OPTIONS = 'curl.options';
     const SSL_CERT_AUTHORITY = 'ssl.certificate_authority';
-    const DISABLE_REDIRECTS = 'client.disable_redirects';
+    const DISABLE_REDIRECTS = RedirectPlugin::DISABLE;
 
     /**
      * @var Collection Default HTTP headers to set on each request

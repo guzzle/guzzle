@@ -19,6 +19,7 @@ class RedirectPlugin implements EventSubscriberInterface
     const MAX_REDIRECTS = 'redirect.max';
     const STRICT_REDIRECTS = 'redirect.strict';
     const PARENT_REQUEST = 'redirect.parent_request';
+    const DISABLE = 'redirect.disable';
 
     /**
      * @var int Default number of redirects allowed when no setting is supplied by a request
@@ -54,12 +55,15 @@ class RedirectPlugin implements EventSubscriberInterface
     public function onRequestSent(Event $event)
     {
         $response = $event['response'];
+        $request = $event['request'];
+
         // Only act on redirect requests with Location headers
-        if (!$response || !$response->isRedirect() || !$response->hasHeader('Location')) {
+        if (!$response || !$response->isRedirect() || !$response->hasHeader('Location')
+            || $request->getParams()->get(self::DISABLE)
+        ) {
             return;
         }
 
-        $request = $event['request'];
         $orignalRequest = $this->prepareRedirection($request);
 
         // Create a redirect request based on the redirect rules set on the request
