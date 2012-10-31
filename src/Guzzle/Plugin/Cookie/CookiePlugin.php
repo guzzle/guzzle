@@ -30,9 +30,8 @@ class CookiePlugin implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return array(
-            'request.before_send'         => array('onRequestBeforeSend', 100),
-            'request.sent'                => array('onRequestSent', 100),
-            'request.receive.status_line' => 'onRequestReceiveStatusLine'
+            'request.before_send' => array('onRequestBeforeSend', 125),
+            'request.sent'        => array('onRequestSent', 125)
         );
     }
 
@@ -71,17 +70,5 @@ class CookiePlugin implements EventSubscriberInterface
     public function onRequestSent(Event $event)
     {
         $this->cookieJar->addCookiesFromResponse($event['response']);
-    }
-
-    /**
-     * Extract cookies from a redirect response
-     *
-     * @param Event $event
-     */
-    public function onRequestReceiveStatusLine(Event $event)
-    {
-        if ($event['previous_response']) {
-            $this->cookieJar->addCookiesFromResponse($event['previous_response']);
-        }
     }
 }

@@ -31,7 +31,7 @@ class RedirectPlugin implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return array(
-            'request.sent'  => 'onRequestSent',
+            'request.sent'  => array('onRequestSent', 100),
             'request.clone' => 'onRequestClone'
         );
     }

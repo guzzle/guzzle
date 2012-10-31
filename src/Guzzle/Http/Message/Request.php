@@ -495,23 +495,15 @@ class Request extends AbstractMessage implements RequestInterface
 
             // Only download the body of the response to the specified response
             // body when a successful response is received.
-            if ($code >= 200 && $code < 300) {
-                $body = $this->getResponseBody();
-            } else {
-                $body = EntityBody::factory();
-            }
+            $body = $code >= 200 && $code < 300 ? $this->getResponseBody() : EntityBody::factory();
 
-            $previousResponse = $this->response;
             $this->response = new Response($code, null, $body);
-            if ($previousResponse) {
-                $this->response->setPreviousResponse($previousResponse);
-            }
             $this->response->setStatus($code, $status)->setRequest($this);
             $this->dispatch('request.receive.status_line', array(
-                'line'              => $data,
-                'status_code'       => $code,
-                'reason_phrase'     => $status,
-                'previous_response' => $previousResponse
+                'request'       => $this,
+                'line'          => $data,
+                'status_code'   => $code,
+                'reason_phrase' => $status
             ));
 
         } elseif (strpos($data, ':') !== false) {

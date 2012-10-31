@@ -63,14 +63,13 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
     public function testCookiesAreExtractedFromRedirectResponses()
     {
         $plugin = new CookiePlugin(new ArrayCookieJar());
+        $this->getServer()->flush();
         $this->getServer()->enqueue(array(
             "HTTP/1.1 302 Moved Temporarily\r\n" .
             "Set-Cookie: test=583551; expires=Wednesday, 23-Mar-2050 19:49:45 GMT; path=/\r\n" .
             "Location: /redirect\r\n\r\n",
-
             "HTTP/1.1 200 OK\r\n" .
             "Content-Length: 0\r\n\r\n",
-
             "HTTP/1.1 200 OK\r\n" .
             "Content-Length: 0\r\n\r\n"
         ));
@@ -78,19 +77,14 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $client = new Client($this->getServer()->getUrl());
         $client->getEventDispatcher()->addSubscriber($plugin);
 
+        $client->get()->send();
         $request = $client->get();
         $request->send();
-
-        $request = $client->get();
-        $request->send();
-
         $this->assertEquals('test=583551', $request->getHeader('Cookie'));
 
         $requests = $this->getServer()->getReceivedRequests(true);
-
         // Confirm subsequent requests have the cookie.
         $this->assertEquals('test=583551', $requests[2]->getHeader('Cookie'));
-
         // Confirm the redirected request has the cookie.
         $this->assertEquals('test=583551', $requests[1]->getHeader('Cookie'));
     }
