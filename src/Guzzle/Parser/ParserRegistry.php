@@ -48,9 +48,10 @@ class ParserRegistry
     public function __construct()
     {
         // Use the PECL URI template parser if available
-        if (extension_loaded('uri_template')) {
-            $this->mapping['uri_template'] = 'Guzzle\\Parser\\UriTemplate\\PeclUriTemplate';
-        }
+        // Commenting out until https://github.com/ioseb/uri-template/issues/1 is fixed
+        // if (extension_loaded('uri_template')) {
+        //     $this->mapping['uri_template'] = 'Guzzle\\Parser\\UriTemplate\\PeclUriTemplate';
+        // }
     }
 
     /**
