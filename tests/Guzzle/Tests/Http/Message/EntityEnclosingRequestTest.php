@@ -7,7 +7,7 @@ use Guzzle\Http\Client;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\RequestFactory;
-use Guzzle\Http\Exception\RequestException;
+use Guzzle\Http\RedirectPlugin;
 use Guzzle\Http\Message\EntityEnclosingRequest;
 use Guzzle\Http\Message\PostFile;
 use Guzzle\Http\QueryString;
@@ -499,5 +499,15 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         // The size is greater than the cutoff
         $request->setBody('foobazbarbamboo');
         $this->assertNotNull($request->getHeader('Expect'));
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::enableStrictRedirects
+     */
+    public function testStrictRedirectsCanBeSpecifiedOnEntityEnclosingRequests()
+    {
+        $request = new EntityEnclosingRequest('PUT', 'http://test.com/');
+        $request->enableStrictRedirects(true);
+        $this->assertTrue($request->getParams()->get(RedirectPlugin::STRICT_REDIRECTS));
     }
 }

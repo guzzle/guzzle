@@ -176,7 +176,7 @@ class RedirectPlugin implements EventSubscriberInterface
 
         // Throw an exception if the redirect count is exceeded
         if ($current > $max) {
-            $this->throwTooManyRedirectsException($request);
+            return $this->throwTooManyRedirectsException($request);
         }
 
         return $original;

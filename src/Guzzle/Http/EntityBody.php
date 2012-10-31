@@ -71,9 +71,7 @@ class EntityBody extends Stream implements EntityBodyInterface
      */
     public function rewind()
     {
-        return $this->rewindFunction
-            ? call_user_func($this->rewindFunction, $this)
-            : parent::rewind();
+        return $this->rewindFunction ? call_user_func($this->rewindFunction, $this) : parent::rewind();
     }
 
     /**

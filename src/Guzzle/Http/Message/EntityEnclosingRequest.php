@@ -5,6 +5,7 @@ namespace Guzzle\Http\Message;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\EntityBodyInterface;
 use Guzzle\Http\QueryString;
+use Guzzle\Http\RedirectPlugin;
 use Guzzle\Http\Exception\RequestException;
 
 /**
@@ -133,6 +134,16 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         } elseif ($this->body && $this->body->getSize() && $this->body->getSize() > $size) {
             $this->setHeader('Expect', '100-Continue');
         }
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function enableStrictRedirects($strict)
+    {
+        $this->getParams()->set(RedirectPlugin::STRICT_REDIRECTS, $strict);
 
         return $this;
     }

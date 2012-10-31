@@ -3,6 +3,7 @@
 namespace Guzzle\Tests\Plugin\Redirect;
 
 use Guzzle\Http\Client;
+use Guzzle\Http\EntityBody;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Http\Exception\TooManyRedirectsException;
 
@@ -113,5 +114,43 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('POST', $requests[1]->getMethod());
         $this->assertEquals('bar', (string) $requests[1]->getHeader('X-Baz'));
         $this->assertEquals('POST', $requests[2]->getMethod());
+    }
+
+    public function testRewindsStreamWhenRedirectingIfNeeded()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+        ));
+
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->put();
+        $request->enableStrictRedirects(true);
+        $body = EntityBody::factory('foo');
+        $body->read(1);
+        $request->setBody($body);
+        $request->send();
+        $requests = $this->getServer()->getReceivedRequests(true);
+        $this->assertEquals('foo', (string) $requests[0]->getBody());
+    }
+
+    /**
+     * @expectedException \Guzzle\Http\Exception\CouldNotRewindStreamException
+     */
+    public function testThrowsExceptionWhenStreamCannotBeRewound()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi",
+            "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n"
+        ));
+
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->put();
+        $request->enableStrictRedirects(true);
+        $body = EntityBody::factory(fopen($this->getServer()->getUrl(), 'r'));
+        $body->read(1);
+        $request->setBody($body)->send();
     }
 }
