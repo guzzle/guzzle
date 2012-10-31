@@ -24,6 +24,11 @@ class GuzzleSubSplitTask extends GitBaseTask
     protected $heads = null;
 
     /**
+     * Publish for comma-separated tags instead of all tags
+     */
+    protected $tags = null;
+
+    /**
      * Base of the tree RELATIVE TO .subsplit working dir
      */
     protected $base = null;
@@ -38,6 +43,16 @@ class GuzzleSubSplitTask extends GitBaseTask
      * Do everything except actually send the update.
      */
     protected $dryRun = null;
+
+    /**
+     * Do not sync any heads.
+     */
+    protected $noHeads = false;
+
+    /**
+     * Do not sync any tags.
+     */
+    protected $noTags = false;
 
     /**
      * The splits we found in the heads
@@ -62,6 +77,16 @@ class GuzzleSubSplitTask extends GitBaseTask
     public function getHeads()
     {
         return $this->heads;
+    }
+
+    public function setTags($str)
+    {
+        $this->tags = explode(',', $str);
+    }
+
+    public function getTags()
+    {
+        return $this->tags;
     }
 
     public function setBase($str)
@@ -93,6 +118,27 @@ class GuzzleSubSplitTask extends GitBaseTask
     {
         return $this->dryRun;
     }
+
+    public function setNoHeads($bool)
+    {
+        $this->noHeads = (bool) $bool;
+    }
+
+    public function getNoHeads()
+    {
+        return $this->noHeads;
+    }
+
+    public function setNoTags($bool)
+    {
+        $this->noTags = (bool) $bool;
+    }
+
+    public function getNoTags()
+    {
+        return $this->noTags;
+    }
+
     /**
      * GitClient from VersionControl_Git
      */
@@ -141,13 +187,32 @@ class GuzzleSubSplitTask extends GitBaseTask
         $base = rtrim($base, '/') . '/';
         $org = $this->getOwningTarget()->getProject()->getProperty('github.org');
 
+        $splits = array();
+
         $heads = $this->getHeads();
         foreach ($heads as $head) {
             foreach ($this->splits[$head] as $component => $meta) {
-                $cmd = 'git subsplit publish ';
-                $cmd .= escapeshellarg($base . $component . ':git@github.com:'. $org.'/'.$meta['repo']) . ' --heads='.$head;
-                passthru($cmd);
+                $splits[] = $base . $component . ':git@github.com:'. $org.'/'.$meta['repo'];
             }
+
+            $cmd = 'git subsplit publish ';
+            $cmd .= escapeshellarg(implode(' ', $splits));
+
+            if ($this->getNoHeads()) {
+                $cmd .= ' --no-heads';
+            } else {
+                $cmd .= ' --heads='.$head;
+            }
+
+            if ($this->getNoTags()) {
+                $cmd .= ' --no-tags';
+            } else {
+                if ($this->getTags()) {
+                    $cmd .= ' --tags=' . escapeshellarg(implode(' ', $this->getTags()));
+                }
+            }
+
+            passthru($cmd);
         }
     }
 
