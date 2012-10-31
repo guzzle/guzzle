@@ -92,6 +92,7 @@
                                 repository="${repo.dir}"
                                 remote="${guzzle.remote}"
                                 heads="${head}"
+                                tags="v${new.version}"
                                 base="src"
                                 subIndicatorFile="composer.json"
                                 gitPath="${cmd.git}" />
