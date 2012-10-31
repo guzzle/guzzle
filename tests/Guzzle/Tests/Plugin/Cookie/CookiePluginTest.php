@@ -85,6 +85,14 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request->send();
 
         $this->assertEquals('test=583551', $request->getHeader('Cookie'));
+
+        $requests = $this->getServer()->getReceivedRequests(true);
+
+        // Confirm subsequent requests have the cookie.
+        $this->assertEquals('test=583551', $requests[2]->getHeader('Cookie'));
+
+        // Confirm the redirected request has the cookie.
+        $this->assertEquals('test=583551', $requests[1]->getHeader('Cookie'));
     }
 
     public function testCookiesAreNotAddedWhenParamIsSet()
