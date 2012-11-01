@@ -12,7 +12,7 @@ use Guzzle\Http\Exception\CouldNotRewindStreamException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Plugin to implement HTTP redirects
+ * Plugin to implement HTTP redirects. Can redirect like a web browser or using strict RFC 2616 compliance
  */
 class RedirectPlugin implements EventSubscriberInterface
 {
@@ -65,14 +65,15 @@ class RedirectPlugin implements EventSubscriberInterface
             return;
         }
 
-        $orignalRequest = $this->prepareRedirection($request);
+        // Prepare the request for a redirect and grab the original request that started the transaction
+        $originalRequest = $this->prepareRedirection($request);
 
         // Create a redirect request based on the redirect rules set on the request
         $redirectRequest = $this->createRedirectRequest(
             $request,
             $event['response']->getStatusCode(),
             trim($response->getHeader('Location')),
-            $orignalRequest
+            $originalRequest
         );
 
         // Send the redirect request and hijack the response of the original request
@@ -82,8 +83,10 @@ class RedirectPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Create a redirect request for a specific request object, taking into account strict redirection vs doing what
-     * most clients do
+     * Create a redirect request for a specific request object
+     *
+     * Takes into account strict RFC compliant redirection (e.g. redirect POST with POST) vs doing what most clients do
+     * (e.g. redirect POST with GET).
      *
      * @param RequestInterface $request    Request being redirected
      * @param RequestInterface $original   Original request
@@ -113,6 +116,7 @@ class RedirectPlugin implements EventSubscriberInterface
         // If the location is not absolute, then combine it with the original URL
         if (!$location->isAbsolute()) {
             $originalUrl = $redirectRequest->getUrl(true);
+            // Remove query string parameters and just take what is present on the redirect Location header
             $originalUrl->getQuery()->clear();
             $location = $originalUrl->combine((string) $location);
         }
@@ -174,11 +178,13 @@ class RedirectPlugin implements EventSubscriberInterface
             $original = $parent;
         }
 
+        // Always associate the parent response with the current response so that a chain can be established
         if ($parent = $request->getParams()->get(self::PARENT_REQUEST)) {
             $request->getResponse()->setPreviousResponse($parent->getResponse());
         }
 
         $params = $original->getParams();
+        // This is a new redirect, so increment the redirect counter
         $current = $params->get(self::REDIRECT_COUNT) + 1;
         $params->set(self::REDIRECT_COUNT, $current);
 
@@ -205,7 +211,7 @@ class RedirectPlugin implements EventSubscriberInterface
     {
         $responses = array();
 
-        // Create a nice message to use when throwing the exception
+        // Create a nice message to use when throwing the exception that shows each request/response transaction
         do {
             $response = $request->getResponse();
             $responses[] = '> ' . $request->getRawHeaders() . "\n\n< " . $response->getRawHeaders();
