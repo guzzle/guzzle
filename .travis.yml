@@ -4,6 +4,7 @@ php:
   - 5.4
 before_script:
   - curl --version
+  - pear config-set php_ini /etc/php.ini
   - echo 'Installing pecl_http'
   - wget --quiet http://pecl.php.net/get/pecl_http-1.7.4.tgz
   - tar -xzf pecl_http-1.7.4.tgz
