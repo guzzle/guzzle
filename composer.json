@@ -62,7 +62,8 @@
         "zendframework/zend-cache": "2.0.*",
         "zendframework/zend-log": "2.0.*",
         "zend/zend-log1": "1.12",
-        "zend/zend-cache1": "1.12"
+        "zend/zend-cache1": "1.12",
+        "phpunit/phpunit": "3.7.*"
     },
 
     "repositories": [

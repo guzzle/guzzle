@@ -16,7 +16,7 @@
     <target name="test" description="Run unit tests" depends="test-init">
         <trycatch>
             <try>
-                <exec passthru="true" command="phpunit" checkReturn="true" />
+                <exec passthru="true" command="vendor/bin/phpunit" checkReturn="true" />
             </try>
             <finally>
                 <testserver cmd="${cmd.testserver}" action="stop" />
@@ -44,7 +44,7 @@
     </target>
 
     <target name="coverage" depends="prepare">
-        <exec passthru="true" command="phpunit --coverage-html=${dir.output}/coverage --coverage-clover=${dir.output}/logs/clover.xml" />
+        <exec passthru="true" command="vendor/bin/phpunit --coverage-html=${dir.output}/coverage --coverage-clover=${dir.output}/logs/clover.xml" />
     </target>
 
     <target name="view-coverage">
