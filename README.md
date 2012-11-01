@@ -192,3 +192,11 @@ $request = $client->get(array('/{?a,b}', array(
 
 The resulting URL would become ``http://test.com?a=hi&b=there``
 
+Unit testing
+------------
+
+[![Build Status](https://secure.travis-ci.org/guzzle/guzzle.png?branch=master)](http://travis-ci.org/guzzle/guzzle)
+
+Guzzle uses PHPUnit for unit testing. In order to run the unit tests, you'll firt need
+to install the dependencies of the project using Composer: `php composer.phar install --dev`.
+You can then run the tests using `vendor/bin/phpunit` or `phing test` (if you have phing installed).
