@@ -2,10 +2,12 @@
 
 namespace Guzzle\Http\Message;
 
+use Guzzle\Common\ToArrayInterface;
+
 /**
  * Represents a header and all of the values stored by that header
  */
-class Header implements \IteratorAggregate, \Countable
+class Header implements ToArrayInterface, \IteratorAggregate, \Countable
 {
     protected $values = array();
     protected $header;
@@ -190,8 +192,7 @@ class Header implements \IteratorAggregate, \Countable
 
     /**
      * Get all of the header values as a flat array
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function toArray()
     {

@@ -59,14 +59,4 @@ class Model extends Collection
 
         return $data;
     }
-
-    /**
-     * Convert the model to an array
-     *
-     * @return array
-     */
-    public function toArray()
-    {
-        return $this->data;
-    }
 }

@@ -2,10 +2,12 @@
 
 namespace Guzzle\Plugin\Cookie;
 
+use Guzzle\Common\ToArrayInterface;
+
 /**
  * Set-Cookie object
  */
-class Cookie
+class Cookie implements ToArrayInterface
 {
     /**
      * @var array Cookie data

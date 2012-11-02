@@ -7,7 +7,7 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 /**
  * Key value pair collection object
  */
-class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
+class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArrayInterface
 {
     /**
      * @var array Data associated with the object.
@@ -149,6 +149,14 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     public function getAll(array $keys = null)
     {
         return $keys ? array_intersect_key($this->data, array_flip($keys)) : $this->data;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function toArray()
+    {
+        return $this->data;
     }
 
     /**
