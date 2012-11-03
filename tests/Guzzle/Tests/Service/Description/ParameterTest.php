@@ -340,7 +340,7 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('foo', $p->getWireName());
     }
 
-    public function testIncludesNameInToArrayWhenItemsAttriubuteHasName()
+    public function testIncludesNameInToArrayWhenItemsAttributeHasName()
     {
         $p = new Parameter(array(
             'type' => 'array',

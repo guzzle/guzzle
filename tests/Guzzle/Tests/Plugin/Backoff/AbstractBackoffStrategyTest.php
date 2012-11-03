@@ -76,7 +76,7 @@ class AbstractBackoffStrategyTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(10, $a->getBackoffPeriod(2, new Request('GET', 'http://www.foo.com')));
     }
 
-    public function testReturnsZeroWhenDecisionMakerReturnsTrueButNoFutherStrategiesAreInTheChain()
+    public function testReturnsZeroWhenDecisionMakerReturnsTrueButNoFurtherStrategiesAreInTheChain()
     {
         $a = new CallbackBackoffStrategy(function () { return null; }, true);
         $b = new CallbackBackoffStrategy(function () { return true; }, true);

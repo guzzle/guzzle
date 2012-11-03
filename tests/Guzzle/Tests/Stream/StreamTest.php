@@ -147,7 +147,7 @@ class StreamTest extends \Guzzle\Tests\GuzzleTestCase
         unset($stream);
 
         // Make sure that false is returned when the size cannot be determined
-        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Lenght: 0\r\n\r\n");
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
         $handle = fopen('http://localhost:' . $this->getServer()->getPort(), 'r');
         $stream = new Stream($handle);
         $this->assertEquals(false, $stream->getSize());

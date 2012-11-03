@@ -159,7 +159,7 @@ class EntityBody extends Stream implements EntityBodyInterface
     /**
      * Calculate the MD5 hash of an entity body
      *
-     * @param EntityBodyInterface $body         Entity body to calcutate the hash for
+     * @param EntityBodyInterface $body         Entity body to calculate the hash for
      * @param bool                $rawOutput    Whether or not to use raw output
      * @param bool                $base64Encode Whether or not to base64 encode raw output (only if raw output is true)
      *

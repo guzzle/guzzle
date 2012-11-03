@@ -79,7 +79,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     private $scope = -1;
 
     /**
-     * Get a cached instance of the curl mutli object
+     * Get a cached instance of the curl multi object
      *
      * @return CurlMulti
      */
