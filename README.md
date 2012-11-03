@@ -190,7 +190,7 @@ $request = $client->get(array('/{?a,b}', array(
 ));
 ```
 
-The resulting URL would become ``http://test.com?a=hi&b=there``
+The resulting URL would become ``http://test.com/?a=hi&b=there``
 
 Unit testing
 ------------
