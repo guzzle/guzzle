@@ -272,7 +272,7 @@ CHANGELOG
     * [BC] No longer supporting "{{ }}" for injecting into command or UriTemplates.  Use "{}"
     * Added the ability to passed parameters to all requests created by a client
     * Added callback functionality to the ExponentialBackoffPlugin
-    * Using microtime in ExponentialBackoffPlugin to allow more granular backoff stategies.
+    * Using microtime in ExponentialBackoffPlugin to allow more granular backoff strategies.
     * Rewinding request stream bodies when retrying requests
     * Exception is thrown when JSON response body cannot be decoded
     * Added configurable magic method calls to clients and commands.  This is off by default.
