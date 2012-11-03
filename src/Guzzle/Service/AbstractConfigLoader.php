@@ -47,7 +47,7 @@ abstract class AbstractConfigLoader implements ConfigLoaderInterface
     }
 
     /**
-     * Remove an alias from the laoder
+     * Remove an alias from the loader
      *
      * @param string $alias Alias to remove
      *

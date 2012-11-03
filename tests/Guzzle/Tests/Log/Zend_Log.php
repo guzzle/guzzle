@@ -303,7 +303,7 @@ class Zend_Log
             return $namespace . $className;
         }
 
-        // emtpy namespace given?
+        // empty namespace given?
         if (strlen($namespace) === 0) {
             return $className;
         }

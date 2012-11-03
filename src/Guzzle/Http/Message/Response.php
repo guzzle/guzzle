@@ -58,7 +58,7 @@ class Response extends AbstractMessage
         417 => 'Expectation Failed',
         422 => 'Unprocessable Entity',
         423 => 'Locked',
-        424 => 'Failed Dependancy',
+        424 => 'Failed Dependency',
         425 => 'Reserved for WebDAV advanced collections expired proposal',
         426 => 'Upgrade required',
         428 => 'Precondition Required',
