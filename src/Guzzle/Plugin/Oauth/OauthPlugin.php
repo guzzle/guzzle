@@ -63,6 +63,7 @@ class OauthPlugin implements EventSubscriberInterface
      * Request before-send event handler
      *
      * @param Event $event Event received
+     * @return array
      */
     public function onRequestBeforeSend(Event $event)
     {
@@ -84,6 +85,8 @@ class OauthPlugin implements EventSubscriberInterface
             'Authorization',
             $this->buildAuthorizationHeader($authorizationParams)
         );
+
+        return $authorizationParams;
     }
 
     private function buildAuthorizationHeader($authorizationParams)
@@ -198,7 +201,7 @@ class OauthPlugin implements EventSubscriberInterface
      *
      * @return string
      */
-    protected function generateNonce(RequestInterface $request)
+    public function generateNonce(RequestInterface $request)
     {
         return sha1(uniqid('', true) . $request->getUrl());
     }
