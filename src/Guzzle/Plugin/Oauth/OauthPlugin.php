@@ -89,6 +89,13 @@ class OauthPlugin implements EventSubscriberInterface
         return $authorizationParams;
     }
 
+    /**
+     * Builds the Authorization header for a request
+     *
+     * @param array $authorizationParams Associative array of authorization parameters
+     *
+     * @return string
+     */
     private function buildAuthorizationHeader($authorizationParams)
     {
         $authorizationString = 'OAuth ';
