@@ -80,7 +80,7 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
      */
     public function add(Cookie $cookie)
     {
-        if (!$cookie->getValue() || !$cookie->getName() || !$cookie->getDomain()) {
+        if ($cookie->getValue() === false || $cookie->getName() === false || $cookie->getDomain() === false) {
             return false;
         }
 
