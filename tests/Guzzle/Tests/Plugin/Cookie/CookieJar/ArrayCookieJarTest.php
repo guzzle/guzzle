@@ -125,43 +125,43 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
         $this->jar->remove(null, null, 'test');
         $this->assertEquals(0, count($this->jar));
     }
-    
+
     public function testDoesNotAddIncompleteCookies()
     {
-    	$this->assertEquals(false, $this->jar->add(new Cookie()));
-    
-    	$this->assertEquals(false, $this->jar->add(new Cookie(array(
-    			'name' => 'foo'
-    	))));
-    	$this->assertEquals(false, $this->jar->add(new Cookie(array(
-    			'name' => false
-    	))));
-    	$this->assertEquals(false, $this->jar->add(new Cookie(array(
-    			'name' => true
-    	))));
-    	$this->assertEquals(false, $this->jar->add(new Cookie(array(
-    			'name'   => 'foo',
-    			'domain' => 'foo.com'
-    	))));
+        $this->assertEquals(false, $this->jar->add(new Cookie()));
+
+        $this->assertEquals(false, $this->jar->add(new Cookie(array(
+                'name' => 'foo'
+        ))));
+        $this->assertEquals(false, $this->jar->add(new Cookie(array(
+                'name' => false
+        ))));
+        $this->assertEquals(false, $this->jar->add(new Cookie(array(
+                'name' => true
+        ))));
+        $this->assertEquals(false, $this->jar->add(new Cookie(array(
+                'name'   => 'foo',
+                'domain' => 'foo.com'
+        ))));
     }
-    
+
     public function testDoesAddValidCookies()
     {
-    	$this->assertEquals(true, $this->jar->add(new Cookie(array(
-    			'name'   => 'foo',
-    			'domain' => 'foo.com',
-    			'value'  => 0
-    	))));
-    	$this->assertEquals(true, $this->jar->add(new Cookie(array(
-    			'name'   => 'foo',
-    			'domain' => 'foo.com',
-    			'value'  => 0.0
-    	))));
-    	$this->assertEquals(true, $this->jar->add(new Cookie(array(
-    			'name'   => 'foo',
-    			'domain' => 'foo.com',
-    			'value'  => '0'
-    	))));
+        $this->assertEquals(true, $this->jar->add(new Cookie(array(
+                'name'   => 'foo',
+                'domain' => 'foo.com',
+                'value'  => 0
+        ))));
+        $this->assertEquals(true, $this->jar->add(new Cookie(array(
+                'name'   => 'foo',
+                'domain' => 'foo.com',
+                'value'  => 0.0
+        ))));
+        $this->assertEquals(true, $this->jar->add(new Cookie(array(
+                'name'   => 'foo',
+                'domain' => 'foo.com',
+                'value'  => '0'
+        ))));
     }
 
     public function testOverwritesCookiesThatAreOlderOrDiscardable()

@@ -80,10 +80,10 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
      */
     public function add(Cookie $cookie)
     {
-    	// Value, name or domain must not be empty but may be 0
-        if (!$this->nonEmpty($cookie->getValue()) || 
-        	!$this->nonEmpty($cookie->getName()) || 
-        	!$this->nonEmpty($cookie->getDomain())
+        // Value, name or domain must not be empty but may be 0
+        if (!$this->nonEmpty($cookie->getValue()) ||
+            !$this->nonEmpty($cookie->getName()) ||
+            !$this->nonEmpty($cookie->getDomain())
         ) {
             return false;
         }
@@ -92,7 +92,7 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
         foreach ($this->cookies as $i => $c) {
 
             // Two cookies are identical, when their path, domain, port and name are identical
-            if ($c->getPath() != $cookie->getPath() || 
+            if ($c->getPath() != $cookie->getPath() ||
                 $c->getDomain() != $cookie->getDomain() ||
                 $c->getPorts() != $cookie->getPorts() ||
                 $c->getName() != $cookie->getName()
@@ -221,13 +221,14 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
 
         return $cookies;
     }
-    
+
     /**
      * Validates a cookie name, value or domain
-     * 
+     *
      * @param unknown_type $value
      */
-    private function nonEmpty($value) {
-    	return is_int($value) || is_float($value) || is_string($value) && strlen($value)>0;
+    private function nonEmpty($value)
+    {
+        return is_int($value) || is_float($value) || is_string($value) && strlen($value)>0;
     }
 }
