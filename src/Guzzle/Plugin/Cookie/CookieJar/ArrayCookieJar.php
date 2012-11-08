@@ -87,10 +87,10 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
         // Resolve conflicts with previously set cookies
         foreach ($this->cookies as $i => $c) {
 
-            // Check the regular comparison fields
-            if ($c->getPath() != $cookie->getPath() || $c->getMaxAge() != $cookie->getMaxAge() ||
-                $c->getDomain() != $cookie->getDomain() || $c->getHttpOnly() != $cookie->getHttpOnly() ||
-                $c->getPorts() != $cookie->getPorts() || $c->getSecure() != $cookie->getSecure() ||
+            // Continue with next cookie, if an identical cookie is already stored
+            if ($c->getPath() != $cookie->getPath() ||
+                $c->getDomain() != $cookie->getDomain() ||
+                $c->getPorts() != $cookie->getPorts() ||
                 $c->getName() != $cookie->getName()
             ) {
                 continue;
