@@ -15,6 +15,67 @@ class Cookie implements ToArrayInterface
     protected $data;
 
     /**
+     * @var array ASCII codes not valid for for use in a cookie name
+     *
+     * Cookie names are defined as 'token', according to RFC 2616, Section 2.2
+     * A valid token may contain any CHAR except CTLs (ASCII 0 - 31 or 127)
+     * or any of the following separators
+     */
+    protected static $invalidCharacterForCookieName = array(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,  // space
+        34,  // "
+        40,  // (
+        41,  // )
+        44,  // ,
+        47,  // /
+        58,  // :
+        59,  // ;
+        60,  // <
+        61,  // =
+        62,  // >
+        63,  // ?
+        64,  // @
+        91,  // [
+        92,  // \
+        93,  // ]
+        123, // {
+        125, // }
+        127  // DEL
+    );
+
+    /**
      * @param array $data Array of cookie data provided by a Cookie parser
      */
     public function __construct(array $data = array())
@@ -460,18 +521,8 @@ class Cookie implements ToArrayInterface
             return false;
         }
 
-        // Also a cookie name must be a token, as defined in RFC 2616, Section 2.2
-        // A valid token may contain any CHAR except CTLs (ASCII 0 - 31 or 127) or any of the following separators
-        $rfc2621_token_separators = array(
-            "(", ")", "<", ">", "@", ",", ";", ":", "\\", "\"",	"/", "[", "]", "?", "=", "{", "}", " "
-        );
-        for ($i = 1; $i <= 31; $i++) {
-            $control_characters[] = chr($i);
-        }
-        $control_characters[] = chr(127);
-
-        foreach (array_merge($rfc2621_token_separators, $control_characters) as $invalid_character) {
-            if (strpos($name, $invalid_character) !== false) {
+        foreach (self::$invalidCharacterForCookieName as $invalidCharacterCode) {
+            if (strpos($name, chr($invalidCharacterCode)) !== false) {
                 return false;
             }
         }
