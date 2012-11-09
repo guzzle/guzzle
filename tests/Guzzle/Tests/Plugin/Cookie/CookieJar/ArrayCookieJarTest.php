@@ -142,6 +142,16 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
             'name'   => 'foo',
             'domain' => 'foo.com'
         ))));
+        $this->assertFalse($this->jar->add(new Cookie(array(
+            'name'   => 'contains s@mple [token) separators;',
+            'value'  => 'foo',
+            'domain' => 'example.com'
+        ))));
+        $this->assertFalse($this->jar->add(new Cookie(array(
+            'name'   => 'has_control_character'.chr(10),
+            'value'  => 'foo',
+            'domain' => 'example.com'
+        ))));
     }
 
     public function testDoesAddValidCookies()
@@ -160,6 +170,11 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
             'name'   => 'foo',
             'domain' => 'foo.com',
             'value'  => '0'
+        ))));
+        $this->assertTrue($this->jar->add(new Cookie(array(
+            'name'   => '0',
+            'domain' => 'foo.com',
+            'value'  => 'bar'
         ))));
     }
 

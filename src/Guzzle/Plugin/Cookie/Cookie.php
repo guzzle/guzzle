@@ -448,6 +448,51 @@ class Cookie implements ToArrayInterface
     }
 
     /**
+     * Check if the cookie is valid according to RFC 6265
+     *
+     * @return bool
+     */
+    public function isValid()
+    {
+        // Names must not be empty, but can be 0
+        $name = $this->getName();
+        if (empty($name) && !is_numeric($name)) {
+            return false;
+        }
+
+        // Also a cookie name must be a token, as defined in RFC 2616, Section 2.2
+        // A valid token may contain any CHAR except CTLs (ASCII 0 - 31 or 127) or any of the following separators
+        $rfc2621_token_separators = array(
+            "(", ")", "<", ">", "@", ",", ";", ":", "\\", "\"",	"/", "[", "]", "?", "=", "{", "}", " "
+        );
+        for ($i = 1; $i <= 31; $i++) {
+            $control_characters[] = chr($i);
+        }
+        $control_characters[] = chr(127);
+
+        foreach (array_merge($rfc2621_token_separators, $control_characters) as $invalid_character) {
+            if (strpos($name, $invalid_character) !== false) {
+                return false;
+            }
+        }
+
+        // Value must not be empty, but can be 0
+        $value = $this->getValue();
+        if (empty($value) && !is_numeric($value)) {
+            return false;
+        }
+
+        // Domains must not be empty, but can be 0
+        // A "0" is not a valid internet domain, but may be used as server name in a private network
+        $domain = $this->getDomain();
+        if (empty($domain) && !is_numeric($domain)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Set a value and return the cookie object
      *
      * @param string $key   Key to set

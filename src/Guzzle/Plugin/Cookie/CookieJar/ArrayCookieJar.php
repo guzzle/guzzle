@@ -80,9 +80,8 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
      */
     public function add(Cookie $cookie)
     {
-        // Name and domain must not be empty. Value must not be empty or equal to 0.
-        $v = $cookie->getValue();
-        if (!$cookie->getName() || !$cookie->getDomain() || (!$v && !is_numeric($v))) {
+        // Only allow cookies with set and valid domain, name, value
+        if (!$cookie->isValid()) {
             return false;
         }
 
