@@ -15,6 +15,67 @@ class Cookie implements ToArrayInterface
     protected $data;
 
     /**
+     * @var array ASCII codes not valid for for use in a cookie name
+     *
+     * Cookie names are defined as 'token', according to RFC 2616, Section 2.2
+     * A valid token may contain any CHAR except CTLs (ASCII 0 - 31 or 127)
+     * or any of the following separators
+     */
+    protected static $invalidCharacterForCookieName = array(
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,  // space
+        34,  // "
+        40,  // (
+        41,  // )
+        44,  // ,
+        47,  // /
+        58,  // :
+        59,  // ;
+        60,  // <
+        61,  // =
+        62,  // >
+        63,  // ?
+        64,  // @
+        91,  // [
+        92,  // \
+        93,  // ]
+        123, // {
+        125, // }
+        127  // DEL
+    );
+
+    /**
      * @param array $data Array of cookie data provided by a Cookie parser
      */
     public function __construct(array $data = array())
@@ -445,6 +506,41 @@ class Cookie implements ToArrayInterface
     public function isExpired()
     {
         return $this->getExpires() && time() > $this->getExpires();
+    }
+
+    /**
+     * Check if the cookie is valid according to RFC 6265
+     *
+     * @return bool
+     */
+    public function isValid()
+    {
+        // Names must not be empty, but can be 0
+        $name = $this->getName();
+        if (empty($name) && !is_numeric($name)) {
+            return false;
+        }
+
+        foreach (self::$invalidCharacterForCookieName as $invalidCharacterCode) {
+            if (strpos($name, chr($invalidCharacterCode)) !== false) {
+                return false;
+            }
+        }
+
+        // Value must not be empty, but can be 0
+        $value = $this->getValue();
+        if (empty($value) && !is_numeric($value)) {
+            return false;
+        }
+
+        // Domains must not be empty, but can be 0
+        // A "0" is not a valid internet domain, but may be used as server name in a private network
+        $domain = $this->getDomain();
+        if (empty($domain) && !is_numeric($domain)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
