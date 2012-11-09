@@ -80,11 +80,9 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
      */
     public function add(Cookie $cookie)
     {
-        // Value, name or domain must not be empty but may be 0
-        if (!$this->nonEmpty($cookie->getValue()) ||
-            !$this->nonEmpty($cookie->getName()) ||
-            !$this->nonEmpty($cookie->getDomain())
-        ) {
+        // Name and domain must not be empty. Value must not be empty or equal to 0.
+        $v = $cookie->getValue();
+        if (!$cookie->getName() || !$cookie->getDomain() || (!$v && !is_numeric($v))) {
             return false;
         }
 
@@ -220,15 +218,5 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
         };
 
         return $cookies;
-    }
-
-    /**
-     * Validates a cookie name, value or domain
-     *
-     * @param unknown_type $value
-     */
-    private function nonEmpty($value)
-    {
-        return is_int($value) || is_float($value) || is_string($value) && strlen($value)>0;
     }
 }

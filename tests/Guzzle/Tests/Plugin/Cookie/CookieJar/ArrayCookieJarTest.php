@@ -129,38 +129,37 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
     public function testDoesNotAddIncompleteCookies()
     {
         $this->assertEquals(false, $this->jar->add(new Cookie()));
-
-        $this->assertEquals(false, $this->jar->add(new Cookie(array(
-                'name' => 'foo'
+        $this->assertFalse($this->jar->add(new Cookie(array(
+            'name' => 'foo'
         ))));
-        $this->assertEquals(false, $this->jar->add(new Cookie(array(
-                'name' => false
+        $this->assertFalse($this->jar->add(new Cookie(array(
+            'name' => false
         ))));
-        $this->assertEquals(false, $this->jar->add(new Cookie(array(
-                'name' => true
+        $this->assertFalse($this->jar->add(new Cookie(array(
+            'name' => true
         ))));
-        $this->assertEquals(false, $this->jar->add(new Cookie(array(
-                'name'   => 'foo',
-                'domain' => 'foo.com'
+        $this->assertFalse($this->jar->add(new Cookie(array(
+            'name'   => 'foo',
+            'domain' => 'foo.com'
         ))));
     }
 
     public function testDoesAddValidCookies()
     {
-        $this->assertEquals(true, $this->jar->add(new Cookie(array(
-                'name'   => 'foo',
-                'domain' => 'foo.com',
-                'value'  => 0
+        $this->assertTrue($this->jar->add(new Cookie(array(
+            'name'   => 'foo',
+            'domain' => 'foo.com',
+            'value'  => 0
         ))));
-        $this->assertEquals(true, $this->jar->add(new Cookie(array(
-                'name'   => 'foo',
-                'domain' => 'foo.com',
-                'value'  => 0.0
+        $this->assertTrue($this->jar->add(new Cookie(array(
+            'name'   => 'foo',
+            'domain' => 'foo.com',
+            'value'  => 0.0
         ))));
-        $this->assertEquals(true, $this->jar->add(new Cookie(array(
-                'name'   => 'foo',
-                'domain' => 'foo.com',
-                'value'  => '0'
+        $this->assertTrue($this->jar->add(new Cookie(array(
+            'name'   => 'foo',
+            'domain' => 'foo.com',
+            'value'  => '0'
         ))));
     }
 
