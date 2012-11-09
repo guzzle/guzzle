@@ -60,15 +60,6 @@ class ReadLimitEntityBody extends AbstractEntityBodyDecorator
     }
 
     /**
-     * Returns the Content-MD5 of the limited subset of data
-     * {@inheritdoc}
-     */
-    public function getContentMd5($rawOutput = false, $base64Encode = false)
-    {
-        return EntityBody::calculateMd5($this, $rawOutput, $base64Encode);
-    }
-
-    /**
      * Allow for a bounded seek on the read limited entity body
      * {@inheritdoc}
      */

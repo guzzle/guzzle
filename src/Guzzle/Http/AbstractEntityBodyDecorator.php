@@ -2,6 +2,8 @@
 
 namespace Guzzle\Http;
 
+use Guzzle\Stream\Stream;
+
 /**
  * Abstract decorator used to wrap entity bodies
  */
@@ -101,7 +103,9 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
      */
     public function getContentMd5($rawOutput = false, $base64Encode = false)
     {
-        return $this->body->getContentMd5($rawOutput, $base64Encode);
+        $hash = Stream::getHash($this, 'md5', $rawOutput);
+
+        return $hash && $base64Encode ? base64_encode($hash) : $hash;
     }
 
     /**

@@ -153,7 +153,9 @@ class EntityBody extends Stream implements EntityBodyInterface
      */
     public function getContentMd5($rawOutput = false, $base64Encode = false)
     {
-        return self::calculateMd5($this, $rawOutput, $base64Encode);
+        $hash = self::getHash($this, 'md5', $rawOutput);
+
+        return $hash && $base64Encode ? base64_encode($hash) : $hash;
     }
 
     /**
@@ -164,23 +166,12 @@ class EntityBody extends Stream implements EntityBodyInterface
      * @param bool                $base64Encode Whether or not to base64 encode raw output (only if raw output is true)
      *
      * @return bool|string Returns an MD5 string on success or FALSE on failure
+     * @deprecated This will be deprecated soon
+     * @codeCoverageIgnore
      */
     public static function calculateMd5(EntityBodyInterface $body, $rawOutput = false, $base64Encode = false)
     {
-        $pos = $body->ftell();
-        if (!$body->seek(0)) {
-            return false;
-        }
-
-        $ctx = hash_init('md5');
-        while ($data = $body->read(1024)) {
-            hash_update($ctx, $data);
-        }
-
-        $out = hash_final($ctx, (bool) $rawOutput);
-        $body->seek($pos);
-
-        return ((bool) $base64Encode && (bool) $rawOutput) ? base64_encode($out) : $out;
+        return $body->getContentMd5($rawOutput, $base64Encode);
     }
 
     /**

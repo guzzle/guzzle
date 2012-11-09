@@ -93,6 +93,33 @@ class Stream implements StreamInterface
     }
 
     /**
+     * Calculate a hash of a Stream
+     *
+     * @param StreamInterface $stream    Stream to calculate the hash for
+     * @param string          $algo      Hash algorithm (e.g. md5, crc32, etc)
+     * @param bool            $rawOutput Whether or not to use raw output
+     *
+     * @return bool|string Returns false on failure or a hash string on success
+     */
+    public static function getHash(StreamInterface $stream, $algo, $rawOutput = false)
+    {
+        $pos = $stream->ftell();
+        if (!$stream->seek(0)) {
+            return false;
+        }
+
+        $ctx = hash_init($algo);
+        while ($data = $stream->read(1024)) {
+            hash_update($ctx, $data);
+        }
+
+        $out = hash_final($ctx, (bool) $rawOutput);
+        $stream->seek($pos);
+
+        return $out;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function getMetaData($key = null)

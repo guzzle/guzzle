@@ -153,6 +153,7 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\EntityBody::getContentMd5
      * @covers Guzzle\Http\EntityBody::calculateMd5
+     * @covers Guzzle\Stream\Stream::getHash
      */
     public function testCreatesMd5Checksum()
     {
@@ -172,6 +173,7 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Http\EntityBody::getContentMd5
      * @covers Guzzle\Http\EntityBody::calculateMd5
+     * @covers Guzzle\Stream\Stream::getHash
      */
     public function testSeeksToOriginalPosAfterMd5()
     {
