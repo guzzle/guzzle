@@ -3,6 +3,7 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
+use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Http\EntityBodyInterface;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Exception\BadResponseException;
@@ -905,5 +906,39 @@ class Response extends AbstractMessage
         $this->previous = $response;
 
         return $this;
+    }
+
+    /**
+     * Parse the JSON response body and return an array
+     *
+     * @return array
+     * @throws RuntimeException if the response body is not in JSON format
+     */
+    public function json()
+    {
+        $data = json_decode((string) $this->body, true);
+        if (JSON_ERROR_NONE !== json_last_error()) {
+            throw new RuntimeException('Unable to parse response body into JSON: ' . json_last_error());
+        }
+
+        return $data ?: array();
+    }
+
+    /**
+     * Parse the XML response body and return a SimpleXMLElement
+     *
+     * @return \SimpleXMLElement
+     * @throws RuntimeException if the response body is not in XML format
+     */
+    public function xml()
+    {
+        try {
+            // Allow XML to be retrieved even if there is no response body
+            $xml = new \SimpleXMLElement((string) $this->body ?: '<root />');
+        } catch (\Exception $e) {
+            throw new RuntimeException('Unable to parse response body into XML: ' . $e->getMessage());
+        }
+
+        return $xml;
     }
 }

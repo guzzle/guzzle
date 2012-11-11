@@ -163,7 +163,7 @@ class CommandTest extends AbstractCommandTest
 
     /**
      * @covers Guzzle\Service\Command\AbstractCommand::process
-     * @expectedException Guzzle\Service\Exception\JsonException
+     * @expectedException \Guzzle\Common\Exception\RuntimeException
      */
     public function testConvertsInvalidJsonResponsesToArray()
     {

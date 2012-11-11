@@ -32,7 +32,7 @@ class AbstractConfigLoaderTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     * @expectedException \Guzzle\Common\Exception\InvalidArgumentException
      */
     public function testOnlyLoadsSupportedTypes()
     {
@@ -40,7 +40,7 @@ class AbstractConfigLoaderTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     * @expectedException \Guzzle\Common\Exception\InvalidArgumentException
      * @expectedExceptionMessage Unable to open fooooooo! for reading
      */
     public function testFileMustBeReadable()
@@ -49,7 +49,7 @@ class AbstractConfigLoaderTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     * @expectedException \Guzzle\Common\Exception\InvalidArgumentException
      * @expectedExceptionMessage Unknown file extension
      */
     public function testMustBeSupportedExtension()
@@ -58,7 +58,7 @@ class AbstractConfigLoaderTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @expectedException Guzzle\Service\Exception\JsonException
+     * @expectedException \Guzzle\Common\Exception\RuntimeException
      * @expectedExceptionMessage Error loading JSON data from
      */
     public function testJsonMustBeValue()
@@ -70,7 +70,7 @@ class AbstractConfigLoaderTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     * @expectedException \Guzzle\Common\Exception\InvalidArgumentException
      * @expectedExceptionMessage PHP files must return an array
      */
     public function testPhpFilesMustReturnAnArray()
@@ -117,7 +117,7 @@ class AbstractConfigLoaderTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     * @expectedException \Guzzle\Common\Exception\InvalidArgumentException
      * @expectedExceptionMessage Unable to open foo for reading
      */
     public function testCanRemoveAliases()

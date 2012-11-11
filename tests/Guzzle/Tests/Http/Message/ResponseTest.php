@@ -822,4 +822,50 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame($previous, $response->getPreviousResponse());
         $this->assertNull($previous->getPreviousResponse());
     }
+
+    /**
+     * @covers Guzzle\Http\Message\Response::json
+     */
+    public function testParsesJsonResponses()
+    {
+        $response = new Response(200, array(), '{"foo": "bar"}');
+        $this->assertEquals(array('foo' => 'bar'), $response->json());
+        // Always return an array from the json method
+        $response = new Response(200);
+        $this->assertEquals(array(), $response->json());
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\Response::json
+     * @expectedException \Guzzle\Common\Exception\RuntimeException
+     * @expectedExceptionMessage Unable to parse response body into JSON: 4
+     */
+    public function testThrowsExceptionWhenFailsToParseJsonResponse()
+    {
+        $response = new Response(200, array(), '{"foo": "');
+        $response->json();
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\Response::xml
+     */
+    public function testParsesXmlResponses()
+    {
+        $response = new Response(200, array(), '<abc><foo>bar</foo></abc>');
+        $this->assertEquals('bar', (string) $response->xml()->foo);
+        // Always return a SimpleXMLElement from the xml method
+        $response = new Response(200);
+        $this->assertEmpty((string) $response->xml()->foo);
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\Response::xml
+     * @expectedException \Guzzle\Common\Exception\RuntimeException
+     * @expectedExceptionMessage Unable to parse response body into XML: String could not be parsed as XML
+     */
+    public function testThrowsExceptionWhenFailsToParseXmlResponse()
+    {
+        $response = new Response(200, array(), '<abc');
+        $response->xml();
+    }
 }
