@@ -57,13 +57,7 @@ class Stream implements StreamInterface
      */
     public function __construct($stream, $size = null)
     {
-        if (!is_resource($stream)) {
-            throw new InvalidArgumentException('Stream must be a resource');
-        }
-
-        $this->size = $size;
-        $this->stream = $stream;
-        $this->rebuildCache();
+        $this->setStream($stream, $size);
     }
 
     /**
@@ -135,6 +129,22 @@ class Stream implements StreamInterface
     public function getStream()
     {
         return $this->stream;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setStream($stream, $size = null)
+    {
+        if (!is_resource($stream)) {
+            throw new InvalidArgumentException('Stream must be a resource');
+        }
+
+        $this->size = $size;
+        $this->stream = $stream;
+        $this->rebuildCache();
+
+        return $this;
     }
 
     /**

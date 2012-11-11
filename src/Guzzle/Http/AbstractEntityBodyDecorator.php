@@ -135,6 +135,15 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
 
     /**
      * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
+    public function setStream($stream, $size = 0)
+    {
+        return $this->body->setStream($stream, $size);
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function getWrapper()
     {

@@ -31,6 +31,16 @@ interface StreamInterface
     public function getStream();
 
     /**
+     * Set the stream that is wrapped by the object
+     *
+     * @param resource $stream Stream resource to wrap
+     * @param int      $size   Size of the stream in bytes. Only pass if the size cannot be obtained from the stream.
+     *
+     * @return self
+     */
+    public function setStream($stream, $size = null);
+
+    /**
      * Get the stream wrapper type
      *
      * @return string

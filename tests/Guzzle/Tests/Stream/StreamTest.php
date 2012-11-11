@@ -11,7 +11,8 @@ class StreamTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
      * @covers Guzzle\Stream\Stream::__construct
-     * @expectedException InvalidArgumentException
+     * @covers Guzzle\Stream\Stream::setStream
+     * @expectedException \InvalidArgumentException
      */
     public function testConstructorThrowsExceptionOnInvalidArgument()
     {
@@ -38,6 +39,21 @@ class StreamTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array(), $stream->getWrapperData());
         $this->assertFalse($stream->isConsumed());
         unset($stream);
+    }
+
+    /**
+     * @covers Guzzle\Stream\Stream::getStream
+     * @covers Guzzle\Stream\Stream::setStream
+     */
+    public function testCanModifyStream()
+    {
+        $handle1 = fopen('php://temp', 'r+');
+        $handle2 = fopen('php://temp', 'r+');
+        $stream = new Stream($handle1);
+        $this->assertSame($handle1, $stream->getStream());
+        $stream->setStream($handle2, 10);
+        $this->assertEquals(10, $stream->getSize());
+        $this->assertSame($handle2, $stream->getStream());
     }
 
     /**
