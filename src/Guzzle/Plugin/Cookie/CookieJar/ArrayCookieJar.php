@@ -6,6 +6,7 @@ use Guzzle\Plugin\Cookie\Cookie;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Parser\ParserRegistry;
+use Guzzle\Plugin\Cookie\Exception\InvalidCookieException;
 
 /**
  * Cookie cookieJar that stores cookies an an array
@@ -16,6 +17,31 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
      * @var array Loaded cookie data
      */
     protected $cookies = array();
+
+    /**
+     * @var bool Whether or not strict mode is enabled. When enabled, exceptions will be thrown for invalid cookies
+     */
+    protected $strictMode;
+
+    /**
+     * @param bool $strictMode Set to true to throw exceptions when invalid cookies are added to the cookie jar
+     */
+    public function __construct($strictMode = false)
+    {
+        $this->strictMode = $strictMode;
+    }
+
+    /**
+     * Enable or disable strict mode on the cookie jar
+     *
+     * @param bool $strictMode Set to true to throw exceptions when invalid cookies are added. False to ignore them.
+     *
+     * @return self
+     */
+    public function setStrictMode($strictMode)
+    {
+        $this->strictMode = $strictMode;
+    }
 
     /**
      * {@inheritdoc}
@@ -81,8 +107,13 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
     public function add(Cookie $cookie)
     {
         // Only allow cookies with set and valid domain, name, value
-        if (!$cookie->isValid()) {
-            return false;
+        $result = $cookie->validate();
+        if ($result !== true) {
+            if ($this->strictMode) {
+                throw new InvalidCookieException($result);
+            } else {
+                return false;
+            }
         }
 
         // Resolve conflicts with previously set cookies

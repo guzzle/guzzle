@@ -165,4 +165,41 @@ class CookieTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($cookie->matchesPath('/foo/bar'));
         $this->assertFalse($cookie->matchesPath('/bar'));
     }
+
+    public function cookieValidateProvider()
+    {
+        return array(
+            array('foo', 'baz', 'bar', true),
+            array('0', '0', '0', true),
+            array('', 'baz', 'bar', 'The cookie name must not be empty'),
+            array('foo', '', 'bar', 'The cookie value must not be empty'),
+            array('foo', 'baz', '', 'The cookie domain must not be empty'),
+            array('foo\\', 'baz', '0', 'The cookie name must not contain invalid characters: foo\\'),
+        );
+    }
+
+    /**
+     * @dataProvider cookieValidateProvider
+     */
+    public function testValidatesCookies($name, $value, $domain, $result)
+    {
+        $cookie = new Cookie(array(
+            'name'   => $name,
+            'value'  => $value,
+            'domain' => $domain
+        ));
+        $this->assertSame($result, $cookie->validate());
+    }
+
+    public function testCreatesInvalidCharacterString()
+    {
+        $m = new \ReflectionMethod('Guzzle\Plugin\Cookie\Cookie', 'getInvalidCharacters');
+        $m->setAccessible(true);
+        $p = new \ReflectionProperty('Guzzle\Plugin\Cookie\Cookie', 'invalidCharString');
+        $p->setAccessible(true);
+        $p->setValue('');
+        // Expects a string containing 51 invalid characters
+        $this->assertEquals(51, strlen($m->invoke($m)));
+        $this->assertContains('@', $m->invoke($m));
+    }
 }

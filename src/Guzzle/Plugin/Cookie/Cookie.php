@@ -15,65 +15,31 @@ class Cookie implements ToArrayInterface
     protected $data;
 
     /**
-     * @var array ASCII codes not valid for for use in a cookie name
+     * @var string ASCII codes not valid for for use in a cookie name
      *
      * Cookie names are defined as 'token', according to RFC 2616, Section 2.2
      * A valid token may contain any CHAR except CTLs (ASCII 0 - 31 or 127)
      * or any of the following separators
      */
-    protected static $invalidCharacterForCookieName = array(
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-        10,
-        11,
-        12,
-        13,
-        14,
-        15,
-        16,
-        17,
-        18,
-        19,
-        20,
-        21,
-        22,
-        23,
-        24,
-        25,
-        26,
-        27,
-        28,
-        29,
-        30,
-        31,
-        32,  // space
-        34,  // "
-        40,  // (
-        41,  // )
-        44,  // ,
-        47,  // /
-        58,  // :
-        59,  // ;
-        60,  // <
-        61,  // =
-        62,  // >
-        63,  // ?
-        64,  // @
-        91,  // [
-        92,  // \
-        93,  // ]
-        123, // {
-        125, // }
-        127  // DEL
-    );
+    protected static $invalidCharString;
+
+    /**
+     * Gets an array of invalid cookie characters
+     *
+     * @return array
+     */
+    protected static function getInvalidCharacters()
+    {
+        if (!self::$invalidCharString) {
+            self::$invalidCharString = implode('', array_map('chr', array_merge(
+                range(0, 32),
+                array(34, 40, 41, 44, 47),
+                array(58, 59, 60, 61, 62, 63, 64, 91, 92, 93, 123, 125, 127)
+            )));
+        }
+
+        return self::$invalidCharString;
+    }
 
     /**
      * @param array $data Array of cookie data provided by a Cookie parser
@@ -511,33 +477,32 @@ class Cookie implements ToArrayInterface
     /**
      * Check if the cookie is valid according to RFC 6265
      *
-     * @return bool
+     * @return bool|string Returns true if valid or an error message if invalid
      */
-    public function isValid()
+    public function validate()
     {
         // Names must not be empty, but can be 0
         $name = $this->getName();
         if (empty($name) && !is_numeric($name)) {
-            return false;
+            return 'The cookie name must not be empty';
         }
 
-        foreach (self::$invalidCharacterForCookieName as $invalidCharacterCode) {
-            if (strpos($name, chr($invalidCharacterCode)) !== false) {
-                return false;
-            }
+        // Check if any of the invalid characters are present in the cookie name
+        if (strpbrk($name, self::getInvalidCharacters()) !== false) {
+            return 'The cookie name must not contain invalid characters: ' . $name;
         }
 
         // Value must not be empty, but can be 0
         $value = $this->getValue();
         if (empty($value) && !is_numeric($value)) {
-            return false;
+            return 'The cookie value must not be empty';
         }
 
         // Domains must not be empty, but can be 0
         // A "0" is not a valid internet domain, but may be used as server name in a private network
         $domain = $this->getDomain();
         if (empty($domain) && !is_numeric($domain)) {
-            return false;
+            return 'The cookie domain must not be empty';
         }
 
         return true;

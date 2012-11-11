@@ -3,6 +3,7 @@
 namespace Guzzle\Plugin\Cookie;
 
 use Guzzle\Common\Event;
+use Guzzle\Plugin\Cookie\CookieJar\ArrayCookieJar;
 use Guzzle\Plugin\Cookie\CookieJar\CookieJarInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -17,11 +18,11 @@ class CookiePlugin implements EventSubscriberInterface
     protected $cookieJar;
 
     /**
-     * @param CookieJarInterface $cookieJar Cookie jar used to hold cookies
+     * @param CookieJarInterface $cookieJar Cookie jar used to hold cookies. Creates an ArrayCookieJar by default.
      */
-    public function __construct(CookieJarInterface $cookieJar)
+    public function __construct(CookieJarInterface $cookieJar = null)
     {
-        $this->cookieJar = $cookieJar;
+        $this->cookieJar = $cookieJar ?: new ArrayCookieJar();
     }
 
     /**
