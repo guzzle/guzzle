@@ -69,7 +69,7 @@ class CachePlugin implements EventSubscriberInterface
             } elseif ($options instanceof CacheStorageInterface) {
                 $options = array('storage' => $options);
             } elseif (class_exists('Doctrine\Common\Cache\ArrayCache')) {
-                $options = array('storage' => new DefaultCacheStorage(new DoctrineCacheAdapter(new ArrayCache())));
+                $options = array('storage' => new DefaultCacheStorage(new DoctrineCacheAdapter(new ArrayCache()), 3600));
             } else {
                 // @codeCoverageIgnoreStart
                 throw new InvalidArgumentException('No cache was provided and Doctrine is not installed');
@@ -112,7 +112,7 @@ class CachePlugin implements EventSubscriberInterface
         if (isset($options['revalidation'])) {
             $this->revalidation = $options['revalidation'];
         } else {
-            $this->revalidation = new DefaultRevalidation($this->keyProvider, $this->storage);
+            $this->revalidation = new DefaultRevalidation($this->keyProvider, $this->storage, $this);
         }
 
         $this->cached = new \SplObjectStorage();

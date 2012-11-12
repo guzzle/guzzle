@@ -22,12 +22,20 @@ class DefaultRevalidation implements RevalidationInterface
     protected $storage;
 
     /**
-     * @var CacheKeyProviderInterface $cacheKey Cache key strategy
+     * @var CachePlugin
      */
-    public function __construct(CacheKeyProviderInterface $cacheKey, CacheStorageInterface $cache)
+    protected $plugin;
+
+    /**
+     * @param CacheKeyProviderInterface $cacheKey Cache key strategy
+     * @param CacheStorageInterface     $storage  Cache storage
+     * @param CachePlugin               $plugin   Cache plugin to remove from revalidation requests
+     */
+    public function __construct(CacheKeyProviderInterface $cacheKey, CacheStorageInterface $cache, CachePlugin $plugin)
     {
         $this->cacheKey = $cacheKey;
         $this->storage = $cache;
+        $this->plugin = $plugin;
     }
 
     /**
@@ -80,7 +88,6 @@ class DefaultRevalidation implements RevalidationInterface
     protected function createRevalidationRequest(RequestInterface $request, Response $response)
     {
         $revalidate = clone $request;
-        //$revalidate->getEventDispatcher()->removeSubscriber($this);
         $revalidate->removeHeader('Pragma')
             ->removeHeader('Cache-Control')
             ->setHeader('If-Modified-Since', $response->getDate());
@@ -88,6 +95,9 @@ class DefaultRevalidation implements RevalidationInterface
         if ($response->getEtag()) {
             $revalidate->setHeader('If-None-Match', '"' . $response->getEtag() . '"');
         }
+
+        // Remove any cache plugins that might be on the request
+        $revalidate->getEventDispatcher()->removeSubscriber($this->plugin);
 
         return $revalidate;
     }
