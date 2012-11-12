@@ -1,6 +1,17 @@
 CHANGELOG
 =========
 
+* 3.0.4 (2012-11-11)
+
+    * Bug: Fixed a bug when adding multiple cookies to a request to use the correct glue value
+    * Bug: Cookies can now be added that have a name, domain, or value set to "0"
+    * Bug: Using the system cacert bundle when using the Phar
+    * Added json and xml methods to Response to make it easier to parse JSON and XML response data into data structures
+    * Enhanced cookie jar de-duplication
+    * Added the ability to enable strict cookie jars that throw exceptions when invalid cookies are added
+    * Added setStream to StreamInterface to actually make it possible to implement custom rewind behavior for entity bodies
+    * Added the ability to create any sort of hash for a stream rather than just an MD5 hash
+
 * 3.0.3 (2012-11-04)
 
     * Implementing redirects in PHP rather than cURL
