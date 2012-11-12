@@ -159,7 +159,7 @@ class Response extends AbstractMessage
     {
         $this->setStatus($statusCode);
         $this->params = new Collection();
-        $this->body = EntityBody::factory($body ?: '');
+        $this->body = EntityBody::factory($body !== null ? $body : '');
 
         if ($headers) {
             if (!is_array($headers) && !($headers instanceof Collection)) {

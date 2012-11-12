@@ -76,6 +76,8 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $response = new Response(200, null, EntityBody::factory('data'));
         $this->assertInstanceOf('Guzzle\\Http\\EntityBody', $response->getBody());
         $this->assertEquals('data', $response->getBody(true));
+        $response = new Response(200, null, '0');
+        $this->assertSame('0', $response->getBody(true), 'getBody(true) should return "0" if response body is "0".');
 
         // Make sure the proper exception is thrown
         try {
