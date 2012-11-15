@@ -59,7 +59,15 @@ class XmlVisitor extends AbstractResponseVisitor
                     foreach ($properties as $property) {
                         $name = $property->getName();
                         $sentAs = $property->getWireName();
-                        if (isset($value[$sentAs])) {
+                        if ($property->getData('xmlAttribute')) {
+                            if (isset($value['@attributes'][$sentAs])) {
+                                $value[$name] = $value['@attributes'][$sentAs];
+                                unset($value['@attributes'][$sentAs]);
+                                if (empty($value['@attributes'])) {
+                                    unset($value['@attributes']);
+                                }
+                            }
+                        } elseif (isset($value[$sentAs])) {
                             $this->recursiveProcess($property, $value[$sentAs]);
                             if ($name != $sentAs) {
                                 $value[$name] = $value[$sentAs];
