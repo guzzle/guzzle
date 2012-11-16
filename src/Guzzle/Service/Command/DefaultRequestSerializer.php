@@ -90,7 +90,11 @@ class DefaultRequestSerializer implements RequestSerializerInterface
             $variables = $client->getConfig()->getAll();
             foreach ($operation->getParams() as $name => $arg) {
                 if ($arg->getLocation() == 'uri' && $command->hasKey($name)) {
-                    $variables[$name] = (string) $command->get($name);
+                    $variables[$name] = $command->get($name);
+
+                    if (!is_array($variables[$name])) {
+                        $variables[$name] = (string) $variables[$name];
+                    }
                 }
             }
             // Merge the client's base URL with an expanded URI template
