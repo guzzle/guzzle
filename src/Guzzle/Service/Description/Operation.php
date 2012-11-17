@@ -447,7 +447,7 @@ class Operation implements OperationInterface
             self::TYPE_DOCUMENTATION => true
         );
         if (!isset($types[$responseType])) {
-            throw new InvalidArgumentException('responseType must be one of ' . implode(', ', $types));
+            throw new InvalidArgumentException('responseType must be one of ' . implode(', ', array_keys($types)));
         }
 
         $this->responseType = $responseType;
