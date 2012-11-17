@@ -9,6 +9,16 @@ use Guzzle\Parser\UriTemplate\PeclUriTemplate;
  */
 class PeclUriTemplateTest extends AbstractUriTemplateTest
 {
+    public function setUp()
+    {
+        if (!extension_loaded('uri_template')) {
+            $this->markTestSkipped(
+                'The PECL uri_template extension is not loaded.'
+            );
+        }
+
+        parent::setUp();
+    }
     /**
      * @dataProvider templateProvider
      */
