@@ -55,7 +55,7 @@ class QueryString extends Collection
                 $query = substr($query, 1);
             }
             foreach (explode('&', $query) as $kvp) {
-                $parts = explode('=', $kvp);
+                $parts = explode('=', $kvp, 2);
                 $key = rawurldecode($parts[0]);
 
                 if (substr($key, -2) == '[]') {
