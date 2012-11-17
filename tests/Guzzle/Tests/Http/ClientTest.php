@@ -105,6 +105,16 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
+     * @covers Guzzle\Http\Client::createRequest
+     * @expectedException \Guzzle\Common\Exception\InvalidArgumentException
+     */
+    public function testValidatesArrayForTemplateIsValid()
+    {
+        $client = new Client('http://www.google.com/');
+        $client->createRequest('GET', array('foo' => 'bar', 'baz' => 'bam'));
+    }
+
+    /**
      * @covers Guzzle\Http\Client::__construct
      * @covers Guzzle\Http\Client::createRequest
      */
