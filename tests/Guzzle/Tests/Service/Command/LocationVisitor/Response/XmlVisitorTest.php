@@ -205,6 +205,105 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
         ), $value);
     }
 
+    public function testCanRenameAttributes()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'name'     => 'RunningQueues',
+            'type'     => 'array',
+            'location' => 'xml',
+            'items'    => array(
+                'type' => 'object',
+                'sentAs' => 'item',
+                'properties' => array(
+                    'QueueId' => array(
+                        'type'   => 'string',
+                        'sentAs' => 'queue_id',
+                        'data'   => array(
+                            'xmlAttribute' => true,
+                        ),
+                    ),
+                    'CurrentState' => array(
+                        'type'       => 'object',
+                        'properties' => array(
+                            'Code' => array(
+                                'type'   => 'numeric',
+                                'sentAs' => 'code',
+                                'data'   => array(
+                                    'xmlAttribute' => true,
+                                ),
+                            ),
+                            'Name' => array(
+                                'sentAs' => 'name',
+                                'data'   => array(
+                                    'xmlAttribute' => true,
+                                ),
+                            ),
+                        ),
+                    ),
+                    'PreviousState' => array(
+                        'type'       => 'object',
+                        'properties' => array(
+                            'Code' => array(
+                                'type'   => 'numeric',
+                                'sentAs' => 'code',
+                                'data'   => array(
+                                    'xmlAttribute' => true,
+                                ),
+                            ),
+                            'Name' => array(
+                                'sentAs' => 'name',
+                                'data'   => array(
+                                    'xmlAttribute' => true,
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            )
+        ));
+
+        $value = array(
+            'RunningQueues' => array(
+                'item' => array(
+                    '@attributes' => array(
+                        'queue_id' => 'q-3ea74257',
+                    ),
+                    'CurrentState' => array(
+                        '@attributes' => array(
+                            'code' => 32,
+                            'name' => 'processing',
+                        ),
+                    ),
+                    'PreviousState' => array(
+                        '@attributes' => array(
+                            'code' => 16,
+                            'name' => 'wait',
+                        ),
+                    ),
+                ),
+            )
+        );
+
+        $visitor->visit($this->command, $this->response, $param, $value);
+
+        $this->assertEquals(array(
+            'RunningQueues' => array(
+                array(
+                    'QueueId' => 'q-3ea74257',
+                    'CurrentState' => array(
+                        'Code' => '32',
+                        'Name' => 'processing',
+                    ),
+                    'PreviousState' => array(
+                        'Code' => '16',
+                        'Name' => 'wait',
+                    ),
+                ),
+            )
+        ), $value);
+    }
+
     public function testAddsEmptyArraysWhenValueIsMissing()
     {
         $visitor = new Visitor();
