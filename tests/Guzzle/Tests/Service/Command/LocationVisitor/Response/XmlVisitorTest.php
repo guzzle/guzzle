@@ -263,28 +263,8 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             )
         ));
 
-        $value = array(
-            'RunningQueues' => array(
-                'item' => array(
-                    '@attributes' => array(
-                        'queue_id' => 'q-3ea74257',
-                    ),
-                    'CurrentState' => array(
-                        '@attributes' => array(
-                            'code' => 32,
-                            'name' => 'processing',
-                        ),
-                    ),
-                    'PreviousState' => array(
-                        '@attributes' => array(
-                            'code' => 16,
-                            'name' => 'wait',
-                        ),
-                    ),
-                ),
-            )
-        );
-
+        $xml = '<wrap><RunningQueues><item queue_id="q-3ea74257"><CurrentState code="32" name="processing" /><PreviousState code="16" name="wait" /></item></RunningQueues></wrap>';
+        $value = json_decode(json_encode(new \SimpleXMLElement($xml)), true);
         $visitor->visit($this->command, $this->response, $param, $value);
 
         $this->assertEquals(array(
