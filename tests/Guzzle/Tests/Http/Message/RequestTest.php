@@ -848,4 +848,18 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request->getParams()->set(RedirectPlugin::DISABLE, true);
         $this->assertEquals(301, $request->send()->getStatusCode());
     }
+
+    public function testCanSendCustomRequests()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
+        $request = $this->client->createRequest('PROPFIND', $this->getServer()->getUrl(), array(
+            'Content-Type' => 'text/plain'
+        ), 'foo');
+        $response = $request->send();
+        $requests = $this->getServer()->getReceivedRequests(true);
+        $this->assertEquals('PROPFIND', $requests[0]->getMethod());
+        $this->assertEquals(3, (string) $requests[0]->getHeader('Content-Length'));
+        $this->assertEquals('foo', (string) $requests[0]->getBody());
+    }
 }

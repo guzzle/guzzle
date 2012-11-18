@@ -129,6 +129,7 @@ class CurlHandle
             case 'PUT':
             case 'PATCH':
             case 'DELETE':
+            default:
                 $curlOptions[CURLOPT_CUSTOMREQUEST] = $method;
                 if ($bodyAsString) {
                     // Remove the curl generated Content-Type header if none was set manually
@@ -143,9 +144,6 @@ class CurlHandle
                         $curlOptions[CURLOPT_INFILESIZE] = $tempContentLength;
                     }
                 }
-                break;
-            default:
-                $curlOptions[CURLOPT_CUSTOMREQUEST] = $method;
         }
 
         // Special handling for requests sending raw data
