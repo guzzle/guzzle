@@ -4,6 +4,7 @@ namespace Guzzle\Http;
 
 use Guzzle\Stream\Stream;
 use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Http\Mimetypes;
 
 /**
  * Entity body used with an HTTP request or response
@@ -139,13 +140,11 @@ class EntityBody extends Stream implements EntityBodyInterface
      */
     public function getContentType()
     {
-        if (!class_exists('finfo', false) || !($this->isLocal() && $this->getWrapper() == 'plainfile' && file_exists($this->getUri()))) {
+        if (!($this->isLocal() && $this->getWrapper() == 'plainfile' && file_exists($this->getUri()))) {
             return 'application/octet-stream';
         }
 
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-
-        return $finfo->file($this->getUri());
+        return Mimetypes::getInstance()->fromFilename($this->getUri()) ?: 'application/octet-stream';
     }
 
     /**

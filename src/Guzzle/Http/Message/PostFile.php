@@ -3,6 +3,7 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Http\Mimetypes;
 
 /**
  * POST file upload
@@ -105,14 +106,6 @@ class PostFile implements PostFileInterface
      */
     protected function guessContentType()
     {
-        // @codeCoverageIgnoreStart
-        if (!class_exists('finfo', false)) {
-            return 'application/octet-stream';
-        }
-        // @codeCoverageIgnoreEnd
-
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-
-        return $finfo->file($this->filename);
+        return Mimetypes::getInstance()->fromFilename($this->filename) ?: 'application/octet-stream';
     }
 }
