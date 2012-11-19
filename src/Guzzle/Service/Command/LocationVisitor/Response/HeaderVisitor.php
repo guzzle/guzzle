@@ -17,20 +17,32 @@ class HeaderVisitor extends AbstractResponseVisitor
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value, $context =  null)
     {
         if ($param->getType() == 'object' && $param->getAdditionalProperties() instanceof Parameter) {
-            // Grab prefixed headers that should be placed into an array with the prefix stripped
-            if ($prefix = $param->getSentAs()) {
-                $container = $param->getName();
-                $len = strlen($prefix);
-                // Find all matching headers and place them into the containing element
-                foreach ($response->getHeaders() as $key => $header) {
-                    if (stripos($key, $prefix) === 0) {
-                        // Account for multi-value headers
-                        $value[$container][substr($key, $len)] = count($header) == 1 ? end($header) : $header;
-                    }
-                }
-            }
+            $this->processPrefixedHeaders($response, $param, $value);
         } else {
             $value[$param->getName()] = (string) $response->getHeader($param->getWireName());
+        }
+    }
+
+    /**
+     * Process a prefixed header array
+     *
+     * @param Response  $response Response that contains the headers
+     * @param Parameter $param    Parameter object
+     * @param array     $value    Value response array to modify
+     */
+    protected function processPrefixedHeaders(Response $response, Parameter $param, &$value)
+    {
+        // Grab prefixed headers that should be placed into an array with the prefix stripped
+        if ($prefix = $param->getSentAs()) {
+            $container = $param->getName();
+            $len = strlen($prefix);
+            // Find all matching headers and place them into the containing element
+            foreach ($response->getHeaders() as $key => $header) {
+                if (stripos($key, $prefix) === 0) {
+                    // Account for multi-value headers
+                    $value[$container][substr($key, $len)] = count($header) == 1 ? end($header) : $header;
+                }
+            }
         }
     }
 }

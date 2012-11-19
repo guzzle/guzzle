@@ -92,15 +92,11 @@ class MessageParser extends AbstractMessageParser
 
             // Parse message headers
             if (!$startLine) {
-
                 $startLine = explode(' ', $line, 3);
-
             } elseif (strpos($line, ':')) {
-
                 $parts = explode(':', $line, 2);
                 $key = trim($parts[0]);
                 $value = isset($parts[1]) ? trim($parts[1]) : '';
-
                 if (!isset($headers[$key])) {
                     $headers[$key] = $value;
                 } elseif (!is_array($headers[$key])) {

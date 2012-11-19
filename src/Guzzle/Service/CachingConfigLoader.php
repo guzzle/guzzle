@@ -36,13 +36,13 @@ class CachingConfigLoader implements ConfigLoaderInterface
      */
     public function load($config, array $options = array())
     {
-        if (is_string($config)) {
+        if (!is_string($config)) {
+            $key = false;
+        } else {
             $key = 'loader_' . crc32($config);
             if ($result = $this->cache->fetch($key)) {
                 return $result;
             }
-        } else {
-            $key = false;
         }
 
         $result = $this->loader->load($config, $options);

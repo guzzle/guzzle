@@ -253,7 +253,10 @@ class Client extends HttpClient implements ClientInterface
             // Add a service description factory if one does not already exist
             if (!$this->commandFactory->has('Guzzle\\Service\\Command\\Factory\\ServiceDescriptionFactory')) {
                 // Add the service description factory before the concrete factory
-                $this->commandFactory->add(new ServiceDescriptionFactory($service), 'Guzzle\\Service\\Command\\Factory\\ConcreteClassFactory');
+                $this->commandFactory->add(
+                    new ServiceDescriptionFactory($service),
+                    'Guzzle\\Service\\Command\\Factory\\ConcreteClassFactory'
+                );
             } else {
                 // Update an existing service description factory
                 $factory = $this->commandFactory->find('Guzzle\\Service\\Command\\Factory\\ServiceDescriptionFactory');
