@@ -13,6 +13,7 @@
     ],
     "require": {
         "php": ">=5.3.2",
+        "ext-curl": "*",
         "guzzle/common": "self.version",
         "guzzle/parser": "self.version",
         "guzzle/stream": "self.version"
