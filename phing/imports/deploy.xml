@@ -81,8 +81,7 @@
                         <!-- checkout the specified branch -->
                         <!-- <gitcheckout repository="${repo.dir}" branchname="${head}" gitPath="${cmd.git}" /> -->
 
-                        <!-- tag the release -->
-                        <gittag repository="${repo.dir}" name="v${new.version}" gitPath="${cmd.git}" />
+                        <!-- Ensure that the tag exists -->
 
                         <!-- push the tag up so subsplit will get it -->
                         <gitpush repository="${repo.dir}" tags="true" gitPath="${cmd.git}" />
