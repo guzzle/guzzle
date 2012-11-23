@@ -179,15 +179,9 @@ class XmlVisitor extends AbstractRequestVisitor
                 if ($property = $param->getProperty($name)) {
                     if ($property->getType() == 'object' || $property->getType() == 'array') {
                         // Account for flat arrays, meaning the contents of the array are not wrapped in a container
-                        $child = $property->getData('xmlFlattened') ? $xml : $xml->addChild($property->getWireName());
-                        $this->addXml($child, $property, $v);
-                    } else {
-                        if ($property->getData('xmlAttribute')) {
-                            $xml->addAttribute($property->getWireName(), $v, $property->getData('xmlNamespace'));
-                        } else {
-                            $xml->addChild($property->getWireName(), $v, $property->getData('xmlNamespace'));
-                        }
+                        $xml = $property->getData('xmlFlattened') ? $xml : $xml->addChild($property->getWireName());
                     }
+                    $this->addXml($xml, $property, $v);
                 }
             }
         }
