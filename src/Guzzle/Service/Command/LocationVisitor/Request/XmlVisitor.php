@@ -63,8 +63,11 @@ class XmlVisitor extends AbstractRequestVisitor
     {
         if (isset($this->data[$command])) {
             $xml = $this->data[$command];
+
             unset($this->data[$command]);
+
             $request->setBody($xml->asXML());
+
             if ($this->contentType) {
                 $request->setHeader('Content-Type', $this->contentType);
             }
@@ -82,7 +85,7 @@ class XmlVisitor extends AbstractRequestVisitor
     {
         static $defaultRoot = array('name' => 'Request');
         // If no root element was specified, then just wrap the XML in 'Request'
-        $root = $operation->getData('xmlRoot') ?: $defaultRoot;
+        $root = $operation->getData('xmlRoot') ? : $defaultRoot;
 
         // Create the wrapping element with no namespaces if no namespaces were present
         if (empty($root['namespaces'])) {
@@ -143,7 +146,7 @@ class XmlVisitor extends AbstractRequestVisitor
     /**
      * Add an object to the XML
      */
-    protected function addXmlObject(\SimpleXMLElement $xml, Parameter $param, &$value)
+    protected function addXmlObject(\SimpleXMLElement $xml, Parameter $param, $value)
     {
         foreach ($value as $name => $v) {
             if ($property = $param->getProperty($name)) {
