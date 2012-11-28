@@ -47,6 +47,7 @@ class XmlVisitor extends AbstractRequestVisitor
 
     /**
      * {@inheritdoc}
+     *
      * @throws RuntimeException
      */
     public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
@@ -59,12 +60,8 @@ class XmlVisitor extends AbstractRequestVisitor
             throw new RuntimeException('Parameter does not have a parent');
         }
 
-        $node = $xml;
-        if (!$param->getData('xmlFlattened') && ($param->getType() == 'object' || $param->getType() == 'array')) {
-            $node = $xml->addChild($param->getWireName());
-        }
+        $this->addXml($xml, $param, $value);
 
-        $this->addXml($node, $param, $value);
         $this->data[$command] = $xml;
     }
 
@@ -75,8 +72,11 @@ class XmlVisitor extends AbstractRequestVisitor
     {
         if (isset($this->data[$command])) {
             $xml = $this->data[$command];
+
             unset($this->data[$command]);
+
             $request->setBody($xml->asXML());
+
             if ($this->contentType) {
                 $request->setHeader('Content-Type', $this->contentType);
             }
@@ -94,7 +94,7 @@ class XmlVisitor extends AbstractRequestVisitor
     {
         static $defaultRoot = array('name' => 'Request');
         // If no root element was specified, then just wrap the XML in 'Request'
-        $root = $operation->getData('xmlRoot') ?: $defaultRoot;
+        $root = $operation->getData('xmlRoot') ? : $defaultRoot;
 
         // Create the wrapping element with no namespaces if no namespaces were present
         if (empty($root['namespaces'])) {
@@ -120,20 +120,28 @@ class XmlVisitor extends AbstractRequestVisitor
     protected function addXml(\SimpleXMLElement $xml, Parameter $param, $value)
     {
         // Determine the name of the element
-        $node = $param->getWireName();
-        // Check if this property has a particular namespace
+        $nodeName = $param->getWireName();
+        // Determine the particular namespace (if this property has one)
         $namespace = $param->getData('xmlNamespace');
         // Filter the value
         $value = $param->filter($value);
+        // Account for flat arrays, meaning the contents of the array are not wrapped in a container
 
-        if ($param->getType() == 'array') {
-            $this->addXmlArray($xml, $param, $value, $namespace);
-        } elseif ($param->getType() == 'object') {
-            $this->addXmlObject($xml, $param, $value);
+        if ($param->getType() == 'object' || $param->getType() == 'array') {
+            // Object or array data may be placed inside some particular node
+            $childNode = $param->getData('xmlFlattened')
+                ? $xml
+                : $xml->addChild($nodeName, null, $namespace);
+
+            if ($param->getType() == 'object') {
+                $this->addXmlObject($childNode, $param, $value);
+            } else {
+                $this->addXmlArray($childNode, $param, $value);
+            }
         } elseif ($param->getData('xmlAttribute')) {
-            $xml->addAttribute($node, $value, $namespace);
+            $xml->addAttribute($nodeName, $value, $namespace);
         } else {
-            $xml->addChild($node, $value, $namespace);
+            $xml->addChild($nodeName, $value, $namespace);
         }
     }
 
@@ -143,21 +151,14 @@ class XmlVisitor extends AbstractRequestVisitor
      * @param \SimpleXMLElement $xml       XML to modify
      * @param Parameter         $param     API Parameter
      * @param mixed             $value     Value to add
-     * @param string            $namespace Namespace to set on each node
      */
-    protected function addXmlArray(\SimpleXMLElement $xml, Parameter $param, &$value, $namespace = null)
+    protected function addXmlArray(\SimpleXMLElement $xml, Parameter $param, $value)
     {
-        if ($items = $param->getItems()) {
-            $name = $items->getWireName();
+        if ($itemsParam = $param->getItems()) {
             foreach ($value as $v) {
                 // Don't add null values
                 if ($v !== null) {
-                    if ($items->getType() == 'object' || $items->getType() == 'array') {
-                        $child = $xml->addChild($name, null, $namespace);
-                        $this->addXml($child, $items, $v);
-                    } else {
-                        $xml->addChild($name, $v, $namespace);
-                    }
+                    $this->addXml($xml, $itemsParam, $v);
                 }
             }
         }
@@ -170,24 +171,14 @@ class XmlVisitor extends AbstractRequestVisitor
      * @param Parameter         $param API Parameter
      * @param mixed             $value Value to add
      */
-    protected function addXmlObject(\SimpleXMLElement $xml, Parameter $param, &$value)
+    protected function addXmlObject(\SimpleXMLElement $xml, Parameter $param, $value)
     {
         foreach ($value as $name => $v) {
             // Don't add null values
             if ($v !== null) {
                 // Continue recursing if a matching property is found
-                if ($property = $param->getProperty($name)) {
-                    if ($property->getType() == 'object' || $property->getType() == 'array') {
-                        // Account for flat arrays, meaning the contents of the array are not wrapped in a container
-                        $child = $property->getData('xmlFlattened') ? $xml : $xml->addChild($property->getWireName());
-                        $this->addXml($child, $property, $v);
-                    } else {
-                        if ($property->getData('xmlAttribute')) {
-                            $xml->addAttribute($property->getWireName(), $v, $property->getData('xmlNamespace'));
-                        } else {
-                            $xml->addChild($property->getWireName(), $v, $property->getData('xmlNamespace'));
-                        }
-                    }
+                if ($propertyParam = $param->getProperty($name)) {
+                    $this->addXml($xml, $propertyParam, $v);
                 }
             }
         }

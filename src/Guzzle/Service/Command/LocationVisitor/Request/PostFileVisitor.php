@@ -17,6 +17,8 @@ class PostFileVisitor extends AbstractRequestVisitor
      */
     public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
+        $value = $param->filter($value);
+
         if ($value instanceof PostFileInterface) {
             $request->addPostFile($value);
         } else {

@@ -17,6 +17,8 @@ class HeaderVisitor extends AbstractRequestVisitor
      */
     public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
+        $value = $param->filter($value);
+
         if ($param->getType() == 'object' && $param->getAdditionalProperties() instanceof Parameter) {
             $this->addPrefixedHeaders($request, $param, $value);
         } else {

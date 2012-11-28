@@ -13,15 +13,40 @@ abstract class AbstractRequestVisitor implements RequestVisitorInterface
 {
     /**
      * {@inheritdoc}
+     *
      * @codeCoverageIgnore
      */
-    public function after(CommandInterface $command, RequestInterface $request) {}
+    public function after(CommandInterface $command, RequestInterface $request)
+    {
+    }
 
     /**
      * {@inheritdoc}
+     *
      * @codeCoverageIgnore
      */
-    public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value) {}
+    public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
+    {
+    }
+
+    /**
+     * Prepare (filter and set desired name for request item) the value for request.
+     *
+     * @param mixed                                     $value
+     * @param \Guzzle\Service\Description\Parameter     $param
+     *
+     * @return array|mixed
+     */
+    protected function prepareValue($value, Parameter $param)
+    {
+        if ($param) {
+            $value = is_array($value)
+                ? $this->resolveRecursively($value, $param)
+                : $param->filter($value);
+        }
+
+        return $value;
+    }
 
     /**
      * Map nested parameters into the location_key based parameters
@@ -36,10 +61,10 @@ abstract class AbstractRequestVisitor implements RequestVisitorInterface
         foreach ($value as $name => $v) {
             if ($subParam = $param->getProperty($name)) {
                 $key = $subParam->getWireName();
-                if (is_array($v)) {
-                    $value[$key] = $this->resolveRecursively($v, $subParam);
-                } elseif ($name != $key) {
-                    $value[$key] = $param->filter($v);
+
+                $value[$key] = $this->prepareValue($v, $subParam);
+
+                if ($name != $key) {
                     unset($value[$name]);
                 }
             }
