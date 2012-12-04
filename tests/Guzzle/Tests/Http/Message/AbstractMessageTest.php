@@ -171,15 +171,20 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
     public function tokenizedHeaderProvider()
     {
         return array(
-            array('ISO-8859-1,utf-8;q=0.7,*;q=0.7"', ';', array(
+            array('ISO-8859-1,utf-8;q=0.7,*;q=0.7', ';', array(
                 'ISO-8859-1,utf-8',
-                'q' => array('0.7,*', '0.7"')
+                'q' => array('0.7,*', '0.7')
             )),
             array('gzip,deflate', ',', array('gzip', 'deflate')),
             array('en-us,en;q=0.5', ';', array(
                 'en-us,en',
                 'q' => '0.5'
-            ))
+            )),
+            array('110 test "Response is stale" "Mon, 03 Dec 2012 09:15:53 GMT",111 test "Revalidation failed"', ',', array(
+               '110 test "Response is stale" "Mon, 03 Dec 2012 09:15:53 GMT"',
+               '111 test "Revalidation failed"'
+            )
+)
         );
     }
 

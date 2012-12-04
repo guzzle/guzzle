@@ -193,7 +193,11 @@ abstract class AbstractMessage implements MessageInterface
         $data = new Collection();
 
         foreach ($this->getHeader($header) as $singleValue) {
-            foreach (explode($token, $singleValue) as $kvp) {
+            preg_match_all('#,?(?!$)(?<match>([^' . preg_quote($token) . '"]?("[^"]*")?)+)#', $singleValue, $matches);
+            foreach ($matches['match'] as $kvp) {
+                if('' == $kvp ) {
+                    continue;
+                }
                 $parts = explode('=', $kvp, 2);
                 if (!isset($parts[1])) {
                     $data[count($data)] = trim($parts[0]);
