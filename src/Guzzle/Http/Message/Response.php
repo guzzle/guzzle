@@ -697,17 +697,6 @@ class Response extends AbstractMessage
     }
 
     /**
-     * Get the Warning HTTP header
-     *
-     * @return string|null A general warning about possible problems with the entity body.
-     *                     (e.g. 199 Miscellaneous warning)
-     */
-    public function getWarning()
-    {
-        return $this->getHeader('Warning', true);
-    }
-
-    /**
      * Get the WWW-Authenticate HTTP header
      *
      * @return string|null Indicates the authentication scheme that should be used to access the requested entity

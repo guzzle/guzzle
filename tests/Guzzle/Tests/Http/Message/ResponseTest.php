@@ -48,7 +48,6 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
             'Transfer-Encoding' => 'chunked',
             'Vary' => '*',
             'Via' => '1.0 fred, 1.1 nowhere.com (Apache/1.1)',
-            'Warning' => '199 Miscellaneous warning',
             'WWW-Authenticate' => 'Basic'
         )), 'body');
     }
@@ -577,13 +576,6 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
     public function testReturnsViaHeader()
     {
         $this->assertEquals('1.0 fred, 1.1 nowhere.com (Apache/1.1)', $this->response->getVia());
-    }
-    /**
-     * @covers Guzzle\Http\Message\Response::getWarning
-     */
-    public function testGetWarning()
-    {
-        $this->assertEquals('199 Miscellaneous warning', $this->response->getWarning());
     }
 
     /**

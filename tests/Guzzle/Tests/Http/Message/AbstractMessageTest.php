@@ -168,6 +168,67 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(100, $mock->getCacheControlDirective('max-age'));
     }
 
+    /**
+     * @covers Guzzle\Http\Message\AbstractMessage
+     */
+    public function testHoldsWarningHeaders()
+    {
+        $mock = $this->mock;
+
+        $mock->setHeader('Warning', '110 test "Response is stale" "Mon, 03 Dec 2012 09:15:53 GMT"');
+        $this->assertTrue($mock->hasWarning(110, 'test'));
+        $this->assertFalse($mock->hasWarning(110, 'other'));
+        $this->assertTrue($mock->hasWarning(110));
+        $this->assertFalse($mock->hasWarning(111));
+
+        $mock->addHeader('Warning', '110 other "Response is stale" "Mon, 03 Dec 2012 09:15:53 GMT"');
+        $this->assertTrue($mock->hasWarning(110, 'test'));
+        $this->assertTrue($mock->hasWarning(110, 'other'));
+        $this->assertTrue($mock->hasWarning(110));
+        $this->assertFalse($mock->hasWarning(111));
+
+        $mock->addHeader('Warning', '111 test "Revalidation failed"');
+        $this->assertTrue($mock->hasWarning(111, 'test'));
+        $this->assertFalse($mock->hasWarning(111, 'other'));
+        $this->assertTrue($mock->hasWarning(111));
+
+        $mock->addWarning(115, 'test');
+        $this->assertTrue($mock->hasWarning(115, 'test'));
+        $this->assertFalse($mock->hasWarning(115, 'other'));
+        $this->assertTrue($mock->hasWarning(115));
+
+        $this->assertTrue($mock->hasWarnings());
+        $this->assertTrue($mock->hasWarnings(110));
+        $this->assertFalse($mock->hasWarnings(112));
+        $this->assertTrue($mock->hasWarnings(110, 'test'));
+        $this->assertTrue($mock->hasWarnings(null, 'other'));
+
+        $this->assertEquals(4, count($mock->getWarnings()));
+        $this->assertEquals(2, count($mock->getWarnings(110)));
+        $this->assertEquals(1, count($mock->getWarnings(111)));
+        $this->assertEquals(3, count($mock->getWarnings(null, 'test')));
+        $this->assertEquals(1, count($mock->getWarnings(null, 'other')));
+        $this->assertEquals(0, count($mock->getWarnings(111, 'other')));
+
+        $mock->removeWarning(110, 'other');
+        $this->assertTrue($mock->hasWarning(110, 'test'));
+        $this->assertFalse($mock->hasWarning(110, 'other'));
+        $this->assertTrue($mock->hasWarning(110));
+
+        $mock->removeWarning(110);
+        $this->assertFalse($mock->hasWarning(110, 'test'));
+        $this->assertFalse($mock->hasWarning(110, 'other'));
+        $this->assertFalse($mock->hasWarning(110));
+
+        $mock->removeWarnings(115);
+        $this->assertFalse($mock->hasWarnings(115));
+
+        $mock->addWarning(110, 'other');
+        $mock->addWarning(111, 'other');
+        $mock->removeWarnings(null, 'other');
+        $this->assertFalse($mock->hasWarnings(null, 'other'));
+    }
+
     public function tokenizedHeaderProvider()
     {
         return array(
