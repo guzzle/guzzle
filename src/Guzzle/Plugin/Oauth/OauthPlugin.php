@@ -120,7 +120,7 @@ class OauthPlugin implements EventSubscriberInterface
     public function getSignature(RequestInterface $request, $timestamp, $nonce)
     {
         $string = $this->getStringToSign($request, $timestamp, $nonce);
-        $key = urlencode($this->config['consumer_secret']) . '&' . urlencode($this->config['token_secret']);
+        $key = $this->urlencode($this->config['consumer_secret']) . '&' . $this->urlencode($this->config['token_secret']);
 
         return base64_encode(call_user_func($this->config['signature_callback'], $string, $key));
     }
@@ -222,5 +222,16 @@ class OauthPlugin implements EventSubscriberInterface
     public function getTimestamp(Event $event)
     {
        return $event['timestamp'] ? : time();
+    }
+
+    /**
+     * Returns an encoded string according to the RFC3986.
+     *
+     * @param $string
+     * @return mixed
+     */
+    public function urlencode($string)
+    {
+        return str_replace('%7E', '~', rawurlencode($string));
     }
 }
