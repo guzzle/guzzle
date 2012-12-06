@@ -2,7 +2,7 @@
 
 namespace Guzzle\Tests\Http\Message;
 
-use Guzzle\Http\Message\Header;
+use Guzzle\Http\Message\Header\Header;
 use Guzzle\Http\Message\Request;
 use Guzzle\Common\Collection;
 
@@ -85,7 +85,7 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
 
         foreach ($this->mock->getHeaders(true) as $key => $value) {
             $this->assertInternalType('string', $key);
-            $this->assertInstanceOf('Guzzle\Http\Message\Header', $value);
+            $this->assertInstanceOf('Guzzle\Http\Message\Header\Header', $value);
         }
     }
 
@@ -328,7 +328,7 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
             'TEST' => array('789'),
         );
         $header = $this->mock->getHeader('test');
-        $this->assertInstanceOf('Guzzle\Http\Message\Header', $header);
+        $this->assertInstanceOf('Guzzle\Http\Message\Header\Header', $header);
         $this->assertSame($header, $this->mock->getHeader('TEST'));
         $this->assertSame($header, $this->mock->getHeader('TeSt'));
 

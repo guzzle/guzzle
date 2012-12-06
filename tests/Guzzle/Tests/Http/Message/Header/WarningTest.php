@@ -3,7 +3,7 @@
 namespace Guzzle\Tests\Http\Message;
 
 use DateTime;
-use Guzzle\Http\Message\Warning;
+use Guzzle\Http\Message\Header\Warning;
 
 /**
  * @covers Guzzle\Http\Message\Warning

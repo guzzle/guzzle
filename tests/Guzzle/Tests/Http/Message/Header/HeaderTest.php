@@ -2,7 +2,7 @@
 
 namespace Guzzle\Tests\Http\Message;
 
-use Guzzle\Http\Message\Header;
+use Guzzle\Http\Message\Header\Header;
 
 /**
  * @covers Guzzle\Http\Message\Header

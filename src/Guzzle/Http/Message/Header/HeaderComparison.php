@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Http\Message;
+namespace Guzzle\Http\Message\Header;
 
 use Guzzle\Common\Collection;
 

@@ -5,6 +5,8 @@ namespace Guzzle\Http\Message;
 use DateTime;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Http\Message\Header\Header;
+use Guzzle\Http\Message\Header\Warning;
 
 /**
  * Abstract HTTP request/response message
