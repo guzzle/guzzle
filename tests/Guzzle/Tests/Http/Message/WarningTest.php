@@ -19,7 +19,7 @@ class WarningTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('test', $warning->getAgent());
         $this->assertEquals('Response is stale', $warning->getText());
         $this->assertEquals($date->format('r'), $warning->getDate()->format('r'));
-        $this->assertEquals(sprintf('110 test "Response is stale" "%s"', $date->format('D, d M Y H:i:s e')), (string)$warning);
+        $this->assertEquals(sprintf('110 test "Response is stale" "%s"', $date->format('D, d M Y H:i:s e')), (string) $warning);
 
         $warning = new Warning('111', 'test');
 
@@ -27,7 +27,7 @@ class WarningTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('test', $warning->getAgent());
         $this->assertEquals('Revalidation failed', $warning->getText());
         $this->assertNull($warning->getDate());
-        $this->assertEquals('111 test "Revalidation failed"', (string)$warning);
+        $this->assertEquals('111 test "Revalidation failed"', (string) $warning);
     }
 
     public function testFromHeader()
@@ -38,7 +38,7 @@ class WarningTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('test', $warning->getAgent());
         $this->assertEquals('Response is stale', $warning->getText());
         $this->assertEquals('Mon, 03 Dec 2012 09:15:53 GMT', $warning->getDate()->format('D, d M Y H:i:s e'));
-        $this->assertEquals($header, (string)$warning);
+        $this->assertEquals($header, (string) $warning);
 
         $header = '111 test "Revalidation failed"';
         $warning = Warning::fromHeader($header);
@@ -46,6 +46,6 @@ class WarningTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('test', $warning->getAgent());
         $this->assertEquals('Revalidation failed', $warning->getText());
         $this->assertNull($warning->getDate());
-        $this->assertEquals($header, (string)$warning);
+        $this->assertEquals($header, (string) $warning);
     }
 }

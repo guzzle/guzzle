@@ -50,7 +50,7 @@ class Warning
      */
     public function __construct($code, $agent, $text = null, DateTime $date = null)
     {
-        $this->code = (int)$code;
+        $this->code = (int) $code;
         $this->agent = $agent;
 
         if (null === $text && array_key_exists($this->code, self::$codeTexts)) {
@@ -72,7 +72,7 @@ class Warning
     {
         $parts = str_getcsv($header, ' ');
 
-        $code = (int)$parts[0];
+        $code = (int) $parts[0];
         $agent = $parts[1];
         $text = isset($parts[2]) ? $parts[2] : null;
         $date = isset($parts[3]) ? DateTime::createFromFormat('D, d M Y H:i:s e', $parts[3]) : null;

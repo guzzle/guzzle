@@ -244,8 +244,7 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
             array('110 test "Response is stale" "Mon, 03 Dec 2012 09:15:53 GMT",111 test "Revalidation failed"', ',', array(
                '110 test "Response is stale" "Mon, 03 Dec 2012 09:15:53 GMT"',
                '111 test "Revalidation failed"'
-            )
-)
+            )),
         );
     }
 

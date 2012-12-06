@@ -201,7 +201,7 @@ abstract class AbstractMessage implements MessageInterface
         foreach ($this->getHeader($header) as $singleValue) {
             preg_match_all('#,?(?!$)(?<match>([^' . preg_quote($token) . '"]?("[^"]*")?)+)#', $singleValue, $matches);
             foreach ($matches['match'] as $kvp) {
-                if('' == $kvp ) {
+                if ('' == $kvp) {
                     continue;
                 }
                 $parts = explode('=', $kvp, 2);
@@ -284,30 +284,33 @@ abstract class AbstractMessage implements MessageInterface
     /**
      * {@inheritdoc}
      */
-    public function getWarning($code, $agent = null) {
-        foreach($this->warnings as $warning) {
-            if(null !== $agent) {
-                if($code == $warning->getCode() && $agent === $warning->getAgent()) {
+    public function getWarning($code, $agent = null)
+    {
+        foreach ($this->warnings as $warning) {
+            if (null !== $agent) {
+                if ($code == $warning->getCode() && $agent === $warning->getAgent()) {
                     return $warning;
                 }
-            } elseif($code == $warning->getCode()) {
+            } elseif ($code == $warning->getCode()) {
                 return $warning;
             }
         }
+
         return null;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getWarnings($code = null, $agent = null) {
-        if(null === $code && null === $agent) {
+    public function getWarnings($code = null, $agent = null)
+    {
+        if (null === $code && null === $agent) {
             return $this->warnings;
         }
 
         $warnings = array();
-        foreach($this->warnings as $warning) {
-            if((null === $code || $code == $warning->getCode()) && (null === $agent || $agent == $warning->getAgent())) {
+        foreach ($this->warnings as $warning) {
+            if ((null === $code || $code == $warning->getCode()) && (null === $agent || $agent == $warning->getAgent())) {
                 $warnings[] = $warning;
             }
         }
@@ -318,22 +321,25 @@ abstract class AbstractMessage implements MessageInterface
     /**
      * {@inheritdoc}
      */
-    public function hasWarning($code, $agent = null) {
+    public function hasWarning($code, $agent = null)
+    {
         return null !== $this->getWarning($code, $agent);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function hasWarnings($code = null, $agent = null) {
+    public function hasWarnings($code = null, $agent = null)
+    {
         return count($this->getWarnings($code, $agent)) > 0;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function addWarning($code, $agent, $text = null, DateTime $date = null) {
-        if(false === $this->hasWarning($code, $agent)) {
+    public function addWarning($code, $agent, $text = null, DateTime $date = null)
+    {
+        if (false === $this->hasWarning($code, $agent)) {
             $this->warnings[] = new Warning($code, $agent, $text, $date);
             $this->rebuildWarningHeader();
         }
@@ -344,14 +350,15 @@ abstract class AbstractMessage implements MessageInterface
     /**
      * {@inheritdoc}
      */
-    public function removeWarning($code, $agent = null) {
-        foreach($this->warnings as $key => $warning) {
-            if(null !== $agent) {
-                if($code == $warning->getCode() && $agent === $warning->getAgent()) {
+    public function removeWarning($code, $agent = null)
+    {
+        foreach ($this->warnings as $key => $warning) {
+            if (null !== $agent) {
+                if ($code == $warning->getCode() && $agent === $warning->getAgent()) {
                     unset($this->warnings[$key]);
                     break;
                 }
-            } elseif($code == $warning->getCode()) {
+            } elseif ($code == $warning->getCode()) {
                 unset($this->warnings[$key]);
                 break;
             }
@@ -364,9 +371,10 @@ abstract class AbstractMessage implements MessageInterface
     /**
      * {@inheritdoc}
      */
-    public function removeWarnings($code = null, $agent = null) {
-        foreach($this->warnings as $key => $warning) {
-            if((null === $code || $code == $warning->getCode()) && (null === $agent || $agent == $warning->getAgent())) {
+    public function removeWarnings($code = null, $agent = null)
+    {
+        foreach ($this->warnings as $key => $warning) {
+            if ((null === $code || $code == $warning->getCode()) && (null === $agent || $agent == $warning->getAgent())) {
                 unset($this->warnings[$key]);
             }
         }
@@ -383,7 +391,7 @@ abstract class AbstractMessage implements MessageInterface
      */
     protected function changedHeader($header)
     {
-        switch($header) {
+        switch ($header) {
             case 'cache-control':
                 $this->parseCacheControlDirective();
                 break;
@@ -440,7 +448,7 @@ abstract class AbstractMessage implements MessageInterface
     {
         $warnings = array();
         foreach ($this->warnings as $warning) {
-            $warnings[] = (string)$warning;
+            $warnings[] = (string) $warning;
         }
         $this->headers['warning'] = new Header('Warning', $warnings, ', ');
     }
