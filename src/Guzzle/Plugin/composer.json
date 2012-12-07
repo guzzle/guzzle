@@ -34,5 +34,10 @@
         "guzzle/plugin-md5": "self.version",
         "guzzle/plugin-mock": "self.version",
         "guzzle/plugin-oauth": "self.version"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0-dev"
+        }
     }
 }

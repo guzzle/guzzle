@@ -18,5 +18,10 @@
     "autoload": {
         "psr-0": { "Guzzle\\Plugin\\Oauth": "" }
     },
-    "target-dir": "Guzzle/Plugin/Oauth"
+    "target-dir": "Guzzle/Plugin/Oauth",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0-dev"
+        }
+    }
 }

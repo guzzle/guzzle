@@ -18,5 +18,10 @@
     "autoload": {
         "psr-0": { "Guzzle\\Plugin\\Async": "" }
     },
-    "target-dir": "Guzzle/Plugin/Async"
+    "target-dir": "Guzzle/Plugin/Async",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0-dev"
+        }
+    }
 }

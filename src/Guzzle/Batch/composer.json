@@ -22,5 +22,10 @@
         "guzzle/http": "self.version",
         "guzzle/service": "self.version"
     },
-    "target-dir": "Guzzle/Batch"
+    "target-dir": "Guzzle/Batch",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0-dev"
+        }
+    }
 }

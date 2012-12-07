@@ -20,5 +20,10 @@
     "autoload": {
         "psr-0": { "Guzzle\\Service": "" }
     },
-    "target-dir": "Guzzle/Service"
+    "target-dir": "Guzzle/Service",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0-dev"
+        }
+    }
 }

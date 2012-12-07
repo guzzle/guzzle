@@ -17,5 +17,10 @@
     "autoload": {
         "psr-0": { "Guzzle\\Inflection": "" }
     },
-    "target-dir": "Guzzle/Inflection"
+    "target-dir": "Guzzle/Inflection",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0-dev"
+        }
+    }
 }
