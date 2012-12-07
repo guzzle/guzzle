@@ -546,6 +546,20 @@ class Operation implements OperationInterface
     }
 
     /**
+     * Set all of the error responses of the operation
+     *
+     * @param array $errorResponses Hash of error name to a hash containing a code, reason, class
+     *
+     * @return self
+     */
+    public function setErrorResponses(array $errorResponses)
+    {
+        $this->errorResponses = $errorResponses;
+
+        return $this;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function getData($name)
