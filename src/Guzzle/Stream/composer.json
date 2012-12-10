@@ -18,5 +18,10 @@
     "autoload": {
         "psr-0": { "Guzzle\\Stream": "" }
     },
-    "target-dir": "Guzzle/Stream"
+    "target-dir": "Guzzle/Stream",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0-dev"
+        }
+    }
 }

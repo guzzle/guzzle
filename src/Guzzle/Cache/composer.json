@@ -18,5 +18,10 @@
     "autoload": {
         "psr-0": { "Guzzle\\Cache": "" }
     },
-    "target-dir": "Guzzle/Cache"
+    "target-dir": "Guzzle/Cache",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0-dev"
+        }
+    }
 }

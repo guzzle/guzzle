@@ -10,5 +10,10 @@
     "autoload": {
         "psr-0": { "Guzzle\\Parser": "" }
     },
-    "target-dir": "Guzzle/Parser"
+    "target-dir": "Guzzle/Parser",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0-dev"
+        }
+    }
 }

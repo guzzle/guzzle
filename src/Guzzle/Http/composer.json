@@ -21,5 +21,10 @@
     "autoload": {
         "psr-0": { "Guzzle\\Http": "" }
     },
-    "target-dir": "Guzzle/Http"
+    "target-dir": "Guzzle/Http",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0-dev"
+        }
+    }
 }

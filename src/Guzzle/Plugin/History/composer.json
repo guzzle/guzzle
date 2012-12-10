@@ -18,5 +18,10 @@
     "autoload": {
         "psr-0": { "Guzzle\\Plugin\\History": "" }
     },
-    "target-dir": "Guzzle/Plugin/History"
+    "target-dir": "Guzzle/Plugin/History",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0-dev"
+        }
+    }
 }

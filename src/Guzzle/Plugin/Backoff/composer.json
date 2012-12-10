@@ -19,5 +19,10 @@
     "autoload": {
         "psr-0": { "Guzzle\\Plugin\\Backoff": "" }
     },
-    "target-dir": "Guzzle/Plugin/Backoff"
+    "target-dir": "Guzzle/Plugin/Backoff",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0-dev"
+        }
+    }
 }

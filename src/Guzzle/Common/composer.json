@@ -11,5 +11,10 @@
     "autoload": {
         "psr-0": { "Guzzle\\Common": "" }
     },
-    "target-dir": "Guzzle/Common"
+    "target-dir": "Guzzle/Common",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0-dev"
+        }
+    }
 }

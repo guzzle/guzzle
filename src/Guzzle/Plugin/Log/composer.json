@@ -19,5 +19,10 @@
     "autoload": {
         "psr-0": { "Guzzle\\Plugin\\Log": "" }
     },
-    "target-dir": "Guzzle/Plugin/Log"
+    "target-dir": "Guzzle/Plugin/Log",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0-dev"
+        }
+    }
 }
