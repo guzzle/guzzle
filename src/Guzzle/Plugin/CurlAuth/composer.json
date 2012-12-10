@@ -18,5 +18,10 @@
     "autoload": {
         "psr-0": { "Guzzle\\Plugin\\CurlAuth": "" }
     },
-    "target-dir": "Guzzle/Plugin/CurlAuth"
+    "target-dir": "Guzzle/Plugin/CurlAuth",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0-dev"
+        }
+    }
 }

@@ -20,5 +20,10 @@
     "suggest": {
         "guzzle/http": "self.version"
     },
-    "target-dir": "Guzzle/Log"
+    "target-dir": "Guzzle/Log",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.0-dev"
+        }
+    }
 }
