@@ -201,10 +201,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function dataProvider()
     {
-        $testFile = __DIR__ . '/../../../../../phpunit.xml';
-        if (!file_exists($testFile)) {
-            $this->markTestSkipped('phpunit.xml does not exist');
-        }
+        $testFile = __DIR__ . '/../../../../../phpunit.xml.dist';
 
         $postBody = new QueryString(array('file' => '@' . $testFile));
         $qs = new QueryString(array(
@@ -369,7 +366,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_HEADERFUNCTION => 'callback',
                 CURLOPT_POST => 1,
                 CURLOPT_POSTFIELDS => array(
-                    'file' => '@' . $testFile . ';type=application/xml;filename=phpunit.xml'
+                    'file' => '@' . $testFile . ';type=application/octet-stream;filename=phpunit.xml.dist'
                 ),
                 CURLOPT_HTTPHEADER => array (
                     'Accept:',
