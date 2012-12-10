@@ -6,6 +6,7 @@ use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Common\Exception\ExceptionCollection;
 use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Message\RequestInterface;
+use Guzzle\Plugin\Backoff\BackoffPlugin;
 
 /**
  * Send {@see RequestInterface} objects in parallel using curl_multi
@@ -126,7 +127,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         class_exists('Guzzle\Http\Message\Response');
         class_exists('Guzzle\Http\Exception\CurlException');
 
-        $this->createMutliHandle();
+        $this->createMultiHandle();
     }
 
     /**
@@ -246,7 +247,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         }
 
         if ($hard) {
-            $this->createMutliHandle();
+            $this->createMultiHandle();
         }
     }
 
@@ -379,43 +380,52 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
 
         // Create the polling event external to the loop
         $event = array('curl_multi' => $this);
+        $active = $this->executeHandles();
 
         while (1) {
 
-            $active = $this->executeHandles();
-
-            // Get messages from curl handles
-            while ($done = curl_multi_info_read($this->multiHandle)) {
-                $request = $this->resourceHash[(int) $done['handle']];
-                $handle = $this->handles[$request];
-                try {
-                    $this->processResponse($request, $handle, $done);
-                } catch (\Exception $e) {
-                    $this->removeErroredRequest($request, $e);
-                }
-            }
-
-            // Notify each request as polling and handled queued responses
-            $scopedPolling = $this->scope <= 0 ? $this->all() : $this->requests[$this->scope];
+            $this->processMessages();
 
             // Exit the function if there are no more requests to send
-            if (empty($scopedPolling)) {
+            if (!($scopedPolling = $this->scope <= 0 ? $this->all() : $this->requests[$this->scope])) {
                 break;
             }
 
-            // Notify all requests that requests are being polled
+            // Notify each request as polling
+            $waiting = $total = 0;
             foreach ($scopedPolling as $request) {
                 $event['request'] = $request;
                 $request->dispatch(self::POLLING_REQUEST, $event);
+                ++$total;
+                if ($request->getParams()->hasKey(BackoffPlugin::DELAY_PARAM)) {
+                    ++$waiting;
+                }
             }
 
-            if ($active) {
-                // Select the curl handles until there is any activity on any of the open file descriptors
-                // See https://github.com/php/php-src/blob/master/ext/curl/multi.c#L170
-                $active = $this->executeHandles(true, 0.1);
-            } else {
+            if ($waiting == $total) {
                 // Sleep to prevent eating CPU because no requests are actually pending a select call
                 usleep(500);
+            } else {
+                // Select the curl handles until there is any activity on any of the open file descriptors
+                // See https://github.com/php/php-src/blob/master/ext/curl/multi.c#L170
+                $active = $this->executeHandles(true, 0.02, $active);
+            }
+        }
+    }
+
+    /**
+     * Process any received curl multi messages
+     */
+    private function processMessages()
+    {
+        // Get messages from curl handles
+        while ($done = curl_multi_info_read($this->multiHandle)) {
+            try {
+                $request = $this->resourceHash[(int) $done['handle']];
+                $handle = $this->handles[$request];
+                $this->processResponse($request, $handle, $done);
+            } catch (\Exception $e) {
+                $this->removeErroredRequest($request, $e);
             }
         }
     }
@@ -425,29 +435,25 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      *
      * @param bool $select  Set to TRUE to select the file descriptors
      * @param int  $timeout Select timeout in seconds
+     * @param int  $active  Previous active value
      *
      * @return int Returns the number of active handles
      */
-    private function executeHandles($select = false, $timeout = 1)
+    private function executeHandles($select = false, $timeout = 1, $active = 0)
     {
-        $active = $selectResult = 0;
-
         do {
-
-            if ($select) {
-                $selectResult = curl_multi_select($this->multiHandle, $timeout);
+            if ($select && $active && curl_multi_select($this->multiHandle, $timeout) == -1) {
+                // Perform a usleep if a previously executed select returned -1
+                // @see https://bugs.php.net/bug.php?id=61141
+                usleep(125);
             }
-
-            if ($selectResult === 0) {
-                do {
-                    $mrc = curl_multi_exec($this->multiHandle, $active);
-                } while ($mrc == CURLM_CALL_MULTI_PERFORM);
-                // Check the return value to ensure an error did not occur
-                $this->checkCurlResult($mrc);
-            }
-
+            do {
+                $mrc = curl_multi_exec($this->multiHandle, $active);
+            } while ($mrc == CURLM_CALL_MULTI_PERFORM);
+            // Check the return value to ensure an error did not occur
+            $this->checkCurlResult($mrc);
         // Poll once if not selecting, or poll until there are no handles with activity
-        } while ($select && $active && $selectResult == 0);
+        } while ($select && $active);
 
         return $active;
     }
@@ -572,19 +578,17 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     private function checkCurlResult($code)
     {
         if ($code != CURLM_OK && $code != CURLM_CALL_MULTI_PERFORM) {
-            if (isset($this->multiErrors[$code])) {
-                $message = "cURL error: {$code} ({$this->multiErrors[$code][0]}): cURL message: {$this->multiErrors[$code][1]}";
-            } else {
-                $message = 'Unexpected cURL error: ' . $code;
-            }
-            throw new CurlException($message);
+            throw new CurlException(isset($this->multiErrors[$code])
+                ? "cURL error: {$code} ({$this->multiErrors[$code][0]}): cURL message: {$this->multiErrors[$code][1]}"
+                : 'Unexpected cURL error: ' . $code
+            );
         }
     }
 
     /**
      * Create the new cURL multi handle with error checking
      */
-    private function createMutliHandle()
+    private function createMultiHandle()
     {
         if ($this->multiHandle && is_resource($this->multiHandle)) {
             curl_multi_close($this->multiHandle);
