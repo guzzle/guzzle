@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+* 3.0.6 (2012-12-09)
+
+    * CurlMulti performance improvements
+    * Adding setErrorResponses() to Operation
+    * composer.json tweaks
+
 * 3.0.5 (2012-11-18)
 
     * Bug: Fixing an infinite recursion bug caused from revalidating with the CachePlugin

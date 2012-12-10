@@ -72,19 +72,15 @@
                     <then>
                         <fail message="Please specify version as [0-9].[0-9].[0-9]. (I'll add v for you.)"/>
                     </then>
-
-
                     <else>
 
                         <echo>BEGINNING RELEASE FOR ${new.version}</echo>
 
                         <!-- checkout the specified branch -->
                         <!-- <gitcheckout repository="${repo.dir}" branchname="${head}" gitPath="${cmd.git}" /> -->
-
                         <!-- Ensure that the tag exists -->
-
                         <!-- push the tag up so subsplit will get it -->
-                        <gitpush repository="${repo.dir}" tags="true" gitPath="${cmd.git}" />
+                        <!--gitpush repository="${repo.dir}" tags="true" gitPath="${cmd.git}" /-->
 
                         <!-- now do the subsplits -->
                         <guzzlesubsplit
