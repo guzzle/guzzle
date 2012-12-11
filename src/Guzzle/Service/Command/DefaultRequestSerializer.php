@@ -6,6 +6,7 @@ use Guzzle\Http\Url;
 use Guzzle\Parser\ParserRegistry;
 use Guzzle\Service\Command\LocationVisitor\Request\RequestVisitorInterface;
 use Guzzle\Service\Command\LocationVisitor\Request\BodyVisitor;
+use Guzzle\Service\Command\LocationVisitor\Request\ResponseBodyVisitor;
 use Guzzle\Service\Command\LocationVisitor\Request\HeaderVisitor;
 use Guzzle\Service\Command\LocationVisitor\Request\JsonVisitor;
 use Guzzle\Service\Command\LocationVisitor\Request\QueryVisitor;
@@ -38,13 +39,14 @@ class DefaultRequestSerializer implements RequestSerializerInterface
     {
         if (!self::$instance) {
             self::$instance = new self(array(
-                'header'    => new HeaderVisitor(),
-                'query'     => new QueryVisitor(),
-                'body'      => new BodyVisitor(),
-                'json'      => new JsonVisitor(),
-                'postFile'  => new PostFileVisitor(),
-                'postField' => new PostFieldVisitor(),
-                'xml'       => new XmlVisitor(),
+                'header'        => new HeaderVisitor(),
+                'query'         => new QueryVisitor(),
+                'body'          => new BodyVisitor(),
+                'json'          => new JsonVisitor(),
+                'postFile'      => new PostFileVisitor(),
+                'postField'     => new PostFieldVisitor(),
+                'xml'           => new XmlVisitor(),
+                'response_body' => new ResponseBodyVisitor()
             ));
         }
 
