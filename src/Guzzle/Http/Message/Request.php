@@ -5,6 +5,7 @@ namespace Guzzle\Http\Message;
 use Guzzle\Common\Event;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\RuntimeException;
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Utils;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Exception\BadResponseException;
@@ -542,9 +543,16 @@ class Request extends AbstractMessage implements RequestInterface
     /**
      * {@inheritdoc}
      */
-    public function setResponseBody(EntityBodyInterface $body)
+    public function setResponseBody($body)
     {
-        $this->responseBody = $body;
+        // Attempt to open a file for writing if a string was passed
+        if (is_string($body)) {
+            if (!($body = fopen($body, 'w+'))) {
+                throw new InvalidArgumentException('Could not open ' . $body . ' for writing');
+            }
+        }
+
+        $this->responseBody = EntityBody::factory($body);
 
         return $this;
     }

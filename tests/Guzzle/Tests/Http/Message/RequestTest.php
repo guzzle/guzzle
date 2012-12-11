@@ -862,4 +862,24 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(3, (string) $requests[0]->getHeader('Content-Length'));
         $this->assertEquals('foo', (string) $requests[0]->getBody());
     }
+
+    /**
+     * @expectedException PHPUnit_Framework_Error_Warning
+     */
+    public function testEnsuresFileCanBeCreated()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ntest");
+        $this->client->get('/')->setResponseBody('/wefwefefefefwewefwe/wefwefwefefwe/wefwefewfw.txt')->send();
+    }
+
+    public function testAllowsFilenameForDownloadingContent()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ntest");
+        $name = sys_get_temp_dir() . '/foo.txt';
+        $this->client->get('/')->setResponseBody($name)->send();
+        $this->assertEquals('test', file_get_contents($name));
+        unlink($name);
+    }
 }
