@@ -355,21 +355,11 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
      */
     public function inject($input)
     {
-        // Only perform the preg callback if needed
-        return strpos($input, '{') === false
-            ? $input
-            : preg_replace_callback('/{\s*([A-Za-z_\-\.0-9]+)\s*}/', array($this, 'getPregMatchValue'), $input);
-    }
+        $replace = array();
+        foreach ($this->data as $key => $val) {
+            $replace['{' . $key . '}'] = $val;
+        }
 
-    /**
-     * Return a collection value for a match array of a preg_replace function
-     *
-     * @param array $matches preg_replace* matches
-     *
-     * @return mixed
-     */
-    public function getPregMatchValue(array $matches)
-    {
-        return $this->get($matches[1]);
+        return strtr($input, $replace);
     }
 }

@@ -40,6 +40,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         );
         $this->coll = new Collection($testData);
         $this->assertEquals($this->coll->getAll(), $testData, '-> getAll() must return the data passed in the constructor');
+        $this->assertEquals($this->coll->getAll(), $this->coll->toArray());
     }
 
     /**
@@ -351,35 +352,25 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         ), $this->coll->getAll());
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::getPregMatchValue
-     */
-    public function testReturnsValuesForPregMatch()
-    {
-        $c = new Collection(array('foo' => 'bar'));
-        $this->assertEquals('bar', $c->getPregMatchValue(array(1 => 'foo')));
-    }
-
     public function dataProvider()
     {
         return array(
-            array('this_is_a_test', '{ a }_is_a_{ b }', array(
+            array('this_is_a_test', '{a}_is_a_{b}', array(
                 'a' => 'this',
                 'b' => 'test'
             )),
-            array('this_is_a_test', '{abc}_is_a_{ 0 }', array(
+            array('this_is_a_test', '{abc}_is_a_{0}', array(
                 'abc' => 'this',
                 0 => 'test'
             )),
-            array('this_is_a_test', '{ abc }_is_{ not_found }a_{ 0 }', array(
+            array('this_is_a_test', '{abc}_is_a_{0}', array(
                 'abc' => 'this',
                 0 => 'test'
             )),
             array('this_is_a_test', 'this_is_a_test', array(
                 'abc' => 'this'
             )),
-            array('_is_a_', '{ abc }_is_{ not_found }a_{ 0 }', array()),
-            array('_is_a_', '{abc}_is_{not_found}a_{0}', array()),
+            array('{abc}_is_{not_found}a_{0}', '{abc}_is_{not_found}a_{0}', array())
         );
     }
 
