@@ -75,7 +75,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         // Allow ssl.certificate_authority config setting to control the certificate authority used by curl
         $authority = $this->config->get(self::SSL_CERT_AUTHORITY);
         // Use the system's cacert if in a phar (curl can't read from a phar stream wrapper)
-        if (strpos(__FILE__, 'phar://') === false && $authority === true) {
+        if (strpos(__FILE__, 'phar://') !== false && (null === $authority || $authority === true)) {
             $authority = 'system';
         }
         // Set the config setting to system to use the certificate authority bundle on your system
