@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+* 3.0.7 (2012-12-19)
+
+    * Fixing phar detection when forcing a cacert to system if null or true
+    * Allowing filename to be passed to `Guzzle\Http\Message\Request::setResponseBody()`
+    * Cleaning up `Guzzle\Common\Collection::inject` method
+    * Adding a response_body location to service descriptions
+
 * 3.0.6 (2012-12-09)
 
     * CurlMulti performance improvements
