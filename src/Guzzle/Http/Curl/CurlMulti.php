@@ -397,7 +397,8 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
                 $event['request'] = $request;
                 $request->dispatch(self::POLLING_REQUEST, $event);
                 ++$total;
-                if ($request->getParams()->hasKey(BackoffPlugin::DELAY_PARAM)) {
+                // BackOffPlugin is in a separate component and might not exist.
+                if (class_exists('Guzzle\Plugin\Backoff\BackoffPlugin') && $request->getParams()->hasKey(BackoffPlugin::DELAY_PARAM)) {
                     ++$waiting;
                 }
             }
