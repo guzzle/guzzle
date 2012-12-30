@@ -6,7 +6,6 @@ use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Common\Exception\ExceptionCollection;
 use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Plugin\Backoff\BackoffPlugin;
 
 /**
  * Send {@see RequestInterface} objects in parallel using curl_multi
@@ -392,17 +391,18 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
             }
 
             // Notify each request as polling
-            $waiting = $total = 0;
+            $blocking = $total = 0;
             foreach ($scopedPolling as $request) {
                 $event['request'] = $request;
                 $request->dispatch(self::POLLING_REQUEST, $event);
                 ++$total;
-                if ($request->getParams()->hasKey(BackoffPlugin::DELAY_PARAM)) {
-                    ++$waiting;
+                // The blocking variable just has to be non-falsey to block the loop
+                if ($request->getParams()->hasKey(self::BLOCKING)) {
+                    ++$blocking;
                 }
             }
 
-            if ($waiting == $total) {
+            if ($blocking == $total) {
                 // Sleep to prevent eating CPU because no requests are actually pending a select call
                 usleep(500);
             } else {

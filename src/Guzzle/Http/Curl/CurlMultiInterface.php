@@ -17,6 +17,7 @@ interface CurlMultiInterface extends HasDispatcherInterface, \Countable
     const ADD_REQUEST = 'curl_multi.add_request';
     const REMOVE_REQUEST = 'curl_multi.remove_request';
     const MULTI_EXCEPTION = 'curl_multi.exception';
+    const BLOCKING = 'curl_multi.blocking';
 
     const STATE_IDLE = 'idle';
     const STATE_SENDING = 'sending';

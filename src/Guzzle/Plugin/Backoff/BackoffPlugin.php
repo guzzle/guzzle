@@ -15,7 +15,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class BackoffPlugin extends AbstractHasDispatcher implements EventSubscriberInterface
 {
-    const DELAY_PARAM = 'plugins.backoff.retry_time';
+    const DELAY_PARAM = CurlMultiInterface::BLOCKING;
     const RETRY_PARAM = 'plugins.backoff.retry_count';
     const RETRY_EVENT = 'plugins.backoff.retry';
 

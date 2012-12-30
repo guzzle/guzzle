@@ -234,7 +234,7 @@ class BackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase implements EventSub
         $request = new EntityEnclosingRequest('PUT', 'http://www.example.com');
         $request->setBody('abc');
         // Set the retry time to be something that will be retried always
-        $request->getParams()->set('plugins.backoff.retry_time', 2);
+        $request->getParams()->set(BackoffPlugin::DELAY_PARAM, 2);
         // Seek to the end of the stream
         $request->getBody()->seek(3);
         $this->assertEquals('', $request->getBody()->read(1));
@@ -249,7 +249,7 @@ class BackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase implements EventSub
     {
         // Create a request with a body
         $request = new EntityEnclosingRequest('PUT', 'http://www.example.com');
-        $request->getParams()->set('plugins.backoff.retry_time', 2);
+        $request->getParams()->set(BackoffPlugin::DELAY_PARAM, 2);
         $plugin = new BackoffPlugin(new ConstantBackoffStrategy(0));
         $plugin->onRequestPoll($this->getMockEvent($request));
     }
