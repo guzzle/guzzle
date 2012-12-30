@@ -3,7 +3,7 @@
 namespace Guzzle\Http\Curl;
 
 use Guzzle\Common\AbstractHasDispatcher;
-use Guzzle\Common\Exception\ExceptionCollection;
+use Guzzle\Http\Exception\MultiTransferException;
 use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Message\RequestInterface;
 
@@ -257,10 +257,11 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     {
         $this->scope++;
         $this->state = self::STATE_SENDING;
+        $requestsInScope = empty($this->requests[$this->scope]) ? array() : $this->requests[$this->scope];
 
         // Only prepare and send requests that are in the current recursion scope
         // Only enter the main perform() loop if there are requests in scope
-        if (!empty($this->requests[$this->scope])) {
+        if ($requestsInScope) {
 
             // Any exceptions thrown from this event should break the entire flow of sending requests
             $this->dispatch(self::BEFORE_SEND, array(
@@ -276,20 +277,14 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
             try {
                 $this->perform();
             } catch (\Exception $e) {
-                $this->exceptions[] = $e;
+                $this->exceptions[] = array('request' => null, 'exception' => $e);
             }
         }
 
         $this->scope--;
 
-        // Aggregate exceptions into an ExceptionCollection
-        $exceptionCollection = null;
-        if (!empty($this->exceptions)) {
-            $exceptionCollection = new ExceptionCollection('Errors during multi transfer');
-            while ($e = array_shift($this->exceptions)) {
-                $exceptionCollection->add($e);
-            }
-        }
+        // Aggregate exceptions into a MultiTransferException if needed
+        $multiException = $this->buildMultiTransferException($requestsInScope);
 
         // Complete the transfer if this is not a nested scope
         if ($this->scope == -1) {
@@ -299,8 +294,8 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         }
 
         // Throw any exceptions that were encountered
-        if ($exceptionCollection) {
-            throw $exceptionCollection;
+        if ($multiException) {
+            throw $multiException;
         }
     }
 
@@ -310,6 +305,43 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     public function count()
     {
         return count($this->all());
+    }
+
+    /**
+     * Build a MultiTransferException if needed
+     *
+     * @param array $requestsInScope All requests in the previous scope
+     *
+     * @return MultiTransferException|null
+     */
+    protected function buildMultiTransferException(array $requestsInScope)
+    {
+        if (empty($this->exceptions)) {
+            return null;
+        }
+
+        // Keep a list of all requests, and remove errored requests from the list
+        $store = new \SplObjectStorage();
+        foreach ($requestsInScope as $request) {
+            $store->attach($request, $request);
+        }
+
+        $multiException = new MultiTransferException('Errors during multi transfer');
+        while ($e = array_shift($this->exceptions)) {
+            $multiException->add($e['exception']);
+            if (isset($e['request'])) {
+                $multiException->addFailedRequest($e['request']);
+                // Remove from the total list so that it becomes a list of successful requests
+                unset($store[$e['request']]);
+            }
+        }
+
+        // Add successful requests
+        foreach ($store as $request) {
+            $multiException->addSuccessfulRequest($request);
+        }
+
+        return $multiException;
     }
 
     /**
@@ -466,7 +498,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      */
     protected function removeErroredRequest(RequestInterface $request, \Exception $e)
     {
-        $this->exceptions[] = $e;
+        $this->exceptions[] = array('request' => $request, 'exception' => $e);
         $this->remove($request);
         $request->setState(RequestInterface::STATE_ERROR);
         $this->dispatch(self::MULTI_EXCEPTION, array(

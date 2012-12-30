@@ -3,7 +3,7 @@
 namespace Guzzle\Tests\Http\Curl;
 
 use Guzzle\Common\Event;
-use Guzzle\Common\Exception\ExceptionCollection;;
+use Guzzle\Http\Exception\MultiTransferException;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Client;
 use Guzzle\Http\Message\Request;
@@ -188,6 +188,7 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Curl\CurlMulti::send
+     * @covers Guzzle\Http\Exception\MultiTransferException
      */
     public function testSendsThroughCurlAndAggregatesRequestExceptions()
     {
@@ -218,8 +219,8 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
 
         try {
             $this->multi->send();
-            $this->fail('ExceptionCollection not thrown when aggregating request exceptions');
-        } catch (ExceptionCollection $e) {
+            $this->fail('MultiTransferException not thrown when aggregating request exceptions');
+        } catch (MultiTransferException $e) {
 
             $this->assertInstanceOf('ArrayIterator', $e->getIterator());
             $this->assertEquals(1, count($e));
@@ -243,12 +244,17 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
             foreach ($e as $except) {
                 $this->assertEquals($failed, $except->getResponse());
             }
+
+            $this->assertEquals(1, count($e->getFailedRequests()));
+            $this->assertEquals(2, count($e->getSuccessfulRequests()));
+            $this->assertEquals(3, count($e->getAllRequests()));
         }
     }
 
     /**
      * @covers Guzzle\Http\Curl\CurlMulti::send
      * @covers Guzzle\Http\Curl\CurlMulti::processResponse
+     * @covers Guzzle\Http\Exception\CurlException
      */
     public function testCurlErrorsAreCaught()
     {
