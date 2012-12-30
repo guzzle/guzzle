@@ -266,8 +266,7 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
             $m = $e->getMessage();
             $this->assertContains('[curl] ', $m);
             $this->assertContains('[url] http://127.0.0.1:9876/', $m);
-            $this->assertContains('[debug] ', $m);
-            $this->assertContains('[info] array (', $m);
+            $this->assertInternalType('array', $e->getCurlInfo());
         }
     }
 

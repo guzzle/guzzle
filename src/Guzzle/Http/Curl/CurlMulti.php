@@ -558,11 +558,11 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         }
 
         $handle->setErrorNo($curl['result']);
-        $e = new CurlException(sprintf('[curl] %s: %s [url] %s [info] %s [debug] %s',
-            $handle->getErrorNo(), $handle->getError(), $handle->getUrl(),
-            var_export($handle->getInfo(), true), $handle->getStderr()));
+        $e = new CurlException(sprintf('[curl] %s: %s [url] %s',
+            $handle->getErrorNo(), $handle->getError(), $handle->getUrl()));
         $e->setCurlHandle($handle)
           ->setRequest($request)
+          ->setCurlInfo($handle->getInfo())
           ->setError($handle->getError(), $handle->getErrorNo());
 
         return $e;

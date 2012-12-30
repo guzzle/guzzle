@@ -12,6 +12,7 @@ class CurlException extends BadResponseException
     private $curlError;
     private $curlErrorNo;
     private $handle;
+    private $curlInfo = array();
 
     /**
      * Set the cURL error message
@@ -56,7 +57,7 @@ class CurlException extends BadResponseException
     /**
      * Get the associated cURL error message
      *
-     * @return string
+     * @return string|null
      */
     public function getError()
     {
@@ -66,10 +67,35 @@ class CurlException extends BadResponseException
     /**
      * Get the associated cURL error number
      *
-     * @return int
+     * @return int|null
      */
     public function getErrorNo()
     {
         return $this->curlErrorNo;
+    }
+
+    /**
+     * Returns curl information about the transfer
+     *
+     * @return array
+     */
+    public function getCurlInfo()
+    {
+        return $this->curlInfo;
+    }
+
+    /**
+     * Set curl transfer information
+     *
+     * @param array $info Array of curl transfer information
+     *
+     * @return self
+     * @link http://php.net/manual/en/function.curl-getinfo.php
+     */
+    public function setCurlInfo(array $info)
+    {
+        $this->curlInfo = $info;
+
+        return $this;
     }
 }
