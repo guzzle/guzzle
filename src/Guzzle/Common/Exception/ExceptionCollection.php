@@ -55,4 +55,14 @@ class ExceptionCollection extends \Exception implements GuzzleException, \Iterat
     {
         return new \ArrayIterator($this->exceptions);
     }
+
+    /**
+     * Get the first exception in the collection
+     *
+     * @return \Exception
+     */
+    public function getFirst()
+    {
+        return $this->exceptions ? $this->exceptions[0] : null;
+    }
 }

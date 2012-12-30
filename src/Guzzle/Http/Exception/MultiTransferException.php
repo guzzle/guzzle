@@ -24,7 +24,7 @@ class MultiTransferException extends ExceptionCollection
     }
 
     /**
-     * Set an array of successful requests
+     * Add to the array of successful requests
      *
      * @param RequestInterface $request Successful request
      *
@@ -38,7 +38,7 @@ class MultiTransferException extends ExceptionCollection
     }
 
     /**
-     * Set an array of failed requests
+     * Add to the array of failed requests
      *
      * @param RequestInterface $request Failed request
      *

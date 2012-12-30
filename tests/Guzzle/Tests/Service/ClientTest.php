@@ -7,6 +7,7 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Plugin\Mock\MockPlugin;
 use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Client;
+use Guzzle\Service\Exception\CommandTransferException;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
 use Guzzle\Service\Resource\ResourceIteratorClassFactory;
@@ -393,5 +394,41 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $command = $client->getCommand('mock_command', array('jar' => 'test'));
         $this->assertEquals('bar', $command->get('mesa'));
         $this->assertEquals('test', $command->get('jar'));
+    }
+
+    /**
+     * @expectedException \Guzzle\Http\Exception\BadResponseException
+     */
+    public function testWrapsSingleCommandExceptions()
+    {
+        $client = new Mock\MockClient('http://foobaz.com');
+        $mock = new MockPlugin(array(new Response(401)));
+        $client->addSubscriber($mock);
+        $client->execute(new MockCommand());
+    }
+
+    public function testWrapsMultipleCommandExceptions()
+    {
+        $client = new Mock\MockClient('http://foobaz.com');
+        $mock = new MockPlugin(array(new Response(200), new Response(200), new Response(404), new Response(500)));
+        $client->addSubscriber($mock);
+
+        $cmds = array(new MockCommand(), new MockCommand(), new MockCommand(), new MockCommand());
+        try {
+            $client->execute($cmds);
+        } catch (CommandTransferException $e) {
+            $this->assertEquals(2, count($e->getFailedRequests()));
+            $this->assertEquals(2, count($e->getFailedCommands()));
+            $this->assertEquals(2, count($e->getSuccessfulRequests()));
+            $this->assertEquals(2, count($e->getSuccessfulCommands()));
+
+            foreach ($e->getSuccessfulCommands() as $c) {
+                $this->assertTrue($c->getResponse()->isSuccessful());
+            }
+
+            foreach ($e->getFailedCommands() as $c) {
+                $this->assertFalse($c->getRequest()->getResponse()->isSuccessful());
+            }
+        }
     }
 }

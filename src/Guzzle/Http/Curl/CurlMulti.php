@@ -323,7 +323,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         // Keep a list of all requests, and remove errored requests from the list
         $store = new \SplObjectStorage();
         foreach ($requestsInScope as $request) {
-            $store->attach($request, $request);
+            $store->attach($request);
         }
 
         $multiException = new MultiTransferException('Errors during multi transfer');

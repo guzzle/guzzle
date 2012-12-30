@@ -21,6 +21,7 @@ class ExceptionCollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $e->add($exceptions[0]);
         $e->add($exceptions[1]);
         $this->assertEquals("Test\nTesting", $e->getMessage());
+        $this->assertSame($exceptions[0], $e->getFirst());
     }
 
     public function testActsAsArray()

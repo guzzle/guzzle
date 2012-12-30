@@ -362,18 +362,13 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         try {
             $curlMulti->send();
         } catch (ExceptionCollection $e) {
-            throw $multipleRequests ? $e : $e->getIterator()->offsetGet(0);
+            throw $multipleRequests ? $e : $e->getFirst();
         }
 
         if (!$multipleRequests) {
             return end($requests)->getResponse();
         } else {
-            return array_map(
-                function ($request) {
-                    return $request->getResponse();
-                },
-                $requests
-            );
+            return array_map(function ($request) { return $request->getResponse(); }, $requests);
         }
     }
 
