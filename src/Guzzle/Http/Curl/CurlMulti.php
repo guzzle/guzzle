@@ -474,11 +474,13 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     private function executeHandles($select = false, $timeout = 1, $active = 0)
     {
         do {
+            // @codeCoverageIgnoreStart
             if ($select && $active && curl_multi_select($this->multiHandle, $timeout) == -1) {
                 // Perform a usleep if a previously executed select returned -1
                 // @see https://bugs.php.net/bug.php?id=61141
                 usleep(125);
             }
+            // @codeCoverageIgnoreEnd
             do {
                 $mrc = curl_multi_exec($this->multiHandle, $active);
             } while ($mrc == CURLM_CALL_MULTI_PERFORM);
