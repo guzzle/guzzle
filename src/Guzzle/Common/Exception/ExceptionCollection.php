@@ -13,6 +13,20 @@ class ExceptionCollection extends \Exception implements GuzzleException, \Iterat
     protected $exceptions = array();
 
     /**
+     * Set all of the exceptions
+     *
+     * @param array $exceptions Array of exceptions
+     *
+     * @return self
+     */
+    public function setExceptions(array $exceptions)
+    {
+        $this->exceptions = $exceptions;
+
+        return $this;
+    }
+
+    /**
      * Add exceptions to the collection
      *
      * @param ExceptionCollection|\Exception $e Exception to add

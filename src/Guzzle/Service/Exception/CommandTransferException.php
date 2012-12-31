@@ -24,15 +24,9 @@ class CommandTransferException extends MultiTransferException
     {
         $ce = new self($e->getMessage(), $e->getCode(), $e->getPrevious());
 
-        foreach ($e->getSuccessfulRequests() as $request) {
-            $ce->addSuccessfulRequest($request);
-        }
-
-        foreach ($e->getFailedRequests() as $request) {
-            $ce->addFailedRequest($request);
-        }
-
-        return $ce;
+        return $ce->setExceptions($e->getIterator()->getArrayCopy())
+            ->setSuccessfulRequests($e->getSuccessfulRequests())
+            ->setFailedRequests($e->getFailedRequests());
     }
 
     /**

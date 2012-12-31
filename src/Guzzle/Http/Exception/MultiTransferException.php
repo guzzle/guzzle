@@ -52,6 +52,34 @@ class MultiTransferException extends ExceptionCollection
     }
 
     /**
+     * Set all of the successful requests
+     *
+     * @param array Array of requests
+     *
+     * @return self
+     */
+    public function setSuccessfulRequests(array $requests)
+    {
+        $this->successfulRequests = $requests;
+
+        return $this;
+    }
+
+    /**
+     * Set all of the failed requests
+     *
+     * @param array Array of requests
+     *
+     * @return self
+     */
+    public function setFailedRequests(array $requests)
+    {
+        $this->failedRequests = $requests;
+
+        return $this;
+    }
+
+    /**
      * Get an array of successful requests sent in the multi transfer
      *
      * @return array
