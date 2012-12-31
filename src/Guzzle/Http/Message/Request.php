@@ -547,9 +547,11 @@ class Request extends AbstractMessage implements RequestInterface
     {
         // Attempt to open a file for writing if a string was passed
         if (is_string($body)) {
+            // @codeCoverageIgnoreStart
             if (!($body = fopen($body, 'w+'))) {
                 throw new InvalidArgumentException('Could not open ' . $body . ' for writing');
             }
+            // @codeCoverageIgnoreEnd
         }
 
         $this->responseBody = EntityBody::factory($body);
