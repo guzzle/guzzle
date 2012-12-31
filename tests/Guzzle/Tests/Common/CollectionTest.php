@@ -31,6 +31,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @covers Guzzle\Common\Collection::__construct
      * @covers Guzzle\Common\Collection::getAll
+     * @covers Guzzle\Common\Collection::toArray
      */
     public function testConstructorCanBeCalledWithParams()
     {
