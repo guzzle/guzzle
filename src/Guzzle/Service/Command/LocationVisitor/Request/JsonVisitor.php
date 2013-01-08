@@ -14,7 +14,7 @@ class JsonVisitor extends AbstractRequestVisitor
     /**
      * @var bool Whether or not to add a Content-Type header when JSON is found
      */
-    protected $jsonContentType = null;
+    protected $jsonContentType = 'application/json';
 
     /**
      * @var \SplObjectStorage Data object for persisting JSON data
