@@ -20,26 +20,6 @@ class ModelTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('bar', $model['foo']);
     }
 
-    public function testRetrievesNestedKeysUsingPath()
-    {
-        $data = array(
-            'foo' => 'bar',
-            'baz' => array(
-                'mesa' => array(
-                    'jar' => 'jar'
-                )
-            )
-        );
-        $param = new Parameter(array('type' => 'object'));
-        $model = new Model($data, $param);
-        $this->assertSame($param, $model->getStructure());
-        $this->assertEquals('bar', $model->getPath('foo'));
-        $this->assertEquals('jar', $model->getPath('baz/mesa/jar'));
-        $this->assertNull($model->getPath('wewewf'));
-        $this->assertNull($model->getPath('baz/mesa/jar/jar'));
-        $this->assertSame($data, $model->toArray());
-    }
-
     public function testCanBeUsedWithoutStructure()
     {
         $model = new Model(array(
@@ -53,18 +33,6 @@ class ModelTest extends \Guzzle\Tests\GuzzleTestCase
         };
         $model = $model->map($transform);
         $this->assertInstanceOf('Guzzle\Common\Collection', $model->getPath('Bar'));
-    }
-
-    public function testFalseyKeysStillDescend()
-    {
-        $model = new Model(array(
-            '0' => array(
-                'a' => 'jar'
-            ),
-            1 => 'other'
-        ));
-        $this->assertEquals('jar', $model->getPath('0/a'));
-        $this->assertEquals('other', $model->getPath('1'));
     }
 
     public function testAllowsFiltering()

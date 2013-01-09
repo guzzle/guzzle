@@ -446,4 +446,39 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $c = new Collection(array('value' => $a));
         $this->assertSame($b, $c->get('value'));
     }
+
+    /**
+     * @covers Guzzle\Common\Collection::getPath
+     */
+    public function testRetrievesNestedKeysUsingPath()
+    {
+        $data = array(
+            'foo' => 'bar',
+            'baz' => array(
+                'mesa' => array(
+                    'jar' => 'jar'
+                )
+            )
+        );
+        $collection = new Collection($data);
+        $this->assertEquals('bar', $collection->getPath('foo'));
+        $this->assertEquals('jar', $collection->getPath('baz/mesa/jar'));
+        $this->assertNull($collection->getPath('wewewf'));
+        $this->assertNull($collection->getPath('baz/mesa/jar/jar'));
+    }
+
+    /**
+     * @covers Guzzle\Common\Collection::getPath
+     */
+    public function testFalseyKeysStillDescend()
+    {
+        $collection = new Collection(array(
+            '0' => array(
+                'a' => 'jar'
+            ),
+            1 => 'other'
+        ));
+        $this->assertEquals('jar', $collection->getPath('0/a'));
+        $this->assertEquals('other', $collection->getPath('1'));
+    }
 }
