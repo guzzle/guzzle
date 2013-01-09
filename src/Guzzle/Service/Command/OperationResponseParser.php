@@ -94,7 +94,7 @@ class OperationResponseParser extends DefaultResponseParser
         }
 
         if ($result instanceof \SimpleXMLElement) {
-            $result = json_decode(json_encode($result), true);
+            $result = $this->xmlToArray($result, $model);
         } elseif ($result instanceof Response) {
             $result = array();
         }
@@ -103,6 +103,19 @@ class OperationResponseParser extends DefaultResponseParser
         $this->visitResult($model, $command, $response, $result);
 
         return new Model($result, $model);
+    }
+
+    /**
+     * Parse a SimpleXMLElement into an array
+     *
+     * @param \SimpleXMLElement $xml   XML to parse
+     * @param Parameter         $model Model object
+     *
+     * @return array
+     */
+    protected function xmlToArray(\SimpleXMLElement $xml, Parameter $model)
+    {
+        return json_decode(json_encode($xml), true);
     }
 
     /**
