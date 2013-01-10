@@ -77,4 +77,13 @@ interface ServiceDescriptionInterface extends \Serializable
      * @return string
      */
     public function getDescription();
+
+    /**
+     * Get extra API data from the service description that is not part of the Guzzle spec but is in the description
+     *
+     * @param string $key Data key to retrieve
+     *
+     * @return null|mixed
+     */
+    public function getData($key);
 }

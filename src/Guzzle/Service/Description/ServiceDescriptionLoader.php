@@ -34,7 +34,7 @@ class ServiceDescriptionLoader extends AbstractConfigLoader
             'description' => isset($config['description']) ? $config['description'] : null,
             'operations'  => $operations,
             'models'      => isset($config['models']) ? $config['models'] : null
-        ));
+        ) + $config);
     }
 
     /**

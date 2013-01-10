@@ -10,6 +10,20 @@ use Guzzle\Service\Description\ServiceDescriptionLoader;
  */
 class ServiceDescriptionLoaderTest extends \Guzzle\Tests\GuzzleTestCase
 {
+    public function testAllowsExtraData()
+    {
+        $d = ServiceDescription::factory(array(
+            'foo' => true,
+            'baz' => array('bar'),
+            'apiVersion' => '123',
+            'operations' => array()
+        ));
+
+        $this->assertEquals(true, $d->getData('foo'));
+        $this->assertEquals(array('bar'), $d->getData('baz'));
+        $this->assertEquals('123', $d->getApiVersion());
+    }
+
     public function testAllowsDeepNestedInheritance()
     {
         $d = ServiceDescription::factory(array(
