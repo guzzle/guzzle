@@ -174,7 +174,7 @@ class CachePlugin implements EventSubscriberInterface
         if (isset($this->cached[$request])) {
             $cacheKey = $this->cached[$request];
             unset($this->cached[$request]);
-            if ($response->isSuccessful() && $response->canCache()) {
+            if ($this->canCache->canCacheResponse($response)) {
                 $this->storage->cache(
                     $cacheKey,
                     $response,
@@ -209,7 +209,9 @@ class CachePlugin implements EventSubscriberInterface
                 if ($maxStale !== true && $response->getFreshness() < (-1 * $maxStale)) {
                     return false;
                 }
-            } elseif ($responseAge > $response->getCacheControlDirective('max-age')) {
+            } elseif ($response->hasCacheControlDirective('max-age')
+                && $responseAge > $response->getCacheControlDirective('max-age')
+            ) {
                 return false;
             }
         }
