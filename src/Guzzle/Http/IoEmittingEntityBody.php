@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http;
 
+use Guzzle\Common\Event;
 use Guzzle\Common\HasDispatcherInterface;
 use Guzzle\Stream\Stream;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -23,11 +24,12 @@ class IoEmittingEntityBody extends AbstractEntityBodyDecorator implements HasDis
      */
     public static function getAllEvents()
     {
-        return array();
+        return array('body.read', 'body.write');
     }
 
     /**
      * {@inheritdoc}
+     * @codeCoverageIgnore
      */
     public function setEventDispatcher(EventDispatcherInterface $eventDispatcher)
     {
@@ -58,6 +60,7 @@ class IoEmittingEntityBody extends AbstractEntityBodyDecorator implements HasDis
 
     /**
      * {@inheritdoc}
+     * @codeCoverageIgnore
      */
     public function addSubscriber(EventSubscriberInterface $subscriber)
     {
@@ -68,23 +71,21 @@ class IoEmittingEntityBody extends AbstractEntityBodyDecorator implements HasDis
 
     /**
      * {@inheritdoc}
-     * @codeCoverageIgnore
      */
     public function read($length)
     {
         $event = array(
             'body'   => $this,
             'length' => $length,
-            'result' => $this->body->read($length)
+            'read'   => $this->body->read($length)
         );
         $this->dispatch('body.read', $event);
 
-        return $event['result'];
+        return $event['read'];
     }
 
     /**
      * {@inheritdoc}
-     * @codeCoverageIgnore
      */
     public function write($string)
     {
