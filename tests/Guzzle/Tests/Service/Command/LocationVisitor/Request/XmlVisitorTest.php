@@ -317,18 +317,6 @@ class XmlVisitorTest extends AbstractVisitorTestCase
         );
     }
 
-    /**
-     * @expectedException \Guzzle\Common\Exception\RuntimeException
-     */
-    public function testEnsuresParameterHasParent()
-    {
-        $param = new Parameter(array('Foo' => array('location' => 'xml', 'type' => 'string')));
-        $value = array();
-        $request = new EntityEnclosingRequest('POST', 'http://foo.com');
-        $visitor = new XmlVisitor();
-        $visitor->visit($this->command, $request, $param, $value);
-    }
-
     public function testCanChangeContentType()
     {
         $visitor = new XmlVisitor();
