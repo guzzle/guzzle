@@ -239,8 +239,8 @@ class Client extends HttpClient implements ClientInterface
             }
         }
 
-        foreach ($successful as $c) {
-            $this->dispatch('command.after_send', array('command' => $c));
+        foreach ($successful as $success) {
+            $this->dispatch('command.after_send', array('command' => $successful[$success]));
         }
 
         // Return the response or throw an exception
