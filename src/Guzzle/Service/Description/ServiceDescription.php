@@ -84,13 +84,13 @@ class ServiceDescription implements ServiceDescriptionInterface
      */
     public function serialize()
     {
-        $result = $this->extraData + array(
+        $result = array(
             'name'        => $this->name,
             'apiVersion'  => $this->apiVersion,
             'baseUrl'     => $this->baseUrl,
-            'description' => $this->description,
-            'operations'  => array(),
-        );
+            'description' => $this->description
+        ) + $this->extraData;
+        $result['operations'] = array();
         foreach ($this->getOperations() as $name => $operation) {
             $result['operations'][$operation->getName() ?: $name] = $operation->toArray();
         }
