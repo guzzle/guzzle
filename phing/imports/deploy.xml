@@ -92,6 +92,10 @@
                                 subIndicatorFile="composer.json"
                                 gitPath="${cmd.git}" />
 
+                        <!-- Copy .md files into the PEAR package -->
+                        <copy file="${repo.dir}/LICENSE" todir="${repo.dir}/src/Guzzle/LICENSE.md" />
+                        <copy file="${repo.dir}/README.md" todir="${repo.dir}/src/Guzzle/README.md" />
+                        <copy file="${repo.dir}/CHANGELOG.md" todir="${repo.dir}/src/Guzzle/CHANGELOG.md" />
 
                         <!-- and now the pear packages -->
                         <guzzlepear

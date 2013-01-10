@@ -143,6 +143,7 @@ class GuzzlePearPharPackageTask extends Task
         );
         $pfm = new PEAR_PackageFileManager2();
         $e = $pfm->setOptions($opts);
+        $pfm->addRole('md', 'doc');
         $pfm->setPackage('Guzzle');
         $pfm->setSummary("Object-oriented PHP HTTP Client for PHP 5.3+");
         $pfm->setDescription($this->guzzleinfo['description']);
