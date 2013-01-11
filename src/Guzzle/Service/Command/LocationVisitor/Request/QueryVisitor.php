@@ -18,7 +18,7 @@ class QueryVisitor extends AbstractRequestVisitor
     {
         $request->getQuery()->set(
             $param->getWireName(),
-            $param && is_array($value) ? $this->resolveRecursively($value, $param) : $value
+            $this->prepareValue($value, $param)
         );
     }
 }

@@ -23,6 +23,7 @@ class BodyVisitor extends AbstractRequestVisitor
      */
     public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
+        $value = $param->filter($value);
         $entityBody = EntityBody::factory($value);
         $request->setBody($entityBody);
         $this->addExpectHeader($request, $entityBody, $param->getData('expect_header'));

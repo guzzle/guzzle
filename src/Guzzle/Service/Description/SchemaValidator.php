@@ -261,13 +261,7 @@ class SchemaValidator implements ValidatorInterface
             }
         }
 
-        // Determine what the response should be
-        if (empty($this->errors)) {
-            $value = $param->filter($value);
-            return true;
-        } else {
-            return false;
-        }
+        return empty($this->errors);
     }
 
     /**

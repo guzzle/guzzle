@@ -18,7 +18,7 @@ class PostFieldVisitor extends AbstractRequestVisitor
     {
         $request->setPostField(
             $param->getWireName(),
-            $param && is_array($value) ? $this->resolveRecursively($value, $param) : $value
+            $this->prepareValue($value, $param)
         );
     }
 }
