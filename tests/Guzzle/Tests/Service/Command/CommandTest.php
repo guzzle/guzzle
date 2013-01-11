@@ -418,16 +418,23 @@ class CommandTest extends AbstractCommandTest
         $command->prepare();
     }
 
-    public function testValidatorUpdatesCommand()
+    public function testValidatorDoesNotUpdateNonDefaultValues()
     {
         $command = new MockCommand(array('test' => 123, 'foo' => 'bar'));
         $command->setClient(new \Guzzle\Service\Client());
         $command->prepare();
         $this->assertEquals(123, $command->get('test'));
-        $this->assertEquals('abc', $command->get('_internal'));
-        $this->assertEquals('BAR', $command->get('foo'));
+        $this->assertEquals('bar', $command->get('foo'));
     }
 
+    public function testValidatorUpdatesDefaultValues()
+    {
+        $command = new MockCommand();
+        $command->setClient(new \Guzzle\Service\Client());
+        $command->prepare();
+        $this->assertEquals(123, $command->get('test'));
+        $this->assertEquals('abc', $command->get('_internal'));
+    }
     /**
      * @expectedException \Guzzle\Service\Exception\ValidationException
      * @expectedExceptionMessage [Foo] Baz
