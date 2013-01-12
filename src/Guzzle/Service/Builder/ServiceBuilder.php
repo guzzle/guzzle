@@ -111,6 +111,18 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
     }
 
     /**
+     * Get data from the service builder without triggering the building of a service
+     *
+     * @param string $name Name of the service to retrieve
+     *
+     * @return array|null
+     */
+    public function getData($name)
+    {
+        return isset($this->builderConfig[$name]) ? $this->builderConfig[$name] : null;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function get($name, $throwAway = false)

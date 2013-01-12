@@ -289,4 +289,11 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $s = $b->get('michael.mock');
         $this->assertTrue($s->getEventDispatcher()->hasListeners('request.complete'));
     }
+
+    public function testCanGetData()
+    {
+        $b = new ServiceBuilder($this->arrayData);
+        $this->assertEquals($this->arrayData['michael.mock'], $b->getData('michael.mock'));
+        $this->assertNull($b->getData('ewofweoweofe'));
+    }
 }

@@ -11,7 +11,7 @@ use Guzzle\Service\Exception\ServiceNotFoundException;
 interface ServiceBuilderInterface
 {
     /**
-     * Get a client using a registered builder
+     * Get a service using a registered builder
      *
      * @param string $name      Name of the registered client to retrieve
      * @param bool   $throwAway Set to TRUE to not store the client for later retrieval from the ServiceBuilder
@@ -22,7 +22,7 @@ interface ServiceBuilderInterface
     public function get($name, $throwAway = false);
 
     /**
-     * Register a client by name with the service builder
+     * Register a service by name with the service builder
      *
      * @param string $key     Name of the client to register
      * @param mixed  $service Service to register
