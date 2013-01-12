@@ -33,13 +33,9 @@ abstract class AbstractRequestVisitor implements RequestVisitorInterface
      */
     protected function prepareValue($value, Parameter $param)
     {
-        if ($param) {
-            $value = is_array($value)
-                ? $this->resolveRecursively($value, $param)
-                : $param->filter($value);
-        }
-
-        return $value;
+        return is_array($value)
+            ? $this->resolveRecursively($value, $param)
+            : $param->filter($value);
     }
 
     /**
@@ -52,13 +48,24 @@ abstract class AbstractRequestVisitor implements RequestVisitorInterface
      */
     protected function resolveRecursively(array $value, Parameter $param)
     {
-        foreach ($value as $name => $v) {
-            if ($subParam = $param->getProperty($name)) {
-                $key = $subParam->getWireName();
-                $value[$key] = $this->prepareValue($v, $subParam);
-                if ($name != $key) {
-                    unset($value[$name]);
-                }
+        foreach ($value as $name => &$v) {
+            switch ($param->getType()) {
+                case 'object':
+                    if ($subParam = $param->getProperty($name)) {
+                        $key = $subParam->getWireName();
+                        $value[$key] = $this->prepareValue($v, $subParam);
+                        if ($name != $key) {
+                            unset($value[$name]);
+                        }
+                    } elseif ($param->getAdditionalProperties() instanceof Parameter) {
+                        $v = $this->prepareValue($v, $param->getAdditionalProperties());
+                    }
+                    break;
+                case 'array':
+                    if ($items = $param->getItems()) {
+                        $v = $this->prepareValue($v, $items);
+                    }
+                    break;
             }
         }
 

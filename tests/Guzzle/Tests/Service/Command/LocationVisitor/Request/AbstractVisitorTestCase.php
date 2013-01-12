@@ -60,8 +60,21 @@ abstract class AbstractVisitorTestCase extends \Guzzle\Tests\GuzzleTestCase
                             )
                         ),
                         'bar' => array('default' => 123)
+                    ),
+                    'additionalProperties' => array(
+                        'type' => 'string',
+                        'filters' => array('strtoupper'),
+                        'location' => $location
                     )
-                ))
+                )),
+                'arr' => new Parameter(array(
+                    'type'         => 'array',
+                    'location'     => $location,
+                    'items' => array(
+                        'type' => 'string',
+                        'filters' => array('strtoupper')
+                     )
+                )),
             )
         ));
     }

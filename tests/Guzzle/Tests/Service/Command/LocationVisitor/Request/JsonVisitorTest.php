@@ -40,10 +40,30 @@ class JsonVisitorTest extends AbstractVisitorTestCase
     {
         $command = $this->getCommand('json');
         $request = $command->prepare();
-        $visitor = new Visitor();
-        $param = $this->getNestedCommand('json')->getParam('foo');
-        $visitor->visit($command, $request, $param->setSentAs('Foo'), $command['foo']);
-        $visitor->after($command, $request);
         $this->assertEquals('{"Foo":{"test":{"baz":true,"Jenga_Yall!":"HELLO"},"bar":123}}', (string) $request->getBody());
+    }
+
+    /**
+     * @covers Guzzle\Service\Command\LocationVisitor\Request\AbstractRequestVisitor::resolveRecursively
+     */
+    public function testAppliesFiltersToAdditionalProperties()
+    {
+        $command = $this->getCommand('json');
+        $command->set('foo', array('not_set' => 'abc'));
+        $request = $command->prepare();
+        $result = json_decode($request->getBody(), true);
+        $this->assertEquals('ABC', $result['Foo']['not_set']);
+    }
+
+    /**
+     * @covers Guzzle\Service\Command\LocationVisitor\Request\AbstractRequestVisitor::resolveRecursively
+     */
+    public function testAppliesFiltersToArrayItemValues()
+    {
+        $command = $this->getCommand('json');
+        $command->set('arr', array('a', 'b'));
+        $request = $command->prepare();
+        $result = json_decode($request->getBody(), true);
+        $this->assertEquals(array('A', 'B'), $result['arr']);
     }
 }
