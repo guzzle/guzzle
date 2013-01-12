@@ -39,7 +39,7 @@ abstract class AbstractRequestVisitor implements RequestVisitorInterface
                 if (is_array($v)) {
                     $value[$key] = $this->resolveRecursively($v, $subParam);
                 } elseif ($name != $key) {
-                    $value[$key] = $param->filter($v);
+                    $value[$key] = $v;
                     unset($value[$name]);
                 }
             }

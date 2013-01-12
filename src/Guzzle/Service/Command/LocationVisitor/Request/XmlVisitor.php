@@ -110,8 +110,6 @@ class XmlVisitor extends AbstractRequestVisitor
             return;
         }
 
-        // Filter the value
-        $value = $param->filter($value);
         $type = $param->getType();
 
         if ($type == 'object' || $type == 'array') {
