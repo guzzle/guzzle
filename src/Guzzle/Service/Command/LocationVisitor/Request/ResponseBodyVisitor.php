@@ -2,7 +2,6 @@
 
 namespace Guzzle\Service\Command\LocationVisitor\Request;
 
-use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Description\Parameter;

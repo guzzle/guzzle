@@ -7,7 +7,6 @@ use Guzzle\Http\Utils;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Client;
-use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Curl\CurlHandle;
 

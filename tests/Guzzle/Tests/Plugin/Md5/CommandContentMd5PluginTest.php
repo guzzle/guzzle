@@ -3,12 +3,7 @@
 namespace Guzzle\Tests\Plugin\Md5;
 
 use Guzzle\Common\Event;
-use Guzzle\Http\EntityBody;
 use Guzzle\Plugin\Md5\CommandContentMd5Plugin;
-use Guzzle\Http\Message\Response;
-use Guzzle\Service\Command\OperationCommand;
-use Guzzle\Service\Description\Operation;
-use Guzzle\Service\Description\Parameter;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Client;
 

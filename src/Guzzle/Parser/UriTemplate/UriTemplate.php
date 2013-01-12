@@ -186,7 +186,7 @@ class UriTemplate implements UriTemplateInterface
 
                 if (empty($variable)) {
                     $actuallyUseQueryString = false;
-                } else if ($value['modifier'] == '*') {
+                } elseif ($value['modifier'] == '*') {
                     $expanded = implode($joiner, $kvp);
                     if ($isAssoc) {
                         // Don't prepend the value name when using the explode modifier with an associative array

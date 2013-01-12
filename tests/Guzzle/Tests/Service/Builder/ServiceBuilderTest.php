@@ -5,8 +5,6 @@ namespace Guzzle\Tests\Service;
 use Guzzle\Plugin\History\HistoryPlugin;
 use Guzzle\Service\Builder\ServiceBuilder;
 use Guzzle\Service\Client;
-use Guzzle\Service\Exception\ServiceNotFoundException;
-use Doctrine\Common\Cache\ArrayCache;
 
 /**
  * @covers Guzzle\Service\Builder\ServiceBuilder

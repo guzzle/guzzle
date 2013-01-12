@@ -4,7 +4,6 @@ namespace Guzzle\Http;
 
 use Guzzle\Common\Event;
 use Guzzle\Common\HasDispatcherInterface;
-use Guzzle\Stream\Stream;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
