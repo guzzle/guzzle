@@ -92,9 +92,19 @@ class Parameter
      */
     public function __construct(array $data = array(), ServiceDescriptionInterface $description = null)
     {
-        // Replace references to models with the actual model data
-        if ($description && isset($data['$ref']) && $description->getModel($data['$ref'])) {
-            $data = $description->getModel($data['$ref'])->toArray();
+        if ($description) {
+            if (isset($data['$ref'])) {
+                // Replace references to models with the actual model data
+                if ($model = $description->getModel($data['$ref'])) {
+                    $data = $model->toArray();
+                }
+            } elseif (isset($data['extends'])) {
+                // If this parameter extends from another parameter then start with the actual data
+                // union in the parent's data (e.g. actual supersedes parent)
+                if ($extends = $description->getModel($data['extends'])) {
+                    $data += $extends->toArray();
+                }
+            }
         }
 
         // Pull configuration data into the parameter

@@ -322,12 +322,33 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
                 'Anakin' => $anakin
             )
         ));
-        $p = new Parameter(array('$ref' => 'Anakin'), $description);
+        // description attribute will be removed
+        $p = new Parameter(array('$ref' => 'Anakin', 'description' => 'missing'), $description);
         $this->assertEquals(array(
             'type'  => 'array',
             'items' => array(
                 'type'    => 'string',
                 'default' => 'Mesa address tha senate!'
+            )
+        ), $p->toArray());
+    }
+
+    public function testResolvesExtendsRecursively()
+    {
+        $jarJar = array('type' => 'string', 'default' => 'Mesa address tha senate!', 'description' => 'a');
+        $anakin = array('type' => 'array', 'items' => array('extends' => 'JarJar', 'description' => 'b'));
+        $description = new ServiceDescription(array(
+            'models' => array('JarJar' => $jarJar, 'Anakin' => $anakin)
+        ));
+        // Description attribute will be updated, and format added
+        $p = new Parameter(array('extends' => 'Anakin', 'format' => 'date'), $description);
+        $this->assertEquals(array(
+            'type'  => 'array',
+            'format' => 'date',
+            'items' => array(
+                'type'    => 'string',
+                'default' => 'Mesa address tha senate!',
+                'description' => 'b'
             )
         ), $p->toArray());
     }
