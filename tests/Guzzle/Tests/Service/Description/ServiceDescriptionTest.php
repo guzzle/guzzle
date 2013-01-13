@@ -112,6 +112,7 @@ class ServiceDescriptionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertInstanceOf('Guzzle\Service\Description\Parameter', $d->getModel('Tag'));
         $this->assertNull($d->getModel('Foo'));
         $this->assertContains('"models":{', serialize($d));
+        $this->assertEquals(array('Tag', 'Person'), array_keys($d->getModels()));
     }
 
     public function testCanAddModels()

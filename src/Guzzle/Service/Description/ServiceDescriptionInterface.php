@@ -49,6 +49,13 @@ interface ServiceDescriptionInterface extends \Serializable
     public function getModel($id);
 
     /**
+     * Get all service description models
+     *
+     * @return array
+     */
+    public function getModels();
+
+    /**
      * Check if the description has a specific model by name
      *
      * @param string $id ID of the model

@@ -142,10 +142,8 @@ class ServiceDescription implements ServiceDescriptionInterface
      */
     public function getOperations()
     {
-        foreach ($this->operations as &$operation) {
-            if (!($operation instanceof Operation)) {
-                $operation = new Operation($operation, $this);
-            }
+        foreach (array_keys($this->operations) as $name) {
+            $this->getOperation($name);
         }
 
         return $this->operations;
@@ -204,6 +202,19 @@ class ServiceDescription implements ServiceDescriptionInterface
         }
 
         return $this->models[$id];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getModels()
+    {
+        // Ensure all models are converted into parameter objects
+        foreach (array_keys($this->models) as $id) {
+            $this->getModel($id);
+        }
+
+        return $this->models;
     }
 
     /**
@@ -268,6 +279,7 @@ class ServiceDescription implements ServiceDescriptionInterface
      * Initialize the state from an array
      *
      * @param array $config Configuration data
+     * @throws InvalidArgumentException
      */
     protected function fromArray(array $config)
     {
