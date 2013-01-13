@@ -233,11 +233,12 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     /**
      * Set the state of the request
      *
-     * @param string $state State of the request (complete, sending, or new)
+     * @param string $state   State of the request (complete, sending, or new)
+     * @param array  $context Contextual information about the state change
      *
      * @return RequestInterface
      */
-    public function setState($state);
+    public function setState($state, array $context = array());
 
     /**
      * Get the cURL options that will be applied when the cURL handle is created

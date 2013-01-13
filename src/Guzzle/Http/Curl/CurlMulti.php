@@ -530,7 +530,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         $this->removeHandle($request);
 
         if (!$curlException) {
-            $request->setState(RequestInterface::STATE_COMPLETE);
+            $request->setState(RequestInterface::STATE_COMPLETE, array('handle' => $handle));
             // Only remove the request if it wasn't resent as a result of the state change
             if ($request->getState() != RequestInterface::STATE_TRANSFER) {
                 $this->remove($request);

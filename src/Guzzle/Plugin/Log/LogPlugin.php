@@ -141,8 +141,7 @@ class LogPlugin implements EventSubscriberInterface
     {
         $request = $event['request'];
         $response = $event['response'];
-
-        $handle = $request->getParams()->get('curl_handle');
+        $handle = $event['handle'];
 
         if ($wire = $request->getParams()->get('request_wire')) {
             $request = clone $request;

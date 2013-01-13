@@ -208,7 +208,6 @@ class CurlHandle
         // Apply the options to a new cURL handle.
         $handle = curl_init();
         curl_setopt_array($handle, $curlOptions);
-        $request->getParams()->set('curl.last_options', $curlOptions);
 
         if ($tempContentLength) {
             $request->setHeader('Content-Length', $tempContentLength);

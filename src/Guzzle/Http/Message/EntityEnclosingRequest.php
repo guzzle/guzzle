@@ -61,9 +61,9 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     /**
      * {@inheritdoc}
      */
-    public function setState($state)
+    public function setState($state, array $context = array())
     {
-        parent::setState($state);
+        parent::setState($state, $context);
         if ($state == self::STATE_TRANSFER && !$this->body && !count($this->postFields) && !count($this->postFiles)) {
             $this->setHeader('Content-Length', 0)->removeHeader('Transfer-Encoding');
         }

@@ -7,7 +7,7 @@ use Guzzle\Http\Curl\CurlHandle;
 /**
  * cURL request exception
  */
-class CurlException extends BadResponseException
+class CurlException extends RequestException
 {
     private $curlError;
     private $curlErrorNo;
