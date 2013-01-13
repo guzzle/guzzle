@@ -31,7 +31,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     const RESPONSE_PROCESSING = 'command.response_processing';
     // Different response types that commands can use
     const TYPE_RAW = 'raw';
-    const TYPE_NATIVE = 'native';
     const TYPE_MODEL = 'model';
     // Option used to change the entity body used to store a response
     const RESPONSE_BODY = 'command.response_body';
