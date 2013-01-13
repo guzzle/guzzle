@@ -17,7 +17,7 @@ interface CanCacheStrategyInterface
      *
      * @return bool
      */
-    public function canCache(RequestInterface $request);
+    public function canCacheRequest(RequestInterface $request);
 
     /**
      * Determine if a response can be cached

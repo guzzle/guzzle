@@ -44,7 +44,7 @@ class CallbackCanCacheStrategy extends DefaultCanCacheStrategy
     /**
      * {@inheritdoc}
      */
-    public function canCache(RequestInterface $request)
+    public function canCacheRequest(RequestInterface $request)
     {
         return $this->requestCallback
             ? call_user_func($this->requestCallback, $request)

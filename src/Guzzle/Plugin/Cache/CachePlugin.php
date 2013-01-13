@@ -137,7 +137,7 @@ class CachePlugin implements EventSubscriberInterface
     public function onRequestBeforeSend(Event $event)
     {
         $request = $event['request'];
-        if (!$this->canCache->canCache($request)) {
+        if (!$this->canCache->canCacheRequest($request)) {
             return;
         }
 

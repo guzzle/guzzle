@@ -13,7 +13,7 @@ class DefaultCanCacheStrategy implements CanCacheStrategyInterface
     /**
      * {@inheritdoc}
      */
-    public function canCache(RequestInterface $request)
+    public function canCacheRequest(RequestInterface $request)
     {
         return $request->canCache();
     }

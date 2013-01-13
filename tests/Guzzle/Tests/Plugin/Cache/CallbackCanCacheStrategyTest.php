@@ -27,7 +27,7 @@ class CallbackCanCacheStrategyTest extends \Guzzle\Tests\GuzzleTestCase
     public function testUsesCallback()
     {
         $c = new CallbackCanCacheStrategy(function ($request) { return true; });
-        $this->assertTrue($c->canCache(new Request('DELETE', 'http://www.foo.com')));
+        $this->assertTrue($c->canCacheRequest(new Request('DELETE', 'http://www.foo.com')));
     }
 
     /**
@@ -52,7 +52,7 @@ class CallbackCanCacheStrategyTest extends \Guzzle\Tests\GuzzleTestCase
             . "hi"
         );
 
-        $this->assertTrue($c->canCache($request));
+        $this->assertTrue($c->canCacheRequest($request));
         $this->assertTrue($c->canCacheResponse($response));
 
         $s = $this->getMockBuilder('Guzzle\Plugin\Cache\DefaultCacheStorage')

@@ -11,7 +11,7 @@ use Guzzle\Plugin\Cache\DefaultCanCacheStrategy;
  */
 class DefaultCanCacheStrategyTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    public function testReturnsRequestCanCache()
+    public function testReturnsRequestcanCacheRequest()
     {
         $strategy = new DefaultCanCacheStrategy();
         $response = $this->getMockBuilder('Guzzle\Http\Message\Request')
@@ -23,6 +23,6 @@ class DefaultCanCacheStrategyTest extends \Guzzle\Tests\GuzzleTestCase
             ->method('canCache')
             ->will($this->returnValue(true));
 
-        $this->assertTrue($strategy->canCache($response));
+        $this->assertTrue($strategy->canCacheRequest($response));
     }
 }
