@@ -7,7 +7,6 @@ use Guzzle\Plugin\Cache\CallbackCacheKeyProvider;
 
 /**
  * @covers Guzzle\Plugin\Cache\CallbackCacheKeyProvider
- * @covers Guzzle\Plugin\Cache\AbstractCallbackStrategy
  */
 class CallbackCacheKeyProviderTest extends \Guzzle\Tests\GuzzleTestCase
 {

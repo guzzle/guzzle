@@ -12,7 +12,6 @@ use Guzzle\Plugin\Cache\CallbackCanCacheStrategy;
 
 /**
  * @covers Guzzle\Plugin\Cache\CallbackCanCacheStrategy
- * @covers Guzzle\Plugin\Cache\AbstractCallbackStrategy
  */
 class CallbackCanCacheStrategyTest extends \Guzzle\Tests\GuzzleTestCase
 {
