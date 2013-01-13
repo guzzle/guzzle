@@ -1,20 +1,41 @@
 CHANGELOG
 =========
 
-* 3.0.7 (2012-12-19)
+3.1.0 (2013-01-12)
+------------------
+
+    * BC: CurlException now extends from RequestException rather than BadResponseException
+    * Bug: Removing hard dependency on the BackoffPlugin from Guzzle\Http
+    * Bug: Adding required content-type when JSON request visitor adds JSON to a command
+    * Bug: Fixing the serialization of a service description with custom data
+    * Made it easier to deal with exceptions thrown when transferring commands or requests in parallel by providing
+      an array of successful and failed responses
+    * Moved getPath from Guzzle\Service\Resource\Model to Guzzle\Common\Collection
+    * Added Guzzle\Http\IoEmittingEntityBody
+    * Moved command filtration from validators to location visitors
+    * Added getData to ServiceDescriptionInterface
+    * Renamed Guzzle\Plugin\Cache\CanCacheStrategyInterface::canCache() to canCacheRequest() and added
+      CanCacheResponse()
+    * Added getModels to ServiceDescriptionInterface
+    * Added context array to RequestInterface::setState()
+
+3.0.7 (2012-12-19)
+------------------
 
     * Fixing phar detection when forcing a cacert to system if null or true
     * Allowing filename to be passed to `Guzzle\Http\Message\Request::setResponseBody()`
     * Cleaning up `Guzzle\Common\Collection::inject` method
     * Adding a response_body location to service descriptions
 
-* 3.0.6 (2012-12-09)
+3.0.6 (2012-12-09)
+------------------
 
     * CurlMulti performance improvements
     * Adding setErrorResponses() to Operation
     * composer.json tweaks
 
-* 3.0.5 (2012-11-18)
+3.0.5 (2012-11-18)
+------------------
 
     * Bug: Fixing an infinite recursion bug caused from revalidating with the CachePlugin
     * Bug: Response body can now be a string containing "0"
@@ -24,7 +45,8 @@ CHANGELOG
     * DefaultRequestSerializer now supports array URI parameter values for URI template expansion
     * Added better mimetype guessing to requests and post files
 
-* 3.0.4 (2012-11-11)
+3.0.4 (2012-11-11)
+------------------
 
     * Bug: Fixed a bug when adding multiple cookies to a request to use the correct glue value
     * Bug: Cookies can now be added that have a name, domain, or value set to "0"
@@ -35,7 +57,8 @@ CHANGELOG
     * Added setStream to StreamInterface to actually make it possible to implement custom rewind behavior for entity bodies
     * Added the ability to create any sort of hash for a stream rather than just an MD5 hash
 
-* 3.0.3 (2012-11-04)
+3.0.3 (2012-11-04)
+------------------
 
     * Implementing redirects in PHP rather than cURL
     * Added PECL URI template extension and using as default parser if available
@@ -44,20 +67,23 @@ CHANGELOG
     * Adding ToArrayInterface throughout library
     * Fixing OauthPlugin to create unique nonce values per request
 
-* 3.0.2 (2012-10-25)
+3.0.2 (2012-10-25)
+------------------
 
     * Magic methods are enabled by default on clients
     * Magic methods return the result of a command
     * Service clients no longer require a base_url option in the factory
     * Bug: Fixed an issue with URI templates where null template variables were being expanded
 
-* 3.0.1 (2012-10-22)
+3.0.1 (2012-10-22)
+------------------
 
     * Models can now be used like regular collection objects by calling filter, map, etc
     * Models no longer require a Parameter structure or initial data in the constructor
     * Added a custom AppendIterator to get around a PHP bug with the `\AppendIterator`
 
-* 3.0.0 (2012-10-15)
+3.0.0 (2012-10-15)
+------------------
 
     * Rewrote service description format to be based on Swagger
         * Now based on JSON schema
@@ -89,11 +115,13 @@ CHANGELOG
     * Cleaning up Collection class and removing default values from the get method
     * Fixed ZF2 cache adapters
 
-* 2.8.8 (2012-10-15)
+2.8.8 (2012-10-15)
+------------------
 
     * Bug: Fixed a cookie issue that caused dot prefixed domains to not match where popular browsers did
 
-* 2.8.7 (2012-09-30)
+2.8.7 (2012-09-30)
+------------------
 
     * Bug: Fixed config file aliases for JSON includes
     * Bug: Fixed cookie bug on a request object by using CookieParser to parse cookies on requests
@@ -107,7 +135,8 @@ CHANGELOG
     * Added the ability to remove POST fields from OAuth signatures
     * OAuth plugin now supports 2-legged OAuth
 
-* 2.8.6 (2012-09-05)
+2.8.6 (2012-09-05)
+------------------
 
     * Added the ability to modify and build service descriptions
     * Added the use of visitors to apply parameters to locations in service descriptions using the dynamic command
@@ -121,7 +150,8 @@ CHANGELOG
     * The JsonLoader now supports aliasing filenames with different filenames. This allows you to alias something like
       '_default' with a default JSON configuration file.
 
-* 2.8.5 (2012-08-29)
+2.8.5 (2012-08-29)
+------------------
 
     * Bug: Suppressed empty arrays from URI templates
     * Bug: Added the missing $options argument from ServiceDescription::factory to enable caching
@@ -129,7 +159,8 @@ CHANGELOG
     * AbstractCommand commands are now invokable
     * Added a way to get the data used when signing an Oauth request before a request is sent
 
-* 2.8.4 (2012-08-15)
+2.8.4 (2012-08-15)
+------------------
 
     * Bug: Custom delay time calculations are no longer ignored in the ExponentialBackoffPlugin
     * Added the ability to transfer entity bodies as a string rather than streamed. This gets around curl error 65. Set `body_as_string` in a request's curl options to enable.
@@ -143,7 +174,8 @@ CHANGELOG
     * Added the ability of the MockPlugin to consume mocked request bodies
     * LogPlugin now exposes request and response objects in the extras array
 
-* 2.8.3 (2012-07-30)
+2.8.3 (2012-07-30)
+------------------
 
     * Bug: Fixed a case where empty POST requests were sent as GET requests
     * Bug: Fixed a bug in ExponentialBackoffPlugin that caused fatal errors when retrying an EntityEnclosingRequest that does not have a body
@@ -153,7 +185,8 @@ CHANGELOG
     * Removed the default 2mb size cutoff from the Md5ValidatorPlugin so that it now defaults to validating everything
     * Changed CurlMulti::perform to pass a smaller timeout to CurlMulti::executeHandles
 
-* 2.8.2 (2012-07-24)
+2.8.2 (2012-07-24)
+------------------
 
     * Bug: Query string values set to 0 are no longer dropped from the query string
     * Bug: A Collection object is no longer created each time a call is made to ``Guzzle\Service\Command\AbstractCommand::getRequestHeaders()``
@@ -161,12 +194,14 @@ CHANGELOG
     * QueryString and Collection performance improvements
     * Allowing dot notation for class paths in filters attribute of a service descriptions
 
-* 2.8.1 (2012-07-16)
+2.8.1 (2012-07-16)
+------------------
 
     * Loosening Event Dispatcher dependency
     * POST redirects can now be customized using CURLOPT_POSTREDIR
 
-* 2.8.0 (2012-07-15)
+2.8.0 (2012-07-15)
+------------------
 
     * BC: Guzzle\Http\Query
         * Query strings with empty variables will always show an equal sign unless the variable is set to QueryString::BLANK (e.g. ?acl= vs ?acl)
@@ -179,7 +214,8 @@ CHANGELOG
     * Cookies are no longer URL decoded by default
     * Bug: URI template variables set to null are no longer expanded
 
-* 2.7.2 (2012-07-02)
+2.7.2 (2012-07-02)
+------------------
 
     * BC: Moving things to get ready for subtree splits. Moving Inflection into Common. Moving Guzzle\Http\Parser to Guzzle\Parser.
     * BC: Removing Guzzle\Common\Batch\Batch::count() and replacing it with isEmpty()
@@ -189,12 +225,14 @@ CHANGELOG
     * Allowing deeply nested arrays for composite variables in URI templates
     * Batch divisors can now return iterators or arrays
 
-* 2.7.1 (2012-06-26)
+2.7.1 (2012-06-26)
+------------------
 
     * Minor patch to update version number in UA string
     * Updating build process
 
-* 2.7.0 (2012-06-25)
+2.7.0 (2012-06-25)
+------------------
 
     * BC: Inflection classes moved to Guzzle\Inflection. No longer static methods. Can now inject custom inflectors into classes.
     * BC: Removed magic setX methods from commands
@@ -211,7 +249,8 @@ CHANGELOG
     * Fixed some tests so that they pass more reliably
     * Added Guzzle\Common\Log\ArrayLogAdapter
 
-* 2.6.6 (2012-06-10)
+2.6.6 (2012-06-10)
+------------------
 
     * BC: Removing Guzzle\Http\Plugin\BatchQueuePlugin
     * BC: Removing Guzzle\Service\Command\CommandSet
@@ -221,7 +260,8 @@ CHANGELOG
     * Adding result_type, result_doc, deprecated, and doc_url to service descriptions
     * Bug: Changed the default cookie header casing back to 'Cookie'
 
-* 2.6.5 (2012-06-03)
+2.6.5 (2012-06-03)
+------------------
 
     * BC: Renaming Guzzle\Http\Message\RequestInterface::getResourceUri() to getResource()
     * BC: Removing unused AUTH_BASIC and AUTH_DIGEST constants from
@@ -233,7 +273,8 @@ CHANGELOG
     * Adding getCookies() to request interface.
     * Making it easier to add event subscribers to HasDispatcherInterface classes. Can now directly call addSubscriber()
 
-* 2.6.4 (2012-05-30)
+2.6.4 (2012-05-30)
+------------------
 
     * BC: Cleaning up how POST files are stored in EntityEnclosingRequest objects. Adding PostFile class.
     * BC: Moving ApiCommand specific functionality from the Inspector and on to the ApiCommand
@@ -250,7 +291,8 @@ CHANGELOG
     * Allowing the result of a command object to be changed
     * Parsing location and type sub values when instantiating a service description rather than over and over at runtime
 
-* 2.6.3 (2012-05-23)
+2.6.3 (2012-05-23)
+------------------
 
     * [BC] Guzzle\Common\FromConfigInterface no longer requires any config options.
     * [BC] Refactoring how POST files are stored on an EntityEnclosingRequest. They are now separate from POST fields.
@@ -264,11 +306,13 @@ CHANGELOG
     * Split the Guzzle\Service\Inspector::validateConfig method into two methods. One to initialize when a command is created, and one to validate.
     * CS updates
 
-* 2.6.2 (2012-05-19)
+2.6.2 (2012-05-19)
+------------------
 
     * [Http] Better handling of nested scope requests in CurlMulti.  Requests are now always prepares in the send() method rather than the addRequest() method.
 
-* 2.6.1 (2012-05-19)
+2.6.1 (2012-05-19)
+------------------
 
     * [BC] Removing 'path' support in service descriptions.  Use 'uri'.
     * [BC] Guzzle\Service\Inspector::parseDocBlock is now protected. Adding getApiParamsForClass() with cache.
@@ -279,7 +323,8 @@ CHANGELOG
     * Adding checks to EntityEnclosingRequest so that empty POST files and fields are ignored.
     * Making the method signature of Guzzle\Service\Builder\ServiceBuilder::factory more flexible.
 
-* 2.6.0 (2012-05-15)
+2.6.0 (2012-05-15)
+------------------
 
     * [BC] Moving Guzzle\Service\Builder to Guzzle\Service\Builder\ServiceBuilder
     * [BC] Executing a Command returns the result of the command rather than the command
@@ -307,7 +352,8 @@ CHANGELOG
     * Adding the ability to include other service builder config files from within XML and JSON files
     * Moving the parseQuery method out of Url and on to QueryString::fromString() as a static factory method.
 
-* 2.5.0 (2012-05-08)
+2.5.0 (2012-05-08)
+------------------
 
     * Major performance improvements
     * [BC] Simplifying Guzzle\Common\Collection.  Please check to see if you are using features that are now deprecated.
