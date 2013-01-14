@@ -31,7 +31,7 @@
     <property name="version.version" value=""/>
     <target name="check-changelog-version">
         <exec executable="fgrep" outputProperty="version.changelog">
-            <arg value="* ${new.version} ("/>
+            <arg value="${new.version} ("/>
             <arg value="${project.basedir}/CHANGELOG.md"/>
         </exec>
         <if>
