@@ -5,6 +5,9 @@ CHANGELOG
 ------------------
 
 * BC: CurlException now extends from RequestException rather than BadResponseException
+* BC: Renamed Guzzle\Plugin\Cache\CanCacheStrategyInterface::canCache() to canCacheRequest() and added CanCacheResponse()
+* Added getData to ServiceDescriptionInterface
+* Added context array to RequestInterface::setState()
 * Bug: Removing hard dependency on the BackoffPlugin from Guzzle\Http
 * Bug: Adding required content-type when JSON request visitor adds JSON to a command
 * Bug: Fixing the serialization of a service description with custom data
@@ -13,11 +16,8 @@ CHANGELOG
 * Moved getPath from Guzzle\Service\Resource\Model to Guzzle\Common\Collection
 * Added Guzzle\Http\IoEmittingEntityBody
 * Moved command filtration from validators to location visitors
-* Added getData to ServiceDescriptionInterface
 * Added `extends` attributes to service description parameters
-* Renamed Guzzle\Plugin\Cache\CanCacheStrategyInterface::canCache() to canCacheRequest() and added CanCacheResponse()
 * Added getModels to ServiceDescriptionInterface
-* Added context array to RequestInterface::setState()
 
 3.0.7 (2012-12-19)
 ------------------
