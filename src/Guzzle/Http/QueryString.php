@@ -220,6 +220,8 @@ class QueryString extends Collection
     public function setAggregateFunction($callback)
     {
         $this->aggregator = $callback;
+
+        return $this;
     }
 
     /**
