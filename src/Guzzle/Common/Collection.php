@@ -365,26 +365,78 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
 
     /**
      * Gets a value from the collection using an array path (e.g. foo/baz/bar would retrieve bar from two nested arrays)
+     * Allows for wildcard searches which recursively combine matches up to the level at which the wildcard occurs. This
+     * can be useful for accepting any key of a sub-array and combining matching keys from each diverging path.
      *
      * @param string $path      Path to traverse and retrieve a value from
      * @param string $separator Character used to add depth to the search
+     * @param mixed  $data      Optional data to descend into (used when wildcards are encountered)
      *
      * @return mixed|null
      */
-    public function getPath($path, $separator = '/')
+    public function getPath($path, $separator = '/', $data = null)
     {
-        $parts = explode($separator, $path);
-        $data = &$this->data;
+        // Assume the data of the collection if no data was passed into the method
+        if ($data === null) {
+            $data = &$this->data;
+        }
+
+        // Break the path into an array if needed
+        if (!is_array($path)) {
+            $path = explode($separator, $path);
+        }
 
         // Using an iterative approach rather than recursion for speed
-        while (null !== ($part = array_shift($parts))) {
-            // Return null if this path doesn't exist or if there's more depth and the value is not an array
-            if (!isset($data[$part]) || ($parts && !is_array($data[$part]))) {
+        while (null !== ($part = array_shift($path))) {
+
+            if (!is_array($data)) {
                 return null;
             }
+
+            // The value does not exist in the array or the path has more but the value is not an array
+            if (!isset($data[$part])) {
+
+                // Not using a wildcard and the key was not found, so return null
+                if ($part != '*') {
+                    return null;
+                }
+
+                // If using a wildcard search, then diverge and combine paths
+                $result = array();
+                foreach ($data as $value) {
+                    if (!$path) {
+                        $result = array_merge_recursive($result, (array) $value);
+                    } else {
+                        $test = $this->getPath($path, $separator, $value);
+                        if ($test !== null) {
+                            $result = array_merge_recursive($result, (array) $test);
+                        }
+                    }
+                }
+
+                return $result;
+            }
+
+            // Descend deeper into the data
             $data = &$data[$part];
         }
 
         return $data;
+    }
+
+    /**
+     * Over write key value pairs in this collection with all of the data from an array or collection.
+     *
+     * @param array|\Traversable $data Values to override over this config
+     *
+     * @return self
+     */
+    public function overwriteWith($data)
+    {
+        foreach ($data as $k => $v) {
+            $this->set($k, $v);
+        }
+
+        return $this;
     }
 }

@@ -9,7 +9,7 @@ use Guzzle\Http\QueryString;
 class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
-     * @var Guzzle\Common\Collection
+     * @var Collection
      */
     protected $coll;
 
@@ -480,5 +480,86 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         ));
         $this->assertEquals('jar', $collection->getPath('0/a'));
         $this->assertEquals('other', $collection->getPath('1'));
+    }
+
+    public function getPathProvider()
+    {
+        $data = array(
+            'foo' => 'bar',
+            'baz' => array(
+                'mesa' => array(
+                    'jar' => 'jar',
+                    'array' => array('a', 'b', 'c')
+                ),
+                'bar' => array(
+                    'baz' => 'bam',
+                    'array' => array('d', 'e', 'f')
+                )
+            ),
+            'bam' => array(
+                array('foo' => 1),
+                array('foo' => 2),
+                array('array' => array('h', 'i'))
+            )
+        );
+        $c = new Collection($data);
+
+        return array(
+            // Simple path selectors
+            array($c, 'foo', 'bar'),
+            array($c, 'baz', $data['baz']),
+            array($c, 'bam', $data['bam']),
+            array($c, 'baz/mesa', $data['baz']['mesa']),
+            array($c, 'baz/mesa/jar', 'jar'),
+            // Merge everything two levels under baz
+            array($c, 'baz/*', array(
+                'jar' => 'jar',
+                'array' => array_merge($data['baz']['mesa']['array'], $data['baz']['bar']['array']),
+                'baz' => 'bam'
+            )),
+            // Does not barf on missing keys
+            array($c, 'fefwfw', null),
+            // Does not barf when a wildcard does not resolve correctly
+            array($c, '*/*/*/*/*/wefwfe', array()),
+            // Allows custom separator
+            array($c, '*|mesa', $data['baz']['mesa'], '|'),
+            // Merge all 'array' keys two levels under baz (the trailing * does not hurt the results)
+            array($c, 'baz/*/array/*', array_merge($data['baz']['mesa']['array'], $data['baz']['bar']['array'])),
+            // Merge all 'array' keys two levels under baz
+            array($c, 'baz/*/array', array_merge($data['baz']['mesa']['array'], $data['baz']['bar']['array'])),
+            array($c, 'baz/mesa/array', $data['baz']['mesa']['array']),
+            // Having a trailing * does not hurt the results
+            array($c, 'baz/mesa/array/*', $data['baz']['mesa']['array']),
+            // Merge of anything one level deep
+            array($c, '*', array_merge(array('bar'), $data['baz'], $data['bam'])),
+            // Funky merge of anything two levels deep
+            array($c, '*/*', array(
+                'jar' => 'jar',
+                'array' => array('a', 'b', 'c', 'd', 'e', 'f', 'h', 'i'),
+                'baz' => 'bam',
+                'foo' => array(1, 2)
+            )),
+            // Funky merge of all 'array' keys that are two levels deep
+            array($c, '*/*/array', array('a', 'b', 'c', 'd', 'e', 'f', 'h', 'i'))
+        );
+    }
+
+    /**
+     * @dataProvider getPathProvider
+     * @covers Guzzle\Common\Collection::getPath
+     */
+    public function testGetPath(Collection $c, $path, $expected, $separator = '/')
+    {
+        $this->assertEquals($expected, $c->getPath($path, $separator));
+    }
+
+    /**
+     * @covers Guzzle\Common\Collection::overwriteWith
+     */
+    public function testOverridesSettings()
+    {
+        $c = new Collection(array('foo' => 1, 'baz' => 2, 'bar' => 3));
+        $c->overwriteWith(array('foo' => 10, 'bar' => 300));
+        $this->assertEquals(array('foo' => 10, 'baz' => 2, 'bar' => 300), $c->getAll());
     }
 }
