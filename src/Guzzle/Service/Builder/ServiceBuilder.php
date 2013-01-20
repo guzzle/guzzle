@@ -128,6 +128,12 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
     public function get($name, $throwAway = false)
     {
         if (!isset($this->builderConfig[$name])) {
+            // Check aliases and return a match if found
+            foreach ($this->builderConfig as $actualName => $config) {
+                if (isset($config['alias']) && $config['alias'] == $name) {
+                    return $this->get($actualName, $throwAway);
+                }
+            }
             throw new ServiceNotFoundException('No service is registered as ' . $name);
         }
 
