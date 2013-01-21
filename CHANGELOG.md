@@ -1,6 +1,13 @@
 CHANGELOG
 =========
 
+3.1.1 (2012-01-20)
+------------------
+
+* Adding wildcard support to Guzzle\Common\Collection::getPath()
+* Adding alias support to ServiceBuilder configs
+* Adding Guzzle\Service\Resource\CompositeResourceIteratorFactory and cleaning up factory interface
+
 3.1.0 (2013-01-12)
 ------------------
 
