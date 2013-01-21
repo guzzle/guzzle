@@ -13,19 +13,23 @@ abstract class AbstractResourceIteratorFactory implements ResourceIteratorFactor
     /**
      * {@inheritdoc}
      */
-    public function build($data, array $options = array())
+    public function build(CommandInterface $command, array $options = array())
     {
-        if (!($data instanceof CommandInterface)) {
-            throw new InvalidArgumentException('The first argument must be an instance of CommandInterface');
+        if (!$this->canBuild($command)) {
+            throw new InvalidArgumentException('Iterator was not found for ' . $command->getName());
         }
 
-        $className = $this->getClassName($data);
+        $className = $this->getClassName($command);
 
-        if (!$className) {
-            throw new InvalidArgumentException('Iterator was not found for ' . $data->getName());
-        }
+        return new $className($command, $options);
+    }
 
-        return new $className($data, $options);
+    /**
+     * {@inheritdoc}
+     */
+    public function canBuild(CommandInterface $command)
+    {
+        return (bool) $this->getClassName($command);
     }
 
     /**

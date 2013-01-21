@@ -12,17 +12,7 @@ use Guzzle\Tests\Service\Mock\Command\MockCommand;
 class ResourceIteratorClassFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
-     * @expectedException InvalidArgumentException
-     * @expectedExceptionMessage The first argument must be an instance of CommandInterface
-     */
-    public function testValidatesCommand()
-    {
-        $factory = new ResourceIteratorClassFactory();
-        $factory->build('foo');
-    }
-
-    /**
-     * @expectedException InvalidArgumentException
+     * @expectedException \InvalidArgumentException
      * @expectedExceptionMessage Iterator was not found for mock_command
      */
     public function testEnsuresIteratorClassExists()
@@ -30,17 +20,22 @@ class ResourceIteratorClassFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $factory = new ResourceIteratorClassFactory(array('Foo', 'Bar'));
         $factory->registerNamespace('Baz');
         $command = new MockCommand();
-        $iterator = $factory->build($command);
+        $factory->build($command);
     }
 
     public function testBuildsResourceIterators()
     {
         $factory = new ResourceIteratorClassFactory('Guzzle\Tests\Service\Mock\Model');
         $command = new MockCommand();
-        $iterator = $factory->build($command, array(
-            'client.namespace' => 'Guzzle\Tests\Service\Mock'
-        ));
-
+        $iterator = $factory->build($command, array('client.namespace' => 'Guzzle\Tests\Service\Mock'));
         $this->assertInstanceOf('Guzzle\Tests\Service\Mock\Model\MockCommandIterator', $iterator);
+    }
+
+    public function testChecksIfCanBuild()
+    {
+        $factory = new ResourceIteratorClassFactory('Guzzle\Tests\Service');
+        $this->assertFalse($factory->canBuild(new MockCommand()));
+        $factory = new ResourceIteratorClassFactory('Guzzle\Tests\Service\Mock\Model');
+        $this->assertTrue($factory->canBuild(new MockCommand()));
     }
 }
