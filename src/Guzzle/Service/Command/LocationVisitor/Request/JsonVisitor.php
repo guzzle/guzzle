@@ -63,7 +63,8 @@ class JsonVisitor extends AbstractRequestVisitor
             $json = $this->data[$command];
             unset($this->data[$command]);
             $request->setBody(json_encode($json));
-            if ($this->jsonContentType) {
+            // Don't overwrite the Content-Type if one is set
+            if ($this->jsonContentType && !$request->hasHeader('Content-Type')) {
                 $request->setHeader('Content-Type', $this->jsonContentType);
             }
         }

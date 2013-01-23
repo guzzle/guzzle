@@ -65,7 +65,8 @@ class XmlVisitor extends AbstractRequestVisitor
             $xml = $this->data[$command];
             unset($this->data[$command]);
             $request->setBody($xml->asXML());
-            if ($this->contentType) {
+            // Don't overwrite the Content-Type if one is set
+            if ($this->contentType && !$request->hasHeader('Content-Type')) {
                 $request->setHeader('Content-Type', $this->contentType);
             }
         }
