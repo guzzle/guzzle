@@ -31,6 +31,11 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     protected $defaultHeaders;
 
     /**
+     * @var string The user agent string to set on each request
+     */
+    protected $userAgent;
+
+    /**
      * @var Collection Parameter object holding configuration data
      */
     private $config;
@@ -240,6 +245,10 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             $url = Url::factory($this->getBaseUrl())->combine($this->expandTemplate($uri, $templateVars));
         }
 
+        if ($this->userAgent) {
+            $this->defaultHeaders->set('User-Agent', $this->userAgent);
+        }
+
         // If default headers are provided, then merge them into existing headers
         // If a collision occurs, the header is completely replaced
         if (count($this->defaultHeaders)) {
@@ -283,7 +292,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         if ($includeDefault) {
             $userAgent .= ' ' . Utils::getDefaultUserAgent();
         }
-        $this->defaultHeaders->set('User-Agent', $userAgent);
+        $this->userAgent = $userAgent;
 
         return $this;
     }

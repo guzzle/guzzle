@@ -159,9 +159,16 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
             'api' => 'v1'
         ));
 
+        // Set the user agent string and include the default user agent appended
         $this->assertSame($client, $client->setUserAgent('Test/1.0Ab', true));
         $this->assertEquals('Test/1.0Ab ' . Utils::getDefaultUserAgent(), $client->get()->getHeader('User-Agent'));
+
+        // Set the user agent string without the default appended
         $client->setUserAgent('Test/1.0Ab');
+        $this->assertEquals('Test/1.0Ab', $client->get()->getHeader('User-Agent'));
+
+        // Set default headers and make sure the user agent string is still set
+        $client->setDefaultHeaders(array());
         $this->assertEquals('Test/1.0Ab', $client->get()->getHeader('User-Agent'));
     }
 
