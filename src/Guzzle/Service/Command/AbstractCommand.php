@@ -32,6 +32,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     // Different response types that commands can use
     const TYPE_RAW = 'raw';
     const TYPE_MODEL = 'model';
+    const TYPE_NO_TRANSLATION = 'no_translation';
     // Option used to change the entity body used to store a response
     const RESPONSE_BODY = 'command.response_body';
 
@@ -93,11 +94,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         if ($onComplete = $this->get('command.on_complete')) {
             $this->remove('command.on_complete');
             $this->setOnComplete($onComplete);
-        }
-
-        // If no response processing value was specified, then attempt to use the highest level of processing
-        if (!$this->get(self::RESPONSE_PROCESSING)) {
-            $this->set(self::RESPONSE_PROCESSING, self::TYPE_MODEL);
         }
 
         $this->init();
@@ -262,6 +258,11 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         if (!$this->isPrepared()) {
             if (!$this->client) {
                 throw new CommandException('A client must be associated with the command before it can be prepared.');
+            }
+
+            // If no response processing value was specified, then attempt to use the highest level of processing
+            if (!$this->hasKey(self::RESPONSE_PROCESSING)) {
+                $this->set(self::RESPONSE_PROCESSING, self::TYPE_MODEL);
             }
 
             // Notify subscribers of the client that the command is being prepared

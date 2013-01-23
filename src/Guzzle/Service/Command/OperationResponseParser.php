@@ -3,14 +3,10 @@
 namespace Guzzle\Service\Command;
 
 use Guzzle\Http\Message\Response;
-use Guzzle\Service\Command\LocationVisitor\Response\HeaderVisitor;
-use Guzzle\Service\Command\LocationVisitor\Response\StatusCodeVisitor;
-use Guzzle\Service\Command\LocationVisitor\Response\ReasonPhraseVisitor;
-use Guzzle\Service\Command\LocationVisitor\Response\BodyVisitor;
-use Guzzle\Service\Command\LocationVisitor\Response\JsonVisitor;
-use Guzzle\Service\Command\LocationVisitor\Response\XmlVisitor;
+use Guzzle\Service\Command\LocationVisitor\VisitorFlyweight;
 use Guzzle\Service\Command\LocationVisitor\Response\ResponseVisitorInterface;
 use Guzzle\Service\Description\Parameter;
+use Guzzle\Service\Description\OperationInterface;
 use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Resource\Model;
 
@@ -20,17 +16,17 @@ use Guzzle\Service\Resource\Model;
 class OperationResponseParser extends DefaultResponseParser
 {
     /**
-     * @var array Location visitors attached to the command
+     * @var VisitorFlyweight $factory Visitor factory
      */
-    protected $visitors = array();
+    protected $factory;
 
     /**
-     * @var array Cached instance with default visitors
+     * @var self
      */
     protected static $instance;
 
     /**
-     * Get a default instance that includes that default location visitors
+     * Get a cached default instance of the Operation response parser that uses default visitors
      *
      * @return self
      * @codeCoverageIgnore
@@ -38,25 +34,18 @@ class OperationResponseParser extends DefaultResponseParser
     public static function getInstance()
     {
         if (!static::$instance) {
-            static::$instance = new static(array(
-                'statusCode'   => new StatusCodeVisitor(),
-                'reasonPhrase' => new ReasonPhraseVisitor(),
-                'header'       => new HeaderVisitor(),
-                'body'         => new BodyVisitor(),
-                'json'         => new JsonVisitor(),
-                'xml'          => new XmlVisitor()
-            ));
+            static::$instance = new static(VisitorFlyweight::getInstance());
         }
 
         return static::$instance;
     }
 
     /**
-     * @param array $visitors Visitors to attach
+     * @param VisitorFlyweight $factory Factory to use when creating visitors
      */
-    public function __construct(array $visitors = array())
+    public function __construct(VisitorFlyweight $factory)
     {
-        $this->visitors = $visitors;
+        $this->factory = $factory;
     }
 
     /**
@@ -69,7 +58,7 @@ class OperationResponseParser extends DefaultResponseParser
      */
     public function addVisitor($location, ResponseVisitorInterface $visitor)
     {
-        $this->visitors[$location] = $visitor;
+        $this->factory->addResponseVisitor($location, $visitor);
 
         return $this;
     }
@@ -77,47 +66,22 @@ class OperationResponseParser extends DefaultResponseParser
     /**
      * {@inheritdoc}
      */
-    public function parseForContentType(AbstractCommand $command, Response $response, $contentType)
+    protected function handleParsing(AbstractCommand $command, Response $response, $contentType)
     {
-        // Perform that default native processing
-        $result = parent::parseForContentType($command, $response, $contentType);
-
         $operation = $command->getOperation();
-        $model = $operation->getResponseType() == 'model'
-            && $command->get(AbstractCommand::RESPONSE_PROCESSING) == AbstractCommand::TYPE_MODEL
+        $model = $operation->getResponseType() == OperationInterface::TYPE_MODEL
             ? $operation->getServiceDescription()->getModel($operation->getResponseClass())
             : null;
 
-        // No further processing is needed if the responseType is not model or using native responses, or the model
-        // cannot be found
         if (!$model) {
-            return $result;
+            // Return basic processing if the responseType is not model or the model cannot be found
+            return parent::handleParsing($command, $response, $contentType);
+        } elseif ($command->get(AbstractCommand::RESPONSE_PROCESSING) != AbstractCommand::TYPE_MODEL) { 
+            // Returns a model with no visiting if the command response processing is not model
+            return new Model(parent::handleParsing($command, $response, $contentType), $model);
+        } else {
+            return new Model($this->visitResult($model, $command, $response), $model);
         }
-
-        if ($result instanceof \SimpleXMLElement) {
-            $result = $this->xmlToArray($result, $operation, $model);
-        } elseif ($result instanceof Response) {
-            $result = array();
-        }
-
-        // Perform transformations on the result using location visitors
-        $this->visitResult($model, $command, $response, $result);
-
-        return new Model($result, $model);
-    }
-
-    /**
-     * Parse a SimpleXMLElement into an array
-     *
-     * @param \SimpleXMLElement $xml       XML to parse
-     * @param Operation         $operation Operation that owns the model
-     * @param Parameter         $model     Model object
-     *
-     * @return array
-     */
-    protected function xmlToArray(\SimpleXMLElement $xml, Operation $operation, Parameter $model)
-    {
-        return json_decode(json_encode($xml), true);
     }
 
     /**
@@ -126,28 +90,36 @@ class OperationResponseParser extends DefaultResponseParser
      * @param Parameter        $model    Model that defines the structure
      * @param CommandInterface $command  Command that performed the operation
      * @param Response         $response Response received
-     * @param array            $result   Result array
-     * @param mixed            $context  Parsing context
+     *
+     * @return array Returns the array of result data
      */
     protected function visitResult(
         Parameter $model,
         CommandInterface $command,
-        Response $response,
-        array &$result,
-        $context = null
+        Response $response
     ) {
+        // Determine what visitors are associated with the model
+        $foundVisitors = $result = array();
+
         foreach ($model->getProperties() as $schema) {
-            /** @var $arg Parameter */
-            $location = $schema->getLocation();
-            // Visit with the associated visitor
-            if (isset($this->visitors[$location])) {
-                // Apply the parameter value with the location visitor
-                $this->visitors[$location]->visit($command, $response, $schema, $result);
+            if ($location = $schema->getLocation()) {
+                $foundVisitors[$location] = $this->factory->getResponseVisitor($location);
+                $foundVisitors[$location]->before($command, $result);
             }
         }
 
-        foreach ($this->visitors as $visitor) {
+        foreach ($model->getProperties() as $schema) {
+            /** @var $arg Parameter */
+            if ($location = $schema->getLocation()) {
+                // Apply the parameter value with the location visitor
+                $foundVisitors[$location]->visit($command, $response, $schema, $result);
+            }
+        }
+
+        foreach ($foundVisitors as $visitor) {
             $visitor->after($command);
         }
+
+        return $result;
     }
 }

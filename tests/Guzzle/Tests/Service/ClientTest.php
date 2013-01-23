@@ -11,6 +11,7 @@ use Guzzle\Service\Exception\CommandTransferException;
 use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
 use Guzzle\Service\Resource\ResourceIteratorClassFactory;
+use Guzzle\Service\Command\AbstractCommand;
 
 /**
  * @group server
@@ -39,6 +40,15 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         ));
 
         $this->service = ServiceDescription::factory(__DIR__ . '/../TestData/test_service.json');
+    }
+
+    public function testAllowsCustomClientParameters()
+    {
+        $client = new Mock\MockClient(null, array(
+            Client::COMMAND_PARAMS => array(AbstractCommand::RESPONSE_PROCESSING => 'foo')
+        ));
+        $command = $client->getCommand('mock_command');
+        $this->assertEquals('foo', $command->get(AbstractCommand::RESPONSE_PROCESSING));
     }
 
     /**

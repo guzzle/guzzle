@@ -16,7 +16,6 @@ class DefaultResponseParser implements ResponseParserInterface
 
     /**
      * Get a cached instance of the default response parser
-     *
      * @return self
      * @codeCoverageIgnore
      */
@@ -43,13 +42,13 @@ class DefaultResponseParser implements ResponseParserInterface
             $contentType = (string) $response->getHeader('Content-Type');
         }
 
-        return $this->parseForContentType($command, $response, $contentType);
+        return $this->handleParsing($command, $response, $contentType);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function parseForContentType(AbstractCommand $command, Response $response, $contentType)
+    protected function handleParsing(AbstractCommand $command, Response $response, $contentType)
     {
         $result = $response;
         if ($result->getBody()) {

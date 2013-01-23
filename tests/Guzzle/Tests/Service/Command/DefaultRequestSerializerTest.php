@@ -8,6 +8,7 @@ use Guzzle\Service\Client;
 use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Description\Parameter;
 use Guzzle\Service\Command\LocationVisitor\Request\HeaderVisitor;
+use Guzzle\Service\Command\LocationVisitor\VisitorFlyweight;
 
 /**
  * @covers Guzzle\Service\Command\DefaultRequestSerializer
@@ -75,10 +76,11 @@ class DefaultRequestSerializerTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('http://foo.com/baz/bar/123', (string) $request->getUrl());
     }
 
-    public function testConstructorAddsVisitors()
+    public function testAllowsCustomFactory()
     {
-        $serializer = new DefaultRequestSerializer(array());
-        $this->assertEmpty($this->readAttribute($serializer, 'visitors'));
+        $f = new VisitorFlyweight();
+        $serializer = new DefaultRequestSerializer($f);
+        $this->assertSame($f, $this->readAttribute($serializer, 'factory'));
     }
 
     public function testMixedParams()

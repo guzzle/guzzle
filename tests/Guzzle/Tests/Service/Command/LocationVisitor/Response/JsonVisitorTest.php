@@ -11,6 +11,20 @@ use Guzzle\Service\Command\LocationVisitor\Response\JsonVisitor as Visitor;
  */
 class JsonVisitorTest extends AbstractResponseVisitorTest
 {
+    public function testBeforeMethodParsesXml()
+    {
+        $visitor = new Visitor();
+        $command = $this->getMockBuilder('Guzzle\Service\Command\AbstractCommand')
+            ->setMethods(array('getResponse'))
+            ->getMockForAbstractClass();
+        $command->expects($this->once())
+            ->method('getResponse')
+            ->will($this->returnValue(new Response(200, null, '{"foo":"bar"}')));
+        $result = array();
+        $visitor->before($command, $result);
+        $this->assertEquals(array('foo' => 'bar'), $result);
+    }
+
     public function testVisitsLocation()
     {
         $visitor = new Visitor();

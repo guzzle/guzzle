@@ -19,6 +19,15 @@ class JsonVisitor extends AbstractResponseVisitor
     /**
      * {@inheritdoc}
      */
+    public function before(CommandInterface $command, array &$result)
+    {
+        // Ensure that the result of the command is always rooted with the parsed JSON data
+        $result = $command->getResponse()->json();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value, $context =  null)
     {
         $name = $param->getName();
@@ -40,26 +49,29 @@ class JsonVisitor extends AbstractResponseVisitor
      */
     protected function recursiveProcess(Parameter $param, &$value)
     {
-        if ($value !== null) {
+        if ($value === null) {
+            return;
+        }
+
+        if (is_array($value)) {
             $type = $param->getType();
-            if (is_array($value)) {
-                if ($type == 'array') {
-                    foreach ($value as &$item) {
-                        $this->recursiveProcess($param->getItems(), $item);
-                    }
-                } elseif ($type == 'object' && !isset($value[0])) {
-                    // On the above line, we ensure that the array is associative and not numerically indexed
-                    if ($properties = $param->getProperties()) {
-                        foreach ($properties as $property) {
-                            $name = $property->getName();
-                            if (isset($value[$name])) {
-                                $this->recursiveProcess($property, $value[$name]);
-                            }
+            if ($type == 'array') {
+                foreach ($value as &$item) {
+                    $this->recursiveProcess($param->getItems(), $item);
+                }
+            } elseif ($type == 'object' && !isset($value[0])) {
+                // On the above line, we ensure that the array is associative and not numerically indexed
+                if ($properties = $param->getProperties()) {
+                    foreach ($properties as $property) {
+                        $name = $property->getName();
+                        if (isset($value[$name])) {
+                            $this->recursiveProcess($property, $value[$name]);
                         }
                     }
                 }
             }
-            $value = $param->filter($value);
         }
+
+        $value = $param->filter($value);
     }
 }

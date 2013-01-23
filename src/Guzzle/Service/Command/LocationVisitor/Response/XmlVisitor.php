@@ -2,6 +2,7 @@
 
 namespace Guzzle\Service\Command\LocationVisitor\Response;
 
+use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Description\Parameter;
 use Guzzle\Service\Command\CommandInterface;
@@ -11,6 +12,15 @@ use Guzzle\Service\Command\CommandInterface;
  */
 class XmlVisitor extends AbstractResponseVisitor
 {
+    /**
+     * {@inheritdoc}
+     */
+    public function before(CommandInterface $command, array &$result)
+    {
+        // Set the result of the command to the array conversion of the XML body
+        $result = json_decode(json_encode($command->getResponse()->xml()), true);
+    }
+
     /**
      * {@inheritdoc}
      */

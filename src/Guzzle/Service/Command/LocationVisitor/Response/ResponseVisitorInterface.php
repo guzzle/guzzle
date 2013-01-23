@@ -12,9 +12,18 @@ use Guzzle\Service\Command\CommandInterface;
 interface ResponseVisitorInterface
 {
     /**
+     * Called before visiting all parameters. This can be used for seeding the result of a command with default
+     * data (e.g. populating with JSON data in the response then adding to the parsed data).
+     *
+     * @param CommandInterface $command Command being visited
+     * @param array            $result  Result value to update if needed (e.g. parsing XML or JSON into an array)
+     */
+    public function before(CommandInterface $command, array &$result);
+
+    /**
      * Called after visiting all parameters
      *
-     * @param CommandInterface $command  Command being visited
+     * @param CommandInterface $command Command being visited
      */
     public function after(CommandInterface $command);
 
