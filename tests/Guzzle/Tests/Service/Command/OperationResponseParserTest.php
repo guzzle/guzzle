@@ -4,7 +4,6 @@ namespace Guzzle\Tests\Service\Command;
 
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Client;
-use Guzzle\Service\Command\AbstractCommand;
 use Guzzle\Service\Command\OperationResponseParser;
 use Guzzle\Service\Command\OperationCommand;
 use Guzzle\Service\Description\Operation;
