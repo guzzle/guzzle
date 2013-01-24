@@ -959,4 +959,22 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $received = $this->getServer()->getReceivedRequests(false);
         $this->assertContainsIns('expect: 100-continue', $received[0]);
     }
+
+    public function testSetsCurloptEncodingWhenAcceptEncodingHeaderIsSet()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ndata");
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->get('/', array(
+                'Accept' => 'application/json',
+                'Accept-Encoding' => 'gzip, deflate',
+            ));
+        $this->updateForHandle($request);
+        $request->send();
+        $options = $this->requestHandle->getOptions()->getAll();
+        $this->assertSame('gzip, deflate', $options[CURLOPT_ENCODING]);
+        $received = $this->getServer()->getReceivedRequests(false);
+        $this->assertContainsIns('accept: application/json', $received[0]);
+        $this->assertContainsIns('accept-encoding: gzip, deflate', $received[0]);
+    }
 }
