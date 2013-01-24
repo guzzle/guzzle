@@ -72,6 +72,13 @@ class CurlHandle
             CURLOPT_SSL_VERIFYHOST => 2
         );
 
+        // Add CURLOPT_ENCODING if Accept-Encoding header is provided
+        if ($acceptEncodingHeader = $request->getHeader('Accept-Encoding')) {
+            $curlOptions[CURLOPT_ENCODING] = (string) $acceptEncodingHeader;
+            // Let cURL set the Accept-Encoding header, prevents duplicate values
+            $request->removeHeader('Accept-Encoding');
+        }
+
         // Enable the progress function if the 'progress' param was set
         if ($requestCurlOptions->get('progress')) {
             $curlOptions[CURLOPT_PROGRESSFUNCTION] = array($mediator, 'progress');
