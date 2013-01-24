@@ -32,7 +32,7 @@ class CompositeResourceIteratorFactory implements ResourceIteratorFactoryInterfa
             throw new InvalidArgumentException('Iterator was not found for ' . $command->getName());
         }
 
-        return $factory->build($command);
+        return $factory->build($command, $options);
     }
 
     /**
