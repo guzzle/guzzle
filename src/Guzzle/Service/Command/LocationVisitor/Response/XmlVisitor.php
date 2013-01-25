@@ -117,13 +117,7 @@ class XmlVisitor extends AbstractResponseVisitor
                 $name = $property->getName();
                 $sentAs = $property->getWireName();
                 if ($property->getData('xmlAttribute')) {
-                    if (isset($value['@attributes'][$sentAs])) {
-                        $value[$name] = $value['@attributes'][$sentAs];
-                        unset($value['@attributes'][$sentAs]);
-                        if (empty($value['@attributes'])) {
-                            unset($value['@attributes']);
-                        }
-                    }
+                    $this->processXmlAttribute($property, $value);
                 } elseif (isset($value[$sentAs])) {
                     $this->recursiveProcess($property, $value[$sentAs]);
                     if ($name != $sentAs) {
@@ -134,6 +128,24 @@ class XmlVisitor extends AbstractResponseVisitor
                     // Set a default empty array
                     $value[$name] = array();
                 }
+            }
+        }
+    }
+
+    /**
+     * Process an XML attribute property
+     *
+     * @param Parameter $property Property to process
+     * @param array     $value    Value to process and update
+     */
+    protected function processXmlAttribute(Parameter $property, array &$value)
+    {
+        $sentAs = $property->getWireName();
+        if (isset($value['@attributes'][$sentAs])) {
+            $value[$property->getName()] = $value['@attributes'][$sentAs];
+            unset($value['@attributes'][$sentAs]);
+            if (empty($value['@attributes'])) {
+                unset($value['@attributes']);
             }
         }
     }
