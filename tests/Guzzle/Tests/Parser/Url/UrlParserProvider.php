@@ -11,6 +11,7 @@ class UrlParserProvider extends \Guzzle\Tests\GuzzleTestCase
     {
         $resp = array();
         foreach (array(
+			'',
             'http://www.guzzle-project.com/',
             'http://www.google.com:8080/path?q=1&v=2',
             'https://www.guzzle-project.com/?value1=a&value2=b',
