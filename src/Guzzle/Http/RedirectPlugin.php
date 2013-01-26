@@ -78,8 +78,10 @@ class RedirectPlugin implements EventSubscriberInterface
 
         // Send the redirect request and hijack the response of the original request
         $redirectResponse = $redirectRequest->send();
-        $redirectResponse->setPreviousResponse($event['response']);
         $request->setResponse($redirectResponse);
+        if (!$redirectResponse->getPreviousResponse()) {
+            $redirectResponse->setPreviousResponse($response);
+        }
     }
 
     /**
