@@ -41,8 +41,6 @@ class BadResponseException extends RequestException
             '[status code] ' . $response->getStatusCode(),
             '[reason phrase] ' . $response->getReasonPhrase(),
             '[url] ' . $request->getUrl(),
-            '[request] ' . (string) $request,
-            '[response] ' . (string) $response
         ));
 
         $e = new $class($message);
