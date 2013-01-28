@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+3.1.2 (2013-01-27)
+------------------
+
+* Refactored how operation responses are parsed. Visitors now include a before() method responsible for parsing the
+  response body. For example, the XmlVisitor now parses the XML response into an array in the before() method.
+* Fixed an issue where cURL would not automatically decompress responses when the Accept-Encoding header was sent
+* CURLOPT_SSL_VERIFYHOST is never set to 1 because it is deprecated (see 5e0ff2ef20f839e19d1eeb298f90ba3598784444)
+* Fixed a bug where redirect responses were not chained correctly using getPreviousResponse()
+* Setting default headers on a client after setting the user-agent will not erase the user-agent setting
+
 3.1.1 (2013-01-20)
 ------------------
 
