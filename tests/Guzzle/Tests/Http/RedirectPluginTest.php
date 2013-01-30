@@ -17,8 +17,8 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
         // Flush the server and queue up a redirect followed by a successful response
         $this->getServer()->flush();
         $this->getServer()->enqueue(array(
-            "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
-            "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect1\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect2\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ));
 
@@ -33,17 +33,32 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
         // Ensure that two requests were sent
         $this->assertEquals('/foo', $requests[0]->getResource());
         $this->assertEquals('GET', $requests[0]->getMethod());
-        $this->assertEquals('/redirect', $requests[1]->getResource());
+        $this->assertEquals('/redirect1', $requests[1]->getResource());
         $this->assertEquals('GET', $requests[1]->getMethod());
-        $this->assertEquals('/redirect', $requests[2]->getResource());
+        $this->assertEquals('/redirect2', $requests[2]->getResource());
         $this->assertEquals('GET', $requests[2]->getMethod());
 
         // Ensure that the previous response was set correctly
         $this->assertEquals(301, $response->getPreviousResponse()->getStatusCode());
-        $this->assertEquals('/redirect', (string) $response->getPreviousResponse()->getHeader('Location'));
+        $this->assertEquals('/redirect2', (string) $response->getPreviousResponse()->getHeader('Location'));
 
         // Ensure that the redirect count was incremented
         $this->assertEquals(2, $request->getParams()->get(RedirectPlugin::REDIRECT_COUNT));
+
+        $c = 0;
+        $r = $response->getPreviousResponse();
+        while ($r) {
+            if ($c == 0) {
+                $this->assertEquals('/redirect2', $r->getLocation());
+            } else {
+                $this->assertEquals('/redirect1', $r->getLocation());
+            }
+            $c++;
+            $r = $r->getPreviousResponse();
+        }
+
+
+        $this->assertEquals(2, $c);
     }
 
     public function testCanLimitNumberOfRedirects()

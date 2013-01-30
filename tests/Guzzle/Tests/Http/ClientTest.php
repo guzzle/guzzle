@@ -228,7 +228,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $options = $client->getConfig('curl.options');
         $this->assertArrayNotHasKey(CURLOPT_CAINFO, $options);
         $this->assertSame(false, $options[CURLOPT_SSL_VERIFYPEER]);
-        $this->assertSame(1, $options[CURLOPT_SSL_VERIFYHOST]);
+        $this->assertSame(2, $options[CURLOPT_SSL_VERIFYHOST]);
     }
 
     /**
