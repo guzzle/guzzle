@@ -151,7 +151,7 @@ class OauthPlugin implements EventSubscriberInterface
             }
         }
 
-        $url = Url::factory($request->getUrl())->setQuery('')->setFragment('');
+        $url = Url::factory($request->getUrl())->setQuery('')->setFragment(null);
 
         return strtoupper($request->getMethod()) . '&'
              . rawurlencode($url) . '&'

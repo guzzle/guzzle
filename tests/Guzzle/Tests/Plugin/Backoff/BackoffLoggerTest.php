@@ -51,7 +51,7 @@ class BackoffLoggerTest extends \Guzzle\Tests\GuzzleTestCase
 
         $logPlugin->onRequestRetry($event);
         $this->assertContains(
-            '] PUT http://www.example.com/ - 503 Service Unavailable - Retries: 1, Delay: 3, Time: 2, 2, cURL: 30 Foo',
+            '] PUT http://www.example.com - 503 Service Unavailable - Retries: 1, Delay: 3, Time: 2, 2, cURL: 30 Foo',
             $this->message
         );
     }

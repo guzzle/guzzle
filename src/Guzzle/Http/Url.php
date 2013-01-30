@@ -15,7 +15,7 @@ class Url
     protected $port;
     protected $username;
     protected $password;
-    protected $path = '/';
+    protected $path = '';
     protected $fragment;
 
     /**
@@ -57,11 +57,11 @@ class Url
 
         if (isset($parts['scheme'])) {
             $scheme = $parts['scheme'];
-            $url .= $scheme . '://';
+            $url .= $scheme . ':';
         }
 
         if (isset($parts['host'])) {
-
+            $url .= '//';
             if (isset($parts['user'])) {
                 $url .= $parts['user'];
                 if (isset($parts['pass'])) {
@@ -80,26 +80,23 @@ class Url
             }
         }
 
-        if (empty($parts['path'])) {
+        if (!empty($url)
+            && $url[strlen($url) - 1] !== '/'
+            && !empty($parts['path'])
+            && $parts['path'][0] !== '/'
+        ) {
             $url .= '/';
-        } else {
-            if ($parts['path'][0] != '/') {
-                $url .= '/';
-            }
-            $url .= $parts['path'];
         }
 
+        $url .= isset($parts['path']) ? $parts['path'] : '';
+
         // Add the query string if present
-        if (!empty($parts['query'])) {
-            if ($parts['query'][0] != '?') {
-                $url .= array_key_exists('query_prefix', $parts)
-                      ? $parts['query_prefix'] : '?';
-            }
-            $url .= $parts['query'];
+        if (isset($parts['query'])) {
+            $url .= '?' . $parts['query'];
         }
 
         // Ensure that # is only added to the url if fragment contains anything.
-        if (isset($parts['fragment']) && !empty($parts['fragment'])) {
+        if (isset($parts['fragment'])) {
             $url .= '#' . $parts['fragment'];
         }
 
@@ -127,10 +124,7 @@ class Url
         $this->password = $password;
         $this->fragment = $fragment;
         $this->setQuery($query ?: new QueryString());
-
-        if ($path) {
-            $this->setPath($path);
-        }
+        $this->setPath($path);
     }
 
     /**
@@ -165,7 +159,7 @@ class Url
             'host' => $this->host,
             'port' => $this->port,
             'path' => $this->getPath(),
-            'query' => (string) $this->query,
+            'query' => (string) $this->query ?: null,
             'fragment' => $this->fragment,
             'query_prefix' => $this->query->getPrefix()
         );
@@ -269,10 +263,7 @@ class Url
         if (is_array($path)) {
             $this->path = '/' . implode('/', $path);
         } else {
-            if (substr($path, 0, 1) != '/' && $path != '*') {
-                $path = '/' . $path;
-            }
-            $this->path = $path;
+            $this->path = (string) $path;
         }
 
         return $this;
@@ -319,11 +310,6 @@ class Url
             }
         }
 
-        // Must always start with a slash
-        if (substr($this->path, 0, 1) != '/') {
-            $this->path = '/' . $this->path;
-        }
-
         return $this;
     }
 
@@ -355,7 +341,7 @@ class Url
      */
     public function getPath()
     {
-        return $this->path ?: '/';
+        return $this->path;
     }
 
     /**

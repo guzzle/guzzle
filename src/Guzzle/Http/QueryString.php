@@ -84,7 +84,7 @@ class QueryString extends Collection
             return '';
         }
 
-        $queryString = $this->prefix;
+        $queryString = '';
         $firstValue = true;
 
         foreach ($this->encodeData($this->data) as $name => $value) {

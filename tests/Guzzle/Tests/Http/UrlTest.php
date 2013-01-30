@@ -59,7 +59,7 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(8081, $url->getPort());
         $this->assertEquals('/path/path2/', $url->getPath());
         $this->assertEquals('fragment', $url->getFragment());
-        $this->assertEquals('?a=1&b=2', (string) $url->getQuery());
+        $this->assertEquals('a=1&b=2', (string) $url->getQuery());
 
         $this->assertEquals(array(
             'fragment' => 'fragment',
@@ -67,7 +67,7 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
             'pass' => 'pass',
             'path' => '/path/path2/',
             'port' => 8081,
-            'query' => '?a=1&b=2',
+            'query' => 'a=1&b=2',
             'query_prefix' => '?',
             'scheme' => 'http',
             'user' => 'test'
@@ -83,16 +83,16 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
     public function testHandlesPathsCorrectly()
     {
         $url = Url::factory('http://www.test.com');
-        $this->assertEquals('/', $url->getPath());
+        $this->assertEquals('', $url->getPath());
         $url->setPath('test');
-        $this->assertEquals('/test', $url->getPath());
+        $this->assertEquals('test', $url->getPath());
 
         $url->setPath('/test/123/abc');
         $this->assertEquals(array('test', '123', 'abc'), $url->getPathSegments());
 
         $parts = parse_url('http://www.test.com/test');
         $parts['path'] = '';
-        $this->assertEquals('http://www.test.com/', Url::buildUrl($parts));
+        $this->assertEquals('http://www.test.com', Url::buildUrl($parts));
         $parts['path'] = 'test';
         $this->assertEquals('http://www.test.com/test', Url::buildUrl($parts));
     }
@@ -102,7 +102,7 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testAddsQueryStringIfPresent()
     {
-        $this->assertEquals('/?foo=bar', Url::buildUrl(array(
+        $this->assertEquals('?foo=bar', Url::buildUrl(array(
             'query' => 'foo=bar'
         )));
     }
@@ -166,9 +166,9 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('b', $url->setUsername('b')->getUsername());
         $this->assertEquals('abc', $url->setFragment('abc')->getFragment());
         $this->assertEquals('https', $url->setScheme('https')->getScheme());
-        $this->assertEquals('?a=123', (string) $url->setQuery('a=123')->getQuery());
+        $this->assertEquals('a=123', (string) $url->setQuery('a=123')->getQuery());
         $this->assertEquals('https://b:a@example.com:8080/foo/bar?a=123#abc', (string)$url);
-        $this->assertEquals('?b=boo', (string) $url->setQuery(new QueryString(array(
+        $this->assertEquals('b=boo', (string) $url->setQuery(new QueryString(array(
             'b' => 'boo'
         )))->getQuery());
         $this->assertEquals('https://b:a@example.com:8080/foo/bar?b=boo#abc', (string)$url);
@@ -181,20 +181,20 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $url = Url::factory('http://www.test.com');
         $url->setQuery(array('a' => 'b'));
-        $this->assertEquals('http://www.test.com/?a=b', (string) $url);
+        $this->assertEquals('http://www.test.com?a=b', (string) $url);
     }
 
     public function urlProvider()
     {
         return array(
-            array('/foo/..', '/'),
-            array('//foo//..', '/'),
-            array('/foo/../..', '/'),
-            array('/foo/../.', '/'),
-            array('/./foo/..', '/'),
-            array('/./foo', '/foo'),
-            array('/./foo/', '/foo/'),
-            array('/./foo/bar/baz/pho/../..', '/foo/bar'),
+            array('/foo/..', ''),
+            array('//foo//..', ''),
+            array('/foo/../..', ''),
+            array('/foo/../.', ''),
+            array('/./foo/..', ''),
+            array('/./foo', 'foo'),
+            array('/./foo/', 'foo/'),
+            array('/./foo/bar/baz/pho/../..', 'foo/bar'),
             array('*', '*')
         );
     }
@@ -219,15 +219,5 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $url->setHost('foo:8983');
         $this->assertEquals('foo', $url->getHost());
         $this->assertEquals(8983, $url->getPort());
-    }
-
-    /**
-     * @covers Guzzle\Http\Url::buildUrl
-     */
-    public function testUrlOnlyContainsHashWhenHashIsNotEmpty()
-    {
-        $url = Url::factory('http://www.example.com/');
-        $url->setFragment('');
-        $this->assertEquals('http://www.example.com/', (string) $url);
     }
 }

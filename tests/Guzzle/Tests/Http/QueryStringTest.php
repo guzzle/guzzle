@@ -133,13 +133,13 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
             'test4'  => null,
         );
         $this->q->replace($params);
-        $this->assertEquals('?test=value&test%202=this%20is%20a%20test%3F&test3%5B0%5D=v1&test3%5B1%5D=v2&test3%5B2%5D=v3&test4=', $this->q->__toString());
+        $this->assertEquals('test=value&test%202=this%20is%20a%20test%3F&test3%5B0%5D=v1&test3%5B1%5D=v2&test3%5B2%5D=v3&test4=', $this->q->__toString());
         $this->q->useUrlEncoding(false);
-        $this->assertEquals('?test=value&test 2=this is a test?&test3[0]=v1&test3[1]=v2&test3[2]=v3&test4=', $this->q->__toString());
+        $this->assertEquals('test=value&test 2=this is a test?&test3[0]=v1&test3[1]=v2&test3[2]=v3&test4=', $this->q->__toString());
 
         // Use an alternative aggregator
         $this->q->setAggregateFunction(array($this->q, 'aggregateUsingComma'));
-        $this->assertEquals('?test=value&test 2=this is a test?&test3=v1,v2,v3&test4=', $this->q->__toString());
+        $this->assertEquals('test=value&test 2=this is a test?&test3=v1,v2,v3&test4=', $this->q->__toString());
     }
 
     /**
@@ -154,7 +154,7 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $q->add('facet.field', 'foo');
         // Use the duplicate aggregator
         $q->setAggregateFunction(array($this->q, 'aggregateUsingDuplicates'));
-        $this->assertEquals('?facet=size&facet=width&facet.field=foo', $q->__toString());
+        $this->assertEquals('facet=size&facet=width&facet.field=foo', $q->__toString());
     }
 
     /**
@@ -177,7 +177,7 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         ));
 
         $this->q->useUrlEncoding(false);
-        $this->assertEquals('?test=value&t[v1]=a&t[v2]=b&t[v3][v4]=c&t[v3][v5]=d', $this->q->__toString());
+        $this->assertEquals('test=value&t[v1]=a&t[v2]=b&t[v3][v4]=c&t[v3][v5]=d', $this->q->__toString());
     }
 
     public function parseQueryProvider()
@@ -233,9 +233,9 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     public function testAllowsBlankQueryStringValues()
     {
         $query = QueryString::fromString('foo');
-        $this->assertEquals('?foo=', (string) $query);
+        $this->assertEquals('foo=', (string) $query);
         $query->set('foo', QueryString::BLANK);
-        $this->assertEquals('?foo', (string) $query);
+        $this->assertEquals('foo', (string) $query);
     }
 
     /**
@@ -243,8 +243,8 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testFromStringIgnoresQuestionMark()
     {
-        $query = QueryString::fromString('?foo=baz&bar=boo');
-        $this->assertEquals('?foo=baz&bar=boo', (string) $query);
+        $query = QueryString::fromString('foo=baz&bar=boo');
+        $this->assertEquals('foo=baz&bar=boo', (string) $query);
     }
 
     /**
@@ -277,7 +277,7 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
             'bar' => null,
             'boo' => false
         ));
-        $this->assertEquals('?foo=0&baz=0&bar=&boo=', (string) $query);
+        $this->assertEquals('foo=0&baz=0&bar=&boo=', (string) $query);
     }
 
     /**

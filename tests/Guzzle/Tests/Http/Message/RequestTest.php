@@ -271,7 +271,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->assertInstanceOf('Guzzle\\Http\\QueryString', $this->request->getQuery());
         $this->request->getQuery()->set('test', '123');
-        $this->assertEquals('?test=123', $this->request->getQuery(true));
+        $this->assertEquals('test=123', $this->request->getQuery(true));
     }
 
     /**
@@ -334,7 +334,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($this->request, $this->request->setPath('/index.html'));
         $this->assertEquals('/index.html', $this->request->getPath());
         $this->assertEquals($this->request, $this->request->setPath('index.html'));
-        $this->assertEquals('/index.html', $this->request->getPath());
+        $this->assertEquals('index.html', $this->request->getPath());
     }
 
     /**
