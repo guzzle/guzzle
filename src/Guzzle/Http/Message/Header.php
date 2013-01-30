@@ -71,12 +71,17 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
             $header = $this->getName();
         }
 
-        if (!array_key_exists($header, $this->values)) {
-            $this->values[$header] = array($value);
+        // Explode the value by the glue used with the header
+        $value = explode($this->getGlue(), $value);
+        if (!isset($this->values[$header])) {
+            // Create an array containing the value if it has not been set
+            $this->values[$header] = $value;
         } else {
-            $this->values[$header][] = $value;
+            // Add to an existing array of values if it was previously set
+            $this->values[$header] = array_merge($this->values[$header], $value);
         }
 
+        // Ensure that the array cache is cleared
         $this->clearCache();
 
         return $this;
@@ -171,7 +176,7 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
     /**
      * Remove a specific value from the header
      *
-     * @param string $value Value to remove
+     * @param string $searchValue Value to remove
      *
      * @return self
      */
@@ -196,12 +201,10 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
      */
     public function toArray()
     {
-        if (!$this->arrayCache) {
+        if ($this->arrayCache === null) {
             $this->arrayCache = array();
             foreach ($this->values as $values) {
-                foreach ($values as $value) {
-                    $this->arrayCache[] = $value;
-                }
+                $this->arrayCache = array_merge($this->arrayCache, $values);
             }
         }
 

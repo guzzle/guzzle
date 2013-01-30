@@ -123,4 +123,21 @@ class HeaderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($h->hasValue('bar'));
         $this->assertTrue($h->hasValue('baz'));
     }
+
+    public function testConvertToArrayUsingGlue()
+    {
+        $h = new Header('Foo', array('Testing, 123, Foo=baz'));
+        $this->assertEquals(array('Testing', '123', 'Foo=baz'), $h->toArray());
+        $h->add('hello');
+        $this->assertEquals(array('Testing', '123', 'Foo=baz', 'hello'), $h->toArray());
+        $h->removeValue('Testing');
+        $this->assertEquals(array('123', 'Foo=baz', 'hello'), $h->toArray());
+        $this->assertEquals('123, Foo=baz, hello', (string) $h);
+    }
+
+    public function testAllowsArrayInConstructor()
+    {
+        $h = new Header('Foo', array('Testing', '123', 'Foo=baz'));
+        $this->assertEquals(array('Testing', '123', 'Foo=baz'), $h->toArray());
+    }
 }

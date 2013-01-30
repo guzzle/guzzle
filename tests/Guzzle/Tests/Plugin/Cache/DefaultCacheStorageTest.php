@@ -33,7 +33,7 @@ class DefaultCacheStorageTest extends \Guzzle\Tests\GuzzleTestCase
             ->method('save')
             ->with('foo', array(200, array(
                 'foo' => array('bar'),
-                'X-Guzzle-Cache' => array('key=foo, ttl=100'),
+                'X-Guzzle-Cache' => array('key=foo', 'ttl=100'),
                 'Date' => array('test')
             ), 'baz'), 100);
 
