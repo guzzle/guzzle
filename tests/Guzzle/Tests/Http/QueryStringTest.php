@@ -27,14 +27,6 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\QueryString::getPrefix
-     */
-    public function testGetPrefix()
-    {
-        $this->assertEquals('?', $this->q->getPrefix());
-    }
-
-    /**
      * @covers Guzzle\Http\QueryString::getValueSeparator
      */
     public function testGetValueSeparator()
@@ -60,16 +52,6 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->assertEquals($this->q, $this->q->setFieldSeparator('/'));
         $this->assertEquals('/', $this->q->getFieldSeparator());
-    }
-
-    /**
-     * @covers Guzzle\Http\QueryString::setPrefix
-     * @covers Guzzle\Http\QueryString::getPrefix
-     */
-    public function testSetPrefix()
-    {
-        $this->assertEquals($this->q, $this->q->setPrefix(''));
-        $this->assertEquals('', $this->q->getPrefix());
     }
 
     /**
