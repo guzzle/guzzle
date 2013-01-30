@@ -68,7 +68,6 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
             'path' => '/path/path2/',
             'port' => 8081,
             'query' => 'a=1&b=2',
-            'query_prefix' => '?',
             'scheme' => 'http',
             'user' => 'test'
         ), $url->getParts());

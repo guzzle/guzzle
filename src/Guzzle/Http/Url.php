@@ -161,7 +161,6 @@ class Url
             'path' => $this->getPath(),
             'query' => (string) $this->query ?: null,
             'fragment' => $this->fragment,
-            'query_prefix' => $this->query->getPrefix()
         );
     }
 
