@@ -18,7 +18,7 @@ use Guzzle\Service\Command\Factory\FactoryInterface as CommandFactoryInterface;
 use Guzzle\Service\Resource\ResourceIteratorInterface;
 use Guzzle\Service\Resource\ResourceIteratorClassFactory;
 use Guzzle\Service\Resource\ResourceIteratorFactoryInterface;
-use Guzzle\Service\Description\ServiceDescription;
+use Guzzle\Service\Description\ServiceDescriptionInterface;
 
 /**
  * Client object for executing commands on a web service.
@@ -28,7 +28,7 @@ class Client extends HttpClient implements ClientInterface
     const COMMAND_PARAMS = 'command.params';
 
     /**
-     * @var ServiceDescription Description of the service and possible commands
+     * @var ServiceDescriptionInterface Description of the service and possible commands
      */
     protected $serviceDescription;
 
@@ -265,12 +265,12 @@ class Client extends HttpClient implements ClientInterface
     /**
      * Set the service description of the client
      *
-     * @param ServiceDescription $service       Service description
-     * @param bool               $updateFactory Set to false to not update the service description based command factory
-     *                                          if it is not already on the client.
+     * @param ServiceDescriptionInterface $service       Service description
+     * @param bool                        $updateFactory Set to false to not update the service description based
+     *                                                   command factory if it is not already on the client.
      * @return Client
      */
-    public function setDescription(ServiceDescription $service, $updateFactory = true)
+    public function setDescription(ServiceDescriptionInterface $service, $updateFactory = true)
     {
         $this->serviceDescription = $service;
 
@@ -305,7 +305,7 @@ class Client extends HttpClient implements ClientInterface
     /**
      * Get the service description of the client
      *
-     * @return ServiceDescription|null
+     * @return ServiceDescriptionInterface|null
      */
     public function getDescription()
     {
