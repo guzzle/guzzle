@@ -435,13 +435,14 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function getResource()
     {
+        $resource = '/' . ltrim($this->url->getPath(), '/');
         $query = (string) $this->url->getQuery();
 
-        if (empty($query)) {
-            return $this->url->getPath() ?: '/';
-        } else {
-            return $this->url->getPath() . '?' . $query;
+        if (!empty($query)) {
+            $resource .= '?' . $query;
         }
+
+        return $resource;
     }
 
     /**

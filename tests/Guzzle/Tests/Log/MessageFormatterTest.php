@@ -61,7 +61,7 @@ class MessageFormatterTest extends \Guzzle\Tests\GuzzleTestCase
             array('{method} - {method}', 'POST - POST'),
             array('{url}', 'http://foo.com?q=test'),
             array('{port}', '80'),
-            array('{resource}', '?q=test'),
+            array('{resource}', '/?q=test'),
             array('{host}', 'foo.com'),
             array('{hostname}', gethostname()),
             array('{protocol}/{version}', 'HTTP/1.1'),
