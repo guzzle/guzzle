@@ -349,11 +349,7 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function getPath()
     {
-        if ($path = $this->url->getPath()) {
-            return '/' . ltrim($path, '/');
-        } else {
-            return '/';
-        }
+        return '/' . ltrim($this->url->getPath(), '/');
     }
 
     /**

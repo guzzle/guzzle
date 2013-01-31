@@ -338,6 +338,22 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
+     * @covers Guzzle\Http\Message\Request::getHost
+     * @covers Guzzle\Http\Message\Request::getPath
+     * @covers Guzzle\Http\Message\Request::getQuery
+     */
+    public function testPermitsFalsyComponents()
+    {
+        $request = new Request('GET', 'http://0/0?0');
+        $this->assertSame('0', $request->getHost());
+        $this->assertSame('/0', $request->getPath());
+        $this->assertSame('0=', $request->getQuery(true));
+
+        $request = new Request('GET', '0');
+        $this->assertEquals('/0', $request->getPath());
+    }
+
+    /**
      * @covers Guzzle\Http\Message\Request::getPort
      * @covers Guzzle\Http\Message\Request::setPort
      */

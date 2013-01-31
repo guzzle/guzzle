@@ -45,7 +45,7 @@ class QueryString extends Collection
     {
         $q = new static();
 
-        if (!empty($query)) {
+        if (0 !== strlen($query)) {
             if ($query[0] == '?') {
                 $query = substr($query, 1);
             }

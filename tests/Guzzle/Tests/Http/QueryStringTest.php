@@ -222,6 +222,18 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\QueryString::fromString
+     * @covers Guzzle\Http\QueryString::__toString
+     */
+    public function testAllowsFalsyQueryStringValues()
+    {
+        $query = QueryString::fromString('0');
+        $this->assertEquals('0=', (string) $query);
+        $query->set('0', QueryString::BLANK);
+        $this->assertSame('0', (string) $query);
+    }
+
+    /**
+     * @covers Guzzle\Http\QueryString::fromString
      */
     public function testFromStringIgnoresQuestionMark()
     {

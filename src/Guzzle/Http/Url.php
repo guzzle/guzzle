@@ -35,7 +35,7 @@ class Url
         $parts = ParserRegistry::getInstance()->getParser('url')->parseUrl($url);
 
         // Convert the query string into a QueryString object
-        if ($parts['query']) {
+        if (0 !== strlen($parts['query'])) {
             $parts['query'] = QueryString::fromString($parts['query']);
         }
 
@@ -81,7 +81,7 @@ class Url
         }
 
         // Add the path component if present
-        if (!empty($parts['path'])) {
+        if (isset($parts['path']) && 0 !== strlen($parts['path'])) {
             // Always ensure that the path begins with '/' if set and something is before the path
             if ($url && $parts['path'][0] != '/' && substr($url, -1)  != '/') {
                 $url .= '/';
