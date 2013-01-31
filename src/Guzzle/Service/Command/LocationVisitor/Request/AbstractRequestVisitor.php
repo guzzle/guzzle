@@ -69,6 +69,6 @@ abstract class AbstractRequestVisitor implements RequestVisitorInterface
             }
         }
 
-        return $value;
+        return $param->filter($value);
     }
 }
