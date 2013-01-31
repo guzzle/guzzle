@@ -74,21 +74,20 @@ class Url
 
             // Only include the port if it is not the default port of the scheme
             if (isset($parts['port'])
-                && !(($scheme == 'http' && $parts['port'] == 80)
-                    || ($scheme == 'https' && $parts['port'] == 443))) {
+                && !(($scheme == 'http' && $parts['port'] == 80) || ($scheme == 'https' && $parts['port'] == 443))
+            ) {
                 $url .= ':' . $parts['port'];
             }
         }
 
-        if (!empty($url)
-            && $url[strlen($url) - 1] !== '/'
-            && !empty($parts['path'])
-            && $parts['path'][0] !== '/'
-        ) {
-            $url .= '/';
+        // Add the path component if present
+        if (!empty($parts['path'])) {
+            // Always ensure that the path begins with '/' if set and something is before the path
+            if ($url && $parts['path'][0] != '/' && substr($url, -1)  != '/') {
+                $url .= '/';
+            }
+            $url .= $parts['path'];
         }
-
-        $url .= isset($parts['path']) ? $parts['path'] : '';
 
         // Add the query string if present
         if (isset($parts['query'])) {

@@ -334,7 +334,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($this->request, $this->request->setPath('/index.html'));
         $this->assertEquals('/index.html', $this->request->getPath());
         $this->assertEquals($this->request, $this->request->setPath('index.html'));
-        $this->assertEquals('index.html', $this->request->getPath());
+        $this->assertEquals('/index.html', $this->request->getPath());
     }
 
     /**
