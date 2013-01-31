@@ -7,7 +7,7 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Inflection\InflectorInterface;
 use Guzzle\Http\ClientInterface as HttpClientInterface;
 use Guzzle\Service\Command\CommandInterface;
-use Guzzle\Service\Description\ServiceDescription;
+use Guzzle\Service\Description\ServiceDescriptionInterface;
 use Guzzle\Service\Command\Factory\FactoryInterface as CommandFactoryInterface;
 use Guzzle\Service\Resource\ResourceIteratorInterface;
 use Guzzle\Service\Resource\ResourceIteratorFactoryInterface;
@@ -43,17 +43,17 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
     /**
      * Set the service description of the client
      *
-     * @param ServiceDescription $service       Service description
-     * @param bool               $updateFactory Set to false to not update the service description based command factory
-     *                                          if it is not already on the client.
+     * @param ServiceDescriptionInterface $service       Service description
+     * @param bool                        $updateFactory Set to false to not update the service description based
+     *                                                   command factory if it is not already on the client.
      * @return ClientInterface
      */
-    public function setDescription(ServiceDescription $service, $updateFactory = true);
+    public function setDescription(ServiceDescriptionInterface $service, $updateFactory = true);
 
     /**
      * Get the service description of the client
      *
-     * @return ServiceDescription|null
+     * @return ServiceDescriptionInterface|null
      */
     public function getDescription();
 

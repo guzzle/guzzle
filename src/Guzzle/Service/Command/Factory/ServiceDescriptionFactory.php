@@ -2,7 +2,7 @@
 
 namespace Guzzle\Service\Command\Factory;
 
-use Guzzle\Service\Description\ServiceDescription;
+use Guzzle\Service\Description\ServiceDescriptionInterface;
 use Guzzle\Inflection\InflectorInterface;
 
 /**
@@ -11,7 +11,7 @@ use Guzzle\Inflection\InflectorInterface;
 class ServiceDescriptionFactory implements FactoryInterface
 {
     /**
-     * @var ServiceDescription
+     * @var ServiceDescriptionInterface
      */
     protected $description;
 
@@ -21,10 +21,10 @@ class ServiceDescriptionFactory implements FactoryInterface
     protected $inflector;
 
     /**
-     * @param ServiceDescription $description Service description
-     * @param InflectorInterface $inflector   Optional inflector to use if the command is not at first found
+     * @param ServiceDescriptionInterface $description Service description
+     * @param InflectorInterface          $inflector   Optional inflector to use if the command is not at first found
      */
-    public function __construct(ServiceDescription $description, InflectorInterface $inflector = null)
+    public function __construct(ServiceDescriptionInterface $description, InflectorInterface $inflector = null)
     {
         $this->setServiceDescription($description);
         $this->inflector = $inflector;
@@ -33,11 +33,11 @@ class ServiceDescriptionFactory implements FactoryInterface
     /**
      * Change the service description used with the factory
      *
-     * @param ServiceDescription $description Service description to use
+     * @param ServiceDescriptionInterface $description Service description to use
      *
-     * @return ServiceDescriptionFactory
+     * @return ServiceDescriptionInterface
      */
-    public function setServiceDescription(ServiceDescription $description)
+    public function setServiceDescription(ServiceDescriptionInterface $description)
     {
         $this->description = $description;
 
@@ -47,7 +47,7 @@ class ServiceDescriptionFactory implements FactoryInterface
     /**
      * Returns the service description
      *
-     * @return ServiceDescription
+     * @return ServiceDescriptionInterface
      */
     public function getServiceDescription()
     {

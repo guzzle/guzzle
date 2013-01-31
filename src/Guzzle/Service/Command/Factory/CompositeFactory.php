@@ -3,7 +3,7 @@
 namespace Guzzle\Service\Command\Factory;
 
 use Guzzle\Service\Command\CommandInterface;
-use Guzzle\Service\Description\ServiceDescription;
+use Guzzle\Service\Description\ServiceDescriptionInterface;
 use Guzzle\Service\ClientInterface;
 
 /**
@@ -28,7 +28,7 @@ class CompositeFactory implements \IteratorAggregate, \Countable, FactoryInterfa
         $chain = new self();
 
         $description = $client->getDescription();
-        if ($description instanceof ServiceDescription) {
+        if ($description instanceof ServiceDescriptionInterface) {
             $chain->add(new ServiceDescriptionFactory($description));
         }
 
