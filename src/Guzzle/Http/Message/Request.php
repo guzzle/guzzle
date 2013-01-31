@@ -562,6 +562,18 @@ class Request extends AbstractMessage implements RequestInterface
     /**
      * {@inheritdoc}
      */
+    public function getResponseBody()
+    {
+        if ($this->responseBody === null) {
+            $this->responseBody = EntityBody::factory();
+        }
+
+        return $this->responseBody;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function isResponseBodyRepeatable()
     {
         return !$this->responseBody ? true : $this->responseBody->isSeekable() && $this->responseBody->isReadable();
@@ -695,18 +707,6 @@ class Request extends AbstractMessage implements RequestInterface
             // If the Host header was changed, be sure to update the internal URL
             $this->setHost((string) $this->getHeader('Host'));
         }
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function getResponseBody()
-    {
-        if ($this->responseBody === null) {
-            $this->responseBody = EntityBody::factory();
-        }
-
-        return $this->responseBody;
     }
 
     /**

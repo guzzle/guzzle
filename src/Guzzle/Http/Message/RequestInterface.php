@@ -257,7 +257,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     public function receiveResponseHeader($data);
 
     /**
-     * Set the EntityBody that will hold the response message's entity body.
+     * Set the EntityBody that will hold a successful response message's entity body.
      *
      * This method should be invoked when you need to send the response's entity body somewhere other than the normal
      * php://temp buffer. For example, you can send the entity body to a socket, file, or some other custom stream.
@@ -267,6 +267,15 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * @return Request
      */
     public function setResponseBody($body);
+
+    /**
+     * Get the EntityBody that will hold the resulting response message's entity body. This response body will only
+     * be used for successful responses. Intermediate responses (e.g. redirects) will not use the targeted response
+     * body.
+     *
+     * @return EntityBodyInterface
+     */
+    public function getResponseBody();
 
     /**
      * Determine if the response body is repeatable (readable + seekable)

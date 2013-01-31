@@ -114,6 +114,9 @@ class RedirectPlugin implements EventSubscriberInterface
             $redirectRequest = clone $request;
         }
 
+        // Always use the same response body when redirecting
+        $redirectRequest->setResponseBody($request->getResponseBody());
+
         $location = Url::factory($location);
         // If the location is not absolute, then combine it with the original URL
         if (!$location->isAbsolute()) {
