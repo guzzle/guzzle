@@ -31,4 +31,21 @@ class QueryVisitorTest extends AbstractVisitorTestCase
             rawurldecode($request->getQuery())
         );
     }
+
+    /**
+     * @covers Guzzle\Service\Command\LocationVisitor\Request\AbstractRequestVisitor::resolveRecursively
+     */
+    public function testFiltersAreAppliedToArrayParamType()
+    {
+        $command = $this->getCommandWithArrayParamAndFilters();
+
+        $request = $command->prepare();
+
+        $query = $request->getQuery();
+
+        // param type 'string'
+        $this->assertEquals('BAR', $query->get('Foo'));
+        // param type 'array'
+        $this->assertEquals('123,456,789', $query->get('Arr'));
+    }
 }
