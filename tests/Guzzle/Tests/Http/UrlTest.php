@@ -5,20 +5,17 @@ namespace Guzzle\Tests\Http;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Url;
 
+/**
+ * @covers Guzzle\Http\Url
+ */
 class UrlTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     *
-     */
     public function testEmptyUrl()
     {
-        $url = Url::factory("");
-        $this->assertEquals("", (string) $url);
+        $url = Url::factory('');
+        $this->assertEquals('', (string) $url);
     }
 
-    /**
-     * @covers Guzzle\Http\Url::getPort
-     */
     public function testPortIsDeterminedFromScheme()
     {
         $this->assertEquals(80, Url::factory('http://www.test.com/')->getPort());
@@ -27,9 +24,6 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(8192, Url::factory('http://www.test.com:8192/')->getPort());
     }
 
-    /**
-     * @covers Guzzle\Http\Url::__clone
-     */
     public function testCloneCreatesNewInternalObjects()
     {
         $u1 = Url::factory('http://www.test.com/');
@@ -37,12 +31,6 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertNotSame($u1->getQuery(), $u2->getQuery());
     }
 
-    /**
-     * @covers Guzzle\Http\Url::__construct
-     * @covers Guzzle\Http\Url::factory
-     * @covers Guzzle\Http\Url::__toString
-     * @covers Guzzle\Http\Url::isAbsolute
-     */
     public function testValidatesUrlPartsInFactory()
     {
         $url = Url::factory('/index.php');
@@ -55,15 +43,6 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($u->isAbsolute());
     }
 
-    /**
-     * @covers Guzzle\Http\Url::factory
-     * @covers Guzzle\Http\Url::getHost
-     * @covers Guzzle\Http\Url::getPort
-     * @covers Guzzle\Http\Url::getQuery
-     * @covers Guzzle\Http\Url::getPath
-     * @covers Guzzle\Http\Url::getFragment
-     * @covers Guzzle\Http\Url::__toString
-     */
     public function testAllowsFalsyUrlParts()
     {
         $url = Url::factory('http://0:50/0?0#0');
@@ -81,9 +60,6 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame('0', (string) $url);
     }
 
-    /**
-     * @covers Guzzle\Http\Url::buildUrl
-     */
     public function testBuildsRelativeUrlsWithFalsyParts()
     {
         $url = Url::buildUrl(array(
@@ -99,9 +75,6 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame('0', $url);
     }
 
-    /**
-     * @covers Guzzle\Http\Url
-     */
     public function testUrlStoresParts()
     {
         $url = Url::factory('http://test:pass@www.test.com:8081/path/path2/?a=1&b=2#fragment');
@@ -126,12 +99,6 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         ), $url->getParts());
     }
 
-    /**
-     * @covers Guzzle\Http\Url::setPath
-     * @covers Guzzle\Http\Url::getPath
-     * @covers Guzzle\Http\Url::getPathSegments
-     * @covers Guzzle\Http\Url::buildUrl
-     */
     public function testHandlesPathsCorrectly()
     {
         $url = Url::factory('http://www.test.com');
@@ -149,9 +116,6 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('http://www.test.com/test', Url::buildUrl($parts));
     }
 
-    /**
-     * @covers Guzzle\Http\Url::buildUrl
-     */
     public function testAddsQueryStringIfPresent()
     {
         $this->assertEquals('?foo=bar', Url::buildUrl(array(
@@ -159,9 +123,6 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         )));
     }
 
-    /**
-     * @covers Guzzle\Http\Url::addPath
-     */
     public function testAddsToPath()
     {
         // Does nothing here
@@ -197,7 +158,6 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Url::combine
      * @dataProvider urlCombineDataProvider
      */
     public function testCombinesUrls($a, $b, $c)
@@ -205,9 +165,6 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($c, (string) Url::factory($a)->combine($b));
     }
 
-    /**
-     * @covers Guzzle\Http\Url
-     */
     public function testHasGettersAndSetters()
     {
         $url = Url::factory('http://www.test.com/');
@@ -226,9 +183,6 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('https://b:a@example.com:8080/foo/bar?b=boo#abc', (string)$url);
     }
 
-    /**
-     * @covers Guzzle\Http\Url::setQuery
-     */
     public function testSetQueryAcceptsArray()
     {
         $url = Url::factory('http://www.test.com');
@@ -252,7 +206,6 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Url::normalizePath
      * @dataProvider urlProvider
      */
     public function testNormalizesPaths($path, $result)
@@ -262,9 +215,6 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($result, $url->getPath());
     }
 
-    /**
-     * @covers Guzzle\Http\Url::setHost
-     */
     public function testSettingHostWithPortModifiesPort()
     {
         $url = Url::factory('http://www.example.com');
