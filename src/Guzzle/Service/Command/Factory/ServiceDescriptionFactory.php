@@ -35,7 +35,7 @@ class ServiceDescriptionFactory implements FactoryInterface
      *
      * @param ServiceDescriptionInterface $description Service description to use
      *
-     * @return ServiceDescriptionInterface
+     * @return FactoryInterface
      */
     public function setServiceDescription(ServiceDescriptionInterface $description)
     {
