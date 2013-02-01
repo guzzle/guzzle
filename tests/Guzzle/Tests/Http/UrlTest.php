@@ -8,6 +8,15 @@ use Guzzle\Http\Url;
 class UrlTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
+     *
+     */
+    public function testEmptyUrl()
+    {
+        $url = Url::factory("");
+        $this->assertEquals("", (string) $url);
+    }
+
+    /**
      * @covers Guzzle\Http\Url::getPort
      */
     public function testPortIsDeterminedFromScheme()
