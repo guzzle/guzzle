@@ -71,8 +71,14 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
             $header = $this->getName();
         }
 
-        // Explode the value by the glue used with the header
-        $value = explode($this->getGlue(), $value);
+        if (stripos($this->header, 'set-cookie') === 0) {
+            // Don't explode Set-Cookie or Set-Cookie2. See http://tools.ietf.org/html/rfc6265#section-3
+            $value = array($value);
+        } else {
+            // Explode the value by the glue used with the header
+            $value = explode($this->getGlue(), $value);
+        }
+
         if (!isset($this->values[$header])) {
             // Create an array containing the value if it has not been set
             $this->values[$header] = $value;
