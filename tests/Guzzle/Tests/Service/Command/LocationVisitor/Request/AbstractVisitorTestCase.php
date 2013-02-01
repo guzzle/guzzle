@@ -91,7 +91,7 @@ abstract class AbstractVisitorTestCase extends \Guzzle\Tests\GuzzleTestCase
                     'required' => true,
                     'default' => 'bar',
                     'filters' => array('strtoupper')
-                        )),
+                )),
                 'arr' => new Parameter(array(
                     'type' => 'array',
                     'location' => 'query',
@@ -99,9 +99,9 @@ abstract class AbstractVisitorTestCase extends \Guzzle\Tests\GuzzleTestCase
                     'required' => true,
                     'default' => array(123, 456, 789),
                     'filters' => array(array('method' => 'implode', 'args' => array(',', '@value')))
-                        ))
+                ))
             )
-                ));
+        ));
         $command = new OperationCommand(array(), $operation);
         $command->setClient(new MockClient());
 

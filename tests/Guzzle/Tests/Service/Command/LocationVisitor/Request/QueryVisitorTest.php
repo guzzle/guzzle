@@ -38,11 +38,8 @@ class QueryVisitorTest extends AbstractVisitorTestCase
     public function testFiltersAreAppliedToArrayParamType()
     {
         $command = $this->getCommandWithArrayParamAndFilters();
-
         $request = $command->prepare();
-
         $query = $request->getQuery();
-
         // param type 'string'
         $this->assertEquals('BAR', $query->get('Foo'));
         // param type 'array'
