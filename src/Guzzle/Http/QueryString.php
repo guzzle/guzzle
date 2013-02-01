@@ -25,11 +25,6 @@ class QueryString extends Collection
     protected $valueSeparator = '=';
 
     /**
-     * @var string The query string prefix
-     */
-    protected $prefix = '?';
-
-    /**
      * @var bool URL encode fields and values?
      */
     protected $urlEncode = true;
@@ -50,7 +45,7 @@ class QueryString extends Collection
     {
         $q = new static();
 
-        if (!empty($query)) {
+        if (0 !== strlen($query)) {
             if ($query[0] == '?') {
                 $query = substr($query, 1);
             }
@@ -84,7 +79,7 @@ class QueryString extends Collection
             return '';
         }
 
-        $queryString = $this->prefix;
+        $queryString = '';
         $firstValue = true;
 
         foreach ($this->encodeData($this->data) as $name => $value) {
@@ -179,16 +174,6 @@ class QueryString extends Collection
     }
 
     /**
-     * Get the query string prefix
-     *
-     * @return string
-     */
-    public function getPrefix()
-    {
-        return $this->prefix;
-    }
-
-    /**
      * Get the query string value separator
      *
      * @return string
@@ -248,20 +233,6 @@ class QueryString extends Collection
     public function setFieldSeparator($separator)
     {
         $this->fieldSeparator = $separator;
-
-        return $this;
-    }
-
-    /**
-     * Set the query string prefix
-     *
-     * @param string $prefix Prefix to use with the query string (e.g. '?')
-     *
-     * @return QueryString
-     */
-    public function setPrefix($prefix)
-    {
-        $this->prefix = $prefix;
 
         return $this;
     }

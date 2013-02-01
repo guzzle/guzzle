@@ -27,7 +27,7 @@ class QueryVisitorTest extends AbstractVisitorTestCase
         $command->getOperation()->getParam('foo')->setSentAs('Foo');
         $request = $command->prepare();
         $this->assertEquals(
-            '?Foo[test][baz]=1&Foo[test][Jenga_Yall!]=HELLO&Foo[bar]=123',
+            'Foo[test][baz]=1&Foo[test][Jenga_Yall!]=HELLO&Foo[bar]=123',
             rawurldecode($request->getQuery())
         );
     }

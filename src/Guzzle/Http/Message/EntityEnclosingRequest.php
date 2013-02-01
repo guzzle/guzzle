@@ -39,7 +39,6 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     public function __construct($method, $url, $headers = array())
     {
         $this->postFields = new QueryString();
-        $this->postFields->setPrefix('');
         parent::__construct($method, $url, $headers);
     }
 
