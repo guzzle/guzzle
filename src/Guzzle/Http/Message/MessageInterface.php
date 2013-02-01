@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http\Message;
 
+use DateTime;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Collection;
 
@@ -165,4 +166,86 @@ interface MessageInterface
      * @return MessageInterface
      */
     public function removeCacheControlDirective($directive);
+
+    /**
+     * Get a message warning by code and, optionally, agent.
+     *
+     * If multiple warnings are found, the first, which should be the earliest, is returned.
+     *
+     * @param int         $code  Warning code
+     * @param null|string $agent Warning agent
+     *
+     * @return Warning|null
+     */
+    public function getWarning($code, $agent = null);
+
+    /**
+     * Get message warnings.
+     *
+     * Supplying a code and/or agent filters the returned array.
+     *
+     * @param null|int    $code  Warning code to check
+     * @param null|string $agent Warning agent to check
+     *
+     * @return Warning[]
+     */
+    public function getWarnings($code = null, $agent = null);
+
+    /**
+     * Check if the message has a warning for a code and, optionally, agent.
+     *
+     * @param int         $code
+     * @param null|string $agent
+     *
+     * @return bool
+     */
+    public function hasWarning($code, $agent = null);
+
+    /**
+     * Check if the message has warnings.
+     *
+     * Supplying a code and/or agent filters the returned array.
+     *
+     * @param null|int    $code  Warning code to check
+     * @param null|string $agent Warning agent to check
+     *
+     * @return bool
+     */
+    public function hasWarnings($code = null, $agent = null);
+
+    /**
+     * Add a warning to the message.
+     *
+     * @param int              $code  Code
+     * @param string           $agent Agent
+     * @param null|string      $text  Text, or null to use the recommended text
+     * @param null|DateTime    $date  Date
+     *
+     * @return MessageInterface
+     */
+    public function addWarning($code, $agent, $text = null, DateTime $date = null);
+
+    /**
+     * Remove a warning by code and, optionally, agent.
+     *
+     * If multiple warnings are found, the first, which should be the earliest, is removed.
+     *
+     * @param int         $code  Code
+     * @param null|string $agent Agent
+     *
+     * @return MessageInterface
+     */
+    public function removeWarning($code, $agent = null);
+
+    /**
+     * Remove warnings.
+     *
+     * Supplying a code and/or agent filters the removed warnings.
+     *
+     * @param null|int    $code  Warning code to filter on
+     * @param null|string $agent Warning agent to filter on
+     *
+     * @return MessageInterface
+     */
+    public function removeWarnings($code = null, $agent = null);
 }

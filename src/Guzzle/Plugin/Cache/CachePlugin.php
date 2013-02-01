@@ -5,6 +5,7 @@ namespace Guzzle\Plugin\Cache;
 use Guzzle\Cache\CacheAdapterInterface;
 use Guzzle\Common\Event;
 use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Common\Version;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Cache\DoctrineCacheAdapter;
@@ -156,6 +157,9 @@ class CachePlugin implements EventSubscriberInterface
 
             // Validate that the response satisfies the request
             if ($this->canResponseSatisfyRequest($request, $response)) {
+                if ($response->isFresh() === false) {
+                    $response->addWarning(110, sprintf('GuzzleCache/%s', Version::VERSION));
+                }
                 $request->setResponse($response);
             }
         }

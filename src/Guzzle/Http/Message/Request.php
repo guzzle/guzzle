@@ -12,6 +12,7 @@ use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\ClientInterface;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\EntityBodyInterface;
+use Guzzle\Http\Message\Header\Header;
 use Guzzle\Http\Url;
 use Guzzle\Parser\ParserRegistry;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;

@@ -2,8 +2,11 @@
 
 namespace Guzzle\Http\Message;
 
+use DateTime;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Http\Message\Header\Header;
+use Guzzle\Http\Message\Header\Warning;
 
 /**
  * Abstract HTTP request/response message
@@ -24,6 +27,11 @@ abstract class AbstractMessage implements MessageInterface
      * @var array Cache-Control directive information
      */
     private $cacheControl = array();
+
+    /**
+     * @var Warning[] Warning headers
+     */
+    private $warnings = array();
 
     /*
      * @var string HTTP protocol version of the message
@@ -193,7 +201,11 @@ abstract class AbstractMessage implements MessageInterface
         $data = new Collection();
 
         foreach ($this->getHeader($header) as $singleValue) {
-            foreach (explode($token, $singleValue) as $kvp) {
+            preg_match_all('#,?(?!$)(?<match>([^' . preg_quote($token) . '"]?("[^"]*")?)+)#', $singleValue, $matches);
+            foreach ($matches['match'] as $kvp) {
+                if ('' == $kvp) {
+                    continue;
+                }
                 $parts = explode('=', $kvp, 2);
                 if (!isset($parts[1])) {
                     $data[count($data)] = trim($parts[0]);
@@ -272,6 +284,108 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function getWarning($code, $agent = null)
+    {
+        foreach ($this->warnings as $warning) {
+            if (null !== $agent) {
+                if ($code == $warning->getCode() && $agent === $warning->getAgent()) {
+                    return $warning;
+                }
+            } elseif ($code == $warning->getCode()) {
+                return $warning;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getWarnings($code = null, $agent = null)
+    {
+        if (null === $code && null === $agent) {
+            return $this->warnings;
+        }
+
+        $warnings = array();
+        foreach ($this->warnings as $warning) {
+            if ((null === $code || $code == $warning->getCode()) && (null === $agent || $agent == $warning->getAgent())) {
+                $warnings[] = $warning;
+            }
+        }
+
+        return $warnings;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function hasWarning($code, $agent = null)
+    {
+        return null !== $this->getWarning($code, $agent);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function hasWarnings($code = null, $agent = null)
+    {
+        return count($this->getWarnings($code, $agent)) > 0;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function addWarning($code, $agent, $text = null, DateTime $date = null)
+    {
+        if (false === $this->hasWarning($code, $agent)) {
+            $this->warnings[] = new Warning($code, $agent, $text, $date);
+            $this->rebuildWarningHeader();
+        }
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function removeWarning($code, $agent = null)
+    {
+        foreach ($this->warnings as $key => $warning) {
+            if (null !== $agent) {
+                if ($code == $warning->getCode() && $agent === $warning->getAgent()) {
+                    unset($this->warnings[$key]);
+                    break;
+                }
+            } elseif ($code == $warning->getCode()) {
+                unset($this->warnings[$key]);
+                break;
+            }
+        }
+        $this->rebuildWarningHeader();
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function removeWarnings($code = null, $agent = null)
+    {
+        foreach ($this->warnings as $key => $warning) {
+            if ((null === $code || $code == $warning->getCode()) && (null === $agent || $agent == $warning->getAgent())) {
+                unset($this->warnings[$key]);
+            }
+        }
+        $this->rebuildWarningHeader();
+
+        return $this;
+    }
+
+    /**
      * Check to see if the modified headers need to reset any of the managed
      * headers like cache-control
      *
@@ -279,8 +393,13 @@ abstract class AbstractMessage implements MessageInterface
      */
     protected function changedHeader($header)
     {
-        if ($header == 'cache-control') {
-            $this->parseCacheControlDirective();
+        switch ($header) {
+            case 'cache-control':
+                $this->parseCacheControlDirective();
+                break;
+            case 'warning':
+                $this->parseWarningHeader();
+                break;
         }
     }
 
@@ -310,5 +429,29 @@ abstract class AbstractMessage implements MessageInterface
             $cacheControl[] = ($value === true) ? $key : ($key . '=' . $value);
         }
         $this->headers['cache-control'] = new Header('Cache-Control', $cacheControl, ', ');
+    }
+
+    /**
+     * Parse the Warning HTTP header into an array
+     */
+    private function parseWarningHeader()
+    {
+        $this->warnings = array();
+        $tokenized = $this->getTokenizedHeader('Warning', ',') ?: array();
+        foreach ($tokenized as $value) {
+            $this->warnings[] = Warning::fromHeader($value);
+        }
+    }
+
+    /**
+     * Rebuild the Warning HTTP header using the user-specified values
+     */
+    private function rebuildWarningHeader()
+    {
+        $warnings = array();
+        foreach ($this->warnings as $warning) {
+            $warnings[] = (string) $warning;
+        }
+        $this->headers['warning'] = new Header('Warning', $warnings, ', ');
     }
 }
