@@ -555,7 +555,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
             'query' => 'hi there',
         ));
         $request = $client->get('http://test.com{?query}');
-        $this->assertEquals('http://test.com/?query=hi%20there', $request->getUrl());
+        $this->assertEquals('http://test.com?query=hi%20there', $request->getUrl());
         $this->assertEquals('hi there', $request->getQuery()->get('query'));
     }
 

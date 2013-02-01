@@ -349,7 +349,7 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function getPath()
     {
-        return $this->url->getPath();
+        return '/' . ltrim($this->url->getPath(), '/');
     }
 
     /**
@@ -435,7 +435,12 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function getResource()
     {
-        return $this->url->getPath() . (string) $this->url->getQuery();
+        $resource = $this->getPath();
+        if ($query = (string) $this->url->getQuery()) {
+            $resource .= '?' . $query;
+        }
+
+        return $resource;
     }
 
     /**
