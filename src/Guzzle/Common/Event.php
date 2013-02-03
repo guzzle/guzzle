@@ -7,7 +7,7 @@ use Symfony\Component\EventDispatcher\Event as SymfonyEvent;
 /**
  * Default event for Guzzle notifications
  */
-class Event extends SymfonyEvent implements \ArrayAccess, \IteratorAggregate
+class Event extends SymfonyEvent implements ToArrayInterface, \ArrayAccess, \IteratorAggregate
 {
     /**
      * @var array
@@ -62,5 +62,13 @@ class Event extends SymfonyEvent implements \ArrayAccess, \IteratorAggregate
     public function offsetUnset($offset)
     {
         unset($this->context[$offset]);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function toArray()
+    {
+        return $this->context;
     }
 }
