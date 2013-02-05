@@ -51,11 +51,11 @@ class BackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase implements EventSub
         $plugin = BackoffPlugin::getExponentialBackoff(3, array(204), array(10));
         $this->assertInstanceOf('Guzzle\Plugin\Backoff\BackoffPlugin', $plugin);
         $strategy = $this->readAttribute($plugin, 'strategy');
-        $this->assertInstanceOf('Guzzle\Plugin\Backoff\HttpBackoffStrategy', $strategy);
-        $this->assertEquals(array(204 => true), $this->readAttribute($strategy, 'errorCodes'));
-        $strategy = $this->readAttribute($strategy, 'next');
         $this->assertInstanceOf('Guzzle\Plugin\Backoff\TruncatedBackoffStrategy', $strategy);
         $this->assertEquals(3, $this->readAttribute($strategy, 'max'));
+        $strategy = $this->readAttribute($strategy, 'next');
+        $this->assertInstanceOf('Guzzle\Plugin\Backoff\HttpBackoffStrategy', $strategy);
+        $this->assertEquals(array(204 => true), $this->readAttribute($strategy, 'errorCodes'));
         $strategy = $this->readAttribute($strategy, 'next');
         $this->assertInstanceOf('Guzzle\Plugin\Backoff\CurlBackoffStrategy', $strategy);
         $this->assertEquals(array(10 => true), $this->readAttribute($strategy, 'errorCodes'));
@@ -137,10 +137,10 @@ class BackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase implements EventSub
         ));
 
         $plugin = new BackoffPlugin(
-            new HttpBackoffStrategy(null,
-                new TruncatedBackoffStrategy(3,
+            new TruncatedBackoffStrategy(3,
+                new HttpBackoffStrategy(null,
                     new CurlBackoffStrategy(null,
-                        new ConstantBackoffStrategy(0.2)
+                        new ConstantBackoffStrategy(0.05)
                     )
                 )
             )
@@ -158,6 +158,30 @@ class BackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase implements EventSub
         // Check that three requests were made to retry this request
         $this->assertEquals(3, count($this->getServer()->getReceivedRequests(false)));
         $this->assertEquals(2, $request->getParams()->get(BackoffPlugin::RETRY_PARAM));
+    }
+
+    /**
+     * @expectedException \Guzzle\Http\Exception\ServerErrorResponseException
+     */
+    public function testFailsOnTruncation()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\n\r\n"
+        ));
+
+        $plugin = new BackoffPlugin(
+            new TruncatedBackoffStrategy(2,
+                new HttpBackoffStrategy(null,
+                    new ConstantBackoffStrategy(0.05)
+                )
+            )
+        );
+
+        $client = new Client($this->getServer()->getUrl());
+        $client->addSubscriber($plugin);
+        $client->get()->send();
     }
 
     public function testRetriesRequestsWhenInParallel()
