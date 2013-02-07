@@ -677,4 +677,11 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client = new Client();
         $client->setDefaultHeaders('foo');
     }
+
+    public function testDontReuseCurlMulti()
+    {
+        $client1 = new Client();
+        $client2 = new Client();
+        $this->assertNotSame($client1->getCurlMulti(), $client2->getCurlMulti());
+    }
 }
