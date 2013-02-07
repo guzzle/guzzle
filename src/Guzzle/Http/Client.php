@@ -397,7 +397,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function getCurlMulti()
     {
         if (!$this->curlMulti) {
-            $this->curlMulti = CurlMulti::getInstance();
+            $this->curlMulti = new CurlMulti();
         }
 
         return $this->curlMulti;

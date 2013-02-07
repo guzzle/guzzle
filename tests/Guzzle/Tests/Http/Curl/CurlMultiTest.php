@@ -43,16 +43,6 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Curl\CurlMulti::getInstance
-     */
-    public function testReturnsCachedInstance()
-    {
-        $c = CurlMulti::getInstance();
-        $this->assertInstanceOf('Guzzle\\Http\\Curl\\CurlMultiInterface', $c);
-        $this->assertSame($c, CurlMulti::getInstance());
-    }
-
-    /**
      * @covers Guzzle\Http\Curl\CurlMulti::__construct
      * @covers Guzzle\Http\Curl\CurlMulti::__destruct
      */

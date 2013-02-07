@@ -79,22 +79,6 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     private $scope = -1;
 
     /**
-     * Get a cached instance of the curl multi object
-     *
-     * @return CurlMulti
-     */
-    public static function getInstance()
-    {
-        // @codeCoverageIgnoreStart
-        if (!self::$instance) {
-            self::$instance = new self();
-        }
-        // @codeCoverageIgnoreEnd
-
-        return self::$instance;
-    }
-
-    /**
      * {@inheritdoc}
      */
     public static function getAllEvents()
