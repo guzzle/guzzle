@@ -62,9 +62,8 @@ class XmlVisitor extends AbstractRequestVisitor
     public function after(CommandInterface $command, RequestInterface $request)
     {
         if (isset($this->data[$command])) {
-            $xml = $this->data[$command];
+            $request->setBody($this->data[$command]->asXML());
             unset($this->data[$command]);
-            $request->setBody($xml->asXML());
             // Don't overwrite the Content-Type if one is set
             if ($this->contentType && !$request->hasHeader('Content-Type')) {
                 $request->setHeader('Content-Type', $this->contentType);
@@ -85,12 +84,19 @@ class XmlVisitor extends AbstractRequestVisitor
         // If no root element was specified, then just wrap the XML in 'Request'
         $root = $operation->getData('xmlRoot') ?: $defaultRoot;
 
+        // Allow the XML declaration to be customized with xmlEncoding
+        $declaration = '<?xml version="1.0"';
+        if ($encoding = $operation->getData('xmlEncoding')) {
+            $declaration .= ' encoding="' . $encoding . '"';
+        }
+        $declaration .= "?>";
+
         // Create the wrapping element with no namespaces if no namespaces were present
         if (empty($root['namespaces'])) {
-            return new \SimpleXMLElement("<{$root['name']}/>");
+            return new \SimpleXMLElement("{$declaration}\n<{$root['name']}/>");
         } else {
             // Create the wrapping element with an array of one or more namespaces
-            $xml = "<{$root['name']} ";
+            $xml = "{$declaration}\n<{$root['name']} ";
             foreach ((array) $root['namespaces'] as $prefix => $uri) {
                 $xml .= is_numeric($prefix) ? "xmlns=\"{$uri}\" " : "xmlns:{$prefix}=\"{$uri}\" ";
             }

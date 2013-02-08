@@ -481,4 +481,26 @@ class XmlVisitorTest extends AbstractVisitorTestCase
             (string) $request->getBody()
         );
     }
+
+    public function testAllowsXmlEncoding()
+    {
+        $operation = new Operation(array(
+            'data' => array(
+                'xmlEncoding' => 'utf8'
+            ),
+            'parameters' => array(
+                'Foo' => array('location' => 'xml')
+            )
+        ));
+        $command = $this->getMockBuilder('Guzzle\Service\Command\OperationCommand')
+            ->setConstructorArgs(array(array('Foo' => 'test'), $operation))
+            ->getMockForAbstractClass();
+        $command->setClient(new Client());
+        $request = $command->prepare();
+        $this->assertEquals(
+            '<?xml version="1.0" encoding="utf8"?>' . "\n"
+                . '<Request><Foo>test</Foo></Request>' . "\n",
+            (string) $request->getBody()
+        );
+    }
 }
