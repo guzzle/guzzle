@@ -124,7 +124,7 @@ echo $request . "\n\n" . $response;
 $request = RequestFactory::fromMessage(
     "PUT / HTTP/1.1\r\n" .
     "Host: test.com:8081\r\n" .
-    "Content-Type: text/plain"
+    "Content-Type: text/plain" .
     "Transfer-Encoding: chunked\r\n" .
     "\r\n" .
     "this is the body"
