@@ -264,15 +264,21 @@ class ServiceDescription implements ServiceDescriptionInterface
     }
 
     /**
-     * Get an extra API data from the service description
-     *
-     * @param string $key Data key to retrieve
-     *
-     * @return null|mixed
+     * {@inheritdoc}
      */
     public function getData($key)
     {
         return isset($this->extraData[$key]) ? $this->extraData[$key] : null;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setData($key, $value)
+    {
+        $this->extraData[$key] = $value;
+
+        return $this;
     }
 
     /**

@@ -158,12 +158,14 @@ class ServiceDescriptionTest extends \Guzzle\Tests\GuzzleTestCase
             'keyParam'    => 'bar'
         );
         $d = new ServiceDescription($data);
+        $d->setData('hello', 'baz');
         $this->assertEquals('foo', $d->getData('auth'));
+        $this->assertEquals('baz', $d->getData('hello'));
         $this->assertEquals('bar', $d->getData('keyParam'));
         // responseClass and responseType are added by default
         $data['operations']['foo']['responseClass'] = 'array';
         $data['operations']['foo']['responseType'] = 'primitive';
-        $this->assertEquals($data, json_decode($d->serialize(), true));
+        $this->assertEquals($data + array('hello' => 'baz'), json_decode($d->serialize(), true));
     }
 
     public function testReturnsNullWhenRetrievingMissingOperation()
