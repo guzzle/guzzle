@@ -63,6 +63,8 @@ class CurlHandle
             CURLOPT_USERAGENT      => (string) $request->getHeader('User-Agent'),
             CURLOPT_PORT           => $request->getPort(),
             CURLOPT_HTTPHEADER     => array(),
+            // Allow only HTTP and HTTPS protocols
+            CURLOPT_PROTOCOLS      => CURLPROTO_HTTP | CURLPROTO_HTTPS,
             CURLOPT_HEADERFUNCTION => array($mediator, 'receiveResponseHeader'),
             CURLOPT_HTTP_VERSION   => $request->getProtocolVersion() === '1.0'
                 ? CURL_HTTP_VERSION_1_0 : CURL_HTTP_VERSION_1_1,
