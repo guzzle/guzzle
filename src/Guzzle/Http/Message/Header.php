@@ -119,16 +119,31 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
     }
 
     /**
-     * Normalize the header into a single standard header with an array of values
+     * Normalize the header to be a single header with an array of values
+     *
+     * @param bool $explodeOnGlue Set to true to explode each header value on the glue of the header
      *
      * @return Header
      */
-    public function normalize()
+    public function normalize($explodeOnGlue = false)
     {
+        $values = $this->toArray();
         $this->clearCache();
-        $this->values = array(
-            $this->getName() => $this->toArray()
-        );
+
+        // Explode each value on glue if needed
+        if ($this->glue && $explodeOnGlue) {
+            foreach ($values as $i => $value) {
+                // Explode the value if the glue was found in the header
+                if (strpos($value, $this->glue)) {
+                    foreach (explode($this->glue, $value) as $v) {
+                        $values[] = $v;
+                    }
+                    unset($values[$i]);
+                }
+            }
+        }
+
+        $this->values = array($this->getName() => $values);
 
         return $this;
     }

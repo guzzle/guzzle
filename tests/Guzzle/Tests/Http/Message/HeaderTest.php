@@ -47,6 +47,14 @@ class HeaderTest extends \Guzzle\Tests\GuzzleTestCase
         ), $h->raw());
     }
 
+    public function testNormalizesGluedHeaders()
+    {
+        $h = new Header('Zoo', array('foo, Faz', 'bar'));
+        $result = $h->normalize(true)->toArray();
+        natsort($result);
+        $this->assertEquals(array('bar', 'foo', 'Faz'), $result);
+    }
+
     public function testCanSearchForValues()
     {
         $h = new Header('Zoo', $this->test);
