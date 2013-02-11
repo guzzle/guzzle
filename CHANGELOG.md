@@ -1,6 +1,22 @@
 CHANGELOG
 =========
 
+3.2.0 (2013-02-10)
+------------------
+
+* CurlMulti is no longer reused globally. A new multi object is created per-client. This helps to isolate clients.
+* URLs with no path no longer contain a "/" by default
+* Guzzle\Http\QueryString does no longer manages the leading "?". This is now handled in Guzzle\Http\Url.
+* BadResponseException no longer includes the full request and response message
+* Adding setData() to Guzzle\Service\Description\ServiceDescriptionInterface
+* Adding getResponseBody() to Guzzle\Http\Message\RequestInterface
+* Various updates to classes to use ServiceDescriptionInterface type hints rather than ServiceDescription
+* Header values can now be normalized into distinct values when multiple headers are combined with a comma separated list
+* xmlEncoding can now be customized for the XML declaration of a XML service description operation
+* Bug fix: Filters were not always invoked for array service description parameters
+* Bug fix: Redirects now use a target response body rather than a temporary response body
+* Bug fix: The default exponential backoff BackoffPlugin was not giving when the request threshold was exceeded
+
 3.1.2 (2013-01-27)
 ------------------
 
