@@ -1,6 +1,53 @@
 Guzzle Upgrade Guide
 ====================
 
+3.1 to 3.2
+----------
+
+### CurlMulti is no longer reused globally
+
+Before 3.2, the same CurlMulti object was reused globally for each client. This can cause issue where plugins added
+to a single client can pollute requests dispatched from other clients.
+
+If you still wish to reuse the same CurlMulti object with each client, then you can add a listener to the
+ServiceBuilder's `service_builder.create_client` event to inject a custom CurlMulti object into each client as it is
+created.
+
+```php
+$multi = new Guzzle\Http\Curl\CurlMulti();
+$builder = Guzzle\Service\Builder\ServiceBuilder::factory('/path/to/config.json');
+$builder->addListener('service_builder.create_client', function ($event) use ($multi) {
+    $event['client']->setCurlMulti($multi);
+}
+});
+```
+
+### No default path
+
+URLs no longer have a default path value of '/' if no path was specified.
+
+Before:
+
+```php
+$request = $client->get('http://www.foo.com');
+echo $request->getUrl();
+// >> http://www.foo.com/
+```
+
+After:
+
+```php
+$request = $client->get('http://www.foo.com');
+echo $request->getUrl();
+// >> http://www.foo.com
+```
+
+### Less verbose BadResponseException
+
+The exception message for `Guzzle\Http\Exception\BadResponseException` no longer contains the full HTTP request and
+response information. You can, however, get access to the request and response object by calling `getRequest()` or
+`getResponse()` on the exception object.
+
 2.8 to 3.x
 ----------
 
@@ -301,7 +348,7 @@ $client->addSubscriber($backoffPlugin);
 
 ### Known Issues
 
-#### [BUG] Accept-Encoding header behavior changed unintentionally. 
+#### [BUG] Accept-Encoding header behavior changed unintentionally.
 
 (See #217) (Fixed in 09daeb8c666fb44499a0646d655a8ae36456575e)
 
