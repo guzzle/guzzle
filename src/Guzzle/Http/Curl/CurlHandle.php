@@ -63,8 +63,6 @@ class CurlHandle
             CURLOPT_USERAGENT      => (string) $request->getHeader('User-Agent'),
             CURLOPT_PORT           => $request->getPort(),
             CURLOPT_HTTPHEADER     => array(),
-            // Allow only HTTP and HTTPS protocols
-            CURLOPT_PROTOCOLS      => CURLPROTO_HTTP | CURLPROTO_HTTPS,
             CURLOPT_HEADERFUNCTION => array($mediator, 'receiveResponseHeader'),
             CURLOPT_HTTP_VERSION   => $request->getProtocolVersion() === '1.0'
                 ? CURL_HTTP_VERSION_1_0 : CURL_HTTP_VERSION_1_1,
@@ -73,6 +71,11 @@ class CurlHandle
             // Certificate must indicate that the server is the server to which you meant to connect
             CURLOPT_SSL_VERIFYHOST => 2
         );
+
+        if (version_compare(CurlVersion::getInstance()->get('version'), '7.19.4', '>=')) {
+            // Allow only HTTP and HTTPS protocols
+            $curlOptions[CURLOPT_PROTOCOLS] = CURLPROTO_HTTP | CURLPROTO_HTTPS;
+        }
 
         // Add CURLOPT_ENCODING if Accept-Encoding header is provided
         if ($acceptEncodingHeader = $request->getHeader('Accept-Encoding')) {
