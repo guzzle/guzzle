@@ -168,6 +168,25 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(100, $mock->getCacheControlDirective('max-age'));
     }
 
+    /**
+     * In some rare cases. Like with the Twitter Search API:
+     *
+     *    http://search.twitter.com/search.json?q=from:mtdowling
+     *
+     * There is more than once Cache-Control added.
+     * Twice the max-age for example.
+     *
+     * @covers Guzzle\Http\Message\AbstractMessage
+     */
+    public function testDoubleCacheControlDirectives()
+    {
+        $mock = $this->mock;
+
+        $mock->setHeader('Cache-Control', 'max-age=15, must-revalidate, max-age=300');
+
+        $this->assertEquals(15, $mock->getCacheControlDirective('max-age'));
+    }
+
     public function tokenizedHeaderProvider()
     {
         return array(

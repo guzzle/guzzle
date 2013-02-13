@@ -236,7 +236,17 @@ abstract class AbstractMessage implements MessageInterface
      */
     public function getCacheControlDirective($directive)
     {
-        return isset($this->cacheControl[$directive]) ? $this->cacheControl[$directive] : null;
+        if (!isset($this->cacheControl[$directive])) {
+            return null;
+        }
+
+        $directive = $this->cacheControl[$directive];
+
+        if (is_array($directive) && !empty($directive)) {
+            return $directive[0];
+        }
+
+        return $directive;
     }
 
     /**
