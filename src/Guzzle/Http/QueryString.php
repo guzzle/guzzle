@@ -3,12 +3,24 @@
 namespace Guzzle\Http;
 
 use Guzzle\Common\Collection;
+use Guzzle\Http\QueryAggregator\QueryAggregatorInterface;
+use Guzzle\Http\QueryAggregator\PhpAggregator;
 
 /**
  * Query string object to handle managing query string parameters and aggregating those parameters together as a string.
  */
 class QueryString extends Collection
 {
+    /**
+     * @var string Used to URL encode with rawurlencode
+     */
+    const RFC_3986 = 'RFC 3986';
+
+    /**
+     * @var string Used to encode with urlencode
+     */
+    const FORM_URLENCODED = 'application/x-www-form-urlencoded';
+
     /**
      * @var string Constant used to create blank query string values (e.g. ?foo)
      */
@@ -27,19 +39,24 @@ class QueryString extends Collection
     /**
      * @var bool URL encode fields and values?
      */
-    protected $urlEncode = true;
+    protected $urlEncode = 'RFC 3986';
 
     /**
-     * @var callable A callback function for combining multi-valued query string values
+     * @var QueryAggregatorInterface
      */
-    protected $aggregator = array(__CLASS__, 'aggregateUsingPhp');
+    protected $aggregator;
+
+    /**
+     * @var array Cached PHP aggregator
+     */
+    protected static $defaultAggregator = null;
 
     /**
      * Parse a query string into a QueryString object
      *
      * @param string $query Query string to parse
      *
-     * @return QueryString
+     * @return self
      */
     public static function fromString($query)
     {
@@ -82,7 +99,7 @@ class QueryString extends Collection
         $queryString = '';
         $firstValue = true;
 
-        foreach ($this->encodeData($this->data) as $name => $value) {
+        foreach ($this->prepareData($this->data) as $name => $value) {
             $value = $value === null ? array('') : (array) $value;
             foreach ($value as $v) {
                 if ($firstValue) {
@@ -98,69 +115,6 @@ class QueryString extends Collection
         }
 
         return $queryString;
-    }
-
-    /**
-     * Aggregate multi-valued parameters using PHP style syntax
-     *
-     * @param string $key    The name of the query string parameter
-     * @param array  $value  The values of the parameter
-     * @param bool   $encode Set to TRUE to encode field names and values
-     *
-     * @return array Returns an array of the combined values
-     */
-    public static function aggregateUsingPhp($key, array $value, $encode = false)
-    {
-        $ret = array();
-
-        foreach ($value as $k => $v) {
-            $k = "{$key}[{$k}]";
-            if (is_array($v)) {
-                $ret = array_merge($ret, self::aggregateUsingPhp($k, $v, $encode));
-            } else {
-                if ($encode) {
-                    $ret[rawurlencode($k)] = rawurlencode($v);
-                } else {
-                    $ret[$k] = $v;
-                }
-            }
-        }
-
-        return $ret;
-    }
-
-    /**
-     * Aggregate multi-valued parameters by joining the values using a comma
-     *
-     * @param string $key    The name of the query string parameter
-     * @param array  $value  The values of the parameter
-     * @param bool   $encode Set to TRUE to encode field names and values
-     *
-     * @return array Returns an array of the combined values
-     */
-    public static function aggregateUsingComma($key, array $value, $encode = false)
-    {
-        return $encode
-            ? array(rawurlencode($key) => implode(',', array_map('rawurlencode', $value)))
-            : array($key => implode(',', $value));
-    }
-
-    /**
-     * Aggregate multi-valued parameters using duplicate values in a query string
-     *
-     * Example: http://test.com?q=1&q=2
-     *
-     * @param string $key    The name of the query string parameter
-     * @param array  $value  The values of the parameter
-     * @param bool   $encode Set to TRUE to encode field names and values
-     *
-     * @return array Returns an array of the combined values
-     */
-    public static function aggregateUsingDuplicates($key, array $value, $encode = false)
-    {
-        return $encode
-            ? array(rawurlencode($key) => array_map('rawurlencode', $value))
-            : array($key => $value);
     }
 
     /**
@@ -184,27 +138,49 @@ class QueryString extends Collection
     }
 
     /**
-     * Returns whether or not field names and values will be urlencoded
+     * Returns the type of URL encoding used by the query string
      *
-     * @return bool
+     * One of: false, "RFC 3986", or "application/x-www-form-urlencoded"
+     *
+     * @return bool|string
      */
-    public function isUrlEncoding()
+    public function getUrlEncoding()
     {
         return $this->urlEncode;
     }
 
     /**
+     * Returns true or false if using URL encoding
+     *
+     * @return bool
+     */
+    public function isUrlEncoding()
+    {
+        return $this->urlEncode !== false;
+    }
+
+    /**
      * Provide a function for combining multi-valued query string parameters into a single or multiple fields
      *
-     * @param callable|null $callback A function or callback array that accepts a $key, $value, $encodeFields, and
-     *                                $encodeValues as arguments and returns an associative array containing the
-     *                                combined values. Set to null to remove any custom aggregator.
-     * @return QueryString
+     * @param null|QueryAggregatorInterface $aggregator Pass in a QueryAggregatorInterface object to handle converting
+     *                                                  deeply nested query string variables into a flattened array.
+     *                                                  Pass null to use the default PHP style aggregator. For legacy
+     *                                                  reasons, this function accepts a callable that must accepts a
+     *                                                  $key, $value, and query object.
+     * @return self
      * @see \Guzzle\Http\QueryString::aggregateUsingComma()
      */
-    public function setAggregateFunction($callback)
+    public function setAggregator(QueryAggregatorInterface $aggregator = null)
     {
-        $this->aggregator = $callback;
+        // Use the default aggregator if none was set
+        if (!$aggregator) {
+            if (!self::$defaultAggregator) {
+                self::$defaultAggregator = new PhpAggregator();
+            }
+            $aggregator = self::$defaultAggregator;
+        }
+
+        $this->aggregator = $aggregator;
 
         return $this;
     }
@@ -212,13 +188,13 @@ class QueryString extends Collection
     /**
      * Set whether or not field names and values should be rawurlencoded
      *
-     * @param bool $encode Set whether or not to encode
-     *
-     * @return QueryString
+     * @param bool|string $encode Set to TRUE to use RFC 3986 encoding (rawurlencode), false to disable encoding, or
+     *                            form_urlencoding to use application/x-www-form-urlencoded encoding (urlencode)
+     * @return self
      */
     public function useUrlEncoding($encode)
     {
-        $this->urlEncode = $encode;
+        $this->urlEncode = ($encode === true) ? self::RFC_3986 : $encode;
 
         return $this;
     }
@@ -228,7 +204,7 @@ class QueryString extends Collection
      *
      * @param string $separator The query string separator that will separate fields
      *
-     * @return QueryString
+     * @return self
      */
     public function setFieldSeparator($separator)
     {
@@ -242,7 +218,7 @@ class QueryString extends Collection
      *
      * @param string $separator The query string separator that will separate values from fields
      *
-     * @return QueryString
+     * @return self
      */
     public function setValueSeparator($separator)
     {
@@ -258,31 +234,47 @@ class QueryString extends Collection
      */
     public function urlEncode()
     {
-        return $this->encodeData($this->data);
+        return $this->prepareData($this->data);
     }
 
     /**
-     * Url encode parameter data.
+     * URL encodes a value based on the url encoding type of the query string object
      *
-     * If a parameter value is an array and no aggregator has been set, the values of the array will be converted into
-     * a PHP compatible form array. If an aggregator is set, the values will be converted using the aggregator function
+     * @param string $value Value to encode
+     *
+     * @return string
+     */
+    public function encodeValue($value)
+    {
+        if ($this->urlEncode == self::RFC_3986) {
+            return rawurlencode($value);
+        } elseif ($this->urlEncode == self::FORM_URLENCODED) {
+            return urlencode($value);
+        } else {
+            return (string) $value;
+        }
+    }
+
+    /**
+     * Url encode parameter data and convert nested query strings into a flattened hash.
      *
      * @param array $data The data to encode
      *
      * @return array Returns an array of encoded values and keys
      */
-    protected function encodeData(array $data)
+    protected function prepareData(array $data)
     {
+        // If no aggregator is present then set the default
+        if (!$this->aggregator) {
+            $this->setAggregator(null);
+        }
+
         $temp = array();
         foreach ($data as $key => $value) {
             if (is_array($value)) {
-                $temp = array_merge($temp, call_user_func_array($this->aggregator, array($key, $value, $this->urlEncode)));
+                $temp = array_merge($temp, $this->aggregator->aggregate($key, $value, $this));
             } else {
-                if ($this->urlEncode) {
-                    $temp[rawurlencode($key)] = rawurlencode($value);
-                } else {
-                    $temp[$key] = (string) $value;
-                }
+                $temp[$this->encodeValue($key)] = $this->encodeValue($value);
             }
         }
 

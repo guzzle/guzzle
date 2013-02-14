@@ -3,13 +3,15 @@
 namespace Guzzle\Tests\Http;
 
 use Guzzle\Http\QueryString;
+use Guzzle\Http\QueryAggregator\DuplicateAggregator;
+use Guzzle\Http\QueryAggregator\CommaAggregator;
 
 class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
      * The query string object to test
      *
-     * @var Guzzle\Http\QueryString
+     * @var \Guzzle\Http\QueryString
      */
     protected $q;
 
@@ -18,57 +20,44 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $this->q = new QueryString();
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString::getFieldSeparator
-     */
     public function testGetFieldSeparator()
     {
         $this->assertEquals('&', $this->q->getFieldSeparator());
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString::getValueSeparator
-     */
     public function testGetValueSeparator()
     {
         $this->assertEquals('=', $this->q->getValueSeparator());
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString::isUrlEncoding
-     */
     public function testIsUrlEncoding()
     {
+        $this->assertEquals('RFC 3986', $this->q->getUrlEncoding());
         $this->assertTrue($this->q->isUrlEncoding());
+        $this->assertEquals('foo%20bar', $this->q->encodeValue('foo bar'));
+
+        $this->q->useUrlEncoding(QueryString::FORM_URLENCODED);
+        $this->assertTrue($this->q->isUrlEncoding());
+        $this->assertEquals(QueryString::FORM_URLENCODED, $this->q->getUrlEncoding());
+        $this->assertEquals('foo+bar', $this->q->encodeValue('foo bar'));
+
         $this->assertSame($this->q, $this->q->useUrlEncoding(false));
+        $this->assertFalse($this->q->isUrlEncoding());
         $this->assertFalse($this->q->isUrlEncoding());
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString::setFieldSeparator
-     * @covers Guzzle\Http\QueryString::setFieldSeparator
-     */
     public function testSetFieldSeparator()
     {
         $this->assertEquals($this->q, $this->q->setFieldSeparator('/'));
         $this->assertEquals('/', $this->q->getFieldSeparator());
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString::setValueSeparator
-     * @covers Guzzle\Http\QueryString::getValueSeparator
-     */
     public function testSetValueSeparator()
     {
         $this->assertEquals($this->q, $this->q->setValueSeparator('/'));
         $this->assertEquals('/', $this->q->getValueSeparator());
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString::urlEncode
-     * @covers Guzzle\Http\QueryString::encodeData
-     * @covers Guzzle\Http\QueryString::replace
-     */
     public function testUrlEncode()
     {
         $params = array(
@@ -95,14 +84,6 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($testData, $this->q->urlEncode());
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString
-     * @covers Guzzle\Http\QueryString::__toString
-     * @covers Guzzle\Http\QueryString::useUrlEncoding
-     * @covers Guzzle\Http\QueryString::replace
-     * @covers Guzzle\Http\QueryString::setAggregateFunction
-     * @covers Guzzle\Http\QueryString::urlEncode
-     */
     public function testToString()
     {
         // Check with no parameters
@@ -120,14 +101,10 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('test=value&test 2=this is a test?&test3[0]=v1&test3[1]=v2&test3[2]=v3&test4=', $this->q->__toString());
 
         // Use an alternative aggregator
-        $this->q->setAggregateFunction(array($this->q, 'aggregateUsingComma'));
+        $this->q->setAggregator(new CommaAggregator());
         $this->assertEquals('test=value&test 2=this is a test?&test3=v1,v2,v3&test4=', $this->q->__toString());
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString::__toString
-     * @covers Guzzle\Http\QueryString::aggregateUsingDuplicates
-     */
     public function testAllowsMultipleValuesPerKey()
     {
         $q = new QueryString();
@@ -135,15 +112,10 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $q->add('facet', 'width');
         $q->add('facet.field', 'foo');
         // Use the duplicate aggregator
-        $q->setAggregateFunction(array($this->q, 'aggregateUsingDuplicates'));
+        $q->setAggregator(new DuplicateAggregator());
         $this->assertEquals('facet=size&facet=width&facet.field=foo', $q->__toString());
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString::__toString
-     * @covers Guzzle\Http\QueryString::encodeData
-     * @covers Guzzle\Http\QueryString::aggregateUsingPhp
-     */
     public function testAllowsNestedQueryData()
     {
         $this->q->replace(array(
@@ -190,7 +162,6 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\QueryString::fromString
      * @dataProvider parseQueryProvider
      */
     public function testParsesQueryStrings($query, $data)
@@ -199,9 +170,6 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($data, $query->getAll());
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString::fromString
-     */
     public function testProperlyDealsWithDuplicateQueryStringValues()
     {
         $query = QueryString::fromString('foo=a&foo=b&?µ=c');
@@ -209,9 +177,6 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('c', $query->get('?µ'));
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString::__toString
-     */
     public function testAllowsBlankQueryStringValues()
     {
         $query = QueryString::fromString('foo');
@@ -220,10 +185,6 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('foo', (string) $query);
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString::fromString
-     * @covers Guzzle\Http\QueryString::__toString
-     */
     public function testAllowsFalsyQueryStringValues()
     {
         $query = QueryString::fromString('0');
@@ -232,37 +193,24 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame('0', (string) $query);
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString::fromString
-     */
     public function testFromStringIgnoresQuestionMark()
     {
         $query = QueryString::fromString('foo=baz&bar=boo');
         $this->assertEquals('foo=baz&bar=boo', (string) $query);
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString::fromString
-     */
     public function testConvertsPlusSymbolsToSpaces()
     {
         $query = QueryString::fromString('var=foo+bar');
         $this->assertEquals('foo bar', $query->get('var'));
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString::fromString
-     * @see https://github.com/guzzle/guzzle/issues/108
-     */
     public function testFromStringDoesntMangleZeroes()
     {
         $query = QueryString::fromString('var=0');
         $this->assertSame('0', $query->get('var'));
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString::__toString
-     */
     public function testAllowsZeroValues()
     {
         $query = new QueryString(array(
@@ -274,9 +222,6 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('foo=0&baz=0&bar=&boo=', (string) $query);
     }
 
-    /**
-     * @covers Guzzle\Http\QueryString::fromString
-     */
     public function testFromStringDoesntStripTrailingEquals()
     {
         $query = QueryString::fromString('data=mF0b3IiLCJUZWFtIERldiJdfX0=');

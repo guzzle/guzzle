@@ -48,6 +48,13 @@ The exception message for `Guzzle\Http\Exception\BadResponseException` no longer
 response information. You can, however, get access to the request and response object by calling `getRequest()` or
 `getResponse()` on the exception object.
 
+
+### Query parameter aggregation
+
+Multi-valued query parameters are no longer aggregated using a callback function. `Guzzle\Http\Query` now has a
+setAggregator() method that accepts a `Guzzle\Http\QueryAggregator\QueryAggregatorInterface` object. This object is
+responsible for handling the aggregation of multi-valued query string variables into a flattened hash.
+
 2.8 to 3.x
 ----------
 

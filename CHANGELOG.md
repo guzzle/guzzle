@@ -13,6 +13,9 @@ CHANGELOG
 * Various updates to classes to use ServiceDescriptionInterface type hints rather than ServiceDescription
 * Header values can now be normalized into distinct values when multiple headers are combined with a comma separated list
 * xmlEncoding can now be customized for the XML declaration of a XML service description operation
+* Guzzle\Http\QueryString now uses Guzzle\Http\QueryAggregator\QueryAggregatorInterface objects to add custom value
+  aggregation and no longer uses callbacks
+* The URL encoding implementation of Guzzle\Http\QueryString can now be customized
 * Bug fix: Filters were not always invoked for array service description parameters
 * Bug fix: Redirects now use a target response body rather than a temporary response body
 * Bug fix: The default exponential backoff BackoffPlugin was not giving when the request threshold was exceeded
