@@ -16,6 +16,7 @@ CHANGELOG
 * Bug fix: Filters were not always invoked for array service description parameters
 * Bug fix: Redirects now use a target response body rather than a temporary response body
 * Bug fix: The default exponential backoff BackoffPlugin was not giving when the request threshold was exceeded
+* Bug fix: Guzzle now takes the first found value when grabbing Cache-Control directives
 
 3.1.2 (2013-01-27)
 ------------------
