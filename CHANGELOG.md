@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-3.2.0 (2013-02-10)
+3.2.0 (2013-02-14)
 ------------------
 
 * CurlMulti is no longer reused globally. A new multi object is created per-client. This helps to isolate clients.
