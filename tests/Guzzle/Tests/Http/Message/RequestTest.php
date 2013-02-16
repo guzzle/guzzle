@@ -386,6 +386,11 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('michael', $this->request->getUsername());
         $this->assertEquals('123', $this->request->getPassword());
 
+        // Set an auth with blank password
+        $this->assertSame($this->request, $this->request->setAuth('michael', ''));
+        $this->assertEquals('michael', $this->request->getUsername());
+        $this->assertEquals('', $this->request->getPassword());
+
         // Remove the auth
         $this->request->setAuth(false);
         $this->assertEquals(null, $this->request->getUsername());
