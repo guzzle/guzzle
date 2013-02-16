@@ -410,7 +410,7 @@ class Request extends AbstractMessage implements RequestInterface
     public function setAuth($user, $password = '', $scheme = CURLAUTH_BASIC)
     {
         // If we got false or null, disable authentication
-        if (!$user || !$password) {
+        if (!$user) {
             $this->password = $this->username = null;
             $this->removeHeader('Authorization');
             $this->getCurlOptions()->remove(CURLOPT_HTTPAUTH);
