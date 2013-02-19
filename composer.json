@@ -56,7 +56,7 @@
     },
 
     "require-dev": {
-        "doctrine/common": "*",
+        "doctrine/cache": "*",
         "symfony/class-loader": "*",
         "monolog/monolog": "1.*",
         "zendframework/zend-cache": "2.0.*",
