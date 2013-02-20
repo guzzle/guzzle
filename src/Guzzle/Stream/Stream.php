@@ -42,7 +42,7 @@ class Stream implements StreamInterface
         ),
         'write' => array(
             'w' => true, 'w+' => true, 'rw' => true, 'r+' => true, 'x+' => true, 'c+' => true,
-            'w+b' => true, 'r+b' => true, 'x+b' => true, 'c+b' => true,
+            'wb' => true, 'w+b' => true, 'r+b' => true, 'x+b' => true, 'c+b' => true,
             'w+t' => true, 'r+t' => true, 'x+t' => true, 'c+t' => true
         )
     );
