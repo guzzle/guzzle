@@ -143,7 +143,7 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
 
         // Convert references to the actual client
         foreach ($this->builderConfig[$name]['params'] as &$v) {
-            if (is_string($v) && 0 === strpos($v, '{') && substr($v, -1) == '}') {
+            if (is_string($v) && substr($v, 0, 1) == '{' && substr($v, -1) == '}') {
                 $v = $this->get(trim(trim($v, '{}')));
             }
         }
