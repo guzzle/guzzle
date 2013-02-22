@@ -71,14 +71,14 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
             $header = $this->getName();
         }
 
-        if (!array_key_exists($header, $this->values)) {
+        if (!isset($this->values[$header])) {
             $this->values[$header] = array($value);
         } else {
             $this->values[$header][] = $value;
         }
 
         // Ensure that the array cache is cleared
-        $this->clearCache();
+        $this->arrayCache = $this->stringCache = null;
 
         return $this;
     }
@@ -128,7 +128,7 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
     public function normalize($explodeOnGlue = false)
     {
         $values = $this->toArray();
-        $this->clearCache();
+        $this->arrayCache = $this->stringCache = null;
 
         // Explode each value on glue if needed
         if ($this->glue && $explodeOnGlue) {
@@ -160,7 +160,7 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
      */
     public function hasExactHeader($header)
     {
-        return array_key_exists($header, $this->values);
+        return isset($this->values[$header]);
     }
 
     /**
@@ -197,7 +197,7 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
             foreach ($values as $index => $value) {
                 if ($value == $searchValue) {
                     unset($this->values[$key][$index]);
-                    $this->clearCache();
+                    $this->arrayCache = $this->stringCache = null;
                     break 2;
                 }
             }
@@ -251,14 +251,5 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
     public function getIterator()
     {
         return new \ArrayIterator($this->toArray());
-    }
-
-    /**
-     * Clear the internal header cache
-     */
-    private function clearCache()
-    {
-        $this->arrayCache = null;
-        $this->stringCache = null;
     }
 }
