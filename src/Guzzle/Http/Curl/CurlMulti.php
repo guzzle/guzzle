@@ -395,14 +395,18 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
 
         // Create the polling event external to the loop
         $event = array('curl_multi' => $this);
-        $active = $this->executeHandles();
+
+        // Initialize the handles with a very quick select timeout
+        $active = $mrc = null;
+        $this->executeHandles($active, $mrc, 0.001);
 
         while (1) {
 
             $this->processMessages();
 
             // Exit the function if there are no more requests to send
-            if (!($scopedPolling = $this->scope <= 0 ? $this->all() : $this->requests[$this->scope])) {
+            $scopedPolling = $this->scope <= 0 ? $this->all() : $this->requests[$this->scope];
+            if (!$scopedPolling) {
                 break;
             }
 
@@ -422,9 +426,9 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
                 // Sleep to prevent eating CPU because no requests are actually pending a select call
                 usleep(500);
             } else {
-                // Select the curl handles until there is any activity on any of the open file descriptors
-                // See https://github.com/php/php-src/blob/master/ext/curl/multi.c#L170
-                $active = $this->executeHandles(true, 0.02, $active);
+                do {
+                    $this->executeHandles($active, $mrc, 1);
+                } while ($active);
             }
         }
     }
@@ -449,31 +453,26 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     /**
      * Execute and select curl handles until there is activity
      *
-     * @param bool $select  Set to TRUE to select the file descriptors
-     * @param int  $timeout Select timeout in seconds
-     * @param int  $active  Previous active value
-     *
-     * @return int Returns the number of active handles
+     * @param int $active  Active value to update
+     * @param int $mrc     Multi result value to update
+     * @param int $timeout Select timeout in seconds
      */
-    private function executeHandles($select = false, $timeout = 1, $active = 0)
+    private function executeHandles(&$active, &$mrc, $timeout = 1)
     {
         do {
-            // @codeCoverageIgnoreStart
-            if ($select && $active && curl_multi_select($this->multiHandle, $timeout) == -1) {
-                // Perform a usleep if a previously executed select returned -1
-                // @see https://bugs.php.net/bug.php?id=61141
-                usleep(125);
-            }
-            // @codeCoverageIgnoreEnd
-            do {
-                $mrc = curl_multi_exec($this->multiHandle, $active);
-            } while ($mrc == CURLM_CALL_MULTI_PERFORM);
-            // Check the return value to ensure an error did not occur
-            $this->checkCurlResult($mrc);
-        // Poll once if not selecting, or poll until there are no handles with activity
-        } while ($select && $active);
+            $mrc = curl_multi_exec($this->multiHandle, $active);
+        } while ($mrc == CURLM_CALL_MULTI_PERFORM && $active);
+        $this->checkCurlResult($mrc);
 
-        return $active;
+        // @codeCoverageIgnoreStart
+        // Select the curl handles until there is any activity on any of the open file descriptors
+        // See https://github.com/php/php-src/blob/master/ext/curl/multi.c#L170
+        if ($active && $mrc == CURLM_OK && curl_multi_select($this->multiHandle, $timeout) == -1) {
+            // Perform a usleep if a previously executed select returned -1
+            // @see https://bugs.php.net/bug.php?id=61141
+            usleep(100);
+        }
+        // @codeCoverageIgnoreEnd
     }
 
     /**
