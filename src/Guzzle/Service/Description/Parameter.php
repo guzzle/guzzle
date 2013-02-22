@@ -11,6 +11,7 @@ class Parameter
 {
     protected $name;
     protected $description;
+    protected $serviceDescription;
     protected $type;
     protected $required;
     protected $enum;
@@ -34,6 +35,7 @@ class Parameter
     protected $parent;
     protected $ref;
     protected $format;
+    protected $propertiesCache = null;
 
     /**
      * Create a new Parameter using an associative array of data. The array can contain the following information:
@@ -112,6 +114,7 @@ class Parameter
             $this->{$key} = $value;
         }
 
+        $this->serviceDescription = $description;
         $this->required = (bool) $this->required;
         $this->data = (array) $this->data;
 
@@ -119,21 +122,8 @@ class Parameter
             $this->setFilters((array) $this->filters);
         }
 
-        if ($this->type == 'object') {
-            if ($this->properties) {
-                $this->properties = array();
-                foreach ($data['properties'] as $name => $property) {
-                    $property['name'] = $name;
-                    $this->addProperty(new static($property, $description));
-                }
-            }
-            if ($this->additionalProperties && is_array($this->additionalProperties)) {
-                $this->setAdditionalProperties(new static($this->additionalProperties, $description));
-            } elseif ($this->additionalProperties === null) {
-                $this->additionalProperties = true;
-            }
-        } elseif ($this->type == 'array' && $this->items) {
-            $this->setItems(new static($this->items, $description));
+        if ($this->type == 'object' && $this->additionalProperties === null) {
+            $this->additionalProperties = true;
         }
     }
 
@@ -160,19 +150,24 @@ class Parameter
             }
         }
 
-        foreach (array('default', 'additionalProperties', 'items') as $notNull) {
-            $value = $this->{$notNull};
-            if ($value !== null) {
-                if ($value instanceof self) {
-                    $value = $value->toArray();
-                }
-                $result[$notNull] = $value;
+        if ($this->default !== null) {
+            $result['default'] = $this->default;
+        }
+
+        if ($this->items !== null) {
+            $result['items'] = $this->getItems()->toArray();
+        }
+
+        if ($this->additionalProperties !== null) {
+            $result['additionalProperties'] = $this->getAdditionalProperties();
+            if ($result['additionalProperties'] instanceof self) {
+                $result['additionalProperties'] = $result['additionalProperties']->toArray();
             }
         }
 
         if ($this->type == 'object' && $this->properties) {
             $result['properties'] = array();
-            foreach ($this->properties as $name => $property) {
+            foreach ($this->getProperties() as $name => $property) {
                 $result['properties'][$name] = $property->toArray();
             }
         }
@@ -707,7 +702,14 @@ class Parameter
      */
     public function getProperties()
     {
-        return $this->properties;
+        if (!$this->propertiesCache) {
+            $this->propertiesCache = array();
+            foreach (array_keys($this->properties) as $name) {
+                $this->propertiesCache[$name] = $this->getProperty($name);
+            }
+        }
+
+        return $this->propertiesCache;
     }
 
     /**
@@ -719,7 +721,17 @@ class Parameter
      */
     public function getProperty($name)
     {
-        return isset($this->properties[$name]) ? $this->properties[$name] : null;
+        if (!isset($this->properties[$name])) {
+            return null;
+        }
+
+        if (!($this->properties[$name] instanceof self)) {
+            $this->properties[$name]['name'] = $name;
+            $this->properties[$name] = new static($this->properties[$name], $this->serviceDescription);
+            $this->properties[$name]->setParent($this);
+        }
+
+        return $this->properties[$name];
     }
 
     /**
@@ -732,6 +744,7 @@ class Parameter
     public function removeProperty($name)
     {
         unset($this->properties[$name]);
+        $this->propertiesCache = null;
 
         return $this;
     }
@@ -747,6 +760,7 @@ class Parameter
     {
         $this->properties[$property->getName()] = $property;
         $property->setParent($this);
+        $this->propertiesCache = null;
 
         return $this;
     }
@@ -758,6 +772,11 @@ class Parameter
      */
     public function getAdditionalProperties()
     {
+        if (is_array($this->additionalProperties)) {
+            $this->additionalProperties = new static($this->additionalProperties, $this->serviceDescription);
+            $this->additionalProperties->setParent($this);
+        }
+
         return $this->additionalProperties;
     }
 
@@ -771,9 +790,6 @@ class Parameter
     public function setAdditionalProperties($additional)
     {
         $this->additionalProperties = $additional;
-        if ($additional instanceof self) {
-            $additional->setParent($this);
-        }
 
         return $this;
     }
@@ -782,6 +798,8 @@ class Parameter
      * Set the items data of the parameter
      *
      * @param Parameter|null $items Items to set
+     *
+     * @return self
      */
     public function setItems(Parameter $items = null)
     {
@@ -799,6 +817,11 @@ class Parameter
      */
     public function getItems()
     {
+        if (is_array($this->items)) {
+            $this->items = new static($this->items, $this->serviceDescription);
+            $this->items->setParent($this);
+        }
+
         return $this->items;
     }
 
