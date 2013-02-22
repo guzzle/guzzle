@@ -60,7 +60,6 @@ class CurlHandle
             CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_RETURNTRANSFER => false,
             CURLOPT_HEADER         => false,
-            CURLOPT_USERAGENT      => (string) $request->getHeader('User-Agent'),
             CURLOPT_PORT           => $request->getPort(),
             CURLOPT_HTTPHEADER     => array(),
             CURLOPT_HEADERFUNCTION => array($mediator, 'receiveResponseHeader'),
@@ -143,18 +142,16 @@ class CurlHandle
             case 'DELETE':
             default:
                 $curlOptions[CURLOPT_CUSTOMREQUEST] = $method;
-                if ($bodyAsString) {
-                    // Remove the curl generated Content-Type header if none was set manually
-                    if (!$request->hasHeader('Content-Type')) {
-                        $curlOptions[CURLOPT_HTTPHEADER][] = 'Content-Type:';
-                    }
-                } else {
+                if (!$bodyAsString) {
                     $curlOptions[CURLOPT_UPLOAD] = true;
                     // Let cURL handle setting the Content-Length header
                     if ($tempContentLength = $request->getHeader('Content-Length')) {
                         $tempContentLength = (int) (string) $tempContentLength;
                         $curlOptions[CURLOPT_INFILESIZE] = $tempContentLength;
                     }
+                } elseif (!$request->hasHeader('Content-Type')) {
+                    // Remove the curl generated Content-Type header if none was set manually
+                    $curlOptions[CURLOPT_HTTPHEADER][] = 'Content-Type:';
                 }
         }
 
