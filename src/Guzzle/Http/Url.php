@@ -122,7 +122,11 @@ class Url
         $this->username = $username;
         $this->password = $password;
         $this->fragment = $fragment;
-        $this->setQuery($query ?: new QueryString());
+        if (!$query) {
+            $this->query = new QueryString();
+        } else {
+            $this->setQuery($query);
+        }
         $this->setPath($path);
     }
 
