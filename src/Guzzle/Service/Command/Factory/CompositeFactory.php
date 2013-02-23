@@ -3,7 +3,6 @@
 namespace Guzzle\Service\Command\Factory;
 
 use Guzzle\Service\Command\CommandInterface;
-use Guzzle\Service\Description\ServiceDescriptionInterface;
 use Guzzle\Service\ClientInterface;
 
 /**
@@ -25,16 +24,13 @@ class CompositeFactory implements \IteratorAggregate, \Countable, FactoryInterfa
      */
     public static function getDefaultChain(ClientInterface $client)
     {
-        $chain = new self();
-
-        $description = $client->getDescription();
-        if ($description instanceof ServiceDescriptionInterface) {
-            $chain->add(new ServiceDescriptionFactory($description));
+        $factories = array();
+        if ($description = $client->getDescription()) {
+            $factories[] = new ServiceDescriptionFactory($description);
         }
+        $factories[] = new ConcreteClassFactory($client);
 
-        $chain->add(new ConcreteClassFactory($client));
-
-        return $chain;
+        return new self($factories);
     }
 
     /**
