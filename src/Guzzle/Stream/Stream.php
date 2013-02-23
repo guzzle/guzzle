@@ -307,8 +307,6 @@ class Stream implements StreamInterface
     protected function rebuildCache()
     {
         $this->cache = stream_get_meta_data($this->stream);
-        $this->cache[self::STREAM_TYPE] = strtolower($this->cache[self::STREAM_TYPE]);
-        $this->cache[self::WRAPPER_TYPE] = strtolower($this->cache[self::WRAPPER_TYPE]);
         $this->cache[self::IS_LOCAL] = stream_is_local($this->stream);
         $this->cache[self::IS_READABLE] = isset(self::$readWriteHash['read'][$this->cache['mode']]);
         $this->cache[self::IS_WRITABLE] = isset(self::$readWriteHash['write'][$this->cache['mode']]);

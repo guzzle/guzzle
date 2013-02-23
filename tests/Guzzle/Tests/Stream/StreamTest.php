@@ -32,8 +32,8 @@ class StreamTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($stream->isWritable());
         $this->assertTrue($stream->isLocal());
         $this->assertTrue($stream->isSeekable());
-        $this->assertEquals('php', $stream->getWrapper());
-        $this->assertEquals('temp', $stream->getStreamType());
+        $this->assertEquals('PHP', $stream->getWrapper());
+        $this->assertEquals('TEMP', $stream->getStreamType());
         $this->assertEquals(4, $stream->getSize());
         $this->assertEquals('php://temp', $stream->getUri());
         $this->assertEquals(array(), $stream->getWrapperData());

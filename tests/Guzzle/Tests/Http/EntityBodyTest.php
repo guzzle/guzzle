@@ -28,8 +28,8 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $body = EntityBody::factory('data');
         $this->assertEquals('data', (string)$body);
         $this->assertEquals(4, $body->getContentLength());
-        $this->assertEquals('php', $body->getWrapper());
-        $this->assertEquals('temp', $body->getStreamType());
+        $this->assertEquals('PHP', $body->getWrapper());
+        $this->assertEquals('TEMP', $body->getStreamType());
 
         $handle = fopen(__DIR__ . '/../../../../phpunit.xml.dist', 'r');
         if (!$handle) {
@@ -51,11 +51,11 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
     public function testFactoryCreatesTempStreamByDefault()
     {
         $body = EntityBody::factory('');
-        $this->assertEquals('php', $body->getWrapper());
-        $this->assertEquals('temp', $body->getStreamType());
+        $this->assertEquals('PHP', $body->getWrapper());
+        $this->assertEquals('TEMP', $body->getStreamType());
         $body = EntityBody::factory();
-        $this->assertEquals('php', $body->getWrapper());
-        $this->assertEquals('temp', $body->getStreamType());
+        $this->assertEquals('PHP', $body->getWrapper());
+        $this->assertEquals('TEMP', $body->getStreamType());
     }
 
     /**
