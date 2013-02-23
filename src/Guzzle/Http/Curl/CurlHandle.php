@@ -184,7 +184,7 @@ class CurlHandle
         }
 
         // Set custom cURL options
-        foreach ($requestCurlOptions as $key => $value) {
+        foreach ($requestCurlOptions->getAll() as $key => $value) {
             if (is_numeric($key)) {
                 $curlOptions[$key] = $value;
             }
