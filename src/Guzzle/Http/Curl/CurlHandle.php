@@ -48,8 +48,8 @@ class CurlHandle
      */
     public static function factory(RequestInterface $request)
     {
-        $mediator = new RequestMediator($request);
         $requestCurlOptions = $request->getCurlOptions();
+        $mediator = new RequestMediator($request, $requestCurlOptions->get('emit_io'));
         $tempContentLength = null;
         $method = $request->getMethod();
         $bodyAsString = $requestCurlOptions->get(self::BODY_AS_STRING);

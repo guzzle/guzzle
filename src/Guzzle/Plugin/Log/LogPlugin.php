@@ -117,7 +117,7 @@ class LogPlugin implements EventSubscriberInterface
         if ($this->wireBodies) {
             $request = $event['request'];
             // Ensure that curl IO events are emitted
-            $request->getParams()->set('curl.emit_io', true);
+            $request->getCurlOptions()->set('emit_io', true);
             // We need to make special handling for content wiring and non-repeatable streams.
             if ($request instanceof EntityEnclosingRequestInterface && $request->getBody()
                 && (!$request->getBody()->isSeekable() || !$request->getBody()->isReadable())

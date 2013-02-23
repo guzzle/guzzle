@@ -26,11 +26,12 @@ class RequestMediator
 
     /**
      * @param RequestInterface $request Request to mediate
+     * @param bool             $emitIo  Set to true to dispatch events on input and output
      */
-    public function __construct(RequestInterface $request)
+    public function __construct(RequestInterface $request, $emitIo = false)
     {
         $this->request = $request;
-        $this->emitIo = $request->getParams()->get('curl.emit_io');
+        $this->emitIo = $emitIo;
     }
 
     /**

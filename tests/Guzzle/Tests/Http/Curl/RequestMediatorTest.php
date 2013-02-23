@@ -25,7 +25,7 @@ class RequestMediatorTest extends \Guzzle\Tests\GuzzleTestCase
         $request->setResponse(new Response(200));
 
         // Ensure that IO events are emitted
-        $request->getParams()->set('curl.emit_io', true);
+        $request->getCurlOptions()->set('emit_io', true);
 
         // Attach listeners for each event type
         $request->getEventDispatcher()->addListener('curl.callback.progress', array($this, 'event'));
