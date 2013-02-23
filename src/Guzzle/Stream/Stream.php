@@ -103,7 +103,7 @@ class Stream implements StreamInterface
         }
 
         $ctx = hash_init($algo);
-        while ($data = $stream->read(1024)) {
+        while ($data = $stream->read(8192)) {
             hash_update($ctx, $data);
         }
 
