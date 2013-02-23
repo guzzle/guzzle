@@ -85,8 +85,10 @@ class EntityBody extends Stream implements EntityBodyInterface
     public static function fromString($string)
     {
         $stream = fopen('php://temp', 'r+');
-        fwrite($stream, $string);
-        rewind($stream);
+        if ($string !== '') {
+            fwrite($stream, $string);
+            rewind($stream);
+        }
 
         return new static($stream);
     }
