@@ -148,6 +148,8 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Service\Client::getCommand
+     * @covers Guzzle\Service\Client::getCommandFactory
+     * @covers Guzzle\Service\Client::setCommandFactory
      */
     public function testCreatesCommandsUsingCommandFactory()
     {
@@ -162,10 +164,9 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
         $client->setCommandFactory($mock);
 
-        $command = $client->getCommand('foo', array(
-            'acl' => '123'
-        ));
-
+        $command = $client->getCommand('foo', array('acl' => '123'));
+        $this->assertSame($mockCommand, $command);
+        $command = $client->getCommand('foo', array('acl' => '123'));
         $this->assertSame($mockCommand, $command);
         $this->assertSame($client, $command->getClient());
     }
@@ -219,26 +220,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(new Response(200))));
         $result = $client->mockCommand();
         $this->assertInstanceOf('Guzzle\Http\Message\Response', $result);
-    }
-
-    /**
-     * @covers Guzzle\Service\Client::getCommandFactory
-     * @covers Guzzle\Service\Client::setCommandFactory
-     */
-    public function testOwnsCommandFactory()
-    {
-        $client = new Mock\MockClient();
-        $method = new \ReflectionMethod($client, 'getCommandFactory');
-        $method->setAccessible(TRUE);
-        $cf1 = $method->invoke($client);
-
-        $cf = $this->readAttribute($client, 'commandFactory');
-        $this->assertInstanceOf('Guzzle\\Service\\Command\\Factory\\CompositeFactory', $cf);
-        $this->assertSame($method->invoke($client), $cf1);
-
-        $mock = $this->getMock('Guzzle\\Service\\Command\\Factory\\CompositeFactory');
-        $client->setCommandFactory($mock);
-        $this->assertSame($mock, $this->readAttribute($client, 'commandFactory'));
     }
 
     /**
