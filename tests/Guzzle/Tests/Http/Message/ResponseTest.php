@@ -3,9 +3,9 @@
 namespace Guzzle\Tests\Message;
 
 use Guzzle\Common\Collection;
+use Guzzle\Http\ClientInterface;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\HttpException;
-use Guzzle\Http\Utils;
 use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\Message\Response;
 
@@ -342,7 +342,7 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $this->response->removeHeader('Date');
         $this->assertNull($this->response->getAge());
 
-        $this->response->setHeader('Date', Utils::getHttpDate(strtotime('-1 minute')));
+        $this->response->setHeader('Date', gmdate(ClientInterface::HTTP_DATE, strtotime('-1 minute')));
         // If the test runs slowly, still pass with a +5 second allowance
         $this->assertTrue($this->response->getAge() - 60 <= 5);
         $this->assertNull($this->response->getAge(true));
@@ -715,17 +715,17 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         // Uses the response's max-age
         $this->assertEquals(120, $this->getResponse(200, array(
             'Cache-Control' => 'max-age=120',
-            'Expires' => Utils::getHttpDate('+1 day')
+            'Expires' => gmdate(ClientInterface::HTTP_DATE, strtotime('+1 day'))
         ))->getMaxAge());
 
         // Uses the Expires date
         $this->assertGreaterThanOrEqual(82400, $this->getResponse(200, array(
-            'Expires' => Utils::getHttpDate('+1 day')
+            'Expires' => gmdate(ClientInterface::HTTP_DATE, strtotime('+1 day'))
         ))->getMaxAge());
 
         // Uses the Expires date
         $this->assertGreaterThanOrEqual(82400, $this->getResponse(200, array(
-            'Expires' => Utils::getHttpDate('+1 day')
+            'Expires' => gmdate(ClientInterface::HTTP_DATE, strtotime('+1 day'))
         ))->getMaxAge());
     }
 

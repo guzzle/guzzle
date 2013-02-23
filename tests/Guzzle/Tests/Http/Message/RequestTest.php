@@ -6,7 +6,6 @@ use Guzzle\Common\Collection;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;
 use Guzzle\Http\Client;
-use Guzzle\Http\Utils;
 use Guzzle\Plugin\Async\AsyncPlugin;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Request;
@@ -123,7 +122,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $message = "PUT /path?q=1&v=2 HTTP/1.1\r\n"
             . "Host: www.google.com\r\n"
             . "Authorization: Basic {$auth}\r\n"
-            . "User-Agent: " . Utils::getDefaultUserAgent() . "\r\n"
             . "Content-Length: 4\r\n\r\nData";
 
         $request = RequestFactory::getInstance()->create('PUT', 'http://www.google.com/path?q=1&v=2', array(
@@ -694,7 +692,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $messages = $this->getServer()->getReceivedRequests(false);
         $port = $this->getServer()->getPort();
 
-        $userAgent = Utils::getDefaultUserAgent();
+        $userAgent = $this->client->getDefaultUserAgent();
 
         $this->assertEquals('127.0.0.1:' . $port, $requests[0]->getHeader('Host'));
         $this->assertEquals('127.0.0.1:' . $port, $requests[1]->getHeader('Host'));

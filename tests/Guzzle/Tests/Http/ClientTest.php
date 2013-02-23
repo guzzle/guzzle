@@ -10,7 +10,7 @@ use Guzzle\Plugin\Log\LogPlugin;
 use Guzzle\Plugin\Mock\MockPlugin;
 use Guzzle\Http\Curl\CurlMulti;
 use Guzzle\Http\Client;
-use Guzzle\Http\Utils;
+use Guzzle\Common\Version;
 
 /**
  * @group server
@@ -146,30 +146,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('http://www.bar.123/', $client->getBaseUrl());
         $client->setBaseUrl('http://www.google.com/');
         $this->assertEquals('http://www.google.com/', $client->getBaseUrl());
-    }
-
-    /**
-     * @covers Guzzle\Http\Client::setUserAgent
-     * @covers Guzzle\Http\Client::createRequest
-     * @covers Guzzle\Http\Client::prepareRequest
-     */
-    public function testSetsUserAgent()
-    {
-        $client = new Client('http://www.test.com/', array(
-            'api' => 'v1'
-        ));
-
-        // Set the user agent string and include the default user agent appended
-        $this->assertSame($client, $client->setUserAgent('Test/1.0Ab', true));
-        $this->assertEquals('Test/1.0Ab ' . Utils::getDefaultUserAgent(), $client->get()->getHeader('User-Agent'));
-
-        // Set the user agent string without the default appended
-        $client->setUserAgent('Test/1.0Ab');
-        $this->assertEquals('Test/1.0Ab', $client->get()->getHeader('User-Agent'));
-
-        // Set default headers and make sure the user agent string is still set
-        $client->setDefaultHeaders(array());
-        $this->assertEquals('Test/1.0Ab', $client->get()->getHeader('User-Agent'));
     }
 
     /**
@@ -683,5 +659,21 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client1 = new Client();
         $client2 = new Client();
         $this->assertNotSame($client1->getCurlMulti(), $client2->getCurlMulti());
+    }
+
+    /**
+     * @covers Guzzle\Http\Client::getDefaultUserAgent
+     * @covers Guzzle\Http\Client::setUserAgent
+     */
+    public function testGetDefaultUserAgent()
+    {
+        $client = new Client();
+        $agent = $this->readAttribute($client, 'userAgent');
+        $version = curl_version();
+        $testAgent = sprintf('Guzzle/%s curl/%s PHP/%s', Version::VERSION, $version['version'], PHP_VERSION);
+        $this->assertEquals($agent, $testAgent);
+
+        $client->setUserAgent('foo');
+        $this->assertEquals('foo', $this->readAttribute($client, 'userAgent'));
     }
 }

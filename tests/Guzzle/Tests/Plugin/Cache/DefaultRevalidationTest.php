@@ -3,11 +3,11 @@
 namespace Guzzle\Tests\Plugin\Cache;
 
 use Guzzle\Http\Client;
+use Guzzle\Http\ClientInterface;
 use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
-use Guzzle\Http\Utils;
 use Guzzle\Plugin\Cache\CachePlugin;
 use Guzzle\Cache\DoctrineCacheAdapter;
 use Guzzle\Plugin\Cache\CallbackCacheKeyProvider;
@@ -20,6 +20,11 @@ use Guzzle\Plugin\Cache\DefaultCacheStorage;
  */
 class DefaultRevalidationTest extends \Guzzle\Tests\GuzzleTestCase
 {
+    protected function getHttpDate($time)
+    {
+        return gmdate(ClientInterface::HTTP_DATE, strtotime($time));
+    }
+
     /**
      * Data provider to test cache revalidation
      *
@@ -32,22 +37,22 @@ class DefaultRevalidationTest extends \Guzzle\Tests\GuzzleTestCase
             array(
                 true,
                 "Pragma: no-cache\r\n\r\n",
-                "HTTP/1.1 200 OK\r\nDate: " . Utils::getHttpDate('-100 hours') . "\r\nContent-Length: 4\r\n\r\nData",
+                "HTTP/1.1 200 OK\r\nDate: " . $this->getHttpDate('-100 hours') . "\r\nContent-Length: 4\r\n\r\nData",
                 "HTTP/1.1 304 NOT MODIFIED\r\nCache-Control: max-age=2000000\r\nContent-Length: 0\r\n\r\n",
             ),
             // Forces revalidation that overwrites what is in cache
             array(
                 false,
                 "\r\n\r\n",
-                "HTTP/1.1 200 OK\r\nCache-Control: must-revalidate, no-cache\r\nDate: " . Utils::getHttpDate('-10 hours') . "\r\nContent-Length: 4\r\n\r\nData",
+                "HTTP/1.1 200 OK\r\nCache-Control: must-revalidate, no-cache\r\nDate: " . $this->getHttpDate('-10 hours') . "\r\nContent-Length: 4\r\n\r\nData",
                 "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nDatas",
-                "HTTP/1.1 200 OK\r\nContent-Length: 5\r\nDate: " . Utils::getHttpDate('now') . "\r\n\r\nDatas"
+                "HTTP/1.1 200 OK\r\nContent-Length: 5\r\nDate: " . $this->getHttpDate('now') . "\r\n\r\nDatas"
             ),
             // Must get a fresh copy because the request is declining revalidation
             array(
                 false,
                 "\r\n\r\n",
-                "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\nDate: " . Utils::getHttpDate('-3 hours') . "\r\nContent-Length: 4\r\n\r\nData",
+                "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\nDate: " . $this->getHttpDate('-3 hours') . "\r\nContent-Length: 4\r\n\r\nData",
                 null,
                 null,
                 'never'
@@ -56,7 +61,7 @@ class DefaultRevalidationTest extends \Guzzle\Tests\GuzzleTestCase
             array(
                 true,
                 "\r\n\r\n",
-                "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\nDate: " . Utils::getHttpDate('-3 hours') . "\r\nContent-Length: 4\r\n\r\nData",
+                "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\nDate: " . $this->getHttpDate('-3 hours') . "\r\nContent-Length: 4\r\n\r\nData",
                 null,
                 null,
                 'skip'
@@ -65,14 +70,14 @@ class DefaultRevalidationTest extends \Guzzle\Tests\GuzzleTestCase
             array(
                 false,
                 "\r\n\r\n",
-                "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\nDate: " . Utils::getHttpDate('-3 hours') . "\r\n\r\nData",
+                "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\nDate: " . $this->getHttpDate('-3 hours') . "\r\n\r\nData",
                 "HTTP/1.1 500 INTERNAL SERVER ERROR\r\nContent-Length: 0\r\n\r\n"
             ),
             // ETag mismatch
             array(
                 false,
                 "\r\n\r\n",
-                "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\nETag: \"123\"\r\nDate: " . Utils::getHttpDate('-10 hours') . "\r\n\r\nData",
+                "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\nETag: \"123\"\r\nDate: " . $this->getHttpDate('-10 hours') . "\r\n\r\nData",
                 "HTTP/1.1 304 NOT MODIFIED\r\nETag: \"123456\"\r\n\r\n",
             ),
         );

@@ -6,6 +6,7 @@ use Guzzle\Common\Collection;
 use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Common\Exception\ExceptionCollection;
 use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Common\Version;
 use Guzzle\Parser\ParserRegistry;
 use Guzzle\Parser\UriTemplate\UriTemplateInterface;
 use Guzzle\Http\Message\RequestInterface;
@@ -14,6 +15,7 @@ use Guzzle\Http\Message\RequestFactoryInterface;
 use Guzzle\Http\Curl\CurlMultiInterface;
 use Guzzle\Http\Curl\CurlMulti;
 use Guzzle\Http\Curl\CurlHandle;
+use Guzzle\Http\Curl\CurlVersion;
 
 /**
  * HTTP client
@@ -90,10 +92,14 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         $this->setBaseUrl($baseUrl);
         $this->defaultHeaders = new Collection();
         $this->setRequestFactory(RequestFactory::getInstance());
+
         // Redirect by default, but allow for redirects to be globally disabled on a client
         if (!$this->config->get(self::DISABLE_REDIRECTS)) {
             $this->addSubscriber(new RedirectPlugin());
         }
+
+        // Set the default User-Agent on the client
+        $this->userAgent = $this->getDefaultUserAgent();
     }
 
     /**
@@ -287,14 +293,23 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * {@inheritdoc}
      */
-    public function setUserAgent($userAgent, $includeDefault = false)
+    public function setUserAgent($userAgent)
     {
-        if ($includeDefault) {
-            $userAgent .= ' ' . Utils::getDefaultUserAgent();
-        }
         $this->userAgent = $userAgent;
 
         return $this;
+    }
+
+    /**
+     * Get the default User-Agent string to use with Guzzle
+     *
+     * @return string
+     */
+    public function getDefaultUserAgent()
+    {
+        return 'Guzzle/' . Version::VERSION
+            . ' curl/' . CurlVersion::getInstance()->get('version')
+            . ' PHP/' . PHP_VERSION;
     }
 
     /**

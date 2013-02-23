@@ -19,6 +19,11 @@ interface ClientInterface extends HasDispatcherInterface
     const CREATE_REQUEST = 'client.create_request';
 
     /**
+     * @var string RFC 1123 HTTP-Date
+     */
+    const HTTP_DATE = 'D, d M Y H:i:s \G\M\T';
+
+    /**
      * Set the configuration object to use with the client
      *
      * @param array|Collection|string $config Parameters that define how the client behaves and connects to a
@@ -139,15 +144,13 @@ interface ClientInterface extends HasDispatcherInterface
     public function setBaseUrl($url);
 
     /**
-     * Set the name of your application and application version that will be
-     * appended to the User-Agent header of all requests.
+     * Set the User-Agent header to be used on all requests from the client
      *
-     * @param string $userAgent      User agent string
-     * @param bool   $includeDefault Set to TRUE to append the default Guzzle use agent
+     * @param string $userAgent User agent string
      *
      * @return ClientInterface
      */
-    public function setUserAgent($userAgent, $includeDefault = false);
+    public function setUserAgent($userAgent);
 
     /**
      * Create a GET request for the client

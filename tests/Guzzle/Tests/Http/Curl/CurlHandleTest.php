@@ -4,7 +4,6 @@ namespace Guzzle\Tests\Http\Curl;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\Event;
-use Guzzle\Http\Utils;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Client;
@@ -227,7 +226,8 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             'z' => 'a'
         ));
 
-        $userAgent = Utils::getDefaultUserAgent();
+        $client = new Client();
+        $userAgent = $client->getDefaultUserAgent();
         $auth = base64_encode('michael:123');
         $testFileSize = filesize($testFile);
 
@@ -287,8 +287,8 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_HTTPHEADER => array(
                     'Accept:',
                     'Host: localhost:8124',
-                    'x-test-data: Guzzle',
-                    'User-Agent: ' . $userAgent
+                    'User-Agent: ' . $userAgent,
+                    'x-test-data: Guzzle'
                 )
             ), array(
                 'Host'             => '*',
@@ -514,7 +514,8 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testFactoryCreatesCurlBasedOnRequest($method, $url, $headers, $body, $options, $expectedHeaders = null)
     {
-        $request = RequestFactory::getInstance()->create($method, $url, $headers, $body);
+        $client = new Client();
+        $request = $client->createRequest($method, $url, $headers, $body);
         $request->getCurlOptions()->set('debug', true);
 
         $originalRequest = clone $request;

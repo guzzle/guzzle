@@ -2,7 +2,6 @@
 
 namespace Guzzle\Tests\Http\Message;
 
-use Guzzle\Http\Utils;
 use Guzzle\Http\Client;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\Request;
@@ -17,6 +16,13 @@ use Guzzle\Http\QueryString;
  */
 class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
 {
+    protected $client;
+
+    public function setUp()
+    {
+        $this->client = new Client();
+    }
+
     /**
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::__construct
      */
@@ -48,10 +54,10 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testRequestIncludesBodyInMessage()
     {
+
         $request = RequestFactory::getInstance()->create('PUT', 'http://www.guzzle-project.com/', null, 'data');
         $this->assertEquals("PUT / HTTP/1.1\r\n"
             . "Host: www.guzzle-project.com\r\n"
-            . "User-Agent: " . Utils::getDefaultUserAgent() . "\r\n"
             . "Content-Length: 4\r\n\r\n"
             . "data", (string) $request);
     }
@@ -66,7 +72,6 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         ));
         $this->assertEquals("POST / HTTP/1.1\r\n"
             . "Host: www.guzzle-project.com\r\n"
-            . "User-Agent: " . Utils::getDefaultUserAgent() . "\r\n"
             . "Content-Type: application/x-www-form-urlencoded\r\n\r\n"
             . "foo=bar", (string) $request);
 
@@ -75,7 +80,6 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         ));
         $this->assertEquals("POST / HTTP/1.1\r\n"
             . "Host: www.guzzle-project.com\r\n"
-            . "User-Agent: " . Utils::getDefaultUserAgent() . "\r\n"
             . "Content-Type: multipart/form-data\r\n"
             . "Expect: 100-Continue\r\n\r\n", (string) $request);
     }
@@ -91,7 +95,6 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         ));
         $this->assertEquals("POST / HTTP/1.1\r\n"
             . "Host: www.guzzle-project.com\r\n"
-            . "User-Agent: " . Utils::getDefaultUserAgent() . "\r\n"
             . "Content-Type: application/x-www-form-urlencoded\r\n\r\n"
             . "data=123", (string) $request);
     }

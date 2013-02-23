@@ -6,7 +6,6 @@ use Guzzle\Common\Event;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Common\Exception\InvalidArgumentException;
-use Guzzle\Http\Utils;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\ClientInterface;
@@ -134,10 +133,6 @@ class Request extends AbstractMessage implements RequestInterface
                     }
                 }
             }
-        }
-
-        if (!$this->hasHeader('User-Agent', true)) {
-            $this->setHeader('User-Agent', Utils::getDefaultUserAgent());
         }
 
         $this->setState(self::STATE_NEW);
