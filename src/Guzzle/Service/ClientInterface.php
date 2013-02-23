@@ -6,6 +6,7 @@ use Guzzle\Common\FromConfigInterface;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Inflection\InflectorInterface;
 use Guzzle\Http\ClientInterface as HttpClientInterface;
+use Guzzle\Service\Exception\CommandTransferException;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Description\ServiceDescriptionInterface;
 use Guzzle\Service\Command\Factory\FactoryInterface as CommandFactoryInterface;
@@ -18,8 +19,8 @@ use Guzzle\Service\Resource\ResourceIteratorFactoryInterface;
 interface ClientInterface extends HttpClientInterface, FromConfigInterface
 {
     /**
-     * Get a command by name.  First, the client will see if it has a service description and if the service description
-     * defines a command by the supplied name.  If no dynamic command is found, the client will look for a concrete
+     * Get a command by name. First, the client will see if it has a service description and if the service description
+     * defines a command by the supplied name. If no dynamic command is found, the client will look for a concrete
      * command class exists matching the name supplied. If neither are found, an InvalidArgumentException is thrown.
      *
      * @param string $name Name of the command to retrieve
@@ -37,18 +38,18 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
      *
      * @return mixed Returns the result of the executed command or an array of commands if executing multiple commands
      * @throws InvalidArgumentException if an invalid command is passed
+     * @throws CommandTransferException if an exception is encountered when transferring multiple commands
      */
     public function execute($command);
 
     /**
      * Set the service description of the client
      *
-     * @param ServiceDescriptionInterface $service       Service description
-     * @param bool                        $updateFactory Set to false to not update the service description based
-     *                                                   command factory if it is not already on the client.
+     * @param ServiceDescriptionInterface $service Service description
+     *
      * @return ClientInterface
      */
-    public function setDescription(ServiceDescriptionInterface $service, $updateFactory = true);
+    public function setDescription(ServiceDescriptionInterface $service);
 
     /**
      * Get the service description of the client

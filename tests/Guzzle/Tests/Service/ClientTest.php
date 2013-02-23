@@ -185,39 +185,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Client::setDescription
-     */
-    public function testSettingServiceDescriptionUpdatesFactories()
-    {
-        $client = new Mock\MockClient();
-        $factory = $this->getMockBuilder('Guzzle\\Service\\Command\\Factory\\MapFactory')
-            ->disableOriginalConstructor()
-            ->getMock();
-        $client->setCommandFactory($factory);
-
-        $description = $this->getMock('Guzzle\\Service\\Description\\ServiceDescription');
-        $client->setDescription($description);
-
-        $cf = $this->readAttribute($client, 'commandFactory');
-        $this->assertNotSame($factory, $cf);
-        $this->assertInstanceOf('Guzzle\\Service\\Command\\Factory\\CompositeFactory', $cf);
-
-        $array = $cf->getIterator()->getArrayCopy();
-        $this->assertSame($array[0], $factory);
-        $this->assertInstanceOf('Guzzle\\Service\\Command\\Factory\\ServiceDescriptionFactory', $array[1]);
-        $this->assertSame($description, $array[1]->getServiceDescription());
-
-        $description2 = $this->getMock('Guzzle\\Service\\Description\\ServiceDescription');
-        $client->setDescription($description2);
-
-        $cf = $this->readAttribute($client, 'commandFactory');
-        $array = $cf->getIterator()->getArrayCopy();
-        $this->assertSame($array[0], $factory);
-        $this->assertInstanceOf('Guzzle\\Service\\Command\\Factory\\ServiceDescriptionFactory', $array[1]);
-        $this->assertSame($description2, $array[1]->getServiceDescription());
-    }
-
-    /**
      * @covers Guzzle\Service\Client::__call
      * @expectedException BadMethodCallException
      */
