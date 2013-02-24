@@ -278,38 +278,35 @@ class Url
      */
     public function normalizePath()
     {
-        if ($this->path == '*') {
+        if (!$this->path || $this->path == '/' || $this->path == '*') {
             return $this;
         }
 
-        if ($this->path && $this->path != '/') {
+        // Replace // and /./ with /
+        $this->path = str_replace(array('/./', '//'), '/', $this->path);
 
-            // Replace // and /./ with /
-            $this->path = str_replace(array('/./', '//'), '/', $this->path);
+        // Remove trailing relative paths if possible
+        $segments = $this->getPathSegments();
+        $last = end($segments);
+        $trailingSlash = false;
+        if ($last === '') {
+            array_pop($segments);
+            $trailingSlash = true;
+        }
 
-            // Remove trailing relative paths if possible
-            $segments = $this->getPathSegments();
-            $last = end($segments);
-            $trailingSlash = false;
-            if ($last === '') {
+        while ($last == '..' || $last == '.') {
+            if ($last == '..') {
                 array_pop($segments);
-                $trailingSlash = true;
+                $last = array_pop($segments);
             }
+            if ($last == '.' || $last == '') {
+                $last = array_pop($segments);
+            }
+        }
 
-            while ($last == '..' || $last == '.') {
-                if ($last == '..') {
-                    array_pop($segments);
-                    $last = array_pop($segments);
-                }
-                if ($last == '.' || $last == '') {
-                    $last = array_pop($segments);
-                }
-            }
-
-            $this->path = implode('/', $segments);
-            if ($trailingSlash) {
-                $this->path .= '/';
-            }
+        $this->path = implode('/', $segments);
+        if ($trailingSlash) {
+            $this->path .= '/';
         }
 
         return $this;
@@ -513,7 +510,7 @@ class Url
                 $this->path = $buffer;
             }
             if (count($url->getQuery())) {
-                $this->query = clone $url->getQuery();
+                $this->query = $url->getQuery();
             }
         } else {
             // Append to the current path and query string
