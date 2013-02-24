@@ -258,10 +258,10 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         // If default headers are provided, then merge them into existing headers
         // If a collision occurs, the header is completely replaced
         if (count($this->defaultHeaders)) {
-            if ($headers instanceof Collection) {
+            if (is_array($headers)) {
+                $headers = array_merge($this->defaultHeaders->getAll(), $headers);
+            } elseif ($headers instanceof Collection) {
                 $headers = array_merge($this->defaultHeaders->getAll(), $headers->getAll());
-            } elseif (is_array($headers)) {
-                 $headers = array_merge($this->defaultHeaders->getAll(), $headers);
             } else {
                 $headers = $this->defaultHeaders;
             }
