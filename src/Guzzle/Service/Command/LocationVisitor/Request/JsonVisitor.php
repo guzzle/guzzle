@@ -49,7 +49,11 @@ class JsonVisitor extends AbstractRequestVisitor
      */
     public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
-        $json = isset($this->data[$command]) ? $this->data[$command] : array();
+        if (isset($this->data[$command])) {
+            $json = $this->data[$command];
+        } else {
+            $json = array();
+        }
         $json[$param->getWireName()] = $this->prepareValue($value, $param);
         $this->data[$command] = $json;
     }
@@ -60,9 +64,8 @@ class JsonVisitor extends AbstractRequestVisitor
     public function after(CommandInterface $command, RequestInterface $request)
     {
         if (isset($this->data[$command])) {
-            $json = $this->data[$command];
+            $request->setBody(json_encode($this->data[$command]));
             unset($this->data[$command]);
-            $request->setBody(json_encode($json));
             // Don't overwrite the Content-Type if one is set
             if ($this->jsonContentType && !$request->hasHeader('Content-Type')) {
                 $request->setHeader('Content-Type', $this->jsonContentType);
