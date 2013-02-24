@@ -458,7 +458,10 @@ class CurlHandle
                 // Convert constants represented as string to constant int values
                 $key = constant($key);
             }
-            $curlOptions[$key] = is_string($value) && defined($value) ? constant($value) : $value;
+            if (is_string($value) && defined($value)) {
+                $value = constant($value);
+            }
+            $curlOptions[$key] = $value;
         }
 
         return $curlOptions;

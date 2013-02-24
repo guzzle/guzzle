@@ -441,7 +441,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 
         // Add any curl options to the request
         if ($options = $this->config->get(self::CURL_OPTIONS)) {
-            $request->getCurlOptions()->merge(CurlHandle::parseCurlConfig($options));
+            $request->getCurlOptions()->replace(CurlHandle::parseCurlConfig($options));
         }
 
         // Add request parameters to the request

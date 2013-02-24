@@ -282,7 +282,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
 
             // Add any curl options to the request
             if ($options = $this->get(Client::CURL_OPTIONS)) {
-                $this->request->getCurlOptions()->merge(CurlHandle::parseCurlConfig($options));
+                $this->request->getCurlOptions()->replace(CurlHandle::parseCurlConfig($options));
             }
 
             // Set a custom response body
