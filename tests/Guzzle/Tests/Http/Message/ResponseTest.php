@@ -832,7 +832,7 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $response = new Response(200, array(), '{"foo": "bar"}');
         $this->assertEquals(array('foo' => 'bar'), $response->json());
-        // Always return an array from the json method
+        // Return array when null is a service response
         $response = new Response(200);
         $this->assertEquals(array(), $response->json());
     }

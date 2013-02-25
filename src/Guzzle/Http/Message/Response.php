@@ -911,7 +911,7 @@ class Response extends AbstractMessage
     /**
      * Parse the JSON response body and return an array
      *
-     * @return array
+     * @return array|string|int|bool|float
      * @throws RuntimeException if the response body is not in JSON format
      */
     public function json()
@@ -921,7 +921,7 @@ class Response extends AbstractMessage
             throw new RuntimeException('Unable to parse response body into JSON: ' . json_last_error());
         }
 
-        return $data ?: array();
+        return $data === null ? array() : $data;
     }
 
     /**
