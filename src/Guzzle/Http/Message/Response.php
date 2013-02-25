@@ -845,7 +845,8 @@ class Response extends AbstractMessage
     /**
      * Check if the response is considered fresh.
      *
-     * A response is considered fresh when its age is less than the freshness lifetime (maximum age) of the response.
+     * A response is considered fresh when its age is less than or equal to the freshness lifetime (maximum age) of the
+     * response.
      *
      * @return bool|null
      */
@@ -853,7 +854,7 @@ class Response extends AbstractMessage
     {
         $fresh = $this->getFreshness();
 
-        return $fresh === null ? null : $this->getFreshness() > 0;
+        return $fresh === null ? null : $this->getFreshness() >= 0;
     }
 
     /**
