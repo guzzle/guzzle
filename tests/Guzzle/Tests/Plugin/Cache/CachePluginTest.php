@@ -3,6 +3,7 @@
 namespace Guzzle\Tests\Plugin\Cache;
 
 use Guzzle\Common\Event;
+use Guzzle\Common\Version;
 use Guzzle\Cache\DoctrineCacheAdapter;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
@@ -198,6 +199,8 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($response[2], $request->getResponse()->getBody(true));
         $this->assertContains('key=', (string) $request->getResponse()->getHeader('X-Guzzle-Cache'));
         $this->assertTrue($request->getResponse()->hasHeader('Age'));
+        $this->assertSame(sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION), $request->getHeader('Via', true));
+        $this->assertSame(sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION), $request->getResponse()->getHeader('Via', true));
         $this->assertTrue($request->getParams()->get('cache.lookup'));
         $this->assertTrue($request->getParams()->get('cache.hit'));
 

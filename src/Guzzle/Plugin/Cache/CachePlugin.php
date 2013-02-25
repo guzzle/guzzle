@@ -5,6 +5,7 @@ namespace Guzzle\Plugin\Cache;
 use Guzzle\Cache\CacheAdapterInterface;
 use Guzzle\Common\Event;
 use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Common\Version;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Cache\DoctrineCacheAdapter;
@@ -149,6 +150,9 @@ class CachePlugin implements EventSubscriberInterface
     public function onRequestBeforeSend(Event $event)
     {
         $request = $event['request'];
+
+        $request->addHeader('Via', sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION));
+
         if (!$this->canCache->canCacheRequest($request)) {
             return;
         }
@@ -196,6 +200,8 @@ class CachePlugin implements EventSubscriberInterface
                 );
             }
         }
+
+        $response->addHeader('Via', sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION));
 
         if ($this->debugHeaders) {
             if ($request->getParams()->get('cache.lookup') === true) {
