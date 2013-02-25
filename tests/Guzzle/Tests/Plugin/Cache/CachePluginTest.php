@@ -81,15 +81,18 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $can = $this->getMockBuilder('Guzzle\Plugin\Cache\CanCacheStrategyInterface')->getMockForAbstractClass();
         $revalidate = $this->getMockBuilder('Guzzle\Plugin\Cache\RevalidationInterface')->getMockForAbstractClass();
         $key = $this->getMockBuilder('Guzzle\Plugin\Cache\CacheKeyProviderInterface')->getMockForAbstractClass();
+        $debugHeaders = false;
         $plugin = new CachePlugin(array(
             'storage' => $this->getMockBuilder('Guzzle\Plugin\Cache\CacheStorageInterface')->getMockForAbstractClass(),
             'can_cache'    => $can,
             'revalidation' => $revalidate,
-            'key_provider' => $key
+            'key_provider' => $key,
+            'debug_headers' => $debugHeaders,
         ));
         $this->assertSame($key, $this->readAttribute($plugin, 'keyProvider'));
         $this->assertSame($can, $this->readAttribute($plugin, 'canCache'));
         $this->assertSame($revalidate, $this->readAttribute($plugin, 'revalidation'));
+        $this->assertSame($debugHeaders, $this->readAttribute($plugin, 'debugHeaders'));
     }
 
     public function satisfyProvider()
@@ -161,21 +164,52 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         )));
     }
 
-    public function testInjectsSatisfiableResponses()
+    public function satisfiableProvider()
+    {
+        return array(
+            // Adding debug headers
+            array(true, array(200, array(), 'foo')),
+            // Not adding debug headers
+            array(false, array(200, array(), 'foo')),
+        );
+    }
+
+    /**
+     * @dataProvider satisfiableProvider
+     */
+    public function testInjectsSatisfiableResponses($debugHeaders, $response)
     {
         $storage = $this->getMockBuilder('Guzzle\Plugin\Cache\CacheStorageInterface')
             ->setMethods(array('fetch'))
             ->getMockForAbstractClass();
-        $storage->expects($this->once())->method('fetch')->will($this->returnValue(array(200, array(), 'foo')));
-        $plugin = new CachePlugin(array('storage' => $storage));
+        $storage->expects($this->once())->method('fetch')->will($this->returnValue($response));
+        $plugin = new CachePlugin(array('storage' => $storage, 'debug_headers' => $debugHeaders));
         $request = new Request('GET', 'http://foo.com');
         $plugin->onRequestBeforeSend(new Event(array(
             'request' => $request
         )));
-        $this->assertEquals(200, $request->getResponse()->getStatusCode());
-        $this->assertEquals('foo', $request->getResponse()->getBody(true));
+        $plugin->onRequestSent(
+            new Event(array(
+                'request' => $request,
+                'response' => $request->getResponse(),
+            ))
+        );
+        $this->assertEquals($response[0], $request->getResponse()->getStatusCode());
+        $this->assertEquals($response[2], $request->getResponse()->getBody(true));
         $this->assertContains('key=', (string) $request->getResponse()->getHeader('X-Guzzle-Cache'));
         $this->assertTrue($request->getResponse()->hasHeader('Age'));
+        $this->assertTrue($request->getParams()->get('cache.lookup'));
+        $this->assertTrue($request->getParams()->get('cache.hit'));
+
+        if (!$debugHeaders) {
+            $this->assertFalse($request->getResponse()->hasHeader('X-Cache-Lookup'));
+            $this->assertFalse($request->getResponse()->hasHeader('X-Cache'));
+        } else {
+            $this->assertTrue($request->getResponse()->hasHeader('X-Cache-Lookup'));
+            $this->assertTrue($request->getResponse()->hasHeader('X-Cache'));
+            $this->assertEquals('HIT from GuzzleCache', $request->getResponse()->getHeader('X-Cache-Lookup', true));
+            $this->assertEquals('HIT from GuzzleCache', $request->getResponse()->getHeader('X-Cache', true));
+        }
     }
 
     public function testCachesResponsesWhenCacheable()

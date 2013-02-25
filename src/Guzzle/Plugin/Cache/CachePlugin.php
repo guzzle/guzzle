@@ -46,6 +46,11 @@ class CachePlugin implements EventSubscriberInterface
     protected $storage;
 
     /**
+     * @var bool Whether to add debug headers to the response
+     */
+    protected $debugHeaders;
+
+    /**
      * Construct a new CachePlugin. Cache options include the following:
      *
      * - CacheKeyProviderInterface key_provider:  (optional) Cache key provider
@@ -55,6 +60,7 @@ class CachePlugin implements EventSubscriberInterface
      * - CanCacheInterface         can_cache:     (optional) Object used to determine if a request can be cached
      * - int                       default_ttl:   (optional) Default TTL to use when caching if no cache_storage was set
      *                                                       must set to 0 or it will assume the default of 3600 secs.
+     * - bool                      debug_headers: (optional) Add debug headers to the response (default true)
      *
      * @param array|CacheAdapterInterface|CacheStorageInterface $options Array of options for the cache plugin,
      *                                                                   cache adapter, or cache storage object.
@@ -115,6 +121,12 @@ class CachePlugin implements EventSubscriberInterface
             $this->revalidation = new DefaultRevalidation($this->keyProvider, $this->storage, $this);
         }
 
+        if (!isset($options['debug_headers'])) {
+            $this->debugHeaders = true;
+        } else {
+            $this->debugHeaders = (bool) $options['debug_headers'];
+        }
+
         $this->cached = new \SplObjectStorage();
     }
 
@@ -147,6 +159,7 @@ class CachePlugin implements EventSubscriberInterface
         // If the cached data was found, then make the request into a
         // manually set request
         if ($cachedData = $this->storage->fetch($hashKey)) {
+            $request->getParams()->set('cache.lookup', true);
             unset($this->cached[$request]);
             $response = new Response($cachedData[0], $cachedData[1], $cachedData[2]);
             $response->setHeader('Age', time() - strtotime($response->getDate() ?: 'now'));
@@ -156,6 +169,7 @@ class CachePlugin implements EventSubscriberInterface
 
             // Validate that the response satisfies the request
             if ($this->canResponseSatisfyRequest($request, $response)) {
+                $request->getParams()->set('cache.hit', true);
                 $request->setResponse($response);
             }
         }
@@ -180,6 +194,19 @@ class CachePlugin implements EventSubscriberInterface
                     $response,
                     $request->getParams()->get('cache.override_ttl') ?: $response->getMaxAge()
                 );
+            }
+        }
+
+        if ($this->debugHeaders) {
+            if ($request->getParams()->get('cache.lookup') === true) {
+                $response->addHeader('X-Cache-Lookup', 'HIT from GuzzleCache');
+            } else {
+                $response->addHeader('X-Cache-Lookup', 'MISS from GuzzleCache');
+            }
+            if ($request->getParams()->get('cache.hit') === true) {
+                $response->addHeader('X-Cache', 'HIT from GuzzleCache');
+            } else {
+                $response->addHeader('X-Cache', 'MISS from GuzzleCache');
             }
         }
     }
