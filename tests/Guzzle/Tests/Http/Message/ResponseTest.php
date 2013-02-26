@@ -759,6 +759,10 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(20, $response->getFreshness());
         $this->assertTrue($response->isFresh());
 
+        $response->setHeader('Age', 120);
+        $this->assertEquals(0, $response->getFreshness());
+        $this->assertTrue($response->isFresh());
+
         $response->setHeader('Age', 150);
         $this->assertEquals(-30, $response->getFreshness());
         $this->assertFalse($response->isFresh());
