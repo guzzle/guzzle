@@ -854,7 +854,7 @@ class Response extends AbstractMessage
     {
         $fresh = $this->getFreshness();
 
-        return $fresh === null ? null : $this->getFreshness() >= 0;
+        return $fresh === null ? null : $fresh >= 0;
     }
 
     /**
