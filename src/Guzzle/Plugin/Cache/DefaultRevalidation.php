@@ -116,7 +116,9 @@ class DefaultRevalidation implements RevalidationInterface
         // Store this response in cache if possible
         if ($validateResponse->canCache()) {
             $this->storage->cache(
-                $this->cacheKey->getCacheKey($request), $validateResponse, $validateResponse->getMaxAge()
+                $this->cacheKey->getCacheKey($request),
+                $validateResponse,
+                $request->getParams()->get('cache.override_ttl')
             );
         }
 
@@ -151,7 +153,11 @@ class DefaultRevalidation implements RevalidationInterface
         }
         // Store the updated response in cache
         if ($modified && $response->canCache()) {
-            $this->storage->cache($this->cacheKey->getCacheKey($request), $response, $response->getMaxAge());
+            $this->storage->cache(
+                $this->cacheKey->getCacheKey($request),
+                $response,
+                $request->getParams()->get('cache.override_ttl')
+            );
         }
 
         return true;
