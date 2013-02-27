@@ -164,15 +164,21 @@ class CachePlugin implements EventSubscriberInterface
         // manually set request
         if ($cachedData = $this->storage->fetch($hashKey)) {
             $request->getParams()->set('cache.lookup', true);
-            unset($this->cached[$request]);
             $response = new Response($cachedData[0], $cachedData[1], $cachedData[2]);
-            $response->setHeader('Age', time() - strtotime($response->getDate() ?: 'now'));
-            if (!$response->hasHeader('X-Guzzle-Cache')) {
-                $response->setHeader('X-Guzzle-Cache', "key={$hashKey}");
-            }
 
             // Validate that the response satisfies the request
             if ($this->canResponseSatisfyRequest($request, $response)) {
+                unset($this->cached[$request]);
+                $response->setHeader('Age', time() - strtotime($response->getDate() ? : 'now'));
+                if ($response->isFresh() === false) {
+                    $response->addHeader(
+                        'Warning',
+                        sprintf('110 GuzzleCache/%s "Response is stale"', Version::VERSION)
+                    );
+                }
+                if (!$response->hasHeader('X-Guzzle-Cache')) {
+                    $response->setHeader('X-Guzzle-Cache', "key={$hashKey}");
+                }
                 $request->getParams()->set('cache.hit', true);
                 $request->setResponse($response);
             }
@@ -193,11 +199,7 @@ class CachePlugin implements EventSubscriberInterface
             $cacheKey = $this->cached[$request];
             unset($this->cached[$request]);
             if ($this->canCache->canCacheResponse($response)) {
-                $this->storage->cache(
-                    $cacheKey,
-                    $response,
-                    $request->getParams()->get('cache.override_ttl') ?: $response->getMaxAge()
-                );
+                $this->storage->cache($cacheKey, $response, $request->getParams()->get('cache.override_ttl'));
             }
         }
 
