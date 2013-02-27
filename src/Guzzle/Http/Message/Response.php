@@ -555,9 +555,7 @@ class Response extends AbstractMessage
      */
     public function getEtag()
     {
-        $etag = $this->getHeader('ETag', true);
-
-        return $etag ? str_replace('"', '', $etag) : null;
+        return $this->getHeader('ETag', true);
     }
 
     /**
