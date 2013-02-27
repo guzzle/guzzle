@@ -167,11 +167,29 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
 
     public function satisfiableProvider()
     {
+        $date = new \DateTime('-10 seconds');
+
         return array(
-            // Adding debug headers
-            array(true, array(200, array(), 'foo')),
-            // Not adding debug headers
-            array(false, array(200, array(), 'foo')),
+            // Fresh response adding debug headers
+            array(
+                true,
+                array(200, array(), 'foo'),
+            ),
+            // Stale response adding debug headers
+            array(
+                true,
+                array(200, array('Date' => $date->format('D, d M Y H:i:s T'), 'Cache-Control' => 'max-age=5'), 'foo'),
+            ),
+            // Fresh response not adding debug headers
+            array(
+                false,
+                array(200, array(), 'foo'),
+            ),
+            // Stale response not adding debug headers
+            array(
+                false,
+                array(200, array('Date' => $date->format('D, d M Y H:i:s T'), 'Cache-Control' => 'max-age=5'), 'foo'),
+            ),
         );
     }
 
@@ -185,7 +203,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
             ->getMockForAbstractClass();
         $storage->expects($this->once())->method('fetch')->will($this->returnValue($response));
         $plugin = new CachePlugin(array('storage' => $storage, 'debug_headers' => $debugHeaders));
-        $request = new Request('GET', 'http://foo.com');
+        $request = new Request('GET', 'http://foo.com', array('Cache-Control' => 'max-stale'));
         $plugin->onRequestBeforeSend(new Event(array(
             'request' => $request
         )));
@@ -199,6 +217,9 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($response[2], $request->getResponse()->getBody(true));
         $this->assertContains('key=', (string) $request->getResponse()->getHeader('X-Guzzle-Cache'));
         $this->assertTrue($request->getResponse()->hasHeader('Age'));
+        if ($request->getResponse()->isFresh() === false) {
+            $this->assertContains('110', $request->getResponse()->getHeader('Warning', true));
+        }
         $this->assertSame(sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION), $request->getHeader('Via', true));
         $this->assertSame(sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION), $request->getResponse()->getHeader('Via', true));
         $this->assertTrue($request->getParams()->get('cache.lookup'));

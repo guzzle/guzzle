@@ -48,6 +48,8 @@ class DefaultCacheStorage implements CacheStorageInterface
             $ttl = $this->defaultTtl;
         }
 
+        $ttl += $response->getMaxAge();
+
         if ($ttl) {
             $response->setHeader('X-Guzzle-Cache', "key={$key}; ttl={$ttl}");
             // Remove excluded headers from the response  (see RFC 2616:13.5.1)
