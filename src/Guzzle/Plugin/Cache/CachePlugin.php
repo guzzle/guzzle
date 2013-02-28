@@ -9,6 +9,7 @@ use Guzzle\Common\Version;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Cache\DoctrineCacheAdapter;
+use Guzzle\Http\Exception\CurlException;
 use Doctrine\Common\Cache\ArrayCache;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -18,14 +19,12 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *
  * This is a simple implementation of RFC 2616 and should be considered a private transparent proxy cache, meaning
  * authorization and private data can be cached.
+ *
+ * It also implements RFC 5861's `stale-if-error` Cache-Control extension, allowing stale cache responses to be used
+ * when an error is encountered (such as a `500 Internal Server Error` or DNS failure).
  */
 class CachePlugin implements EventSubscriberInterface
 {
-    /**
-     * @var array SplObjectStorage of request cache keys to hold until a response is returned
-     */
-    private $cached;
-
     /**
      * @var CacheKeyProviderInterface Cache key provider
      */
@@ -127,8 +126,6 @@ class CachePlugin implements EventSubscriberInterface
         } else {
             $this->debugHeaders = (bool) $options['debug_headers'];
         }
-
-        $this->cached = new \SplObjectStorage();
     }
 
     /**
@@ -138,7 +135,9 @@ class CachePlugin implements EventSubscriberInterface
     {
         return array(
             'request.before_send' => array('onRequestBeforeSend', -255),
-            'request.sent'        => array('onRequestSent', 255)
+            'request.sent'        => array('onRequestSent', 255),
+            'request.error'       => array('onRequestError', 0),
+            'request.exception'   => array('onRequestException', 0),
         );
     }
 
@@ -158,27 +157,16 @@ class CachePlugin implements EventSubscriberInterface
         }
 
         $hashKey = $this->keyProvider->getCacheKey($request);
-        $this->cached[$request] = $hashKey;
 
         // If the cached data was found, then make the request into a
         // manually set request
         if ($cachedData = $this->storage->fetch($hashKey)) {
             $request->getParams()->set('cache.lookup', true);
             $response = new Response($cachedData[0], $cachedData[1], $cachedData[2]);
+            $response->setHeader('Age', time() - strtotime($response->getDate() ? : 'now'));
 
             // Validate that the response satisfies the request
             if ($this->canResponseSatisfyRequest($request, $response)) {
-                unset($this->cached[$request]);
-                $response->setHeader('Age', time() - strtotime($response->getDate() ? : 'now'));
-                if ($response->isFresh() === false) {
-                    $response->addHeader(
-                        'Warning',
-                        sprintf('110 GuzzleCache/%s "Response is stale"', Version::VERSION)
-                    );
-                }
-                if (!$response->hasHeader('X-Guzzle-Cache')) {
-                    $response->setHeader('X-Guzzle-Cache', "key={$hashKey}");
-                }
                 $request->getParams()->set('cache.hit', true);
                 $request->setResponse($response);
             }
@@ -195,27 +183,83 @@ class CachePlugin implements EventSubscriberInterface
         $request = $event['request'];
         $response = $event['response'];
 
-        if (isset($this->cached[$request])) {
-            $cacheKey = $this->cached[$request];
-            unset($this->cached[$request]);
-            if ($this->canCache->canCacheResponse($response)) {
-                $this->storage->cache($cacheKey, $response, $request->getParams()->get('cache.override_ttl'));
-            }
+        $cacheKey = $this->keyProvider->getCacheKey($request);
+
+        if ($request->getParams()->get('cache.hit') === null &&
+            $this->canCache->canCacheRequest($request) &&
+            $this->canCache->canCacheResponse($response)
+        ) {
+            $this->storage->cache($cacheKey, $response, $request->getParams()->get('cache.override_ttl'));
         }
 
-        $response->addHeader('Via', sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION));
+        $this->addResponseHeaders($cacheKey, $request, $response);
+    }
 
-        if ($this->debugHeaders) {
-            if ($request->getParams()->get('cache.lookup') === true) {
-                $response->addHeader('X-Cache-Lookup', 'HIT from GuzzleCache');
-            } else {
-                $response->addHeader('X-Cache-Lookup', 'MISS from GuzzleCache');
+    /**
+     * If possible, return a cache response on an error
+     *
+     * @param Event $event
+     */
+    public function onRequestError(Event $event)
+    {
+        $request = $event['request'];
+
+        if (!$this->canCache->canCacheRequest($request)) {
+            return;
+        }
+
+        $cacheKey = $this->keyProvider->getCacheKey($request);
+
+        if ($cachedData = $this->storage->fetch($cacheKey)) {
+            $response = new Response($cachedData[0], $cachedData[1], $cachedData[2]);
+            $response->setRequest($request);
+
+            $response->setHeader('Age', time() - strtotime($response->getDate() ? : 'now'));
+
+            if (!$this->canResponseSatisfyFailedRequest($request, $response)) {
+                return;
             }
-            if ($request->getParams()->get('cache.hit') === true) {
-                $response->addHeader('X-Cache', 'HIT from GuzzleCache');
-            } else {
-                $response->addHeader('X-Cache', 'MISS from GuzzleCache');
+
+            $request->getParams()->set('cache.hit', 'error');
+            $this->addResponseHeaders($cacheKey, $request, $response);
+
+            $event['response'] = $response;
+            $event->stopPropagation();
+        }
+    }
+
+    /**
+     * If possible, set a cache response on a cURL exception
+     *
+     * @param Event $event
+     */
+    public function onRequestException(Event $event)
+    {
+        if (!$event['exception'] instanceof CurlException) {
+            return;
+        }
+
+        $request = $event['request'];
+
+        if (!$this->canCache->canCacheRequest($request)) {
+            return;
+        }
+
+        $cacheKey = $this->keyProvider->getCacheKey($request);
+
+        if ($cachedData = $this->storage->fetch($cacheKey)) {
+            $response = new Response($cachedData[0], $cachedData[1], $cachedData[2]);
+
+            $response->setHeader('Age', time() - strtotime($response->getDate() ? : 'now'));
+
+            if (!$this->canResponseSatisfyFailedRequest($request, $response)) {
+                return;
             }
+
+            $request->getParams()->set('cache.hit', 'error');
+
+            $request->setResponse($response);
+            $event->stopPropagation();
         }
     }
 
@@ -279,5 +323,80 @@ class CachePlugin implements EventSubscriberInterface
         }
 
         return true;
+    }
+
+    /**
+     * Check if a cache response satisfies a failed request's caching constraints
+     *
+     * @param RequestInterface $request  Request to validate
+     * @param Response         $response Response to validate
+     *
+     * @return bool
+     */
+    public function canResponseSatisfyFailedRequest(RequestInterface $request, Response $response)
+    {
+        $requestStaleIfError = $request->getCacheControlDirective('stale-if-error');
+        $responseStaleIfError = $response->getCacheControlDirective('stale-if-error');
+
+        if (!$requestStaleIfError && !$responseStaleIfError) {
+            return false;
+        }
+
+        if ($requestStaleIfError !== true &&
+            $requestStaleIfError !== null &&
+            $response->getAge() - $response->getMaxAge() > $requestStaleIfError
+        ) {
+            return false;
+        }
+
+        if ($responseStaleIfError !== true &&
+            $responseStaleIfError !== null &&
+            $response->getAge() - $response->getMaxAge() > $responseStaleIfError
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Add the plugin's headers to a response
+     *
+     * @param string           $cacheKey Cache key
+     * @param RequestInterface $request  Request
+     * @param Response         $response Response to add headers to
+     */
+    protected function addResponseHeaders($cacheKey, RequestInterface $request, Response $response)
+    {
+        if (!$response->hasHeader('X-Guzzle-Cache')) {
+            $response->setHeader('X-Guzzle-Cache', "key={$cacheKey}");
+        }
+
+        $response->addHeader('Via', sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION));
+
+        if ($this->debugHeaders) {
+            if ($request->getParams()->get('cache.lookup') === true) {
+                $response->addHeader('X-Cache-Lookup', 'HIT from GuzzleCache');
+            } else {
+                $response->addHeader('X-Cache-Lookup', 'MISS from GuzzleCache');
+            }
+            if ($request->getParams()->get('cache.hit') === true) {
+                $response->addHeader('X-Cache', 'HIT from GuzzleCache');
+            } elseif ($request->getParams()->get('cache.hit') === 'error') {
+                $response->addHeader('X-Cache', 'HIT_ERROR from GuzzleCache');
+            } else {
+                $response->addHeader('X-Cache', 'MISS from GuzzleCache');
+            }
+        }
+
+        if ($response->isFresh() === false) {
+            $response->addHeader('Warning', sprintf('110 GuzzleCache/%s "Response is stale"', Version::VERSION));
+            if ($request->getParams()->get('cache.hit') === 'error') {
+                $response->addHeader(
+                    'Warning',
+                    sprintf('111 GuzzleCache/%s "Revalidation failed"', Version::VERSION)
+                );
+            }
+        }
     }
 }
