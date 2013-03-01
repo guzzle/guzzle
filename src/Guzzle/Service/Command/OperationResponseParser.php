@@ -98,24 +98,21 @@ class OperationResponseParser extends DefaultResponseParser
         CommandInterface $command,
         Response $response
     ) {
-        // Determine what visitors are associated with the model
         $foundVisitors = $result = array();
 
         foreach ($model->getProperties() as $schema) {
             if ($location = $schema->getLocation()) {
-                $foundVisitors[$location] = $this->factory->getResponseVisitor($location);
-                $foundVisitors[$location]->before($command, $result);
-            }
-        }
-
-        foreach ($model->getProperties() as $schema) {
-            /** @var $arg Parameter */
-            if ($location = $schema->getLocation()) {
+                // Trigger the before method on the first found visitor of this type
+                if (!isset($foundVisitors[$location])) {
+                    $foundVisitors[$location] = $this->factory->getResponseVisitor($location);
+                    $foundVisitors[$location]->before($command, $result);
+                }
                 // Apply the parameter value with the location visitor
                 $foundVisitors[$location]->visit($command, $response, $schema, $result);
             }
         }
 
+        // Call the after() method of each found visitor
         foreach ($foundVisitors as $visitor) {
             $visitor->after($command);
         }
