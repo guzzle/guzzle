@@ -1,6 +1,31 @@
 CHANGELOG
 =========
 
+3.3.0 (2013-03-03)
+------------------
+
+* A large number of performance optimizations have been made
+* Bug fix: Added 'wb' as a valid write mode for streams
+* Bug fix: `Guzzle\Http\Message\Response::json()` now allows scalar values to be returned
+* Bug fix: Fixed bug in `Guzzle\Http\Message\Response` where wrapping quotes were stripped from `getEtag()`
+* BC: Removed `Guzzle\Http\Utils` class
+* BC: Setting a service description on a client will no longer modify the client's command factories.
+* BC: Emitting IO events from a RequestMediator is now a parameter that must be set in a request' curl options using the
+  'emit_io' key. This was previously set under a request's parameters using 'curl.emit_io'
+* BC: `Guzzle\Stream\Stream::getWrapper()` and `Guzzle\Stream\Stream::getSteamType()` are no longer converted to
+  lowercase
+* Operation parameter objects are now lazy loaded internally
+* Added ErrorResponsePlugin that can throw errors for responses defined in service description operations' errorResponses
+* Added support for instantiating responseType=class responseClass classes. Classes must implement
+  `Guzzle\Service\Command\ResponseClassInterface`
+* Added support for additionalProperties for top-level parameters in responseType=model responseClasses. These
+  additional properties also support locations and can be used to parse JSON responses where the outermost part of the
+  JSON is an array
+* Added support for nested renaming of JSON models (rename sentAs to name)
+* CachePlugin
+    * Added support for stale-if-error so that the CachePlugin can now serve stale content from the cache on error
+    * Debug headers can now added to cached response in the CachePlugin
+
 3.2.0 (2013-02-14)
 ------------------
 
