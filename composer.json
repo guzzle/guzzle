@@ -33,6 +33,7 @@
         "guzzle/plugin-cache": "self.version",
         "guzzle/plugin-cookie": "self.version",
         "guzzle/plugin-curlauth": "self.version",
+        "guzzle/plugin-error-response": "self.version",
         "guzzle/plugin-history": "self.version",
         "guzzle/plugin-log": "self.version",
         "guzzle/plugin-md5": "self.version",
