@@ -64,8 +64,13 @@ class JsonVisitor extends AbstractResponseVisitor
                 if ($properties = $param->getProperties()) {
                     foreach ($properties as $property) {
                         $name = $property->getName();
-                        if (isset($value[$name])) {
-                            $this->recursiveProcess($property, $value[$name]);
+                        $key = $property->getWireName();
+                        if (isset($value[$key])) {
+                            $this->recursiveProcess($property, $value[$key]);
+                        }
+                        if ($key != $name) {
+                            $value[$name] = $value[$key];
+                            unset($value[$key]);
                         }
                     }
                 }
