@@ -8,6 +8,7 @@ use Guzzle\Service\Command\LocationVisitor\Response\ResponseVisitorInterface;
 use Guzzle\Service\Description\Parameter;
 use Guzzle\Service\Description\OperationInterface;
 use Guzzle\Service\Description\Operation;
+use Guzzle\Service\Exception\ResponseClassException;
 use Guzzle\Service\Resource\Model;
 
 /**
@@ -69,9 +70,21 @@ class OperationResponseParser extends DefaultResponseParser
     protected function handleParsing(AbstractCommand $command, Response $response, $contentType)
     {
         $operation = $command->getOperation();
-        $model = $operation->getResponseType() == OperationInterface::TYPE_MODEL
-            ? $operation->getServiceDescription()->getModel($operation->getResponseClass())
-            : null;
+        $type = $operation->getResponseType();
+        $model = null;
+
+        if ($type == OperationInterface::TYPE_MODEL) {
+            $model = $operation->getServiceDescription()->getModel($operation->getResponseClass());
+        } elseif ($type == OperationInterface::TYPE_CLASS) {
+            $responseClassInterface = __NAMESPACE__ . '\ResponseClassInterface';
+            $className = $operation->getResponseClass();
+            if (!class_exists($className)) {
+                throw new ResponseClassException("{$className} does not exist");
+            } elseif (!is_subclass_of($className, $responseClassInterface)) {
+                throw new ResponseClassException("{$className} must implement {$responseClassInterface}");
+            }
+            return $className::fromCommand($command);
+        }
 
         if (!$model) {
             // Return basic processing if the responseType is not model or the model cannot be found

@@ -160,6 +160,55 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
         ), $result);
     }
 
+    public function testCreatesCustomResponseClassInterface()
+    {
+        $parser = OperationResponseParser::getInstance();
+        $description = ServiceDescription::factory(array(
+            'operations' => array('test' => array('responseClass' => 'Guzzle\Tests\Mock\CustomResponseModel'))
+        ));
+        $operation = $description->getOperation('test');
+        $op = new OperationCommand(array(), $operation);
+        $op->setResponseParser($parser)->setClient(new Client());
+        $op->prepare()->setResponse(new Response(200, array('Content-Type' => 'application/json'), 'hi!'), true);
+        $result = $op->execute();
+        $this->assertInstanceOf('Guzzle\Tests\Mock\CustomResponseModel', $result);
+        $this->assertSame($op, $result->command);
+    }
+
+    /**
+     * @expectedException \Guzzle\Service\Exception\ResponseClassException
+     * @expectedExceptionMessage does not exist
+     */
+    public function testEnsuresResponseClassExists()
+    {
+        $parser = OperationResponseParser::getInstance();
+        $description = ServiceDescription::factory(array(
+            'operations' => array('test' => array('responseClass' => 'Foo\Baz\Bar'))
+        ));
+        $operation = $description->getOperation('test');
+        $op = new OperationCommand(array(), $operation);
+        $op->setResponseParser($parser)->setClient(new Client());
+        $op->prepare()->setResponse(new Response(200, array('Content-Type' => 'application/json'), 'hi!'), true);
+        $op->execute();
+    }
+
+    /**
+     * @expectedException \Guzzle\Service\Exception\ResponseClassException
+     * @expectedExceptionMessage must implement
+     */
+    public function testEnsuresResponseClassImplementsResponseClassInterface()
+    {
+        $parser = OperationResponseParser::getInstance();
+        $description = ServiceDescription::factory(array(
+            'operations' => array('test' => array('responseClass' => __CLASS__))
+        ));
+        $operation = $description->getOperation('test');
+        $op = new OperationCommand(array(), $operation);
+        $op->setResponseParser($parser)->setClient(new Client());
+        $op->prepare()->setResponse(new Response(200, array('Content-Type' => 'application/json'), 'hi!'), true);
+        $op->execute();
+    }
+
     protected function getDescription()
     {
         return ServiceDescription::factory(array(
