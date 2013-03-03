@@ -122,6 +122,44 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($brokenXml, (string) $result['baz']);
     }
 
+    public function testVisitsAdditionalProperties()
+    {
+        $parser = OperationResponseParser::getInstance();
+        $description = ServiceDescription::factory(array(
+            'operations' => array('test' => array('responseClass' => 'Foo')),
+            'models' => array(
+                'Foo' => array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'code' => array('location' => 'statusCode')
+                    ),
+                    'additionalProperties' => array(
+                        'location' => 'json',
+                        'type' => 'object',
+                        'properties' => array(
+                            'a' => array(
+                                'type' => 'string',
+                                'filters' => 'strtoupper'
+                            )
+                        )
+                    )
+                )
+            )
+        ));
+
+        $operation = $description->getOperation('test');
+        $op = new OperationCommand(array(), $operation);
+        $op->setResponseParser($parser)->setClient(new Client());
+        $json = '[{"a":"test"},{"a":"baz"}]';
+        $op->prepare()->setResponse(new Response(200, array('Content-Type' => 'application/json'), $json), true);
+        $result = $op->execute()->toArray();
+        $this->assertEquals(array(
+            'code' => 200,
+            array('a' => 'TEST'),
+            array('a' => 'BAZ')
+        ), $result);
+    }
+
     protected function getDescription()
     {
         return ServiceDescription::factory(array(

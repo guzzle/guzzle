@@ -111,6 +111,33 @@ class OperationResponseParser extends DefaultResponseParser
             }
         }
 
+        // Visit additional properties when it is an actual schema
+        if ($additional = $model->getAdditionalProperties()) {
+            if ($additional instanceof Parameter) {
+                // Only visit when a location is specified
+                if ($location = $additional->getLocation()) {
+                    if (!isset($foundVisitors[$location])) {
+                        $foundVisitors[$location] = $this->factory->getResponseVisitor($location);
+                        $foundVisitors[$location]->before($command, $result);
+                    }
+                    // Only traverse if an array was parsed from the before() visitors
+                    if (is_array($result)) {
+                        // Find each additional property
+                        foreach (array_keys($result) as $key) {
+                            // Check if the model actually knows this property. If so, then it is not additional
+                            if (!$model->getProperty($key)) {
+                                // Set the name to the key so that we can parse it with each visitor
+                                $additional->setName($key);
+                                $foundVisitors[$location]->visit($command, $response, $additional, $result);
+                            }
+                        }
+                        // Reset the additionalProperties name to null
+                        $additional->setName(null);
+                    }
+                }
+            }
+        }
+
         // Apply the parameter value with the location visitor
         foreach ($props as $schema) {
             if ($location = $schema->getLocation()) {
