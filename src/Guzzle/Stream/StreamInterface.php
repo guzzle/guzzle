@@ -50,7 +50,7 @@ interface StreamInterface
     /**
      * Wrapper specific data attached to this stream.
      *
-     * @return string
+     * @return array
      */
     public function getWrapperData();
 
