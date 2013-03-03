@@ -293,8 +293,11 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * {@inheritdoc}
      */
-    public function setUserAgent($userAgent)
+    public function setUserAgent($userAgent, $includeDefault = false)
     {
+        if ($includeDefault) {
+            $userAgent .= ' ' . $this->getDefaultUserAgent();
+        }
         $this->userAgent = $userAgent;
 
         return $this;
