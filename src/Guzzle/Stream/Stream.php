@@ -70,9 +70,7 @@ class Stream implements StreamInterface
      */
     public function __destruct()
     {
-        if (is_resource($this->stream)) {
-            fclose($this->stream);
-        }
+        $this->close();
     }
 
     /**
@@ -89,6 +87,18 @@ class Stream implements StreamInterface
         $this->seek($originalPos);
 
         return $body;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function close()
+    {
+        if (is_resource($this->stream)) {
+            fclose($this->stream);
+        }
+        $this->cache[self::IS_READABLE] = false;
+        $this->cache[self::IS_WRITABLE] = false;
     }
 
     /**
