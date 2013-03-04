@@ -71,7 +71,7 @@ class CurlHandle
             CURLOPT_SSL_VERIFYHOST => 2
         );
 
-        if (version_compare(CurlVersion::getInstance()->get('version'), '7.19.4', '>=')) {
+        if (defined('CURLOPT_PROTOCOLS')) {
             // Allow only HTTP and HTTPS protocols
             $curlOptions[CURLOPT_PROTOCOLS] = CURLPROTO_HTTP | CURLPROTO_HTTPS;
         }
