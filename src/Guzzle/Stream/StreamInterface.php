@@ -97,6 +97,13 @@ interface StreamInterface
     public function isConsumed();
 
     /**
+     * Alias of isConsumed
+     *
+     * @return bool
+     */
+    public function feof();
+
+    /**
      * Check if the stream is a local stream vs a remote stream
      *
      * @return bool
