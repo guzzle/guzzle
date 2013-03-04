@@ -161,4 +161,32 @@ interface StreamInterface
      * @return bool Returns true on success or false on failure
      */
     public function rewind();
+
+    /**
+     * Read a line from the stream up to the maximum allowed buffer length
+     *
+     * @param int $maxLength Maximum buffer length
+     *
+     * @return string|bool
+     */
+    public function readLine($maxLength = null);
+
+    /**
+     * Set custom data on the stream
+     *
+     * @param string $key   Key to set
+     * @param mixed  $value Value to set
+     *
+     * @return self
+     */
+    public function setCustomData($key, $value);
+
+    /**
+     * Get custom data from the stream
+     *
+     * @param string $key Key to retrieve
+     *
+     * @return null|mixed
+     */
+    public function getCustomData($key);
 }

@@ -65,7 +65,10 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
         }
 
         // Create the file handle but silence errors
-        return $this->createStream();
+        $stream = new Stream($this->createStream());
+
+        return $stream->setCustomData('request', $request)
+            ->setCustomData('response_headers', $this->getLastResponseHeaders());
     }
 
     /**
