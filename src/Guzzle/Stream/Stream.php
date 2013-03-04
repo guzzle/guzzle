@@ -236,6 +236,14 @@ class Stream implements StreamInterface
     /**
      * {@inheritdoc}
      */
+    public function feof()
+    {
+        return $this->isConsumed();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function isLocal()
     {
         return $this->cache[self::IS_LOCAL];
