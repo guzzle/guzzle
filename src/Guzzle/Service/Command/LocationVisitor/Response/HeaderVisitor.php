@@ -19,7 +19,7 @@ class HeaderVisitor extends AbstractResponseVisitor
         if ($param->getType() == 'object' && $param->getAdditionalProperties() instanceof Parameter) {
             $this->processPrefixedHeaders($response, $param, $value);
         } else {
-            $value[$param->getName()] = (string) $response->getHeader($param->getWireName());
+            $value[$param->getName()] = $param->filter((string) $response->getHeader($param->getWireName()));
         }
     }
 

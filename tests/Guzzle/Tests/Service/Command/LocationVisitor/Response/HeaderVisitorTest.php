@@ -23,6 +23,18 @@ class HeaderVisitorTest extends AbstractResponseVisitorTest
         $this->assertEquals('text/plain', $this->value['ContentType']);
     }
 
+    public function testVisitsLocationWithFilters()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'location' => 'header',
+            'name'     => 'Content-Type',
+            'filters'  => array('strtoupper')
+        ));
+        $visitor->visit($this->command, $this->response, $param, $this->value);
+        $this->assertEquals('TEXT/PLAIN', $this->value['Content-Type']);
+    }
+
     public function testVisitsMappedPrefixHeaders()
     {
         $visitor = new Visitor();
