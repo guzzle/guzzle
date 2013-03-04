@@ -10,8 +10,8 @@ CHANGELOG
 * Bug fix: Fixed bug in `Guzzle\Http\Message\Response` where wrapping quotes were stripped from `getEtag()`
 * BC: Removed `Guzzle\Http\Utils` class
 * BC: Setting a service description on a client will no longer modify the client's command factories.
-* BC: Emitting IO events from a RequestMediator is now a parameter that must be set in a request' curl options using the
-  'emit_io' key. This was previously set under a request's parameters using 'curl.emit_io'
+* BC: Emitting IO events from a RequestMediator is now a parameter that must be set in a request's curl options using
+  the 'emit_io' key. This was previously set under a request's parameters using 'curl.emit_io'
 * BC: `Guzzle\Stream\Stream::getWrapper()` and `Guzzle\Stream\Stream::getSteamType()` are no longer converted to
   lowercase
 * Operation parameter objects are now lazy loaded internally

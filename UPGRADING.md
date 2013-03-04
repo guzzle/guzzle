@@ -1,6 +1,26 @@
 Guzzle Upgrade Guide
 ====================
 
+3.2 to 3.3
+----------
+
+### Response::getEtag() quote stripping removed
+
+`Guzzle\Http\Message\Response::getEtag()` no longer strips quotes around the ETag response header
+
+### Removed `Guzzle\Http\Utils`
+
+The `Guzzle\Http\Utils` class was removed. This class was only used for testing.
+
+### Stream wrapper and type
+
+`Guzzle\Stream\Stream::getWrapper()` and `Guzzle\Stream\Stream::getSteamType()` are no longer converted to lowercase.
+
+### curl.emit_io became emit_io
+
+Emitting IO events from a RequestMediator is now a parameter that must be set in a request's curl options using the
+'emit_io' key. This was previously set under a request's parameters using 'curl.emit_io'
+
 3.1 to 3.2
 ----------
 
