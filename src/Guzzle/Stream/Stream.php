@@ -32,6 +32,11 @@ class Stream implements StreamInterface
     protected $cache = array();
 
     /**
+     * @var array Custom stream data
+     */
+    protected $customData = array();
+
+    /**
      * @var array Hash table of readable and writeable stream types for fast lookups
      */
     protected static $readWriteHash = array(
@@ -300,6 +305,37 @@ class Stream implements StreamInterface
     {
         return $this->seek(0);
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function readLine($maxLength = null)
+    {
+        if (!$this->cache[self::IS_READABLE]) {
+            return false;
+        } else {
+            return $maxLength ? fgets($this->getStream(), $maxLength) : fgets($this->getStream());
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setCustomData($key, $value)
+    {
+        $this->customData[$key] = $value;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getCustomData($key)
+    {
+        return isset($this->customData[$key]) ? $this->customData[$key] : null;
+    }
+
 
     /**
      * Reprocess stream metadata

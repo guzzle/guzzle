@@ -16,7 +16,7 @@ interface StreamRequestFactoryInterface
      * @param array            $options Custom context options to merge into the default context options
      * @param array            $params  Custom context params to use with the request
      *
-     * @return resource Returns a stream resource that can be used like fopen resources
+     * @return StreamInterface Returns a stream object
      * @throws \Guzzle\Common\Exception\RuntimeException if the stream cannot be opened or an error occurs
      */
     public function fromRequest(RequestInterface $request, array $options = null, array $params = array());
