@@ -40,6 +40,9 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
         // Use the new contextParams
         $this->params = $params;
 
+        // Dispatch the before send event
+        $request->dispatch('request.before_send', array('request' => $request));
+
         // Add default HTTP context options
         $this->createDefaultContext($request);
 
