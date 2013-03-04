@@ -13,7 +13,8 @@
     ],
     "require": {
         "php": ">=5.3.2",
-        "guzzle/common": "self.version"
+        "guzzle/common": "self.version",
+        "guzzle/http": "self.version"
     },
     "autoload": {
         "psr-0": { "Guzzle\\Stream": "" }
