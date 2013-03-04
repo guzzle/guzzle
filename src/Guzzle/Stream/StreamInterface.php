@@ -15,6 +15,11 @@ interface StreamInterface
     public function __toString();
 
     /**
+     * Close the underlying stream
+     */
+    public function close();
+
+    /**
      * Get stream metadata
      *
      * @param string $key Specific metadata to retrieve
