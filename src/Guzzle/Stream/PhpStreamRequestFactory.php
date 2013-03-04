@@ -23,6 +23,11 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
     protected $url;
 
     /**
+     * @var array Last response headers received by the HTTP request
+     */
+    protected $lastResponseHeaders;
+
+    /**
      * {@inheritdoc}
      */
     public function fromRequest(RequestInterface $request, array $contextOptions = null)
@@ -50,6 +55,16 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
 
         // Create the file handle but silence errors
         return $this->createStream();
+    }
+
+    /**
+     * Get the last response headers received by the HTTP request
+     *
+     * @return array
+     */
+    public function getLastResponseHeaders()
+    {
+        return $this->lastResponseHeaders;
     }
 
     /**
@@ -149,13 +164,26 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
      */
     protected function createStream()
     {
+        // Turn off error reporting while we try to initiate the request
         $level = error_reporting(0);
         $fp = fopen((string) $this->url, 'r', false, stream_context_create($this->context));
         error_reporting($level);
+
+        // If the file could not be created, then grab the last error and throw an exception
         if (false === $fp) {
-            // If the file could not be created, then grab the last error and throw an exception
             $error = error_get_last();
             throw new RuntimeException($error['message']);
+        }
+
+        // Track the response headers of the request
+        if (isset($http_response_header)) {
+            $this->lastResponseHeaders = array();
+            foreach ($http_response_header as $line) {
+                $parts = explode(':', $line);
+                if (isset($parts[1])) {
+                    $this->lastResponseHeaders[trim($parts[0])] = trim($parts[1]);
+                }
+            }
         }
 
         return $fp;
