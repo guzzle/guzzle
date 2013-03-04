@@ -50,6 +50,15 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
      * {@inheritdoc}
      * @codeCoverageIgnore
      */
+    public function close()
+    {
+        return $this->body->close();
+    }
+
+    /**
+     * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
     public function setRewindFunction($callable)
     {
         return $this->body->setRewindFunction($callable);
@@ -209,6 +218,14 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
     /**
      * {@inheritdoc}
      */
+    public function feof()
+    {
+        return $this->body->feof();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function isLocal()
     {
         return $this->body->isLocal();
@@ -265,5 +282,31 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
     public function ftell()
     {
         return $this->body->ftell();
+    }
+
+    /**
+     * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
+    public function getCustomData($key)
+    {
+        return $this->body->getCustomData($key);
+    }
+
+    /**
+     * {@inheritdoc}
+     * @codeCoverageIgnore
+     */
+    public function setCustomData($key, $value)
+    {
+        return $this->body->setCustomData($key, $value);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function readLine($maxLength = null)
+    {
+        return $this->body->readLine($maxLength);
     }
 }
