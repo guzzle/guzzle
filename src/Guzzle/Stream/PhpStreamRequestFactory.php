@@ -13,9 +13,14 @@ use Guzzle\Http\Url;
 class PhpStreamRequestFactory implements StreamRequestFactoryInterface
 {
     /**
-     * @var array Stream context
+     * @var array Stream context options
      */
-    protected $context;
+    protected $options;
+
+    /**
+     * @var array Stream context params
+     */
+    protected $params;
 
     /**
      * @var Url Stream URL
@@ -30,8 +35,11 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
     /**
      * {@inheritdoc}
      */
-    public function fromRequest(RequestInterface $request, array $contextOptions = null)
+    public function fromRequest(RequestInterface $request, array $options = null, array $params = array())
     {
+        // Use the new contextParams
+        $this->params = $params;
+
         // Add default HTTP context options
         $this->createDefaultContext($request);
 
@@ -49,8 +57,8 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
         }
 
         // Merge in custom context options
-        if ($contextOptions) {
-            $this->mergeContextOptions($contextOptions);
+        if ($options) {
+            $this->mergeContextOptions($options);
         }
 
         // Create the file handle but silence errors
@@ -74,7 +82,7 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
      */
     protected function createDefaultContext(RequestInterface $request)
     {
-        $this->context = array(
+        $this->options = array(
             'http' => array(
                 'method'           => $request->getMethod(),
                 'header'           => $request->getHeaderLines(),
@@ -112,11 +120,11 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
     protected function addSslOptions(RequestInterface $request)
     {
         if ($verify = $request->getCurlOptions()->get(CURLOPT_SSL_VERIFYPEER)) {
-            $this->context['ssl']['verify_peer'] = true;
+            $this->options['ssl']['verify_peer'] = true;
         }
 
         if ($cafile = $request->getCurlOptions()->get(CURLOPT_CAINFO)) {
-            $this->context['ssl']['cafile'] = $cafile;
+            $this->options['ssl']['cafile'] = $cafile;
         }
     }
 
@@ -128,12 +136,12 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
     protected function addBodyOptions(EntityEnclosingRequestInterface $request)
     {
         if ($request->getPostFields()) {
-            $this->context['http']['content'] = (string) $request->getPostFields();
+            $this->options['http']['content'] = (string) $request->getPostFields();
         } elseif ($request->getBody()) {
-            $this->context['http']['content'] = (string) $request->getBody();
+            $this->options['http']['content'] = (string) $request->getBody();
         }
-        if ($this->context['http']['content']) {
-            $this->context['http']['header'][] = 'Content-Length: ' . strlen($this->context['http']['content']);
+        if ($this->options['http']['content']) {
+            $this->options['http']['header'][] = 'Content-Length: ' . strlen($this->options['http']['content']);
         }
     }
 
@@ -145,12 +153,12 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
     protected function mergeContextOptions(array $contextOptions)
     {
         foreach ($contextOptions as $wrapper => $options) {
-            if (!isset($this->context[$wrapper])) {
-                $this->context[$wrapper] = array();
+            if (!isset($this->options[$wrapper])) {
+                $this->options[$wrapper] = array();
             }
             if (is_array($options)) {
                 foreach ($options as $optionName => $optionValue) {
-                    $this->context[$wrapper][$optionName] = $optionValue;
+                    $this->options[$wrapper][$optionName] = $optionValue;
                 }
             }
         }
@@ -166,7 +174,7 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
     {
         // Turn off error reporting while we try to initiate the request
         $level = error_reporting(0);
-        $fp = fopen((string) $this->url, 'r', false, stream_context_create($this->context));
+        $fp = fopen((string) $this->url, 'r', false, stream_context_create($this->options, $this->params));
         error_reporting($level);
 
         // If the file could not be created, then grab the last error and throw an exception
