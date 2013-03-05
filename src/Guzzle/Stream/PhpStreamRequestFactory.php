@@ -59,6 +59,9 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
             $this->addBodyOptions($request);
         }
 
+        // Add proxy params if needed
+        $this->addProxyOptions($request);
+
         // Merge in custom context options
         if ($options) {
             $this->mergeContextOptions($options);
@@ -92,8 +95,9 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
             'http' => array(
                 'method'           => $request->getMethod(),
                 'header'           => $request->getHeaderLines(),
+                // Force 1.0 for now until PHP fully support chunked transfer-encoding decoding
                 'protocol_version' => '1.0',
-                'ignore_errors'    => '1'
+                'ignore_errors'    => true
             )
         );
     }
@@ -171,6 +175,18 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
     }
 
     /**
+     * Add proxy parameters to the context if needed
+     *
+     * @param RequestInterface $request Request
+     */
+    protected function addProxyOptions(RequestInterface $request)
+    {
+        if ($proxy = $request->getCurlOptions()->get(CURLOPT_PROXY)) {
+            $this->options['proxy'] = $proxy;
+        }
+    }
+
+    /**
      * Create the stream for the request with the context options
      *
      * @return resource
@@ -191,13 +207,7 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
 
         // Track the response headers of the request
         if (isset($http_response_header)) {
-            $this->lastResponseHeaders = array();
-            foreach ($http_response_header as $line) {
-                $parts = explode(':', $line);
-                if (isset($parts[1])) {
-                    $this->lastResponseHeaders[trim($parts[0])] = trim($parts[1]);
-                }
-            }
+            $this->lastResponseHeaders = $http_response_header;
         }
 
         return $fp;
