@@ -13,8 +13,10 @@
     ],
     "require": {
         "php": ">=5.3.2",
-        "guzzle/common": "self.version",
-        "guzzle/http": "self.version"
+        "guzzle/common": "self.version"
+    },
+    "suggest": {
+        "guzzle/http": "To convert Guzzle request objects to PHP streams"
     },
     "autoload": {
         "psr-0": { "Guzzle\\Stream": "" }
