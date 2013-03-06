@@ -6,6 +6,7 @@ use Guzzle\Common\Event;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
+use Guzzle\Http\QueryString;
 use Guzzle\Http\Url;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -137,25 +138,17 @@ class OauthPlugin implements EventSubscriberInterface
     {
         $params = $this->getParamsToSign($request, $timestamp, $nonce);
 
+        // Convert booleans to strings.
+        $params = $this->convertBooleanToString($params);
+
         // Build signing string from combined params
-        $parameterString = array();
-        foreach ($params as $key => $values) {
-            $key = rawurlencode($key);
-            $values = (array) $values;
-            sort($values);
-            foreach ($values as $value) {
-                if (is_bool($value)) {
-                    $value = $value ? 'true' : 'false';
-                }
-                $parameterString[] = $key . '=' . rawurlencode($value);
-            }
-        }
+        $parameterString = new QueryString($params);
 
         $url = Url::factory($request->getUrl())->setQuery('')->setFragment(null);
 
         return strtoupper($request->getMethod()) . '&'
              . rawurlencode($url) . '&'
-             . rawurlencode(implode('&', $parameterString));
+             . rawurlencode((string) $parameterString);
     }
 
     /**
@@ -222,5 +215,22 @@ class OauthPlugin implements EventSubscriberInterface
     public function getTimestamp(Event $event)
     {
        return $event['timestamp'] ? : time();
+    }
+
+    /**
+     * Convert booleans to strings.
+     */
+    function convertBooleanToString($data)
+    {
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $data[$key] = $this->convertBooleanToString($value);
+            }
+            elseif (is_bool($value)) {
+                $data[$key] = $value ? 'true' : 'false';
+            }
+        }
+
+        return $data;
     }
 }

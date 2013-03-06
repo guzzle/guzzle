@@ -114,6 +114,17 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
     /**
      * @depends testCreatesStringToSignFromPostRequest
      */
+    public function testMultiDimensionalArray()
+    {
+        $p = new OauthPlugin($this->config);
+        $request = $this->getRequest();
+        $request->getQuery()->set('a', array('b' => array('c' => 'd')));
+        $this->assertContains('&a%255Bb%255D%255Bc%255D%3Dd%26c%3Dd', $p->getStringToSign($request, self::TIMESTAMP, self::NONCE));
+    }
+
+    /**
+     * @depends testCreatesStringToSignFromPostRequest
+     */
     public function testSignsStrings()
     {
         $p = new OauthPlugin(array_merge($this->config, array(
