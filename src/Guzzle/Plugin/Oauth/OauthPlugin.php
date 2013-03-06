@@ -219,14 +219,17 @@ class OauthPlugin implements EventSubscriberInterface
 
     /**
      * Convert booleans to strings.
+     *
+     * @param array $data Data array
+     *
+     * @return array
      */
-    function convertBooleanToString($data)
+    protected function convertBooleanToString($data)
     {
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 $data[$key] = $this->convertBooleanToString($value);
-            }
-            elseif (is_bool($value)) {
+            } elseif (is_bool($value)) {
                 $data[$key] = $value ? 'true' : 'false';
             }
         }
