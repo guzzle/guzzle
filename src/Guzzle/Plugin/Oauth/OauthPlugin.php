@@ -139,7 +139,7 @@ class OauthPlugin implements EventSubscriberInterface
         $params = $this->getParamsToSign($request, $timestamp, $nonce);
 
         // Convert booleans to strings.
-        $params = $this->convertBooleanToString($params);
+        $params = $this->prepareParameters($params);
 
         // Build signing string from combined params
         $parameterString = new QueryString($params);
@@ -218,17 +218,18 @@ class OauthPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Convert booleans to strings.
+     * Convert booleans to strings, and sorts the array.
      *
      * @param array $data Data array
      *
      * @return array
      */
-    protected function convertBooleanToString($data)
+    protected function prepareParameters($data)
     {
+        ksort($data);
         foreach ($data as $key => $value) {
             if (is_array($value)) {
-                $data[$key] = $this->convertBooleanToString($value);
+                $data[$key] = self::prepareParameters($value);
             } elseif (is_bool($value)) {
                 $data[$key] = $value ? 'true' : 'false';
             }

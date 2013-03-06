@@ -118,8 +118,8 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $p = new OauthPlugin($this->config);
         $request = $this->getRequest();
-        $request->getQuery()->set('a', array('b' => array('c' => 'd')));
-        $this->assertContains('&a%255Bb%255D%255Bc%255D%3Dd%26c%3Dd', $p->getStringToSign($request, self::TIMESTAMP, self::NONCE));
+        $request->getQuery()->set('a', array('b' => array('e' => 'f', 'c' => 'd')));
+        $this->assertContains('a%255Bb%255D%255Bc%255D%3Dd%26a%255Bb%255D%255Be%255D%3Df%26c%3Dd%26e%3Df%26', $p->getStringToSign($request, self::TIMESTAMP, self::NONCE));
     }
 
     /**
