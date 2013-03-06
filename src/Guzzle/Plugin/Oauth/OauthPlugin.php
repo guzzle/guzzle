@@ -138,6 +138,9 @@ class OauthPlugin implements EventSubscriberInterface
     {
         $params = $this->getParamsToSign($request, $timestamp, $nonce);
 
+        // Convert booleans to strings.
+        $params = $this->convertBooleanToString($params);
+
         // Build signing string from combined params
         $parameterString = new QueryString($params);
 
@@ -212,5 +215,22 @@ class OauthPlugin implements EventSubscriberInterface
     public function getTimestamp(Event $event)
     {
        return $event['timestamp'] ? : time();
+    }
+
+    /**
+     * Convert booleans to strings.
+     */
+    function convertBooleanToString($data)
+    {
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $data[$key] = $this->convertBooleanToString($value);
+            }
+            elseif (is_bool($value)) {
+                $data[$key] = $value ? 'true' : 'false';
+            }
+        }
+
+        return $data;
     }
 }
