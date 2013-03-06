@@ -2,6 +2,7 @@
 
 namespace Guzzle\Stream;
 
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\RequestInterface;
@@ -15,14 +16,14 @@ use Guzzle\Http\Url;
 class PhpStreamRequestFactory implements StreamRequestFactoryInterface
 {
     /**
-     * @var array Stream context options
+     * @var resource Stream context options
      */
-    protected $options;
+    protected $context;
 
     /**
-     * @var array Stream context params
+     * @var array Stream context
      */
-    protected $params;
+    protected $contextOptions;
 
     /**
      * @var Url Stream URL
@@ -37,43 +38,67 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
     /**
      * {@inheritdoc}
      */
-    public function fromRequest(RequestInterface $request, array $options = null, array $params = array())
+    public function fromRequest(RequestInterface $request, $context = array(), array $params = array())
     {
-        // Use the new contextParams
-        $this->params = $params;
+        if (is_resource($context)) {
+            $this->contextOptions = stream_context_get_options($context);
+            $this->context = $context;
+        } elseif (is_array($context) || !$context) {
+            $this->contextOptions = $context;
+            $this->createContext($params);
+        } elseif ($context) {
+            throw new InvalidArgumentException('$context must be an array or resource');
+        }
 
-        // Dispatch the before send event
-        $request->dispatch('request.before_send', array('request' => $request));
-
-        // Add default HTTP context options
-        $this->createDefaultContext($request);
-
-        // Use the request's URL
         $this->setUrl($request);
-
-        // Add SSL options if needed
-        if ($request->getScheme() == 'https') {
-            $this->addSslOptions($request);
-        }
-
-        // Add the content for the request if needed
-        if ($request instanceof EntityEnclosingRequestInterface) {
-            $this->addBodyOptions($request);
-        }
-
-        // Add proxy params if needed
+        $this->addDefaultContextOptions($request);
+        $this->addSslOptions($request);
+        $this->addBodyOptions($request);
         $this->addProxyOptions($request);
 
-        // Merge in custom context options
-        if ($options) {
-            $this->mergeContextOptions($options);
-        }
+        // Dispatch the before send event
+        $request->dispatch('request.before_send', array(
+            'request'         => $request,
+            'context'         => $this->context,
+            'context_options' => $this->contextOptions
+        ));
 
         // Create the file handle but silence errors
-        $stream = new Stream($this->createStream());
-
-        return $stream->setCustomData('request', $request)
+        return $this->createStream()
+            ->setCustomData('request', $request)
             ->setCustomData('response_headers', $this->getLastResponseHeaders());
+    }
+
+    /**
+     * Set an option on the context and the internal options array
+     *
+     * @param string $wrapper   Stream wrapper name of http
+     * @param string $name      Context name
+     * @param mixed  $value     Context value
+     * @param bool   $overwrite Set to true to overwrite an existing value
+     */
+    protected function setContextValue($wrapper, $name, $value, $overwrite = false)
+    {
+        if (!isset($this->contextOptions[$wrapper])) {
+            $this->contextOptions[$wrapper] = array($name => $value);
+        } elseif (!$overwrite && isset($this->contextOptions[$wrapper][$name])) {
+            return;
+        }
+        $this->contextOptions[$wrapper][$name] = $value;
+        stream_context_set_option($this->context, $wrapper, $name, $value);
+    }
+
+    /**
+     * Create a stream context
+     *
+     * @param array $param Parameter array
+     */
+    protected function createContext(array $params)
+    {
+        $options = $this->contextOptions;
+        $this->context = $this->createResource(function () use ($params, $options) {
+            return stream_context_create($options, $params);
+        });
     }
 
     /**
@@ -91,17 +116,13 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
      *
      * @param RequestInterface $request Request
      */
-    protected function createDefaultContext(RequestInterface $request)
+    protected function addDefaultContextOptions(RequestInterface $request)
     {
-        $this->options = array(
-            'http' => array(
-                'method'           => $request->getMethod(),
-                'header'           => $request->getHeaderLines(),
-                // Force 1.0 for now until PHP fully support chunked transfer-encoding decoding
-                'protocol_version' => '1.0',
-                'ignore_errors'    => true
-            )
-        );
+        $this->setContextValue('http', 'method', $request->getMethod());
+        $this->setContextValue('http', 'header', $request->getHeaderLines());
+        // Force 1.0 for now until PHP fully support chunked transfer-encoding decoding
+        $this->setContextValue('http', 'protocol_version', '1.0');
+        $this->setContextValue('http', 'ignore_errors', true);
     }
 
     /**
@@ -132,47 +153,38 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
     protected function addSslOptions(RequestInterface $request)
     {
         if ($verify = $request->getCurlOptions()->get(CURLOPT_SSL_VERIFYPEER)) {
-            $this->options['ssl']['verify_peer'] = true;
-        }
-
-        if ($cafile = $request->getCurlOptions()->get(CURLOPT_CAINFO)) {
-            $this->options['ssl']['cafile'] = $cafile;
+            $this->setContextValue('ssl', 'verify_peer', true, true);
+            if ($cafile = $request->getCurlOptions()->get(CURLOPT_CAINFO)) {
+                $this->setContextValue('ssl', 'cafile', $cafile, true);
+            }
+        } else {
+            $this->setContextValue('ssl', 'verify_peer', false, true);
         }
     }
 
     /**
      * Add body (content) specific options to the context options
      *
-     * @param EntityEnclosingRequestInterface $request
+     * @param RequestInterface $request
      */
-    protected function addBodyOptions(EntityEnclosingRequestInterface $request)
+    protected function addBodyOptions(RequestInterface $request)
     {
-        if ($request->getPostFields()) {
-            $this->options['http']['content'] = (string) $request->getPostFields();
-        } elseif ($request->getBody()) {
-            $this->options['http']['content'] = (string) $request->getBody();
+        // Add the content for the request if needed
+        if (!($request instanceof EntityEnclosingRequestInterface)) {
+            return;
         }
-        if ($this->options['http']['content']) {
-            $this->options['http']['header'][] = 'Content-Length: ' . strlen($this->options['http']['content']);
-        }
-    }
 
-    /**
-     * Merge custom context options into the default context options
-     *
-     * @param array $contextOptions Context options
-     */
-    protected function mergeContextOptions(array $contextOptions)
-    {
-        foreach ($contextOptions as $wrapper => $options) {
-            if (!isset($this->options[$wrapper])) {
-                $this->options[$wrapper] = array();
-            }
-            if (is_array($options)) {
-                foreach ($options as $optionName => $optionValue) {
-                    $this->options[$wrapper][$optionName] = $optionValue;
-                }
-            }
+        if (count($request->getPostFields())) {
+            $this->setContextValue('http', 'content', (string) $request->getPostFields(), true);
+        } elseif ($request->getBody()) {
+            $this->setContextValue('http', 'content', (string) $request->getBody(), true);
+        }
+
+        // Always ensure a content-length header is sent
+        if (isset($this->contextOptions['http']['content'])) {
+            $headers = isset($this->contextOptions['http']['header']) ? $this->contextOptions['http']['header'] : array();
+            $headers[] = 'Content-Length: ' . strlen($this->contextOptions['http']['content']);
+            $this->setContextValue('http', 'header', $headers, true);
         }
     }
 
@@ -184,34 +196,56 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
     protected function addProxyOptions(RequestInterface $request)
     {
         if ($proxy = $request->getCurlOptions()->get(CURLOPT_PROXY)) {
-            $this->options['proxy'] = $proxy;
+            $this->setContextValue('http', 'proxy', $proxy);
         }
     }
 
     /**
      * Create the stream for the request with the context options
      *
-     * @return resource
-     * @throws RuntimeException If an error occurs
+     * @return StreamInterface
      */
     protected function createStream()
     {
-        // Turn off error reporting while we try to initiate the request
-        $level = error_reporting(0);
-        $fp = fopen((string) $this->url, 'r', false, stream_context_create($this->options, $this->params));
-        error_reporting($level);
-
-        // If the file could not be created, then grab the last error and throw an exception
-        if (false === $fp) {
-            $error = error_get_last();
-            throw new RuntimeException($error['message']);
-        }
+        $http_response_header = null;
+        $url = $this->url;
+        $context = $this->context;
+        $fp = $this->createResource(function () use ($context, $url, &$http_response_header) {
+            return fopen((string) $url, 'r', false, $context);
+        });
 
         // Track the response headers of the request
         if (isset($http_response_header)) {
             $this->lastResponseHeaders = $http_response_header;
         }
 
-        return $fp;
+        return new Stream($fp);
+    }
+
+    /**
+     * Create a resource and check to ensure it was created successfully
+     *
+     * @param callable $callback Closure to invoke that must return a valid resource
+     *
+     * @return resource
+     * @throws RuntimeException on error
+     */
+    protected function createResource($callback)
+    {
+        // Turn off error reporting while we try to initiate the request
+        $level = error_reporting(0);
+        $resource = call_user_func($callback);
+        error_reporting($level);
+
+        // If the resource could not be created, then grab the last error and throw an exception
+        if (false === $resource) {
+            $message = 'Error creating resource. ';
+            foreach (error_get_last() as $key => $value) {
+                $message .= "[{$key}] {$value} ";
+            }
+            throw new RuntimeException(trim($message));
+        }
+
+        return $resource;
     }
 }
