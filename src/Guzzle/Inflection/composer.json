@@ -20,7 +20,7 @@
     "target-dir": "Guzzle/Inflection",
     "extra": {
         "branch-alias": {
-            "dev-master": "3.0-dev"
+            "dev-master": "3.3-dev"
         }
     }
 }
