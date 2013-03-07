@@ -321,9 +321,6 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
 
         $value = array();
         $visitor->visit($this->command, $this->response, $param, $value);
-        $this->assertEquals(array(
-            'Foo' => array()
-        ), $value);
 
         $value = array(
             'Foo' => array(
@@ -334,26 +331,9 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
         $this->assertEquals(array(
             'Foo' => array(
                 array(
-                    'Baz' => array(),
-                    'Bar' => array(
-                        'Baz' => array()
-                    )
+                    'Bar' => array()
                 )
             )
         ), $value);
-    }
-
-    public function testAddsBooleanWhenValueIsMissing()
-    {
-        $visitor = new Visitor();
-        $param = new Parameter(array(
-            'name'     => 'Foo',
-            'type'     => 'boolean',
-            'location' => 'xml'
-        ));
-
-        $value = null;
-        $visitor->visit($this->command, $this->response, $param, $value);
-        $this->assertSame(array('Foo' => false), $value);
     }
 }

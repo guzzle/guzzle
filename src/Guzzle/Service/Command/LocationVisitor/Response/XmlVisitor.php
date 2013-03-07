@@ -33,12 +33,6 @@ class XmlVisitor extends AbstractResponseVisitor
                 $value[$name] = $value[$sentAs];
                 unset($value[$sentAs]);
             }
-        } elseif ($param->getType() == 'array') {
-            // Use a default array when the value is missing
-            $value[$name] = array();
-        } elseif ($param->getType() == 'boolean') {
-            // Use a default value of false when the value is missing
-            $value[$name] = false;
         }
     }
 
@@ -124,9 +118,6 @@ class XmlVisitor extends AbstractResponseVisitor
                         $value[$name] = $value[$sentAs];
                         unset($value[$sentAs]);
                     }
-                } elseif ($property->getType() == 'array') {
-                    // Set a default empty array
-                    $value[$name] = array();
                 }
             }
         }
