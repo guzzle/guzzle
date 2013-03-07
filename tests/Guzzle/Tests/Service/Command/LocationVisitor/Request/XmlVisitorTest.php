@@ -503,4 +503,23 @@ class XmlVisitorTest extends AbstractVisitorTestCase
             (string) $request->getBody()
         );
     }
+
+    public function testAllowsSendingXmlPayloadIfNoXmlParamsWereSet()
+    {
+        $operation = new Operation(array(
+            'httpMethod' => 'POST',
+            'data' => array('xmlAllowEmpty' => true),
+            'parameters' => array('Foo' => array('location' => 'xml'))
+        ));
+        $command = $this->getMockBuilder('Guzzle\Service\Command\OperationCommand')
+            ->setConstructorArgs(array(array(), $operation))
+            ->getMockForAbstractClass();
+        $command->setClient(new Client('http://foo.com'));
+        $request = $command->prepare();
+        $this->assertEquals(
+            '<?xml version="1.0"?>' . "\n"
+            . '<Request/>' . "\n",
+            (string) $request->getBody()
+        );
+    }
 }

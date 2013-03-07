@@ -61,9 +61,22 @@ class XmlVisitor extends AbstractRequestVisitor
      */
     public function after(CommandInterface $command, RequestInterface $request)
     {
+        $xml = null;
+
+        // If data was found that needs to be serialized, then do so
         if (isset($this->data[$command])) {
-            $request->setBody($this->data[$command]->asXML());
+            $xml = $this->data[$command]->asXML();
             unset($this->data[$command]);
+        } else {
+            // Check if XML should always be sent for the command
+            $operation = $command->getOperation();
+            if ($operation->getData('xmlAllowEmpty')) {
+                $xml = $this->createRootElement($operation)->asXML();
+            }
+        }
+
+        if ($xml) {
+            $request->setBody($xml);
             // Don't overwrite the Content-Type if one is set
             if ($this->contentType && !$request->hasHeader('Content-Type')) {
                 $request->setHeader('Content-Type', $this->contentType);
