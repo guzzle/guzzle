@@ -417,8 +417,9 @@ class Request extends AbstractMessage implements RequestInterface
                 $this->getCurlOptions()->remove(CURLOPT_HTTPAUTH);
                 $this->setHeader('Authorization', 'Basic ' . base64_encode($this->username . ':' . $this->password));
             } else {
-                $this->getCurlOptions()->set(CURLOPT_HTTPAUTH, $scheme)
-                     ->set(CURLOPT_USERPWD, $this->username . ':' . $this->password);
+                $this->getCurlOptions()
+                    ->set(CURLOPT_HTTPAUTH, $scheme)
+                    ->set(CURLOPT_USERPWD, $this->username . ':' . $this->password);
             }
         }
 
