@@ -112,7 +112,7 @@ class RequestFactory implements RequestFactoryInterface
                 // Normalize PHP style cURL uploads with a leading '@' symbol
                 foreach ($body as $key => $value) {
                     if (is_string($value) && substr($value, 0, 1) == '@') {
-                        $request->addPostFile('file', $value);
+                        $request->addPostFile($key, $value);
                         unset($body[$key]);
                     }
                 }
