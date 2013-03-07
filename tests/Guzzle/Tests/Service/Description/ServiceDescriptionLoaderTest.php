@@ -29,23 +29,30 @@ class ServiceDescriptionLoaderTest extends \Guzzle\Tests\GuzzleTestCase
         $d = ServiceDescription::factory(array(
             'operations' => array(
                 'abstract' => array(
-                    'httpMethod' => 'GET',
+                    'httpMethod' => 'HEAD',
                     'parameters' => array(
                         'test' => array('type' => 'string', 'required' => true)
                     )
                 ),
                 'abstract2' => array('uri' => '/test', 'extends' => 'abstract'),
-                'concrete'  => array('extends' => 'abstract2')
+                'concrete'  => array('extends' => 'abstract2'),
+                'override'  => array('extends' => 'abstract', 'httpMethod' => 'PUT'),
+                'override2'  => array('extends' => 'override', 'httpMethod' => 'POST', 'uri' => '/')
             )
         ));
 
         $c = $d->getOperation('concrete');
         $this->assertEquals('/test', $c->getUri());
-        $this->assertEquals('GET', $c->getHttpMethod());
+        $this->assertEquals('HEAD', $c->getHttpMethod());
         $params = $c->getParams();
         $param = $params['test'];
         $this->assertEquals('string', $param->getType());
         $this->assertTrue($param->getRequired());
+
+        // Ensure that merging HTTP method does not make an array
+        $this->assertEquals('PUT', $d->getOperation('override')->getHttpMethod());
+        $this->assertEquals('POST', $d->getOperation('override2')->getHttpMethod());
+        $this->assertEquals('/', $d->getOperation('override2')->getUri());
     }
 
     /**
