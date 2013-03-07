@@ -77,6 +77,7 @@ abstract class AbstractConfigLoader implements ConfigLoaderInterface
      *
      * @return array
      * @throws InvalidArgumentException
+     * @throws RuntimeException when the JSON cannot be parsed
      */
     protected function loadFile($filename)
     {
