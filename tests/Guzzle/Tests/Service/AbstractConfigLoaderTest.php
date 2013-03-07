@@ -137,4 +137,17 @@ class AbstractConfigLoaderTest extends \Guzzle\Tests\GuzzleTestCase
         $data = $this->loader->load($config);
         $this->assertEquals('bar', $data['services']['foo']['params']['baz']);
     }
+
+    public function testDoesNotEnterInfiniteLoop()
+    {
+        $prefix = $file = dirname(__DIR__) . '/TestData/description';
+        $this->loader->load("{$prefix}/baz.json");
+        $this->assertCount(4, $this->readAttribute($this->loader, 'loadedFiles'));
+        // Ensure that the internal list of loaded files is reset
+        $this->loader->load("{$prefix}/../test_service2.json");
+        $this->assertCount(1, $this->readAttribute($this->loader, 'loadedFiles'));
+        // Ensure that previously loaded files will be reloaded when starting fresh
+        $this->loader->load("{$prefix}/baz.json");
+        $this->assertCount(4, $this->readAttribute($this->loader, 'loadedFiles'));
+    }
 }

@@ -16,10 +16,18 @@ abstract class AbstractConfigLoader implements ConfigLoaderInterface
     protected $aliases = array();
 
     /**
+     * @var array Hash of previously loaded filenames
+     */
+    protected $loadedFiles = array();
+
+    /**
      * {@inheritdoc}
      */
     public function load($config, array $options = array())
     {
+        // Reset the array of loaded files because this is a new config
+        $this->loadedFiles = array();
+
         if (is_string($config)) {
             $config = $this->loadFile($config);
         } elseif (!is_array($config)) {
@@ -105,6 +113,9 @@ abstract class AbstractConfigLoader implements ConfigLoaderInterface
             throw new InvalidArgumentException('Unknown file extension: ' . $filename);
         }
 
+        // Keep track of this file being loaded to prevent infinite recursion
+        $this->loadedFiles[$filename] = true;
+
         // Merge include files into the configuration array
         $this->mergeIncludes($config, dirname($filename));
 
@@ -127,7 +138,11 @@ abstract class AbstractConfigLoader implements ConfigLoaderInterface
                 if ($path[0] != DIRECTORY_SEPARATOR && !isset($this->aliases[$path]) && $basePath) {
                     $path = "{$basePath}/{$path}";
                 }
-                $config = $this->mergeData($this->loadFile($path), $config);
+                // Don't load the same files more than once
+                if (!isset($this->loadedFiles[$path])) {
+                    $this->loadedFiles[$path] = true;
+                    $config = $this->mergeData($this->loadFile($path), $config);
+                }
             }
         }
     }
