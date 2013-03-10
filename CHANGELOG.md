@@ -1,6 +1,18 @@
 CHANGELOG
 =========
 
+3.3.1 (2013-03-10)
+------------------
+
+* Added the ability to create PHP streaming responses from HTTP requests
+* Bug fix: Running any filters when parsing response headers with service descriptions
+* Bug fix: OauthPlugin fixes to allow for multi-dimensional array signing, and sorting parameters before signing
+* Bug fix: Removed the adding of default empty arrays and false Booleans to responses in order to be consistent across
+  response location visitors.
+* Bug fix: Removed the possibility of creating configuration files with circular dependencies
+* RequestFactory::create() now uses the key of a POST file when setting the POST file name
+* Added xmlAllowEmpty to serialize an XML body even if no XML specific parameters are set
+
 3.3.0 (2013-03-03)
 ------------------
 
