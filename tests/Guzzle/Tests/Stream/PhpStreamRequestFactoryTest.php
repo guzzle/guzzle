@@ -34,11 +34,10 @@ class PhpStreamRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $this->client->get('/');
         $stream = $this->factory->fromRequest($request);
         $this->assertEquals('hi', (string) $stream);
-        $this->assertEquals(array(
-            'HTTP/1.1 200 OK',
-            'Content-Length: 2',
-            'Connection: close'
-        ), $this->factory->getLastResponseHeaders());
+        $headers = $this->factory->getLastResponseHeaders();
+        $this->assertContains('HTTP/1.1 200 OK', $headers);
+        $this->assertContains('Content-Length: 2', $headers);
+        $this->assertSame($headers, $stream->getCustomData('response_headers'));
     }
 
     public function testOpensValidStreamByPassingContextAndMerging()
@@ -85,11 +84,12 @@ class PhpStreamRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $this->client->post('/', array('Foo' => 'Bar'), array('foo' => 'baz bar'));
         $stream = $this->factory->fromRequest($request);
         $this->assertEquals('hi', (string) $stream);
-        $this->assertEquals(array(
-            'HTTP/1.1 200 OK',
-            'Content-Length: 2',
-            'Connection: close'
-        ), $this->factory->getLastResponseHeaders());
+
+        $headers = $this->factory->getLastResponseHeaders();
+        $this->assertContains('HTTP/1.1 200 OK', $headers);
+        $this->assertContains('Content-Length: 2', $headers);
+        $this->assertSame($headers, $stream->getCustomData('response_headers'));
+
         $received = $this->getServer()->getReceivedRequests();
         $this->assertEquals(1, count($received));
         $this->assertContains('POST / HTTP/1.0', $received[0]);
@@ -107,11 +107,12 @@ class PhpStreamRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $this->client->put('/', array('Foo' => 'Bar'), 'Testing...123');
         $stream = $this->factory->fromRequest($request);
         $this->assertEquals('hi', (string) $stream);
-        $this->assertEquals(array(
-            'HTTP/1.1 200 OK',
-            'Content-Length: 2',
-            'Connection: close'
-        ), $this->factory->getLastResponseHeaders());
+
+        $headers = $this->factory->getLastResponseHeaders();
+        $this->assertContains('HTTP/1.1 200 OK', $headers);
+        $this->assertContains('Content-Length: 2', $headers);
+        $this->assertSame($headers, $stream->getCustomData('response_headers'));
+
         $received = $this->getServer()->getReceivedRequests();
         $this->assertEquals(1, count($received));
         $this->assertContains('PUT / HTTP/1.0', $received[0]);
