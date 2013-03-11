@@ -251,10 +251,6 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             $url = Url::factory($this->getBaseUrl())->combine($this->expandTemplate($uri, $templateVars));
         }
 
-        if ($this->userAgent) {
-            $this->defaultHeaders->set('User-Agent', $this->userAgent);
-        }
-
         // If default headers are provided, then merge them into existing headers
         // If a collision occurs, the header is completely replaced
         if (count($this->defaultHeaders)) {
@@ -454,6 +450,11 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 
         // Attach client observers to the request
         $request->setEventDispatcher(clone $this->getEventDispatcher());
+
+        // Set the User-Agent if one is specified on the client but not explicitly on the request
+        if ($this->userAgent && !$request->hasHeader('User-Agent')) {
+            $request->setHeader('User-Agent', $this->userAgent);
+        }
 
         $this->dispatch(
             'client.create_request',

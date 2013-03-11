@@ -287,8 +287,8 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_HTTPHEADER => array(
                     'Accept:',
                     'Host: localhost:8124',
-                    'User-Agent: ' . $userAgent,
-                    'x-test-data: Guzzle'
+                    'x-test-data: Guzzle',
+                    'User-Agent: ' . $userAgent
                 )
             ), array(
                 'Host'             => '*',
@@ -307,8 +307,8 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                     'Expect:',
                     'Accept:',
                     'Host: localhost:8124',
-                    'User-Agent: ' . $userAgent,
-                    'Content-Type: application/x-www-form-urlencoded'
+                    'Content-Type: application/x-www-form-urlencoded',
+                    'User-Agent: ' . $userAgent
                 )
             ), array(
                 'Host'             => '*',
@@ -356,8 +356,8 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                     'Expect:',
                     'Accept:',
                     'Host: localhost:8124',
-                    'User-Agent: ' . $userAgent,
-                    'Content-Type: application/x-www-form-urlencoded'
+                    'Content-Type: application/x-www-form-urlencoded',
+                    'User-Agent: ' . $userAgent
                 )
             ), array(
                 'Host'             => '*',
@@ -381,9 +381,9 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_HTTPHEADER => array (
                     'Accept:',
                     'Host: localhost:8124',
-                    'User-Agent: ' . $userAgent,
                     'Content-Type: multipart/form-data',
-                    'Expect: 100-Continue'
+                    'Expect: 100-Continue',
+                    'User-Agent: ' . $userAgent
                 )
             ), array(
                 'Host'             => '*',
@@ -407,9 +407,9 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                     'Expect:',
                     'Accept:',
                     'Host: localhost:8124',
-                    'User-Agent: ' . $userAgent,
                     'Content-Type: application/json',
-                    'Content-Length: 14'
+                    'Content-Length: 14',
+                    'User-Agent: ' . $userAgent
                 ),
             ), array(
                 'Host'             => '*',
@@ -434,9 +434,9 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                     'Expect:',
                     'Accept:',
                     'Host: localhost:8124',
-                    'User-Agent: ' . $userAgent,
                     'Content-Type: application/json',
-                    'Transfer-Encoding: chunked'
+                    'Transfer-Encoding: chunked',
+                    'User-Agent: ' . $userAgent
                 ),
             ), array(
                 'Host'             => '*',

@@ -676,4 +676,21 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client->setUserAgent('foo');
         $this->assertEquals('foo', $this->readAttribute($client, 'userAgent'));
     }
+
+    /**
+     * @covers Guzzle\Http\Client::prepareRequest
+     */
+    public function testOverwritesUserAgent()
+    {
+        $client = new Client();
+        $request = $client->createRequest('GET', 'http://www.foo.com', array('User-agent' => 'foo'));
+        $this->assertEquals('foo', (string) $request->getHeader('User-Agent'));
+    }
+
+    public function testUsesDefaultUserAgent()
+    {
+        $client = new Client();
+        $request = $client->createRequest('GET', 'http://www.foo.com');
+        $this->assertContains('Guzzle/', (string) $request->getHeader('User-Agent'));
+    }
 }
