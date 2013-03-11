@@ -145,6 +145,10 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
             array('q[]=a&q[]=b', array(
                 'q' => array('a', 'b')
             )),
+            // Ensure that a single PHP array style query string value is parsed into an array
+            array('q[]=a', array(
+                'q' => array('a')
+            )),
             // Ensure that decimals are allowed in query strings
             array('q.a=a&q.b=b', array(
                 'q.a' => 'a',
