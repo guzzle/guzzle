@@ -70,14 +70,14 @@ class QueryString extends Collection
                 $parts = explode('=', $kvp, 2);
                 $key = rawurldecode($parts[0]);
 
-                $paramIsPHPStyleArray = substr($key, -2) == '[]';
-                if ($paramIsPHPStyleArray) {
+                $paramIsPhpStyleArray = substr($key, -2) == '[]';
+                if ($paramIsPhpStyleArray) {
                     $key = substr($key, 0, -2);
                 }
 
                 if (array_key_exists(1, $parts)) {
                     $value = rawurldecode(str_replace('+', '%20', $parts[1]));
-                    if ($paramIsPHPStyleArray && !$q->hasKey($key)) {
+                    if ($paramIsPhpStyleArray && !$q->hasKey($key)) {
                         $value = array($value);
                     }
                     $q->add($key, $value);
