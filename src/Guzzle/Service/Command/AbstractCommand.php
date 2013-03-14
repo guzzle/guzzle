@@ -289,6 +289,8 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             if ($responseBody = $this->get(self::RESPONSE_BODY)) {
                 $this->request->setResponseBody($responseBody);
             }
+
+            $this->client->dispatch('command.after_prepare', array('command' => $this));
         }
 
         return $this->request;

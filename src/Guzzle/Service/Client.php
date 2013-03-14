@@ -70,6 +70,7 @@ class Client extends HttpClient implements ClientInterface
         return array_merge(HttpClient::getAllEvents(), array(
             'client.command.create',
             'command.before_prepare',
+            'command.after_prepare',
             'command.before_send',
             'command.after_send'
         ));
