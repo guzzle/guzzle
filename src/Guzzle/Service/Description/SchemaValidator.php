@@ -252,7 +252,7 @@ class SchemaValidator implements ValidatorInterface
                 }
             }
 
-        } elseif ($type == 'integer' || $type == 'numeric') {
+        } elseif ($type == 'integer' || $type == 'number' || $type == 'numeric') {
             if (($min = $param->getMinimum()) && $value < $min) {
                 $this->errors[] = "{$path} must be greater than or equal to {$min}";
             }
@@ -285,6 +285,8 @@ class SchemaValidator implements ValidatorInterface
                 return 'integer';
             } elseif ($t == 'boolean' && is_bool($value)) {
                 return 'boolean';
+            } elseif ($t == 'number' && is_numeric($value)) {
+                return 'number';
             } elseif ($t == 'numeric' && is_numeric($value)) {
                 return 'numeric';
             } elseif ($t == 'null' && !$value) {

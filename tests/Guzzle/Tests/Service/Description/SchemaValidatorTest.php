@@ -130,6 +130,7 @@ class SchemaValidatorTest extends \Guzzle\Tests\GuzzleTestCase
                 'test5' => array('type' => 'array', 'maxItems' => 2),
                 'test6' => array('type' => 'string', 'enum' => array('a', 'bc')),
                 'test7' => array('type' => 'string', 'pattern' => '/[0-9]+/'),
+                'test8' => array('type' => 'number'),
                 'baz' => array(
                     'type'     => 'array',
                     'minItems' => 2,
@@ -147,7 +148,8 @@ class SchemaValidatorTest extends \Guzzle\Tests\GuzzleTestCase
             'test4' => 100,
             'test5' => array(1, 3, 4),
             'test6' => 'Foo',
-            'test7' => 'abc'
+            'test7' => 'abc',
+            'test8' => 'abc'
         );
 
         $this->assertFalse($this->validator->validate($p, $value));
@@ -161,6 +163,7 @@ class SchemaValidatorTest extends \Guzzle\Tests\GuzzleTestCase
             '[foo][test5] must contain 2 or fewer elements',
             '[foo][test6] must be one of "a" or "bc"',
             '[foo][test7] must match the following regular expression: /[0-9]+/',
+            '[foo][test8] must be of type number',
             '[foo][test] length must be greater than or equal to 2',
         ), $this->validator->getErrors());
     }
@@ -218,6 +221,8 @@ class SchemaValidatorTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(false, $r->invoke($p, 'integer', 'abc'));
         $this->assertEquals('numeric', $r->invoke($p, 'numeric', 1));
         $this->assertEquals('numeric', $r->invoke($p, 'numeric', '1'));
+        $this->assertEquals('number', $r->invoke($p, 'number', 1));
+        $this->assertEquals('number', $r->invoke($p, 'number', '1'));
         $this->assertEquals(false, $r->invoke($p, 'numeric', 'a'));
         $this->assertEquals('boolean', $r->invoke($p, 'boolean', true));
         $this->assertEquals('boolean', $r->invoke($p, 'boolean', false));
