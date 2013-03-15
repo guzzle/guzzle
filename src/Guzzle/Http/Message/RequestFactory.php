@@ -107,7 +107,7 @@ class RequestFactory implements RequestFactoryInterface
 
             $isChunked = (string) $request->getHeader('Transfer-Encoding') == 'chunked';
 
-            if ($method == 'POST' && (is_array($body) || $body instanceof Collection)) {
+            if (($method == 'POST' || $method == 'PUT') && (is_array($body) || $body instanceof Collection)) {
 
                 // Normalize PHP style cURL uploads with a leading '@' symbol
                 foreach ($body as $key => $value) {
