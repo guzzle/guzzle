@@ -132,6 +132,7 @@ class OauthPlugin implements EventSubscriberInterface
      * @param RequestInterface $request   Request to generate a signature for
      * @param int              $timestamp Timestamp to use for nonce
      * @param string           $nonce
+     *
      * @return string
      */
     public function getStringToSign(RequestInterface $request, $timestamp, $nonce)
@@ -181,8 +182,8 @@ class OauthPlugin implements EventSubscriberInterface
         // Add POST fields to signing string
         if (!$this->config->get('disable_post_params') &&
             $request instanceof EntityEnclosingRequestInterface &&
-            (string) $request->getHeader('Content-Type') == 'application/x-www-form-urlencoded') {
-
+            (string) $request->getHeader('Content-Type') == 'application/x-www-form-urlencoded')
+        {
             $params->merge($request->getPostFields());
         }
 
@@ -197,7 +198,7 @@ class OauthPlugin implements EventSubscriberInterface
      * Returns a Nonce Based on the unique id and URL. This will allow for multiple requests in parallel with the same
      * exact timestamp to use separate nonce's.
      *
-     * @param RequestInterface $request   Request to generate a nonce for
+     * @param RequestInterface $request Request to generate a nonce for
      *
      * @return string
      */
@@ -209,17 +210,17 @@ class OauthPlugin implements EventSubscriberInterface
     /**
      * Gets timestamp from event or create new timestamp
      *
-     * @param Event $event
-     * @return integer
+     * @param Event $event Event containing contextual information
+     *
+     * @return int
      */
     public function getTimestamp(Event $event)
     {
-       return $event['timestamp'] ? : time();
+       return $event['timestamp'] ?: time();
     }
 
     /**
-     * Convert booleans to strings, and sorts the array.
-     * Removes unset parameters
+     * Convert booleans to strings, removed unset parameters, and sorts the array
      *
      * @param array $data Data array
      *
@@ -228,15 +229,17 @@ class OauthPlugin implements EventSubscriberInterface
     protected function prepareParameters($data)
     {
         ksort($data);
-        foreach ($data as $key => $value) {
-            if (is_null($value)) {
-                unset($data[$key]);
-            } else {
-                if (is_array($value)) {
+        foreach ($data as $key => &$value) {
+            switch (gettype($value)) {
+                case 'NULL':
+                    unset($data[$key]);
+                    break;
+                case 'array':
                     $data[$key] = self::prepareParameters($value);
-                } elseif (is_bool($value)) {
+                    break;
+                case 'boolean':
                     $data[$key] = $value ? 'true' : 'false';
-                }
+                    break;
             }
         }
 
