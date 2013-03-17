@@ -111,6 +111,32 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertContains('&a%3Dtrue%26c%3Dfalse', $p->getStringToSign($request, self::TIMESTAMP, self::NONCE));
     }
 
+    public function testCreatesStringToSignFromPostRequestWithNullValues()
+    {
+        $config = array(
+            'consumer_key'    => 'foo',
+            'consumer_secret' => 'bar',
+            'token'           => null,
+            'token_secret'    => 'dracula'
+        );
+
+        $p          = new OauthPlugin($config);
+        $request    = $this->getRequest();
+        $signString = $p->getStringToSign($request, self::TIMESTAMP, self::NONCE);
+
+        $this->assertContains('&e=f', rawurldecode($signString));
+
+        $expectedSignString = // Method and URL
+                'POST&http%3A%2F%2Fwww.test.com%2Fpath' .
+                // Sorted parameters from query string and body
+                '&a%3Db%26c%3Dd%26e%3Df%26oauth_consumer_key%3Dfoo' .
+                '%26oauth_nonce%3De7aa11195ca58349bec8b5ebe351d3497eb9e603%26' .
+                'oauth_signature_method%3DHMAC-SHA1' .
+                '%26oauth_timestamp%3D' . self::TIMESTAMP . '%26oauth_version%3D1.0';
+
+        $this->assertEquals($expectedSignString, $signString);
+    }
+
     /**
      * @depends testCreatesStringToSignFromPostRequest
      */

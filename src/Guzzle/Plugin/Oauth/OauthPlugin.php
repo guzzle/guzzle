@@ -219,6 +219,7 @@ class OauthPlugin implements EventSubscriberInterface
 
     /**
      * Convert booleans to strings, and sorts the array.
+     * Removes unset parameters
      *
      * @param array $data Data array
      *
@@ -228,10 +229,14 @@ class OauthPlugin implements EventSubscriberInterface
     {
         ksort($data);
         foreach ($data as $key => $value) {
-            if (is_array($value)) {
-                $data[$key] = self::prepareParameters($value);
-            } elseif (is_bool($value)) {
-                $data[$key] = $value ? 'true' : 'false';
+            if (is_null($value)) {
+                unset($data[$key]);
+            } else {
+                if (is_array($value)) {
+                    $data[$key] = self::prepareParameters($value);
+                } elseif (is_bool($value)) {
+                    $data[$key] = $value ? 'true' : 'false';
+                }
             }
         }
 
