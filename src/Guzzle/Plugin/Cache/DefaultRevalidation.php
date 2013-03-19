@@ -90,7 +90,7 @@ class DefaultRevalidation implements RevalidationInterface
         $revalidate = clone $request;
         $revalidate->removeHeader('Pragma')
             ->removeHeader('Cache-Control')
-            ->setHeader('If-Modified-Since', $response->getDate());
+            ->setHeader('If-Modified-Since', $response->getLastModified() ?: $response->getDate());
 
         if ($response->getEtag()) {
             $revalidate->setHeader('If-None-Match', '"' . $response->getEtag() . '"');
