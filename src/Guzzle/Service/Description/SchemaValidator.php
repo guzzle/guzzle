@@ -192,7 +192,7 @@ class SchemaValidator implements ValidatorInterface
 
         // If the value is required and the type is not null, then there is an error if the value is not set
         if ($required && $value === null && $type != 'null') {
-            $message = "{$path} is " . ($param->getType() ? ('a required ' . $param->getType()) : 'required');
+            $message = "{$path} is " . ($param->getType() ? ('a required ' . implode(' or ', (array) $param->getType())) : 'required');
             if ($param->getDescription()) {
                 $message .= ': ' . $param->getDescription();
             }
