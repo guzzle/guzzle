@@ -295,6 +295,14 @@ class SchemaValidatorTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('12', $value);
     }
 
+    public function testRequiredMessageIncludesType()
+    {
+        $param = new Parameter(array('name' => 'test', 'type' => array('string', 'boolean'), 'required' => true));
+        $value = null;
+        $this->assertFalse($this->validator->validate($param, $value));
+        $this->assertEquals(array('[test] is a required string or boolean'), $this->validator->getErrors());
+    }
+
     protected function getComplexParam()
     {
         return new Parameter(array(
