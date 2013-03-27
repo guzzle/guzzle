@@ -301,4 +301,26 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $b = new ServiceBuilder($this->arrayData);
         $this->assertSame($b->get('billy.mock'), $b->get('Hello!'));
     }
+
+    public function testCanOverwriteParametersForThrowawayClients()
+    {
+        $b = new ServiceBuilder($this->arrayData);
+
+        $c1 = $b->get('michael.mock');
+        $this->assertEquals('michael', $c1->getConfig('username'));
+
+        $c2 = $b->get('michael.mock', array('username' => 'jeremy'));
+        $this->assertEquals('jeremy', $c2->getConfig('username'));
+    }
+
+    public function testGettingAThrowawayClientWithParametersDoesNotAffectGettingOtherClients()
+    {
+        $b = new ServiceBuilder($this->arrayData);
+
+        $c1 = $b->get('michael.mock', array('username' => 'jeremy'));
+        $this->assertEquals('jeremy', $c1->getConfig('username'));
+
+        $c2 = $b->get('michael.mock');
+        $this->assertEquals('michael', $c2->getConfig('username'));
+    }
 }
