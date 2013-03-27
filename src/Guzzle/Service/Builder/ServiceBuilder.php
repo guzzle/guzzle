@@ -148,8 +148,14 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
             }
         }
 
+        // Get the configured parameters and merge in any parameters provided for throw-away clients
+        $config = $this->builderConfig[$name]['params'];
+        if (is_array($throwAway)) {
+            $config = $throwAway + $config;
+        }
+
         $class = $this->builderConfig[$name]['class'];
-        $client = $class::factory($this->builderConfig[$name]['params']);
+        $client = $class::factory($config);
 
         if (!$throwAway) {
             $this->clients[$name] = $client;
