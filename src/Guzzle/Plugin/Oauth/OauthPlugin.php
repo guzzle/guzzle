@@ -25,6 +25,7 @@ class OauthPlugin implements EventSubscriberInterface
      * Create a new OAuth 1.0 plugin
      *
      * @param array $config Configuration array containing these parameters:
+     *     - string 'callback'             OAuth callback
      *     - string 'consumer_key'         Consumer key
      *     - string 'consumer_secret'      Consumer secret
      *     - string 'token'                Token
