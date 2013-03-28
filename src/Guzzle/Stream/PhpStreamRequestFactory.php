@@ -37,6 +37,9 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
 
     /**
      * {@inheritdoc}
+     *
+     * The $params array can contain the following custom keys specific to the PhpStreamRequestFactory:
+     * - stream_class: The name of a class to create instead of a Guzzle\Stream\Stream object
      */
     public function fromRequest(RequestInterface $request, $context = array(), array $params = array())
     {
@@ -64,7 +67,7 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
         ));
 
         // Create the file handle but silence errors
-        return $this->createStream()
+        return $this->createStream($params)
             ->setCustomData('request', $request)
             ->setCustomData('response_headers', $this->getLastResponseHeaders());
     }
@@ -91,7 +94,7 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
     /**
      * Create a stream context
      *
-     * @param array $param Parameter array
+     * @param array $params Parameter array
      */
     protected function createContext(array $params)
     {
@@ -203,9 +206,11 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
     /**
      * Create the stream for the request with the context options
      *
+     * @param array $params Parameters of the stream
+     *
      * @return StreamInterface
      */
-    protected function createStream()
+    protected function createStream(array $params)
     {
         $http_response_header = null;
         $url = $this->url;
@@ -219,7 +224,10 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
             $this->lastResponseHeaders = $http_response_header;
         }
 
-        return new Stream($fp);
+        // Determine the class to instantiate
+        $className = isset($params['stream_class']) ? $params['stream_class'] : __NAMESPACE__ . '\\Stream';
+
+        return new $className($fp);
     }
 
     /**
