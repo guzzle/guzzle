@@ -9,6 +9,7 @@ use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Parser\ParserRegistry;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Url;
+use Guzzle\Http\EntityBody;
 
 /**
  * Immutable wrapper for a cURL handle
@@ -138,6 +139,8 @@ class CurlHandle
                 }
                 break;
             case 'PUT':
+                if (count($request->getPostFields()) && $request->getHeader('Content-Type') == 'application/x-www-form-urlencoded')
+                    $request->setBody(EntityBody::factory((string)$request->getPostFields()));
             case 'PATCH':
             case 'DELETE':
             default:
