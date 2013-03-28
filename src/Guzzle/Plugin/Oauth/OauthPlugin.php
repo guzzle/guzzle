@@ -73,6 +73,7 @@ class OauthPlugin implements EventSubscriberInterface
         $nonce = $this->generateNonce($request);
 
         $authorizationParams = array(
+            'oauth_callback'         => $this->config['callback'],
             'oauth_consumer_key'     => $this->config['consumer_key'],
             'oauth_nonce'            => $nonce,
             'oauth_signature'        => $this->getSignature($request, $timestamp, $nonce),
