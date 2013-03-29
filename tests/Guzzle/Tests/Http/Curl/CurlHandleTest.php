@@ -402,13 +402,14 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_CONNECTTIMEOUT => 10,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
-                CURLOPT_POST => 1,
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_UPLOAD => true,
+                CURLOPT_INFILESIZE => 14,
                 CURLOPT_HTTPHEADER => array (
                     'Expect:',
                     'Accept:',
                     'Host: localhost:8124',
                     'Content-Type: application/json',
-                    'Content-Length: 14',
                     'User-Agent: ' . $userAgent
                 ),
             ), array(
@@ -429,7 +430,8 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_CONNECTTIMEOUT => 10,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
-                CURLOPT_POST => 1,
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_UPLOAD => true,
                 CURLOPT_HTTPHEADER => array (
                     'Expect:',
                     'Accept:',
@@ -795,7 +797,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertContains('POST /', $requests[0]);
         $this->assertContains("\nfoo", $requests[0]);
         $this->assertContains('content-length: 3', $requests[0]);
-        $this->assertContains('application/x-www-form-urlencoded', $requests[0]);
+        $this->assertNotContains('content-type', $requests[0]);
     }
 
     public function testAllowsWireTransferInfoToBeEnabled()
@@ -925,7 +927,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
 
         $client = new Client($this->getServer()->getUrl());
-        $request = $client->get('/', null, 'test');
+        $request = $client->get('/', null);
         $request->getCurlOptions()->set(CURLOPT_ENCODING, '');
         $this->updateForHandle($request);
         $request->send();
@@ -957,9 +959,9 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ndata");
         $client = new Client($this->getServer()->getUrl());
         $request = $client->get('/', array(
-                'Accept' => 'application/json',
-                'Accept-Encoding' => 'gzip, deflate',
-            ));
+            'Accept' => 'application/json',
+            'Accept-Encoding' => 'gzip, deflate',
+        ));
         $this->updateForHandle($request);
         $request->send();
         $options = $this->requestHandle->getOptions()->getAll();
@@ -967,5 +969,41 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $received = $this->getServer()->getReceivedRequests(false);
         $this->assertContainsIns('accept: application/json', $received[0]);
         $this->assertContainsIns('accept-encoding: gzip, deflate', $received[0]);
+    }
+
+    public function testSendsPostFieldsForNonPostRequests()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\n\r\nContent-Length: 0\r\n\r\n");
+
+        $client = new Client();
+        $request = $client->put($this->getServer()->getUrl(), null, array(
+            'foo' => 'baz',
+            'baz' => 'bar'
+        ));
+
+        $request->send();
+        $requests = $this->getServer()->getReceivedRequests(true);
+        $this->assertEquals('PUT', $requests[0]->getMethod());
+        $this->assertEquals('application/x-www-form-urlencoded', (string) $requests[0]->getHeader('Content-Type'));
+        $this->assertEquals(15, (string) $requests[0]->getHeader('Content-Length'));
+        $this->assertEquals('foo=baz&baz=bar', (string) $requests[0]->getBody());
+    }
+
+    public function testSendsPostFilesForNonPostRequests()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\n\r\nContent-Length: 0\r\n\r\n");
+
+        $client = new Client();
+        $request = $client->put($this->getServer()->getUrl(), null, array(
+            'foo' => '@' . __FILE__
+        ));
+
+        $request->send();
+        $requests = $this->getServer()->getReceivedRequests(true);
+        $this->assertEquals('PUT', $requests[0]->getMethod());
+        $this->assertContains('multipart/form-data', (string) $requests[0]->getHeader('Content-Type'));
+        $this->assertContains('testSendsPostFilesForNonPostRequests', (string) $requests[0]->getBody());
     }
 }

@@ -91,24 +91,21 @@ class RequestFactory implements RequestFactoryInterface
         $method = strtoupper($method);
 
         if ($method == 'GET' || $method == 'HEAD' || $method == 'TRACE' || $method == 'OPTIONS') {
-            $c = $this->requestClass;
-            $request = new $c($method, $url, $headers);
+            // Handle non-entity-enclosing request methods
+            $request = new $this->requestClass($method, $url, $headers);
             if ($body) {
                 // The body is where the response body will be stored
-                $request->setResponseBody(EntityBody::factory($body));
+                $request->setResponseBody($body);
             }
             return $request;
         }
 
-        $c = $this->entityEnclosingRequestClass;
-        $request = new $c($method, $url, $headers);
+        // Create an entity enclosing request by default
+        $request = new $this->entityEnclosingRequestClass($method, $url, $headers);
 
         if ($body) {
-
-            $isChunked = (string) $request->getHeader('Transfer-Encoding') == 'chunked';
-
-            if ($method == 'POST' && (is_array($body) || $body instanceof Collection)) {
-
+            // Add POST fields and files to an entity enclosing request if an array is used
+            if (is_array($body) || $body instanceof Collection) {
                 // Normalize PHP style cURL uploads with a leading '@' symbol
                 foreach ($body as $key => $value) {
                     if (is_string($value) && substr($value, 0, 1) == '@') {
@@ -116,14 +113,15 @@ class RequestFactory implements RequestFactoryInterface
                         unset($body[$key]);
                     }
                 }
-
                 // Add the fields if they are still present and not all files
                 $request->addPostFields($body);
-
-            } elseif (is_resource($body) || $body instanceof EntityBody) {
-                $request->setBody($body, (string) $request->getHeader('Content-Type'), $isChunked);
             } else {
-                $request->setBody((string) $body, (string) $request->getHeader('Content-Type'), $isChunked);
+                // Add a raw entity body body to the request
+                $request->setBody(
+                    $body,
+                    (string) $request->getHeader('Content-Type'),
+                    (string) $request->getHeader('Transfer-Encoding') == 'chunked'
+                );
             }
         }
 

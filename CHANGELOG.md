@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+Next Version (TBD):
+-------------------
+
+* You can now send any EntityEnclosingRequest with POST fields or POST files and cURL will handle creating bodies
+* POST requests using a custom entity body are now treated exactly like PUT requests but with a custom cURL method. This
+  means that the redirect behavior of POST requests with custom bodies will not be the same as POST requests that use
+  POST fields or files (the latter is only used when emulating a form POST in the browser).
+* Lots of cleanup to CurlHandle::factory and RequestFactory::createRequest
+
 3.3.1 (2013-03-10)
 ------------------
 

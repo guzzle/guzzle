@@ -5,9 +5,9 @@ namespace Guzzle\Http\Curl;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Common\Collection;
+use Guzzle\Http\Message\EntityEnclosingRequest;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Parser\ParserRegistry;
-use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Url;
 
 /**
@@ -62,6 +62,7 @@ class CurlHandle
             CURLOPT_HEADER         => false,
             CURLOPT_PORT           => $request->getPort(),
             CURLOPT_HTTPHEADER     => array(),
+            CURLOPT_WRITEFUNCTION  => array($mediator, 'writeResponseBody'),
             CURLOPT_HEADERFUNCTION => array($mediator, 'receiveResponseHeader'),
             CURLOPT_HTTP_VERSION   => $request->getProtocolVersion() === '1.0'
                 ? CURL_HTTP_VERSION_1_0 : CURL_HTTP_VERSION_1_1,
@@ -100,64 +101,22 @@ class CurlHandle
             $curlOptions[CURLOPT_VERBOSE] = true;
         }
 
-        // HEAD requests need no response body, everything else might
-        if ($method != 'HEAD') {
-            $curlOptions[CURLOPT_WRITEFUNCTION] = array($mediator, 'writeResponseBody');
-        }
-
         // Specify settings according to the HTTP method
-        switch ($method) {
-            case 'GET':
-                $curlOptions[CURLOPT_HTTPGET] = true;
-                break;
-            case 'HEAD':
-                $curlOptions[CURLOPT_NOBODY] = true;
-                break;
-            case 'POST':
-                $curlOptions[CURLOPT_POST] = true;
-                // Special handling for POST specific fields and files
-                if (count($request->getPostFiles())) {
-                    $fields = $request->getPostFields()->useUrlEncoding(false)->urlEncode();
-                    foreach ($request->getPostFiles() as $key => $data) {
-                        $prefixKeys = count($data) > 1;
-                        foreach ($data as $index => $file) {
-                            // Allow multiple files in the same key
-                            $fieldKey = $prefixKeys ? "{$key}[{$index}]" : $key;
-                            $fields[$fieldKey] = $file->getCurlString();
-                        }
-                    }
-                    $curlOptions[CURLOPT_POSTFIELDS] = $fields;
-                    $request->removeHeader('Content-Length');
-                } elseif (count($request->getPostFields())) {
-                    $curlOptions[CURLOPT_POSTFIELDS] = (string) $request->getPostFields()->useUrlEncoding(true);
-                    $request->removeHeader('Content-Length');
-                } elseif (!$request->getBody()) {
-                    // Need to remove CURLOPT_POST to prevent chunked encoding for an empty POST
-                    unset($curlOptions[CURLOPT_POST]);
-                    $curlOptions[CURLOPT_CUSTOMREQUEST] = 'POST';
-                }
-                break;
-            case 'PUT':
-            case 'PATCH':
-            case 'DELETE':
-            default:
-                $curlOptions[CURLOPT_CUSTOMREQUEST] = $method;
-                if (!$bodyAsString) {
-                    $curlOptions[CURLOPT_UPLOAD] = true;
-                    // Let cURL handle setting the Content-Length header
-                    if ($tempContentLength = $request->getHeader('Content-Length')) {
-                        $tempContentLength = (int) (string) $tempContentLength;
-                        $curlOptions[CURLOPT_INFILESIZE] = $tempContentLength;
-                    }
-                } elseif (!$request->hasHeader('Content-Type')) {
-                    // Remove the curl generated Content-Type header if none was set manually
-                    $curlOptions[CURLOPT_HTTPHEADER][] = 'Content-Type:';
-                }
-        }
+        if ($method == 'GET') {
+            $curlOptions[CURLOPT_HTTPGET] = true;
+        } elseif ($method == 'HEAD') {
+            $curlOptions[CURLOPT_NOBODY] = true;
+            // HEAD requests do not use a write function
+            unset($curlOptions[CURLOPT_WRITEFUNCTION]);
+        } elseif (!($request instanceof EntityEnclosingRequest)) {
+            $curlOptions[CURLOPT_CUSTOMREQUEST] = $method;
+        } else {
 
-        // Special handling for requests sending raw data
-        if ($request instanceof EntityEnclosingRequestInterface) {
+            $curlOptions[CURLOPT_CUSTOMREQUEST] = $method;
+
+            // Handle sending raw bodies in a request
             if ($request->getBody()) {
+                // You can send the body as a string using curl's CURLOPT_POSTFIELDS
                 if ($bodyAsString) {
                     $curlOptions[CURLOPT_POSTFIELDS] = (string) $request->getBody();
                     // Allow curl to add the Content-Length for us to account for the times when
@@ -165,13 +124,51 @@ class CurlHandle
                     if ($tempContentLength = $request->getHeader('Content-Length')) {
                         $tempContentLength = (int) (string) $tempContentLength;
                     }
+                    // Remove the curl generated Content-Type header if none was set manually
+                    if (!$request->hasHeader('Content-Type')) {
+                        $curlOptions[CURLOPT_HTTPHEADER][] = 'Content-Type:';
+                    }
                 } else {
+                    $curlOptions[CURLOPT_UPLOAD] = true;
+                    // Let cURL handle setting the Content-Length header
+                    if ($tempContentLength = $request->getHeader('Content-Length')) {
+                        $tempContentLength = (int) (string) $tempContentLength;
+                        $curlOptions[CURLOPT_INFILESIZE] = $tempContentLength;
+                    }
                     // Add a callback for curl to read data to send with the request only if a body was specified
                     $curlOptions[CURLOPT_READFUNCTION] = array($mediator, 'readRequestBody');
                     // Attempt to seek to the start of the stream
                     $request->getBody()->seek(0);
                 }
+
+            } else {
+
+                // Special handling for POST specific fields and files
+                $postFields = false;
+                if (count($request->getPostFiles())) {
+                    $postFields = $request->getPostFields()->useUrlEncoding(false)->urlEncode();
+                    foreach ($request->getPostFiles() as $key => $data) {
+                        $prefixKeys = count($data) > 1;
+                        foreach ($data as $index => $file) {
+                            // Allow multiple files in the same key
+                            $fieldKey = $prefixKeys ? "{$key}[{$index}]" : $key;
+                            $postFields[$fieldKey] = $file->getCurlString();
+                        }
+                    }
+                } elseif (count($request->getPostFields())) {
+                    $postFields = (string) $request->getPostFields()->useUrlEncoding(true);
+                }
+
+                if ($postFields !== false) {
+                    if ($method == 'POST') {
+                        unset($curlOptions[CURLOPT_CUSTOMREQUEST]);
+                        $curlOptions[CURLOPT_POST] = true;
+                    }
+                    $curlOptions[CURLOPT_POSTFIELDS] = $postFields;
+                    $request->removeHeader('Content-Length');
+                }
             }
+
             // If the Expect header is not present, prevent curl from adding it
             if (!$request->hasHeader('Expect')) {
                 $curlOptions[CURLOPT_HTTPHEADER][] = 'Expect:';

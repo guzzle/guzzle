@@ -43,7 +43,7 @@ class DefaultRevalidationTest extends \Guzzle\Tests\GuzzleTestCase
             // Forces revalidation that overwrites what is in cache
             array(
                 false,
-                "\r\n\r\n",
+                "\r\n",
                 "HTTP/1.1 200 OK\r\nCache-Control: must-revalidate, no-cache\r\nDate: " . $this->getHttpDate('-10 hours') . "\r\nContent-Length: 4\r\n\r\nData",
                 "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nDatas",
                 "HTTP/1.1 200 OK\r\nContent-Length: 5\r\nDate: " . $this->getHttpDate('now') . "\r\n\r\nDatas"
@@ -51,7 +51,7 @@ class DefaultRevalidationTest extends \Guzzle\Tests\GuzzleTestCase
             // Must get a fresh copy because the request is declining revalidation
             array(
                 false,
-                "\r\n\r\n",
+                "\r\n",
                 "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\nDate: " . $this->getHttpDate('-3 hours') . "\r\nContent-Length: 4\r\n\r\nData",
                 null,
                 null,
@@ -60,7 +60,7 @@ class DefaultRevalidationTest extends \Guzzle\Tests\GuzzleTestCase
             // Skips revalidation because the request is accepting the cached copy
             array(
                 true,
-                "\r\n\r\n",
+                "\r\n",
                 "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\nDate: " . $this->getHttpDate('-3 hours') . "\r\nContent-Length: 4\r\n\r\nData",
                 null,
                 null,
@@ -69,14 +69,14 @@ class DefaultRevalidationTest extends \Guzzle\Tests\GuzzleTestCase
             // Throws an exception during revalidation
             array(
                 false,
-                "\r\n\r\n",
+                "\r\n",
                 "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\nDate: " . $this->getHttpDate('-3 hours') . "\r\n\r\nData",
                 "HTTP/1.1 500 INTERNAL SERVER ERROR\r\nContent-Length: 0\r\n\r\n"
             ),
             // ETag mismatch
             array(
                 false,
-                "\r\n\r\n",
+                "\r\n",
                 "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\nETag: \"123\"\r\nDate: " . $this->getHttpDate('-10 hours') . "\r\n\r\nData",
                 "HTTP/1.1 304 NOT MODIFIED\r\nETag: \"123456\"\r\n\r\n",
             ),
