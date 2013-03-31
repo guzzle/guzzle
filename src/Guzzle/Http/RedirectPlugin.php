@@ -6,6 +6,7 @@ use Guzzle\Common\Event;
 use Guzzle\Http\Url;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
+use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Exception\TooManyRedirectsException;
 use Guzzle\Http\Exception\CouldNotRewindStreamException;
@@ -155,17 +156,7 @@ class RedirectPlugin implements EventSubscriberInterface
      */
     protected function cloneRequestWithGetMethod(EntityEnclosingRequestInterface $request)
     {
-        // Create a new GET request using the original request's URL
-        $redirectRequest = $request->getClient()->get($request->getUrl());
-        $redirectRequest->getCurlOptions()->replace($request->getCurlOptions()->getAll());
-        // Copy over the headers, while ensuring that the Content-Length is not copied
-        $redirectRequest->setHeaders($request->getHeaders()->getAll())->removeHeader('Content-Length');
-        $redirectRequest->setEventDispatcher(clone $request->getEventDispatcher());
-        $redirectRequest->getParams()
-            ->replace($request->getParams()->getAll())
-            ->remove('curl_handle')->remove('queued_response')->remove('curl_multi');
-
-        return $redirectRequest;
+        return RequestFactory::getInstance()->cloneRequestWithMethod($request, 'GET');
     }
 
     /**

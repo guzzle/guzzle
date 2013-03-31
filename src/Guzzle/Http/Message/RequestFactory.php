@@ -127,4 +127,39 @@ class RequestFactory implements RequestFactoryInterface
 
         return $request;
     }
+
+    /**
+     * Clone a request while changing the method. Emulates the behavior of
+     * {@see Guzzle\Http\Message\Request::clone}, but can change the HTTP method.
+     *
+     * @param RequestInterface $request Request to clone
+     * @param string           $method  Method to set
+     *
+     * @return RequestInterface
+     */
+    public function cloneRequestWithMethod(RequestInterface $request, $method)
+    {
+        // Create the request with the same client if possible
+        if ($client = $request->getClient()) {
+            $cloned = $request->getClient()->createRequest($method, $request->getUrl(), $request->getHeaders());
+        } else {
+            $cloned = $this->create($method, $request->getUrl(), $request->getHeaders());
+        }
+
+        $cloned->getCurlOptions()->replace($request->getCurlOptions()->getAll());
+        $cloned->setEventDispatcher(clone $request->getEventDispatcher());
+        // Ensure that that the Content-Length header is not copied if changing to GET or HEAD
+        if (!($cloned instanceof EntityEnclosingRequestInterface)) {
+            $cloned->removeHeader('Content-Length');
+        } elseif ($request instanceof EntityEnclosingRequestInterface) {
+            $cloned->setBody($request->getBody());
+        }
+        $cloned->getParams()
+            ->replace($request->getParams()->getAll())
+            ->remove('curl_handle')
+            ->remove('queued_response')
+            ->remove('curl_multi');
+
+        return $cloned;
+    }
 }
