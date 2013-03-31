@@ -10,6 +10,7 @@ use Guzzle\Service\Command\AbstractCommand;
 use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Description\Parameter;
 use Guzzle\Service\Description\SchemaValidator;
+use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Tests\Service\Mock\Command\MockCommand;
 use Guzzle\Tests\Service\Mock\Command\Sub\Sub;
 
@@ -450,6 +451,31 @@ class CommandTest extends AbstractCommandTest
         $v->expects($this->any())->method('validate')->will($this->returnValue(false));
         $v->expects($this->any())->method('getErrors')->will($this->returnValue(array('[Foo] Baz', '[Bar] Boo')));
         $command->setValidator($v);
+        $command->prepare();
+    }
+
+    /**
+     * @expectedException \Guzzle\Service\Exception\ValidationException
+     * @expectedExceptionMessage Validation errors: [abc] must be of type string
+     */
+    public function testValidatesAdditionalProperties()
+    {
+        $description = ServiceDescription::factory(array(
+            'operations' => array(
+                'foo' => array(
+                    'parameters' => array(
+                        'baz' => array('type' => 'integer')
+                    ),
+                    'additionalProperties' => array(
+                        'type' => 'string'
+                    )
+                )
+            )
+        ));
+
+        $client = new Client();
+        $client->setDescription($description);
+        $command = $client->getCommand('foo', array('abc' => false));
         $command->prepare();
     }
 

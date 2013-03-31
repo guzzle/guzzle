@@ -29,6 +29,11 @@ class Operation implements OperationInterface
     protected $parameters = array();
 
     /**
+     * @var Parameter Additional properties
+     */
+    protected $additionalProperties;
+
+    /**
      * @var string Name of the command
      */
     protected $name;
@@ -120,6 +125,8 @@ class Operation implements OperationInterface
      *                       error), and 'class' (a custom exception class that would be thrown if the error is
      *                       encountered).
      * - data:               (array) Any extra data that might be used to help build or serialize the operation
+     * - additionalProperties: (null|array) Parameter schema to use when an option is passed to the operation that is
+     *                                      not in the schema
      *
      * @param array                       $config      Array of configuration data
      * @param ServiceDescriptionInterface $description Service description used to resolve models if $ref tags are found
@@ -160,6 +167,14 @@ class Operation implements OperationInterface
                     $param['name'] = $name;
                     $this->addParam(new Parameter($param, $this->description));
                 }
+            }
+        }
+
+        if (isset($config['additionalProperties'])) {
+            if ($config['additionalProperties'] instanceof Parameter) {
+                $this->setAdditionalProperties($config['additionalProperties']);
+            } elseif (is_array($config['additionalProperties'])) {
+                $this->setAdditionalProperties(new Parameter($config['additionalProperties'], $this->description));
             }
         }
     }
@@ -578,6 +593,29 @@ class Operation implements OperationInterface
     public function setData($name, $value)
     {
         $this->data[$name] = $value;
+
+        return $this;
+    }
+
+    /**
+     * Get the additionalProperties/parameters of the operation
+     *
+     * @return Paramter|null
+     */
+    public function getAdditionalProperties()
+    {
+        return $this->additionalProperties;
+    }
+
+    /**
+     * Set the additionalProperties/parameters of the operation
+     *
+     * @param Parameter|null $parameter Parameter to set
+     */
+    public function setAdditionalProperties($parameter)
+    {
+        $this->additionalProperties = $parameter;
+        $this->additionalProperties->setParent($this);
 
         return $this;
     }
