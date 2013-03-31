@@ -5,6 +5,7 @@ namespace Guzzle\Tests\Service\Command;
 use Guzzle\Service\Command\DefaultRequestSerializer;
 use Guzzle\Http\Message\EntityEnclosingRequest;
 use Guzzle\Service\Client;
+use Guzzle\Service\Description\ServiceDescription;
 use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Description\Parameter;
 use Guzzle\Service\Command\LocationVisitor\Request\HeaderVisitor;
@@ -101,5 +102,31 @@ class DefaultRequestSerializerTest extends \Guzzle\Tests\GuzzleTestCase
 
         $request = $this->serializer->prepare($this->command);
         $this->assertEquals('http://foo.com/baz/bar?fields='.urlencode('id,name'), (string) $request->getUrl());
+    }
+
+    public function testValidatesAdditionalProperties()
+    {
+        $description = ServiceDescription::factory(array(
+            'operations' => array(
+                'foo' => array(
+                    'httpMethod' => 'PUT',
+                    'parameters' => array(
+                        'bar' => array('location' => 'header')
+                    ),
+                    'additionalProperties' => array(
+                        'location' => 'json'
+                    )
+                )
+            )
+        ));
+
+        $client = new Client();
+        $client->setDescription($description);
+        $command = $client->getCommand('foo');
+        $command['bar'] = 'test';
+        $command['hello'] = 'abc';
+        $request = $command->prepare();
+        $this->assertEquals('test', (string) $request->getHeader('bar'));
+        $this->assertEquals('{"hello":"abc"}', (string) $request->getBody());
     }
 }
