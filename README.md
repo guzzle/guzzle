@@ -172,7 +172,7 @@ $client = new Guzzle\Http\Client('http://www.myapi.com/api/v1', array(
 $request = $client->get('http://www.test.com{+path}{?a,data*}');
 ```
 
-The generated request URL would become: ``http://www.test.com/path/to?a=hi&foo=bar&mesa=jarajar``
+The generated request URL would become: ``http://www.test.com/path/to?a=hi&foo=bar&mesa=jarjar``
 
 You can specify URI templates and an array of additional template variables to use when creating requests:
 
