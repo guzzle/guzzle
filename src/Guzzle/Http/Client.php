@@ -83,13 +83,14 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 
         // Allow ssl.certificate_authority config setting to control the certificate authority used by curl
         $authority = $this->config->get(self::SSL_CERT_AUTHORITY);
+
         // Set the SSL certificate
         if ($authority !== 'system') {
-            if (substr(__FILE__, 0, 7) == 'phar://') {
-                $this->preparePharCacert();
-            }
             if ($authority === null) {
                 $authority = true;
+            }
+            if ($authority === true && substr(__FILE__, 0, 7) == 'phar://') {
+                $authority = $this->preparePharCacert();
             }
             $this->setSslVerification($authority);
         }
@@ -485,14 +486,14 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     {
         $certFile = sys_get_temp_dir() . '/cacert.pem';
         if (file_exists($certFile)) {
-            return;
+            if (!copy('phar://guzzle.phar/src/Guzzle/Http/Resources/cacert.pem', $certFile)) {
+                throw new RuntimeException(
+                    'Could not copy phar://guzzle.phar/src/Guzzle/Http/Resources/cacert.pem to '
+                    . $certFile
+                );
+            }
         }
 
-        if (!copy('phar://guzzle.phar/src/Guzzle/Http/Resources/cacert.pem', $certFile)) {
-            throw new RuntimeException(
-                'Could not copy phar://guzzle.phar/src/Guzzle/Http/Resources/cacert.pem to '
-                . $certFile
-            );
-        }
+        return $certFile;
     }
 }
