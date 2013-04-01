@@ -6,6 +6,7 @@ use Guzzle\Common\Collection;
 use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Common\Exception\ExceptionCollection;
 use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Common\Version;
 use Guzzle\Parser\ParserRegistry;
 use Guzzle\Parser\UriTemplate\UriTemplateInterface;
@@ -79,16 +80,20 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function __construct($baseUrl = '', $config = null)
     {
         $this->setConfig($config ?: new Collection());
+
         // Allow ssl.certificate_authority config setting to control the certificate authority used by curl
         $authority = $this->config->get(self::SSL_CERT_AUTHORITY);
-        // Use the system's cacert if in a phar (curl can't read from a phar stream wrapper)
-        if (strpos(__FILE__, 'phar://') !== false && (null === $authority || $authority === true)) {
-            $authority = 'system';
-        }
-        // Set the config setting to system to use the certificate authority bundle on your system
+        // Set the SSL certificate
         if ($authority !== 'system') {
-            $this->setSslVerification($authority !== null ? $authority : true);
+            if (substr(__FILE__, 0, 7) == 'phar://') {
+                $this->preparePharCacert();
+            }
+            if ($authority === null) {
+                $authority = true;
+            }
+            $this->setSslVerification($authority);
         }
+
         $this->setBaseUrl($baseUrl);
         $this->defaultHeaders = new Collection();
         $this->setRequestFactory(RequestFactory::getInstance());
@@ -158,6 +163,10 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             } elseif (is_dir($certificateAuthority)) {
                 unset($opts[CURLOPT_CAINFO]);
                 $opts[CURLOPT_CAPATH] = $certificateAuthority;
+            } else {
+                throw new RuntimeException(
+                    'Invalid option passed to ' . self::SSL_CERT_AUTHORITY . ': ' . $certificateAuthority
+                );
             }
         }
 
@@ -465,5 +474,25 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         );
 
         return $request;
+    }
+
+    /**
+     * Copy the cecert.pem file from the phar if it is not in the temp folder
+     *
+     * @throws RuntimeException if the file cannot be copied
+     */
+    protected function preparePharCacert()
+    {
+        $certFile = sys_get_temp_dir() . '/cacert.pem';
+        if (file_exists($certFile)) {
+            return;
+        }
+
+        if (!copy('phar://guzzle.phar/src/Guzzle/Http/Resources/cacert.pem', $certFile)) {
+            throw new RuntimeException(
+                'Could not copy phar://guzzle.phar/src/Guzzle/Http/Resources/cacert.pem to '
+                . $certFile
+            );
+        }
     }
 }

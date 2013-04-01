@@ -226,6 +226,16 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @covers Guzzle\Http\Client::setSslVerification
+     * @expectedException \Guzzle\Common\Exception\RuntimeException
+     */
+    public function testThrowsExceptionForInvalidCertificate()
+    {
+        $client = new Client('https://www.secure.com/');
+        $client->setSslVerification('/path/to/missing/file');
+    }
+
+    /**
+     * @covers Guzzle\Http\Client::setSslVerification
      */
     public function testClientAllowsSettingSpecificSslCaInfo()
     {
