@@ -127,7 +127,7 @@ interface StreamInterface
      *
      * @param int $size Size of the stream contents in bytes
      *
-     * @return Stream
+     * @return self
      */
     public function setSize($size);
 
