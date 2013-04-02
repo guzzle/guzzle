@@ -30,6 +30,23 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
     }
 
     /**
+     * Will give the contents of the buffer followed by the exhausted remote stream.
+     *
+     * Warning: Loads the entire stream into memory
+     *
+     * @return string
+     */
+    public function __toString()
+    {
+        $str = (string) $this->body;
+        while (!$this->remoteStream->feof()) {
+            $str .= $this->remoteStream->read(16384);
+        }
+
+        return $str;
+    }
+
+    /**
      * {@inheritdoc}
      * @throws RuntimeException When seeking with SEEK_END or when seeking past the total size of the buffer stream
      */
@@ -50,7 +67,7 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
             );
         }
 
-        return $this->body->seek($offset);
+        return $this->body->seek($byte);
     }
 
     /**
@@ -103,10 +120,30 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
 
     /**
      * {@inheritdoc}
+     * @link http://php.net/manual/en/function.fgets.php
      */
     public function readLine($maxLength = null)
     {
-        return $this->body->readLine($maxLength);
+        $buffer = '';
+        $size = 0;
+        while (!$this->isConsumed()) {
+            $byte = $this->read(1);
+            $buffer .= $byte;
+            // Break when a new line is found or the max length - 1 is reached
+            if ($byte == PHP_EOL || ++$size == $maxLength - 1) {
+                break;
+            }
+        }
+
+        return $buffer;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isConsumed()
+    {
+        return $this->body->isConsumed() && $this->remoteStream->isConsumed();
     }
 
     /**
@@ -114,17 +151,19 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
      */
     public function close()
     {
-        return $this->remoteStream->close() && parent::close();
+        return $this->remoteStream->close() && $this->body->close();
     }
 
     /**
-     * You cannot change the underlying stream of a buffered stream
-     *
-     * @throws RuntimeException
+     * {@inheritdoc}
      */
     public function setStream($stream, $size = 0)
     {
-        throw new RuntimeException('Cannot change the underlying stream of a CachingEntityBody');
+        $this->remoteStream->setStream($stream, $size);
+        $remoteSize = $this->remoteStream->getSize();
+        if (false !== $remoteSize) {
+            $this->body->setSize($remoteSize);
+        }
     }
 
     /**
@@ -208,6 +247,8 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
      */
     public function setCustomData($key, $value)
     {
-        return $this->remoteStream->setCustomData($key, $value);
+        $this->remoteStream->setCustomData($key, $value);
+
+        return $this;
     }
 }
