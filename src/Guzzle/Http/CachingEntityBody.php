@@ -15,6 +15,11 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
     protected $remoteStream;
 
     /**
+     * @var int The number of bytes to skip reading due to a write on the temporary buffer
+     */
+    protected $skipReadBytes = 0;
+
+    /**
      * We will treat the buffer object as the body of the entity body
      * {@inheritdoc}
      */
@@ -22,11 +27,6 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
     {
         $this->remoteStream = $body;
         $this->body = new EntityBody(fopen('php://temp', 'r+'));
-        // Use the specifically set size of the remote stream if it is available
-        $remoteSize = $this->remoteStream->getSize();
-        if (false !== $remoteSize) {
-            $this->body->setSize($remoteSize);
-        }
     }
 
     /**
@@ -38,12 +38,25 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
      */
     public function __toString()
     {
-        $str = (string) $this->body;
-        while (!$this->remoteStream->feof()) {
-            $str .= $this->remoteStream->read(16384);
+        $pos = $this->ftell();
+        $this->rewind();
+
+        $str = '';
+        while (!$this->isConsumed()) {
+            $str .= $this->read(16384);
         }
 
+        $this->seek($pos);
+
         return $str;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getSize()
+    {
+        return max($this->body->getSize(), $this->remoteStream->getSize());
     }
 
     /**
@@ -61,9 +74,9 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
         }
 
         // You cannot skip ahead past where you've read from the remote stream
-        if ($byte > $this->getSize()) {
+        if ($byte > $this->body->getSize()) {
             throw new RuntimeException(
-                "Cannot seek to byte {$byte} when the buffered stream only contains {$this->getSize()} bytes"
+                "Cannot seek to byte {$byte} when the buffered stream only contains {$this->body->getSize()} bytes"
             );
         }
 
@@ -93,16 +106,23 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
      */
     public function read($length)
     {
-        $data = '';
-        $remaining = $length;
+        // Perform a regular read on any previously read data from the buffer
+        $data = $this->body->read($length);
+        $remaining = $length - strlen($data);
 
-        if ($this->ftell() < $this->body->getSize()) {
-            $data = $this->body->read($length);
-            $remaining -= strlen($data);
-        }
-
+        // More data was requested so read from the remote stream
         if ($remaining) {
-            $remoteData = $this->remoteStream->read($remaining);
+            // If data was written to the buffer in a position that would have been filled from the remote stream,
+            // then we must skip bytes on the remote stream to emulate overwriting bytes from that position. This
+            // mimics the behavior of other PHP stream wrappers.
+            $remoteData = $this->remoteStream->read($remaining + $this->skipReadBytes);
+
+            if ($this->skipReadBytes) {
+                $len = strlen($remoteData);
+                $remoteData = substr($remoteData, $this->skipReadBytes);
+                $this->skipReadBytes = max(0, $this->skipReadBytes - $len);
+            }
+
             $data .= $remoteData;
             $this->body->write($remoteData);
         }
@@ -115,6 +135,13 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
      */
     public function write($string)
     {
+        // When appending to the end of the currently read stream, you'll want to skip bytes from being read from
+        // the remote stream to emulate other stream wrappers. Basically replacing bytes of data of a fixed length.
+        $overflow = (strlen($string) + $this->ftell()) - $this->remoteStream->ftell();
+        if ($overflow > 0) {
+            $this->skipReadBytes += $overflow;
+        }
+
         return $this->body->write($string);
     }
 
@@ -160,10 +187,6 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
     public function setStream($stream, $size = 0)
     {
         $this->remoteStream->setStream($stream, $size);
-        $remoteSize = $this->remoteStream->getSize();
-        if (false !== $remoteSize) {
-            $this->body->setSize($remoteSize);
-        }
     }
 
     /**
