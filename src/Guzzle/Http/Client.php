@@ -488,7 +488,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         $certFile = sys_get_temp_dir() . '/guzzle-cacert.pem';
         if (file_exists($certFile)) {
             $actualMd5 = md5_file($certFile);
-            $expectedMd5 = trim(file_get_contents('phar://guzzle.phar/src/Guzzle/Http/Resources/cacert.md5'));
+            $expectedMd5 = trim(file_get_contents("{$from}.md5"));
             if ($actualMd5 != $expectedMd5) {
                 throw new RuntimeException("{$certFile} MD5 mismatch: expected {$expectedMd5} but got {$actualMd5}");
             }
