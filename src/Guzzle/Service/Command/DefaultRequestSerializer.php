@@ -7,6 +7,8 @@ use Guzzle\Http\Url;
 use Guzzle\Parser\ParserRegistry;
 use Guzzle\Service\Command\LocationVisitor\Request\RequestVisitorInterface;
 use Guzzle\Service\Command\LocationVisitor\VisitorFlyweight;
+use Guzzle\Service\Description\OperationInterface;
+use Guzzle\Service\Description\Parameter;
 
 /**
  * Default request serializer that transforms command options and operation parameters into a request
@@ -71,28 +73,6 @@ class DefaultRequestSerializer implements RequestSerializerInterface
         $foundVisitors = array();
         $operation = $command->getOperation();
 
-        // Serialize additional properties
-        if ($additional = $operation->getAdditionalProperties()) {
-            if ($location = $additional->getLocation()) {
-                foreach ($command->getAll() as $key => $value) {
-                    // Ignore values that are null or built-in command options
-                    if ($value !== null
-                        && $key != 'command.headers'
-                        && $key != 'command.response_processing'
-                        && !$operation->hasParam($key)
-                    ) {
-                        $additional->setName($key);
-                        // Instantiate visitors as they are detected in the properties
-                        if (!isset($foundVisitors[$location])) {
-                            $foundVisitors[$location] = $this->factory->getRequestVisitor($location);
-                        }
-                        // Apply the parameter value with the location visitor
-                        $foundVisitors[$location]->visit($command, $request, $additional, $value);
-                    }
-                }
-            }
-        }
-
         // Add arguments to the request using the location attribute
         foreach ($operation->getParams() as $name => $arg) {
             /** @var $arg \Guzzle\Service\Description\Parameter */
@@ -112,12 +92,56 @@ class DefaultRequestSerializer implements RequestSerializerInterface
             }
         }
 
+        // Serialize additional parameters
+        if ($additional = $operation->getAdditionalParameters()) {
+            if ($visitor = $this->prepareAdditionalParameters($operation, $command, $request, $additional)) {
+                $foundVisitors[$additional->getLocation()] = $visitor;
+            }
+        }
+
         // Call the after method on each visitor found in the operation
         foreach ($foundVisitors as $visitor) {
             $visitor->after($command, $request);
         }
 
         return $request;
+    }
+
+    /**
+     * Serialize additional parameters
+     *
+     * @param OperationInterface $operation  Operation that owns the command
+     * @param CommandInterface   $command    Command to prepare
+     * @param RequestInterface   $request    Request to serialize
+     * @param Parameter          $additional Additional parameters
+     *
+     * @return null|RequestVisitorInterface
+     */
+    protected function prepareAdditionalParameters(
+        OperationInterface $operation,
+        CommandInterface $command,
+        RequestInterface $request,
+        Parameter $additional
+    ) {
+        if (!($location = $additional->getLocation())) {
+            return;
+        }
+
+        $visitor = $this->factory->getRequestVisitor($location);
+
+        foreach ($command->getAll() as $key => $value) {
+            // Ignore values that are null or built-in command options
+            if ($value !== null
+                && $key != 'command.headers'
+                && $key != 'command.response_processing'
+                && !$operation->hasParam($key)
+            ) {
+                $additional->setName($key);
+                $visitor->visit($command, $request, $additional, $value);
+            }
+        }
+
+        return $visitor;
     }
 
     /**

@@ -20,7 +20,8 @@ class Operation implements OperationInterface
     protected static $properties = array(
         'name' => true, 'httpMethod' => true, 'uri' => true, 'class' => true, 'responseClass' => true,
         'responseType' => true, 'responseNotes' => true, 'notes' => true, 'summary' => true, 'documentationUrl' => true,
-        'deprecated' => true, 'data' => true, 'parameters' => true, 'errorResponses' => true
+        'deprecated' => true, 'data' => true, 'parameters' => true, 'additionalParameters' => true,
+        'errorResponses' => true
     );
 
     /**
@@ -29,9 +30,9 @@ class Operation implements OperationInterface
     protected $parameters = array();
 
     /**
-     * @var Parameter Additional properties
+     * @var Parameter Additional parameters schema
      */
-    protected $additionalProperties;
+    protected $additionalParameters;
 
     /**
      * @var string Name of the command
@@ -125,7 +126,7 @@ class Operation implements OperationInterface
      *                       error), and 'class' (a custom exception class that would be thrown if the error is
      *                       encountered).
      * - data:               (array) Any extra data that might be used to help build or serialize the operation
-     * - additionalProperties: (null|array) Parameter schema to use when an option is passed to the operation that is
+     * - additionalParameters: (null|array) Parameter schema to use when an option is passed to the operation that is
      *                                      not in the schema
      *
      * @param array                       $config      Array of configuration data
@@ -170,11 +171,11 @@ class Operation implements OperationInterface
             }
         }
 
-        if (isset($config['additionalProperties'])) {
-            if ($config['additionalProperties'] instanceof Parameter) {
-                $this->setAdditionalProperties($config['additionalProperties']);
-            } elseif (is_array($config['additionalProperties'])) {
-                $this->setAdditionalProperties(new Parameter($config['additionalProperties'], $this->description));
+        if (isset($config['additionalParameters'])) {
+            if ($config['additionalParameters'] instanceof Parameter) {
+                $this->setadditionalParameters($config['additionalParameters']);
+            } elseif (is_array($config['additionalParameters'])) {
+                $this->setadditionalParameters(new Parameter($config['additionalParameters'], $this->description));
             }
         }
     }
@@ -197,6 +198,10 @@ class Operation implements OperationInterface
         $result['parameters'] = array();
         foreach ($this->parameters as $key => $param) {
             $result['parameters'][$key] = $param->toArray();
+        }
+        // Additional parameters need to be cast to an array
+        if ($this->additionalParameters instanceof Parameter) {
+            $result['additionalParameters'] = $this->additionalParameters->toArray();
         }
 
         return $result;
@@ -598,24 +603,27 @@ class Operation implements OperationInterface
     }
 
     /**
-     * Get the additionalProperties/parameters of the operation
+     * Get the additionalParameters of the operation
      *
      * @return Paramter|null
      */
-    public function getAdditionalProperties()
+    public function getAdditionalParameters()
     {
-        return $this->additionalProperties;
+        return $this->additionalParameters;
     }
 
     /**
-     * Set the additionalProperties/parameters of the operation
+     * Set the additionalParameters of the operation
      *
      * @param Parameter|null $parameter Parameter to set
+     *
+     * @return self
      */
-    public function setAdditionalProperties($parameter)
+    public function setAdditionalParameters($parameter)
     {
-        $this->additionalProperties = $parameter;
-        $this->additionalProperties->setParent($this);
+        if ($this->additionalParameters = $parameter) {
+            $this->additionalParameters->setParent($this);
+        }
 
         return $this;
     }

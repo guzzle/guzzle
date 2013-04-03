@@ -374,8 +374,8 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             }
         }
 
-        // Validate additional properties
-        if ($properties = $this->operation->getAdditionalProperties()) {
+        // Validate additional parameters
+        if ($properties = $this->operation->getAdditionalParameters()) {
             foreach ($this->getAll() as $name => $value) {
                 // It's only additional if it isn't defined in the schema
                 if (!$this->operation->hasParam($name)) {

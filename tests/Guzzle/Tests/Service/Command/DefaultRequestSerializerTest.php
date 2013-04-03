@@ -104,7 +104,7 @@ class DefaultRequestSerializerTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('http://foo.com/baz/bar?fields='.urlencode('id,name'), (string) $request->getUrl());
     }
 
-    public function testValidatesAdditionalProperties()
+    public function testValidatesAdditionalParameters()
     {
         $description = ServiceDescription::factory(array(
             'operations' => array(
@@ -113,7 +113,7 @@ class DefaultRequestSerializerTest extends \Guzzle\Tests\GuzzleTestCase
                     'parameters' => array(
                         'bar' => array('location' => 'header')
                     ),
-                    'additionalProperties' => array(
+                    'additionalParameters' => array(
                         'location' => 'json'
                     )
                 )

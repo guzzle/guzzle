@@ -466,7 +466,7 @@ class CommandTest extends AbstractCommandTest
                     'parameters' => array(
                         'baz' => array('type' => 'integer')
                     ),
-                    'additionalProperties' => array(
+                    'additionalParameters' => array(
                         'type' => 'string'
                     )
                 )
