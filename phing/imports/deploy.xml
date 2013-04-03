@@ -130,6 +130,8 @@
                 signature="md5">
             <fileset dir="${project.basedir}/.subsplit">
                 <include name="src/**/*.php" />
+                <include name="src/**/*.pem" />
+                <include name="src/**/*.md5" />
                 <include name="vendor/symfony/class-loader/Symfony/Component/ClassLoader/UniversalClassLoader.php" />
                 <include name="vendor/symfony/event-dispatcher/**/*.php" />
                 <include name="vendor/doctrine/common/lib/Doctrine/Common/Cache/*.php" />
