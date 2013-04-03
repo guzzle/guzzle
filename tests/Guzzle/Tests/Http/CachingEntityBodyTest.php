@@ -26,7 +26,7 @@ class CachingEntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $this->body = new CachingEntityBody($this->decorated);
     }
 
-    public function testConstructorSetsSizeUsingRemoteSize()
+    public function testUsesRemoteSizeIfPossible()
     {
         $body = EntityBody::factory('test');
         $caching = new CachingEntityBody($body);
@@ -104,14 +104,12 @@ class CachingEntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $this->body->read(2);
         $this->body->write('hi');
         $this->body->rewind();
-        $this->assertEquals('tehisting', (string) $this->body);
+        $this->assertEquals('tehiing', (string) $this->body);
     }
 
-    /**
-     * @outputBufferingEnabled
-     */
     public function testReadLinesFromBothStreams()
     {
+        $this->body->seek($this->body->ftell());
         $this->body->write("test\n123\nhello\n1234567890\n");
         $this->body->rewind();
         $this->assertEquals("test\n", $this->body->readLine(7));
@@ -119,8 +117,49 @@ class CachingEntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals("hello\n", $this->body->readLine(7));
         $this->assertEquals("123456", $this->body->readLine(7));
         $this->assertEquals("7890\n", $this->body->readLine(7));
-        $this->assertEquals("testin", $this->body->readLine(7));
-        $this->assertEquals("g", $this->body->readLine(7));
+        // We overwrote the decorated stream, so no more data
+        $this->assertEquals('', $this->body->readLine(7));
+    }
+
+    public function testSkipsOverwrittenBytes()
+    {
+        $decorated = EntityBody::factory(
+            implode("\n", array_map(function ($n) {
+                return str_pad($n, 4, '0', STR_PAD_LEFT);
+            }, range(0, 25)))
+        );
+
+        $body = new CachingEntityBody($decorated);
+
+        $this->assertEquals("0000\n", $body->readLine());
+        $this->assertEquals("0001\n", $body->readLine());
+        // Write over part of the body yet to be read, so skip some bytes
+        $this->assertEquals(5, $body->write("TEST\n"));
+        $this->assertEquals(5, $this->readAttribute($body, 'skipReadBytes'));
+        // Read, which skips bytes, then reads
+        $this->assertEquals("0003\n", $body->readLine());
+        $this->assertEquals(0, $this->readAttribute($body, 'skipReadBytes'));
+        $this->assertEquals("0004\n", $body->readLine());
+        $this->assertEquals("0005\n", $body->readLine());
+
+        // Overwrite part of the cached body (so don't skip any bytes)
+        $body->seek(5);
+        $this->assertEquals(5, $body->write("ABCD\n"));
+        $this->assertEquals(0, $this->readAttribute($body, 'skipReadBytes'));
+        $this->assertEquals("TEST\n", $body->readLine());
+        $this->assertEquals("0003\n", $body->readLine());
+        $this->assertEquals("0004\n", $body->readLine());
+        $this->assertEquals("0005\n", $body->readLine());
+        $this->assertEquals("0006\n", $body->readLine());
+        $this->assertEquals(5, $body->write("1234\n"));
+        $this->assertEquals(5, $this->readAttribute($body, 'skipReadBytes'));
+
+        // Seek to 0 and ensure the overwritten bit is replaced
+        $body->rewind();
+        $this->assertEquals("0000\nABCD\nTEST\n0003\n0004\n0005\n0006\n1234\n0008\n0009\n", $body->read(50));
+
+        // Ensure that casting it to a string does not include the bit that was overwritten
+        $this->assertContains("0000\nABCD\nTEST\n0003\n0004\n0005\n0006\n1234\n0008\n0009\n", (string) $body);
     }
 
     public function testWrapsContentType()
@@ -160,7 +199,7 @@ class CachingEntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
             ->method('getMetadata')
             ->will($this->returnValue(array()));
         // Called twice for getWrapper and getWrapperData
-        $a->expects($this->exactly(2))
+        $a->expects($this->exactly(1))
             ->method('getWrapper')
             ->will($this->returnValue('wrapper'));
         $a->expects($this->once())

@@ -92,7 +92,7 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
      */
     public function getContentLength()
     {
-        return $this->body->getContentLength();
+        return $this->getSize();
     }
 
     /**
