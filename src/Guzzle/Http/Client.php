@@ -478,9 +478,10 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
-     * Copy the cecert.pem file from the phar if it is not in the temp folder
+     * Copy the cecert.pem file from the phar if it is not in the temp folder and validate the MD5 checksum
      *
-     * @throws RuntimeException if the file cannot be copied
+     * @return string
+     * @throws RuntimeException if the file cannot be copied or there is a MD5 mismatch
      */
     protected function preparePharCacert()
     {
