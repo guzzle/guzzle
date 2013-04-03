@@ -203,9 +203,12 @@ class Stream implements StreamInterface
             return $this->size;
         }
 
-        // If the stream is a file based stream and local, then check the filesize
-        if ($this->isLocal() && $this->getWrapper() == 'plainfile' && $this->getUri() && file_exists($this->getUri())) {
-            return filesize($this->getUri());
+        // If the stream is a file based stream and local, then use fstat
+        if ($this->isLocal()) {
+            $stats = fstat($this->stream);
+            if (isset($stats['size'])) {
+                return $stats['size'];
+            }
         }
 
         // Only get the size based on the content if the the stream is readable and seekable
