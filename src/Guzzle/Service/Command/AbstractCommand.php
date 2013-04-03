@@ -374,6 +374,22 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             }
         }
 
+        // Validate additional properties
+        if ($properties = $this->operation->getAdditionalProperties()) {
+            foreach ($this->getAll() as $name => $value) {
+                // It's only additional if it isn't defined in the schema
+                if (!$this->operation->hasParam($name)) {
+                    // Always set the name so that error messages are useful
+                    $properties->setName($name);
+                    if (!$validator->validate($properties, $value)) {
+                        $errors = array_merge($errors, $validator->getErrors());
+                    } elseif ($value !== $this->get($name)) {
+                        $this->data[$name] = $value;
+                    }
+                }
+            }
+        }
+
         if (!empty($errors)) {
             $e = new ValidationException('Validation errors: ' . implode("\n", $errors));
             $e->setErrors($errors);

@@ -69,15 +69,36 @@ class DefaultRequestSerializer implements RequestSerializerInterface
         $request = $this->createRequest($command);
         // Keep an array of visitors found in the operation
         $foundVisitors = array();
+        $operation = $command->getOperation();
+
+        // Serialize additional properties
+        if ($additional = $operation->getAdditionalProperties()) {
+            if ($location = $additional->getLocation()) {
+                foreach ($command->getAll() as $key => $value) {
+                    // Ignore values that are null or built-in command options
+                    if ($value !== null
+                        && $key != 'command.headers'
+                        && $key != 'command.response_processing'
+                        && !$operation->hasParam($key)
+                    ) {
+                        $additional->setName($key);
+                        // Instantiate visitors as they are detected in the properties
+                        if (!isset($foundVisitors[$location])) {
+                            $foundVisitors[$location] = $this->factory->getRequestVisitor($location);
+                        }
+                        // Apply the parameter value with the location visitor
+                        $foundVisitors[$location]->visit($command, $request, $additional, $value);
+                    }
+                }
+            }
+        }
 
         // Add arguments to the request using the location attribute
-        foreach ($command->getOperation()->getParams() as $name => $arg) {
+        foreach ($operation->getParams() as $name => $arg) {
             /** @var $arg \Guzzle\Service\Description\Parameter */
-            if ($location = $arg->getLocation()) {
-                // Skip 'uri' locations because they've already been processed
-                if ($location == 'uri') {
-                    continue;
-                }
+            $location = $arg->getLocation();
+            // Skip 'uri' locations because they've already been processed
+            if ($location && $location != 'uri') {
                 // Instantiate visitors as they are detected in the properties
                 if (!isset($foundVisitors[$location])) {
                     $foundVisitors[$location] = $this->factory->getRequestVisitor($location);
