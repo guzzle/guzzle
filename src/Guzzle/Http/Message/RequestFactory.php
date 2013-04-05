@@ -95,7 +95,7 @@ class RequestFactory implements RequestFactoryInterface
             $request = new $this->requestClass($method, $url, $headers);
             if ($body) {
                 // The body is where the response body will be stored
-                $request->setResponseBody($body);
+                $request->setResponseBody(EntityBody:factory($body));
             }
             return $request;
         }
