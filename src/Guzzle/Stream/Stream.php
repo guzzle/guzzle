@@ -306,8 +306,10 @@ class Stream implements StreamInterface
         }
 
         $bytes = fwrite($this->stream, $string);
-        if ($this->size !== null) {
-            $this->size += $bytes;
+
+        // We can't know the size after writing if any bytes were written
+        if ($bytes) {
+            $this->size = null;
         }
 
         return $bytes;
