@@ -52,6 +52,25 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('HMAC-SHA1', $config['signature_method']);
     }
 
+    public function testAcceptsConfigurationCallbackData()
+    {
+        $opt = array(
+            'callback' => 'http://magic.call.to/callmeback'
+        );
+        $cfg = array_merge($this->config, $opt);
+
+        $p = new OauthPlugin($cfg);
+
+        // Access the config object
+        $class = new \ReflectionClass($p);
+        $property = $class->getProperty('config');
+        $property->setAccessible(true);
+        $config = $property->getValue($p);
+
+        $this->assertEquals('http://magic.call.to/callmeback', $config['callback']);
+    }
+
+
     public function testCreatesStringToSignFromPostRequest()
     {
         $p = new OauthPlugin($this->config);
