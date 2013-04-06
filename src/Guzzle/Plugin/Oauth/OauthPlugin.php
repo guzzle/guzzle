@@ -44,7 +44,8 @@ class OauthPlugin implements EventSubscriberInterface
             'signature_method' => 'HMAC-SHA1',
             'signature_callback' => function($stringToSign, $key) {
                 return hash_hmac('sha1', $stringToSign, $key, true);
-            }
+            },
+            'callback' => null
         ), array(
             'signature_method', 'signature_callback', 'version',
             'consumer_key', 'consumer_secret'
@@ -82,6 +83,7 @@ class OauthPlugin implements EventSubscriberInterface
             'oauth_timestamp'        => $timestamp,
             'oauth_token'            => $this->config['token'],
             'oauth_version'          => $this->config['version'],
+            'oauth_callback'         => $this->config['callback'],
         );
 
         $request->setHeader(
