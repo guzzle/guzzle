@@ -81,7 +81,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
 
         // Auto detect the Content-Type from the path of the request if possible
         if ($contentType === null && !$this->hasHeader('Content-Type')) {
-            $contentType = Mimetypes::getInstance()->fromFilename($this->getPath());
+            $contentType = Mimetypes::getInstance()->fromFilename($this->getPath()) ?: $this->body->getContentType();
         }
 
         if ($contentType) {
