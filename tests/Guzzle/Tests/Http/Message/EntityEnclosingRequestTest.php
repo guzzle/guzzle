@@ -41,11 +41,9 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testCanSetBodyWithoutOverridingContentType()
     {
-        $request = new EntityEnclosingRequest('PUT', 'http://test.com', array(
-            'Content-Type' => 'application/json'
-        ));
+        $request = new EntityEnclosingRequest('PUT', 'http://test.com', array('Content-Type' => 'foooooo'));
         $request->setBody('{"a":"b"}');
-        $this->assertEquals('application/json', $request->getHeader('Content-Type'));
+        $this->assertEquals('foooooo', $request->getHeader('Content-Type'));
     }
 
     /**
@@ -522,5 +520,15 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request = new EntityEnclosingRequest('PUT', 'http://test.com/');
         $request->configureRedirects(false, false);
         $this->assertTrue($request->getParams()->get(RedirectPlugin::DISABLE));
+    }
+
+    /**
+     * @covers Guzzle\Http\Message\EntityEnclosingRequest::setBody
+     */
+    public function testSetsContentTypeWhenSettingBodyByGuessing()
+    {
+        $request = new EntityEnclosingRequest('PUT', 'http://test.com/foo.json');
+        $request->setBody('{"a":"b"}');
+        $this->assertEquals('application/json', $request->getHeader('Content-Type'));
     }
 }

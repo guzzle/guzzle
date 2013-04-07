@@ -143,7 +143,7 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
     {
         // Test using a string/temp stream
         $body = EntityBody::factory('testing 123...testing 123');
-        $this->assertEquals('application/octet-stream', $body->getContentType());
+        $this->assertNull($body->getContentType());
 
         // Use a local file
         $body = EntityBody::factory(fopen(__FILE__, 'r'));

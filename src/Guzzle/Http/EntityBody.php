@@ -142,11 +142,9 @@ class EntityBody extends Stream implements EntityBodyInterface
      */
     public function getContentType()
     {
-        if (!($this->isLocal() && $this->getWrapper() == 'plainfile' && file_exists($this->getUri()))) {
-            return 'application/octet-stream';
-        }
-
-        return Mimetypes::getInstance()->fromFilename($this->getUri()) ?: 'application/octet-stream';
+        return (!($this->isLocal() && $this->getWrapper() == 'plainfile' && file_exists($this->getUri())))
+            ? null
+            : Mimetypes::getInstance()->fromFilename($this->getUri());
     }
 
     /**

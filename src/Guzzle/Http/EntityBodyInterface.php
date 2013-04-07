@@ -47,9 +47,9 @@ interface EntityBodyInterface extends StreamInterface
     public function getContentLength();
 
     /**
-     * Guess the Content-Type or return the default application/octet-stream
+     * Guess the Content-Type of a local stream
      *
-     * @return string
+     * @return string|null
      * @see http://www.php.net/manual/en/function.finfo-open.php
      */
     public function getContentType();

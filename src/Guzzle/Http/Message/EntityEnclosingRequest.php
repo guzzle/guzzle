@@ -7,6 +7,7 @@ use Guzzle\Http\EntityBodyInterface;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Http\Exception\RequestException;
+use Guzzle\Http\Mimetypes;
 
 /**
  * HTTP request that sends an entity-body in the request message (POST, PUT, PATCH, DELETE)
@@ -77,6 +78,11 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     {
         $this->body = EntityBody::factory($body);
         $this->removeHeader('Content-Length');
+
+        // Auto detect the Content-Type from the path of the request if possible
+        if ($contentType === null && !$this->hasHeader('Content-Type')) {
+            $contentType = Mimetypes::getInstance()->fromFilename($this->getPath());
+        }
 
         if ($contentType) {
             $this->setHeader('Content-Type', (string) $contentType);
