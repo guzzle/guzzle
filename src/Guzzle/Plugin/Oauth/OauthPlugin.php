@@ -174,7 +174,7 @@ class OauthPlugin implements EventSubscriberInterface
         ));
 
         // Filter out oauth_token during temp token step, as in request_token.
-        if ($this->config['token'] !== false) {
+        if ($this->config['token']) {
             $params->add('oauth_token', $this->config['token']);
         }
 
