@@ -33,6 +33,13 @@ class ReadLimitEntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('baz', (string) $limited);
     }
 
+    public function testReturnsSubsetOfEmptyBodyWhenCastToString()
+    {
+        $body = EntityBody::factory('');
+        $limited = new ReadLimitEntityBody($body, 0, 10);
+        $this->assertEquals('', (string) $limited);
+    }
+
     public function testSeeksWhenConstructed()
     {
         $this->assertEquals(3, $this->body->ftell());

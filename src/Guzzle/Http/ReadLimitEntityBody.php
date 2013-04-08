@@ -35,7 +35,7 @@ class ReadLimitEntityBody extends AbstractEntityBodyDecorator
      */
     public function __toString()
     {
-        return substr((string) $this->body, $this->offset, $this->limit);
+        return substr((string) $this->body, $this->offset, $this->limit) ?: '';
     }
 
     /**
