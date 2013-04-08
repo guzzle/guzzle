@@ -486,6 +486,8 @@ class Url
 
         if ($buffer = $url->getHost()) {
             $this->host = $buffer;
+            // All services that define a host must define the full path for each operation
+            $absolutePath = true;
         }
 
         if ($buffer = $url->getPort()) {
