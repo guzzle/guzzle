@@ -237,7 +237,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             array('GET', 'http://www.google.com/', null, null, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_CONNECTTIMEOUT => 150,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
                 CURLOPT_HTTPHEADER => array('Accept:', 'Host: www.google.com', 'User-Agent: ' . $userAgent),
@@ -250,7 +250,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             array('GET', 'http://127.0.0.1:8080', null, null, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_CONNECTTIMEOUT => 150,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
                 CURLOPT_PORT => 8080,
@@ -260,7 +260,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             array('HEAD', 'http://www.google.com/', null, null, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_CONNECTTIMEOUT => 150,
                 CURLOPT_HEADERFUNCTION => 'callback',
                 CURLOPT_HTTPHEADER => array('Accept:', 'Host: www.google.com', 'User-Agent: ' . $userAgent),
                 CURLOPT_NOBODY => 1
@@ -269,7 +269,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             array('GET', 'https://michael:123@localhost/index.html?q=2', null, null, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_CONNECTTIMEOUT => 150,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
                 CURLOPT_HTTPHEADER => array(
@@ -300,7 +300,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             array('POST', 'http://localhost:8124/post.php', null, $qs, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_CONNECTTIMEOUT => 150,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
                 CURLOPT_POSTFIELDS => 'x=y&z=a',
@@ -323,7 +323,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             array('PUT', 'http://localhost:8124/put.php', null, EntityBody::factory(fopen($testFile, 'r+')), array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_CONNECTTIMEOUT => 150,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
                 CURLOPT_READFUNCTION => 'callback',
@@ -348,7 +348,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             ), array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_CONNECTTIMEOUT => 150,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
                 CURLOPT_POST => 1,
@@ -372,7 +372,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             array('POST', 'http://localhost:8124/post.php', null, $postBody, array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_CONNECTTIMEOUT => 150,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
                 CURLOPT_POST => 1,
@@ -400,7 +400,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             ), '{"hi":"there"}', array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_CONNECTTIMEOUT => 150,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
                 CURLOPT_CUSTOMREQUEST => 'POST',
@@ -428,7 +428,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             ), '{"hi":"there"}', array(
                 CURLOPT_RETURNTRANSFER => 0,
                 CURLOPT_HEADER => 0,
-                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_CONNECTTIMEOUT => 150,
                 CURLOPT_WRITEFUNCTION => 'callback',
                 CURLOPT_HEADERFUNCTION => 'callback',
                 CURLOPT_CUSTOMREQUEST => 'POST',
