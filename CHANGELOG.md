@@ -1,9 +1,29 @@
 CHANGELOG
 =========
 
-Next Version (TBD):
--------------------
+3.4.0 (TBD)
+-----------
 
+* Bug fix: URLs are now resolved correctly based on http://tools.ietf.org/html/rfc3986#section-5.2. #289
+* Bug fix: Absolute URLs with a path in a service description will now properly override the base URL. #289
+* Bug fix: Parsing a query string with a single PHP array value will now result in an array. #263
+* Bug fix: Better normalization of the User-Agent header to prevent duplicate headers. #264.
+* Bug fix: Added `number` type to service descriptions.
+* Bug fix: empty parameters are removed from an OAuth signature
+* Bug fix: Revalidating a cache entry prefers the Last-Modified over the Date header
+* Bug fix: Fixed "array to string" error when validating a union of types in a service description
+* Bug fix: Removed code that attempted to determine the size of a stream when data is written to the stream
+* Bug fix: Not including an `oauth_token` if the value is null in the OauthPlugin.
+* Added a feature to EntityEnclosingRequest::setBody() that will automatically set the Content-Type of the request if
+  the Content-Type can be determined based on the entity body or the path of the request.
+* Added the ability to overwrite configuration settings in a client when grabbing a throwaway client from a builder.
+* Added support for a PSR-3 LogAdapter.
+* Added a `command.after_prepare` event
+* Added `oauth_callback` parameter to the OauthPlugin
+* Added the ability to create a custom stream class when using a stream factory
+* Added a CachingEntityBody decorator
+* Added support for `additionalParameters` in service descriptions to define how custom parameters are serialized.
+* The bundled SSL certificate is now provided in the phar file and extracted when running Guzzle from a phar.
 * You can now send any EntityEnclosingRequest with POST fields or POST files and cURL will handle creating bodies
 * POST requests using a custom entity body are now treated exactly like PUT requests but with a custom cURL method. This
   means that the redirect behavior of POST requests with custom bodies will not be the same as POST requests that use
