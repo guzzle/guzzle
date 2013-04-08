@@ -148,12 +148,13 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
             array('http://www.example.com/path', 'more', 'http://www.example.com/path/more'),
             array('http://www.example.com/path', 'more?q=1', 'http://www.example.com/path/more?q=1'),
             array('http://www.example.com/', '?q=1', 'http://www.example.com/?q=1'),
-            array('http://www.example.com/path', 'http://test.com', 'http://test.com/path'),
-            array('http://www.example.com:8080/path', 'http://test.com', 'http://test.com/path'),
+            array('http://www.example.com/path', 'http://test.com', 'http://test.com'),
+            array('http://www.example.com:8080/path', 'http://test.com', 'http://test.com'),
             array('http://www.example.com:8080/path', '?q=2#abc', 'http://www.example.com:8080/path?q=2#abc'),
             array('http://u:a@www.example.com/path', 'test', 'http://u:a@www.example.com/path/test'),
-            array('http://www.example.com/path', 'http://u:a@www.example.com/', 'http://u:a@www.example.com/path'),
+            array('http://www.example.com/path', 'http://u:a@www.example.com/', 'http://u:a@www.example.com/'),
             array('/path?q=2', 'http://www.test.com/', 'http://www.test.com/path?q=2'),
+            array('http://api.flickr.com/services/', 'http://www.flickr.com/services/oauth/access_token', 'http://www.flickr.com/services/oauth/access_token')
         );
     }
 
@@ -198,10 +199,11 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
             array('/foo/../..', ''),
             array('/foo/../.', ''),
             array('/./foo/..', ''),
-            array('/./foo', 'foo'),
-            array('/./foo/', 'foo/'),
+            array('/./foo', '/foo'),
+            array('/./foo/', '/foo/'),
             array('/./foo/bar/baz/pho/../..', 'foo/bar'),
-            array('*', '*')
+            array('*', '*'),
+            array('/foo', '/foo')
         );
     }
 

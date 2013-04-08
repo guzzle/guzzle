@@ -285,28 +285,32 @@ class Url
         // Replace // and /./ with /
         $this->path = str_replace(array('/./', '//'), '/', $this->path);
 
-        // Remove trailing relative paths if possible
-        $segments = $this->getPathSegments();
-        $last = end($segments);
-        $trailingSlash = false;
-        if ($last === '') {
-            array_pop($segments);
-            $trailingSlash = true;
-        }
+        // Remove dot segments
+        if (strpos($this->path, '..') !== false) {
 
-        while ($last == '..' || $last == '.') {
-            if ($last == '..') {
+            // Remove trailing relative paths if possible
+            $segments = $this->getPathSegments();
+            $last = end($segments);
+            $trailingSlash = false;
+            if ($last === '') {
                 array_pop($segments);
-                $last = array_pop($segments);
+                $trailingSlash = true;
             }
-            if ($last == '.' || $last == '') {
-                $last = array_pop($segments);
-            }
-        }
 
-        $this->path = implode('/', $segments);
-        if ($trailingSlash) {
-            $this->path .= '/';
+            while ($last == '..' || $last == '.') {
+                if ($last == '..') {
+                    array_pop($segments);
+                    $last = array_pop($segments);
+                }
+                if ($last == '.' || $last == '') {
+                    $last = array_pop($segments);
+                }
+            }
+
+            $this->path = implode('/', $segments);
+            if ($trailingSlash) {
+                $this->path .= '/';
+            }
         }
 
         return $this;
@@ -468,59 +472,65 @@ class Url
     }
 
     /**
-     * Combine the URL with another URL. Parts specified in the passed URL will supersede parts in the current URL.
+     * Combine the URL with another URL. Follows the rules specific in RFC 3986 section 5.4.
      *
      * @param string $url Relative URL to combine with
      *
      * @return Url
      * @throws InvalidArgumentException
+     * @link http://tools.ietf.org/html/rfc3986#section-5.4
      */
     public function combine($url)
     {
-        $absolutePath = $url[0] == '/';
         $url = self::factory($url);
 
+        // Use the more absolute URL as the base URL
+        if (!$this->isAbsolute() && $url->isAbsolute()) {
+            $url = $url->combine($this);
+        }
+
+        // Passing a URL with a scheme overrides everything
         if ($buffer = $url->getScheme()) {
             $this->scheme = $buffer;
+            $this->host = $url->getHost();
+            $this->port = $url->getPort();
+            $this->username = $url->getUsername();
+            $this->password = $url->getPassword();
+            $this->path = $url->getPath();
+            $this->query = $url->getQuery();
+            $this->fragment = $url->getFragment();
+            return $this;
         }
 
+        // Setting a host overrides the entire rest of the URL
         if ($buffer = $url->getHost()) {
             $this->host = $buffer;
+            $this->port = $url->getPort();
+            $this->username = $url->getUsername();
+            $this->password = $url->getPassword();
+            $this->path = $url->getPath();
+            $this->fragment = $url->getFragment();
+            return $this;
         }
 
-        if ($buffer = $url->getPort()) {
-            $this->port = $buffer;
-        }
+        $path = $url->getPath();
+        $query = $url->getQuery();
 
-        if ($buffer = $url->getUsername()) {
-            $this->username = $buffer;
-        }
-
-        if ($buffer = $url->getPassword()) {
-            $this->password = $buffer;
-        }
-
-        if ($buffer = $url->getFragment()) {
-            $this->fragment = $buffer;
-        }
-
-        if ($absolutePath) {
-            // Replace the current URL and query if set
-            if ($buffer = $url->getPath()) {
-                $this->path = $buffer;
-            }
-            if (count($url->getQuery())) {
-                $this->query = $url->getQuery();
+        if (!$path) {
+            if (count($query)) {
+                $this->query = $query;
             }
         } else {
-            // Append to the current path and query string
-            if ($buffer = $url->getPath()) {
-                $this->addPath($buffer);
+            if ($path[0] == '/') {
+                $this->path = $path;
+            } else {
+                $this->path .= '/' . $path;
             }
-            if ($buffer = $url->getQuery()) {
-                $this->query->merge($buffer);
-            }
+            $this->normalizePath();
+            $this->query = $query;
         }
+
+        $this->fragment = $url->getFragment();
 
         return $this;
     }
