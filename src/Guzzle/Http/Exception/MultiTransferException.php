@@ -98,4 +98,16 @@ class MultiTransferException extends ExceptionCollection
     {
         return $this->failedRequests;
     }
+
+    /**
+     * Check if the exception object contains a request
+     *
+     * @param RequestInterface $request Request to check
+     *
+     * @return bool
+     */
+    public function containsRequest(RequestInterface $request)
+    {
+        return in_array($request, $this->failedRequests, true) || in_array($request, $this->successfulRequests, true);
+    }
 }

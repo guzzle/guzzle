@@ -340,4 +340,20 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * @return bool
      */
     public function canCache();
+
+    /**
+     * Set whether or not the request is a request that resulted from a redirect
+     *
+     * @param bool $isRedirect
+     *
+     * @return self
+     */
+    public function setIsRedirect($isRedirect);
+
+    /**
+     * Check whether or not the request is a request that resulted from a redirect
+     *
+     * @return bool
+     */
+    public function isRedirect();
 }

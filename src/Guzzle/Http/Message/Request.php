@@ -73,6 +73,11 @@ class Request extends AbstractMessage implements RequestInterface
     protected $curlOptions;
 
     /**
+     * @var bool
+     */
+    protected $isRedirect = false;
+
+    /**
      * {@inheritdoc}
      */
     public static function getAllEvents()
@@ -695,6 +700,24 @@ class Request extends AbstractMessage implements RequestInterface
         $this->getEventDispatcher()->addSubscriber($subscriber);
 
         return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setIsRedirect($isRedirect)
+    {
+        $this->isRedirect = $isRedirect;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isRedirect()
+    {
+        return $this->isRedirect;
     }
 
     /**
