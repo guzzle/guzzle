@@ -181,10 +181,8 @@ class OauthPlugin implements EventSubscriberInterface
         // Add query string parameters
         $params->merge($request->getQuery());
 
-        // Add POST fields to signing string
-        if (!$this->config->get('disable_post_params') &&
-            $request instanceof EntityEnclosingRequestInterface &&
-            (string) $request->getHeader('Content-Type') == 'application/x-www-form-urlencoded')
+        // Add POST fields to signing string if required
+        if ($this->shouldPostFieldsBeSigned($request))
         {
             $params->merge($request->getPostFields());
         }
@@ -195,6 +193,28 @@ class OauthPlugin implements EventSubscriberInterface
 
         return $params;
     }
+
+    /**
+     * Decide whether the post fields should be added to the base string that Oauth signs.
+     * This implementation is correct. Non-conformant APIs may require that this method be
+     * overwritten e.g. the Flickr API incorrectly adds the post fields when the Content-Type
+     * is 'application/x-www-form-urlencoded'
+     *
+     * @param $request
+     * @return bool Whether the post fields should be signed or not
+     */
+    public function shouldPostFieldsBeSigned($request)
+    {
+        if (!$this->config->get('disable_post_params') &&
+            $request instanceof EntityEnclosingRequestInterface &&
+            (string) $request->getHeader('Content-Type') == 'application/x-www-form-urlencoded')
+        {
+            return true;
+        }
+
+        return false;
+    }
+
 
     /**
      * Returns a Nonce Based on the unique id and URL. This will allow for multiple requests in parallel with the same
