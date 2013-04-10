@@ -212,6 +212,9 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
             $this->fail('MultiTransferException not thrown when aggregating request exceptions');
         } catch (MultiTransferException $e) {
 
+            $this->assertTrue($e->containsRequest($request1));
+            $this->assertTrue($e->containsRequest($request2));
+            $this->assertTrue($e->containsRequest($request3));
             $this->assertInstanceOf('ArrayIterator', $e->getIterator());
             $this->assertEquals(1, count($e));
             $exceptions = $e->getIterator();

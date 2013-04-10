@@ -115,6 +115,7 @@ class RedirectPlugin implements EventSubscriberInterface
             $redirectRequest = clone $request;
         }
 
+        $redirectRequest->setIsRedirect(true);
         // Always use the same response body when redirecting
         $redirectRequest->setResponseBody($request->getResponseBody());
 
@@ -205,17 +206,17 @@ class RedirectPlugin implements EventSubscriberInterface
      */
     protected function throwTooManyRedirectsException(RequestInterface $request)
     {
-        $responses = array();
+        $lines = array();
+        $response = $request->getResponse();
 
-        // Create a nice message to use when throwing the exception that shows each request/response transaction
         do {
-            $response = $request->getResponse();
-            $responses[] = '> ' . $request->getRawHeaders() . "\n\n< " . $response->getRawHeaders();
-            $request = $response->getPreviousResponse() ? $response->getPreviousResponse()->getRequest() : null;
-        } while ($request);
+            $lines[] = '> ' . $response->getRequest()->getRawHeaders() . "\n\n< " . $response->getRawHeaders();
+            $response = $response->getPreviousResponse();
+        } while ($response);
 
-        $transaction = implode("* Sending redirect request\n", array_reverse($responses));
-
-        throw new TooManyRedirectsException("Too many redirects were issued for this transaction:\n{$transaction}");
+        throw new TooManyRedirectsException(
+            "Too many redirects were issued for this transaction:\n"
+            . implode("* Sending redirect request\n", array_reverse($lines))
+        );
     }
 }

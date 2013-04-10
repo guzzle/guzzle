@@ -35,17 +35,21 @@ class ExceptionCollection extends \Exception implements GuzzleException, \Iterat
      */
     public function add($e)
     {
+        if ($this->message) {
+            $this->message .= "\n";
+        }
+
         if ($e instanceof self) {
             foreach ($e as $exception) {
                 $this->exceptions[] = $exception;
+                $this->message .= $e->getMessage() . "\n";
             }
         } elseif ($e instanceof \Exception) {
             $this->exceptions[] = $e;
+            $this->message .= $e->getMessage();
         }
 
-        $this->message = implode("\n", array_map(function($e) {
-            return $e->getMessage();
-        }, $this->exceptions));
+        $this->message = rtrim($this->message);
 
         return $this;
     }

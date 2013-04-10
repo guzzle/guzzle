@@ -901,4 +901,12 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('test', file_get_contents($name));
         unlink($name);
     }
+
+    public function testHasRedirectFlag()
+    {
+        $request = new Request('GET', $this->getServer()->getUrl());
+        $this->assertFalse($request->isRedirect());
+        $this->assertSame($request, $request->setIsRedirect(true));
+        $this->assertTrue($request->isRedirect());
+    }
 }
