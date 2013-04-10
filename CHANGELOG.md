@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-3.4.0 (TBD)
------------
+3.4.0 (2013-04-10)
+------------------
 
 * Bug fix: URLs are now resolved correctly based on http://tools.ietf.org/html/rfc3986#section-5.2. #289
 * Bug fix: Absolute URLs with a path in a service description will now properly override the base URL. #289
@@ -14,6 +14,8 @@ CHANGELOG
 * Bug fix: Fixed "array to string" error when validating a union of types in a service description
 * Bug fix: Removed code that attempted to determine the size of a stream when data is written to the stream
 * Bug fix: Not including an `oauth_token` if the value is null in the OauthPlugin.
+* Bug fix: Now correctly aggregating successful requests and failed requests in CurlMulti when a redirect occurs.
+* The new default CURLOPT_TIMEOUT setting has been increased to 150 seconds so that Guzzle works on poor connections.
 * Added a feature to EntityEnclosingRequest::setBody() that will automatically set the Content-Type of the request if
   the Content-Type can be determined based on the entity body or the path of the request.
 * Added the ability to overwrite configuration settings in a client when grabbing a throwaway client from a builder.
