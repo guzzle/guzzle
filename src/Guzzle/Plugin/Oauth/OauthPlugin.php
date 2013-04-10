@@ -203,7 +203,7 @@ class OauthPlugin implements EventSubscriberInterface
      * @param $request
      * @return bool Whether the post fields should be signed or not
      */
-    public function		shouldPostFieldsBeSigned($request)
+    public function shouldPostFieldsBeSigned($request)
     {
         if (!$this->config->get('disable_post_params') &&
             $request instanceof EntityEnclosingRequestInterface &&
