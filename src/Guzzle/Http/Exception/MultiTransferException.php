@@ -108,6 +108,6 @@ class MultiTransferException extends ExceptionCollection
      */
     public function containsRequest(RequestInterface $request)
     {
-        return in_array($request, $this->failedRequests) || in_array($request, $this->successfulRequests);
+        return in_array($request, $this->failedRequests, true) || in_array($request, $this->successfulRequests, true);
     }
 }
