@@ -485,7 +485,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      */
     protected function preparePharCacert()
     {
-        $from = 'phar://guzzle.phar/src/Guzzle/Http/Resources/cacert.pem';
+        $from = __DIR__ . '/Resources/cacert.pem';
         $certFile = sys_get_temp_dir() . '/guzzle-cacert.pem';
         if (file_exists($certFile)) {
             $actualMd5 = md5_file($certFile);
