@@ -80,7 +80,7 @@ class OperationResponseParser extends DefaultResponseParser
             $className = $operation->getResponseClass();
             if (!class_exists($className)) {
                 throw new ResponseClassException("{$className} does not exist");
-            } elseif (!is_subclass_of($className, $responseClassInterface)) {
+            } elseif (!method_exists($className, 'fromCommand')) {
                 throw new ResponseClassException("{$className} must implement {$responseClassInterface}");
             }
             return $className::fromCommand($command);
