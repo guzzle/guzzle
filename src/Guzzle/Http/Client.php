@@ -494,7 +494,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
                 throw new RuntimeException("{$certFile} MD5 mismatch: expected {$expectedMd5} but got {$actualMd5}");
             }
         } elseif (!copy($from, $certFile)) {
-            throw new RuntimeException("Could not copy {$from} to {$certFile}");
+            throw new RuntimeException("Could not copy {$from} to {$certFile}: " . var_export(error_get_last(), true));
         }
 
         return $certFile;
