@@ -168,6 +168,7 @@ class OauthPlugin implements EventSubscriberInterface
     public function getParamsToSign(RequestInterface $request, $timestamp, $nonce)
     {
         $params = new Collection(array(
+            'oauth_callback'         => $this->config['callback'],
             'oauth_consumer_key'     => $this->config['consumer_key'],
             'oauth_nonce'            => $nonce,
             'oauth_signature_method' => $this->config['signature_method'],
