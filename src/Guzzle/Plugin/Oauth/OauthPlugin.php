@@ -30,6 +30,7 @@ class OauthPlugin implements EventSubscriberInterface
      *     - string 'consumer_secret'      Consumer secret
      *     - string 'token'                Token
      *     - string 'token_secret'         Token secret
+     *     - string 'verifier'             OAuth verifier.
      *     - string 'version'              OAuth version.  Defaults to 1.0
      *     - string 'signature_method'     Custom signature method
      *     - bool   'disable_post_params'  Set to true to prevent POST parameters from being signed
@@ -81,6 +82,7 @@ class OauthPlugin implements EventSubscriberInterface
             'oauth_signature_method' => $this->config['signature_method'],
             'oauth_timestamp'        => $timestamp,
             'oauth_token'            => $this->config['token'],
+            'oauth_verifier'         => $this->config['verifier'],
             'oauth_version'          => $this->config['version'],
         );
 
@@ -171,6 +173,7 @@ class OauthPlugin implements EventSubscriberInterface
             'oauth_signature_method' => $this->config['signature_method'],
             'oauth_timestamp'        => $timestamp,
             'oauth_token'            => $this->config['token'],
+            'oauth_verifier'         => $this->config['verifier'],
             'oauth_version'          => $this->config['version']
         ));
 
