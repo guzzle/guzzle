@@ -1,6 +1,11 @@
 Guzzle Upgrade Guide
 ====================
 
+3.3 to 3.4
+----------
+
+Base URLs of a client now follow the rules of http://tools.ietf.org/html/rfc3986#section-5.2.2 when merging URLs.
+
 3.2 to 3.3
 ----------
 

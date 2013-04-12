@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-3.4.0 (2013-04-10)
+3.4.0 (2013-04-11)
 ------------------
 
 * Bug fix: URLs are now resolved correctly based on http://tools.ietf.org/html/rfc3986#section-5.2. #289
