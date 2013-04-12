@@ -170,13 +170,9 @@ class OauthPlugin implements EventSubscriberInterface
             'oauth_nonce'            => $nonce,
             'oauth_signature_method' => $this->config['signature_method'],
             'oauth_timestamp'        => $timestamp,
+            'oauth_token'            => $this->config['token'],
             'oauth_version'          => $this->config['version']
         ));
-
-        // Filter out oauth_token during temp token step, as in request_token.
-        if ($this->config['token']) {
-            $params->add('oauth_token', $this->config['token']);
-        }
 
         // Add query string parameters
         $params->merge($request->getQuery());
