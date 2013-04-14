@@ -37,6 +37,14 @@ class ServiceDescriptionFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         }
     }
 
+    public function testUsesUcFirstIfNoExactMatch()
+    {
+        $d = $this->getDescription();
+        $factory = new ServiceDescriptionFactory($d, new Inflector());
+        $this->assertInstanceof('Guzzle\Tests\Service\Mock\Command\OtherCommand', $factory->factory('Test'));
+        $this->assertInstanceof('Guzzle\Tests\Service\Mock\Command\OtherCommand', $factory->factory('test'));
+    }
+
     public function testUsesInflectionIfNoExactMatch()
     {
         $d = $this->getDescription();
@@ -51,12 +59,9 @@ class ServiceDescriptionFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     {
         return ServiceDescription::factory(array(
             'operations' => array(
-                'jar_jar' => array(
-                    'class' => 'Guzzle\Tests\Service\Mock\Command\MockCommand'
-                ),
-                'binks' => array(
-                    'class' => 'Guzzle\Tests\Service\Mock\Command\OtherCommand'
-                )
+                'jar_jar' => array('class' => 'Guzzle\Tests\Service\Mock\Command\MockCommand'),
+                'binks' => array('class' => 'Guzzle\Tests\Service\Mock\Command\OtherCommand'),
+                'Test' => array('class' => 'Guzzle\Tests\Service\Mock\Command\OtherCommand')
             )
         ));
     }
