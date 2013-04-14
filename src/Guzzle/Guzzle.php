@@ -29,7 +29,7 @@ final class Guzzle
      *                         "cookies": Associative array of cookies
      *                         "curl": Associative array of CURL options to add to the request
      *                         "events": Associative array mapping event names to callables
-     *                         "streaming": Set to true to retrieve a Guzzle\Stream\Stream object instead of a response
+     *                         "stream": Set to true to retrieve a Guzzle\Stream\Stream object instead of a response
      *                         "plugins": Array of plugins to add to the request
      *
      * @return \Guzzle\Http\Message\Response|\Guzzle\Stream\Stream
@@ -42,7 +42,7 @@ final class Guzzle
         }
 
         // Extract parameters from the config array
-        $headers = $body = $curl = $auth = $events = $plugins = $allow_redirects = $cookies = $query = $streaming = null;
+        $headers = $body = $curl = $auth = $events = $plugins = $allow_redirects = $cookies = $query = $stream = null;
         extract($options, EXTR_IF_EXISTS);
 
         $request = self::$client->createRequest($method, $url, $headers, $body);
@@ -84,7 +84,7 @@ final class Guzzle
             }
         }
 
-        if (!$streaming) {
+        if (!$stream) {
             return $request->send();
         } else {
             $streamFactory = new PhpStreamRequestFactory();
