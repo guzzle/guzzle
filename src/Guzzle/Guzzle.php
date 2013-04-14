@@ -1,8 +1,9 @@
 <?php
 
+use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Client;
 use Guzzle\Http\RedirectPlugin;
-use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Stream\PhpStreamRequestFactory;
 
 /**
  * Simplified interface to Guzzle that does not require a class to be instantiated
@@ -28,9 +29,10 @@ final class Guzzle
      *                         "cookies": Associative array of cookies
      *                         "curl": Associative array of CURL options to add to the request
      *                         "events": Associative array mapping event names to callables
+     *                         "streaming": Set to true to retrieve a Guzzle\Stream\Stream object instead of a response
      *                         "plugins": Array of plugins to add to the request
      *
-     * @return \Guzzle\Http\Message\Response
+     * @return \Guzzle\Http\Message\Response|\Guzzle\Stream\Stream
      * @throws InvalidArgumentException
      */
     public static function request($method, $url, $options = array())
@@ -40,7 +42,7 @@ final class Guzzle
         }
 
         // Extract parameters from the config array
-        $headers = $body = $curl = $auth = $events = $plugins = $allow_redirects = $cookies = $query = null;
+        $headers = $body = $curl = $auth = $events = $plugins = $allow_redirects = $cookies = $query = $streaming = null;
         extract($options, EXTR_IF_EXISTS);
 
         $request = self::$client->createRequest($method, $url, $headers, $body);
@@ -82,7 +84,12 @@ final class Guzzle
             }
         }
 
-        return $request->send();
+        if (!$streaming) {
+            return $request->send();
+        } else {
+            $streamFactory = new PhpStreamRequestFactory();
+            return $streamFactory->fromRequest($request);
+        }
     }
 
     /**
