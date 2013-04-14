@@ -59,9 +59,9 @@ interface PostFileInterface
     public function getContentType();
 
     /**
-     * Get a cURL ready string for the upload
+     * Get a cURL ready string or CurlFile object for the upload
      *
      * @return string
      */
-    public function getCurlString();
+    public function getCurlValue();
 }

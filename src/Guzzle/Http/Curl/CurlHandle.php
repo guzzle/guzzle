@@ -152,7 +152,7 @@ class CurlHandle
                         foreach ($data as $index => $file) {
                             // Allow multiple files in the same key
                             $fieldKey = $prefixKeys ? "{$key}[{$index}]" : $key;
-                            $postFields[$fieldKey] = $file->getCurlString();
+                            $postFields[$fieldKey] = $file->getCurlValue();
                         }
                     }
                 } elseif (count($request->getPostFields())) {

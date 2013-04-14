@@ -50,7 +50,7 @@ class PostFileTest extends \Guzzle\Tests\GuzzleTestCase
     public function testReturnsCurlValueString()
     {
         $file = new PostFile('foo', __FILE__);
-        $this->assertContains('@' . __FILE__ . ';type=text/x-', $file->getCurlString());
+        $this->assertContains('@' . __FILE__ . ';filename=PostFileTest.php;type=text/x-', $file->getCurlValue());
     }
 
     public function testContentDispositionFilePathIsStripped()

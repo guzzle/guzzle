@@ -377,7 +377,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 CURLOPT_HEADERFUNCTION => 'callback',
                 CURLOPT_POST => 1,
                 CURLOPT_POSTFIELDS => array(
-                    'file' => '@' . $testFile . ';type=application/octet-stream;filename=phpunit.xml.dist'
+                    'file' => '@' . $testFile . ';filename=phpunit.xml.dist;type=application/octet-stream'
                 ),
                 CURLOPT_HTTPHEADER => array (
                     'Accept:',
@@ -697,7 +697,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Ensure the CURLOPT_POSTFIELDS option was set properly
         $options = $this->requestHandle->getOptions()->getAll();
-        $this->assertContains('@' . __FILE__ . ';type=text/x-', $options[CURLOPT_POSTFIELDS]['foo']);
+        $this->assertContains('@' . __FILE__ . ';filename=CurlHandleTest.php;type=text/x-', $options[CURLOPT_POSTFIELDS]['foo']);
         $this->assertEquals('baz', $options[CURLOPT_POSTFIELDS]['bar']);
         $this->assertEquals('1', $options[CURLOPT_POSTFIELDS]['arr[a]']);
         $this->assertEquals('2', $options[CURLOPT_POSTFIELDS]['arr[b]']);
