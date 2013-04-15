@@ -98,7 +98,7 @@ class Parameter
             if (isset($data['$ref'])) {
                 // Replace references to models with the actual model data
                 if ($model = $description->getModel($data['$ref'])) {
-                    $data = $model->toArray();
+                    $data = $model->toArray() + array('name' => !empty($data['name']) ? $data['name'] : '');
                 }
             } elseif (isset($data['extends'])) {
                 // If this parameter extends from another parameter then start with the actual data
