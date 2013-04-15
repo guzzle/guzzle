@@ -96,9 +96,13 @@ class Parameter
     {
         if ($description) {
             if (isset($data['$ref'])) {
-                // Replace references to models with the actual model data
                 if ($model = $description->getModel($data['$ref'])) {
+                    // The name of the original parameter should override the ref name if one is available
+                    $name = empty($data['name']) ? null : $data['name'];
                     $data = $model->toArray();
+                    if ($name) {
+                        $data['name'] = $name;
+                    }
                 }
             } elseif (isset($data['extends'])) {
                 // If this parameter extends from another parameter then start with the actual data

@@ -205,4 +205,23 @@ class ServiceDescriptionTest extends \Guzzle\Tests\GuzzleTestCase
         $description = new ServiceDescription(array('basePath' => 'http://foo.com'));
         $this->assertEquals('http://foo.com', $description->getBaseUrl());
     }
+
+    public function testModelsHaveNames()
+    {
+        $desc = array(
+            'models' => array(
+                'date' => array('type' => 'string'),
+                'user'=> array(
+                    'type' => 'object',
+                    'properties' => array(
+                        'dob' => array('$ref' => 'date')
+                    )
+                )
+            )
+        );
+
+        $s = ServiceDescription::factory($desc);
+        $this->assertEquals('date', $s->getModel('date')->getName());
+        $this->assertEquals('dob', $s->getModel('user')->getProperty('dob')->getName());
+    }
 }

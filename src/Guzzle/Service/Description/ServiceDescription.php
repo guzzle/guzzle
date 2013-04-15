@@ -198,7 +198,7 @@ class ServiceDescription implements ServiceDescriptionInterface
         }
 
         if (!($this->models[$id] instanceof Parameter)) {
-            $this->models[$id] = new Parameter($this->models[$id], $this);
+            $this->models[$id] = new Parameter($this->models[$id] + array('name' => $id), $this);
         }
 
         return $this->models[$id];
