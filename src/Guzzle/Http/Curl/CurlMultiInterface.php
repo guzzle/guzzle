@@ -9,11 +9,9 @@ use Guzzle\Http\Message\RequestInterface;
 /**
  * Interface for sending a pool of {@see RequestInterface} objects in parallel
  */
-interface CurlMultiInterface extends \Countable
+interface CurlMultiInterface extends \Countable, HasDispatcherInterface
 {
-    const BEFORE_SEND = 'curl_multi.before_send';
     const POLLING_REQUEST = 'curl_multi.polling_request';
-    const COMPLETE = 'curl_multi.complete';
     const ADD_REQUEST = 'curl_multi.add_request';
     const REMOVE_REQUEST = 'curl_multi.remove_request';
     const MULTI_EXCEPTION = 'curl_multi.exception';

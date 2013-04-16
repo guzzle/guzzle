@@ -2,13 +2,14 @@
 
 namespace Guzzle\Http\Curl;
 
+use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Http\Message\RequestInterface;
 
 /**
  * Proxies requests and connections to a pool of internal curl_multi handles. Each recursive call will add requests
  * to the next available CurlMulti handle.
  */
-class CurlMultiProxy implements CurlMultiInterface
+class CurlMultiProxy extends AbstractHasDispatcher implements CurlMultiInterface
 {
     protected $handles = array();
     protected $groups = array();
@@ -131,6 +132,7 @@ class CurlMultiProxy implements CurlMultiInterface
 
         // All are claimed, so create one
         $handle = new CurlMulti();
+        $handle->setEventDispatcher($this->getEventDispatcher());
         $this->handles[] = $handle;
 
         return $handle;

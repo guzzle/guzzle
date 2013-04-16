@@ -85,6 +85,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         // If requests are currently transferring and this is async, then the
         // request must be prepared now as the send() method is not called.
         $this->beforeSend($request);
+        $this->dispatch(self::ADD_REQUEST, array('request' => $request));
 
         return $this;
     }
@@ -107,6 +108,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
             if ($request === $r) {
                 unset($this->requests[$i]);
                 $this->requests = array_values($this->requests);
+                $this->dispatch(self::REMOVE_REQUEST, array('request' => $request));
                 return true;
             }
         }
@@ -330,6 +332,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
 
         $this->remove($request);
         $request->setState(RequestInterface::STATE_ERROR);
+        $this->dispatch(self::MULTI_EXCEPTION, array('exception' => $e, 'all_exceptions' => $this->exceptions));
     }
 
     /**
