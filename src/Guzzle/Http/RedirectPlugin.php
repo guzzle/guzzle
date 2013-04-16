@@ -84,6 +84,9 @@ class RedirectPlugin implements EventSubscriberInterface
         } catch (BadResponseException $e) {
             // Still hijack if an exception occurs after redirecting
             $redirectResponse = $e->getResponse();
+            if (!$e->getResponse()) {
+                throw $e;
+            }
         }
 
         $request->setResponse($redirectResponse);
