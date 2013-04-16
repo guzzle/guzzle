@@ -128,7 +128,7 @@ class BackoffPlugin extends AbstractHasDispatcher implements EventSubscriberInte
             }
             $multi = $event['curl_multi'];
             $multi->remove($request);
-            $multi->add($request, true);
+            $multi->add($request);
         }
     }
 }

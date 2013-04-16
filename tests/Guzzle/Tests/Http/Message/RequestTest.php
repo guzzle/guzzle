@@ -249,11 +249,9 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
             'Content-Length' => 3
         ), 'abc');
 
-        $request = new Request('GET', 'http://www.google.com/');
-        $request->setClient($this->client);
         try {
-            $request->setResponse($response, true);
-            $request->send();
+            $this->request->setResponse($response, true);
+            $this->request->send();
             $this->fail('Expected exception not thrown');
         } catch (BadResponseException $e) {
             $this->assertInstanceOf('Guzzle\\Http\\Message\\RequestInterface', $e->getRequest());

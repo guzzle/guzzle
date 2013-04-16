@@ -14,7 +14,7 @@ use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\RequestFactoryInterface;
 use Guzzle\Http\Curl\CurlMultiInterface;
-use Guzzle\Http\Curl\CurlMulti;
+use Guzzle\Http\Curl\CurlMultiProxy;
 use Guzzle\Http\Curl\CurlHandle;
 use Guzzle\Http\Curl\CurlVersion;
 
@@ -421,7 +421,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function getCurlMulti()
     {
         if (!$this->curlMulti) {
-            $this->curlMulti = new CurlMulti();
+            $this->curlMulti = new CurlMultiProxy();
         }
 
         return $this->curlMulti;

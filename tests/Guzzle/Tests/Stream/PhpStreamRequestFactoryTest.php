@@ -8,7 +8,7 @@ use Guzzle\Http\Client;
 
 /**
  * @group server
- * @covers \Gizzle\Stream\PhpStreamRequestFactory
+ * @covers \Guzzle\Stream\PhpStreamRequestFactory
  */
 class PhpStreamRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 {
