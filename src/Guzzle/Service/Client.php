@@ -186,49 +186,47 @@ class Client extends HttpClient implements ClientInterface
 
         $failureException = null;
         $requests = array();
-        $successful = new \SplObjectStorage();
+        $commandRequests = new \SplObjectStorage();
 
         foreach ($command as $c) {
             $c->setClient($this);
             // Set the state to new if the command was previously executed
             $request = $c->prepare()->setState(RequestInterface::STATE_NEW);
-            $successful[$request] = $c;
+            $commandRequests[$request] = $c;
             $requests[] = $request;
             $this->dispatch('command.before_send', array('command' => $c));
         }
 
         try {
             $this->send($requests);
-        } catch (MultiTransferException $failureException) {
-            $failures = new \SplObjectStorage();
-            // Remove failed requests from the successful requests array and add to the failures array
-            foreach ($failureException->getFailedRequests() as $request) {
-                if (isset($successful[$request])) {
-                    $failures[$request] = $successful[$request];
-                    unset($successful[$request]);
-                }
+            foreach ($command as $c) {
+                $this->dispatch('command.after_send', array('command' => $c));
             }
-        }
-
-        foreach ($successful as $success) {
-            $this->dispatch('command.after_send', array('command' => $successful[$success]));
-        }
-
-        // Return the response or throw an exception
-        if (!$failureException) {
             return $singleCommand ? end($command)->getResult() : $command;
-        } elseif ($singleCommand) {
-            // If only sending a single request, then don't use a CommandTransferException
-            throw $failureException->getFirst();
-        } else {
+        } catch (MultiTransferException $failureException) {
+
+            if ($singleCommand) {
+                // If only sending a single request, then don't use a CommandTransferException
+                throw $failureException->getFirst();
+            }
+
             // Throw a CommandTransferException using the successful and failed commands
             $e = CommandTransferException::fromMultiTransferException($failureException);
-            foreach ($failures as $failure) {
-                $e->addFailedCommand($failures[$failure]);
+
+            // Remove failed requests from the successful requests array and add to the failures array
+            foreach ($failureException->getFailedRequests() as $request) {
+                if (isset($commandRequests[$request])) {
+                    $e->addFailedCommand($commandRequests[$request]);
+                    unset($commandRequests[$request]);
+                }
             }
-            foreach ($successful as $success) {
-                $e->addSuccessfulCommand($successful[$success]);
+
+            // Always emit the command after_send events for successful commands
+            foreach ($commandRequests as $success) {
+                $e->addSuccessfulCommand($commandRequests[$success]);
+                $this->dispatch('command.after_send', array('command' => $commandRequests[$success]));
             }
+
             throw $e;
         }
     }

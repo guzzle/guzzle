@@ -376,8 +376,8 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
             $client->execute($cmds);
         } catch (CommandTransferException $e) {
             $this->assertEquals(2, count($e->getFailedRequests()));
-            $this->assertEquals(2, count($e->getFailedCommands()));
             $this->assertEquals(2, count($e->getSuccessfulRequests()));
+            $this->assertEquals(2, count($e->getFailedCommands()));
             $this->assertEquals(2, count($e->getSuccessfulCommands()));
 
             foreach ($e->getSuccessfulCommands() as $c) {

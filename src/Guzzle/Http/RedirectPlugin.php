@@ -3,6 +3,7 @@
 namespace Guzzle\Http;
 
 use Guzzle\Common\Event;
+use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\Url;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
@@ -77,8 +78,14 @@ class RedirectPlugin implements EventSubscriberInterface
             $originalRequest
         );
 
-        // Send the redirect request and hijack the response of the original request
-        $redirectResponse = $redirectRequest->send();
+        try {
+            // Send the redirect request and hijack the response of the original request
+            $redirectResponse = $redirectRequest->send();
+        } catch (BadResponseException $e) {
+            // Still hijack if an exception occurs after redirecting
+            $redirectResponse = $e->getResponse();
+        }
+
         $request->setResponse($redirectResponse);
         if (!$redirectResponse->getPreviousResponse()) {
             $redirectResponse->setPreviousResponse($response);

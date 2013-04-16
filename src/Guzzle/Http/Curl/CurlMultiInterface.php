@@ -9,7 +9,7 @@ use Guzzle\Http\Message\RequestInterface;
 /**
  * Interface for sending a pool of {@see RequestInterface} objects in parallel
  */
-interface CurlMultiInterface extends HasDispatcherInterface, \Countable
+interface CurlMultiInterface extends \Countable
 {
     const BEFORE_SEND = 'curl_multi.before_send';
     const POLLING_REQUEST = 'curl_multi.polling_request';
@@ -18,10 +18,6 @@ interface CurlMultiInterface extends HasDispatcherInterface, \Countable
     const REMOVE_REQUEST = 'curl_multi.remove_request';
     const MULTI_EXCEPTION = 'curl_multi.exception';
     const BLOCKING = 'curl_multi.blocking';
-
-    const STATE_IDLE = 'idle';
-    const STATE_SENDING = 'sending';
-    const STATE_COMPLETE = 'complete';
 
     /**
      * Add a request to the pool.
@@ -40,18 +36,11 @@ interface CurlMultiInterface extends HasDispatcherInterface, \Countable
     public function all();
 
     /**
-     * Get the current state of the Pool
-     *
-     * @return string
-     */
-    public function getState();
-
-    /**
      * Remove a request from the pool.
      *
      * @param RequestInterface $request Request to remove
      *
-     * @return CurlMultiInterface
+     * @return bool Returns true on success or false on failure
      */
     public function remove(RequestInterface $request);
 
