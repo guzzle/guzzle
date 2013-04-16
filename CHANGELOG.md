@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+3.4.1 (2013-04-16)
+------------------
+
+* Large refactoring to how CurlMulti handles work. There is now a proxy that sits in front of a pool of CurlMulti
+  handles. This greatly simplifies the implementation, fixes a couple bugs, and provides a small performance boost.
+* Exceptions are now properly grouped when sending requests in parallel
+* Redirects are now properly aggregated when a multi transaction fails
+* Redirects now set the response on the original object even in the event of a failure
+* Bug fix: Model names are now properly set even when using $refs
+* Added support for PHP 5.5's CurlFile to prevent warnings with the deprecated @ syntax
+* Added support for oauth_callback in OAuth signatures
+* Added support for oauth_verifier in OAuth signatures
+* Added support to attempt to retrieve a command first literally, then ucfirst, the with inflection
+
 3.4.0 (2013-04-11)
 ------------------
 
