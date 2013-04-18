@@ -43,12 +43,12 @@ class Stream implements StreamInterface
         'read' => array(
             'r' => true, 'w+' => true, 'r+' => true, 'x+' => true, 'c+' => true,
             'rb' => true, 'w+b' => true, 'r+b' => true, 'x+b' => true, 'c+b' => true,
-            'rt' => true, 'w+t' => true, 'r+t' => true, 'x+t' => true, 'c+t' => true
+            'rt' => true, 'w+t' => true, 'r+t' => true, 'x+t' => true, 'c+t' => true, 'a+' => true
         ),
         'write' => array(
             'w' => true, 'w+' => true, 'rw' => true, 'r+' => true, 'x+' => true, 'c+' => true,
             'wb' => true, 'w+b' => true, 'r+b' => true, 'x+b' => true, 'c+b' => true,
-            'w+t' => true, 'r+t' => true, 'x+t' => true, 'c+t' => true
+            'w+t' => true, 'r+t' => true, 'x+t' => true, 'c+t' => true, 'a' => true, 'a+' => true
         )
     );
 
