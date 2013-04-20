@@ -74,7 +74,7 @@ HTTP basics
 
 use Guzzle\Http\Client;
 
-$client = new Client('http://www.example.com/api/v1/key/{{key}}', array(
+$client = new Client('http://www.example.com/api/v1/key/{key}', array(
     'key' => '***'
 ));
 
