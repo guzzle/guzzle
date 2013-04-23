@@ -244,6 +244,12 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
 
         if ($field instanceof PostFileInterface) {
             $data = $field;
+        } elseif (is_array($filename)) {
+            // Allow multiple values to be set in a single key
+            foreach ($filename as $file) {
+                $this->addPostFile($field, $file, $contentType);
+            }
+            return $this;
         } elseif (!is_string($filename)) {
             throw new RequestException('The path to a file must be a string');
         } elseif (!empty($filename)) {
