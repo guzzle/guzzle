@@ -190,6 +190,10 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     protected function beforeSend(RequestInterface $request)
     {
         try {
+            // Fix Content-Length and Transfer-Encoding collisions
+            if ($request->hasHeader('Transfer-Encoding') && $request->hasHeader('Content-Length')) {
+                $request->removeHeader('Transfer-Encoding');
+            }
             $request->setState(RequestInterface::STATE_TRANSFER);
             $request->dispatch('request.before_send', array('request' => $request));
             if ($request->getState() != RequestInterface::STATE_TRANSFER) {

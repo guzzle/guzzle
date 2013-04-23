@@ -77,7 +77,6 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     public function setBody($body, $contentType = null, $tryChunkedTransfer = false)
     {
         $this->body = EntityBody::factory($body);
-        $this->removeHeader('Content-Length');
 
         // Auto detect the Content-Type from the path of the request if possible
         if ($contentType === null && !$this->hasHeader('Content-Type')) {
@@ -94,9 +93,9 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         }
 
         if ($tryChunkedTransfer) {
+            $this->removeHeader('Content-Length');
             $this->setHeader('Transfer-Encoding', 'chunked');
         } else {
-            $this->removeHeader('Transfer-Encoding');
             // Set the Content-Length header if it can be determined
             $size = $this->body->getContentLength();
             if ($size !== null && $size !== false) {
@@ -104,12 +103,14 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
                 if ($size > $this->expectCutoff) {
                     $this->setHeader('Expect', '100-Continue');
                 }
-            } elseif ('1.1' == $this->protocolVersion) {
-                $this->setHeader('Transfer-Encoding', 'chunked');
-            } else {
-                throw new RequestException(
-                    'Cannot determine Content-Length and cannot use chunked Transfer-Encoding when using HTTP/1.0'
-                );
+            } elseif (!$this->hasHeader('Content-Length')) {
+                if ('1.1' == $this->protocolVersion) {
+                    $this->setHeader('Transfer-Encoding', 'chunked');
+                } else {
+                    throw new RequestException(
+                        'Cannot determine Content-Length and cannot use chunked Transfer-Encoding when using HTTP/1.0'
+                    );
+                }
             }
         }
 

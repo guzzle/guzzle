@@ -605,10 +605,13 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Ensure that the request was received exactly as intended
         $r = $this->getServer()->getReceivedRequests(true);
-
-        $this->assertEquals(strtolower($request), strtolower($r[0]));
         $this->assertFalse($r[0]->hasHeader('Transfer-Encoding'));
         $this->assertEquals(4, (string) $r[0]->getHeader('Content-Length'));
+        $sent = strtolower($r[0]);
+        $this->assertContains('put / http/1.1', $sent);
+        $this->assertContains('host: 127.0.0.1', $sent);
+        $this->assertContains('user-agent:', $sent);
+        $this->assertContains('content-type: text/plain', $sent);
     }
 
     /**
@@ -670,8 +673,11 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         // Make sure that the request was sent correctly
         $r = $this->getServer()->getReceivedRequests(true);
         $this->assertEquals('a=b&c=ay%21%20~This%20is%20a%20test%2C%20isn%27t%20it%3F', (string) $r[0]->getBody());
-
-        $this->assertEquals(strtolower($request), strtolower($r[0]));
+        $this->assertFalse($r[0]->hasHeader('Transfer-Encoding'));
+        $this->assertEquals(56, (string) $r[0]->getHeader('Content-Length'));
+        $sent = strtolower($r[0]);
+        $this->assertContains('post / http/1.1', $sent);
+        $this->assertContains('content-type: application/x-www-form-urlencoded', $sent);
     }
 
     /**
