@@ -57,12 +57,20 @@ class LogPlugin implements EventSubscriberInterface
      * Get a log plugin that outputs full request, response, and curl error information to stderr
      *
      * @param bool     $wireBodies Set to false to disable request/response body output when they use are not repeatable
-     * @param resource $stream     Stream to write to when logging
+     * @param resource $stream     Stream to write to when logging. Defaults to STDERR when it is available
      *
      * @return self
      */
-    public static function getDebugPlugin($wireBodies = true, $stream = STDERR)
+    public static function getDebugPlugin($wireBodies = true, $stream = null)
     {
+        if ($stream === null) {
+            if (defined('STDERR')) {
+                $stream = STDERR;
+            } else {
+                $stream = fopen('php://output', 'w');
+            }
+        }
+
         return new self(new ClosureLogAdapter(function ($m) use ($stream) {
             fwrite($stream, $m . PHP_EOL);
         }), "# Request:\n{request}\n\n# Response:\n{response}\n\n# Errors: {curl_code} {curl_error}", $wireBodies);
