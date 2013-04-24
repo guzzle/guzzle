@@ -11,7 +11,7 @@ use Guzzle\Http\QueryString;
  */
 interface EntityEnclosingRequestInterface extends RequestInterface
 {
-    const URL_ENCODED = 'application/x-www-form-urlencoded';
+    const URL_ENCODED = 'application/x-www-form-urlencoded; charset=utf-8';
     const MULTIPART = 'multipart/form-data';
 
     /**

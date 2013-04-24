@@ -23,6 +23,11 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->client = new Client();
     }
 
+    public function tearDown()
+    {
+        $this->client = null;
+    }
+
     /**
      * @covers Guzzle\Http\Message\EntityEnclosingRequest::__construct
      */
@@ -70,7 +75,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         ));
         $this->assertEquals("POST / HTTP/1.1\r\n"
             . "Host: www.guzzle-project.com\r\n"
-            . "Content-Type: application/x-www-form-urlencoded\r\n\r\n"
+            . "Content-Type: application/x-www-form-urlencoded; charset=utf-8\r\n\r\n"
             . "foo=bar", (string) $request);
 
         $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/', null, array(
@@ -93,7 +98,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         ));
         $this->assertEquals("POST / HTTP/1.1\r\n"
             . "Host: www.guzzle-project.com\r\n"
-            . "Content-Type: application/x-www-form-urlencoded\r\n\r\n"
+            . "Content-Type: application/x-www-form-urlencoded; charset=utf-8\r\n\r\n"
             . "data=123", (string) $request);
     }
 
@@ -286,7 +291,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/');
         $request->setPostField('a', 'b');
         $this->assertContains("\r\n\r\na=b", (string) $request);
-        $this->assertEquals('application/x-www-form-urlencoded', $request->getHeader('Content-Type'));
+        $this->assertEquals('application/x-www-form-urlencoded; charset=utf-8', $request->getHeader('Content-Type'));
     }
 
     /**
@@ -296,7 +301,7 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $request = RequestFactory::getInstance()->create('POST', 'http://www.guzzle-project.com/');
         $request->setPostField('a', 'b');
-        $this->assertEquals('application/x-www-form-urlencoded', $request->getHeader('Content-Type'));
+        $this->assertEquals('application/x-www-form-urlencoded; charset=utf-8', $request->getHeader('Content-Type'));
     }
 
     /**

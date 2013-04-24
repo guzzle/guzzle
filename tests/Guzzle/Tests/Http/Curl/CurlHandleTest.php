@@ -308,7 +308,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                     'Expect:',
                     'Accept:',
                     'Host: localhost:8124',
-                    'Content-Type: application/x-www-form-urlencoded',
+                    'Content-Type: application/x-www-form-urlencoded; charset=utf-8',
                     'User-Agent: ' . $userAgent
                 )
             ), array(
@@ -316,7 +316,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 'User-Agent'       => '*',
                 'Content-Length'   => '7',
                 '!Expect'          => null,
-                'Content-Type'     => 'application/x-www-form-urlencoded',
+                'Content-Type'     => 'application/x-www-form-urlencoded; charset=utf-8',
                 '!Transfer-Encoding' => null
             )),
             // Send a PUT using raw data
@@ -357,7 +357,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                     'Expect:',
                     'Accept:',
                     'Host: localhost:8124',
-                    'Content-Type: application/x-www-form-urlencoded',
+                    'Content-Type: application/x-www-form-urlencoded; charset=utf-8',
                     'User-Agent: ' . $userAgent
                 )
             ), array(
@@ -365,7 +365,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 'User-Agent'       => '*',
                 'Content-Length'   => '7',
                 '!Expect'          => null,
-                'Content-Type'     => 'application/x-www-form-urlencoded',
+                'Content-Type'     => 'application/x-www-form-urlencoded; charset=utf-8',
                 '!Transfer-Encoding' => null
             )),
             // Send a POST request using a POST file
@@ -677,7 +677,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(56, (string) $r[0]->getHeader('Content-Length'));
         $sent = strtolower($r[0]);
         $this->assertContains('post / http/1.1', $sent);
-        $this->assertContains('content-type: application/x-www-form-urlencoded', $sent);
+        $this->assertContains('content-type: application/x-www-form-urlencoded; charset=utf-8', $sent);
     }
 
     /**
@@ -992,7 +992,10 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $request->send();
         $requests = $this->getServer()->getReceivedRequests(true);
         $this->assertEquals('PUT', $requests[0]->getMethod());
-        $this->assertEquals('application/x-www-form-urlencoded', (string) $requests[0]->getHeader('Content-Type'));
+        $this->assertEquals(
+            'application/x-www-form-urlencoded; charset=utf-8',
+            (string) $requests[0]->getHeader('Content-Type')
+        );
         $this->assertEquals(15, (string) $requests[0]->getHeader('Content-Length'));
         $this->assertEquals('foo=baz&baz=bar', (string) $requests[0]->getBody());
     }
