@@ -205,6 +205,7 @@ class Stream implements StreamInterface
 
         // If the stream is a file based stream and local, then use fstat
         if ($this->isLocal()) {
+            clearstatcache(true, $this->getUri());
             $stats = fstat($this->stream);
             if (isset($stats['size'])) {
                 return $stats['size'];

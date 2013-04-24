@@ -303,4 +303,14 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
 
         return $this;
     }
+
+    /**
+     * Get the wrapped EntityBody object
+     *
+     * @return EntityBodyInterface
+     */
+    public function getDecoratedBody()
+    {
+        return $this->body;
+    }
 }
