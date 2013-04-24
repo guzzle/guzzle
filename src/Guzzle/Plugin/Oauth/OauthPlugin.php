@@ -207,14 +207,13 @@ class OauthPlugin implements EventSubscriberInterface
     {
         if (!$this->config->get('disable_post_params') &&
             $request instanceof EntityEnclosingRequestInterface &&
-            (string) $request->getHeader('Content-Type') == 'application/x-www-form-urlencoded')
+            false !== strpos($request->getHeader('Content-Type'), 'application/x-www-form-urlencoded'))
         {
             return true;
         }
 
         return false;
     }
-
 
     /**
      * Returns a Nonce Based on the unique id and URL. This will allow for multiple requests in parallel with the same
