@@ -45,14 +45,9 @@ class AsyncPlugin implements EventSubscriberInterface
      */
     public function onCurlProgress(Event $event)
     {
-        if (!$event['handle']) {
-            return;
-        }
-
-        if ($event['downloaded'] || ($event['uploaded'] || $event['upload_size'] === $event['uploaded'])) {
-            $event['handle']->getOptions()
-                ->set(CURLOPT_TIMEOUT_MS, 1)
-                ->set(CURLOPT_NOBODY, true);
+        if ($event['handle'] &&
+            ($event['downloaded'] || ($event['uploaded'] && $event['upload_size'] === $event['uploaded']))
+        ) {
             // Timeout after 1ms
             curl_setopt($event['handle']->getHandle(), CURLOPT_TIMEOUT_MS, 1);
             // Even if the response is quick, tell curl not to download the body

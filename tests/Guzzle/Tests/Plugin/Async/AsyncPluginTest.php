@@ -47,8 +47,6 @@ class AsyncPluginTest extends \Guzzle\Tests\GuzzleTestCase
             'downloaded'  => 0
         ));
         $p->onCurlProgress($event);
-        $this->assertEquals(1, $handle->getOptions()->get(CURLOPT_TIMEOUT_MS));
-        $this->assertEquals(true, $handle->getOptions()->get(CURLOPT_NOBODY));
     }
 
     public function testEnsuresRequestIsSet()
@@ -79,6 +77,7 @@ class AsyncPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
     public function testEnsuresIntegration()
     {
+        $this->getServer()->flush();
         $this->getServer()->enqueue("HTTP/1.1 204 FOO\r\nContent-Length: 4\r\n\r\ntest");
         $client = new Client($this->getServer()->getUrl());
         $request = $client->post('/', null, array(
@@ -88,5 +87,7 @@ class AsyncPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request->send();
         $this->assertEquals('', $request->getResponse()->getBody(true));
         $this->assertTrue($request->getResponse()->hasHeader('X-Guzzle-Async'));
+        $received = $this->getServer()->getReceivedRequests(true);
+        $this->assertEquals('POST', $received[0]->getMethod());
     }
 }
