@@ -7,6 +7,7 @@ use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\Response;
 use Guzzle\Plugin\Mock\MockPlugin;
 use Guzzle\Http\Client;
+use Guzzle\Http\Exception\CurlException;
 
 /**
  * @covers Guzzle\Plugin\Mock\MockPlugin
@@ -176,5 +177,35 @@ class MockPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request->setBody($body);
         $request->send();
         $this->assertEquals(3, $body->ftell());
+    }
+
+    /**
+     * @expectedException \Exception
+     * @expectedExceptionMessage Foo
+     */
+    public function testCanMockExceptions()
+    {
+        $mock = new MockPlugin();
+        $mock->addException(new \Exception('Foo'));
+        $client = new Client('http://localhost:123/');
+        $client->addSubscriber($mock);
+        $client->get('foo')->send();
+    }
+
+    public function testCanMockBadRequestExceptions()
+    {
+        $client = new Client('http://localhost:123/');
+        $ex = new CurlException('Foo');
+        $mock = new MockPlugin(array($ex));
+        $client->addSubscriber($mock);
+        $request = $client->get('foo');
+
+        try {
+            $request->send();
+            $this->fail('Did not dequeue an exception');
+        } catch (CurlException $e) {
+            $this->assertSame($e, $ex);
+            $this->assertSame($request, $ex->getRequest());
+        }
     }
 }
