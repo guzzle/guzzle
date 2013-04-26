@@ -72,7 +72,7 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
     /**
      * Get a mock response from a file
      *
-     * @param string $file File to retrieve a mock response from
+     * @param string $path File to retrieve a mock response from
      *
      * @return Response
      * @throws InvalidArgumentException if the file is not found
@@ -90,7 +90,7 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
      * Set whether or not to consume the entity body of a request when a mock
      * response is used
      *
-     * @param bool $consumeBody Set to true to read and consume entity bodies
+     * @param bool $readBodies Set to true to read and consume entity bodies
      *
      * @return self
      */
