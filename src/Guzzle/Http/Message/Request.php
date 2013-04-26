@@ -758,7 +758,12 @@ class Request extends AbstractMessage implements RequestInterface
         // Use the queued response if one is set
         if ($this->getParams()->get('queued_response')) {
             $this->response = $this->getParams()->get('queued_response');
-            $this->responseBody = $this->response->getBody();
+            // If a specific response body is specified, then use it instead of the response's body
+            if ($this->responseBody) {
+                $this->getResponseBody()->write((string) $this->response->getBody());
+            } else {
+                $this->responseBody = $this->response->getBody();
+            }
             $this->getParams()->remove('queued_response');
         } elseif (!$this->response) {
             // If no response, then processResponse shouldn't have been called
