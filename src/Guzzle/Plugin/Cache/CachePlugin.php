@@ -150,7 +150,6 @@ class CachePlugin implements EventSubscriberInterface
     public function onRequestBeforeSend(Event $event)
     {
         $request = $event['request'];
-
         $request->addHeader('Via', sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION));
 
         // Intercept PURGE requests
@@ -171,8 +170,10 @@ class CachePlugin implements EventSubscriberInterface
         if ($cachedData = $this->storage->fetch($hashKey)) {
             $request->getParams()->set('cache.lookup', true);
             $response = new Response($cachedData[0], $cachedData[1], $cachedData[2]);
-            $response->setHeader('Age', time() - strtotime($response->getDate() ? : 'now'));
-
+            $response->setHeader(
+                'Age',
+                time() - strtotime($response->getDate() ? : $response->getLastModified() ?: 'now')
+            );
             // Validate that the response satisfies the request
             if ($this->canResponseSatisfyRequest($request, $response)) {
                 $request->getParams()->set('cache.hit', true);
@@ -221,18 +222,17 @@ class CachePlugin implements EventSubscriberInterface
         if ($cachedData = $this->storage->fetch($cacheKey)) {
             $response = new Response($cachedData[0], $cachedData[1], $cachedData[2]);
             $response->setRequest($request);
+            $response->setHeader(
+                'Age',
+                time() - strtotime($response->getLastModified() ? : $response->getDate() ?: 'now')
+            );
 
-            $response->setHeader('Age', time() - strtotime($response->getDate() ? : 'now'));
-
-            if (!$this->canResponseSatisfyFailedRequest($request, $response)) {
-                return;
+            if ($this->canResponseSatisfyFailedRequest($request, $response)) {
+                $request->getParams()->set('cache.hit', 'error');
+                $this->addResponseHeaders($cacheKey, $request, $response);
+                $event['response'] = $response;
+                $event->stopPropagation();
             }
-
-            $request->getParams()->set('cache.hit', 'error');
-            $this->addResponseHeaders($cacheKey, $request, $response);
-
-            $event['response'] = $response;
-            $event->stopPropagation();
         }
     }
 
@@ -250,7 +250,6 @@ class CachePlugin implements EventSubscriberInterface
         }
 
         $request = $event['request'];
-
         if (!$this->canCache->canCacheRequest($request)) {
             return;
         }
@@ -259,15 +258,11 @@ class CachePlugin implements EventSubscriberInterface
 
         if ($cachedData = $this->storage->fetch($cacheKey)) {
             $response = new Response($cachedData[0], $cachedData[1], $cachedData[2]);
-
             $response->setHeader('Age', time() - strtotime($response->getDate() ? : 'now'));
-
             if (!$this->canResponseSatisfyFailedRequest($request, $response)) {
                 return;
             }
-
             $request->getParams()->set('cache.hit', 'error');
-
             $request->setResponse($response);
             $event->stopPropagation();
         }
@@ -352,15 +347,13 @@ class CachePlugin implements EventSubscriberInterface
             return false;
         }
 
-        if ($requestStaleIfError !== true &&
-            $requestStaleIfError !== null &&
+        if (is_numeric($requestStaleIfError) &&
             $response->getAge() - $response->getMaxAge() > $requestStaleIfError
         ) {
             return false;
         }
 
-        if ($responseStaleIfError !== true &&
-            $responseStaleIfError !== null &&
+        if (is_numeric($responseStaleIfError) &&
             $response->getAge() - $response->getMaxAge() > $responseStaleIfError
         ) {
             return false;

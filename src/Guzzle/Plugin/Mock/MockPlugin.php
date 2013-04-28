@@ -5,7 +5,7 @@ namespace Guzzle\Plugin\Mock;
 use Guzzle\Common\Event;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\AbstractHasDispatcher;
-use Guzzle\Http\Exception\RequestException;
+use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\Response;
@@ -141,11 +141,11 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
     /**
      * Add an exception to the end of the queue
      *
-     * @param \Exception $e Exception to throw when the request is executed
+     * @param CurlException $e Exception to throw when the request is executed
      *
      * @return MockPlugin
      */
-    public function addException(\Exception $e)
+    public function addException(CurlException $e)
     {
         $this->queue[] = $e;
 
@@ -190,7 +190,7 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
      * @param RequestInterface $request Request to mock
      *
      * @return self
-     * @throws \Exception|RequestException When request.send is called and an exception is queued
+     * @throws CurlException When request.send is called and an exception is queued
      */
     public function dequeue(RequestInterface $request)
     {
@@ -207,15 +207,21 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
                     while ($data = $event['request']->getBody()->read(8096));
                 });
             }
-        } elseif ($item instanceof \Exception) {
+        } elseif ($item instanceof CurlException) {
             $request->getEventDispatcher()->addListener(
                 'request.before_send',
                 function (Event $event) use ($request, $item) {
-                    if ($item instanceof RequestException) {
-                        $item->setRequest($request);
+                    // Emulates exceptions encountered while transferring requests
+                    $item->setRequest($request);
+                    $request->setState(RequestInterface::STATE_ERROR);
+                    $request->dispatch('request.exception', array('request' => $request, 'exception' => $item));
+                    // Only throw if the exception wasn't handled
+                    if ($request->getState() == RequestInterface::STATE_ERROR) {
+                        throw $item;
                     }
-                    throw $item;
-                }
+                },
+                // Use a number lower than the CachePlugin
+                -999
             );
         }
 

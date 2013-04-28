@@ -179,19 +179,6 @@ class MockPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(3, $body->ftell());
     }
 
-    /**
-     * @expectedException \Exception
-     * @expectedExceptionMessage Foo
-     */
-    public function testCanMockExceptions()
-    {
-        $mock = new MockPlugin();
-        $mock->addException(new \Exception('Foo'));
-        $client = new Client('http://localhost:123/');
-        $client->addSubscriber($mock);
-        $client->get('foo')->send();
-    }
-
     public function testCanMockBadRequestExceptions()
     {
         $client = new Client('http://localhost:123/');

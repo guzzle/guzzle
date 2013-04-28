@@ -2,6 +2,7 @@
 
 namespace Guzzle\Plugin\Cache;
 
+use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Exception\BadResponseException;
@@ -28,7 +29,7 @@ class DefaultRevalidation implements RevalidationInterface
 
     /**
      * @param CacheKeyProviderInterface $cacheKey Cache key strategy
-     * @param CacheStorageInterface     $storage  Cache storage
+     * @param CacheStorageInterface     $cache    Cache storage
      * @param CachePlugin               $plugin   Cache plugin to remove from revalidation requests
      */
     public function __construct(CacheKeyProviderInterface $cacheKey, CacheStorageInterface $cache, CachePlugin $plugin)
@@ -51,6 +52,8 @@ class DefaultRevalidation implements RevalidationInterface
             } elseif ($validateResponse->getStatusCode() == 304) {
                 return $this->handle304Response($request, $validateResponse, $response);
             }
+        } catch (CurlException $e) {
+            return $this->plugin->canResponseSatisfyFailedRequest($request, $response);
         } catch (BadResponseException $e) {
             $this->handleBadResponse($e);
         }
