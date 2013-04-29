@@ -7,12 +7,13 @@ CHANGELOG
 * Bug fix: Stream objects now work correctly with "a" and "a+" modes
 * Bug fix: Removing `Transfer-Encoding: chunked` header when a Content-Length is present
 * Bug fix: AsyncPlugin no longer forces HEAD requests
+* Bug fix: DateTime timezones are now properly handled when using the service description schema formatter
+* Bug fix: CachePlugin now properly handles stale-if-error directives when a request to the origin server fails
 * Setting a response on a request will write to the custom request body from the response body if one is specified
-* LogPlugin now write to php://output when STDERR is undefined
+* LogPlugin now writes to php://output when STDERR is undefined
 * Added the ability to set multiple POST files for the same key in a single call
 * application/x-www-form-urlencoded POSTs now use the utf-8 charset by default
 * Added the ability to queue CurlExceptions to the MockPlugin
-* CachePlugin now properly handles stale-if-error directives when a request to the origin server fails
 * Cleaned up how manual responses are queued on requests (removed "queued_response" and now using request.before_send)
 * Configuration loading now allows remote files
 
