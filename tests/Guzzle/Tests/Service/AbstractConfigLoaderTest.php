@@ -41,11 +41,11 @@ class AbstractConfigLoaderTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @expectedException \Guzzle\Common\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Unable to open fooooooo! for reading
+     * @expectedExceptionMessage Unable to open fooooooo.json
      */
     public function testFileMustBeReadable()
     {
-        $this->loader->load('fooooooo!');
+        $this->loader->load('fooooooo.json');
     }
 
     /**
@@ -118,14 +118,14 @@ class AbstractConfigLoaderTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @expectedException \Guzzle\Common\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Unable to open foo for reading
+     * @expectedExceptionMessage Unable to open foo.json
      */
     public function testCanRemoveAliases()
     {
         $file = dirname(__DIR__) . '/TestData/services/json1.json';
-        $this->loader->addAlias('foo', $file);
-        $this->loader->removeAlias('foo');
-        $this->loader->load('foo');
+        $this->loader->addAlias('foo.json', $file);
+        $this->loader->removeAlias('foo.json');
+        $this->loader->load('foo.json');
     }
 
     public function testCanLoadArraysWithIncludes()

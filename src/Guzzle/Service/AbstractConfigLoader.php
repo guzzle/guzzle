@@ -93,24 +93,35 @@ abstract class AbstractConfigLoader implements ConfigLoaderInterface
             $filename = $this->aliases[$filename];
         }
 
-        if (!is_readable($filename)) {
-            throw new InvalidArgumentException("Unable to open {$filename} for reading");
-        }
+        switch (pathinfo($filename, PATHINFO_EXTENSION)) {
+            case 'js':
+            case 'json':
+                $level = error_reporting(0);
+                $json = file_get_contents($filename);
+                error_reporting($level);
 
-        $ext = pathinfo($filename, PATHINFO_EXTENSION);
-        if ($ext == 'js' || $ext == 'json') {
-            $config = json_decode(file_get_contents($filename), true);
-            // Throw an exception if there was an error loading the file
-            if ($error = json_last_error()) {
-                throw new RuntimeException("Error loading JSON data from {$filename}: {$error}");
-            }
-        } elseif ($ext == 'php') {
-            $config = require $filename;
-            if (!is_array($config)) {
-                throw new InvalidArgumentException('PHP files must return an array of configuration data');
-            }
-        } else {
-            throw new InvalidArgumentException('Unknown file extension: ' . $filename);
+                if ($json === false) {
+                    $err = error_get_last();
+                    throw new InvalidArgumentException("Unable to open {$filename}: " . $err['message']);
+                }
+
+                $config = json_decode($json, true);
+                // Throw an exception if there was an error loading the file
+                if ($error = json_last_error()) {
+                    throw new RuntimeException("Error loading JSON data from {$filename}: {$error}");
+                }
+                break;
+            case 'php':
+                if (!is_readable($filename)) {
+                    throw new InvalidArgumentException("Unable to open {$filename} for reading");
+                }
+                $config = require $filename;
+                if (!is_array($config)) {
+                    throw new InvalidArgumentException('PHP files must return an array of configuration data');
+                }
+                break;
+            default:
+                throw new InvalidArgumentException('Unknown file extension: ' . $filename);
         }
 
         // Keep track of this file being loaded to prevent infinite recursion
