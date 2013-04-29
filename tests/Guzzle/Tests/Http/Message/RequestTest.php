@@ -212,17 +212,15 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     public function testGetResponse()
     {
         $this->assertNull($this->request->getResponse());
-
-        $response = new Response(200, array(
-            'Content-Length' => 3
-        ), 'abc');
+        $response = new Response(200, array('Content-Length' => 3), 'abc');
 
         $this->request->setResponse($response);
         $this->assertEquals($response, $this->request->getResponse());
 
-        $request = new Request('GET', 'http://www.google.com/');
+        $client = new Client('http://www.google.com');
+        $request = $client->get('http://www.google.com/');
         $request->setResponse($response, true);
-        $request->setState(RequestInterface::STATE_COMPLETE);
+        $request->send();
         $requestResponse = $request->getResponse();
         $this->assertSame($response, $requestResponse);
 
@@ -230,9 +228,9 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame($requestResponse, $request->getResponse());
 
         $response = new Response(204);
-        $request = new Request('GET', 'http://www.google.com/');
+        $request = $client->get();
         $request->setResponse($response, true);
-        $request->setState('complete');
+        $request->send();
         $requestResponse = $request->getResponse();
         $this->assertSame($response, $requestResponse);
         $this->assertInstanceOf('Guzzle\\Http\\EntityBody', $response->getBody());
@@ -245,12 +243,8 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function testRequestThrowsExceptionOnBadResponse()
     {
-        $response = new Response(404, array(
-            'Content-Length' => 3
-        ), 'abc');
-
         try {
-            $this->request->setResponse($response, true);
+            $this->request->setResponse(new Response(404, array('Content-Length' => 3), 'abc'), true);
             $this->request->send();
             $this->fail('Expected exception not thrown');
         } catch (BadResponseException $e) {
@@ -594,8 +588,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($r->getHeaders(), $this->request->getHeaders());
         $this->assertNotSame($h, $r->getHeader('Host'));
         $this->assertNotSame($r->getParams(), $this->request->getParams());
-        $this->assertNull($r->getParams()->get('queued_response'));
-
         $this->assertTrue($this->request->getEventDispatcher()->hasListeners('request.sent'));
     }
 

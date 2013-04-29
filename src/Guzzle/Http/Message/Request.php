@@ -155,7 +155,7 @@ class Request extends AbstractMessage implements RequestInterface
         $this->curlOptions = clone $this->curlOptions;
         $this->params = clone $this->params;
         // Remove state based parameters from the cloned request
-        $this->params->remove('curl_handle')->remove('queued_response')->remove('curl_multi');
+        $this->params->remove('curl_handle')->remove('curl_multi');
         $this->url = clone $this->url;
         $this->response = $this->responseBody = null;
 
@@ -533,15 +533,19 @@ class Request extends AbstractMessage implements RequestInterface
         }
 
         if ($queued) {
-            $this->getParams()->set('queued_response', $response);
+            $this->getEventDispatcher()->addListener('request.before_send', function ($e) use ($response) {
+                $e['request']->setResponse($response);
+            }, -9999);
         } else {
-            $this->getParams()->remove('queued_response');
             $this->response = $response;
-            $this->responseBody = $response->getBody();
+            // If a specific response body is specified, then use it instead of the response's body
+            if ($this->responseBody) {
+                $this->getResponseBody()->write((string) $this->response->getBody());
+            } else {
+                $this->responseBody = $this->response->getBody();
+            }
             $this->processResponse();
         }
-
-        $this->dispatch('request.set_response', $this->getEventArray());
 
         return $this;
     }
@@ -750,22 +754,11 @@ class Request extends AbstractMessage implements RequestInterface
      * Process a received response
      *
      * @param array $context Contextual information
-     *
-     * @throws BadResponseException on unsuccessful responses
+     * @throws RequestException|BadResponseException on unsuccessful responses
      */
     protected function processResponse(array $context = array())
     {
-        // Use the queued response if one is set
-        if ($this->getParams()->get('queued_response')) {
-            $this->response = $this->getParams()->get('queued_response');
-            // If a specific response body is specified, then use it instead of the response's body
-            if ($this->responseBody) {
-                $this->getResponseBody()->write((string) $this->response->getBody());
-            } else {
-                $this->responseBody = $this->response->getBody();
-            }
-            $this->getParams()->remove('queued_response');
-        } elseif (!$this->response) {
+        if (!$this->response) {
             // If no response, then processResponse shouldn't have been called
             $e = new RequestException('Error completing request');
             $e->setRequest($this);
@@ -799,7 +792,5 @@ class Request extends AbstractMessage implements RequestInterface
                 $this->dispatch('request.success', $this->getEventArray());
             }
         }
-
-        return $this;
     }
 }

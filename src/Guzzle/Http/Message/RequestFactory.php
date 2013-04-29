@@ -160,7 +160,6 @@ class RequestFactory implements RequestFactoryInterface
         $cloned->getParams()
             ->replace($request->getParams()->getAll())
             ->remove('curl_handle')
-            ->remove('queued_response')
             ->remove('curl_multi');
 
         return $cloned;

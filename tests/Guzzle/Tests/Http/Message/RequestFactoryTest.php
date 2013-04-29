@@ -7,7 +7,6 @@ use Guzzle\Http\Client;
 use Guzzle\Http\Url;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\RequestFactory;
-use Guzzle\Http\Message\PostFile;
 use Guzzle\Http\QueryString;
 use Guzzle\Parser\Message\MessageParser;
 
@@ -341,7 +340,6 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $f->create('GET', 'http://www.test.com', array('X-Foo' => 'Bar'));
         $request->getParams()->replace(array(
             'curl_handle' => 'foo',
-            'queued_response' => 'baz',
             'curl_multi' => 'bar',
             'test' => '123'
         ));
