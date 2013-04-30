@@ -13,6 +13,7 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Http\Exception\BadResponseException;
+use Guzzle\Plugin\Log\LogPlugin;
 
 /**
  * @group server
@@ -898,5 +899,27 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($request->isRedirect());
         $this->assertSame($request, $request->setIsRedirect(true));
         $this->assertTrue($request->isRedirect());
+    }
+
+    public function testUsesCustomResponseBodyWhenItIsCustom()
+    {
+        $en = EntityBody::factory();
+        $request = $this->client->get();
+        $request->setResponseBody($en);
+        $request->setResponse(new Response(200, array(), 'foo'));
+        $this->assertEquals('foo', (string) $en);
+    }
+
+    public function testDoesNotUseRequestResponseBodyWhenNotCustom()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 307 Foo\r\nLocation: /foo\r\nContent-Length: 2\r\n\r\nHI",
+            "HTTP/1.1 301 Foo\r\nLocation: /foo\r\nContent-Length: 2\r\n\r\nFI",
+            "HTTP/1.1 200 OK\r\nContent-Lenght: 4\r\n\r\ntest",
+        ));
+        $request = $this->client->get();
+        $request->send();
+        $this->assertEquals('test', $request->getResponse()->getBody(true));
     }
 }

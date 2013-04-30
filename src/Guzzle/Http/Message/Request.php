@@ -539,7 +539,7 @@ class Request extends AbstractMessage implements RequestInterface
         } else {
             $this->response = $response;
             // If a specific response body is specified, then use it instead of the response's body
-            if ($this->responseBody) {
+            if ($this->responseBody && !$this->responseBody->getCustomData('default')) {
                 $this->getResponseBody()->write((string) $this->response->getBody());
             } else {
                 $this->responseBody = $this->response->getBody();
@@ -576,6 +576,7 @@ class Request extends AbstractMessage implements RequestInterface
     {
         if ($this->responseBody === null) {
             $this->responseBody = EntityBody::factory();
+            $this->responseBody->setCustomData('default', true);
         }
 
         return $this->responseBody;
