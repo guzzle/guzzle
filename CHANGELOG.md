@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-3.4.3 (2013-04-29)
+3.4.3 (2013-04-30)
 ------------------
 * Bug fix: Fixing bug introduced in 3.4.2 where redirect responses are duplicated on the final redirected response
 * Added a check to re-extract the temp cacert bundle from the phar before sending each request
