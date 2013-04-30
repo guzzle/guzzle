@@ -915,7 +915,17 @@ class Response extends AbstractMessage
      */
     public function json()
     {
-        $data = json_decode((string) $this->body, true);
+        $body = (string) $this->body;
+        $contentType = strtolower($this->getContentType());
+        $match = array();
+        if ( preg_match('/;\\s*charset\\s*=\\s*("[^"]*"|[^\\s;]+)/', $contentType, $match) )
+        {
+            if ( $match[1] == 'iso-8859-1' || $match[1] == '"iso-8859-1"' )
+            {
+                $body = utf8_encode($body);
+            }
+        }
+        $data = json_decode($body, true);
         if (JSON_ERROR_NONE !== json_last_error()) {
             throw new RuntimeException('Unable to parse response body into JSON: ' . json_last_error());
         }
