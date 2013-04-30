@@ -80,21 +80,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function __construct($baseUrl = '', $config = null)
     {
         $this->setConfig($config ?: new Collection());
-
-        // Allow ssl.certificate_authority config setting to control the certificate authority used by curl
-        $authority = $this->config->get(self::SSL_CERT_AUTHORITY);
-
-        // Set the SSL certificate
-        if ($authority !== 'system') {
-            if ($authority === null) {
-                $authority = true;
-            }
-            if ($authority === true && substr(__FILE__, 0, 7) == 'phar://') {
-                $authority = $this->preparePharCacert();
-            }
-            $this->setSslVerification($authority);
-        }
-
+        $this->initSsl();
         $this->setBaseUrl($baseUrl);
         $this->defaultHeaders = new Collection();
         $this->setRequestFactory(RequestFactory::getInstance());
@@ -438,6 +424,29 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
+     * Copy the cacert.pem file from the phar if it is not in the temp folder and validate the MD5 checksum
+     *
+     * @return string Returns the path to the extracted cacert
+     * @throws RuntimeException if the file cannot be copied or there is a MD5 mismatch
+     */
+    public function preparePharCacert()
+    {
+        $from = __DIR__ . '/Resources/cacert.pem';
+        $certFile = sys_get_temp_dir() . '/guzzle-cacert.pem';
+        if (file_exists($certFile)) {
+            $actualMd5 = md5_file($certFile);
+            $expectedMd5 = trim(file_get_contents("{$from}.md5"));
+            if ($actualMd5 != $expectedMd5) {
+                throw new RuntimeException("{$certFile} MD5 mismatch: expected {$expectedMd5} but got {$actualMd5}");
+            }
+        } elseif (!copy($from, $certFile)) {
+            throw new RuntimeException("Could not copy {$from} to {$certFile}: " . var_export(error_get_last(), true));
+        }
+
+        return $certFile;
+    }
+
+    /**
      * Prepare a request to be sent from the Client by adding client specific behaviors and properties to the request.
      *
      * @param RequestInterface $request Request to prepare for the client
@@ -478,25 +487,34 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
-     * Copy the cecert.pem file from the phar if it is not in the temp folder and validate the MD5 checksum
-     *
-     * @return string
-     * @throws RuntimeException if the file cannot be copied or there is a MD5 mismatch
+     * Initializes SSL settings
      */
-    protected function preparePharCacert()
+    protected function initSsl()
     {
-        $from = __DIR__ . '/Resources/cacert.pem';
-        $certFile = sys_get_temp_dir() . '/guzzle-cacert.pem';
-        if (file_exists($certFile)) {
-            $actualMd5 = md5_file($certFile);
-            $expectedMd5 = trim(file_get_contents("{$from}.md5"));
-            if ($actualMd5 != $expectedMd5) {
-                throw new RuntimeException("{$certFile} MD5 mismatch: expected {$expectedMd5} but got {$actualMd5}");
-            }
-        } elseif (!copy($from, $certFile)) {
-            throw new RuntimeException("Could not copy {$from} to {$certFile}: " . var_export(error_get_last(), true));
-        }
+        // Allow ssl.certificate_authority config setting to control the certificate authority used by curl
+        $authority = $this->config->get(self::SSL_CERT_AUTHORITY);
 
-        return $certFile;
+        // Set the SSL certificate
+        if ($authority !== 'system') {
+
+            if ($authority === null) {
+                $authority = true;
+            }
+
+            if ($authority === true && substr(__FILE__, 0, 7) == 'phar://') {
+                $authority = $this->preparePharCacert();
+                $that = $this;
+                $this->getEventDispatcher()->addListener(
+                    'request.before_send',
+                    function ($event) use ($authority, $that) {
+                        if ($authority == $event['request']->getCurlOptions()->get(CURLOPT_CAINFO)) {
+                            $that->preparePharCacert();
+                        }
+                    }
+                );
+            }
+
+            $this->setSslVerification($authority);
+        }
     }
 }
