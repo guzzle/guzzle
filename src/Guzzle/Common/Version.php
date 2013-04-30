@@ -7,5 +7,5 @@ namespace Guzzle\Common;
  */
 class Version
 {
-    const VERSION = '3.4.2';
+    const VERSION = '3.4.3';
 }

@@ -426,21 +426,23 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * Copy the cacert.pem file from the phar if it is not in the temp folder and validate the MD5 checksum
      *
+     * @param bool $md5Check Set to false to not perform the MD5 validation
+     *
      * @return string Returns the path to the extracted cacert
      * @throws RuntimeException if the file cannot be copied or there is a MD5 mismatch
      */
-    public function preparePharCacert()
+    public function preparePharCacert($md5Check = true)
     {
         $from = __DIR__ . '/Resources/cacert.pem';
         $certFile = sys_get_temp_dir() . '/guzzle-cacert.pem';
-        if (file_exists($certFile)) {
+        if (!file_exists($certFile) && !copy($from, $certFile)) {
+            throw new RuntimeException("Could not copy {$from} to {$certFile}: " . var_export(error_get_last(), true));
+        } elseif ($md5Check) {
             $actualMd5 = md5_file($certFile);
             $expectedMd5 = trim(file_get_contents("{$from}.md5"));
             if ($actualMd5 != $expectedMd5) {
                 throw new RuntimeException("{$certFile} MD5 mismatch: expected {$expectedMd5} but got {$actualMd5}");
             }
-        } elseif (!copy($from, $certFile)) {
-            throw new RuntimeException("Could not copy {$from} to {$certFile}: " . var_export(error_get_last(), true));
         }
 
         return $certFile;
@@ -508,7 +510,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
                     'request.before_send',
                     function ($event) use ($authority, $that) {
                         if ($authority == $event['request']->getCurlOptions()->get(CURLOPT_CAINFO)) {
-                            $that->preparePharCacert();
+                            $that->preparePharCacert(false);
                         }
                     }
                 );
