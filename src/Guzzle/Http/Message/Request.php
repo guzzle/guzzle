@@ -96,9 +96,7 @@ class Request extends AbstractMessage implements RequestInterface
             // An exception is being thrown because of an unsuccessful response
             'request.exception',
             // Received response status line
-            'request.receive.status_line',
-            // Manually set a response
-            'request.set_response'
+            'request.receive.status_line'
         );
     }
 
