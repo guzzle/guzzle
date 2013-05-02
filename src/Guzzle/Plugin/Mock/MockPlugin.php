@@ -63,7 +63,8 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
      */
     public static function getSubscribedEvents()
     {
-        return array('client.create_request' => 'onRequestCreate');
+        // Use a number lower than the CachePlugin
+        return array('request.before_send' => array('onRequestBeforeSend', -999));
     }
 
     /**
@@ -194,10 +195,7 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
      */
     public function dequeue(RequestInterface $request)
     {
-        $this->dispatch('mock.request', array(
-            'plugin'  => $this,
-            'request' => $request
-        ));
+        $this->dispatch('mock.request', array('plugin' => $this, 'request' => $request));
 
         $item = array_shift($this->queue);
         if ($item instanceof Response) {
@@ -206,23 +204,16 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
                     while ($data = $event['request']->getBody()->read(8096));
                 });
             }
-            $request->setResponse($item, true);
+            $request->setResponse($item);
         } elseif ($item instanceof CurlException) {
-            $request->getEventDispatcher()->addListener(
-                'request.before_send',
-                function (Event $event) use ($request, $item) {
-                    // Emulates exceptions encountered while transferring requests
-                    $item->setRequest($request);
-                    $request->setState(RequestInterface::STATE_ERROR);
-                    $request->dispatch('request.exception', array('request' => $request, 'exception' => $item));
-                    // Only throw if the exception wasn't handled
-                    if ($request->getState() == RequestInterface::STATE_ERROR) {
-                        throw $item;
-                    }
-                },
-                // Use a number lower than the CachePlugin
-                -999
-            );
+            // Emulates exceptions encountered while transferring requests
+            $item->setRequest($request);
+            $request->setState(RequestInterface::STATE_ERROR);
+            $request->dispatch('request.exception', array('request' => $request, 'exception' => $item));
+            // Only throw if the exception wasn't handled
+            if ($request->getState() == RequestInterface::STATE_ERROR) {
+                throw $item;
+            }
         }
 
         return $this;
@@ -247,20 +238,20 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
     }
 
     /**
-     * Called when a request completes
+     * Called when a request is about to be sent
      *
      * @param Event $event
      */
-    public function onRequestCreate(Event $event)
+    public function onRequestBeforeSend(Event $event)
     {
         if (!empty($this->queue)) {
             $request = $event['request'];
-            $this->dequeue($request);
             $this->received[] = $request;
             // Detach the filter from the client so it's a one-time use
-            if ($this->temporary && empty($this->queue) && $request->getClient()) {
+            if ($this->temporary && count($this->queue) == 1 && $request->getClient()) {
                 $request->getClient()->getEventDispatcher()->removeSubscriber($this);
             }
+            $this->dequeue($request);
         }
     }
 }
