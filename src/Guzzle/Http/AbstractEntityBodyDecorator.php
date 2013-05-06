@@ -40,7 +40,7 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
      *
      * @return mixed
      */
-    public function __call($method, array $args = null)
+    public function __call($method, array $args)
     {
         return call_user_func_array(array($this->body, $method), $args);
     }
