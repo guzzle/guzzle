@@ -17,7 +17,7 @@ class XmlVisitor extends AbstractResponseVisitor
     public function before(CommandInterface $command, array &$result)
     {
         // Set the result of the command to the array conversion of the XML body
-        $result = get_object_vars($command->getResponse()->xml());
+        $result = $this->recursiveXMLtoArray($command->getResponse()->xml());
     }
 
     /**
@@ -61,6 +61,49 @@ class XmlVisitor extends AbstractResponseVisitor
         if ($value !== null) {
             $value = $param->filter($value);
         }
+    }
+
+    /**
+     * Recursively process a SimpleXMLElement into an Array
+     *
+     * @param SimpleXMLElement $xml SimpleXMLElement being processed
+     * @return array The array representation of the current SimpleXMLElement
+     */
+    protected function recursiveXMLtoArray($xml)
+    {
+        $content = (string) $xml;
+        $attributes = $xml->attributes();
+        $children = $xml->children();
+        $root = array();
+
+        if (count($attributes) > 0)
+        {
+            $attributesarray = array();
+            foreach ($attributes as $key => $value)
+            {
+                $attributesarray[$key] = (string) $value;
+            }
+            $root['@attributes'] = $attributesarray;
+        }
+
+        if (count($children) > 0)
+        {
+            foreach($children as $parent => $child)
+            {
+                $childelement = $this->recursiveXMLtoArray($child);
+                if (!empty($childelement))
+                {
+                    $root[$parent] = $childelement;
+                }
+            }
+        }
+
+        if (!empty($content))
+        {
+            $root[] = $content;
+        }
+
+        return $root;
     }
 
     /**
