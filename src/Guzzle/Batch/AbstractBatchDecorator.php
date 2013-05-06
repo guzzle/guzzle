@@ -31,7 +31,7 @@ abstract class AbstractBatchDecorator implements BatchInterface
      * @return mixed
      * @codeCoverageIgnore
      */
-    public function __call($method, array $args = null)
+    public function __call($method, array $args)
     {
         return call_user_func_array(array($this->decoratedBatch, $method), $args);
     }
