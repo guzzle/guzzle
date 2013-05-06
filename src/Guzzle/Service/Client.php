@@ -85,7 +85,7 @@ class Client extends HttpClient implements ClientInterface
      * @return mixed Returns the result of the command
      * @throws BadMethodCallException when a command is not found or magic methods are disabled
      */
-    public function __call($method, $args = null)
+    public function __call($method, $args)
     {
         if (!$this->enableMagicMethods) {
             throw new BadMethodCallException("Missing method {$method}. This client has not enabled magic methods.");
