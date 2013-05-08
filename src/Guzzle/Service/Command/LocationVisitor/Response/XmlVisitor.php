@@ -17,7 +17,7 @@ class XmlVisitor extends AbstractResponseVisitor
     public function before(CommandInterface $command, array &$result)
     {
         // Set the result of the command to the array conversion of the XML body
-        $result = get_object_vars($command->getResponse()->xml());
+        $result = json_decode(json_encode($command->getResponse()->xml()), true);
     }
 
     /**
