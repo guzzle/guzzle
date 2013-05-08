@@ -27,6 +27,7 @@ class VisitorFlyweight
         'request.postFile'      => 'Guzzle\Service\Command\LocationVisitor\Request\PostFileVisitor',
         'request.query'         => 'Guzzle\Service\Command\LocationVisitor\Request\QueryVisitor',
         'request.response_body' => 'Guzzle\Service\Command\LocationVisitor\Request\ResponseBodyVisitor',
+        'request.responseBody'  => 'Guzzle\Service\Command\LocationVisitor\Request\ResponseBodyVisitor',
         'request.xml'           => 'Guzzle\Service\Command\LocationVisitor\Request\XmlVisitor',
         'response.body'         => 'Guzzle\Service\Command\LocationVisitor\Response\BodyVisitor',
         'response.header'       => 'Guzzle\Service\Command\LocationVisitor\Response\HeaderVisitor',
