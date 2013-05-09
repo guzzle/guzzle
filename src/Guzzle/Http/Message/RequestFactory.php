@@ -157,10 +157,7 @@ class RequestFactory implements RequestFactoryInterface
         } elseif ($request instanceof EntityEnclosingRequestInterface) {
             $cloned->setBody($request->getBody());
         }
-        $cloned->getParams()
-            ->replace($request->getParams()->getAll())
-            ->remove('curl_handle')
-            ->remove('curl_multi');
+        $cloned->getParams()->replace($request->getParams()->getAll());
 
         return $cloned;
     }

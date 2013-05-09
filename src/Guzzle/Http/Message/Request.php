@@ -152,8 +152,6 @@ class Request extends AbstractMessage implements RequestInterface
         }
         $this->curlOptions = clone $this->curlOptions;
         $this->params = clone $this->params;
-        // Remove state based parameters from the cloned request
-        $this->params->remove('curl_handle')->remove('curl_multi');
         $this->url = clone $this->url;
         $this->response = $this->responseBody = null;
 

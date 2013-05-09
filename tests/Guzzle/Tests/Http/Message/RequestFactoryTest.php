@@ -338,11 +338,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $f = RequestFactory::getInstance();
         $request = $f->create('GET', 'http://www.test.com', array('X-Foo' => 'Bar'));
-        $request->getParams()->replace(array(
-            'curl_handle' => 'foo',
-            'curl_multi' => 'bar',
-            'test' => '123'
-        ));
+        $request->getParams()->replace(array('test' => '123'));
         $request->getCurlOptions()->set('foo', 'bar');
         $cloned = $f->cloneRequestWithMethod($request, 'PUT');
         $this->assertEquals('PUT', $cloned->getMethod());

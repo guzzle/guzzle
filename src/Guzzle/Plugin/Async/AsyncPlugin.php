@@ -49,9 +49,9 @@ class AsyncPlugin implements EventSubscriberInterface
             ($event['downloaded'] || ($event['uploaded'] && $event['upload_size'] === $event['uploaded']))
         ) {
             // Timeout after 1ms
-            curl_setopt($event['handle']->getHandle(), CURLOPT_TIMEOUT_MS, 1);
+            curl_setopt($event['handle'], CURLOPT_TIMEOUT_MS, 1);
             // Even if the response is quick, tell curl not to download the body
-            curl_setopt($event['handle']->getHandle(), CURLOPT_NOBODY, true);
+            curl_setopt($event['handle'], CURLOPT_NOBODY, true);
         }
     }
 

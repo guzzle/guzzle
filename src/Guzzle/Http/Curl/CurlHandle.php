@@ -84,12 +84,6 @@ class CurlHandle
             $request->removeHeader('Accept-Encoding');
         }
 
-        // Enable the progress function if the 'progress' param was set
-        if ($requestCurlOptions->get('progress')) {
-            $curlOptions[CURLOPT_PROGRESSFUNCTION] = array($mediator, 'progress');
-            $curlOptions[CURLOPT_NOPROGRESS] = false;
-        }
-
         // Enable curl debug information if the 'debug' param was set
         if ($requestCurlOptions->get('debug')) {
             $curlOptions[CURLOPT_STDERR] = fopen('php://temp', 'r+');
@@ -211,18 +205,29 @@ class CurlHandle
             $curlOptions[CURLOPT_HTTPHEADER][] = $line;
         }
 
-        // Apply the options to a new cURL handle.
-        $handle = curl_init();
-        curl_setopt_array($handle, $curlOptions);
-
+        // Add the content-length header back if it was temporarily removed
         if ($tempContentLength) {
             $request->setHeader('Content-Length', $tempContentLength);
         }
 
-        $handle = new static($handle, $curlOptions);
-        $mediator->setCurlHandle($handle);
+        // Apply the options to a new cURL handle.
+        $handle = curl_init();
 
-        return $handle;
+        // Enable the progress function if the 'progress' param was set
+        if ($requestCurlOptions->get('progress')) {
+            // Wrap the function in a function that provides the curl handle to the mediator's progress function
+            // Using this rather than injecting the handle into the mediator prevents a circular reference
+            $curlOptions[CURLOPT_PROGRESSFUNCTION] = function () use ($mediator, $handle) {
+                $args = func_get_args();
+                $args[] = $handle;
+                call_user_func_array(array($mediator, 'progress'), $args);
+            };
+            $curlOptions[CURLOPT_NOPROGRESS] = false;
+        }
+
+        curl_setopt_array($handle, $curlOptions);
+
+        return new static($handle, $curlOptions);
     }
 
     /**

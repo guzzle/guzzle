@@ -41,7 +41,7 @@ class AsyncPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $handle = CurlHandle::factory($request);
         $event = new Event(array(
             'request'     => $request,
-            'handle'      => $handle,
+            'handle'      => $handle->getHandle(),
             'uploaded'    => 10,
             'upload_size' => 10,
             'downloaded'  => 0

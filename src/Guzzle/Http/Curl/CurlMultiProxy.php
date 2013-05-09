@@ -102,9 +102,18 @@ class CurlMultiProxy extends AbstractHasDispatcher implements CurlMultiInterface
             while ($request = array_shift($this->queued)) {
                 $group->add($request);
             }
-            $group->send();
-            array_pop($this->groups);
-            $this->cleanupHandles();
+            try {
+                $group->send();
+                array_pop($this->groups);
+                $this->cleanupHandles();
+            } catch (\Exception $e) {
+                // Remove the group and cleanup if an exception was encountered and no more requests in group
+                if (!$group->count()) {
+                    array_pop($this->groups);
+                    $this->cleanupHandles();
+                }
+                throw $e;
+            }
         }
     }
 
