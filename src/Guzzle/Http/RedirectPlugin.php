@@ -4,6 +4,7 @@ namespace Guzzle\Http;
 
 use Guzzle\Common\Event;
 use Guzzle\Http\Exception\BadResponseException;
+use Guzzle\Http\Message\RedirectHistory;
 use Guzzle\Http\Url;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
@@ -61,38 +62,42 @@ class RedirectPlugin implements EventSubscriberInterface
         $request = $event['request'];
 
         // Only act on redirect requests with Location headers
-        if (!$response || !$response->isRedirect() || !$response->hasHeader('Location')
-            || $request->getParams()->get(self::DISABLE)
-        ) {
+        if (!$response || $request->getParams()->get(self::DISABLE)) {
             return;
         }
 
-        // Prepare the request for a redirect and grab the original request that started the transaction
-        $originalRequest = $this->prepareRedirection($request);
+        // Trace the original request based on parameter history
+        $original = $this->getOriginalRequest($request);
 
-        // Create a redirect request based on the redirect rules set on the request
-        $redirectRequest = $this->createRedirectRequest(
-            $request,
-            $event['response']->getStatusCode(),
-            trim($response->getHeader('Location')),
-            $originalRequest
-        );
-
-        try {
-            // Send the redirect request and hijack the response of the original request
-            $redirectResponse = $redirectRequest->send();
-        } catch (BadResponseException $e) {
-            // Still hijack if an exception occurs after redirecting
-            $redirectResponse = $e->getResponse();
-            if (!$e->getResponse()) {
-                throw $e;
+        // Terminating condition to set the effective repsonse on the original request
+        if (!$response->isRedirect() || !$response->hasHeader('Location')) {
+            if ($request !== $original) {
+                // This is a terminating redirect response, so set it on the original request
+                $response->setRedirectHistory($original->getParams()->get('redirect.history'));
+                $original->setResponse($response);
             }
+            return;
         }
 
-        $request->setResponse($redirectResponse);
-        if (!$redirectResponse->getPreviousResponse()) {
-            $redirectResponse->setPreviousResponse($response);
+        $this->sendRedirectRequest($original, $request, $response);
+    }
+
+    /**
+     * Get the original request that initiated a series of redirects
+     *
+     * @param RequestInterface $request Request to get the original request from
+     *
+     * @return RequestInterface
+     */
+    protected function getOriginalRequest(RequestInterface $request)
+    {
+        $original = $request;
+        // The number of redirects is held on the original request, so determine which request that is
+        while ($parent = $original->getParams()->get(self::PARENT_REQUEST)) {
+            $original = $parent;
         }
+
+        return $original;
     }
 
     /**
@@ -117,10 +122,11 @@ class RedirectPlugin implements EventSubscriberInterface
     ) {
         $redirectRequest = null;
         $strict = $original->getParams()->get(self::STRICT_REDIRECTS);
+
         // Use a GET request if this is an entity enclosing request and we are not forcing RFC compliance, but rather
         // emulating what all browsers would do
         if ($request instanceof EntityEnclosingRequestInterface && !$strict && $statusCode <= 302) {
-            $redirectRequest = $this->cloneRequestWithGetMethod($request);
+            $redirectRequest = RequestFactory::getInstance()->cloneRequestWithMethod($request, 'GET');
         } else {
             $redirectRequest = clone $request;
         }
@@ -158,38 +164,16 @@ class RedirectPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Clone a request while changing the method to GET. Emulates the behavior of
-     * {@see Guzzle\Http\Message\Request::clone}, but can change the HTTP method.
-     *
-     * @param EntityEnclosingRequestInterface $request Request to clone
-     *
-     * @return RequestInterface Returns a GET request
-     */
-    protected function cloneRequestWithGetMethod(EntityEnclosingRequestInterface $request)
-    {
-        return RequestFactory::getInstance()->cloneRequestWithMethod($request, 'GET');
-    }
-
-    /**
      * Prepare the request for redirection and enforce the maximum number of allowed redirects per client
      *
-     * @param RequestInterface $request Request to prepare and validate
+     * @param RequestInterface $original  Origina request
+     * @param RequestInterface $request   Request to prepare and validate
+     * @param Response         $response  The current response
      *
-     * @return RequestInterface Returns the original request
+     * @return RequestInterface
      */
-    protected function prepareRedirection(RequestInterface $request)
+    protected function prepareRedirection(RequestInterface $original, RequestInterface $request, Response $response)
     {
-        $original = $request;
-        // The number of redirects is held on the original request, so determine which request that is
-        while ($parent = $original->getParams()->get(self::PARENT_REQUEST)) {
-            $original = $parent;
-        }
-
-        // Always associate the parent response with the current response so that a chain can be established
-        if ($parent = $request->getParams()->get(self::PARENT_REQUEST)) {
-            $request->getResponse()->setPreviousResponse($parent->getResponse());
-        }
-
         $params = $original->getParams();
         // This is a new redirect, so increment the redirect counter
         $current = $params->get(self::REDIRECT_COUNT) + 1;
@@ -202,10 +186,53 @@ class RedirectPlugin implements EventSubscriberInterface
 
         // Throw an exception if the redirect count is exceeded
         if ($current > $max) {
-            return $this->throwTooManyRedirectsException($request);
+            $this->throwTooManyRedirectsException($request);
         }
 
-        return $original;
+        // Create a redirect request based on the redirect rules set on the request
+        return $this->createRedirectRequest(
+            $request,
+            $response->getStatusCode(),
+            trim($response->getHeader('Location')),
+            $original
+        );
+    }
+
+    /**
+     * Send a redirect request and handle any errors
+     *
+     * @param RequestInterface $original The originating request
+     * @param RequestInterface $request  The current request being redirected
+     * @param Response         $response The response of the current request
+     *
+     * @throws BadResponseException|\Exception
+     */
+    protected function sendRedirectRequest(RequestInterface $original, RequestInterface $request, Response $response)
+    {
+        // Validate and create a redirect request based on the original request and current response
+        $redirectRequest = $this->prepareRedirection($original, $request, $response);
+
+        // Keep a redirect history on the original request
+        if (!$history = $original->getParams()->get('redirect.history')) {
+            $history = new RedirectHistory();
+            $history->addTransaction($original, $original->getResponse());
+            $original->getParams()->set('redirect.history', $history);
+        }
+
+        // Add to the transaction history before we get a response for the correct order and in case of failure
+        $currentTransaction = $history->addTransaction($redirectRequest);
+
+        try {
+            $redirectResponse = $redirectRequest->send();
+        } catch (BadResponseException $e) {
+            $redirectResponse = $e->getResponse();
+            if (!$e->getResponse()) {
+                throw $e;
+            }
+        }
+
+        // Add the response to the transaction history in the correct position
+        $history->setTransactionResponse($currentTransaction, $redirectResponse);
     }
 
     /**
@@ -216,17 +243,11 @@ class RedirectPlugin implements EventSubscriberInterface
      */
     protected function throwTooManyRedirectsException(RequestInterface $request)
     {
-        $lines = array();
-        $response = $request->getResponse();
-
-        do {
-            $lines[] = '> ' . $response->getRequest()->getRawHeaders() . "\n\n< " . $response->getRawHeaders();
-            $response = $response->getPreviousResponse();
-        } while ($response);
+        $request->getResponse()->setRedirectHistory($request->getParams()->get('redirect.history'));
 
         throw new TooManyRedirectsException(
             "Too many redirects were issued for this transaction:\n"
-            . implode("* Sending redirect request\n", array_reverse($lines))
+            . $request->getResponse()->getRedirectHistory(true)
         );
     }
 }

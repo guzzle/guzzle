@@ -114,9 +114,9 @@ class Response extends AbstractMessage
     protected $cacheResponseCodes = array(200, 203, 206, 300, 301, 410);
 
     /**
-     * @var Response If a redirect was issued or an intermediate response was issued
+     * @var RedirectHistory Array of request message strings that received this response
      */
-    protected $previous;
+    protected $redirectHistory;
 
     /**
      * Create a new Response based on a raw response message
@@ -884,30 +884,6 @@ class Response extends AbstractMessage
     }
 
     /**
-     * Get the previous response (e.g. Redirect response)
-     *
-     * @return null|Response
-     */
-    public function getPreviousResponse()
-    {
-        return $this->previous;
-    }
-
-    /**
-     * Set the previous response
-     *
-     * @param Response $response Response to set
-     *
-     * @return self
-     */
-    public function setPreviousResponse(Response $response)
-    {
-        $this->previous = $response;
-
-        return $this;
-    }
-
-    /**
      * Parse the JSON response body and return an array
      *
      * @return array|string|int|bool|float
@@ -939,5 +915,41 @@ class Response extends AbstractMessage
         }
 
         return $xml;
+    }
+
+    /**
+     * @deprecated
+     */
+    public function getPreviousResponse()
+    {
+        return null;
+    }
+
+    /**
+     * Set the redirect history of the response
+     *
+     * @param RedirectHistory $history History to set
+     *
+     * @return self
+     */
+    public function setRedirectHistory(RedirectHistory $history)
+    {
+        $this->redirectHistory = $history;
+
+        return $this;
+    }
+
+    /**
+     * Get the redirect history of the response
+     *
+     * @return RedirectHistory
+     */
+    public function getRedirectHistory()
+    {
+        if (!$this->redirectHistory) {
+            $this->redirectHistory = new RedirectHistory();
+        }
+
+        return $this->redirectHistory;
     }
 }
