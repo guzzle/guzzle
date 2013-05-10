@@ -3,10 +3,10 @@
 namespace Guzzle\Tests\Plugin\History;
 
 use Guzzle\Http\Client;
-use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
 use Guzzle\Plugin\History\HistoryPlugin;
+use Guzzle\Plugin\Mock\MockPlugin;
 
 /**
  * @covers Guzzle\Plugin\History\HistoryPlugin
@@ -111,5 +111,48 @@ class HistoryPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request->send();
 
         $this->assertSame($request, $h->getLastRequest());
+    }
+
+    public function testCanCastToString()
+    {
+        $client = new Client('http://localhost/');
+        $h = new HistoryPlugin();
+        $client->getEventDispatcher()->addSubscriber($h);
+
+        $mock = new MockPlugin(array(
+            new Response(301, array('Location' => '/redirect1')),
+            new Response(307, array('Location' => '/redirect2')),
+            new Response(200, array('Content-Length' => '2'), 'HI')
+        ));
+
+        $client->getEventDispatcher()->addSubscriber($mock);
+        $request = $client->get();
+        $request->send();
+        $this->assertEquals(3, count($h));
+        $this->assertEquals(3, count($mock->getReceivedRequests()));
+
+        $this->assertEquals(<<<EOT
+> GET / HTTP/1.1
+Host: localhost
+User-Agent: Guzzle/3.4.3 curl/7.21.4 PHP/5.3.15
+
+< HTTP/1.1 301 Moved Permanently
+Location: /redirect1
+
+> GET /redirect1 HTTP/1.1
+Host: localhost
+User-Agent: Guzzle/3.4.3 curl/7.21.4 PHP/5.3.15
+
+< HTTP/1.1 307 Temporary Redirect
+Location: /redirect2
+
+> GET /redirect2 HTTP/1.1
+Host: localhost
+User-Agent: Guzzle/3.4.3 curl/7.21.4 PHP/5.3.15
+
+< HTTP/1.1 200 OK
+Content-Length: 2
+EOT
+, str_replace("\r", '', trim((string) $h)));
     }
 }
