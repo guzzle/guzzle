@@ -207,5 +207,6 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         $response = $request->send();
         $this->assertFalse($request->getParams()->hasKey('redirect.count'));
+        $this->assertEquals($this->getServer()->getUrl() . 'redirect2', $response->getEffectiveUrl());
     }
 }

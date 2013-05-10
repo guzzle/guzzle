@@ -74,9 +74,12 @@ class RedirectPlugin implements EventSubscriberInterface
         if (!$response->isRedirect() || !$response->hasHeader('Location')) {
             if ($request !== $original) {
                 // This is a terminating redirect response, so set it on the original request
-                $response->setEffectiveUrl($request->getUrl());
                 $response->getParams()->set(self::REDIRECT_COUNT, $original->getParams()->get(self::REDIRECT_COUNT));
                 $original->setResponse($response);
+                // Set the correct effective URL
+                $original->getEventDispatcher()->addListener('request.complete', function ($e) use ($request) {
+                    $e['response']->setEffectiveUrl($request->getUrl());
+                });
             }
             return;
         }
