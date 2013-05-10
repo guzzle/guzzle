@@ -824,28 +824,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame('OK', $request->getResponse()->getReasonPhrase());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::receiveResponseHeader
-     */
-    public function testAddsPreviousResponseToResponseWhenRedirecting()
-    {
-        $url = $this->getServer()->getUrl();
-        $this->getServer()->flush();
-        $this->getServer()->enqueue(array(
-            "HTTP/1.1 303 SEE OTHER\r\n" .
-            "Content-Length: 0\r\n" .
-            "Location: {$url}/foo\r\n\r\n",
-            "HTTP/1.1 200 OK\r\n" .
-            "Content-Length: 0\r\n\r\n"
-        ));
-
-        $request = $this->request;
-        $request->send();
-        $this->assertEquals(2, count($this->getServer()->getReceivedRequests()));
-        $this->assertEquals(200, $request->getResponse()->getStatusCode());
-        $this->assertEquals(303, $request->getResponse()->getPreviousResponse()->getStatusCode());
-    }
-
     public function testUnresolvedRedirectsReturnResponse()
     {
         $this->getServer()->flush();
