@@ -500,7 +500,8 @@ class Request extends AbstractMessage implements RequestInterface
             $body = $code >= 200 && $code < 300 ? $this->getResponseBody() : EntityBody::factory();
 
             $this->response = new Response($code, null, $body);
-            $this->response->setStatus($code, $status)->setRequest($this);
+            $this->response->setStatus($code, $status);
+            $this->setRequestOnResponse($this->response);
             $this->dispatch('request.receive.status_line', array(
                 'request'       => $this,
                 'line'          => $data,
@@ -524,7 +525,7 @@ class Request extends AbstractMessage implements RequestInterface
     {
         // Never overwrite the request associated with the response (useful for redirect history)
         if (!$response->getRequest()) {
-            $response->setRequest($this);
+            $this->setRequestOnResponse($response);
         }
 
         if ($queued) {
@@ -788,5 +789,19 @@ class Request extends AbstractMessage implements RequestInterface
                 $this->dispatch('request.success', $this->getEventArray());
             }
         }
+    }
+
+    /**
+     * Set a request closure on a response
+     *
+     * @param Response $response
+     * @deprecated
+     */
+    protected function setRequestOnResponse(Response $response)
+    {
+        $headers = $this->getRawHeaders();
+        $response->setRequest(function () use ($headers) {
+            return RequestFactory::getInstance()->fromMessage($headers);
+        });
     }
 }

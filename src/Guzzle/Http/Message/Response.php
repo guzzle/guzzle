@@ -104,7 +104,7 @@ class Response extends AbstractMessage
     protected $info = array();
 
     /**
-     * @var RequestInterface Request object that may or may not be set
+     * @var RequestInterface|callable Request object that may or may not be set
      */
     protected $request = null;
 
@@ -341,16 +341,6 @@ class Response extends AbstractMessage
         }
 
         return $headers . "\r\n";
-    }
-
-    /**
-     * Get the request object (or null) that is associated with this response
-     *
-     * @return RequestInterface
-     */
-    public function getRequest()
-    {
-        return $this->request;
     }
 
     /**
@@ -779,15 +769,31 @@ class Response extends AbstractMessage
     /**
      * Set the request object associated with the response
      *
-     * @param RequestInterface $request The request object used to generate the response
+     * @param mixed $request The request object used to generate the response or a closure to return a request
      *
      * @return Response
+     * @deprecated
      */
-    public function setRequest(RequestInterface $request)
+    public function setRequest($request)
     {
         $this->request = $request;
 
         return $this;
+    }
+
+    /**
+     * Get the request object (or null) that is associated with this response
+     *
+     * @return RequestInterface
+     * @deprecated
+     */
+    public function getRequest()
+    {
+        if (is_callable($this->request)) {
+            $this->request = call_user_func($this->request);
+        }
+
+        return $this->request;
     }
 
     /**
