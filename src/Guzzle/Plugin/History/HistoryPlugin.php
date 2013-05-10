@@ -57,11 +57,13 @@ class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Co
      */
     public function add(RequestInterface $request, Response $response = null)
     {
-        if ($request->getResponse()) {
-            $this->transactions[] = array('request' => $request, 'response' => $response);
-            if (count($this->transactions) > $this->getlimit()) {
-                array_shift($this->transactions);
-            }
+        if (!$response && $request->getResponse()) {
+            $response = $request->getResponse();
+        }
+
+        $this->transactions[] = array('request' => $request, 'response' => $response);
+        if (count($this->transactions) > $this->getlimit()) {
+            array_shift($this->transactions);
         }
 
         return $this;
@@ -110,10 +112,10 @@ class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Co
     public function getIterator()
     {
         // Return an iterator just like the old iteration of the HistoryPlugin for BC compatibility (use getAll())
-        return new MapIterator(new \ArrayIterator($this->transactions), function ($entry) {
+        return new \ArrayIterator(array_map(function ($entry) {
             $entry['request']->getParams()->set('actual_response', $entry['response']);
             return $entry['request'];
-        });
+        }, $this->transactions));
     }
 
     /**
