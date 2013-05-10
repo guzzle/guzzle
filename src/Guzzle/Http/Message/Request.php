@@ -529,10 +529,7 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function setResponse(Response $response, $queued = false)
     {
-        // Never overwrite the request associated with the response (useful for redirect history)
-        if (!$response->getRequest()) {
-            $this->setRequestOnResponse($response);
-        }
+        $this->setRequestOnResponse($response);
 
         if ($queued) {
             $this->getEventDispatcher()->addListener('request.before_send', function ($e) use ($response) {

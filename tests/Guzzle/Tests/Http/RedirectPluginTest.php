@@ -182,10 +182,6 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($this->getServer()->getUrl() . 'redirect?foo=bar', $requests[1]->getUrl());
         // Ensure that the history on the actual request is correct
         $this->assertEquals($this->getServer()->getUrl() . '?foo=bar', $request->getUrl());
-        $this->assertEquals(
-            $this->getServer()->getUrl() . 'redirect?foo=bar',
-            $request->getResponse()->getRequest()->getUrl()
-        );
     }
 
     public function testResetsHistoryEachSend()
