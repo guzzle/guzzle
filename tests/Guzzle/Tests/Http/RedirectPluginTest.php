@@ -6,6 +6,7 @@ use Guzzle\Http\Client;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Http\Exception\TooManyRedirectsException;
+use Guzzle\Http\Message\RedirectHistory;
 
 /**
  * @covers Guzzle\Http\RedirectPlugin
@@ -38,27 +39,17 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('/redirect2', $requests[2]->getResource());
         $this->assertEquals('GET', $requests[2]->getMethod());
 
-        // Ensure that the previous response was set correctly
-        $this->assertEquals(301, $response->getPreviousResponse()->getStatusCode());
-        $this->assertEquals('/redirect2', (string) $response->getPreviousResponse()->getHeader('Location'));
-
         // Ensure that the redirect count was incremented
         $this->assertEquals(2, $request->getParams()->get(RedirectPlugin::REDIRECT_COUNT));
 
-        $c = 0;
-        $r = $response->getPreviousResponse();
-        while ($r) {
-            if ($c == 0) {
-                $this->assertEquals('/redirect2', $r->getLocation());
-            } else {
-                $this->assertEquals('/redirect1', $r->getLocation());
-            }
-            $c++;
-            $r = $r->getPreviousResponse();
-        }
+        $this->assertCount(3, $response->getRedirectHistory());
+        $requestHistory = iterator_to_array($response->getRedirectHistory()->iterateObjects());
 
-
-        $this->assertEquals(2, $c);
+        $this->assertEquals(301, $requestHistory[0]->getResponse()->getStatusCode());
+        $this->assertEquals('/redirect1', (string) $requestHistory[0]->getResponse()->getHeader('Location'));
+        $this->assertEquals(301, $requestHistory[1]->getResponse()->getStatusCode());
+        $this->assertEquals('/redirect2', (string) $requestHistory[1]->getResponse()->getHeader('Location'));
+        $this->assertEquals(200, $requestHistory[2]->getResponse()->getStatusCode());
     }
 
     public function testCanLimitNumberOfRedirects()
@@ -83,11 +74,17 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
             $message = $e->getMessage();
             $parts = explode("\n* Sending redirect request\n", $message);
             $this->assertContains('> GET /foo', $parts[0]);
+            $this->assertContains('Location: /redirect1', $parts[0]);
             $this->assertContains('> GET /redirect1', $parts[1]);
+            $this->assertContains('Location: /redirect2', $parts[1]);
             $this->assertContains('> GET /redirect2', $parts[2]);
+            $this->assertContains('Location: /redirect3', $parts[2]);
             $this->assertContains('> GET /redirect3', $parts[3]);
+            $this->assertContains('Location: /redirect4', $parts[3]);
             $this->assertContains('> GET /redirect4', $parts[4]);
+            $this->assertContains('Location: /redirect5', $parts[4]);
             $this->assertContains('> GET /redirect5', $parts[5]);
+            $this->assertContains('Location: /redirect6', $parts[5]);
         }
     }
 

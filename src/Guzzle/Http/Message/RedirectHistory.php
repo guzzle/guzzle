@@ -2,10 +2,12 @@
 
 namespace Guzzle\Http\Message;
 
+use Guzzle\Iterator\MapIterator;
+
 /**
  * Maintains a text-based history of redirects for a transaction
  */
-class RedirectHistory implements \IteratorAggregate, \Countable
+class RedirectHistory implements \IteratorAggregate, \Countable, \ArrayAccess
 {
     /**
      * @var array Array of 'request' and 'response' keys
@@ -57,22 +59,6 @@ class RedirectHistory implements \IteratorAggregate, \Countable
     }
 
     /**
-     * @return \ArrayIterator
-     */
-    public function getIterator()
-    {
-        return new \ArrayIterator($this->history);
-    }
-
-    /**
-     * @return int
-     */
-    public function count()
-    {
-        return count($this->history);
-    }
-
-    /**
      * Get the effective URL of the transaction (the last redirected URL)
      *
      * @return string|null
@@ -85,5 +71,54 @@ class RedirectHistory implements \IteratorAggregate, \Countable
         }
 
         return $url;
+    }
+
+    /**
+     * Returns an iterator that yields request objects for the history rather than strings
+     *
+     * @return \Iterator
+     */
+    public function iterateObjects()
+    {
+        return new MapIterator($this->getIterator(), function ($entry) {
+            $request = RequestFactory::getInstance()->fromMessage($entry['request']);
+            if ($entry['response']) {
+                $request->setResponse(Response::fromMessage($entry['response']));
+            }
+            return $request;
+        });
+    }
+
+    /**
+     * @return \ArrayIterator
+     */
+    public function getIterator()
+    {
+        return new \ArrayIterator($this->history);
+    }
+
+    public function count()
+    {
+        return count($this->history);
+    }
+
+    public function offsetGet($offset)
+    {
+        return isset($this->history[$offset]) ? $this->history[$offset] : null;
+    }
+
+    public function offsetExists($offset)
+    {
+        return isset($this->history[$offset]);
+    }
+
+    public function offsetUnset($offset)
+    {
+        unset($this->history[$offset]);
+    }
+
+    public function offsetSet($offset, $value)
+    {
+        $this->history[$offset] = $value;
     }
 }

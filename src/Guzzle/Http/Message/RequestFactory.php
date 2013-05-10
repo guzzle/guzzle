@@ -158,6 +158,7 @@ class RequestFactory implements RequestFactoryInterface
             $cloned->setBody($request->getBody());
         }
         $cloned->getParams()->replace($request->getParams()->getAll());
+        $cloned->dispatch('request.clone', array('request' => $cloned));
 
         return $cloned;
     }

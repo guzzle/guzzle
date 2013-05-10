@@ -22,6 +22,7 @@ class RedirectPlugin implements EventSubscriberInterface
     const REDIRECT_COUNT = 'redirect.count';
     const MAX_REDIRECTS = 'redirect.max';
     const STRICT_REDIRECTS = 'redirect.strict';
+    const REDIRECT_HISTORY = 'redirect.history';
     const PARENT_REQUEST = 'redirect.parent_request';
     const DISABLE = 'redirect.disable';
 
@@ -48,7 +49,8 @@ class RedirectPlugin implements EventSubscriberInterface
      */
     public function onRequestClone(Event $event)
     {
-        $event['request']->getParams()->remove(self::REDIRECT_COUNT)->remove(self::PARENT_REQUEST);
+        $event['request']->getParams()
+            ->remove(self::REDIRECT_COUNT)->remove(self::PARENT_REQUEST)->remove(self::REDIRECT_HISTORY);
     }
 
     /**
@@ -186,16 +188,17 @@ class RedirectPlugin implements EventSubscriberInterface
 
         // Throw an exception if the redirect count is exceeded
         if ($current > $max) {
-            $this->throwTooManyRedirectsException($request);
+            $this->throwTooManyRedirectsException($original, $request);
+            return false;
+        } else {
+            // Create a redirect request based on the redirect rules set on the request
+            return $this->createRedirectRequest(
+                $request,
+                $response->getStatusCode(),
+                trim($response->getHeader('Location')),
+                $original
+            );
         }
-
-        // Create a redirect request based on the redirect rules set on the request
-        return $this->createRedirectRequest(
-            $request,
-            $response->getStatusCode(),
-            trim($response->getHeader('Location')),
-            $original
-        );
     }
 
     /**
@@ -210,7 +213,9 @@ class RedirectPlugin implements EventSubscriberInterface
     protected function sendRedirectRequest(RequestInterface $original, RequestInterface $request, Response $response)
     {
         // Validate and create a redirect request based on the original request and current response
-        $redirectRequest = $this->prepareRedirection($original, $request, $response);
+        if (!$redirectRequest = $this->prepareRedirection($original, $request, $response)) {
+            return;
+        }
 
         // Keep a redirect history on the original request
         if (!$history = $original->getParams()->get('redirect.history')) {
@@ -231,23 +236,25 @@ class RedirectPlugin implements EventSubscriberInterface
             }
         }
 
-        // Add the response to the transaction history in the correct position
+        // Update the history
         $history->setTransactionResponse($currentTransaction, $redirectResponse);
     }
 
     /**
      * Throw a too many redirects exception for a request
      *
+     * @param RequestInterface $original Request
      * @param RequestInterface $request Request
+     *
      * @throws TooManyRedirectsException when too many redirects have been issued
      */
-    protected function throwTooManyRedirectsException(RequestInterface $request)
+    protected function throwTooManyRedirectsException(RequestInterface $original, RequestInterface $request)
     {
-        $request->getResponse()->setRedirectHistory($request->getParams()->get('redirect.history'));
-
-        throw new TooManyRedirectsException(
-            "Too many redirects were issued for this transaction:\n"
-            . $request->getResponse()->getRedirectHistory(true)
-        );
+        $history = $original->getParams()->get('redirect.history');
+        $request->getResponse()->setRedirectHistory($history);
+        $original->getEventDispatcher()->addListener('request.complete', function ($e) use ($history) {
+            $e['request']->getResponse()->setRedirectHistory($history);
+            throw new TooManyRedirectsException("Too many redirects were issued for this transaction:\n{$history}");
+        });
     }
 }
