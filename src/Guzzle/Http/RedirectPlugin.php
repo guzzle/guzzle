@@ -37,8 +37,9 @@ class RedirectPlugin implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return array(
-            'request.sent'  => array('onRequestSent', 100),
-            'request.clone' => 'onRequestClone'
+            'request.sent'        => array('onRequestSent', 100),
+            'request.clone'       => 'onRequestClone',
+            'request.before_send' => 'onRequestClone'
         );
     }
 
@@ -147,7 +148,11 @@ class RedirectPlugin implements EventSubscriberInterface
         }
 
         $redirectRequest->setUrl($location);
-        $redirectRequest->getParams()->set(self::PARENT_REQUEST, $request);
+
+        // Add the parent request to the request before it sends (make sure it's before the onRequestClone event too)
+        $redirectRequest->getEventDispatcher()->addListener('request.before_send', function ($e) use ($request) {
+            $e['request']->getParams()->set(RedirectPlugin::PARENT_REQUEST, $request);
+        }, -1);
 
         // Rewind the entity body of the request if needed
         if ($redirectRequest instanceof EntityEnclosingRequestInterface && $redirectRequest->getBody()) {

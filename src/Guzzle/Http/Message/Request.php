@@ -143,7 +143,6 @@ class Request extends AbstractMessage implements RequestInterface
 
     /**
      * Clone the request object, leaving off any response that was received
-     * @see Guzzle\Plugin\Redirect\RedirectPlugin::cloneRequestWithGetMethod
      */
     public function __clone()
     {
