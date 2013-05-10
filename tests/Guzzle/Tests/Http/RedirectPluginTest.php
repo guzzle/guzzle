@@ -6,7 +6,7 @@ use Guzzle\Http\Client;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Http\Exception\TooManyRedirectsException;
-use Guzzle\Http\Message\RedirectHistory;
+use Guzzle\Plugin\History\HistoryPlugin;
 
 /**
  * @covers Guzzle\Http\RedirectPlugin
@@ -25,13 +25,15 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Create a client that uses the default redirect behavior
         $client = new Client($this->getServer()->getUrl());
+        $history = new HistoryPlugin();
+        $client->addSubscriber($history);
+
         $request = $client->get('/foo');
         $response = $request->send();
-
         $this->assertEquals(200, $response->getStatusCode());
-        $requests = $this->getServer()->getReceivedRequests(true);
 
         // Ensure that two requests were sent
+        $requests = $this->getServer()->getReceivedRequests(true);
         $this->assertEquals('/foo', $requests[0]->getResource());
         $this->assertEquals('GET', $requests[0]->getMethod());
         $this->assertEquals('/redirect1', $requests[1]->getResource());
@@ -41,15 +43,14 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Ensure that the redirect count was incremented
         $this->assertEquals(2, $request->getParams()->get(RedirectPlugin::REDIRECT_COUNT));
+        $this->assertCount(3, $history);
+        $requestHistory = $history->getAll();
 
-        $this->assertCount(3, $response->getRedirectHistory());
-        $requestHistory = iterator_to_array($response->getRedirectHistory()->iterateObjects());
-
-        $this->assertEquals(301, $requestHistory[0]->getResponse()->getStatusCode());
-        $this->assertEquals('/redirect1', (string) $requestHistory[0]->getResponse()->getHeader('Location'));
-        $this->assertEquals(301, $requestHistory[1]->getResponse()->getStatusCode());
-        $this->assertEquals('/redirect2', (string) $requestHistory[1]->getResponse()->getHeader('Location'));
-        $this->assertEquals(200, $requestHistory[2]->getResponse()->getStatusCode());
+        $this->assertEquals(301, $requestHistory[0]['response']->getStatusCode());
+        $this->assertEquals('/redirect1', (string) $requestHistory[0]['response']->getHeader('Location'));
+        $this->assertEquals(301, $requestHistory[1]['response']->getStatusCode());
+        $this->assertEquals('/redirect2', (string) $requestHistory[1]['response']->getHeader('Location'));
+        $this->assertEquals(200, $requestHistory[2]['response']->getStatusCode());
     }
 
     public function testCanLimitNumberOfRedirects()
@@ -70,21 +71,11 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
             $client->get('/foo')->send();
             $this->fail('Did not throw expected exception');
         } catch (TooManyRedirectsException $e) {
-            // Ensure that the exception message is correct
-            $message = $e->getMessage();
-            $parts = explode("\n* Sending redirect request\n", $message);
-            $this->assertContains('> GET /foo', $parts[0]);
-            $this->assertContains('Location: /redirect1', $parts[0]);
-            $this->assertContains('> GET /redirect1', $parts[1]);
-            $this->assertContains('Location: /redirect2', $parts[1]);
-            $this->assertContains('> GET /redirect2', $parts[2]);
-            $this->assertContains('Location: /redirect3', $parts[2]);
-            $this->assertContains('> GET /redirect3', $parts[3]);
-            $this->assertContains('Location: /redirect4', $parts[3]);
-            $this->assertContains('> GET /redirect4', $parts[4]);
-            $this->assertContains('Location: /redirect5', $parts[4]);
-            $this->assertContains('> GET /redirect5', $parts[5]);
-            $this->assertContains('Location: /redirect6', $parts[5]);
+            $this->assertEquals(
+                "5 redirects were issued for this request:\nGET /foo HTTP/1.1\r\n"
+                . "Host: 127.0.0.1:8124\r\nUser-Agent: Guzzle/3.4.3 curl/7.21.4 PHP/5.3.15",
+                $e->getMessage()
+            );
         }
     }
 
@@ -210,14 +201,15 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Create a client that uses the default redirect behavior
         $client = new Client($this->getServer()->getUrl());
+        $history = new HistoryPlugin();
+        $client->addSubscriber($history);
+
         $request = $client->get('/foo');
-        $response = $request->send();
-        $this->assertEquals(3, count($response->getRedirectHistory()));
-        $this->assertTrue($request->getParams()->hasKey('redirect.history'));
+        $request->send();
+        $this->assertEquals(3, count($history));
         $this->assertTrue($request->getParams()->hasKey('redirect.count'));
+
         $response = $request->send();
-        $this->assertCount(0, $response->getRedirectHistory());
-        $this->assertFalse($request->getParams()->hasKey('redirect.history'));
         $this->assertFalse($request->getParams()->hasKey('redirect.count'));
     }
 }

@@ -894,10 +894,9 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->enqueue(array(
             "HTTP/1.1 307 Foo\r\nLocation: /foo\r\nContent-Length: 2\r\n\r\nHI",
             "HTTP/1.1 301 Foo\r\nLocation: /foo\r\nContent-Length: 2\r\n\r\nFI",
-            "HTTP/1.1 200 OK\r\nContent-Lenght: 4\r\n\r\ntest",
+            "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ntest",
         ));
-        $request = $this->client->get();
-        $request->send();
-        $this->assertEquals('test', $request->getResponse()->getBody(true));
+        $response = $this->client->get()->send();
+        $this->assertEquals('test', $response->getBody(true));
     }
 }

@@ -22,7 +22,6 @@ class RedirectPlugin implements EventSubscriberInterface
     const REDIRECT_COUNT = 'redirect.count';
     const MAX_REDIRECTS = 'redirect.max';
     const STRICT_REDIRECTS = 'redirect.strict';
-    const REDIRECT_HISTORY = 'redirect.history';
     const PARENT_REQUEST = 'redirect.parent_request';
     const DISABLE = 'redirect.disable';
 
@@ -50,8 +49,7 @@ class RedirectPlugin implements EventSubscriberInterface
      */
     public function onRequestClone(Event $event)
     {
-        $event['request']->getParams()
-            ->remove(self::REDIRECT_COUNT)->remove(self::PARENT_REQUEST)->remove(self::REDIRECT_HISTORY);
+        $event['request']->getParams()->remove(self::REDIRECT_COUNT)->remove(self::PARENT_REQUEST);
     }
 
     /**
@@ -76,7 +74,8 @@ class RedirectPlugin implements EventSubscriberInterface
         if (!$response->isRedirect() || !$response->hasHeader('Location')) {
             if ($request !== $original) {
                 // This is a terminating redirect response, so set it on the original request
-                $response->setRedirectHistory($original->getParams()->get('redirect.history'));
+                $response->setEffectiveUrl($request->getUrl());
+                $response->getParams()->set(self::REDIRECT_COUNT, $original->getParams()->get(self::REDIRECT_COUNT));
                 $original->setResponse($response);
             }
             return;
@@ -193,7 +192,7 @@ class RedirectPlugin implements EventSubscriberInterface
 
         // Throw an exception if the redirect count is exceeded
         if ($current > $max) {
-            $this->throwTooManyRedirectsException($original, $request);
+            $this->throwTooManyRedirectsException($original, $max);
             return false;
         } else {
             // Create a redirect request based on the redirect rules set on the request
@@ -218,48 +217,31 @@ class RedirectPlugin implements EventSubscriberInterface
     protected function sendRedirectRequest(RequestInterface $original, RequestInterface $request, Response $response)
     {
         // Validate and create a redirect request based on the original request and current response
-        if (!$redirectRequest = $this->prepareRedirection($original, $request, $response)) {
-            return;
-        }
-
-        // Keep a redirect history on the original request
-        if (!$history = $original->getParams()->get('redirect.history')) {
-            $history = new RedirectHistory();
-            $history->addTransaction($original, $original->getResponse());
-            $original->getParams()->set('redirect.history', $history);
-        }
-
-        // Add to the transaction history before we get a response for the correct order and in case of failure
-        $currentTransaction = $history->addTransaction($redirectRequest);
-
-        try {
-            $redirectResponse = $redirectRequest->send();
-        } catch (BadResponseException $e) {
-            $redirectResponse = $e->getResponse();
-            if (!$e->getResponse()) {
-                throw $e;
+        if ($redirectRequest = $this->prepareRedirection($original, $request, $response)) {
+            try {
+                $redirectRequest->send();
+            } catch (BadResponseException $e) {
+                $e->getResponse();
+                if (!$e->getResponse()) {
+                    throw $e;
+                }
             }
         }
-
-        // Update the history
-        $history->setTransactionResponse($currentTransaction, $redirectResponse);
     }
 
     /**
      * Throw a too many redirects exception for a request
      *
      * @param RequestInterface $original Request
-     * @param RequestInterface $request Request
+     * @param int              $max      Max allowed redirects
      *
      * @throws TooManyRedirectsException when too many redirects have been issued
      */
-    protected function throwTooManyRedirectsException(RequestInterface $original, RequestInterface $request)
+    protected function throwTooManyRedirectsException(RequestInterface $original, $max)
     {
-        $history = $original->getParams()->get('redirect.history');
-        $request->getResponse()->setRedirectHistory($history);
-        $original->getEventDispatcher()->addListener('request.complete', function ($e) use ($history) {
-            $e['request']->getResponse()->setRedirectHistory($history);
-            throw new TooManyRedirectsException("Too many redirects were issued for this transaction:\n{$history}");
+        $original->getEventDispatcher()->addListener('request.complete', function ($e) use ($max) {
+            $str = "{$max} redirects were issued for this request:\n" . $e['request']->getRawHeaders();
+            throw new TooManyRedirectsException($str);
         });
     }
 }

@@ -7,6 +7,7 @@ use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Http\EntityBodyInterface;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Exception\BadResponseException;
+use Guzzle\Http\RedirectPlugin;
 use Guzzle\Parser\ParserRegistry;
 
 /**
@@ -114,9 +115,9 @@ class Response extends AbstractMessage
     protected $cacheResponseCodes = array(200, 203, 206, 300, 301, 410);
 
     /**
-     * @var RedirectHistory Array of request message strings that received this response
+     * @var string The effective URL that returned this response
      */
-    protected $redirectHistory;
+    protected $effectiveUrl;
 
     /**
      * Create a new Response based on a raw response message
@@ -932,30 +933,36 @@ class Response extends AbstractMessage
     }
 
     /**
-     * Set the redirect history of the response
+     * Get the redirect count of this response
      *
-     * @param RedirectHistory $history History to set
+     * @return int
+     */
+    public function getRedirectCount()
+    {
+        return (int) $this->params->get(RedirectPlugin::REDIRECT_COUNT);
+    }
+
+    /**
+     * Set the effective URL that resulted in this response (e.g. the last redirect URL)
+     *
+     * @param string $url The effective URL
      *
      * @return self
      */
-    public function setRedirectHistory(RedirectHistory $history)
+    public function setEffectiveUrl($url)
     {
-        $this->redirectHistory = $history;
+        $this->effectiveUrl = $url;
 
         return $this;
     }
 
     /**
-     * Get the redirect history of the response
+     * Get the effective URL that resulted in this response (e.g. the last redirect URL)
      *
-     * @return RedirectHistory
+     * @return string
      */
-    public function getRedirectHistory()
+    public function getEffectiveUrl()
     {
-        if (!$this->redirectHistory) {
-            $this->redirectHistory = new RedirectHistory();
-        }
-
-        return $this->redirectHistory;
+        return $this->effectiveUrl;
     }
 }
