@@ -70,6 +70,6 @@ class CookiePlugin implements EventSubscriberInterface
      */
     public function onRequestSent(Event $event)
     {
-        $this->cookieJar->addCookiesFromResponse($event['response']);
+        $this->cookieJar->addCookiesFromResponse($event['response'], $event['request']);
     }
 }

@@ -6,6 +6,7 @@ use Guzzle\Http\Client;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Http\Exception\TooManyRedirectsException;
+use Guzzle\Plugin\History\HistoryPlugin;
 
 /**
  * @covers Guzzle\Http\RedirectPlugin
@@ -24,13 +25,16 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Create a client that uses the default redirect behavior
         $client = new Client($this->getServer()->getUrl());
+        $history = new HistoryPlugin();
+        $client->addSubscriber($history);
+
         $request = $client->get('/foo');
         $response = $request->send();
-
         $this->assertEquals(200, $response->getStatusCode());
-        $requests = $this->getServer()->getReceivedRequests(true);
+        $this->assertContains('/redirect2', $response->getEffectiveUrl());
 
         // Ensure that two requests were sent
+        $requests = $this->getServer()->getReceivedRequests(true);
         $this->assertEquals('/foo', $requests[0]->getResource());
         $this->assertEquals('GET', $requests[0]->getMethod());
         $this->assertEquals('/redirect1', $requests[1]->getResource());
@@ -38,27 +42,16 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('/redirect2', $requests[2]->getResource());
         $this->assertEquals('GET', $requests[2]->getMethod());
 
-        // Ensure that the previous response was set correctly
-        $this->assertEquals(301, $response->getPreviousResponse()->getStatusCode());
-        $this->assertEquals('/redirect2', (string) $response->getPreviousResponse()->getHeader('Location'));
-
         // Ensure that the redirect count was incremented
         $this->assertEquals(2, $request->getParams()->get(RedirectPlugin::REDIRECT_COUNT));
+        $this->assertCount(3, $history);
+        $requestHistory = $history->getAll();
 
-        $c = 0;
-        $r = $response->getPreviousResponse();
-        while ($r) {
-            if ($c == 0) {
-                $this->assertEquals('/redirect2', $r->getLocation());
-            } else {
-                $this->assertEquals('/redirect1', $r->getLocation());
-            }
-            $c++;
-            $r = $r->getPreviousResponse();
-        }
-
-
-        $this->assertEquals(2, $c);
+        $this->assertEquals(301, $requestHistory[0]['response']->getStatusCode());
+        $this->assertEquals('/redirect1', (string) $requestHistory[0]['response']->getHeader('Location'));
+        $this->assertEquals(301, $requestHistory[1]['response']->getStatusCode());
+        $this->assertEquals('/redirect2', (string) $requestHistory[1]['response']->getHeader('Location'));
+        $this->assertEquals(200, $requestHistory[2]['response']->getStatusCode());
     }
 
     public function testCanLimitNumberOfRedirects()
@@ -79,15 +72,10 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
             $client->get('/foo')->send();
             $this->fail('Did not throw expected exception');
         } catch (TooManyRedirectsException $e) {
-            // Ensure that the exception message is correct
-            $message = $e->getMessage();
-            $parts = explode("\n* Sending redirect request\n", $message);
-            $this->assertContains('> GET /foo', $parts[0]);
-            $this->assertContains('> GET /redirect1', $parts[1]);
-            $this->assertContains('> GET /redirect2', $parts[2]);
-            $this->assertContains('> GET /redirect3', $parts[3]);
-            $this->assertContains('> GET /redirect4', $parts[4]);
-            $this->assertContains('> GET /redirect5', $parts[5]);
+            $this->assertContains(
+                "5 redirects were issued for this request:\nGET /foo HTTP/1.1\r\n",
+                $e->getMessage()
+            );
         }
     }
 
@@ -194,9 +182,31 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($this->getServer()->getUrl() . 'redirect?foo=bar', $requests[1]->getUrl());
         // Ensure that the history on the actual request is correct
         $this->assertEquals($this->getServer()->getUrl() . '?foo=bar', $request->getUrl());
-        $this->assertEquals(
-            $this->getServer()->getUrl() . 'redirect?foo=bar',
-            $request->getResponse()->getRequest()->getUrl()
-        );
+    }
+
+    public function testResetsHistoryEachSend()
+    {
+        // Flush the server and queue up a redirect followed by a successful response
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect1\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect2\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
+        ));
+
+        // Create a client that uses the default redirect behavior
+        $client = new Client($this->getServer()->getUrl());
+        $history = new HistoryPlugin();
+        $client->addSubscriber($history);
+
+        $request = $client->get('/foo');
+        $response = $request->send();
+        $this->assertEquals(3, count($history));
+        $this->assertTrue($request->getParams()->hasKey('redirect.count'));
+        $this->assertContains('/redirect2', $response->getEffectiveUrl());
+
+        $request->send();
+        $this->assertFalse($request->getParams()->hasKey('redirect.count'));
     }
 }

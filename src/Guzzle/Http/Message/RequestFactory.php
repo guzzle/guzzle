@@ -3,7 +3,6 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
-use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;
 use Guzzle\Parser\ParserRegistry;
 
@@ -158,6 +157,7 @@ class RequestFactory implements RequestFactoryInterface
             $cloned->setBody($request->getBody());
         }
         $cloned->getParams()->replace($request->getParams()->getAll());
+        $cloned->dispatch('request.clone', array('request' => $cloned));
 
         return $cloned;
     }

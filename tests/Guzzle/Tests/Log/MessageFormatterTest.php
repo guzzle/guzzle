@@ -2,11 +2,14 @@
 
 namespace Guzzle\Tests\Log;
 
+use Guzzle\Http\Client;
 use Guzzle\Http\Curl\CurlHandle;
 use Guzzle\Http\Message\EntityEnclosingRequest;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\Response;
 use Guzzle\Log\MessageFormatter;
+use Guzzle\Plugin\Log\LogPlugin;
+use Guzzle\Log\ClosureLogAdapter;
 
 /**
  * @covers Guzzle\Log\MessageFormatter
@@ -117,5 +120,18 @@ class MessageFormatterTest extends \Guzzle\Tests\GuzzleTestCase
                 array('total_time', '2'),
             )));
         $this->assertEquals('1/2', $formatter->format($this->request, $response));
+    }
+
+    public function testInjectsTotalTime()
+    {
+        $out = '';
+        $formatter = new MessageFormatter('{connect_time}/{total_time}');
+        $adapter = new ClosureLogAdapter(function ($m) use (&$out) { $out .= $m; });
+        $log = new LogPlugin($adapter, $formatter);
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nHI");
+        $client = new Client($this->getServer()->getUrl());
+        $client->addSubscriber($log);
+        $client->get('/')->send();
+        $this->assertNotEquals('/', $out);
     }
 }

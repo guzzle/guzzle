@@ -7,6 +7,7 @@ use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Http\EntityBodyInterface;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Exception\BadResponseException;
+use Guzzle\Http\RedirectPlugin;
 use Guzzle\Parser\ParserRegistry;
 
 /**
@@ -104,7 +105,7 @@ class Response extends AbstractMessage
     protected $info = array();
 
     /**
-     * @var RequestInterface Request object that may or may not be set
+     * @var RequestInterface|callable Request object that may or may not be set
      */
     protected $request = null;
 
@@ -114,9 +115,9 @@ class Response extends AbstractMessage
     protected $cacheResponseCodes = array(200, 203, 206, 300, 301, 410);
 
     /**
-     * @var Response If a redirect was issued or an intermediate response was issued
+     * @var string The effective URL that returned this response
      */
-    protected $previous;
+    protected $effectiveUrl;
 
     /**
      * Create a new Response based on a raw response message
@@ -341,16 +342,6 @@ class Response extends AbstractMessage
         }
 
         return $headers . "\r\n";
-    }
-
-    /**
-     * Get the request object (or null) that is associated with this response
-     *
-     * @return RequestInterface
-     */
-    public function getRequest()
-    {
-        return $this->request;
     }
 
     /**
@@ -779,15 +770,31 @@ class Response extends AbstractMessage
     /**
      * Set the request object associated with the response
      *
-     * @param RequestInterface $request The request object used to generate the response
+     * @param mixed $request The request object used to generate the response or a closure to return a request
      *
      * @return Response
+     * @deprecated
      */
-    public function setRequest(RequestInterface $request)
+    public function setRequest($request)
     {
         $this->request = $request;
 
         return $this;
+    }
+
+    /**
+     * Get the request object (or null) that is associated with this response
+     *
+     * @return RequestInterface
+     * @deprecated
+     */
+    public function getRequest()
+    {
+        if (is_callable($this->request)) {
+            $this->request = call_user_func($this->request);
+        }
+
+        return $this->request;
     }
 
     /**
@@ -884,30 +891,6 @@ class Response extends AbstractMessage
     }
 
     /**
-     * Get the previous response (e.g. Redirect response)
-     *
-     * @return null|Response
-     */
-    public function getPreviousResponse()
-    {
-        return $this->previous;
-    }
-
-    /**
-     * Set the previous response
-     *
-     * @param Response $response Response to set
-     *
-     * @return self
-     */
-    public function setPreviousResponse(Response $response)
-    {
-        $this->previous = $response;
-
-        return $this;
-    }
-
-    /**
      * Parse the JSON response body and return an array
      *
      * @return array|string|int|bool|float
@@ -939,5 +922,47 @@ class Response extends AbstractMessage
         }
 
         return $xml;
+    }
+
+    /**
+     * @deprecated
+     */
+    public function getPreviousResponse()
+    {
+        return null;
+    }
+
+    /**
+     * Get the redirect count of this response
+     *
+     * @return int
+     */
+    public function getRedirectCount()
+    {
+        return (int) $this->params->get(RedirectPlugin::REDIRECT_COUNT);
+    }
+
+    /**
+     * Set the effective URL that resulted in this response (e.g. the last redirect URL)
+     *
+     * @param string $url The effective URL
+     *
+     * @return self
+     */
+    public function setEffectiveUrl($url)
+    {
+        $this->effectiveUrl = $url;
+
+        return $this;
+    }
+
+    /**
+     * Get the effective URL that resulted in this response (e.g. the last redirect URL)
+     *
+     * @return string
+     */
+    public function getEffectiveUrl()
+    {
+        return $this->effectiveUrl;
     }
 }

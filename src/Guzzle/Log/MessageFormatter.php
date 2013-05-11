@@ -144,18 +144,14 @@ class MessageFormatter
                         $result = $response ? $response->getReasonPhrase() : '';
                         break;
                     case 'connect_time':
-                        if ($handle) {
-                            $result = $handle->getInfo(CURLINFO_CONNECT_TIME);
-                        } elseif ($response) {
-                            $result = $response->getInfo('connect_time');
-                        }
+                        $result = $handle && $handle->getInfo(CURLINFO_CONNECT_TIME)
+                            ? $handle->getInfo(CURLINFO_CONNECT_TIME)
+                            : $response->getInfo('connect_time');
                         break;
                     case 'total_time':
-                        if ($handle) {
-                            $result = $handle->getInfo(CURLINFO_TOTAL_TIME);
-                        } elseif ($response) {
-                            $result = $response->getInfo('total_time');
-                        }
+                        $result = $handle && $handle->getInfo(CURLINFO_TOTAL_TIME)
+                            ? $handle->getInfo(CURLINFO_TOTAL_TIME)
+                            : $response->getInfo('total_time');
                         break;
                     case 'curl_error':
                         $result = $handle ? $handle->getError() : '';

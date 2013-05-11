@@ -13,7 +13,6 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Http\Exception\BadResponseException;
-use Guzzle\Plugin\Log\LogPlugin;
 
 /**
  * @group server
@@ -824,28 +823,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame('OK', $request->getResponse()->getReasonPhrase());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::receiveResponseHeader
-     */
-    public function testAddsPreviousResponseToResponseWhenRedirecting()
-    {
-        $url = $this->getServer()->getUrl();
-        $this->getServer()->flush();
-        $this->getServer()->enqueue(array(
-            "HTTP/1.1 303 SEE OTHER\r\n" .
-            "Content-Length: 0\r\n" .
-            "Location: {$url}/foo\r\n\r\n",
-            "HTTP/1.1 200 OK\r\n" .
-            "Content-Length: 0\r\n\r\n"
-        ));
-
-        $request = $this->request;
-        $request->send();
-        $this->assertEquals(2, count($this->getServer()->getReceivedRequests()));
-        $this->assertEquals(200, $request->getResponse()->getStatusCode());
-        $this->assertEquals(303, $request->getResponse()->getPreviousResponse()->getStatusCode());
-    }
-
     public function testUnresolvedRedirectsReturnResponse()
     {
         $this->getServer()->flush();
@@ -916,10 +893,9 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->getServer()->enqueue(array(
             "HTTP/1.1 307 Foo\r\nLocation: /foo\r\nContent-Length: 2\r\n\r\nHI",
             "HTTP/1.1 301 Foo\r\nLocation: /foo\r\nContent-Length: 2\r\n\r\nFI",
-            "HTTP/1.1 200 OK\r\nContent-Lenght: 4\r\n\r\ntest",
+            "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ntest",
         ));
-        $request = $this->client->get();
-        $request->send();
-        $this->assertEquals('test', $request->getResponse()->getBody(true));
+        $response = $this->client->get()->send();
+        $this->assertEquals('test', $response->getBody(true));
     }
 }

@@ -171,7 +171,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('/path', $request->getPath());
         $this->assertEquals('/path?q=1&v=2', $request->getResource());
         $this->assertInstanceOf('Guzzle\\Http\\EntityBody', $request->getBody());
-        $this->assertEquals('Data', (string)$request->getBody());
+        $this->assertEquals('Data', (string) $request->getBody());
         $this->assertEquals('michael', $request->getUsername());
         $this->assertEquals('123', $request->getPassword());
         $this->assertEquals('8080', $request->getPort());
@@ -221,7 +221,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('/path', $request->getPath());
         $this->assertEquals('/path?q=1&v=2', $request->getResource());
         $this->assertInstanceOf('Guzzle\\Http\\EntityBody', $request->getBody());
-        $this->assertEquals('Data', (string)$request->getBody());
+        $this->assertEquals('Data', (string) $request->getBody());
         $this->assertEquals('michael', $request->getUsername());
         $this->assertEquals('123', $request->getPassword());
         $this->assertEquals(80, $request->getPort());

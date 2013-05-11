@@ -139,7 +139,7 @@ class CommandTest extends AbstractCommandTest
         $this->assertInstanceOf('Guzzle\\Http\\Message\\Request', $command->getRequest());
         // Make sure that the result was automatically set to a SimpleXMLElement
         $this->assertInstanceOf('SimpleXMLElement', $command->getResult());
-        $this->assertEquals('123', (string)$command->getResult()->data);
+        $this->assertEquals('123', (string) $command->getResult()->data);
     }
 
     /**

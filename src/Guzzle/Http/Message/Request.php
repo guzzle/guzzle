@@ -143,7 +143,6 @@ class Request extends AbstractMessage implements RequestInterface
 
     /**
      * Clone the request object, leaving off any response that was received
-     * @see Guzzle\Plugin\Redirect\RedirectPlugin::cloneRequestWithGetMethod
      */
     public function __clone()
     {
@@ -461,10 +460,12 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function setState($state, array $context = array())
     {
+        $oldState = $this->state;
         $this->state = $state;
-        if ($this->state == self::STATE_NEW) {
+
+        if ($state == self::STATE_NEW) {
             $this->response = null;
-        } elseif ($this->state == self::STATE_COMPLETE) {
+        } elseif ($state == self::STATE_COMPLETE && $oldState !== self::STATE_COMPLETE) {
             $this->processResponse($context);
             $this->responseBody = null;
         }
@@ -498,10 +499,15 @@ class Request extends AbstractMessage implements RequestInterface
 
             // Only download the body of the response to the specified response
             // body when a successful response is received.
-            $body = $code >= 200 && $code < 300 ? $this->getResponseBody() : EntityBody::factory();
+            if ($code >= 200 && $code < 300) {
+                $body = $this->getResponseBody();
+            } else {
+                $body = EntityBody::factory();
+            }
 
             $this->response = new Response($code, null, $body);
-            $this->response->setStatus($code, $status)->setRequest($this);
+            $this->response->setStatus($code, $status);
+            $this->setRequestOnResponse($this->response);
             $this->dispatch('request.receive.status_line', array(
                 'request'       => $this,
                 'line'          => $data,
@@ -523,10 +529,7 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function setResponse(Response $response, $queued = false)
     {
-        // Never overwrite the request associated with the response (useful for redirect history)
-        if (!$response->getRequest()) {
-            $response->setRequest($this);
-        }
+        $this->setRequestOnResponse($response);
 
         if ($queued) {
             $this->getEventDispatcher()->addListener('request.before_send', function ($e) use ($response) {
@@ -540,7 +543,7 @@ class Request extends AbstractMessage implements RequestInterface
             } else {
                 $this->responseBody = $this->response->getBody();
             }
-            $this->processResponse();
+            $this->setState(self::STATE_COMPLETE);
         }
 
         return $this;
@@ -571,8 +574,7 @@ class Request extends AbstractMessage implements RequestInterface
     public function getResponseBody()
     {
         if ($this->responseBody === null) {
-            $this->responseBody = EntityBody::factory();
-            $this->responseBody->setCustomData('default', true);
+            $this->responseBody = EntityBody::factory()->setCustomData('default', true);
         }
 
         return $this->responseBody;
@@ -789,5 +791,20 @@ class Request extends AbstractMessage implements RequestInterface
                 $this->dispatch('request.success', $this->getEventArray());
             }
         }
+    }
+
+    /**
+     * Set a request closure on a response
+     *
+     * @param Response $response
+     * @deprecated
+     */
+    protected function setRequestOnResponse(Response $response)
+    {
+        $headers = $this->getRawHeaders();
+        $response->setEffectiveUrl((string) $this->url);
+        $response->setRequest(function () use ($headers) {
+            return RequestFactory::getInstance()->fromMessage($headers);
+        });
     }
 }

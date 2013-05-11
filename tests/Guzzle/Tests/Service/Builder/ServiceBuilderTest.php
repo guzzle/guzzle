@@ -286,7 +286,7 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $b = new ServiceBuilder($this->arrayData);
         $b->addGlobalPlugin(new HistoryPlugin());
         $s = $b->get('michael.mock');
-        $this->assertTrue($s->getEventDispatcher()->hasListeners('request.complete'));
+        $this->assertTrue($s->getEventDispatcher()->hasListeners('request.sent'));
     }
 
     public function testCanGetData()

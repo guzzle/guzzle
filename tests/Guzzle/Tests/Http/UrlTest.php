@@ -177,11 +177,11 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('abc', $url->setFragment('abc')->getFragment());
         $this->assertEquals('https', $url->setScheme('https')->getScheme());
         $this->assertEquals('a=123', (string) $url->setQuery('a=123')->getQuery());
-        $this->assertEquals('https://b:a@example.com:8080/foo/bar?a=123#abc', (string)$url);
+        $this->assertEquals('https://b:a@example.com:8080/foo/bar?a=123#abc', (string) $url);
         $this->assertEquals('b=boo', (string) $url->setQuery(new QueryString(array(
             'b' => 'boo'
         )))->getQuery());
-        $this->assertEquals('https://b:a@example.com:8080/foo/bar?b=boo#abc', (string)$url);
+        $this->assertEquals('https://b:a@example.com:8080/foo/bar?b=boo#abc', (string) $url);
     }
 
     public function testSetQueryAcceptsArray()

@@ -22,7 +22,7 @@ interface HasDispatcherInterface
      *
      * @param EventDispatcherInterface $eventDispatcher
      *
-     * @return HasDispatcherInterface
+     * @return self
      */
     public function setEventDispatcher(EventDispatcherInterface $eventDispatcher);
 
@@ -46,7 +46,7 @@ interface HasDispatcherInterface
      *
      * @param EventSubscriberInterface $subscriber Event subscriber
      *
-     * @return AbstractHasDispatcher
+     * @return self
      */
     public function addSubscriber(EventSubscriberInterface $subscriber);
 }
