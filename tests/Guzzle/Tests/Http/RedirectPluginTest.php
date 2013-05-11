@@ -72,9 +72,8 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
             $client->get('/foo')->send();
             $this->fail('Did not throw expected exception');
         } catch (TooManyRedirectsException $e) {
-            $this->assertEquals(
-                "5 redirects were issued for this request:\nGET /foo HTTP/1.1\r\n"
-                . "Host: 127.0.0.1:8124\r\nUser-Agent: Guzzle/3.4.3 curl/7.21.4 PHP/5.3.15",
+            $this->assertContains(
+                "5 redirects were issued for this request:\nGET /foo HTTP/1.1\r\n",
                 $e->getMessage()
             );
         }

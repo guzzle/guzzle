@@ -134,25 +134,25 @@ class HistoryPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(<<<EOT
 > GET / HTTP/1.1
 Host: localhost
-User-Agent: Guzzle/3.4.3 curl/7.21.4 PHP/5.3.15
+User-Agent:
 
 < HTTP/1.1 301 Moved Permanently
 Location: /redirect1
 
 > GET /redirect1 HTTP/1.1
 Host: localhost
-User-Agent: Guzzle/3.4.3 curl/7.21.4 PHP/5.3.15
+User-Agent:
 
 < HTTP/1.1 307 Temporary Redirect
 Location: /redirect2
 
 > GET /redirect2 HTTP/1.1
 Host: localhost
-User-Agent: Guzzle/3.4.3 curl/7.21.4 PHP/5.3.15
+User-Agent:
 
 < HTTP/1.1 200 OK
 Content-Length: 2
 EOT
-, str_replace("\r", '', trim((string) $h)));
+, preg_replace('/User\-Agent: .*/', 'User-Agent:', str_replace("\r", '', trim((string) $h))));
     }
 }
