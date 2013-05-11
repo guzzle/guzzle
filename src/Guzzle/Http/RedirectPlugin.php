@@ -4,7 +4,6 @@ namespace Guzzle\Http;
 
 use Guzzle\Common\Event;
 use Guzzle\Http\Exception\BadResponseException;
-use Guzzle\Http\Message\RedirectHistory;
 use Guzzle\Http\Url;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
@@ -77,7 +76,9 @@ class RedirectPlugin implements EventSubscriberInterface
                 $response->getParams()->set(self::REDIRECT_COUNT, $original->getParams()->get(self::REDIRECT_COUNT));
                 $original->setResponse($response);
                 // Set the correct effective URL
-                $original->getEventDispatcher()->addListener('request.complete', function ($e) use ($request) {
+                $dispatcher = $original->getEventDispatcher();
+                $dispatcher->addListener('request.complete', $func = function ($e) use (&$func, $dispatcher, $request) {
+                    $dispatcher->removeListener('request.complete', $func);
                     $e['response']->setEffectiveUrl($request->getUrl());
                 });
             }
@@ -152,9 +153,13 @@ class RedirectPlugin implements EventSubscriberInterface
         $redirectRequest->setUrl($location);
 
         // Add the parent request to the request before it sends (make sure it's before the onRequestClone event too)
-        $redirectRequest->getEventDispatcher()->addListener('request.before_send', function ($e) use ($request) {
-            $e['request']->getParams()->set(RedirectPlugin::PARENT_REQUEST, $request);
-        }, -1);
+        $redirectRequest->getEventDispatcher()->addListener(
+            'request.before_send',
+            $func = function ($e) use (&$func, $request, $redirectRequest) {
+                $redirectRequest->getEventDispatcher()->removeListener('request.before_send', $func);
+                $e['request']->getParams()->set(RedirectPlugin::PARENT_REQUEST, $request);
+            }
+        );
 
         // Rewind the entity body of the request if needed
         if ($redirectRequest instanceof EntityEnclosingRequestInterface && $redirectRequest->getBody()) {
@@ -242,9 +247,13 @@ class RedirectPlugin implements EventSubscriberInterface
      */
     protected function throwTooManyRedirectsException(RequestInterface $original, $max)
     {
-        $original->getEventDispatcher()->addListener('request.complete', function ($e) use ($max) {
-            $str = "{$max} redirects were issued for this request:\n" . $e['request']->getRawHeaders();
-            throw new TooManyRedirectsException($str);
-        });
+        $original->getEventDispatcher()->addListener(
+            'request.complete',
+            $func = function ($e) use (&$func, $original, $max) {
+                $original->getEventDispatcher()->removeListener('request.complete', $func);
+                $str = "{$max} redirects were issued for this request:\n" . $e['request']->getRawHeaders();
+                throw new TooManyRedirectsException($str);
+            }
+        );
     }
 }
