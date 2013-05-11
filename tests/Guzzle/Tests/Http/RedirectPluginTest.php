@@ -31,6 +31,7 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $client->get('/foo');
         $response = $request->send();
         $this->assertEquals(200, $response->getStatusCode());
+        $this->assertContains('/redirect2', $response->getEffectiveUrl());
 
         // Ensure that two requests were sent
         $requests = $this->getServer()->getReceivedRequests(true);
@@ -201,12 +202,12 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $client->addSubscriber($history);
 
         $request = $client->get('/foo');
-        $request->send();
+        $response = $request->send();
         $this->assertEquals(3, count($history));
         $this->assertTrue($request->getParams()->hasKey('redirect.count'));
+        $this->assertContains('/redirect2', $response->getEffectiveUrl());
 
-        $response = $request->send();
+        $request->send();
         $this->assertFalse($request->getParams()->hasKey('redirect.count'));
-        $this->assertEquals($this->getServer()->getUrl() . 'redirect2', $response->getEffectiveUrl());
     }
 }

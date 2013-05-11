@@ -75,12 +75,7 @@ class RedirectPlugin implements EventSubscriberInterface
                 // This is a terminating redirect response, so set it on the original request
                 $response->getParams()->set(self::REDIRECT_COUNT, $original->getParams()->get(self::REDIRECT_COUNT));
                 $original->setResponse($response);
-                // Set the correct effective URL
-                $dispatcher = $original->getEventDispatcher();
-                $dispatcher->addListener('request.complete', $func = function ($e) use (&$func, $dispatcher, $request) {
-                    $dispatcher->removeListener('request.complete', $func);
-                    $e['response']->setEffectiveUrl($request->getUrl());
-                });
+                $response->setEffectiveUrl($request->getUrl());
             }
             return;
         }
