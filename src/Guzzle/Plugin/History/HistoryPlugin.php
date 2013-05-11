@@ -5,7 +5,6 @@ namespace Guzzle\Plugin\History;
 use Guzzle\Common\Event;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
-use Guzzle\Iterator\MapIterator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

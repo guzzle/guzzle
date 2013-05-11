@@ -3,7 +3,6 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
-use Guzzle\Http\EntityBody;
 use Guzzle\Http\Url;
 use Guzzle\Parser\ParserRegistry;
 

@@ -13,7 +13,6 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Http\Exception\BadResponseException;
-use Guzzle\Plugin\Log\LogPlugin;
 
 /**
  * @group server

@@ -63,49 +63,8 @@
         "psr/log": "1.0.*",
         "zendframework/zend-cache": "2.0.*",
         "zendframework/zend-log": "2.0.*",
-        "zend/zend-log1": "1.12",
-        "zend/zend-cache1": "1.12",
         "phpunit/phpunit": "3.7.*"
     },
-
-    "repositories": [
-        {
-            "type": "composer",
-            "url": "http://packages.zendframework.com/"
-        },
-        {
-            "type":"package",
-            "package": {
-                "name": "zend/zend-log1",
-                "version": "1.12",
-                "source": {
-                    "url": "http://framework.zend.com/svn",
-                    "type": "svn",
-                    "reference": "framework/standard/trunk/library/Zend/Log/"
-                },
-                "target-dir": "Zend/Log",
-                "autoload": {
-                    "psr-0": { "Zend_Log": "/" }
-                }
-            }
-        },
-        {
-            "type":"package",
-            "package": {
-                "name": "zend/zend-cache1",
-                "version": "1.12",
-                "source": {
-                    "url": "http://framework.zend.com/svn",
-                    "type": "svn",
-                    "reference": "framework/standard/trunk/library/Zend/Cache/"
-                },
-                "target-dir": "Zend/Cache",
-                "autoload": {
-                    "psr-0": { "Zend_Cache": "/" }
-                }
-            }
-        }
-    ],
 
     "extra": {
         "branch-alias": {

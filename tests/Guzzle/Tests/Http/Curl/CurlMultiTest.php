@@ -5,7 +5,6 @@ namespace Guzzle\Tests\Http\Curl;
 use Guzzle\Common\Event;
 use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\Exception\MultiTransferException;
-use Guzzle\Common\Collection;
 use Guzzle\Http\Client;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;

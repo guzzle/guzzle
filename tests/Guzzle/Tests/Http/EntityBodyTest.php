@@ -26,7 +26,7 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
     public function testFactory()
     {
         $body = EntityBody::factory('data');
-        $this->assertEquals('data', (string)$body);
+        $this->assertEquals('data', (string) $body);
         $this->assertEquals(4, $body->getContentLength());
         $this->assertEquals('PHP', $body->getWrapper());
         $this->assertEquals('TEMP', $body->getStreamType());
@@ -112,7 +112,7 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $body = EntityBody::factory(gzencode('test'));
         $this->assertSame($body, $body->setStreamFilterContentEncoding('zlib.deflate'));
         $this->assertTrue($body->uncompress('zlib.inflate'));
-        $this->assertEquals('test', (string)$body);
+        $this->assertEquals('test', (string) $body);
         unset($body);
 
         // Test using a very long string
@@ -121,12 +121,12 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
             $largeString .= chr(rand(33, 126));
         }
         $body = EntityBody::factory($largeString);
-        $this->assertEquals($largeString, (string)$body);
+        $this->assertEquals($largeString, (string) $body);
         $this->assertTrue($body->compress());
-        $this->assertNotEquals($largeString, (string)$body);
-        $compressed = (string)$body;
+        $this->assertNotEquals($largeString, (string) $body);
+        $compressed = (string) $body;
         $this->assertTrue($body->uncompress());
-        $this->assertEquals($largeString, (string)$body);
+        $this->assertEquals($largeString, (string) $body);
         $this->assertEquals($compressed, gzdeflate($largeString));
 
         $body = EntityBody::factory(fopen(__DIR__ . '/../TestData/compress_test', 'w'));
@@ -190,7 +190,7 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
     public function testGetTypeFormBodyFactoring()
     {
         $body = EntityBody::factory(array('key1' => 'val1', 'key2' => 'val2'));
-        $this->assertEquals('key1=val1&key2=val2', (string)$body);
+        $this->assertEquals('key1=val1&key2=val2', (string) $body);
     }
 
     /**
