@@ -67,10 +67,10 @@ class JsonVisitor extends AbstractResponseVisitor
                         $key = $property->getWireName();
                         if (isset($value[$key])) {
                             $this->recursiveProcess($property, $value[$key]);
-                        }
-                        if ($key != $name) {
-                            $value[$name] = $value[$key];
-                            unset($value[$key]);
+                            if ($key != $name) {
+                                $value[$name] = $value[$key];
+                                unset($value[$key]);
+                            }
                         }
                     }
                 }

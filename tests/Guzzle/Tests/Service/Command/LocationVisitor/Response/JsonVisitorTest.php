@@ -54,6 +54,24 @@ class JsonVisitorTest extends AbstractResponseVisitorTest
         $this->assertEquals(array('foo' => 'test'), $this->value);
     }
 
+    public function testRenamesDoesNotFailForNonExistentKey()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'name'          => 'foo',
+            'type'          => 'object',
+            'properties'    => array(
+                'bar' => array(
+                    'name'      => 'bar',
+                    'sentAs'    => 'baz',
+                ),
+            ),
+        ));
+        $this->value = array('foo' => array('unknown' => 'Unknown'));
+        $visitor->visit($this->command, $this->response, $param, $this->value);
+        $this->assertEquals(array('foo' => array('unknown' => 'Unknown')), $this->value);
+    }
+
     public function testTraversesObjectsAndAppliesFilters()
     {
         $visitor = new Visitor();
