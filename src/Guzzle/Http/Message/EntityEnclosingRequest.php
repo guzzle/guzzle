@@ -61,6 +61,17 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     /**
      * {@inheritdoc}
      */
+    public function __clone()
+    {
+        if ($this->body) {
+            $this->body = clone $this->body;
+        }
+        parent::__clone();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function setState($state, array $context = array())
     {
         parent::setState($state, $context);

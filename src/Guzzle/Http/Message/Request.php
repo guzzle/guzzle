@@ -155,7 +155,7 @@ class Request extends AbstractMessage implements RequestInterface
         $this->response = $this->responseBody = null;
 
         // Clone each header
-        foreach ($this->headers as $key => &$value) {
+        foreach ($this->headers as &$value) {
             $value = clone $value;
         }
 
@@ -532,13 +532,15 @@ class Request extends AbstractMessage implements RequestInterface
         $this->setRequestOnResponse($response);
 
         if ($queued) {
-            $this->getEventDispatcher()->addListener('request.before_send', function ($e) use ($response) {
+            $ed = $this->getEventDispatcher();
+            $ed->addListener('request.before_send', $f = function ($e) use ($response, &$f, $ed) {
                 $e['request']->setResponse($response);
+                $ed->removeListener('request.before_send', $f);
             }, -9999);
         } else {
             $this->response = $response;
             // If a specific response body is specified, then use it instead of the response's body
-            if ($this->responseBody && !$this->responseBody->getCustomData('default')) {
+            if ($this->responseBody && !$this->responseBody->getCustomData('default') && !$response->isRedirect()) {
                 $this->getResponseBody()->write((string) $this->response->getBody());
             } else {
                 $this->responseBody = $this->response->getBody();

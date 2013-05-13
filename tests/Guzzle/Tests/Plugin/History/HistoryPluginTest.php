@@ -120,8 +120,8 @@ class HistoryPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $client->getEventDispatcher()->addSubscriber($h);
 
         $mock = new MockPlugin(array(
-            new Response(301, array('Location' => '/redirect1')),
-            new Response(307, array('Location' => '/redirect2')),
+            new Response(301, array('Location' => '/redirect1', 'Content-Length' => 0)),
+            new Response(307, array('Location' => '/redirect2', 'Content-Length' => 0)),
             new Response(200, array('Content-Length' => '2'), 'HI')
         ));
 
@@ -131,28 +131,10 @@ class HistoryPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(3, count($h));
         $this->assertEquals(3, count($mock->getReceivedRequests()));
 
-        $this->assertEquals(<<<EOT
-> GET / HTTP/1.1
-Host: localhost
-User-Agent:
-
-< HTTP/1.1 301 Moved Permanently
-Location: /redirect1
-
-> GET /redirect1 HTTP/1.1
-Host: localhost
-User-Agent:
-
-< HTTP/1.1 307 Temporary Redirect
-Location: /redirect2
-
-> GET /redirect2 HTTP/1.1
-Host: localhost
-User-Agent:
-
-< HTTP/1.1 200 OK
-Content-Length: 2
-EOT
-, preg_replace('/User\-Agent: .*/', 'User-Agent:', str_replace("\r", '', trim((string) $h))));
+        $h = str_replace("\r", '', $h);
+        $this->assertContains("> GET / HTTP/1.1\nHost: localhost\nUser-Agent:", $h);
+        $this->assertContains("< HTTP/1.1 301 Moved Permanently\nLocation: /redirect1", $h);
+        $this->assertContains("< HTTP/1.1 307 Temporary Redirect\nLocation: /redirect2", $h);
+        $this->assertContains("< HTTP/1.1 200 OK\nContent-Length: 2\n\nHI", $h);
     }
 }

@@ -39,8 +39,8 @@ class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Co
     {
         $lines = array();
         foreach ($this->transactions as $entry) {
-            $response = isset($entry['response']) ? $entry['response']->getRawHeaders() : '';
-            $lines[] = '> ' . trim($entry['request']->getRawHeaders()) . "\n\n< " . trim($response) . "\n";
+            $response = isset($entry['response']) ? $entry['response'] : '';
+            $lines[] = '> ' . trim($entry['request']) . "\n\n< " . trim($response) . "\n";
         }
 
         return implode("\n", $lines);
