@@ -1,8 +1,32 @@
 CHANGELOG
 =========
 
+3.5.0 (2013-05-13)
+------------------
+
+* Bug: Fixed a regression so that request responses are parsed only once per oncomplete event rather than multiple times
+* Bug: Better cleanup of one-time events accross the board (when an event is meant to fire once, it will now remove
+  itself from the EventDispatcher)
+* Bug: `Guzzle\Log\MessageFormatter` now properly writes "total_time" and "connect_time" values
+* Bug: Cloning an EntityEnclosingRequest now clones the EntityBody too
+* Bug: Fixed an undefined index error when parsing nested JSON responses with a sentAs parameter that reference a
+  non-existent key
+* Bug: All __call() method arguments are now required (helps with mocking frameworks)
+* Deprecating Response::getRequest() and now using a shallow clone of a request object to remove a circular reference
+  to help with refcount based garbage collection of resources created by sending a request
+* Deprecating ZF1 cache and log adapters. These will be removed in the next major version.
+* Deprecating `Response::getPreviousResponse()` (method signature still exists, but it'sdeprecated). Use the
+  HistoryPlugin for a history.
+* Added a `responseBody` alias for the `response_body` location
+* Refactored internals to no longer rely on Response::getRequest()
+* HistoryPlugin can now be cast to a string
+* HistoryPlugin now logs transactions rather than requests and responses to more accurately keep track of the requests
+  and responses that are sent over the wire
+* Added `getEffectiveUrl()` and `getRedirectCount()` to Response objects
+
 3.4.3 (2013-04-30)
 ------------------
+
 * Bug fix: Fixing bug introduced in 3.4.2 where redirect responses are duplicated on the final redirected response
 * Added a check to re-extract the temp cacert bundle from the phar before sending each request
 

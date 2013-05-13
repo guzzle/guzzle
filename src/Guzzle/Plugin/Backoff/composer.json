@@ -22,7 +22,7 @@
     "target-dir": "Guzzle/Plugin/Backoff",
     "extra": {
         "branch-alias": {
-            "dev-master": "3.4-dev"
+            "dev-master": "3.5-dev"
         }
     }
 }
