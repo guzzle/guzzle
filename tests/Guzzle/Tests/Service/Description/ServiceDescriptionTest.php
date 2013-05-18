@@ -168,6 +168,19 @@ class ServiceDescriptionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($data + array('hello' => 'baz'), json_decode($d->serialize(), true));
     }
 
+    public function testHasToArray()
+    {
+        $data = array(
+            'operations'  => array(),
+            'name'        => 'Name',
+            'description' => 'Test'
+        );
+        $d = new ServiceDescription($data);
+        $arr = $d->toArray();
+        $this->assertEquals('Name', $arr['name']);
+        $this->assertEquals('Test', $arr['description']);
+    }
+
     public function testReturnsNullWhenRetrievingMissingOperation()
     {
         $s = new ServiceDescription(array());

@@ -3,11 +3,12 @@
 namespace Guzzle\Service\Description;
 
 use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Common\ToArrayInterface;
 
 /**
  * A ServiceDescription stores service information based on a service document
  */
-class ServiceDescription implements ServiceDescriptionInterface
+class ServiceDescription implements ServiceDescriptionInterface, ToArrayInterface
 {
     /**
      * @var array Array of {@see OperationInterface} objects
@@ -84,6 +85,14 @@ class ServiceDescription implements ServiceDescriptionInterface
      */
     public function serialize()
     {
+        return json_encode($this->toArray());
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function toArray()
+    {
         $result = array(
             'name'        => $this->name,
             'apiVersion'  => $this->apiVersion,
@@ -101,7 +110,7 @@ class ServiceDescription implements ServiceDescriptionInterface
             }
         }
 
-        return json_encode(array_filter($result));
+        return array_filter($result);
     }
 
     /**
