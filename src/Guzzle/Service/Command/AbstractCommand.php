@@ -25,6 +25,8 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     const HEADERS_OPTION = 'command.headers';
     // Option used to add an onComplete method to a command
     const ON_COMPLETE = 'command.on_complete';
+    // command values to not count as additionalParameters
+    const HIDDEN_PARAMS = 'command.hidden_params';
     // Option used to disable any pre-sending command validation
     const DISABLE_VALIDATION = 'command.disable_validation';
     // Option used to override how a command result will be formatted
@@ -94,6 +96,15 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         if ($onComplete = $this->get('command.on_complete')) {
             $this->remove('command.on_complete');
             $this->setOnComplete($onComplete);
+        }
+
+        // Set the hidden additional parameters
+        if (!$this->get(self::HIDDEN_PARAMS)) {
+            $this->set(self::HIDDEN_PARAMS, array(
+                'command.headers',
+                'command.response_processing',
+                'command.hidden_params'
+            ));
         }
 
         $this->init();
@@ -375,10 +386,12 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         }
 
         // Validate additional parameters
+        $hidden = $this->get(self::HIDDEN_PARAMS);
+
         if ($properties = $this->operation->getAdditionalParameters()) {
             foreach ($this->getAll() as $name => $value) {
                 // It's only additional if it isn't defined in the schema
-                if (!$this->operation->hasParam($name)) {
+                if (!$this->operation->hasParam($name) && !in_array($name, $hidden)) {
                     // Always set the name so that error messages are useful
                     $properties->setName($name);
                     if (!$validator->validate($properties, $value)) {

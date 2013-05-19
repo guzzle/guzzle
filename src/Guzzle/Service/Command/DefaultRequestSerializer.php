@@ -128,12 +128,12 @@ class DefaultRequestSerializer implements RequestSerializerInterface
         }
 
         $visitor = $this->factory->getRequestVisitor($location);
+        $hidden = $command->get($command::HIDDEN_PARAMS);
 
         foreach ($command->getAll() as $key => $value) {
             // Ignore values that are null or built-in command options
             if ($value !== null
-                && $key != 'command.headers'
-                && $key != 'command.response_processing'
+                && !in_array($key, $hidden)
                 && !$operation->hasParam($key)
             ) {
                 $additional->setName($key);

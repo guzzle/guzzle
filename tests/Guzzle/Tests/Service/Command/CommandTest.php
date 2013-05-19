@@ -458,7 +458,7 @@ class CommandTest extends AbstractCommandTest
      * @expectedException \Guzzle\Service\Exception\ValidationException
      * @expectedExceptionMessage Validation errors: [abc] must be of type string
      */
-    public function testValidatesAdditionalProperties()
+    public function testValidatesAdditionalParameters()
     {
         $description = ServiceDescription::factory(array(
             'operations' => array(
@@ -475,7 +475,10 @@ class CommandTest extends AbstractCommandTest
 
         $client = new Client();
         $client->setDescription($description);
-        $command = $client->getCommand('foo', array('abc' => false));
+        $command = $client->getCommand('foo', array(
+            'abc'             => false,
+            'command.headers' => array('foo' => 'bar')
+        ));
         $command->prepare();
     }
 
