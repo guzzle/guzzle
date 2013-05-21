@@ -22,7 +22,7 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
      * @param array  $values Values of the header
      * @param string $glue   Glue used to combine multiple values into a string
      */
-    public function __construct($header, $values = array(), $glue = ', ')
+    public function __construct($header, $values = array(), $glue = ',')
     {
         $this->header = $header;
         $this->glue = $glue;
@@ -51,7 +51,7 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
     public function __toString()
     {
         if (!$this->stringCache) {
-            $this->stringCache = implode($this->glue, $this->toArray());
+            $this->stringCache = implode($this->glue . ' ', $this->toArray());
         }
 
         return $this->stringCache;
@@ -119,26 +119,21 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
     }
 
     /**
-     * Normalize the header to be a single header with an array of values
-     *
-     * @param bool $explodeOnGlue Set to true to explode each header value on the glue of the header
+     * Normalize the header to be a single header with an array of values. If any values of the header contains the
+     * glue string value (e.g. ","), then the value will be exploded into multiple entries in the header.
      *
      * @return Header
      */
-    public function normalize($explodeOnGlue = false)
+    public function normalize()
     {
         $values = $this->toArray();
         $this->arrayCache = $this->stringCache = null;
 
-        // Explode each value on glue if needed
-        if ($this->glue && $explodeOnGlue) {
-            foreach ($values as $i => $value) {
-                // Explode the value if the glue was found in the header
-                if (strpos($value, $this->glue)) {
-                    foreach (explode($this->glue, $value) as $v) {
-                        $values[] = $v;
-                    }
-                    unset($values[$i]);
+        foreach ($values as $i => $value) {
+            if (strpos($value, $this->glue) !== false) {
+                unset($values[$i]);
+                foreach (explode($this->glue, $value) as $v) {
+                    $values[] = trim($v);
                 }
             }
         }
@@ -251,5 +246,34 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
     public function getIterator()
     {
         return new \ArrayIterator($this->toArray());
+    }
+
+    /**
+     * Convert a header containing ";" separated data into an array of associative arrays representing the header
+     * key value pair data of the header. When a parameter does not contain a value, but just contains a key, this
+     * function will inject a key with a null value.
+     *
+     * @return array
+     * @todo Do not split semicolons when enclosed in quotes (e.g. foo="baz;bar")
+     */
+    public function parseParams()
+    {
+        $params = array();
+        // Clone the header so that this is not destructive
+        $header = clone $this;
+
+        // Normalize the header into a single array and iterate over all values
+        foreach ($header->normalize(true) as $val) {
+            $part = array();
+            foreach (explode(';', $val) as $kvp) {
+                $pieces = array_map(function ($str) {
+                    return trim($str, "\"'  \n");
+                }, explode('=', $kvp, 2));
+                $part[$pieces[0]] = isset($pieces[1]) ? $pieces[1] : '';
+            }
+            $params[] = $part;
+        }
+
+        return $params;
     }
 }

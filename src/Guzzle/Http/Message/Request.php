@@ -625,7 +625,7 @@ class Request extends AbstractMessage implements RequestInterface
         }
 
         // Always use semicolons to separate multiple cookie headers
-        $this->getHeader('Cookie')->setGlue('; ');
+        $this->getHeader('Cookie')->setGlue(';');
 
         return $this;
     }

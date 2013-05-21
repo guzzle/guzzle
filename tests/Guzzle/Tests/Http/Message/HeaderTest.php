@@ -3,6 +3,7 @@
 namespace Guzzle\Tests\Http\Message;
 
 use Guzzle\Http\Message\Header;
+use Guzzle\Http\Message\Response;
 
 /**
  * @covers Guzzle\Http\Message\Header
@@ -34,7 +35,7 @@ class HeaderTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $i = new Header('Zoo', $this->test);
         $this->assertEquals('foo, Foo, bar', (string) $i);
-        $i->setGlue('; ');
+        $i->setGlue(';');
         $this->assertEquals('foo; Foo; bar', (string) $i);
     }
 
@@ -136,5 +137,49 @@ class HeaderTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $h = new Header('Foo', array('Testing', '123', 'Foo=baz'));
         $this->assertEquals(array('Testing', '123', 'Foo=baz'), $h->toArray());
+    }
+
+    public function parseParamsProvider()
+    {
+        $res1 = array(
+            array(
+                '<http:/.../front.jpeg>' => '',
+                'rel' => 'front',
+                'type' => 'image/jpeg',
+            ),
+            array(
+                '<http://.../back.jpeg>' => '',
+                'rel' => 'back',
+                'type' => 'image/jpeg',
+            ),
+        );
+
+        return array(
+            array(
+                '<http:/.../front.jpeg>; rel="front"; type="image/jpeg", <http://.../back.jpeg>; rel=back; type="image/jpeg"',
+                $res1
+            ),
+            array(
+                '<http:/.../front.jpeg>; rel="front"; type="image/jpeg",<http://.../back.jpeg>; rel=back; type="image/jpeg"',
+                $res1
+            ),
+            array(
+                'foo="baz"; bar=123, boo, test="123"',
+                array(
+                    array('foo' => 'baz', 'bar' => '123'),
+                    array('boo' => ''),
+                    array('test' => '123')
+                )
+            )
+        );
+    }
+
+    /**
+     * @dataProvider parseParamsProvider
+     */
+    public function testParseParams($header, $result)
+    {
+        $response = new Response(200, array('Link' => $header));
+        $this->assertEquals($result, $response->getHeader('Link')->parseParams());
     }
 }

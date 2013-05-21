@@ -965,4 +965,42 @@ class Response extends AbstractMessage
     {
         return $this->effectiveUrl;
     }
+
+    /**
+     * Returns an associative array of parsed Link headers
+     *
+     * For example:
+     * Link: <http:/.../front.jpeg>; rel=front; type="image/jpeg", <http://.../back.jpeg>; rel=back; type="image/jpeg"
+     *
+     * <code>
+     * var_export($response->getLinks());
+     * array(
+     *     array(
+     *         'url' => 'http:/.../front.jpeg',
+     *         'rel' => 'back',
+     *         'type' => 'image/jpeg',
+     *     )
+     * )
+     * </code>
+     *
+     * @param string $rel Optionally provide a string to retrieve information for a particular "rel" link
+     *
+     * @return array|null Returns an array of all Link header values when no rel argument is supplied,
+     *                    Returns an associative array of a specific Link value when a rel argument is supplied
+     *                    Or returns null when a rel is supplied that is not found.
+     */
+    public function getLinks($rel = null)
+    {
+        $links = $this->getHeader('Link')->parseParams();
+        foreach ($links as &$link) {
+            $key = key($link);
+            unset($link[$key]);
+            $link['url'] = trim($key, '<> ');
+            if ($rel && isset($link['rel']) && $link['rel'] == $rel) {
+                return $link;
+            }
+        }
+
+        return $links;
+    }
 }
