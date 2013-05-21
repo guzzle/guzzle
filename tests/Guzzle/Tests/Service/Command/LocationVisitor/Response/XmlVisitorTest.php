@@ -350,4 +350,29 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             )
         ), $value);
     }
+
+    public function testEnsuresArraysDropAttributes()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'name' => 'Items',
+            'type' => 'array',
+            'location' => 'xml',
+            'items' => array(
+                'sentAs' => 'Item',
+                'type' => 'object'
+            )
+        ));
+
+        $xml = '<wrap><Items size="1"><Item /></Items><Bar></Bar></wrap>';
+        $value = json_decode(json_encode(new \SimpleXMLElement($xml)), true);
+        $visitor->visit($this->command, $this->response, $param, $value);
+
+        $this->assertEquals(array(
+            'Bar' => array(),
+            'Items' => array(
+                array()
+            ),
+        ), $value);
+    }
 }

@@ -90,6 +90,9 @@ class XmlVisitor extends AbstractResponseVisitor
                 // value is set and not empty
                 $value = array($value);
             }
+        } else {
+            // If the node has attributes drop them
+            unset($value['@attributes']);
         }
 
         foreach ($value as &$item) {
