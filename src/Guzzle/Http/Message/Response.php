@@ -482,7 +482,7 @@ class Response extends AbstractMessage
      */
     public function getContentDisposition()
     {
-        return (string) $this->getHeader('Content-Disposition')->setGlue(';');
+        return (string) $this->getHeader('Content-Disposition');
     }
 
     /**
