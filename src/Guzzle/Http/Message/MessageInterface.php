@@ -48,28 +48,6 @@ interface MessageInterface
     public function getHeader($header, $string = false);
 
     /**
-     * Get a tokenized header as a Collection
-     *
-     * @param string $header Header to retrieve
-     * @param string $token  Token separator
-     *
-     * @return Collection|null
-     */
-    public function getTokenizedHeader($header, $token = ';');
-
-    /**
-     * Set a tokenized header on the request that implodes a Collection of data into a string separated by a token.
-     *
-     * @param string           $header Header to set
-     * @param array|Collection $data   Header data
-     * @param string           $token  Token delimiter
-     *
-     * @return MessageInterface
-     * @throws InvalidArgumentException if data is not an array or Collection
-     */
-    public function setTokenizedHeader($header, $data, $token = ';');
-
-    /**
      * Get all headers as a collection
      *
      * @param bool $asObjects Set to true to retrieve a collection of Header objects

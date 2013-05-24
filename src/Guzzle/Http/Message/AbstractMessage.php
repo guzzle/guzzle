@@ -182,53 +182,19 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @deprecated Use $message->getHeader()->parseParams()
      */
     public function getTokenizedHeader($header, $token = ';')
     {
-        if (!$this->hasHeader($header)) {
-            return null;
-        }
-
-        $data = new Collection();
-
-        foreach ($this->getHeader($header) as $singleValue) {
-            foreach (explode($token, $singleValue) as $kvp) {
-                $parts = explode('=', $kvp, 2);
-                if (!isset($parts[1])) {
-                    $data[count($data)] = trim($parts[0]);
-                } else {
-                    $data->add(trim($parts[0]), trim($parts[1]));
-                }
-            }
-        }
-
-        foreach ($data as $key => $value) {
-            if (is_array($value)) {
-                $data->set($key, array_unique($value));
-            }
-        }
-
-        return $data;
+        return null;
     }
 
     /**
-     * {@inheritdoc}
+     * @deprecated
      */
     public function setTokenizedHeader($header, $data, $token = ';')
     {
-        if (!($data instanceof Collection) && !is_array($data)) {
-            throw new InvalidArgumentException('Data must be a Collection or array');
-        }
-
-        $values = array();
-        foreach ($data as $key => $value) {
-            foreach ((array) $value as $v) {
-                $values[] = is_int($key) ? $v : $key . '=' . $v;
-            }
-        }
-
-        return $this->setHeader($header, implode($token, $values));
+        return $this;
     }
 
     /**
@@ -300,12 +266,12 @@ abstract class AbstractMessage implements MessageInterface
     private function parseCacheControlDirective()
     {
         $this->cacheControl = array();
-        $tokenized = $this->getTokenizedHeader('Cache-Control', ',') ?: array();
-        foreach ($tokenized as $key => $value) {
-            if (is_numeric($key)) {
-                $this->cacheControl[$value] = true;
-            } else {
-                $this->cacheControl[$key] = $value;
+        if ($header = $this->getHeader('Cache-Control')) {
+            foreach ($header->parseParams() as $collection) {
+                foreach ($collection as $key => $value) {
+                    $value = $value === '' ? true : $value;
+                    $this->cacheControl[$key] = $value;
+                }
             }
         }
     }

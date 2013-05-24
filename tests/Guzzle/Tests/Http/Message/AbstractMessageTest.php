@@ -181,78 +181,8 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
     public function testDoubleCacheControlDirectives()
     {
         $mock = $this->mock;
-
         $mock->setHeader('Cache-Control', 'max-age=15, must-revalidate, max-age=300');
-
-        $this->assertEquals(15, $mock->getCacheControlDirective('max-age'));
-    }
-
-    public function tokenizedHeaderProvider()
-    {
-        return array(
-            array('ISO-8859-1,utf-8;q=0.7,*;q=0.7"', ';', array(
-                'ISO-8859-1,utf-8',
-                'q' => array('0.7,*', '0.7"')
-            )),
-            array('gzip,deflate', ',', array('gzip', 'deflate')),
-            array('en-us,en;q=0.5', ';', array(
-                'en-us,en',
-                'q' => '0.5'
-            ))
-        );
-    }
-
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::getTokenizedHeader
-     * @dataProvider tokenizedHeaderProvider
-     */
-    public function testConvertsTokenizedHeadersToArray($string, $token, $result)
-    {
-        $this->mock->setHeader('test', $string);
-        $this->assertEquals($result, $this->mock->getTokenizedHeader('test', $token)->getAll());
-    }
-
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::setTokenizedHeader
-     * @dataProvider tokenizedHeaderProvider
-     */
-    public function testConvertsArrayToTokenizedHeader($string, $token, $result)
-    {
-        $this->mock->setTokenizedHeader('test', $result, $token);
-        $this->assertEquals($string, $this->mock->getHeader('test'));
-    }
-
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::setTokenizedHeader
-     * @expectedException InvalidArgumentException
-     */
-    public function testTokenizedHeaderMustBeArrayToSet()
-    {
-        $this->mock->setTokenizedHeader('test', false);
-    }
-
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::getTokenizedHeader
-     */
-    public function testReturnsNullWhenTokenizedHeaderNotFound()
-    {
-        $this->assertNull($this->mock->getTokenizedHeader('foo'));
-    }
-
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::getTokenizedHeader
-     */
-    public function testMultipleTokenizedHeadersAreCombined()
-    {
-        $this->mock->addHeader('test', 'ISO-8859-1,utf-8;q=0.7,*;q=0.7');
-        $this->mock->addHeader('test', 'foo;q=123,*;q=456;q=0.7');
-        $this->mock->addHeader('Content-Length', 0);
-
-        $this->assertEquals(array(
-            0 => 'ISO-8859-1,utf-8',
-            'q' => array('0.7,*', '0.7', '123,*', '456'),
-            2 => 'foo',
-        ), $this->mock->getTokenizedHeader('test')->getAll());
+        $this->assertEquals(300, $mock->getCacheControlDirective('max-age'));
     }
 
     /**
