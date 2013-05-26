@@ -78,7 +78,7 @@ class RequestFactory implements RequestFactoryInterface
         $protocol = 'HTTP',
         $protocolVersion = '1.1'
     ) {
-        return $this->create($method, Url::buildUrl($urlParts, true), $headers, $body)
+        return $this->create($method, Url::buildUrl($urlParts), $headers, $body)
                     ->setProtocolVersion($protocolVersion);
     }
 
