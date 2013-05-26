@@ -1,6 +1,7 @@
 # Ingore common cruft
 .DS_STORE
 coverage
+.idea
 
 # Ignore binary files
 guzzle.phar
