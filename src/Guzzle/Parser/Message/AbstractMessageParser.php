@@ -29,7 +29,7 @@ abstract class AbstractMessageParser implements MessageParserInterface
         } elseif (isset($parts['headers']['host'])) {
             $urlParts['host'] = $parts['headers']['host'];
         } else {
-            $urlParts['host'] = '';
+            $urlParts['host'] = null;
         }
 
         if (false === strpos($urlParts['host'], ':')) {

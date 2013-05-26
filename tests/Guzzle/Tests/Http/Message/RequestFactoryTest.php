@@ -311,6 +311,19 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
+     * @covers Guzzle\Http\Message\RequestFactory::fromMessage
+     * @covers Guzzle\Http\Message\RequestFactory::create
+     */
+    public function testBugPathIncorrectlyHandled()
+    {
+        $message = "POST /foo\r\n\r\nBODY";
+        $request = RequestFactory::getInstance()->fromMessage($message);
+        $this->assertSame('POST', $request->getMethod());
+        $this->assertSame('/foo', $request->getPath());
+        $this->assertSame('BODY', (string) $request->getBody());
+    }
+
+    /**
      * @covers Guzzle\Http\Message\RequestFactory::create
      */
     public function testHandlesChunkedTransferEncoding()
