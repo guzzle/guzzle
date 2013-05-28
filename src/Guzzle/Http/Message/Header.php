@@ -27,17 +27,19 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
         $this->header = $header;
         $this->glue = $glue;
 
-        if (null !== $values) {
-            foreach ((array) $values as $key => $value) {
-                if (is_numeric($key)) {
-                    $key = $header;
-                }
-                if ($value === null) {
-                    $this->add($value, $key);
-                } else {
-                    foreach ((array) $value as $v) {
-                        $this->add($v, $key);
-                    }
+        if (null === $values) {
+            return;
+        }
+
+        foreach ((array) $values as $key => $value) {
+            if (is_numeric($key)) {
+                $key = $header;
+            }
+            if ($value === null) {
+                $this->add($value, $key);
+            } else {
+                foreach ((array) $value as $v) {
+                    $this->add($v, $key);
                 }
             }
         }
@@ -63,7 +65,7 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
      * @param string $value  Value to add
      * @param string $header The exact header casing to add with. Defaults to the name of the header.
      *
-     * @return Header
+     * @return self
      */
     public function add($value, $header = null)
     {
@@ -98,7 +100,7 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
      *
      * @param string $glue Glue used to implode multiple values
      *
-     * @return Header
+     * @return self
      */
     public function setGlue($glue)
     {
@@ -261,12 +263,13 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
     public function parseParams()
     {
         $params = array();
+        $callback = array($this, 'trimHeader');
 
         // Normalize the header into a single array and iterate over all values
         foreach ($this->normalize()->toArray() as $val) {
             $part = array();
             foreach (explode(';', $val) as $kvp) {
-                $pieces = array_map(array($this, 'trimHeader'), explode('=', $kvp, 2));
+                $pieces = array_map($callback, explode('=', $kvp, 2));
                 $part[$pieces[0]] = isset($pieces[1]) ? $pieces[1] : '';
             }
             $params[] = $part;
