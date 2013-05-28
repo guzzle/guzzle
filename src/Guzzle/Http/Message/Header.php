@@ -18,9 +18,9 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
     /**
      * Construct a new header object
      *
-     * @param string $header Name of the header
-     * @param array  $values Values of the header
-     * @param string $glue   Glue used to combine multiple values into a string
+     * @param string       $header Name of the header
+     * @param array|string $values Values of the header as an array or a scalar
+     * @param string       $glue   Glue used to combine multiple values into a string
      */
     public function __construct($header, $values = array(), $glue = ',')
     {
@@ -32,15 +32,12 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
         }
 
         foreach ((array) $values as $key => $value) {
-            if (is_numeric($key)) {
-                $key = $header;
+            $key = is_numeric($key) ? $header : $key;
+            if (!isset($this->values[$key])) {
+                $this->values[$key] = array();
             }
-            if ($value === null) {
-                $this->add($value, $key);
-            } else {
-                foreach ((array) $value as $v) {
-                    $this->add($v, $key);
-                }
+            foreach ((array) $value as $v) {
+                $this->values[$key][] = $v;
             }
         }
     }

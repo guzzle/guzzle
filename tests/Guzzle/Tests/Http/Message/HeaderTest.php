@@ -102,7 +102,6 @@ class HeaderTest extends \Guzzle\Tests\GuzzleTestCase
         // Allows null array for a single null header
         $h = new Header('Foo', array(null));
         $this->assertEquals('', (string) $h);
-        $this->assertEquals(1, count($h));
 
         // Allows empty string
         $h = new Header('Foo', '');
