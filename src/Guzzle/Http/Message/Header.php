@@ -252,7 +252,7 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
     /**
      * Convert a header containing ";" separated data into an array of associative arrays representing the header
      * key value pair data of the header. When a parameter does not contain a value, but just contains a key, this
-     * function will inject a key with a null value.
+     * function will inject a key with a '' string value.
      *
      * @return array
      * @todo Do not split semicolons when enclosed in quotes (e.g. foo="baz;bar")
