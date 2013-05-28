@@ -546,4 +546,13 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request->setBody(EntityBody::factory(fopen(__FILE__, 'r')));
         $this->assertEquals('text/x-php', (string) $request->getHeader('Content-Type'));
     }
+
+    public function testDoesNotCloneBody()
+    {
+        $request = new EntityEnclosingRequest('PUT', 'http://test.com/foo');
+        $request->setBody('test');
+        $newRequest = clone $request;
+        $newRequest->setBody('foo');
+        $this->assertInternalType('string', (string) $request->getBody());
+    }
 }
