@@ -119,26 +119,28 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
     }
 
     /**
-     * Normalize the header to be a single header with an array of values. If any values of the header contains the
-     * glue string value (e.g. ","), then the value will be exploded into multiple entries in the header.
+     * Normalize the header to be a single header with an array of values.
      *
-     * @return Header
+     * This function will consolidate any variances in casing into a single header. If any values of the header
+     * contains the glue string value (e.g. ","), then the value will be exploded into multiple entries in the header.
+     *
+     * @return self
      */
     public function normalize()
     {
         $values = $this->toArray();
         $this->arrayCache = $this->stringCache = null;
 
-        foreach ($values as $i => $value) {
-            if (strpos($value, $this->glue) !== false) {
-                unset($values[$i]);
-                foreach (explode($this->glue, $value) as $v) {
+        for ($i = 0, $total = count($values); $i < $total; $i++) {
+            if (strpos($values[$i], $this->glue) !== false) {
+                foreach (explode($this->glue, $values[$i]) as $v) {
                     $values[] = trim($v);
                 }
+                unset($values[$i]);
             }
         }
 
-        $this->values = array($this->getName() => $values);
+        $this->values = array($this->getName() => array_values($values));
 
         return $this;
     }
@@ -259,21 +261,31 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
     public function parseParams()
     {
         $params = array();
-        // Clone the header so that this is not destructive
-        $header = clone $this;
 
         // Normalize the header into a single array and iterate over all values
-        foreach ($header->normalize(true) as $val) {
+        foreach ($this->normalize()->toArray() as $val) {
             $part = array();
             foreach (explode(';', $val) as $kvp) {
-                $pieces = array_map(function ($str) {
-                    return trim($str, "\"'  \n");
-                }, explode('=', $kvp, 2));
+                $pieces = array_map(array($this, 'trimHeader'), explode('=', $kvp, 2));
                 $part[$pieces[0]] = isset($pieces[1]) ? $pieces[1] : '';
             }
             $params[] = $part;
         }
 
         return $params;
+    }
+
+    /**
+     * Trim a header by removing excess spaces and wrapping quotes
+     *
+     * @param $str
+     *
+     * @return string
+     */
+    protected function trimHeader($str)
+    {
+        static $trimmed = "\"'  \n\t";
+
+        return trim($str, $trimmed);
     }
 }
