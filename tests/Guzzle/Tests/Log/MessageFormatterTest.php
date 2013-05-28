@@ -122,6 +122,12 @@ class MessageFormatterTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('1/2', $formatter->format($this->request, $response));
     }
 
+    public function testUsesEmptyStringWhenNoHandleAndNoResponse()
+    {
+        $formatter = new MessageFormatter('{connect_time}/{total_time}');
+        $this->assertEquals('/', $formatter->format($this->request));
+    }
+
     public function testInjectsTotalTime()
     {
         $out = '';
