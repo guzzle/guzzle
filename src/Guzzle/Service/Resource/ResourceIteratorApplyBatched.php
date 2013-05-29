@@ -9,6 +9,7 @@ use Guzzle\Batch\BatchClosureTransfer;
 
 /**
  * Apply a callback to the contents of a {@see ResourceIteratorInterface}
+ * @deprecated Will be removed in a future version. Use the Batch\ abstractions instead.
  */
 class ResourceIteratorApplyBatched extends AbstractHasDispatcher
 {
