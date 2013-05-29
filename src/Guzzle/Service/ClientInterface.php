@@ -59,15 +59,6 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
     public function getDescription();
 
     /**
-     * Set the command factory used to create commands by name
-     *
-     * @param CommandFactoryInterface $factory Command factory
-     *
-     * @return ClientInterface
-     */
-    public function setCommandFactory(CommandFactoryInterface $factory);
-
-    /**
      * Get a resource iterator from the client.
      *
      * @param string|CommandInterface $command         Command class or command name.
@@ -77,29 +68,4 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
      * @return ResourceIteratorInterface
      */
     public function getIterator($command, array $commandOptions = null, array $iteratorOptions = array());
-
-    /**
-     * Set the resource iterator factory associated with the client
-     *
-     * @param ResourceIteratorFactoryInterface $factory Resource iterator factory
-     *
-     * @return ClientInterface
-     */
-    public function setResourceIteratorFactory(ResourceIteratorFactoryInterface $factory);
-
-    /**
-     * Set the inflector used with the client
-     *
-     * @param InflectorInterface $inflector Inflection object
-     *
-     * @return ClientInterface
-     */
-    public function setInflector(InflectorInterface $inflector);
-
-    /**
-     * Get the inflector used with the client
-     *
-     * @return InflectorInterface
-     */
-    public function getInflector();
 }
