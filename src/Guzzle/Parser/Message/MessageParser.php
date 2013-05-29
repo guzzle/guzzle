@@ -7,9 +7,6 @@ namespace Guzzle\Parser\Message;
  */
 class MessageParser extends AbstractMessageParser
 {
-    /**
-     * {@inheritdoc}
-     */
     public function parseRequest($message)
     {
         if (!$message) {
@@ -41,9 +38,6 @@ class MessageParser extends AbstractMessageParser
         return $parsed;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function parseResponse($message)
     {
         if (!$message) {

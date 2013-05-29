@@ -7,9 +7,7 @@ namespace Guzzle\Parser\Cookie;
  */
 class CookieParser implements CookieParserInterface
 {
-    /**
-     * @var array Cookie part names to snake_case array values
-     */
+    /** @var array Cookie part names to snake_case array values */
     protected static $cookieParts = array(
         'domain'      => 'Domain',
         'path'        => 'Path',
@@ -24,9 +22,6 @@ class CookieParser implements CookieParserInterface
         'http_only'   => 'HttpOnly'
     );
 
-    /**
-     * {@inheritdoc}
-     */
     public function parseCookie($cookie, $host = null, $path = null, $decode = false)
     {
         // Explode the cookie string using a series of semicolons

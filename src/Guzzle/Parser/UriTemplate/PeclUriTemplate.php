@@ -12,10 +12,6 @@ use Guzzle\Common\Exception\RuntimeException;
  */
 class PeclUriTemplate implements UriTemplateInterface
 {
-    /**
-     * Validates that the uri_template extension is installed
-     * @codeCoverageIgnore
-     */
     public function __construct()
     {
         if (!extension_loaded('uri_template')) {
@@ -23,9 +19,6 @@ class PeclUriTemplate implements UriTemplateInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function expand($template, array $variables)
     {
         return uri_template($template, $variables);
