@@ -165,6 +165,13 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         return $this->getUriTemplate()->expand($template, $expansionVars);
     }
 
+    /**
+     * Set the URI template expander to use with the client
+     *
+     * @param UriTemplateInterface $uriTemplate URI template expander
+     *
+     * @return self
+     */
     public function setUriTemplate(UriTemplateInterface $uriTemplate)
     {
         $this->uriTemplate = $uriTemplate;
@@ -172,6 +179,11 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         return $this;
     }
 
+    /**
+     * Get the URI template expander used by the client
+     *
+     * @return UriTemplateInterface
+     */
     public function getUriTemplate()
     {
         if (!$this->uriTemplate) {
@@ -315,6 +327,13 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         }
     }
 
+    /**
+     * Set a curl multi object to be used internally by the client for transferring requests.
+     *
+     * @param CurlMultiInterface $curlMulti Multi object
+     *
+     * @return self
+     */
     public function setCurlMulti(CurlMultiInterface $curlMulti)
     {
         $this->curlMulti = $curlMulti;

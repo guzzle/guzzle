@@ -80,22 +80,6 @@ interface ClientInterface extends HasDispatcherInterface
     public function setDefaultHeaders($headers);
 
     /**
-     * Set the URI template expander to use with the client
-     *
-     * @param UriTemplateInterface $uriTemplate URI template expander
-     *
-     * @return ClientInterface
-     */
-    public function setUriTemplate(UriTemplateInterface $uriTemplate);
-
-    /**
-     * Get the URI template expander used by the client
-     *
-     * @return UriTemplateInterface
-     */
-    public function getUriTemplate();
-
-    /**
      * Expand a URI template using client configuration data
      *
      * @param string $template  URI template to expand
@@ -242,15 +226,6 @@ interface ClientInterface extends HasDispatcherInterface
      * @return array Returns the response(s)
      */
     public function send($requests);
-
-    /**
-     * Set a curl multi object to be used internally by the client for transferring requests.
-     *
-     * @param CurlMultiInterface $curlMulti Multi object
-     *
-     * @return ClientInterface
-     */
-    public function setCurlMulti(CurlMultiInterface $curlMulti);
 
     /**
      * Get the curl multi object to be used internally by the client for transferring requests.
