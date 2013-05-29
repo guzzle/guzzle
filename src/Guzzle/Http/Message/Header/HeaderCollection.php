@@ -47,6 +47,16 @@ class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, 
     }
 
     /**
+     * Get an array of header objects
+     *
+     * @return array
+     */
+    public function getAll()
+    {
+        return $this->headers;
+    }
+
+    /**
      * Alias of offsetGet
      */
     public function get($key)
@@ -94,15 +104,5 @@ class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, 
         }
 
         return $result;
-    }
-
-    /**
-     * Get an array of header objects
-     *
-     * @return array
-     */
-    public function getAll()
-    {
-        return $this->headers;
     }
 }
