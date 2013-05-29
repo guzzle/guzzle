@@ -132,12 +132,12 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $response = Response::fromMessage("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ntest");
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals(4, $response->getContentLength());
+        $this->assertEquals(4, (string) $response->getContentLength());
         $this->assertEquals('test', $response->getBody(true));
 
         // Make sure that automatic Content-Length works
         $response = Response::fromMessage("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ntest");
-        $this->assertEquals(4, $response->getContentLength());
+        $this->assertEquals(4, (string) $response->getContentLength());
         $this->assertEquals('test', $response->getBody(true));
     }
 
@@ -149,7 +149,7 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $response = Response::fromMessage("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\n");
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals(4, $response->getContentLength());
+        $this->assertEquals(4, (string) $response->getContentLength());
         $this->assertEquals('', $response->getBody(true));
     }
 
@@ -336,16 +336,15 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Message\Response::getAge
+     * @covers Guzzle\Http\Message\Response::calculateAge
      */
-    public function testGetAge()
+    public function testCalculatesAge()
     {
-        $this->assertEquals(12, $this->response->getAge(false));
-        $this->assertEquals(12, $this->response->getAge(true));
+        $this->assertEquals(12, $this->response->calculateAge());
 
         $this->response->removeHeader('Age');
         $this->response->removeHeader('Date');
-        $this->assertNull($this->response->getAge());
+        $this->assertNull($this->response->calculateAge());
 
         $this->response->setHeader('Date', gmdate(ClientInterface::HTTP_DATE, strtotime('-1 minute')));
         // If the test runs slowly, still pass with a +5 second allowance
@@ -490,20 +489,6 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Message\Response::getRetryAfter
-     */
-    public function testGetRetryAfter()
-    {
-        $this->assertEquals('120', $this->response->getRetryAfter());
-        $t = time() + 1000;
-        $d = $t - time();
-        $this->response->setHeader('Retry-After', date('r', $t));
-        $this->assertEquals($d, $this->response->getRetryAfter());
-        $this->response->removeHeader('Retry-After');
-        $this->assertNull($this->response->getRetryAfter());
-    }
-
-    /**
      * @covers Guzzle\Http\Message\Response::getServer
      */
     public function testGetServer()
@@ -528,7 +513,7 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array(
             'UserID=JohnDoe; Max-Age=3600; Version=1',
             'UserID=Mike; Max-Age=200',
-        ), $this->response->getSetCookie()->toArray());
+        ), $this->response->getHeader('Set-Cookie')->toArray());
     }
 
     /**
@@ -544,12 +529,15 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array(
             'UserID=JohnDoe; Max-Age=3600; Version=1',
             'foo'
-        ), $this->response->getSetCookie()->toArray());
+        ), $this->response->getHeader('Set-Cookie')->toArray());
 
         $this->response->addHeaders(array(
             'set-cookie' => 'fubu'
         ));
-        $this->assertEquals(array('UserID=JohnDoe; Max-Age=3600; Version=1', 'foo', 'fubu'), $this->response->getSetCookie()->toArray());
+        $this->assertEquals(
+            array('UserID=JohnDoe; Max-Age=3600; Version=1', 'foo', 'fubu'),
+            $this->response->getHeader('Set-Cookie')->toArray()
+        );
     }
 
     /**

@@ -174,8 +174,6 @@ class Response extends AbstractMessage
     }
 
     /**
-     * Convert the response object to a string
-     *
      * @return string
      */
     public function __toString()
@@ -367,21 +365,29 @@ class Response extends AbstractMessage
     }
 
     /**
-     * Get the Age HTTP header
+     * Calculate the age of the response
      *
-     * @param bool $headerOnly Set to TRUE to only retrieve the Age header rather than calculating the age
-     *
-     * @return integer|null Returns the age the object has been in a proxy cache in seconds.
+     * @return integer
      */
-    public function getAge($headerOnly = false)
+    public function calculateAge()
     {
         $age = $this->getHeader('Age', true);
 
-        if (!$headerOnly && $age === null && $this->getDate()) {
+        if ($age === null && $this->getDate()) {
             $age = time() - strtotime($this->getDate());
         }
 
-        return $age;
+        return $age === null ? null : (int)  $age;
+    }
+
+    /**
+     * Get the Age HTTP header
+     *
+     * @return integer|null Returns the age the object has been in a proxy cache in seconds.
+     */
+    public function getAge()
+    {
+        return $this->getHeader('Age', true);
     }
 
     /**
@@ -418,12 +424,11 @@ class Response extends AbstractMessage
     /**
      * Get the Cache-Control HTTP header
      *
-     * @return Header|null Returns a Header object that tells all caching mechanisms from server to client whether they
-     *                     may cache this object.
+     * @return string
      */
     public function getCacheControl()
     {
-        return $this->getHeader('Cache-Control');
+        return $this->getHeader('Cache-Control', true);
     }
 
     /**
@@ -439,7 +444,7 @@ class Response extends AbstractMessage
     /**
      * Get the Content-Encoding HTTP header
      *
-     * @return string|null Returns the type of encoding used on the data. One of compress, deflate, gzip, identity.
+     * @return string|null
      */
     public function getContentEncoding()
     {
@@ -483,7 +488,7 @@ class Response extends AbstractMessage
      */
     public function getContentDisposition()
     {
-        return (string) $this->getHeader('Content-Disposition');
+        return $this->getHeader('Content-Disposition', true);
     }
 
     /**
@@ -527,7 +532,7 @@ class Response extends AbstractMessage
      */
     public function isContentType($type)
     {
-        return stripos($this->getContentType(), $type) !== false;
+        return stripos($this->getHeader('Content-Type'), $type) !== false;
     }
 
     /**
@@ -589,7 +594,7 @@ class Response extends AbstractMessage
      */
     public function getPragma()
     {
-        return $this->getHeader('Pragma');
+        return $this->getHeader('Pragma', true);
     }
 
     /**
@@ -610,16 +615,7 @@ class Response extends AbstractMessage
      */
     public function getRetryAfter()
     {
-        $time = $this->getHeader('Retry-After', true);
-        if ($time === null) {
-            return null;
-        }
-
-        if (!is_numeric($time)) {
-            $time = strtotime($time) - time();
-        }
-
-        return (int) $time;
+        return $this->getHeader('Retry-After', true);
     }
 
     /**
@@ -635,11 +631,11 @@ class Response extends AbstractMessage
     /**
      * Get the Set-Cookie HTTP header
      *
-     * @return Header|null An HTTP cookie.
+     * @return string|null An HTTP cookie.
      */
     public function getSetCookie()
     {
-        return $this->getHeader('Set-Cookie');
+        return $this->getHeader('Set-Cookie', true);
     }
 
     /**
@@ -656,8 +652,7 @@ class Response extends AbstractMessage
     /**
      * Get the Transfer-Encoding HTTP header
      *
-     * @return string|null The form of encoding used to safely transfer the entity to the user. Currently defined
-     *                     methods are: chunked
+     * @return string|null The form of encoding used to safely transfer the entity to the user
      */
     public function getTransferEncoding()
     {
@@ -679,7 +674,6 @@ class Response extends AbstractMessage
      * Get the Via HTTP header
      *
      * @return string|null Informs the client of proxies through which the response was sent.
-     *                     (e.g. 1.0 fred, 1.1 nowhere.com (Apache/1.1))
      */
     public function getVia()
     {
@@ -689,8 +683,7 @@ class Response extends AbstractMessage
     /**
      * Get the Warning HTTP header
      *
-     * @return string|null A general warning about possible problems with the entity body.
-     *                     (e.g. 199 Miscellaneous warning)
+     * @return string|null A general warning about possible problems with the entity body
      */
     public function getWarning()
     {
@@ -701,7 +694,6 @@ class Response extends AbstractMessage
      * Get the WWW-Authenticate HTTP header
      *
      * @return string|null Indicates the authentication scheme that should be used to access the requested entity
-     *                     (e.g. Basic)
      */
     public function getWwwAuthenticate()
     {
@@ -879,7 +871,7 @@ class Response extends AbstractMessage
     public function getFreshness()
     {
         $maxAge = $this->getMaxAge();
-        $age = $this->getAge();
+        $age = $this->calculateAge();
 
         return $maxAge && $age ? ($maxAge - $age) : null;
     }
