@@ -10,6 +10,26 @@ use Guzzle\Http\Message\Header;
 class Link extends Header
 {
     /**
+     * Add a link to the header
+     *
+     * @param string $url    Link URL
+     * @param string $rel    Link rel
+     * @param array  $params Other link parameters
+     *
+     * @return self
+     */
+    public function addLink($url, $rel, array $params = array())
+    {
+        $values = array("<{$url}>", "rel=\"{$rel}\"");
+
+        foreach ($params as $k => $v) {
+            $lines[] = "{$k}=\"{$v}\"";
+        }
+
+        return $this->add(implode(';', $lines));
+    }
+
+    /**
      * Check if a specific link exists for a given rel attribute
      *
      * @param string $rel rel value
