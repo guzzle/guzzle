@@ -11,9 +11,6 @@ use Guzzle\Service\Command\CommandInterface;
  */
 class StatusCodeVisitor extends AbstractResponseVisitor
 {
-    /**
-     * {@inheritdoc}
-     */
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value, $context =  null)
     {
         $value[$param->getName()] = $response->getStatusCode();

@@ -9,9 +9,7 @@ use Guzzle\Common\Exception\InvalidArgumentException;
  */
 class SchemaFormatter
 {
-    /**
-     * @var \DateTimeZone
-     */
+    /** @var \DateTimeZone */
     protected static $utcTimeZone;
 
     /**

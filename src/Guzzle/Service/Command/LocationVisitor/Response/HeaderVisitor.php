@@ -11,9 +11,6 @@ use Guzzle\Service\Command\CommandInterface;
  */
 class HeaderVisitor extends AbstractResponseVisitor
 {
-    /**
-     * {@inheritdoc}
-     */
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value, $context =  null)
     {
         if ($param->getType() == 'object' && $param->getAdditionalProperties() instanceof Parameter) {

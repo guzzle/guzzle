@@ -38,39 +38,25 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     // Option used to change the entity body used to store a response
     const RESPONSE_BODY = 'command.response_body';
 
-    /**
-     * @var ClientInterface Client object used to execute the command
-     */
+    /** @var ClientInterface Client object used to execute the command */
     protected $client;
 
-    /**
-     * @var RequestInterface The request object associated with the command
-     */
+    /** @var RequestInterface The request object associated with the command */
     protected $request;
 
-    /**
-     * @var mixed The result of the command
-     */
+    /** @var mixed The result of the command */
     protected $result;
 
-    /**
-     * @var OperationInterface API information about the command
-     */
+    /** @var OperationInterface API information about the command */
     protected $operation;
 
-    /**
-     * @var mixed callable
-     */
+    /** @var mixed callable */
     protected $onComplete;
 
-    /**
-     * @var ValidatorInterface Validator used to prepare and validate properties against a JSON schema
-     */
+    /** @var ValidatorInterface Validator used to prepare and validate properties against a JSON schema */
     protected $validator;
 
     /**
-     * Constructor
-     *
      * @param array|Collection   $parameters Collection of parameters to set on the command
      * @param OperationInterface $operation Command definition from description
      */
@@ -129,9 +115,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this->execute();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getName()
     {
         return $this->operation->getName();
@@ -147,9 +130,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this->operation;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setOnComplete($callable)
     {
         if (!is_callable($callable)) {
@@ -161,9 +141,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function execute()
     {
         if (!$this->client) {
@@ -173,17 +150,11 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this->client->execute($this);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getClient()
     {
         return $this->client;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setClient(ClientInterface $client)
     {
         $this->client = $client;
@@ -191,9 +162,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getRequest()
     {
         if (!$this->request) {
@@ -203,9 +171,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this->request;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getResponse()
     {
         if (!$this->isExecuted()) {
@@ -215,9 +180,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this->request->getResponse();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getResult()
     {
         if (!$this->isExecuted()) {
@@ -235,9 +197,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this->result;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setResult($result)
     {
         $this->result = $result;
@@ -245,25 +204,16 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function isPrepared()
     {
         return $this->request !== null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function isExecuted()
     {
         return $this->request !== null && $this->request->getState() == 'complete';
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function prepare()
     {
         if (!$this->isPrepared()) {
@@ -322,9 +272,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getRequestHeaders()
     {
         return $this->get(self::HEADERS_OPTION);

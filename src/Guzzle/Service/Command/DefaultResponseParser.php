@@ -9,13 +9,10 @@ use Guzzle\Http\Message\Response;
  */
 class DefaultResponseParser implements ResponseParserInterface
 {
-    /**
-     * @var self
-     */
+    /** @var self */
     protected static $instance;
 
     /**
-     * Get a cached instance of the default response parser
      * @return self
      * @codeCoverageIgnore
      */
@@ -28,9 +25,6 @@ class DefaultResponseParser implements ResponseParserInterface
         return self::$instance;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function parse(CommandInterface $command)
     {
         $response = $command->getRequest()->getResponse();
@@ -45,9 +39,6 @@ class DefaultResponseParser implements ResponseParserInterface
         return $this->handleParsing($command, $response, $contentType);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function handleParsing(AbstractCommand $command, Response $response, $contentType)
     {
         $result = $response;

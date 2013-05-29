@@ -11,18 +11,12 @@ use Guzzle\Service\Command\CommandInterface;
  */
 class XmlVisitor extends AbstractResponseVisitor
 {
-    /**
-     * {@inheritdoc}
-     */
     public function before(CommandInterface $command, array &$result)
     {
         // Set the result of the command to the array conversion of the XML body
         $result = json_decode(json_encode($command->getResponse()->xml()), true);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value, $context =  null)
     {
         $sentAs = $param->getWireName();

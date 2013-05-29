@@ -16,19 +16,13 @@ use Guzzle\Service\Resource\Model;
  */
 class OperationResponseParser extends DefaultResponseParser
 {
-    /**
-     * @var VisitorFlyweight $factory Visitor factory
-     */
+    /** @var VisitorFlyweight $factory Visitor factory */
     protected $factory;
 
-    /**
-     * @var self
-     */
+    /** @var self */
     protected static $instance;
 
     /**
-     * Get a cached default instance of the Operation response parser that uses default visitors
-     *
      * @return self
      * @codeCoverageIgnore
      */
@@ -64,9 +58,6 @@ class OperationResponseParser extends DefaultResponseParser
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function handleParsing(AbstractCommand $command, Response $response, $contentType)
     {
         $operation = $command->getOperation();

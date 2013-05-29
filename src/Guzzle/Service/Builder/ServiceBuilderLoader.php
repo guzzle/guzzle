@@ -10,9 +10,6 @@ use Guzzle\Service\Exception\ServiceNotFoundException;
  */
 class ServiceBuilderLoader extends AbstractConfigLoader
 {
-    /**
-     * {@inheritdoc}
-     */
     protected function build($config, array $options)
     {
         // A service builder class can be specified in the class field
@@ -58,9 +55,6 @@ class ServiceBuilderLoader extends AbstractConfigLoader
         return new $class($services);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function mergeData(array $a, array $b)
     {
         $result = $b + $a;

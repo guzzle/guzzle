@@ -9,14 +9,10 @@ namespace Guzzle\Service\Command;
  */
 class OperationCommand extends AbstractCommand
 {
-    /**
-     * @var RequestSerializerInterface
-     */
+    /** @var RequestSerializerInterface */
     protected $requestSerializer;
 
-    /**
-     * @var ResponseParserInterface Response parser
-     */
+    /** @var ResponseParserInterface Response parser */
     protected $responseParser;
 
     /**
@@ -77,18 +73,12 @@ class OperationCommand extends AbstractCommand
         return $this->responseParser;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function build()
     {
         // Prepare and serialize the request
         $this->request = $this->getRequestSerializer()->prepare($this);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function process()
     {
         // Do not process the response if 'command.response_processing' is set to 'raw'

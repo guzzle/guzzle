@@ -15,19 +15,13 @@ use Guzzle\Service\Description\Parameter;
  */
 class DefaultRequestSerializer implements RequestSerializerInterface
 {
-    /**
-     * @var VisitorFlyweight $factory Visitor factory
-     */
+    /** @var VisitorFlyweight $factory Visitor factory */
     protected $factory;
 
-    /**
-     * @var self
-     */
+    /** @var self */
     protected static $instance;
 
     /**
-     * Get a cached default instance of the class
-     *
      * @return self
      * @codeCoverageIgnore
      */
@@ -63,9 +57,6 @@ class DefaultRequestSerializer implements RequestSerializerInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function prepare(CommandInterface $command)
     {
         $request = $this->createRequest($command);

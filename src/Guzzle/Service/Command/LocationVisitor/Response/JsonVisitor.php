@@ -16,18 +16,12 @@ use Guzzle\Service\Command\CommandInterface;
  */
 class JsonVisitor extends AbstractResponseVisitor
 {
-    /**
-     * {@inheritdoc}
-     */
     public function before(CommandInterface $command, array &$result)
     {
         // Ensure that the result of the command is always rooted with the parsed JSON data
         $result = $command->getResponse()->json();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function visit(CommandInterface $command, Response $response, Parameter $param, &$value, $context =  null)
     {
         $name = $param->getName();
