@@ -8,15 +8,12 @@ use Guzzle\Common\Collection;
 
 class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var Request Request object
-     */
+    /** @var Request Request object */
     private $request;
+
+    /** @var AbstractMessage */
     private $mock;
 
-    /**
-     * Setup
-     */
     public function setUp()
     {
         parent::setUp();
@@ -217,5 +214,12 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
         $this->mock->setHeader('Content-Length', 0);
         $this->assertTrue($this->mock->hasHeader('Content-Length'));
         $this->assertEquals(0, (string) $this->mock->getHeader('Content-Length'));
+    }
+
+    public function testCanSetCustomHeaderFactory()
+    {
+        $f = new Header\HeaderFactory();
+        $this->mock->setHeaderFactory($f);
+        $this->assertSame($f, $this->readAttribute($this->mock, 'headerFactory'));
     }
 }
