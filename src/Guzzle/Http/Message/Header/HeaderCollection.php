@@ -116,4 +116,14 @@ class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, 
 
         return $result;
     }
+
+    /**
+     * Get an array of header objects
+     *
+     * @return array
+     */
+    public function getAll()
+    {
+        return $this->headers;
+    }
 }
