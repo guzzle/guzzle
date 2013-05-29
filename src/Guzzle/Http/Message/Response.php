@@ -361,7 +361,7 @@ class Response extends AbstractMessage
      */
     public function getAcceptRanges()
     {
-        return $this->getHeader('Accept-Ranges', true);
+        return (string) $this->getHeader('Accept-Ranges');
     }
 
     /**
@@ -371,13 +371,13 @@ class Response extends AbstractMessage
      */
     public function calculateAge()
     {
-        $age = $this->getHeader('Age', true);
+        $age = $this->getHeader('Age');
 
         if ($age === null && $this->getDate()) {
             $age = time() - strtotime($this->getDate());
         }
 
-        return $age === null ? null : (int)  $age;
+        return $age === null ? null : (int) (string) $age;
     }
 
     /**
@@ -387,7 +387,7 @@ class Response extends AbstractMessage
      */
     public function getAge()
     {
-        return $this->getHeader('Age', true);
+        return (string) $this->getHeader('Age');
     }
 
     /**
@@ -397,7 +397,7 @@ class Response extends AbstractMessage
      */
     public function getAllow()
     {
-        return $this->getHeader('Allow', true);
+        return (string) $this->getHeader('Allow');
     }
 
     /**
@@ -428,7 +428,7 @@ class Response extends AbstractMessage
      */
     public function getCacheControl()
     {
-        return $this->getHeader('Cache-Control', true);
+        return (string) $this->getHeader('Cache-Control');
     }
 
     /**
@@ -438,7 +438,7 @@ class Response extends AbstractMessage
      */
     public function getConnection()
     {
-        return $this->getHeader('Connection', true);
+        return (string) $this->getHeader('Connection');
     }
 
     /**
@@ -448,7 +448,7 @@ class Response extends AbstractMessage
      */
     public function getContentEncoding()
     {
-        return $this->getHeader('Content-Encoding', true);
+        return (string) $this->getHeader('Content-Encoding');
     }
 
     /**
@@ -458,7 +458,7 @@ class Response extends AbstractMessage
      */
     public function getContentLanguage()
     {
-        return $this->getHeader('Content-Language', true);
+        return (string) $this->getHeader('Content-Language');
     }
 
     /**
@@ -468,7 +468,7 @@ class Response extends AbstractMessage
      */
     public function getContentLength()
     {
-        return (int) $this->getHeader('Content-Length', true);
+        return (int) (string) $this->getHeader('Content-Length');
     }
 
     /**
@@ -478,7 +478,7 @@ class Response extends AbstractMessage
      */
     public function getContentLocation()
     {
-        return $this->getHeader('Content-Location', true);
+        return (string) $this->getHeader('Content-Location');
     }
 
     /**
@@ -488,7 +488,7 @@ class Response extends AbstractMessage
      */
     public function getContentDisposition()
     {
-        return $this->getHeader('Content-Disposition', true);
+        return (string) $this->getHeader('Content-Disposition');
     }
 
     /**
@@ -498,7 +498,7 @@ class Response extends AbstractMessage
      */
     public function getContentMd5()
     {
-        return $this->getHeader('Content-MD5', true);
+        return (string) $this->getHeader('Content-MD5');
     }
 
     /**
@@ -508,7 +508,7 @@ class Response extends AbstractMessage
      */
     public function getContentRange()
     {
-        return $this->getHeader('Content-Range', true);
+        return (string) $this->getHeader('Content-Range');
     }
 
     /**
@@ -518,7 +518,7 @@ class Response extends AbstractMessage
      */
     public function getContentType()
     {
-        return $this->getHeader('Content-Type', true);
+        return (string) $this->getHeader('Content-Type');
     }
 
     /**
@@ -542,7 +542,7 @@ class Response extends AbstractMessage
      */
     public function getDate()
     {
-        return $this->getHeader('Date', true);
+        return (string) $this->getHeader('Date');
     }
 
     /**
@@ -552,7 +552,7 @@ class Response extends AbstractMessage
      */
     public function getEtag()
     {
-        return $this->getHeader('ETag', true);
+        return (string) $this->getHeader('ETag');
     }
 
     /**
@@ -562,7 +562,7 @@ class Response extends AbstractMessage
      */
     public function getExpires()
     {
-        return $this->getHeader('Expires', true);
+        return (string) $this->getHeader('Expires');
     }
 
     /**
@@ -573,7 +573,7 @@ class Response extends AbstractMessage
      */
     public function getLastModified()
     {
-        return $this->getHeader('Last-Modified', true);
+        return (string) $this->getHeader('Last-Modified');
     }
 
     /**
@@ -583,7 +583,7 @@ class Response extends AbstractMessage
      */
     public function getLocation()
     {
-        return $this->getHeader('Location', true);
+        return (string) $this->getHeader('Location');
     }
 
     /**
@@ -594,7 +594,7 @@ class Response extends AbstractMessage
      */
     public function getPragma()
     {
-        return $this->getHeader('Pragma', true);
+        return (string) $this->getHeader('Pragma');
     }
 
     /**
@@ -604,7 +604,7 @@ class Response extends AbstractMessage
      */
     public function getProxyAuthenticate()
     {
-        return $this->getHeader('Proxy-Authenticate', true);
+        return (string) $this->getHeader('Proxy-Authenticate');
     }
 
     /**
@@ -615,7 +615,7 @@ class Response extends AbstractMessage
      */
     public function getRetryAfter()
     {
-        return $this->getHeader('Retry-After', true);
+        return (string) $this->getHeader('Retry-After');
     }
 
     /**
@@ -625,7 +625,7 @@ class Response extends AbstractMessage
      */
     public function getServer()
     {
-        return $this->getHeader('Server', true);
+        return (string)  $this->getHeader('Server');
     }
 
     /**
@@ -635,7 +635,7 @@ class Response extends AbstractMessage
      */
     public function getSetCookie()
     {
-        return $this->getHeader('Set-Cookie', true);
+        return (string) $this->getHeader('Set-Cookie');
     }
 
     /**
@@ -646,7 +646,7 @@ class Response extends AbstractMessage
      */
     public function getTrailer()
     {
-        return $this->getHeader('Trailer', true);
+        return (string) $this->getHeader('Trailer');
     }
 
     /**
@@ -656,7 +656,7 @@ class Response extends AbstractMessage
      */
     public function getTransferEncoding()
     {
-        return $this->getHeader('Transfer-Encoding', true);
+        return (string) $this->getHeader('Transfer-Encoding');
     }
 
     /**
@@ -667,7 +667,7 @@ class Response extends AbstractMessage
      */
     public function getVary()
     {
-        return $this->getHeader('Vary', true);
+        return (string) $this->getHeader('Vary');
     }
 
     /**
@@ -677,7 +677,7 @@ class Response extends AbstractMessage
      */
     public function getVia()
     {
-        return $this->getHeader('Via', true);
+        return (string) $this->getHeader('Via');
     }
 
     /**
@@ -687,7 +687,7 @@ class Response extends AbstractMessage
      */
     public function getWarning()
     {
-        return $this->getHeader('Warning', true);
+        return (string) $this->getHeader('Warning');
     }
 
     /**
@@ -697,7 +697,7 @@ class Response extends AbstractMessage
      */
     public function getWwwAuthenticate()
     {
-        return $this->getHeader('WWW-Authenticate', true);
+        return (string) $this->getHeader('WWW-Authenticate');
     }
 
     /**

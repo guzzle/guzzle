@@ -3,7 +3,6 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\Header\HeaderCollection;
 use Guzzle\Http\Message\Header\HeaderFactory;
 use Guzzle\Http\Message\Header\HeaderInterface;
@@ -79,17 +78,9 @@ abstract class AbstractMessage implements MessageInterface
     /**
      * {@inheritdoc}
      */
-    public function getHeader($header, $string = false)
+    public function getHeader($header)
     {
-        $value = $this->headers[$header];
-
-        if ($value === null) {
-            return null;
-        } elseif ($string) {
-            return (string) $value;
-        } else {
-            return $value;
-        }
+        return $this->headers[$header];
     }
 
     /**

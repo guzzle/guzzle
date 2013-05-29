@@ -216,6 +216,6 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $this->mock->setHeader('Content-Length', 0);
         $this->assertTrue($this->mock->hasHeader('Content-Length'));
-        $this->assertEquals(0, $this->mock->getHeader('Content-Length', true));
+        $this->assertEquals(0, (string) $this->mock->getHeader('Content-Length'));
     }
 }

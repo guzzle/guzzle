@@ -40,12 +40,10 @@ interface MessageInterface
      * Retrieve an HTTP header by name. Performs a case-insensitive search of all headers.
      *
      * @param string $header Header to retrieve.
-     * @param bool   $string Set to true to get the header as a string
      *
-     * @return string|Header|null Returns NULL if no matching header is found. Returns a string if $string is set to
-     *                            TRUE. Returns a Header object if a matching header is found.
+     * @return Header|null
      */
-    public function getHeader($header, $string = false);
+    public function getHeader($header);
 
     /**
      * Get all headers as a collection

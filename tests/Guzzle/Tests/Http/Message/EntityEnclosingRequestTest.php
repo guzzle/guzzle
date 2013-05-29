@@ -341,8 +341,8 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         // Ensure that the same request was sent twice with different bodies
         $requests = $this->getServer()->getReceivedRequests(true);
         $this->assertEquals(2, count($requests));
-        $this->assertEquals(4, $requests[0]->getHeader('Content-Length', true));
-        $this->assertEquals(7, $requests[1]->getHeader('Content-Length', true));
+        $this->assertEquals(4, (string) $requests[0]->getHeader('Content-Length'));
+        $this->assertEquals(7, (string) $requests[1]->getHeader('Content-Length'));
     }
 
     /**
