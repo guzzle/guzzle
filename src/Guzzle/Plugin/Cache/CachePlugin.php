@@ -278,23 +278,26 @@ class CachePlugin implements EventSubscriberInterface
      */
     public function canResponseSatisfyRequest(RequestInterface $request, Response $response)
     {
-        $responseAge = $response->getAge();
+        $responseAge = $response->calculateAge();
+
+        $reqc = $request->getHeader('Cache-Control');
+        $resc = $response->getHeader('Cache-Control');
 
         // Check the request's max-age header against the age of the response
-        if ($request->hasCacheControlDirective('max-age') &&
-            $responseAge > $request->getCacheControlDirective('max-age')) {
+        if ($reqc && $reqc->hasDirective('max-age') &&
+            $responseAge > $reqc->getDirective('max-age')) {
             return false;
         }
 
         // Check the response's max-age header
         if ($response->isFresh() === false) {
-            $maxStale = $request->getCacheControlDirective('max-stale');
+            $maxStale = $reqc ? $reqc->getDirective('max-stale') : null;
             if (null !== $maxStale) {
                 if ($maxStale !== true && $response->getFreshness() < (-1 * $maxStale)) {
                     return false;
                 }
-            } elseif ($response->hasCacheControlDirective('max-age')
-                && $responseAge > $response->getCacheControlDirective('max-age')
+            } elseif ($resc && $resc->hasDirective('max-age')
+                && $responseAge > $resc->getDirective('max-age')
             ) {
                 return false;
             }
@@ -304,10 +307,9 @@ class CachePlugin implements EventSubscriberInterface
         if ($request->getMethod() == RequestInterface::GET) {
             // Check if the response must be validated against the origin server
             if ($request->getHeader('Pragma') == 'no-cache' ||
-                $request->hasCacheControlDirective('no-cache') ||
-                $request->hasCacheControlDirective('must-revalidate') ||
-                $response->hasCacheControlDirective('must-revalidate') ||
-                $response->hasCacheControlDirective('no-cache')) {
+                ($reqc && ($reqc->hasDirective('no-cache') || $reqc->hasDirective('must-revalidate'))) ||
+                ($resc && ($resc->hasDirective('no-cache') || $resc->hasDirective('must-revalidate')))
+            ) {
                 // no-cache: When no parameters are present, always revalidate
                 // When parameters are present in no-cache and the request includes those same parameters, then the
                 // response must re-validate. I'll need an example of what fields look like in order to implement a
@@ -340,8 +342,11 @@ class CachePlugin implements EventSubscriberInterface
      */
     public function canResponseSatisfyFailedRequest(RequestInterface $request, Response $response)
     {
-        $requestStaleIfError = $request->getCacheControlDirective('stale-if-error');
-        $responseStaleIfError = $response->getCacheControlDirective('stale-if-error');
+        $reqc = $request->getHeader('Cache-Control');
+        $resc = $response->getHeader('Cache-Control');
+
+        $requestStaleIfError = $reqc ? $reqc->getDirective('stale-if-error') : null;
+        $responseStaleIfError = $resc ? $resc->getDirective('stale-if-error') : null;
 
         if (!$requestStaleIfError && !$responseStaleIfError) {
             return false;
