@@ -7,9 +7,6 @@ namespace Guzzle\Log;
  */
 class ClosureLogAdapter extends AbstractLogAdapter
 {
-    /**
-     * {@inheritdoc}
-     */
     public function __construct($logObject)
     {
         if (!is_callable($logObject)) {
@@ -19,10 +16,7 @@ class ClosureLogAdapter extends AbstractLogAdapter
         $this->log = $logObject;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function log($message, $priority = LOG_INFO, $extras = null)
+    public function log($message, $priority = LOG_INFO, $extras = array())
     {
         call_user_func($this->log, $message, $priority, $extras);
     }

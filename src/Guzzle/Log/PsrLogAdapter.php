@@ -24,20 +24,13 @@ class PsrLogAdapter extends AbstractLogAdapter
         LOG_ALERT   => LogLevel::ALERT
     );
 
-    /**
-     * {@inheritdoc}
-     */
     public function __construct(LoggerInterface $logObject)
     {
         $this->log = $logObject;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function log($message, $priority = LOG_INFO, $extras = null)
+    public function log($message, $priority = LOG_INFO, $extras = array())
     {
-
         $this->log->log(self::$mapping[$priority], $message, $extras);
     }
 }
