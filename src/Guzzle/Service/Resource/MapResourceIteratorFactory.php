@@ -9,22 +9,15 @@ use Guzzle\Service\Command\CommandInterface;
  */
 class MapResourceIteratorFactory extends AbstractResourceIteratorFactory
 {
-    /**
-     * @var array Associative array mapping iterator names to class names
-     */
+    /** @var array Associative array mapping iterator names to class names */
     protected $map;
 
-    /**
-     * @param array $map Associative array mapping iterator names to class names
-     */
+    /** @param array $map Associative array mapping iterator names to class names */
     public function __construct(array $map)
     {
         $this->map = $map;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getClassName(CommandInterface $command)
     {
         $className = $command->getName();

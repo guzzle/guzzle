@@ -10,9 +10,7 @@ use Guzzle\Service\Description\Parameter;
  */
 class Model extends Collection
 {
-    /**
-     * @var Parameter Structure of the model
-     */
+    /** @var Parameter Structure of the model */
     protected $structure;
 
     /**

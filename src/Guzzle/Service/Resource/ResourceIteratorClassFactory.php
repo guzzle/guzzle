@@ -13,14 +13,10 @@ use Guzzle\Service\Command\CommandInterface;
  */
 class ResourceIteratorClassFactory extends AbstractResourceIteratorFactory
 {
-    /**
-     * @var array List of namespaces used to look for classes
-     */
+    /** @var array List of namespaces used to look for classes */
     protected $namespaces;
 
-    /**
-     * @var InflectorInterface Inflector used to determine class names
-     */
+    /** @var InflectorInterface Inflector used to determine class names */
     protected $inflector;
 
     /**
@@ -47,9 +43,6 @@ class ResourceIteratorClassFactory extends AbstractResourceIteratorFactory
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function getClassName(CommandInterface $command)
     {
         $iteratorName = $this->inflector->camel($command->getName()) . 'Iterator';
