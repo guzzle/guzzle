@@ -94,16 +94,12 @@ class CacheControl extends Header
      */
     public function getDirectives()
     {
-        if ($this->directives) {
-            return $this->directives;
-        }
-
-        $this->directives = array();
-
-        foreach ($this->parseParams() as $collection) {
-            foreach ($collection as $key => $value) {
-                $value = $value === '' ? true : $value;
-                $this->directives[$key] = $value;
+        if ($this->directives === null) {
+            $this->directives = array();
+            foreach ($this->parseParams() as $collection) {
+                foreach ($collection as $key => $value) {
+                    $this->directives[$key] = $value === '' ? true : $value;
+                }
             }
         }
 
@@ -117,14 +113,11 @@ class CacheControl extends Header
      */
     protected function updateFromDirectives(array $directives)
     {
-        $this->values = $this->directives = array();
+        $this->directives = $directives;
+        $this->values = array();
 
         foreach ($directives as $key => $value) {
-            if ($value === true) {
-                $this->values[] = $key;
-            } else {
-                $this->values[] = "{$key}={$value}";
-            }
+            $this->values[] = $value === true ? $key : "{$key}={$value}";
         }
     }
 }
