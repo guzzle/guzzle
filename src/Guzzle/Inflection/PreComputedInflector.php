@@ -7,22 +7,16 @@ namespace Guzzle\Inflection;
  */
 class PreComputedInflector implements InflectorInterface
 {
-    /**
-     * @var array Array of pre-computed inflections
-     */
+    /** @var array Array of pre-computed inflections */
     protected $mapping = array(
         'snake' => array(),
         'camel' => array()
     );
 
-    /**
-     * @var InflectorInterface Decorated inflector
-     */
+    /** @var InflectorInterface Decorated inflector */
     protected $decoratedInflector;
 
     /**
-     * Decorate using a pre-computed map.
-     *
      * @param InflectorInterface $inflector Inflector being decorated
      * @param array              $snake     Hash of pre-computed camel to snake
      * @param array              $camel     Hash of pre-computed snake to camel
@@ -42,9 +36,6 @@ class PreComputedInflector implements InflectorInterface
         );
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function snake($word)
     {
         return isset($this->mapping['snake'][$word])

@@ -7,14 +7,10 @@ namespace Guzzle\Iterator;
  */
 class ChunkedIterator extends \IteratorIterator
 {
-    /**
-     * @var int Size of each chunk
-     */
+    /** @var int Size of each chunk */
     protected $chunkSize;
 
-    /**
-     * @var array Current chunk
-     */
+    /** @var array Current chunk */
     protected $chunk;
 
     /**
@@ -27,17 +23,11 @@ class ChunkedIterator extends \IteratorIterator
         $this->chunkSize = $chunkSize;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function rewind()
     {
         $this->next();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function next()
     {
         $this->chunk = array();
@@ -48,17 +38,11 @@ class ChunkedIterator extends \IteratorIterator
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function current()
     {
         return $this->chunk;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function valid()
     {
         return !empty($this->chunk);
