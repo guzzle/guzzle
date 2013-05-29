@@ -474,44 +474,13 @@ class Request extends AbstractMessage implements RequestInterface
     /**
      * {@inheritdoc}
      */
-    public function receiveResponseHeader($data)
+    public function startResponse(Response $response)
     {
-        static $normalize = array("\r", "\n");
         $this->state = self::STATE_TRANSFER;
-        $length = strlen($data);
-        $data = str_replace($normalize, '', $data);
+        $response->setEffectiveUrl((string) $this->getUrl());
+        $this->response = $response;
 
-        if (strpos($data, 'HTTP/') === 0) {
-
-            $startLine = explode(' ', $data, 3);
-            $code = $startLine[1];
-            $status = isset($startLine[2]) ? $startLine[2] : '';
-
-            // Only download the body of the response to the specified response
-            // body when a successful response is received.
-            if ($code >= 200 && $code < 300) {
-                $body = $this->getResponseBody();
-            } else {
-                $body = EntityBody::factory();
-            }
-
-            $this->response = new Response($code, null, $body);
-            $this->response->setStatus($code, $status);
-            $this->response->setEffectiveUrl((string) $this->url);
-            $this->dispatch('request.receive.status_line', array(
-                'request'       => $this,
-                'line'          => $data,
-                'status_code'   => $code,
-                'reason_phrase' => $status
-            ));
-
-        } elseif (strpos($data, ':') !== false) {
-
-            list($header, $value) = explode(':', $data, 2);
-            $this->response->addHeader(trim($header), trim($value));
-        }
-
-        return $length;
+        return $this;
     }
 
     /**

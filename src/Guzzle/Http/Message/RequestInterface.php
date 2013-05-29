@@ -249,13 +249,13 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     public function getCurlOptions();
 
     /**
-     * Method to receive HTTP response headers as they are retrieved
+     * The start of a response has been received for a request
      *
-     * @param string $data Header data.
+     * @param Response $response Response that has been received so far
      *
-     * @return integer Returns the size of the data.
+     * @return self
      */
-    public function receiveResponseHeader($data);
+    public function startResponse(Response $response);
 
     /**
      * Set the EntityBody that will hold a successful response message's entity body.

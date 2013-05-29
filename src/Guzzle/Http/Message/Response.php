@@ -285,7 +285,7 @@ class Response extends AbstractMessage
     {
         $this->statusCode = (int) $statusCode;
 
-        if (!$reasonPhrase && array_key_exists($this->statusCode, self::$statusTexts)) {
+        if (!$reasonPhrase && isset(self::$statusTexts[$this->statusCode])) {
             $this->reasonPhrase = self::$statusTexts[$this->statusCode];
         } else {
             $this->reasonPhrase = $reasonPhrase;
