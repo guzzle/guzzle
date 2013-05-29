@@ -17,15 +17,13 @@ interface EntityEnclosingRequestInterface extends RequestInterface
     /**
      * Set the body of the request
      *
-     * @param string|resource|EntityBodyInterface $body               Body to use in the entity body of the request
-     * @param string                              $contentType        Content-Type to set. Leave null to use an existing
-     *                                                                Content-Type or to guess the Content-Type
-     * @param bool                                $tryChunkedTransfer Try to use chunked Transfer-Encoding
-     *
-     * @return EntityEnclosingRequestInterface
+     * @param string|resource|EntityBodyInterface $body        Body to use in the entity body of the request
+     * @param string                              $contentType Content-Type to set. Leave null to use an existing
+     *                                                         Content-Type or to guess the Content-Type
+     * @return self
      * @throws RequestException if the protocol is < 1.1 and Content-Length can not be determined
      */
-    public function setBody($body, $contentType = null, $tryChunkedTransfer = false);
+    public function setBody($body, $contentType = null);
 
     /**
      * Get the body of the request if set
@@ -56,7 +54,7 @@ interface EntityEnclosingRequestInterface extends RequestInterface
      * @param string $key   Key to set
      * @param string $value Value to set
      *
-     * @return EntityEnclosingRequestInterface
+     * @return self
      */
     public function setPostField($key, $value);
 
@@ -65,7 +63,7 @@ interface EntityEnclosingRequestInterface extends RequestInterface
      *
      * @param QueryString|array $fields POST fields
      *
-     * @return EntityEnclosingRequestInterface
+     * @return self
      */
     public function addPostFields($fields);
 
@@ -74,7 +72,7 @@ interface EntityEnclosingRequestInterface extends RequestInterface
      *
      * @param string $field Name of the POST field or file to remove
      *
-     * @return EntityEnclosingRequestInterface
+     * @return self
      */
     public function removePostField($field);
 
@@ -99,7 +97,7 @@ interface EntityEnclosingRequestInterface extends RequestInterface
      *
      * @param string $fieldName POST file field name to remove
      *
-     * @return EntityEnclosingRequestInterface
+     * @return self
      */
     public function removePostFile($fieldName);
 
@@ -110,8 +108,7 @@ interface EntityEnclosingRequestInterface extends RequestInterface
      * @param string $filename    Full path to the file. Do not include the @ symbol.
      * @param string $contentType Optional Content-Type to add to the Content-Disposition.
      *                            Default behavior is to guess. Set to false to not specify.
-     *
-     * @return EntityEnclosingRequestInterface
+     * @return self
      */
     public function addPostFile($field, $filename = null, $contentType = null);
 
@@ -120,7 +117,7 @@ interface EntityEnclosingRequestInterface extends RequestInterface
      *
      * @param array $files An array of POST fields => filenames where filename can be a string or PostFileInterface
      *
-     * @return EntityEnclosingRequestInterface
+     * @return self
      */
     public function addPostFiles(array $files);
 

@@ -119,11 +119,10 @@ class RequestFactory implements RequestFactoryInterface
                 $request->addPostFields($body);
             } else {
                 // Add a raw entity body body to the request
-                $request->setBody(
-                    $body,
-                    (string) $request->getHeader('Content-Type'),
-                    (string) $request->getHeader('Transfer-Encoding') == 'chunked'
-                );
+                $request->setBody($body, (string) $request->getHeader('Content-Type'));
+                if ((string) $request->getHeader('Transfer-Encoding') == 'chunked') {
+                    $request->removeHeader('Content-Length');
+                }
             }
         }
 
