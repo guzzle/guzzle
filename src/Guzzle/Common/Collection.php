@@ -9,14 +9,10 @@ use Guzzle\Common\Exception\InvalidArgumentException;
  */
 class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArrayInterface
 {
-    /**
-     * @var array Data associated with the object.
-     */
+    /** @var array Data associated with the object. */
     protected $data;
 
     /**
-     * Constructor
-     *
      * @param array $data Associative array of data to set
      */
     public function __construct(array $data = null)
@@ -151,9 +147,6 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
         return $keys ? array_intersect_key($this->data, array_flip($keys)) : $this->data;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function toArray()
     {
         return $this->data;
