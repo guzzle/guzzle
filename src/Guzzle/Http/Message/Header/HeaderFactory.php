@@ -9,9 +9,7 @@ use Guzzle\Http\Message\Header;
  */
 class HeaderFactory implements HeaderFactoryInterface
 {
-    /**
-     * @var array
-     */
+    /** @var array */
     protected $mapping = array(
         'cache-control' => 'Guzzle\Http\Message\Header\CacheControl',
         'link'          => 'Guzzle\Http\Message\Header\Link',

@@ -14,29 +14,18 @@ use Guzzle\Http\Mimetypes;
  */
 class EntityEnclosingRequest extends Request implements EntityEnclosingRequestInterface
 {
-    /**
-     * @var int When the size of the body is greater than 1MB, then send Expect: 100-Continue
-     */
+    /** @var int When the size of the body is greater than 1MB, then send Expect: 100-Continue */
     protected $expectCutoff = 1048576;
 
-    /**
-     * @var EntityBodyInterface $body Body of the request
-     */
+    /** @var EntityBodyInterface $body Body of the request */
     protected $body;
 
-    /**
-     * @var QueryString POST fields to use in the EntityBody
-     */
+    /** @var QueryString POST fields to use in the EntityBody */
     protected $postFields;
 
-    /**
-     * @var array POST files to send with the request
-     */
+    /** @var array POST files to send with the request */
     protected $postFiles = array();
 
-    /**
-     * {@inheritdoc}
-     */
     public function __construct($method, $url, $headers = array())
     {
         $this->postFields = new QueryString();
@@ -44,8 +33,6 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
     }
 
     /**
-     * Get the HTTP request as a string
-     *
      * @return string
      */
     public function __toString()
@@ -58,9 +45,6 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         return parent::__toString() . $this->body;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setState($state, array $context = array())
     {
         parent::setState($state, $context);
@@ -71,9 +55,6 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setBody($body, $contentType = null)
     {
         $this->body = EntityBody::factory($body);
@@ -112,9 +93,6 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getBody()
     {
         return $this->body;
@@ -139,9 +117,6 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function configureRedirects($strict = false, $maxRedirects = 5)
     {
         $this->getParams()->set(RedirectPlugin::STRICT_REDIRECTS, $strict);
@@ -154,25 +129,16 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getPostField($field)
     {
         return $this->postFields->get($field);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getPostFields()
     {
         return $this->postFields;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setPostField($key, $value)
     {
         $this->postFields->set($key, $value);
@@ -181,9 +147,6 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function addPostFields($fields)
     {
         $this->postFields->merge($fields);
@@ -192,9 +155,6 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function removePostField($field)
     {
         $this->postFields->remove($field);
@@ -203,25 +163,16 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getPostFiles()
     {
         return $this->postFiles;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getPostFile($fieldName)
     {
         return isset($this->postFiles[$fieldName]) ? $this->postFiles[$fieldName] : null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function removePostFile($fieldName)
     {
         unset($this->postFiles[$fieldName]);
@@ -230,9 +181,6 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function addPostFile($field, $filename = null, $contentType = null)
     {
         $data = null;
@@ -264,9 +212,6 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function addPostFiles(array $files)
     {
         foreach ($files as $key => $file) {
@@ -291,7 +236,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
      */
     protected function processPostFields()
     {
-        if (empty($this->postFiles)) {
+        if (!$this->postFiles) {
             $this->removeHeader('Expect')->setHeader('Content-Type', self::URL_ENCODED);
         } else {
             $this->setHeader('Content-Type', self::MULTIPART);

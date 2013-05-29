@@ -23,64 +23,39 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class Request extends AbstractMessage implements RequestInterface
 {
-    /**
-     * @var EventDispatcherInterface
-     */
+    /** @var EventDispatcherInterface */
     protected $eventDispatcher;
 
-    /**
-     * @var Url HTTP Url
-     */
+    /** @var Url HTTP Url */
     protected $url;
 
-    /**
-     * @var string HTTP method (GET, PUT, POST, DELETE, HEAD, OPTIONS, TRACE)
-     */
+    /** @var string HTTP method (GET, PUT, POST, DELETE, HEAD, OPTIONS, TRACE) */
     protected $method;
 
-    /**
-     * @var ClientInterface
-     */
+    /** @var ClientInterface */
     protected $client;
 
-    /**
-     * @var Response Response of the request
-     */
+    /** @var Response Response of the request */
     protected $response;
 
-    /**
-     * @var EntityBodyInterface Response body
-     */
+    /** @var EntityBodyInterface Response body */
     protected $responseBody;
 
-    /**
-     * @var string State of the request object
-     */
+    /** @var string State of the request object */
     protected $state;
 
-    /**
-     * @var string Authentication username
-     */
+    /** @var string Authentication username */
     protected $username;
 
-    /**
-     * @var string Auth password
-     */
+    /** @var string Auth password */
     protected $password;
 
-    /**
-     * @var Collection cURL specific transfer options
-     */
+    /** @var Collection cURL specific transfer options */
     protected $curlOptions;
 
-    /**
-     * @var bool
-     */
+    /** @var bool */
     protected $isRedirect = false;
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getAllEvents()
     {
         return array(
@@ -102,8 +77,6 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Create a new request
-     *
      * @param string           $method  HTTP method
      * @param string|Url       $url     HTTP URL to connect to. The URI scheme, host header, and URI are parsed from the
      *                                  full URL. If query string parameters are present they will be parsed as well.
@@ -135,9 +108,6 @@ class Request extends AbstractMessage implements RequestInterface
         $this->setState(self::STATE_NEW);
     }
 
-    /**
-     * Clone the request object, leaving off any response that was received
-     */
     public function __clone()
     {
         if ($this->eventDispatcher) {
@@ -182,9 +152,6 @@ class Request extends AbstractMessage implements RequestInterface
         throw $e;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setClient(ClientInterface $client)
     {
         $this->client = $client;
@@ -192,17 +159,11 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getClient()
     {
         return $this->client;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getRawHeaders()
     {
         $protocolVersion = $this->protocolVersion ?: '1.1';
@@ -212,9 +173,6 @@ class Request extends AbstractMessage implements RequestInterface
             . '/' . $protocolVersion . "\r\n" . implode("\r\n", $this->getHeaderLines());
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setUrl($url)
     {
         if ($url instanceof Url) {
@@ -236,9 +194,6 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function send()
     {
         if (!$this->client) {
@@ -248,17 +203,11 @@ class Request extends AbstractMessage implements RequestInterface
         return $this->client->send($this);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getResponse()
     {
         return $this->response;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getQuery($asString = false)
     {
         return $asString
@@ -266,25 +215,16 @@ class Request extends AbstractMessage implements RequestInterface
             : $this->url->getQuery();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getMethod()
     {
         return $this->method;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getScheme()
     {
         return $this->url->getScheme();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setScheme($scheme)
     {
         $this->url->setScheme($scheme);
@@ -292,17 +232,11 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getHost()
     {
         return $this->url->getHost();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setHost($host)
     {
         $this->url->setHost($host);
@@ -311,17 +245,11 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getProtocolVersion()
     {
         return $this->protocolVersion;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setProtocolVersion($protocol)
     {
         $this->protocolVersion = $protocol;
@@ -329,17 +257,11 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getPath()
     {
         return '/' . ltrim($this->url->getPath(), '/');
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setPath($path)
     {
         $this->url->setPath($path);
@@ -347,17 +269,11 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getPort()
     {
         return $this->url->getPort();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setPort($port)
     {
         $this->url->setPort($port);
@@ -373,25 +289,16 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getUsername()
     {
         return $this->username;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getPassword()
     {
         return $this->password;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setAuth($user, $password = '', $scheme = CURLAUTH_BASIC)
     {
         // If we got false or null, disable authentication
@@ -416,9 +323,6 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getResource()
     {
         $resource = $this->getPath();
@@ -429,25 +333,16 @@ class Request extends AbstractMessage implements RequestInterface
         return $resource;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getUrl($asObject = false)
     {
         return $asObject ? clone $this->url : (string) $this->url;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getState()
     {
         return $this->state;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setState($state, array $context = array())
     {
         $oldState = $this->state;
@@ -463,17 +358,11 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getCurlOptions()
     {
         return $this->curlOptions;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function startResponse(Response $response)
     {
         $this->state = self::STATE_TRANSFER;
@@ -483,9 +372,6 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setResponse(Response $response, $queued = false)
     {
         $response->setEffectiveUrl((string) $this->url);
@@ -510,9 +396,6 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setResponseBody($body)
     {
         // Attempt to open a file for writing if a string was passed
@@ -529,9 +412,6 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getResponseBody()
     {
         if ($this->responseBody === null) {
@@ -551,9 +431,6 @@ class Request extends AbstractMessage implements RequestInterface
         return !$this->responseBody ? true : $this->responseBody->isSeekable() && $this->responseBody->isReadable();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getCookies()
     {
         if ($cookie = $this->getHeader('Cookie')) {
@@ -564,9 +441,6 @@ class Request extends AbstractMessage implements RequestInterface
         return array();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getCookie($name)
     {
         $cookies = $this->getCookies();
@@ -574,9 +448,6 @@ class Request extends AbstractMessage implements RequestInterface
         return isset($cookies[$name]) ? $cookies[$name] : null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function addCookie($name, $value)
     {
         if (!$this->hasHeader('Cookie')) {
@@ -591,9 +462,6 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function removeCookie($name)
     {
         if ($cookie = $this->getHeader('Cookie')) {
@@ -607,9 +475,6 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function canCache()
     {
         // Only GET and HEAD requests can be cached
@@ -625,9 +490,6 @@ class Request extends AbstractMessage implements RequestInterface
         return true;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setEventDispatcher(EventDispatcherInterface $eventDispatcher)
     {
         $this->eventDispatcher = $eventDispatcher;
@@ -636,9 +498,6 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getEventDispatcher()
     {
         if (!$this->eventDispatcher) {
@@ -648,19 +507,12 @@ class Request extends AbstractMessage implements RequestInterface
         return $this->eventDispatcher;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function dispatch($eventName, array $context = array())
     {
         $context['request'] = $this;
         $this->getEventDispatcher()->dispatch($eventName, new Event($context));
     }
 
-    /**
-     * {@inheritdoc}
-     * @codeCoverageIgnore
-     */
     public function addSubscriber(EventSubscriberInterface $subscriber)
     {
         $this->getEventDispatcher()->addSubscriber($subscriber);
@@ -668,9 +520,6 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setIsRedirect($isRedirect)
     {
         $this->isRedirect = $isRedirect;
@@ -678,9 +527,6 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function isRedirect()
     {
         return $this->isRedirect;
@@ -688,7 +534,6 @@ class Request extends AbstractMessage implements RequestInterface
 
     /**
      * {@inheritdoc}
-     *
      * Adds a check for Host header changes
      */
     public function addHeader($header, $value)

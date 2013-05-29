@@ -9,9 +9,7 @@ use Guzzle\Http\Message\Header;
  */
 class CacheControl extends Header
 {
-    /**
-     * @var array
-     */
+    /** @var array */
     protected $directives;
 
     public function add($value)

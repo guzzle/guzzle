@@ -14,8 +14,6 @@ class Header implements HeaderInterface
     protected $glue;
 
     /**
-     * Construct a new header object
-     *
      * @param string       $header Name of the header
      * @param array|string $values Values of the header as an array or a scalar
      * @param string       $glue   Glue used to combine multiple values into a string
@@ -32,17 +30,11 @@ class Header implements HeaderInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function __toString()
     {
         return implode($this->glue . ' ', $this->toArray());
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function add($value)
     {
         $this->values[] = $value;
@@ -50,17 +42,11 @@ class Header implements HeaderInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getName()
     {
         return $this->header;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setName($name)
     {
         $this->header = $name;
@@ -68,9 +54,6 @@ class Header implements HeaderInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setGlue($glue)
     {
         $this->glue = $glue;
@@ -78,17 +61,11 @@ class Header implements HeaderInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getGlue()
     {
         return $this->glue;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function normalize()
     {
         $values = $this->toArray();
@@ -107,25 +84,11 @@ class Header implements HeaderInterface
         return $this;
     }
 
-    /**
-     * @deprecated
-     */
-    public function hasExactHeader($header)
-    {
-        return $this->header == $header;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function hasValue($searchValue)
     {
         return in_array($searchValue, $this->toArray());
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function removeValue($searchValue)
     {
         $this->values = array_values(array_filter($this->values, function ($value) use ($searchValue) {
@@ -135,33 +98,16 @@ class Header implements HeaderInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function toArray()
     {
         return $this->values;
     }
 
-    /**
-     * {@deprecated}
-     */
-    public function raw()
-    {
-        return $this->toArray();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function count()
     {
         return count($this->toArray());
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getIterator()
     {
         return new \ArrayIterator($this->toArray());
@@ -187,6 +133,22 @@ class Header implements HeaderInterface
         }
 
         return $params;
+    }
+
+    /**
+     * @deprecated
+     */
+    public function hasExactHeader($header)
+    {
+        return $this->header == $header;
+    }
+
+    /**
+     * {@deprecated}
+     */
+    public function raw()
+    {
+        return $this->toArray();
     }
 
     /**

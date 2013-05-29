@@ -79,34 +79,22 @@ class Response extends AbstractMessage
         511 => 'Network Authentication Required',
     );
 
-    /**
-     * @var EntityBodyInterface The response body
-     */
+    /** @var EntityBodyInterface The response body */
     protected $body;
 
-    /**
-     * @var string The reason phrase of the response (human readable code)
-     */
+    /** @var string The reason phrase of the response (human readable code) */
     protected $reasonPhrase;
 
-    /**
-     * @var string The status code of the response
-     */
+    /** @var string The status code of the response */
     protected $statusCode;
 
-    /**
-     * @var array Information about the request
-     */
+    /** @var array Information about the request */
     protected $info = array();
 
-    /**
-     * @var array Cacheable response codes (see RFC 2616:13.4)
-     */
+    /** @var array Cacheable response codes (see RFC 2616:13.4) */
     protected $cacheResponseCodes = array(200, 203, 206, 300, 301, 410);
 
-    /**
-     * @var string The effective URL that returned this response
-     */
+    /** @var string The effective URL that returned this response */
     protected $effectiveUrl;
 
     /**
