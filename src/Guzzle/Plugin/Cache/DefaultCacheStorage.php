@@ -11,19 +11,13 @@ use Guzzle\Http\Message\Response;
  */
 class DefaultCacheStorage implements CacheStorageInterface
 {
-    /**
-     * @var CacheAdapterInterface Cache used to store cache data
-     */
+    /** @var CacheAdapterInterface Cache used to store cache data */
     protected $cache;
 
-    /**
-     * @var int Default cache TTL
-     */
+    /** @var int Default cache TTL */
     protected $defaultTtl;
 
-    /**
-     * @var array Headers are excluded from the caching (see RFC 2616:13.5.1)
-     */
+    /** @var array Headers are excluded from the caching (see RFC 2616:13.5.1) */
     protected $excludeResponseHeaders = array(
         'Connection', 'Keep-Alive', 'Proxy-Authenticate', 'Proxy-Authorization',
         'TE', 'Trailers', 'Transfer-Encoding', 'Upgrade', 'Set-Cookie', 'Set-Cookie2'
@@ -39,9 +33,6 @@ class DefaultCacheStorage implements CacheStorageInterface
         $this->defaultTtl = $defaultTtl;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function cache($key, Response $response, $ttl = null)
     {
         if ($ttl === null) {
@@ -68,17 +59,11 @@ class DefaultCacheStorage implements CacheStorageInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function delete($key)
     {
         $this->cache->delete($key);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function fetch($key)
     {
         return $this->cache->fetch($key);

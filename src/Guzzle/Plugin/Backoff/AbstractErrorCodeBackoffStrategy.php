@@ -7,14 +7,10 @@ namespace Guzzle\Plugin\Backoff;
  */
 abstract class AbstractErrorCodeBackoffStrategy extends AbstractBackoffStrategy
 {
-    /**
-     * @var array Default cURL errors to retry
-     */
+    /** @var array Default cURL errors to retry */
     protected static $defaultErrorCodes = array();
 
-    /**
-     * @var array Error codes that can be retried
-     */
+    /** @var array Error codes that can be retried */
     protected $errorCodes;
 
     /**
@@ -37,9 +33,6 @@ abstract class AbstractErrorCodeBackoffStrategy extends AbstractBackoffStrategy
         return static::$defaultErrorCodes;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function makesDecision()
     {
         return true;

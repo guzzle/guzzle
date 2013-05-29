@@ -10,9 +10,6 @@ use Guzzle\Http\Message\Response;
  */
 class DenyRevalidation implements RevalidationInterface
 {
-    /**
-     * {@inheritdoc}
-     */
     public function revalidate(RequestInterface $request, Response $response)
     {
         return false;

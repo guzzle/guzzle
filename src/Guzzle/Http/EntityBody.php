@@ -11,14 +11,10 @@ use Guzzle\Http\Mimetypes;
  */
 class EntityBody extends Stream implements EntityBodyInterface
 {
-    /**
-     * @var bool Content-Encoding of the entity body if known
-     */
+    /** @var bool Content-Encoding of the entity body if known */
     protected $contentEncoding = false;
 
-    /**
-     * @var callable Method to invoke for rewinding a stream
-     */
+    /** @var callable Method to invoke for rewinding a stream */
     protected $rewindFunction;
 
     /**
@@ -53,9 +49,6 @@ class EntityBody extends Stream implements EntityBodyInterface
         throw new InvalidArgumentException('Invalid resource type');
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setRewindFunction($callable)
     {
         if (!is_callable($callable)) {
@@ -67,9 +60,6 @@ class EntityBody extends Stream implements EntityBodyInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function rewind()
     {
         return $this->rewindFunction ? call_user_func($this->rewindFunction, $this) : parent::rewind();
@@ -93,9 +83,6 @@ class EntityBody extends Stream implements EntityBodyInterface
         return new static($stream);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function compress($filter = 'zlib.deflate')
     {
         $result = $this->handleCompression($filter);
@@ -104,9 +91,6 @@ class EntityBody extends Stream implements EntityBodyInterface
         return $result;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function uncompress($filter = 'zlib.inflate')
     {
         $offsetStart = 0;
@@ -129,25 +113,16 @@ class EntityBody extends Stream implements EntityBodyInterface
         return $this->handleCompression($filter, $offsetStart);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getContentLength()
     {
         return $this->getSize();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getContentType()
     {
         return $this->getUri() ? Mimetypes::getInstance()->fromFilename($this->getUri()) : null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getContentMd5($rawOutput = false, $base64Encode = false)
     {
         $hash = self::getHash($this, 'md5', $rawOutput);
@@ -171,9 +146,6 @@ class EntityBody extends Stream implements EntityBodyInterface
         return $body->getContentMd5($rawOutput, $base64Encode);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setStreamFilterContentEncoding($streamFilterContentEncoding)
     {
         $this->contentEncoding = $streamFilterContentEncoding;
@@ -181,9 +153,6 @@ class EntityBody extends Stream implements EntityBodyInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getContentEncoding()
     {
         return strtr($this->contentEncoding, array(
@@ -192,9 +161,6 @@ class EntityBody extends Stream implements EntityBodyInterface
         )) ?: false;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function handleCompression($filter, $offsetStart = 0)
     {
         // @codeCoverageIgnoreStart

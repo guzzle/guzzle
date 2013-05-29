@@ -15,8 +15,6 @@ class CurlAuthPlugin implements EventSubscriberInterface
     private $scheme;
 
     /**
-     * Constructor
-     *
      * @param string $username HTTP basic auth username
      * @param string $password Password
      * @param int    $scheme   Curl auth scheme
@@ -28,9 +26,6 @@ class CurlAuthPlugin implements EventSubscriberInterface
         $this->scheme = $scheme;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getSubscribedEvents()
     {
         return array('client.create_request' => array('onRequestCreate', 255));

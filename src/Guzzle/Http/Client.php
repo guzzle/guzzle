@@ -28,52 +28,33 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     const SSL_CERT_AUTHORITY = 'ssl.certificate_authority';
     const DISABLE_REDIRECTS = RedirectPlugin::DISABLE;
 
-    /**
-     * @var Collection Default HTTP headers to set on each request
-     */
+    /** @var Collection Default HTTP headers to set on each request */
     protected $defaultHeaders;
 
-    /**
-     * @var string The user agent string to set on each request
-     */
+    /** @var string The user agent string to set on each request */
     protected $userAgent;
 
-    /**
-     * @var Collection Parameter object holding configuration data
-     */
+    /** @var Collection Parameter object holding configuration data */
     private $config;
 
-    /**
-     * @var Url Base URL of the client
-     */
+    /** @var Url Base URL of the client */
     private $baseUrl;
 
-    /**
-     * @var CurlMultiInterface CurlMulti object used internally
-     */
+    /** @var CurlMultiInterface CurlMulti object used internally */
     private $curlMulti;
 
-    /**
-     * @var UriTemplateInterface URI template owned by the client
-     */
+    /** @var UriTemplateInterface URI template owned by the client */
     private $uriTemplate;
 
-    /**
-     * @var RequestFactoryInterface Request factory used by the client
-     */
+    /** @var RequestFactoryInterface Request factory used by the client */
     protected $requestFactory;
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getAllEvents()
     {
         return array(self::CREATE_REQUEST);
     }
 
     /**
-     * Client constructor
-     *
      * @param string           $baseUrl Base URL of the web service
      * @param array|Collection $config  Configuration settings
      */
@@ -97,9 +78,6 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         $this->userAgent = $this->getDefaultUserAgent();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     final public function setConfig($config)
     {
         // Set the configuration object
@@ -116,17 +94,11 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     final public function getConfig($key = false)
     {
         return $key ? $this->config->get($key) : $this->config;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     final public function setSslVerification($certificateAuthority = true, $verifyPeer = true, $verifyHost = 2)
     {
         $opts = $this->config->get(self::CURL_OPTIONS) ?: array();
@@ -165,17 +137,11 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getDefaultHeaders()
     {
         return $this->defaultHeaders;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setDefaultHeaders($headers)
     {
         if ($headers instanceof Collection) {
@@ -189,9 +155,6 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function expandTemplate($template, array $variables = null)
     {
         $expansionVars = $this->getConfig()->getAll();
@@ -202,9 +165,6 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         return $this->getUriTemplate()->expand($template, $expansionVars);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setUriTemplate(UriTemplateInterface $uriTemplate)
     {
         $this->uriTemplate = $uriTemplate;
@@ -212,9 +172,6 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getUriTemplate()
     {
         if (!$this->uriTemplate) {
@@ -224,9 +181,6 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         return $this->uriTemplate;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function createRequest($method = RequestInterface::GET, $uri = null, $headers = null, $body = null)
     {
         if (!is_array($uri)) {
@@ -267,17 +221,11 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         );
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getBaseUrl($expand = true)
     {
         return $expand ? $this->expandTemplate($this->baseUrl) : $this->baseUrl;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setBaseUrl($url)
     {
         $this->baseUrl = $url;
@@ -285,9 +233,6 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setUserAgent($userAgent, $includeDefault = false)
     {
         if ($includeDefault) {
@@ -310,65 +255,41 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             . ' PHP/' . PHP_VERSION;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function get($uri = null, $headers = null, $body = null)
     {
         return $this->createRequest('GET', $uri, $headers, $body);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function head($uri = null, $headers = null)
     {
         return $this->createRequest('HEAD', $uri, $headers);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function delete($uri = null, $headers = null, $body = null)
     {
         return $this->createRequest('DELETE', $uri, $headers, $body);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function put($uri = null, $headers = null, $body = null)
     {
         return $this->createRequest('PUT', $uri, $headers, $body);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function patch($uri = null, $headers = null, $body = null)
     {
         return $this->createRequest('PATCH', $uri, $headers, $body);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function post($uri = null, $headers = null, $postBody = null)
     {
         return $this->createRequest('POST', $uri, $headers, $postBody);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function options($uri = null)
     {
         return $this->createRequest('OPTIONS', $uri);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function send($requests)
     {
         $curlMulti = $this->getCurlMulti();
@@ -394,9 +315,6 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setCurlMulti(CurlMultiInterface $curlMulti)
     {
         $this->curlMulti = $curlMulti;
@@ -404,9 +322,6 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getCurlMulti()
     {
         if (!$this->curlMulti) {
@@ -416,9 +331,6 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         return $this->curlMulti;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setRequestFactory(RequestFactoryInterface $factory)
     {
         $this->requestFactory = $factory;

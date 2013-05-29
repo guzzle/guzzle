@@ -15,24 +15,15 @@ use Guzzle\Http\Message\RequestInterface;
  */
 class DefaultCacheKeyProvider implements CacheKeyProviderInterface
 {
-    /**
-     * @var string Request parameter holding the cache key
-     */
+    /** @var string Request parameter holding the cache key */
     const CACHE_KEY = 'cache.key';
 
-    /**
-     * @var string Request parameter holding the cache key filter settings
-     */
+    /** @var string Request parameter holding the cache key filter settings */
     const CACHE_KEY_FILTER = 'cache.key_filter';
 
-    /**
-     * @var string Request parameter holding the raw key
-     */
+    /** @var string Request parameter holding the raw key */
     const CACHE_KEY_RAW = 'cache.raw_key';
 
-    /**
-     * {@inheritdoc}
-     */
     public function getCacheKey(RequestInterface $request)
     {
         // See if the key has already been calculated

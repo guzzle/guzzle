@@ -7,14 +7,10 @@ namespace Guzzle\Batch;
  */
 abstract class AbstractBatchDecorator implements BatchInterface
 {
-    /**
-     * @var BatchInterface Decorated batch object
-     */
+    /** @var BatchInterface Decorated batch object */
     protected $decoratedBatch;
 
     /**
-     * Create the decorator
-     *
      * @param BatchInterface $decoratedBatch  BatchInterface that is being decorated
      */
     public function __construct(BatchInterface $decoratedBatch)
@@ -36,9 +32,6 @@ abstract class AbstractBatchDecorator implements BatchInterface
         return call_user_func_array(array($this->decoratedBatch, $method), $args);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function add($item)
     {
         $this->decoratedBatch->add($item);
@@ -46,17 +39,11 @@ abstract class AbstractBatchDecorator implements BatchInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function flush()
     {
         return $this->decoratedBatch->flush();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function isEmpty()
     {
         return $this->decoratedBatch->isEmpty();

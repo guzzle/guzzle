@@ -10,14 +10,9 @@ use Guzzle\Batch\Exception\BatchTransferException;
  */
 class ExceptionBufferingBatch extends AbstractBatchDecorator
 {
-    /**
-     * @var array Array of BatchTransferException exceptions
-     */
+    /** @var array Array of BatchTransferException exceptions */
     protected $exceptions = array();
 
-    /**
-     * {@inheritdoc}
-     */
     public function flush()
     {
         $items = array();

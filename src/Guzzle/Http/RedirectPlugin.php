@@ -29,9 +29,6 @@ class RedirectPlugin implements EventSubscriberInterface
      */
     protected $defaultMaxRedirects = 5;
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getSubscribedEvents()
     {
         return array(

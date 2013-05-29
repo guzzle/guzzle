@@ -12,19 +12,13 @@ use Guzzle\Http\Exception\BadResponseException;
  */
 class DefaultRevalidation implements RevalidationInterface
 {
-    /**
-     * @var CacheKeyProviderInterface Strategy used to create cache keys
-     */
+    /** @var CacheKeyProviderInterface Strategy used to create cache keys */
     protected $cacheKey;
 
-    /**
-     * @var CacheStorageInterface Cache object storing cache data
-     */
+    /** @var CacheStorageInterface Cache object storing cache data */
     protected $storage;
 
-    /**
-     * @var CachePlugin
-     */
+    /** @var CachePlugin */
     protected $plugin;
 
     /**
@@ -39,9 +33,6 @@ class DefaultRevalidation implements RevalidationInterface
         $this->plugin = $plugin;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function revalidate(RequestInterface $request, Response $response)
     {
         try {

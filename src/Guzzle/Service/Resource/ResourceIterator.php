@@ -5,9 +5,6 @@ namespace Guzzle\Service\Resource;
 use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Service\Command\CommandInterface;
 
-/**
- * {@inheritdoc}
- */
 abstract class ResourceIterator extends AbstractHasDispatcher implements ResourceIteratorInterface
 {
     /** @var CommandInterface Command used to send requests */

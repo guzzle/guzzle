@@ -11,14 +11,10 @@ use Guzzle\Http\Message\Response;
  */
 class RequestMediator
 {
-    /**
-     * @var RequestInterface
-     */
+    /** @var RequestInterface */
     protected $request;
 
-    /**
-     * @var bool Whether or not to emit read/write events
-     */
+    /** @var bool Whether or not to emit read/write events */
     protected $emitIo;
 
     /**

@@ -12,9 +12,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class CookiePlugin implements EventSubscriberInterface
 {
-    /**
-     * @var CookieJarInterface Cookie cookieJar used to hold cookies
-     */
+    /** @var CookieJarInterface Cookie cookieJar used to hold cookies */
     protected $cookieJar;
 
     /**
@@ -25,9 +23,6 @@ class CookiePlugin implements EventSubscriberInterface
         $this->cookieJar = $cookieJar ?: new ArrayCookieJar();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getSubscribedEvents()
     {
         return array(

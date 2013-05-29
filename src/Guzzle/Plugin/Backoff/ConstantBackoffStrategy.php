@@ -13,30 +13,20 @@ use Guzzle\Http\Exception\HttpException;
  */
 class ConstantBackoffStrategy extends AbstractBackoffStrategy
 {
-    /**
-     * @var int Amount of time for each delay
-     */
+    /** @var int Amount of time for each delay */
     protected $delay;
 
-    /**
-     * @param int $delay Amount of time to delay between each additional backoff
-     */
+    /** @param int $delay Amount of time to delay between each additional backoff */
     public function __construct($delay)
     {
         $this->delay = $delay;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function makesDecision()
     {
         return false;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function getDelay($retries, RequestInterface $request, Response $response = null, HttpException $e = null)
     {
         return $this->delay;

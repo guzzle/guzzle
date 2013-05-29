@@ -19,33 +19,21 @@ class Zf2CacheAdapter extends AbstractCacheAdapter
         $this->cache = $cache;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function contains($id, array $options = null)
     {
         return $this->cache->hasItem($id);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function delete($id, array $options = null)
     {
         return $this->cache->removeItem($id);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function fetch($id, array $options = null)
     {
         return $this->cache->getItem($id);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function save($id, $data, $lifeTime = false, array $options = null)
     {
         return $this->cache->setItem($id, $data);

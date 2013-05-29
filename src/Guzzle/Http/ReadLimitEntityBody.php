@@ -7,14 +7,10 @@ namespace Guzzle\Http;
  */
 class ReadLimitEntityBody extends AbstractEntityBodyDecorator
 {
-    /**
-     * @var int Limit the number of bytes that can be read
-     */
+    /** @var int Limit the number of bytes that can be read */
     protected $limit;
 
-    /**
-     * @var int Offset to start reading from
-     */
+    /** @var int Offset to start reading from */
     protected $offset;
 
     /**
@@ -38,9 +34,6 @@ class ReadLimitEntityBody extends AbstractEntityBodyDecorator
         return substr((string) $this->body, $this->offset, $this->limit) ?: '';
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function isConsumed()
     {
         return (($this->offset + $this->limit) - $this->body->ftell()) <= 0;
@@ -99,9 +92,6 @@ class ReadLimitEntityBody extends AbstractEntityBodyDecorator
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function read($length)
     {
         // Check if the current position is less than the total allowed bytes + original offset

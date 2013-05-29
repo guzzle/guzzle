@@ -19,19 +19,13 @@ class CurlHandle
     const PROGRESS = 'progress';
     const DEBUG = 'debug';
 
-    /**
-     * @var Collection Curl options
-     */
+    /** @var Collection Curl options */
     protected $options;
 
-    /**
-     * @var resource Curl resource handle
-     */
+    /** @var resource Curl resource handle */
     protected $handle;
 
-    /**
-     * @var int CURLE_* error
-     */
+    /** @var int CURLE_* error */
     protected $errorNo = CURLE_OK;
 
     /**

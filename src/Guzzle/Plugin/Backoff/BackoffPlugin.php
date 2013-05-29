@@ -19,9 +19,7 @@ class BackoffPlugin extends AbstractHasDispatcher implements EventSubscriberInte
     const RETRY_PARAM = 'plugins.backoff.retry_count';
     const RETRY_EVENT = 'plugins.backoff.retry';
 
-    /**
-     * @var BackoffStrategyInterface Backoff strategy
-     */
+    /** @var BackoffStrategyInterface Backoff strategy */
     protected $strategy;
 
     /**
@@ -56,17 +54,11 @@ class BackoffPlugin extends AbstractHasDispatcher implements EventSubscriberInte
         ));
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getAllEvents()
     {
         return array(self::RETRY_EVENT);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getSubscribedEvents()
     {
         return array(

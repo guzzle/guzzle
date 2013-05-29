@@ -14,19 +14,13 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class Md5ValidatorPlugin implements EventSubscriberInterface
 {
-    /**
-     * @var int Maximum Content-Length in bytes to validate
-     */
+    /** @var int Maximum Content-Length in bytes to validate */
     protected $contentLengthCutoff;
 
-    /**
-     * @var bool Whether or not to compare when a Content-Encoding is present
-     */
+    /** @var bool Whether or not to compare when a Content-Encoding is present */
     protected $contentEncoded;
 
     /**
-     * Constructor
-     *
      * @param bool     $contentEncoded      Calculating the MD5 hash of an entity body where a Content-Encoding was
      *                                      applied is a more expensive comparison because the entity body will need to
      *                                      be compressed in order to get the correct hash.  Set to FALSE to not
@@ -41,9 +35,6 @@ class Md5ValidatorPlugin implements EventSubscriberInterface
         $this->contentEncoded = $contentEncoded;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getSubscribedEvents()
     {
         return array('request.complete' => array('onRequestComplete', 255));

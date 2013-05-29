@@ -20,24 +20,16 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class LogPlugin implements EventSubscriberInterface
 {
-    /**
-     * @var LogAdapterInterface Adapter responsible for writing log data
-     */
+    /** @var LogAdapterInterface Adapter responsible for writing log data */
     private $logAdapter;
 
-    /**
-     * @var MessageFormatter Formatter used to format messages before logging
-     */
+    /** @var MessageFormatter Formatter used to format messages before logging */
     protected $formatter;
 
-    /**
-     * @var bool Whether or not to wire request and response bodies
-     */
+    /** @var bool Whether or not to wire request and response bodies */
     protected $wireBodies;
 
     /**
-     * Construct a new LogPlugin
-     *
      * @param LogAdapterInterface     $logAdapter Adapter object used to log message
      * @param string|MessageFormatter $formatter  Formatter used to format log messages or the formatter template
      * @param bool                    $wireBodies Set to true to track request and response bodies using a temporary
@@ -76,9 +68,6 @@ class LogPlugin implements EventSubscriberInterface
         }), "# Request:\n{request}\n\n# Response:\n{response}\n\n# Errors: {curl_code} {curl_error}", $wireBodies);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getSubscribedEvents()
     {
         return array(

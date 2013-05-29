@@ -9,9 +9,7 @@ use Guzzle\Common\ToArrayInterface;
  */
 class Cookie implements ToArrayInterface
 {
-    /**
-     * @var array Cookie data
-     */
+    /** @var array Cookie data */
     protected $data;
 
     /**

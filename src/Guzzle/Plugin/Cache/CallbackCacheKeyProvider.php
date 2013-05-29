@@ -10,9 +10,7 @@ use Guzzle\Http\Message\RequestInterface;
  */
 class CallbackCacheKeyProvider implements CacheKeyProviderInterface
 {
-    /**
-     * @var \Closure|array|mixed Callable method
-     */
+    /** @var \Closure|array|mixed Callable method */
     protected $callback;
 
     /**
@@ -27,9 +25,6 @@ class CallbackCacheKeyProvider implements CacheKeyProviderInterface
         $this->callback = $callback;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getCacheKey(RequestInterface $request)
     {
         return call_user_func($this->callback, $request);

@@ -26,33 +26,23 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class CachePlugin implements EventSubscriberInterface
 {
-    /**
-     * @var CacheKeyProviderInterface Cache key provider
-     */
+    /** @var CacheKeyProviderInterface Cache key provider */
     protected $keyProvider;
 
-    /**
-     * @var RevalidationInterface Cache revalidation strategy
-     */
+    /** @var RevalidationInterface Cache revalidation strategy */
     protected $revalidation;
 
-    /**
-     * @var CanCacheStrategyInterface Object used to determine if a request can be cached
-     */
+    /** @var CanCacheStrategyInterface Object used to determine if a request can be cached */
     protected $canCache;
 
-    /**
-     * @var CacheStorageInterface $cache Object used to cache responses
-     */
+    /** @var CacheStorageInterface $cache Object used to cache responses */
     protected $storage;
 
-    /**
-     * @var bool Whether to add debug headers to the response
-     */
+    /** @var bool Whether to add debug headers to the response */
     protected $debugHeaders;
 
     /**
-     * Construct a new CachePlugin. Cache options include the following:
+     * Cache options include the following:
      *
      * - CacheKeyProviderInterface key_provider:  (optional) Cache key provider
      * - CacheAdapterInterface     adapter:       (optional) Adapter used to cache objects. Pass this or a cache_storage
@@ -129,9 +119,6 @@ class CachePlugin implements EventSubscriberInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getSubscribedEvents()
     {
         return array(

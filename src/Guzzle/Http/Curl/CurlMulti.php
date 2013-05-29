@@ -12,39 +12,25 @@ use Guzzle\Http\Message\RequestInterface;
  */
 class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
 {
-    /**
-     * @var resource cURL multi handle.
-     */
+    /** @var resource cURL multi handle. */
     protected $multiHandle;
 
-    /**
-     * @var array Attached {@see RequestInterface} objects.
-     */
+    /** @var array Attached {@see RequestInterface} objects. */
     protected $requests;
 
-    /**
-     * @var \SplObjectStorage RequestInterface to CurlHandle hash
-     */
+    /** @var \SplObjectStorage RequestInterface to CurlHandle hash */
     protected $handles;
 
-    /**
-     * @var array Hash mapping curl handle resource IDs to request objects
-     */
+    /** @var array Hash mapping curl handle resource IDs to request objects */
     protected $resourceHash;
 
-    /**
-     * @var array Queued exceptions
-     */
+    /** @var array Queued exceptions */
     protected $exceptions = array();
 
-    /**
-     * @var array Requests that succeeded
-     */
+    /** @var array Requests that succeeded */
     protected $successful = array();
 
-    /**
-     * @var array cURL multi error values and codes
-     */
+    /** @var array cURL multi error values and codes */
     protected $multiErrors = array(
         CURLM_BAD_HANDLE      => array('CURLM_BAD_HANDLE', 'The passed-in handle is not a valid CURLM handle.'),
         CURLM_BAD_EASY_HANDLE => array('CURLM_BAD_EASY_HANDLE', "An easy handle was not good/valid. It could mean that it isn't an easy handle at all, or possibly that the handle already is in used by this or another multi handle."),
@@ -52,9 +38,6 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         CURLM_INTERNAL_ERROR  => array('CURLM_INTERNAL_ERROR', 'This can only be returned if libcurl bugs. Please report it to us!')
     );
 
-    /**
-     * {@inheritdoc}
-     */
     public function __construct()
     {
         $this->multiHandle = curl_multi_init();
@@ -66,9 +49,6 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         $this->reset();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function __destruct()
     {
         if (is_resource($this->multiHandle)) {
@@ -76,9 +56,6 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function add(RequestInterface $request)
     {
         $this->requests[] = $request;
@@ -90,17 +67,11 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function all()
     {
         return $this->requests;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function remove(RequestInterface $request)
     {
         $this->removeHandle($request);
@@ -116,9 +87,6 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         return false;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function reset($hard = false)
     {
         // Remove each request
@@ -132,9 +100,6 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         $this->requests = $this->resourceHash = $this->exceptions = $this->successful = array();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function send()
     {
         $this->perform();
@@ -147,9 +112,6 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function count()
     {
         return count($this->requests);
