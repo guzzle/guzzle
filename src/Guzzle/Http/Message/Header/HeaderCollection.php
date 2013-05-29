@@ -54,25 +54,16 @@ class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, 
         return $this->offsetGet($key);
     }
 
-    /**
-     * @inheritdoc}
-     */
     public function count()
     {
         return count($this->headers);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function offsetExists($offset)
     {
         return isset($this->headers[strtolower($offset)]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function offsetGet($offset)
     {
         $l = strtolower($offset);
@@ -80,33 +71,21 @@ class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, 
         return isset($this->headers[$l]) ? $this->headers[$l] : null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function offsetSet($offset, $value)
     {
         $this->add($value);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function offsetUnset($offset)
     {
         unset($this->headers[strtolower($offset)]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getIterator()
     {
         return new \ArrayIterator($this->headers);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function toArray()
     {
         $result = array();
