@@ -108,7 +108,30 @@ abstract class AbstractConfigLoader implements ConfigLoaderInterface
                 $config = json_decode($json, true);
                 // Throw an exception if there was an error loading the file
                 if ($error = json_last_error()) {
-                    throw new RuntimeException("Error loading JSON data from {$filename}: {$error}");
+                    switch ($error) {
+                        case JSON_ERROR_NONE:
+                            $message = 'JSON_ERROR_NONE - No errors';
+                        break;
+                        case JSON_ERROR_DEPTH:
+                            $message = 'JSON_ERROR_DEPTH - Maximum stack depth exceeded';
+                        break;
+                        case JSON_ERROR_STATE_MISMATCH:
+                            $message = 'JSON_ERROR_STATE_MISMATCH - Underflow or the modes mismatch';
+                        break;
+                        case JSON_ERROR_CTRL_CHAR:
+                            $message = 'JSON_ERROR_CTRL_CHAR - Unexpected control character found';
+                        break;
+                        case JSON_ERROR_SYNTAX:
+                            $message = 'JSON_ERROR_SYNTAX - Syntax error, malformed JSON';
+                        break;
+                        case JSON_ERROR_UTF8:
+                            $message = 'JSON_ERROR_UTF8 - Malformed UTF-8 characters, possibly incorrectly encoded';
+                        break;
+                        default:
+                            $message = 'Unknown error';
+                        break;
+                    }
+                    throw new RuntimeException("Error loading JSON data from {$filename}: ({$error}) - {$message}");
                 }
                 break;
             case 'php':
