@@ -186,20 +186,6 @@ class CurlHandle
             $curlOptions[CURLOPT_HTTPHEADER][] = 'Accept:';
         }
 
-        // Check if any headers or cURL options are blacklisted
-        if ($blacklist = $requestCurlOptions->get('blacklist')) {
-            foreach ($blacklist as $value) {
-                if (strpos($value, 'header.') !== 0) {
-                    unset($curlOptions[$value]);
-                } else {
-                    // Remove headers that may have previously been set but are supposed to be blacklisted
-                    $key = substr($value, 7);
-                    $request->removeHeader($key);
-                    $curlOptions[CURLOPT_HTTPHEADER][] = $key . ':';
-                }
-            }
-        }
-
         // Add any custom headers to the request. Empty headers will cause curl to not send the header at all.
         foreach ($request->getHeaderLines() as $line) {
             $curlOptions[CURLOPT_HTTPHEADER][] = $line;
@@ -456,7 +442,7 @@ class CurlHandle
     {
         $curlOptions = array();
         foreach ($config as $key => $value) {
-            if (!is_numeric($key) && defined($key)) {
+            if (is_string($key) && defined($key)) {
                 // Convert constants represented as string to constant int values
                 $key = constant($key);
             }
