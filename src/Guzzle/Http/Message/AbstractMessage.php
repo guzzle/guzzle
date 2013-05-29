@@ -12,24 +12,19 @@ use Guzzle\Http\Message\Header\HeaderInterface;
  */
 abstract class AbstractMessage implements MessageInterface
 {
-    /**
-     * @var array HTTP header collection
-     */
+    /** @var array HTTP header collection */
     protected $headers;
 
-    /**
-     * @var HeaderFactoryInterface $headerFactory
-     */
+    /** @var HeaderFactoryInterface $headerFactory */
     protected $headerFactory;
 
-    /**
-     * @var Collection Custom message parameters that are extendable by plugins
-     */
+    /** @var Collection Custom message parameters that are extendable by plugins */
     protected $params;
 
-    /**
-     * @var string HTTP protocol version of the message
-     */
+    /** @var string Message protocol */
+    protected $protocol = 'HTTP';
+
+    /** @var string HTTP protocol version of the message */
     protected $protocolVersion = '1.1';
 
     public function __construct()
@@ -39,17 +34,11 @@ abstract class AbstractMessage implements MessageInterface
         $this->headers = new HeaderCollection();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getParams()
     {
         return $this->params;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function addHeader($header, $value)
     {
         if (isset($this->headers[$header])) {
@@ -63,9 +52,6 @@ abstract class AbstractMessage implements MessageInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function addHeaders(array $headers)
     {
         foreach ($headers as $key => $value) {
@@ -75,25 +61,16 @@ abstract class AbstractMessage implements MessageInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getHeader($header)
     {
         return $this->headers[$header];
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getHeaders()
     {
         return $this->headers;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getHeaderLines()
     {
         $headers = array();
@@ -104,9 +81,6 @@ abstract class AbstractMessage implements MessageInterface
         return $headers;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setHeader($header, $value)
     {
         unset($this->headers[$header]);
@@ -115,9 +89,6 @@ abstract class AbstractMessage implements MessageInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setHeaders(array $headers)
     {
         $this->headers->clear();
@@ -128,17 +99,11 @@ abstract class AbstractMessage implements MessageInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function hasHeader($header)
     {
         return isset($this->headers[$header]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function removeHeader($header)
     {
         unset($this->headers[$header]);

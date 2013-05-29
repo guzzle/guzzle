@@ -95,11 +95,6 @@ class Response extends AbstractMessage
     protected $statusCode;
 
     /**
-     * @var string Response protocol
-     */
-    protected $protocol = 'HTTP';
-
-    /**
      * @var array Information about the request
      */
     protected $info = array();
@@ -119,7 +114,7 @@ class Response extends AbstractMessage
      *
      * @param string $message Response message
      *
-     * @return Response|bool Returns false on error
+     * @return self|bool Returns false on error
      */
     public static function fromMessage($message)
     {
@@ -208,7 +203,7 @@ class Response extends AbstractMessage
      * @param string $protocol Response protocol
      * @param string $version  Protocol version
      *
-     * @return Response
+     * @return self
      */
     public function setProtocol($protocol, $version)
     {
@@ -225,7 +220,7 @@ class Response extends AbstractMessage
      */
     public function getProtocol()
     {
-        return $this->protocol ?: 'HTTP';
+        return $this->protocol;
     }
 
     /**
@@ -235,7 +230,7 @@ class Response extends AbstractMessage
      */
     public function getProtocolVersion()
     {
-        return $this->protocolVersion ?: '1.1';
+        return $this->protocolVersion;
     }
 
     /**
@@ -263,7 +258,7 @@ class Response extends AbstractMessage
      *
      * @param array $info Array of cURL transfer stats
      *
-     * @return Response
+     * @return self
      */
     public function setInfo(array $info)
     {
@@ -278,7 +273,7 @@ class Response extends AbstractMessage
      * @param int    $statusCode   Response status code to set
      * @param string $reasonPhrase Response reason phrase
      *
-     * @return Response
+     * @return self
      * @throws BadResponseException when an invalid response code is received
      */
     public function setStatus($statusCode, $reasonPhrase = '')
@@ -756,23 +751,7 @@ class Response extends AbstractMessage
     }
 
     /**
-     * @deprecated
-     */
-    public function setRequest($request)
-    {
-        return $this;
-    }
-
-    /**
-     * @deprecated
-     */
-    public function getRequest()
-    {
-        return null;
-    }
-
-    /**
-     * Check if the response can be cached
+     * Check if the response can be cached based on the response headers
      *
      * @return bool Returns TRUE if the response can be cached or false if not
      */
@@ -900,14 +879,6 @@ class Response extends AbstractMessage
     }
 
     /**
-     * @deprecated
-     */
-    public function getPreviousResponse()
-    {
-        return null;
-    }
-
-    /**
      * Get the redirect count of this response
      *
      * @return int
@@ -939,5 +910,29 @@ class Response extends AbstractMessage
     public function getEffectiveUrl()
     {
         return $this->effectiveUrl;
+    }
+
+    /**
+     * @deprecated
+     */
+    public function getPreviousResponse()
+    {
+        return null;
+    }
+
+    /**
+     * @deprecated
+     */
+    public function setRequest($request)
+    {
+        return $this;
+    }
+
+    /**
+     * @deprecated
+     */
+    public function getRequest()
+    {
+        return null;
     }
 }

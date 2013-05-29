@@ -31,8 +31,6 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     const PATCH = 'PATCH';
 
     /**
-     * Get the HTTP request as a string
-     *
      * @return string
      */
     public function __toString();
@@ -42,7 +40,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @param ClientInterface $client
      *
-     * @return RequestInterface
+     * @return self
      */
     public function setClient(ClientInterface $client);
 
@@ -56,12 +54,9 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     /**
      * Set the URL of the request
      *
-     * Warning: Calling this method will modify headers, rewrite the  query string object, and set other data
-     * associated with the request.
-     *
      * @param string $url|Url Full URL to set including query string
      *
-     * @return RequestInterface
+     * @return self
      */
     public function setUrl($url);
 
@@ -74,16 +69,14 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     public function send();
 
     /**
-     * Get the previously received {@see Response} or NULL if the request has
-     * not been sent
+     * Get the previously received {@see Response} or NULL if the request has not been sent
      *
      * @return Response|null
      */
     public function getResponse();
 
     /**
-     * Get the collection of key value pairs that will be used as the query
-     * string in the request
+     * Get the collection of key value pairs that will be used as the query string in the request
      *
      * @return QueryString
      */
@@ -108,7 +101,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @param string $scheme Scheme to set
      *
-     * @return RequestInterface
+     * @return self
      */
     public function setScheme($scheme);
 
@@ -120,12 +113,11 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     public function getHost();
 
     /**
-     * Set the host of the request.  Including a port in the host will modify
-     * the port of the request.
+     * Set the host of the request. Including a port in the host will modify the port of the request.
      *
      * @param string $host Host to set (e.g. www.yahoo.com, www.yahoo.com:80)
      *
-     * @return RequestInterface
+     * @return self
      */
     public function setHost($host);
 
@@ -141,7 +133,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @param string $protocol HTTP protocol version to use with the request
      *
-     * @return RequestInterface
+     * @return self
      */
     public function setProtocolVersion($protocol);
 
@@ -157,7 +149,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @param string|array $path Path to set or array of segments to implode
      *
-     * @return RequestInterface
+     * @return self
      */
     public function setPath($path);
 
@@ -173,7 +165,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @param int $port Port number to set
      *
-     * @return RequestInterface
+     * @return self
      */
     public function setPort($port);
 
@@ -191,8 +183,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * @param string      $password Password
      * @param string      $scheme   Authentication scheme to use (CURLAUTH_BASIC, CURLAUTH_DIGEST, etc)
      *
-     * @return Request
-     *
+     * @return self
      * @link http://www.ietf.org/rfc/rfc2617.txt
      * @link http://php.net/manual/en/function.curl-setopt.php See the available options for CURLOPT_HTTPAUTH
      * @throws RequestException
@@ -207,8 +198,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     public function getPassword();
 
     /**
-     * Get the resource part of the the request, including the path, query
-     * string, and fragment
+     * Get the resource part of the the request, including the path, query string, and fragment
      *
      * @return string
      */
@@ -216,7 +206,6 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
 
     /**
      * Get the full URL of the request (e.g. 'http://www.guzzle-project.com/')
-     * scheme://username:password@domain:port/path?query_string#fragment
      *
      * @param bool $asObject Set to TRUE to retrieve the URL as a clone of the URL object owned by the request.
      *
@@ -225,7 +214,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     public function getUrl($asObject = false);
 
     /**
-     * Get the state of the request.  One of 'complete', 'sending', 'new'
+     * Get the state of the request. One of 'complete', 'transfer', 'new', 'error'
      *
      * @return string
      */
@@ -234,10 +223,10 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     /**
      * Set the state of the request
      *
-     * @param string $state   State of the request (complete, sending, or new)
+     * @param string $state   State of the request ('complete', 'transfer', 'new', 'error')
      * @param array  $context Contextual information about the state change
      *
-     * @return RequestInterface
+     * @return self
      */
     public function setState($state, array $context = array());
 
@@ -249,7 +238,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     public function getCurlOptions();
 
     /**
-     * The start of a response has been received for a request
+     * The start of a response has been received for a request and the request is still in progress
      *
      * @param Response $response Response that has been received so far
      *
@@ -279,13 +268,6 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     public function getResponseBody();
 
     /**
-     * Determine if the response body is repeatable (readable + seekable)
-     *
-     * @return bool
-     */
-    public function isResponseBodyRepeatable();
-
-    /**
      * Manually set a response for the request.
      *
      * This method is useful for specifying a mock response for the request or setting the response using a cache.
@@ -295,7 +277,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * @param bool     $queued   Set to TRUE to keep the request in a state of not having been sent, but queue the
      *                           response for send()
      *
-     * @return RequestInterface Returns a reference to the object.
+     * @return self Returns a reference to the object.
      */
     public function setResponse(Response $response, $queued = false);
 
@@ -321,7 +303,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * @param string $name  Name of the cookie to add
      * @param string $value Value to set
      *
-     * @return RequestInterface
+     * @return self
      */
     public function addCookie($name, $value);
 
@@ -330,12 +312,12 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @param string $name Cookie to remove by name
      *
-     * @return RequestInterface
+     * @return self
      */
     public function removeCookie($name);
 
     /**
-     * Returns whether or not the request can be cached
+     * Returns whether or not the request can be cached based on the request headers
      *
      * @return bool
      */

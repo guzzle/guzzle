@@ -542,7 +542,9 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Determine if the response body is repeatable (readable + seekable)
+     *
+     * @return bool
      */
     public function isResponseBodyRepeatable()
     {

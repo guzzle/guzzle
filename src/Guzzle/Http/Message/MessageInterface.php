@@ -2,9 +2,6 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Common\Exception\InvalidArgumentException;
-use Guzzle\Common\Collection;
-
 /**
  * Request and response message interface
  */
@@ -13,7 +10,7 @@ interface MessageInterface
     /**
      * Get application and plugin specific parameters set on the message.
      *
-     * @return Collection
+     * @return \Guzzle\Common\Collection
      */
     public function getParams();
 
@@ -23,7 +20,7 @@ interface MessageInterface
      * @param string $header Header name to add
      * @param string $value  Value of the header
      *
-     * @return MessageInterface
+     * @return self
      */
     public function addHeader($header, $value);
 
@@ -32,7 +29,7 @@ interface MessageInterface
      *
      * @param array $headers Associative array of header data.
      *
-     * @return MessageInterface
+     * @return self
      */
     public function addHeaders(array $headers);
 
@@ -48,23 +45,16 @@ interface MessageInterface
     /**
      * Get all headers as a collection
      *
-     * @return Collection Returns a {@see Collection} of all headers
+     * @return \Guzzle\Http\Message\Header\HeaderCollection
      */
     public function getHeaders();
-
-    /**
-     * Get an array of message header lines
-     *
-     * @return array
-     */
-    public function getHeaderLines();
 
     /**
      * Check if the specified header is present.
      *
      * @param string $header The header to check.
      *
-     * @return bool Returns TRUE or FALSE if the header is present
+     * @return bool
      */
     public function hasHeader($header);
 
@@ -73,17 +63,17 @@ interface MessageInterface
      *
      * @param string $header HTTP header to remove.
      *
-     * @return MessageInterface
+     * @return self
      */
     public function removeHeader($header);
 
     /**
-     * Set an HTTP header
+     * Set an HTTP header and overwrite any existing value for the header
      *
      * @param string $header Name of the header to set.
      * @param mixed  $value  Value to set.
      *
-     * @return MessageInterface
+     * @return self
      */
     public function setHeader($header, $value);
 
@@ -92,9 +82,16 @@ interface MessageInterface
      *
      * @param array $headers Associative array of header data.
      *
-     * @return MessageInterface
+     * @return self
      */
     public function setHeaders(array $headers);
+
+    /**
+     * Get an array of message header lines (e.g. ["Host: example.com", ...])
+     *
+     * @return array
+     */
+    public function getHeaderLines();
 
     /**
      * Get the raw message headers as a string
