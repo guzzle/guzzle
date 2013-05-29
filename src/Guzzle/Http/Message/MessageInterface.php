@@ -50,11 +50,9 @@ interface MessageInterface
     /**
      * Get all headers as a collection
      *
-     * @param bool $asObjects Set to true to retrieve a collection of Header objects
-     *
      * @return Collection Returns a {@see Collection} of all headers
      */
-    public function getHeaders($asObjects = false);
+    public function getHeaders();
 
     /**
      * Get an array of message header lines
@@ -106,41 +104,4 @@ interface MessageInterface
      * @return string
      */
     public function getRawHeaders();
-
-    /**
-     * Get a Cache-Control directive from the message
-     *
-     * @param string $directive Directive to retrieve
-     *
-     * @return null|string
-     */
-    public function getCacheControlDirective($directive);
-
-    /**
-     * Check if the message has a Cache-Control directive
-     *
-     * @param string $directive Directive to check
-     *
-     * @return bool
-     */
-    public function hasCacheControlDirective($directive);
-
-    /**
-     * Add a Cache-Control directive on the message
-     *
-     * @param string      $directive Directive to set
-     * @param bool|string $value     Value to set
-     *
-     * @return MessageInterface
-     */
-    public function addCacheControlDirective($directive, $value = true);
-
-    /**
-     * Remove a Cache-Control directive from the message
-     *
-     * @param string $directive Directive to remove
-     *
-     * @return MessageInterface
-     */
-    public function removeCacheControlDirective($directive);
 }

@@ -3,7 +3,7 @@
 namespace Guzzle\Tests\Message;
 
 use Guzzle\Common\Collection;
-use Guzzle\Http\Message\HeaderComparison;
+use Guzzle\Tests\Http\Message\HeaderComparison;
 
 /**
  * @covers Guzzle\Http\Message\HeaderComparison

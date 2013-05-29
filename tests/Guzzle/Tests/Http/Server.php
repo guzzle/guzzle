@@ -112,7 +112,7 @@ class Server
             $data[] = array(
                 'statusCode'   => $response->getStatusCode(),
                 'reasonPhrase' => $response->getReasonPhrase(),
-                'headers'      => $response->getHeaders()->getAll(),
+                'headers'      => $response->getHeaders()->toArray(),
                 'body'         => $response->getBody(true)
             );
         }

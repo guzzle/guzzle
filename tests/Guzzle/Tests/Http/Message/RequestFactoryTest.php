@@ -203,8 +203,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('/path?q=1&v=2', $request->getResource());
         $this->assertInstanceOf('Guzzle\\Http\\EntityBody', $request->getBody());
         $this->assertEquals('Data', (string) $request->getBody());
-        $this->assertEquals('michael', $request->getUsername());
-        $this->assertEquals('123', $request->getPassword());
+        $this->assertEquals("Basic {$auth}", (string) $request->getHeader('Authorization'));
         $this->assertEquals('8080', $request->getPort());
 
         // Test passing a blank message returns false
@@ -222,8 +221,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('/path?q=1&v=2', $request->getResource());
         $this->assertInstanceOf('Guzzle\\Http\\EntityBody', $request->getBody());
         $this->assertEquals('Data', (string) $request->getBody());
-        $this->assertEquals('michael', $request->getUsername());
-        $this->assertEquals('123', $request->getPassword());
+        $this->assertEquals("Basic {$auth}", (string) $request->getHeader('Authorization'));
         $this->assertEquals(80, $request->getPort());
     }
 
@@ -275,9 +273,8 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $request = RequestFactory::getInstance()->fromMessage($message);
 
         $this->assertEquals(array(
-            'ZOO' => array('abc', '123', 'HI'),
-            'zoo' => array('456')
-        ), $request->getHeader('zoo')->raw());
+            'abc', '123', 'HI', '456'
+        ), $request->getHeader('zoo')->toArray());
     }
 
     /**

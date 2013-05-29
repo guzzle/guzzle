@@ -37,7 +37,7 @@ class HeaderVisitor extends AbstractResponseVisitor
             $container = $param->getName();
             $len = strlen($prefix);
             // Find all matching headers and place them into the containing element
-            foreach ($response->getHeaders() as $key => $header) {
+            foreach ($response->getHeaders()->toArray() as $key => $header) {
                 if (stripos($key, $prefix) === 0) {
                     // Account for multi-value headers
                     $value[$container][substr($key, $len)] = count($header) == 1 ? end($header) : $header;

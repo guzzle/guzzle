@@ -158,16 +158,17 @@ class Response extends AbstractMessage
      */
     public function __construct($statusCode, $headers = null, $body = null)
     {
+        parent::__construct();
         $this->setStatus($statusCode);
-        $this->params = new Collection();
         $this->body = EntityBody::factory($body !== null ? $body : '');
 
         if ($headers) {
-            if (!is_array($headers) && !($headers instanceof Collection)) {
+            if (is_array($headers)) {
+                $this->setHeaders($headers);
+            } elseif ($headers instanceof Collection) {
+                $this->setHeaders($headers->toArray());
+            } else {
                 throw new BadResponseException('Invalid headers argument received');
-            }
-            foreach ($headers as $key => $value) {
-                $this->addHeaders(array($key => $value));
             }
         }
     }
@@ -768,11 +769,6 @@ class Response extends AbstractMessage
     }
 
     /**
-     * Set the request object associated with the response
-     *
-     * @param mixed $request The request object used to generate the response or a closure to return a request
-     *
-     * @return Response
      * @deprecated
      */
     public function setRequest($request)
@@ -783,9 +779,6 @@ class Response extends AbstractMessage
     }
 
     /**
-     * Get the request object (or null) that is associated with this response
-     *
-     * @return RequestInterface
      * @deprecated
      */
     public function getRequest()
@@ -817,7 +810,7 @@ class Response extends AbstractMessage
 
         // Never cache no-store resources (this is a private cache, so private
         // can be cached)
-        if ($this->hasCacheControlDirective('no-store')) {
+        if ($this->getHeader('Cache-Control') && $this->getHeader('Cache-Control')->hasDirective('no-store')) {
             return false;
         }
 
@@ -831,13 +824,14 @@ class Response extends AbstractMessage
      */
     public function getMaxAge()
     {
-        // s-max-age, then max-age, then Expires
-        if ($age = $this->getCacheControlDirective('s-maxage')) {
-            return $age;
-        }
-
-        if ($age = $this->getCacheControlDirective('max-age')) {
-            return $age;
+        if ($header = $this->getHeader('Cache-Control')) {
+            // s-max-age, then max-age, then Expires
+            if ($age = $header->getDirective('s-maxage')) {
+                return $age;
+            }
+            if ($age = $header->getDirective('max-age')) {
+                return $age;
+            }
         }
 
         if ($this->getHeader('Expires')) {
@@ -964,43 +958,5 @@ class Response extends AbstractMessage
     public function getEffectiveUrl()
     {
         return $this->effectiveUrl;
-    }
-
-    /**
-     * Returns an associative array of parsed Link headers
-     *
-     * For example:
-     * Link: <http:/.../front.jpeg>; rel=front; type="image/jpeg", <http://.../back.jpeg>; rel=back; type="image/jpeg"
-     *
-     * <code>
-     * var_export($response->getLinks());
-     * array(
-     *     array(
-     *         'url' => 'http:/.../front.jpeg',
-     *         'rel' => 'back',
-     *         'type' => 'image/jpeg',
-     *     )
-     * )
-     * </code>
-     *
-     * @param string $rel Optionally provide a string to retrieve information for a particular "rel" link
-     *
-     * @return array|null Returns an array of all Link header values when no rel argument is supplied,
-     *                    Returns an associative array of a specific Link value when a rel argument is supplied
-     *                    Or returns null when a rel is supplied that is not found.
-     */
-    public function getLinks($rel = null)
-    {
-        $links = $this->getHeader('Link')->parseParams();
-        foreach ($links as &$link) {
-            $key = key($link);
-            unset($link[$key]);
-            $link['url'] = trim($key, '<> ');
-            if ($rel && isset($link['rel']) && $link['rel'] == $rel) {
-                return $link;
-            }
-        }
-
-        return $links;
     }
 }

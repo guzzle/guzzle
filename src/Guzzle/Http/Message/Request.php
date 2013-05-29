@@ -11,6 +11,7 @@ use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\ClientInterface;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\EntityBodyInterface;
+use Guzzle\Http\Message\Header\HeaderInterface;
 use Guzzle\Http\Url;
 use Guzzle\Parser\ParserRegistry;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -110,26 +111,19 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function __construct($method, $url, $headers = array())
     {
+        parent::__construct();
         $this->method = strtoupper($method);
         $this->curlOptions = new Collection();
-        $this->params = new Collection();
         $this->setUrl($url);
 
         if ($headers) {
             // Special handling for multi-value headers
             foreach ($headers as $key => $value) {
-                $lkey = strtolower($key);
                 // Deal with collisions with Host and Authorization
-                if ($lkey == 'host') {
+                if ($key == 'host' || $key == 'Host') {
                     $this->setHeader($key, $value);
-                } elseif ($lkey == 'authorization') {
-                    $parts = explode(' ', $value);
-                    if ($parts[0] == 'Basic' && isset($parts[1])) {
-                        list($user, $pass) = explode(':', base64_decode($parts[1]));
-                        $this->setAuth($user, $pass);
-                    } else {
-                        $this->setHeader($key, $value);
-                    }
+                } elseif ($value instanceof HeaderInterface) {
+                    $this->addHeader($key, $value);
                 } else {
                     foreach ((array) $value as $v) {
                         $this->addHeader($key, $v);
@@ -153,11 +147,7 @@ class Request extends AbstractMessage implements RequestInterface
         $this->params = clone $this->params;
         $this->url = clone $this->url;
         $this->response = $this->responseBody = null;
-
-        // Clone each header
-        foreach ($this->headers as &$value) {
-            $value = clone $value;
-        }
+        $this->headers = clone $this->headers;
 
         $this->setState(RequestInterface::STATE_NEW);
         $this->dispatch('request.clone', array('request' => $this));
@@ -375,9 +365,9 @@ class Request extends AbstractMessage implements RequestInterface
         // Include the port in the Host header if it is not the default port for the scheme of the URL
         $scheme = $this->url->getScheme();
         if (($scheme == 'http' && $port != 80) || ($scheme == 'https' && $port != 443)) {
-            $this->headers['host'] = new Header('Host', $this->url->getHost() . ':' . $port);
+            $this->headers['host'] = $this->headerFactory->createHeader('Host', $this->url->getHost() . ':' . $port);
         } else {
-            $this->headers['host'] = new Header('Host', $this->url->getHost());
+            $this->headers['host'] = $this->headerFactory->createHeader('Host', $this->url->getHost());
         }
 
         return $this;
@@ -657,7 +647,7 @@ class Request extends AbstractMessage implements RequestInterface
         }
 
         // Never cache requests when using no-store
-        if ($this->hasCacheControlDirective('no-store')) {
+        if ($this->getHeader('Cache-Control') && $this->getHeader('Cache-Control')->hasDirective('no-store')) {
             return false;
         }
 
@@ -727,15 +717,18 @@ class Request extends AbstractMessage implements RequestInterface
 
     /**
      * {@inheritdoc}
+     *
+     * Adds a check for Host header changes
      */
-    protected function changedHeader($header)
+    public function addHeader($header, $value)
     {
-        parent::changedHeader($header);
+        parent::addHeader($header, $value);
 
-        if ($header == 'host') {
-            // If the Host header was changed, be sure to update the internal URL
+        if ($header == 'host' || $header == 'Host') {
             $this->setHost((string) $this->getHeader('Host'));
         }
+
+        return $this;
     }
 
     /**

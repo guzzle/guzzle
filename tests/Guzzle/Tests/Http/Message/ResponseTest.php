@@ -53,6 +53,11 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         )), 'body');
     }
 
+    public function tearDown()
+    {
+        unset($this->response);
+    }
+
     /**
      * @covers Guzzle\Http\Message\Response::__construct
      */
@@ -754,7 +759,7 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertNull($response->isFresh());
         $this->assertNull($response->getFreshness());
 
-        $response->addCacheControlDirective('max-age', 120);
+        $response->setHeader('Cache-Control', 'max-age=120');
         $response->setHeader('Age', 100);
         $this->assertEquals(20, $response->getFreshness());
         $this->assertTrue($response->isFresh());

@@ -62,7 +62,7 @@ class DefaultCacheStorage implements CacheStorageInterface
             }
             $this->cache->save(
                 $key,
-                array($response->getStatusCode(), $response->getHeaders()->getAll(), $response->getBody(true)),
+                array($response->getStatusCode(), $response->getHeaders()->toArray(), $response->getBody(true)),
                 $ttl
             );
         }

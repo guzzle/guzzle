@@ -754,20 +754,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Curl\CurlHandle::factory
-     */
-    public function testAllowsHeadersSetToNull()
-    {
-        $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl());
-        $request->setClient(new Client());
-        $request->setBody('test');
-        $request->setHeader('Expect', null);
-        $handle = CurlHandle::factory($request);
-        $headers = $handle->getOptions()->get(CURLOPT_HTTPHEADER);
-        $this->assertTrue(in_array('Expect:', $headers));
-    }
-
-    /**
      * @covers Guzzle\Http\Curl\CurlHandle::updateRequestFromTransfer
      */
     public function testEnsuresRequestsHaveResponsesWhenUpdatingFromTransfer()

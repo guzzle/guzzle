@@ -2,18 +2,16 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Common\ToArrayInterface;
+use Guzzle\Http\Message\Header\HeaderInterface;
 
 /**
  * Represents a header and all of the values stored by that header
  */
-class Header implements ToArrayInterface, \IteratorAggregate, \Countable
+class Header implements HeaderInterface
 {
     protected $values = array();
     protected $header;
     protected $glue;
-    protected $stringCache;
-    protected $arrayCache;
 
     /**
      * Construct a new header object
@@ -24,68 +22,36 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
      */
     public function __construct($header, $values = array(), $glue = ',')
     {
-        $this->header = $header;
+        $this->header = trim($header);
         $this->glue = $glue;
 
-        if (null === $values) {
-            return;
-        }
-
-        foreach ((array) $values as $key => $value) {
-            $key = is_numeric($key) ? $header : $key;
-            if (!isset($this->values[$key])) {
-                $this->values[$key] = array();
-            }
+        foreach ((array) $values as $value) {
             foreach ((array) $value as $v) {
-                $this->values[$key][] = $v;
+                $this->values[] = $v;
             }
         }
     }
 
     /**
-     * Convert the header to a string
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function __toString()
     {
-        if (!$this->stringCache) {
-            $this->stringCache = implode($this->glue . ' ', $this->toArray());
-        }
-
-        return $this->stringCache;
+        return implode($this->glue . ' ', $this->toArray());
     }
 
     /**
-     * Add a value to the list of header values
-     *
-     * @param string $value  Value to add
-     * @param string $header The exact header casing to add with. Defaults to the name of the header.
-     *
-     * @return self
+     * {@inheritdoc}
      */
-    public function add($value, $header = null)
+    public function add($value)
     {
-        if (!$header) {
-            $header = $this->getName();
-        }
-
-        if (!isset($this->values[$header])) {
-            $this->values[$header] = array($value);
-        } else {
-            $this->values[$header][] = $value;
-        }
-
-        // Ensure that the array cache is cleared
-        $this->arrayCache = $this->stringCache = null;
+        $this->values[] = $value;
 
         return $this;
     }
 
     /**
-     * Get the name of the header
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getName()
     {
@@ -93,24 +59,27 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
     }
 
     /**
-     * Change the glue used to implode the values
-     *
-     * @param string $glue Glue used to implode multiple values
-     *
-     * @return self
+     * {@inheritdoc}
      */
-    public function setGlue($glue)
+    public function setName($name)
     {
-        $this->glue = $glue;
-        $this->stringCache = null;
+        $this->header = $name;
 
         return $this;
     }
 
     /**
-     * Get the glue used to implode multiple values into a string
-     *
-     * @return string
+     * {@inheritdoc}
+     */
+    public function setGlue($glue)
+    {
+        $this->glue = $glue;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function getGlue()
     {
@@ -118,17 +87,11 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
     }
 
     /**
-     * Normalize the header to be a single header with an array of values.
-     *
-     * This function will consolidate any variances in casing into a single header. If any values of the header
-     * contains the glue string value (e.g. ","), then the value will be exploded into multiple entries in the header.
-     *
-     * @return self
+     * {@inheritdoc}
      */
     public function normalize()
     {
         $values = $this->toArray();
-        $this->arrayCache = $this->stringCache = null;
 
         for ($i = 0, $total = count($values); $i < $total; $i++) {
             if (strpos($values[$i], $this->glue) !== false) {
@@ -139,100 +102,57 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
             }
         }
 
-        $this->values = array($this->getName() => array_values($values));
+        $this->values = array_values($values);
 
         return $this;
     }
 
     /**
-     * Check if a particular case variation is present in the header
-     * Example: A header exists on a message for 'Foo', and 'foo'. The Header object will contain all of the values of
-     * 'Foo' and all of the values of 'foo'.  You can use this method to check to see if a header was set using
-     * 'foo' (true), 'Foo' (true), 'FOO' (false), etc.
-     *
-     * @param string $header Exact header to check for
-     *
-     * @return bool
+     * @deprecated
      */
     public function hasExactHeader($header)
     {
-        return isset($this->values[$header]);
+        return $this->header == $header;
     }
 
     /**
-     * Check if the collection of headers has a particular value
-     *
-     * @param string $searchValue     Value to search for
-     * @param bool   $caseInsensitive Set to TRUE to use a case insensitive search
-     *
-     * @return bool
+     * {@inheritdoc}
      */
-    public function hasValue($searchValue, $caseInsensitive = false)
+    public function hasValue($searchValue)
     {
-        foreach ($this->toArray() as $value) {
-            if ($value == $searchValue) {
-                return true;
-            } elseif ($caseInsensitive && !strcasecmp($value, $searchValue)) {
-                return true;
-            }
-        }
-
-        return false;
+        return in_array($searchValue, $this->toArray());
     }
 
     /**
-     * Remove a specific value from the header
-     *
-     * @param string $searchValue Value to remove
-     *
-     * @return self
+     * {@inheritdoc}
      */
     public function removeValue($searchValue)
     {
-        foreach ($this->values as $key => $values) {
-            foreach ($values as $index => $value) {
-                if ($value == $searchValue) {
-                    unset($this->values[$key][$index]);
-                    $this->arrayCache = $this->stringCache = null;
-                    break 2;
-                }
-            }
-        }
+        $this->values = array_values(array_filter($this->values, function ($value) use ($searchValue) {
+            return $value != $searchValue;
+        }));
 
         return $this;
     }
 
     /**
-     * Get all of the header values as a flat array
      * {@inheritdoc}
      */
     public function toArray()
-    {
-        if ($this->arrayCache === null) {
-            $this->arrayCache = array();
-            foreach ($this->values as $values) {
-                $this->arrayCache = array_merge($this->arrayCache, $values);
-            }
-        }
-
-        return $this->arrayCache;
-    }
-
-    /**
-     * Get the raw data array of the headers. This array is represented as an associative array of the various cases
-     * that might be stored in the header and an array of values associated with each case variation.
-     *
-     * @return array
-     */
-    public function raw()
     {
         return $this->values;
     }
 
     /**
-     * Returns the total number of header values
-     *
-     * @return int
+     * {@deprecated}
+     */
+    public function raw()
+    {
+        return $this->toArray();
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function count()
     {
@@ -240,9 +160,7 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
     }
 
     /**
-     * Get an iterator that can be used to easily iterate over each header value
-     *
-     * @return \ArrayIterator
+     * {@inheritdoc}
      */
     public function getIterator()
     {
@@ -250,11 +168,7 @@ class Header implements ToArrayInterface, \IteratorAggregate, \Countable
     }
 
     /**
-     * Convert a header containing ";" separated data into an array of associative arrays representing the header
-     * key value pair data of the header. When a parameter does not contain a value, but just contains a key, this
-     * function will inject a key with a '' string value.
-     *
-     * @return array
+     * {@inheritdoc}
      * @todo Do not split semicolons when enclosed in quotes (e.g. foo="baz;bar")
      */
     public function parseParams()

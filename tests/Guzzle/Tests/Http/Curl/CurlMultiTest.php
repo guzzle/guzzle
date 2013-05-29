@@ -33,6 +33,11 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
         $this->multi = new MockMulti();
     }
 
+    public function tearDown()
+    {
+        unset($this->multi);
+    }
+
     public function testConstructorCreateMultiHandle()
     {
         $this->assertInternalType('resource', $this->multi->getHandle());
