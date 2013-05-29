@@ -497,7 +497,7 @@ class Request extends AbstractMessage implements RequestInterface
 
             $this->response = new Response($code, null, $body);
             $this->response->setStatus($code, $status);
-            $this->setRequestOnResponse($this->response);
+            $this->response->setEffectiveUrl((string) $this->url);
             $this->dispatch('request.receive.status_line', array(
                 'request'       => $this,
                 'line'          => $data,
@@ -519,7 +519,7 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function setResponse(Response $response, $queued = false)
     {
-        $this->setRequestOnResponse($response);
+        $response->setEffectiveUrl((string) $this->url);
 
         if ($queued) {
             $ed = $this->getEventDispatcher();
@@ -786,20 +786,5 @@ class Request extends AbstractMessage implements RequestInterface
                 $this->dispatch('request.success', $this->getEventArray());
             }
         }
-    }
-
-    /**
-     * Set a request closure on a response
-     *
-     * @param Response $response
-     * @deprecated
-     */
-    protected function setRequestOnResponse(Response $response)
-    {
-        $headers = $this->getRawHeaders();
-        $response->setEffectiveUrl((string) $this->url);
-        $response->setRequest(function () use ($headers) {
-            return RequestFactory::getInstance()->fromMessage($headers);
-        });
     }
 }

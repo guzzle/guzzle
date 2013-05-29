@@ -210,18 +210,6 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Message\Response::getRequest
-     */
-    public function testGetRequest()
-    {
-        $response = new Response(200, new Collection(), 'body');
-        $this->assertNull($response->getRequest());
-        $request = new \Guzzle\Http\Message\Request('GET', 'http://www.guzzle-project.com/');
-        $response->setRequest($request);
-        $this->assertEquals($request, $response->getRequest());
-    }
-
-    /**
      * @covers Guzzle\Http\Message\Response::getReasonPhrase
      * @covers Guzzle\Http\Message\Response::setStatus
      */
@@ -313,18 +301,6 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($response->isSuccessful());
         $response = new Response(403);
         $this->assertFalse($response->isSuccessful());
-    }
-
-    /**
-     * @covers Guzzle\Http\Message\Response::setRequest
-     */
-    public function testSetRequest()
-    {
-        $response = new Response(200);
-        $this->assertNull($response->getRequest());
-        $r = new \Guzzle\Http\Message\Request('GET', 'http://www.guzzle-project.com/');
-        $response->setRequest($r);
-        $this->assertEquals($r, $response->getRequest());
     }
 
     /**

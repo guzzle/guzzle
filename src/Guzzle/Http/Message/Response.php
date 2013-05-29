@@ -105,11 +105,6 @@ class Response extends AbstractMessage
     protected $info = array();
 
     /**
-     * @var RequestInterface|callable Request object that may or may not be set
-     */
-    protected $request = null;
-
-    /**
      * @var array Cacheable response codes (see RFC 2616:13.4)
      */
     protected $cacheResponseCodes = array(200, 203, 206, 300, 301, 410);
@@ -765,8 +760,6 @@ class Response extends AbstractMessage
      */
     public function setRequest($request)
     {
-        $this->request = $request;
-
         return $this;
     }
 
@@ -775,11 +768,7 @@ class Response extends AbstractMessage
      */
     public function getRequest()
     {
-        if (is_callable($this->request)) {
-            $this->request = call_user_func($this->request);
-        }
-
-        return $this->request;
+        return null;
     }
 
     /**
