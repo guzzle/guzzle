@@ -55,16 +55,6 @@ interface HeaderInterface extends ToArrayInterface, \Countable, \IteratorAggrega
     public function getGlue();
 
     /**
-     * Normalize the header to be a single header with an array of values.
-     *
-     * If any values of the header contains the glue string value (e.g. ","), then the value will be exploded into
-     * multiple entries in the header.
-     *
-     * @return self
-     */
-    public function normalize();
-
-    /**
      * Check if the collection of headers has a particular value
      *
      * @param string $searchValue Value to search for

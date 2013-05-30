@@ -66,6 +66,14 @@ class Header implements HeaderInterface
         return $this->glue;
     }
 
+    /**
+     * Normalize the header to be a single header with an array of values.
+     *
+     * If any values of the header contains the glue string value (e.g. ","), then the value will be exploded into
+     * multiple entries in the header.
+     *
+     * @return self
+     */
     public function normalize()
     {
         $values = $this->toArray();
