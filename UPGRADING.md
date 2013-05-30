@@ -43,6 +43,7 @@ Other changes:
   `Guzzle\Service\Command\ArrayCommandInterface`.
 * Added `Guzzle\Http\Message\RequestInterface::startResponse()` to the RequestInterface to handle injecting a response
   on a request while the request is still being transferred
+* `Guzzle\Service\Command\CommandInterface` now extends from ToArrayInterface and ArrayAccess
 
 Marked as deprecated:
 
