@@ -82,7 +82,7 @@ class OperationCommand extends AbstractCommand
     protected function process()
     {
         // Do not process the response if 'command.response_processing' is set to 'raw'
-        $this->result = $this->get(self::RESPONSE_PROCESSING) == self::TYPE_RAW
+        $this->result = $this[self::RESPONSE_PROCESSING] == self::TYPE_RAW
             ? $this->request->getResponse()
             : $this->getResponseParser()->parse($this);
     }

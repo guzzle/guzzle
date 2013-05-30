@@ -58,7 +58,7 @@ class OperationResponseParser extends DefaultResponseParser
         return $this;
     }
 
-    protected function handleParsing(AbstractCommand $command, Response $response, $contentType)
+    protected function handleParsing(ArrayCommandInterface $command, Response $response, $contentType)
     {
         $operation = $command->getOperation();
         $type = $operation->getResponseType();
@@ -80,7 +80,7 @@ class OperationResponseParser extends DefaultResponseParser
         if (!$model) {
             // Return basic processing if the responseType is not model or the model cannot be found
             return parent::handleParsing($command, $response, $contentType);
-        } elseif ($command->get(AbstractCommand::RESPONSE_PROCESSING) != AbstractCommand::TYPE_MODEL) {
+        } elseif ($command[AbstractCommand::RESPONSE_PROCESSING] != AbstractCommand::TYPE_MODEL) {
             // Returns a model with no visiting if the command response processing is not model
             return new Model(parent::handleParsing($command, $response, $contentType), $model);
         } else {
@@ -91,15 +91,15 @@ class OperationResponseParser extends DefaultResponseParser
     /**
      * Perform transformations on the result array
      *
-     * @param Parameter        $model    Model that defines the structure
-     * @param CommandInterface $command  Command that performed the operation
-     * @param Response         $response Response received
+     * @param Parameter             $model    Model that defines the structure
+     * @param ArrayCommandInterface $command  Command that performed the operation
+     * @param Response              $response Response received
      *
      * @return array Returns the array of result data
      */
     protected function visitResult(
         Parameter $model,
-        CommandInterface $command,
+        ArrayCommandInterface $command,
         Response $response
     ) {
         $foundVisitors = $result = array();

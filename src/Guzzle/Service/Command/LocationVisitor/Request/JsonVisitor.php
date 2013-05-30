@@ -3,7 +3,7 @@
 namespace Guzzle\Service\Command\LocationVisitor\Request;
 
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Service\Command\CommandInterface;
+use Guzzle\Service\Command\ArrayCommandInterface;
 use Guzzle\Service\Description\Parameter;
 
 /**
@@ -37,7 +37,7 @@ class JsonVisitor extends AbstractRequestVisitor
         return $this;
     }
 
-    public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
+    public function visit(ArrayCommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
         if (isset($this->data[$command])) {
             $json = $this->data[$command];
@@ -48,7 +48,7 @@ class JsonVisitor extends AbstractRequestVisitor
         $this->data[$command] = $json;
     }
 
-    public function after(CommandInterface $command, RequestInterface $request)
+    public function after(ArrayCommandInterface $command, RequestInterface $request)
     {
         if (isset($this->data[$command])) {
             $request->setBody(json_encode($this->data[$command]));

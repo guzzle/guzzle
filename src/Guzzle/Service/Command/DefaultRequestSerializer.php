@@ -57,7 +57,7 @@ class DefaultRequestSerializer implements RequestSerializerInterface
         return $this;
     }
 
-    public function prepare(CommandInterface $command)
+    public function prepare(ArrayCommandInterface $command)
     {
         $request = $this->createRequest($command);
         // Keep an array of visitors found in the operation
@@ -75,7 +75,7 @@ class DefaultRequestSerializer implements RequestSerializerInterface
                     $foundVisitors[$location] = $this->factory->getRequestVisitor($location);
                 }
                 // Ensure that a value has been set for this parameter
-                $value = $command->get($name);
+                $value = $command[$name];
                 if ($value !== null) {
                     // Apply the parameter value with the location visitor
                     $foundVisitors[$location]->visit($command, $request, $arg, $value);
@@ -101,16 +101,16 @@ class DefaultRequestSerializer implements RequestSerializerInterface
     /**
      * Serialize additional parameters
      *
-     * @param OperationInterface $operation  Operation that owns the command
-     * @param CommandInterface   $command    Command to prepare
-     * @param RequestInterface   $request    Request to serialize
-     * @param Parameter          $additional Additional parameters
+     * @param OperationInterface    $operation  Operation that owns the command
+     * @param ArrayCommandInterface $command    Command to prepare
+     * @param RequestInterface      $request    Request to serialize
+     * @param Parameter             $additional Additional parameters
      *
      * @return null|RequestVisitorInterface
      */
     protected function prepareAdditionalParameters(
         OperationInterface $operation,
-        CommandInterface $command,
+        ArrayCommandInterface $command,
         RequestInterface $request,
         Parameter $additional
     ) {
@@ -119,9 +119,9 @@ class DefaultRequestSerializer implements RequestSerializerInterface
         }
 
         $visitor = $this->factory->getRequestVisitor($location);
-        $hidden = $command->get($command::HIDDEN_PARAMS);
+        $hidden = $command[$command::HIDDEN_PARAMS];
 
-        foreach ($command->getAll() as $key => $value) {
+        foreach ($command->toArray() as $key => $value) {
             // Ignore values that are null or built-in command options
             if ($value !== null
                 && !in_array($key, $hidden)
@@ -138,11 +138,11 @@ class DefaultRequestSerializer implements RequestSerializerInterface
     /**
      * Create a request for the command and operation
      *
-     * @param CommandInterface $command Command to create a request for
+     * @param ArrayCommandInterface $command Command to create a request for
      *
      * @return RequestInterface
      */
-    protected function createRequest(CommandInterface $command)
+    protected function createRequest(ArrayCommandInterface $command)
     {
         $operation = $command->getOperation();
         $client = $command->getClient();
@@ -156,8 +156,8 @@ class DefaultRequestSerializer implements RequestSerializerInterface
         $variables = array();
         foreach ($operation->getParams() as $name => $arg) {
             if ($arg->getLocation() == 'uri') {
-                if ($command->hasKey($name)) {
-                    $variables[$name] = $arg->filter($command->get($name));
+                if (isset($command[$name])) {
+                    $variables[$name] = $arg->filter($command[$name]);
                     if (!is_array($variables[$name])) {
                         $variables[$name] = (string) $variables[$name];
                     }

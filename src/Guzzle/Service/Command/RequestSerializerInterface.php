@@ -13,9 +13,9 @@ interface RequestSerializerInterface
     /**
      * Create a request for a command
      *
-     * @param CommandInterface $command Command that will own the request
+     * @param ArrayCommandInterface $command Command that will own the request
      *
      * @return RequestInterface
      */
-    public function prepare(CommandInterface $command);
+    public function prepare(ArrayCommandInterface $command);
 }

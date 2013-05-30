@@ -25,12 +25,12 @@ class DefaultResponseParser implements ResponseParserInterface
         return self::$instance;
     }
 
-    public function parse(CommandInterface $command)
+    public function parse(ArrayCommandInterface $command)
     {
         $response = $command->getRequest()->getResponse();
 
         // Account for hard coded content-type values specified in service descriptions
-        if ($contentType = $command->get('command.expects')) {
+        if ($contentType = $command['command.expects']) {
             $response->setHeader('Content-Type', $contentType);
         } else {
             $contentType = (string) $response->getHeader('Content-Type');
@@ -39,7 +39,7 @@ class DefaultResponseParser implements ResponseParserInterface
         return $this->handleParsing($command, $response, $contentType);
     }
 
-    protected function handleParsing(AbstractCommand $command, Response $response, $contentType)
+    protected function handleParsing(ArrayCommandInterface $command, Response $response, $contentType)
     {
         $result = $response;
         if ($result->getBody()) {
