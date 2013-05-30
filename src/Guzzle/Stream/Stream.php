@@ -135,6 +135,13 @@ class Stream implements StreamInterface
         return $this;
     }
 
+    public function detachStream()
+    {
+        $this->stream = null;
+
+        return $this;
+    }
+
     public function getWrapper()
     {
         return $this->cache[self::WRAPPER_TYPE];

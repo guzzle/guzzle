@@ -167,4 +167,12 @@ class StreamTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($stream->rewind());
         $this->assertEquals('foobazbar', $stream->read(9));
     }
+
+    public function testCanDetachStream()
+    {
+        $r = fopen('php://temp', 'w+');
+        $stream = new Stream($r);
+        $stream->detachStream();
+        $this->assertNull($stream->getStream());
+    }
 }

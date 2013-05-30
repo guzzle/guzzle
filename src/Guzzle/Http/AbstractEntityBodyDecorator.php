@@ -104,6 +104,13 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
         return $this;
     }
 
+    public function detachStream()
+    {
+        $this->body->detachStream();
+
+        return $this;
+    }
+
     public function getWrapper()
     {
         return $this->body->getWrapper();
