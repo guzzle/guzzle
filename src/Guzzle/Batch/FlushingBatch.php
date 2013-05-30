@@ -7,14 +7,10 @@ namespace Guzzle\Batch;
  */
 class FlushingBatch extends AbstractBatchDecorator
 {
-    /**
-     * @var int The threshold for which to automatically flush
-     */
+    /** @var int The threshold for which to automatically flush */
     protected $threshold;
 
-    /**
-     * @var int Current number of items known to be in the queue
-     */
+    /** @var int Current number of items known to be in the queue */
     protected $currentTotal = 0;
 
     /**
@@ -51,9 +47,6 @@ class FlushingBatch extends AbstractBatchDecorator
         return $this->threshold;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function add($item)
     {
         $this->decoratedBatch->add($item);

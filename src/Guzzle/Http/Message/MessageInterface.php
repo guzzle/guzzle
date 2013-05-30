@@ -2,9 +2,6 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Common\Exception\InvalidArgumentException;
-use Guzzle\Common\Collection;
-
 /**
  * Request and response message interface
  */
@@ -13,7 +10,7 @@ interface MessageInterface
     /**
      * Get application and plugin specific parameters set on the message.
      *
-     * @return Collection
+     * @return \Guzzle\Common\Collection
      */
     public function getParams();
 
@@ -23,7 +20,7 @@ interface MessageInterface
      * @param string $header Header name to add
      * @param string $value  Value of the header
      *
-     * @return MessageInterface
+     * @return self
      */
     public function addHeader($header, $value);
 
@@ -32,7 +29,7 @@ interface MessageInterface
      *
      * @param array $headers Associative array of header data.
      *
-     * @return MessageInterface
+     * @return self
      */
     public function addHeaders(array $headers);
 
@@ -40,35 +37,24 @@ interface MessageInterface
      * Retrieve an HTTP header by name. Performs a case-insensitive search of all headers.
      *
      * @param string $header Header to retrieve.
-     * @param bool   $string Set to true to get the header as a string
      *
-     * @return string|Header|null Returns NULL if no matching header is found. Returns a string if $string is set to
-     *                            TRUE. Returns a Header object if a matching header is found.
+     * @return Header|null
      */
-    public function getHeader($header, $string = false);
+    public function getHeader($header);
 
     /**
      * Get all headers as a collection
      *
-     * @param bool $asObjects Set to true to retrieve a collection of Header objects
-     *
-     * @return Collection Returns a {@see Collection} of all headers
+     * @return \Guzzle\Http\Message\Header\HeaderCollection
      */
-    public function getHeaders($asObjects = false);
-
-    /**
-     * Get an array of message header lines
-     *
-     * @return array
-     */
-    public function getHeaderLines();
+    public function getHeaders();
 
     /**
      * Check if the specified header is present.
      *
      * @param string $header The header to check.
      *
-     * @return bool Returns TRUE or FALSE if the header is present
+     * @return bool
      */
     public function hasHeader($header);
 
@@ -77,17 +63,17 @@ interface MessageInterface
      *
      * @param string $header HTTP header to remove.
      *
-     * @return MessageInterface
+     * @return self
      */
     public function removeHeader($header);
 
     /**
-     * Set an HTTP header
+     * Set an HTTP header and overwrite any existing value for the header
      *
      * @param string $header Name of the header to set.
      * @param mixed  $value  Value to set.
      *
-     * @return MessageInterface
+     * @return self
      */
     public function setHeader($header, $value);
 
@@ -96,9 +82,16 @@ interface MessageInterface
      *
      * @param array $headers Associative array of header data.
      *
-     * @return MessageInterface
+     * @return self
      */
     public function setHeaders(array $headers);
+
+    /**
+     * Get an array of message header lines (e.g. ["Host: example.com", ...])
+     *
+     * @return array
+     */
+    public function getHeaderLines();
 
     /**
      * Get the raw message headers as a string
@@ -106,41 +99,4 @@ interface MessageInterface
      * @return string
      */
     public function getRawHeaders();
-
-    /**
-     * Get a Cache-Control directive from the message
-     *
-     * @param string $directive Directive to retrieve
-     *
-     * @return null|string
-     */
-    public function getCacheControlDirective($directive);
-
-    /**
-     * Check if the message has a Cache-Control directive
-     *
-     * @param string $directive Directive to check
-     *
-     * @return bool
-     */
-    public function hasCacheControlDirective($directive);
-
-    /**
-     * Add a Cache-Control directive on the message
-     *
-     * @param string      $directive Directive to set
-     * @param bool|string $value     Value to set
-     *
-     * @return MessageInterface
-     */
-    public function addCacheControlDirective($directive, $value = true);
-
-    /**
-     * Remove a Cache-Control directive from the message
-     *
-     * @param string $directive Directive to remove
-     *
-     * @return MessageInterface
-     */
-    public function removeCacheControlDirective($directive);
 }

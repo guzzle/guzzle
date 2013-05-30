@@ -16,29 +16,19 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterface, \Countable
 {
-    /**
-     * @var array Array of mock responses / exceptions
-     */
+    /** @var array Array of mock responses / exceptions */
     protected $queue = array();
 
-    /**
-     * @var bool Whether or not to remove the plugin when the queue is empty
-     */
+    /** @var bool Whether or not to remove the plugin when the queue is empty */
     protected $temporary = false;
 
-    /**
-     * @var array Array of requests that were mocked
-     */
+    /** @var array Array of requests that were mocked */
     protected $received = array();
 
-    /**
-     * @var bool Whether or not to consume an entity body when a mock response is served
-     */
+    /** @var bool Whether or not to consume an entity body when a mock response is served */
     protected $readBodies;
 
     /**
-     * Constructor
-     *
      * @param array $items      Array of responses or exceptions to queue
      * @param bool  $temporary  Set to TRUE to remove the plugin when the queue is empty
      * @param bool  $readBodies Set to TRUE to consume the entity body when a mock is served
@@ -58,18 +48,12 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getSubscribedEvents()
     {
         // Use a number lower than the CachePlugin
         return array('request.before_send' => array('onRequestBeforeSend', -999));
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getAllEvents()
     {
         return array('mock.request');

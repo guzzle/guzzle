@@ -14,24 +14,16 @@ use Guzzle\Batch\Exception\BatchTransferException;
  */
 class Batch implements BatchInterface
 {
-    /**
-     * @var \SplQueue Queue of items in the queue
-     */
+    /** @var \SplQueue Queue of items in the queue */
     protected $queue;
 
-    /**
-     * @var array Divided batches to be transferred
-     */
+    /** @var array Divided batches to be transferred */
     protected $dividedBatches;
 
-    /**
-     * @var BatchTransferInterface
-     */
+    /** @var BatchTransferInterface */
     protected $transferStrategy;
 
-    /**
-     * @var BatchDivisorInterface
-     */
+    /** @var BatchDivisorInterface */
     protected $divisionStrategy;
 
     /**
@@ -47,9 +39,6 @@ class Batch implements BatchInterface
         $this->dividedBatches = array();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function add($item)
     {
         $this->queue->enqueue($item);
@@ -57,9 +46,6 @@ class Batch implements BatchInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function flush()
     {
         $this->createBatches();
@@ -83,9 +69,6 @@ class Batch implements BatchInterface
         return $items;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function isEmpty()
     {
         return count($this->queue) == 0 && count($this->dividedBatches) == 0;

@@ -252,10 +252,10 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertContains('key=', (string) $request->getResponse()->getHeader('X-Guzzle-Cache'));
         $this->assertTrue($request->getResponse()->hasHeader('Age'));
         if ($request->getResponse()->isFresh() === false) {
-            $this->assertContains('110', $request->getResponse()->getHeader('Warning', true));
+            $this->assertContains('110', (string) $request->getResponse()->getHeader('Warning'));
         }
-        $this->assertSame(sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION), $request->getHeader('Via', true));
-        $this->assertSame(sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION), $request->getResponse()->getHeader('Via', true));
+        $this->assertSame(sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION), (string) $request->getHeader('Via'));
+        $this->assertSame(sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION), (string) $request->getResponse()->getHeader('Via'));
         $this->assertTrue($request->getParams()->get('cache.lookup'));
         $this->assertTrue($request->getParams()->get('cache.hit'));
 
@@ -265,8 +265,8 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         } else {
             $this->assertTrue($request->getResponse()->hasHeader('X-Cache-Lookup'));
             $this->assertTrue($request->getResponse()->hasHeader('X-Cache'));
-            $this->assertEquals('HIT from GuzzleCache', $request->getResponse()->getHeader('X-Cache-Lookup', true));
-            $this->assertEquals('HIT from GuzzleCache', $request->getResponse()->getHeader('X-Cache', true));
+            $this->assertEquals('HIT from GuzzleCache', (string) $request->getResponse()->getHeader('X-Cache-Lookup'));
+            $this->assertEquals('HIT from GuzzleCache', (string) $request->getResponse()->getHeader('X-Cache'));
         }
     }
 
@@ -314,10 +314,10 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertContains('key=', (string) $response->getHeader('X-Guzzle-Cache'));
         $this->assertTrue($response->hasHeader('Age'));
         if ($response->isFresh() === false) {
-            $this->assertContains('110', $response->getHeader('Warning', true));
+            $this->assertContains('110', (string) $response->getHeader('Warning'));
         }
-        $this->assertSame(sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION), $request->getHeader('Via', true));
-        $this->assertSame(sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION), $response->getHeader('Via', true));
+        $this->assertSame(sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION), (string) $request->getHeader('Via'));
+        $this->assertSame(sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION), (string) $response->getHeader('Via'));
         $this->assertTrue($request->getParams()->get('cache.lookup'));
         $this->assertSame('error', $request->getParams()->get('cache.hit'));
 
@@ -327,8 +327,8 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         } else {
             $this->assertTrue($response->hasHeader('X-Cache-Lookup'));
             $this->assertTrue($response->hasHeader('X-Cache'));
-            $this->assertEquals('HIT from GuzzleCache', $response->getHeader('X-Cache-Lookup', true));
-            $this->assertEquals('HIT_ERROR from GuzzleCache', $response->getHeader('X-Cache', true));
+            $this->assertEquals('HIT from GuzzleCache', (string) $response->getHeader('X-Cache-Lookup'));
+            $this->assertEquals('HIT_ERROR from GuzzleCache', (string) $response->getHeader('X-Cache'));
         }
     }
 
@@ -364,10 +364,10 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertContains('key=', (string) $response->getHeader('X-Guzzle-Cache'));
         $this->assertTrue($response->hasHeader('Age'));
         if ($response->isFresh() === false) {
-            $this->assertContains('110', $response->getHeader('Warning', true));
+            $this->assertContains('110', (string) $response->getHeader('Warning'));
         }
-        $this->assertSame(sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION), $request->getHeader('Via', true));
-        $this->assertSame(sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION), $response->getHeader('Via', true));
+        $this->assertSame(sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION), (string) $request->getHeader('Via'));
+        $this->assertSame(sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION), (string) $response->getHeader('Via'));
         $this->assertTrue($request->getParams()->get('cache.lookup'));
         $this->assertSame('error', $request->getParams()->get('cache.hit'));
 
@@ -377,8 +377,8 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         } else {
             $this->assertTrue($response->hasHeader('X-Cache-Lookup'));
             $this->assertTrue($response->hasHeader('X-Cache'));
-            $this->assertEquals('HIT from GuzzleCache', $response->getHeader('X-Cache-Lookup', true));
-            $this->assertEquals('HIT_ERROR from GuzzleCache', $response->getHeader('X-Cache', true));
+            $this->assertEquals('HIT from GuzzleCache', (string) $response->getHeader('X-Cache-Lookup'));
+            $this->assertEquals('HIT_ERROR from GuzzleCache', (string) $response->getHeader('X-Cache'));
         }
     }
 

@@ -38,39 +38,25 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     // Option used to change the entity body used to store a response
     const RESPONSE_BODY = 'command.response_body';
 
-    /**
-     * @var ClientInterface Client object used to execute the command
-     */
+    /** @var ClientInterface Client object used to execute the command */
     protected $client;
 
-    /**
-     * @var RequestInterface The request object associated with the command
-     */
+    /** @var RequestInterface The request object associated with the command */
     protected $request;
 
-    /**
-     * @var mixed The result of the command
-     */
+    /** @var mixed The result of the command */
     protected $result;
 
-    /**
-     * @var OperationInterface API information about the command
-     */
+    /** @var OperationInterface API information about the command */
     protected $operation;
 
-    /**
-     * @var mixed callable
-     */
+    /** @var mixed callable */
     protected $onComplete;
 
-    /**
-     * @var ValidatorInterface Validator used to prepare and validate properties against a JSON schema
-     */
+    /** @var ValidatorInterface Validator used to prepare and validate properties against a JSON schema */
     protected $validator;
 
     /**
-     * Constructor
-     *
      * @param array|Collection   $parameters Collection of parameters to set on the command
      * @param OperationInterface $operation Command definition from description
      */
@@ -79,32 +65,32 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         parent::__construct($parameters);
         $this->operation = $operation ?: $this->createOperation();
         foreach ($this->operation->getParams() as $name => $arg) {
-            $currentValue = $this->get($name);
+            $currentValue = $this[$name];
             $configValue = $arg->getValue($currentValue);
             // If default or static values are set, then this should always be updated on the config object
             if ($currentValue !== $configValue) {
-                $this->set($name, $configValue);
+                $this[$name] = $configValue;
             }
         }
 
-        $headers = $this->get(self::HEADERS_OPTION);
+        $headers = $this[self::HEADERS_OPTION];
         if (!$headers instanceof Collection) {
-            $this->set(self::HEADERS_OPTION, new Collection((array) $headers));
+            $this[self::HEADERS_OPTION] = new Collection((array) $headers);
         }
 
         // You can set a command.on_complete option in your parameters to set an onComplete callback
-        if ($onComplete = $this->get('command.on_complete')) {
-            $this->remove('command.on_complete');
+        if ($onComplete = $this['command.on_complete']) {
+            unset($this['command.on_complete']);
             $this->setOnComplete($onComplete);
         }
 
         // Set the hidden additional parameters
-        if (!$this->get(self::HIDDEN_PARAMS)) {
-            $this->set(self::HIDDEN_PARAMS, array(
+        if (!$this[self::HIDDEN_PARAMS]) {
+            $this[self::HIDDEN_PARAMS] = array(
                 'command.headers',
                 'command.response_processing',
                 'command.hidden_params'
-            ));
+            );
         }
 
         $this->init();
@@ -129,9 +115,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this->execute();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getName()
     {
         return $this->operation->getName();
@@ -147,9 +130,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this->operation;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setOnComplete($callable)
     {
         if (!is_callable($callable)) {
@@ -161,9 +141,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function execute()
     {
         if (!$this->client) {
@@ -173,17 +150,11 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this->client->execute($this);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getClient()
     {
         return $this->client;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setClient(ClientInterface $client)
     {
         $this->client = $client;
@@ -191,9 +162,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getRequest()
     {
         if (!$this->request) {
@@ -203,9 +171,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this->request;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getResponse()
     {
         if (!$this->isExecuted()) {
@@ -215,9 +180,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this->request->getResponse();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getResult()
     {
         if (!$this->isExecuted()) {
@@ -235,9 +197,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this->result;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setResult($result)
     {
         $this->result = $result;
@@ -245,25 +204,16 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function isPrepared()
     {
         return $this->request !== null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function isExecuted()
     {
         return $this->request !== null && $this->request->getState() == 'complete';
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function prepare()
     {
         if (!$this->isPrepared()) {
@@ -272,8 +222,8 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             }
 
             // If no response processing value was specified, then attempt to use the highest level of processing
-            if (!$this->hasKey(self::RESPONSE_PROCESSING)) {
-                $this->set(self::RESPONSE_PROCESSING, self::TYPE_MODEL);
+            if (!isset($this[self::RESPONSE_PROCESSING])) {
+                $this[self::RESPONSE_PROCESSING] = self::TYPE_MODEL;
             }
 
             // Notify subscribers of the client that the command is being prepared
@@ -285,19 +235,19 @@ abstract class AbstractCommand extends Collection implements CommandInterface
             $this->build();
 
             // Add custom request headers set on the command
-            if ($headers = $this->get(self::HEADERS_OPTION)) {
+            if ($headers = $this[self::HEADERS_OPTION]) {
                 foreach ($headers as $key => $value) {
                     $this->request->setHeader($key, $value);
                 }
             }
 
             // Add any curl options to the request
-            if ($options = $this->get(Client::CURL_OPTIONS)) {
+            if ($options = $this[Client::CURL_OPTIONS]) {
                 $this->request->getCurlOptions()->merge(CurlHandle::parseCurlConfig($options));
             }
 
             // Set a custom response body
-            if ($responseBody = $this->get(self::RESPONSE_BODY)) {
+            if ($responseBody = $this[self::RESPONSE_BODY]) {
                 $this->request->setResponseBody($responseBody);
             }
 
@@ -322,12 +272,9 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getRequestHeaders()
     {
-        return $this->get(self::HEADERS_OPTION);
+        return $this[self::HEADERS_OPTION];
     }
 
     /**
@@ -356,7 +303,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
      */
     protected function process()
     {
-        $this->result = $this->get(self::RESPONSE_PROCESSING) != self::TYPE_RAW
+        $this->result = $this[self::RESPONSE_PROCESSING] != self::TYPE_RAW
             ? DefaultResponseParser::getInstance()->parse($this)
             : $this->request->getResponse();
     }
@@ -369,34 +316,34 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     protected function validate()
     {
         // Do not perform request validation/transformation if it is disable
-        if ($this->get(self::DISABLE_VALIDATION)) {
+        if ($this[self::DISABLE_VALIDATION]) {
             return;
         }
 
         $errors = array();
         $validator = $this->getValidator();
         foreach ($this->operation->getParams() as $name => $schema) {
-            $value = $this->get($name);
+            $value = $this[$name];
             if (!$validator->validate($schema, $value)) {
                 $errors = array_merge($errors, $validator->getErrors());
-            } elseif ($value !== $this->get($name)) {
+            } elseif ($value !== $this[$name]) {
                 // Update the config value if it changed and no validation errors were encountered
                 $this->data[$name] = $value;
             }
         }
 
         // Validate additional parameters
-        $hidden = $this->get(self::HIDDEN_PARAMS);
+        $hidden = $this[self::HIDDEN_PARAMS];
 
         if ($properties = $this->operation->getAdditionalParameters()) {
-            foreach ($this->getAll() as $name => $value) {
+            foreach ($this->toArray() as $name => $value) {
                 // It's only additional if it isn't defined in the schema
                 if (!$this->operation->hasParam($name) && !in_array($name, $hidden)) {
                     // Always set the name so that error messages are useful
                     $properties->setName($name);
                     if (!$validator->validate($properties, $value)) {
                         $errors = array_merge($errors, $validator->getErrors());
-                    } elseif ($value !== $this->get($name)) {
+                    } elseif ($value !== $this[$name]) {
                         $this->data[$name] = $value;
                     }
                 }

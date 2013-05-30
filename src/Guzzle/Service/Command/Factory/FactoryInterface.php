@@ -15,7 +15,7 @@ interface FactoryInterface
      * @param string $name Command to create
      * @param array  $args Command arguments
      *
-     * @return null|CommandInterface
+     * @return CommandInterface|null
      */
     public function factory($name, array $args = array());
 }

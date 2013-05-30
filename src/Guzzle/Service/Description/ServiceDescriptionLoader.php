@@ -10,9 +10,6 @@ use Guzzle\Service\Exception\DescriptionBuilderException;
  */
 class ServiceDescriptionLoader extends AbstractConfigLoader
 {
-    /**
-     * {@inheritdoc}
-     */
     protected function build($config, array $options)
     {
         $operations = array();

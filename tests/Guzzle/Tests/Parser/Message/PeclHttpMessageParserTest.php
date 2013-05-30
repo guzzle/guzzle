@@ -4,6 +4,9 @@ namespace Guzzle\Tests\Parser\Message;
 
 use Guzzle\Parser\Message\PeclHttpMessageParser;
 
+/**
+ * @covers Guzzle\Parser\Message\PeclHttpMessageParser
+ */
 class PeclHttpMessageParserTest extends MessageParserProvider
 {
     protected function setUp()
@@ -14,7 +17,6 @@ class PeclHttpMessageParserTest extends MessageParserProvider
     }
 
     /**
-     * @covers Guzzle\Parser\Message\PeclHttpMessageParser::parseRequest
      * @dataProvider requestProvider
      */
     public function testParsesRequests($message, $parts)
@@ -24,7 +26,6 @@ class PeclHttpMessageParserTest extends MessageParserProvider
     }
 
     /**
-     * @covers Guzzle\Parser\Message\PeclHttpMessageParser::parseResponse
      * @dataProvider responseProvider
      */
     public function testParsesResponses($message, $parts)

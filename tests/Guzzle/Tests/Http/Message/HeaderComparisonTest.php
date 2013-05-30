@@ -3,11 +3,8 @@
 namespace Guzzle\Tests\Message;
 
 use Guzzle\Common\Collection;
-use Guzzle\Http\Message\HeaderComparison;
+use Guzzle\Tests\Http\Message\HeaderComparison;
 
-/**
- * @covers Guzzle\Http\Message\HeaderComparison
- */
 class HeaderComparisonTest extends \Guzzle\Tests\GuzzleTestCase
 {
     public function filterProvider()

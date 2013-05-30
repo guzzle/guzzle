@@ -19,9 +19,7 @@ use Guzzle\Tests\Mock\MockMulti;
  */
 class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var \Guzzle\Http\Curl\CurlMulti
-     */
+    /** @var \Guzzle\Http\Curl\CurlMulti */
     private $multi;
 
     /**
@@ -31,6 +29,11 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
     {
         parent::setUp();
         $this->multi = new MockMulti();
+    }
+
+    public function tearDown()
+    {
+        unset($this->multi);
     }
 
     public function testConstructorCreateMultiHandle()

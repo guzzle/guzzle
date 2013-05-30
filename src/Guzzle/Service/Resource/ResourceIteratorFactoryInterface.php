@@ -13,7 +13,7 @@ interface ResourceIteratorFactoryInterface
      * Create a resource iterator
      *
      * @param CommandInterface $command Command to create an iterator for
-     * @param array            $options Iterator options that are exposed as data.
+     * @param array                 $options Iterator options that are exposed as data.
      *
      * @return ResourceIteratorInterface
      */

@@ -3,60 +3,70 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Http\Message\Header\HeaderCollection;
+use Guzzle\Http\Message\Header\HeaderFactory;
+use Guzzle\Http\Message\Header\HeaderFactoryInterface;
+use Guzzle\Http\Message\Header\HeaderInterface;
 
 /**
  * Abstract HTTP request/response message
  */
 abstract class AbstractMessage implements MessageInterface
 {
-    /**
-     * @var array HTTP headers
-     */
-    protected $headers = array();
+    /** @var array HTTP header collection */
+    protected $headers;
 
-    /**
-     * @var Collection Custom message parameters that are extendable by plugins
-     */
+    /** @var HeaderFactoryInterface $headerFactory */
+    protected $headerFactory;
+
+    /** @var Collection Custom message parameters that are extendable by plugins */
     protected $params;
 
-    /**
-     * @var array Cache-Control directive information
-     */
-    private $cacheControl = array();
+    /** @var string Message protocol */
+    protected $protocol = 'HTTP';
 
-    /*
-     * @var string HTTP protocol version of the message
-     */
+    /** @var string HTTP protocol version of the message */
     protected $protocolVersion = '1.1';
 
+    public function __construct()
+    {
+        $this->params = new Collection();
+        $this->headerFactory = new HeaderFactory();
+        $this->headers = new HeaderCollection();
+    }
+
     /**
-     * {@inheritdoc}
+     * Set the header factory to use to create headers
+     *
+     * @param HeaderFactoryInterface $factory
+     *
+     * @return self
      */
+    public function setHeaderFactory(HeaderFactoryInterface $factory)
+    {
+        $this->headerFactory = $factory;
+
+        return $this;
+    }
+
     public function getParams()
     {
         return $this->params;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function addHeader($header, $value)
     {
-        $key = strtolower($header);
-        if (!isset($this->headers[$key])) {
-            $this->headers[$key] = new Header($header, $value);
+        if (isset($this->headers[$header])) {
+            $this->headers[$header]->add($value);
+        } elseif ($value instanceof HeaderInterface) {
+            $this->headers[$header] = $value;
         } else {
-            $this->headers[$key]->add($value, $header);
+            $this->headers[$header] = $this->headerFactory->createHeader($header, $value);
         }
-        $this->changedHeader($key);
 
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function addHeaders(array $headers)
     {
         foreach ($headers as $key => $value) {
@@ -66,117 +76,52 @@ abstract class AbstractMessage implements MessageInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getHeader($header, $string = false)
+    public function getHeader($header)
     {
-        $key = strtolower($header);
-        if (!isset($this->headers[$key])) {
-            return null;
-        }
-
-        return $string ? (string) $this->headers[$key] : $this->headers[$key];
+        return $this->headers[$header];
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getHeaders($asObjects = false)
+    public function getHeaders()
     {
-        if ($asObjects) {
-            $result = $this->headers;
-        } else {
-            $result = array();
-            // Convert all of the headers into a collection
-            foreach ($this->headers as $header) {
-                foreach ($header->raw() as $key => $value) {
-                    $result[$key] = $value;
-                }
-            }
-        }
-
-        return new Collection($result);
+        return $this->headers;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getHeaderLines()
     {
         $headers = array();
         foreach ($this->headers as $value) {
-            $glue = $value->getGlue();
-            foreach ($value->raw() as $key => $v) {
-                $headers[] = rtrim($key . ': ' . implode($glue, $v));
-            }
+            $headers[] = $value->getName() . ': ' . $value;
         }
 
         return $headers;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setHeader($header, $value)
     {
-        // Remove any existing header
-        $key = strtolower($header);
-        unset($this->headers[$key]);
-
-        if ($value instanceof Header) {
-            $this->headers[$key] = $value;
-        } else {
-            // Allow for 0, '', and NULL to be set
-            if (!$value) {
-                $value = array($value);
-            }
-            $this->headers[$key] = new Header($header, $value);
-        }
-        $this->changedHeader($key);
+        unset($this->headers[$header]);
+        $this->addHeader($header, $value);
 
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setHeaders(array $headers)
     {
-        // Get the keys that are changing
-        $changed = array_keys($this->headers);
-        // Erase the old headers
-        $this->headers = array();
-        // Add the new headers
+        $this->headers->clear();
         foreach ($headers as $key => $value) {
-            $changed[] = $key;
             $this->addHeader($key, $value);
         }
 
-        // Notify of the changed headers
-        foreach (array_unique($changed) as $header) {
-            $this->changedHeader(strtolower($header));
-        }
-
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function hasHeader($header)
     {
-        return array_key_exists(strtolower($header), $this->headers);
+        return isset($this->headers[$header]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function removeHeader($header)
     {
-        $header = strtolower($header);
         unset($this->headers[$header]);
-        $this->changedHeader($header);
 
         return $this;
     }
@@ -198,93 +143,53 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @deprecated
      */
     public function getCacheControlDirective($directive)
     {
-        if (!isset($this->cacheControl[$directive])) {
+        if (!($header = $this->getHeader('Cache-Control'))) {
             return null;
         }
 
-        $directive = $this->cacheControl[$directive];
-
-        if (is_array($directive) && !empty($directive)) {
-            return $directive[0];
-        }
-
-        return $directive;
+        return $header->getDirective($directive);
     }
 
     /**
-     * {@inheritdoc}
+     * @deprecated
      */
     public function hasCacheControlDirective($directive)
     {
-        return isset($this->cacheControl[$directive]);
+        if ($header = $this->getHeader('Cache-Control')) {
+            return $header->hasDirective($directive);
+        } else {
+            return false;
+        }
     }
 
     /**
-     * {@inheritdoc}
+     * @deprecated
      */
     public function addCacheControlDirective($directive, $value = true)
     {
-        $this->cacheControl[$directive] = $value;
-        $this->rebuildCacheControlDirective();
+        if (!($header = $this->getHeader('Cache-Control'))) {
+            $this->addHeader('Cache-Control', '');
+            $header = $this->getHeader('Cache-Control');
+        }
+
+        $header->addDirective($directive, $value);
 
         return $this;
     }
 
     /**
-     * {@inheritdoc}
+     * @deprecated
      */
     public function removeCacheControlDirective($directive)
     {
-        if (array_key_exists($directive, $this->cacheControl)) {
-            unset($this->cacheControl[$directive]);
-            $this->rebuildCacheControlDirective();
+        if ($header = $this->getHeader('Cache-Control')) {
+            $header->removeDirective($directive);
         }
 
         return $this;
-    }
-
-    /**
-     * Check to see if the modified headers need to reset any of the managed
-     * headers like cache-control
-     *
-     * @param string $header Header that changed
-     */
-    protected function changedHeader($header)
-    {
-        if ($header == 'cache-control') {
-            $this->parseCacheControlDirective();
-        }
-    }
-
-    /**
-     * Parse the Cache-Control HTTP header into an array
-     */
-    private function parseCacheControlDirective()
-    {
-        $this->cacheControl = array();
-        if ($header = $this->getHeader('Cache-Control')) {
-            foreach ($header->parseParams() as $collection) {
-                foreach ($collection as $key => $value) {
-                    $value = $value === '' ? true : $value;
-                    $this->cacheControl[$key] = $value;
-                }
-            }
-        }
-    }
-
-    /**
-     * Rebuild the Cache-Control HTTP header using the user-specified values
-     */
-    private function rebuildCacheControlDirective()
-    {
-        $cacheControl = array();
-        foreach ($this->cacheControl as $key => $value) {
-            $cacheControl[] = ($value === true) ? $key : ($key . '=' . $value);
-        }
-        $this->headers['cache-control'] = new Header('Cache-Control', $cacheControl, ', ');
     }
 }

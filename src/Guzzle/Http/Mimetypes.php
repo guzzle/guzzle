@@ -8,14 +8,10 @@ namespace Guzzle\Http;
  */
 class Mimetypes
 {
-    /**
-     * @var self
-     */
+    /** @var self */
     protected static $instance;
 
-    /**
-     * @var array Mapping of extension to mimetype
-     */
+    /** @var array Mapping of extension to mimetype */
     protected $mimetypes = array(
         '3dml' => 'text/vnd.in3d.3dml',
         '3g2' => 'video/3gpp2',

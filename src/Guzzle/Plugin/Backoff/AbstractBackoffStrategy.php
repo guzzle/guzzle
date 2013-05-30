@@ -11,14 +11,10 @@ use Guzzle\Http\Exception\HttpException;
  */
 abstract class AbstractBackoffStrategy implements BackoffStrategyInterface
 {
-    /**
-     * @var AbstractBackoffStrategy Next strategy in the chain
-     */
+    /** @var AbstractBackoffStrategy Next strategy in the chain */
     protected $next;
 
-    /**
-     * @param AbstractBackoffStrategy $next Next strategy in the chain
-     */
+    /** @param AbstractBackoffStrategy $next Next strategy in the chain */
     public function setNext(AbstractBackoffStrategy $next)
     {
         $this->next = $next;
@@ -34,9 +30,6 @@ abstract class AbstractBackoffStrategy implements BackoffStrategyInterface
         return $this->next;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getBackoffPeriod(
         $retries,
         RequestInterface $request,

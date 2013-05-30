@@ -7,14 +7,10 @@ namespace Guzzle\Batch;
  */
 class BatchSizeDivisor implements BatchDivisorInterface
 {
-    /**
-     * @var int Size of each batch
-     */
+    /** @var int Size of each batch */
     protected $size;
 
-    /**
-     * @param int $size Size of each batch
-     */
+    /** @param int $size Size of each batch */
     public function __construct($size)
     {
         $this->size = $size;
@@ -44,9 +40,6 @@ class BatchSizeDivisor implements BatchDivisorInterface
         return $this->size;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function createBatches(\SplQueue $queue)
     {
         return array_chunk(iterator_to_array($queue, false), $this->size);

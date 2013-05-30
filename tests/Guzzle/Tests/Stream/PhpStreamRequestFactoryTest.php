@@ -12,14 +12,10 @@ use Guzzle\Http\Client;
  */
 class PhpStreamRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var Client
-     */
+    /** @var Client */
     protected $client;
 
-    /**
-     * @var PhpStreamRequestFactory
-     */
+    /** @var PhpStreamRequestFactory */
     protected $factory;
 
     protected function setUp()

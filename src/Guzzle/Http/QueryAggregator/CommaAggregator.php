@@ -9,9 +9,6 @@ use Guzzle\Http\QueryString;
  */
 class CommaAggregator implements QueryAggregatorInterface
 {
-    /**
-     * {@inheritdoc}
-     */
     public function aggregate($key, $value, QueryString $query)
     {
         if ($query->isUrlEncoding()) {

@@ -15,24 +15,16 @@ use Guzzle\Http\Url;
  */
 class PhpStreamRequestFactory implements StreamRequestFactoryInterface
 {
-    /**
-     * @var resource Stream context options
-     */
+    /** @var resource Stream context options */
     protected $context;
 
-    /**
-     * @var array Stream context
-     */
+    /** @var array Stream context */
     protected $contextOptions;
 
-    /**
-     * @var Url Stream URL
-     */
+    /** @var Url Stream URL */
     protected $url;
 
-    /**
-     * @var array Last response headers received by the HTTP request
-     */
+    /** @var array Last response headers received by the HTTP request */
     protected $lastResponseHeaders;
 
     /**

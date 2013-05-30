@@ -12,19 +12,12 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Countable
 {
-    /**
-     * @var int The maximum number of requests to maintain in the history
-     */
+    /** @var int The maximum number of requests to maintain in the history */
     protected $limit = 10;
 
-    /**
-     * @var array Requests and responses that have passed through the plugin
-     */
+    /** @var array Requests and responses that have passed through the plugin */
     protected $transactions = array();
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getSubscribedEvents()
     {
         return array('request.sent' => array('onRequestSent', 9999));
@@ -163,9 +156,6 @@ class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Co
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function onRequestSent(Event $event)
     {
         $this->add($event['request'], $event['response']);

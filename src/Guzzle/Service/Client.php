@@ -25,29 +25,19 @@ class Client extends HttpClient implements ClientInterface
 {
     const COMMAND_PARAMS = 'command.params';
 
-    /**
-     * @var ServiceDescriptionInterface Description of the service and possible commands
-     */
+    /** @var ServiceDescriptionInterface Description of the service and possible commands */
     protected $serviceDescription;
 
-    /**
-     * @var bool Whether or not magic methods are enabled
-     */
+    /** @var bool Whether or not magic methods are enabled */
     protected $enableMagicMethods = true;
 
-    /**
-     * @var CommandFactoryInterface
-     */
+    /** @var CommandFactoryInterface */
     protected $commandFactory;
 
-    /**
-     * @var ResourceIteratorFactoryInterface
-     */
+    /** @var ResourceIteratorFactoryInterface */
     protected $resourceIteratorFactory;
 
-    /**
-     * @var InflectorInterface Inflector associated with the service/client
-     */
+    /** @var InflectorInterface Inflector associated with the service/client */
     protected $inflector;
 
     /**
@@ -62,9 +52,6 @@ class Client extends HttpClient implements ClientInterface
         return new static(isset($config['base_url']) ? $config['base_url'] : null, $config);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getAllEvents()
     {
         return array_merge(HttpClient::getAllEvents(), array(
@@ -108,9 +95,6 @@ class Client extends HttpClient implements ClientInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getCommand($name, array $args = array())
     {
         if (!($command = $this->getCommandFactory()->factory($name, $args))) {
@@ -120,12 +104,10 @@ class Client extends HttpClient implements ClientInterface
         $command->setClient($this);
 
         // Add global client options to the command
-        if ($command instanceof Collection) {
-            if ($options = $this->getConfig(self::COMMAND_PARAMS)) {
-                foreach ($options as $key => $value) {
-                    if (!$command->hasKey($key)) {
-                        $command->set($key, $value);
-                    }
+        if ($options = $this->getConfig(self::COMMAND_PARAMS)) {
+            foreach ($options as $key => $value) {
+                if (!isset($command[$key])) {
+                    $command[$key] = $value;
                 }
             }
         }
@@ -139,7 +121,11 @@ class Client extends HttpClient implements ClientInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Set the command factory used to create commands by name
+     *
+     * @param CommandFactoryInterface $factory Command factory
+     *
+     * @return self
      */
     public function setCommandFactory(CommandFactoryInterface $factory)
     {
@@ -149,7 +135,11 @@ class Client extends HttpClient implements ClientInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Set the resource iterator factory associated with the client
+     *
+     * @param ResourceIteratorFactoryInterface $factory Resource iterator factory
+     *
+     * @return self
      */
     public function setResourceIteratorFactory(ResourceIteratorFactoryInterface $factory)
     {
@@ -158,9 +148,6 @@ class Client extends HttpClient implements ClientInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getIterator($command, array $commandOptions = null, array $iteratorOptions = array())
     {
         if (!($command instanceof CommandInterface)) {
@@ -170,9 +157,6 @@ class Client extends HttpClient implements ClientInterface
         return $this->getResourceIteratorFactory()->build($command, $iteratorOptions);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function execute($command)
     {
         if ($command instanceof CommandInterface) {
@@ -231,9 +215,6 @@ class Client extends HttpClient implements ClientInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setDescription(ServiceDescriptionInterface $service)
     {
         $this->serviceDescription = $service;
@@ -246,16 +227,17 @@ class Client extends HttpClient implements ClientInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getDescription()
     {
         return $this->serviceDescription;
     }
 
     /**
-     * {@inheritdoc}
+     * Set the inflector used with the client
+     *
+     * @param InflectorInterface $inflector Inflection object
+     *
+     * @return self
      */
     public function setInflector(InflectorInterface $inflector)
     {
@@ -265,7 +247,9 @@ class Client extends HttpClient implements ClientInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Get the inflector used with the client
+     *
+     * @return self
      */
     public function getInflector()
     {
@@ -276,9 +260,6 @@ class Client extends HttpClient implements ClientInterface
         return $this->inflector;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function getResourceIteratorFactory()
     {
         if (!$this->resourceIteratorFactory) {

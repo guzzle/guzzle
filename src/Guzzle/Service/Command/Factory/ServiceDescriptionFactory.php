@@ -10,14 +10,10 @@ use Guzzle\Inflection\InflectorInterface;
  */
 class ServiceDescriptionFactory implements FactoryInterface
 {
-    /**
-     * @var ServiceDescriptionInterface
-     */
+    /** @var ServiceDescriptionInterface */
     protected $description;
 
-    /**
-     * @var InflectorInterface
-     */
+    /** @var InflectorInterface */
     protected $inflector;
 
     /**
@@ -54,9 +50,6 @@ class ServiceDescriptionFactory implements FactoryInterface
         return $this->description;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function factory($name, array $args = array())
     {
         $command = $this->description->getOperation($name);

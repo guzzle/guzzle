@@ -14,14 +14,10 @@ use Guzzle\Service\Exception\InconsistentClientTransferException;
  */
 class BatchCommandTransfer implements BatchTransferInterface, BatchDivisorInterface
 {
-    /**
-     * @var int Size of each command batch
-     */
+    /** @var int Size of each command batch */
     protected $batchSize;
 
     /**
-     * Constructor used to specify how large each batch should be
-     *
      * @param int $batchSize Size of each batch
      */
     public function __construct($batchSize = 50)
@@ -31,7 +27,6 @@ class BatchCommandTransfer implements BatchTransferInterface, BatchDivisorInterf
 
     /**
      * Creates batches by grouping commands by their associated client
-     *
      * {@inheritdoc}
      */
     public function createBatches(\SplQueue $queue)
@@ -57,9 +52,6 @@ class BatchCommandTransfer implements BatchTransferInterface, BatchDivisorInterf
         return $batches;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function transfer(array $batch)
     {
         if (empty($batch)) {

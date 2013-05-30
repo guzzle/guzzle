@@ -13,14 +13,9 @@ use Guzzle\Http\Exception\HttpException;
  */
 class HttpBackoffStrategy extends AbstractErrorCodeBackoffStrategy
 {
-    /**
-     * @var array Default cURL errors to retry
-     */
+    /** @var array Default cURL errors to retry */
     protected static $defaultErrorCodes = array(500, 503);
 
-    /**
-     * {@inheritdoc}
-     */
     protected function getDelay($retries, RequestInterface $request, Response $response = null, HttpException $e = null)
     {
         if ($response) {

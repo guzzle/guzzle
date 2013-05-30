@@ -10,9 +10,7 @@ use Guzzle\Service\ClientInterface;
  */
 class CompositeFactory implements \IteratorAggregate, \Countable, FactoryInterface
 {
-    /**
-     * @var array Array of command factories
-     */
+    /** @var array Array of command factories */
     protected $factories;
 
     /**
@@ -47,7 +45,6 @@ class CompositeFactory implements \IteratorAggregate, \Countable, FactoryInterfa
      * @param FactoryInterface        $factory Factory to add
      * @param string|FactoryInterface $before  Insert the new command factory before a command factory class or object
      *                                         matching a class name.
-     *
      * @return CompositeFactory
      */
     public function add(FactoryInterface $factory, $before = null)
@@ -145,17 +142,11 @@ class CompositeFactory implements \IteratorAggregate, \Countable, FactoryInterfa
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function count()
     {
         return count($this->factories);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getIterator()
     {
         return new \ArrayIterator($this->factories);

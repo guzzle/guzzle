@@ -6,20 +6,16 @@ use Guzzle\Common\Event;
 use Guzzle\Common\AbstractHasDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
+/**
+ * @covers Guzzle\Common\AbstractHasDispatcher
+ */
 class AbstractHasAdapterTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @covers Guzzle\Common\AbstractHasDispatcher::getAllEvents
-     */
     public function testDoesNotRequireRegisteredEvents()
     {
         $this->assertEquals(array(), AbstractHasDispatcher::getAllEvents());
     }
 
-    /**
-     * @covers Guzzle\Common\AbstractHasDispatcher::setEventDispatcher
-     * @covers Guzzle\Common\AbstractHasDispatcher::getEventDispatcher
-     */
     public function testAllowsDispatcherToBeInjected()
     {
         $d = new EventDispatcher();
@@ -28,18 +24,12 @@ class AbstractHasAdapterTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame($d, $mock->getEventDispatcher());
     }
 
-    /**
-     * @covers Guzzle\Common\AbstractHasDispatcher::getEventDispatcher
-     */
     public function testCreatesDefaultEventDispatcherIfNeeded()
     {
         $mock = $this->getMockForAbstractClass('Guzzle\Common\AbstractHasDispatcher');
         $this->assertInstanceOf('Symfony\Component\EventDispatcher\EventDispatcher', $mock->getEventDispatcher());
     }
 
-    /**
-     * @covers Guzzle\Common\AbstractHasDispatcher::dispatch
-     */
     public function testHelperDispatchesEvents()
     {
         $data = array();
@@ -55,9 +45,6 @@ class AbstractHasAdapterTest extends \Guzzle\Tests\GuzzleTestCase
         ), $data);
     }
 
-    /**
-     * @covers Guzzle\Common\AbstractHasDispatcher::addSubscriber
-     */
     public function testHelperAttachesSubscribers()
     {
         $mock = $this->getMockForAbstractClass('Guzzle\Common\AbstractHasDispatcher');

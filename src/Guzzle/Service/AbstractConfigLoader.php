@@ -10,19 +10,13 @@ use Guzzle\Common\Exception\RuntimeException;
  */
 abstract class AbstractConfigLoader implements ConfigLoaderInterface
 {
-    /**
-     * @var array Array of aliases for actual filenames
-     */
+    /** @var array Array of aliases for actual filenames */
     protected $aliases = array();
 
-    /**
-     * @var array Hash of previously loaded filenames
-     */
+    /** @var array Hash of previously loaded filenames */
     protected $loadedFiles = array();
 
-    /**
-     * @var array JSON error code mappings
-     */
+    /** @var array JSON error code mappings */
     protected static $jsonErrors = array(
         JSON_ERROR_NONE => 'JSON_ERROR_NONE - No errors',
         JSON_ERROR_DEPTH => 'JSON_ERROR_DEPTH - Maximum stack depth exceeded',
@@ -32,9 +26,6 @@ abstract class AbstractConfigLoader implements ConfigLoaderInterface
         JSON_ERROR_UTF8 => 'JSON_ERROR_UTF8 - Malformed UTF-8 characters, possibly incorrectly encoded'
     );
 
-    /**
-     * {@inheritdoc}
-     */
     public function load($config, array $options = array())
     {
         // Reset the array of loaded files because this is a new config

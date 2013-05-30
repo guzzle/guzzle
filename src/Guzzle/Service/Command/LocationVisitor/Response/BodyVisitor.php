@@ -11,11 +11,13 @@ use Guzzle\Service\Description\Parameter;
  */
 class BodyVisitor extends AbstractResponseVisitor
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function visit(CommandInterface $command, Response $response, Parameter $param, &$value, $context =  null)
-    {
+    public function visit(
+        CommandInterface $command,
+        Response $response,
+        Parameter $param,
+        &$value,
+        $context =  null
+    ) {
         $value[$param->getName()] = $param->filter($response->getBody());
     }
 }

@@ -9,24 +9,16 @@ use Guzzle\Common\ToArrayInterface;
  */
 class SchemaValidator implements ValidatorInterface
 {
-    /**
-     * @var self Cache instance of the object
-     */
+    /** @var self Cache instance of the object */
     protected static $instance;
 
-    /**
-     * @var bool Whether or not integers are converted to strings when an integer is received for a string input
-     */
+    /** @var bool Whether or not integers are converted to strings when an integer is received for a string input */
     protected $castIntegerToStringType;
 
-    /**
-     * @var array Errors encountered while validating
-     */
+    /** @var array Errors encountered while validating */
     protected $errors;
 
     /**
-     * Get a cached instance
-     *
      * @return self
      * @codeCoverageIgnore
      */
@@ -48,9 +40,6 @@ class SchemaValidator implements ValidatorInterface
         $this->castIntegerToStringType = $castIntegerToStringType;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function validate(Parameter $param, &$value)
     {
         $this->errors = array();

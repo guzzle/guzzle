@@ -26,9 +26,6 @@ class PostFile implements PostFileInterface
         $this->contentType = $contentType ?: $this->guessContentType();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setFieldName($name)
     {
         $this->fieldName = $name;
@@ -36,17 +33,11 @@ class PostFile implements PostFileInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getFieldName()
     {
         return $this->fieldName;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setFilename($filename)
     {
         // Remove leading @ symbol
@@ -63,17 +54,11 @@ class PostFile implements PostFileInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getFilename()
     {
         return $this->filename;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setContentType($type)
     {
         $this->contentType = $type;
@@ -81,17 +66,11 @@ class PostFile implements PostFileInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getContentType()
     {
         return $this->contentType;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getCurlValue()
     {
         // PHP 5.5 introduced a CurlFile object that deprecates the old @filename syntax

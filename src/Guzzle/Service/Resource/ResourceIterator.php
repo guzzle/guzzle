@@ -5,69 +5,41 @@ namespace Guzzle\Service\Resource;
 use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Service\Command\CommandInterface;
 
-/**
- * {@inheritdoc}
- */
 abstract class ResourceIterator extends AbstractHasDispatcher implements ResourceIteratorInterface
 {
-    /**
-     * @var CommandInterface Command used to send requests
-     */
+    /** @var CommandInterface Command used to send requests */
     protected $command;
 
-    /**
-     * @var CommandInterface First sent command
-     */
+    /** @var CommandInterface First sent command */
     protected $originalCommand;
 
-    /**
-     * @var array Currently loaded resources
-     */
+    /** @var array Currently loaded resources */
     protected $resources;
 
-    /**
-     * @var int Total number of resources that have been retrieved
-     */
+    /** @var int Total number of resources that have been retrieved */
     protected $retrievedCount = 0;
 
-    /**
-     * @var int Total number of resources that have been iterated
-     */
+    /** @var int Total number of resources that have been iterated */
     protected $iteratedCount = 0;
 
-    /**
-     * @var string NextToken/Marker for a subsequent request
-     */
+    /** @var string NextToken/Marker for a subsequent request */
     protected $nextToken = false;
 
-    /**
-     * @var int Maximum number of resources to fetch per request
-     */
+    /** @var int Maximum number of resources to fetch per request */
     protected $pageSize;
 
-    /**
-     * @var int Maximum number of resources to retrieve in total
-     */
+    /** @var int Maximum number of resources to retrieve in total */
     protected $limit;
 
-    /**
-     * @var int Number of requests sent
-     */
+    /** @var int Number of requests sent */
     protected $requestCount = 0;
 
-    /**
-     * @var array Initial data passed to the constructor
-     */
+    /** @var array Initial data passed to the constructor */
     protected $data = array();
 
-    /**
-     * @var bool Whether or not the current value is known to be invalid (e.g. when sendRequest() returns 0 resources)
-     */
+    /** @var bool Whether or not the current value is known to be invalid */
     protected $invalid;
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getAllEvents()
     {
         return array(
@@ -79,14 +51,11 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements Resourc
     }
 
     /**
-     * This should only be invoked by a {@see ClientInterface} object.
-     *
      * @param CommandInterface $command Initial command used for iteration
-     *
-     * @param array $data Associative array of additional parameters. You may specify any number of custom options for
-     *                    an iterator. Among these options, you may also specify the following values:
-     *                    - limit: Attempt to limit the maximum number of resources to this amount
-     *                    - page_size: Attempt to retrieve this number of resources per request
+     * @param array            $data    Associative array of additional parameters. You may specify any number of custom
+     *     options for an iterator. Among these options, you may also specify the following values:
+     *     - limit: Attempt to limit the maximum number of resources to this amount
+     *     - page_size: Attempt to retrieve this number of resources per request
      */
     public function __construct(CommandInterface $command, array $data = array())
     {
@@ -109,9 +78,6 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements Resourc
         return iterator_to_array($this, false);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setLimit($limit)
     {
         $this->limit = $limit;
@@ -120,9 +86,6 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements Resourc
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setPageSize($pageSize)
     {
         $this->pageSize = $pageSize;
@@ -158,31 +121,16 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements Resourc
         return $this;
     }
 
-    /**
-     * Return the current element.
-     *
-     * @return mixed Returns the current element.
-     */
     public function current()
     {
         return $this->resources ? current($this->resources) : false;
     }
 
-    /**
-     * Return the key of the current element.
-     *
-     * @return mixed
-     */
     public function key()
     {
         return max(0, $this->iteratedCount - 1);
     }
 
-    /**
-     * Return the total number of items that have been retrieved thus far.
-     *
-     * @return int
-     */
     public function count()
     {
         return $this->retrievedCount;
@@ -209,20 +157,12 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements Resourc
         $this->next();
     }
 
-    /**
-     * Check if there is a current element after calls to rewind() or next().
-     *
-     * @return bool Returns TRUE if the current element is valid or FALSE
-     */
     public function valid()
     {
         return !$this->invalid && (!$this->resources || $this->current() || $this->nextToken)
             && (!$this->limit || $this->iteratedCount < $this->limit + 1);
     }
 
-    /**
-     * Move forward to next element and may trigger subsequent requests
-     */
     public function next()
     {
         $this->iteratedCount++;

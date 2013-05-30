@@ -11,19 +11,12 @@ use Guzzle\Service\Description\Parameter;
  */
 class JsonVisitor extends AbstractRequestVisitor
 {
-    /**
-     * @var bool Whether or not to add a Content-Type header when JSON is found
-     */
+    /** @var bool Whether or not to add a Content-Type header when JSON is found */
     protected $jsonContentType = 'application/json';
 
-    /**
-     * @var \SplObjectStorage Data object for persisting JSON data
-     */
+    /** @var \SplObjectStorage Data object for persisting JSON data */
     protected $data;
 
-    /**
-     * This visitor uses an {@see \SplObjectStorage} to associate JSON data with commands
-     */
     public function __construct()
     {
         $this->data = new \SplObjectStorage();
@@ -44,9 +37,6 @@ class JsonVisitor extends AbstractRequestVisitor
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
         if (isset($this->data[$command])) {
@@ -58,9 +48,6 @@ class JsonVisitor extends AbstractRequestVisitor
         $this->data[$command] = $json;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function after(CommandInterface $command, RequestInterface $request)
     {
         if (isset($this->data[$command])) {

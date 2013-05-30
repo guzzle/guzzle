@@ -12,19 +12,12 @@ use Guzzle\Service\Description\Parameter;
  */
 class XmlVisitor extends AbstractRequestVisitor
 {
-    /**
-     * @var \SplObjectStorage Data object for persisting XML data
-     */
+    /** @var \SplObjectStorage Data object for persisting XML data */
     protected $data;
 
-    /**
-     * @var bool Content-Type header added when XML is found
-     */
+    /** @var bool Content-Type header added when XML is found */
     protected $contentType = 'application/xml';
 
-    /**
-     * This visitor uses an {@see \SplObjectStorage} to associate XML data with commands
-     */
     public function __construct()
     {
         $this->data = new \SplObjectStorage();
@@ -44,9 +37,6 @@ class XmlVisitor extends AbstractRequestVisitor
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
         $xml = isset($this->data[$command])
@@ -56,9 +46,6 @@ class XmlVisitor extends AbstractRequestVisitor
         $this->data[$command] = $xml;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function after(CommandInterface $command, RequestInterface $request)
     {
         $xml = null;

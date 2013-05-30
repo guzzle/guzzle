@@ -6,7 +6,7 @@ use Guzzle\Common\HasDispatcherInterface;
 use Guzzle\Common\Event;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\HeaderComparison;
+use Guzzle\Tests\Http\Message\HeaderComparison;
 use Guzzle\Plugin\Mock\MockPlugin;
 use Guzzle\Service\Client;
 use Guzzle\Service\Builder\ServiceBuilderInterface;

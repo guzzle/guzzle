@@ -11,9 +11,7 @@ use Guzzle\Common\Exception\InvalidArgumentException;
  */
 class FilterIterator extends \FilterIterator
 {
-    /**
-     * @var mixed Callback used for filtering
-     */
+    /** @var mixed Callback used for filtering */
     protected $callback;
 
     /**
@@ -31,9 +29,6 @@ class FilterIterator extends \FilterIterator
         $this->callback = $callback;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function accept()
     {
         return call_user_func($this->callback, $this->current());

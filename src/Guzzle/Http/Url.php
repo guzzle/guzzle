@@ -18,9 +18,7 @@ class Url
     protected $path = '';
     protected $fragment;
 
-    /**
-     * @var QueryString Query part of the URL
-     */
+    /** @var QueryString Query part of the URL */
     protected $query;
 
     /**

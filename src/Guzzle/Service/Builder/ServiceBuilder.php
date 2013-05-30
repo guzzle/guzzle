@@ -13,24 +13,16 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInterface, \ArrayAccess, \Serializable
 {
-    /**
-     * @var array Service builder configuration data
-     */
+    /** @var array Service builder configuration data */
     protected $builderConfig = array();
 
-    /**
-     * @var array Instantiated client objects
-     */
+    /** @var array Instantiated client objects */
     protected $clients = array();
 
-    /**
-     * @var ServiceBuilderLoader Cached instance of the service builder loader
-     */
+    /** @var ServiceBuilderLoader Cached instance of the service builder loader */
     protected static $cachedFactory;
 
-    /**
-     * @var array Plugins to attach to each client created by the service builder
-     */
+    /** @var array Plugins to attach to each client created by the service builder */
     protected $plugins = array();
 
     /**
@@ -56,8 +48,6 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
     }
 
     /**
-     * Construct a new service builder
-     *
      * @param array $serviceBuilderConfig Service configuration settings:
      *     - name: Name of the service
      *     - class: Client class to instantiate using a factory method
@@ -68,29 +58,16 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
         $this->builderConfig = $serviceBuilderConfig;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getAllEvents()
     {
         return array('service_builder.create_client');
     }
 
-    /**
-     * Restores the service builder from JSON
-     *
-     * @param string $serialized JSON data to restore from
-     */
     public function unserialize($serialized)
     {
         $this->builderConfig = json_decode($serialized, true);
     }
 
-    /**
-     * Represents the service builder as a string
-     *
-     * @return array
-     */
     public function serialize()
     {
         return json_encode($this->builderConfig);
@@ -122,9 +99,6 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
         return isset($this->builderConfig[$name]) ? $this->builderConfig[$name] : null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function get($name, $throwAway = false)
     {
         if (!isset($this->builderConfig[$name])) {
@@ -171,9 +145,6 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
         return $client;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function set($key, $service)
     {
         $this->builderConfig[$key] = $service;

@@ -7,9 +7,7 @@ namespace Guzzle\Parser\Url;
  */
 class UrlParser implements UrlParserInterface
 {
-    /**
-     * @var bool Whether or not to work with UTF-8 strings
-     */
+    /** @var bool Whether or not to work with UTF-8 strings */
     protected $utf8 = false;
 
     /**
@@ -22,9 +20,6 @@ class UrlParser implements UrlParserInterface
         $this->utf8 = $utf8;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function parseUrl($url)
     {
         $parts = parse_url($url);

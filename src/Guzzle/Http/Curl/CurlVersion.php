@@ -7,24 +7,16 @@ namespace Guzzle\Http\Curl;
  */
 class CurlVersion
 {
-    /**
-     * @var array curl_version() information
-     */
+    /** @var array curl_version() information */
     protected $version;
 
-    /**
-     * @var CurlVersion
-     */
+    /** @var CurlVersion */
     protected static $instance;
 
-    /**
-     * @var string Default user agent
-     */
+    /** @var string Default user agent */
     protected $userAgent;
 
     /**
-     * Get the singleton instance of the CurlVersion object
-     *
      * @return CurlVersion
      */
     public static function getInstance()

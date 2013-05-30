@@ -10,39 +10,25 @@ use Guzzle\Common\Exception\RuntimeException;
  */
 class BatchBuilder
 {
-    /**
-     * @var bool Whether or not the batch should automatically flush
-     */
+    /** @var bool Whether or not the batch should automatically flush*/
     protected $autoFlush = false;
 
-    /**
-     * @var bool Whether or not to maintain a batch history
-     */
+    /** @var bool Whether or not to maintain a batch history */
     protected $history = false;
 
-    /**
-     * @var bool Whether or not to buffer exceptions encountered in transfer
-     */
+    /** @var bool Whether or not to buffer exceptions encountered in transfer */
     protected $exceptionBuffering = false;
 
-    /**
-     * @var mixed Callable to invoke each time a flush completes
-     */
+    /** @var mixed Callable to invoke each time a flush completes */
     protected $afterFlush;
 
-    /**
-     * @var BatchTransferInterface Object used to transfer items in the queue
-     */
+    /** @var BatchTransferInterface Object used to transfer items in the queue */
     protected $transferStrategy;
 
-    /**
-     * @var BatchDivisorInterface Object used to divide the queue into batches
-     */
+    /** @var BatchDivisorInterface Object used to divide the queue into batches */
     protected $divisorStrategy;
 
-    /**
-     * @var array of Mapped transfer strategies by handle name
-     */
+    /** @var array of Mapped transfer strategies by handle name */
     protected static $mapping = array(
         'request' => 'Guzzle\Batch\BatchRequestTransfer',
         'command' => 'Guzzle\Batch\BatchCommandTransfer'

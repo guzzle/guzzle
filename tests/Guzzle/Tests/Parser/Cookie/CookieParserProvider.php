@@ -4,6 +4,9 @@ namespace Guzzle\Tests\Parser\Cookie;
 
 use Guzzle\Http\Url;
 
+/**
+ * @covers Guzzle\Parser\Cookie\CookieParser
+ */
 class CookieParserProvider extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
@@ -251,7 +254,6 @@ class CookieParserProvider extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @dataProvider cookieParserDataProvider
-     * @covers Guzzle\Parser\Cookie\CookieParser
      */
     public function testParseCookie($cookie, $parsed, $url = null)
     {

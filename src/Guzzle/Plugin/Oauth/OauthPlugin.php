@@ -16,9 +16,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class OauthPlugin implements EventSubscriberInterface
 {
-    /**
-     * @var Collection Configuration settings
-     */
+    /** @var Collection Configuration settings */
     protected $config;
 
     /**
@@ -52,9 +50,6 @@ class OauthPlugin implements EventSubscriberInterface
         ));
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getSubscribedEvents()
     {
         return array(

@@ -35,33 +35,21 @@ class ClosureCacheAdapter implements CacheAdapterInterface
         $this->callables = $callables;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function contains($id, array $options = null)
     {
         return call_user_func($this->callables['contains'], $id, $options);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function delete($id, array $options = null)
     {
         return call_user_func($this->callables['delete'], $id, $options);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function fetch($id, array $options = null)
     {
         return call_user_func($this->callables['fetch'], $id, $options);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function save($id, $data, $lifeTime = false, array $options = null)
     {
         return call_user_func($this->callables['save'], $id, $data, $lifeTime, $options);

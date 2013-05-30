@@ -11,14 +11,10 @@ use Guzzle\Http\Message\Response;
  */
 class CallbackCanCacheStrategy extends DefaultCanCacheStrategy
 {
-    /**
-     * @var callable Callback for request
-     */
+    /** @var callable Callback for request */
     protected $requestCallback;
 
-    /**
-     * @var callable Callback for response
-     */
+    /** @var callable Callback for response */
     protected $responseCallback;
 
     /**
@@ -41,9 +37,6 @@ class CallbackCanCacheStrategy extends DefaultCanCacheStrategy
         $this->responseCallback = $responseCallback;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function canCacheRequest(RequestInterface $request)
     {
         return $this->requestCallback
@@ -51,9 +44,6 @@ class CallbackCanCacheStrategy extends DefaultCanCacheStrategy
             : parent::canCache($request);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function canCacheResponse(Response $response)
     {
         return $this->responseCallback

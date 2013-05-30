@@ -16,29 +16,19 @@ use Guzzle\Service\Command\LocationVisitor\VisitorFlyweight;
  */
 class DefaultRequestSerializerTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var EntityEnclosingRequest
-     */
+    /** @var EntityEnclosingRequest */
     protected $request;
 
-    /**
-     * @var \Guzzle\Service\Command\AbstractCommand
-     */
+    /** @var \Guzzle\Service\Command\AbstractCommand */
     protected $command;
 
-    /**
-     * @var Client
-     */
+    /** @var Client */
     protected $client;
 
-    /**
-     * @var DefaultRequestSerializer
-     */
+    /** @var DefaultRequestSerializer */
     protected $serializer;
 
-    /**
-     * @var Operation
-     */
+    /** @var Operation */
     protected $operation;
 
     public function setUp()

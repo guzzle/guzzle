@@ -4,6 +4,9 @@ namespace Guzzle\Tests\Common;
 
 use Guzzle\Common\Event;
 
+/**
+ * @covers Guzzle\Common\Event
+ */
 class EventTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
@@ -18,9 +21,6 @@ class EventTest extends \Guzzle\Tests\GuzzleTestCase
         ));
     }
 
-    /**
-     * @covers Guzzle\Common\Event::__construct
-     */
     public function testAllowsParameterInjection()
     {
         $event = new Event(array(
@@ -29,12 +29,6 @@ class EventTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('123', $event['test']);
     }
 
-    /**
-     * @covers Guzzle\Common\Event::offsetGet
-     * @covers Guzzle\Common\Event::offsetSet
-     * @covers Guzzle\Common\Event::offsetUnset
-     * @covers Guzzle\Common\Event::offsetExists
-     */
     public function testImplementsArrayAccess()
     {
         $event = $this->getEvent();
@@ -51,18 +45,12 @@ class EventTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('new', $event['test']);
     }
 
-    /**
-     * @covers Guzzle\Common\Event::getIterator
-     */
     public function testImplementsIteratorAggregate()
     {
         $event = $this->getEvent();
         $this->assertInstanceOf('ArrayIterator', $event->getIterator());
     }
 
-    /**
-     * @covers Guzzle\Common\Event::toArray
-     */
     public function testConvertsToArray()
     {
         $this->assertEquals(array(

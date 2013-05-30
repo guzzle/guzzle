@@ -16,19 +16,13 @@ use Guzzle\Service\Resource\Model;
  */
 class OperationResponseParser extends DefaultResponseParser
 {
-    /**
-     * @var VisitorFlyweight $factory Visitor factory
-     */
+    /** @var VisitorFlyweight $factory Visitor factory */
     protected $factory;
 
-    /**
-     * @var self
-     */
+    /** @var self */
     protected static $instance;
 
     /**
-     * Get a cached default instance of the Operation response parser that uses default visitors
-     *
      * @return self
      * @codeCoverageIgnore
      */
@@ -64,10 +58,7 @@ class OperationResponseParser extends DefaultResponseParser
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function handleParsing(AbstractCommand $command, Response $response, $contentType)
+    protected function handleParsing(CommandInterface $command, Response $response, $contentType)
     {
         $operation = $command->getOperation();
         $type = $operation->getResponseType();
@@ -89,7 +80,7 @@ class OperationResponseParser extends DefaultResponseParser
         if (!$model) {
             // Return basic processing if the responseType is not model or the model cannot be found
             return parent::handleParsing($command, $response, $contentType);
-        } elseif ($command->get(AbstractCommand::RESPONSE_PROCESSING) != AbstractCommand::TYPE_MODEL) {
+        } elseif ($command[AbstractCommand::RESPONSE_PROCESSING] != AbstractCommand::TYPE_MODEL) {
             // Returns a model with no visiting if the command response processing is not model
             return new Model(parent::handleParsing($command, $response, $contentType), $model);
         } else {
@@ -106,11 +97,8 @@ class OperationResponseParser extends DefaultResponseParser
      *
      * @return array Returns the array of result data
      */
-    protected function visitResult(
-        Parameter $model,
-        CommandInterface $command,
-        Response $response
-    ) {
+    protected function visitResult(Parameter $model, CommandInterface $command, Response $response)
+    {
         $foundVisitors = $result = array();
         $props = $model->getProperties();
 

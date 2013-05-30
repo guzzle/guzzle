@@ -1,8 +1,9 @@
 <?php
 
-namespace Guzzle\Http\Message;
+namespace Guzzle\Tests\Http\Message;
 
 use Guzzle\Common\Collection;
+use Guzzle\Http\Message\Header\HeaderCollection;
 
 /**
  * Class used to compare HTTP headers using a custom DSL
@@ -26,8 +27,8 @@ class HeaderComparison
         $ignore = array();
         $absent = array();
 
-        if ($actualHeaders instanceof Collection) {
-            $actualHeaders = $actualHeaders->getAll();
+        if ($actualHeaders instanceof HeaderCollection) {
+            $actualHeaders = $actualHeaders->toArray();
         }
 
         foreach ($filteredHeaders as $k => $v) {
@@ -117,7 +118,13 @@ class HeaderComparison
      */
     protected function hasKey($key, $array)
     {
-        foreach (array_keys($array) as $k) {
+        if ($array instanceof Collection) {
+            $keys = $array->getKeys();
+        } else {
+            $keys = array_keys($array);
+        }
+
+        foreach ($keys as $k) {
             if (!strcasecmp($k, $key)) {
                 return true;
             }

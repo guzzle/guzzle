@@ -6,16 +6,15 @@ use Guzzle\Cache\CacheAdapterFactory;
 use Guzzle\Cache\DoctrineCacheAdapter;
 use Doctrine\Common\Cache\ArrayCache;
 
+/**
+ * @covers Guzzle\Cache\CacheAdapterFactory
+ */
 class CacheAdapterFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var ArrayCache
-     */
+    /** @var ArrayCache */
     private $cache;
 
-    /**
-     * @var DoctrineCacheAdapter
-     */
+    /** @var DoctrineCacheAdapter */
     private $adapter;
 
     /**
@@ -29,8 +28,7 @@ class CacheAdapterFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Cache\CacheAdapterFactory::factory
-     * @expectedException InvalidArgumentException
+     * @expectedException \InvalidArgumentException
      */
     public function testEnsuresConfigIsArray()
     {
@@ -38,8 +36,7 @@ class CacheAdapterFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Cache\CacheAdapterFactory::factory
-     * @expectedException InvalidArgumentException
+     * @expectedException \InvalidArgumentException
      * @expectedExceptionMessage cache.provider is a required CacheAdapterFactory option
      */
     public function testEnsuresRequiredProviderOption()
@@ -50,8 +47,7 @@ class CacheAdapterFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Cache\CacheAdapterFactory::factory
-     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     * @expectedException \Guzzle\Common\Exception\InvalidArgumentException
      * @expectedExceptionMessage cache.adapter is a required CacheAdapterFactory option
      */
     public function testEnsuresRequiredAdapterOption()
@@ -62,8 +58,7 @@ class CacheAdapterFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Cache\CacheAdapterFactory::factory
-     * @expectedException InvalidArgumentException
+     * @expectedException \InvalidArgumentException
      * @expectedExceptionMessage foo is not a valid class for cache.adapter
      */
     public function testEnsuresClassesExist()
@@ -74,10 +69,6 @@ class CacheAdapterFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         ));
     }
 
-    /**
-     * @covers Guzzle\Cache\CacheAdapterFactory::factory
-     * @covers Guzzle\Cache\CacheAdapterFactory::createObject
-     */
     public function testCreatesProviderFromConfig()
     {
         $cache = CacheAdapterFactory::factory(array(
@@ -89,10 +80,6 @@ class CacheAdapterFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertInstanceOf('Doctrine\Common\Cache\ApcCache', $cache->getCacheObject());
     }
 
-    /**
-     * @covers Guzzle\Cache\CacheAdapterFactory::factory
-     * @covers Guzzle\Cache\CacheAdapterFactory::createObject
-     */
     public function testCreatesProviderFromConfigWithArguments()
     {
         $cache = CacheAdapterFactory::factory(array(
@@ -107,8 +94,7 @@ class CacheAdapterFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Cache\CacheAdapterFactory
-     * @expectedException Guzzle\Common\Exception\RuntimeException
+     * @expectedException \Guzzle\Common\Exception\RuntimeException
      */
     public function testWrapsExceptionsOnObjectCreation()
     {
@@ -118,9 +104,6 @@ class CacheAdapterFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         ));
     }
 
-    /**
-     * @covers Guzzle\Cache\CacheAdapterFactory
-     */
     public function testCreatesNullCacheAdapterByDefault()
     {
         $adapter = CacheAdapterFactory::factory(array());

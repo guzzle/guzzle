@@ -9,14 +9,10 @@ use Guzzle\Common\Exception\RuntimeException;
  */
 class CachingEntityBody extends AbstractEntityBodyDecorator
 {
-    /**
-     * @var EntityBody Remote stream used to actually pull data onto the buffer
-     */
+    /** @var EntityBody Remote stream used to actually pull data onto the buffer */
     protected $remoteStream;
 
-    /**
-     * @var int The number of bytes to skip reading due to a write on the temporary buffer
-     */
+    /** @var int The number of bytes to skip reading due to a write on the temporary buffer */
     protected $skipReadBytes = 0;
 
     /**
@@ -51,9 +47,6 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
         return $str;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getSize()
     {
         return max($this->body->getSize(), $this->remoteStream->getSize());
@@ -83,9 +76,6 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
         return $this->body->seek($byte);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function rewind()
     {
         return $this->seek(0);
@@ -101,9 +91,6 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
         throw new RuntimeException(__CLASS__ . ' does not support custom stream rewind functions');
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function read($length)
     {
         // Perform a regular read on any previously read data from the buffer
@@ -130,9 +117,6 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
         return $data;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function write($string)
     {
         // When appending to the end of the currently read stream, you'll want to skip bytes from being read from
@@ -165,9 +149,6 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
         return $buffer;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function isConsumed()
     {
         return $this->body->isConsumed() && $this->remoteStream->isConsumed();
@@ -181,73 +162,46 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
         return $this->remoteStream->close() && $this->body->close();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setStream($stream, $size = 0)
     {
         $this->remoteStream->setStream($stream, $size);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getContentType()
     {
         return $this->remoteStream->getContentType();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getContentEncoding()
     {
         return $this->remoteStream->getContentEncoding();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getMetaData($key = null)
     {
         return $this->remoteStream->getMetaData($key);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getStream()
     {
         return $this->remoteStream->getStream();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getWrapper()
     {
         return $this->remoteStream->getWrapper();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getWrapperData()
     {
         return $this->remoteStream->getWrapperData();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getStreamType()
     {
         return $this->remoteStream->getStreamType();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getUri()
     {
         return $this->remoteStream->getUri();
@@ -255,7 +209,6 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
 
     /**
      * Always retrieve custom data from the remote stream
-     *
      * {@inheritdoc}
      */
     public function getCustomData($key)
@@ -265,7 +218,6 @@ class CachingEntityBody extends AbstractEntityBodyDecorator
 
     /**
      * Always set custom data on the remote stream
-     *
      * {@inheritdoc}
      */
     public function setCustomData($key, $value)

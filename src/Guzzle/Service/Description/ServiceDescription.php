@@ -10,44 +10,28 @@ use Guzzle\Common\ToArrayInterface;
  */
 class ServiceDescription implements ServiceDescriptionInterface, ToArrayInterface
 {
-    /**
-     * @var array Array of {@see OperationInterface} objects
-     */
+    /** @var array Array of {@see OperationInterface} objects */
     protected $operations = array();
 
-    /**
-     * @var array Array of API models
-     */
+    /** @var array Array of API models */
     protected $models = array();
 
-    /**
-     * @var string Name of the API
-     */
+    /** @var string Name of the API */
     protected $name;
 
-    /**
-     * @var string API version
-     */
+    /** @var string API version */
     protected $apiVersion;
 
-    /**
-     * @var string Summary of the API
-     */
+    /** @var string Summary of the API */
     protected $description;
 
-    /**
-     * @var array Any extra API data
-     */
+    /** @var array Any extra API data */
     protected $extraData = array();
 
-    /**
-     * @var ServiceDescriptionLoader Factory used in factory method
-     */
+    /** @var ServiceDescriptionLoader Factory used in factory method */
     protected static $descriptionLoader;
 
-    /**
-     * @var string baseUrl/basePath
-     */
+    /** @var string baseUrl/basePath */
     protected $baseUrl;
 
     /**
@@ -69,8 +53,6 @@ class ServiceDescription implements ServiceDescriptionInterface, ToArrayInterfac
     }
 
     /**
-     * Create a new ServiceDescription
-     *
      * @param array $config Array of configuration data
      */
     public function __construct(array $config = array())
@@ -78,19 +60,17 @@ class ServiceDescription implements ServiceDescriptionInterface, ToArrayInterfac
         $this->fromArray($config);
     }
 
-    /**
-     * Serialize the service description
-     *
-     * @return string
-     */
     public function serialize()
     {
         return json_encode($this->toArray());
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    public function unserialize($json)
+    {
+        $this->operations = array();
+        $this->fromArray(json_decode($json, true));
+    }
+
     public function toArray()
     {
         $result = array(
@@ -113,20 +93,6 @@ class ServiceDescription implements ServiceDescriptionInterface, ToArrayInterfac
         return array_filter($result);
     }
 
-    /**
-     * Unserialize the service description
-     *
-     * @param string|array $json JSON data
-     */
-    public function unserialize($json)
-    {
-        $this->operations = array();
-        $this->fromArray(json_decode($json, true));
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function getBaseUrl()
     {
         return $this->baseUrl;
@@ -146,9 +112,6 @@ class ServiceDescription implements ServiceDescriptionInterface, ToArrayInterfac
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getOperations()
     {
         foreach (array_keys($this->operations) as $name) {
@@ -158,17 +121,11 @@ class ServiceDescription implements ServiceDescriptionInterface, ToArrayInterfac
         return $this->operations;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function hasOperation($name)
     {
         return isset($this->operations[$name]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getOperation($name)
     {
         // Lazily retrieve and build operations
@@ -197,9 +154,6 @@ class ServiceDescription implements ServiceDescriptionInterface, ToArrayInterfac
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getModel($id)
     {
         if (!isset($this->models[$id])) {
@@ -213,9 +167,6 @@ class ServiceDescription implements ServiceDescriptionInterface, ToArrayInterfac
         return $this->models[$id];
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getModels()
     {
         // Ensure all models are converted into parameter objects
@@ -226,9 +177,6 @@ class ServiceDescription implements ServiceDescriptionInterface, ToArrayInterfac
         return $this->models;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function hasModel($id)
     {
         return isset($this->models[$id]);
@@ -248,41 +196,26 @@ class ServiceDescription implements ServiceDescriptionInterface, ToArrayInterfac
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getApiVersion()
     {
         return $this->apiVersion;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getName()
     {
         return $this->name;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getDescription()
     {
         return $this->description;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getData($key)
     {
         return isset($this->extraData[$key]) ? $this->extraData[$key] : null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setData($key, $value)
     {
         $this->extraData[$key] = $value;

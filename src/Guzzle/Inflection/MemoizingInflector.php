@@ -7,22 +7,16 @@ namespace Guzzle\Inflection;
  */
 class MemoizingInflector implements InflectorInterface
 {
-    /**
-     * @var array Array of cached inflections
-     */
+    /** @var array Array of cached inflections */
     protected $cache = array(
         'snake' => array(),
         'camel' => array()
     );
 
-    /**
-     * @var int Max entries per cache
-     */
+    /** @var int Max entries per cache */
     protected $maxCacheSize;
 
-    /**
-     * @var InflectorInterface Decorated inflector
-     */
+    /** @var InflectorInterface Decorated inflector */
     protected $decoratedInflector;
 
     /**
@@ -35,9 +29,6 @@ class MemoizingInflector implements InflectorInterface
         $this->maxCacheSize = $maxCacheSize;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function snake($word)
     {
         if (!isset($this->cache['snake'][$word])) {

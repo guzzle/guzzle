@@ -9,14 +9,10 @@ use Guzzle\Common\Exception\InvalidArgumentException;
  */
 class Operation implements OperationInterface
 {
-    /**
-     * @var string Default command class to use when none is specified
-     */
+    /** @var string Default command class to use when none is specified */
     const DEFAULT_COMMAND_CLASS = 'Guzzle\\Service\\Command\\OperationCommand';
 
-    /**
-     * @var array Hashmap of properties that can be specified. Represented as a hash to speed up constructor.
-     */
+    /** @var array Hashmap of properties that can be specified. Represented as a hash to speed up constructor. */
     protected static $properties = array(
         'name' => true, 'httpMethod' => true, 'uri' => true, 'class' => true, 'responseClass' => true,
         'responseType' => true, 'responseNotes' => true, 'notes' => true, 'summary' => true, 'documentationUrl' => true,
@@ -24,84 +20,52 @@ class Operation implements OperationInterface
         'errorResponses' => true
     );
 
-    /**
-     * @var array Parameters
-     */
+    /** @var array Parameters */
     protected $parameters = array();
 
-    /**
-     * @var Parameter Additional parameters schema
-     */
+    /** @var Parameter Additional parameters schema */
     protected $additionalParameters;
 
-    /**
-     * @var string Name of the command
-     */
+    /** @var string Name of the command */
     protected $name;
 
-    /**
-     * @var string HTTP method
-     */
+    /** @var string HTTP method */
     protected $httpMethod;
 
-    /**
-     * @var string This is a short summary of what the operation does
-     */
+    /** @var string This is a short summary of what the operation does */
     protected $summary;
 
-    /**
-     * @var string A longer text field to explain the behavior of the operation.
-     */
+    /** @var string A longer text field to explain the behavior of the operation. */
     protected $notes;
 
-    /**
-     * @var string Reference URL providing more information about the operation
-     */
+    /** @var string Reference URL providing more information about the operation */
     protected $documentationUrl;
 
-    /**
-     * @var string HTTP URI of the command
-     */
+    /** @var string HTTP URI of the command */
     protected $uri;
 
-    /**
-     * @var string Class of the command object
-     */
+    /** @var string Class of the command object */
     protected $class;
 
-    /**
-     * @var string This is what is returned from the method
-     */
+    /** @var string This is what is returned from the method */
     protected $responseClass;
 
-    /**
-     * @var string Type information about the response
-     */
+    /** @var string Type information about the response */
     protected $responseType;
 
-    /**
-     * @var string Information about the response returned by the operation
-     */
+    /** @var string Information about the response returned by the operation */
     protected $responseNotes;
 
-    /**
-     * @var bool Whether or not the command is deprecated
-     */
+    /** @var bool Whether or not the command is deprecated */
     protected $deprecated;
 
-    /**
-     * @var array Array of errors that could occur when running the command
-     */
+    /** @var array Array of errors that could occur when running the command */
     protected $errorResponses;
 
-    /**
-     * @var ServiceDescriptionInterface
-     */
+    /** @var ServiceDescriptionInterface */
     protected $description;
 
-    /**
-     * @var array Extra operation information
-     */
+    /** @var array Extra operation information */
     protected $data;
 
     /**
@@ -180,9 +144,6 @@ class Operation implements OperationInterface
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function toArray()
     {
         $result = array();
@@ -207,17 +168,11 @@ class Operation implements OperationInterface
         return $result;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getServiceDescription()
     {
         return $this->description;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setServiceDescription(ServiceDescriptionInterface $description)
     {
         $this->description = $description;
@@ -225,33 +180,21 @@ class Operation implements OperationInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getParams()
     {
         return $this->parameters;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getParamNames()
     {
         return array_keys($this->parameters);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function hasParam($name)
     {
         return isset($this->parameters[$name]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getParam($param)
     {
         return isset($this->parameters[$param]) ? $this->parameters[$param] : null;
@@ -286,9 +229,6 @@ class Operation implements OperationInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getHttpMethod()
     {
         return $this->httpMethod;
@@ -308,9 +248,6 @@ class Operation implements OperationInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getClass()
     {
         return $this->class;
@@ -330,9 +267,6 @@ class Operation implements OperationInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getName()
     {
         return $this->name;
@@ -352,9 +286,6 @@ class Operation implements OperationInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getSummary()
     {
         return $this->summary;
@@ -374,9 +305,6 @@ class Operation implements OperationInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getNotes()
     {
         return $this->notes;
@@ -396,9 +324,6 @@ class Operation implements OperationInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getDocumentationUrl()
     {
         return $this->documentationUrl;
@@ -418,9 +343,6 @@ class Operation implements OperationInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getResponseClass()
     {
         return $this->responseClass;
@@ -442,9 +364,6 @@ class Operation implements OperationInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getResponseType()
     {
         return $this->responseType;
@@ -475,9 +394,6 @@ class Operation implements OperationInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getResponseNotes()
     {
         return $this->responseNotes;
@@ -497,9 +413,6 @@ class Operation implements OperationInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getDeprecated()
     {
         return $this->deprecated;
@@ -519,9 +432,6 @@ class Operation implements OperationInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getUri()
     {
         return $this->uri;
@@ -541,9 +451,6 @@ class Operation implements OperationInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getErrorResponses()
     {
         return $this->errorResponses;
@@ -579,9 +486,6 @@ class Operation implements OperationInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getData($name)
     {
         return isset($this->data[$name]) ? $this->data[$name] : null;

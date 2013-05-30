@@ -7,11 +7,11 @@ use Guzzle\Http\QueryString;
 
 /**
  * @group server
+ * @covers Guzzle\Http\EntityBody
  */
 class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
-     * @covers Guzzle\Http\EntityBody::factory
      * @expectedException \Guzzle\Common\Exception\InvalidArgumentException
      */
     public function testFactoryThrowsException()
@@ -19,10 +19,6 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $body = EntityBody::factory(false);
     }
 
-    /**
-     * @covers Guzzle\Http\EntityBody::factory
-     * @covers Guzzle\Http\EntityBody::fromString
-     */
     public function testFactory()
     {
         $body = EntityBody::factory('data');
@@ -45,9 +41,6 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($body === EntityBody::factory($body));
     }
 
-    /**
-     * @covers Guzzle\Http\EntityBody::factory
-     */
     public function testFactoryCreatesTempStreamByDefault()
     {
         $body = EntityBody::factory('');
@@ -58,9 +51,6 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('TEMP', $body->getStreamType());
     }
 
-    /**
-     * @covers Guzzle\Http\EntityBody::factory
-     */
     public function testFactoryCanCreateFromObject()
     {
         $body = EntityBody::factory(new QueryString(array('foo' => 'bar')));
@@ -68,22 +58,13 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\EntityBody::factory
-     * @expectedException Guzzle\Common\Exception\InvalidArgumentException
+     * @expectedException \Guzzle\Common\Exception\InvalidArgumentException
      */
     public function testFactoryEnsuresObjectsHaveToStringMethod()
     {
         EntityBody::factory(new \stdClass('a'));
     }
 
-    /**
-     * @covers Guzzle\Http\EntityBody::compress
-     * @covers Guzzle\Http\EntityBody::uncompress
-     * @covers Guzzle\Http\EntityBody::getContentEncoding
-     * @covers Guzzle\Http\EntityBody::setStreamFilterContentEncoding
-     * @covers Guzzle\Http\EntityBody::handleCompression
-     * @covers Guzzle\Http\EntityBody::getContentLength
-     */
     public function testHandlesCompression()
     {
         $body = EntityBody::factory('testing 123...testing 123');
@@ -136,9 +117,6 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         unlink(__DIR__ . '/../TestData/compress_test');
     }
 
-    /**
-     * @covers Guzzle\Http\EntityBody::getContentType
-     */
     public function testDeterminesContentType()
     {
         // Test using a string/temp stream
@@ -150,11 +128,6 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertContains('text/x-', $body->getContentType());
     }
 
-    /**
-     * @covers Guzzle\Http\EntityBody::getContentMd5
-     * @covers Guzzle\Http\EntityBody::calculateMd5
-     * @covers Guzzle\Stream\Stream::getHash
-     */
     public function testCreatesMd5Checksum()
     {
         $body = EntityBody::factory('testing 123...testing 123');
@@ -170,11 +143,6 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($body->getContentMd5());
     }
 
-    /**
-     * @covers Guzzle\Http\EntityBody::getContentMd5
-     * @covers Guzzle\Http\EntityBody::calculateMd5
-     * @covers Guzzle\Stream\Stream::getHash
-     */
     public function testSeeksToOriginalPosAfterMd5()
     {
         $body = EntityBody::factory('testing 123');
@@ -184,19 +152,12 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('ing 123', $body->read(1000));
     }
 
-    /**
-     * @covers Guzzle\Http\EntityBody::factory
-     */
     public function testGetTypeFormBodyFactoring()
     {
         $body = EntityBody::factory(array('key1' => 'val1', 'key2' => 'val2'));
         $this->assertEquals('key1=val1&key2=val2', (string) $body);
     }
 
-    /**
-     * @covers Guzzle\Http\EntityBody::setRewindFunction
-     * @covers Guzzle\Http\EntityBody::rewind
-     */
     public function testAllowsCustomRewind()
     {
         $body = EntityBody::factory('foo');
@@ -211,7 +172,6 @@ class EntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\EntityBody::setRewindFunction
      * @expectedException \Guzzle\Common\Exception\InvalidArgumentException
      */
     public function testCustomRewindFunctionMustBeCallable()

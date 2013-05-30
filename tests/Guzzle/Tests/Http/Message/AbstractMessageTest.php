@@ -6,35 +6,34 @@ use Guzzle\Http\Message\Header;
 use Guzzle\Http\Message\Request;
 use Guzzle\Common\Collection;
 
+/**
+ * @covers Guzzle\Http\Message\AbstractMessage
+ */
 class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var Request Request object
-     */
+    /** @var Request Request object */
     private $request;
+
+    /** @var AbstractMessage */
     private $mock;
 
-    /**
-     * Setup
-     */
     public function setUp()
     {
         parent::setUp();
         $this->mock = $this->getMockForAbstractClass('Guzzle\Http\Message\AbstractMessage');
     }
 
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::getParams
-     */
+    public function tearDown()
+    {
+        $this->mock = $this->request = null;
+    }
+
     public function testGetParams()
     {
         $request = new Request('GET', 'http://example.com');
         $this->assertInstanceOf('Guzzle\\Common\\Collection', $request->getParams());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::addHeaders
-     */
     public function testAddHeaders()
     {
         $this->mock->setHeader('A', 'B');
@@ -47,9 +46,6 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($this->mock->hasHeader('A') !== false);
     }
 
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::setHeader
-     */
     public function testAllowsHeaderToSetAsHeader()
     {
         $h = new Header('A', 'B');
@@ -57,55 +53,33 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame($h, $this->mock->getHeader('A'));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::getHeaders
-     */
     public function testGetHeader()
     {
         $this->mock->setHeader('Test', '123');
         $this->assertEquals('123', $this->mock->getHeader('Test'));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::getHeaders
-     * @covers Guzzle\Http\Message\AbstractMessage::getHeader
-     * @covers Guzzle\Http\Message\AbstractMessage::setHeaders
-     */
     public function testGetHeaders()
     {
-        $this->assertSame($this->mock, $this->mock->setHeaders(array(
-            'a' => 'b',
-            'c' => 'd'
-        )));
-
-        $this->assertEquals(array(
-            'a' => array('b'),
-            'c' => array('d')
-        ), $this->mock->getHeaders()->getAll());
-
-        foreach ($this->mock->getHeaders(true) as $key => $value) {
-            $this->assertInternalType('string', $key);
-            $this->assertInstanceOf('Guzzle\Http\Message\Header', $value);
-        }
+        $this->assertSame($this->mock, $this->mock->setHeaders(array('a' => 'b', 'c' => 'd')));
+        $h = $this->mock->getHeaders();
+        $this->assertArrayHasKey('a', $h->toArray());
+        $this->assertArrayHasKey('c', $h->toArray());
+        $this->assertInstanceOf('Guzzle\Http\Message\Header\HeaderInterface', $h->get('a'));
+        $this->assertInstanceOf('Guzzle\Http\Message\Header\HeaderInterface', $h->get('c'));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::getHeaderLines
-     */
     public function testGetHeaderLinesUsesGlue()
     {
         $this->mock->setHeaders(array('a' => 'b', 'c' => 'd'));
         $this->mock->addHeader('a', 'e');
         $this->mock->getHeader('a')->setGlue('!');
         $this->assertEquals(array(
-            'a: b!e',
+            'a: b! e',
             'c: d'
         ), $this->mock->getHeaderLines());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::hasHeader
-     */
     public function testHasHeader()
     {
         $this->assertFalse($this->mock->hasHeader('Foo'));
@@ -117,10 +91,6 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(false, $this->mock->hasHeader('bar'));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::removeHeader
-     * @covers Guzzle\Http\Message\AbstractMessage::setHeader
-     */
     public function testRemoveHeader()
     {
         $this->mock->setHeader('Foo', 'Bar');
@@ -129,9 +99,6 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($this->mock->hasHeader('Foo'));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage
-     */
     public function testHoldsCacheControlDirectives()
     {
         $mock = $this->mock;
@@ -175,8 +142,6 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
      *
      * There is more than once Cache-Control added.
      * Twice the max-age for example.
-     *
-     * @covers Guzzle\Http\Message\AbstractMessage
      */
     public function testDoubleCacheControlDirectives()
     {
@@ -185,54 +150,11 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(300, $mock->getCacheControlDirective('max-age'));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::getHeader
-     */
     public function testReturnsNullWhenHeaderIsNotFound()
     {
         $this->assertNull($this->mock->getHeader('foo'));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::addHeaders
-     * @covers Guzzle\Http\Message\AbstractMessage::addHeader
-     * @covers Guzzle\Http\Message\AbstractMessage::getHeader
-     */
-    public function testAddingHeadersWithMultipleValuesUsesCaseInsensitiveKey()
-    {
-        $this->mock->addHeaders(array(
-            'test' => '123',
-            'Test' => '456'
-        ));
-        $this->mock->addHeader('TEST', '789');
-
-        $headers = array(
-            'test' => array('123'),
-            'Test' => array('456'),
-            'TEST' => array('789'),
-        );
-        $header = $this->mock->getHeader('test');
-        $this->assertInstanceOf('Guzzle\Http\Message\Header', $header);
-        $this->assertSame($header, $this->mock->getHeader('TEST'));
-        $this->assertSame($header, $this->mock->getHeader('TeSt'));
-
-        $this->assertEquals($headers, $header->raw());
-    }
-
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::setHeader
-     */
-    public function testSettingHeadersUsesCaseInsensitiveKey()
-    {
-        $this->mock->setHeader('test', '123');
-        $this->mock->setHeader('TEST', '456');
-        $this->assertEquals('456', $this->mock->getHeader('test'));
-        $this->assertEquals('456', $this->mock->getHeader('TEST'));
-    }
-
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage::addHeaders
-     */
     public function testAddingHeadersPreservesOriginalHeaderCase()
     {
         $this->mock->addHeaders(array(
@@ -243,23 +165,23 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
         $this->mock->addHeader('test', '789');
 
         $header = $this->mock->getHeader('test');
-        $this->assertEquals(array('123', '456', '789', 'abc'), $header->toArray());
-        $this->mock->addHeader('Test', 'abc');
-
-        // Add a header of a different name
-        $this->assertEquals(array(
-            'test' => array('123', '456', '789'),
-            'Test' => array('abc', 'abc')
-        ), $this->mock->getHeader('test')->raw());
+        $this->assertContains('123', $header->toArray());
+        $this->assertContains('456', $header->toArray());
+        $this->assertContains('789', $header->toArray());
+        $this->assertContains('abc', $header->toArray());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\AbstractMessage
-     */
     public function testCanStoreEmptyHeaders()
     {
         $this->mock->setHeader('Content-Length', 0);
         $this->assertTrue($this->mock->hasHeader('Content-Length'));
-        $this->assertEquals(0, $this->mock->getHeader('Content-Length', true));
+        $this->assertEquals(0, (string) $this->mock->getHeader('Content-Length'));
+    }
+
+    public function testCanSetCustomHeaderFactory()
+    {
+        $f = new Header\HeaderFactory();
+        $this->mock->setHeaderFactory($f);
+        $this->assertSame($f, $this->readAttribute($this->mock, 'headerFactory'));
     }
 }

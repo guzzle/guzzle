@@ -13,9 +13,7 @@ use Guzzle\Http\Exception\HttpException;
  */
 class LinearBackoffStrategy extends AbstractBackoffStrategy
 {
-    /**
-     * @var int Amount of time to progress each delay
-     */
+    /** @var int Amount of time to progress each delay */
     protected $step;
 
     /**
@@ -26,17 +24,11 @@ class LinearBackoffStrategy extends AbstractBackoffStrategy
         $this->step = $step;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function makesDecision()
     {
         return false;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function getDelay($retries, RequestInterface $request, Response $response = null, HttpException $e = null)
     {
         return $retries * $this->step;

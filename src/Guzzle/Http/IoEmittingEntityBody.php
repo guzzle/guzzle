@@ -13,14 +13,9 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  */
 class IoEmittingEntityBody extends AbstractEntityBodyDecorator implements HasDispatcherInterface
 {
-    /**
-     * @var EventDispatcherInterface
-     */
+    /** @var EventDispatcherInterface */
     protected $eventDispatcher;
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getAllEvents()
     {
         return array('body.read', 'body.write');
@@ -37,9 +32,6 @@ class IoEmittingEntityBody extends AbstractEntityBodyDecorator implements HasDis
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getEventDispatcher()
     {
         if (!$this->eventDispatcher) {
@@ -49,9 +41,6 @@ class IoEmittingEntityBody extends AbstractEntityBodyDecorator implements HasDis
         return $this->eventDispatcher;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function dispatch($eventName, array $context = array())
     {
         $this->getEventDispatcher()->dispatch($eventName, new Event($context));
@@ -68,9 +57,6 @@ class IoEmittingEntityBody extends AbstractEntityBodyDecorator implements HasDis
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function read($length)
     {
         $event = array(
@@ -83,9 +69,6 @@ class IoEmittingEntityBody extends AbstractEntityBodyDecorator implements HasDis
         return $event['read'];
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function write($string)
     {
         $event = array(

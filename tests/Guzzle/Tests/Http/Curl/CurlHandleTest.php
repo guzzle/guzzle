@@ -13,6 +13,7 @@ use Guzzle\Http\Curl\CurlHandle;
 
 /**
  * @group server
+ * @covers Guzzle\Http\Curl\CurlHandle
  */
 class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 {
@@ -34,7 +35,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Curl\CurlHandle
      * @expectedException \InvalidArgumentException
      */
     public function testConstructorExpectsCurlResource()
@@ -42,9 +42,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $h = new CurlHandle(false, array());
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle
-     */
     public function testConstructorExpectsProperOptions()
     {
         $h = curl_init($this->getServer()->getUrl());
@@ -65,12 +62,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
        $this->assertEquals($this->getServer()->getUrl(), $ha->getOptions()->get(CURLOPT_URL));
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle::__construct
-     * @covers Guzzle\Http\Curl\CurlHandle::getHandle
-     * @covers Guzzle\Http\Curl\CurlHandle::getUrl
-     * @covers Guzzle\Http\Curl\CurlHandle::getOptions
-     */
     public function testConstructorInitializesObject()
     {
         $handle = curl_init($this->getServer()->getUrl());
@@ -83,9 +74,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($this->getServer()->getUrl(), $h->getOptions()->get(CURLOPT_URL));
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle::getStderr
-     */
     public function testStoresStdErr()
     {
         $request = RequestFactory::getInstance()->create('GET', 'http://test.com');
@@ -99,10 +87,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('test', $h->getStderr(false));
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle::setErrorNo
-     * @covers Guzzle\Http\Curl\CurlHandle::getErrorNo
-     */
     public function testStoresCurlErrorNumber()
     {
         $h = new CurlHandle(curl_init('http://test.com'), array(CURLOPT_URL => 'http://test.com'));
@@ -111,9 +95,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(CURLE_OPERATION_TIMEOUTED, $h->getErrorNo());
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle::getStderr
-     */
     public function testAccountsForMissingStdErr()
     {
         $handle = curl_init('http://www.test.com/');
@@ -123,9 +104,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertNull($h->getStderr(false));
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle::isAvailable
-     */
     public function testDeterminesIfResourceIsAvailable()
     {
         $handle = curl_init($this->getServer()->getUrl());
@@ -141,11 +119,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($h->isAvailable());
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle::getError
-     * @covers Guzzle\Http\Curl\CurlHandle::getErrorNo
-     * @covers Guzzle\Http\Curl\CurlHandle::getInfo
-     */
     public function testWrapsErrorsAndInfo()
     {
         if (!defined('CURLOPT_TIMEOUT_MS')) {
@@ -180,9 +153,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(null, $h->getInfo('url'));
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle::getInfo
-     */
     public function testGetInfoWithoutDebugMode()
     {
         $client = new Client($this->getServer()->getUrl());
@@ -197,9 +167,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($this->getServer()->getUrl(), $info['url']);
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle::getOptions
-     */
     public function testWrapsCurlOptions()
     {
         $handle = curl_init($this->getServer()->getUrl());
@@ -437,8 +404,8 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                     'Expect:',
                     'Accept:',
                     'Host: localhost:8124',
-                    'Content-Type: application/json',
                     'Transfer-Encoding: chunked',
+                    'Content-Type: application/json',
                     'User-Agent: ' . $userAgent
                 ),
             ), array(
@@ -510,9 +477,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Curl\CurlHandle::factory
-     * @covers Guzzle\Http\Curl\CurlHandle::updateRequestFromTransfer
-     * @covers Guzzle\Http\Curl\RequestMediator
      * @dataProvider dataProvider
      */
     public function testFactoryCreatesCurlBasedOnRequest($method, $url, $headers, $body, $options, $expectedHeaders = null)
@@ -571,9 +535,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         }
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle
-     */
     public function testFactoryUsesSpecifiedProtocol()
     {
         $request = RequestFactory::getInstance()->create('GET', 'http://localhost:8124/');
@@ -583,9 +544,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(CURL_HTTP_VERSION_1_1, $options[CURLOPT_HTTP_VERSION]);
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle
-     */
     public function testUploadsPutData()
     {
         $this->getServer()->flush();
@@ -614,9 +572,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertContains('content-type: text/plain', $sent);
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle
-     */
     public function testUploadsPutDataUsingChunkedEncodingWhenLengthCannotBeDetermined()
     {
         $this->getServer()->flush();
@@ -634,17 +589,13 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($r[1]->hasHeader('Content-Length'));
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle
-     */
     public function testUploadsPutDataUsingChunkedEncodingWhenForced()
     {
         $this->getServer()->flush();
         $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi");
 
         $client = new Client($this->getServer()->getUrl());
-        $request = $client->put('/');
-        $request->setBody(EntityBody::factory('hi!'), 'text/plain', true);
+        $request = $client->put('/', array('Transfer-Encoding' => 'chunked'), 'hi!');
         $request->send();
 
         $r = $this->getServer()->getReceivedRequests(true);
@@ -653,9 +604,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('hi!', $r[0]->getBody(true));
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle
-     */
     public function testSendsPostRequestsWithFields()
     {
         $this->getServer()->flush();
@@ -680,9 +628,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertContains('content-type: application/x-www-form-urlencoded; charset=utf-8', $sent);
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle
-     */
     public function testSendsPostRequestsWithFiles()
     {
         $this->getServer()->flush();
@@ -711,34 +656,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($request->hasHeader('Content-Length'));
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle::factory
-     */
-    public function testHeadersCanBeBlacklisted()
-    {
-        $client = new Client($this->getServer()->getUrl(), array(
-            'curl.options' => array(
-                'blacklist' => array('header.Foo', CURLOPT_FOLLOWLOCATION)
-            )
-        ));
-        $request = $client->put();
-        $request->setHeader('Foo', 'Bar');
-        $handle = CurlHandle::factory($request);
-        $headers = $handle->getOptions()->get(CURLOPT_HTTPHEADER);
-        $this->assertTrue(in_array('Foo:', $headers));
-        $this->assertFalse($handle->getOptions()->hasKey(CURLOPT_FOLLOWLOCATION));
-
-        $this->getServer()->flush();
-        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi");
-        $request->send();
-
-        $r = $this->getServer()->getReceivedRequests(true);
-        $this->assertFalse($r[0]->hasHeader('Foo'));
-    }
-
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle::factory
-     */
     public function testCurlConfigurationOptionsAreSet()
     {
         $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl());
@@ -753,23 +670,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertNull($handle->getOptions()->get('fake_opt'));
     }
 
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle::factory
-     */
-    public function testAllowsHeadersSetToNull()
-    {
-        $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl());
-        $request->setClient(new Client());
-        $request->setBody('test');
-        $request->setHeader('Expect', null);
-        $handle = CurlHandle::factory($request);
-        $headers = $handle->getOptions()->get(CURLOPT_HTTPHEADER);
-        $this->assertTrue(in_array('Expect:', $headers));
-    }
-
-    /**
-     * @covers Guzzle\Http\Curl\CurlHandle::updateRequestFromTransfer
-     */
     public function testEnsuresRequestsHaveResponsesWhenUpdatingFromTransfer()
     {
         $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl());
@@ -852,7 +752,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Curl\CurlHandle
      * @dataProvider requestMethodProvider
      */
     public function testSendsRequestsWithNoBodyUsingContentLengthZero($method)
@@ -868,7 +767,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Curl\CurlHandle::parseCurlConfig
      * @dataProvider provideCurlConfig
      */
     public function testParseCurlConfigConvertsStringKeysToConstantKeys($options, $expected)

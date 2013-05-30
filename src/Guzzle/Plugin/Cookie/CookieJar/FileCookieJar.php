@@ -9,9 +9,7 @@ use Guzzle\Common\Exception\RuntimeException;
  */
 class FileCookieJar extends ArrayCookieJar
 {
-    /**
-     * @var string filename
-     */
+    /** @var string filename */
     protected $filename;
 
     /**

@@ -16,7 +16,7 @@ interface ResponseVisitorInterface
      * data (e.g. populating with JSON data in the response then adding to the parsed data).
      *
      * @param CommandInterface $command Command being visited
-     * @param array            $result  Result value to update if needed (e.g. parsing XML or JSON into an array)
+     * @param array            $result  Result value to update if needed (e.g. parsing XML or JSON)
      */
     public function before(CommandInterface $command, array &$result);
 
@@ -36,5 +36,11 @@ interface ResponseVisitorInterface
      * @param mixed            $value    Result associative array value being updated by reference
      * @param mixed            $context  Parsing context
      */
-    public function visit(CommandInterface $command, Response $response, Parameter $param, &$value, $context =  null);
+    public function visit(
+        CommandInterface $command,
+        Response $response,
+        Parameter $param,
+        &$value,
+        $context =  null
+    );
 }

@@ -9,14 +9,10 @@ use Guzzle\Common\Exception\InvalidArgumentException;
  */
 class BatchClosureDivisor implements BatchDivisorInterface
 {
-    /**
-     * @var callable Method used to divide the batches
-     */
+    /** @var callable Method used to divide the batches */
     protected $callable;
 
-    /**
-     * @var mixed $context Context passed to the callable
-     */
+    /** @var mixed $context Context passed to the callable */
     protected $context;
 
     /**
@@ -36,9 +32,6 @@ class BatchClosureDivisor implements BatchDivisorInterface
         $this->context = $context;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function createBatches(\SplQueue $queue)
     {
         return call_user_func($this->callable, $queue, $this->context);

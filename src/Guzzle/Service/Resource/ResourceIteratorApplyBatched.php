@@ -9,32 +9,22 @@ use Guzzle\Batch\BatchClosureTransfer;
 
 /**
  * Apply a callback to the contents of a {@see ResourceIteratorInterface}
+ * @deprecated Will be removed in a future version. Use the Batch\ abstractions instead.
  */
 class ResourceIteratorApplyBatched extends AbstractHasDispatcher
 {
-    /**
-     * @var callable|array
-     */
+    /** @var callable|array */
     protected $callback;
 
-    /**
-     * @var ResourceIteratorInterface
-     */
+    /** @var ResourceIteratorInterface */
     protected $iterator;
 
-    /**
-     * @var integer Total number of sent batches
-     */
+    /** @var integer Total number of sent batches */
     protected $batches = 0;
 
-    /**
-     * @var int Total number of iterated resources
-     */
+    /** @var int Total number of iterated resources */
     protected $iterated = 0;
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getAllEvents()
     {
         return array(
@@ -48,8 +38,6 @@ class ResourceIteratorApplyBatched extends AbstractHasDispatcher
     }
 
     /**
-     * Constructor
-     *
      * @param ResourceIteratorInterface $iterator Resource iterator to apply a callback to
      * @param array|callable            $callback Callback method accepting the resource iterator
      *                                            and an array of the iterator's current resources

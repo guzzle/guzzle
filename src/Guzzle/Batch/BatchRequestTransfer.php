@@ -13,9 +13,7 @@ use Guzzle\Http\Message\RequestInterface;
  */
 class BatchRequestTransfer implements BatchTransferInterface, BatchDivisorInterface
 {
-    /**
-     * @var int Size of each command batch
-     */
+    /** @var int Size of each command batch */
     protected $batchSize;
 
     /**
@@ -30,7 +28,6 @@ class BatchRequestTransfer implements BatchTransferInterface, BatchDivisorInterf
 
     /**
      * Creates batches of requests by grouping requests by their associated curl multi object.
-     *
      * {@inheritdoc}
      */
     public function createBatches(\SplQueue $queue)
@@ -57,9 +54,6 @@ class BatchRequestTransfer implements BatchTransferInterface, BatchDivisorInterf
         return $batches;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function transfer(array $batch)
     {
         if (empty($batch)) {

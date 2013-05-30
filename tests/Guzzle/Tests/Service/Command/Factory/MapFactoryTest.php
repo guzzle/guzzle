@@ -4,6 +4,9 @@ namespace Guzzle\Tests\Service\Command;
 
 use Guzzle\Service\Command\Factory\MapFactory;
 
+/**
+ * @covers Guzzle\Service\Command\Factory\MapFactory
+ */
 class MapFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 {
     public function mapProvider()
@@ -16,7 +19,6 @@ class MapFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Command\Factory\MapFactory
      * @dataProvider mapProvider
      */
     public function testCreatesCommandsUsingMappings($key, $result)

@@ -8,24 +8,19 @@ use Guzzle\Service\Description\Parameter;
 
 /**
  * {@inheritdoc}
+ * @codeCoverageIgnore
  */
 abstract class AbstractResponseVisitor implements ResponseVisitorInterface
 {
-    /**
-     * {@inheritdoc}
-     * @codeCoverageIgnore
-     */
     public function before(CommandInterface $command, array &$result) {}
 
-    /**
-     * {@inheritdoc}
-     * @codeCoverageIgnore
-     */
     public function after(CommandInterface $command) {}
 
-    /**
-     * {@inheritdoc}
-     * @codeCoverageIgnore
-     */
-    public function visit(CommandInterface $command, Response $response, Parameter $param, &$value, $context =  null) {}
+    public function visit(
+        CommandInterface $command,
+        Response $response,
+        Parameter $param,
+        &$value,
+        $context =  null
+    ) {}
 }

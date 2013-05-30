@@ -11,22 +11,14 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class AbstractHasDispatcher implements HasDispatcherInterface
 {
-    /**
-     * @var EventDispatcherInterface
-     */
+    /** @var EventDispatcherInterface */
     protected $eventDispatcher;
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getAllEvents()
     {
         return array();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setEventDispatcher(EventDispatcherInterface $eventDispatcher)
     {
         $this->eventDispatcher = $eventDispatcher;
@@ -34,9 +26,6 @@ class AbstractHasDispatcher implements HasDispatcherInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getEventDispatcher()
     {
         if (!$this->eventDispatcher) {
@@ -46,17 +35,11 @@ class AbstractHasDispatcher implements HasDispatcherInterface
         return $this->eventDispatcher;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function dispatch($eventName, array $context = array())
     {
         $this->getEventDispatcher()->dispatch($eventName, new Event($context));
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function addSubscriber(EventSubscriberInterface $subscriber)
     {
         $this->getEventDispatcher()->addSubscriber($subscriber);

@@ -7,6 +7,9 @@ use Guzzle\Service\Command\Factory\AliasFactory;
 use Guzzle\Service\Command\Factory\MapFactory;
 use Guzzle\Service\Command\Factory\CompositeFactory;
 
+/**
+ * @covers Guzzle\Service\Command\Factory\AliasFactory
+ */
 class AliasFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 {
     private $factory;
@@ -53,7 +56,6 @@ class AliasFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Command\Factory\AliasFactory
      * @dataProvider aliasProvider
      */
     public function testAliasesCommands($key, $result, $exception)

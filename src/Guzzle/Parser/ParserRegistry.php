@@ -7,19 +7,13 @@ namespace Guzzle\Parser;
  */
 class ParserRegistry
 {
-    /**
-     * @var ParserRegistry Singleton instance
-     */
+    /** @var ParserRegistry Singleton instance */
     protected static $instance;
 
-    /**
-     * @var array Array of parser instances
-     */
+    /** @var array Array of parser instances */
     protected $instances = array();
 
-    /**
-     * @var array Mapping of parser name to default class
-     */
+    /** @var array Mapping of parser name to default class */
     protected $mapping = array(
         'message'      => 'Guzzle\\Parser\\Message\\MessageParser',
         'cookie'       => 'Guzzle\\Parser\\Cookie\\CookieParser',
@@ -28,8 +22,6 @@ class ParserRegistry
     );
 
     /**
-     * Get a singleton instance
-     *
      * @return self
      * @codeCoverageIgnore
      */
@@ -42,9 +34,6 @@ class ParserRegistry
         return self::$instance;
     }
 
-    /**
-     * Constructor used to apply the most performant parsers based on loaded extensions
-     */
     public function __construct()
     {
         // Use the PECL URI template parser if available
@@ -82,32 +71,5 @@ class ParserRegistry
     public function registerParser($name, $parser)
     {
         $this->instances[$name] = $parser;
-    }
-
-    /**
-     * Get a specific parser by handle name
-     *
-     * @param string $name Name of the parser to retrieve
-     *
-     * @return mixed|null Returns null if the parser is not found or cannot be instantiated
-     * @deprecated Will be removed in 3.1.0
-     * @codeCoverageIgnore
-     */
-    public static function get($name)
-    {
-        return self::getInstance()->getParser($name);
-    }
-
-    /**
-     * Register a custom parser by name with the register
-     *
-     * @param      string $name   Name or handle of the parser to register
-     * @param      mixed  $parser Instantiated parser to register
-     * @deprecated Will be removed in 3.1.0
-     * @codeCoverageIgnore
-     */
-    public static function set($name, $parser)
-    {
-        self::getInstance()->registerParser($name, $parser);
     }
 }

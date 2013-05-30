@@ -10,14 +10,10 @@ use Guzzle\Http\CachingEntityBody;
  */
 class CachingEntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var CachingEntityBody
-     */
+    /** @var CachingEntityBody */
     protected $body;
 
-    /**
-     * @var EntityBody
-     */
+    /** @var EntityBody */
     protected $decorated;
 
     public function setUp()

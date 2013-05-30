@@ -10,22 +10,15 @@ use Guzzle\Service\Command\CommandInterface;
  */
 class CompositeResourceIteratorFactory implements ResourceIteratorFactoryInterface
 {
-    /**
-     * @var array Array of factories
-     */
+    /** @var array Array of factories */
     protected $factories;
 
-    /**
-     * @param array $factories Array of factories used to instantiate iterators
-     */
+    /** @param array $factories Array of factories used to instantiate iterators */
     public function __construct(array $factories)
     {
         $this->factories = $factories;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function build(CommandInterface $command, array $options = array())
     {
         if (!($factory = $this->getFactory($command))) {
@@ -35,9 +28,6 @@ class CompositeResourceIteratorFactory implements ResourceIteratorFactoryInterfa
         return $factory->build($command, $options);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function canBuild(CommandInterface $command)
     {
         return $this->getFactory($command) !== false;

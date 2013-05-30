@@ -9,9 +9,7 @@ use Guzzle\Common\Exception\InvalidArgumentException;
  */
 class NotifyingBatch extends AbstractBatchDecorator
 {
-    /**
-     * @var mixed Callable to call
-     */
+    /** @var mixed Callable to call */
     protected $callable;
 
     /**
@@ -30,9 +28,6 @@ class NotifyingBatch extends AbstractBatchDecorator
         parent::__construct($decoratedBatch);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function flush()
     {
         $items = $this->decoratedBatch->flush();

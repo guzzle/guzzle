@@ -11,44 +11,28 @@ use Guzzle\Http\QueryAggregator\PhpAggregator;
  */
 class QueryString extends Collection
 {
-    /**
-     * @var string Used to URL encode with rawurlencode
-     */
+    /** @var string Used to URL encode with rawurlencode */
     const RFC_3986 = 'RFC 3986';
 
-    /**
-     * @var string Used to encode with urlencode
-     */
+    /** @var string Used to encode with urlencode */
     const FORM_URLENCODED = 'application/x-www-form-urlencoded';
 
-    /**
-     * @var string Constant used to create blank query string values (e.g. ?foo)
-     */
+    /** @var string Constant used to create blank query string values (e.g. ?foo) */
     const BLANK = "_guzzle_blank_";
 
-    /**
-     * @var string The query string field separator (e.g. '&')
-     */
+    /** @var string The query string field separator (e.g. '&') */
     protected $fieldSeparator = '&';
 
-    /**
-     * @var string The query string value separator (e.g. '=')
-     */
+    /** @var string The query string value separator (e.g. '=') */
     protected $valueSeparator = '=';
 
-    /**
-     * @var bool URL encode fields and values?
-     */
+    /** @var bool URL encode fields and values */
     protected $urlEncode = 'RFC 3986';
 
-    /**
-     * @var QueryAggregatorInterface
-     */
+    /** @var QueryAggregatorInterface */
     protected $aggregator;
 
-    /**
-     * @var array Cached PHP aggregator
-     */
+    /** @var array Cached PHP aggregator */
     protected static $defaultAggregator = null;
 
     /**

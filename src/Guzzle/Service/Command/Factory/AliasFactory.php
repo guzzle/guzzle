@@ -10,14 +10,10 @@ use Guzzle\Service\ClientInterface;
  */
 class AliasFactory implements FactoryInterface
 {
-    /**
-     * @var array Associative array mapping command aliases to the aliased command
-     */
+    /** @var array Associative array mapping command aliases to the aliased command */
     protected $aliases;
 
-    /**
-     * @var ClientInterface Client used to retry using aliases
-     */
+    /** @var ClientInterface Client used to retry using aliases */
     protected $client;
 
     /**
@@ -30,9 +26,6 @@ class AliasFactory implements FactoryInterface
         $this->aliases = $aliases;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function factory($name, array $args = array())
     {
         if (isset($this->aliases[$name])) {

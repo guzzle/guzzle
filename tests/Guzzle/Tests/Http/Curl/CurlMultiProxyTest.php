@@ -12,15 +12,18 @@ use Guzzle\Http\Curl\CurlMultiProxy;
  */
 class CurlMultiProxyTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var \Guzzle\Http\Curl\CurlMultiProxy
-     */
+    /** @var \Guzzle\Http\Curl\CurlMultiProxy */
     private $multi;
 
     protected function setUp()
     {
         parent::setUp();
         $this->multi = new CurlMultiProxy();
+    }
+
+    public function tearDown()
+    {
+        unset($this->multi);
     }
 
     public function testConstructorSetsMaxHandles()

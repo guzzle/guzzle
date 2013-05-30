@@ -12,14 +12,10 @@ use Guzzle\Http\Exception\HttpException;
  */
 class CallbackBackoffStrategy extends AbstractBackoffStrategy
 {
-    /**
-     * @var \Closure|array|mixed Callable method to invoke
-     */
+    /** @var \Closure|array|mixed Callable method to invoke */
     protected $callback;
 
-    /**
-     * @var bool Whether or not this strategy makes a retry decision
-     */
+    /** @var bool Whether or not this strategy makes a retry decision */
     protected $decision;
 
     /**
@@ -39,17 +35,11 @@ class CallbackBackoffStrategy extends AbstractBackoffStrategy
         $this->next = $next;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function makesDecision()
     {
         return $this->decision;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function getDelay($retries, RequestInterface $request, Response $response = null, HttpException $e = null)
     {
         return call_user_func($this->callback, $retries, $request, $response, $e);

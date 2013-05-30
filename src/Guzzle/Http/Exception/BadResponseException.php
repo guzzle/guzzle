@@ -10,9 +10,7 @@ use Guzzle\Http\Message\Response;
  */
 class BadResponseException extends RequestException
 {
-    /**
-     * @var Response
-     */
+    /** @var Response */
     private $response;
 
     /**

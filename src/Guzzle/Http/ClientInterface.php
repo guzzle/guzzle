@@ -18,9 +18,7 @@ interface ClientInterface extends HasDispatcherInterface
 {
     const CREATE_REQUEST = 'client.create_request';
 
-    /**
-     * @var string RFC 1123 HTTP-Date
-     */
+    /** @var string RFC 1123 HTTP-Date */
     const HTTP_DATE = 'D, d M Y H:i:s \G\M\T';
 
     /**
@@ -80,22 +78,6 @@ interface ClientInterface extends HasDispatcherInterface
      * @return ClientInterface
      */
     public function setDefaultHeaders($headers);
-
-    /**
-     * Set the URI template expander to use with the client
-     *
-     * @param UriTemplateInterface $uriTemplate URI template expander
-     *
-     * @return ClientInterface
-     */
-    public function setUriTemplate(UriTemplateInterface $uriTemplate);
-
-    /**
-     * Get the URI template expander used by the client
-     *
-     * @return UriTemplateInterface
-     */
-    public function getUriTemplate();
 
     /**
      * Expand a URI template using client configuration data
@@ -244,15 +226,6 @@ interface ClientInterface extends HasDispatcherInterface
      * @return array Returns the response(s)
      */
     public function send($requests);
-
-    /**
-     * Set a curl multi object to be used internally by the client for transferring requests.
-     *
-     * @param CurlMultiInterface $curlMulti Multi object
-     *
-     * @return ClientInterface
-     */
-    public function setCurlMulti(CurlMultiInterface $curlMulti);
 
     /**
      * Get the curl multi object to be used internally by the client for transferring requests.

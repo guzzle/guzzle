@@ -9,19 +9,13 @@ use Guzzle\Cache\CacheAdapterInterface;
  */
 class CachingConfigLoader implements ConfigLoaderInterface
 {
-    /**
-     * @var ConfigLoaderInterface
-     */
+    /** @var ConfigLoaderInterface */
     protected $loader;
 
-    /**
-     * @var CacheAdapterInterface
-     */
+    /** @var CacheAdapterInterface */
     protected $cache;
 
     /**
-     * Add caching to a config loader
-     *
      * @param ConfigLoaderInterface $loader Loader used to load the config when there is a cache miss
      * @param CacheAdapterInterface $cache  Object used to cache the loaded result
      */
@@ -31,9 +25,6 @@ class CachingConfigLoader implements ConfigLoaderInterface
         $this->cache = $cache;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function load($config, array $options = array())
     {
         if (!is_string($config)) {

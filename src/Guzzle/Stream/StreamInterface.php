@@ -46,6 +46,13 @@ interface StreamInterface
     public function setStream($stream, $size = null);
 
     /**
+     * Detach the current stream resource
+     *
+     * @return self
+     */
+    public function detachStream();
+
+    /**
      * Get the stream wrapper type
      *
      * @return string

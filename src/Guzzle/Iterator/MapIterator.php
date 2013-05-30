@@ -9,9 +9,7 @@ use Guzzle\Common\Exception\InvalidArgumentException;
  */
 class MapIterator extends \IteratorIterator
 {
-    /**
-     * @var mixed Callback
-     */
+    /** @var mixed Callback */
     protected $callback;
 
     /**
@@ -29,9 +27,6 @@ class MapIterator extends \IteratorIterator
         $this->callback = $callback;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function current()
     {
         return call_user_func($this->callback, parent::current());

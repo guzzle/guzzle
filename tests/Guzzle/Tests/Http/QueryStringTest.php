@@ -8,11 +8,7 @@ use Guzzle\Http\QueryAggregator\CommaAggregator;
 
 class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * The query string object to test
-     *
-     * @var \Guzzle\Http\QueryString
-     */
+    /** @var \Guzzle\Http\QueryString The query string object to test */
     protected $q;
 
     public function setup()

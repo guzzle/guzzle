@@ -18,9 +18,6 @@ use Guzzle\Service\Description\Parameter;
  */
 class BodyVisitor extends AbstractRequestVisitor
 {
-    /**
-     * {@inheritdoc}
-     */
     public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
         $value = $param->filter($value);

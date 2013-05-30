@@ -9,9 +9,6 @@ abstract class AbstractLogAdapter implements LogAdapterInterface
 {
     protected $log;
 
-    /**
-     * {@inheritdoc}
-     */
     public function getLogObject()
     {
         return $this->log;

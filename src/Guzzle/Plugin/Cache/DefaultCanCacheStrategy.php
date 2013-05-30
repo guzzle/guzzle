@@ -10,17 +10,11 @@ use Guzzle\Http\Message\Response;
  */
 class DefaultCanCacheStrategy implements CanCacheStrategyInterface
 {
-    /**
-     * {@inheritdoc}
-     */
     public function canCacheRequest(RequestInterface $request)
     {
         return $request->canCache();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function canCacheResponse(Response $response)
     {
         return $response->isSuccessful() && $response->canCache();

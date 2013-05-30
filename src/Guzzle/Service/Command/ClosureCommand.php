@@ -19,7 +19,7 @@ class ClosureCommand extends AbstractCommand
      */
     protected function init()
     {
-        if (!$this->get('closure')) {
+        if (!$this['closure']) {
             throw new InvalidArgumentException('A closure must be passed in the parameters array');
         }
     }
@@ -30,7 +30,7 @@ class ClosureCommand extends AbstractCommand
      */
     protected function build()
     {
-        $closure = $this->get('closure');
+        $closure = $this['closure'];
         /** @var $closure \Closure */
         $this->request = $closure($this, $this->operation);
 
