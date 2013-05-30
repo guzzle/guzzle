@@ -22,7 +22,7 @@
     "target-dir": "Guzzle/Plugin/Log",
     "extra": {
         "branch-alias": {
-            "dev-master": "3.5-dev"
+            "dev-master": "3.6-dev"
         }
     }
 }

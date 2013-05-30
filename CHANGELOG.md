@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-3.6.0 (?)
----------
+3.6.0 (2013-05-29)
+------------------
 
 * ServiceDescription now implements ToArrayInterface
 * Added command.hidden_params to blacklist certain headers from being treated as additionalParameters
@@ -37,6 +37,7 @@ CHANGELOG
 * Deprecated cache control specific methods on Guzzle\Http\Message\AbstractMessage. Use the CacheControl header object
   instead.
 * `Guzzle\Service\Command\CommandInterface` now extends from ToArrayInterface and ArrayAccess
+* Added the ability to cast Model objects to a string to view debug information.
 
 3.5.0 (2013-05-13)
 ------------------
