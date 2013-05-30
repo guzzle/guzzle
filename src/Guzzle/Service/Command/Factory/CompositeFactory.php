@@ -45,7 +45,6 @@ class CompositeFactory implements \IteratorAggregate, \Countable, FactoryInterfa
      * @param FactoryInterface        $factory Factory to add
      * @param string|FactoryInterface $before  Insert the new command factory before a command factory class or object
      *                                         matching a class name.
-     *
      * @return CompositeFactory
      */
     public function add(FactoryInterface $factory, $before = null)

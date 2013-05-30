@@ -58,7 +58,7 @@ class OperationResponseParser extends DefaultResponseParser
         return $this;
     }
 
-    protected function handleParsing(ArrayCommandInterface $command, Response $response, $contentType)
+    protected function handleParsing(CommandInterface $command, Response $response, $contentType)
     {
         $operation = $command->getOperation();
         $type = $operation->getResponseType();
@@ -91,17 +91,14 @@ class OperationResponseParser extends DefaultResponseParser
     /**
      * Perform transformations on the result array
      *
-     * @param Parameter             $model    Model that defines the structure
-     * @param ArrayCommandInterface $command  Command that performed the operation
-     * @param Response              $response Response received
+     * @param Parameter        $model    Model that defines the structure
+     * @param CommandInterface $command  Command that performed the operation
+     * @param Response         $response Response received
      *
      * @return array Returns the array of result data
      */
-    protected function visitResult(
-        Parameter $model,
-        ArrayCommandInterface $command,
-        Response $response
-    ) {
+    protected function visitResult(Parameter $model, CommandInterface $command, Response $response)
+    {
         $foundVisitors = $result = array();
         $props = $model->getProperties();
 

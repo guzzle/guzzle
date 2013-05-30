@@ -19,7 +19,7 @@ use Guzzle\Service\Exception\ValidationException;
 /**
  * Command object to handle preparing and processing client requests and responses of the requests
  */
-abstract class AbstractCommand extends Collection implements CommandInterface, ArrayCommandInterface
+abstract class AbstractCommand extends Collection implements CommandInterface
 {
     // Option used to specify custom headers to add to the generated request
     const HEADERS_OPTION = 'command.headers';

@@ -6,14 +6,15 @@ use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Service\ClientInterface;
-use Guzzle\Service\Description\OperationInterface;
 use Guzzle\Service\Exception\CommandException;
+use Guzzle\Service\Description\OperationInterface;
+use Guzzle\Service\ClientInterface;
+use Guzzle\Common\ToArrayInterface;
 
 /**
- * Command object to handle preparing and processing client requests and responses of the requests
+ * A command object that contains parameters that can be modified and accessed like an array and turned into an array
  */
-interface CommandInterface
+interface CommandInterface extends \ArrayAccess, ToArrayInterface
 {
     /**
      * Get the short form name of the command
@@ -49,7 +50,7 @@ interface CommandInterface
      *
      * @param ClientInterface $client The client object that will execute the command
      *
-     * @return CommandInterface
+     * @return self
      */
     public function setClient(ClientInterface $client);
 
@@ -120,7 +121,7 @@ interface CommandInterface
      *
      * @param mixed $callable Callable to execute when the command completes. The callable must accept a
      *                        {@see CommandInterface} object as the only argument.
-     * @return CommandInterface
+     * @return self
      * @throws InvalidArgumentException
      */
     public function setOnComplete($callable);

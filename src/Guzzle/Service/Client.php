@@ -9,7 +9,6 @@ use Guzzle\Inflection\InflectorInterface;
 use Guzzle\Inflection\Inflector;
 use Guzzle\Http\Client as HttpClient;
 use Guzzle\Http\Exception\MultiTransferException;
-use Guzzle\Service\Command\ArrayCommandInterface;
 use Guzzle\Service\Exception\CommandTransferException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\Command\CommandInterface;
@@ -105,12 +104,10 @@ class Client extends HttpClient implements ClientInterface
         $command->setClient($this);
 
         // Add global client options to the command
-        if ($command instanceof ArrayCommandInterface) {
-            if ($options = $this->getConfig(self::COMMAND_PARAMS)) {
-                foreach ($options as $key => $value) {
-                    if (!isset($command[$key])) {
-                        $command[$key] = $value;
-                    }
+        if ($options = $this->getConfig(self::COMMAND_PARAMS)) {
+            foreach ($options as $key => $value) {
+                if (!isset($command[$key])) {
+                    $command[$key] = $value;
                 }
             }
         }

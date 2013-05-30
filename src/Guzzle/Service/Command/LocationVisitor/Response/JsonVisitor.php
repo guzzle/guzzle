@@ -4,7 +4,7 @@ namespace Guzzle\Service\Command\LocationVisitor\Response;
 
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Description\Parameter;
-use Guzzle\Service\Command\ArrayCommandInterface;
+use Guzzle\Service\Command\CommandInterface;
 
 /**
  * Location visitor used to marshal JSON response data into a formatted array.
@@ -16,14 +16,14 @@ use Guzzle\Service\Command\ArrayCommandInterface;
  */
 class JsonVisitor extends AbstractResponseVisitor
 {
-    public function before(ArrayCommandInterface $command, array &$result)
+    public function before(CommandInterface $command, array &$result)
     {
         // Ensure that the result of the command is always rooted with the parsed JSON data
         $result = $command->getResponse()->json();
     }
 
     public function visit(
-        ArrayCommandInterface $command,
+        CommandInterface $command,
         Response $response,
         Parameter $param,
         &$value,

@@ -3,7 +3,7 @@
 namespace Guzzle\Service\Command\LocationVisitor\Request;
 
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Service\Command\ArrayCommandInterface;
+use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Description\Parameter;
 
@@ -37,7 +37,7 @@ class XmlVisitor extends AbstractRequestVisitor
         return $this;
     }
 
-    public function visit(ArrayCommandInterface $command, RequestInterface $request, Parameter $param, $value)
+    public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
         $xml = isset($this->data[$command])
             ? $this->data[$command]
@@ -46,7 +46,7 @@ class XmlVisitor extends AbstractRequestVisitor
         $this->data[$command] = $xml;
     }
 
-    public function after(ArrayCommandInterface $command, RequestInterface $request)
+    public function after(CommandInterface $command, RequestInterface $request)
     {
         $xml = null;
 

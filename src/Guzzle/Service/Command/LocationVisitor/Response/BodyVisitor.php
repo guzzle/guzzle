@@ -2,7 +2,7 @@
 
 namespace Guzzle\Service\Command\LocationVisitor\Response;
 
-use Guzzle\Service\Command\ArrayCommandInterface;
+use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Description\Parameter;
 
@@ -12,7 +12,7 @@ use Guzzle\Service\Description\Parameter;
 class BodyVisitor extends AbstractResponseVisitor
 {
     public function visit(
-        ArrayCommandInterface $command,
+        CommandInterface $command,
         Response $response,
         Parameter $param,
         &$value,

@@ -57,7 +57,7 @@ class DefaultRequestSerializer implements RequestSerializerInterface
         return $this;
     }
 
-    public function prepare(ArrayCommandInterface $command)
+    public function prepare(CommandInterface $command)
     {
         $request = $this->createRequest($command);
         // Keep an array of visitors found in the operation
@@ -101,16 +101,16 @@ class DefaultRequestSerializer implements RequestSerializerInterface
     /**
      * Serialize additional parameters
      *
-     * @param OperationInterface    $operation  Operation that owns the command
-     * @param ArrayCommandInterface $command    Command to prepare
-     * @param RequestInterface      $request    Request to serialize
-     * @param Parameter             $additional Additional parameters
+     * @param OperationInterface $operation  Operation that owns the command
+     * @param CommandInterface   $command    Command to prepare
+     * @param RequestInterface   $request    Request to serialize
+     * @param Parameter          $additional Additional parameters
      *
      * @return null|RequestVisitorInterface
      */
     protected function prepareAdditionalParameters(
         OperationInterface $operation,
-        ArrayCommandInterface $command,
+        CommandInterface $command,
         RequestInterface $request,
         Parameter $additional
     ) {
@@ -138,11 +138,11 @@ class DefaultRequestSerializer implements RequestSerializerInterface
     /**
      * Create a request for the command and operation
      *
-     * @param ArrayCommandInterface $command Command to create a request for
+     * @param CommandInterface $command Command to create a request for
      *
      * @return RequestInterface
      */
-    protected function createRequest(ArrayCommandInterface $command)
+    protected function createRequest(CommandInterface $command)
     {
         $operation = $command->getOperation();
         $client = $command->getClient();

@@ -6,7 +6,7 @@ use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\EntityBodyInterface;
-use Guzzle\Service\Command\ArrayCommandInterface;
+use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Description\Parameter;
 
 /**
@@ -18,7 +18,7 @@ use Guzzle\Service\Description\Parameter;
  */
 class BodyVisitor extends AbstractRequestVisitor
 {
-    public function visit(ArrayCommandInterface $command, RequestInterface $request, Parameter $param, $value)
+    public function visit(CommandInterface $command, RequestInterface $request, Parameter $param, $value)
     {
         $value = $param->filter($value);
         $entityBody = EntityBody::factory($value);

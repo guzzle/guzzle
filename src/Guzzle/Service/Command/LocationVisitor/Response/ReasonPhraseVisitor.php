@@ -4,7 +4,7 @@ namespace Guzzle\Service\Command\LocationVisitor\Response;
 
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Description\Parameter;
-use Guzzle\Service\Command\ArrayCommandInterface;
+use Guzzle\Service\Command\CommandInterface;
 
 /**
  * Location visitor used to add the reason phrase of a response to a key in the result
@@ -12,7 +12,7 @@ use Guzzle\Service\Command\ArrayCommandInterface;
 class ReasonPhraseVisitor extends AbstractResponseVisitor
 {
     public function visit(
-        ArrayCommandInterface $command,
+        CommandInterface $command,
         Response $response,
         Parameter $param,
         &$value,

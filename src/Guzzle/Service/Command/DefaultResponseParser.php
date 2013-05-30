@@ -25,7 +25,7 @@ class DefaultResponseParser implements ResponseParserInterface
         return self::$instance;
     }
 
-    public function parse(ArrayCommandInterface $command)
+    public function parse(CommandInterface $command)
     {
         $response = $command->getRequest()->getResponse();
 
@@ -39,7 +39,7 @@ class DefaultResponseParser implements ResponseParserInterface
         return $this->handleParsing($command, $response, $contentType);
     }
 
-    protected function handleParsing(ArrayCommandInterface $command, Response $response, $contentType)
+    protected function handleParsing(CommandInterface $command, Response $response, $contentType)
     {
         $result = $response;
         if ($result->getBody()) {

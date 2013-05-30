@@ -52,10 +52,10 @@ abstract class ResourceIterator extends AbstractHasDispatcher implements Resourc
 
     /**
      * @param CommandInterface $command Initial command used for iteration
-     * @param array $data Associative array of additional parameters. You may specify any number of custom options for
-     *                    an iterator. Among these options, you may also specify the following values:
-     *                    - limit: Attempt to limit the maximum number of resources to this amount
-     *                    - page_size: Attempt to retrieve this number of resources per request
+     * @param array            $data    Associative array of additional parameters. You may specify any number of custom
+     *     options for an iterator. Among these options, you may also specify the following values:
+     *     - limit: Attempt to limit the maximum number of resources to this amount
+     *     - page_size: Attempt to retrieve this number of resources per request
      */
     public function __construct(CommandInterface $command, array $data = array())
     {
