@@ -9,14 +9,10 @@ use Guzzle\Batch\BatchClosureTransfer;
  */
 class BatchClosureTransferTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var Guzzle\Batch\BatchClosureTransfer The transfer fixture
-     */
+    /** @var \Guzzle\Batch\BatchClosureTransfer The transfer fixture */
     protected $transferStrategy;
 
-    /**
-     * @var array|null An array for keeping track of items passed into the transfer closure
-     */
+    /** @var array|null An array for keeping track of items passed into the transfer closure */
     protected $itemsTransferred;
 
     protected function setUp()

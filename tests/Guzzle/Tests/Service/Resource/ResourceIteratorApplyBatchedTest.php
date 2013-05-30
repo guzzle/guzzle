@@ -8,20 +8,15 @@ use Guzzle\Tests\Service\Mock\Model\MockCommandIterator;
 
 /**
  * @group server
+ * @covers Guzzle\Service\Resource\ResourceIteratorApplyBatched
  */
 class ResourceIteratorApplyBatchedTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @covers Guzzle\Service\Resource\ResourceIteratorApplyBatched::getAllEvents
-     */
     public function testDescribesEvents()
     {
         $this->assertInternalType('array', ResourceIteratorApplyBatched::getAllEvents());
     }
 
-    /**
-     * @covers Guzzle\Service\Resource\ResourceIteratorApplyBatched
-     */
     public function testSendsRequestsForNextSetOfResources()
     {
         $this->getServer()->flush();

@@ -7,19 +7,13 @@ use Guzzle\Http\Message\Response;
 
 abstract class AbstractResponseVisitorTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var Response
-     */
+    /** @var Response */
     protected $response;
 
-    /**
-     * @var MockCommand
-     */
+    /** @var MockCommand */
     protected $command;
 
-    /**
-     * @var array
-     */
+    /** @var array */
     protected $value;
 
     public function setUp()

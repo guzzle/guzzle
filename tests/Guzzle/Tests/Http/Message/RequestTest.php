@@ -16,17 +16,15 @@ use Guzzle\Http\Exception\BadResponseException;
 
 /**
  * @group server
+ * @covers Guzzle\Http\Message\Request
+ * @covers Guzzle\Http\Message\AbstractMessage
  */
 class RequestTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var Request
-     */
+    /** @var Request */
     protected $request;
 
-    /**
-     * @var Client
-     */
+    /** @var Client */
     protected $client;
 
     protected function setUp()
@@ -41,9 +39,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         unset($this->client);
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::__construct
-     */
     public function testConstructorBuildsRequestWithArrayHeaders()
     {
         // Test passing an array of headers
@@ -56,17 +51,11 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('bar', $request->getHeader('foo'));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::getAllEvents
-     */
     public function testDescribesEvents()
     {
         $this->assertInternalType('array', Request::getAllEvents());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::__construct
-     */
     public function testConstructorBuildsRequestWithCollectionHeaders()
     {
         $request = new Request('GET', 'http://www.guzzle-project.com/', new Collection(array(
@@ -75,18 +64,12 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('bar', $request->getHeader('foo'));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::__construct
-     */
     public function testConstructorBuildsRequestWithNoHeaders()
     {
         $request = new Request('GET', 'http://www.guzzle-project.com/', null);
         $this->assertFalse($request->hasHeader('foo'));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::__construct
-     */
     public function testConstructorHandlesNonBasicAuth()
     {
         $request = new Request('GET', 'http://www.guzzle-project.com/', array(
@@ -97,11 +80,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('Foo bar', (string) $request->getHeader('Authorization'));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::__toString
-     * @covers Guzzle\Http\Message\Request::getRawHeaders
-     * @covers Guzzle\Http\Message\AbstractMessage::getHeaderLines
-     */
     public function testRequestsCanBeConvertedToRawMessageStrings()
     {
         $auth = base64_encode('michael:123');
@@ -119,9 +97,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * Add authorization after the fact and see that it was put in the message
-     *
-     * @covers Guzzle\Http\Message\Request::__toString
-     * @covers Guzzle\Http\Message\Request::getRawHeaders
      */
     public function testRequestStringsIncludeAuth()
     {
@@ -135,9 +110,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertContains('Authorization: Basic ' . $auth, (string) $request);
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::getEventDispatcher
-     */
     public function testGetEventDispatcher()
     {
         $d = $this->request->getEventDispatcher();
@@ -145,10 +117,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($d, $this->request->getEventDispatcher());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::getClient
-     * @covers Guzzle\Http\Message\Request::setClient
-     */
     public function testRequestsManageClients()
     {
         $request = new Request('GET', 'http://test.com');
@@ -158,7 +126,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Message\Request::send
      * @expectedException \RuntimeException
      * @expectedExceptionMessage A client must be set on the request
      */
@@ -168,13 +135,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request->send();
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::send
-     * @covers Guzzle\Http\Message\Request::getResponse
-     * @covers Guzzle\Http\Message\Request::setResponse
-     * @covers Guzzle\Http\Message\Request::processResponse
-     * @covers Guzzle\Http\Message\Request::getResponseBody
-     */
     public function testSend()
     {
         $response = new Response(200, array(
@@ -189,12 +149,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('complete', $this->request->getState());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::getResponse
-     * @covers Guzzle\Http\Message\Request::setResponse
-     * @covers Guzzle\Http\Message\Request::processResponse
-     * @covers Guzzle\Http\Message\Request::getResponseBody
-     */
     public function testGetResponse()
     {
         $this->assertNull($this->request->getResponse());
@@ -222,11 +176,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertInstanceOf('Guzzle\\Http\\EntityBody', $response->getBody());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::getResponse
-     * @covers Guzzle\Http\Message\Request::processResponse
-     * @covers Guzzle\Http\Message\Request::getResponseBody
-     */
     public function testRequestThrowsExceptionOnBadResponse()
     {
         try {
@@ -240,9 +189,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         }
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::getQuery
-     */
     public function testManagesQuery()
     {
         $this->assertInstanceOf('Guzzle\\Http\\QueryString', $this->request->getQuery());
@@ -250,18 +196,11 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('test=123', $this->request->getQuery(true));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::getMethod
-     */
     public function testRequestHasMethod()
     {
         $this->assertEquals('GET', $this->request->getMethod());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::getScheme
-     * @covers Guzzle\Http\Message\Request::setScheme
-     */
     public function testRequestHasScheme()
     {
         $this->assertEquals('http', $this->request->getScheme());
@@ -269,10 +208,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('https', $this->request->getScheme());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::getHost
-     * @covers Guzzle\Http\Message\Request::setHost
-     */
     public function testRequestHasHost()
     {
         $this->assertEquals('127.0.0.1', $this->request->getHost());
@@ -287,10 +222,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(8081, $this->request->getPort());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::getProtocolVersion
-     * @covers Guzzle\Http\Message\Request::setProtocolVersion
-     */
     public function testRequestHasProtocol()
     {
         $this->assertEquals('1.1', $this->request->getProtocolVersion());
@@ -300,10 +231,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('1.0', $this->request->getProtocolVersion());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::getPath
-     * @covers Guzzle\Http\Message\Request::setPath
-     */
     public function testRequestHasPath()
     {
         $this->assertEquals('/', $this->request->getPath());
@@ -313,11 +240,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('/index.html', $this->request->getPath());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::getHost
-     * @covers Guzzle\Http\Message\Request::getPath
-     * @covers Guzzle\Http\Message\Request::getQuery
-     */
     public function testPermitsFalsyComponents()
     {
         $request = new Request('GET', 'http://0/0?0');
@@ -329,10 +251,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('/0', $request->getPath());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::getPort
-     * @covers Guzzle\Http\Message\Request::setPort
-     */
     public function testRequestHasPort()
     {
         $this->assertEquals(8124, $this->request->getPort());
@@ -346,11 +264,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('127.0.0.1', $this->request->getHeader('Host'));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::getUsername
-     * @covers Guzzle\Http\Message\Request::getPassword
-     * @covers Guzzle\Http\Message\Request::setAuth
-     */
     public function testRequestHandlesAuthorization()
     {
         // Uninitialized auth
@@ -379,9 +292,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(CURLAUTH_DIGEST, $request->getCurlOptions()->get(CURLOPT_HTTPAUTH));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::getResource
-     */
     public function testGetResourceUri()
     {
         $this->assertEquals('/', $this->request->getResource());
@@ -391,10 +301,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('/index.html?v=1', $this->request->getResource());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::getUrl
-     * @covers Guzzle\Http\Message\Request::setUrl
-     */
     public function testRequestHasMutableUrl()
     {
         $url = 'http://www.test.com:8081/path?q=123#fragment';
@@ -406,10 +312,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($url, $this->request->getUrl());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::setState
-     * @covers Guzzle\Http\Message\Request::getState
-     */
     public function testRequestHasState()
     {
         $this->assertEquals(RequestInterface::STATE_NEW, $this->request->getState());
@@ -417,11 +319,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(RequestInterface::STATE_TRANSFER, $this->request->getState());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::setResponse
-     * @covers Guzzle\Http\Message\Request::getResponse
-     * @covers Guzzle\Http\Message\Request::getState
-     */
     public function testSetManualResponse()
     {
         $response = new Response(200, array(
@@ -436,9 +333,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame($response, $this->request->getResponse(), '-> setResponse() must set the exact same response that was passed in to it');
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::setResponseBody
-     */
     public function testRequestCanHaveManuallySetResponseBody()
     {
         $file = __DIR__ . '/../../TestData/temp.out';
@@ -461,9 +355,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('data', $response->getBody(true));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::isResponseBodyRepeatable
-     */
     public function testDeterminesIfResponseBodyRepeatable()
     {
         // The default stream created for responses is seekable
@@ -476,9 +367,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($request->isResponseBodyRepeatable());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::canCache
-     */
     public function testDeterminesIfCanCacheRequest()
     {
         $this->assertTrue(RequestFactory::getInstance()->fromMessage(
@@ -502,9 +390,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         )->canCache());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request
-     */
     public function testHoldsCookies()
     {
         $this->assertNull($this->request->getCookie('test'));
@@ -548,8 +433,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Http\Message\Request::processResponse
-     * @expectedException Guzzle\Http\Exception\RequestException
+     * @expectedException \Guzzle\Http\Exception\RequestException
      * @expectedExceptionMessage Error completing request
      */
     public function testRequestThrowsExceptionWhenSetToCompleteWithNoResponse()
@@ -557,9 +441,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->request->setState(RequestInterface::STATE_COMPLETE);
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::__clone
-     */
     public function testClonedRequestsUseNewInternalState()
     {
         $p = new AsyncPlugin();
@@ -577,10 +458,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($this->request->getEventDispatcher()->hasListeners('request.sent'));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::changedHeader
-     * @covers Guzzle\Http\Message\Request::setHeader
-     */
     public function testCatchesAllHostHeaderChanges()
     {
         // Tests setting using headers
@@ -615,9 +492,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(8983, $this->request->getPort());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::setUrl
-     */
     public function testRecognizesBasicAuthCredentialsInUrls()
     {
         $this->request->setUrl('http://michael:test@test.com/');
@@ -625,14 +499,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('test', $this->request->getPassword());
     }
 
-    /**
-     * This test launches a dummy Guzzle\Http\Server\Server object that listens
-     * for incoming requests.  The server allows us to test how cURL sends
-     * requests and receives responses.  We can validate the request structure
-     * and whether or not the response was interpreted correctly.
-     *
-     * @covers Guzzle\Http\Message\Request
-     */
     public function testRequestCanBeSentUsingCurl()
     {
         $this->getServer()->flush();
@@ -688,9 +554,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('GET /index.html HTTP/1.1', $parts[0]);
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::onRequestError
-     */
     public function testThrowsExceptionsWhenUnsuccessfulResponseIsReceivedByDefault()
     {
         $this->getServer()->flush();
@@ -707,9 +570,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         }
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::onRequestError
-     */
     public function testCanShortCircuitErrorHandling()
     {
         $request = $this->request;
@@ -727,10 +587,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame($response, $request->getResponse());
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request::processResponse
-     * @covers Guzzle\Http\Message\Request::onRequestError
-     */
     public function testCanOverrideUnsuccessfulResponses()
     {
         $this->getServer()->flush();
@@ -764,9 +620,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(2, count($this->getServer()->getReceivedRequests()));
     }
 
-    /**
-     * @covers Guzzle\Http\Message\Request
-     */
     public function testCanRetrieveUrlObject()
     {
         $request = new Request('GET', 'http://www.example.com/foo?abc=d');
@@ -774,8 +627,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('http://www.example.com/foo?abc=d', $request->getUrl());
         $this->assertEquals('http://www.example.com/foo?abc=d', (string) $request->getUrl(true));
     }
-
-
 
     public function testUnresolvedRedirectsReturnResponse()
     {
@@ -805,7 +656,7 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @expectedException PHPUnit_Framework_Error_Warning
+     * @expectedException \PHPUnit_Framework_Error_Warning
      */
     public function testEnsuresFileCanBeCreated()
     {
@@ -839,17 +690,5 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $request->setResponseBody($en);
         $request->setResponse(new Response(200, array(), 'foo'));
         $this->assertEquals('foo', (string) $en);
-    }
-
-    public function testDoesNotUseRequestResponseBodyWhenNotCustom()
-    {
-        $this->getServer()->flush();
-        $this->getServer()->enqueue(array(
-            "HTTP/1.1 307 Foo\r\nLocation: /foo\r\nContent-Length: 2\r\n\r\nHI",
-            "HTTP/1.1 301 Foo\r\nLocation: /foo\r\nContent-Length: 2\r\n\r\nFI",
-            "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ntest",
-        ));
-        $response = $this->client->get()->send();
-        $this->assertEquals('test', $response->getBody(true));
     }
 }

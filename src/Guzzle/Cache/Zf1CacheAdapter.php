@@ -7,6 +7,7 @@ namespace Guzzle\Cache;
  *
  * @link http://framework.zend.com/manual/en/zend.cache.html
  * @deprecated
+ * @codeCoverageIgnore
  */
 class Zf1CacheAdapter extends AbstractCacheAdapter
 {

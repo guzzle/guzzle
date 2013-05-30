@@ -9,19 +9,13 @@ use Guzzle\Cache\ClosureCacheAdapter;
  */
 class ClosureCacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var ClosureCacheAdapter
-     */
+    /** @var ClosureCacheAdapter */
     private $adapter;
 
-    /**
-     * Array of callables to use for testing
-     */
+    /** Array of callables to use for testing */
     private $callables;
 
-    /**
-     * Cache data for testing
-     */
+    /** Cache data for testing */
     public $data = array();
 
     /**
@@ -63,7 +57,6 @@ class ClosureCacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Cache\ClosureCacheAdapter::__construct
      * @expectedException InvalidArgumentException
      */
     public function testEnsuresCallablesArePresent()
@@ -73,27 +66,17 @@ class ClosureCacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
         $cache = new ClosureCacheAdapter($callables);
     }
 
-    /**
-     * @covers Guzzle\Cache\ClosureCacheAdapter::__construct
-     */
     public function testAllCallablesMustBePresent()
     {
         $cache = new ClosureCacheAdapter($this->callables);
     }
 
-    /**
-     * @covers Guzzle\Cache\ClosureCacheAdapter::save
-     * @covers Guzzle\Cache\ClosureCacheAdapter::fetch
-     */
     public function testCachesDataUsingCallables()
     {
         $this->assertTrue($this->adapter->save('test', 'data', 1000));
         $this->assertEquals('data', $this->adapter->fetch('test'));
     }
 
-    /**
-     * @covers Guzzle\Cache\ClosureCacheAdapter::contains
-     */
     public function testChecksIfCacheContainsKeys()
     {
         $this->adapter->save('test', 'data', 1000);
@@ -101,9 +84,6 @@ class ClosureCacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($this->adapter->contains('foo'));
     }
 
-    /**
-     * @covers Guzzle\Cache\ClosureCacheAdapter::delete
-     */
     public function testDeletesFromCacheByKey()
     {
         $this->adapter->save('test', 'data', 1000);

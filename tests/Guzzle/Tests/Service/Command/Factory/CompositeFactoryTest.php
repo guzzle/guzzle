@@ -4,6 +4,9 @@ namespace Guzzle\Tests\Service\Command;
 
 use Guzzle\Service\Command\Factory\CompositeFactory;
 
+/**
+ * @covers Guzzle\Service\Command\Factory\CompositeFactory
+ */
 class CompositeFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 {
     private function getFactory($class = 'Guzzle\\Service\\Command\\Factory\\MapFactory')
@@ -13,10 +16,6 @@ class CompositeFactoryTest extends \Guzzle\Tests\GuzzleTestCase
             ->getMock();
     }
 
-    /**
-     * @covers Guzzle\Service\Command\Factory\CompositeFactory::getIterator
-     * @covers Guzzle\Service\Command\Factory\CompositeFactory::count
-     */
     public function testIsIterable()
     {
         $factory = new CompositeFactory(array($this->getFactory(), $this->getFactory()));
@@ -24,10 +23,6 @@ class CompositeFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(2, count(iterator_to_array($factory->getIterator())));
     }
 
-    /**
-     * @covers Guzzle\Service\Command\Factory\CompositeFactory::find
-     * @covers Guzzle\Service\Command\Factory\CompositeFactory::has
-     */
     public function testFindsFactories()
     {
         $f1 = $this->getFactory();
@@ -45,10 +40,6 @@ class CompositeFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($factory->has('Guzzle\\Service\\Command\\Factory\\CompositeFactory'));
     }
 
-    /**
-     * @covers Guzzle\Service\Command\Factory\CompositeFactory::factory
-     * @covers Guzzle\Service\Command\Factory\CompositeFactory::__construct
-     */
     public function testCreatesCommands()
     {
         $factory = new CompositeFactory();
@@ -66,9 +57,6 @@ class CompositeFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame($mockCommand1, $factory->factory('foo'));
     }
 
-    /**
-     * @covers Guzzle\Service\Command\Factory\CompositeFactory::remove
-     */
     public function testAllowsRemovalOfFactories()
     {
         $f1 = $this->getFactory();
@@ -93,9 +81,6 @@ class CompositeFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array(), $factory->getIterator()->getArrayCopy());
     }
 
-    /**
-     * @covers Guzzle\Service\Command\Factory\CompositeFactory::add
-     */
     public function testAddsFactoriesBeforeAndAtEnd()
     {
         $f1 = $this->getFactory();
@@ -118,9 +103,6 @@ class CompositeFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array($f1, $f4, $f3, $f2), $factory->getIterator()->getArrayCopy());
     }
 
-    /**
-     * @covers Guzzle\Service\Command\Factory\CompositeFactory::getDefaultChain
-     */
     public function testProvidesDefaultChainForClients()
     {
         $client = $this->getMock('Guzzle\\Service\\Client');

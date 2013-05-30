@@ -58,9 +58,6 @@ class MockObserver implements \Countable, EventSubscriberInterface
         return null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function update(Event $event)
     {
         $this->events[] = $event;

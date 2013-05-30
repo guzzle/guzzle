@@ -15,6 +15,7 @@ use Guzzle\Service\Command\AbstractCommand;
 
 /**
  * @group server
+ * @covers Guzzle\Service\Client
  */
 class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 {
@@ -51,9 +52,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('foo', $command->get(AbstractCommand::RESPONSE_PROCESSING));
     }
 
-    /**
-     * @covers Guzzle\Service\Client::factory
-     */
     public function testFactoryCreatesClient()
     {
         $client = Client::factory(array(
@@ -65,25 +63,16 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('123', $client->getConfig('test'));
     }
 
-    /**
-     * @covers Guzzle\Service\Client::factory
-     */
     public function testFactoryDoesNotRequireBaseUrl()
     {
         $client = Client::factory();
     }
 
-    /**
-     * @covers Guzzle\Service\Client::getAllEvents
-     */
     public function testDescribesEvents()
     {
         $this->assertInternalType('array', Client::getAllEvents());
     }
 
-    /**
-     * @covers Guzzle\Service\Client::execute
-     */
     public function testExecutesCommands()
     {
         $this->getServer()->flush();
@@ -98,9 +87,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(1, count($this->getServer()->getReceivedRequests(false)));
     }
 
-    /**
-     * @covers Guzzle\Service\Client::execute
-     */
     public function testExecutesCommandsWithArray()
     {
         $client = new Client('http://www.test.com/');
@@ -119,7 +105,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Client::execute
      * @expectedException Guzzle\Common\Exception\InvalidArgumentException
      */
     public function testThrowsExceptionWhenInvalidCommandIsExecuted()
@@ -129,7 +114,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Client::getCommand
      * @expectedException InvalidArgumentException
      */
     public function testThrowsExceptionWhenMissingCommand()
@@ -146,11 +130,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client->getCommand('test');
     }
 
-    /**
-     * @covers Guzzle\Service\Client::getCommand
-     * @covers Guzzle\Service\Client::getCommandFactory
-     * @covers Guzzle\Service\Client::setCommandFactory
-     */
     public function testCreatesCommandsUsingCommandFactory()
     {
         $mockCommand = new MockCommand();
@@ -171,10 +150,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame($client, $command->getClient());
     }
 
-    /**
-     * @covers Guzzle\Service\Client::getDescription
-     * @covers Guzzle\Service\Client::setDescription
-     */
     public function testOwnsServiceDescription()
     {
         $client = new Mock\MockClient();
@@ -186,7 +161,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Client::__call
      * @expectedException BadMethodCallException
      */
     public function testMagicCallBehaviorCanBeDisabled()
@@ -197,8 +171,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Client::__call
-     * @covers Guzzle\Service\Client::enableMagicMethods
      * @expectedException InvalidArgumentException
      * @expectedExceptionMessage Command was not found matching foo
      */
@@ -210,9 +182,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client->foo();
     }
 
-    /**
-     * @covers Guzzle\Service\Client::__call
-     */
     public function testMagicCallBehaviorExecuteExecutesCommands()
     {
         $client = new Mock\MockClient();
@@ -222,10 +191,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertInstanceOf('Guzzle\Http\Message\Response', $result);
     }
 
-    /**
-     * @covers Guzzle\Service\Client::getResourceIteratorFactory
-     * @covers Guzzle\Service\Client::setResourceIteratorFactory
-     */
     public function testOwnsResourceIteratorFactory()
     {
         $client = new Mock\MockClient();
@@ -243,9 +208,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertNotSame($rf1, $rf);
     }
 
-    /**
-     * @covers Guzzle\Service\Client::execute
-     */
     public function testClientResetsRequestsBeforeExecutingCommands()
     {
         $this->getServer()->flush();
@@ -262,9 +224,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('I', $command->getResponse()->getBody(true));
     }
 
-    /**
-     * @covers Guzzle\Service\Client::getIterator
-     */
     public function testClientCreatesIterators()
     {
         $client = new Mock\MockClient();
@@ -282,9 +241,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('bar', $command->get('foo'));
     }
 
-    /**
-     * @covers Guzzle\Service\Client::getIterator
-     */
     public function testClientCreatesIteratorsWithNoOptions()
     {
         $client = new Mock\MockClient();
@@ -292,9 +248,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertInstanceOf('Guzzle\Tests\Service\Mock\Model\MockCommandIterator', $iterator);
     }
 
-    /**
-     * @covers Guzzle\Service\Client::getIterator
-     */
     public function testClientCreatesIteratorsWithCommands()
     {
         $client = new Mock\MockClient();
@@ -305,10 +258,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame($command, $iteratorCommand);
     }
 
-    /**
-     * @covers Guzzle\Service\Client::getInflector
-     * @covers Guzzle\Service\Client::setInflector
-     */
     public function testClientHoldsInflector()
     {
         $client = new Mock\MockClient();
@@ -319,9 +268,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame($inflector, $client->getInflector());
     }
 
-    /**
-     * @covers Guzzle\Service\Client::getCommand
-     */
     public function testClientAddsGlobalCommandOptions()
     {
         $client = new Mock\MockClient('http://www.foo.com', array(

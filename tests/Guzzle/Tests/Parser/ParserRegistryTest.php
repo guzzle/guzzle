@@ -5,7 +5,7 @@ namespace Guzzle\Tests\Parser;
 use Guzzle\Parser\ParserRegistry;
 
 /**
- * Guzzle\Parser\ParserRegistry
+ * @covers Guzzle\Parser\ParserRegistry
  */
 class ParserRegistryTest extends \Guzzle\Tests\GuzzleTestCase
 {

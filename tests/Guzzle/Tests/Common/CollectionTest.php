@@ -6,11 +6,12 @@ use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\QueryString;
 
+/**
+ * @covers Guzzle\Common\Collection
+ */
 class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var Collection
-     */
+    /** @var Collection */
     protected $coll;
 
     protected function setUp()
@@ -18,9 +19,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->coll = new Collection();
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::__construct
-     */
     public function testConstructorCanBeCalledWithNoParams()
     {
         $this->coll = new Collection();
@@ -28,11 +26,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEmpty($p, '-> Collection must be empty when no data is passed');
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::__construct
-     * @covers Guzzle\Common\Collection::getAll
-     * @covers Guzzle\Common\Collection::toArray
-     */
     public function testConstructorCanBeCalledWithParams()
     {
         $testData = array(
@@ -44,11 +37,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($this->coll->getAll(), $this->coll->toArray());
     }
 
-    /**
-     * Test the IteratorAggregate implementation of theCollection object
-     *
-     * @covers Guzzle\Common\Collection::getIterator
-     */
     public function testImplementsIteratorAggregate()
     {
         $this->coll->set('key', 'value');
@@ -63,9 +51,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(1, $total);
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::add
-     */
     public function testCanAddValuesToExistingKeysByUsingArray()
     {
         $this->coll->add('test', 'value1');
@@ -76,10 +61,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($this->coll->getAll(), array('test' => array('value1', 'value2', 'value3')));
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::merge
-     * @covers Guzzle\Common\Collection::getAll
-     */
     public function testHandlesMergingInDisparateDataSources()
     {
         $params = array(
@@ -94,10 +75,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($this->coll->merge($this->coll), $this->coll);
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::clear
-     * @covers Guzzle\Common\Collection::remove
-     */
     public function testCanClearAllDataOrSpecificKeys()
     {
         $this->coll->merge(array(
@@ -118,10 +95,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($this->coll->getAll(), array());
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::get
-     * @covers Guzzle\Common\Collection::getAll
-     */
     public function testGetsValuesByKey()
     {
         $this->assertNull($this->coll->get('test'));
@@ -135,10 +108,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         ), $this->coll->getAll(array('test', 'test2')));
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::getKeys
-     * @covers Guzzle\Common\Collection::remove
-     */
     public function testProvidesKeys()
     {
         $this->assertEquals(array(), $this->coll->getKeys());
@@ -155,9 +124,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array('test2', 'test3'), $this->coll->getKeys());
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::hasKey
-     */
     public function testChecksIfHasKey()
     {
         $this->assertFalse($this->coll->hasKey('test'));
@@ -170,9 +136,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(false, $this->coll->hasKey('AB-C', 'junk'));
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::hasValue
-     */
     public function testChecksIfHasValue()
     {
         $this->assertFalse($this->coll->hasValue('value'));
@@ -184,9 +147,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($this->coll->hasValue('val'));
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::getAll
-     */
     public function testCanGetAllValuesByArray()
     {
         $this->coll->add('foo', 'bar');
@@ -203,9 +163,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         )));
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::count
-     */
     public function testImplementsCount()
     {
         $data = new Collection();
@@ -218,9 +175,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(2, count($data));
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::merge
-     */
     public function testAddParamsByMerging()
     {
         $params = array(
@@ -246,9 +200,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         ), $this->coll->getAll());
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::filter
-     */
     public function testAllowsFunctionalFilter()
     {
         $this->coll->merge(array(
@@ -270,9 +221,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         ), $filtered->getAll());
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::map
-     */
     public function testAllowsFunctionalMapping()
     {
         $this->coll->merge(array(
@@ -294,12 +242,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         ), $mapped->getAll());
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::offsetGet
-     * @covers Guzzle\Common\Collection::offsetSet
-     * @covers Guzzle\Common\Collection::offsetUnset
-     * @covers Guzzle\Common\Collection::offsetExists
-     */
     public function testImplementsArrayAccess()
     {
         $this->coll->merge(array(
@@ -318,10 +260,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($this->coll->offsetExists('k1'));
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::filter
-     * @covers Guzzle\Common\Collection::map
-     */
     public function testUsesStaticWhenCreatingNew()
     {
         $qs = new QueryString(array(
@@ -336,9 +274,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertInstanceOf('Guzzle\\Common\\Collection', $qs->filter(function($a, $b) {}, false));
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::replace
-     */
     public function testCanReplaceAllData()
     {
         $this->assertSame($this->coll, $this->coll->replace(array(
@@ -373,7 +308,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Common\Collection::inject
      * @dataProvider dataProvider
      */
     public function testInjectsConfigData($output, $input, $config)
@@ -382,9 +316,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($output, $collection->inject($input));
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::keySearch
-     */
     public function testCanSearchByKey()
     {
         $collection = new Collection(array(
@@ -397,9 +328,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(false, $collection->keySearch('Bar'));
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::fromConfig
-     */
     public function testPreparesFromConfig()
     {
         $c = Collection::fromConfig(array(
@@ -444,9 +372,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame($b, $c->get('value'));
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::getPath
-     */
     public function testRetrievesNestedKeysUsingPath()
     {
         $data = array(
@@ -464,9 +389,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertNull($collection->getPath('baz/mesa/jar/jar'));
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::getPath
-     */
     public function testFalseyKeysStillDescend()
     {
         $collection = new Collection(array(
@@ -543,16 +465,12 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @dataProvider getPathProvider
-     * @covers Guzzle\Common\Collection::getPath
      */
     public function testGetPath(Collection $c, $path, $expected, $separator = '/')
     {
         $this->assertEquals($expected, $c->getPath($path, $separator));
     }
 
-    /**
-     * @covers Guzzle\Common\Collection::overwriteWith
-     */
     public function testOverridesSettings()
     {
         $c = new Collection(array('foo' => 1, 'baz' => 2, 'bar' => 3));

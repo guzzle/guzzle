@@ -19,9 +19,7 @@ use Guzzle\Tests\Mock\MockMulti;
  */
 class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var \Guzzle\Http\Curl\CurlMulti
-     */
+    /** @var \Guzzle\Http\Curl\CurlMulti */
     private $multi;
 
     /**

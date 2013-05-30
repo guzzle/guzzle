@@ -7,14 +7,10 @@ namespace Guzzle\Tests\Service;
  */
 class AbstractConfigLoaderTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var \Guzzle\Service\AbstractConfigLoader
-     */
+    /** @var \Guzzle\Service\AbstractConfigLoader */
     protected $loader;
 
-    /**
-     * @var array Any files that need to be deleted on tear down
-     */
+    /** @var array Any files that need to be deleted on tear down */
     protected $cleanup = array();
 
     public function setUp()

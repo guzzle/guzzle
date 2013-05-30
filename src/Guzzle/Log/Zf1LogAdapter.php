@@ -5,6 +5,7 @@ namespace Guzzle\Log;
 /**
  * Adapts a Zend Framework 1 logger object
  * @deprecated
+ * @codeCoverageIgnore
  */
 class Zf1LogAdapter extends AbstractLogAdapter
 {

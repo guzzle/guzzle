@@ -6,10 +6,12 @@ use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Service\Command\ClosureCommand;
 use Guzzle\Service\Client;
 
+/**
+ * @covers Guzzle\Service\Command\ClosureCommand
+ */
 class ClosureCommandTest extends \Guzzle\Tests\GuzzleTestCase
 {
     /**
-     * @covers Guzzle\Service\Command\ClosureCommand
      * @expectedException InvalidArgumentException
      * @expectedExceptionMessage A closure must be passed in the parameters array
      */
@@ -18,10 +20,6 @@ class ClosureCommandTest extends \Guzzle\Tests\GuzzleTestCase
         $c = new ClosureCommand();
     }
 
-    /**
-     * @covers Guzzle\Service\Command\ClosureCommand::prepare
-     * @covers Guzzle\Service\Command\ClosureCommand::build
-     */
     public function testExecutesClosure()
     {
         $c = new ClosureCommand(array(
@@ -39,7 +37,6 @@ class ClosureCommandTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Command\ClosureCommand
      * @expectedException UnexpectedValueException
      * @expectedExceptionMessage Closure command did not return a RequestInterface object
      */

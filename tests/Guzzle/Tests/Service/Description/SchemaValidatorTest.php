@@ -10,9 +10,7 @@ use Guzzle\Service\Description\SchemaValidator;
  */
 class SchemaValidatorTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var SchemaValidator
-     */
+    /** @var SchemaValidator */
     protected $validator;
 
     public function setUp()

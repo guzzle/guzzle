@@ -7,20 +7,15 @@ use Guzzle\Tests\Service\Mock\Model\MockCommandIterator;
 
 /**
  * @group server
+ * @covers Guzzle\Service\Resource\ResourceIterator
  */
 class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @covers Guzzle\Service\Resource\ResourceIterator::getAllEvents
-     */
     public function testDescribesEvents()
     {
         $this->assertInternalType('array', ResourceIterator::getAllEvents());
     }
 
-    /**
-      * @covers Guzzle\Service\Resource\ResourceIterator
-     */
     public function testConstructorConfiguresDefaults()
     {
         $ri = $this->getMockForAbstractClass('Guzzle\\Service\\Resource\\ResourceIterator', array(
@@ -35,9 +30,6 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(false, $ri->current());
     }
 
-    /**
-     * @covers Guzzle\Service\Resource\ResourceIterator
-     */
     public function testSendsRequestsForNextSetOfResources()
     {
         // Queue up an array of responses for iterating
@@ -81,9 +73,6 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array('d', 'e', 'f', 'g', 'h', 'i', 'j'), $d);
     }
 
-    /**
-     * @covers Guzzle\Service\Resource\ResourceIterator
-     */
     public function testCalculatesPageSize()
     {
         $this->getServer()->flush();
@@ -106,9 +95,6 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(1, $requests[2]->getQuery()->get('page_size'));
     }
 
-    /**
-     * @covers Guzzle\Service\Resource\ResourceIterator
-     */
     public function testUseAsArray()
     {
         $this->getServer()->flush();
@@ -134,9 +120,6 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array('d', 'e', 'f', 'g', 'h', 'i'), $data);
     }
 
-    /**
-     * @covers Guzzle\Service\Resource\ResourceIterator
-     */
     public function testBailsWhenSendReturnsNoResults()
     {
         $this->getServer()->flush();
@@ -157,10 +140,6 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(2, $ri->getRequestCount());
     }
 
-    /**
-     * @covers Guzzle\Service\Resource\ResourceIterator::set
-     * @covers Guzzle\Service\Resource\ResourceIterator::get
-     */
     public function testHoldsDataOptions()
     {
         $ri = new MockCommandIterator($this->getServiceBuilder()->get('mock')->getCommand('iterable_command'));
@@ -169,10 +148,6 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('bar', $ri->get('foo'));
     }
 
-    /**
-     * @covers Guzzle\Service\Resource\ResourceIterator::setLimit
-     * @covers Guzzle\Service\Resource\ResourceIterator::setPageSize
-     */
     public function testSettingLimitOrPageSizeClearsData()
     {
         $this->getServer()->flush();

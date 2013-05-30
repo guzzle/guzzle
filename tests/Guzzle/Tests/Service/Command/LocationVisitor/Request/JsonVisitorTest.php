@@ -6,6 +6,7 @@ use Guzzle\Service\Command\LocationVisitor\Request\JsonVisitor as Visitor;
 
 /**
  * @covers Guzzle\Service\Command\LocationVisitor\Request\JsonVisitor
+ * @covers Guzzle\Service\Command\LocationVisitor\Request\AbstractRequestVisitor::resolveRecursively
  */
 class JsonVisitorTest extends AbstractVisitorTestCase
 {
@@ -32,10 +33,6 @@ class JsonVisitorTest extends AbstractVisitorTestCase
         $this->assertEquals('application/json-foo', (string) $this->request->getHeader('Content-Type'));
     }
 
-    /**
-     * @covers Guzzle\Service\Command\LocationVisitor\Request\JsonVisitor
-     * @covers Guzzle\Service\Command\LocationVisitor\Request\AbstractRequestVisitor::resolveRecursively
-     */
     public function testRecursivelyBuildsJsonBodies()
     {
         $command = $this->getCommand('json');
@@ -43,9 +40,6 @@ class JsonVisitorTest extends AbstractVisitorTestCase
         $this->assertEquals('{"Foo":{"test":{"baz":true,"Jenga_Yall!":"HELLO"},"bar":123}}', (string) $request->getBody());
     }
 
-    /**
-     * @covers Guzzle\Service\Command\LocationVisitor\Request\AbstractRequestVisitor::resolveRecursively
-     */
     public function testAppliesFiltersToAdditionalProperties()
     {
         $command = $this->getCommand('json');
@@ -55,9 +49,6 @@ class JsonVisitorTest extends AbstractVisitorTestCase
         $this->assertEquals('ABC', $result['Foo']['not_set']);
     }
 
-    /**
-     * @covers Guzzle\Service\Command\LocationVisitor\Request\AbstractRequestVisitor::resolveRecursively
-     */
     public function testAppliesFiltersToArrayItemValues()
     {
         $command = $this->getCommand('json');

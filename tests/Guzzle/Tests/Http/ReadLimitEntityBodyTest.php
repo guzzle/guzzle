@@ -10,14 +10,10 @@ use Guzzle\Http\ReadLimitEntityBody;
  */
 class ReadLimitEntityBodyTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var ReadLimitEntityBody
-     */
+    /** @var ReadLimitEntityBody */
     protected $body;
 
-    /**
-     * @var EntityBody
-     */
+    /** @var EntityBody */
     protected $decorated;
 
     public function setUp()

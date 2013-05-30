@@ -10,14 +10,10 @@ use Doctrine\Common\Cache\ArrayCache;
  */
 class CacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
 {
-    /**
-     * @var ArrayCache
-     */
+    /** @var ArrayCache */
     private $cache;
 
-    /**
-     * @var DoctrineCacheAdapter
-     */
+    /** @var DoctrineCacheAdapter */
     private $adapter;
 
     /**
@@ -40,43 +36,28 @@ class CacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
         parent::tearDown();
     }
 
-    /**
-     * @covers \Guzzle\Cache\AbstractCacheAdapter::getCacheObject
-     */
     public function testGetCacheObject()
     {
         $this->assertEquals($this->cache, $this->adapter->getCacheObject());
     }
 
-    /**
-     * @covers \Guzzle\Cache\DoctrineCacheAdapter::save
-     */
     public function testSave()
     {
         $this->assertTrue($this->adapter->save('test', 'data', 1000));
     }
 
-    /**
-     * @covers \Guzzle\Cache\DoctrineCacheAdapter::fetch
-     */
     public function testFetch()
     {
         $this->assertTrue($this->adapter->save('test', 'data', 1000));
         $this->assertEquals('data', $this->adapter->fetch('test'));
     }
 
-    /**
-     * @covers \Guzzle\Cache\DoctrineCacheAdapter::contains
-     */
     public function testContains()
     {
         $this->assertTrue($this->adapter->save('test', 'data', 1000));
         $this->assertTrue($this->adapter->contains('test'));
     }
 
-    /**
-     * @covers \Guzzle\Cache\DoctrineCacheAdapter::delete
-     */
     public function testDelete()
     {
         $this->assertTrue($this->adapter->save('test', 'data', 1000));

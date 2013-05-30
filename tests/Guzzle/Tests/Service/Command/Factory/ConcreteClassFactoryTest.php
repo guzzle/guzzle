@@ -5,6 +5,9 @@ namespace Guzzle\Tests\Service\Command;
 use Guzzle\Tests\Service\Mock\MockClient;
 use Guzzle\Service\Command\Factory\ConcreteClassFactory;
 
+/**
+ * @covers Guzzle\Service\Command\Factory\ConcreteClassFactory
+ */
 class ConcreteClassFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 {
     public function testProvider()
@@ -23,7 +26,6 @@ class ConcreteClassFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @covers Guzzle\Service\Command\Factory\ConcreteClassFactory
      * @dataProvider testProvider
      */
     public function testCreatesConcreteCommands($key, $result, $prefix)

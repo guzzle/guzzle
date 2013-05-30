@@ -29,19 +29,13 @@ class Server
     const DEFAULT_PORT = 8124;
     const REQUEST_DELIMITER = "\n----[request]\n";
 
-    /**
-     * @var int Port that the server will listen on
-     */
+    /** @var int Port that the server will listen on */
     private $port;
 
-    /**
-     * @var bool Is the server running
-     */
+    /** @var bool Is the server running */
     private $running = false;
 
-    /**
-     * @var Client
-     */
+    /** @var Client */
     private $client;
 
     /**
