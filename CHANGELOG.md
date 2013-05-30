@@ -1,6 +1,42 @@
 CHANGELOG
 =========
 
+3.6.0 (?)
+---------
+
+* ServiceDescription now implements ToArrayInterface
+* Added command.hidden_params to blacklist certain headers from being treated as additionalParameters
+* Guzzle can now correctly parse incomplete URLs
+* Mixed casing of headers are now forced to be a single consistent casing across all values for that header.
+* Messages internally use a HeaderCollection object to delegate handling case-insensitive header resolution
+* Removed the whole changedHeader() function system of messages because all header changes now go through addHeader().
+* Specific header implementations can be created for complex headers. When a message creates a header, it uses a
+  HeaderFactory which can map specific headers to specific header classes. There is now a Link header and
+  CacheControl header implementation.
+* Removed from interface: Guzzle\Http\ClientInterface::setUriTemplate
+* Removed from interface: Guzzle\Http\ClientInterface::setCurlMulti()
+* Removed Guzzle\Http\Message\Request::receivedRequestHeader() and implemented this functionality in
+  Guzzle\Http\Curl\RequestMediator
+* Removed the optional $asString parameter from MessageInterface::getHeader(). Just cast the header to a string.
+* Removed the optional $tryChunkedTransfer option from Guzzle\Http\Message\EntityEnclosingRequestInterface
+* Removed the $asObjects argument from Guzzle\Http\Message\MessageInterface::getHeaders()
+* Removed Guzzle\Parser\ParserRegister::get(). Use getParser()
+* Removed Guzzle\Parser\ParserRegister::set(). Use registerParser().
+* All response header helper functions return a string rather than mixing Header objects and strings inconsistently
+* Removed cURL blacklist support. This is no longer necessary now that Expect, Accept, etc are managed by Guzzle
+  directly via interfaces
+* Removed the injecting of a request object onto a response object. The methods to get and set a request still exist
+  but are a no-op until removed.
+* Most classes that used to require a ``Guzzle\Service\Command\CommandInterface` typehint now request a
+  `Guzzle\Service\Command\ArrayCommandInterface`.
+* Added `Guzzle\Http\Message\RequestInterface::startResponse()` to the RequestInterface to handle injecting a response
+  on a request while the request is still being transferred
+* The ability to case-insensitively search for header values
+* Guzzle\Http\Message\Header::hasExactHeader
+* Guzzle\Http\Message\Header::raw. Use getAll()
+* Deprecated cache control specific methods on Guzzle\Http\Message\AbstractMessage. Use the CacheControl header object
+  instead.
+
 3.5.0 (2013-05-13)
 ------------------
 
