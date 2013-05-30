@@ -90,9 +90,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->coll->merge($params);
         $this->assertEquals($this->coll->getAll(), $params);
 
-        // Pass an invalid value and expect the same unaltered object
-        $this->assertEquals($this->coll->merge(false), $this->coll);
-
         // Pass the same object to itself
         $this->assertEquals($this->coll->merge($this->coll), $this->coll);
     }
@@ -421,7 +418,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         ), $c->getAll());
 
         try {
-            $c = Collection::fromConfig(null, null, array('a'));
+            $c = Collection::fromConfig(array(), array(), array('a'));
             $this->fail('Exception not throw when missing config');
         } catch (InvalidArgumentException $e) {
         }
