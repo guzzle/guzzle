@@ -119,6 +119,11 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
             array($req2, new Response(200), true, false),
             // Does not perform revalidation and fails
             array($req3, new Response(200), false, false),
+            // Performs revalidation due to ETag on the response and no cache-control on the request
+            array(new Request('GET', 'http://foo.com'), new Response(200, array(
+                'ETag' => 'ABC',
+                'Expires' => date('c', strtotime('+1 year'))
+            )), true, true),
         );
     }
 

@@ -292,11 +292,18 @@ class CachePlugin implements EventSubscriberInterface
 
         // Only revalidate GET requests
         if ($request->getMethod() == RequestInterface::GET) {
-            // Check if the response must be validated against the origin server
-            if ($request->getHeader('Pragma') == 'no-cache' ||
+
+            $revalidate = $request->getHeader('Pragma') == 'no-cache' ||
                 ($reqc && ($reqc->hasDirective('no-cache') || $reqc->hasDirective('must-revalidate'))) ||
-                ($resc && ($resc->hasDirective('no-cache') || $resc->hasDirective('must-revalidate')))
-            ) {
+                ($resc && ($resc->hasDirective('no-cache') || $resc->hasDirective('must-revalidate')));
+
+            // Use the strong ETag validator if available and the response contains no Cache-Control directive
+            if (!$revalidate && !$request->hasHeader('Cache-Control') && $response->hasHeader('ETag')) {
+                $revalidate = true;
+            }
+
+            // Check if the response must be validated against the origin server
+            if ($revalidate) {
                 // no-cache: When no parameters are present, always revalidate
                 // When parameters are present in no-cache and the request includes those same parameters, then the
                 // response must re-validate. I'll need an example of what fields look like in order to implement a
