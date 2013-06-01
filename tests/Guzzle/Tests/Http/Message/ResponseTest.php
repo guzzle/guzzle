@@ -649,4 +649,13 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $response = new Response(200, array(), '<abc');
         $response->xml();
     }
+
+    public function testResponseIsSerializable()
+    {
+        $response = new Response(200, array('Foo' => 'bar'), 'test');
+        $r = unserialize(serialize($response));
+        $this->assertEquals(200, $r->getStatusCode());
+        $this->assertEquals('bar', (string) $r->getHeader('Foo'));
+        $this->assertEquals('test', (string) $r->getBody());
+    }
 }
