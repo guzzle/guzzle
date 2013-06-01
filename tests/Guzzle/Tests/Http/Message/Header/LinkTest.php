@@ -33,4 +33,14 @@ class LinkTest extends GuzzleTestCase
         $this->assertTrue($link->hasLink('front'));
         $this->assertFalse($link->hasLink('foo'));
     }
+
+    public function testCanAddLink()
+    {
+        $link = new Link('Link', '<http://foo>; rel=a; type="image/jpeg"');
+        $link->addLink('http://test.com', 'test', array('foo' => 'bar'));
+        $this->assertEquals(
+            '<http://foo>; rel=a; type="image/jpeg", <http://test.com>; rel="test"; foo="bar"',
+            (string) $link
+        );
+    }
 }

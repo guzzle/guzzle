@@ -292,6 +292,16 @@ class CachePlugin implements EventSubscriberInterface
 
         // Only revalidate GET requests
         if ($request->getMethod() == RequestInterface::GET) {
+
+            $revalidate = false;
+            if ($request->getHeader('Pragma') == 'no-cache') {
+                $revalidate = true;
+            } elseif (!$request->hasHeader('Cache-Control')) {
+                $revalidate = true;
+            } elseif ($request->) {
+
+            }
+
             // Check if the response must be validated against the origin server
             if ($request->getHeader('Pragma') == 'no-cache' ||
                 ($reqc && ($reqc->hasDirective('no-cache') || $reqc->hasDirective('must-revalidate'))) ||

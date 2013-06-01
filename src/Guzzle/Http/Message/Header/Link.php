@@ -23,10 +23,10 @@ class Link extends Header
         $values = array("<{$url}>", "rel=\"{$rel}\"");
 
         foreach ($params as $k => $v) {
-            $lines[] = "{$k}=\"{$v}\"";
+            $values[] = "{$k}=\"{$v}\"";
         }
 
-        return $this->add(implode(';', $lines));
+        return $this->add(implode('; ', $values));
     }
 
     /**
