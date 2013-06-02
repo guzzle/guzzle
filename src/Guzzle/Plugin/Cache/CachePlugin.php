@@ -241,21 +241,12 @@ class CachePlugin implements EventSubscriberInterface
             }
         }
 
-        // Only revalidate GET requests
-        if ($request->getMethod() == RequestInterface::GET) {
-
-            $revalidate = $request->getHeader('Pragma') == 'no-cache' ||
-                ($reqc && ($reqc->hasDirective('no-cache') || $reqc->hasDirective('must-revalidate'))) ||
-                ($resc && ($resc->hasDirective('no-cache') || $resc->hasDirective('must-revalidate')));
-
-            // Use the strong ETag validator if available and the response contains no Cache-Control directive
-            if (!$revalidate && !$request->hasHeader('Cache-Control') && $response->hasHeader('ETag')) {
-                $revalidate = true;
-            }
-
-            // Check if the response must be validated against the origin server
-            if ($revalidate) {
+        if ($this->revalidation->shouldRevalidate($request, $response)) {
+            try {
                 return $this->revalidation->revalidate($request, $response);
+            } catch (CurlException $e) {
+                $request->getParams()->set('cache.hit', 'error');
+                return $this->canResponseSatisfyFailedRequest($request, $response);
             }
         }
 

@@ -15,17 +15,12 @@ class DefaultRevalidation implements RevalidationInterface
     /** @var CacheStorageInterface Cache object storing cache data */
     protected $storage;
 
-    /** @var CachePlugin */
-    protected $plugin;
-
     /**
      * @param CacheStorageInterface $cache  Cache storage
-     * @param CachePlugin           $plugin Cache plugin to remove from revalidation requests
      */
-    public function __construct(CacheStorageInterface $cache, CachePlugin $plugin)
+    public function __construct(CacheStorageInterface $cache)
     {
         $this->storage = $cache;
-        $this->plugin = $plugin;
     }
 
     public function revalidate(RequestInterface $request, Response $response)
@@ -38,9 +33,6 @@ class DefaultRevalidation implements RevalidationInterface
             } elseif ($validateResponse->getStatusCode() == 304) {
                 return $this->handle304Response($request, $validateResponse, $response);
             }
-        } catch (CurlException $e) {
-            $request->getParams()->set('cache.hit', 'error');
-            return $this->plugin->canResponseSatisfyFailedRequest($request, $response);
         } catch (BadResponseException $e) {
             $this->handleBadResponse($e);
         }
@@ -48,6 +40,27 @@ class DefaultRevalidation implements RevalidationInterface
         // Other exceptions encountered in the revalidation request are ignored
         // in hopes that sending a request to the origin server will fix it
         return false;
+    }
+
+    public function shouldRevalidate(RequestInterface $request, Response $response)
+    {
+        if ($request->getMethod() != RequestInterface::GET) {
+            return false;
+        }
+
+        $reqCache = $request->getHeader('Cache-Control');
+        $resCache = $response->getHeader('Cache-Control');
+
+        $revalidate = $request->getHeader('Pragma') == 'no-cache' ||
+            ($reqCache && ($reqCache->hasDirective('no-cache') || $reqCache->hasDirective('must-revalidate'))) ||
+            ($resCache && ($resCache->hasDirective('no-cache') || $resCache->hasDirective('must-revalidate')));
+
+        // Use the strong ETag validator if available and the response contains no Cache-Control directive
+        if (!$revalidate && !$reqCache && $response->hasHeader('ETag')) {
+            $revalidate = true;
+        }
+
+        return $revalidate;
     }
 
     /**
@@ -86,8 +99,15 @@ class DefaultRevalidation implements RevalidationInterface
             $revalidate->setHeader('If-None-Match', '"' . $response->getEtag() . '"');
         }
 
-        // Remove any cache plugins that might be on the request
-        $revalidate->getEventDispatcher()->removeSubscriber($this->plugin);
+        // Remove any cache plugins that might be on the request to prevent infinite recursive revalidations
+        $dispatcher = $revalidate->getEventDispatcher();
+        foreach ($dispatcher->getListeners() as $eventName => $listeners) {
+            foreach ($listeners as $listener) {
+                if ($listener[0] instanceof CachePlugin) {
+                    $dispatcher->removeListener($eventName, $listener);
+                }
+            }
+        }
 
         return $revalidate;
     }

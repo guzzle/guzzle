@@ -15,6 +15,7 @@ use Doctrine\Common\Cache\ArrayCache;
 /**
  * @group server
  * @covers Guzzle\Plugin\Cache\CachePlugin
+ * @covers Guzzle\Plugin\Cache\DefaualtRevalidation
  */
 class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
 {
@@ -107,8 +108,10 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
     public function testChecksIfResponseCanSatisfyRequest($request, $response, $can, $revalidates)
     {
         $didRevalidate = false;
-        $revalidate = $this->getMockBuilder('Guzzle\Plugin\Cache\RevalidationInterface')
+        $storage = $this->getMockBuilder('Guzzle\Plugin\Cache\CacheStorageInterface')->getMockForAbstractClass();
+        $revalidate = $this->getMockBuilder('Guzzle\Plugin\Cache\DefaultRevalidation')
             ->setMethods(array('revalidate'))
+            ->setConstructorArgs(array($storage))
             ->getMockForAbstractClass();
 
         $revalidate->expects($this->any())
@@ -119,7 +122,7 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
             }));
 
         $plugin = new CachePlugin(array(
-            'storage' => $this->getMockBuilder('Guzzle\Plugin\Cache\CacheStorageInterface')->getMockForAbstractClass(),
+            'storage' => $storage,
             'revalidation' => $revalidate
         ));
 
