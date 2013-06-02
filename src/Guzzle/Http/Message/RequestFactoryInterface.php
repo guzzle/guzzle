@@ -56,8 +56,31 @@ interface RequestFactoryInterface
      * @param string|Url                                $url     HTTP URL to connect to
      * @param array|Collection                          $headers HTTP headers
      * @param string|resource|array|EntityBodyInterface $body    Body to send in the request
+     * @param array                                     $options Array of options to apply to the request
      *
      * @return RequestInterface
      */
-    public function create($method, $url, $headers = null, $body = null);
+    public function create($method, $url, $headers = null, $body = null, array $options = array());
+
+    /**
+     * Apply an associative array of options to the request
+     *
+     * @param RequestInterface $request Request to update
+     * @param array            $options Options to use with the request. Available options are:
+     *        "headers": Associative array of headers
+     *        "body": Body of a request, including an EntityBody, string, or array when sending POST requests. Setting
+     *                a body for a GET request will set where the response body is downloaded.
+     *        "allow_redirects": Set to false to disable redirects
+     *        "auth": Basic auth array where index 0 is the username and index 1 is the password
+     *        "query": Associative array of query string values to add to the request
+     *        "cookies": Associative array of cookies
+     *        "timeout": Float describing the timeout of the request in seconds
+     *        "verify": Set to true to enable SSL cert validation (the default), false to disable, or supply the path to
+     *                  a CA bundle to enable verification using a custom certificate.
+     *        "curl": Associative array of CURL options to add to the request
+     *        "events": Associative array mapping event names to a closure or array of (priority, closure)
+     *        "plugins": Array of plugins to add to the request
+     *        "debug": Set to true to display all data sent over the wire
+     */
+    public function applyOptions(RequestInterface $request, array $options = array());
 }

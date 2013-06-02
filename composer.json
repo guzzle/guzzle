@@ -53,8 +53,7 @@
         "psr-0": {
             "Guzzle\\Tests": "tests/",
             "Guzzle": "src/"
-        },
-        "files": ["src/Guzzle/Guzzle.php"]
+        }
     },
 
     "require-dev": {

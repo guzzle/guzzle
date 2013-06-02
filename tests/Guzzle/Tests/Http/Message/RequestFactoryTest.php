@@ -4,11 +4,13 @@ namespace Guzzle\Tests\Http\Message;
 
 use Guzzle\Common\Collection;
 use Guzzle\Http\Client;
+use Guzzle\Http\Message\Response;
 use Guzzle\Http\Url;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\QueryString;
 use Guzzle\Parser\Message\MessageParser;
+use Guzzle\Plugin\Mock\MockPlugin;
 
 /**
  * @group server
@@ -321,5 +323,72 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertNull($cloned->getHeader('Content-Length'));
         $this->assertEquals('http://www.test.com', $cloned->getUrl());
         $this->assertSame($request->getClient(), $cloned->getClient());
+    }
+
+    public function testCanDisableRedirects()
+    {
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 307\r\nLocation: " . $this->getServer()->getUrl() . "\r\nContent-Length: 0\r\n\r\n"
+        ));
+        $client = new Client($this->getServer()->getUrl());
+        $response = $client->get('/', array(), null, array('allow_redirects' => false))->send();
+        $this->assertEquals(307, $response->getStatusCode());
+    }
+
+    public function testCanAddCookies()
+    {
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->get('/', array(), null, array('cookies' => array('Foo' => 'Bar')));
+        $this->assertEquals('Bar', $request->getCookie('Foo'));
+    }
+
+    public function testCanAddQueryString()
+    {
+        $request = RequestFactory::getInstance()->create('GET', 'http://foo.com', array(), null, array(
+            'query' => array('Foo' => 'Bar')
+        ));
+        $this->assertEquals('Bar', $request->getQuery()->get('Foo'));
+    }
+
+    public function testCanAddCurl()
+    {
+        $request = RequestFactory::getInstance()->create('GET', 'http://foo.com', array(), null, array(
+            'curl' => array(CURLOPT_ENCODING => '*')
+        ));
+        $this->assertEquals('*', $request->getCurlOptions()->get(CURLOPT_ENCODING));
+    }
+
+    public function testCanAddAuth()
+    {
+        $request = RequestFactory::getInstance()->create('GET', 'http://foo.com', array(), null, array(
+            'auth' => array('michael', 'test')
+        ));
+        $this->assertEquals('michael', $request->getUsername());
+        $this->assertEquals('test', $request->getPassword());
+    }
+
+    public function testCanAddEvents()
+    {
+        $foo = null;
+        $client = new Client();
+        $client->addSubscriber(new MockPlugin(array(new Response(200))));
+        $request = $client->get($this->getServer()->getUrl(), array(), null, array(
+            'events' => array(
+                'request.before_send' => function () use (&$foo) { $foo = true; }
+            )
+        ));
+        $request->send();
+        $this->assertTrue($foo);
+    }
+
+    public function testCanAddPlugins()
+    {
+        $mock = new MockPlugin(array(new Response(200)));
+        $client = new Client();
+        $client->addSubscriber($mock);
+        $request = $client->get($this->getServer()->getUrl(), array(), null, array(
+            'plugins' => array($mock)
+        ));
+        $request->send();
     }
 }

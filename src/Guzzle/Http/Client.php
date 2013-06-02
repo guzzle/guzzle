@@ -57,6 +57,8 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     /**
      * @param string           $baseUrl Base URL of the web service
      * @param array|Collection $config  Configuration settings
+     *
+     * @throws RuntimeException if cURL is not installed
      */
     public function __construct($baseUrl = '', $config = null)
     {
@@ -69,8 +71,8 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         $this->defaultHeaders = new Collection();
         $this->setRequestFactory(RequestFactory::getInstance());
 
-        // Redirect by default, but allow for redirects to be globally disabled on a client
-        if (!$this->config->get(self::DISABLE_REDIRECTS)) {
+        // Redirect by default, but allow for redire4cts to be globally disabled on a client
+        if (!$this->config[self::DISABLE_REDIRECTS]) {
             $this->addSubscriber(new RedirectPlugin());
         }
 
@@ -96,12 +98,12 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 
     final public function getConfig($key = false)
     {
-        return $key ? $this->config->get($key) : $this->config;
+        return $key ? $this->config[$key] : $this->config;
     }
 
     final public function setSslVerification($certificateAuthority = true, $verifyPeer = true, $verifyHost = 2)
     {
-        $opts = $this->config->get(self::CURL_OPTIONS) ?: array();
+        $opts = $this->config[self::CURL_OPTIONS] ?: array();
 
         if ($certificateAuthority === true) {
             // use bundled CA bundle, set secure defaults
@@ -193,44 +195,43 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         return $this->uriTemplate;
     }
 
-    public function createRequest($method = RequestInterface::GET, $uri = null, $headers = null, $body = null)
+    public function createRequest($method = 'GET', $uri = null, $headers = null, $body = null, array $options = array())
     {
-        if (!is_array($uri)) {
-            $templateVars = null;
-        } else {
-            if (count($uri) != 2 || !isset($uri[1]) || !is_array($uri[1])) {
-                throw new InvalidArgumentException(
-                    'You must provide a URI template followed by an array of template variables '
-                    . 'when using an array for a URI template'
-                );
-            }
-            list($uri, $templateVars) = $uri;
-        }
-
         if (!$uri) {
             $url = $this->getBaseUrl();
-        } elseif (substr($uri, 0, 4) === 'http') {
-            // Use absolute URLs as-is
-            $url = $this->expandTemplate($uri, $templateVars);
         } else {
-            $url = Url::factory($this->getBaseUrl())->combine($this->expandTemplate($uri, $templateVars));
+            if (!is_array($uri)) {
+                $templateVars = null;
+            } else {
+                if (count($uri) != 2 || !isset($uri[1]) || !is_array($uri[1])) {
+                    throw new InvalidArgumentException(
+                        'You must provide a URI template followed by an array of template variables '
+                            . 'when using an array for a URI template'
+                    );
+                }
+                list($uri, $templateVars) = $uri;
+            }
+            if (substr($uri, 0, 4) === 'http') {
+                // Use absolute URLs as-is
+                $url = $this->expandTemplate($uri, $templateVars);
+            } else {
+                $url = Url::factory($this->getBaseUrl())->combine($this->expandTemplate($uri, $templateVars));
+            }
         }
 
         // If default headers are provided, then merge them into existing headers
         // If a collision occurs, the header is completely replaced
         if (count($this->defaultHeaders)) {
             if (is_array($headers)) {
-                $headers = array_merge($this->defaultHeaders->getAll(), $headers);
+                $headers = array_merge($this->defaultHeaders->toArray(), $headers);
             } elseif ($headers instanceof Collection) {
-                $headers = array_merge($this->defaultHeaders->getAll(), $headers->getAll());
+                $headers = array_merge($this->defaultHeaders->toArray(), $headers->toArray());
             } else {
                 $headers = $this->defaultHeaders;
             }
         }
 
-        return $this->prepareRequest(
-            $this->requestFactory->create($method, (string) $url, $headers, $body)
-        );
+        return $this->prepareRequest($this->requestFactory->create($method, (string) $url, $headers, $body), $options);
     }
 
     public function getBaseUrl($expand = true)
@@ -267,39 +268,39 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             . ' PHP/' . PHP_VERSION;
     }
 
-    public function get($uri = null, $headers = null, $body = null)
+    public function get($uri = null, $headers = null, $saveTo = null, array $options = array())
     {
-        return $this->createRequest('GET', $uri, $headers, $body);
+        return $this->createRequest('GET', $uri, $headers, $saveTo, $options);
     }
 
-    public function head($uri = null, $headers = null)
+    public function head($uri = null, $headers = null, array $options = array())
     {
-        return $this->createRequest('HEAD', $uri, $headers);
+        return $this->createRequest('HEAD', $uri, $headers, $options);
     }
 
-    public function delete($uri = null, $headers = null, $body = null)
+    public function delete($uri = null, $headers = null, $body = null, array $options = array())
     {
-        return $this->createRequest('DELETE', $uri, $headers, $body);
+        return $this->createRequest('DELETE', $uri, $headers, $body, $options);
     }
 
-    public function put($uri = null, $headers = null, $body = null)
+    public function put($uri = null, $headers = null, $body = null, array $options = array())
     {
-        return $this->createRequest('PUT', $uri, $headers, $body);
+        return $this->createRequest('PUT', $uri, $headers, $body, $options);
     }
 
-    public function patch($uri = null, $headers = null, $body = null)
+    public function patch($uri = null, $headers = null, $body = null, array $options = array())
     {
-        return $this->createRequest('PATCH', $uri, $headers, $body);
+        return $this->createRequest('PATCH', $uri, $headers, $body, $options);
     }
 
-    public function post($uri = null, $headers = null, $postBody = null)
+    public function post($uri = null, $headers = null, $postBody = null, array $options = array())
     {
-        return $this->createRequest('POST', $uri, $headers, $postBody);
+        return $this->createRequest('POST', $uri, $headers, $postBody, $options);
     }
 
-    public function options($uri = null)
+    public function options($uri = null, array $options = array())
     {
-        return $this->createRequest('OPTIONS', $uri);
+        return $this->createRequest('OPTIONS', $uri, $options);
     }
 
     public function send($requests)
@@ -386,21 +387,22 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      * Prepare a request to be sent from the Client by adding client specific behaviors and properties to the request.
      *
      * @param RequestInterface $request Request to prepare for the client
+     * @param array            $options Options to apply to the request
      *
      * @return RequestInterface
      */
-    protected function prepareRequest(RequestInterface $request)
+    protected function prepareRequest(RequestInterface $request, array $options = array())
     {
         $request->setClient($this);
 
         // Add any curl options to the request
-        if ($options = $this->config->get(self::CURL_OPTIONS)) {
-            $request->getCurlOptions()->merge(CurlHandle::parseCurlConfig($options));
+        if ($curl = $this->config[self::CURL_OPTIONS]) {
+            $request->getCurlOptions()->overwriteWith(CurlHandle::parseCurlConfig($curl));
         }
 
         // Add request parameters to the request
-        if ($options = $this->config->get(self::REQUEST_PARAMS)) {
-            $request->getParams()->merge($options);
+        if ($params = $this->config[self::REQUEST_PARAMS]) {
+            $request->getParams()->overwriteWith($params);
         }
 
         // Attach client observers to the request
@@ -411,13 +413,11 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             $request->setHeader('User-Agent', $this->userAgent);
         }
 
-        $this->dispatch(
-            'client.create_request',
-            array(
-                'client'  => $this,
-                'request' => $request
-            )
-        );
+        if ($options) {
+            $this->requestFactory->applyOptions($request, $options);
+        }
+
+        $this->dispatch('client.create_request', array('client' => $this, 'request' => $request));
 
         return $request;
     }
@@ -428,7 +428,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     protected function initSsl()
     {
         // Allow ssl.certificate_authority config setting to control the certificate authority used by curl
-        $authority = $this->config->get(self::SSL_CERT_AUTHORITY);
+        $authority = $this->config[self::SSL_CERT_AUTHORITY];
 
         // Set the SSL certificate
         if ($authority !== 'system') {
