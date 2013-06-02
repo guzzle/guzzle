@@ -114,15 +114,16 @@ class CachePlugin implements EventSubscriberInterface
         }
 
         if ($response = $this->storage->fetch($request)) {
-            $request->getParams()->set('cache.lookup', true);
+            $params = $request->getParams();
+            $params['cache.lookup'] = true;
             $response->setHeader(
                 'Age',
                 time() - strtotime($response->getDate() ? : $response->getLastModified() ?: 'now')
             );
             // Validate that the response satisfies the request
             if ($this->canResponseSatisfyRequest($request, $response)) {
-                if (!$request->getParams()->hasKey('cache.hit')) {
-                    $request->getParams()->set('cache.hit', true);
+                if (!isset($params['cache.hit'])) {
+                    $params['cache.hit'] = true;
                 }
                 $request->setResponse($response);
             }
