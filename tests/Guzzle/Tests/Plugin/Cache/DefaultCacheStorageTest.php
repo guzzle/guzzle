@@ -181,4 +181,13 @@ class DefaultCacheStorageTest extends \Guzzle\Tests\GuzzleTestCase
             }
         }
     }
+
+    public function testCanFilterCacheKeys()
+    {
+        $cache = $this->getCache();
+        $cache['request']->getQuery()->set('auth', 'foo');
+        $this->assertNull($cache['storage']->fetch($cache['request']));
+        $cache['request']->getParams()->set('cache.key_filter', 'auth');
+        $this->assertNotNull($cache['storage']->fetch($cache['request']));
+    }
 }

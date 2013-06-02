@@ -165,7 +165,16 @@ class DefaultCacheStorage implements CacheStorageInterface
      */
     protected function getCacheKey(RequestInterface $request)
     {
-        return $this->keyPrefix . md5($request->getMethod() . ' ' . $request->getUrl());
+        $url = $request->getUrl(true);
+
+        // Allow cache.key_filter to trim down the URL cache key by removing generate query string values (e.g. auth)
+        if ($filter = $request->getParams()->get('cache.key_filter')) {
+            foreach (explode(',', $filter) as $remove) {
+                $url->getQuery()->remove(trim($remove));
+            }
+        }
+
+        return $this->keyPrefix . md5($request->getMethod() . ' ' . $url);
     }
 
     /**
