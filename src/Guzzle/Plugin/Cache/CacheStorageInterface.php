@@ -2,6 +2,7 @@
 
 namespace Guzzle\Plugin\Cache;
 
+use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
 
 /**
@@ -10,27 +11,33 @@ use Guzzle\Http\Message\Response;
 interface CacheStorageInterface
 {
     /**
-     * Cache an HTTP request
+     * Get a Response from the cache for a request
      *
-     * @param string   $key      Cache key
-     * @param Response $response Response to cache
-     * @param int      $ttl      Amount of time to cache the response
-     */
-    public function cache($key, Response $response, $ttl = null);
-
-    /**
-     * Delete an item from the cache
-     *
-     * @param string $key Cache key
-     */
-    public function delete($key);
-
-    /**
-     * Get a Response from the cache
-     *
-     * @param string $key Cache key
+     * @param RequestInterface $request
      *
      * @return null|Response
      */
-    public function fetch($key);
+    public function fetch(RequestInterface $request);
+
+    /**
+     * Cache an HTTP request
+     *
+     * @param RequestInterface $request  Request being cached
+     * @param Response         $response Response to cache
+     */
+    public function cache(RequestInterface $request, Response $response);
+
+    /**
+     * Deletes cache entries that match a request
+     *
+     * @param RequestInterface $request Request to delete from cache
+     */
+    public function delete(RequestInterface $request);
+
+    /**
+     * Purge all cache entries for a given URL
+     *
+     * @param string $url
+     */
+    public function purge($url);
 }
