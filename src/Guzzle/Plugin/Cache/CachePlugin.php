@@ -35,16 +35,17 @@ class CachePlugin implements EventSubscriberInterface
     /** @var CacheStorageInterface $cache Object used to cache responses */
     protected $storage;
 
+    /** @var bool */
+    protected $autoPurge;
+
     /**
-     * Cache options include the following:
-     *
-     * - CacheStorageInterface     storage:       (optional) Adapter used to cache responses
-     * - RevalidationInterface     revalidation:  (optional) Cache revalidation strategy
-     * - CanCacheInterface         can_cache:     (optional) Object used to determine if a request can be cached
-     *
      * @param array|CacheAdapterInterface|CacheStorageInterface $options Array of options for the cache plugin,
-     *                                                                   cache adapter, or cache storage object.
-     *
+     *     cache adapter, or cache storage object.
+     *     - CacheStorageInterface storage:      Adapter used to cache responses
+     *     - RevalidationInterface revalidation: Cache revalidation strategy
+     *     - CanCacheInterface     can_cache:    Object used to determine if a request can be cached
+     *     - bool                  auto_purge    Set to true to automatically PURGE resources when non-idempotent
+     *                                           requests are sent to a resource. Defaults to false.
      * @throws InvalidArgumentException if no cache is provided and Doctrine cache is not installed
      */
     public function __construct($options = null)
@@ -62,6 +63,8 @@ class CachePlugin implements EventSubscriberInterface
                 // @codeCoverageIgnoreEnd
             }
         }
+
+        $this->autoPurge = isset($options['auto_purge']) ? $options['auto_purge'] : false;
 
         // Add a cache storage if a cache adapter was provided
         $this->storage = isset($options['storage'])
@@ -102,14 +105,20 @@ class CachePlugin implements EventSubscriberInterface
         $request = $event['request'];
         $request->addHeader('Via', sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION));
 
-        // Intercept PURGE requests
-        if ($request->getMethod() == 'PURGE') {
-            $this->purge($request);
-            $request->setResponse(new Response(200, array(), 'purged'));
-            return;
-        }
-
         if (!$this->canCache->canCacheRequest($request)) {
+            switch ($request->getMethod()) {
+                case 'PURGE':
+                    $this->purge($request);
+                    $request->setResponse(new Response(200, array(), 'purged'));
+                    break;
+                case 'PUT':
+                case 'POST':
+                case 'DELETE':
+                case 'PATCH':
+                    if ($this->autoPurge) {
+                        $this->purge($request);
+                    }
+            }
             return;
         }
 

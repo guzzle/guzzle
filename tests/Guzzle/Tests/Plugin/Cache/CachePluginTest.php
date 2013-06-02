@@ -5,6 +5,7 @@ namespace Guzzle\Tests\Plugin\Cache;
 use Guzzle\Common\Event;
 use Guzzle\Common\Version;
 use Guzzle\Cache\DoctrineCacheAdapter;
+use Guzzle\Http\Client;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
 use Guzzle\Plugin\Cache\CachePlugin;
@@ -418,10 +419,23 @@ class CachePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $storage = $this->getMockBuilder('Guzzle\Plugin\Cache\CacheStorageInterface')
             ->setMethods(array('purge'))
             ->getMockForAbstractClass();
-        $storage->expects($this->atLeastOnce())
-            ->method('purge');
+        $storage->expects($this->atLeastOnce())->method('purge');
         $plugin = new CachePlugin(array('storage' => $storage));
         $request = new Request('GET', 'http://foo.com', array('X-Foo' => 'Bar'));
         $plugin->purge($request);
+    }
+
+    public function testAutoPurgesRequests()
+    {
+        $storage = $this->getMockBuilder('Guzzle\Plugin\Cache\CacheStorageInterface')
+            ->setMethods(array('purge'))
+            ->getMockForAbstractClass();
+        $storage->expects($this->atLeastOnce())->method('purge');
+        $plugin = new CachePlugin(array('storage' => $storage, 'auto_purge' => true));
+        $client = new Client();
+        $request = $client->put('http://foo.com', array('X-Foo' => 'Bar'));
+        $request->addSubscriber($plugin);
+        $request->setResponse(new Response(200), true);
+        $request->send();
     }
 }
