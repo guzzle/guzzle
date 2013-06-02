@@ -61,9 +61,7 @@ class CallbackCanCacheStrategyTest extends \Guzzle\Tests\GuzzleTestCase
 
         $s->expects($this->once())
             ->method('fetch')
-            ->will($this->returnValue(
-                array(200, $response->getHeaders()->toArray(), $response->getBody(true))
-            ));
+            ->will($this->returnValue($response));
 
         $plugin = new CachePlugin(array('can_cache' => $c, 'storage' => $s));
         $plugin->onRequestBeforeSend(new Event(array('request' => $request)));
