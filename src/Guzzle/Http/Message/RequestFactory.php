@@ -281,4 +281,17 @@ class RequestFactory implements RequestFactoryInterface
             $curl[CURLOPT_SSL_VERIFYPEER] = false;
         }
     }
+
+    protected function visit_exceptions(RequestInterface $request, $value)
+    {
+        if ($value === false || $value === 0) {
+            $dispatcher = $request->getEventDispatcher();
+            foreach ($dispatcher->getListeners('request.error') as $listener) {
+                if ($listener[0] == 'Guzzle\Http\Message\Request' && $listener[1] = 'onRequestError') {
+                    $dispatcher->removeListener('request.error', $listener);
+                    break;
+                }
+            }
+        }
+    }
 }

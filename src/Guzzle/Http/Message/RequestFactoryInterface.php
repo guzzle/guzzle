@@ -81,6 +81,7 @@ interface RequestFactoryInterface
      *        "events": Associative array mapping event names to a closure or array of (priority, closure)
      *        "plugins": Array of plugins to add to the request
      *        "debug": Set to true to display all data sent over the wire
+     *        "exceptions": Set to false to disable throwing exceptions on an HTTP level error (e.g. 404, 500, etc)
      */
     public function applyOptions(RequestInterface $request, array $options = array());
 }
