@@ -213,7 +213,6 @@ class Client extends HttpClient implements ClientInterface
      */
     protected function executeMultiple(array $commands)
     {
-        $failureException = null;
         $requests = array();
         $commandRequests = new \SplObjectStorage();
 

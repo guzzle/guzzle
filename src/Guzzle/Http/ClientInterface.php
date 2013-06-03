@@ -236,9 +236,9 @@ interface ClientInterface extends HasDispatcherInterface
     /**
      * Sends a single request or an array of requests in parallel
      *
-     * @param array $requests Request(s) to send
+     * @param array|RequestInterface $requests One or more RequestInterface objects to send
      *
-     * @return array Returns the response(s)
+     * @return Response|array Returns a single Response or an array of Response objects
      */
     public function send($requests);
 
