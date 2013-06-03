@@ -145,15 +145,15 @@ interface ClientInterface extends HasDispatcherInterface
     /**
      * Create a GET request for the client
      *
-     * @param string|array                              $uri     Resource URI
-     * @param array|Collection                          $headers HTTP headers
-     * @param string|resource|array|EntityBodyInterface $saveTo  Where to store the response entity body
-     * @param array                                     $options Options to apply to the request
-     *
+     * @param string|array     $uri     Resource URI
+     * @param array|Collection $headers HTTP headers
+     * @param array            $options Options to apply to the request. For BC compatibility, you can also pass a
+     *                                  string to tell Guzzle to download the body of the response to a particular
+     *                                  location. Use the 'body' option instead for forward compatibility.
      * @return RequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    public function get($uri = null, $headers = null, $saveTo = null, array $options = array());
+    public function get($uri = null, $headers = null, $options = array());
 
     /**
      * Create a HEAD request for the client

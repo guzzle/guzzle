@@ -331,14 +331,14 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 307\r\nLocation: " . $this->getServer()->getUrl() . "\r\nContent-Length: 0\r\n\r\n"
         ));
         $client = new Client($this->getServer()->getUrl());
-        $response = $client->get('/', array(), null, array('allow_redirects' => false))->send();
+        $response = $client->get('/', array(), array('allow_redirects' => false))->send();
         $this->assertEquals(307, $response->getStatusCode());
     }
 
     public function testCanAddCookies()
     {
         $client = new Client($this->getServer()->getUrl());
-        $request = $client->get('/', array(), null, array('cookies' => array('Foo' => 'Bar')));
+        $request = $client->get('/', array(), array('cookies' => array('Foo' => 'Bar')));
         $this->assertEquals('Bar', $request->getCookie('Foo'));
     }
 
@@ -372,7 +372,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $foo = null;
         $client = new Client();
         $client->addSubscriber(new MockPlugin(array(new Response(200))));
-        $request = $client->get($this->getServer()->getUrl(), array(), null, array(
+        $request = $client->get($this->getServer()->getUrl(), array(), array(
             'events' => array(
                 'request.before_send' => function () use (&$foo) { $foo = true; }
             )
@@ -386,7 +386,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $mock = new MockPlugin(array(new Response(200)));
         $client = new Client();
         $client->addSubscriber($mock);
-        $request = $client->get($this->getServer()->getUrl(), array(), null, array(
+        $request = $client->get($this->getServer()->getUrl(), array(), array(
             'plugins' => array($mock)
         ));
         $request->send();

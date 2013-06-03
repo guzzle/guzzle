@@ -268,9 +268,12 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             . ' PHP/' . PHP_VERSION;
     }
 
-    public function get($uri = null, $headers = null, $saveTo = null, array $options = array())
+    public function get($uri = null, $headers = null, $options = array())
     {
-        return $this->createRequest('GET', $uri, $headers, $saveTo, $options);
+        // BC compat: $options can be a string, resource, etc to specify where the response body is downloaded
+        return is_array($options)
+            ? $this->createRequest('GET', $uri, $headers, null, $options)
+            : $this->createRequest('GET', $uri, $headers, $options);
     }
 
     public function head($uri = null, $headers = null, array $options = array())
