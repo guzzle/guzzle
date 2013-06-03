@@ -278,4 +278,9 @@ class Client extends HttpClient implements ClientInterface
 
         return $this->commandFactory;
     }
+
+    /**
+     * @deprecated
+     */
+    public function enableMagicMethods($isEnabled) {}
 }
