@@ -87,15 +87,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('bar', $client->getConfig('foo'));
     }
 
-    /**
-     * @expectedException \Guzzle\Common\Exception\InvalidArgumentException
-     */
-    public function testValidatesArrayForTemplateIsValid()
-    {
-        $client = new Client('http://www.google.com/');
-        $client->createRequest('GET', array('foo' => 'bar', 'baz' => 'bam'));
-    }
-
     public function testClientAttachersObserversToRequests()
     {
         $this->getServer()->flush();
@@ -483,24 +474,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         ));
 
         $this->assertEquals('http://hi?han=solo', $uri);
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testUriArrayMustContainExactlyTwoElements()
-    {
-        $client = new Client();
-        $client->createRequest('GET', array('haha!'));
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testUriArrayMustContainAnArray()
-    {
-        $client = new Client();
-        $client->createRequest('GET', array('haha!', 'test'));
     }
 
     public function testUriArrayAllowsCustomTemplateVariables()

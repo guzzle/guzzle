@@ -21,10 +21,15 @@ use Guzzle\Service\Exception\ValidationException;
  */
 abstract class AbstractCommand extends Collection implements CommandInterface
 {
-    // Option used to specify custom headers to add to the generated request
+    // @deprecated: Option used to specify custom headers to add to the generated request
     const HEADERS_OPTION = 'command.headers';
-    // Option used to add an onComplete method to a command
+    // @deprecated: Option used to add an onComplete method to a command
     const ON_COMPLETE = 'command.on_complete';
+    // @deprecated: Option used to change the entity body used to store a response
+    const RESPONSE_BODY = 'command.response_body';
+
+    // Option used to add request options to the request created by a command
+    const REQUEST_OPTIONS = 'command.options';
     // command values to not count as additionalParameters
     const HIDDEN_PARAMS = 'command.hidden_params';
     // Option used to disable any pre-sending command validation
@@ -35,8 +40,6 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     const TYPE_RAW = 'raw';
     const TYPE_MODEL = 'model';
     const TYPE_NO_TRANSLATION = 'no_translation';
-    // Option used to change the entity body used to store a response
-    const RESPONSE_BODY = 'command.response_body';
 
     /** @var ClientInterface Client object used to execute the command */
     protected $client;
@@ -87,9 +90,10 @@ abstract class AbstractCommand extends Collection implements CommandInterface
         // Set the hidden additional parameters
         if (!$this[self::HIDDEN_PARAMS]) {
             $this[self::HIDDEN_PARAMS] = array(
-                'command.headers',
-                'command.response_processing',
-                'command.hidden_params'
+                self::HEADERS_OPTION,
+                self::RESPONSE_PROCESSING,
+                self::HIDDEN_PARAMS,
+                self::REQUEST_OPTIONS
             );
         }
 
