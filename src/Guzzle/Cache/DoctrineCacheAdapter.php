@@ -24,7 +24,6 @@ class DoctrineCacheAdapter extends AbstractCacheAdapter
         return $this->cache->contains($id);
     }
 
-
     public function delete($id, array $options = null)
     {
         return $this->cache->delete($id);

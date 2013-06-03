@@ -4,14 +4,11 @@ namespace Guzzle\Service;
 
 use Guzzle\Common\FromConfigInterface;
 use Guzzle\Common\Exception\InvalidArgumentException;
-use Guzzle\Inflection\InflectorInterface;
 use Guzzle\Http\ClientInterface as HttpClientInterface;
 use Guzzle\Service\Exception\CommandTransferException;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Description\ServiceDescriptionInterface;
-use Guzzle\Service\Command\Factory\FactoryInterface as CommandFactoryInterface;
 use Guzzle\Service\Resource\ResourceIteratorInterface;
-use Guzzle\Service\Resource\ResourceIteratorFactoryInterface;
 
 /**
  * Client interface for executing commands on a web service.

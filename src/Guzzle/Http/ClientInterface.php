@@ -8,7 +8,6 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactoryInterface;
-use Guzzle\Parser\UriTemplate\UriTemplateInterface;
 use Guzzle\Http\Curl\CurlMultiInterface;
 
 /**
