@@ -302,26 +302,18 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 
     public function send($requests)
     {
-        $curlMulti = $this->getCurlMulti();
-        $multipleRequests = !($requests instanceof RequestInterface);
-        if (!$multipleRequests) {
-            $requests = array($requests);
-        }
-
-        foreach ($requests as $request) {
-            $curlMulti->add($request);
+        if (!($requests instanceof RequestInterface)) {
+            return $this->sendMultiple($requests);
         }
 
         try {
+            /** @var $requests RequestInterface  */
+            $curlMulti = $this->getCurlMulti();
+            $curlMulti->add($requests);
             $curlMulti->send();
+            return $requests->getResponse();
         } catch (ExceptionCollection $e) {
-            throw $multipleRequests ? $e : $e->getFirst();
-        }
-
-        if (!$multipleRequests) {
-            return end($requests)->getResponse();
-        } else {
-            return array_map(function ($request) { return $request->getResponse(); }, $requests);
+            throw $e->getFirst();
         }
     }
 
@@ -378,6 +370,30 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         }
 
         return $certFile;
+    }
+
+    /**
+     * Send multiple requests in parallel
+     *
+     * @param array $requests Array of RequestInterface objects
+     *
+     * @return \SplObjectStorage Returns an object mapping Responses to RequestInterface objects
+     */
+    protected function sendMultiple(array $requests)
+    {
+        $curlMulti = $this->getCurlMulti();
+        foreach ($requests as $request) {
+            $curlMulti->add($request);
+        }
+        $curlMulti->send();
+
+        /** @var $request RequestInterface */
+        $result = array();
+        foreach ($requests as $request) {
+            $result[] = $request->getResponse();
+        }
+
+        return $result;
     }
 
     /**

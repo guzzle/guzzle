@@ -160,37 +160,6 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame($description, $client->getDescription());
     }
 
-    /**
-     * @expectedException BadMethodCallException
-     */
-    public function testMagicCallBehaviorCanBeDisabled()
-    {
-        $client = new Client();
-        $client->enableMagicMethods(false);
-        $client->foo();
-    }
-
-    /**
-     * @expectedException InvalidArgumentException
-     * @expectedExceptionMessage Command was not found matching foo
-     */
-    public function testMagicCallBehaviorEnsuresCommandExists()
-    {
-        $client = new Mock\MockClient();
-        $client->setDescription($this->service);
-        $client->enableMagicMethods(true);
-        $client->foo();
-    }
-
-    public function testMagicCallBehaviorExecuteExecutesCommands()
-    {
-        $client = new Mock\MockClient();
-        $client->setDescription($this->service);
-        $client->getEventDispatcher()->addSubscriber(new MockPlugin(array(new Response(200))));
-        $result = $client->mockCommand();
-        $this->assertInstanceOf('Guzzle\Http\Message\Response', $result);
-    }
-
     public function testOwnsResourceIteratorFactory()
     {
         $client = new Mock\MockClient();
