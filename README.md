@@ -27,7 +27,7 @@ The recommended way to install Guzzle is through [Composer](http://getcomposer.o
 
 ```bash
 # Install Composer
-curl -s http://getcomposer.org/installer | php
+curl -sS https://getcomposer.org/installer | php
 
 # Add Guzzle as a dependency
 php composer.phar require guzzle/guzzle:~3.6
