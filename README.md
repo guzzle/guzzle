@@ -8,7 +8,7 @@ Guzzle is a PHP HTTP client and framework for building RESTful web service clien
 - Service description DSL allows you build awesome web service clients faster.
 - Symfony2 event-based plugin system allows you to completely modify the behavior of a request.
 
-### Quick example
+[Documentation](http://www.guzzlephp.org/) | [Forum](https://groups.google.com/forum/?hl=en#!forum/guzzle) | IRC: [#guzzlephp](irc://irc.freenode.net/#guzzlephp) channel on irc.freenode.net
 
 ```php
 // Really simple using a static facade
@@ -20,13 +20,6 @@ $client = new \Guzzle\Http\Client('http://guzzlephp.org');
 $request = $client->get('/');
 $response = $request->send();
 ```
-
-Getting started
----------------
-
-- [Documentation](http://www.guzzlephp.org/)
-- [Forum](https://groups.google.com/forum/?hl=en#!forum/guzzle)
-- IRC: [#guzzlephp](irc://irc.freenode.net/#guzzlephp) channel on irc.freenode.net
 
 ### Installing via Composer
 
