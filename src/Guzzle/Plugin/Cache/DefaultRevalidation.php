@@ -2,7 +2,6 @@
 
 namespace Guzzle\Plugin\Cache;
 
-use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Exception\BadResponseException;

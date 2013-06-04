@@ -3,7 +3,6 @@
 namespace Guzzle\Service\Resource;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Service\Description\Parameter;
 
 /**

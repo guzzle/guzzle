@@ -10,7 +10,7 @@
          testSuiteLoaderClass="PHPUnit_Runner_StandardTestSuiteLoader">
 
     <testsuites>
-        <testsuite name="Guzzle">
+        <testsuite>
             <directory>./tests/Guzzle/Tests</directory>
         </testsuite>
     </testsuites>

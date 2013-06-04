@@ -122,12 +122,10 @@ class Operation implements OperationInterface
         }
 
         // Parameters need special handling when adding
-        if (!empty($config['parameters'])) {
-            $this->parameters = array();
-            foreach ($config['parameters'] as $name => $param) {
+        if ($this->parameters) {
+            foreach ($this->parameters as $name => $param) {
                 if ($param instanceof Parameter) {
                     $param->setName($name)->setParent($this);
-                    $this->parameters[$name] = $param;
                 } elseif (is_array($param)) {
                     $param['name'] = $name;
                     $this->addParam(new Parameter($param, $this->description));
@@ -135,11 +133,11 @@ class Operation implements OperationInterface
             }
         }
 
-        if (isset($config['additionalParameters'])) {
-            if ($config['additionalParameters'] instanceof Parameter) {
-                $this->setadditionalParameters($config['additionalParameters']);
-            } elseif (is_array($config['additionalParameters'])) {
-                $this->setadditionalParameters(new Parameter($config['additionalParameters'], $this->description));
+        if ($this->additionalParameters) {
+            if ($this->additionalParameters instanceof Parameter) {
+                $this->additionalParameters->setParent($this);
+            } elseif (is_array($this->additionalParameters)) {
+                $this->setadditionalParameters(new Parameter($this->additionalParameters, $this->description));
             }
         }
     }

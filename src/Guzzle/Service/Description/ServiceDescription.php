@@ -232,7 +232,7 @@ class ServiceDescription implements ServiceDescriptionInterface, ToArrayInterfac
     protected function fromArray(array $config)
     {
         // Keep a list of default keys used in service descriptions that is later used to determine extra data keys
-        $defaultKeys = array('name', 'models', 'apiVersion', 'baseUrl', 'description');
+        static $defaultKeys = array('name', 'models', 'apiVersion', 'baseUrl', 'description');
         // Pull in the default configuration values
         foreach ($defaultKeys as $key) {
             if (isset($config[$key])) {

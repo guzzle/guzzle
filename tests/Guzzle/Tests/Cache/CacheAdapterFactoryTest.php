@@ -5,7 +5,6 @@ namespace Guzzle\Tests\Cache;
 use Guzzle\Cache\CacheAdapterFactory;
 use Guzzle\Cache\DoctrineCacheAdapter;
 use Doctrine\Common\Cache\ArrayCache;
-use Monolog\Logger;
 use Zend\Cache\StorageFactory;
 
 /**

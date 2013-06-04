@@ -8,7 +8,6 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactoryInterface;
-use Guzzle\Parser\UriTemplate\UriTemplateInterface;
 use Guzzle\Http\Curl\CurlMultiInterface;
 
 /**
@@ -100,12 +99,19 @@ interface ClientInterface extends HasDispatcherInterface
      * @param string|array                              $uri     Resource URI.
      * @param array|Collection                          $headers HTTP headers
      * @param string|resource|array|EntityBodyInterface $body    Entity body of request (POST/PUT) or response (GET)
+     * @param array                                     $options Array of options to apply to the request
      *
      * @return RequestInterface
      * @throws InvalidArgumentException if a URI array is passed that does not contain exactly two elements: the URI
      *                                  followed by template variables
      */
-    public function createRequest($method = RequestInterface::GET, $uri = null, $headers = null, $body = null);
+    public function createRequest(
+        $method = RequestInterface::GET,
+        $uri = null,
+        $headers = null,
+        $body = null,
+        array $options = array()
+    );
 
     /**
      * Get the client's base URL as either an expanded or raw URI template
@@ -138,37 +144,40 @@ interface ClientInterface extends HasDispatcherInterface
     /**
      * Create a GET request for the client
      *
-     * @param string|array                              $uri     Resource URI
-     * @param array|Collection                          $headers HTTP headers
-     * @param string|resource|array|EntityBodyInterface $body    Where to store the response entity body
-     *
+     * @param string|array     $uri     Resource URI
+     * @param array|Collection $headers HTTP headers
+     * @param array            $options Options to apply to the request. For BC compatibility, you can also pass a
+     *                                  string to tell Guzzle to download the body of the response to a particular
+     *                                  location. Use the 'body' option instead for forward compatibility.
      * @return RequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    public function get($uri = null, $headers = null, $body = null);
+    public function get($uri = null, $headers = null, $options = array());
 
     /**
      * Create a HEAD request for the client
      *
      * @param string|array     $uri     Resource URI
      * @param array|Collection $headers HTTP headers
+     * @param array            $options Options to apply to the request
      *
      * @return RequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    public function head($uri = null, $headers = null);
+    public function head($uri = null, $headers = null, array $options = array());
 
     /**
      * Create a DELETE request for the client
      *
-     * @param string|array     $uri     Resource URI
-     * @param array|Collection $headers HTTP headers
+     * @param string|array                        $uri     Resource URI
+     * @param array|Collection                    $headers HTTP headers
      * @param string|resource|EntityBodyInterface $body    Body to send in the request
+     * @param array                               $options Options to apply to the request
      *
      * @return EntityEnclosingRequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    public function delete($uri = null, $headers = null, $body = null);
+    public function delete($uri = null, $headers = null, $body = null, array $options = array());
 
     /**
      * Create a PUT request for the client
@@ -176,11 +185,12 @@ interface ClientInterface extends HasDispatcherInterface
      * @param string|array                        $uri     Resource URI
      * @param array|Collection                    $headers HTTP headers
      * @param string|resource|EntityBodyInterface $body    Body to send in the request
+     * @param array                               $options Options to apply to the request
      *
      * @return EntityEnclosingRequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    public function put($uri = null, $headers = null, $body = null);
+    public function put($uri = null, $headers = null, $body = null, array $options = array());
 
     /**
      * Create a PATCH request for the client
@@ -188,11 +198,12 @@ interface ClientInterface extends HasDispatcherInterface
      * @param string|array                        $uri     Resource URI
      * @param array|Collection                    $headers HTTP headers
      * @param string|resource|EntityBodyInterface $body    Body to send in the request
+     * @param array                               $options Options to apply to the request
      *
      * @return EntityEnclosingRequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    public function patch($uri = null, $headers = null, $body = null);
+    public function patch($uri = null, $headers = null, $body = null, array $options = array());
 
     /**
      * Create a POST request for the client
@@ -203,27 +214,30 @@ interface ClientInterface extends HasDispatcherInterface
      *                                                    associative array of POST fields to send in the body of the
      *                                                    request.  Prefix a value in the array with the @ symbol to
      *                                                    reference a file.
+     * @param array                                       $options Options to apply to the request
+     *
      * @return EntityEnclosingRequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    public function post($uri = null, $headers = null, $postBody = null);
+    public function post($uri = null, $headers = null, $postBody = null, array $options = array());
 
     /**
      * Create an OPTIONS request for the client
      *
-     * @param string|array $uri Resource URI
+     * @param string|array $uri     Resource URI
+     * @param array        $options Options to apply to the request
      *
      * @return RequestInterface
      * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    public function options($uri = null);
+    public function options($uri = null, array $options = array());
 
     /**
      * Sends a single request or an array of requests in parallel
      *
-     * @param array $requests Request(s) to send
+     * @param array|RequestInterface $requests One or more RequestInterface objects to send
      *
-     * @return array Returns the response(s)
+     * @return Response|array Returns a single Response or an array of Response objects
      */
     public function send($requests);
 

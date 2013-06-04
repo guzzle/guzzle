@@ -4,7 +4,6 @@ namespace Guzzle\Service\Command;
 
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Url;
-use Guzzle\Parser\ParserRegistry;
 use Guzzle\Service\Command\LocationVisitor\Request\RequestVisitorInterface;
 use Guzzle\Service\Command\LocationVisitor\VisitorFlyweight;
 use Guzzle\Service\Description\OperationInterface;
@@ -146,10 +145,11 @@ class DefaultRequestSerializer implements RequestSerializerInterface
     {
         $operation = $command->getOperation();
         $client = $command->getClient();
+        $options = $command[AbstractCommand::REQUEST_OPTIONS] ?: array();
 
         // If the command does not specify a template, then assume the base URL of the client
         if (!($uri = $operation->getUri())) {
-            return $client->createRequest($operation->getHttpMethod(), $client->getBaseUrl());
+            return $client->createRequest($operation->getHttpMethod(), $client->getBaseUrl(), null, null, $options);
         }
 
         // Get the path values and use the client config settings
@@ -165,11 +165,6 @@ class DefaultRequestSerializer implements RequestSerializerInterface
             }
         }
 
-        // Merge the client's base URL with an expanded URI template
-        return $client->createRequest(
-            $operation->getHttpMethod(),
-            (string) Url::factory($client->getBaseUrl())
-                ->combine(ParserRegistry::getInstance()->getParser('uri_template')->expand($uri, $variables))
-        );
+        return $client->createRequest($operation->getHttpMethod(), array($uri, $variables), null, null, $options);
     }
 }

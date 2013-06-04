@@ -6,6 +6,7 @@ use Monolog\Logger;
 
 /**
  * @deprecated
+ * @codeCoverageIgnore
  */
 class MonologLogAdapter extends AbstractLogAdapter
 {

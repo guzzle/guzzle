@@ -282,7 +282,6 @@ class Stream implements StreamInterface
         return isset($this->customData[$key]) ? $this->customData[$key] : null;
     }
 
-
     /**
      * Reprocess stream metadata
      */
