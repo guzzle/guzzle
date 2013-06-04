@@ -37,9 +37,11 @@ final class StaticClient
      */
     public static function request($method, $url, $options = array())
     {
+        // @codeCoverageIgnoreStart
         if (!self::$client) {
             self::$client = new Client();
         }
+        // @codeCoverageIgnoreEnd
 
         $request = self::$client->createRequest($method, $url, null, null, $options);
 

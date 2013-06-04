@@ -24,6 +24,14 @@ class ExceptionCollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame($exceptions[0], $e->getFirst());
     }
 
+    public function testCanSetExceptions()
+    {
+        $ex = new \Exception('foo');
+        $e = new ExceptionCollection();
+        $e->setExceptions(array($ex));
+        $this->assertSame($ex, $e->getFirst());
+    }
+
     public function testActsAsArray()
     {
         $e = new ExceptionCollection();
