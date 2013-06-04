@@ -391,4 +391,35 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         ));
         $request->send();
     }
+
+    public function testCanDisableExceptions()
+    {
+        $client = new Client();
+        $request = $client->get($this->getServer()->getUrl(), array(), array(
+            'plugins' => array(new MockPlugin(array(new Response(500)))),
+            'exceptions' => false
+        ));
+        $this->assertEquals(500, $request->send()->getStatusCode());
+    }
+
+    public function testCanChangeSaveToLocation()
+    {
+        $r = EntityBody::factory();
+        $client = new Client();
+        $request = $client->get($this->getServer()->getUrl(), array(), array(
+            'plugins' => array(new MockPlugin(array(new Response(200, array(), 'testing')))),
+            'save_to' => $r
+        ));
+        $request->send();
+        $this->assertEquals('testing', (string) $r);
+    }
+
+    public function testCanSetProxy()
+    {
+        $client = new Client();
+        $request = $client->get($this->getServer()->getUrl(), array(), array(
+            'proxy' => '192.168.16.121'
+        ));
+        $this->assertEquals('192.168.16.121', $request->getCurlOptions()->get(CURLOPT_PROXY));
+    }
 }

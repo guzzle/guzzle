@@ -194,7 +194,11 @@ class RequestFactory implements RequestFactoryInterface
             throw new InvalidArgumentException('auth value must be an array');
         }
 
-        $request->setAuth($value[0], isset($value[1]) ? $value[1] : null);
+        $request->setAuth(
+            $value[0],
+            isset($value[1]) ? $value[1] : null,
+            isset($value[2]) ? $value[2] : CURLAUTH_BASIC
+        );
     }
 
     protected function visit_query(RequestInterface $request, $value)
@@ -293,5 +297,15 @@ class RequestFactory implements RequestFactoryInterface
                 }
             }
         }
+    }
+
+    protected function visit_save_to(RequestInterface $request, $value)
+    {
+        $request->setResponseBody($value);
+    }
+
+    protected function visit_proxy(RequestInterface $request, $value)
+    {
+        $request->getCurlOptions()->set(CURLOPT_PROXY, $value);
     }
 }
