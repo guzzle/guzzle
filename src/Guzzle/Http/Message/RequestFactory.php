@@ -240,7 +240,9 @@ class RequestFactory implements RequestFactoryInterface
         if (class_exists('Guzzle\Plugin\Log\LogPlugin')) {
             $request->addSubscriber(LogPlugin::getDebugPlugin());
         } else {
+            // @codeCoverageIgnoreStart
             $request->getCurlOptions()->set(CURLOPT_VERBOSE, true);
+            // @codeCoverageIgnoreEnd
         }
     }
 
@@ -252,7 +254,7 @@ class RequestFactory implements RequestFactoryInterface
 
         foreach ($value as $name => $method) {
             if (is_array($method)) {
-                $request->getEventDispatcher()->addListener($name, $method[1], $method[0]);
+                $request->getEventDispatcher()->addListener($name, $method[0], $method[1]);
             } else {
                 $request->getEventDispatcher()->addListener($name, $method);
             }
