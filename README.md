@@ -184,7 +184,7 @@ $response = Guzzle::post('http://guzzlephp.org', [
 * "debug": Set to true to display all data sent over the wire
 * "exceptions": Set to false to disable throwing exceptions on an HTTP level error (e.g. 404, 500, etc)
 
-These options can also be used when creating request using a standard client:
+These options can also be used when creating requests using a standard client:
 
 ```php
 $client = new Guzzle\Http\Client();
