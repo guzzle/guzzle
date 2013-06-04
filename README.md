@@ -157,7 +157,7 @@ $response = Guzzle::get('http://guzzlephp.org');
 $response = Guzzle::post('http://guzzlephp.org', [
     'headers' => ['X-Foo' => 'Bar']
     'body'    => ['Foo' => 'Bar'],
-    'query'   => ['Test => 123],
+    'query'   => ['Test' => 123],
     'timeout' => 10,
     'debug'   => true,
     'save_to' => '/path/to/file.html'
