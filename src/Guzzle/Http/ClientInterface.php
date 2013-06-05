@@ -37,46 +37,6 @@ interface ClientInterface extends HasDispatcherInterface
     public function getConfig($key = false);
 
     /**
-     * Set SSL verification options.
-     *
-     * Setting $certificateAuthority to TRUE will result in the bundled
-     * cacert.pem being used to verify against the remote host.
-     *
-     * Alternate certificates to verify against can be specified with the
-     * $certificateAuthority option set to a certificate file location to be
-     * used with CURLOPT_CAINFO, or a certificate directory path to be used
-     * with the CURLOPT_CAPATH option.
-     *
-     * Setting $certificateAuthority to FALSE will turn off peer verification,
-     * unset the bundled cacert.pem, and disable host verification. Please
-     * don't do this unless you really know what you're doing, and why
-     * you're doing it.
-     *
-     * @param string|bool $certificateAuthority bool, file path, or directory path
-     * @param bool        $verifyPeer           FALSE to stop cURL from verifying the peer's certificate.
-     * @param int         $verifyHost           Set the cURL handle's CURLOPT_SSL_VERIFYHOST option
-     *
-     * @return self
-     */
-    public function setSslVerification($certificateAuthority = true, $verifyPeer = true, $verifyHost = 2);
-
-    /**
-     * Get the default HTTP headers to add to each request created by the client
-     *
-     * @return Collection
-     */
-    public function getDefaultHeaders();
-
-    /**
-     * Set the default HTTP headers to add to each request created by the client
-     *
-     * @param array|Collection $headers Default HTTP headers
-     *
-     * @return self
-     */
-    public function setDefaultHeaders($headers);
-
-    /**
      * Create and return a new {@see RequestInterface} configured for the client.
      *
      * Use an absolute path to override the base path of the client, or a relative path to append to the base path of
@@ -100,34 +60,6 @@ interface ClientInterface extends HasDispatcherInterface
         $body = null,
         array $options = array()
     );
-
-    /**
-     * Get the client's base URL as either an expanded or raw URI template
-     *
-     * @param bool $expand Set to FALSE to get the raw base URL without URI template expansion
-     *
-     * @return string|null
-     */
-    public function getBaseUrl($expand = true);
-
-    /**
-     * Set the base URL of the client
-     *
-     * @param string $url The base service endpoint URL of the webservice
-     *
-     * @return self
-     */
-    public function setBaseUrl($url);
-
-    /**
-     * Set the User-Agent header to be used on all requests from the client
-     *
-     * @param string $userAgent      User agent string
-     * @param bool   $includeDefault Set to true to prepend the value to Guzzle's default user agent string
-     *
-     * @return self
-     */
-    public function setUserAgent($userAgent, $includeDefault = false);
 
     /**
      * Create a GET request for the client
@@ -228,4 +160,61 @@ interface ClientInterface extends HasDispatcherInterface
      * @return \Guzzle\Http\Message\Response|array Returns a single Response or an array of Response objects
      */
     public function send($requests);
+
+    /**
+     * Get the default HTTP headers to add to each request created by the client
+     *
+     * @return Collection
+     */
+    public function getDefaultHeaders();
+
+    /**
+     * Get the client's base URL as either an expanded or raw URI template
+     *
+     * @param bool $expand Set to FALSE to get the raw base URL without URI template expansion
+     *
+     * @return string|null
+     */
+    public function getBaseUrl($expand = true);
+
+    /**
+     * Set the base URL of the client
+     *
+     * @param string $url The base service endpoint URL of the webservice
+     *
+     * @return self
+     */
+    public function setBaseUrl($url);
+
+    /**
+     * Set the User-Agent header to be used on all requests from the client
+     *
+     * @param string $userAgent      User agent string
+     * @param bool   $includeDefault Set to true to prepend the value to Guzzle's default user agent string
+     *
+     * @return self
+     */
+    public function setUserAgent($userAgent, $includeDefault = false);
+
+    /**
+     * Set SSL verification options.
+     *
+     * Setting $certificateAuthority to TRUE will result in the bundled cacert.pem being used to verify against the
+     * remote host.
+     *
+     * Alternate certificates to verify against can be specified with the $certificateAuthority option set to the full
+     * path to a certificate file, or the path to a directory containing certificates.
+     *
+     * Setting $certificateAuthority to FALSE will turn off peer verification, unset the bundled cacert.pem, and
+     * disable host verification. Please don't do this unless you really know what you're doing, and why you're doing
+     * it.
+     *
+     * @param string|bool $certificateAuthority bool, file path, or directory path
+     * @param bool        $verifyPeer           FALSE to stop from verifying the peer's certificate.
+     * @param int         $verifyHost           Set to 1 to check the existence of a common name in the SSL peer
+     *                                          certificate. 2 to check the existence of a common name and also verify
+     *                                          that it matches the hostname provided.
+     * @return self
+     */
+    public function setSslVerification($certificateAuthority = true, $verifyPeer = true, $verifyHost = 2);
 }
