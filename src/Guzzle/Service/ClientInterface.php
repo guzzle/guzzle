@@ -31,7 +31,7 @@ interface ClientInterface extends HttpClientInterface, FromConfigInterface
     /**
      * Execute one or more commands
      *
-     * @param CommandInterface|array $command Command or array of commands to execute
+     * @param CommandInterface|array|Traversable $command Command, array of commands or Traversable object containing commands to execute
      *
      * @return mixed Returns the result of the executed command or an array of commands if executing multiple commands
      * @throws InvalidArgumentException if an invalid command is passed
