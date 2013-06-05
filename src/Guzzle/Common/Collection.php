@@ -218,11 +218,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
      */
     public function merge($data)
     {
-        if (!is_array($data)) {
-            $data = $data->toArray();
+        foreach ($data as $key => $value) {
+            $this->add($key, $value);
         }
-
-        $this->data = array_merge_recursive($this->data, $data);
 
         return $this;
     }
