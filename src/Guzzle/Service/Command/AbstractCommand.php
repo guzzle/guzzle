@@ -63,7 +63,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
      * @param array|Collection   $parameters Collection of parameters to set on the command
      * @param OperationInterface $operation Command definition from description
      */
-    public function __construct($parameters = null, OperationInterface $operation = null)
+    public function __construct($parameters = array(), OperationInterface $operation = null)
     {
         parent::__construct($parameters);
         $this->operation = $operation ?: $this->createOperation();

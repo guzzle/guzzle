@@ -15,9 +15,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
     /**
      * @param array $data Associative array of data to set
      */
-    public function __construct(array $data = null)
+    public function __construct(array $data = array())
     {
-        $this->data = $data ?: array();
+        $this->data = $data;
     }
 
     /**
