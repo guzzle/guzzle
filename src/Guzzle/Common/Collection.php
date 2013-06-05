@@ -32,19 +32,13 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
      */
     public static function fromConfig(array $config = array(), array $defaults = array(), array $required = array())
     {
-        $collection = new self($defaults);
+        $data = $config + $defaults;
 
-        foreach ($config as $key => $value) {
-            $collection->set($key, $value);
+        if ($missing = array_diff($required, array_keys($data))) {
+            throw new InvalidArgumentException('Config is missing the following keys: ' . implode(', ', $missing));
         }
 
-        foreach ($required as $key) {
-            if (!isset($collection[$key])) {
-                throw new InvalidArgumentException("Config must contain a '{$key}' key");
-            }
-        }
-
-        return $collection;
+        return new self($data);
     }
 
     public function count()
@@ -224,16 +218,8 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
      */
     public function merge($data)
     {
-        if ($data instanceof self) {
-            $data = $data->getAll();
-        }
-
-        if (!$this->data) {
-            $this->data = $data;
-        } else {
-            foreach ($data as $key => $value) {
-                $this->add($key, $value);
-            }
+        foreach ($data as $key => $value) {
+            $this->add($key, $value);
         }
 
         return $this;
