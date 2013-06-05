@@ -55,7 +55,7 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
      *     - class: Client class to instantiate using a factory method
      *     - params: array of key value pair configuration settings for the builder
      */
-    public function __construct(array $serviceBuilderConfig)
+    public function __construct(array $serviceBuilderConfig = array())
     {
         $this->builderConfig = $serviceBuilderConfig;
     }

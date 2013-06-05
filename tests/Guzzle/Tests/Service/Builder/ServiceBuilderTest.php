@@ -326,7 +326,7 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
 
     public function testCanUseArbitraryData()
     {
-        $b = new ServiceBuilder(array());
+        $b = new ServiceBuilder();
         $b['a'] = 'foo';
         $this->assertTrue(isset($b['a']));
         $this->assertEquals('foo', $b['a']);
@@ -336,7 +336,7 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
 
     public function testCanRegisterServiceData()
     {
-        $b = new ServiceBuilder(array());
+        $b = new ServiceBuilder();
         $b['a'] = array(
             'class' => 'Guzzle\Tests\Service\Mock\MockClient',
             'params' => array(
