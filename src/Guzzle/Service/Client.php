@@ -134,7 +134,7 @@ class Client extends HttpClient implements ClientInterface
             $this->send($this->prepareCommand($command));
             $this->dispatch('command.after_send', array('command' => $command));
             return $command->getResult();
-        } elseif (is_array($command)) {
+        } elseif (is_array($command) || $command instanceof \Traversable) {
             return $this->executeMultiple($command);
         } else {
             throw new InvalidArgumentException('Command must be a command or array of commands');
@@ -206,12 +206,12 @@ class Client extends HttpClient implements ClientInterface
     /**
      * Execute multiple commands in parallel
      *
-     * @param array $commands Array of CommandInterface objects to execute
+     * @param array|Traversable $commands Array of CommandInterface objects to execute
      *
      * @return array Returns an array of the executed commands
      * @throws Exception\CommandTransferException
      */
-    protected function executeMultiple(array $commands)
+    protected function executeMultiple($commands)
     {
         $requests = array();
         $commandRequests = new \SplObjectStorage();
