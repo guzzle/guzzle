@@ -20,7 +20,7 @@ class ExceptionCollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $exceptions = $this->getExceptions();
         $e->add($exceptions[0]);
         $e->add($exceptions[1]);
-        $this->assertEquals("Test\nTesting", $e->getMessage());
+        $this->assertEquals("(Exception) Test\n(Exception) Testing", $e->getMessage());
         $this->assertSame($exceptions[0], $e->getFirst());
     }
 
@@ -46,10 +46,13 @@ class ExceptionCollectionTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $e1 = new ExceptionCollection();
         $e1->add(new \Exception("Test"));
-        $e2 = new ExceptionCollection();
+        $e2 = new ExceptionCollection('Meta description!');
         $e2->add(new \Exception("Test 2"));
-
         $e1->add($e2);
-        $this->assertEquals("Test\nTest 2", $e1->getMessage());
+        $message = $e1->getMessage();
+        $this->assertEquals("(Exception) Test\n"
+            . "(Guzzle\\Common\\Exception\\ExceptionCollection)\n"
+            . "    Meta description!\n"
+            . "    (Exception) Test 2\n", $message);
     }
 }

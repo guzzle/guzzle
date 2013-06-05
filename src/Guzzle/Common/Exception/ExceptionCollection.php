@@ -19,7 +19,10 @@ class ExceptionCollection extends \Exception implements GuzzleException, \Iterat
      */
     public function setExceptions(array $exceptions)
     {
-        $this->exceptions = $exceptions;
+        $this->exceptions = array();
+        foreach ($exceptions as $exception) {
+            $this->add($exception);
+        }
 
         return $this;
     }
@@ -38,16 +41,14 @@ class ExceptionCollection extends \Exception implements GuzzleException, \Iterat
         }
 
         if ($e instanceof self) {
-            foreach ($e as $exception) {
-                $this->exceptions[] = $exception;
-                $this->message .= $e->getMessage() . "\n";
+            $this->message .= '(' . get_class($e) . ")\n";
+            foreach (explode("\n", $e->getMessage()) as $message) {
+                $this->message .= '    ' . $message . "\n";
             }
         } elseif ($e instanceof \Exception) {
             $this->exceptions[] = $e;
-            $this->message .= $e->getMessage();
+            $this->message .= '(' . get_class($e) . ') ' . $e->getMessage();
         }
-
-        $this->message = rtrim($this->message);
 
         return $this;
     }
