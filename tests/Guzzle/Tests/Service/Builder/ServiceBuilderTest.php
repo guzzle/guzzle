@@ -323,4 +323,35 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         $c2 = $b->get('michael.mock');
         $this->assertEquals('michael', $c2->getConfig('username'));
     }
+
+    public function testCanUseArbitraryData()
+    {
+        $b = new ServiceBuilder(array());
+        $b['a'] = 'foo';
+        $this->assertTrue(isset($b['a']));
+        $this->assertEquals('foo', $b['a']);
+        unset($b['a']);
+        $this->assertFalse(isset($b['a']));
+    }
+
+    public function testCanRegisterServiceData()
+    {
+        $b = new ServiceBuilder(array());
+        $b['a'] = array(
+            'class' => 'Guzzle\Tests\Service\Mock\MockClient',
+            'params' => array(
+                'username' => 'billy',
+                'password' => 'passw0rd',
+                'subdomain' => 'billy',
+            )
+        );
+        $this->assertTrue(isset($b['a']));
+        $this->assertInstanceOf('Guzzle\Tests\Service\Mock\MockClient', $b['a']);
+        $client = $b['a'];
+        unset($b['a']);
+        $this->assertFalse(isset($b['a']));
+        // Ensure that instantiated clients can be registered
+        $b['mock'] = $client;
+        $this->assertSame($client, $b['mock']);
+    }
 }

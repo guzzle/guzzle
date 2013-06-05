@@ -3,13 +3,15 @@
 namespace Guzzle\Service\Builder;
 
 use Guzzle\Common\AbstractHasDispatcher;
-use Guzzle\Http\ClientInterface;
+use Guzzle\Service\ClientInterface;
 use Guzzle\Service\Exception\ServiceBuilderException;
 use Guzzle\Service\Exception\ServiceNotFoundException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Service builder to generate service builders and service clients from configuration settings
+ * {@inheritdoc}
+ *
+ * Clients and data can be set, retrieved, and removed by accessing the service builder like an associative array.
  */
 class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInterface, \ArrayAccess, \Serializable
 {
@@ -102,6 +104,12 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
     public function get($name, $throwAway = false)
     {
         if (!isset($this->builderConfig[$name])) {
+
+            // Check to see if arbitrary data is being referenced
+            if (isset($this->clients[$name])) {
+                return $this->clients[$name];
+            }
+
             // Check aliases and return a match if found
             foreach ($this->builderConfig as $actualName => $config) {
                 if (isset($config['alias']) && $config['alias'] == $name) {
@@ -115,83 +123,65 @@ class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInte
             return $this->clients[$name];
         }
 
+        $builder =& $this->builderConfig[$name];
+
         // Convert references to the actual client
-        foreach ($this->builderConfig[$name]['params'] as &$v) {
+        foreach ($builder['params'] as &$v) {
             if (is_string($v) && substr($v, 0, 1) == '{' && substr($v, -1) == '}') {
-                $v = $this->get(trim(trim($v, '{}')));
+                $v = $this->get(trim($v, '{} '));
             }
         }
 
         // Get the configured parameters and merge in any parameters provided for throw-away clients
-        $config = $this->builderConfig[$name]['params'];
+        $config = $builder['params'];
         if (is_array($throwAway)) {
             $config = $throwAway + $config;
         }
 
-        $class = $this->builderConfig[$name]['class'];
-        $client = $class::factory($config);
+        $client = $builder['class']::factory($config);
 
         if (!$throwAway) {
             $this->clients[$name] = $client;
         }
 
-        foreach ($this->plugins as $plugin) {
-            $client->addSubscriber($plugin);
+        if ($client instanceof ClientInterface) {
+            foreach ($this->plugins as $plugin) {
+                $client->addSubscriber($plugin);
+            }
+            // Dispatch an event letting listeners know a client was created
+            $this->dispatch('service_builder.create_client', array('client' => $client));
         }
-
-        // Dispatch an event letting listeners know a client was created
-        $this->dispatch('service_builder.create_client', array('client' => $client));
 
         return $client;
     }
 
     public function set($key, $service)
     {
-        $this->builderConfig[$key] = $service;
+        if (is_array($service) && isset($service['class']) && isset($service['params'])) {
+            $this->builderConfig[$key] = $service;
+        } else {
+            $this->clients[$key] = $service;
+        }
 
         return $this;
     }
 
-    /**
-     * Register a client by name with the service builder
-     *
-     * @param string          $offset Name of the client to register
-     * @param ClientInterface $value  Client to register
-     */
     public function offsetSet($offset, $value)
     {
         $this->set($offset, $value);
     }
 
-    /**
-     * Remove a registered client by name
-     *
-     * @param string $offset Client to remove by name
-     */
     public function offsetUnset($offset)
     {
         unset($this->builderConfig[$offset]);
+        unset($this->clients[$offset]);
     }
 
-    /**
-     * Check if a client is registered with the service builder by name
-     *
-     * @param string $offset Name to check to see if a client exists
-     *
-     * @return bool
-     */
     public function offsetExists($offset)
     {
-        return isset($this->builderConfig[$offset]);
+        return isset($this->builderConfig[$offset]) || isset($this->clients[$offset]);
     }
 
-    /**
-     * Get a registered client by name
-     *
-     * @param string $offset Registered client name to retrieve
-     *
-     * @return ClientInterface
-     */
     public function offsetGet($offset)
     {
         return $this->get($offset);
