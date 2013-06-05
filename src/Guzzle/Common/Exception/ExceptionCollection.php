@@ -41,9 +41,9 @@ class ExceptionCollection extends \Exception implements GuzzleException, \Iterat
         }
 
         if ($e instanceof self) {
-            $this->message .= '(' . get_class($e) . ")\n";
+            $this->message .= '(' . get_class($e) . ")";
             foreach (explode("\n", $e->getMessage()) as $message) {
-                $this->message .= '    ' . $message . "\n";
+                $this->message .= "\n    {$message}";
             }
         } elseif ($e instanceof \Exception) {
             $this->exceptions[] = $e;
