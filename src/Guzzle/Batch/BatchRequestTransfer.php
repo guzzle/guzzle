@@ -32,23 +32,25 @@ class BatchRequestTransfer implements BatchTransferInterface, BatchDivisorInterf
      */
     public function createBatches(\SplQueue $queue)
     {
-        // Create batches by curl multi object groups
+        // Create batches by client objects
         $groups = new \SplObjectStorage();
         foreach ($queue as $item) {
             if (!$item instanceof RequestInterface) {
                 throw new InvalidArgumentException('All items must implement Guzzle\Http\Message\RequestInterface');
             }
-            $multi = $item->getClient()->getCurlMulti();
-            if (!$groups->contains($multi)) {
-                $groups->attach($multi, new \ArrayObject(array($item)));
+            $client = $item->getClient();
+            if (!$groups->contains($client)) {
+                $groups->attach($client, array($item));
             } else {
-                $groups[$multi]->append($item);
+                $current = $groups[$client];
+                $current[] = $item;
+                $groups[$client] = $current;
             }
         }
 
         $batches = array();
         foreach ($groups as $batch) {
-            $batches = array_merge($batches, array_chunk($groups[$batch]->getArrayCopy(), $this->batchSize));
+            $batches = array_merge($batches, array_chunk($groups[$batch], $this->batchSize));
         }
 
         return $batches;

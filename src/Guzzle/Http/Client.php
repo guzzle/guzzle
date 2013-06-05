@@ -377,7 +377,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      *
      * @param array $requests Array of RequestInterface objects
      *
-     * @return \SplObjectStorage Returns an object mapping Responses to RequestInterface objects
+     * @return array Returns an array of Response objects
      */
     protected function sendMultiple(array $requests)
     {

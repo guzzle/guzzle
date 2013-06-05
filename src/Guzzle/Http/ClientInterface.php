@@ -7,8 +7,6 @@ use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\RequestFactoryInterface;
-use Guzzle\Http\Curl\CurlMultiInterface;
 
 /**
  * Client interface for send HTTP requests
@@ -25,14 +23,14 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @param array|Collection|string $config Parameters that define how the client behaves and connects to a
      *                                        webservice. Pass an array or a Collection object.
-     * @return ClientInterface
+     * @return self
      */
     public function setConfig($config);
 
     /**
      * Get a configuration setting or all of the configuration settings
      *
-     * @param bool|string $key Configuration value to retrieve.  Set to FALSE to retrieve all values of the client.
+     * @param bool|string $key Configuration value to retrieve. Set to FALSE to retrieve all values of the client.
      *                         The object return can be modified, and modifications will affect the client's config.
      * @return mixed|Collection
      */
@@ -58,7 +56,7 @@ interface ClientInterface extends HasDispatcherInterface
      * @param bool        $verifyPeer           FALSE to stop cURL from verifying the peer's certificate.
      * @param int         $verifyHost           Set the cURL handle's CURLOPT_SSL_VERIFYHOST option
      *
-     * @return ClientInterface
+     * @return self
      */
     public function setSslVerification($certificateAuthority = true, $verifyPeer = true, $verifyHost = 2);
 
@@ -74,28 +72,18 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @param array|Collection $headers Default HTTP headers
      *
-     * @return ClientInterface
+     * @return self
      */
     public function setDefaultHeaders($headers);
-
-    /**
-     * Expand a URI template using client configuration data
-     *
-     * @param string $template  URI template to expand
-     * @param array  $variables Additional variables to use in the expansion
-     *
-     * @return string
-     */
-    public function expandTemplate($template, array $variables = null);
 
     /**
      * Create and return a new {@see RequestInterface} configured for the client.
      *
      * Use an absolute path to override the base path of the client, or a relative path to append to the base path of
-     * the client. The URI can contain the query string as well.  Use an array to provide a URI template and additional
+     * the client. The URI can contain the query string as well. Use an array to provide a URI template and additional
      * variables to use in the URI template expansion.
      *
-     * @param string                                    $method  HTTP method.  Defaults to GET
+     * @param string                                    $method  HTTP method. Defaults to GET
      * @param string|array                              $uri     Resource URI.
      * @param array|Collection                          $headers HTTP headers
      * @param string|resource|array|EntityBodyInterface $body    Entity body of request (POST/PUT) or response (GET)
@@ -127,7 +115,7 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @param string $url The base service endpoint URL of the webservice
      *
-     * @return ClientInterface
+     * @return self
      */
     public function setBaseUrl($url);
 
@@ -212,7 +200,7 @@ interface ClientInterface extends HasDispatcherInterface
      * @param array|Collection                            $headers  HTTP headers
      * @param array|Collection|string|EntityBodyInterface $postBody POST body. Can be a string, EntityBody, or
      *                                                    associative array of POST fields to send in the body of the
-     *                                                    request.  Prefix a value in the array with the @ symbol to
+     *                                                    request. Prefix a value in the array with the @ symbol to
      *                                                    reference a file.
      * @param array                                       $options Options to apply to the request
      *
@@ -237,23 +225,7 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @param array|RequestInterface $requests One or more RequestInterface objects to send
      *
-     * @return Response|array Returns a single Response or an array of Response objects
+     * @return \Guzzle\Http\Message\Response|array Returns a single Response or an array of Response objects
      */
     public function send($requests);
-
-    /**
-     * Get the curl multi object to be used internally by the client for transferring requests.
-     *
-     * @return CurlMultiInterface
-     */
-    public function getCurlMulti();
-
-    /**
-     * Set the request factory to use with the client when creating requests
-     *
-     * @param RequestFactoryInterface $factory Request factory
-     *
-     * @return ClientInterface
-     */
-    public function setRequestFactory(RequestFactoryInterface $factory);
 }
