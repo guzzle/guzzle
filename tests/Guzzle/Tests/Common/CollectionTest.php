@@ -477,4 +477,20 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $c->overwriteWith(array('foo' => 10, 'bar' => 300));
         $this->assertEquals(array('foo' => 10, 'baz' => 2, 'bar' => 300), $c->getAll());
     }
+
+    public function testOverwriteWithCollection()
+    {
+        $c = new Collection(array('foo' => 1, 'baz' => 2, 'bar' => 3));
+        $b = new Collection(array('foo' => 10, 'bar' => 300));
+        $c->overwriteWith($b);
+        $this->assertEquals(array('foo' => 10, 'baz' => 2, 'bar' => 300), $c->getAll());
+    }
+
+    public function testOverwriteWithTraversable()
+    {
+        $c = new Collection(array('foo' => 1, 'baz' => 2, 'bar' => 3));
+        $b = new Collection(array('foo' => 10, 'bar' => 300));
+        $c->overwriteWith($b->getIterator());
+        $this->assertEquals(array('foo' => 10, 'baz' => 2, 'bar' => 300), $c->getAll());
+    }
 }

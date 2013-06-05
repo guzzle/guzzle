@@ -234,8 +234,14 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
      */
     public function overwriteWith($data)
     {
-        foreach ($data as $k => $v) {
-            $this->set($k, $v);
+        if (is_array($data)) {
+            $this->data = $data + $this->data;
+        } elseif ($data instanceof Collection) {
+            $this->data = $data->toArray() + $this->data;
+        } else {
+            foreach ($data as $key => $value) {
+                $this->data[$key] = $value;
+            }
         }
 
         return $this;
