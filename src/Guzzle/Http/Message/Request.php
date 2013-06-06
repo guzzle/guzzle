@@ -582,17 +582,12 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function canCache()
     {
-        // Only GET and HEAD requests can be cached
-        if ($this->method != RequestInterface::GET && $this->method != RequestInterface::HEAD) {
+        if (class_exists('Guzzle\Plugin\Cache\DefaultCanCacheStrategy')) {
+            $canCache = new \Guzzle\Plugin\Cache\DefaultCanCacheStrategy();
+            return $canCache->canCacheRequest($this);
+        } else {
             return false;
         }
-
-        // Never cache requests when using no-store
-        if ($this->getHeader('Cache-Control') && $this->getHeader('Cache-Control')->hasDirective('no-store')) {
-            return false;
-        }
-
-        return true;
     }
 
     /**

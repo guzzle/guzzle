@@ -14,15 +14,27 @@ class DefaultCanCacheStrategyTest extends \Guzzle\Tests\GuzzleTestCase
     public function testReturnsRequestcanCacheRequest()
     {
         $strategy = new DefaultCanCacheStrategy();
-        $response = $this->getMockBuilder('Guzzle\Http\Message\Request')
-            ->disableOriginalConstructor()
-            ->setMethods(array('canCache'))
-            ->getMock();
+        $request = new Request('GET', 'http://foo.com');
+        $this->assertTrue($strategy->canCacheRequest($request));
+    }
 
+    public function testDoesNotCacheNoStore()
+    {
+        $strategy = new DefaultCanCacheStrategy();
+        $request = new Request('GET', 'http://foo.com', array('cache-control' => 'no-store'));
+        $this->assertFalse($strategy->canCacheRequest($request));
+    }
+
+    public function testCanCacheResponse()
+    {
+        $response = $this->getMockBuilder('Guzzle\Http\Message\Response')
+            ->setMethods(array('canCache'))
+            ->setConstructorArgs(array(200))
+            ->getMock();
         $response->expects($this->once())
             ->method('canCache')
             ->will($this->returnValue(true));
-
-        $this->assertTrue($strategy->canCacheRequest($response));
+        $strategy = new DefaultCanCacheStrategy();
+        $this->assertTrue($strategy->canCacheResponse($response));
     }
 }
