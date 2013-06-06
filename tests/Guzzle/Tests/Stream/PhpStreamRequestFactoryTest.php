@@ -34,6 +34,7 @@ class PhpStreamRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertContains('HTTP/1.1 200 OK', $headers);
         $this->assertContains('Content-Length: 2', $headers);
         $this->assertSame($headers, $stream->getCustomData('response_headers'));
+        $this->assertEquals(2, $stream->getSize());
     }
 
     public function testOpensValidStreamByPassingContextAndMerging()
