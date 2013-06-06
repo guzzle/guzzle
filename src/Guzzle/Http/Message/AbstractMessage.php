@@ -131,7 +131,7 @@ abstract class AbstractMessage implements MessageInterface
      */
     public function getTokenizedHeader($header, $token = ';')
     {
-        return null;
+        throw new \BadMethodCallException('getTokenizedHeader is deprecated. Use $message->getHeader()->parseParams()');
     }
 
     /**
