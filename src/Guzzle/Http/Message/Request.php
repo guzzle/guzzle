@@ -475,21 +475,6 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    public function canCache()
-    {
-        // Only GET and HEAD requests can be cached
-        if ($this->method != RequestInterface::GET && $this->method != RequestInterface::HEAD) {
-            return false;
-        }
-
-        // Never cache requests when using no-store
-        if ($this->getHeader('Cache-Control') && $this->getHeader('Cache-Control')->hasDirective('no-store')) {
-            return false;
-        }
-
-        return true;
-    }
-
     public function setEventDispatcher(EventDispatcherInterface $eventDispatcher)
     {
         $this->eventDispatcher = $eventDispatcher;
@@ -518,18 +503,6 @@ class Request extends AbstractMessage implements RequestInterface
         $this->getEventDispatcher()->addSubscriber($subscriber);
 
         return $this;
-    }
-
-    public function setIsRedirect($isRedirect)
-    {
-        $this->isRedirect = $isRedirect;
-
-        return $this;
-    }
-
-    public function isRedirect()
-    {
-        return $this->isRedirect;
     }
 
     /**
@@ -602,5 +575,41 @@ class Request extends AbstractMessage implements RequestInterface
                 $this->dispatch('request.success', $this->getEventArray());
             }
         }
+    }
+
+    /**
+     * @deprecated Use Guzzle\Plugin\Cache\DefaultCanCacheStrategy
+     */
+    public function canCache()
+    {
+        // Only GET and HEAD requests can be cached
+        if ($this->method != RequestInterface::GET && $this->method != RequestInterface::HEAD) {
+            return false;
+        }
+
+        // Never cache requests when using no-store
+        if ($this->getHeader('Cache-Control') && $this->getHeader('Cache-Control')->hasDirective('no-store')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @deprecated Use the history plugin
+     */
+    public function setIsRedirect($isRedirect)
+    {
+        $this->isRedirect = $isRedirect;
+
+        return $this;
+    }
+
+    /**
+     * @deprecated Use the history plugin
+     */
+    public function isRedirect()
+    {
+        return $this->isRedirect;
     }
 }
