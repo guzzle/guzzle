@@ -14,12 +14,17 @@ class DefaultRevalidation implements RevalidationInterface
     /** @var CacheStorageInterface Cache object storing cache data */
     protected $storage;
 
+    /** @var CanCacheStrategyInterface */
+    protected $canCache;
+
     /**
-     * @param CacheStorageInterface $cache  Cache storage
+     * @param CacheStorageInterface     $cache    Cache storage
+     * @param CanCacheStrategyInterface $canCache Determines if a message can be cached
      */
-    public function __construct(CacheStorageInterface $cache)
+    public function __construct(CacheStorageInterface $cache, CanCacheStrategyInterface $canCache = null)
     {
         $this->storage = $cache;
+        $this->canCache = $canCache ?: new DefaultCanCacheStrategy();
     }
 
     public function revalidate(RequestInterface $request, Response $response)
@@ -122,7 +127,7 @@ class DefaultRevalidation implements RevalidationInterface
     protected function handle200Response(RequestInterface $request, Response $validateResponse)
     {
         $request->setResponse($validateResponse);
-        if ($validateResponse->canCache()) {
+        if ($this->canCache->canCacheResponse($validateResponse)) {
             $this->storage->cache($request, $validateResponse);
         }
 
@@ -158,7 +163,7 @@ class DefaultRevalidation implements RevalidationInterface
         }
 
         // Store the updated response in cache
-        if ($modified && $response->canCache()) {
+        if ($modified && $this->canCache->canCacheResponse($response)) {
             $this->storage->cache($request, $response);
         }
 

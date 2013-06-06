@@ -82,7 +82,7 @@ class CachePlugin implements EventSubscriberInterface
         // Use the provided revalidation strategy or the default
         $this->revalidation = isset($options['revalidation'])
             ? $options['revalidation']
-            : new DefaultRevalidation($this->storage, $this);
+            : new DefaultRevalidation($this->storage, $this->canCache);
     }
 
     public static function getSubscribedEvents()
