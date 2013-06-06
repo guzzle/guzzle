@@ -214,21 +214,31 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
         // Determine the class to instantiate
         $className = isset($params['stream_class']) ? $params['stream_class'] : __NAMESPACE__ . '\\Stream';
 
-        /** @var $result StreamInterface */
-        $result = new $className($fp);
+        /** @var $stream StreamInterface */
+        $stream = new $className($fp);
 
         // Track the response headers of the request
         if (isset($http_response_header)) {
             $this->lastResponseHeaders = $http_response_header;
-            // Set the size on the stream if it was returned in the response
-            foreach ($this->lastResponseHeaders as $header) {
-                if (($pos = stripos($header, 'Content-Length:')) === 0) {
-                    $result->setSize(trim(substr($header, 15)));
-                }
-            }
+            $this->processResponseHeaders($stream);
         }
 
-        return $result;
+        return $stream;
+    }
+
+    /**
+     * Process response headers
+     *
+     * @param StreamInterface $stream
+     */
+    protected function processResponseHeaders(StreamInterface $stream)
+    {
+        // Set the size on the stream if it was returned in the response
+        foreach ($this->lastResponseHeaders as $header) {
+            if (($pos = stripos($header, 'Content-Length:')) === 0) {
+                $stream->setSize(trim(substr($header, 15)));
+            }
+        }
     }
 
     /**
