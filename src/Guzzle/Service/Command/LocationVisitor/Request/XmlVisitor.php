@@ -6,6 +6,7 @@ use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Description\Parameter;
+use Guzzle\Common\SimpleXMLExtended;
 
 /**
  * Location visitor used to serialize XML bodies
@@ -93,14 +94,14 @@ class XmlVisitor extends AbstractRequestVisitor
 
         // Create the wrapping element with no namespaces if no namespaces were present
         if (empty($root['namespaces'])) {
-            return new \SimpleXMLElement("{$declaration}\n<{$root['name']}/>");
+            return new SimpleXMLExtended("{$declaration}\n<{$root['name']}/>");
         } else {
             // Create the wrapping element with an array of one or more namespaces
             $xml = "{$declaration}\n<{$root['name']} ";
             foreach ((array) $root['namespaces'] as $prefix => $uri) {
                 $xml .= is_numeric($prefix) ? "xmlns=\"{$uri}\" " : "xmlns:{$prefix}=\"{$uri}\" ";
             }
-            return new \SimpleXMLElement($xml . "/>");
+            return new SimpleXMLExtended($xml . "/>");
         }
     }
 
@@ -129,6 +130,9 @@ class XmlVisitor extends AbstractRequestVisitor
             }
         } elseif ($param->getData('xmlAttribute')) {
             $xml->addAttribute($param->getWireName(), $value, $param->getData('xmlNamespace'));
+        } elseif (preg_match('/(<|>|&)/', $value)) {
+            $xml->{$param->getWireName()} = null;
+            $xml->{$param->getWireName()}->addCDATASection($value);
         } else {
             $xml->addChild($param->getWireName(), $value, $param->getData('xmlNamespace'));
         }
