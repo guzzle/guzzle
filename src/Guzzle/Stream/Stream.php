@@ -169,23 +169,20 @@ class Stream implements StreamInterface
         }
 
         // If the stream is a file based stream and local, then use fstat
-        if ($this->isLocal()) {
-            clearstatcache(true, $this->getUri());
-            $stats = fstat($this->stream);
-            if (isset($stats['size'])) {
-                return $stats['size'];
-            }
-        }
-
-        // Only get the size based on the content if the the stream is readable and seekable
-        if (!$this->cache[self::IS_READABLE] || !$this->cache[self::SEEKABLE]) {
-            return false;
-        } else {
+        clearstatcache(true, $this->cache['uri']);
+        $stats = fstat($this->stream);
+        if (isset($stats['size'])) {
+            $this->size = $stats['size'];
+            return $this->size;
+        } elseif ($this->cache[self::IS_READABLE] && $this->cache[self::SEEKABLE]) {
+            // Only get the size based on the content if the the stream is readable and seekable
             $pos = $this->ftell();
             $this->size = strlen((string) $this);
             $this->seek($pos);
             return $this->size;
         }
+
+        return false;
     }
 
     public function isReadable()
@@ -242,11 +239,8 @@ class Stream implements StreamInterface
         }
 
         $bytes = fwrite($this->stream, $string);
-
-        // We can't know the size after writing if any bytes were written
-        if ($bytes) {
-            $this->size = null;
-        }
+        // We can't know the size after writing anything
+        $this->size = null;
 
         return $bytes;
     }

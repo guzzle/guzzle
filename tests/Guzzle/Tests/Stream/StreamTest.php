@@ -135,6 +135,17 @@ class StreamTest extends \Guzzle\Tests\GuzzleTestCase
         unset($stream);
     }
 
+    public function testEnsuresSizeIsConsistent()
+    {
+        $h = fopen('php://temp', 'r+');
+        fwrite($h, 'foo');
+        $stream = new Stream($h);
+        $this->assertEquals(3, $stream->getSize());
+        $stream->write('test');
+        $this->assertEquals(7, $stream->getSize());
+        fclose($h);
+    }
+
     public function testAbstractsMetaData()
     {
         $handle = fopen(__DIR__ . '/../../../bootstrap.php', 'r');
