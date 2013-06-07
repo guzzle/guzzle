@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http\Message;
 
+use Guzzle\Common\Version;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Http\EntityBodyInterface;
@@ -917,25 +918,31 @@ class Response extends AbstractMessage implements \Serializable
 
     /**
      * @deprecated
+     * @codeCoverageIgnore
      */
     public function getPreviousResponse()
     {
+        Version::warn(__METHOD__ . ' is deprecated. Use the HistoryPlugin.');
         return null;
     }
 
     /**
      * @deprecated
+     * @codeCoverageIgnore
      */
     public function setRequest($request)
     {
+        Version::warn(__METHOD__ . ' is deprecated');
         return $this;
     }
 
     /**
      * @deprecated
+     * @codeCoverageIgnore
      */
     public function getRequest()
     {
+        Version::warn(__METHOD__ . ' is deprecated');
         return null;
     }
 }

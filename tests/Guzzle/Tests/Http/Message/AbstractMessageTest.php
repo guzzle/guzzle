@@ -99,57 +99,6 @@ class AbstractMessageTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($this->mock->hasHeader('Foo'));
     }
 
-    public function testHoldsCacheControlDirectives()
-    {
-        $mock = $this->mock;
-
-        // Set a directive using a header
-        $mock->setHeader('Cache-Control', 'max-age=100');
-        $this->assertEquals(100, $mock->getCacheControlDirective('max-age'));
-
-        // Set a header using the directive and check that the header was updated
-        $this->assertSame($mock, $mock->addCacheControlDirective('max-age', 80));
-        $this->assertEquals(80, $mock->getCacheControlDirective('max-age'));
-        $this->assertEquals('max-age=80', $mock->getHeader('Cache-Control'));
-
-        // Remove the directive
-        $this->assertEquals($mock, $mock->removeCacheControlDirective('max-age'));
-        $this->assertEquals('', $mock->getHeader('Cache-Control'));
-        $this->assertEquals(null, $mock->getCacheControlDirective('max-age'));
-        // Remove a non-existent directive
-        $this->assertEquals($mock, $mock->removeCacheControlDirective('max-age'));
-
-        // Has directive
-        $this->assertFalse($mock->hasCacheControlDirective('max-age'));
-        $mock->addCacheControlDirective('must-revalidate');
-        $this->assertTrue($mock->hasCacheControlDirective('must-revalidate'));
-
-        // Make sure that it works with multiple Cache-Control headers
-        $mock->setHeader('Cache-Control', 'must-revalidate, max-age=100');
-        $mock->addHeaders(array(
-            'Cache-Control' => 'no-cache'
-        ));
-
-        $this->assertEquals(true, $mock->getCacheControlDirective('no-cache'));
-        $this->assertEquals(true, $mock->getCacheControlDirective('must-revalidate'));
-        $this->assertEquals(100, $mock->getCacheControlDirective('max-age'));
-    }
-
-    /**
-     * In some rare cases. Like with the Twitter Search API:
-     *
-     *    http://search.twitter.com/search.json?q=from:mtdowling
-     *
-     * There is more than once Cache-Control added.
-     * Twice the max-age for example.
-     */
-    public function testDoubleCacheControlDirectives()
-    {
-        $mock = $this->mock;
-        $mock->setHeader('Cache-Control', 'max-age=15, must-revalidate, max-age=300');
-        $this->assertEquals(300, $mock->getCacheControlDirective('max-age'));
-    }
-
     public function testReturnsNullWhenHeaderIsNotFound()
     {
         $this->assertNull($this->mock->getHeader('foo'));

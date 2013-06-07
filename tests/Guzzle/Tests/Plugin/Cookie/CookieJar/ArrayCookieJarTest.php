@@ -258,7 +258,6 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
             'Set-Cookie' => "fpc=d=.Hm.yh4.1XmJWjJfs4orLQzKzPImxklQoxXSHOZATHUSEFciRueW_7704iYUtsXNEXq0M92Px2glMdWypmJ7HIQl6XIUvrZimWjQ3vIdeuRbI.FNQMAfcxu_XN1zSx7l.AcPdKL6guHc2V7hIQFhnjRW0rxm2oHY1P4bGQxFNz7f.tHm12ZD3DbdMDiDy7TBXsuP4DM-&v=2; expires=Fri, 02-Mar-2019 02:17:40 GMT;"
         ));
         $request = new Request('GET', 'http://www.example.com');
-        $response->setRequest($request);
         $this->jar->addCookiesFromResponse($response, $request);
         $this->assertEquals(1, count($this->jar));
     }

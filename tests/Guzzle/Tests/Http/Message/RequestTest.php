@@ -367,29 +367,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($request->isResponseBodyRepeatable());
     }
 
-    public function testDeterminesIfCanCacheRequest()
-    {
-        $this->assertTrue(RequestFactory::getInstance()->fromMessage(
-            "GET / HTTP/1.1\r\nHost: www.test.com\r\nCache-Control: no-cache, max-age=120\r\n\r\n"
-        )->canCache());
-
-        $this->assertTrue(RequestFactory::getInstance()->fromMessage(
-            "HEAD / HTTP/1.1\r\nHost: www.test.com\r\nCache-Control: no-cache, max-age=120\r\n\r\n"
-        )->canCache());
-
-        $this->assertFalse(RequestFactory::getInstance()->fromMessage(
-            "HEAD / HTTP/1.1\r\nHost: www.test.com\r\nCache-Control: no-cache, max-age=120, no-store\r\n\r\n"
-        )->canCache());
-
-        $this->assertFalse(RequestFactory::getInstance()->fromMessage(
-            "POST / HTTP/1.1\r\nHost: www.test.com\r\n\r\n"
-        )->canCache());
-
-        $this->assertFalse(RequestFactory::getInstance()->fromMessage(
-            "PUT / HTTP/1.1\r\nHost: www.test.com\r\nCache-Control: no-cache, max-age=120\r\n\r\n"
-        )->canCache());
-    }
-
     public function testHoldsCookies()
     {
         $this->assertNull($this->request->getCookie('test'));
@@ -673,14 +650,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->client->get('/')->setResponseBody($name)->send();
         $this->assertEquals('test', file_get_contents($name));
         unlink($name);
-    }
-
-    public function testHasRedirectFlag()
-    {
-        $request = new Request('GET', $this->getServer()->getUrl());
-        $this->assertFalse($request->isRedirect());
-        $this->assertSame($request, $request->setIsRedirect(true));
-        $this->assertTrue($request->isRedirect());
     }
 
     public function testUsesCustomResponseBodyWhenItIsCustom()

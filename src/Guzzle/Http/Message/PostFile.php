@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http\Message;
 
+use Guzzle\Common\Version;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Mimetypes;
 
@@ -90,9 +91,11 @@ class PostFile implements PostFileInterface
 
     /**
      * @deprecated
+     * @codeCoverageIgnore
      */
     public function getCurlString()
     {
+        Version::warn(__METHOD__ . ' is deprecated. Use getCurlValue()');
         return $this->getCurlValue();
     }
 

@@ -5,6 +5,7 @@ namespace Guzzle\Service;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\Exception\BadMethodCallException;
+use Guzzle\Common\Version;
 use Guzzle\Inflection\InflectorInterface;
 use Guzzle\Inflection\Inflector;
 use Guzzle\Http\Client as HttpClient;
@@ -281,6 +282,10 @@ class Client extends HttpClient implements ClientInterface
 
     /**
      * @deprecated
+     * @codeCoverageIgnore
      */
-    public function enableMagicMethods($isEnabled) {}
+    public function enableMagicMethods($isEnabled)
+    {
+        Version::warn(__METHOD__ . ' is deprecated');
+    }
 }

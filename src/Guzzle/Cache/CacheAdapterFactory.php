@@ -3,6 +3,7 @@
 namespace Guzzle\Cache;
 
 use Doctrine\Common\Cache\Cache;
+use Guzzle\Common\Version;
 use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Common\FromConfigInterface;
 use Zend\Cache\Storage\StorageInterface;
@@ -49,6 +50,7 @@ class CacheAdapterFactory implements FromConfigInterface
      */
     public static function factory($config = array())
     {
+        Version::warn(__METHOD__ . ' is deprecated');
         if (!is_array($config)) {
             throw new InvalidArgumentException('$config must be an array');
         }

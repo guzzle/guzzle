@@ -8,4 +8,22 @@ namespace Guzzle\Common;
 class Version
 {
     const VERSION = '3.6.0';
+
+    /**
+     * @var bool Set this value to true to enable warnings for deprecated functionality use. This should be on in your
+     *           unit tests, but probably not in production.
+     */
+    public static $emitWarnings = false;
+
+    /**
+     * Emit a deprecation warning
+     *
+     * @param string $message Warning message
+     */
+    public static function warn($message)
+    {
+        if (self::$emitWarnings) {
+            trigger_error($message, E_USER_DEPRECATED);
+        }
+    }
 }

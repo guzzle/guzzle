@@ -37,22 +37,6 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
         ),
         'missing_params' => array(
             'extends' => 'billy.mock'
-        ),
-        'cache.adapter' => array(
-            'class'  => 'Guzzle\Cache\CacheAdapterFactory',
-            'params' => array(
-                'cache.adapter'  => 'Guzzle\Cache\DoctrineCacheAdapter',
-                'cache.provider' => 'Doctrine\Common\Cache\ArrayCache'
-            )
-        ),
-        'service_uses_cache' => array(
-            'class'  => 'Guzzle\Tests\Service\Mock\MockClient',
-            'params' => array(
-                'cache'     => '{cache.adapter}',
-                'username'  => 'foo',
-                'password'  => 'bar',
-                'subdomain' => 'baz'
-            )
         )
     );
 
@@ -255,30 +239,6 @@ class ServiceBuilderTest extends \Guzzle\Tests\GuzzleTestCase
             $this->assertEquals('fred', $service['params']['username']);
             $this->assertEquals('test', $service['params']['new_value']);
         }
-    }
-
-    public function testCacheServiceCanBeCreatedAndInjectedIntoOtherServices()
-    {
-        $builder = ServiceBuilder::factory($this->arrayData);
-        $usesCache = $builder['service_uses_cache'];
-        $this->assertInstanceOf('Guzzle\Cache\DoctrineCacheAdapter', $usesCache->getConfig('cache'));
-    }
-
-    public function testServicesCanBeAddedToBuilderAfterInstantiationAndInjectedIntoServices()
-    {
-        // Grab the cache adapter and remove it from the config
-        $cache = $this->arrayData['cache.adapter'];
-        $data = $this->arrayData;
-        unset($data['cache.adapter']);
-
-        // Create the builder and add the cache adapter
-        $builder = ServiceBuilder::factory($data);
-        $builder['cache.adapter'] = $cache;
-
-        $this->assertInstanceOf(
-            'Guzzle\Cache\DoctrineCacheAdapter',
-            $builder['service_uses_cache']->getConfig('cache')
-        );
     }
 
     public function testAddsGlobalPlugins()

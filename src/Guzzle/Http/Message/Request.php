@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http\Message;
 
+use Guzzle\Common\Version;
 use Guzzle\Common\Event;
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\RuntimeException;
@@ -579,9 +580,11 @@ class Request extends AbstractMessage implements RequestInterface
 
     /**
      * @deprecated Use Guzzle\Plugin\Cache\DefaultCanCacheStrategy
+     * @codeCoverageIgnore
      */
     public function canCache()
     {
+        Version::warn(__METHOD__ . ' is deprecated. Use Guzzle\Plugin\Cache\DefaultCanCacheStrategy.');
         if (class_exists('Guzzle\Plugin\Cache\DefaultCanCacheStrategy')) {
             $canCache = new \Guzzle\Plugin\Cache\DefaultCanCacheStrategy();
             return $canCache->canCacheRequest($this);
@@ -591,7 +594,8 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * @deprecated Use the history plugin
+     * @deprecated Use the history plugin (not emitting a warning as this is built-into the RedirectPlugin for now)
+     * @codeCoverageIgnore
      */
     public function setIsRedirect($isRedirect)
     {
@@ -602,9 +606,11 @@ class Request extends AbstractMessage implements RequestInterface
 
     /**
      * @deprecated Use the history plugin
+     * @codeCoverageIgnore
      */
     public function isRedirect()
     {
+        Version::warn(__METHOD__ . ' is deprecated. Use the HistoryPlugin to track this.');
         return $this->isRedirect;
     }
 }

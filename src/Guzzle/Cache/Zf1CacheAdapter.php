@@ -2,6 +2,8 @@
 
 namespace Guzzle\Cache;
 
+use Guzzle\Common\Version;
+
 /**
  * Zend Framework 1 cache adapter
  *
@@ -16,6 +18,7 @@ class Zf1CacheAdapter extends AbstractCacheAdapter
      */
     public function __construct(\Zend_Cache_Backend $cache)
     {
+        Version::warn(__CLASS__ . ' is deprecated. Upgrade to ZF2 or use PsrCacheAdapter');
         $this->cache = $cache;
     }
 
