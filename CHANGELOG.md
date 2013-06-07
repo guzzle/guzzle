@@ -65,7 +65,8 @@ Next version
     - Marked `Guzzle\Service\Client::enableMagicMethods()` as deprecated
     - Magic methods can no longer be disabled on a Guzzle\Service\Client
 * Breaking changes in the CachePlugin internals:
-    - There are no longer CacheKeyProviderInterface objects. All of this logic is handled in a CacheStorageInterface
+    - CacheKeyProviderInterface and DefaultCacheKeyProvider are no longer used. All of this logic is handled in a
+      CacheStorageInterface. These two objects and interface will be removed in a future version.
     - Always setting X-cache headers on cached responses
     - Default cache TTLs are now handled by the CacheStorageInterface of a CachePlugin
     - `CacheStorageInterface::cache($key, Response $response, $ttl = null)` has changed to `cache(RequestInterface
