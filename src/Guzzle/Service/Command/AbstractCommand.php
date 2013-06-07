@@ -29,7 +29,7 @@ abstract class AbstractCommand extends Collection implements CommandInterface
     const RESPONSE_BODY = 'command.response_body';
 
     // Option used to add request options to the request created by a command
-    const REQUEST_OPTIONS = 'command.options';
+    const REQUEST_OPTIONS = 'command.request_options';
     // command values to not count as additionalParameters
     const HIDDEN_PARAMS = 'command.hidden_params';
     // Option used to disable any pre-sending command validation
