@@ -131,7 +131,20 @@ abstract class AbstractMessage implements MessageInterface
      */
     public function getTokenizedHeader($header, $token = ';')
     {
-        return null;
+        trigger_error('getTokenizedHeader() is deprecated. Use $message->getHeader()->parseParams()');
+        if ($this->hasHeader($header)) {
+            $data = new Collection();
+            foreach ($this->getHeader($header)->parseParams() as $values) {
+                foreach ($values as $key => $value) {
+                    if ($value === '') {
+                        $data->set($data->count(), $key);
+                    } else {
+                        $data->add($key, $value);
+                    }
+                }
+            }
+            return $data;
+        }
     }
 
     /**
@@ -139,6 +152,7 @@ abstract class AbstractMessage implements MessageInterface
      */
     public function setTokenizedHeader($header, $data, $token = ';')
     {
+        trigger_error('setTokenizedHeader() is deprecated');
         return $this;
     }
 
