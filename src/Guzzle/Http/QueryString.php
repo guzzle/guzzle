@@ -81,7 +81,7 @@ class QueryString extends Collection
      */
     public function __toString()
     {
-        if (empty($this->data)) {
+        if (!$this->data) {
             return '';
         }
 

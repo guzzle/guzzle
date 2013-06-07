@@ -159,7 +159,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     {
         $expansionVars = $this->getConfig()->getAll();
         if ($variables) {
-            $expansionVars = array_merge($expansionVars, $variables);
+            $expansionVars = $variables + $expansionVars;
         }
 
         return $this->getUriTemplate()->expand($template, $expansionVars);
@@ -214,12 +214,12 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         // If default headers are provided, then merge them into existing headers
         // If a collision occurs, the header is completely replaced
         if (count($this->defaultHeaders)) {
-            if (is_array($headers)) {
-                $headers = array_merge($this->defaultHeaders->toArray(), $headers);
-            } elseif ($headers instanceof Collection) {
-                $headers = array_merge($this->defaultHeaders->toArray(), $headers->toArray());
-            } else {
+            if (!$headers) {
                 $headers = $this->defaultHeaders;
+            } elseif (is_array($headers)) {
+                $headers += $this->defaultHeaders->toArray();
+            } elseif ($headers instanceof Collection) {
+                $headers = $headers->toArray() + $this->defaultHeaders->toArray();
             }
         }
 
