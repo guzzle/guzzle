@@ -194,11 +194,16 @@ class RequestFactory implements RequestFactoryInterface
             throw new InvalidArgumentException('auth value must be an array');
         }
 
-        $request->setAuth(
-            $value[0],
-            isset($value[1]) ? $value[1] : null,
-            isset($value[2]) ? $value[2] : CURLAUTH_BASIC
-        );
+        $authType = isset($value[2]) ? strtolower($value[2]) : 'basic';
+        if ($authType == 'basic') {
+            $authType = CURLAUTH_BASIC;
+        } elseif ($authType == 'digest') {
+            $authType = CURLAUTH_DIGEST;
+        } else {
+            throw new InvalidArgumentException($authType . ' is not a support auth type');
+        }
+
+        $request->setAuth($value[0], isset($value[1]) ? $value[1] : null, $authType);
     }
 
     protected function visit_query(RequestInterface $request, $value)
