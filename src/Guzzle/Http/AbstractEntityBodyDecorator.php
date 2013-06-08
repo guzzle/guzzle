@@ -141,6 +141,11 @@ class AbstractEntityBodyDecorator implements EntityBodyInterface
         return $this->body->isReadable();
     }
 
+    public function isRepeatable()
+    {
+        return $this->isSeekable() && $this->isReadable();
+    }
+
     public function isWritable()
     {
         return $this->body->isWritable();

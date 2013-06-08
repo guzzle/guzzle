@@ -363,18 +363,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('data', $response->getBody(true));
     }
 
-    public function testDeterminesIfResponseBodyRepeatable()
-    {
-        // The default stream created for responses is seekable
-        $request = RequestFactory::getInstance()->create('GET', 'http://localhost:' . $this->getServer()->getPort());
-        $this->assertTrue($request->isResponseBodyRepeatable());
-
-        // This should return false because an HTTP stream is not seekable
-        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ndata");
-        $request->setResponseBody(EntityBody::factory(fopen($this->getServer()->getUrl(), true)));
-        $this->assertFalse($request->isResponseBodyRepeatable());
-    }
-
     public function testHoldsCookies()
     {
         $this->assertNull($this->request->getCookie('test'));

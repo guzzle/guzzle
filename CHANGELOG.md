@@ -41,6 +41,7 @@ Next version
           resource, string, or EntityBody into the $options parameter to specify the download location of the response.
         - Changed `Guzzle\Common\Collection::__construct($data)` to no longer accepts a null value for `$data` but a
           default `array()`
+        - Added `Guzzle\Stream\StreamInterface::isRepeatable`
     - The following methods were removed from interfaces. All of these methods are still available in the concrete
       classes that implement them, but you should update your code to use alternative methods:
         - Removed `Guzzle\Http\ClientInterface::setDefaultHeaders()`
@@ -53,6 +54,8 @@ Next version
 * Deprecations:
     - You can now enable E_USER_DEPRECATED warnings to see if you are using a deprecated method by setting
       `Guzzle\Common\Version::$emitWarnings` to true.
+    - Marked `Guzzle\Http\Message\Request::isResponseBodyRepeatable()` as deprecated. Use
+          `$request->getResponseBody()->isRepeatable()` instead.
     - Marked `Guzzle\Http\Message\Request::canCache()` as deprecated. Use
       `Guzzle\Plugin\Cache\DefaultCanCacheStrategy->canCacheRequest()` instead.
     - Marked `Guzzle\Http\Message\Request::canCache()` as deprecated. Use

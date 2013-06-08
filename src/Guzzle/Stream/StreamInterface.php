@@ -95,6 +95,13 @@ interface StreamInterface
     public function isReadable();
 
     /**
+     * Check if the stream is repeatable
+     *
+     * @return bool
+     */
+    public function isRepeatable();
+
+    /**
      * Check if the stream is writable
      *
      * @return bool

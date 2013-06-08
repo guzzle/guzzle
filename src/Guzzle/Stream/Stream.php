@@ -190,6 +190,11 @@ class Stream implements StreamInterface
         return $this->cache[self::IS_READABLE];
     }
 
+    public function isRepeatable()
+    {
+        return $this->cache[self::IS_READABLE] && $this->cache[self::SEEKABLE];
+    }
+
     public function isWritable()
     {
         return $this->cache[self::IS_WRITABLE];

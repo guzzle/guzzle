@@ -440,10 +440,13 @@ class Request extends AbstractMessage implements RequestInterface
      * Determine if the response body is repeatable (readable + seekable)
      *
      * @return bool
+     * @deprecated Use getResponseBody()->isSeekable()
+     * @codeCoverageIgnore
      */
     public function isResponseBodyRepeatable()
     {
-        return !$this->responseBody ? true : $this->responseBody->isSeekable() && $this->responseBody->isReadable();
+        Version::warn(__METHOD__ . ' is deprecated. Use $request->getResponseBody()->isRepeatable()');
+        return !$this->responseBody ? true : $this->responseBody->isRepeatable();
     }
 
     public function getCookies()

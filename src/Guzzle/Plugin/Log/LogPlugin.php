@@ -122,7 +122,7 @@ class LogPlugin implements EventSubscriberInterface
                 // The body of the request cannot be recalled so logging the body will require us to buffer it
                 $request->getParams()->set('request_wire', EntityBody::factory());
             }
-            if (!$request->isResponseBodyRepeatable()) {
+            if (!$request->getResponseBody()->isRepeatable()) {
                 // The body of the response cannot be recalled so logging the body will require us to buffer it
                 $request->getParams()->set('response_wire', EntityBody::factory());
             }
