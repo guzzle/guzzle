@@ -361,14 +361,6 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('Bar', $request->getQuery()->get('Foo'));
     }
 
-    public function testCanAddCurl()
-    {
-        $request = RequestFactory::getInstance()->create('GET', 'http://foo.com', array(), null, array(
-            'curl' => array(CURLOPT_ENCODING => '*')
-        ));
-        $this->assertEquals('*', $request->getCurlOptions()->get(CURLOPT_ENCODING));
-    }
-
     public function testCanAddAuth()
     {
         $request = RequestFactory::getInstance()->create('GET', 'http://foo.com', array(), null, array(
@@ -476,6 +468,13 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(1500, $request->getCurlOptions()->get(CURLOPT_TIMEOUT_MS));
     }
 
+    public function testCanSetConnectTimeoutOption()
+    {
+        $client = new Client();
+        $request = $client->get('/', array(), array('connect_timeout' => 1.5));
+        $this->assertEquals(1500, $request->getCurlOptions()->get(CURLOPT_CONNECTTIMEOUT_MS));
+    }
+
     public function testCanSetDebug()
     {
         $client = new Client();
@@ -520,7 +519,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     public function inputValidation()
     {
         return array_map(function ($option) { return array($option); }, array(
-            'headers', 'query', 'cookies', 'auth', 'curl', 'events', 'plugins'
+            'headers', 'query', 'cookies', 'auth', 'events', 'plugins'
         ));
     }
 

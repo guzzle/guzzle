@@ -221,15 +221,6 @@ class RequestFactory implements RequestFactoryInterface
         }
     }
 
-    protected function visit_curl(RequestInterface $request, $value)
-    {
-        if (!is_array($value)) {
-            throw new InvalidArgumentException('curl value must be an array');
-        }
-
-        $request->getCurlOptions()->replace($value);
-    }
-
     protected function visit_timeout(RequestInterface $request, $value)
     {
         $request->getCurlOptions()->set(CURLOPT_TIMEOUT_MS, $value * 1000);
@@ -309,5 +300,10 @@ class RequestFactory implements RequestFactoryInterface
     protected function visit_proxy(RequestInterface $request, $value)
     {
         $request->getCurlOptions()->set(CURLOPT_PROXY, $value);
+    }
+
+    protected function visit_connect_timeout(RequestInterface $request, $value)
+    {
+        $request->getCurlOptions()->set(CURLOPT_CONNECTTIMEOUT_MS, $value * 1000);
     }
 }

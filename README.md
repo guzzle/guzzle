@@ -166,23 +166,24 @@ $response = Guzzle::post('http://guzzlephp.org', [
 
 ### Available request options:
 
-* "headers": Associative array of headers
-* "body": Body of a request, including an EntityBody, string, or array when sending POST requests. Setting a body for a
+* headers: Associative array of headers
+* query: Associative array of query string values to add to the request
+* body: Body of a request, including an EntityBody, string, or array when sending POST requests. Setting a body for a
   GET request will set where the response body is downloaded.
-* "save_to": String, fopen resource, or EntityBody object used to store the body of the response
-* "allow_redirects": Set to false to disable redirects
-* "auth": Basic auth array where [0] is the username, [1] is the password, and [2] (optional) is the type
-* "query": Associative array of query string values to add to the request
-* "cookies": Associative array of cookies
-* "timeout": Float describing the timeout of the request in seconds
-* "verify": Set to true to enable SSL cert validation (the default), false to disable, or supply the path to a CA
-   bundle to enable verification using a custom certificate.
-* "proxy": Specify an HTTP proxy (e.g. "http://username:password@192.168.16.1:10")
-* "curl": Associative array of CURL options to add to the request
-* "events": Associative array mapping event names to a closure or array of (priority, closure)
-* "plugins": Array of plugins to add to the request
-* "debug": Set to true to display all data sent over the wire
-* "exceptions": Set to false to disable throwing exceptions on an HTTP level error (e.g. 404, 500, etc)
+* auth: Basic auth array where [0] is the username, [1] is the password, and [2] (optional) is the type
+* cookies: Associative array of cookies
+* allow_redirects: Set to false to disable redirects
+* save_to: String, fopen resource, or EntityBody object used to store the body of the response
+* events: Associative array mapping event names to a closure or array of (priority, closure)
+* plugins: Array of plugins to add to the request
+* exceptions: Set to false to disable throwing exceptions on an HTTP level error (e.g. 404, 500, etc)
+* timeout: Float describing the timeout of the request in seconds
+* connect_timeout: Float describing the number of seconds to wait while trying to connect. Use 0 to wait
+  indefinitely.
+* verify: Set to true to enable SSL cert validation (the default), false to disable, or supply the path to a CA
+  bundle to enable verification using a custom certificate.
+* proxy: Specify an HTTP proxy (e.g. "http://username:password@192.168.16.1:10")
+* debug: Set to true to display all data sent over the wire
 
 These options can also be used when creating requests using a standard client:
 
