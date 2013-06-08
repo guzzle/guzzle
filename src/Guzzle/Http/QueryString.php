@@ -65,7 +65,7 @@ class QueryString extends Collection
                     }
                     $q->add($key, $value);
                 } else {
-                    $q->add($key, '');
+                    $q->add($key, null);
                 }
             }
         }
@@ -85,14 +85,10 @@ class QueryString extends Collection
         }
 
         $queryString = '';
-        $firstValue = true;
 
         foreach ($this->prepareData($this->data) as $name => $value) {
-            $value = $value === null ? array('') : (array) $value;
-            foreach ($value as $v) {
-                if ($firstValue) {
-                    $firstValue = false;
-                } else {
+            foreach ((array) $value as $v) {
+                if ($queryString) {
                     $queryString .= $this->fieldSeparator;
                 }
                 $queryString .= $name;

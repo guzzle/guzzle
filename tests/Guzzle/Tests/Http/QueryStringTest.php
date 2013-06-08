@@ -134,30 +134,20 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     {
         return array(
             // Ensure that multiple query string values are allowed per value
-            array('q=a&q=b', array(
-                'q' => array('a', 'b')
-            )),
+            array('q=a&q=b', array('q' => array('a', 'b'))),
             // Ensure that PHP array style query string values are parsed
-            array('q[]=a&q[]=b', array(
-                'q' => array('a', 'b')
-            )),
+            array('q[]=a&q[]=b', array('q' => array('a', 'b'))),
             // Ensure that a single PHP array style query string value is parsed into an array
-            array('q[]=a', array(
-                'q' => array('a')
-            )),
+            array('q[]=a', array('q' => array('a'))),
             // Ensure that decimals are allowed in query strings
             array('q.a=a&q.b=b', array(
                 'q.a' => 'a',
                 'q.b' => 'b'
             )),
             // Ensure that query string values are percent decoded
-            array('q%20a=a%20b', array(
-                'q a' => 'a b'
-            )),
-            // Ensure that values can be set without have a value
-            array('q', array(
-                'q' => null
-            )),
+            array('q%20a=a%20b', array('q a' => 'a b')),
+            // Ensure null values can be added
+            array('q&a', array('q' => null, 'a' => null)),
         );
     }
 
