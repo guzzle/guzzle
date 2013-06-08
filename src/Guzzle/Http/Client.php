@@ -306,9 +306,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 
         try {
             /** @var $requests RequestInterface  */
-            $curlMulti = $this->getCurlMulti();
-            $curlMulti->add($requests);
-            $curlMulti->send();
+            $this->getCurlMulti()->add($requests)->send();
             return $requests->getResponse();
         } catch (ExceptionCollection $e) {
             throw $e->getFirst();

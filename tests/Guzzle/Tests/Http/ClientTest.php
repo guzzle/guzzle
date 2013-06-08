@@ -343,9 +343,11 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $mock = $this->getMock('Guzzle\\Http\\Curl\\CurlMulti', array('add', 'send'));
         $mock->expects($this->once())
-             ->method('add');
+            ->method('add')
+            ->will($this->returnSelf());
         $mock->expects($this->once())
-             ->method('send');
+            ->method('send')
+            ->will($this->returnSelf());
 
         $client = new Client();
         $client->setCurlMulti($mock);
