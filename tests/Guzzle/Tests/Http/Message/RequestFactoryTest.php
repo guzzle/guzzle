@@ -373,21 +373,11 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     public function testCanAddDigestAuth()
     {
         $request = RequestFactory::getInstance()->create('GET', 'http://foo.com', array(), null, array(
-            'auth' => array('michael', 'test', 'Digest')
+            'auth' => array('michael', 'test', 'digest')
         ));
         $this->assertEquals(CURLAUTH_DIGEST, $request->getCurlOptions()->get(CURLOPT_HTTPAUTH));
         $this->assertEquals('michael', $request->getUsername());
         $this->assertEquals('test', $request->getPassword());
-    }
-
-    /**
-     * @expectedException \Guzzle\Common\Exception\InvalidArgumentException
-     */
-    public function testValidatesAuth()
-    {
-        RequestFactory::getInstance()->create('GET', 'http://foo.com', array(), null, array(
-            'auth' => array('michael', 'test', 'foo')
-        ));
     }
 
     public function testCanAddEvents()

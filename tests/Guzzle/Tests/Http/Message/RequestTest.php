@@ -292,6 +292,14 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(CURLAUTH_DIGEST, $request->getCurlOptions()->get(CURLOPT_HTTPAUTH));
     }
 
+    /**
+     * @expectedException \Guzzle\Common\Exception\InvalidArgumentException
+     */
+    public function testValidatesAuth()
+    {
+        $this->request->setAuth('foo', 'bar', 'bam');
+    }
+
     public function testGetResourceUri()
     {
         $this->assertEquals('/', $this->request->getResource());

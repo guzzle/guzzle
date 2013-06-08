@@ -181,14 +181,14 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @param string|bool $user     User name or false disable authentication
      * @param string      $password Password
-     * @param int         $scheme   Authentication scheme to use (CURLAUTH_BASIC, CURLAUTH_DIGEST, etc)
+     * @param string      $scheme   Authentication scheme ('Basic', 'Digest', or a CURLAUTH_* constant (deprecated))
      *
      * @return self
      * @link http://www.ietf.org/rfc/rfc2617.txt
      * @link http://php.net/manual/en/function.curl-setopt.php See the available options for CURLOPT_HTTPAUTH
      * @throws RequestException
      */
-    public function setAuth($user, $password = '', $scheme = CURLAUTH_BASIC);
+    public function setAuth($user, $password = '', $scheme = 'Basic');
 
     /**
      * Get the HTTP protocol version of the request
