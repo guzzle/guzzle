@@ -30,10 +30,13 @@ class Url
      */
     public static function factory($url)
     {
-        $parts = ParserRegistry::getInstance()->getParser('url')->parseUrl($url);
+        static $defaults = array('scheme' => null, 'host' => null, 'path' => null, 'port' => null, 'query' => null,
+            'user' => null, 'pass' => null, 'fragment' => null);
+
+        $parts = parse_url($url) + $defaults;
 
         // Convert the query string into a QueryString object
-        if (0 !== strlen($parts['query'])) {
+        if ($parts['query'] || 0 !== strlen($parts['query'])) {
             $parts['query'] = QueryString::fromString($parts['query']);
         }
 
