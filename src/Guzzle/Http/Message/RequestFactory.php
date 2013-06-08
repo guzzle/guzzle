@@ -137,7 +137,7 @@ class RequestFactory implements RequestFactoryInterface
             $cloned = $this->create($method, $request->getUrl(), $request->getHeaders());
         }
 
-        $cloned->getCurlOptions()->replace($request->getCurlOptions()->getAll());
+        $cloned->getCurlOptions()->replace($request->getCurlOptions()->toArray());
         $cloned->setEventDispatcher(clone $request->getEventDispatcher());
         // Ensure that that the Content-Length header is not copied if changing to GET or HEAD
         if (!($cloned instanceof EntityEnclosingRequestInterface)) {
@@ -145,7 +145,7 @@ class RequestFactory implements RequestFactoryInterface
         } elseif ($request instanceof EntityEnclosingRequestInterface) {
             $cloned->setBody($request->getBody());
         }
-        $cloned->getParams()->replace($request->getParams()->getAll());
+        $cloned->getParams()->replace($request->getParams()->toArray());
         $cloned->dispatch('request.clone', array('request' => $cloned));
 
         return $cloned;

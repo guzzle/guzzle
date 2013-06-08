@@ -313,12 +313,14 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
     /**
      * Inject configuration settings into an input string
      *
-     * @param string $input  Input to inject
+     * @param string $input Input to inject
      *
      * @return string
+     * @deprecated
      */
     public function inject($input)
     {
+        Version::warn(__METHOD__ . ' is deprecated');
         $replace = array();
         foreach ($this->data as $key => $val) {
             $replace['{' . $key . '}'] = $val;

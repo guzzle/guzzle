@@ -183,7 +183,7 @@ class OauthPlugin implements EventSubscriberInterface
         }
 
         // Sort params
-        $params = $params->getAll();
+        $params = $params->toArray();
         ksort($params);
 
         return $params;

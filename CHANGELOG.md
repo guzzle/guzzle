@@ -68,6 +68,7 @@ Next version
     - Marked `Guzzle\Service\Client::enableMagicMethods()` as deprecated
     - Magic methods can no longer be disabled on a Guzzle\Service\Client
     - Marked `Guzzle\Parser\Url\UrlParser` as deprecated. Just use PHP's `parse_url()` and percent encode your UTF-8.
+    - Marked `Guzzle\Common\Collection::inject()` as deprecated.
 * Breaking changes in the CachePlugin internals:
     - CacheKeyProviderInterface and DefaultCacheKeyProvider are no longer used. All of this logic is handled in a
       CacheStorageInterface. These two objects and interface will be removed in a future version.
