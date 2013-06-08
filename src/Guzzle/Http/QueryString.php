@@ -46,7 +46,7 @@ class QueryString extends Collection
     {
         $q = new static();
 
-        if (0 !== strlen($query)) {
+        if ($query || $query === '0') {
             if ($query[0] == '?') {
                 $query = substr($query, 1);
             }
@@ -54,12 +54,11 @@ class QueryString extends Collection
                 $parts = explode('=', $kvp, 2);
                 $key = rawurldecode($parts[0]);
 
-                $paramIsPhpStyleArray = substr($key, -2) == '[]';
-                if ($paramIsPhpStyleArray) {
+                if ($paramIsPhpStyleArray = substr($key, -2) == '[]') {
                     $key = substr($key, 0, -2);
                 }
 
-                if (array_key_exists(1, $parts)) {
+                if (isset($parts[1])) {
                     $value = rawurldecode(str_replace('+', '%20', $parts[1]));
                     if ($paramIsPhpStyleArray && !$q->hasKey($key)) {
                         $value = array($value);
