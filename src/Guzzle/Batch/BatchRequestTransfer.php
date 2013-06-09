@@ -58,17 +58,8 @@ class BatchRequestTransfer implements BatchTransferInterface, BatchDivisorInterf
 
     public function transfer(array $batch)
     {
-        if (empty($batch)) {
-            return;
+        if ($batch) {
+            reset($batch)->getClient()->send($batch);
         }
-
-        $multi = reset($batch)->getClient()->getCurlMulti();
-
-        // Prepare each request for their respective curl multi objects
-        foreach ($batch as $request) {
-            $multi->add($request);
-        }
-
-        $multi->send();
     }
 }
