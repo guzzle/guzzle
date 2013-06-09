@@ -60,4 +60,20 @@ class AbstractHasAdapterTest extends \Guzzle\Tests\GuzzleTestCase
         $mock->setEventDispatcher($dispatcher);
         $mock->addSubscriber($subscriber);
     }
+
+    public function testHelperRemovesSubscribers()
+    {
+        $mock = $this->getMockForAbstractClass('Guzzle\Common\AbstractHasDispatcher');
+        $subscriber = $this->getMockForAbstractClass('Symfony\Component\EventDispatcher\EventSubscriberInterface');
+
+        $dispatcher = $this->getMockBuilder('Symfony\Component\EventDispatcher\EventDispatcher')
+            ->setMethods(array('removeSubscriber'))
+            ->getMock();
+
+        $dispatcher->expects($this->once())
+            ->method('removeSubscriber');
+
+        $mock->setEventDispatcher($dispatcher);
+        $mock->removeSubscriber($subscriber);
+    }
 }
