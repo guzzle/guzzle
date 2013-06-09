@@ -51,6 +51,7 @@ CHANGELOG
 * Removed `Guzzle\Http\Message\RequestInterface::canCache`
 * Removed `Guzzle\Http\Message\RequestInterface::setIsRedirect`
 * Removed `Guzzle\Http\Message\RequestInterface::isRedirect`
+* Made `Guzzle\Http\Client::expandTemplate` and `getUriTemplate` protected methods.
 * You can now enable E_USER_DEPRECATED warnings to see if you are using a deprecated method by setting
   `Guzzle\Common\Version::$emitWarnings` to true.
 * Marked `Guzzle\Http\Message\Request::isResponseBodyRepeatable()` as deprecated. Use

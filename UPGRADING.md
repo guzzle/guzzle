@@ -63,6 +63,7 @@ Additions and changes (you will need to update any implementations or subclasses
 - Changed `Guzzle\Common\Collection::__construct($data)` to no longer accepts a null value for `$data` but a
   default `array()`
 - Added `Guzzle\Stream\StreamInterface::isRepeatable`
+- Made `Guzzle\Http\Client::expandTemplate` and `getUriTemplate` protected methods.
 
 The following methods were removed from interfaces. All of these methods are still available in the concrete classes
 that implement them, but you should update your code to use alternative methods:

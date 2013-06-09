@@ -137,44 +137,6 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         return $this;
     }
 
-    public function expandTemplate($template, array $variables = null)
-    {
-        $expansionVars = $this->getConfig()->toArray();
-        if ($variables) {
-            $expansionVars = $variables + $expansionVars;
-        }
-
-        return $this->getUriTemplate()->expand($template, $expansionVars);
-    }
-
-    /**
-     * Set the URI template expander to use with the client
-     *
-     * @param UriTemplateInterface $uriTemplate URI template expander
-     *
-     * @return self
-     */
-    public function setUriTemplate(UriTemplateInterface $uriTemplate)
-    {
-        $this->uriTemplate = $uriTemplate;
-
-        return $this;
-    }
-
-    /**
-     * Get the URI template expander used by the client
-     *
-     * @return UriTemplateInterface
-     */
-    public function getUriTemplate()
-    {
-        if (!$this->uriTemplate) {
-            $this->uriTemplate = ParserRegistry::getInstance()->getParser('uri_template');
-        }
-
-        return $this->uriTemplate;
-    }
-
     public function createRequest($method = 'GET', $uri = null, $headers = null, $body = null, array $options = array())
     {
         if (!$uri) {
@@ -308,6 +270,9 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         return $this;
     }
 
+    /**
+     * @return CurlMultiInterface|CurlMultiProxy
+     */
     public function getCurlMulti()
     {
         if (!$this->curlMulti) {
@@ -320,6 +285,20 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function setRequestFactory(RequestFactoryInterface $factory)
     {
         $this->requestFactory = $factory;
+
+        return $this;
+    }
+
+    /**
+     * Set the URI template expander to use with the client
+     *
+     * @param UriTemplateInterface $uriTemplate URI template expander
+     *
+     * @return self
+     */
+    public function setUriTemplate(UriTemplateInterface $uriTemplate)
+    {
+        $this->uriTemplate = $uriTemplate;
 
         return $this;
     }
@@ -347,6 +326,38 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         }
 
         return $certFile;
+    }
+
+    /**
+     * Expand a URI template while merging client config settings into the template variables
+     *
+     * @param string $template  Template to expand
+     * @param array  $variables Variables to inject
+     *
+     * @return string
+     */
+    protected function expandTemplate($template, array $variables = null)
+    {
+        $expansionVars = $this->getConfig()->toArray();
+        if ($variables) {
+            $expansionVars = $variables + $expansionVars;
+        }
+
+        return $this->getUriTemplate()->expand($template, $expansionVars);
+    }
+
+    /**
+     * Get the URI template expander used by the client
+     *
+     * @return UriTemplateInterface
+     */
+    protected function getUriTemplate()
+    {
+        if (!$this->uriTemplate) {
+            $this->uriTemplate = ParserRegistry::getInstance()->getParser('uri_template');
+        }
+
+        return $this->uriTemplate;
     }
 
     /**

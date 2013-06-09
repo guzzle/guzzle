@@ -76,15 +76,10 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
     public function testExpandsUriTemplatesUsingConfig()
     {
         $client = new Client('http://www.google.com/');
-        $client->setConfig(array(
-            'api' => 'v1',
-            'key' => 'value',
-            'foo' => 'bar'
-        ));
-        $this->assertEquals('Testing...api/v1/key/value', $client->expandTemplate('Testing...api/{api}/key/{key}'));
-
-        // Make sure that the client properly validates and injects config
-        $this->assertEquals('bar', $client->getConfig('foo'));
+        $client->setConfig(array('api' => 'v1', 'key' => 'value', 'foo' => 'bar'));
+        $ref = new \ReflectionMethod($client, 'expandTemplate');
+        $ref->setAccessible(true);
+        $this->assertEquals('Testing...api/v1/key/value', $ref->invoke($client, 'Testing...api/{api}/key/{key}'));
     }
 
     public function testClientAttachersObserversToRequests()
@@ -454,29 +449,21 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     public function testAllowsUriTemplateInjection()
     {
-        $client = new Client('http://test.com', array(
-            'path'  => array('foo', 'bar'),
-            'query' => 'hi there',
-        ));
-
-        $a = $client->getUriTemplate();
-        $this->assertSame($a, $client->getUriTemplate());
+        $client = new Client('http://test.com');
+        $ref = new \ReflectionMethod($client, 'getUriTemplate');
+        $ref->setAccessible(true);
+        $a = $ref->invoke($client);
+        $this->assertSame($a, $ref->invoke($client));
         $client->setUriTemplate(new UriTemplate());
-        $this->assertNotSame($a, $client->getUriTemplate());
+        $this->assertNotSame($a, $ref->invoke($client));
     }
 
     public function testAllowsCustomVariablesWhenExpandingTemplates()
     {
-        $client = new Client('http://test.com', array(
-            'test' => 'hi',
-        ));
-
-        $uri = $client->expandTemplate('http://{test}{?query*}', array(
-            'query' => array(
-                'han' => 'solo'
-            )
-        ));
-
+        $client = new Client('http://test.com', array('test' => 'hi'));
+        $ref = new \ReflectionMethod($client, 'expandTemplate');
+        $ref->setAccessible(true);
+        $uri = $ref->invoke($client, 'http://{test}{?query*}', array('query' => array('han' => 'solo')));
         $this->assertEquals('http://hi?han=solo', $uri);
     }
 
