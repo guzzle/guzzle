@@ -4,10 +4,10 @@ namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Http\RedirectPlugin;
 use Guzzle\Http\Url;
 use Guzzle\Parser\ParserRegistry;
 use Guzzle\Plugin\Log\LogPlugin;
-use Guzzle\Http\RedirectPlugin;
 
 /**
  * Default HTTP request factory used to create the default {@see Request} and {@see EntityEnclosingRequest} objects.
@@ -16,6 +16,9 @@ class RequestFactory implements RequestFactoryInterface
 {
     /** @var RequestFactory Singleton instance of the default request factory */
     protected static $instance;
+
+    /** @var array Hash of methods available to the class (provides fast isset() lookups) */
+    protected $methods;
 
     /** @var string Class to instantiate for requests with no body */
     protected $requestClass = 'Guzzle\\Http\\Message\\Request';
@@ -37,6 +40,11 @@ class RequestFactory implements RequestFactoryInterface
         // @codeCoverageIgnoreEnd
 
         return static::$instance;
+    }
+
+    public function __construct()
+    {
+        $this->methods = array_flip(get_class_methods(__CLASS__));
     }
 
     public function fromMessage($message)
@@ -151,28 +159,36 @@ class RequestFactory implements RequestFactoryInterface
         return $cloned;
     }
 
-    public function applyOptions(RequestInterface $request, array $options = array())
+    public function applyOptions(RequestInterface $request, array $options = array(), $flags = self::OPTIONS_NONE)
     {
-        $methods = get_class_methods(__CLASS__);
         // Iterate over each key value pair and attempt to apply a config using function visitors
         foreach ($options as $key => $value) {
             $method = "visit_{$key}";
-            if (in_array($method, $methods)) {
-                $this->{$method}($request, $value);
+            if (isset($this->methods[$method])) {
+                $this->{$method}($request, $value, $flags);
             }
         }
     }
 
-    protected function visit_headers(RequestInterface $request, $value)
+    protected function visit_headers(RequestInterface $request, $value, $flags)
     {
         if (!is_array($value)) {
             throw new InvalidArgumentException('headers value must be an array');
         }
 
-        $request->addHeaders($value);
+        if ($flags & self::OPTIONS_AS_DEFAULTS) {
+            // Merge headers in but do not overwrite existing values
+            foreach ($value as $key => $header) {
+                if (!$request->hasHeader($key)) {
+                    $request->setHeader($key, $header);
+                }
+            }
+        } else {
+            $request->addHeaders($value);
+        }
     }
 
-    protected function visit_body(RequestInterface $request, $value)
+    protected function visit_body(RequestInterface $request, $value, $flags)
     {
         if ($request instanceof EntityEnclosingRequestInterface) {
             $request->setBody($value);
@@ -181,34 +197,38 @@ class RequestFactory implements RequestFactoryInterface
         }
     }
 
-    protected function visit_allow_redirects(RequestInterface $request, $value)
+    protected function visit_allow_redirects(RequestInterface $request, $value, $flags)
     {
         if ($value === false) {
             $request->getParams()->set(RedirectPlugin::DISABLE, true);
         }
     }
 
-    protected function visit_auth(RequestInterface $request, $value)
+    protected function visit_auth(RequestInterface $request, $value, $flags)
     {
         if (!is_array($value)) {
             throw new InvalidArgumentException('auth value must be an array');
         }
 
-        $authType = isset($value[2]) ? $value[2] : 'basic';
-
-        $request->setAuth($value[0], isset($value[1]) ? $value[1] : null, $authType);
+        $request->setAuth($value[0], isset($value[1]) ? $value[1] : null, isset($value[2]) ? $value[2] : 'basic');
     }
 
-    protected function visit_query(RequestInterface $request, $value)
+    protected function visit_query(RequestInterface $request, $value, $flags)
     {
         if (!is_array($value)) {
             throw new InvalidArgumentException('query value must be an array');
         }
 
-        $request->getQuery()->overwriteWith($value);
+        if ($flags & self::OPTIONS_AS_DEFAULTS) {
+            // Merge query string values in but do not overwrite existing values
+            $query = $request->getQuery();
+            $query->overwriteWith(array_diff_key($value, $query->toArray()));
+        } else {
+            $request->getQuery()->overwriteWith($value);
+        }
     }
 
-    protected function visit_cookies(RequestInterface $request, $value)
+    protected function visit_cookies(RequestInterface $request, $value, $flags)
     {
         if (!is_array($value)) {
             throw new InvalidArgumentException('cookies value must be an array');
@@ -219,23 +239,7 @@ class RequestFactory implements RequestFactoryInterface
         }
     }
 
-    protected function visit_timeout(RequestInterface $request, $value)
-    {
-        $request->getCurlOptions()->set(CURLOPT_TIMEOUT_MS, $value * 1000);
-    }
-
-    protected function visit_debug(RequestInterface $request, $value)
-    {
-        if (class_exists('Guzzle\Plugin\Log\LogPlugin')) {
-            $request->addSubscriber(LogPlugin::getDebugPlugin());
-        } else {
-            // @codeCoverageIgnoreStart
-            $request->getCurlOptions()->set(CURLOPT_VERBOSE, true);
-            // @codeCoverageIgnoreEnd
-        }
-    }
-
-    protected function visit_events(RequestInterface $request, $value)
+    protected function visit_events(RequestInterface $request, $value, $flags)
     {
         if (!is_array($value)) {
             throw new InvalidArgumentException('events value must be an array');
@@ -250,7 +254,7 @@ class RequestFactory implements RequestFactoryInterface
         }
     }
 
-    protected function visit_plugins(RequestInterface $request, $value)
+    protected function visit_plugins(RequestInterface $request, $value, $flags)
     {
         if (!is_array($value)) {
             throw new InvalidArgumentException('plugins value must be an array');
@@ -261,7 +265,46 @@ class RequestFactory implements RequestFactoryInterface
         }
     }
 
-    protected function visit_verify(RequestInterface $request, $value)
+    protected function visit_exceptions(RequestInterface $request, $value, $flags)
+    {
+        if ($value === false || $value === 0) {
+            $dispatcher = $request->getEventDispatcher();
+            foreach ($dispatcher->getListeners('request.error') as $listener) {
+                if ($listener[0] == 'Guzzle\Http\Message\Request' && $listener[1] = 'onRequestError') {
+                    $dispatcher->removeListener('request.error', $listener);
+                    break;
+                }
+            }
+        }
+    }
+
+    protected function visit_save_to(RequestInterface $request, $value, $flags)
+    {
+        $request->setResponseBody($value);
+    }
+
+    protected function visit_timeout(RequestInterface $request, $value, $flags)
+    {
+        $request->getCurlOptions()->set(CURLOPT_TIMEOUT_MS, $value * 1000);
+    }
+
+    protected function visit_connect_timeout(RequestInterface $request, $value, $flags)
+    {
+        $request->getCurlOptions()->set(CURLOPT_CONNECTTIMEOUT_MS, $value * 1000);
+    }
+
+    protected function visit_debug(RequestInterface $request, $value, $flags)
+    {
+        if (class_exists('Guzzle\Plugin\Log\LogPlugin')) {
+            $request->addSubscriber(LogPlugin::getDebugPlugin());
+        } else {
+            // @codeCoverageIgnoreStart
+            $request->getCurlOptions()->set(CURLOPT_VERBOSE, true);
+            // @codeCoverageIgnoreEnd
+        }
+    }
+
+    protected function visit_verify(RequestInterface $request, $value, $flags)
     {
         $curl = $request->getCurlOptions();
         if ($value === true || is_string($value)) {
@@ -277,31 +320,8 @@ class RequestFactory implements RequestFactoryInterface
         }
     }
 
-    protected function visit_exceptions(RequestInterface $request, $value)
+    protected function visit_proxy(RequestInterface $request, $value, $flags)
     {
-        if ($value === false || $value === 0) {
-            $dispatcher = $request->getEventDispatcher();
-            foreach ($dispatcher->getListeners('request.error') as $listener) {
-                if ($listener[0] == 'Guzzle\Http\Message\Request' && $listener[1] = 'onRequestError') {
-                    $dispatcher->removeListener('request.error', $listener);
-                    break;
-                }
-            }
-        }
-    }
-
-    protected function visit_save_to(RequestInterface $request, $value)
-    {
-        $request->setResponseBody($value);
-    }
-
-    protected function visit_proxy(RequestInterface $request, $value)
-    {
-        $request->getCurlOptions()->set(CURLOPT_PROXY, $value);
-    }
-
-    protected function visit_connect_timeout(RequestInterface $request, $value)
-    {
-        $request->getCurlOptions()->set(CURLOPT_CONNECTTIMEOUT_MS, $value * 1000);
+        $request->getCurlOptions()->set(CURLOPT_PROXY, $value, $flags);
     }
 }

@@ -3,6 +3,7 @@
 namespace Guzzle\Common;
 
 use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Common\Exception\RuntimeException;
 
 /**
  * Key value pair collection object
@@ -311,22 +312,32 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
     }
 
     /**
-     * Inject configuration settings into an input string
+     * Set a value into a nested array key. Keys will be created as needed to set the value.
      *
-     * @param string $input Input to inject
+     * @param string $path  Path to set
+     * @param mixed  $value Value to set at the key
      *
-     * @return string
-     * @deprecated
+     * @return self
+     * @throws RuntimeException when trying to setPath using a nested path that travels through a scalar value
      */
-    public function inject($input)
+    public function setPath($path, $value)
     {
-        Version::warn(__METHOD__ . ' is deprecated');
-        $replace = array();
-        foreach ($this->data as $key => $val) {
-            $replace['{' . $key . '}'] = $val;
+        $current =& $this->data;
+        $queue = explode('/', $path);
+        while (null !== ($key = array_shift($queue))) {
+            if (!is_array($current)) {
+                throw new RuntimeException("Trying to setPath {$path}, but {$key} is set and is not an array");
+            } elseif (!$queue) {
+                $current[$key] = $value;
+            } elseif (isset($current[$key])) {
+                $current =& $current[$key];
+            } else {
+                $current[$key] = array();
+                $current =& $current[$key];
+            }
         }
 
-        return strtr($input, $replace);
+        return $this;
     }
 
     /**
@@ -344,7 +355,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
     {
         // Assume the data of the collection if no data was passed into the method
         if ($data === null) {
-            $data = &$this->data;
+            $data =& $this->data;
         }
 
         // Break the path into an array if needed
@@ -384,9 +395,28 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
             }
 
             // Descend deeper into the data
-            $data = &$data[$part];
+            $data =& $data[$part];
         }
 
         return $data;
+    }
+
+    /**
+     * Inject configuration settings into an input string
+     *
+     * @param string $input Input to inject
+     *
+     * @return string
+     * @deprecated
+     */
+    public function inject($input)
+    {
+        Version::warn(__METHOD__ . ' is deprecated');
+        $replace = array();
+        foreach ($this->data as $key => $val) {
+            $replace['{' . $key . '}'] = $val;
+        }
+
+        return strtr($input, $replace);
     }
 }

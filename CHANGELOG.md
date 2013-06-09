@@ -6,20 +6,23 @@ Next version
 
 * New features:
     - Requests now support the ability to specify an array of $options when creating a request to more easily modify a
-      request
+      request. You can pass a 'request.options' configuration setting to a client to apply default request options to
+      every request created by a client (e.g. default query string variables, headers, curl options, etc).
     - Added a static facade class that allows you to use Guzzle with static methods and mount the class to `\Guzzle`.
       See `Guzzle\Http\StaticClient::mount`.
+    - Added `command.request_options` to `Guzzle\Service\Command\AbstractCommand` to pass request options to requests
+          created by a command (e.g. custom headers, query string variables, timeout settings, etc).
     - Stream size in `Guzzle\Stream\PhpStreamRequestFactory` will now be set if Content-Length is returned in the
       headers of a response
-    - Added `Guzzle\Cache\CacheAdapterFactory::fromCache()` to more easily create cache adapters
-    - Added command.request_options to `Guzzle\Service\Command\AbstractCommand` to pass request options to requests
-      created by a command
-    - `Guzzle\Http\Message\Response` now implements `\Serializable`
-    - `Guzzle\Service\ClientInterface::execute()` now accepts an array, single command, or Traversable
+    - Added `Guzzle\Common\Collection::setPath($path, $value)` to set a value into an array using a nested key
+      (e.g. `$collection->setPath('foo/baz/bar', 'test'); echo $collection['foo']['bar']['bar'];`)
     - ServiceBuilders now support storing and retrieving arbitrary data
     - CachePlugin can now purge all resources for a given URI
     - CachePlugin can automatically purge matching cached items when a non-idempotent request is sent to a resource
     - CachePlugin now uses the Vary header to determine if a resource is a cache hit
+    - `Guzzle\Http\Message\Response` now implements `\Serializable`
+    - Added `Guzzle\Cache\CacheAdapterFactory::fromCache()` to more easily create cache adapters
+    - `Guzzle\Service\ClientInterface::execute()` now accepts an array, single command, or Traversable
 * Bug fixes:
     - Fixed a bug in `Guzzle\Http\Message\Header\Link::addLink()`
 * Improvements:
@@ -44,7 +47,10 @@ Next version
         - Added `Guzzle\Stream\StreamInterface::isRepeatable`
     - The following methods were removed from interfaces. All of these methods are still available in the concrete
       classes that implement them, but you should update your code to use alternative methods:
-        - Removed `Guzzle\Http\ClientInterface::setDefaultHeaders()`
+        - Removed `Guzzle\Http\ClientInterface::setDefaultHeaders(). Use
+          $client->getConfig()->setPath('request.options/headers/{header_name}', 'value')`. or
+          $client->getConfig()->setPath('request.options/headers', array('header_name' => 'value'))`.
+        - Removed `Guzzle\Http\ClientInterface::getDefaultHeaders(). Use $client->getConfig()->getPath('request.options/headers')`.
         - Removed `Guzzle\Http\ClientInterface::expandTemplate()`
         - Removed `Guzzle\Http\ClientInterface::setRequestFactory()`
         - Removed `Guzzle\Http\ClientInterface::getCurlMulti()`
@@ -65,8 +71,9 @@ Next version
     - Marked `Guzzle\Cache\CacheAdapterFactory::factory()` as deprecated
     - Marked 'command.headers', 'command.response_body' and 'command.on_complete' as deprecated for AbstractCommand.
       These will work through Guzzle 4.0
-    - Marked `Guzzle\Service\Client::enableMagicMethods()` as deprecated
-    - Magic methods can no longer be disabled on a Guzzle\Service\Client
+    - Marked `Guzzle\Service\Client::enableMagicMethods()` as deprecated. Magic methods can no longer be disabled on a Guzzle\Service\Client.
+    - Marked `Guzzle\Service\Client::getDefaultHeaders()` as deprecated. Use $client->getConfig()->getPath('request.options/headers')`.
+    - Marked `Guzzle\Service\Client::setDefaultHeaders()` as deprecated. Use $client->getConfig()->setPath('request.options/headers/{header_name}', 'value')`.
     - Marked `Guzzle\Parser\Url\UrlParser` as deprecated. Just use PHP's `parse_url()` and percent encode your UTF-8.
     - Marked `Guzzle\Common\Collection::inject()` as deprecated.
 * Breaking changes in the CachePlugin internals:

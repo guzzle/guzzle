@@ -21,18 +21,28 @@ interface ClientInterface extends HasDispatcherInterface
     /**
      * Set the configuration object to use with the client
      *
-     * @param array|Collection|string $config Parameters that define how the client behaves and connects to a
-     *                                        webservice. Pass an array or a Collection object.
+     * @param array|Collection $config Parameters that define how the client behaves
+     *
      * @return self
      */
     public function setConfig($config);
 
     /**
-     * Get a configuration setting or all of the configuration settings
+     * Get a configuration setting or all of the configuration settings. The Collection result of this method can be
+     * modified to change the configuration settings of a client.
+     *
+     * A client should honor the following special values:
+     *
+     * - request.options: Associative array of default RequestFactory options to apply to each request
+     * - request.params: Associative array of request parameters (data values) to apply to each request
+     * - curl.options: Associative array of cURL configuration settings to apply to each request
+     * - ssl.certificate_authority: Path a CAINFO, CAPATH, true to use strict defaults, or false to disable verification
+     * - redirect.disable: Set to true to disable redirects
      *
      * @param bool|string $key Configuration value to retrieve. Set to FALSE to retrieve all values of the client.
      *                         The object return can be modified, and modifications will affect the client's config.
      * @return mixed|Collection
+     * @see \Guzzle\Http\Message\RequestFactoryInterface::applyOptions for a full list of request.options options
      */
     public function getConfig($key = false);
 
@@ -160,13 +170,6 @@ interface ClientInterface extends HasDispatcherInterface
      * @return \Guzzle\Http\Message\Response|array Returns a single Response or an array of Response objects
      */
     public function send($requests);
-
-    /**
-     * Get the default HTTP headers to add to each request created by the client
-     *
-     * @return Collection
-     */
-    public function getDefaultHeaders();
 
     /**
      * Get the client's base URL as either an expanded or raw URI template

@@ -44,7 +44,7 @@
     </target>
 
     <target name="coverage" depends="prepare">
-        <exec passthru="true" command="vendor/bin/phpunit --coverage-html=${dir.output}/coverage --coverage-clover=${dir.output}/logs/clover.xml" />
+        <exec passthru="true" command="vendor/bin/phpunit --coverage-html=${dir.output}/coverage" />
     </target>
 
     <target name="view-coverage">

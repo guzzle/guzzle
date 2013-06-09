@@ -11,6 +11,9 @@ use Guzzle\Http\Url;
  */
 interface RequestFactoryInterface
 {
+    const OPTIONS_NONE = 0;
+    const OPTIONS_AS_DEFAULTS = 1;
+
     /**
      * Create a new request based on an HTTP message
      *
@@ -86,6 +89,10 @@ interface RequestFactoryInterface
      *            to a CA bundle to enable verification using a custom certificate.
      *        "proxy": Specify an HTTP proxy (e.g. "http://username:password@192.168.16.1:10")
      *        "debug": Set to true to display all data sent over the wire
+     * @param int $flags Bitwise flags to apply when applying the options to the request. Defaults to no special
+     *                   options. `1` (OPTIONS_AS_DEFAULTS): When specified, options will only update a request when
+     *                   the value does not already exist on the request. This is only supported by "query" and
+     *                   "headers". Other bitwise options may be added in the future.
      */
-    public function applyOptions(RequestInterface $request, array $options = array());
+    public function applyOptions(RequestInterface $request, array $options = array(), $flags = self::OPTIONS_NONE);
 }

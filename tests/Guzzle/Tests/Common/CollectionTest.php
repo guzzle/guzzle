@@ -493,4 +493,37 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $c->overwriteWith($b->getIterator());
         $this->assertEquals(array('foo' => 10, 'baz' => 2, 'bar' => 300), $c->getAll());
     }
+
+    public function testCanSetNestedPathValueThatDoesNotExist()
+    {
+        $c = new Collection(array());
+        $c->setPath('foo/bar/baz/123', 'hi');
+        $this->assertEquals('hi', $c['foo']['bar']['baz']['123']);
+    }
+
+    public function testCanSetNestedPathValueThatExists()
+    {
+        $c = new Collection(array('foo' => array('bar' => 'test')));
+        $c->setPath('foo/bar', 'hi');
+        $this->assertEquals('hi', $c['foo']['bar']);
+    }
+
+    /**
+     * @expectedException \Guzzle\Common\Exception\RuntimeException
+     */
+    public function testVerifiesNestedPathIsValidAtExactLevel()
+    {
+        $c = new Collection(array('foo' => 'bar'));
+        $c->setPath('foo/bar', 'hi');
+        $this->assertEquals('hi', $c['foo']['bar']);
+    }
+
+    /**
+     * @expectedException \Guzzle\Common\Exception\RuntimeException
+     */
+    public function testVerifiesThatNestedPathIsValidAtAnyLevel()
+    {
+        $c = new Collection(array('foo' => 'bar'));
+        $c->setPath('foo/bar/baz', 'test');
+    }
 }

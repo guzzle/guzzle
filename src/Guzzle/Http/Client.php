@@ -23,6 +23,7 @@ use Guzzle\Http\Curl\CurlVersion;
  */
 class Client extends AbstractHasDispatcher implements ClientInterface
 {
+    const REQUEST_OPTIONS = 'request.options';
     const REQUEST_PARAMS = 'request.params';
     const CURL_OPTIONS = 'curl.options';
     const SSL_CERT_AUTHORITY = 'ssl.certificate_authority';
@@ -70,19 +71,14 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         $this->setBaseUrl($baseUrl);
         $this->defaultHeaders = new Collection();
         $this->setRequestFactory(RequestFactory::getInstance());
-
-        // Redirect by default, but allow for redire4cts to be globally disabled on a client
+        $this->userAgent = $this->getDefaultUserAgent();
         if (!$this->config[self::DISABLE_REDIRECTS]) {
             $this->addSubscriber(new RedirectPlugin());
         }
-
-        // Set the default User-Agent on the client
-        $this->userAgent = $this->getDefaultUserAgent();
     }
 
     final public function setConfig($config)
     {
-        // Set the configuration object
         if ($config instanceof Collection) {
             $this->config = $config;
         } elseif (is_array($config)) {
@@ -133,24 +129,6 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         }
 
         $this->config->set(self::CURL_OPTIONS, $opts);
-
-        return $this;
-    }
-
-    public function getDefaultHeaders()
-    {
-        return $this->defaultHeaders;
-    }
-
-    public function setDefaultHeaders($headers)
-    {
-        if ($headers instanceof Collection) {
-            $this->defaultHeaders = $headers;
-        } elseif (is_array($headers)) {
-            $this->defaultHeaders = new Collection($headers);
-        } else {
-            throw new InvalidArgumentException('Headers must be an array or Collection');
-        }
 
         return $this;
     }
@@ -211,11 +189,10 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             }
         }
 
-        // If default headers are provided, then merge them into existing headers
-        // If a collision occurs, the header is completely replaced
+        // If default headers are provided, then merge them under any explicitly provided headers for the request
         if (count($this->defaultHeaders)) {
             if (!$headers) {
-                $headers = $this->defaultHeaders;
+                $headers = $this->defaultHeaders->toArray();
             } elseif (is_array($headers)) {
                 $headers += $this->defaultHeaders->toArray();
             } elseif ($headers instanceof Collection) {
@@ -402,24 +379,22 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      */
     protected function prepareRequest(RequestInterface $request, array $options = array())
     {
-        $request->setClient($this);
+        $request->setClient($this)->setEventDispatcher(clone $this->getEventDispatcher());
 
-        // Add any curl options to the request
         if ($curl = $this->config[self::CURL_OPTIONS]) {
             $request->getCurlOptions()->overwriteWith(CurlHandle::parseCurlConfig($curl));
         }
 
-        // Add request parameters to the request
         if ($params = $this->config[self::REQUEST_PARAMS]) {
             $request->getParams()->overwriteWith($params);
         }
 
-        // Attach client observers to the request
-        $request->setEventDispatcher(clone $this->getEventDispatcher());
-
-        // Set the User-Agent if one is specified on the client but not explicitly on the request
         if ($this->userAgent && !$request->hasHeader('User-Agent')) {
             $request->setHeader('User-Agent', $this->userAgent);
+        }
+
+        if ($defaults = $this->config[self::REQUEST_OPTIONS]) {
+            $this->requestFactory->applyOptions($request, $defaults, RequestFactoryInterface::OPTIONS_AS_DEFAULTS);
         }
 
         if ($options) {
@@ -436,30 +411,50 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      */
     protected function initSsl()
     {
-        // Allow ssl.certificate_authority config setting to control the certificate authority used by curl
-        $authority = $this->config[self::SSL_CERT_AUTHORITY];
-
-        // Set the SSL certificate
-        if ($authority !== 'system') {
-
-            if ($authority === null) {
-                $authority = true;
-            }
-
-            if ($authority === true && substr(__FILE__, 0, 7) == 'phar://') {
-                $authority = $this->preparePharCacert();
-                $that = $this;
-                $this->getEventDispatcher()->addListener(
-                    'request.before_send',
-                    function ($event) use ($authority, $that) {
-                        if ($authority == $event['request']->getCurlOptions()->get(CURLOPT_CAINFO)) {
-                            $that->preparePharCacert(false);
-                        }
-                    }
-                );
-            }
-
-            $this->setSslVerification($authority);
+        if ('system' == ($authority = $this->config[self::SSL_CERT_AUTHORITY])) {
+            return;
         }
+
+        if ($authority === null) {
+            $authority = true;
+        }
+
+        if ($authority === true && substr(__FILE__, 0, 7) == 'phar://') {
+            $authority = $this->preparePharCacert();
+            $that = $this;
+            $this->getEventDispatcher()->addListener('request.before_send', function ($event) use ($authority, $that) {
+                if ($authority == $event['request']->getCurlOptions()->get(CURLOPT_CAINFO)) {
+                    $that->preparePharCacert(false);
+                }
+            });
+        }
+
+        $this->setSslVerification($authority);
+    }
+
+    /**
+     * @deprecated
+     */
+    public function getDefaultHeaders()
+    {
+        Version::warn(__METHOD__ . ' is deprecated. Use the request.options array to retrieve default request options');
+        return $this->defaultHeaders;
+    }
+
+    /**
+     * @deprecated
+     */
+    public function setDefaultHeaders($headers)
+    {
+        Version::warn(__METHOD__ . ' is deprecated. Use the request.options array to specify default request options');
+        if ($headers instanceof Collection) {
+            $this->defaultHeaders = $headers;
+        } elseif (is_array($headers)) {
+            $this->defaultHeaders = new Collection($headers);
+        } else {
+            throw new InvalidArgumentException('Headers must be an array or Collection');
+        }
+
+        return $this;
     }
 }

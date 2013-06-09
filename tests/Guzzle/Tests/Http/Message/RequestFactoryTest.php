@@ -8,6 +8,7 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Http\Url;
 use Guzzle\Http\EntityBody;
 use Guzzle\Http\Message\RequestFactory;
+use Guzzle\Http\Message\Request;
 use Guzzle\Http\QueryString;
 use Guzzle\Parser\Message\MessageParser;
 use Guzzle\Plugin\Log\LogPlugin;
@@ -361,6 +362,16 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('Bar', $request->getQuery()->get('Foo'));
     }
 
+    public function testCanSetDefaultQueryString()
+    {
+        $request = new Request('GET', 'http://www.foo.com?test=abc');
+        RequestFactory::getInstance()->applyOptions($request, array(
+            'query' => array('test' => '123', 'other' => 't123')
+        ), RequestFactory::OPTIONS_AS_DEFAULTS);
+        $this->assertEquals('abc', $request->getQuery()->get('test'));
+        $this->assertEquals('t123', $request->getQuery()->get('other'));
+    }
+
     public function testCanAddBasicAuth()
     {
         $request = RequestFactory::getInstance()->create('GET', 'http://foo.com', array(), null, array(
@@ -453,6 +464,16 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $client = new Client();
         $request = $client->get('/', array(), array('headers' => array('Foo' => 'Bar')));
         $this->assertEquals('Bar', (string) $request->getHeader('Foo'));
+    }
+
+    public function testCanSetDefaultHeadersOptions()
+    {
+        $request = new Request('GET', 'http://www.foo.com', array('Foo' => 'Bar'));
+        RequestFactory::getInstance()->applyOptions($request, array(
+            'headers' => array('Foo' => 'Baz', 'Bam' => 't123')
+        ), RequestFactory::OPTIONS_AS_DEFAULTS);
+        $this->assertEquals('Bar', (string) $request->getHeader('Foo'));
+        $this->assertEquals('t123', (string) $request->getHeader('Bam'));
     }
 
     public function testCanSetBodyOption()

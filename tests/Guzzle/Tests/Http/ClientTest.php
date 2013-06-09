@@ -494,12 +494,9 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
     public function testAllowsDefaultHeaders()
     {
-        $default = array(
-            'X-Test' => 'Hi!'
-        );
-        $other = array(
-            'X-Other' => 'Foo'
-        );
+        Version::$emitWarnings = false;
+        $default = array('X-Test' => 'Hi!');
+        $other = array('X-Other' => 'Foo');
 
         $client = new Client();
         $client->setDefaultHeaders($default);
@@ -517,15 +514,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
 
         $request = $client->createRequest('GET');
         $this->assertEquals('Hi!', $request->getHeader('X-Test'));
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testValidatesDefaultHeaders()
-    {
-        $client = new Client();
-        $client->setDefaultHeaders('foo');
+        Version::$emitWarnings = true;
     }
 
     public function testDontReuseCurlMulti()
@@ -559,5 +548,30 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client = new Client();
         $request = $client->createRequest('GET', 'http://www.foo.com');
         $this->assertContains('Guzzle/', (string) $request->getHeader('User-Agent'));
+    }
+
+    public function testCanSetDefaultRequestOptions()
+    {
+        $client = new Client();
+        $client->getConfig()->set('request.options', array(
+            'query' => array('test' => '123', 'other' => 'abc'),
+            'headers' => array('Foo' => 'Bar', 'Baz' => 'Bam')
+        ));
+        $request = $client->createRequest('GET', 'http://www.foo.com?test=hello', array('Foo' => 'Test'));
+        // Explicit options on a request should overrule default options
+        $this->assertEquals('Test', (string) $request->getHeader('Foo'));
+        $this->assertEquals('hello', $request->getQuery()->get('test'));
+        // Default options should still be set
+        $this->assertEquals('abc', $request->getQuery()->get('other'));
+        $this->assertEquals('Bam', (string) $request->getHeader('Baz'));
+    }
+
+    public function testCanSetSetOptionsOnRequests()
+    {
+        $client = new Client();
+        $request = $client->createRequest('GET', 'http://www.foo.com?test=hello', array('Foo' => 'Test'), null, array(
+            'cookies' => array('michael' => 'test')
+        ));
+        $this->assertEquals('test', $request->getCookie('michael'));
     }
 }
