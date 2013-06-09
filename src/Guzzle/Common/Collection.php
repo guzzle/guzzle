@@ -353,49 +353,30 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
      */
     public function getPath($path, $separator = '/', $data = null)
     {
-        // Assume the data of the collection if no data was passed into the method
         if ($data === null) {
             $data =& $this->data;
         }
 
-        // Break the path into an array if needed
-        if (!is_array($path)) {
-            $path = explode($separator, $path);
-        }
-
-        // Using an iterative approach rather than recursion for speed
+        $path = is_array($path) ? $path : explode($separator, $path);
         while (null !== ($part = array_shift($path))) {
-
             if (!is_array($data)) {
                 return null;
-            }
-
-            // The value does not exist in the array or the path has more but the value is not an array
-            if (!isset($data[$part])) {
-
-                // Not using a wildcard and the key was not found, so return null
-                if ($part != '*') {
-                    return null;
-                }
-
-                // If using a wildcard search, then diverge and combine paths
+            } elseif (isset($data[$part])) {
+                $data =& $data[$part];
+            } elseif ($part != '*') {
+                return null;
+            } else {
+                // Perform a wildcard search by diverging and merging paths
                 $result = array();
                 foreach ($data as $value) {
                     if (!$path) {
                         $result = array_merge_recursive($result, (array) $value);
-                    } else {
-                        $test = $this->getPath($path, $separator, $value);
-                        if ($test !== null) {
-                            $result = array_merge_recursive($result, (array) $test);
-                        }
+                    } elseif (null !== ($test = $this->getPath($path, $separator, $value))) {
+                        $result = array_merge_recursive($result, (array) $test);
                     }
                 }
-
                 return $result;
             }
-
-            // Descend deeper into the data
-            $data =& $data[$part];
         }
 
         return $data;
