@@ -76,7 +76,7 @@ Next version
     - Marked `Guzzle\Service\Client::setDefaultHeaders()` as deprecated. Use $client->getConfig()->setPath('request.options/headers/{header_name}', 'value')`.
     - Marked `Guzzle\Parser\Url\UrlParser` as deprecated. Just use PHP's `parse_url()` and percent encode your UTF-8.
     - Marked `Guzzle\Common\Collection::inject()` as deprecated.
-    - Marked `Guzzle\Plugin\CurlAuth` as deprecated. Use `$client->getConfig()->setPath('request.options/auth', array('user', 'pass', 'Basic|Digest');`
+    - Marked `Guzzle\Plugin\CurlAuth\CurlAuthPlugin` as deprecated. Use `$client->getConfig()->setPath('request.options/auth', array('user', 'pass', 'Basic|Digest');`
 * Breaking changes in the CachePlugin internals:
     - CacheKeyProviderInterface and DefaultCacheKeyProvider are no longer used. All of this logic is handled in a
       CacheStorageInterface. These two objects and interface will be removed in a future version.
