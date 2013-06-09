@@ -35,19 +35,19 @@ configuration options and methods of a client and AbstractCommand have been depr
 - Marked 'request.params' for `Guzzle\Http\Client` as deprecated. Use [request.options][params].
 - Marked 'command.headers', 'command.response_body' and 'command.on_complete' as deprecated for AbstractCommand. These will work through Guzzle 4.0
 
-    $command = $client->getCommand('foo', array(
-        'command.headers' => array('Test' => '123'),
-        'command.response_body' => '/path/to/file'
-    ));
+        $command = $client->getCommand('foo', array(
+            'command.headers' => array('Test' => '123'),
+            'command.response_body' => '/path/to/file'
+        ));
 
-    // Should be changed to:
+        // Should be changed to:
 
-    $command = $client->getCommand('foo', array(
-        'command.request_options' => array(
-            'headers' => array('Test' => '123'),
-            'save_as' => '/path/to/file'
-        )
-    ));
+        $command = $client->getCommand('foo', array(
+            'command.request_options' => array(
+                'headers' => array('Test' => '123'),
+                'save_as' => '/path/to/file'
+            )
+        ));
 
 ### Interface changes
 
@@ -78,7 +78,7 @@ that implement them, but you should update your code to use alternative methods:
 - Removed `Guzzle\Http\Message\RequestInterface::setIsRedirect`. Use the HistoryPlugin.
 - Removed `Guzzle\Http\Message\RequestInterface::isRedirect`. Use the HistoryPlugin.
 
-## Cache plugin breaking changes
+### Cache plugin breaking changes
 
 - CacheKeyProviderInterface and DefaultCacheKeyProvider are no longer used. All of this logic is handled in a
   CacheStorageInterface. These two objects and interface will be removed in a future version.
