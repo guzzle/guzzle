@@ -4,7 +4,7 @@ Guzzle Upgrade Guide
 3.6 to 3.7
 ----------
 
-### Deprecated various aspects of the framework in favor of a smaller API:
+### Deprecations
 
 - You can now enable E_USER_DEPRECATED warnings to see if you are using any deprecated methods.:
 
