@@ -283,6 +283,15 @@ class RequestFactory implements RequestFactoryInterface
         $request->setResponseBody($value);
     }
 
+    protected function visit_params(RequestInterface $request, $value, $flags)
+    {
+        if (!is_array($value)) {
+            throw new InvalidArgumentException('params value must be an array');
+        }
+
+        $request->getParams()->overwriteWith($value);
+    }
+
     protected function visit_timeout(RequestInterface $request, $value, $flags)
     {
         $request->getCurlOptions()->set(CURLOPT_TIMEOUT_MS, $value * 1000);

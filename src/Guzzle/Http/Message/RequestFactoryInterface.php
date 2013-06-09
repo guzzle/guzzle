@@ -82,6 +82,7 @@ interface RequestFactoryInterface
      *        "events": Associative array mapping event names to a closure or array of (priority, closure)
      *        "plugins": Array of plugins to add to the request
      *        "exceptions": Set to false to disable throwing exceptions on an HTTP level error (e.g. 404, 500, etc)
+     *        "params": Set custom request data parameters on a request. (Note: these are not query string parameters)
      *        "timeout": Float describing the timeout of the request in seconds
      *        "connect_timeout": Float describing the number of seconds to wait while trying to connect. Use 0 to wait
      *            indefinitely.

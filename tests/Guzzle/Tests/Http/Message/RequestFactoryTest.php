@@ -550,7 +550,7 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     public function inputValidation()
     {
         return array_map(function ($option) { return array($option); }, array(
-            'headers', 'query', 'cookies', 'auth', 'events', 'plugins'
+            'headers', 'query', 'cookies', 'auth', 'events', 'plugins', 'params'
         ));
     }
 
@@ -562,5 +562,12 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $client = new Client();
         $client->get('/', array(), array($option => 'foo'));
+    }
+
+    public function testCanAddRequestParams()
+    {
+        $client = new Client();
+        $request = $client->put('/', array(), null, array('params' => array('foo' => 'test')));
+        $this->assertEquals('test', $request->getParams()->get('foo'));
     }
 }

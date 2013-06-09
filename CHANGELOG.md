@@ -71,6 +71,7 @@ Next version
     - Marked `Guzzle\Cache\CacheAdapterFactory::factory()` as deprecated
     - Marked 'command.headers', 'command.response_body' and 'command.on_complete' as deprecated for AbstractCommand.
       These will work through Guzzle 4.0
+    - Marked 'request.params' for `Guzzle\Http\Client` as deprecated. Use [request.options][params].
     - Marked `Guzzle\Service\Client::enableMagicMethods()` as deprecated. Magic methods can no longer be disabled on a Guzzle\Service\Client.
     - Marked `Guzzle\Service\Client::getDefaultHeaders()` as deprecated. Use $client->getConfig()->getPath('request.options/headers')`.
     - Marked `Guzzle\Service\Client::setDefaultHeaders()` as deprecated. Use $client->getConfig()->setPath('request.options/headers/{header_name}', 'value')`.

@@ -33,8 +33,8 @@ class RedirectPlugin implements EventSubscriberInterface
     {
         return array(
             'request.sent'        => array('onRequestSent', 100),
-            'request.clone'       => 'onRequestClone',
-            'request.before_send' => 'onRequestClone'
+            'request.clone'       => 'cleanupRequest',
+            'request.before_send' => 'cleanupRequest'
         );
     }
 
@@ -43,9 +43,11 @@ class RedirectPlugin implements EventSubscriberInterface
      *
      * @param Event $event Event emitted
      */
-    public function onRequestClone(Event $event)
+    public function cleanupRequest(Event $event)
     {
-        $event['request']->getParams()->remove(self::REDIRECT_COUNT)->remove(self::PARENT_REQUEST);
+        $params = $event['request']->getParams();
+        unset($params[self::REDIRECT_COUNT]);
+        unset($params[self::PARENT_REQUEST]);
     }
 
     /**

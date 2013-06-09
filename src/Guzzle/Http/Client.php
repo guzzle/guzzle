@@ -23,8 +23,10 @@ use Guzzle\Http\Curl\CurlVersion;
  */
 class Client extends AbstractHasDispatcher implements ClientInterface
 {
-    const REQUEST_OPTIONS = 'request.options';
+    /** @deprecated Use [request.options][params] */
     const REQUEST_PARAMS = 'request.params';
+
+    const REQUEST_OPTIONS = 'request.options';
     const CURL_OPTIONS = 'curl.options';
     const SSL_CERT_AUTHORITY = 'ssl.certificate_authority';
     const DISABLE_REDIRECTS = RedirectPlugin::DISABLE;
@@ -64,7 +66,9 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function __construct($baseUrl = '', $config = null)
     {
         if (!extension_loaded('curl')) {
+            // @codeCoverageIgnoreStart
             throw new RuntimeException('The PHP cURL extension must be installed to use Guzzle.');
+            // @codeCoverageIgnoreEnd
         }
         $this->setConfig($config ?: new Collection());
         $this->initSsl();
@@ -386,6 +390,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         }
 
         if ($params = $this->config[self::REQUEST_PARAMS]) {
+            Version::warn('request.params is deprecated. Use request.options to add default request options.');
             $request->getParams()->overwriteWith($params);
         }
 
