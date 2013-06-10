@@ -3,6 +3,7 @@
 namespace Guzzle\Http\Curl;
 
 use Guzzle\Common\AbstractHasDispatcher;
+use Guzzle\Common\Event;
 use Guzzle\Http\Exception\MultiTransferException;
 use Guzzle\Http\Exception\CurlException;
 use Guzzle\Http\Message\RequestInterface;
@@ -197,23 +198,17 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         // Initialize the handles with a very quick select timeout
         $active = $mrc = null;
         $this->executeHandles($active, $mrc, 0.001);
-        $event = array('curl_multi' => $this);
+        $event = new Event(array('curl_multi' => $this));
+        $this->processMessages();
 
-        while (1) {
-
-            $this->processMessages();
-
-            // Exit the function if there are no more requests to send
-            if (!$this->requests) {
-                break;
-            }
+        while ($this->requests) {
 
             // Notify each request as polling
             $blocking = $total = 0;
             foreach ($this->requests as $request) {
-                $event['request'] = $request;
-                $request->dispatch(self::POLLING_REQUEST, $event);
                 ++$total;
+                $event['request'] = $request;
+                $request->getEventDispatcher()->dispatch(self::POLLING_REQUEST, $event);
                 // The blocking variable just has to be non-falsey to block the loop
                 if ($request->getParams()->hasKey(self::BLOCKING)) {
                     ++$blocking;
@@ -228,6 +223,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
                     $this->executeHandles($active, $mrc, 1);
                 } while ($active);
             }
+            $this->processMessages();
         }
     }
 
