@@ -74,8 +74,7 @@ class Server
             return false;
         }
 
-        return $this->client->delete('guzzle-server/requests')
-            ->send()->getStatusCode() == 200;
+        return $this->client->delete('guzzle-server/requests')->send()->getStatusCode() == 200;
     }
 
     /**

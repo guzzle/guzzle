@@ -152,21 +152,16 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     protected function beforeSend(RequestInterface $request)
     {
         try {
-            // Fix Content-Length and Transfer-Encoding collisions
-            if ($request->hasHeader('Transfer-Encoding') && $request->hasHeader('Content-Length')) {
-                $request->removeHeader('Transfer-Encoding');
-            }
-            $request->setState(RequestInterface::STATE_TRANSFER);
-            $request->dispatch('request.before_send', array('request' => $request));
-            if ($request->getState() != RequestInterface::STATE_TRANSFER) {
-                // Requests might decide they don't need to be sent just before transfer (e.g. CachePlugin)
-                $this->remove($request);
-                if ($request->getState() == RequestInterface::STATE_COMPLETE) {
-                    $this->successful[] = $request;
-                }
-            } else {
+            $state = $request->setState(RequestInterface::STATE_TRANSFER);
+            if ($state == RequestInterface::STATE_TRANSFER) {
                 // Add the request curl handle to the multi handle
                 $this->checkCurlResult(curl_multi_add_handle($this->multiHandle, $this->createCurlHandle($request)->getHandle()));
+            } else {
+                // Requests might decide they don't need to be sent just before transfer (e.g. CachePlugin)
+                $this->remove($request);
+                if ($state == RequestInterface::STATE_COMPLETE) {
+                    $this->successful[] = $request;
+                }
             }
         } catch (\Exception $e) {
             // Queue the exception to be thrown when sent
@@ -295,7 +290,6 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         }
 
         $this->remove($request);
-        $request->setState(RequestInterface::STATE_ERROR);
         $this->dispatch(self::MULTI_EXCEPTION, array('exception' => $e, 'all_exceptions' => $this->exceptions));
     }
 
@@ -320,22 +314,15 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         $this->removeHandle($request);
 
         if (!$curlException) {
-            $request->setState(RequestInterface::STATE_COMPLETE, array('handle' => $handle));
+            $state = $request->setState(RequestInterface::STATE_COMPLETE, array('handle' => $handle));
             // Only remove the request if it wasn't resent as a result of the state change
-            if ($request->getState() != RequestInterface::STATE_TRANSFER) {
+            if ($state != RequestInterface::STATE_TRANSFER) {
                 $this->remove($request);
             }
         } else {
             // Set the state of the request to an error
-            $request->setState(RequestInterface::STATE_ERROR);
-            // Notify things that listen to the request of the failure
-            $request->dispatch('request.exception', array(
-                'request'   => $this,
-                'exception' => $curlException
-            ));
-
+            $state = $request->setState(RequestInterface::STATE_ERROR, array('exception' => $curlException));
             // Allow things to ignore the error if possible
-            $state = $request->getState();
             if ($state != RequestInterface::STATE_TRANSFER) {
                 $this->remove($request);
             }

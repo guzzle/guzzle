@@ -270,7 +270,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * @param string $state   State of the request ('complete', 'transfer', 'new', 'error')
      * @param array  $context Contextual information about the state change
      *
-     * @return self
+     * @return string Returns the current state of the request (which may have changed due to events being fired)
      */
     public function setState($state, array $context = array());
 

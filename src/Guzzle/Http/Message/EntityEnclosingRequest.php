@@ -52,7 +52,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
             $this->setHeader('Content-Length', 0)->removeHeader('Transfer-Encoding');
         }
 
-        return $this;
+        return $this->state;
     }
 
     public function setBody($body, $contentType = null)

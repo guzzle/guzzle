@@ -135,8 +135,7 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * Default method that will throw exceptions if an unsuccessful response
-     * is received.
+     * Default method that will throw exceptions if an unsuccessful response is received.
      *
      * @param Event $event Received
      * @throws BadResponseException if the response is not successful
@@ -144,12 +143,7 @@ class Request extends AbstractMessage implements RequestInterface
     public static function onRequestError(Event $event)
     {
         $e = BadResponseException::factory($event['request'], $event['response']);
-        $event['request']->dispatch('request.exception', array(
-            'request'   => $event['request'],
-            'response'  => $event['response'],
-            'exception' => $e
-        ));
-
+        $event['request']->setState(self::STATE_ERROR, array('exception' => $e) + $event->toArray());
         throw $e;
     }
 
@@ -363,14 +357,36 @@ class Request extends AbstractMessage implements RequestInterface
         $oldState = $this->state;
         $this->state = $state;
 
-        if ($state == self::STATE_NEW) {
-            $this->response = null;
-        } elseif ($state == self::STATE_COMPLETE && $oldState !== self::STATE_COMPLETE) {
-            $this->processResponse($context);
-            $this->responseBody = null;
+        switch ($state) {
+            case self::STATE_NEW:
+                $this->response = null;
+                break;
+            case self::STATE_TRANSFER:
+                if ($oldState !== $state) {
+                    // Fix Content-Length and Transfer-Encoding collisions
+                    if ($this->hasHeader('Transfer-Encoding') && $this->hasHeader('Content-Length')) {
+                        $this->removeHeader('Transfer-Encoding');
+                    }
+                    $this->dispatch('request.before_send', array('request' => $this));
+                }
+                break;
+            case self::STATE_COMPLETE:
+                if ($oldState !== $state) {
+                    $this->processResponse($context);
+                    $this->responseBody = null;
+                }
+                break;
+            case self::STATE_ERROR:
+                if (isset($context['exception'])) {
+                    $this->dispatch('request.exception', array(
+                        'request'   => $this,
+                        'response'  => isset($context['response']) ? $context['response'] : $this->response,
+                        'exception' => isset($context['exception']) ? $context['exception'] : null
+                    ));
+                }
         }
 
-        return $this;
+        return $this->state;
     }
 
     public function getCurlOptions()

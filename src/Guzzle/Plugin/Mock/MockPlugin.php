@@ -194,10 +194,9 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
         } elseif ($item instanceof CurlException) {
             // Emulates exceptions encountered while transferring requests
             $item->setRequest($request);
-            $request->setState(RequestInterface::STATE_ERROR);
-            $request->dispatch('request.exception', array('request' => $request, 'exception' => $item));
+            $state = $request->setState(RequestInterface::STATE_ERROR, array('exception' => $item));
             // Only throw if the exception wasn't handled
-            if ($request->getState() == RequestInterface::STATE_ERROR) {
+            if ($state == RequestInterface::STATE_ERROR) {
                 throw $item;
             }
         }
@@ -230,7 +229,7 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
      */
     public function onRequestBeforeSend(Event $event)
     {
-        if (!empty($this->queue)) {
+        if ($this->queue) {
             $request = $event['request'];
             $this->received[] = $request;
             // Detach the filter from the client so it's a one-time use
