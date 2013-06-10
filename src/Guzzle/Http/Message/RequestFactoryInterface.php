@@ -75,7 +75,7 @@ interface RequestFactoryInterface
      *        "body": Body of a request, including an EntityBody, string, or array when sending POST requests.
      *        "auth": Array of HTTP authentication parameters to use with the request. The array must contain the
      *            username in index [0], the password in index [2], and can optionally contain the authentication type
-     *            in index [3]. The authentication types are: "Basic", "Digest". The default auth is "Basic".
+     *            in index [3]. The authentication types are: "Basic", "Digest", "NTLM", "Any" (defaults to "Basic").
      *        "cookies": Associative array of cookies
      *        "allow_redirects": Set to false to disable redirects
      *        "save_to": String, fopen resource, or EntityBody object used to store the body of the response

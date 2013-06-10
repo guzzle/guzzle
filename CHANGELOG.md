@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-3.7.0 (2013-06-09)
-------------------
+3.7.0 (TBD)
+-----------
 
 * See UPGRADING.md for more information on how to upgrade.
 * Requests now support the ability to specify an array of $options when creating a request to more easily modify a

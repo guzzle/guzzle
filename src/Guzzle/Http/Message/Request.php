@@ -296,28 +296,31 @@ class Request extends AbstractMessage implements RequestInterface
 
     public function setAuth($user, $password = '', $scheme = CURLAUTH_BASIC)
     {
-        $this->username = $user;
-        $this->password = $password;
+        static $authMap = array(
+            'basic'  => CURLAUTH_BASIC,
+            'digest' => CURLAUTH_DIGEST,
+            'ntlm'   => CURLAUTH_NTLM,
+            'any'    => CURLAUTH_ANY
+        );
 
         // If we got false or null, disable authentication
         if (!$user) {
             $this->password = $this->username = null;
             $this->removeHeader('Authorization');
             $this->getCurlOptions()->remove(CURLOPT_HTTPAUTH);
-
             return $this;
         }
 
         if (!is_numeric($scheme)) {
             $scheme = strtolower($scheme);
-            if ($scheme == 'basic') {
-                $scheme = CURLAUTH_BASIC;
-            } elseif ($scheme == 'digest') {
-                $scheme = CURLAUTH_DIGEST;
-            } else {
+            if (!isset($authMap[$scheme])) {
                 throw new InvalidArgumentException($scheme . ' is not a valid authentication type');
             }
+            $scheme = $authMap[$scheme];
         }
+
+        $this->username = $user;
+        $this->password = $password;
 
         // Bypass CURL when using basic auth to promote connection reuse
         if ($scheme == CURLAUTH_BASIC) {
