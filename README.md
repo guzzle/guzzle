@@ -1,6 +1,8 @@
 Guzzle, PHP HTTP client and webservice framework
 ================================================
 
+[![Latest Stable Version](https://poser.pugx.org/guzzle/guzzle/version.png)](https://packagist.org/packages/guzzle/guzzle) [![Composer Downloads](https://poser.pugx.org/guzzle/guzzle/d/total.png)](https://packagist.org/packages/guzzle/guzzle) [![Build Status](https://secure.travis-ci.org/guzzle/guzzle.png?branch=master)](http://travis-ci.org/guzzle/guzzle)
+
 Guzzle is a PHP HTTP client and framework for building RESTful web service clients.
 
 - Extremely powerful API provides all the power of cURL with a simple interface.
@@ -198,8 +200,6 @@ $response = $request->send();
 
 Unit testing
 ------------
-
-[![Build Status](https://secure.travis-ci.org/guzzle/guzzle.png?branch=master)](http://travis-ci.org/guzzle/guzzle)
 
 Guzzle uses PHPUnit for unit testing. In order to run the unit tests, you'll first need
 to install the dependencies of the project using Composer: `php composer.phar install --dev`.
