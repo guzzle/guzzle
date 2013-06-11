@@ -32,7 +32,7 @@ The recommended way to install Guzzle is through [Composer](http://getcomposer.o
 curl -sS https://getcomposer.org/installer | php
 
 # Add Guzzle as a dependency
-php composer.phar require guzzle/guzzle:~3.6
+php composer.phar require guzzle/guzzle:~3.7
 ```
 
 After installing, you need to require Composer's autoloader:
