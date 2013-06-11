@@ -23,16 +23,18 @@ The following APIs and options have been marked as deprecated:
 - Marked `Guzzle\Service\Client::enableMagicMethods()` as deprecated. Magic methods can no longer be disabled on a Guzzle\Service\Client.
 - Marked `Guzzle\Parser\Url\UrlParser` as deprecated. Just use PHP's `parse_url()` and percent encode your UTF-8.
 - Marked `Guzzle\Common\Collection::inject()` as deprecated.
-- Marked `Guzzle\Plugin\CurlAuth\CurlAuthPlugin` as deprecated. Use `$client->getConfig()->setPath('request.options/auth', array('user', 'pass', 'Basic|Digest');`
+- Marked `Guzzle\Plugin\CurlAuth\CurlAuthPlugin` as deprecated. Use
+  `$client->getConfig()->setPath('request.options/auth', array('user', 'pass', 'Basic|Digest|NTLM|Any'));` or
+  `$client->setDefaultOption('auth', array('user', 'pass', 'Basic|Digest|NTLM|Any'));`
 
 3.7 introduces `request.options` as a parameter for a client configuration and as an optional argument to all creational
 request methods. When paired with a client's configuration settings, these options allow you to specify default settings
 for various aspects of a request. Because these options make other previous configuration options redundant, several
 configuration options and methods of a client and AbstractCommand have been deprecated.
 
-- Marked `Guzzle\Service\Client::getDefaultHeaders()` as deprecated. Use $client->getConfig()->getPath('request.options/headers')`.
-- Marked `Guzzle\Service\Client::setDefaultHeaders()` as deprecated. Use $client->getConfig()->setPath('request.options/headers/{header_name}', 'value')`.
-- Marked 'request.params' for `Guzzle\Http\Client` as deprecated. Use [request.options][params].
+- Marked `Guzzle\Service\Client::getDefaultHeaders()` as deprecated. Use `$client->getDefaultOption('headers')`.
+- Marked `Guzzle\Service\Client::setDefaultHeaders()` as deprecated. Use `$client->setDefaultOption('headers/{header_name}', 'value')`.
+- Marked 'request.params' for `Guzzle\Http\Client` as deprecated. Use `$client->setDefaultOption('params/{param_name}', 'value')`
 - Marked 'command.headers', 'command.response_body' and 'command.on_complete' as deprecated for AbstractCommand. These will work through Guzzle 4.0
 
         $command = $client->getCommand('foo', array(
@@ -70,7 +72,9 @@ that implement them, but you should update your code to use alternative methods:
 
 - Removed `Guzzle\Http\ClientInterface::setDefaultHeaders(). Use
   `$client->getConfig()->setPath('request.options/headers/{header_name}', 'value')`. or
-  `$client->getConfig()->setPath('request.options/headers', array('header_name' => 'value'))`.
+  `$client->getConfig()->setPath('request.options/headers', array('header_name' => 'value'))` or
+  `$client->setDefaultOption('headers/{header_name}', 'value')`. or
+  `$client->setDefaultOption('headers', array('header_name' => 'value'))`.
 - Removed `Guzzle\Http\ClientInterface::getDefaultHeaders(). Use `$client->getConfig()->getPath('request.options/headers')`.
 - Removed `Guzzle\Http\ClientInterface::expandTemplate()`. This is an implementation detail.
 - Removed `Guzzle\Http\ClientInterface::setRequestFactory()`. This is an implementation detail.

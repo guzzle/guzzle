@@ -563,4 +563,15 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         ));
         $this->assertEquals('test', $request->getCookie('michael'));
     }
+
+    public function testHasDefaultOptionsHelperMethods()
+    {
+        $client = new Client();
+        // With path
+        $client->setDefaultOption('headers/foo', 'bar');
+        $this->assertEquals('bar', $client->getDefaultOption('headers/foo'));
+        // With simple key
+        $client->setDefaultOption('allow_redirects', false);
+        $this->assertFalse($client->getDefaultOption('allow_redirects'));
+    }
 }

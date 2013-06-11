@@ -99,6 +99,37 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         return $key ? $this->config[$key] : $this->config;
     }
 
+    /**
+     * Set a default request option on the client that will be used as a default for each request
+     *
+     * @param string $keyOrPath request.options key (e.g. allow_redirects) or path to a nested key (e.g. headers/foo)
+     * @param mixed  $value     Value to set
+     *
+     * @return $this
+     */
+    public function setDefaultOption($keyOrPath, $value)
+    {
+        if (strpos($keyOrPath, '/')) {
+            $this->config->setPath($keyOrPath, $value);
+        } else {
+            $this->config[$keyOrPath] = $value;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Retrieve a default request option from the client
+     *
+     * @param string $keyOrPath request.options key (e.g. allow_redirects) or path to a nested key (e.g. headers/foo)
+     *
+     * @return mixed|null
+     */
+    public function getDefaultOption($keyOrPath)
+    {
+        return strpos($keyOrPath, '/') ? $this->config->getPath($keyOrPath) : $this->config[$keyOrPath];
+    }
+
     final public function setSslVerification($certificateAuthority = true, $verifyPeer = true, $verifyHost = 2)
     {
         $opts = $this->config[self::CURL_OPTIONS] ?: array();
