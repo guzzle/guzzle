@@ -15,6 +15,9 @@ class XmlVisitor extends AbstractRequestVisitor
     /** @var \SplObjectStorage Data object for persisting XML data */
     protected $data;
 
+    /** @var \XMLWriter XML writer resource */
+    protected $writer;
+
     /** @var bool Content-Type header added when XML is found */
     protected $contentType = 'application/xml';
 
@@ -43,6 +46,7 @@ class XmlVisitor extends AbstractRequestVisitor
             ? $this->data[$command]
             : $this->createRootElement($param->getParent());
         $this->addXml($xml, $param, $value);
+
         $this->data[$command] = $xml;
     }
 
@@ -52,13 +56,14 @@ class XmlVisitor extends AbstractRequestVisitor
 
         // If data was found that needs to be serialized, then do so
         if (isset($this->data[$command])) {
-            $xml = $this->data[$command]->asXML();
+            $xml = $this->finishDocument($this->writer);
             unset($this->data[$command]);
         } else {
             // Check if XML should always be sent for the command
             $operation = $command->getOperation();
             if ($operation->getData('xmlAllowEmpty')) {
-                $xml = $this->createRootElement($operation)->asXML();
+                $xmlWriter = $this->createRootElement($operation);
+                $xml = $this->finishDocument($xmlWriter);
             }
         }
 
@@ -76,42 +81,41 @@ class XmlVisitor extends AbstractRequestVisitor
      *
      * @param Operation $operation Operation object
      *
-     * @return \SimpleXMLElement
+     * @return \XMLWriter
      */
     protected function createRootElement(Operation $operation)
     {
         static $defaultRoot = array('name' => 'Request');
         // If no root element was specified, then just wrap the XML in 'Request'
         $root = $operation->getData('xmlRoot') ?: $defaultRoot;
-
         // Allow the XML declaration to be customized with xmlEncoding
-        $declaration = '<?xml version="1.0"';
-        if ($encoding = $operation->getData('xmlEncoding')) {
-            $declaration .= ' encoding="' . $encoding . '"';
-        }
-        $declaration .= "?>";
+        $encoding = $operation->getData('xmlEncoding');
 
+        $xmlWriter = $this->startDocument($encoding);
+
+        $xmlWriter->startElement($root['name']);
         // Create the wrapping element with no namespaces if no namespaces were present
-        if (empty($root['namespaces'])) {
-            return new \SimpleXMLElement("{$declaration}\n<{$root['name']}/>");
-        } else {
+        if (!empty($root['namespaces'])) {
             // Create the wrapping element with an array of one or more namespaces
-            $xml = "{$declaration}\n<{$root['name']} ";
             foreach ((array) $root['namespaces'] as $prefix => $uri) {
-                $xml .= is_numeric($prefix) ? "xmlns=\"{$uri}\" " : "xmlns:{$prefix}=\"{$uri}\" ";
+                $nsLabel = 'xmlns';
+                if (!is_numeric($prefix)) {
+                    $nsLabel .= ':'.$prefix;
+                }
+                $xmlWriter->writeAttribute($nsLabel, $uri);
             }
-            return new \SimpleXMLElement($xml . "/>");
         }
+        return $xmlWriter;
     }
 
     /**
      * Recursively build the XML body
      *
-     * @param \SimpleXMLElement $xml   XML to modify
+     * @param \XMLWriter $xml   XML to modify
      * @param Parameter         $param API Parameter
      * @param mixed             $value Value to add
      */
-    protected function addXml(\SimpleXMLElement $xml, Parameter $param, $value)
+    protected function addXml(\XMLWriter $xmlWriter, Parameter $param, $value)
     {
         if ($value === null) {
             return;
@@ -119,29 +123,106 @@ class XmlVisitor extends AbstractRequestVisitor
 
         $value = $param->filter($value);
         $type = $param->getType();
+        $name = $param->getWireName();
+        $prefix = null;
+        $namespace = $param->getData('xmlNamespace');
+        if (false !== strpos($name, ':')) {
+            list($prefix, $name) = explode(':', $name);
+        }
 
         if ($type == 'object' || $type == 'array') {
-            $ele = $param->getData('xmlFlattened') ? $xml : $xml->addChild($param->getWireName());
-            if ($param->getType() == 'array') {
-                $this->addXmlArray($ele, $param, $value, $param->getData('xmlNamespace'));
-            } elseif ($param->getType() == 'object') {
-                $this->addXmlObject($ele, $param, $value);
+            if (!$param->getData('xmlFlattened')) {
+                $xmlWriter->startElementNS(null, $name, $namespace);
             }
-        } elseif ($param->getData('xmlAttribute')) {
-            $xml->addAttribute($param->getWireName(), $value, $param->getData('xmlNamespace'));
-        } else {
-            $xml->addChild($param->getWireName(), $value, $param->getData('xmlNamespace'));
+            if ($param->getType() == 'array') {
+                $this->addXmlArray($xmlWriter, $param, $value);
+            } elseif ($param->getType() == 'object') {
+                $this->addXmlObject($xmlWriter, $param, $value);
+            }
+            if (!$param->getData('xmlFlattened')) {
+                $xmlWriter->endElement();
+            }
+            return;
         }
+        if ($param->getData('xmlAttribute')) {
+            $this->writeAttribute($xmlWriter, $prefix, $name, $namespace, $value);
+        } else {
+            $this->writeElement($xmlWriter, $prefix, $name, $namespace, $value);
+        }
+    }
+
+    /**
+     * Write an attribute with namespace if used
+     * 
+     * @param  \XMLWriter $xmlWriter [description]
+     * @param  string $prefix        Namespace prefix if any
+     * @param  string $name          Attribute name
+     * @param  string $namespace     The uri of the namespace
+     * @param  string $value         The attribute content
+     */
+    protected function writeAttribute($xmlWriter, $prefix, $name, $namespace, $value) 
+    {
+        if (empty($namespace)) {
+            $xmlWriter->writeAttribute($name, $value);
+        } else {
+            $xmlWriter->writeAttributeNS($prefix, $name, $namespace, $value);
+        }
+    }
+
+    /**
+     * Write an element with namespace if used
+     * 
+     * @param  \XMLWriter $xmlWriter XML writer respource
+     * @param  string $prefix        Namespace prefix if any
+     * @param  string $name          Element name
+     * @param  string $namespace     The uri of the namespace
+     * @param  string $value         The element content
+     */
+    protected function writeElement(\XMLWriter $xmlWriter, $prefix, $name, $namespace, $value)
+    {
+        $xmlWriter->startElementNS($prefix, $name, $namespace);
+        if (preg_match('/(<|>|&)/', $value)) {
+            $xmlWriter->writeCData($value);
+        } else {
+            $xmlWriter->writeRaw($value);
+        }
+        $xmlWriter->endElement();
+    }
+
+    /**
+     * Create a new xml writier and start a document
+     * 
+     * @param  string $encoding document encoding
+     * 
+     * @return \XMLWriter the writer resource
+     */
+    protected function startDocument($encoding)
+    {
+        $this->writer = new \XMLWriter();
+        $this->writer->openMemory();
+        $this->writer->startDocument('1.0', $encoding);
+        return $this->writer;
+    }
+
+    /**
+     * End the document and return the output
+     * 
+     * @return \string the writer resource
+     */
+    protected function finishDocument($xmlWriter)
+    {
+        $xmlWriter->endDocument();
+        return $xmlWriter->outputMemory();
     }
 
     /**
      * Add an array to the XML
      */
-    protected function addXmlArray(\SimpleXMLElement $xml, Parameter $param, &$value)
+    protected function addXmlArray(\XMLWriter $xmlWriter, Parameter $param, &$value)
     {
         if ($items = $param->getItems()) {
             foreach ($value as $v) {
-                $this->addXml($xml, $items, $v);
+                $this->addXml($xmlWriter, $items, $v);
             }
         }
     }
@@ -149,11 +230,11 @@ class XmlVisitor extends AbstractRequestVisitor
     /**
      * Add an object to the XML
      */
-    protected function addXmlObject(\SimpleXMLElement $xml, Parameter $param, &$value)
+    protected function addXmlObject(\XMLWriter $xmlWriter, Parameter $param, &$value)
     {
         foreach ($value as $name => $v) {
             if ($property = $param->getProperty($name)) {
-                $this->addXml($xml, $property, $v);
+                $this->addXml($xmlWriter, $property, $v);
             }
         }
     }
