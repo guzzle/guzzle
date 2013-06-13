@@ -127,7 +127,7 @@ class XmlVisitor extends AbstractRequestVisitor
         $prefix = null;
         $namespace = $param->getData('xmlNamespace');
         if (false !== strpos($name, ':')) {
-            list($prefix, $name) = explode(':', $name);
+            list($prefix, $name) = explode(':', $name, 2);
         }
 
         if ($type == 'object' || $type == 'array') {
@@ -181,7 +181,7 @@ class XmlVisitor extends AbstractRequestVisitor
     protected function writeElement(\XMLWriter $xmlWriter, $prefix, $name, $namespace, $value)
     {
         $xmlWriter->startElementNS($prefix, $name, $namespace);
-        if (preg_match('/(<|>|&)/', $value)) {
+        if (strpbrk($value, '<>&')) {
             $xmlWriter->writeCData($value);
         } else {
             $xmlWriter->writeRaw($value);
