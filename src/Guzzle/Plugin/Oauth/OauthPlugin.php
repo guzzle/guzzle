@@ -173,11 +173,11 @@ class OauthPlugin implements EventSubscriberInterface
         
         if (array_key_exists('callback', $this->config) == true) {
             $params['oauth_callback'] = $this->config['callback'];
-		}
-
-		if (array_key_exists('verifier', $this->config) == true) {
-			$params['oauth_verifier'] = $this->config['verifier'];
-		}
+        }
+        
+        if (array_key_exists('verifier', $this->config) == true) {
+            $params['oauth_verifier'] = $this->config['verifier'];
+        }
 
         // Add query string parameters
         $params->merge($request->getQuery());
