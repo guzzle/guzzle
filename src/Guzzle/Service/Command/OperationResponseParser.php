@@ -67,6 +67,11 @@ class OperationResponseParser extends DefaultResponseParser
         if ($type == OperationInterface::TYPE_MODEL) {
             $model = $operation->getServiceDescription()->getModel($operation->getResponseClass());
         } elseif ($type == OperationInterface::TYPE_CLASS) {
+            $object = $command->getClient()->createObject($command);
+            if ($object != null) {
+                return $object;
+            }
+
             $responseClassInterface = __NAMESPACE__ . '\ResponseClassInterface';
             $className = $operation->getResponseClass();
             if (!class_exists($className)) {

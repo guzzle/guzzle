@@ -282,6 +282,23 @@ class Client extends HttpClient implements ClientInterface
     }
 
     /**
+     * Allows the client for an API to create the responseClass objects for a given command.
+     * Override this function to create the objects specific to the API you are using.
+     *
+     * @param $className The class name as defined in the service.
+     * @param AbstractCommand $command The command that was requested.
+     * @return null Default implementation does not create any classes.
+     */
+    function createObject(AbstractCommand $command){
+        //The className that should be created should be retrieved from:
+        //$className = $command->getOperation()->getResponseClass();
+
+        //The data returned be the API can be accessed via:
+        //$data = $command->getRequest()->getResponse()->getBody(TRUE);
+        return null;
+    }
+
+    /**
      * @deprecated
      * @codeCoverageIgnore
      */
