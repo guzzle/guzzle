@@ -244,7 +244,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 
     public function head($uri = null, $headers = null, array $options = array())
     {
-        return $this->createRequest('HEAD', $uri, $headers, $options);
+        return $this->createRequest('HEAD', $uri, $headers, null, $options);
     }
 
     public function delete($uri = null, $headers = null, $body = null, array $options = array())

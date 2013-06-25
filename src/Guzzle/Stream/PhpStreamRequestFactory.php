@@ -45,18 +45,18 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
             throw new InvalidArgumentException('$context must be an array or resource');
         }
 
-        $this->setUrl($request);
-        $this->addDefaultContextOptions($request);
-        $this->addSslOptions($request);
-        $this->addBodyOptions($request);
-        $this->addProxyOptions($request);
-
         // Dispatch the before send event
         $request->dispatch('request.before_send', array(
             'request'         => $request,
             'context'         => $this->context,
             'context_options' => $this->contextOptions
         ));
+
+        $this->setUrl($request);
+        $this->addDefaultContextOptions($request);
+        $this->addSslOptions($request);
+        $this->addBodyOptions($request);
+        $this->addProxyOptions($request);
 
         // Create the file handle but silence errors
         return $this->createStream($params)

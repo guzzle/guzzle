@@ -574,4 +574,11 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $client->setDefaultOption('allow_redirects', false);
         $this->assertFalse($client->getDefaultOption('allow_redirects'));
     }
+
+    public function testHeadCanUseOptions()
+    {
+        $client = new Client();
+        $head = $client->head('http://www.foo.com', array(), array('query' => array('foo' => 'bar')));
+        $this->assertEquals('bar', $head->getQuery()->get('foo'));
+    }
 }
