@@ -440,6 +440,10 @@ class Cookie implements ToArrayInterface
                 return false;
             }
 
+            if (filter_var($domain, FILTER_VALIDATE_IP)) {
+                return false;
+            }
+
             if (substr($domain, -strlen($realDomain)) === $realDomain) {
                 // Match exact or 1 deep subdomain.
                 return !strcasecmp($domain, $realDomain) ||
