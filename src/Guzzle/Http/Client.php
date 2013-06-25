@@ -167,6 +167,44 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 
         return $this;
     }
+    /**
+     * Set the client private key used for client SSL validation
+     *  
+     * @param string $filename path to client key file in PEM format
+     * @param string $password
+     * @return \Guzzle\Http\Client
+     */
+    final public function setSslClientKey($filename, $password = null)
+    {
+    	$opts = $this->config[self::CURL_OPTIONS] ?: array();
+    
+    	$opts[CURLOPT_SSLKEY] = $filename;
+    	if(!is_null($password)) {
+    		$opts[CURLOPT_SSLKEYPASSWD] = $password;
+    	}
+    	$this->config->set(self::CURL_OPTIONS, $opts);
+    
+    	return $this;
+    }
+    /**
+     * Set the client certificate used for client SSL validation
+     *
+     * @param string $filename path to client certificate file in PEM format
+     * @param string $password
+     * @return \Guzzle\Http\Client
+     */
+    final public function setSslClientCert($filename, $password = null)
+    {
+    	$opts = $this->config[self::CURL_OPTIONS] ?: array();
+    
+    	$opts[CURLOPT_SSLCERT] = $filename;
+    	if(!is_null($password)) {
+    		$opts[CURLOPT_SSLCERTPASSWD] = $password;
+    	}
+    	$this->config->set(self::CURL_OPTIONS, $opts);
+    
+    	return $this;
+    }
 
     public function createRequest($method = 'GET', $uri = null, $headers = null, $body = null, array $options = array())
     {
