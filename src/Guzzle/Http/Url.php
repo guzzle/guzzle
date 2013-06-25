@@ -33,8 +33,10 @@ class Url
         static $defaults = array('scheme' => null, 'host' => null, 'path' => null, 'port' => null, 'query' => null,
             'user' => null, 'pass' => null, 'fragment' => null);
 
-        $parts = parse_url($url) + $defaults;
-
+        if (parse_url($url))
+            $parts = parse_url($url) + $defaults;
+        else
+            throw new InvalidArgumentException('Was unable to parse malformed url: ' . $url);
         // Convert the query string into a QueryString object
         if ($parts['query'] || 0 !== strlen($parts['query'])) {
             $parts['query'] = QueryString::fromString($parts['query']);
