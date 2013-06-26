@@ -543,21 +543,6 @@ class Request extends AbstractMessage implements RequestInterface
     }
 
     /**
-     * {@inheritdoc}
-     * Adds a check for Host header changes
-     */
-    public function addHeader($header, $value)
-    {
-        parent::addHeader($header, $value);
-
-        if ($header == 'host' || $header == 'Host') {
-            $this->setHost((string) $this->getHeader('Host'));
-        }
-
-        return $this;
-    }
-
-    /**
      * Get an array containing the request and response for event notifications
      *
      * @return array

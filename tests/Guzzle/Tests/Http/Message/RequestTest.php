@@ -431,40 +431,6 @@ class RequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($this->request->getEventDispatcher()->hasListeners('request.sent'));
     }
 
-    public function testCatchesAllHostHeaderChanges()
-    {
-        // Tests setting using headers
-        $this->request->setHeader('Host', 'www.abc.com');
-        $this->assertEquals('www.abc.com', $this->request->getHost());
-        $this->assertEquals('www.abc.com:8124', $this->request->getHeader('Host'));
-        $this->assertEquals(8124, $this->request->getPort());
-
-        // Tests setting using setHost()
-        $this->request->setHost('abc.com');
-        $this->assertEquals('abc.com', $this->request->getHost());
-        $this->assertEquals('abc.com:8124', $this->request->getHeader('Host'));
-        $this->assertEquals(8124, $this->request->getPort());
-
-        // Tests setting with a port
-        $this->request->setHost('abc.com:8081');
-        $this->assertEquals('abc.com', $this->request->getHost());
-        $this->assertEquals('abc.com:8081', $this->request->getHeader('Host'));
-        $this->assertEquals(8081, $this->request->getPort());
-
-        // Tests setting with a port using the Host header
-        $this->request->setHeader('Host', 'solr.com:8983');
-        $this->assertEquals('solr.com', $this->request->getHost());
-        $this->assertEquals('solr.com:8983', (string) $this->request->getHeader('Host'));
-        $this->assertEquals(8983, $this->request->getPort());
-
-        // Tests setting with an inferred 443 port using the Host header
-        $this->request->setScheme('https');
-        $this->request->setHeader('Host', 'solr.com');
-        $this->assertEquals('solr.com', $this->request->getHost());
-        $this->assertEquals('solr.com:8983', (string) $this->request->getHeader('Host'));
-        $this->assertEquals(8983, $this->request->getPort());
-    }
-
     public function testRecognizesBasicAuthCredentialsInUrls()
     {
         $this->request->setUrl('http://michael:test@test.com/');
