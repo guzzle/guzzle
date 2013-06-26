@@ -163,7 +163,7 @@ class XmlVisitorTest extends AbstractVisitorTestCase
                 array('Wrap' => array(
                     'Foo' => 'test'
                 )),
-                '<Request><Wrap xmlns:xsi="http://foo.com" xsi:baz="test"/></Request>'
+                '<Request><Wrap xsi:baz="test" xmlns:xsi="http://foo.com"/></Request>'
             ),
             // Add nodes with custom namespace prefix
             array(
@@ -188,6 +188,21 @@ class XmlVisitorTest extends AbstractVisitorTestCase
                     'Foo' => 'test'
                 )),
                 '<Request><Wrap><xsi:Foo xmlns:xsi="http://foobar.com">test</xsi:Foo></Wrap></Request>'
+            ),
+            array(
+                array(
+                    'parameters' => array(
+                        'Foo' => array(
+                            'location' => 'xml',
+                            'type' => 'string',
+                            'data' => array(
+                                'xmlNamespace' => 'http://foo.com'
+                            )
+                        )
+                    )
+                ),
+                array('Foo' => '<h1>This is a title</h1>'),
+                '<Request><Foo xmlns="http://foo.com"><![CDATA[<h1>This is a title</h1>]]></Foo></Request>'
             ),
             // Flat array at top level
             array(
