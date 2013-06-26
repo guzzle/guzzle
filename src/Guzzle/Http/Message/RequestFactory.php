@@ -333,4 +333,24 @@ class RequestFactory implements RequestFactoryInterface
     {
         $request->getCurlOptions()->set(CURLOPT_PROXY, $value, $flags);
     }
+
+    protected function visit_cert(RequestInterface $request, $value, $flags)
+    {
+        if (is_array($value)) {
+            $request->getCurlOptions()->set(CURLOPT_SSLCERT, $value[0]);
+            $request->getCurlOptions()->set(CURLOPT_SSLCERTPASSWD, $value[1]);
+        } else {
+            $request->getCurlOptions()->set(CURLOPT_SSLCERT, $value);
+        }
+    }
+
+    protected function visit_ssl_key(RequestInterface $request, $value, $flags)
+    {
+        if (is_array($value)) {
+            $request->getCurlOptions()->set(CURLOPT_SSLKEY, $value[0]);
+            $request->getCurlOptions()->set(CURLOPT_SSLKEYPASSWD, $value[1]);
+        } else {
+            $request->getCurlOptions()->set(CURLOPT_SSLKEY, $value);
+        }
+    }
 }
