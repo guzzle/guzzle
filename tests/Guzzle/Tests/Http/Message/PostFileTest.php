@@ -56,7 +56,7 @@ class PostFileTest extends \Guzzle\Tests\GuzzleTestCase
             $c = $file->getCurlValue();
             $this->assertEquals(__FILE__, $c->getFilename());
             $this->assertEquals('PostFileTest.php', $c->getPostFilename());
-            $this->assertContains('test/x-', $c->getMimeType());
+            $this->assertContains('text/x-', $c->getMimeType());
         }
     }
 
