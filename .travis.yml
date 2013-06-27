@@ -2,7 +2,6 @@ language: php
 php:
   - 5.3
   - 5.4
-  - 5.5
 before_script:
   - curl --version
   - pear config-set php_ini ~/.phpenv/versions/`php -r 'echo phpversion();'`/etc/php.ini
