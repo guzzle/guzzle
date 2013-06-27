@@ -134,6 +134,13 @@ class HeaderTest extends \Guzzle\Tests\GuzzleTestCase
                     array('boo' => ''),
                     array('test' => '123')
                 )
+            ),
+            array(
+                '<http://.../side.jpeg?test=1>; rel="side"; type="image/jpeg",<http://.../side.jpeg?test=2>; rel=side; type="image/jpeg"',
+                array(
+                    array('<http://.../side.jpeg?test=1>' => '', 'rel' => 'side', 'type' => 'image/jpeg'),
+                    array('<http://.../side.jpeg?test=2>' => '', 'rel' => 'side', 'type' => 'image/jpeg')
+                )
             )
         );
     }
