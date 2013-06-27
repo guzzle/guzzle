@@ -1,14 +1,21 @@
 language: php
+
 php:
   - 5.3
   - 5.4
+  - 5.5
+
+matrix:
+  allow_failures:
+    - php: 5.5
+
 before_script:
   - curl --version
   - pear config-set php_ini ~/.phpenv/versions/`php -r 'echo phpversion();'`/etc/php.ini
   - echo 'Installing pecl_http'
-  - wget --quiet http://pecl.php.net/get/pecl_http-1.7.4.tgz
-  - tar -xzf pecl_http-1.7.4.tgz
-  - sh -c "cd pecl_http-1.7.4 && phpize && ./configure && make && sudo make install" > /dev/null
+  - wget --quiet http://pecl.php.net/get/pecl_http-1.7.6.tgz
+  - tar -xzf pecl_http-1.7.6.tgz
+  - sh -c "cd pecl_http-1.7.6 && phpize && ./configure && make && sudo make install" > /dev/null
   - echo "extension=http.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
   - pecl install uri_template-beta
   - pear config-set auto_discover 1
@@ -24,4 +31,5 @@ before_script:
   - cp phing/build.properties.travis phing/build.properties
   - echo 'Ensuring the correct version of node is running'
   - ~/.nvm/nvm.sh install v0.6.14
+
 script: phing travisci
