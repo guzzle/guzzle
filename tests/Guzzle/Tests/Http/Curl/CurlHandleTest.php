@@ -199,7 +199,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         $auth = base64_encode('michael:123');
         $testFileSize = filesize($testFile);
 
-        return array(
+        $tests = array(
             // Send a regular GET
             array('GET', 'http://www.google.com/', null, null, array(
                 CURLOPT_RETURNTRANSFER => 0,
@@ -335,32 +335,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 'Content-Type'     => 'application/x-www-form-urlencoded; charset=utf-8',
                 '!Transfer-Encoding' => null
             )),
-            // Send a POST request using a POST file
-            array('POST', 'http://localhost:8124/post.php', null, $postBody, array(
-                CURLOPT_RETURNTRANSFER => 0,
-                CURLOPT_HEADER => 0,
-                CURLOPT_CONNECTTIMEOUT => 150,
-                CURLOPT_WRITEFUNCTION => 'callback',
-                CURLOPT_HEADERFUNCTION => 'callback',
-                CURLOPT_POST => 1,
-                CURLOPT_POSTFIELDS => array(
-                    'file' => '@' . $testFile . ';filename=phpunit.xml.dist;type=application/octet-stream'
-                ),
-                CURLOPT_HTTPHEADER => array (
-                    'Accept:',
-                    'Host: localhost:8124',
-                    'Content-Type: multipart/form-data',
-                    'Expect: 100-Continue',
-                    'User-Agent: ' . $userAgent
-                )
-            ), array(
-                'Host'             => '*',
-                'User-Agent'       => '*',
-                'Content-Length'   => '*',
-                'Expect'           => '100-Continue',
-                'Content-Type'     => 'multipart/form-data; boundary=*',
-                '!Transfer-Encoding' => null
-            )),
             // Send a POST request with raw POST data and a custom content-type
             array('POST', 'http://localhost:8124/post.php', array(
                 'Content-Type' => 'application/json'
@@ -474,6 +448,43 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 '!Transfer-Encoding' => null
             ))
         );
+
+
+        $postTest = array('POST', 'http://localhost:8124/post.php', null, $postBody, array(
+            CURLOPT_RETURNTRANSFER => 0,
+            CURLOPT_HEADER => 0,
+            CURLOPT_CONNECTTIMEOUT => 150,
+            CURLOPT_WRITEFUNCTION => 'callback',
+            CURLOPT_HEADERFUNCTION => 'callback',
+            CURLOPT_POST => 1,
+            CURLOPT_POSTFIELDS => array(
+                'file' => '@' . $testFile . ';filename=phpunit.xml.dist;type=application/octet-stream'
+            ),
+            CURLOPT_HTTPHEADER => array (
+                'Accept:',
+                'Host: localhost:8124',
+                'Content-Type: multipart/form-data',
+                'Expect: 100-Continue',
+                'User-Agent: ' . $userAgent
+            )
+        ), array(
+            'Host'             => '*',
+            'User-Agent'       => '*',
+            'Content-Length'   => '*',
+            'Expect'           => '100-Continue',
+            'Content-Type'     => 'multipart/form-data; boundary=*',
+            '!Transfer-Encoding' => null
+        ));
+
+        if (version_compare(phpversion(), '5.5.0', '>=')) {
+            $postTest[4][CURLOPT_POSTFIELDS] = array(
+                new CurlFile($testFile, 'application/octet-stream', 'phpunit.xml.dist')
+            );
+        }
+
+        $tests[] = $postTest;
+
+        return $tests;
     }
 
     /**
@@ -648,7 +659,11 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
         // Ensure the CURLOPT_POSTFIELDS option was set properly
         $options = $this->requestHandle->getOptions()->getAll();
-        $this->assertContains('@' . __FILE__ . ';filename=CurlHandleTest.php;type=text/x-', $options[CURLOPT_POSTFIELDS]['foo']);
+        if (version_compare(phpversion(), '5.5.0', '<')) {
+            $this->assertContains('@' . __FILE__ . ';filename=CurlHandleTest.php;type=text/x-', $options[CURLOPT_POSTFIELDS]['foo']);
+        } else{
+            $this->assertInstanceOf(\CURLFile, $options[CURLOPT_POSTFIELDS]['foo']);
+        }
         $this->assertEquals('baz', $options[CURLOPT_POSTFIELDS]['bar']);
         $this->assertEquals('1', $options[CURLOPT_POSTFIELDS]['arr[a]']);
         $this->assertEquals('2', $options[CURLOPT_POSTFIELDS]['arr[b]']);
