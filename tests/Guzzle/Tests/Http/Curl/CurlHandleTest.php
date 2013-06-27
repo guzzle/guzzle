@@ -662,7 +662,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
         if (version_compare(phpversion(), '5.5.0', '<')) {
             $this->assertContains('@' . __FILE__ . ';filename=CurlHandleTest.php;type=text/x-', $options[CURLOPT_POSTFIELDS]['foo']);
         } else{
-            $this->assertInstanceOf(\CURLFile, $options[CURLOPT_POSTFIELDS]['foo']);
+            $this->assertInstanceOf('CURLFile', $options[CURLOPT_POSTFIELDS]['foo']);
         }
         $this->assertEquals('baz', $options[CURLOPT_POSTFIELDS]['bar']);
         $this->assertEquals('1', $options[CURLOPT_POSTFIELDS]['arr[a]']);
