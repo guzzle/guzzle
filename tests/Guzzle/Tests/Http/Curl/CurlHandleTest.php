@@ -478,7 +478,7 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
         if (version_compare(phpversion(), '5.5.0', '>=')) {
             $postTest[4][CURLOPT_POSTFIELDS] = array(
-                new CurlFile($testFile, 'application/octet-stream', 'phpunit.xml.dist')
+                new \CurlFile($testFile, 'application/octet-stream', 'phpunit.xml.dist')
             );
         }
 
