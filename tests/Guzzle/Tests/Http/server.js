@@ -124,9 +124,15 @@ var GuzzleServer = function(port) {
 
             // If this is not a control request and no responses are in queue, return 500 response
             if (req.url.indexOf("/guzzle-server") == -1 && !that.responses.length) {
-                res.writeHead(500);
-                res.end("No responses in queue");
-                return;
+                if (req.url == '/guzzle-perf') {
+                    res.writeHead(200);
+                    res.end("Body of response");
+                    return;
+                } else {
+                    res.writeHead(500);
+                    res.end("No responses in queue");
+                    return;
+                }
             }
 
             // Begin building the request message as a string
