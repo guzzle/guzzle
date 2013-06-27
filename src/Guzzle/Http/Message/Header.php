@@ -133,16 +133,17 @@ class Header implements HeaderInterface
 
         // Normalize the header into a single array and iterate over all values
         foreach ($this->normalize()->toArray() as $val) {
+
             $part = array();
-            $parts = explode(';', $val);
-            $part[array_shift($parts)] = '';
-            foreach ($parts as $kvp) {
-                $pieces = array_map($callback, explode('=', $kvp, 2));
+            foreach (explode(';', $val) as $kvp) {
+                $matches = array();
+                preg_match_all('/<[^>]+>|[^=]+/', $kvp, $matches);
+                $pieces = array_map($callback, $matches[0]);
+
                 $part[$pieces[0]] = isset($pieces[1]) ? $pieces[1] : '';
             }
             $params[] = $part;
         }
-
         return $params;
     }
 
