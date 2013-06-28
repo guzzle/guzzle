@@ -67,14 +67,7 @@ class OperationResponseParser extends DefaultResponseParser
         if ($type == OperationInterface::TYPE_MODEL) {
             $model = $operation->getServiceDescription()->getModel($operation->getResponseClass());
         } elseif ($type == OperationInterface::TYPE_CLASS) {
-            $responseClassInterface = __NAMESPACE__ . '\ResponseClassInterface';
-            $className = $operation->getResponseClass();
-            if (!class_exists($className)) {
-                throw new ResponseClassException("{$className} does not exist");
-            } elseif (!method_exists($className, 'fromCommand')) {
-                throw new ResponseClassException("{$className} must implement {$responseClassInterface}");
-            }
-            return $className::fromCommand($command);
+            return $this->parseClass($command);
         }
 
         if (!$model) {
@@ -86,6 +79,28 @@ class OperationResponseParser extends DefaultResponseParser
         } else {
             return new Model($this->visitResult($model, $command, $response), $model);
         }
+    }
+
+    /**
+     * Parse a class object
+     *
+     * @param CommandInterface $command Command to parse into an object
+     *
+     * @return mixed
+     * @throws ResponseClassException
+     */
+    protected function parseClass(CommandInterface $command)
+    {
+        $className = $command->getOperation()->getResponseClass();
+        if (!class_exists($className)) {
+            throw new ResponseClassException("{$className} does not exist");
+        }
+
+        if (!method_exists($className, 'fromCommand')) {
+            throw new ResponseClassException("{$className} must implement the fromCommand() method");
+        }
+
+        return $className::fromCommand($command);
     }
 
     /**
@@ -113,30 +128,8 @@ class OperationResponseParser extends DefaultResponseParser
         }
 
         // Visit additional properties when it is an actual schema
-        if ($additional = $model->getAdditionalProperties()) {
-            if ($additional instanceof Parameter) {
-                // Only visit when a location is specified
-                if ($location = $additional->getLocation()) {
-                    if (!isset($foundVisitors[$location])) {
-                        $foundVisitors[$location] = $this->factory->getResponseVisitor($location);
-                        $foundVisitors[$location]->before($command, $result);
-                    }
-                    // Only traverse if an array was parsed from the before() visitors
-                    if (is_array($result)) {
-                        // Find each additional property
-                        foreach (array_keys($result) as $key) {
-                            // Check if the model actually knows this property. If so, then it is not additional
-                            if (!$model->getProperty($key)) {
-                                // Set the name to the key so that we can parse it with each visitor
-                                $additional->setName($key);
-                                $foundVisitors[$location]->visit($command, $response, $additional, $result);
-                            }
-                        }
-                        // Reset the additionalProperties name to null
-                        $additional->setName(null);
-                    }
-                }
-            }
+        if (($additional = $model->getAdditionalProperties()) instanceof Parameter) {
+            $this->visitAdditionalProperties($model, $command, $response, $additional, $result, $foundVisitors);
         }
 
         // Apply the parameter value with the location visitor
@@ -152,5 +145,36 @@ class OperationResponseParser extends DefaultResponseParser
         }
 
         return $result;
+    }
+
+    protected function visitAdditionalProperties(
+        Parameter $model,
+        CommandInterface $command,
+        Response $response,
+        Parameter $additional,
+        &$result,
+        array &$foundVisitors
+    ) {
+        // Only visit when a location is specified
+        if ($location = $additional->getLocation()) {
+            if (!isset($foundVisitors[$location])) {
+                $foundVisitors[$location] = $this->factory->getResponseVisitor($location);
+                $foundVisitors[$location]->before($command, $result);
+            }
+            // Only traverse if an array was parsed from the before() visitors
+            if (is_array($result)) {
+                // Find each additional property
+                foreach (array_keys($result) as $key) {
+                    // Check if the model actually knows this property. If so, then it is not additional
+                    if (!$model->getProperty($key)) {
+                        // Set the name to the key so that we can parse it with each visitor
+                        $additional->setName($key);
+                        $foundVisitors[$location]->visit($command, $response, $additional, $result);
+                    }
+                }
+                // Reset the additionalProperties name to null
+                $additional->setName(null);
+            }
+        }
     }
 }
