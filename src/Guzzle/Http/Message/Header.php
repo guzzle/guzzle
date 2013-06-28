@@ -122,26 +122,22 @@ class Header implements HeaderInterface
         return new \ArrayIterator($this->toArray());
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function parseParams()
     {
-        $params = array();
+        $params = $matches = array();
         $callback = array($this, 'trimHeader');
 
         // Normalize the header into a single array and iterate over all values
         foreach ($this->normalize()->toArray() as $val) {
-
             $part = array();
             foreach (preg_split('/;(?=([^"]*"[^"]*")*[^"]*$)/', $val) as $kvp) {
-                $matches = array();
                 preg_match_all('/<[^>]+>|[^=]+/', $kvp, $matches);
                 $pieces = array_map($callback, $matches[0]);
                 $part[$pieces[0]] = isset($pieces[1]) ? $pieces[1] : '';
             }
             $params[] = $part;
         }
+
         return $params;
     }
 
