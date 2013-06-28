@@ -9,7 +9,7 @@ class LinkTest extends GuzzleTestCase
 {
     public function testParsesLinks()
     {
-        $link = new Link('Link', '<http:/.../front.jpeg>; rel=front; type="image/jpeg", <http://.../back.jpeg>; rel=back; type="image/jpeg"');
+        $link = new Link('Link', '<http:/.../front.jpeg>; rel=front; type="image/jpeg", <http://.../back.jpeg>; rel=back; type="image/jpeg", <http://.../side.jpeg?test=1>; rel=side; type="image/jpeg"');
         $links = $link->getLinks();
         $this->assertEquals(array(
             array(
@@ -22,6 +22,11 @@ class LinkTest extends GuzzleTestCase
                 'type' => 'image/jpeg',
                 'url' => 'http://.../back.jpeg',
             ),
+            array(
+                'rel' => 'side',
+                'type' => 'image/jpeg',
+                'url' => 'http://.../side.jpeg?test=1'
+            )
         ), $links);
 
         $this->assertEquals(array(
