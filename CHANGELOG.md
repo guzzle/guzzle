@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+3.7.1 (TBD)
+------------------
+
+* Bug fix: Setting default options on a client now works
+* `Guzzle\Service\Command\LocationVisitor\Request\XmlVisitor` was rewritten to change from using SimpleXML to XMLWriter
+* Setting options on HEAD requests now works. See #352
+* Moving stream factory before send event to before building the stream. See #353
+* OAuth parameters are only added via the plugin if they aren't already set
+* Cookies no longer match on IP addresses per RFC 6265
+* Exceptions are now thrown when a URL cannot be parsed
+* Added `cert` and `ssl_key` as request options
+* `Host` header can now diverge from the host part of a URL if the header is set manually
+* Correctly parsing header parameters that are in `<>` and quotes
+
 3.7.0 (2013-06-10)
 ------------------
 
