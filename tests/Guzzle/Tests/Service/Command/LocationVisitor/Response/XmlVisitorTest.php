@@ -25,6 +25,22 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
         $this->assertEquals(array('Bar' => 'test'), $result);
     }
 
+    public function testBeforeMethodParsesXmlWithNamespace()
+    {
+        $this->markTestSkipped("Response/XmlVisitor cannot accept 'xmlns' in response, see #368 (http://git.io/USa1mA).");
+
+        $visitor = new Visitor();
+        $command = $this->getMockBuilder('Guzzle\Service\Command\AbstractCommand')
+            ->setMethods(array('getResponse'))
+            ->getMockForAbstractClass();
+        $command->expects($this->once())
+            ->method('getResponse')
+            ->will($this->returnValue(new Response(200, null, '<foo xmlns="urn:foo"><bar:Bar xmlns:bar="urn:bar">test</bar:Bar></foo>')));
+        $result = array();
+        $visitor->before($command, $result);
+        $this->assertEquals(array('Bar' => 'test'), $result);
+    }
+
     public function testBeforeMethodParsesNestedXml()
     {
         $visitor = new Visitor();
