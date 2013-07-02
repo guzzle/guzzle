@@ -14,6 +14,8 @@ CHANGELOG
 * Added `cert` and `ssl_key` as request options
 * `Host` header can now diverge from the host part of a URL if the header is set manually
 * Correctly parsing header parameters that are in `<>` and quotes
+* Returning `false` if `Guzzle\Http\EntityBody::getContentMd5()` fails
+* Not setting a `Content-MD5` on a command if calculating the Content-MD5 fails via the CommandContentMd5Plugin
 
 3.7.0 (2013-06-10)
 ------------------
