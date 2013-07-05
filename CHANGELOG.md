@@ -1,19 +1,19 @@
 CHANGELOG
 =========
 
-3.7.1 (TBD)
+3.7.1 (2013-07-05)
 ------------------
 
 * Bug fix: Setting default options on a client now works
-* `Guzzle\Service\Command\LocationVisitor\Request\XmlVisitor` was rewritten to change from using SimpleXML to XMLWriter
-* Setting options on HEAD requests now works. See #352
-* Moving stream factory before send event to before building the stream. See #353
-* OAuth parameters are only added via the plugin if they aren't already set
-* Cookies no longer match on IP addresses per RFC 6265
-* Exceptions are now thrown when a URL cannot be parsed
+* Bug fix: Setting options on HEAD requests now works. See #352
+* Bug fix: Moving stream factory before send event to before building the stream. See #353
+* Bug fix: Cookies no longer match on IP addresses per RFC 6265
+* Bug fix: Correctly parsing header parameters that are in `<>` and quotes
 * Added `cert` and `ssl_key` as request options
 * `Host` header can now diverge from the host part of a URL if the header is set manually
-* Correctly parsing header parameters that are in `<>` and quotes
+* `Guzzle\Service\Command\LocationVisitor\Request\XmlVisitor` was rewritten to change from using SimpleXML to XMLWriter
+* OAuth parameters are only added via the plugin if they aren't already set
+* Exceptions are now thrown when a URL cannot be parsed
 * Returning `false` if `Guzzle\Http\EntityBody::getContentMd5()` fails
 * Not setting a `Content-MD5` on a command if calculating the Content-MD5 fails via the CommandContentMd5Plugin
 
