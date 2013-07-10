@@ -36,7 +36,8 @@ class UriTemplate implements UriTemplateInterface
 
     public function expand($template, array $variables)
     {
-        $this->template = $template;
+        // URL encode spaces
+        $this->template = strtr($template, ' ', '%20');
         $this->variables = $variables;
 
         // Check to ensure that the preg_* function is needed
