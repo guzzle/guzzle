@@ -513,7 +513,7 @@ class XmlVisitorTest extends AbstractVisitorTestCase
         $command->setClient(new Client());
         $request = $command->prepare();
         $this->assertEquals(
-            '<?xml version="1.0" encoding="utf8"?>' . "\n"
+            '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
                 . '<Request><Foo>test</Foo></Request>' . "\n",
             (string) $request->getBody()
         );
