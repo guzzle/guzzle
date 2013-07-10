@@ -31,7 +31,7 @@ var http = require("http");
  * Guzzle node.js server
  * @class
  */
-var GuzzleServer = function(port) {
+var GuzzleServer = function(port, log) {
 
     this.port = port;
     this.log = log;
