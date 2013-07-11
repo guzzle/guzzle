@@ -59,6 +59,7 @@ class Url
      */
     public static function buildUrl(array $parts)
     {
+        static $pathReplace = array(' ' => '%20', '?' => '%3F');
         $url = $scheme = '';
 
         if (isset($parts['scheme'])) {
@@ -92,7 +93,7 @@ class Url
             if ($url && $parts['path'][0] != '/' && substr($url, -1)  != '/') {
                 $url .= '/';
             }
-            $url .= $parts['path'];
+            $url .= strtr($parts['path'], $pathReplace);
         }
 
         // Add the query string if present

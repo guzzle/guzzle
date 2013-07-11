@@ -209,4 +209,19 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request->send();
         $this->assertFalse($request->getParams()->hasKey('redirect.count'));
     }
+
+    public function testHandlesRedirectsWithSpacesProperly()
+    {
+        // Flush the server and queue up a redirect followed by a successful response
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect 1\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
+        ));
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->get('/foo');
+        $request->send();
+        $reqs = $this->getServer()->getReceivedRequests(true);
+        $this->assertEquals('/redirect%201', $reqs[1]->getResource());
+    }
 }

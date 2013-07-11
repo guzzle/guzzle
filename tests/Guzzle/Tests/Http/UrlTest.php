@@ -232,4 +232,11 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
     {
         Url::factory('foo:////');
     }
+
+    public function testConvertsSpecialCharsInPathWhenCastingToString()
+    {
+        $url = Url::factory('http://foo.com/baz bar?a=b');
+        $url->addPath('?');
+        $this->assertEquals('http://foo.com/baz%20bar/%3F?a=b', (string) $url);
+    }
 }
