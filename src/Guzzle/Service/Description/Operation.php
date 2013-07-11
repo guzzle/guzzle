@@ -15,6 +15,7 @@ class Operation implements OperationInterface
     /** @var array Hashmap of properties that can be specified. Represented as a hash to speed up constructor. */
     protected static $properties = array(
         'name' => true, 'httpMethod' => true, 'uri' => true, 'class' => true, 'responseClass' => true,
+        'responseFactory' => true,
         'responseType' => true, 'responseNotes' => true, 'notes' => true, 'summary' => true, 'documentationUrl' => true,
         'deprecated' => true, 'data' => true, 'parameters' => true, 'additionalParameters' => true,
         'errorResponses' => true
@@ -49,6 +50,10 @@ class Operation implements OperationInterface
 
     /** @var string This is what is returned from the method */
     protected $responseClass;
+
+    /** @var string A factory class that can be set to create the class returned from the method */
+    protected $responseFactory;
+
 
     /** @var string Type information about the response */
     protected $responseType;
@@ -110,7 +115,7 @@ class Operation implements OperationInterface
         $this->errorResponses = $this->errorResponses ?: array();
         $this->data = $this->data ?: array();
 
-        if (!$this->responseClass) {
+        if (!$this->responseClass && !$this->responseFactory) {
             $this->responseClass = 'array';
             $this->responseType = 'primitive';
         } elseif ($this->responseType) {
@@ -362,6 +367,27 @@ class Operation implements OperationInterface
         return $this;
     }
 
+    public function setResponseFactory($responseFactory)
+    {
+        $this->responseFactory = $responseFactory;
+        return $this;
+    }
+
+    public function getResponseFactory()
+    {
+        if ($this->responseFactory != null) {
+            return $this->responseFactory;
+        }
+
+        $serviceDescription = $this->getServiceDescription();
+
+        if ($serviceDescription != null) {
+            return $serviceDescription->getResponseFactory();
+        }
+
+        return null;
+    }
+
     public function getResponseType()
     {
         return $this->responseType;
@@ -532,11 +558,15 @@ class Operation implements OperationInterface
 
     /**
      * Infer the response type from the responseClass value
+     * //TODO - should this be affected by responseFactory?
      */
     protected function inferResponseType()
     {
-        if (!$this->responseClass || $this->responseClass == 'array' || $this->responseClass == 'string'
-            || $this->responseClass == 'boolean' || $this->responseClass == 'integer'
+        if ($this->responseFactory) {
+            $this->responseType = self::TYPE_CLASS;
+        } elseif (!$this->responseClass || $this->responseClass == 'array' ||
+            $this->responseClass == 'string' || $this->responseClass == 'boolean' ||
+            $this->responseClass == 'integer'
         ) {
             $this->responseType = self::TYPE_PRIMITIVE;
         } elseif ($this->description && $this->description->hasModel($this->responseClass)) {

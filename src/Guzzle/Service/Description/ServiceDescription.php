@@ -34,6 +34,9 @@ class ServiceDescription implements ServiceDescriptionInterface, ToArrayInterfac
     /** @var string baseUrl/basePath */
     protected $baseUrl;
 
+    /** @var string The default responseFactory class for the service. */
+    protected $responseFactory;
+
     /**
      * {@inheritdoc}
      * @param string|array $config  File to build or array of operation information
@@ -77,7 +80,8 @@ class ServiceDescription implements ServiceDescriptionInterface, ToArrayInterfac
             'name'        => $this->name,
             'apiVersion'  => $this->apiVersion,
             'baseUrl'     => $this->baseUrl,
-            'description' => $this->description
+            'description' => $this->description,
+            'responseFactory' => $this->responseFactory
         ) + $this->extraData;
         $result['operations'] = array();
         foreach ($this->getOperations() as $name => $operation) {
@@ -111,6 +115,26 @@ class ServiceDescription implements ServiceDescriptionInterface, ToArrayInterfac
 
         return $this;
     }
+
+    /**
+    * Set the responseFactory of the service
+    *
+    * @param string $responseFactory Default responseFactory class to use for each operation
+    *
+    * @return self
+    */
+    public function setResponseFactory($responseFactory)
+    {
+        $this->responseFactory = $responseFactory;
+
+        return $this;
+    }
+
+    public function getResponseFactory()
+    {
+        return $this->responseFactory;
+    }
+
 
     public function getOperations()
     {
@@ -232,7 +256,7 @@ class ServiceDescription implements ServiceDescriptionInterface, ToArrayInterfac
     protected function fromArray(array $config)
     {
         // Keep a list of default keys used in service descriptions that is later used to determine extra data keys
-        static $defaultKeys = array('name', 'models', 'apiVersion', 'baseUrl', 'description');
+        static $defaultKeys = array('name', 'models', 'apiVersion', 'baseUrl', 'description', 'responseFactory');
         // Pull in the default configuration values
         foreach ($defaultKeys as $key) {
             if (isset($config[$key])) {

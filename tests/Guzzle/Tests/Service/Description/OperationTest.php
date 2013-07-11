@@ -26,6 +26,7 @@ class OperationTest extends \Guzzle\Tests\GuzzleTestCase
             'httpMethod'         => 'POST',
             'uri'                => '/api/v1',
             'responseClass'      => 'array',
+            'responseFactory'    => 'Guzzle\Tests\Mock\MockResponseObjectFactory',
             'responseNotes'      => 'returns the json_decoded response',
             'deprecated'         => true,
             'parameters'         => array(
@@ -51,6 +52,7 @@ class OperationTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('returns the json_decoded response', $c->getResponseNotes());
         $this->assertTrue($c->getDeprecated());
         $this->assertEquals('Guzzle\\Service\\Command\\OperationCommand', $c->getClass());
+        $this->assertEquals('Guzzle\Tests\Mock\MockResponseObjectFactory', $c->getResponseFactory());
         $this->assertEquals(array(
             'key' => new Parameter(array(
                 'name'      => 'key',
@@ -155,6 +157,7 @@ class OperationTest extends \Guzzle\Tests\GuzzleTestCase
             ->setHttpMethod('PUT')
             ->setResponseNotes('oh')
             ->setResponseClass('string')
+            ->setResponseFactory('Guzzle\Tests\Service\Description\MockResponseObjectFactory')
             ->setUri('/foo/bar')
             ->addParam(new Parameter(array(
                 'name' => 'test'
@@ -168,6 +171,7 @@ class OperationTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('PUT', $c->getHttpMethod());
         $this->assertEquals('oh', $c->getResponseNotes());
         $this->assertEquals('string', $c->getResponseClass());
+        $this->assertEquals('Guzzle\Tests\Service\Description\MockResponseObjectFactory', $c->getResponseFactory());
         $this->assertEquals('/foo/bar', $c->getUri());
         $this->assertEquals(array('test'), $c->getParamNames());
     }
@@ -247,6 +251,31 @@ class OperationTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('primitive', $o->setResponseClass('boolean')->getResponseType());
         $this->assertEquals('class', $o->setResponseClass(__CLASS__)->getResponseType());
         $this->assertEquals('model', $o->setResponseClass('Foo')->getResponseType());
+    }
+
+    public function testOperationInheritsServiceFactoryClassType()
+    {
+        $o = new Operation(array());
+        $o->setServiceDescription(new ServiceDescription(array('responseFactory' => 'Guzzle\Tests\Mock\MockResponseObjectFactory')));
+        $this->assertEquals('Guzzle\Tests\Mock\MockResponseObjectFactory', $o->getResponseFactory());
+    }
+
+    public function testOperationOverridesServiceFactoryClassType()
+    {
+        $o = new Operation(array('responseFactory' => 'Guzzle\Tests\Mock\MockResponseObjectFactory'));
+        $o->setServiceDescription(new ServiceDescription(array()));
+        $this->assertEquals('Guzzle\Tests\Mock\MockResponseObjectFactory', $o->getResponseFactory());
+
+        $o2 = new Operation(array('responseFactory' => 'Guzzle\Tests\Mock\MockResponseObjectFactory'));
+        $o->setServiceDescription(new ServiceDescription(array('responseFactory' => 'Foo\Bar\Baz')));
+        $this->assertEquals('Guzzle\Tests\Mock\MockResponseObjectFactory', $o->getResponseFactory());
+    }
+
+    public function testFactoryClassNullByDefault()
+    {
+        $o = new Operation(array());
+        $o->setServiceDescription(new ServiceDescription(array()));
+        $this->assertNull($o->getResponseFactory());
     }
 
     public function testHasResponseType()

@@ -9,6 +9,7 @@ use Guzzle\Service\Description\Parameter;
 use Guzzle\Service\Description\OperationInterface;
 use Guzzle\Service\Description\Operation;
 use Guzzle\Service\Exception\ResponseClassException;
+use Guzzle\Service\Exception\ResponseFactoryException;
 use Guzzle\Service\Resource\Model;
 
 /**
@@ -91,6 +92,20 @@ class OperationResponseParser extends DefaultResponseParser
      */
     protected function parseClass(CommandInterface $command)
     {
+        $responseFactory = $command->getOperation()->getResponseFactory();
+
+        if ($responseFactory != null) {
+            if (!class_exists($responseFactory)) {
+                throw new ResponseFactoryException("{$responseFactory} does not exist");
+            }
+
+            if (!method_exists($responseFactory, 'fromCommand')) {
+                throw new ResponseFactoryException("{$responseFactory} must implement the fromCommand() method");
+            }
+
+            return $responseFactory::fromCommand($command);
+        }
+
         $className = $command->getOperation()->getResponseClass();
         if (!class_exists($className)) {
             throw new ResponseClassException("{$className} does not exist");
