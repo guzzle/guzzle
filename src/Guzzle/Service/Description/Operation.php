@@ -373,6 +373,11 @@ class Operation implements OperationInterface
         return $this;
     }
 
+    /**
+     * Returns the class name of the responseFactory if it is set for this Operation
+     * or the default for the service if it is set.
+     * @return null|string
+     */
     public function getResponseFactory()
     {
         if ($this->responseFactory != null) {
@@ -558,7 +563,6 @@ class Operation implements OperationInterface
 
     /**
      * Infer the response type from the responseClass value
-     * //TODO - should this be affected by responseFactory?
      */
     protected function inferResponseType()
     {
