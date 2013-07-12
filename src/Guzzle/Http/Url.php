@@ -268,11 +268,12 @@ class Url
      */
     public function setPath($path)
     {
+        static $pathReplace = array(' ' => '%20', '?' => '%3F');
         if (is_array($path)) {
-            $this->path = '/' . implode('/', $path);
-        } else {
-            $this->path = (string) $path;
+            $path = '/' . implode('/', $path);
         }
+
+        $this->path = strtr($path, $pathReplace);
 
         return $this;
     }
