@@ -251,6 +251,37 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
 
 
     /**
+     * Checks that although the responseClass is set, the responseFactory still handles
+     * the creating of the responseObject correctly, i.e. responseClass is just a suggestion
+     * to the responseFactory.
+     */
+    public function testResponseFactoryReplacesResponseClass()
+    {
+        $parser = OperationResponseParser::getInstance();
+        $description = ServiceDescription::factory(array(
+            'operations' => array(
+                'test' => array(
+                    'responseClass'   =>  __CLASS__,
+                    'responseFactory' => 'Guzzle\Tests\Mock\MockResponseObjectFactory'
+                )
+            )
+        ));
+        $operation = $description->getOperation('test');
+        $op = new OperationCommand(array(), $operation);
+        $op->setResponseParser($parser)->setClient(new Client());
+
+        $jsonResponse = '{"salutation": "Hello", "subject": "world"}';
+
+        $op->prepare()->setResponse(new Response(200, array('Content-Type' => 'application/json'), $jsonResponse), true);
+        $result = $op->execute();
+        $this->assertInstanceOf('Guzzle\Tests\Mock\MockResponseObject', $result);
+        $this->assertEquals('Hello', $result->getSalutation());
+        $this->assertEquals('world', $result->getSubject());
+    }
+
+
+
+    /**
      * @expectedException \Guzzle\Service\Exception\ResponseFactoryException
      * @expectedExceptionMessage must implement
      */
