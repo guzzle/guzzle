@@ -428,7 +428,7 @@ class Cookie implements ToArrayInterface
 
         // Remove the leading '.' as per spec in RFC 6265:
         // http://tools.ietf.org/html/rfc6265#section-5.2.3
-        if($cookieDomain && substr($cookieDomain, 0, 1) == '.') {
+        if($cookieDomain && substr($cookieDomain, 0, 1) == '.' && !filter_var(substr($cookieDomain, 1), FILTER_VALIDATE_IP)) {
             $cookieDomain = substr($cookieDomain, 1);
         }
 
