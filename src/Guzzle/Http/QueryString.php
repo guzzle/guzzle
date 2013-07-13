@@ -170,6 +170,32 @@ class QueryString extends Collection
     }
 
     /**
+     * Provide a function for defining the default query string aggregation method
+     *
+     * @param null|QueryAggregatorInterface $aggregator Pass in a QueryAggregatorInterface object to handle converting
+     *                                                  deeply nested query string variables into a flattened array.
+     *                                                  For legacy reasons, this function accepts a callable that must
+     *                                                  accept a $key, $value, and query object.
+     * @return self
+     */
+    public function setDefaultAggregator(QueryAggregatorInterface $aggregator)
+    {
+        self::$defaultAggregator = $aggregator;
+
+        return $this;
+    }
+
+    /**
+     * Provides the current default aggregator type
+     *
+     * @return string
+     */
+    public function getDefaultAggregatorType()
+    {
+        return (self::$defaultAggregator === null) ? 'null' : get_class(self::$defaultAggregator);
+    }
+
+    /**
      * Set whether or not field names and values should be rawurlencoded
      *
      * @param bool|string $encode Set to TRUE to use RFC 3986 encoding (rawurlencode), false to disable encoding, or
