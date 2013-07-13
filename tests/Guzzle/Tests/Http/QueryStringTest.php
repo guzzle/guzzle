@@ -217,4 +217,16 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         $query = QueryString::fromString('data=mF0b3IiLCJUZWFtIERldiJdfX0=');
         $this->assertEquals('mF0b3IiLCJUZWFtIERldiJdfX0=', $query->get('data'));
     }
+
+    public function testGuessesIfDuplicateAggregatorShouldBeUsed()
+    {
+        $query = QueryString::fromString('test=a&test=b');
+        $this->assertEquals('test=a&test=b', (string) $query);
+    }
+
+    public function testGuessesIfDuplicateAggregatorShouldBeUsedAndChecksForPhpStyle()
+    {
+        $query = QueryString::fromString('test[]=a&test[]=b');
+        $this->assertEquals('test%5B0%5D=a&test%5B1%5D=b', (string) $query);
+    }
 }
