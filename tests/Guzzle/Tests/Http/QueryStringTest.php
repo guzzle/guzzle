@@ -3,6 +3,7 @@
 namespace Guzzle\Tests\Http;
 
 use Guzzle\Http\QueryString;
+use Guzzle\Http\QueryAggregator\PhpAggregator;
 use Guzzle\Http\QueryAggregator\DuplicateAggregator;
 use Guzzle\Http\QueryAggregator\CommaAggregator;
 
@@ -110,6 +111,32 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
         // Use the duplicate aggregator
         $q->setAggregator(new DuplicateAggregator());
         $this->assertEquals('facet=size&facet=width&facet.field=foo', $q->__toString());
+    }
+
+    public function testAllowsChangingDefaultAggregator()
+    {
+        $q = new QueryString();
+        // Use the DuplicateAggregator, since default is PhpAggregator
+        $q->setDefaultAggregator(new DuplicateAggregator());
+        $q->add('facet', 'size');
+        $q->add('facet', 'width');
+        $this->assertEquals('facet=size&facet=width', $q->__toString());
+
+        // Temporarily use the Comma Aggreagotor
+        $q = new QueryString();
+        $q->setAggregator(new CommaAggregator());
+        $q->add('facet', 'size');
+        $q->add('facet', 'width');
+        $this->assertEquals('facet=size,width', $q->__toString());
+
+        // Subsequent query strings, without aggregator explicitly set, should revert to defined default
+        $q = new QueryString();
+        $q->add('facet', 'size');
+        $q->add('facet', 'width');
+        $this->assertEquals('facet=size&facet=width', $q->__toString());
+
+        // Revert to the default default aggregator type
+        $q->setDefaultAggregator(new PhpAggregator());
     }
 
     public function testAllowsNestedQueryData()
