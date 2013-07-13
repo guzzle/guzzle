@@ -3,6 +3,7 @@
 namespace Guzzle\Http;
 
 use Guzzle\Common\Collection;
+use Guzzle\Http\QueryAggregator\DuplicateAggregator;
 use Guzzle\Http\QueryAggregator\QueryAggregatorInterface;
 use Guzzle\Http\QueryAggregator\PhpAggregator;
 
@@ -33,7 +34,7 @@ class QueryString extends Collection
     protected $aggregator;
 
     /** @var array Cached PHP aggregator */
-    protected static $defaultAggregator = null;
+    private static $defaultAggregator = null;
 
     /**
      * Parse a query string into a QueryString object
@@ -45,29 +46,37 @@ class QueryString extends Collection
     public static function fromString($query)
     {
         $q = new static();
+        if ($query === '') {
+            return $q;
+        }
 
-        if ($query || $query === '0') {
-            if ($query[0] == '?') {
-                $query = substr($query, 1);
+        $foundDuplicates = $foundPhpStyle = false;
+
+        foreach (explode('&', $query) as $kvp) {
+            $parts = explode('=', $kvp, 2);
+            $key = rawurldecode($parts[0]);
+            if ($paramIsPhpStyleArray = substr($key, -2) == '[]') {
+                $foundPhpStyle = true;
+                $key = substr($key, 0, -2);
             }
-            foreach (explode('&', $query) as $kvp) {
-                $parts = explode('=', $kvp, 2);
-                $key = rawurldecode($parts[0]);
-
-                if ($paramIsPhpStyleArray = substr($key, -2) == '[]') {
-                    $key = substr($key, 0, -2);
-                }
-
-                if (isset($parts[1])) {
-                    $value = rawurldecode(str_replace('+', '%20', $parts[1]));
-                    if ($paramIsPhpStyleArray && !$q->hasKey($key)) {
-                        $value = array($value);
-                    }
+            if (isset($parts[1])) {
+                $value = rawurldecode(str_replace('+', '%20', $parts[1]));
+                if (isset($q[$key])) {
                     $q->add($key, $value);
+                    $foundDuplicates = true;
+                } elseif ($paramIsPhpStyleArray) {
+                    $q[$key] = array($value);
                 } else {
-                    $q->add($key, null);
+                    $q[$key] = $value;
                 }
+            } else {
+                $q->add($key, null);
             }
+        }
+
+        // Use the duplicate aggregator if duplicates were found and not using PHP style arrays
+        if ($foundDuplicates && !$foundPhpStyle) {
+            $q->setAggregator(new DuplicateAggregator());
         }
 
         return $q;
