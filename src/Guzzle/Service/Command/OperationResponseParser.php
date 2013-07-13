@@ -93,8 +93,9 @@ class OperationResponseParser extends DefaultResponseParser
     protected function parseClass(CommandInterface $command)
     {
         // Emit the operation.parse_class event. If a listener injects a 'result' property, then that will be the result
-        $event = $command->getClient()->dispatch('operation.parse_class', array('command' => $command));
-        if ($result = $event['result']) {
+        $event = new CreateResponseClassEvent(array('command' => $command));
+        $command->getClient()->getEventDispatcher()->dispatch('operation.parse_class', $event);
+        if ($result = $event->getResult()) {
             return $result;
         }
 
