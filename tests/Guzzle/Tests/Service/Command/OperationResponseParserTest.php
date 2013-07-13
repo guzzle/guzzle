@@ -16,6 +16,7 @@ use Guzzle\Service\Command\LocationVisitor\VisitorFlyweight;
 
 /**
  * @covers Guzzle\Service\Command\OperationResponseParser
+ * @covers Guzzle\Service\Command\CreateResponseClassEvent
  */
 class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
 {
