@@ -426,32 +426,26 @@ class Cookie implements ToArrayInterface
     {
         $cookieDomain = $this->getDomain();
 
+        // Remove the leading '.' as per spec in RFC 6265:
+        // http://tools.ietf.org/html/rfc6265#section-5.2.3
+        if (!empty($cookieDomain) && $cookieDomain[0] == '.') {
+            $cookieDomain = substr($cookieDomain, 1);
+            if (filter_var($cookieDomain, FILTER_VALIDATE_IP)) {
+                return false;
+            }
+        }
+
         // Domain not set or exact match.
         if (!$cookieDomain || !strcasecmp($domain, $cookieDomain)) {
             return true;
         }
 
-        // . prefix match.
-        if (strpos($cookieDomain, '.') === 0) {
-            $realDomain = substr($cookieDomain, 1);
-
-            // Root domains don't match except for .local.
-            if (!substr_count($realDomain, '.') && strcasecmp($realDomain, 'local')) {
-                return false;
-            }
-
-            if (filter_var($domain, FILTER_VALIDATE_IP)) {
-                return false;
-            }
-
-            if (substr($domain, -strlen($realDomain)) === $realDomain) {
-                // Match exact or 1 deep subdomain.
-                return !strcasecmp($domain, $realDomain) ||
-                    substr_count(substr($domain, 0, -strlen($realDomain)), '.') === 1;
-            }
+        // Matching the subdomain according to RFC 6265:
+        // http://tools.ietf.org/html/rfc6265#section-5.1.3
+        if (filter_var($domain, FILTER_VALIDATE_IP)) {
+            return false;
         }
-
-        return false;
+        return preg_match('/\.' . preg_quote($cookieDomain) . '$/i', $domain);
     }
 
     /**
