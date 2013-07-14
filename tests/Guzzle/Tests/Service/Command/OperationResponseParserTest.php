@@ -16,6 +16,7 @@ use Guzzle\Service\Command\LocationVisitor\VisitorFlyweight;
 
 /**
  * @covers Guzzle\Service\Command\OperationResponseParser
+ * @covers Guzzle\Service\Command\CreateResponseClassEvent
  */
 class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
 {
@@ -177,7 +178,7 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @expectedException \Guzzle\Service\Exception\ResponseClassException
-     * @expectedExceptionMessage does not exist
+     * @expectedExceptionMessage must exist
      */
     public function testEnsuresResponseClassExists()
     {
@@ -194,7 +195,7 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @expectedException \Guzzle\Service\Exception\ResponseClassException
-     * @expectedExceptionMessage must implement
+     * @expectedExceptionMessage and implement
      */
     public function testEnsuresResponseClassImplementsResponseClassInterface()
     {
@@ -224,5 +225,21 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
                 )
             )
         ));
+    }
+
+    public function testCanAddListenerToParseDomainObjects()
+    {
+        $client = new Client();
+        $client->setDescription(ServiceDescription::factory(array(
+            'operations' => array('test' => array('responseClass' => 'FooBazBar'))
+        )));
+        $foo = new \stdClass();
+        $client->getEventDispatcher()->addListener('operation.parse_class', function ($e) use ($foo) {
+             $e['result'] = $foo;
+        });
+        $command = $client->getCommand('test');
+        $command->prepare()->setResponse(new Response(200), true);
+        $result = $command->execute();
+        $this->assertSame($result, $foo);
     }
 }

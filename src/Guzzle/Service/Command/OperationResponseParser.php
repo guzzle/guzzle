@@ -2,6 +2,7 @@
 
 namespace Guzzle\Service\Command;
 
+use Guzzle\Common\Event;
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Command\LocationVisitor\VisitorFlyweight;
 use Guzzle\Service\Command\LocationVisitor\Response\ResponseVisitorInterface;
@@ -91,13 +92,16 @@ class OperationResponseParser extends DefaultResponseParser
      */
     protected function parseClass(CommandInterface $command)
     {
-        $className = $command->getOperation()->getResponseClass();
-        if (!class_exists($className)) {
-            throw new ResponseClassException("{$className} does not exist");
+        // Emit the operation.parse_class event. If a listener injects a 'result' property, then that will be the result
+        $event = new CreateResponseClassEvent(array('command' => $command));
+        $command->getClient()->getEventDispatcher()->dispatch('operation.parse_class', $event);
+        if ($result = $event->getResult()) {
+            return $result;
         }
 
+        $className = $command->getOperation()->getResponseClass();
         if (!method_exists($className, 'fromCommand')) {
-            throw new ResponseClassException("{$className} must implement the fromCommand() method");
+            throw new ResponseClassException("{$className} must exist and implement a static fromCommand() method");
         }
 
         return $className::fromCommand($command);
