@@ -234,7 +234,7 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
             'operations' => array('test' => array('responseClass' => 'FooBazBar'))
         )));
         $foo = new \stdClass();
-        $client->getEventDispatcher()->addListener('operation.parse_class', function ($e) use ($foo) {
+        $client->getEventDispatcher()->addListener('command.parse_response', function ($e) use ($foo) {
              $e['result'] = $foo;
         });
         $command = $client->getCommand('test');

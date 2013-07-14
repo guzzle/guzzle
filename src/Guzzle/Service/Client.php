@@ -57,7 +57,8 @@ class Client extends HttpClient implements ClientInterface
             'command.before_prepare',
             'command.after_prepare',
             'command.before_send',
-            'command.after_send'
+            'command.after_send',
+            'command.parse_response'
         ));
     }
 
