@@ -268,7 +268,7 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
             array('https://example.com', array(0)),
             array('http://example.com', array()),
             array('https://example.com:8912', array()),
-            array('https://foo.example.com', array()),
+            array('https://foo.example.com', array(0)),
             array('http://foo.example.com/test/acme/', array(4))
         );
     }
@@ -330,7 +330,7 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
 
         $request = new Request('GET', $url);
         $results = $this->jar->getMatchingCookies($request);
-        $this->assertEquals(count($results), count($cookies));
+        $this->assertEquals(count($cookies), count($results));
         foreach ($cookies as $i) {
             $this->assertContains($bag[$i], $results);
         }

@@ -424,28 +424,20 @@ class Cookie implements ToArrayInterface
      */
     public function matchesDomain($domain)
     {
-        $cookieDomain = $this->getDomain();
-
-        // Remove the leading '.' as per spec in RFC 6265:
-        // http://tools.ietf.org/html/rfc6265#section-5.2.3
-        if (!empty($cookieDomain) && $cookieDomain[0] == '.') {
-            $cookieDomain = substr($cookieDomain, 1);
-            if (filter_var($cookieDomain, FILTER_VALIDATE_IP)) {
-                return false;
-            }
-        }
+        // Remove the leading '.' as per spec in RFC 6265: http://tools.ietf.org/html/rfc6265#section-5.2.3
+        $cookieDomain = ltrim($this->getDomain(), '.');
 
         // Domain not set or exact match.
         if (!$cookieDomain || !strcasecmp($domain, $cookieDomain)) {
             return true;
         }
 
-        // Matching the subdomain according to RFC 6265:
-        // http://tools.ietf.org/html/rfc6265#section-5.1.3
+        // Matching the subdomain according to RFC 6265: http://tools.ietf.org/html/rfc6265#section-5.1.3
         if (filter_var($domain, FILTER_VALIDATE_IP)) {
             return false;
         }
-        return preg_match('/\.' . preg_quote($cookieDomain) . '$/i', $domain);
+
+        return (bool) preg_match('/\.' . preg_quote($cookieDomain) . '$/i', $domain);
     }
 
     /**
