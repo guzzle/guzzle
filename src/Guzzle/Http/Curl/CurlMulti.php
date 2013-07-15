@@ -258,13 +258,13 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     {
         do {
             $mrc = curl_multi_exec($this->multiHandle, $active);
-        } while ($mrc == CURLM_CALL_MULTI_PERFORM && $active);
+        } while ($mrc == CURLM_CALL_MULTI_PERFORM);
         $this->checkCurlResult($mrc);
 
         // @codeCoverageIgnoreStart
         // Select the curl handles until there is any activity on any of the open file descriptors
         // See https://github.com/php/php-src/blob/master/ext/curl/multi.c#L170
-        if ($active && $mrc == CURLM_OK && curl_multi_select($this->multiHandle, $timeout) == -1) {
+        if ($active && curl_multi_select($this->multiHandle, $timeout) == -1) {
             // Perform a usleep if a previously executed select returned -1
             // @see https://bugs.php.net/bug.php?id=61141
             usleep(100);
