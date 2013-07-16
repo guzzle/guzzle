@@ -105,7 +105,10 @@ var GuzzleServer = function(port, log) {
      * @param (ServerResponse) res Outgoing server response
      */
     var receivedRequest = function(request, req, res) {
-        if (req.url.indexOf("/guzzle-server") === 0) {
+        if (req.url == '/guzzle-perf') {
+            res.writeHead(200, "OK", {"Content-Length": 10});
+            res.end("Body of response");
+        } else if (req.url.indexOf("/guzzle-server") === 0) {
             controlRequest(request, req, res);
         } else {
             var response = that.responses.shift();
@@ -123,16 +126,10 @@ var GuzzleServer = function(port, log) {
         that.server = http.createServer(function(req, res) {
 
             // If this is not a control request and no responses are in queue, return 500 response
-            if (req.url.indexOf("/guzzle-server") == -1 && !that.responses.length) {
-                if (req.url == '/guzzle-perf') {
-                    res.writeHead(200);
-                    res.end("Body of response");
-                    return;
-                } else {
-                    res.writeHead(500);
-                    res.end("No responses in queue");
-                    return;
-                }
+            if (req.url.indexOf("/guzzle-server") == -1 && !that.responses.length && req.url != '/guzzle-perf') {
+                res.writeHead(500);
+                res.end("No responses in queue");
+                return;
             }
 
             // Begin building the request message as a string
