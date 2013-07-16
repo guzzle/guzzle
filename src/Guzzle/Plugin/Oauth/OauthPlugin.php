@@ -168,16 +168,10 @@ class OauthPlugin implements EventSubscriberInterface
             'oauth_signature_method' => $this->config['signature_method'],
             'oauth_timestamp'        => $timestamp,
             'oauth_token'            => $this->config['token'],
-            'oauth_version'          => $this->config['version']
+            'oauth_version'          => $this->config['version'],
+            'oauth_callback'         => $this->config['callback'],
+            'oauth_verifier'         => $this->config['verifier']
         ));
-        
-        if (array_key_exists('callback', $this->config) == true) {
-            $params['oauth_callback'] = $this->config['callback'];
-        }
-        
-        if (array_key_exists('verifier', $this->config) == true) {
-            $params['oauth_verifier'] = $this->config['verifier'];
-        }
 
         // Add query string parameters
         $params->merge($request->getQuery());
