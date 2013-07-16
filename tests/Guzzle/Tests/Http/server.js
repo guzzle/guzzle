@@ -39,14 +39,11 @@ var GuzzleServer = function(port, log) {
     this.requests = [];
     var that = this;
 
-    /**
-     * Handle a Guzzle Server control request
-     * @param (String) request HTTP request as a string
-     * @param (ServerRequest) req Received server request
-     * @param (ServerResponse) res Outgoing server response
-     */
     var controlRequest = function(request, req, res) {
-        if (req.method == "DELETE") {
+        if (req.url == '/guzzle-server/perf') {
+            res.writeHead(200, "OK", {"Content-Length": 16});
+            res.end("Body of response");
+        } else if (req.method == "DELETE") {
             if (req.url == "/guzzle-server/requests") {
                 // Clear the received requests
                 that.requests = [];
@@ -85,7 +82,7 @@ var GuzzleServer = function(port, log) {
                     if (that.log) {
                         console.log("No response data was provided");
                     }
-                    res.writeHead(500, "NO RESPONSES IN REQUEST", { "Content-Length": 0 });
+                    res.writeHead(400, "NO RESPONSES IN REQUEST", { "Content-Length": 0 });
                 } else {
                     that.responses = eval("(" + data + ")");
                     if (that.log) {
@@ -98,18 +95,12 @@ var GuzzleServer = function(port, log) {
         }
     };
 
-    /**
-     * Received a complete request
-     * @param (String) request HTTP request as a string
-     * @param (ServerRequest) req Received server request
-     * @param (ServerResponse) res Outgoing server response
-     */
     var receivedRequest = function(request, req, res) {
-        if (req.url == '/guzzle-perf') {
-            res.writeHead(200, "OK", {"Content-Length": 16});
-            res.end("Body of response");
-        } else if (req.url.indexOf("/guzzle-server") === 0) {
+        if (req.url.indexOf("/guzzle-server") === 0) {
             controlRequest(request, req, res);
+        } else if (req.url.indexOf("/guzzle-server") == -1 && !that.responses.length) {
+            res.writeHead(500);
+            res.end("No responses in queue");
         } else {
             var response = that.responses.shift();
             res.writeHead(response.statusCode, response.reasonPhrase, response.headers);
@@ -118,23 +109,11 @@ var GuzzleServer = function(port, log) {
         }
     };
 
-    /**
-     * Start the node.js Guzzle server
-     */
     this.start = function() {
 
         that.server = http.createServer(function(req, res) {
 
-            // If this is not a control request and no responses are in queue, return 500 response
-            if (req.url.indexOf("/guzzle-server") == -1 && !that.responses.length && req.url != '/guzzle-perf') {
-                res.writeHead(500);
-                res.end("No responses in queue");
-                return;
-            }
-
-            // Begin building the request message as a string
             var request = req.method + " " + req.url + " HTTP/" + req.httpVersion + "\r\n";
-            // Add the request headers
             for (var i in req.headers) {
                 request += i + ": " + req.headers[i] + "\r\n";
             }
