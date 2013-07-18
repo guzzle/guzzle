@@ -155,11 +155,9 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
 
     public function testGetInfoWithoutDebugMode()
     {
+        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
         $client = new Client($this->getServer()->getUrl());
-        $this->getServer()->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ndata");
-        $request = RequestFactory::getInstance()->create('PUT', $this->getServer()->getUrl());
-        $request->getCurlOptions()->set('debug', false);
-        $request->setClient($client);
+        $request = $client->get($this->getServer()->getUrl());
         $response = $request->send();
 
         $info = $response->getInfo();

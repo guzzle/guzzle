@@ -76,13 +76,12 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     public function remove(RequestInterface $request)
     {
         $this->removeHandle($request);
-        foreach ($this->requests as $i => $r) {
-            if ($request === $r) {
-                unset($this->requests[$i]);
-                $this->requests = array_values($this->requests);
-                $this->dispatch(self::REMOVE_REQUEST, array('request' => $request));
-                return true;
-            }
+        if (($index = array_search($request, $this->requests, true)) !== false) {
+            $request = $this->requests[$index];
+            unset($this->requests[$index]);
+            $this->requests = array_values($this->requests);
+            $this->dispatch(self::REMOVE_REQUEST, array('request' => $request));
+            return true;
         }
 
         return false;
@@ -156,7 +155,8 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
             $state = $request->setState(RequestInterface::STATE_TRANSFER);
             if ($state == RequestInterface::STATE_TRANSFER) {
                 // Add the request curl handle to the multi handle
-                $this->checkCurlResult(curl_multi_add_handle($this->multiHandle, $this->createCurlHandle($request)->getHandle()));
+                $handle = $this->createCurlHandle($request)->getHandle();
+                $this->checkCurlResult(curl_multi_add_handle($this->multiHandle, $handle));
             } else {
                 // Requests might decide they don't need to be sent just before transfer (e.g. CachePlugin)
                 $this->remove($request);
@@ -191,18 +191,9 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      */
     protected function perform()
     {
-        if (!$this->requests) {
-            return;
-        }
-
-        // Initialize the handles with a very quick select timeout
-        $active = $mrc = null;
-        $this->executeHandles($active, $mrc, 0.001);
         $event = new Event(array('curl_multi' => $this));
-        $this->processMessages();
 
         while ($this->requests) {
-
             // Notify each request as polling
             $blocking = $total = 0;
             foreach ($this->requests as $request) {
@@ -214,16 +205,37 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
                     ++$blocking;
                 }
             }
-
             if ($blocking == $total) {
                 // Sleep to prevent eating CPU because no requests are actually pending a select call
                 usleep(500);
             } else {
-                do {
-                    $this->executeHandles($active, $mrc, 1);
-                } while ($active);
+                $this->executeHandles();
             }
-            $this->processMessages();
+        }
+    }
+
+    /**
+     * Execute and select curl handles
+     */
+    private function executeHandles()
+    {
+        $active = null;
+        while (($mrc = curl_multi_exec($this->multiHandle, $active)) == CURLM_CALL_MULTI_PERFORM);
+        $this->checkCurlResult($mrc);
+        $this->processMessages();
+
+        // The first curl_multi_select often times out no matter what, but is usually required for fast transfers
+        $selectTimeout = 0.001;
+        while ($active) {
+            if (curl_multi_select($this->multiHandle, $selectTimeout) !== -1) {
+                while (($mrc = curl_multi_exec($this->multiHandle, $active)) == CURLM_CALL_MULTI_PERFORM);
+                $this->checkCurlResult($mrc);
+                $this->processMessages();
+                $selectTimeout = 1;
+            } else {
+                // Perform a usleep if a select returns -1: https://bugs.php.net/bug.php?id=61141
+                usleep(150);
+            }
         }
     }
 
@@ -232,15 +244,11 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
      */
     private function processMessages()
     {
-        // Get messages from curl handles
         while ($done = curl_multi_info_read($this->multiHandle)) {
+            $request = $this->resourceHash[(int) $done['handle']];
             try {
-                $request = $this->resourceHash[(int) $done['handle']];
                 $this->processResponse($request, $this->handles[$request], $done);
                 $this->successful[] = $request;
-            } catch (MultiTransferException $e) {
-                $this->removeErroredRequest($request, $e, false);
-                throw $e;
             } catch (\Exception $e) {
                 $this->removeErroredRequest($request, $e);
             }
@@ -248,43 +256,14 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     }
 
     /**
-     * Execute and select curl handles until there is activity
-     *
-     * @param int $active  Active value to update
-     * @param int $mrc     Multi result value to update
-     * @param int $timeout Select timeout in seconds
-     */
-    private function executeHandles(&$active, &$mrc, $timeout = 1)
-    {
-        do {
-            $mrc = curl_multi_exec($this->multiHandle, $active);
-        } while ($mrc == CURLM_CALL_MULTI_PERFORM);
-        $this->checkCurlResult($mrc);
-
-        // @codeCoverageIgnoreStart
-        // Select the curl handles until there is any activity on any of the open file descriptors
-        // See https://github.com/php/php-src/blob/master/ext/curl/multi.c#L170
-        if ($active && curl_multi_select($this->multiHandle, $timeout) == -1) {
-            // Perform a usleep if a previously executed select returned -1
-            // @see https://bugs.php.net/bug.php?id=61141
-            usleep(100);
-        }
-        // @codeCoverageIgnoreEnd
-    }
-
-    /**
      * Remove a request that encountered an exception
      *
      * @param RequestInterface $request Request to remove
      * @param \Exception       $e       Exception encountered
-     * @param bool             $buffer  Set to false to not buffer the exception
      */
-    protected function removeErroredRequest(RequestInterface $request, \Exception $e = null, $buffer = true)
+    protected function removeErroredRequest(RequestInterface $request, \Exception $e = null)
     {
-        if ($buffer) {
-            $this->exceptions[] = array('request' => $request, 'exception' => $e);
-        }
-
+        $this->exceptions[] = array('request' => $request, 'exception' => $e);
         $this->remove($request);
         $this->dispatch(self::MULTI_EXCEPTION, array('exception' => $e, 'all_exceptions' => $this->exceptions));
     }
@@ -339,9 +318,9 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
     {
         if (isset($this->handles[$request])) {
             $handle = $this->handles[$request];
+            curl_multi_remove_handle($this->multiHandle, $handle->getHandle());
             unset($this->handles[$request]);
             unset($this->resourceHash[(int) $handle->getHandle()]);
-            curl_multi_remove_handle($this->multiHandle, $handle->getHandle());
             $handle->close();
         }
     }

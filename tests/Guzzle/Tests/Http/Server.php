@@ -51,13 +51,11 @@ class Server
 
     /**
      * Flush the received requests from the server
-     *
-     * @return bool Returns TRUE on success or FALSE on failure
      * @throws RuntimeException
      */
     public function flush()
     {
-        return $this->client->delete('guzzle-server/requests')->send()->getStatusCode() == 200;
+        $this->client->delete('guzzle-server/requests')->send();
     }
 
     /**
@@ -67,8 +65,6 @@ class Server
      * on the server will return queued responses in FIFO order.
      *
      * @param array|Response $responses A single or array of Responses to queue
-     *
-     * @return bool Returns TRUE on success or FALSE on failure
      * @throws BadResponseException
      */
     public function enqueue($responses)
@@ -92,9 +88,7 @@ class Server
         }
 
         $request = $this->client->put('guzzle-server/responses', null, json_encode($data));
-        $response = $request->send();
-
-        return $response->getStatusCode() == 200;
+        $request->send();
     }
 
     /**
@@ -109,7 +103,7 @@ class Server
         }
 
         try {
-            $this->client->get('/guzzle-server/perf', array(), array('timeout' => 5))->send();
+            $this->client->get('guzzle-server/perf', array(), array('timeout' => 5))->send();
             return $this->running = true;
         } catch (\Exception $e) {
             return false;
@@ -179,9 +173,6 @@ class Server
 
     /**
      * Stop running the node.js server
-     *
-     * @return bool Returns TRUE on success or FALSE on failure
-     * @throws RuntimeException
      */
     public function stop()
     {
@@ -190,7 +181,6 @@ class Server
         }
 
         $this->running = false;
-
-        return $this->client->delete('guzzle-server')->send()->getStatusCode() == 200;
+        $this->client->delete('guzzle-server')->send();
     }
 }
