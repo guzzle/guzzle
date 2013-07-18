@@ -270,7 +270,7 @@ class RequestFactory implements RequestFactoryInterface
         if ($value === false || $value === 0) {
             $dispatcher = $request->getEventDispatcher();
             foreach ($dispatcher->getListeners('request.error') as $listener) {
-                if ($listener[0] == 'Guzzle\Http\Message\Request' && $listener[1] = 'onRequestError') {
+                if (is_array($listener) && $listener[0] == 'Guzzle\Http\Message\Request' && $listener[1] = 'onRequestError') {
                     $dispatcher->removeListener('request.error', $listener);
                     break;
                 }
