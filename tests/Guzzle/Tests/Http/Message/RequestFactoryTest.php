@@ -440,6 +440,17 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(500, $request->send()->getStatusCode());
     }
 
+    public function testCanDisableExceptionsWithErrorListener()
+    {
+        $client = new Client();
+        $client->getEventDispatcher()->addListener('request.error', function () {});
+        $request = $client->get('/', array(), array(
+                'plugins' => array(new MockPlugin(array(new Response(500)))),
+                'exceptions' => false
+            ));
+        $this->assertEquals(500, $request->send()->getStatusCode());
+    }
+
     public function testCanChangeSaveToLocation()
     {
         $r = EntityBody::factory();
