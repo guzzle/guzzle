@@ -180,15 +180,39 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertTrue($event['request']->hasHeader('Authorization'));
 
-        $this->assertEquals('OAuth oauth_consumer_key="foo", '
-            . 'oauth_nonce="'.urlencode($params['oauth_nonce']).'", '
-            . 'oauth_signature="'.urlencode($params['oauth_signature']).'", '
-            . 'oauth_signature_method="HMAC-SHA1", '
-            . 'oauth_timestamp="' . self::TIMESTAMP . '", '
-            . 'oauth_token="count", '
-            . 'oauth_version="1.0"',
-            (string) $event['request']->getHeader('Authorization')
+        $authorizationHeader = (string)$event['request']->getHeader('Authorization');
+
+        $this->assertStringStartsWith("OAuth ", $authorizationHeader);
+
+        $stringsToCheck = array(
+            'a="b"', 
+            'c="d"',
+            'e="f"', 
+            'oauth_consumer_key="foo"',
+            'oauth_nonce="'.urlencode($params['oauth_nonce']).'"',
+            'oauth_signature="'.urlencode($params['oauth_signature']).'"',
+            'oauth_signature_method="HMAC-SHA1"',
+            'oauth_timestamp="' . self::TIMESTAMP . '"',
+            'oauth_token="count"',
+            'oauth_version="1.0"',
         );
+
+        $totalLength = strlen("OAuth ");
+
+        //Separator is not used before first parameter.
+        $separator = "";
+
+        foreach ($stringsToCheck as $stringToCheck) {
+            $this->assertContains($stringToCheck, $authorizationHeader);
+            $totalLength += strlen($separator);
+            $totalLength += strlen($stringToCheck);
+            $separator = ", ";
+        }
+
+        //Technically this test is not universally valid. It would be allowable to have extra \n characters 
+        //in the Authorization header. However Guzzle does not does this, so we just perform a simple check
+        //on length to validate the Authorization header is composed of the strings above.
+        $this->assertEquals($totalLength, strlen($authorizationHeader), "Authorization has extra characters i.e. contains extra elements compared to stringsToCheck.");
     }
 
     public function testDoesNotAddFalseyValuesToAuthorization()
