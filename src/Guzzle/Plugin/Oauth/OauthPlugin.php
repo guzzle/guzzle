@@ -68,7 +68,7 @@ class OauthPlugin implements EventSubscriberInterface
         $timestamp = $this->getTimestamp($event);
         $request = $event['request'];
         $nonce = $this->generateNonce($request);
-        $authorizationParams = $this->getParamsToSign($request, $timestamp, $nonce);
+        $authorizationParams = $this->getOauthParams($timestamp, $nonce);
         $authorizationParams['oauth_signature']  = $this->getSignature($request, $timestamp, $nonce);
 
         $request->setHeader(
@@ -142,16 +142,13 @@ class OauthPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Parameters sorted and filtered in order to properly sign a request
-     *
-     * @param RequestInterface $request   Request to generate a signature for
-     * @param integer          $timestamp Timestamp to use for nonce
-     * @param string           $nonce
-     *
-     * @return array
+     * Get the oauth parameters as named by the oauth spec
+     * 
+     * @param $timestamp
+     * @param $nonce
+     * @return Collection
      */
-    public function getParamsToSign(RequestInterface $request, $timestamp, $nonce)
-    {
+    protected function getOauthParams($timestamp, $nonce){
         $params = new Collection(array(
             'oauth_consumer_key'     => $this->config['consumer_key'],
             'oauth_nonce'            => $nonce,
@@ -173,6 +170,24 @@ class OauthPlugin implements EventSubscriberInterface
                 $params[$oauthName] = $this->config[$optionName];
             }
         }
+        return $params;
+    }
+
+    /**
+     * Get all of the parameters required to sign a request including:
+     * * The oauth params
+     * * The request GET params.
+     * * The params passed in the POST body (with a content-type of application/x-www-form-urlencoded)
+     * 
+     * @param RequestInterface $request   Request to generate a signature for
+     * @param integer          $timestamp Timestamp to use for nonce
+     * @param string           $nonce
+     *
+     * @return array
+     */
+    public function getParamsToSign(RequestInterface $request, $timestamp, $nonce)
+    {
+        $params = $this->getOauthParams($timestamp, $nonce);
 
         // Add query string parameters
         $params->merge($request->getQuery());

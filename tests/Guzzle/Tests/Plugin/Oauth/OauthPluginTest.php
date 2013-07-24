@@ -169,6 +169,10 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         );
     }
 
+    /**
+     * Test that the Oauth is signed correctly and that extra strings haven't been added 
+     * to the authorization header.
+     */
     public function testSignsOauthRequests()
     {
         $p = new OauthPlugin($this->config);
@@ -183,11 +187,8 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $authorizationHeader = (string)$event['request']->getHeader('Authorization');
 
         $this->assertStringStartsWith("OAuth ", $authorizationHeader);
-
-        $stringsToCheck = array(
-            'a="b"', 
-            'c="d"',
-            'e="f"', 
+        
+        $stringsToCheck = array( 
             'oauth_consumer_key="foo"',
             'oauth_nonce="'.urlencode($params['oauth_nonce']).'"',
             'oauth_signature="'.urlencode($params['oauth_signature']).'"',
