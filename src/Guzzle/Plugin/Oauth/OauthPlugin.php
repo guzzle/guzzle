@@ -143,21 +143,22 @@ class OauthPlugin implements EventSubscriberInterface
 
     /**
      * Get the oauth parameters as named by the oauth spec
-     * 
+     *
      * @param $timestamp
      * @param $nonce
      * @return Collection
      */
-    protected function getOauthParams($timestamp, $nonce){
+    protected function getOauthParams($timestamp, $nonce)
+    {
         $params = new Collection(array(
             'oauth_consumer_key'     => $this->config['consumer_key'],
             'oauth_nonce'            => $nonce,
             'oauth_signature_method' => $this->config['signature_method'],
-            'oauth_timestamp'        => $timestamp, 
+            'oauth_timestamp'        => $timestamp,
         ));
 
-        //Optional parameters should not be set if they have not been set in the config as
-        //the parameter may be considered invalid by the Oauth service.
+        // Optional parameters should not be set if they have not been set in the config as
+        // the parameter may be considered invalid by the Oauth service.
         $optionalParams = array(
             'callback'  => 'oauth_callback',
             'token'     => 'oauth_token',
@@ -170,6 +171,7 @@ class OauthPlugin implements EventSubscriberInterface
                 $params[$oauthName] = $this->config[$optionName];
             }
         }
+
         return $params;
     }
 
@@ -178,7 +180,7 @@ class OauthPlugin implements EventSubscriberInterface
      * * The oauth params
      * * The request GET params
      * * The params passed in the POST body (with a content-type of application/x-www-form-urlencoded)
-     * 
+     *
      * @param RequestInterface $request   Request to generate a signature for
      * @param integer          $timestamp Timestamp to use for nonce
      * @param string           $nonce

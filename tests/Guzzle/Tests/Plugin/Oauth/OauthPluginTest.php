@@ -170,7 +170,7 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * Test that the Oauth is signed correctly and that extra strings haven't been added 
+     * Test that the Oauth is signed correctly and that extra strings haven't been added
      * to the authorization header.
      */
     public function testSignsOauthRequests()
@@ -186,9 +186,9 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         $authorizationHeader = (string)$event['request']->getHeader('Authorization');
 
-        $this->assertStringStartsWith("OAuth ", $authorizationHeader);
-        
-        $stringsToCheck = array( 
+        $this->assertStringStartsWith('OAuth ', $authorizationHeader);
+
+        $stringsToCheck = array(
             'oauth_consumer_key="foo"',
             'oauth_nonce="'.urlencode($params['oauth_nonce']).'"',
             'oauth_signature="'.urlencode($params['oauth_signature']).'"',
@@ -198,22 +198,22 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
             'oauth_version="1.0"',
         );
 
-        $totalLength = strlen("OAuth ");
+        $totalLength = strlen('OAuth ');
 
         //Separator is not used before first parameter.
-        $separator = "";
+        $separator = '';
 
         foreach ($stringsToCheck as $stringToCheck) {
             $this->assertContains($stringToCheck, $authorizationHeader);
             $totalLength += strlen($separator);
             $totalLength += strlen($stringToCheck);
-            $separator = ", ";
+            $separator = ', ';
         }
 
-        //Technically this test is not universally valid. It would be allowable to have extra \n characters 
-        //in the Authorization header. However Guzzle does not do this, so we just perform a simple check
-        //on length to validate the Authorization header is composed of only the strings above.
-        $this->assertEquals($totalLength, strlen($authorizationHeader), "Authorization has extra characters i.e. contains extra elements compared to stringsToCheck.");
+        // Technically this test is not universally valid. It would be allowable to have extra \n characters
+        // in the Authorization header. However Guzzle does not do this, so we just perform a simple check
+        // on length to validate the Authorization header is composed of only the strings above.
+        $this->assertEquals($totalLength, strlen($authorizationHeader), 'Authorization has extra characters i.e. contains extra elements compared to stringsToCheck.');
     }
 
     public function testDoesNotAddFalseyValuesToAuthorization()
@@ -228,8 +228,8 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
     public function testOptionalOauthParametersAreNotAutomaticallyAdded()
     {
-        //The only required Oauth parameters are the consumer key and secret. That is enough credentials 
-        //for signing oauth requests.
+        // The only required Oauth parameters are the consumer key and secret. That is enough credentials
+        // for signing oauth requests.
          $config = array(
             'consumer_key'    => 'foo',
             'consumer_secret' => 'bar',
