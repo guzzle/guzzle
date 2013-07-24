@@ -169,6 +169,10 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         );
     }
 
+    /**
+     * Test that the Oauth is signed correctly and that extra strings haven't been added 
+     * to the authorization header.
+     */
     public function testSignsOauthRequests()
     {
         $p = new OauthPlugin($this->config);
@@ -180,15 +184,36 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertTrue($event['request']->hasHeader('Authorization'));
 
-        $this->assertEquals('OAuth oauth_consumer_key="foo", '
-            . 'oauth_nonce="'.urlencode($params['oauth_nonce']).'", '
-            . 'oauth_signature="'.urlencode($params['oauth_signature']).'", '
-            . 'oauth_signature_method="HMAC-SHA1", '
-            . 'oauth_timestamp="' . self::TIMESTAMP . '", '
-            . 'oauth_token="count", '
-            . 'oauth_version="1.0"',
-            (string) $event['request']->getHeader('Authorization')
+        $authorizationHeader = (string)$event['request']->getHeader('Authorization');
+
+        $this->assertStringStartsWith("OAuth ", $authorizationHeader);
+        
+        $stringsToCheck = array( 
+            'oauth_consumer_key="foo"',
+            'oauth_nonce="'.urlencode($params['oauth_nonce']).'"',
+            'oauth_signature="'.urlencode($params['oauth_signature']).'"',
+            'oauth_signature_method="HMAC-SHA1"',
+            'oauth_timestamp="' . self::TIMESTAMP . '"',
+            'oauth_token="count"',
+            'oauth_version="1.0"',
         );
+
+        $totalLength = strlen("OAuth ");
+
+        //Separator is not used before first parameter.
+        $separator = "";
+
+        foreach ($stringsToCheck as $stringToCheck) {
+            $this->assertContains($stringToCheck, $authorizationHeader);
+            $totalLength += strlen($separator);
+            $totalLength += strlen($stringToCheck);
+            $separator = ", ";
+        }
+
+        //Technically this test is not universally valid. It would be allowable to have extra \n characters 
+        //in the Authorization header. However Guzzle does not do this, so we just perform a simple check
+        //on length to validate the Authorization header is composed of only the strings above.
+        $this->assertEquals($totalLength, strlen($authorizationHeader), "Authorization has extra characters i.e. contains extra elements compared to stringsToCheck.");
     }
 
     public function testDoesNotAddFalseyValuesToAuthorization()
@@ -199,5 +224,38 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $p->onRequestBeforeSend($event);
         $this->assertTrue($event['request']->hasHeader('Authorization'));
         $this->assertNotContains('oauth_token=', (string) $event['request']->getHeader('Authorization'));
+    }
+
+    public function testOptionalOauthParametersAreNotAutomaticallyAdded()
+    {
+        //The only required Oauth parameters are the consumer key and secret. That is enough credentials 
+        //for signing oauth requests.
+         $config = array(
+            'consumer_key'    => 'foo',
+            'consumer_secret' => 'bar',
+        );
+
+        $plugin = new OauthPlugin($config);
+        $event = new Event(array(
+            'request' => $this->getRequest(),
+            'timestamp' => self::TIMESTAMP
+        ));
+
+        $timestamp = $plugin->getTimestamp($event);
+        $request = $event['request'];
+        $nonce = $plugin->generateNonce($request);
+
+        $paramsToSign = $plugin->getParamsToSign($request, $timestamp, $nonce);
+
+        $optionalParams = array(
+            'callback'      => 'oauth_callback',
+            'token'         => 'oauth_token',
+            'verifier'      => 'oauth_verifier',
+            'token_secret'  => 'token_secret'
+        );
+
+        foreach ($optionalParams as $optionName => $oauthName) {
+            $this->assertArrayNotHasKey($oauthName, $paramsToSign, "Optional Oauth param '$oauthName' was not set via config variable '$optionName', but it is listed in getParamsToSign().");
+        }
     }
 }
