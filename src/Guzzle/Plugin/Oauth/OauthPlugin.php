@@ -68,18 +68,8 @@ class OauthPlugin implements EventSubscriberInterface
         $timestamp = $this->getTimestamp($event);
         $request = $event['request'];
         $nonce = $this->generateNonce($request);
-
-        $authorizationParams = array(
-            'oauth_callback'         => $this->config['callback'],
-            'oauth_consumer_key'     => $this->config['consumer_key'],
-            'oauth_nonce'            => $nonce,
-            'oauth_signature'        => $this->getSignature($request, $timestamp, $nonce),
-            'oauth_signature_method' => $this->config['signature_method'],
-            'oauth_timestamp'        => $timestamp,
-            'oauth_token'            => $this->config['token'],
-            'oauth_verifier'         => $this->config['verifier'],
-            'oauth_version'          => $this->config['version'],
-        );
+        $authorizationParams = $this->getParamsToSign($request, $timestamp, $nonce);
+        $authorizationParams['oauth_signature']  = $this->getSignature($request, $timestamp, $nonce);
 
         $request->setHeader(
             'Authorization',
@@ -166,12 +156,23 @@ class OauthPlugin implements EventSubscriberInterface
             'oauth_consumer_key'     => $this->config['consumer_key'],
             'oauth_nonce'            => $nonce,
             'oauth_signature_method' => $this->config['signature_method'],
-            'oauth_timestamp'        => $timestamp,
-            'oauth_token'            => $this->config['token'],
-            'oauth_version'          => $this->config['version'],
-            'oauth_callback'         => $this->config['callback'],
-            'oauth_verifier'         => $this->config['verifier']
+            'oauth_timestamp'        => $timestamp, 
         ));
+
+        //Optional parameters should not be set if they have not been set in the config as
+        //the parameter may be considered invalid by the Oauth service.
+        $optionalParams = array(
+            'callback'  => 'oauth_callback',
+            'token'     => 'oauth_token',
+            'verifier'  => 'oauth_verifier',
+            'version'   => 'oauth_version'
+        );
+
+        foreach ($optionalParams as $optionName => $oauthName) {
+            if (isset($this->config[$optionName]) == true) {
+                $params[$oauthName] = $this->config[$optionName];
+            }
+        }
 
         // Add query string parameters
         $params->merge($request->getQuery());
