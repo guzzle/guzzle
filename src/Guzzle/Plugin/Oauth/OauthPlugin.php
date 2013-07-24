@@ -68,18 +68,8 @@ class OauthPlugin implements EventSubscriberInterface
         $timestamp = $this->getTimestamp($event);
         $request = $event['request'];
         $nonce = $this->generateNonce($request);
-
-        $authorizationParams = array(
-            'oauth_callback'         => $this->config['callback'],
-            'oauth_consumer_key'     => $this->config['consumer_key'],
-            'oauth_nonce'            => $nonce,
-            'oauth_signature'        => $this->getSignature($request, $timestamp, $nonce),
-            'oauth_signature_method' => $this->config['signature_method'],
-            'oauth_timestamp'        => $timestamp,
-            'oauth_token'            => $this->config['token'],
-            'oauth_verifier'         => $this->config['verifier'],
-            'oauth_version'          => $this->config['version'],
-        );
+        $authorizationParams = $this->getOauthParams($timestamp, $nonce);
+        $authorizationParams['oauth_signature']  = $this->getSignature($request, $timestamp, $nonce);
 
         $request->setHeader(
             'Authorization',
@@ -152,8 +142,43 @@ class OauthPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Parameters sorted and filtered in order to properly sign a request
-     *
+     * Get the oauth parameters as named by the oauth spec
+     * 
+     * @param $timestamp
+     * @param $nonce
+     * @return Collection
+     */
+    protected function getOauthParams($timestamp, $nonce){
+        $params = new Collection(array(
+            'oauth_consumer_key'     => $this->config['consumer_key'],
+            'oauth_nonce'            => $nonce,
+            'oauth_signature_method' => $this->config['signature_method'],
+            'oauth_timestamp'        => $timestamp, 
+        ));
+
+        //Optional parameters should not be set if they have not been set in the config as
+        //the parameter may be considered invalid by the Oauth service.
+        $optionalParams = array(
+            'callback'  => 'oauth_callback',
+            'token'     => 'oauth_token',
+            'verifier'  => 'oauth_verifier',
+            'version'   => 'oauth_version'
+        );
+
+        foreach ($optionalParams as $optionName => $oauthName) {
+            if (isset($this->config[$optionName]) == true) {
+                $params[$oauthName] = $this->config[$optionName];
+            }
+        }
+        return $params;
+    }
+
+    /**
+     * Get all of the parameters required to sign a request including:
+     * * The oauth params
+     * * The request GET params
+     * * The params passed in the POST body (with a content-type of application/x-www-form-urlencoded)
+     * 
      * @param RequestInterface $request   Request to generate a signature for
      * @param integer          $timestamp Timestamp to use for nonce
      * @param string           $nonce
@@ -162,16 +187,7 @@ class OauthPlugin implements EventSubscriberInterface
      */
     public function getParamsToSign(RequestInterface $request, $timestamp, $nonce)
     {
-        $params = new Collection(array(
-            'oauth_consumer_key'     => $this->config['consumer_key'],
-            'oauth_nonce'            => $nonce,
-            'oauth_signature_method' => $this->config['signature_method'],
-            'oauth_timestamp'        => $timestamp,
-            'oauth_token'            => $this->config['token'],
-            'oauth_version'          => $this->config['version'],
-            'oauth_callback'         => $this->config['callback'],
-            'oauth_verifier'         => $this->config['verifier']
-        ));
+        $params = $this->getOauthParams($timestamp, $nonce);
 
         // Add query string parameters
         $params->merge($request->getQuery());
