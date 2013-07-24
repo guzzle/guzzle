@@ -211,8 +211,8 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         }
 
         //Technically this test is not universally valid. It would be allowable to have extra \n characters 
-        //in the Authorization header. However Guzzle does not does this, so we just perform a simple check
-        //on length to validate the Authorization header is composed of the strings above.
+        //in the Authorization header. However Guzzle does not do this, so we just perform a simple check
+        //on length to validate the Authorization header is composed of only the strings above.
         $this->assertEquals($totalLength, strlen($authorizationHeader), "Authorization has extra characters i.e. contains extra elements compared to stringsToCheck.");
     }
 

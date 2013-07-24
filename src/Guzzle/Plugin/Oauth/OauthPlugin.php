@@ -176,7 +176,7 @@ class OauthPlugin implements EventSubscriberInterface
     /**
      * Get all of the parameters required to sign a request including:
      * * The oauth params
-     * * The request GET params.
+     * * The request GET params
      * * The params passed in the POST body (with a content-type of application/x-www-form-urlencoded)
      * 
      * @param RequestInterface $request   Request to generate a signature for
