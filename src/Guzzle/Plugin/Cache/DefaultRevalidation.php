@@ -100,7 +100,7 @@ class DefaultRevalidation implements RevalidationInterface
             ->setHeader('If-Modified-Since', $response->getLastModified() ?: $response->getDate());
 
         if ($response->getEtag()) {
-            $revalidate->setHeader('If-None-Match', '"' . $response->getEtag() . '"');
+            $revalidate->setHeader('If-None-Match', $response->getEtag());
         }
 
         // Remove any cache plugins that might be on the request to prevent infinite recursive revalidations
