@@ -234,15 +234,11 @@ class Stream implements StreamInterface
 
     public function read($length)
     {
-        return $this->cache[self::IS_READABLE] ? fread($this->stream, $length) : false;
+        return fread($this->stream, $length);
     }
 
     public function write($string)
     {
-        if (!$this->cache[self::IS_WRITABLE]) {
-            return 0;
-        }
-
         // We can't know the size after writing anything
         $this->size = null;
 

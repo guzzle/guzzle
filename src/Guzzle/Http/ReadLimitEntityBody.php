@@ -22,7 +22,6 @@ class ReadLimitEntityBody extends AbstractEntityBodyDecorator
     {
         parent::__construct($body);
         $this->setLimit($limit)->setOffset($offset);
-        $this->body->seek($offset);
     }
 
     /**
