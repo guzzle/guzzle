@@ -15,13 +15,13 @@ class Stream implements StreamInterface
     const SEEKABLE = 'seekable';
 
     /** @var resource Stream resource */
-    protected $stream;
+    private $stream;
 
     /** @var int Size of the stream contents in bytes */
-    protected $size;
+    private $size;
 
     /** @var array Stream metadata */
-    protected $meta = array();
+    private $meta = array();
 
     /** @var array Hash table of readable and writeable stream types for fast lookups */
     protected static $readWriteHash = array(

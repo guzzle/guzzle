@@ -10,10 +10,10 @@ class LimitStream implements StreamInterface
     use StreamDecorator;
 
     /** @var int Offset to start reading from */
-    protected $offset;
+    private $offset;
 
     /** @var int Limit the number of bytes that can be read */
-    protected $limit;
+    private $limit;
 
     /**
      * @param StreamInterface $stream Stream to wrap

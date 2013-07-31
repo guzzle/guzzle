@@ -10,10 +10,10 @@ class CachingStream implements StreamInterface
     use StreamDecorator;
 
     /** @var StreamInterface Remote stream used to actually pull data onto the buffer */
-    protected $remoteStream;
+    private $remoteStream;
 
     /** @var int The number of bytes to skip reading due to a write on the temporary buffer */
-    protected $skipReadBytes = 0;
+    private $skipReadBytes = 0;
 
     /**
      * We will treat the buffer object as the body of the stream
@@ -21,9 +21,9 @@ class CachingStream implements StreamInterface
      * @param StreamInterface $stream Stream to cache
      * @param StreamInterface $target Optionally specify where data is cached
      */
-    public function __construct(StreamInterface $body, StreamInterface $target = null)
+    public function __construct(StreamInterface $stream, StreamInterface $target = null)
     {
-        $this->remoteStream = $body;
+        $this->remoteStream = $stream;
         $this->stream = $target ?: new Stream(fopen('php://temp', 'r+'));
     }
 
@@ -40,7 +40,7 @@ class CachingStream implements StreamInterface
         $this->rewind();
 
         $str = '';
-        while (!$this->isConsumed()) {
+        while (!$this->feof()) {
             $str .= $this->read(16384);
         }
 
@@ -56,7 +56,7 @@ class CachingStream implements StreamInterface
 
     /**
      * {@inheritdoc}
-     * @throws RuntimeException When seeking with SEEK_END or when seeking past the total size of the buffer stream
+     * @throws \RuntimeException When seeking with SEEK_END or when seeking past the total size of the buffer stream
      */
     public function seek($offset, $whence = SEEK_SET)
     {
@@ -65,12 +65,12 @@ class CachingStream implements StreamInterface
         } elseif ($whence == SEEK_CUR) {
             $byte = $offset + $this->ftell();
         } else {
-            throw new RuntimeException(__CLASS__ . ' supports only SEEK_SET and SEEK_CUR seek operations');
+            throw new \RuntimeException(__CLASS__ . ' supports only SEEK_SET and SEEK_CUR seek operations');
         }
 
         // You cannot skip ahead past where you've read from the remote stream
         if ($byte > $this->stream->getSize()) {
-            throw new RuntimeException(
+            throw new \RuntimeException(
                 "Cannot seek to byte {$byte} when the buffered stream only contains {$this->stream->getSize()} bytes"
             );
         }
@@ -129,7 +129,7 @@ class CachingStream implements StreamInterface
     {
         $buffer = '';
         $size = 0;
-        while (!$this->isConsumed()) {
+        while (!$this->feof()) {
             $byte = $this->read(1);
             $buffer .= $byte;
             // Break when a new line is found or the max length - 1 is reached
@@ -151,7 +151,7 @@ class CachingStream implements StreamInterface
      */
     public function close()
     {
-        return $this->remoteStream->close() && $this->stream->close();
+        $this->remoteStream->close() && $this->stream->close();
     }
 
     public function getMetaData($key = null)

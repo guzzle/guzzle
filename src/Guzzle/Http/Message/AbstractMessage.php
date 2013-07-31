@@ -22,9 +22,6 @@ abstract class AbstractMessage implements MessageInterface
     /** @var HeaderFactoryInterface $headerFactory */
     protected $headerFactory;
 
-    /** @var string Message protocol */
-    protected $protocol = 'HTTP';
-
     /** @var string HTTP protocol version of the message */
     protected $protocolVersion = '1.1';
 
@@ -33,7 +30,7 @@ abstract class AbstractMessage implements MessageInterface
 
     public function __construct()
     {
-        $this->headerFactory = new HeaderFactory();
+        $this->headerFactory = HeaderFactory::getInstance();
         $this->headers = new HeaderCollection();
     }
 
