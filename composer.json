@@ -11,47 +11,16 @@
             "name": "Michael Dowling",
             "email": "mtdowling@gmail.com",
             "homepage": "https://github.com/mtdowling"
-        },
-        {
-            "name": "Guzzle Community",
-            "homepage": "https://github.com/guzzle/guzzle/contributors"
         }
     ],
 
-    "replace": {
-        "guzzle/batch": "self.version",
-        "guzzle/cache": "self.version",
-        "guzzle/common": "self.version",
-        "guzzle/http": "self.version",
-        "guzzle/inflection": "self.version",
-        "guzzle/iterator": "self.version",
-        "guzzle/log": "self.version",
-        "guzzle/parser": "self.version",
-        "guzzle/plugin": "self.version",
-        "guzzle/plugin-async": "self.version",
-        "guzzle/plugin-backoff": "self.version",
-        "guzzle/plugin-cache": "self.version",
-        "guzzle/plugin-cookie": "self.version",
-        "guzzle/plugin-curlauth": "self.version",
-        "guzzle/plugin-error-response": "self.version",
-        "guzzle/plugin-history": "self.version",
-        "guzzle/plugin-log": "self.version",
-        "guzzle/plugin-md5": "self.version",
-        "guzzle/plugin-mock": "self.version",
-        "guzzle/plugin-oauth": "self.version",
-        "guzzle/service": "self.version",
-        "guzzle/stream": "self.version"
-    },
-
     "require": {
-        "php": ">=5.3.3",
-        "ext-curl": "*",
+        "php": ">=5.4.0",
         "symfony/event-dispatcher": ">=2.1"
     },
 
     "autoload": {
         "psr-0": {
-            "Guzzle\\Tests": "tests/",
             "Guzzle": "src/"
         }
     },
@@ -61,8 +30,6 @@
         "symfony/class-loader": "*",
         "monolog/monolog": "1.*",
         "psr/log": "1.0.*",
-        "zendframework/zend-cache": "2.0.*",
-        "zendframework/zend-log": "2.0.*",
         "phpunit/phpunit": "3.7.*"
     },
 

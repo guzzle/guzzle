@@ -10,8 +10,7 @@ use Guzzle\Common\Exception\RuntimeException;
  */
 class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArrayInterface
 {
-    /** @var array Data associated with the object. */
-    protected $data;
+    use HasData;
 
     /**
      * @param array $data Associative array of data to set
@@ -40,21 +39,6 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
         }
 
         return new self($data);
-    }
-
-    public function count()
-    {
-        return count($this->data);
-    }
-
-    public function getIterator()
-    {
-        return new \ArrayIterator($this->data);
-    }
-
-    public function toArray()
-    {
-        return $this->data;
     }
 
     /**
@@ -291,26 +275,6 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
         return $collection;
     }
 
-    public function offsetExists($offset)
-    {
-        return isset($this->data[$offset]);
-    }
-
-    public function offsetGet($offset)
-    {
-        return isset($this->data[$offset]) ? $this->data[$offset] : null;
-    }
-
-    public function offsetSet($offset, $value)
-    {
-        $this->data[$offset] = $value;
-    }
-
-    public function offsetUnset($offset)
-    {
-        unset($this->data[$offset]);
-    }
-
     /**
      * Set a value into a nested array key. Keys will be created as needed to set the value.
      *
@@ -341,63 +305,25 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
     }
 
     /**
-     * Gets a value from the collection using an array path (e.g. foo/baz/bar would retrieve bar from two nested arrays)
-     * Allows for wildcard searches which recursively combine matches up to the level at which the wildcard occurs. This
-     * can be useful for accepting any key of a sub-array and combining matching keys from each diverging path.
+     * Gets a value from the collection using an array path
+     * (e.g. foo/baz/bar would retrieve bar from two nested arrays)
      *
-     * @param string $path      Path to traverse and retrieve a value from
-     * @param string $separator Character used to add depth to the search
-     * @param mixed  $data      Optional data to descend into (used when wildcards are encountered)
+     * @param string $path Path to traverse and retrieve a value from
      *
      * @return mixed|null
      */
-    public function getPath($path, $separator = '/', $data = null)
+    public function getPath($path)
     {
-        if ($data === null) {
-            $data =& $this->data;
-        }
+        $data =& $this->data;
+        $path = explode('/', $path);
 
-        $path = is_array($path) ? $path : explode($separator, $path);
         while (null !== ($part = array_shift($path))) {
-            if (!is_array($data)) {
+            if (!is_array($data) || !isset($data[$part])) {
                 return null;
-            } elseif (isset($data[$part])) {
-                $data =& $data[$part];
-            } elseif ($part != '*') {
-                return null;
-            } else {
-                // Perform a wildcard search by diverging and merging paths
-                $result = array();
-                foreach ($data as $value) {
-                    if (!$path) {
-                        $result = array_merge_recursive($result, (array) $value);
-                    } elseif (null !== ($test = $this->getPath($path, $separator, $value))) {
-                        $result = array_merge_recursive($result, (array) $test);
-                    }
-                }
-                return $result;
             }
+            $data =& $data[$part];
         }
 
         return $data;
-    }
-
-    /**
-     * Inject configuration settings into an input string
-     *
-     * @param string $input Input to inject
-     *
-     * @return string
-     * @deprecated
-     */
-    public function inject($input)
-    {
-        Version::warn(__METHOD__ . ' is deprecated');
-        $replace = array();
-        foreach ($this->data as $key => $val) {
-            $replace['{' . $key . '}'] = $val;
-        }
-
-        return strtr($input, $replace);
     }
 }

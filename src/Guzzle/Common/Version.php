@@ -7,7 +7,7 @@ namespace Guzzle\Common;
  */
 class Version
 {
-    const VERSION = '3.7.4';
+    const VERSION = '4.0.0-alpha';
 
     /**
      * @var bool Set this value to true to enable warnings for deprecated functionality use. This should be on in your

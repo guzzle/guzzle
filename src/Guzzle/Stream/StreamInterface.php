@@ -2,9 +2,6 @@
 
 namespace Guzzle\Stream;
 
-/**
- * OO interface to PHP streams
- */
 interface StreamInterface
 {
     /**
@@ -15,7 +12,7 @@ interface StreamInterface
     public function __toString();
 
     /**
-     * Close the underlying stream
+     * Close the stream
      */
     public function close();
 
@@ -26,52 +23,29 @@ interface StreamInterface
      *
      * @return array|mixed|null
      */
-    public function getMetaData($key = null);
+    public function getMetadata($key = null);
 
     /**
-     * Get the stream resource
+     * Set stream metadata
      *
-     * @return resource
+     * @param string $key   Metadata name to set
+     * @param mixed  $value Value to set
+     *
+     * @return self
+     */
+    public function setMetadata($key, $value);
+
+    /**
+     * Get the underlying stream resource (if available)
+     *
+     * @return resource|null
      */
     public function getStream();
 
     /**
-     * Set the stream that is wrapped by the object
-     *
-     * @param resource $stream Stream resource to wrap
-     * @param int      $size   Size of the stream in bytes. Only pass if the size cannot be obtained from the stream.
-     *
-     * @return self
-     */
-    public function setStream($stream, $size = null);
-
-    /**
      * Detach the current stream resource
-     *
-     * @return self
      */
     public function detachStream();
-
-    /**
-     * Get the stream wrapper type
-     *
-     * @return string
-     */
-    public function getWrapper();
-
-    /**
-     * Wrapper specific data attached to this stream.
-     *
-     * @return array
-     */
-    public function getWrapperData();
-
-    /**
-     * Get a label describing the underlying implementation of the stream
-     *
-     * @return string
-     */
-    public function getStreamType();
 
     /**
      * Get the URI/filename associated with this stream
@@ -88,6 +62,20 @@ interface StreamInterface
     public function getSize();
 
     /**
+     * Returns true if the stream is at the end of the stream
+     *
+     * @return bool
+     */
+    public function feof();
+
+    /**
+     * Returns the current position of the file read/write pointer
+     *
+     * @return int|bool Returns the position of the file pointer or false on error
+     */
+    public function ftell();
+
+    /**
      * Check if the stream is readable
      *
      * @return bool
@@ -95,32 +83,11 @@ interface StreamInterface
     public function isReadable();
 
     /**
-     * Check if the stream is repeatable
-     *
-     * @return bool
-     */
-    public function isRepeatable();
-
-    /**
      * Check if the stream is writable
      *
      * @return bool
      */
     public function isWritable();
-
-    /**
-     * Check if the stream has been consumed
-     *
-     * @return bool
-     */
-    public function isConsumed();
-
-    /**
-     * Alias of isConsumed
-     *
-     * @return bool
-     */
-    public function feof();
 
     /**
      * Check if the stream is a local stream vs a remote stream
@@ -157,6 +124,13 @@ interface StreamInterface
     public function seek($offset, $whence = SEEK_SET);
 
     /**
+     * Rewind to the beginning of the stream
+     *
+     * @return bool Returns true on success or false on failure
+     */
+    public function rewind();
+
+    /**
      * Read data from the stream
      *
      * @param int $length Up to length number of bytes read.
@@ -164,29 +138,6 @@ interface StreamInterface
      * @return string|bool Returns the data read from the stream or FALSE on failure or EOF
      */
     public function read($length);
-
-    /**
-     * Write data to the stream
-     *
-     * @param string $string The string that is to be written.
-     *
-     * @return int|bool Returns the number of bytes written to the stream on success or FALSE on failure.
-     */
-    public function write($string);
-
-    /**
-     * Returns the current position of the file read/write pointer
-     *
-     * @return int|bool Returns the position of the file pointer or false on error
-     */
-    public function ftell();
-
-    /**
-     * Rewind to the beginning of the stream
-     *
-     * @return bool Returns true on success or false on failure
-     */
-    public function rewind();
 
     /**
      * Read a line from the stream up to the maximum allowed buffer length
@@ -198,21 +149,11 @@ interface StreamInterface
     public function readLine($maxLength = null);
 
     /**
-     * Set custom data on the stream
+     * Write data to the stream
      *
-     * @param string $key   Key to set
-     * @param mixed  $value Value to set
+     * @param string $string The string that is to be written.
      *
-     * @return self
+     * @return int|bool Returns the number of bytes written to the stream on success or FALSE on failure.
      */
-    public function setCustomData($key, $value);
-
-    /**
-     * Get custom data from the stream
-     *
-     * @param string $key Key to retrieve
-     *
-     * @return null|mixed
-     */
-    public function getCustomData($key);
+    public function write($string);
 }

@@ -2,17 +2,29 @@
 
 namespace Guzzle\Http\Message;
 
+use Guzzle\Http\Header;
+use Guzzle\Http\Header\HeaderInterface;
+use Guzzle\Http\Header\HeaderCollection;
+use Guzzle\Stream\StreamInterface;
+
 /**
  * Request and response message interface
  */
-interface MessageInterface
+interface MessageInterface extends \Serializable
 {
     /**
-     * Get application and plugin specific parameters set on the message.
+     * Get a string represenation of the message
      *
-     * @return \Guzzle\Common\Collection
+     * @return string
      */
-    public function getParams();
+    public function __toString();
+
+    /**
+     * Get the start line of the message (e.g. "HTTP/1.1 200 OK")
+     *
+     * @return string
+     */
+    public function getStartLine();
 
     /**
      * Add a header to an existing collection of headers.
@@ -20,9 +32,9 @@ interface MessageInterface
      * @param string $header Header name to add
      * @param string $value  Value of the header
      *
-     * @return self
+     * @return HeaderInterface Returns the added header object
      */
-    public function addHeader($header, $value);
+    public function addHeader($header, $value = null);
 
     /**
      * Add and merge in an array of HTTP headers.
@@ -38,14 +50,14 @@ interface MessageInterface
      *
      * @param string $header Header to retrieve.
      *
-     * @return Header|null
+     * @return HeaderInterface|null
      */
     public function getHeader($header);
 
     /**
      * Get all headers as a collection
      *
-     * @return \Guzzle\Http\Message\Header\HeaderCollection
+     * @return HeaderCollection
      */
     public function getHeaders();
 
@@ -73,9 +85,9 @@ interface MessageInterface
      * @param string $header Name of the header to set.
      * @param mixed  $value  Value to set.
      *
-     * @return self
+     * @return HeaderInterface Returns the set header object
      */
-    public function setHeader($header, $value);
+    public function setHeader($header, $value = null);
 
     /**
      * Overwrite all HTTP headers with the supplied array of headers
@@ -87,16 +99,36 @@ interface MessageInterface
     public function setHeaders(array $headers);
 
     /**
-     * Get an array of message header lines (e.g. ["Host: example.com", ...])
+     * Set the HTTP protocol version of the request (e.g. 1.1 or 1.0)
      *
-     * @return array
+     * @param string $protocol HTTP protocol version to use with the request
+     *
+     * @return self
      */
-    public function getHeaderLines();
+    public function setProtocolVersion($protocol);
 
     /**
-     * Get the raw message headers as a string
+     * Get the HTTP protocol version of the message
      *
      * @return string
      */
-    public function getRawHeaders();
+    public function getProtocolVersion();
+
+    /**
+     * Set the body of the message
+     *
+     * @param string|resource|StreamInterface $body Body of the message
+     * @param string                                $contentType Content-Type to set. Leave null to use an existing
+     *                                                           Content-Type or to guess the Content-Type
+     * @return self
+     * @throws \LogicException when set on a request if the protocol is < 1.1 and Content-Length cannot be determined
+     */
+    public function setBody($body, $contentType = null);
+
+    /**
+     * Get the body of the message
+     *
+     * @return StreamInterface|null
+     */
+    public function getBody();
 }

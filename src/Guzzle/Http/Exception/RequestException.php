@@ -2,29 +2,62 @@
 
 namespace Guzzle\Http\Exception;
 
-use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Http\Message\RequestInterface;
+use Guzzle\Http\Message\ResponseInterface;
 
 /**
- * Http request exception
+ * HTTP Request exception
  */
-class RequestException extends RuntimeException implements HttpException
+class RequestException extends TransferException
 {
     /** @var RequestInterface */
     protected $request;
 
-    /**
-     * Set the request that caused the exception
-     *
-     * @param RequestInterface $request Request to set
-     *
-     * @return RequestException
-     */
-    public function setRequest(RequestInterface $request)
-    {
-        $this->request = $request;
+    /** @var ResponseInterface */
+    protected $response;
 
-        return $this;
+    public function __construct(
+        $message = '',
+        RequestInterface $request,
+        ResponseInterface $response = null,
+        \Exception $previous = null
+    ) {
+        parent::__construct($message, 0, $previous);
+        $this->request = $request;
+        $this->response = $response;
+    }
+
+    /**
+     * Factory method to create a new exception with a normalized error message
+     *
+     * @param RequestInterface  $request  Request
+     * @param ResponseInterface $response Response received
+     * @param \Exception        $previous Previous exception
+     *
+     * @return self
+     */
+    public static function create(
+        RequestInterface $request,
+        ResponseInterface $response = null,
+        \Exception $previous = null
+    ) {
+        if (!$response) {
+            $label = 'Error completing request';
+        } elseif ($response->isClientError()) {
+            $label = 'Client error response';
+        } elseif ($response->isServerError()) {
+            $label = 'Server error response';
+        } else {
+            $label = 'Unsuccessful response';
+        }
+
+        $message = $label . PHP_EOL . implode(PHP_EOL, array(
+            '[status code] ' . $response->getStatusCode(),
+            '[reason phrase] ' . $response->getReasonPhrase(),
+            '[url] ' . $request->getUrl(),
+        ));
+
+        return new self($message, $request, $response, $previous);
     }
 
     /**
@@ -35,5 +68,25 @@ class RequestException extends RuntimeException implements HttpException
     public function getRequest()
     {
         return $this->request;
+    }
+
+    /**
+     * Get the associated repsonse
+     *
+     * @return ResponseInterface|null
+     */
+    public function getResponse()
+    {
+        return $this->response;
+    }
+
+    /**
+     * Check if a response was recieved
+     *
+     * @return bool
+     */
+    public function hasResponse()
+    {
+        return $this->response !== null;
     }
 }

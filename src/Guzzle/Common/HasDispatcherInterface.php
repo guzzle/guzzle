@@ -11,13 +11,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 interface HasDispatcherInterface
 {
     /**
-     * Get a list of all of the events emitted from the class
-     *
-     * @return array
-     */
-    public static function getAllEvents();
-
-    /**
      * Set the EventDispatcher of the request
      *
      * @param EventDispatcherInterface $eventDispatcher
@@ -41,7 +34,7 @@ interface HasDispatcherInterface
      *
      * @return Event Returns the created event object
      */
-    public function dispatch($eventName, array $context = array());
+    public function dispatch($eventName, array $context = []);
 
     /**
      * Add an event subscriber to the dispatcher

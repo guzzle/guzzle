@@ -2,8 +2,6 @@
 
 namespace Guzzle\Stream;
 
-use Guzzle\Common\Exception\InvalidArgumentException;
-
 /**
  * PHP stream implementation
  */
@@ -22,11 +20,8 @@ class Stream implements StreamInterface
     /** @var int Size of the stream contents in bytes */
     protected $size;
 
-    /** @var array Stream cached data */
-    protected $cache = array();
-
-    /** @var array Custom stream data */
-    protected $customData = array();
+    /** @var array Stream metadata */
+    protected $meta = array();
 
     /** @var array Hash table of readable and writeable stream types for fast lookups */
     protected static $readWriteHash = array(
@@ -43,44 +38,53 @@ class Stream implements StreamInterface
     );
 
     /**
-     * @param resource $stream Stream resource to wrap
-     * @param int      $size   Size of the stream in bytes. Only pass if the size cannot be obtained from the stream.
+     * Create a new EntityBody based on the input type
      *
-     * @throws InvalidArgumentException if the stream is not a stream resource
+     * @param resource|string|EntityBody $resource Entity body data
+     * @param int                        $size     Size of the data contained in the resource
+     *
+     * @return EntityBody
+     * @throws \InvalidArgumentException if the $resource arg is not a resource or string
      */
-    public function __construct($stream, $size = null)
+    public static function factory($resource = '', $size = null)
     {
-        $this->setStream($stream, $size);
+        if ($resource instanceof EntityBodyInterface) {
+            return $resource;
+        }
+
+        switch (gettype($resource)) {
+            case 'string':
+                return self::fromString($resource);
+            case 'resource':
+                return new static($resource, $size);
+            case 'object':
+                if (method_exists($resource, '__toString')) {
+                    return self::fromString((string) $resource);
+                }
+                break;
+            case 'array':
+                return self::fromString(http_build_query($resource));
+        }
+
+        throw new \InvalidArgumentException('Invalid resource type');
     }
 
     /**
-     * Closes the stream when the helper is destructed
+     * Create a new EntityBody from a string
+     *
+     * @param string $string String of data
+     *
+     * @return EntityBody
      */
-    public function __destruct()
+    public static function fromString($string)
     {
-        $this->close();
-    }
-
-    public function __toString()
-    {
-        if (!$this->isReadable() || (!$this->isSeekable() && $this->isConsumed())) {
-            return '';
+        $stream = fopen('php://temp', 'r+');
+        if ($string !== '') {
+            fwrite($stream, $string);
+            rewind($stream);
         }
 
-        $originalPos = $this->ftell();
-        $body = stream_get_contents($this->stream, -1, 0);
-        $this->seek($originalPos);
-
-        return $body;
-    }
-
-    public function close()
-    {
-        if (is_resource($this->stream)) {
-            fclose($this->stream);
-        }
-        $this->cache[self::IS_READABLE] = false;
-        $this->cache[self::IS_WRITABLE] = false;
+        return new static($stream);
     }
 
     /**
@@ -110,11 +114,72 @@ class Stream implements StreamInterface
         return $out;
     }
 
-    public function getMetaData($key = null)
+    /**
+     * @param resource $stream Stream resource to wrap
+     * @param int      $size   Size of the stream in bytes. Only pass if the size cannot be obtained from the stream.
+     *
+     * @throws \InvalidArgumentException if the stream is not a stream resource
+     */
+    public function __construct($stream, $size = null)
     {
-        $meta = stream_get_meta_data($this->stream);
+        if (!is_resource($stream)) {
+            throw new \InvalidArgumentException('Stream must be a resource');
+        }
 
-        return !$key ? $meta : (array_key_exists($key, $meta) ? $meta[$key] : null);
+        $this->size = $size;
+        $this->stream = $stream;
+        $this->meta = stream_get_meta_data($this->stream);
+        $this->meta[self::IS_LOCAL] = stream_is_local($this->stream);
+        $this->meta[self::IS_READABLE] = isset(self::$readWriteHash['read'][$this->meta['mode']]);
+        $this->meta[self::IS_WRITABLE] = isset(self::$readWriteHash['write'][$this->meta['mode']]);
+    }
+
+    /**
+     * Closes the stream when the destructed
+     */
+    public function __destruct()
+    {
+        $this->close();
+    }
+
+    public function __toString()
+    {
+        if (!$this->isReadable() || (!$this->isSeekable() && $this->feof())) {
+            return '';
+        }
+
+        $originalPos = $this->ftell();
+        $body = stream_get_contents($this->stream, -1, 0);
+        $this->seek($originalPos);
+
+        return $body;
+    }
+
+    public function close()
+    {
+        if (is_resource($this->stream)) {
+            fclose($this->stream);
+        }
+        $this->meta = [];
+    }
+
+    public function getMetadata($key = null)
+    {
+        return !$key ? $this->meta : (isset($this->meta[$key]) ? $this->meta[$key] : null);
+    }
+
+    public function setMetadata($key, $value)
+    {
+        static $immutable = ['wrapper_type', 'stream_type', 'mode', 'unread_bytes',
+            'seekable', 'uri', self::IS_LOCAL, self::IS_READABLE, self::IS_WRITABLE];
+
+        if (in_array($key, $immutable)) {
+            throw new \InvalidArgumentException("Cannot change immutable value of stream: {$key}");
+        }
+
+        $this->meta[$key] = $value;
+
+        return $this;
     }
 
     public function getStream()
@@ -122,44 +187,14 @@ class Stream implements StreamInterface
         return $this->stream;
     }
 
-    public function setStream($stream, $size = null)
-    {
-        if (!is_resource($stream)) {
-            throw new InvalidArgumentException('Stream must be a resource');
-        }
-
-        $this->size = $size;
-        $this->stream = $stream;
-        $this->rebuildCache();
-
-        return $this;
-    }
-
     public function detachStream()
     {
         $this->stream = null;
-
-        return $this;
-    }
-
-    public function getWrapper()
-    {
-        return $this->cache[self::WRAPPER_TYPE];
-    }
-
-    public function getWrapperData()
-    {
-        return $this->getMetaData('wrapper_data') ?: array();
-    }
-
-    public function getStreamType()
-    {
-        return $this->cache[self::STREAM_TYPE];
     }
 
     public function getUri()
     {
-        return $this->cache['uri'];
+        return $this->meta['uri'];
     }
 
     public function getSize()
@@ -169,12 +204,12 @@ class Stream implements StreamInterface
         }
 
         // If the stream is a file based stream and local, then use fstat
-        clearstatcache(true, $this->cache['uri']);
+        clearstatcache(true, $this->meta['uri']);
         $stats = fstat($this->stream);
         if (isset($stats['size'])) {
             $this->size = $stats['size'];
             return $this->size;
-        } elseif ($this->cache[self::IS_READABLE] && $this->cache[self::SEEKABLE]) {
+        } elseif ($this->meta[self::IS_READABLE] && $this->meta[self::SEEKABLE]) {
             // Only get the size based on the content if the the stream is readable and seekable
             $pos = $this->ftell();
             $this->size = strlen((string) $this);
@@ -187,37 +222,32 @@ class Stream implements StreamInterface
 
     public function isReadable()
     {
-        return $this->cache[self::IS_READABLE];
-    }
-
-    public function isRepeatable()
-    {
-        return $this->cache[self::IS_READABLE] && $this->cache[self::SEEKABLE];
+        return $this->meta[self::IS_READABLE];
     }
 
     public function isWritable()
     {
-        return $this->cache[self::IS_WRITABLE];
-    }
-
-    public function isConsumed()
-    {
-        return feof($this->stream);
-    }
-
-    public function feof()
-    {
-        return $this->isConsumed();
+        return $this->meta[self::IS_WRITABLE];
     }
 
     public function isLocal()
     {
-        return $this->cache[self::IS_LOCAL];
+        return $this->meta[self::IS_LOCAL];
     }
 
     public function isSeekable()
     {
-        return $this->cache[self::SEEKABLE];
+        return $this->meta[self::SEEKABLE];
+    }
+
+    public function feof()
+    {
+        return feof($this->stream);
+    }
+
+    public function ftell()
+    {
+        return ftell($this->stream);
     }
 
     public function setSize($size)
@@ -229,12 +259,22 @@ class Stream implements StreamInterface
 
     public function seek($offset, $whence = SEEK_SET)
     {
-        return $this->cache[self::SEEKABLE] ? fseek($this->stream, $offset, $whence) === 0 : false;
+        return $this->meta[self::SEEKABLE] ? fseek($this->stream, $offset, $whence) === 0 : false;
+    }
+
+    public function rewind()
+    {
+        return $this->seek(0);
     }
 
     public function read($length)
     {
         return fread($this->stream, $length);
+    }
+
+    public function readLine($maxLength = null)
+    {
+        return $maxLength ? fgets($this->getStream(), $maxLength) : fgets($this->getStream());
     }
 
     public function write($string)
@@ -243,47 +283,5 @@ class Stream implements StreamInterface
         $this->size = null;
 
         return fwrite($this->stream, $string);
-    }
-
-    public function ftell()
-    {
-        return ftell($this->stream);
-    }
-
-    public function rewind()
-    {
-        return $this->seek(0);
-    }
-
-    public function readLine($maxLength = null)
-    {
-        if (!$this->cache[self::IS_READABLE]) {
-            return false;
-        } else {
-            return $maxLength ? fgets($this->getStream(), $maxLength) : fgets($this->getStream());
-        }
-    }
-
-    public function setCustomData($key, $value)
-    {
-        $this->customData[$key] = $value;
-
-        return $this;
-    }
-
-    public function getCustomData($key)
-    {
-        return isset($this->customData[$key]) ? $this->customData[$key] : null;
-    }
-
-    /**
-     * Reprocess stream metadata
-     */
-    protected function rebuildCache()
-    {
-        $this->cache = stream_get_meta_data($this->stream);
-        $this->cache[self::IS_LOCAL] = stream_is_local($this->stream);
-        $this->cache[self::IS_READABLE] = isset(self::$readWriteHash['read'][$this->cache['mode']]);
-        $this->cache[self::IS_WRITABLE] = isset(self::$readWriteHash['write'][$this->cache['mode']]);
     }
 }
