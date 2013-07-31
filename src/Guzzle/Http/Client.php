@@ -4,8 +4,10 @@ namespace Guzzle\Http;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\HasDispatcher;
-use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Common\Version;
+use Guzzle\Http\Adapter\AdapterInterface;
+use Guzzle\Http\Adapter\StreamAdapter;
+use Guzzle\Http\Adapter\StreamingProxyAdapter;
 use Guzzle\Http\Adapter\Curl\CurlAdapter;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Url\Url;
@@ -28,31 +30,53 @@ class Client implements ClientInterface
     /** @var Collection Parameter object holding configuration data */
     private $config;
 
-    /** @var Url Base URL of the client */
+    /** @var string Base URL of the client */
     private $baseUrl;
 
     /** @var AdapterInterface */
     private $adapter;
-
-    /** @var UriTemplateInterface URI template owned by the client */
-    private $uriTemplate;
 
     /** @var MessageFactoryInterface Request factory used by the client */
     protected $messageFactory;
 
     /**
      * @param array $config Client configuration settings
+     *                      - base_url: Base URL of the client that is merged into relative URLs. Can be a string or
+     *                      -           an array that contains a URI template followed by an associative array of
+     *                                  expansion variables to inject into the URI template.
+     *                      - message_factory: Factory used to create request and response object
+     *                      - adapter: Adapter used to transfer requests
      */
     public function __construct(array $config = array())
     {
         $this->config = new Collection($config);
-        $this->baseUrl = $this->config['base_url'];
-        $this->messageFactory = $config['message_factory'] ?: MessageFactory::getInstance();
         $this->userAgent = $this->getDefaultUserAgent();
-        if ($this->config['adapter']) {
-            $this->adapter = $this->config['adapter'];
+        $this->baseUrl = $this->buildUrl($this->config['base_url']);
+        $this->messageFactory = $config['message_factory'] ?: MessageFactory::getInstance();
+        $this->adapter = $this->config['adapter'] ?: self::getDefaultAdapter($this->messageFactory);
+    }
+
+    /**
+     * Get a default adapter to use based on the environment
+     *
+     * @param MessageFactoryInterface $messageFactory Message factory used by the adapter
+     *
+     * @return AdapterInterface
+     * @throws \RuntimeException
+     */
+    public static function getDefaultAdapter(MessageFactoryInterface $messageFactory)
+    {
+        if (extension_loaded('curl')) {
+            return ini_get('allow_url_fopen')
+                ? new StreamingProxyAdapter(
+                    new CurlAdapter($messageFactory),
+                    new StreamAdapter($messageFactory)
+                )
+                : new CurlAdapter($messageFactory);
+        } elseif (ini_get('allow_url_fopen')) {
+            return new StreamAdapter($messageFactory);
         } else {
-            $this->adapter = new CurlAdapter($this->messageFactory);
+            throw new \RuntimeException('The curl extension must be installed or you must set allow_url_fopen to true');
         }
     }
 
@@ -90,7 +114,7 @@ class Client implements ClientInterface
 
     public function createRequest($method, $url = null, $body = null, array $options = array())
     {
-        $url = !$url ? $this->getBaseUrl() : $this->buildUrl($url);
+        $url = $url ? $this->buildUrl($url) : $this->getBaseUrl();
 
         // Merge in default options
         if ($default = $this->config->get(self::REQUEST_OPTIONS)) {
@@ -173,36 +197,7 @@ class Client implements ClientInterface
      */
     protected function getDefaultUserAgent()
     {
-        return 'Guzzle/' . Version::VERSION
-        . ' curl/' . CurlVersion::getInstance()->get('version')
-        . ' PHP/' . PHP_VERSION;
-    }
-
-    /**
-     * Copy the cacert.pem file from the phar if it is not in the temp folder and validate the MD5 checksum
-     *
-     * @param bool $md5Check Set to false to not perform the MD5 validation
-     *
-     * @return string Returns the path to the extracted cacert
-     * @throws RuntimeException if the file cannot be copied or there is a MD5 mismatch
-     */
-    public function preparePharCacert($md5Check = true)
-    {
-        /*
-        $from = __DIR__ . '/Resources/cacert.pem';
-        $certFile = sys_get_temp_dir() . '/guzzle-cacert.pem';
-        if (!file_exists($certFile) && !copy($from, $certFile)) {
-            throw new RuntimeException("Could not copy {$from} to {$certFile}: " . var_export(error_get_last(), true));
-        } elseif ($md5Check) {
-            $actualMd5 = md5_file($certFile);
-            $expectedMd5 = trim(file_get_contents("{$from}.md5"));
-            if ($actualMd5 != $expectedMd5) {
-                throw new RuntimeException("{$certFile} MD5 mismatch: expected {$expectedMd5} but got {$actualMd5}");
-            }
-        }
-
-        return $certFile;
-        */
+        return 'Guzzle/' . Version::VERSION . ' curl/' . curl_version()['version'] . ' PHP/' . PHP_VERSION;
     }
 
     /**
@@ -213,7 +208,7 @@ class Client implements ClientInterface
      *
      * @return string
      */
-    protected function expandTemplate($template, array $variables = array())
+    private function expandTemplate($template, array $variables = array())
     {
         return function_exists('uri_template')
             ? uri_template($template, $variables)
@@ -221,52 +216,28 @@ class Client implements ClientInterface
     }
 
     /**
-     * Initializes SSL settings
+     * Expand a URI template
+     *
+     * @param string|array $url URL or URI template to expand
+     *
+     * @return string
      */
-    private function initSsl()
-    {
-        /*
-        if ('system' == ($authority = $this->config[self::SSL_CERT_AUTHORITY])) {
-            return;
-        }
-
-        if ($authority === null) {
-            $authority = true;
-        }
-
-        if ($authority === true && substr(__FILE__, 0, 7) == 'phar://') {
-            $authority = $this->preparePharCacert();
-            $that = $this;
-            $this->getEventDispatcher()->addListener('request.before_send', function ($event) use ($authority, $that) {
-                if ($authority == $event['request']->getCurlOptions()->get(CURLOPT_CAINFO)) {
-                    $that->preparePharCacert(false);
-                }
-            });
-        }
-
-        $this->setSslVerification($authority);
-        */
-    }
-
     private function buildUrl($url)
     {
-        if (!$url) {
-            return '';
+        if ($url) {
+            if (is_array($url)) {
+                list($url, $templateVars) = $url;
+            } else {
+                $templateVars = null;
+            }
+            if (substr($url, 0, 4) === 'http') {
+                // Use absolute URLs as-is
+                $url = $this->expandTemplate($url, $templateVars);
+            } else {
+                $url = Url::fromString($this->getBaseUrl())->combine($this->expandTemplate($url, $templateVars));
+            }
         }
 
-        if (!is_array($uri)) {
-            $templateVars = null;
-        } else {
-            list($uri, $templateVars) = $uri;
-        }
-
-        if (substr($uri, 0, 4) === 'http') {
-            // Use absolute URLs as-is
-            $url = $this->expandTemplate($uri, $templateVars);
-        } else {
-            $url = Url::fromString($this->getBaseUrl())->combine($this->expandTemplate($uri, $templateVars));
-        }
-
-        return $url;
+        return (string) $url;
     }
 }

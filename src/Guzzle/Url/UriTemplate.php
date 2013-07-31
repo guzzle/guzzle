@@ -39,7 +39,7 @@ class UriTemplate
         '%3B', '%3D'
     );
 
-    public function getInstance()
+    public static function getInstance()
     {
         if (!self::$instance) {
             self::$instance = new self();
