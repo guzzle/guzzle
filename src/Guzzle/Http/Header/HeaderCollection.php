@@ -11,7 +11,7 @@ use Guzzle\Common\ToArrayInterface;
 class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, ToArrayInterface
 {
     /** @var array */
-    protected $headers;
+    private $headers;
 
     public function __construct($headers = [])
     {
@@ -24,14 +24,14 @@ class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, 
             $header = clone $header;
         }
     }
-    
+
     public function __toString()
     {
         $result = '';
         foreach ($this->headers as $header) {
             $result .= $header->getName() . ': ' . $header . "\r\n";
         }
-        
+
         return rtrim($result);
     }
 
@@ -42,7 +42,7 @@ class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, 
     {
         $this->headers = [];
     }
-    
+
     /**
      * Set a header on the collection
      *

@@ -10,9 +10,7 @@ use Guzzle\Stream\StreamInterface;
  */
 class Response extends AbstractMessage implements ResponseInterface
 {
-    /**
-     * @var array Array of reason phrases and their corresponding status codes
-     */
+    /** @var array Array of reason phrases and their corresponding status codes */
     private static $statusTexts = array(
         100 => 'Continue',
         101 => 'Switching Protocols',
@@ -75,13 +73,13 @@ class Response extends AbstractMessage implements ResponseInterface
     );
 
     /** @var string The reason phrase of the response (human readable code) */
-    protected $reasonPhrase;
+    private $reasonPhrase;
 
     /** @var string The status code of the response */
-    protected $statusCode;
+    private $statusCode;
 
     /** @var string The effective URL that returned this response */
-    protected $effectiveUrl;
+    private $effectiveUrl;
 
     /**
      * Create a new Response based on a message string
@@ -148,7 +146,7 @@ class Response extends AbstractMessage implements ResponseInterface
 
     public function getStartLine()
     {
-        return "HTTP/{$this->protocolVersion} {$this->statusCode} {$this->reasonPhrase}";
+        return sprintf('HTTP/%s %d %s', $this->getProtocolVersion(), $this->statusCode, $this->reasonPhrase);
     }
 
     public function setBody($body, $contentType = null)

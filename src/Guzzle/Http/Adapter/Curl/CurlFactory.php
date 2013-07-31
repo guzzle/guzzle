@@ -5,10 +5,17 @@ namespace Guzzle\Http\Adapter\Curl;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
 
+/**
+ * Creates curl resources from a request and response object
+ */
 class CurlFactory
 {
-    protected static $instance;
+    /** @var self */
+    private static $instance;
 
+    /**
+     * @return self
+     */
     public static function getInstance()
     {
         if (!static::$instance) {

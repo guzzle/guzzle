@@ -19,14 +19,14 @@ abstract class AbstractMessage implements MessageInterface
     /** @var array HTTP header collection */
     protected $headers;
 
-    /** @var HeaderFactoryInterface $headerFactory */
-    protected $headerFactory;
-
-    /** @var string HTTP protocol version of the message */
-    protected $protocolVersion = '1.1';
-
     /** @var StreamInterface Message body */
     protected $body;
+
+    /** @var HeaderFactoryInterface $headerFactory */
+    private $headerFactory;
+
+    /** @var string HTTP protocol version of the message */
+    private $protocolVersion = '1.1';
 
     public function __construct()
     {

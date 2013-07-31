@@ -9,8 +9,8 @@ namespace Guzzle\Http\Adapter;
  */
 class StreamingProxyAdapter implements AdapterInterface
 {
-    protected $defaultAdapter;
-    protected $streamingAdapter;
+    private $defaultAdapter;
+    private $streamingAdapter;
 
     /**
      * @param AdapterInterface $defaultAdapter   Adapter used for non-streaming responses

@@ -15,13 +15,13 @@ class Request extends AbstractMessage implements RequestInterface
     use HasDispatcher;
 
     /** @var Url HTTP Url */
-    protected $url;
+    private $url;
 
     /** @var string HTTP method (GET, PUT, POST, DELETE, HEAD, OPTIONS, TRACE) */
-    protected $method;
+    private $method;
 
     /** @var Collection Transfer options */
-    protected $transferOptions;
+    private $transferOptions;
 
     /**
      * @param string           $method  HTTP method
@@ -86,11 +86,9 @@ class Request extends AbstractMessage implements RequestInterface
 
     public function getStartLine()
     {
-        $protocolVersion = $this->protocolVersion ?: '1.1';
-
         return trim($this->method . ' ' . $this->getResource()) . ' '
             . strtoupper(str_replace('https', 'http', $this->url->getScheme()))
-            . '/' . $protocolVersion;
+            . '/' . $this->getProtocolVersion();
     }
 
     /**
@@ -111,7 +109,7 @@ class Request extends AbstractMessage implements RequestInterface
         if ($size !== null && $size !== false) {
             $this->setHeader('Content-Length', $size);
         } elseif (!$this->hasHeader('Content-Length')) {
-            if ('1.1' == $this->protocolVersion) {
+            if ('1.1' == $this->getProtocolVersion()) {
                 $this->setHeader('Transfer-Encoding', 'chunked');
             } else {
                 throw new \LengthException(
@@ -208,9 +206,9 @@ class Request extends AbstractMessage implements RequestInterface
         // Include the port in the Host header if it is not the default port for the scheme of the URL
         $scheme = $this->url->getScheme();
         if (($scheme == 'http' && $port != 80) || ($scheme == 'https' && $port != 443)) {
-            $this->headers['host'] = $this->headerFactory->createHeader('Host', $this->url->getHost() . ':' . $port);
+            $this->setHeader('Host', $this->url->getHost() . ':' . $port);
         } else {
-            $this->headers['host'] = $this->headerFactory->createHeader('Host', $this->url->getHost());
+            $this->setHeader('Host', $this->url->getHost());
         }
 
         return $this;

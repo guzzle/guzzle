@@ -15,7 +15,7 @@ use Guzzle\Stream\Stream;
 class CurlAdapter extends AbstractAdapter
 {
     /** @var CurlFactory */
-    protected $factory;
+    private $factory;
 
     /** @var array Array of curl multi handles */
     private $multiHandles = array();
@@ -67,7 +67,7 @@ class CurlAdapter extends AbstractAdapter
         return $context['transaction'];
     }
 
-    protected function prepare(RequestInterface $request, array $context)
+    private function prepare(RequestInterface $request, array $context)
     {
         $response = $this->messageFactory->createResponse();
         $handle = $this->factory->createHandle($request, $response);

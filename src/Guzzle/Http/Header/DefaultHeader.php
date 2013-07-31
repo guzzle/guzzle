@@ -8,17 +8,17 @@ namespace Guzzle\Http\Header;
 class DefaultHeader implements HeaderInterface
 {
     protected $values = array();
-    protected $header;
-    protected $glue;
+    private $headerName;
+    private $glue;
 
     /**
-     * @param string       $header Name of the header
+     * @param string       $name   Name of the header
      * @param array|string $values Values of the header as an array or a scalar
      * @param string       $glue   Glue used to combine multiple values into a string
      */
-    public function __construct($header, $values = array(), $glue = ',')
+    public function __construct($name, $values = array(), $glue = ',')
     {
-        $this->header = trim($header);
+        $this->headerName = trim($name);
         $this->glue = $glue;
 
         foreach ((array) $values as $value) {
@@ -42,12 +42,12 @@ class DefaultHeader implements HeaderInterface
 
     public function getName()
     {
-        return $this->header;
+        return $this->headerName;
     }
 
     public function setName($name)
     {
-        $this->header = $name;
+        $this->headerName = $name;
 
         return $this;
     }
@@ -124,7 +124,7 @@ class DefaultHeader implements HeaderInterface
      *
      * @return self
      */
-    protected function normalize()
+    private function normalize()
     {
         $values = $this->toArray();
 
@@ -149,7 +149,7 @@ class DefaultHeader implements HeaderInterface
      *
      * @return string
      */
-    protected function trimHeader($str)
+    private function trimHeader($str)
     {
         static $trimmed = "\"'  \n\t";
 

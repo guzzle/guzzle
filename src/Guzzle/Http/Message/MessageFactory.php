@@ -14,7 +14,7 @@ use Guzzle\Url\Url;
 class MessageFactory implements MessageFactoryInterface
 {
     /** @var MessageFactory Singleton instance of the default request factory */
-    protected static $instance;
+    private static $instance;
 
     /**
      * Get a cached instance of the default request factory
@@ -110,14 +110,14 @@ class MessageFactory implements MessageFactoryInterface
         }
     }
 
-    protected function visit_allow_redirects(RequestInterface $request, $value)
+    private function visit_allow_redirects(RequestInterface $request, $value)
     {
         if ($value === false) {
 
         }
     }
 
-    protected function visit_auth(RequestInterface $request, $value)
+    private function visit_auth(RequestInterface $request, $value)
     {
         if (!is_array($value) || count($value) < 2) {
             throw new \InvalidArgumentException(
@@ -126,7 +126,7 @@ class MessageFactory implements MessageFactoryInterface
         }
     }
 
-    protected function visit_query(RequestInterface $request, $value)
+    private function visit_query(RequestInterface $request, $value)
     {
         if (!is_array($value)) {
             throw new InvalidArgumentException('query value must be an array');
@@ -135,7 +135,7 @@ class MessageFactory implements MessageFactoryInterface
         $request->getQuery()->overwriteWith($value);
     }
 
-    protected function visit_cookies(RequestInterface $request, $value)
+    private function visit_cookies(RequestInterface $request, $value)
     {
         if (!is_array($value)) {
             throw new InvalidArgumentException('cookies value must be an array');
@@ -146,7 +146,7 @@ class MessageFactory implements MessageFactoryInterface
         }
     }
 
-    protected function visit_events(RequestInterface $request, $value)
+    private function visit_events(RequestInterface $request, $value)
     {
         if (!is_array($value)) {
             throw new InvalidArgumentException('events value must be an array');
@@ -161,7 +161,7 @@ class MessageFactory implements MessageFactoryInterface
         }
     }
 
-    protected function visit_plugins(RequestInterface $request, $value)
+    private function visit_plugins(RequestInterface $request, $value)
     {
         if (!is_array($value)) {
             throw new InvalidArgumentException('plugins value must be an array');
@@ -172,19 +172,19 @@ class MessageFactory implements MessageFactoryInterface
         }
     }
 
-    protected function visit_exceptions(RequestInterface $request, $value)
+    private function visit_exceptions(RequestInterface $request, $value)
     {
         if ($value === false || $value === 0) {
 
         }
     }
 
-    protected function visit_save_to(RequestInterface $request, $value)
+    private function visit_save_to(RequestInterface $request, $value)
     {
         $request->getTransferOptions()->set('save_to', $value);
     }
 
-    protected function visit_debug(RequestInterface $request, $value)
+    private function visit_debug(RequestInterface $request, $value)
     {
 
     }

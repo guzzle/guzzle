@@ -13,10 +13,10 @@ use Guzzle\Stream\Stream;
 class RequestMediator
 {
     /** @var RequestInterface */
-    protected $request;
+    private $request;
 
     /** @var ResponseInterface */
-    protected $response;
+    private $response;
 
     /**
      * @param RequestInterface  $request Request to mediate

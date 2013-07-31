@@ -61,7 +61,7 @@ class MessageParser implements MessageParserInterface
      *
      * @return array|bool
      */
-    protected function parseMessage($message)
+    private function parseMessage($message)
     {
         if (!$message) {
             return false;
@@ -117,7 +117,7 @@ class MessageParser implements MessageParserInterface
      *
      * @return array
      */
-    protected function getUrlPartsFromMessage($requestUrl, array $parts)
+    private function getUrlPartsFromMessage($requestUrl, array $parts)
     {
         // Parse the URL information from the message
         $urlParts = ['path' => $requestUrl, 'scheme' => 'http'];

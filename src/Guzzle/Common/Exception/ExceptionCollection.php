@@ -5,7 +5,7 @@ namespace Guzzle\Common\Exception;
 /**
  * Collection of exceptions
  */
-class ExceptionCollection extends \Exception implements GuzzleException, \IteratorAggregate, \Countable
+class ExceptionCollection extends \Exception implements \IteratorAggregate, \Countable
 {
     /** @var array Array of Exceptions */
     protected $exceptions = array();

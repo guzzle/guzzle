@@ -8,7 +8,7 @@ namespace Guzzle\Http\Header;
 class CacheControl extends DefaultHeader
 {
     /** @var array */
-    protected $directives;
+    private $directives;
 
     public function add($value)
     {
@@ -107,7 +107,7 @@ class CacheControl extends DefaultHeader
      *
      * @param array $directives Array of cache control directives
      */
-    protected function updateFromDirectives(array $directives)
+    private function updateFromDirectives(array $directives)
     {
         $this->directives = $directives;
         $this->values = array();

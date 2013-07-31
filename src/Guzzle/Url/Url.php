@@ -2,23 +2,21 @@
 
 namespace Guzzle\Url;
 
-use Guzzle\Common\Exception\InvalidArgumentException;
-
 /**
  * Parses and generates URLs based on URL parts
  */
 class Url
 {
-    protected $scheme;
-    protected $host;
-    protected $port;
-    protected $username;
-    protected $password;
-    protected $path = '';
-    protected $fragment;
+    private $scheme;
+    private $host;
+    private $port;
+    private $username;
+    private $password;
+    private $path = '';
+    private $fragment;
 
     /** @var QueryString Query part of the URL */
-    protected $query;
+    private $query;
 
     /**
      * Factory method to create a new URL from a URL string
@@ -26,7 +24,7 @@ class Url
      * @param string $url Full URL used to create a Url object
      *
      * @return Url
-     * @throws InvalidArgumentException
+     * @throws \InvalidArgumentException
      */
     public static function fromString($url)
     {
@@ -34,7 +32,7 @@ class Url
             'user' => null, 'pass' => null, 'fragment' => null);
 
         if (false === ($parts = parse_url($url))) {
-            throw new InvalidArgumentException('Was unable to parse malformed url: ' . $url);
+            throw new \InvalidArgumentException('Was unable to parse malformed url: ' . $url);
         }
 
         $parts += $defaults;
@@ -475,7 +473,7 @@ class Url
      *                             "bar" would become "http://a.com/foo/bar". When this value is set to false, it would
      *                             become "http://a.com/foo/baz/bar".
      * @return Url
-     * @throws InvalidArgumentException
+     * @throws \InvalidArgumentException
      * @link http://tools.ietf.org/html/rfc3986#section-5.4
      */
     public function combine($url, $strictRfc386 = false)

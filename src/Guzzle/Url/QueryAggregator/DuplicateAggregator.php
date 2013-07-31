@@ -17,7 +17,7 @@ class DuplicateAggregator implements QueryAggregatorInterface
         return $this->walkQuery($query, $encType, '');
     }
 
-    protected function walkQuery(array $query, $encType, $keyPrefix)
+    private function walkQuery(array $query, $encType, $keyPrefix)
     {
         $q = '';
         foreach ($query as $key => $value) {

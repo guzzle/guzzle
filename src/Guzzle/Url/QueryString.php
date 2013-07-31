@@ -16,10 +16,10 @@ class QueryString extends Collection
     const RFC1738 = 'RFC1738';
 
     /** @var bool URL encode fields and values */
-    protected $encoding = self::RFC3986;
+    private $encoding = self::RFC3986;
 
     /** @var QueryAggregatorInterface */
-    protected $aggregator;
+    private $aggregator;
 
     /**
      * Parse a query string into a QueryString object
