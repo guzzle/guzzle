@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Url\UriTemplate;
+namespace Guzzle\Url;
 
 /**
  * Expands URI templates. Userland implementation of PECL uri_template.

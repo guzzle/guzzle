@@ -24,20 +24,20 @@ class Client implements ClientInterface
 
     const REQUEST_OPTIONS = 'request.options';
 
-    /** @var string The user agent string to set on each request */
-    protected $userAgent;
-
-    /** @var Collection Parameter object holding configuration data */
-    private $config;
-
-    /** @var string Base URL of the client */
-    private $baseUrl;
+    /** @var MessageFactoryInterface Request factory used by the client */
+    protected $messageFactory;
 
     /** @var AdapterInterface */
     private $adapter;
 
-    /** @var MessageFactoryInterface Request factory used by the client */
-    protected $messageFactory;
+    /** @var string Base URL of the client */
+    private $baseUrl;
+
+    /** @var Collection Parameter object holding configuration data */
+    private $config;
+
+    /** @var string The user agent string to set on each request */
+    private $userAgent;
 
     /**
      * @param array $config Client configuration settings
