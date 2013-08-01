@@ -25,7 +25,7 @@ class BatchException extends TransferException
         $this->transaction = $transaction;
         $message = "Batch transaction error: \n";
         foreach ($transaction->getExceptions() as $e) {
-            $message .= $e->getMessage() . "\n";
+            $message .= ' - ' . $e->getMessage() . "\n";
         }
         parent::__construct($message, 0, $previous);
     }
