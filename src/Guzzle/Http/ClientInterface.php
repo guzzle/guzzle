@@ -3,7 +3,8 @@
 namespace Guzzle\Http;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Exception\InvalidArgumentException;
+use Guzzle\Http\Exception\AdapterException;
+use Guzzle\Http\Exception\BatchException;
 use Guzzle\Common\HasDispatcherInterface;
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Message\RequestInterface;
@@ -25,82 +26,81 @@ interface ClientInterface extends HasDispatcherInterface
      *
      * @param string                          $method  HTTP method
      * @param string|array                    $url     Resource URL
+     * @param array                           $headers Request headers
      * @param string|StreamInterface|resource $body    Body to send
      * @param array                           $options Array of options to apply to the request
      *
      * @return RequestInterface
-     * @throws InvalidArgumentException if a URL array is passed that does not contain exactly two elements: the URL
-     *                                  followed by template variables
      */
-    public function createRequest($method, $url = null, $body = null, array $options = []);
+    public function createRequest($method, $url = null, array $headers = [], $body = null, array $options = []);
 
     /**
      * Send a GET request
      *
      * @param string|array|Url $url     Resource URL
+     * @param array            $headers Request headers
      * @param array            $options Options to apply to the request
      *
      * @return ResponseInterface
-     * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    public function get($url = null, $options = []);
+    public function get($url = null, array $headers = [], $options = []);
 
     /**
      * Send a HEAD request
      *
      * @param string|array|Url $url     Absolute or relative URL
+     * @param array            $headers Request headers
      * @param array            $options Options to apply to the request
      *
      * @return ResponseInterface
-     * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    public function head($url = null, array $options = []);
+    public function head($url = null, array $headers = [], array $options = []);
 
     /**
      * Send a DELETE request
      *
      * @param string|array|Url $url     Resource URL
+     * @param array            $headers Request headers
      * @param array            $options Options to apply to the request
      *
      * @return ResponseInterface
-     * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    public function delete($url = null, array $options = []);
+    public function delete($url = null, array $headers = [], array $options = []);
 
     /**
      * Send a PUT request
      *
      * @param string|array|Url                $url     Resource URL
+     * @param array                           $headers Request headers
      * @param string|StreamInterface|resource $body    Body to send
      * @param array                           $options Options to apply to the request
      *
      * @return ResponseInterface
-     * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    public function put($url = null, $body = null, array $options = []);
+    public function put($url = null, array $headers = [], $body = null, array $options = []);
 
     /**
      * Send a PATCH request
      *
      * @param string|array|Url                $url     Resource URL
+     * @param array                           $headers Request headers
      * @param string|StreamInterface|resource $body    Body to send
      * @param array                           $options Options to apply to the request
      *
      * @return ResponseInterface
-     * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    public function patch($url = null, $body = null, array $options = []);
+    public function patch($url = null, array $headers = [], $body = null, array $options = []);
 
     /**
      * Send an OPTIONS request
      *
      * @param string|array|Url $url     Resource URL
+     * @param array            $headers Request headers
      * @param array            $options Options to apply to the request
      *
      * @return ResponseInterface
-     * @see    Guzzle\Http\ClientInterface::createRequest()
      */
-    public function options($url = null, array $options = []);
+    public function options($url = null, array $headers = [], array $options = []);
 
     /**
      * Sends a single request
@@ -108,17 +108,20 @@ interface ClientInterface extends HasDispatcherInterface
      * @param RequestInterface $request Request to send
      *
      * @return \Guzzle\Http\Message\ResponseInterface
+     * @throws \LogicException When the adapter does not populate a response
+     * @throws AdapterException When an error is encountered (network or HTTP errors)
      */
     public function send(RequestInterface $request);
 
     /**
      * Send one or more requests in parallel
      *
-     * @param \Traversable RequestInterface objects to send
+     * @param array $requests RequestInterface objects to send
      *
-     * @return Transaction
+     * @return Transaction Returns a hash map object of request to response objects
+     * @throws BatchException
      */
-    public function batch($requests);
+    public function batch(array $requests);
 
     /**
      * Get the client's base URL

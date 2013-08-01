@@ -9,6 +9,8 @@ use Guzzle\Http\Adapter\AdapterInterface;
 use Guzzle\Http\Adapter\StreamAdapter;
 use Guzzle\Http\Adapter\StreamingProxyAdapter;
 use Guzzle\Http\Adapter\Curl\CurlAdapter;
+use Guzzle\Http\Exception\AdapterException;
+use Guzzle\Http\Exception\BatchException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Url\Url;
 use Guzzle\Url\UriTemplate;
@@ -52,7 +54,7 @@ class Client implements ClientInterface
         $this->config = new Collection($config);
         $this->userAgent = $this->getDefaultUserAgent();
         $this->baseUrl = $this->buildUrl($this->config['base_url']);
-        $this->messageFactory = $config['message_factory'] ?: MessageFactory::getInstance();
+        $this->messageFactory = $this->config['message_factory'] ?: MessageFactory::getInstance();
         $this->adapter = $this->config['adapter'] ?: self::getDefaultAdapter($this->messageFactory);
     }
 
@@ -112,7 +114,7 @@ class Client implements ClientInterface
         return $this->config->getPath(self::REQUEST_OPTIONS . '/' . $keyOrPath);
     }
 
-    public function createRequest($method, $url = null, $body = null, array $options = array())
+    public function createRequest($method, $url = null, array $headers = [], $body = null, array $options = array())
     {
         $url = $url ? $this->buildUrl($url) : $this->getBaseUrl();
 
@@ -145,49 +147,61 @@ class Client implements ClientInterface
         return $this;
     }
 
-    public function get($uri = null, $options = array())
+    public function get($url = null, array $headers = [], $options = array())
     {
-        return $this->send($this->createRequest('GET', $uri, null, $options));
+        return $this->send($this->createRequest('GET', $url, $headers, null, $options));
     }
 
-    public function head($uri = null, array $options = array())
+    public function head($url = null, array $headers = [], array $options = array())
     {
-        return $this->send($this->createRequest('HEAD', $uri, null, $options));
+        return $this->send($this->createRequest('HEAD', $url, $headers, null, $options));
     }
 
-    public function delete($uri = null, array $options = array())
+    public function delete($url = null, array $headers = [], array $options = array())
     {
-        return $this->send($this->createRequest('DELETE', $uri, null, $options));
+        return $this->send($this->createRequest('DELETE', $url, $headers, null, $options));
     }
 
-    public function put($uri = null, $body = null, array $options = array())
+    public function put($url = null, array $headers = [], $body = null, array $options = array())
     {
-        return $this->send($this->createRequest('PUT', $uri, $body, $options));
+        return $this->send($this->createRequest('PUT', $url, $headers, $body, $options));
     }
 
-    public function patch($uri = null, $body = null, array $options = array())
+    public function patch($url = null, array $headers = [], $body = null, array $options = array())
     {
-        return $this->send($this->createRequest('PATCH', $uri, $body, $options));
+        return $this->send($this->createRequest('PATCH', $url, $headers, $body, $options));
     }
 
-    public function post($uri = null, $body = null, array $options = array())
+    public function post($url = null, array $headers = [], $body = null, array $options = array())
     {
-        return $this->send($this->createRequest('POST', $uri, $body, $options));
+        return $this->send($this->createRequest('POST', $url, $headers, $body, $options));
     }
 
-    public function options($uri = null, array $options = array())
+    public function options($url = null, array $headers = [], array $options = array())
     {
-        return $this->send($this->createRequest('OPTIONS', $uri, $options));
+        return $this->send($this->createRequest('OPTIONS', $url, $headers, $options));
     }
 
     public function send(RequestInterface $request)
     {
+        $transaction = $this->adapter->send(array($request));
+        if (!isset($transaction[$request])) {
+            throw new \LogicException('The client HTTP adapter did not populate a response for the request');
+        } elseif ($transaction[$request] instanceof AdapterException) {
+            throw $transaction[$request];
+        }
 
+        return $transaction[$request];
     }
 
-    public function batch($requests)
+    public function batch(array $requests)
     {
+        $transaction = $this->adapter->send($requests);
+        if ($transaction->hasExceptions()) {
+            throw new BatchException($transaction, $this);
+        }
 
+        return $transaction;
     }
 
     /**
@@ -216,7 +230,7 @@ class Client implements ClientInterface
     }
 
     /**
-     * Expand a URI template
+     * Expand a URI template and inherit from the base URL if it's relative
      *
      * @param string|array $url URL or URI template to expand
      *
@@ -228,7 +242,7 @@ class Client implements ClientInterface
             if (is_array($url)) {
                 list($url, $templateVars) = $url;
             } else {
-                $templateVars = null;
+                $templateVars = array();
             }
             if (substr($url, 0, 4) === 'http') {
                 // Use absolute URLs as-is

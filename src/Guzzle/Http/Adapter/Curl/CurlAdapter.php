@@ -170,7 +170,7 @@ class CurlAdapter extends AbstractAdapter
     {
         if ($code != CURLM_OK && $code != CURLM_CALL_MULTI_PERFORM) {
             throw new AdapterException(isset(self::$multiErrors[$code])
-                ? "cURL error: {$code} ({self::$multiErrors[$code][0]}): cURL message: {self::$multiErrors[$code][1]}"
+                ? sprintf('cURL error %s: %s (%s)', $code, self::$multiErrors[$code][0], self::$multiErrors[$code][1])
                 : 'Unexpected cURL error: ' . $code
             );
         }

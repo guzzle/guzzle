@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http\Adapter;
 
+use Guzzle\Http\Exception\AdapterException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Http\Exception\RequestException;
@@ -38,5 +39,55 @@ class Transaction extends \SplObjectStorage
         }
 
         return $responses;
+    }
+
+    /**
+     * Check if the transaction has any exceptions
+     *
+     * @return bool
+     */
+    public function hasExceptions()
+    {
+        foreach ($this as $request) {
+            if ($this[$request] instanceof AdapterException) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get a Transaction object that only contains exceptions
+     *
+     * @return Transaction
+     */
+    public function getExceptions()
+    {
+        $transaction = new Transaction();
+        foreach ($this as $request) {
+            if ($this[$request] instanceof AdapterException) {
+                $transaction[$request] = $this[$request];
+            }
+        }
+
+        return $transaction;
+    }
+
+    /**
+     * Get a Transaction object that only contains valid responses
+     *
+     * @return Transaction
+     */
+    public function getResponses()
+    {
+        $transaction = new Transaction();
+        foreach ($this as $request) {
+            if ($this[$request] instanceof ResponseInterface) {
+                $transaction[$request] = $this[$request];
+            }
+        }
+
+        return $transaction;
     }
 }
