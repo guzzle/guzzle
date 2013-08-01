@@ -155,7 +155,7 @@ class CurlAdapter extends AbstractAdapter
         // Emit request.error?
 
         throw new RequestException(
-            sprintf('[curl] Erorr code %s [url] %s', $curl['result'], $request->getUrl()),
+            sprintf('[curl] Error code %s [url] %s', $curl['result'], $request->getUrl()),
             $request
         );
     }

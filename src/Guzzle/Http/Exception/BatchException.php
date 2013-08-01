@@ -17,14 +17,17 @@ class BatchException extends TransferException
     protected $transaction;
 
     public function __construct(
-        $message = '',
         Transaction $transaction,
         ClientInterface $client,
         \Exception $previous = null
     ) {
-        parent::__construct($message, 0, $previous);
         $this->client = $client;
         $this->transaction = $transaction;
+        $message = "Batch transaction error: \n";
+        foreach ($transaction->getExceptions() as $e) {
+            $message .= $e->getMessage() . "\n";
+        }
+        parent::__construct($message, 0, $previous);
     }
 
     /**
