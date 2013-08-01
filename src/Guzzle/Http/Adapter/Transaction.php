@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http\Adapter;
 
+use Guzzle\Http\ClientInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Http\Exception\RequestException;
@@ -11,6 +12,17 @@ use Guzzle\Http\Exception\RequestException;
  */
 class Transaction extends \SplObjectStorage
 {
+    /** @var ClientInterface */
+    private $client;
+
+    /**
+     * @param ClientInterface $client Client that is used to send the requests
+     */
+    public function __construct(ClientInterface $client)
+    {
+        $this->client = $client;
+    }
+
     public function offsetSet($object, $data = null)
     {
         if (!($object instanceof RequestInterface)) {
@@ -88,5 +100,15 @@ class Transaction extends \SplObjectStorage
         }
 
         return $hash;
+    }
+
+    /**
+     * Get the client that sent the requests
+     *
+     * @return ClientInterface
+     */
+    public function getClient()
+    {
+        return $this->client;
     }
 }

@@ -45,15 +45,15 @@ class CurlAdapter extends AbstractAdapter
         $this->factory = isset($options['factory']) ? $options['factory'] : CurlFactory::getInstance();
     }
 
-    public function send(array $requests)
+    public function send(Transaction $transaction)
     {
         $context = [
-            'transaction' => new Transaction(),
+            'transaction' => $transaction,
             'handles'     => new \SplObjectStorage(),
             'multi'       => $this->checkoutMultiHandle()
         ];
 
-        foreach ($requests as $request) {
+        foreach ($transaction as $request) {
             try {
                 $this->prepare($request, $context);
             } catch (RequestException $e) {
@@ -69,11 +69,9 @@ class CurlAdapter extends AbstractAdapter
 
     private function prepare(RequestInterface $request, array $context)
     {
-        $response = $this->messageFactory->createResponse();
-        $handle = $this->factory->createHandle($request, $response);
+        $handle = $this->factory->createHandle($request, $context['transaction'][$request]);
         $this->checkCurlResult(curl_multi_add_handle($context['multi'], $handle));
         $context['handles'][$request] = $handle;
-        $context['transaction'][$request] = $response;
     }
 
     /**
@@ -117,7 +115,6 @@ class CurlAdapter extends AbstractAdapter
 
         try {
             $this->isCurlException($request, $curl);
-            // Emit request.sent
         } catch (RequestException $e) {
             $context['transaction'][$request] = $e;
         }

@@ -5,13 +5,17 @@ namespace Guzzle\Http;
 use Guzzle\Common\Collection;
 use Guzzle\Common\HasDispatcher;
 use Guzzle\Common\Version;
+use Guzzle\Http\Event\AfterSendEvent;
+use Guzzle\Http\Event\BeforeSendEvent;
 use Guzzle\Http\Adapter\AdapterInterface;
 use Guzzle\Http\Adapter\StreamAdapter;
 use Guzzle\Http\Adapter\StreamingProxyAdapter;
 use Guzzle\Http\Adapter\Curl\CurlAdapter;
+use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Exception\AdapterException;
 use Guzzle\Http\Exception\BatchException;
 use Guzzle\Http\Message\RequestInterface;
+use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Url\Url;
 use Guzzle\Url\UriTemplate;
 use Guzzle\Http\Message\MessageFactory;
@@ -184,10 +188,17 @@ class Client implements ClientInterface
 
     public function send(RequestInterface $request)
     {
-        $transaction = $this->adapter->send(array($request));
-        if (!isset($transaction[$request])) {
-            throw new \LogicException('The client HTTP adapter did not populate a response for the request');
-        } elseif ($transaction[$request] instanceof AdapterException) {
+        $transaction = new Transaction($this);
+        $event = $this->preSend($request);
+        if ($response = $event->getResponse()) {
+            $transaction[$request] = $response;
+        } else {
+            $transaction[$request] = $this->messageFactory->createResponse();
+            $this->adapter->send($transaction);
+        }
+
+        $this->afterSend($request, $transaction);
+        if ($transaction[$request] instanceof \Exception) {
             throw $transaction[$request];
         }
 
@@ -196,7 +207,28 @@ class Client implements ClientInterface
 
     public function batch(array $requests)
     {
-        $transaction = $this->adapter->send($requests);
+        $transaction = new Transaction($this);
+        $intercepted = new Transaction($this);
+
+        foreach ($requests as $request) {
+            $event = $this->preSend($request);
+            if ($response = $event->getResponse()) {
+                $intercepted[$request] = $response;
+            } else {
+                $transaction[$request] = $this->messageFactory->createResponse();
+            }
+        }
+
+        if (count($transaction)) {
+            $this->adapter->send($transaction);
+        }
+
+        $transaction->addAll($intercepted);
+
+        foreach ($requests as $request) {
+            $this->afterSend($request, $transaction);
+        }
+
         if ($transaction->hasExceptions()) {
             throw new BatchException($transaction, $this);
         }
@@ -212,6 +244,41 @@ class Client implements ClientInterface
     protected function getDefaultUserAgent()
     {
         return 'Guzzle/' . Version::VERSION . ' curl/' . curl_version()['version'] . ' PHP/' . PHP_VERSION;
+    }
+
+    /**
+     * Emits events before a request is sent
+     *
+     * @param RequestInterface  $request Request about to be sent
+     *
+     * @return BeforeSendEvent
+     */
+    private function preSend(RequestInterface $request)
+    {
+        return $request->getEventDispatcher()->dispatch(
+            'request.before_send',
+            new BeforeSendEvent($request, $this->messageFactory)
+        );
+    }
+
+    /**
+     * Performs validation and emits events after a request has been sent
+     *
+     * @param RequestInterface  $request     Request that sent
+     * @param Transaction       $transaction Transaction
+     * @throws \LogicException if the transaction loses the request for some reason after the request.after_send event
+     */
+    private function afterSend(RequestInterface $request, Transaction $transaction)
+    {
+        if (!isset($transaction[$request])) {
+            throw new \LogicException('The request is not associated with the transaction');
+        }
+
+        $event = $request->getEventDispatcher()->dispatch(
+            'request.after_send',
+            new AfterSendEvent($request, $transaction[$request], $this->messageFactory)
+        );
+        $transaction[$request] = $event->getResult();
     }
 
     /**

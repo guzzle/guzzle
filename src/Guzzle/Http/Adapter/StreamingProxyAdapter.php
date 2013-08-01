@@ -22,11 +22,11 @@ class StreamingProxyAdapter implements AdapterInterface
         $this->streamingAdapter = $streamingAdapter;
     }
 
-    public function send(array $requests)
+    public function send(Transaction $transaction)
     {
         $streaming = $default = array();
 
-        foreach ($requests as $request) {
+        foreach ($transaction as $request) {
             if ($request->getTransferOptions()['streaming']) {
                 $streaming[] = $request;
             } else {
@@ -34,14 +34,25 @@ class StreamingProxyAdapter implements AdapterInterface
             }
         }
 
-        if ($default) {
-            $result = $this->defaultAdapter->send($default);
-            if ($streaming) {
-                $result->addAll($this->streamingAdapter->send($streaming));
-            }
-            return $result;
-        } elseif ($streaming) {
-            return $this->streamingAdapter->send($streaming);
+        if (!$streaming) {
+            return $this->defaultAdapter->send($transaction);
         }
+
+        $streamingTransaction = new Transaction($transaction->getClient());
+        foreach ($streaming as $request) {
+            $streamingTransaction[$request] = $transaction[$request];
+        }
+
+        $this->streamingAdapter->send($streamingTransaction);
+
+        if ($default) {
+            $defaultTransaction = new Transaction($transaction->getClient());
+            foreach ($default as $request) {
+                $defaultTransaction[$request] = $transaction[$request];
+            }
+            $streamingTransaction->addAll($this->defaultAdapter->send($defaultTransaction));
+        }
+
+        return $streamingTransaction;
     }
 }

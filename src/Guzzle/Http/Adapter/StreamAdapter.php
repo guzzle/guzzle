@@ -12,29 +12,27 @@ use Guzzle\Stream\Stream;
  */
 class StreamAdapter extends AbstractAdapter
 {
-    public function send(array $requests)
+    public function send(Transaction $transaction)
     {
-        $result = new Transaction();
-        foreach ($requests as $request) {
+        foreach ($transaction as $request) {
             try {
-                $result[$request] = $this->createResponse($request);
+                $this->createResponse($request, $transaction[$request]);
             } catch (RequestException $e) {
-                $result[$request] = $e;
+                $transaction[$request] = $e;
             }
         }
 
-        return $result;
+        return $transaction;
     }
 
     /**
-     * @param RequestInterface $request
-     * @return ResponseInterface
+     * @param RequestInterface  $request  Request to send
+     * @param ResponseInterface $response Response to populate
      * @throws \LogicException if you attempt to stream and specify a write_to option
      */
-    private function createResponse(RequestInterface $request)
+    private function createResponse(RequestInterface $request, ResponseInterface $response)
     {
         $stream = $this->createStream($request, $http_response_header);
-        $response = $this->messageFactory->createResponse();
 
         // Track the response headers of the request
         if (isset($http_response_header)) {
@@ -46,8 +44,6 @@ class StreamAdapter extends AbstractAdapter
         } else{
             $this->applySaveToBody($request, $response, $stream);
         }
-
-        return $response;
     }
 
     /**
