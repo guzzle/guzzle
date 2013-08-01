@@ -2,7 +2,7 @@
 
 namespace Guzzle\Http\Adapter\Curl;
 
-use Guzzle\Http\Adapter\AbstractAdapter;
+use Guzzle\Http\Adapter\AdapterInterface;
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Exception\AdapterException;
 use Guzzle\Http\Exception\RequestException;
@@ -12,7 +12,7 @@ use Guzzle\Stream\Stream;
 /**
  * HTTP adapter that uses cURL as a transport layer
  */
-class CurlAdapter extends AbstractAdapter
+class CurlAdapter implements AdapterInterface
 {
     /** @var CurlFactory */
     private $factory;
