@@ -23,25 +23,24 @@ class BufferedAdapter implements AdapterInterface
         $this->max = $max;
     }
 
-    public function send(array $requests)
+    public function send(Transaction $transaction)
     {
-        $result = new Transaction();
-        $c = 0;
-        $buffer = [];
+        $bufferCount = 0;
+        $buffer = new Transaction($transaction->getClient());
 
-        foreach ($requests as $request) {
-            $buffer[] = $request;
-            if (++$c >= $this->max) {
-                $result->addAll($this->adapter->send($buffer));
-                $buffer = [];
-                $c = 0;
+        foreach ($transaction as $request) {
+            $buffer[$request] = $transaction[$request];
+            if (++$bufferCount >= $this->max) {
+                $transaction->addAll($this->adapter->send($buffer));
+                $buffer = new Transaction($transaction->getClient());
+                $bufferCount = 0;
             }
         }
 
-        if ($buffer) {
-            $result->addAll($this->adapter->send($buffer));
+        if ($bufferCount > 0) {
+            $transaction->addAll($this->adapter->send($buffer));
         }
 
-        return $result;
+        return $transaction;
     }
 }
