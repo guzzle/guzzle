@@ -260,13 +260,6 @@ class Response extends AbstractMessage implements ResponseInterface
         return $this->effectiveUrl;
     }
 
-    /**
-     * Set the effective URL that resulted in this response (e.g. the last redirect URL)
-     *
-     * @param string $url The effective URL
-     *
-     * @return self
-     */
     public function setEffectiveUrl($url)
     {
         $this->effectiveUrl = $url;
