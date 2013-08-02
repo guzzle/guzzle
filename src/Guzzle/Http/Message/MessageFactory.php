@@ -237,4 +237,9 @@ class MessageFactory implements MessageFactoryInterface
     {
         $request->getTransferOptions()->set('debug', $value);
     }
+
+    private function visit_verify(RequestInterface $request, $value)
+    {
+        $request->getTransferOptions()->set('verify', $value);
+    }
 }

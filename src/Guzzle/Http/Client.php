@@ -29,9 +29,6 @@ class Client implements ClientInterface
     /** @var MessageFactoryInterface Request factory used by the client */
     protected $messageFactory;
 
-    /** @var array Default request options */
-    protected $defaults = ['allow_redirects' => true, 'exceptions' => true];
-
     /** @var AdapterInterface */
     private $adapter;
 
@@ -61,9 +58,11 @@ class Client implements ClientInterface
         $this->messageFactory = $this->config['message_factory'] ?: MessageFactory::getInstance();
         $this->adapter = $this->config['adapter'] ?: self::getDefaultAdapter();
         // Add default request options
-        $this->config['defaults'] = !$this->config['defaults']
-            ? $this->defaults
-            : array_replace($this->defaults, $this->config['defaults']);
+        if (!$this->config['defaults']) {
+            $this->config['defaults'] = $this->getDefaultOptions();
+        } else {
+            $this->config['defaults'] = array_replace($this->getDefaultOptions(), $this->config['defaults']);
+        }
     }
 
     /**
@@ -244,6 +243,16 @@ class Client implements ClientInterface
     protected function getDefaultUserAgent()
     {
         return 'Guzzle/' . Version::VERSION . ' curl/' . curl_version()['version'] . ' PHP/' . PHP_VERSION;
+    }
+
+    /**
+     * Get an array of default options to apply to the client
+     *
+     * @return array
+     */
+    protected function getDefaultOptions()
+    {
+        return ['allow_redirects' => true, 'exceptions' => true, 'verify' => __DIR__ . '/Resources/cacert.pem'];
     }
 
     private function addEffectiveUrl(RequestInterface $request, ResponseInterface $response)

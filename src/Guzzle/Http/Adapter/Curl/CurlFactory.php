@@ -163,16 +163,16 @@ class CurlFactory
 
     protected function visit_verify(RequestInterface $request, &$options, $value)
     {
-        if ($value === true || is_string($value)) {
+        if ($value === false) {
+            unset($options[CURLOPT_CAINFO]);
+            $options[CURLOPT_SSL_VERIFYHOST] = 0;
+            $options[CURLOPT_SSL_VERIFYPEER] = false;
+        } elseif ($value === true || is_string($value)) {
             $options[CURLOPT_SSL_VERIFYHOST] = 2;
             $options[CURLOPT_SSL_VERIFYPEER] = true;
             if ($value !== true) {
                 $options[CURLOPT_CAINFO] = $value;
             }
-        } elseif ($value === false) {
-            unset($options[CURLOPT_CAINFO]);
-            $options[CURLOPT_SSL_VERIFYHOST] = 0;
-            $options[CURLOPT_SSL_VERIFYPEER] = false;
         }
     }
 
