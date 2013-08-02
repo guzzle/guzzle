@@ -15,6 +15,7 @@ interface MessageFactoryInterface
      *
      * @param string                                $method  HTTP method (GET, POST, PUT, PATCH, HEAD, DELETE, ...)
      * @param string|Url                            $url     HTTP URL to connect to
+     * @param array                                 $headers HTTP request headers
      * @param string|resource|array|StreamInterface $body    Body to send in the request
      * @param array                                 $options Array of options to apply to the request
      *        "headers": Associative array of headers
@@ -44,7 +45,7 @@ interface MessageFactoryInterface
      *
      * @return RequestInterface
      */
-    public function createRequest($method, $url, $body = null, array $options = array());
+    public function createRequest($method, $url, array $headers = [], $body = null, array $options = array());
 
     /**
      * Create a response object

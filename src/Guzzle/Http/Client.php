@@ -123,7 +123,7 @@ class Client implements ClientInterface
             $options = array_replace_recursive($default, $options);
         }
 
-        $request = $this->messageFactory->createRequest($method, (string) $url, $body, $options);
+        $request = $this->messageFactory->createRequest($method, (string) $url, $headers, $body, $options);
         $request->setEventDispatcher(clone $this->getEventDispatcher());
         if ($this->userAgent && !$request->hasHeader('User-Agent')) {
             $request->setHeader('User-Agent', $this->userAgent);

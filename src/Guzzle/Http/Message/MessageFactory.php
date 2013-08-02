@@ -34,9 +34,8 @@ class MessageFactory implements MessageFactoryInterface
         return new Response();
     }
 
-    public function createRequest($method, $url, $body = null, array $options = array())
+    public function createRequest($method, $url, array $headers = [], $body = null, array $options = array())
     {
-        $headers = isset($options['headers']) ? $options['headers'] : array();
         $request = new Request($method, $url, $headers);
 
         if ($body) {
@@ -138,7 +137,27 @@ class MessageFactory implements MessageFactoryInterface
             throw new \InvalidArgumentException('query value must be an array');
         }
 
-        $request->getQuery()->overwriteWith($value);
+        // Do not overwrite existing query string variables
+        $query = $request->getQuery();
+        foreach ($value as $k => $v) {
+            if (!isset($query[$k])) {
+                $query[$k] = $v;
+            }
+        }
+    }
+
+    private function visit_headers(RequestInterface $request, $value)
+    {
+        if (!is_array($value)) {
+            throw new \InvalidArgumentException('header value must be an array');
+        }
+
+        // Do not overwrite existing headers
+        foreach ($value as $k => $v) {
+            if (!$request->hasHeader($k)) {
+                $request->setHeader($k, $v);
+            }
+        }
     }
 
     private function visit_cookies(RequestInterface $request, $value)
