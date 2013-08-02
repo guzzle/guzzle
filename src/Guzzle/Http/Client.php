@@ -59,7 +59,7 @@ class Client implements ClientInterface
         $this->userAgent = $this->getDefaultUserAgent();
         $this->baseUrl = $this->buildUrl($this->config['base_url']);
         $this->messageFactory = $this->config['message_factory'] ?: MessageFactory::getInstance();
-        $this->adapter = $this->config['adapter'] ?: self::getDefaultAdapter($this->messageFactory);
+        $this->adapter = $this->config['adapter'] ?: self::getDefaultAdapter();
         // Add default request options
         $this->config['defaults'] = !$this->config['defaults']
             ? $this->defaults
@@ -69,12 +69,10 @@ class Client implements ClientInterface
     /**
      * Get a default adapter to use based on the environment
      *
-     * @param MessageFactoryInterface $messageFactory Message factory used by the adapter
-     *
      * @return AdapterInterface
      * @throws \RuntimeException
      */
-    public static function getDefaultAdapter(MessageFactoryInterface $messageFactory)
+    public static function getDefaultAdapter()
     {
         if (extension_loaded('curl')) {
             return ini_get('allow_url_fopen')
