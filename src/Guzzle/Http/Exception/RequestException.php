@@ -43,19 +43,23 @@ class RequestException extends TransferException
     ) {
         if (!$response) {
             $label = 'Error completing request';
+            $className = __CLASS__;
         } elseif ($response->isClientError()) {
             $label = 'Client error response';
+            $className = __NAMESPACE__ . '\\ClientErrorResponseException';
         } elseif ($response->isServerError()) {
             $label = 'Server error response';
+            $className = __NAMESPACE__ . '\\ServerErrorResponseException';
         } else {
             $label = 'Unsuccessful response';
+            $className = __CLASS__;
         }
 
         $message = $label . ' [url] ' . $request->getUrl()
             . ' [status code] ' . $response->getStatusCode()
             . ' [reason phrase] ' . $response->getReasonPhrase();
 
-        return new self($message, $request, $response, $previous);
+        return new $className($message, $request, $response, $previous);
     }
 
     /**
