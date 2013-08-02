@@ -27,7 +27,7 @@ class RequestBeforeSendEvent extends AbstractRequestEvent
         // Emit the 'request.after_send' event for the request
         $request->getEventDispatcher()->dispatch(
             'request.after_send',
-            new AfterSendEvent($request, $this->transaction)
+            new RequestAfterSendEvent($request, $this->transaction)
         );
     }
 }

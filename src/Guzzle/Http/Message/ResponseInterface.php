@@ -72,6 +72,15 @@ interface ResponseInterface extends MessageInterface
     public function getEffectiveUrl();
 
     /**
+     * Set the effective URL that resulted in this response (e.g. the last redirect URL)
+     *
+     * @param string $url Effective URL
+     *
+     * @return self
+     */
+    public function setEffectiveUrl($url);
+
+    /**
      * Parse the JSON response body and return an array
      *
      * @return array|string|int|bool|float
