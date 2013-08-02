@@ -31,7 +31,7 @@ function getDefaultClient()
  *
  * @return ResponseInterface
  */
-function request($method, $url, array $headers = [], $body = null, $options = array())
+function request($method, $url, array $headers = [], $body = null, $options = [])
 {
     $request = getDefaultClient()->createRequest($method, $url, $headers, $body, $options);
 
@@ -47,9 +47,9 @@ function request($method, $url, array $headers = [], $body = null, $options = ar
  *
  * @return ResponseInterface
  */
-function get($url, array $headers = [], $options = array())
+function get($url, array $headers = [], $options = [])
 {
-    return request('GET', $url, $headers, $options);
+    return request('GET', $url, $headers, null, $options);
 }
 
 /**
@@ -61,9 +61,9 @@ function get($url, array $headers = [], $options = array())
  *
  * @return ResponseInterface
  */
-function head($url, array $headers = [], $options = array())
+function head($url, array $headers = [], $options = [])
 {
-    return request('HEAD', $url, $headers, $options);
+    return request('HEAD', $url, $headers, null, $options);
 }
 
 /**
@@ -75,9 +75,9 @@ function head($url, array $headers = [], $options = array())
  *
  * @return ResponseInterface
  */
-function delete($url, array $headers = [], $options = array())
+function delete($url, array $headers = [], $options = [])
 {
-    return request('DELETE', $url, $options);
+    return request('DELETE', $url, $headers, null, $options);
 }
 
 /**
@@ -90,7 +90,7 @@ function delete($url, array $headers = [], $options = array())
  *
  * @return ResponseInterface
  */
-function post($url, array $headers = [], $body = null, $options = array())
+function post($url, array $headers = [], $body = null, $options = [])
 {
     return request('POST', $url, $headers, $body, $options);
 }
@@ -105,7 +105,7 @@ function post($url, array $headers = [], $body = null, $options = array())
  *
  * @return ResponseInterface
  */
-function put($url, array $headers = [], $body = null, $options = array())
+function put($url, array $headers = [], $body = null, $options = [])
 {
     return request('PUT', $url, $headers, $body, $options);
 }
@@ -120,7 +120,7 @@ function put($url, array $headers = [], $body = null, $options = array())
  *
  * @return ResponseInterface
  */
-function patch($url, array $headers = [], $body = null, $options = array())
+function patch($url, array $headers = [], $body = null, $options = [])
 {
     return request('PATCH', $url, $headers, $body, $options);
 }
@@ -134,7 +134,7 @@ function patch($url, array $headers = [], $body = null, $options = array())
  *
  * @return ResponseInterface
  */
-function options($url, array $headers = [], $options = array())
+function options($url, array $headers = [], $options = [])
 {
     return request('OPTIONS', $url, $headers, $options);
 }

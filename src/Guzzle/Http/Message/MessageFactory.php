@@ -39,7 +39,7 @@ class MessageFactory implements MessageFactoryInterface
     public function __construct()
     {
         $this->errorPlugin = new HttpErrorPlugin();
-        // $this->redirectPlugin = new RedirectPlugin();
+        $this->redirectPlugin = new RedirectPlugin();
     }
 
     public function createResponse()
@@ -134,7 +134,7 @@ class MessageFactory implements MessageFactoryInterface
     private function visit_allow_redirects(RequestInterface $request, $value)
     {
         if ($value === true) {
-            // $request->getEventDispatcher()->addSubscriber($this->redirectPlugin);
+            $request->getEventDispatcher()->addSubscriber($this->redirectPlugin);
         }
     }
 
