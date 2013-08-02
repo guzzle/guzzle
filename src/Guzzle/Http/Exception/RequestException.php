@@ -51,11 +51,9 @@ class RequestException extends TransferException
             $label = 'Unsuccessful response';
         }
 
-        $message = $label . PHP_EOL . implode(PHP_EOL, array(
-            '[status code] ' . $response->getStatusCode(),
-            '[reason phrase] ' . $response->getReasonPhrase(),
-            '[url] ' . $request->getUrl(),
-        ));
+        $message = $label . ' [url] ' . $request->getUrl()
+            . ' [status code] ' . $response->getStatusCode()
+            . ' [reason phrase] ' . $response->getReasonPhrase();
 
         return new self($message, $request, $response, $previous);
     }

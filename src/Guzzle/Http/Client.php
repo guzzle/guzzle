@@ -50,13 +50,14 @@ class Client implements ClientInterface
      *                      - adapter: Adapter used to transfer requests
      *                      - defaults: Default request options to apply to each request
      */
-    public function __construct(array $config = array())
+    public function __construct(array $config = [])
     {
         $this->config = new Collection($config);
         $this->userAgent = $this->getDefaultUserAgent();
         $this->baseUrl = $this->buildUrl($this->config['base_url']);
         $this->messageFactory = $this->config['message_factory'] ?: MessageFactory::getInstance();
         $this->adapter = $this->config['adapter'] ?: self::getDefaultAdapter($this->messageFactory);
+        $this->getEventDispatcher()->addSubscriber(new HttpErrorPlugin());
     }
 
     /**
@@ -115,7 +116,7 @@ class Client implements ClientInterface
         return $this->config->getPath("defaults/{$keyOrPath}");
     }
 
-    public function createRequest($method, $url = null, array $headers = [], $body = null, array $options = array())
+    public function createRequest($method, $url = null, array $headers = [], $body = null, array $options = [])
     {
         $url = $url ? $this->buildUrl($url) : $this->getBaseUrl();
 
@@ -148,37 +149,37 @@ class Client implements ClientInterface
         return $this;
     }
 
-    public function get($url = null, array $headers = [], $options = array())
+    public function get($url = null, array $headers = [], $options = [])
     {
         return $this->send($this->createRequest('GET', $url, $headers, null, $options));
     }
 
-    public function head($url = null, array $headers = [], array $options = array())
+    public function head($url = null, array $headers = [], array $options = [])
     {
         return $this->send($this->createRequest('HEAD', $url, $headers, null, $options));
     }
 
-    public function delete($url = null, array $headers = [], array $options = array())
+    public function delete($url = null, array $headers = [], array $options = [])
     {
         return $this->send($this->createRequest('DELETE', $url, $headers, null, $options));
     }
 
-    public function put($url = null, array $headers = [], $body = null, array $options = array())
+    public function put($url = null, array $headers = [], $body = null, array $options = [])
     {
         return $this->send($this->createRequest('PUT', $url, $headers, $body, $options));
     }
 
-    public function patch($url = null, array $headers = [], $body = null, array $options = array())
+    public function patch($url = null, array $headers = [], $body = null, array $options = [])
     {
         return $this->send($this->createRequest('PATCH', $url, $headers, $body, $options));
     }
 
-    public function post($url = null, array $headers = [], $body = null, array $options = array())
+    public function post($url = null, array $headers = [], $body = null, array $options = [])
     {
         return $this->send($this->createRequest('POST', $url, $headers, $body, $options));
     }
 
-    public function options($url = null, array $headers = [], array $options = array())
+    public function options($url = null, array $headers = [], array $options = [])
     {
         return $this->send($this->createRequest('OPTIONS', $url, $headers, $options));
     }
@@ -223,7 +224,7 @@ class Client implements ClientInterface
         $transaction->addAll($intercepted);
 
         if ($transaction->hasExceptions()) {
-            throw new BatchException($transaction, $this);
+            throw new BatchException($transaction);
         }
 
         return $transaction;
@@ -268,7 +269,7 @@ class Client implements ClientInterface
      *
      * @return string
      */
-    private function expandTemplate($template, array $variables = array())
+    private function expandTemplate($template, array $variables = [])
     {
         return function_exists('uri_template')
             ? uri_template($template, $variables)
@@ -288,7 +289,7 @@ class Client implements ClientInterface
             if (is_array($url)) {
                 list($url, $templateVars) = $url;
             } else {
-                $templateVars = array();
+                $templateVars = [];
             }
             if (substr($url, 0, 4) === 'http') {
                 // Use absolute URLs as-is
