@@ -129,6 +129,14 @@ class MessageFactory implements MessageFactoryInterface
                 'auth value must be an array that contains a username, password, and optional authentication scheme'
             );
         }
+
+        if (!isset($auth[2]) || strtolower($auth[2]) == 'basic') {
+            // We can easily handle simple basic Auth in the factory
+            $request->setHeader('Authorization', 'Basic ' . base64_encode("$value[0]:$value[1]"));
+        } else {
+            // Rely on an adapter to implement the authorization protocol (e.g. cURL)
+            $request->getTransferOptions()->set('auth', $value);
+        }
     }
 
     private function visit_query(RequestInterface $request, $value)
