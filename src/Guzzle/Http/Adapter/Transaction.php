@@ -3,9 +3,9 @@
 namespace Guzzle\Http\Adapter;
 
 use Guzzle\Http\ClientInterface;
+use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
-use Guzzle\Http\Exception\RequestException;
 
 /**
  * SplObjectStorage object that only allows Requests that map to Responses or Exception
@@ -53,6 +53,23 @@ class Transaction extends \SplObjectStorage
     }
 
     /**
+     * Get a Transaction object that only contains valid responses
+     *
+     * @return \SplObjectStorage Map of responses to requests
+     */
+    public function getResponses()
+    {
+        $hash = new \SplObjectStorage();
+        foreach ($this as $request) {
+            if ($this[$request] instanceof ResponseInterface) {
+                $hash[$this[$request]] = $request;
+            }
+        }
+
+        return $hash;
+    }
+
+    /**
      * Check if the transaction has any exceptions
      *
      * @return bool
@@ -83,23 +100,6 @@ class Transaction extends \SplObjectStorage
         }
 
         return $transaction;
-    }
-
-    /**
-     * Get a Transaction object that only contains valid responses
-     *
-     * @return \SplObjectStorage Map of responses to requests
-     */
-    public function getResponses()
-    {
-        $hash = new \SplObjectStorage();
-        foreach ($this as $request) {
-            if ($this[$request] instanceof ResponseInterface) {
-                $hash[$this[$request]] = $request;
-            }
-        }
-
-        return $hash;
     }
 
     /**

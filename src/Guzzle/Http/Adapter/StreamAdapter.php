@@ -2,9 +2,10 @@
 
 namespace Guzzle\Http\Adapter;
 
+use Guzzle\Http\Event\AfterSendEvent;
+use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
-use Guzzle\Http\Exception\RequestException;
 use Guzzle\Stream\Stream;
 
 /**
@@ -20,6 +21,10 @@ class StreamAdapter implements AdapterInterface
             } catch (RequestException $e) {
                 $transaction[$request] = $e;
             }
+            $request->getEventDispatcher()->dispatch(
+                'request.after_send',
+                new AfterSendEvent($request, $transaction)
+            );
         }
 
         return $transaction;
@@ -126,7 +131,9 @@ class StreamAdapter implements AdapterInterface
     }
 
     /**
-     * Create the stream for the request with the context options
+     * Create the stream for the request with the context options.
+     *
+     * Stream context parameters may be set in the '_params' option key.
      *
      * @param RequestInterface $request              Request being sent
      * @param mixed            $http_response_header Value is populated by stream wrapper
@@ -156,8 +163,18 @@ class StreamAdapter implements AdapterInterface
             }
         }
 
-        $context = $this->createResource(function () use ($request, $options) {
-            return stream_context_create($options);
+        $params = null;
+        if (isset($options['_params'])) {
+            $params = $options['_params'];
+            unset($options['_params']);
+        }
+
+        $context = $this->createResource(function () use ($request, $options, $params) {
+            $context = stream_context_create($options);
+            if ($params) {
+                stream_context_set_params($context, $params);
+            }
+            return $context;
         }, $request, $options);
 
         return $this->createResource(function () use ($request, &$http_response_header, $context) {
@@ -196,5 +213,50 @@ class StreamAdapter implements AdapterInterface
         } else {
             $options['http']['local_cert'] = $value;
         }
+    }
+
+    private function visit_debug(RequestInterface $request, &$options, $value)
+    {
+        if (!is_resource($value)) {
+            $value = fopen('php://output', 'w');
+        }
+
+        $options['_params'] = array(
+            'notification' => function (
+                $code,
+                $severity,
+                $message,
+                $message_code,
+                $bytes_transferred,
+                $bytes_max
+            ) use ($request, $value) {
+                fwrite($value, '<' . $request->getUrl() . '>: ');
+                switch ($code) {
+                    case STREAM_NOTIFY_COMPLETED:
+                        fwrite($value, 'Completed request to ' . $request->getUrl() . "\n");
+                        break;
+                    case STREAM_NOTIFY_FAILURE:
+                        fwrite($value, "Failure: {$message_code} {$message} \n");
+                        break;
+                    case STREAM_NOTIFY_RESOLVE:
+                    case STREAM_NOTIFY_AUTH_REQUIRED:
+                    case STREAM_NOTIFY_AUTH_RESULT:
+                        var_dump($code, $severity, $message, $message_code, $bytes_transferred, $bytes_max);
+                        break;
+                    case STREAM_NOTIFY_CONNECT:
+                        fputs($value, "Connected...\n");
+                        break;
+                    case STREAM_NOTIFY_FILE_SIZE_IS:
+                        fputs($value, "Got the filesize: {$bytes_max}\n");
+                        break;
+                    case STREAM_NOTIFY_MIME_TYPE_IS:
+                        fputs($value, "Found the mime-type: {$message}\n");
+                        break;
+                    case STREAM_NOTIFY_PROGRESS:
+                        fputs($value, "Downloaded {$bytes_transferred} bytes\n");
+                        break;
+                }
+            }
+        );
     }
 }

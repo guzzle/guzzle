@@ -3,7 +3,6 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Plugin\Log\LogPlugin;
 use Guzzle\Url\Url;
@@ -117,6 +116,13 @@ class MessageFactory implements MessageFactoryInterface
         }
     }
 
+    private function visit_exceptions(RequestInterface $request, $value)
+    {
+        if ($value === false || $value === 0) {
+
+        }
+    }
+
     private function visit_auth(RequestInterface $request, $value)
     {
         if (!is_array($value) || count($value) < 2) {
@@ -129,7 +135,7 @@ class MessageFactory implements MessageFactoryInterface
     private function visit_query(RequestInterface $request, $value)
     {
         if (!is_array($value)) {
-            throw new InvalidArgumentException('query value must be an array');
+            throw new \InvalidArgumentException('query value must be an array');
         }
 
         $request->getQuery()->overwriteWith($value);
@@ -138,7 +144,7 @@ class MessageFactory implements MessageFactoryInterface
     private function visit_cookies(RequestInterface $request, $value)
     {
         if (!is_array($value)) {
-            throw new InvalidArgumentException('cookies value must be an array');
+            throw new \InvalidArgumentException('cookies value must be an array');
         }
 
         foreach ($value as $name => $v) {
@@ -149,7 +155,7 @@ class MessageFactory implements MessageFactoryInterface
     private function visit_events(RequestInterface $request, $value)
     {
         if (!is_array($value)) {
-            throw new InvalidArgumentException('events value must be an array');
+            throw new \InvalidArgumentException('events value must be an array');
         }
 
         foreach ($value as $name => $method) {
@@ -164,18 +170,11 @@ class MessageFactory implements MessageFactoryInterface
     private function visit_plugins(RequestInterface $request, $value)
     {
         if (!is_array($value)) {
-            throw new InvalidArgumentException('plugins value must be an array');
+            throw new \InvalidArgumentException('plugins value must be an array');
         }
 
         foreach ($value as $plugin) {
             $request->addSubscriber($plugin);
-        }
-    }
-
-    private function visit_exceptions(RequestInterface $request, $value)
-    {
-        if ($value === false || $value === 0) {
-
         }
     }
 
@@ -186,6 +185,6 @@ class MessageFactory implements MessageFactoryInterface
 
     private function visit_debug(RequestInterface $request, $value)
     {
-
+        $request->getTransferOptions()->set('debug', $value);
     }
 }

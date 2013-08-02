@@ -5,19 +5,18 @@ namespace Guzzle\Http;
 use Guzzle\Common\Collection;
 use Guzzle\Common\HasDispatcher;
 use Guzzle\Common\Version;
-use Guzzle\Http\Event\AfterSendEvent;
-use Guzzle\Http\Event\BeforeSendEvent;
 use Guzzle\Http\Adapter\AdapterInterface;
 use Guzzle\Http\Adapter\StreamAdapter;
 use Guzzle\Http\Adapter\StreamingProxyAdapter;
 use Guzzle\Http\Adapter\Curl\CurlAdapter;
 use Guzzle\Http\Adapter\Transaction;
+use Guzzle\Http\Event\BeforeSendEvent;
 use Guzzle\Http\Exception\BatchException;
+use Guzzle\Http\Message\MessageFactory;
+use Guzzle\Http\Message\MessageFactoryInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Url\Url;
 use Guzzle\Url\UriTemplate;
-use Guzzle\Http\Message\MessageFactory;
-use Guzzle\Http\Message\MessageFactoryInterface;
 
 /**
  * HTTP client
@@ -25,8 +24,6 @@ use Guzzle\Http\Message\MessageFactoryInterface;
 class Client implements ClientInterface
 {
     use HasDispatcher;
-
-    const REQUEST_OPTIONS = 'request.options';
 
     /** @var MessageFactoryInterface Request factory used by the client */
     protected $messageFactory;
@@ -50,6 +47,7 @@ class Client implements ClientInterface
      *                                  expansion variables to inject into the URI template.
      *                      - message_factory: Factory used to create request and response object
      *                      - adapter: Adapter used to transfer requests
+     *                      - defaults: Default request options to apply to each request
      */
     public function __construct(array $config = array())
     {
@@ -73,12 +71,12 @@ class Client implements ClientInterface
         if (extension_loaded('curl')) {
             return ini_get('allow_url_fopen')
                 ? new StreamingProxyAdapter(
-                    new CurlAdapter($messageFactory),
-                    new StreamAdapter($messageFactory)
+                    new CurlAdapter(),
+                    new StreamAdapter()
                 )
-                : new CurlAdapter($messageFactory);
+                : new CurlAdapter();
         } elseif (ini_get('allow_url_fopen')) {
-            return new StreamAdapter($messageFactory);
+            return new StreamAdapter();
         } else {
             throw new \RuntimeException('The curl extension must be installed or you must set allow_url_fopen to true');
         }
@@ -99,7 +97,7 @@ class Client implements ClientInterface
      */
     public function setDefaultOption($keyOrPath, $value)
     {
-        $this->config->setPath(self::REQUEST_OPTIONS . '/' . $keyOrPath, $value);
+        $this->config->setPath("defaults/{$keyOrPath}", $value);
 
         return $this;
     }
@@ -113,7 +111,7 @@ class Client implements ClientInterface
      */
     public function getDefaultOption($keyOrPath)
     {
-        return $this->config->getPath(self::REQUEST_OPTIONS . '/' . $keyOrPath);
+        return $this->config->getPath("defaults/{$keyOrPath}");
     }
 
     public function createRequest($method, $url = null, array $headers = [], $body = null, array $options = array())
@@ -121,7 +119,7 @@ class Client implements ClientInterface
         $url = $url ? $this->buildUrl($url) : $this->getBaseUrl();
 
         // Merge in default options
-        if ($default = $this->config->get(self::REQUEST_OPTIONS)) {
+        if ($default = $this->config->get('defaults')) {
             $options = array_replace_recursive($default, $options);
         }
 
@@ -187,15 +185,11 @@ class Client implements ClientInterface
     public function send(RequestInterface $request)
     {
         $transaction = new Transaction($this);
-        $event = $this->preSend($request);
-        if ($response = $event->getResponse()) {
-            $transaction[$request] = $response;
-        } else {
+        if (!$this->preSend($request, $transaction)->isPropagationStopped()) {
             $transaction[$request] = $this->messageFactory->createResponse();
             $this->adapter->send($transaction);
         }
 
-        $this->afterSend($request, $transaction);
         if ($transaction[$request] instanceof \Exception) {
             throw $transaction[$request];
         }
@@ -209,9 +203,9 @@ class Client implements ClientInterface
         $intercepted = new Transaction($this);
 
         foreach ($requests as $request) {
-            $event = $this->preSend($request);
-            if ($response = $event->getResponse()) {
-                $intercepted[$request] = $response;
+            if ($this->preSend($request, $transaction)->isPropagationStopped()) {
+                $intercepted[$request] = $transaction[$request];
+                unset($transaction[$request]);
             } else {
                 $transaction[$request] = $this->messageFactory->createResponse();
             }
@@ -222,10 +216,6 @@ class Client implements ClientInterface
         }
 
         $transaction->addAll($intercepted);
-
-        foreach ($requests as $request) {
-            $this->afterSend($request, $transaction);
-        }
 
         if ($transaction->hasExceptions()) {
             throw new BatchException($transaction, $this);
@@ -245,38 +235,17 @@ class Client implements ClientInterface
     }
 
     /**
-     * Emits events before a request is sent
-     *
-     * @param RequestInterface  $request Request about to be sent
+     * @param RequestInterface $request Request about to be sent
+     * @param Transaction      $transaction Transaction
      *
      * @return BeforeSendEvent
      */
-    private function preSend(RequestInterface $request)
+    private function preSend(RequestInterface $request, Transaction $transaction)
     {
         return $request->getEventDispatcher()->dispatch(
             'request.before_send',
-            new BeforeSendEvent($request, $this->messageFactory)
+            new BeforeSendEvent($request, $transaction)
         );
-    }
-
-    /**
-     * Performs validation and emits events after a request has been sent
-     *
-     * @param RequestInterface  $request     Request that sent
-     * @param Transaction       $transaction Transaction
-     * @throws \LogicException if the transaction loses the request for some reason after the request.after_send event
-     */
-    private function afterSend(RequestInterface $request, Transaction $transaction)
-    {
-        if (!isset($transaction[$request])) {
-            throw new \LogicException('The request is not associated with the transaction');
-        }
-
-        $event = $request->getEventDispatcher()->dispatch(
-            'request.after_send',
-            new AfterSendEvent($request, $transaction[$request], $this->messageFactory)
-        );
-        $transaction[$request] = $event->getResult();
     }
 
     /**

@@ -136,6 +136,16 @@ class CurlFactory
         }
     }
 
+    protected function visit_debug(RequestInterface $request, &$options, $value)
+    {
+        if (is_resource($value)) {
+            $options[CURLOPT_VERBOSE] = true;
+            $options[CURLOPT_STDERR] = $value;
+        } else {
+            $options[CURLOPT_VERBOSE] = $value;
+        }
+    }
+
     protected function visit_proxy(RequestInterface $request, &$options, $value)
     {
         $options[CURLOPT_PROXY] = $value;

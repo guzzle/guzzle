@@ -2,53 +2,53 @@
 
 namespace Guzzle\Http\Event;
 
-use Guzzle\Common\Event;
-use Guzzle\Http\Message\MessageFactoryInterface;
-use Guzzle\Http\Message\RequestInterface;
+use Guzzle\Http\Exception\AdapterException;
 use Guzzle\Http\Message\ResponseInterface;
 
-class AfterSendEvent extends Event
+/**
+ * Event object emitted after a request has been sent.
+ *
+ * You may change the result value associated with a request using the setResult() method of the event.
+ */
+class AfterSendEvent extends AbstractRequestEvent
 {
-    public function __construct(RequestInterface $request, $result, MessageFactoryInterface $factory)
-    {
-        parent::__construct([
-            'request'         => $request,
-            'message_factory' => $factory,
-            'result'          => $result
-        ]);
-    }
-
-    public function getRequest()
-    {
-        return $this['request'];
-    }
-
-    public function getMessageFactory()
-    {
-        return $this['message_factory'];
-    }
-
+    /**
+     * Set a transactional result for the request
+     *
+     * @param ResponseInterface|AdapterException $result Result to set for the request
+     */
     public function setResult($result)
     {
-        if (!($result instanceof ResponseInterface) && !($result instanceof \Exception)) {
-            throw new \InvalidArgumentException('Result must be a ResponseInterface or Exception object');
-        }
-
-        $this['result'] = $result;
+        $this->transaction[$this['request']] = $result;
     }
 
+    /**
+     * Get the transactional result for the request
+     *
+     * @return ResponseInterface|AdapterException
+     */
     public function getResult()
     {
-        return $this['result'];
+        return $this->transaction[$this['request']];
     }
 
+    /**
+     * Check if the result of the request is a response object
+     *
+     * @return bool
+     */
     public function hasResponse()
     {
-        return $this['result'] instanceof ResponseInterface;
+        return $this->transaction[$this['request']] instanceof ResponseInterface;
     }
 
+    /**
+     * Check if the result of the request is an AdapterException object
+     *
+     * @return bool
+     */
     public function hasException()
     {
-        return $this['result'] instanceof \Exception;
+        return $this->transaction[$this['request']] instanceof \Exception;
     }
 }

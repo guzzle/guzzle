@@ -40,6 +40,16 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
+     * Get a string representation of the start line and headers
+     *
+     * @return string
+     */
+    public function getRawHeaders()
+    {
+        return $this->getStartLine() . "\r\n" . $this->getHeaders();
+    }
+
+    /**
      * Set the header factory to use to create headers
      *
      * @param HeaderFactoryInterface $factory

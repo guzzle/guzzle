@@ -2,38 +2,33 @@
 
 namespace Guzzle\Http\Event;
 
-use Guzzle\Common\Event;
-use Guzzle\Http\Message\MessageFactoryInterface;
-use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
 
-class BeforeSendEvent extends Event
+/**
+ * Event object emitted before a request is sent.
+ *
+ * You can intercept a request and inject a response onto the event object. Intercepting a request from an event
+ * listener will prevent the client from sending the request over the wire. The injected response will then be used as
+ * the response for the request.
+ */
+class BeforeSendEvent extends AbstractRequestEvent
 {
-    public function __construct(RequestInterface $request, MessageFactoryInterface $factory)
+    /**
+     * Intercept the request and inject a response
+     *
+     * @param ResponseInterface $response Response to set
+     */
+    public function intercept(ResponseInterface $response)
     {
-        parent::__construct([
-            'request'         => $request,
-            'message_factory' => $factory
-        ]);
-    }
+        $request = $this->getRequest();
+        $this->transaction[$request] = $response;
 
-    public function getRequest()
-    {
-        return $this['request'];
-    }
+        // Emit the 'request.after_send' event for the request
+        $request->getEventDispatcher()->dispatch(
+            'request.after_send',
+            new AfterSendEvent($request, $this->transaction)
+        );
 
-    public function getMessageFactory()
-    {
-        return $this['message_factory'];
-    }
-
-    public function getResponse()
-    {
-        return $this['response'];
-    }
-
-    public function setResponse(ResponseInterface $response)
-    {
-        $this['response'] = $response;
+        $this->stopPropagation();
     }
 }
