@@ -29,6 +29,9 @@ class Client implements ClientInterface
     /** @var MessageFactoryInterface Request factory used by the client */
     protected $messageFactory;
 
+    /** @var array Default request options */
+    protected $defaults = ['allow_redirects' => true, 'exceptions' => true];
+
     /** @var AdapterInterface */
     private $adapter;
 
@@ -57,7 +60,10 @@ class Client implements ClientInterface
         $this->baseUrl = $this->buildUrl($this->config['base_url']);
         $this->messageFactory = $this->config['message_factory'] ?: MessageFactory::getInstance();
         $this->adapter = $this->config['adapter'] ?: self::getDefaultAdapter($this->messageFactory);
-        $this->getEventDispatcher()->addSubscriber(new HttpErrorPlugin());
+        // Add default request options
+        $this->config['defaults'] = !$this->config['defaults']
+            ? $this->defaults
+            : array_replace($this->defaults, $this->config['defaults']);
     }
 
     /**
@@ -125,8 +131,10 @@ class Client implements ClientInterface
             $options = array_replace_recursive($default, $options);
         }
 
+        // Use a clone of the client's event dispatcher
+        $options['dispatcher'] = clone $this->getEventDispatcher();
         $request = $this->messageFactory->createRequest($method, (string) $url, $headers, $body, $options);
-        $request->setEventDispatcher(clone $this->getEventDispatcher());
+
         if ($this->userAgent && !$request->hasHeader('User-Agent')) {
             $request->setHeader('User-Agent', $this->userAgent);
         }

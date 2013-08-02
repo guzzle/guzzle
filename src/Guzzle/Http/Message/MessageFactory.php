@@ -3,6 +3,7 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
+use Guzzle\Http\HttpErrorPlugin;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Plugin\Log\LogPlugin;
 use Guzzle\Url\Url;
@@ -14,6 +15,12 @@ class MessageFactory implements MessageFactoryInterface
 {
     /** @var MessageFactory Singleton instance of the default request factory */
     private static $instance;
+
+    /** @var HttpErrorPlugin */
+    private $errorPlugin;
+
+    /** @var RedirectPlugin */
+    private $redirectPlugin;
 
     /**
      * Get a cached instance of the default request factory
@@ -29,14 +36,30 @@ class MessageFactory implements MessageFactoryInterface
         return static::$instance;
     }
 
+    public function __construct()
+    {
+        $this->errorPlugin = new HttpErrorPlugin();
+        // $this->redirectPlugin = new RedirectPlugin();
+    }
+
     public function createResponse()
     {
         return new Response();
     }
 
-    public function createRequest($method, $url, array $headers = [], $body = null, array $options = array())
-    {
+    public function createRequest(
+        $method,
+        $url,
+        array $headers = [],
+        $body = null,
+        array $options = array()
+    ) {
         $request = new Request($method, $url, $headers);
+
+        if (isset($options['dispatcher'])) {
+            $request->setEventDispatcher($options['dispatcher']);
+            unset($options['dispatcher']);
+        }
 
         if ($body) {
             // Add POST fields and files to an entity enclosing request if an array is used
@@ -110,15 +133,15 @@ class MessageFactory implements MessageFactoryInterface
 
     private function visit_allow_redirects(RequestInterface $request, $value)
     {
-        if ($value === false) {
-
+        if ($value === true) {
+            // $request->getEventDispatcher()->addSubscriber($this->redirectPlugin);
         }
     }
 
     private function visit_exceptions(RequestInterface $request, $value)
     {
-        if ($value === false || $value === 0) {
-
+        if ($value === true) {
+            $request->getEventDispatcher()->addSubscriber($this->errorPlugin);
         }
     }
 

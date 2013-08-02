@@ -3,15 +3,12 @@
 namespace Guzzle\Http;
 
 use Guzzle\Common\Event;
-use Guzzle\Http\Exception\BadResponseException;
-use Guzzle\Http\Url;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\RequestFactory;
-use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\Exception\TooManyRedirectsException;
 use Guzzle\Http\Exception\CouldNotRewindStreamException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Guzzle\Url\Url;
 
 /**
  * Plugin to implement HTTP redirects. Can redirect like a web browser or using strict RFC 2616 compliance
@@ -32,8 +29,7 @@ class RedirectPlugin implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return array(
-            'request.sent'        => array('onRequestSent', 100),
-            'request.clone'       => 'cleanupRequest',
+            'request.after_send'  => array('onRequestSent', 100),
             'request.before_send' => 'cleanupRequest'
         );
     }
