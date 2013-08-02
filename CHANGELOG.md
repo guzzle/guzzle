@@ -1,6 +1,22 @@
 CHANGELOG
 =========
 
+3.7.2 (2013-08-02)
+------------------
+
+* Bug fix: Properly URL encoding paths when using the PHP-only version of the UriTemplate expander
+  See https://github.com/guzzle/guzzle/issues/371
+* Bug fix: Cookie domains are now matched correctly according to RFC 6265
+  See https://github.com/guzzle/guzzle/issues/377
+* Bug fix: GET parameters are now used when calculating an OAuth signature
+* Bug fix: Fixed an issue with cache revalidation where the If-None-Match header was being double quoted
+* `Guzzle\Common\AbstractHasDispatcher::dispatch()` now returns the event that was dispatched
+* `Guzzle\Http\QueryString::factory()` now guesses the most appropriate query aggregator to used based on the input.
+  See https://github.com/guzzle/guzzle/issues/379
+* Added a way to add custom domain objects to service description parsing using the `operation.parse_class` event. See
+  https://github.com/guzzle/guzzle/pull/380
+* cURL multi cleanup and optimizations
+
 3.7.1 (2013-07-05)
 ------------------
 
