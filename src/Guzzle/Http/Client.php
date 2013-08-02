@@ -10,7 +10,7 @@ use Guzzle\Http\Adapter\StreamAdapter;
 use Guzzle\Http\Adapter\StreamingProxyAdapter;
 use Guzzle\Http\Adapter\Curl\CurlAdapter;
 use Guzzle\Http\Adapter\Transaction;
-use Guzzle\Http\Event\BeforeSendEvent;
+use Guzzle\Http\Event\RequestBeforeSendEvent;
 use Guzzle\Http\Exception\BatchException;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\MessageFactoryInterface;
@@ -244,7 +244,7 @@ class Client implements ClientInterface
     {
         return $request->getEventDispatcher()->dispatch(
             'request.before_send',
-            new BeforeSendEvent($request, $transaction)
+            new RequestBeforeSendEvent($request, $transaction)
         );
     }
 

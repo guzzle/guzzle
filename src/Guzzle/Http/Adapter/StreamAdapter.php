@@ -2,7 +2,8 @@
 
 namespace Guzzle\Http\Adapter;
 
-use Guzzle\Http\Event\AfterSendEvent;
+use Guzzle\Http\Event\RequestAfterSendEvent;
+use Guzzle\Http\Event\RequestErrorEvent;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
@@ -18,13 +19,17 @@ class StreamAdapter implements AdapterInterface
         foreach ($transaction as $request) {
             try {
                 $this->createResponse($request, $transaction[$request]);
+                $request->getEventDispatcher()->dispatch(
+                    'request.after_send',
+                    new RequestAfterSendEvent($request, $transaction)
+                );
             } catch (RequestException $e) {
                 $transaction[$request] = $e;
+                $request->getEventDispatcher()->dispatch(
+                    'request.error',
+                    new RequestErrorEvent($request, $transaction)
+                );
             }
-            $request->getEventDispatcher()->dispatch(
-                'request.after_send',
-                new AfterSendEvent($request, $transaction)
-            );
         }
 
         return $transaction;

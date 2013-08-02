@@ -10,7 +10,7 @@ use Guzzle\Http\Message\ResponseInterface;
  *
  * You may change the result value associated with a request using the setResult() method of the event.
  */
-class AfterSendEvent extends AbstractRequestEvent
+class RequestAfterSendEvent extends AbstractRequestEvent
 {
     /**
      * Set a transactional result for the request

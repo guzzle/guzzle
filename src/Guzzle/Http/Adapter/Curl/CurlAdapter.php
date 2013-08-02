@@ -4,7 +4,8 @@ namespace Guzzle\Http\Adapter\Curl;
 
 use Guzzle\Http\Adapter\AdapterInterface;
 use Guzzle\Http\Adapter\Transaction;
-use Guzzle\Http\Event\AfterSendEvent;
+use Guzzle\Http\Event\RequestAfterSendEvent;
+use Guzzle\Http\Event\RequestErrorEvent;
 use Guzzle\Http\Exception\AdapterException;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\RequestInterface;
@@ -123,14 +124,17 @@ class CurlAdapter implements AdapterInterface
 
         try {
             $this->isCurlException($request, $curl);
+            $request->getEventDispatcher()->dispatch(
+                'request.after_send',
+                new RequestAfterSendEvent($request, $context['transaction'])
+            );
         } catch (RequestException $e) {
             $context['transaction'][$request] = $e;
+            $request->getEventDispatcher()->dispatch(
+                'request.error',
+                new RequestErrorEvent($request, $context['transaction'])
+            );
         }
-
-        $request->getEventDispatcher()->dispatch(
-            'request.after_send',
-            new AfterSendEvent($request, $context['transaction'])
-        );
     }
 
     /**
