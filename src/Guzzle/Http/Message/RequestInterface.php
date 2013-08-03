@@ -137,6 +137,28 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     public function setPort($port);
 
     /**
+     * Get an array of POST fields to send in the body of the request
+     *
+     * @return QueryString
+     */
+    public function getFormFields();
+
+    /**
+     * Get an array of form files to send in the body of the request
+     *
+     * @return FormFileCollection
+     */
+    public function getFormFiles();
+
+    /**
+     * Prepare a request for sending over the wire. For example, this method should ensure that POST fields and files
+     * are set in the body of the request, appropriate headers are set on the request, etc...
+     *
+     * @return self
+     */
+    public function prepare();
+
+    /**
      * Get the transfer options bag owned by the request
      *
      * @return \Guzzle\Common\Collection

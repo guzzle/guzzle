@@ -4,6 +4,7 @@ namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
 use Guzzle\Http\HttpErrorPlugin;
+use Guzzle\Http\Message\Form\FormFile;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Plugin\Log\LogPlugin;
 use Guzzle\Url\QueryString;
@@ -66,13 +67,14 @@ class MessageFactory implements MessageFactoryInterface
             if (!is_array($body)) {
                 $request->setBody($body, (string) $request->getHeader('Content-Type'));
             } else {
-                $request->setBody(
-                    (string) (new QueryString($body))->setEncodingType(QueryString::RFC1738),
-                    $request->getHeader('Content-Type') ?: 'application/x-www-form-urlencoded'
-                );
-            }
-            if ((string) $request->getHeader('Transfer-Encoding') == 'chunked') {
-                $request->removeHeader('Content-Length');
+                // Add POST/Form data
+                foreach ($body as $key => $value) {
+                    if (is_string($value) || is_array($value)) {
+                        $request->getFormFields()->set($key, $value);
+                    } else {
+                        $request->getFormFiles()->addFile(FormFile::create($value, $key));
+                    }
+                }
             }
         }
 

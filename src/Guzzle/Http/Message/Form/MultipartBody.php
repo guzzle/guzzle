@@ -1,18 +1,21 @@
 <?php
 
-namespace Guzzle\Stream;
+namespace Guzzle\Http\Message\Form;
 
+use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Mimetypes;
+use Guzzle\Stream\Stream;
+use Guzzle\Stream\StreamInterface;
 use Guzzle\Url\QueryString;
 
 /**
- * Stream that when read returns bytes for a multipart/form-data body
+ * Stream that when read returns bytes for a streaming multipart/form-data body
  */
 class MultipartBody implements StreamInterface
 {
     /** @var StreamInterface */
     private $files = [];
-    private $fields = [];
+    private $fields;
     private $metadata = ['mode' => 'r'];
     private $size;
     private $buffer;
@@ -24,8 +27,26 @@ class MultipartBody implements StreamInterface
 
     public function __construct()
     {
-        $this->buffer = Stream::factory();
         $this->boundary = uniqid();
+        $this->postFields = new QueryString();
+    }
+
+    /**
+     * Create a MultipartBody from a request object's form fields and files
+     *
+     * @param RequestInterface $request Request to create from
+     *
+     * @return MultipartBody
+     */
+    public static function fromRequest(RequestInterface $request)
+    {
+        $body = new self();
+        $body->setFields($request->getFormFields());
+        foreach ($request->getFormFiles() as $file) {
+            $body->addFile($file);
+        }
+
+        return $body;
     }
 
     public function __toString()
@@ -82,18 +103,15 @@ class MultipartBody implements StreamInterface
     }
 
     /**
-     * Replace all existing POST fields with an associative array of fields
+     * Replace all existing POST fields
      *
-     * @param array $fields Associative array of POST fields to send
+     * @param QueryString $fields Fields
      *
      * @return self
      */
-    public function setFields(array $fields)
+    public function setFields(QueryString $fields)
     {
-        $this->fields = [];
-        foreach ($fields as $key => $value) {
-            $this->setField($key, $value);
-        }
+        $this->fields = $fields;
 
         return $this;
     }
@@ -114,53 +132,14 @@ class MultipartBody implements StreamInterface
     /**
      * Add a file to the stream
      *
-     * @param string|resource|StreamInterface|\Generator $data         File data to send
-     * @param string                                     $name         Name of the file upload in the HTML form
-     *                                                                 (content-disposition name attribute).
-     * @param string                                     $postFileName Name of the POST file (filename
-     *                                                                 content-disposition attribute). Only set this
-     *                                                                 value to override any filename that can be
-     *                                                                 obtained from the data resource.
-     * @param array                                      $headers      Array of custom headers to attach to the file.
-     *                                                                 You can set/overwrite any header, including
-     *                                                                 content-disposition, content-type, etc...
+     * @param FormFileInterface $file Form file
+     *
      * @return self
      */
-    public function addFile($data, $name = null, $postFileName = null, array $headers = [])
+    public function addFile(FormFileInterface $file)
     {
         $this->size = null;
-        $headers = array_change_key_case($headers);
-
-        // Allow nested multipart/form-data bodies
-        if ($data instanceof self) {
-            // Add default headers if they were not already supplied
-            $headers = array_replace([
-                'content-disposition' => 'form-data; name="' . ($name ?: $data->getBoundary()) . '"',
-                'content-type' => 'multipart/form-data; boundary=' . $data->getBoundary()
-            ], $headers);
-        } else {
-            $data = Stream::factory($data);
-            // Use the URI of the stream if one is available and the POST filename was not provided
-            if (!$postFileName && $data->getUri()) {
-                $postFileName = basename($data->getUri());
-            }
-            if (!isset($headers['content-disposition'])) {
-                $headers['content-disposition'] = 'file; filename="' . $postFileName . '"';
-                if ($name) {
-                    $headers['content-disposition'] .= '; name="' . $name . '"';
-                }
-            }
-            // Attempt to guess the content-type if none was supplied
-            if (!isset($headers['content-type'])) {
-                $headers['content-type'] = Mimetypes::getInstance()->fromFilename($postFileName) ?: 'text/plain';
-            }
-            // Assume a binary transfer-encoding unless the header is specified and is blank or provided
-            if (!array_key_exists('content-transfer-encoding', $headers)) {
-                $headers['content-transfer-encoding'] = 'binary';
-            }
-        }
-
-        $this->files[] = [$data, $headers];
+        $this->files[] = $file;
 
         return $this;
     }
@@ -242,7 +221,7 @@ class MultipartBody implements StreamInterface
     public function isSeekable()
     {
         foreach ($this->files as $file) {
-            if (!$file[0]->isSeekable()) {
+            if (!$file->getContent()->isSeekable()) {
                 return false;
             }
         }
@@ -292,7 +271,7 @@ class MultipartBody implements StreamInterface
         }
 
         foreach ($this->files as $file) {
-            if (!$file[0]->rewind()) {
+            if (!$file->getContent()->rewind()) {
                 throw new \RuntimeException('Rewind on multipart file failed even though it shouldn\'t have');
             }
         }
@@ -351,7 +330,7 @@ class MultipartBody implements StreamInterface
      */
     private function readField($length)
     {
-        $name = array_keys($this->fields)[++$this->currentField - 1];
+        $name = $this->fields->getKeys()[++$this->currentField - 1];
         $this->buffer = Stream::fromString(
             sprintf(
                 "--%s\r\ncontent-disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n",
@@ -376,7 +355,7 @@ class MultipartBody implements StreamInterface
         $key = $this->currentFile;
 
         // Got to the next file and recursively return the read value
-        if ($this->files[$key][0]->eof()) {
+        if ($this->files[$key]->getContent()->eof()) {
             if (++$this->currentFile == count($this->files)) {
                 return '';
             }
@@ -385,10 +364,7 @@ class MultipartBody implements StreamInterface
 
         // If this is the start of a file, then send the headers to the read buffer
         if (!isset($this->bufferedHeaders[$this->currentFile])) {
-            $headers = "--{$this->boundary}\r\n";
-            foreach ($this->files[$key][1] as $k => $v) {
-                $headers .= "{$k}: {$v}\r\n";
-            }
+            $headers = "--{$this->boundary}\r\n" . $this->files[$key]->getHeaders() . "\r\n";
             $this->buffer = Stream::fromString($headers . "\r\n");
             $this->bufferedHeaders[$this->currentFile] = true;
         }
@@ -400,7 +376,7 @@ class MultipartBody implements StreamInterface
 
         // More data needs to be read to meet the limit, so pull from the file
         if (($remaining = $length - strlen($content)) > 0) {
-            $content .= $this->files[$key][0]->read($remaining);
+            $content .= $this->files[$key]->getContent()->read($remaining);
         }
 
         return $content;

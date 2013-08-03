@@ -5,6 +5,9 @@ namespace Guzzle\Http\Message;
 use Guzzle\Common\HasDispatcher;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Header\HeaderInterface;
+use Guzzle\Http\Message\Form\FormFileCollection;
+use Guzzle\Http\Message\Form\MultipartBody;
+use Guzzle\Url\QueryString;
 use Guzzle\Url\Url;
 
 /**
@@ -22,6 +25,12 @@ class Request extends AbstractMessage implements RequestInterface
 
     /** @var Collection Transfer options */
     private $transferOptions;
+
+    /** @var QueryString Form fields */
+    private $formFields;
+
+    /** @var FormFileCollection Form files */
+    private $formFiles;
 
     /**
      * @param string           $method  HTTP method
@@ -63,6 +72,12 @@ class Request extends AbstractMessage implements RequestInterface
         if ($this->eventDispatcher) {
             $this->eventDispatcher = clone $this->eventDispatcher;
         }
+        if ($this->formFields) {
+            $this->formFields = clone $this->formFields;
+        }
+        if ($this->formFiles) {
+            $this->formFiles = clone $this->formFiles;
+        }
         $this->transferOptions = clone $this->transferOptions;
         $this->url = clone $this->url;
         $this->headers = clone $this->headers;
@@ -99,9 +114,8 @@ class Request extends AbstractMessage implements RequestInterface
     {
         parent::setBody($body, $contentType);
 
-        // Always add the Expect 100-Continue header if the body cannot be rewound
-        if (!$this->body->isSeekable()) {
-            $this->setHeader('Expect', '100-Continue');
+        if ($body === null) {
+            return $this;
         }
 
         // Set the Content-Length header if it can be determined
@@ -222,6 +236,55 @@ class Request extends AbstractMessage implements RequestInterface
         }
 
         return $resource;
+    }
+
+    public function getFormFields()
+    {
+        if (!$this->formFields) {
+            $this->formFields = new QueryString();
+        }
+
+        return $this->formFields;
+    }
+
+    public function getFormFiles()
+    {
+        if (!$this->formFiles) {
+            $this->formFiles = new FormFileCollection();
+        }
+
+        return $this->formFiles;
+    }
+
+    public function prepare()
+    {
+        // Set the appropriate Content-Type for a request if one is not set and there are form fields
+        if (!$this->body) {
+            if ($this->formFiles && count($this->formFiles)) {
+                $body = MultipartBody::fromRequest($this);
+                if (!$this->hasHeader('Content-Type')) {
+                    $this->setHeader('Content-Type', 'multipart/form-data; boundary=' . $body->getBoundary());
+                }
+                $this->setBody($body);
+            } elseif ($this->formFields && count($this->getFormFields())) {
+                if (!$this->hasHeader('Content-Type')) {
+                    $this->setHeader('Content-Type', 'application/x-www-form-urlencoded');
+                }
+                $this->setBody((string) $this->formFields);
+            }
+        }
+
+        // Never send a Transfer-Encoding: chunked and Content-Length header in the same request
+        if ((string) $this->getHeader('Transfer-Encoding') == 'chunked') {
+            $this->removeHeader('Content-Length');
+        }
+
+        // Always add the Expect 100-Continue header if the body cannot be rewound
+        if (!$this->body->isSeekable()) {
+            $this->setHeader('Expect', '100-Continue');
+        }
+
+        return $this;
     }
 
     public function getTransferOptions()

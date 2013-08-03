@@ -263,6 +263,8 @@ class Client implements ClientInterface
     }
 
     /**
+     * Emits a request.before_send event, prepares for sending over the wire, and emits a request.prepared event
+     *
      * @param RequestInterface $request Request about to be sent
      * @param Transaction      $transaction Transaction
      *
@@ -270,10 +272,15 @@ class Client implements ClientInterface
      */
     private function preSend(RequestInterface $request, Transaction $transaction)
     {
-        return $request->getEventDispatcher()->dispatch(
-            'request.before_send',
-            new RequestBeforeSendEvent($request, $transaction)
-        );
+        $event = new RequestBeforeSendEvent($request, $transaction);
+        if (!$request->getEventDispatcher()->dispatch('request.before_send', $event)->isPropagationStopped()) {
+            // The request.prepared event SHOULD be used for things like logging, signing, etc. You MUST be careful to
+            // ensure that you are cooperating with other events when modifying a request during this event.
+            $request->prepare();
+            $request->getEventDispatcher()->dispatch('request.prepared', $event);
+        }
+
+        return $event;
     }
 
     /**
