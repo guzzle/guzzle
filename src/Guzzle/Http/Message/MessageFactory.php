@@ -6,6 +6,7 @@ use Guzzle\Common\Collection;
 use Guzzle\Http\HttpErrorPlugin;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Plugin\Log\LogPlugin;
+use Guzzle\Url\QueryString;
 use Guzzle\Url\Url;
 
 /**
@@ -62,23 +63,16 @@ class MessageFactory implements MessageFactoryInterface
         }
 
         if ($body) {
-            // Add POST fields and files to an entity enclosing request if an array is used
-            if (is_array($body)) {
-                // Normalize PHP style cURL uploads with a leading '@' symbol
-                foreach ($body as $key => $value) {
-                    if (is_string($value) && substr($value, 0, 1) == '@') {
-                        // $request->addPostFile($key, $value);
-                        unset($body[$key]);
-                    }
-                }
-                // Add the fields if they are still present and not all files
-                // $request->addPostFields($body);
-            } else {
-                // Add a raw entity body body to the request
+            if (!is_array($body)) {
                 $request->setBody($body, (string) $request->getHeader('Content-Type'));
-                if ((string) $request->getHeader('Transfer-Encoding') == 'chunked') {
-                    $request->removeHeader('Content-Length');
-                }
+            } else {
+                $request->setBody(
+                    (string) (new QueryString($body))->setEncodingType(QueryString::RFC1738),
+                    $request->getHeader('Content-Type') ?: 'application/x-www-form-urlencoded'
+                );
+            }
+            if ((string) $request->getHeader('Transfer-Encoding') == 'chunked') {
+                $request->removeHeader('Content-Length');
             }
         }
 
