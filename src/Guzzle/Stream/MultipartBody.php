@@ -11,15 +11,15 @@ use Guzzle\Url\QueryString;
 class MultipartBody implements StreamInterface
 {
     /** @var StreamInterface */
-    private $buffer;
     private $files = [];
     private $fields = [];
-    private $bufferedHeaders = [];
     private $metadata = ['mode' => 'r'];
     private $size;
+    private $buffer;
+    private $bufferedHeaders = [];
+    private $pos = 0;
     private $currentFile = 0;
     private $currentField = 0;
-    private $pos = 0;
     private $boundary;
 
     public function __construct()
@@ -73,16 +73,9 @@ class MultipartBody implements StreamInterface
      * @param string $value Field value
      *
      * @return self
-     * @throws \InvalidArgumentException for invalid field values
      */
     public function setField($name, $value)
     {
-        $this->size = null;
-        $type = gettype($value);
-        if ($type != 'string' && $type != 'array') {
-            throw new \InvalidArgumentException('Field values must be a string or array');
-        }
-
         $this->fields[$name] = $value;
 
         return $this;
@@ -122,35 +115,48 @@ class MultipartBody implements StreamInterface
      * Add a file to the stream
      *
      * @param string|resource|StreamInterface|\Generator $data         File data to send
-     * @param array                                      $headers      Array of custom headers to attach to the file
-     * @param string                                     $postFileName Name of the POST file. Only set this value to
-     *                                                                 override any filename that can be obtained from
-     *                                                                 the data resource.
+     * @param string                                     $name         Name of the file upload in the HTML form
+     *                                                                 (content-disposition name attribute).
+     * @param string                                     $postFileName Name of the POST file (filename
+     *                                                                 content-disposition attribute). Only set this
+     *                                                                 value to override any filename that can be
+     *                                                                 obtained from the data resource.
+     * @param array                                      $headers      Array of custom headers to attach to the file.
+     *                                                                 You can set/overwrite any header, including
+     *                                                                 content-disposition, content-type, etc...
      * @return self
      */
-    public function addFile($data, array $headers = [], $postFileName = null)
+    public function addFile($data, $name = null, $postFileName = null, array $headers = [])
     {
         $this->size = null;
         $headers = array_change_key_case($headers);
 
         // Allow nested multipart/form-data bodies
         if ($data instanceof self) {
-            if (!isset($headers['content-disposition'])) {
-                $headers['content-disposition'] = 'form-data; name="' . $data->getBoundary() . '"';
-            }
-            if (!isset($headers['content-type'])) {
-                $headers['content-type'] = 'multipart/form-data; boundary=' . $data->getBoundary();
-            }
+            // Add default headers if they were not already supplied
+            $headers = array_replace([
+                'content-disposition' => 'form-data; name="' . ($name ?: $data->getBoundary()) . '"',
+                'content-type' => 'multipart/form-data; boundary=' . $data->getBoundary()
+            ], $headers);
         } else {
             $data = Stream::factory($data);
+            // Use the URI of the stream if one is available and the POST filename was not provided
             if (!$postFileName && $data->getUri()) {
                 $postFileName = basename($data->getUri());
             }
             if (!isset($headers['content-disposition'])) {
                 $headers['content-disposition'] = 'file; filename="' . $postFileName . '"';
+                if ($name) {
+                    $headers['content-disposition'] .= '; name="' . $name . '"';
+                }
             }
+            // Attempt to guess the content-type if none was supplied
             if (!isset($headers['content-type'])) {
                 $headers['content-type'] = Mimetypes::getInstance()->fromFilename($postFileName) ?: 'text/plain';
+            }
+            // Assume a binary transfer-encoding unless the header is specified and is blank or provided
+            if (!array_key_exists('content-transfer-encoding', $headers)) {
+                $headers['content-transfer-encoding'] = 'binary';
             }
         }
 
@@ -229,6 +235,10 @@ class MultipartBody implements StreamInterface
         return false;
     }
 
+    /**
+     * The steam is seekable by default, but all attached files must be seekable too
+     * {@inheritdoc}
+     */
     public function isSeekable()
     {
         foreach ($this->files as $file) {
@@ -287,9 +297,9 @@ class MultipartBody implements StreamInterface
             }
         }
 
-        $this->currentField = $this->currentFile = 0;
+        $this->buffer = null;
+        $this->pos = $this->currentField = $this->currentFile = 0;
         $this->bufferedHeaders = [];
-        $this->pos = 0;
 
         return true;
     }
@@ -388,6 +398,7 @@ class MultipartBody implements StreamInterface
             $content = $this->buffer->read($length);
         }
 
+        // More data needs to be read to meet the limit, so pull from the file
         if (($remaining = $length - strlen($content)) > 0) {
             $content .= $this->files[$key][0]->read($remaining);
         }
