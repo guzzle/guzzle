@@ -38,17 +38,17 @@ class Stream implements StreamInterface
     );
 
     /**
-     * Create a new EntityBody based on the input type
+     * Create a new stream based on the input type
      *
-     * @param resource|string|EntityBody $resource Entity body data
-     * @param int                        $size     Size of the data contained in the resource
+     * @param resource|string|StreamInterface $resource Entity body data
+     * @param int                             $size     Size of the data contained in the resource
      *
-     * @return EntityBody
+     * @return StreamInterface
      * @throws \InvalidArgumentException if the $resource arg is not a resource or string
      */
     public static function factory($resource = '', $size = null)
     {
-        if ($resource instanceof EntityBodyInterface) {
+        if ($resource instanceof StreamInterface) {
             return $resource;
         }
 
@@ -70,11 +70,11 @@ class Stream implements StreamInterface
     }
 
     /**
-     * Create a new EntityBody from a string
+     * Create a new stream from a string
      *
      * @param string $string String of data
      *
-     * @return EntityBody
+     * @return StreamInterface
      */
     public static function fromString($string)
     {
@@ -98,7 +98,7 @@ class Stream implements StreamInterface
      */
     public static function getHash(StreamInterface $stream, $algo, $rawOutput = false)
     {
-        $pos = $stream->ftell();
+        $pos = $stream->tell();
         if (!$stream->seek(0)) {
             return false;
         }
@@ -144,11 +144,11 @@ class Stream implements StreamInterface
 
     public function __toString()
     {
-        if (!$this->isReadable() || (!$this->isSeekable() && $this->feof())) {
+        if (!$this->isReadable() || (!$this->isSeekable() && $this->eof())) {
             return '';
         }
 
-        $originalPos = $this->ftell();
+        $originalPos = $this->tell();
         $body = stream_get_contents($this->stream, -1, 0);
         $this->seek($originalPos);
 
@@ -211,7 +211,7 @@ class Stream implements StreamInterface
             return $this->size;
         } elseif ($this->meta[self::IS_READABLE] && $this->meta[self::SEEKABLE]) {
             // Only get the size based on the content if the the stream is readable and seekable
-            $pos = $this->ftell();
+            $pos = $this->tell();
             $this->size = strlen((string) $this);
             $this->seek($pos);
             return $this->size;
@@ -240,12 +240,12 @@ class Stream implements StreamInterface
         return $this->meta[self::SEEKABLE];
     }
 
-    public function feof()
+    public function eof()
     {
         return feof($this->stream);
     }
 
-    public function ftell()
+    public function tell()
     {
         return ftell($this->stream);
     }

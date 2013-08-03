@@ -36,12 +36,12 @@ class LimitStream implements StreamInterface
         return substr((string) $this->stream, $this->offset, $this->limit) ?: '';
     }
 
-    public function feof()
+    public function eof()
     {
         if ($this->limit == -1) {
-            return $this->stream->feof();
+            return $this->stream->eof();
         } else {
-            return (($this->offset + $this->limit) - $this->stream->ftell()) <= 0;
+            return (($this->offset + $this->limit) - $this->stream->tell()) <= 0;
         }
     }
 
@@ -85,7 +85,7 @@ class LimitStream implements StreamInterface
     public function setOffset($offset)
     {
         $this->offset = $offset;
-        $current = $this->stream->ftell();
+        $current = $this->stream->tell();
         if ($current !== $offset) {
             // If the stream cannot seek to the offset position, then read to it
             if (!$this->stream->seek($offset)) {
@@ -121,7 +121,7 @@ class LimitStream implements StreamInterface
         }
 
         // Check if the current position is less than the total allowed bytes + original offset
-        $remaining = ($this->offset + $this->limit) - $this->stream->ftell();
+        $remaining = ($this->offset + $this->limit) - $this->stream->tell();
         if ($remaining > 0) {
             // Only return the amount of requested data, ensuring that the byte limit is not exceeded
             return $this->stream->read(min($remaining, $length));

@@ -65,21 +65,6 @@ trait StreamDecorator
         return $this;
     }
 
-    public function getWrapper()
-    {
-        return $this->stream->getWrapper();
-    }
-
-    public function getWrapperData()
-    {
-        return $this->stream->getWrapperData();
-    }
-
-    public function getStreamType()
-    {
-        return $this->stream->getStreamType();
-    }
-
     public function getUri()
     {
         return $this->stream->getUri();
@@ -90,14 +75,14 @@ trait StreamDecorator
         return $this->stream->getSize();
     }
 
-    public function feof()
+    public function eof()
     {
-        return $this->stream->feof();
+        return $this->stream->eof();
     }
 
-    public function ftell()
+    public function tell()
     {
-        return $this->stream->ftell();
+        return $this->stream->tell();
     }
 
     public function isReadable()

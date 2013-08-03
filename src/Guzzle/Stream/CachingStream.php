@@ -36,11 +36,11 @@ class CachingStream implements StreamInterface
      */
     public function __toString()
     {
-        $pos = $this->ftell();
+        $pos = $this->tell();
         $this->rewind();
 
         $str = '';
-        while (!$this->feof()) {
+        while (!$this->eof()) {
             $str .= $this->read(16384);
         }
 
@@ -63,7 +63,7 @@ class CachingStream implements StreamInterface
         if ($whence == SEEK_SET) {
             $byte = $offset;
         } elseif ($whence == SEEK_CUR) {
-            $byte = $offset + $this->ftell();
+            $byte = $offset + $this->tell();
         } else {
             throw new \RuntimeException(__CLASS__ . ' supports only SEEK_SET and SEEK_CUR seek operations');
         }
@@ -113,7 +113,7 @@ class CachingStream implements StreamInterface
     {
         // When appending to the end of the currently read stream, you'll want to skip bytes from being read from
         // the remote stream to emulate other stream wrappers. Basically replacing bytes of data of a fixed length.
-        $overflow = (strlen($string) + $this->ftell()) - $this->remoteStream->ftell();
+        $overflow = (strlen($string) + $this->tell()) - $this->remoteStream->tell();
         if ($overflow > 0) {
             $this->skipReadBytes += $overflow;
         }
@@ -129,7 +129,7 @@ class CachingStream implements StreamInterface
     {
         $buffer = '';
         $size = 0;
-        while (!$this->feof()) {
+        while (!$this->eof()) {
             $byte = $this->read(1);
             $buffer .= $byte;
             // Break when a new line is found or the max length - 1 is reached
@@ -141,9 +141,9 @@ class CachingStream implements StreamInterface
         return $buffer;
     }
 
-    public function feof()
+    public function eof()
     {
-        return $this->stream->feof() && $this->remoteStream->feof();
+        return $this->stream->eof() && $this->remoteStream->eof();
     }
 
     /**

@@ -55,25 +55,18 @@ interface StreamInterface
     public function getUri();
 
     /**
-     * Get the size of the stream if able
-     *
-     * @return int|bool
-     */
-    public function getSize();
-
-    /**
      * Returns true if the stream is at the end of the stream
      *
      * @return bool
      */
-    public function feof();
+    public function eof();
 
     /**
      * Returns the current position of the file read/write pointer
      *
      * @return int|bool Returns the position of the file pointer or false on error
      */
-    public function ftell();
+    public function tell();
 
     /**
      * Check if the stream is readable
@@ -111,6 +104,13 @@ interface StreamInterface
      * @return self
      */
     public function setSize($size);
+
+    /**
+     * Get the size of the stream if able
+     *
+     * @return int|bool
+     */
+    public function getSize();
 
     /**
      * Seek to a position in the stream
