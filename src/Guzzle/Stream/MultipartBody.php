@@ -1,6 +1,7 @@
 <?php
 
 namespace Guzzle\Stream;
+
 use Guzzle\Http\Mimetypes;
 use Guzzle\Url\QueryString;
 
@@ -9,13 +10,23 @@ use Guzzle\Url\QueryString;
  */
 class MultipartBody implements StreamInterface
 {
+    /** @var StreamInterface */
+    private $buffer;
     private $files = [];
     private $fields = [];
+    private $bufferedHeaders = [];
     private $metadata = ['mode' => 'r'];
     private $size;
-    private $currentField = 0;
     private $currentFile = 0;
+    private $currentField = 0;
     private $pos = 0;
+    private $boundary;
+
+    public function __construct()
+    {
+        $this->buffer = Stream::factory();
+        $this->boundary = uniqid();
+    }
 
     public function __toString()
     {
@@ -29,6 +40,30 @@ class MultipartBody implements StreamInterface
         }
 
         return $buffer;
+    }
+
+    /**
+     * Get the boundary
+     *
+     * @return string
+     */
+    public function getBoundary()
+    {
+        return $this->boundary;
+    }
+
+    /**
+     * Set a specific boundary
+     *
+     * @param string $boundary Boundary to set
+     *
+     * @return self
+     */
+    public function setBoundary($boundary)
+    {
+        $this->boundary = $boundary;
+
+        return $this;
     }
 
     /**
@@ -71,51 +106,55 @@ class MultipartBody implements StreamInterface
     }
 
     /**
-     * Replace all existing POST files with an associative array of POST files
-     *
-     * @param array $files Associative array of POST files
+     * Remove all files from the stream
      *
      * @return self
-     * @throws \InvalidArgumentException for invalid POST file values
      */
-    public function setFiles(array $files)
+    public function clearFiles()
     {
-        foreach ($files as $name => $file) {
-            if (!is_array($file)) {
-                throw new \InvalidArgumentException('Each POST file must be the data, content-type, and post name');
-            }
-            call_user_func_array(array($this, 'setFile'), array_merge(array($name), $file));
-        }
+        $this->currentFile = 0;
+        $this->files = [];
 
         return $this;
     }
 
     /**
-     * Set a specific field value
+     * Add a file to the stream
      *
-     * @param string                                     $name         Name of the file
      * @param string|resource|StreamInterface|\Generator $data         File data to send
-     * @param string                                     $contentType  Content-type to set
-     * @param string                                     $postFileName Name of the POST file
-     *
+     * @param array                                      $headers      Array of custom headers to attach to the file
+     * @param string                                     $postFileName Name of the POST file. Only set this value to
+     *                                                                 override any filename that can be obtained from
+     *                                                                 the data resource.
      * @return self
      */
-    public function setFile($name, $data, $contentType = null, $postFileName = null)
+    public function addFile($data, array $headers = [], $postFileName = null)
     {
         $this->size = null;
-        $data = Stream::factory($data);
+        $headers = array_change_key_case($headers);
 
-        // Gleam the POST file name from the URI if it isn't set and there is a URI
-        if (!$postFileName && $data->getUri()) {
-            $postFileName = basename($data->getUri());
+        // Allow nested multipart/form-data bodies
+        if ($data instanceof self) {
+            if (!isset($headers['content-disposition'])) {
+                $headers['content-disposition'] = 'form-data; name="' . $data->getBoundary() . '"';
+            }
+            if (!isset($headers['content-type'])) {
+                $headers['content-type'] = 'multipart/form-data; boundary=' . $data->getBoundary();
+            }
+        } else {
+            $data = Stream::factory($data);
+            if (!$postFileName && $data->getUri()) {
+                $postFileName = basename($data->getUri());
+            }
+            if (!isset($headers['content-disposition'])) {
+                $headers['content-disposition'] = 'file; filename="' . $postFileName . '"';
+            }
+            if (!isset($headers['content-type'])) {
+                $headers['content-type'] = Mimetypes::getInstance()->fromFilename($postFileName) ?: 'text/plain';
+            }
         }
 
-        // Guess the Content-Type if one was not provided
-        if (!$contentType) {
-            $contentType = Mimetypes::getInstance()->fromFilename($postFileName);
-        }
-
-        $this->fields[$name] = [$data, $contentType, $postFileName];
+        $this->files[] = [$data, $headers];
 
         return $this;
     }
@@ -167,9 +206,7 @@ class MultipartBody implements StreamInterface
      */
     public function eof()
     {
-        return $this->currentField == count($this->fields)
-            && $this->currentFile == count($this->files)
-            && (!$this->currentFile || $this->files[$this->currentFile - 1]->eof());
+        return $this->currentField == count($this->fields) && $this->currentFile == count($this->files);
     }
 
     public function tell()
@@ -195,7 +232,7 @@ class MultipartBody implements StreamInterface
     public function isSeekable()
     {
         foreach ($this->files as $file) {
-            if (!$file->isSeekable()) {
+            if (!$file[0]->isSeekable()) {
                 return false;
             }
         }
@@ -215,7 +252,15 @@ class MultipartBody implements StreamInterface
 
     public function read($length)
     {
-        
+        $content = '';
+        if ($this->buffer && !$this->buffer->eof()) {
+            $content .= $this->buffer->read($length);
+        }
+        if ($delta = $length - strlen($content)) {
+            $content .= $this->readData($delta);
+        }
+
+        return $content;
     }
 
     public function rewind()
@@ -237,11 +282,13 @@ class MultipartBody implements StreamInterface
         }
 
         foreach ($this->files as $file) {
-            if (!$file->rewind()) {
+            if (!$file[0]->rewind()) {
                 throw new \RuntimeException('Rewind on multipart file failed even though it shouldn\'t have');
             }
         }
 
+        $this->currentField = $this->currentFile = 0;
+        $this->bufferedHeaders = [];
         $this->pos = 0;
 
         return true;
@@ -261,5 +308,90 @@ class MultipartBody implements StreamInterface
     public function write($string)
     {
         throw new \BadMethodCallException(__CLASS__ . ' does not support ' . __METHOD__);
+    }
+
+    /**
+     * No data is in the read buffer, so more needs to be pulled in from fields and files
+     *
+     * @param int $length Amount of data to read
+     *
+     * @return string
+     */
+    private function readData($length)
+    {
+        $result = '';
+
+        if ($this->currentField < count($this->fields)) {
+            $result = $this->readField($length);
+        }
+
+        if ($result === '' && $this->currentFile < count($this->files)) {
+            $result = $this->readFile($length);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Create a new stream buffer and inject form-data
+     *
+     * @param int $length Amount of data to read from the stream buffer
+     *
+     * @return string
+     */
+    private function readField($length)
+    {
+        $name = array_keys($this->fields)[++$this->currentField - 1];
+        $this->buffer = Stream::fromString(
+            sprintf(
+                "--%s\r\ncontent-disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n",
+                $this->boundary,
+                $name,
+                $this->fields[$name]
+            )
+        );
+
+        return $this->buffer->read($length);
+    }
+
+    /**
+     * Read data from a POST file, fill the read buffer with any overflow
+     *
+     * @param int $length Amount of data to read from the file
+     *
+     * @return string
+     */
+    private function readFile($length)
+    {
+        $key = $this->currentFile;
+
+        // Got to the next file and recursively return the read value
+        if ($this->files[$key][0]->eof()) {
+            if (++$this->currentFile == count($this->files)) {
+                return '';
+            }
+            return $this->readFile($length);
+        }
+
+        // If this is the start of a file, then send the headers to the read buffer
+        if (!isset($this->bufferedHeaders[$this->currentFile])) {
+            $headers = "--{$this->boundary}\r\n";
+            foreach ($this->files[$key][1] as $k => $v) {
+                $headers .= "{$k}: {$v}\r\n";
+            }
+            $this->buffer = Stream::fromString($headers . "\r\n");
+            $this->bufferedHeaders[$this->currentFile] = true;
+        }
+
+        $content = '';
+        if ($this->buffer) {
+            $content = $this->buffer->read($length);
+        }
+
+        if (($remaining = $length - strlen($content)) > 0) {
+            $content .= $this->files[$key][0]->read($remaining);
+        }
+
+        return $content;
     }
 }
