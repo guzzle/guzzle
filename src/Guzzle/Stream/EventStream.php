@@ -19,6 +19,10 @@ class EventStream implements StreamInterface, HasDispatcherInterface
         $event = ['stream' => $this, 'length' => $length, 'data' => $this->stream->read($length)];
         $this->dispatch('stream.read', $event);
 
+        if ($this->feof()) {
+            $this->dispatch('stream.eof', ['stream' => $this]);
+        }
+
         return $event['data'];
     }
 
