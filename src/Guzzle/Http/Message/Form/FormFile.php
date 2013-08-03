@@ -64,7 +64,7 @@ class FormFile implements FormFileInterface
 
         // Set a default content-disposition header if one was no provided
         if (!isset($this->headers['content-disposition'])) {
-            $disposition = 'file; filename="' . $filename . '"';
+            $disposition = 'file; filename="' . $this->filename . '"';
             if ($name) {
                 $disposition .= '; name="' . $name . '"';
             }
@@ -73,7 +73,7 @@ class FormFile implements FormFileInterface
 
         // Set a default Content-Type if one was not supplied
         if (!isset($this->headers['Content-Type'])) {
-            $this->setHeader('content-type', Mimetypes::getInstance()->fromFilename($filename) ?: 'text/plain');
+            $this->setHeader('content-type', Mimetypes::getInstance()->fromFilename($this->filename) ?: 'text/plain');
         }
 
         // Assume a binary transfer-encoding unless the header is specified and is blank or provided
