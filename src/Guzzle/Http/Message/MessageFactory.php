@@ -64,17 +64,10 @@ class MessageFactory implements MessageFactoryInterface
         }
 
         if ($body) {
-            if (!is_array($body)) {
-                $request->setBody($body, (string) $request->getHeader('Content-Type'));
+            if (is_array($body)) {
+                $this->addFormData($request, $body);
             } else {
-                // Add POST/Form data
-                foreach ($body as $key => $value) {
-                    if (is_string($value) || is_array($value)) {
-                        $request->getFormFields()->set($key, $value);
-                    } else {
-                        $request->getFormFiles()->addFile(FormFile::create($value, $key));
-                    }
-                }
+                $request->setBody($body, (string) $request->getHeader('Content-Type'));
             }
         }
 
@@ -109,6 +102,33 @@ class MessageFactory implements MessageFactoryInterface
         }
 
         return $request;
+    }
+
+    /**
+     * Apply POST fields and files to a request to attempt to give an accurate representation
+     *
+     * @param RequestInterface $request Request to update
+     * @param array            $body    Body to apply
+     */
+    protected function addFormData(RequestInterface $request, array $body)
+    {
+        $foundFile = false;
+        foreach ($body as $key => $value) {
+            if (is_string($value) || is_array($value)) {
+                $request->getFormFields()->set($key, $value);
+            } else {
+                $foundFile = true;
+                $request->getFormFiles()->addFile(FormFile::create($value, $key));
+            }
+        }
+
+        // Set the appropriate content-type in the factory
+        if (!$request->hasHeader('Content-Type')) {
+            $request->addHeader('Content-Type', $foundFile
+                ? 'multipart/form-data'
+                : 'application/x-www-form-urlencoded'
+            );
+        }
     }
 
     protected function applyOptions(RequestInterface $request, array $options = array())

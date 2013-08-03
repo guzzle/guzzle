@@ -3,6 +3,7 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\HasDispatcherInterface;
+use Guzzle\Http\Message\Form\FormFileCollection;
 use Guzzle\Url\Url;
 use Guzzle\Url\QueryString;
 

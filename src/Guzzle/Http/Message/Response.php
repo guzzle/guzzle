@@ -149,18 +149,6 @@ class Response extends AbstractMessage implements ResponseInterface
         return sprintf('HTTP/%s %d %s', $this->getProtocolVersion(), $this->statusCode, $this->reasonPhrase);
     }
 
-    public function setBody($body, $contentType = null)
-    {
-        parent::setBody($body, $contentType);
-        if (false !== ($size = $this->body->getSize())) {
-            if (!$this->hasHeader('Transfer-Encoding')) {
-                $this->setHeader('Content-Length', $size);
-            }
-        }
-
-        return $this;
-    }
-
     public function getBody()
     {
         if (!$this->body) {

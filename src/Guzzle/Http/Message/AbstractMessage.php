@@ -133,6 +133,8 @@ abstract class AbstractMessage implements MessageInterface
         if ($body === null) {
             // Setting a null body will remove the body of the request
             $this->body = null;
+            $this->setHeader('Content-Length', 0);
+            $this->removeHeader('Transfer-Encoding');
         } else {
             $this->body = Stream::factory($body);
             // Auto detect the Content-Type from the path of the request if possible
@@ -141,6 +143,11 @@ abstract class AbstractMessage implements MessageInterface
             }
             if ($contentType) {
                 $this->setHeader('Content-Type', $contentType);
+            }
+            // Set the Content-Length header if it can be determined
+            $size = $this->body->getSize();
+            if ($size !== null && $size !== false) {
+                $this->setHeader('Content-Length', $size);
             }
         }
 

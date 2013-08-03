@@ -108,28 +108,14 @@ class Request extends AbstractMessage implements RequestInterface
 
     /**
      * {@inheritdoc}
-     * @throws \LengthException If the content-length cannot be determined and using HTTP/1.0
      */
     public function setBody($body, $contentType = null)
     {
         parent::setBody($body, $contentType);
 
-        if ($body === null) {
-            return $this;
-        }
-
-        // Set the Content-Length header if it can be determined
-        $size = $this->body->getSize();
-        if ($size !== null && $size !== false) {
-            $this->setHeader('Content-Length', $size);
-        } elseif (!$this->hasHeader('Content-Length')) {
-            if ('1.1' == $this->getProtocolVersion()) {
-                $this->setHeader('Transfer-Encoding', 'chunked');
-            } else {
-                throw new \LengthException(
-                    'Cannot determine Content-Length and cannot use chunked Transfer-Encoding when using HTTP/1.0'
-                );
-            }
+        // Use chunked Transfer-Encoding if there is no content-length header
+        if ($body !== null && !$this->hasHeader('Content-Length') && '1.1' == $this->getProtocolVersion()) {
+            $this->setHeader('Transfer-Encoding', 'chunked');
         }
 
         return $this;
