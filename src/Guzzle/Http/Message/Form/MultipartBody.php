@@ -236,7 +236,21 @@ class MultipartBody implements StreamInterface
 
     public function getSize()
     {
-        return null;
+        if ($this->size === null) {
+            foreach ($this->files as $file) {
+                // We must be able to ascertain the size of each attached file
+                if (null === ($size = $file->getContent()->getSize())) {
+                    return null;
+                }
+                $this->size += strlen($this->getFileHeaders($file)) + $size;
+            }
+            foreach ($this->fields->getKeys() as $key) {
+                $this->size += strlen($this->getFieldString($key));
+            }
+            $this->size += strlen("\r\n--{$this->boundary}--");
+        }
+
+        return $this->size;
     }
 
     public function read($length)
@@ -251,7 +265,7 @@ class MultipartBody implements StreamInterface
 
         if ($content === '' && !$this->sentLast) {
             $this->sentLast = true;
-            return "\r\n--{$this->boundary}--";
+            $content = "\r\n--{$this->boundary}--";
         }
 
         return $content;
@@ -336,14 +350,7 @@ class MultipartBody implements StreamInterface
     private function readField($length)
     {
         $name = $this->fields->getKeys()[++$this->currentField - 1];
-        $this->buffer = Stream::fromString(
-            sprintf(
-                "--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n",
-                $this->boundary,
-                $name,
-                $this->fields[$name]
-            )
-        );
+        $this->buffer = Stream::fromString($this->getFieldString($name));
 
         return $this->buffer->read($length);
     }
@@ -357,34 +364,36 @@ class MultipartBody implements StreamInterface
      */
     private function readFile($length)
     {
-        $key = $this->currentFile;
-        $current = $this->files[$key];
+        $current = $this->files[$this->currentFile];
 
-        // Got to the next file and recursively return the read value
+        // Got to the next file and recursively return the read value, or bail if no more data can be read
         if ($current->getContent()->eof()) {
-            if (++$this->currentFile == count($this->files)) {
-                return '';
-            }
-            return $this->readFile($length);
+            return ++$this->currentFile == count($this->files) ? '' : $this->readFile($length);
         }
 
         // If this is the start of a file, then send the headers to the read buffer
         if (!isset($this->bufferedHeaders[$this->currentFile])) {
-            $headers = "--{$this->boundary}\r\n" . $current->getHeaders() . "\r\n";
-            $this->buffer = Stream::fromString($headers . "\r\n");
+            $this->buffer = Stream::fromString($this->getFileHeaders($current));
             $this->bufferedHeaders[$this->currentFile] = true;
         }
 
-        $content = '';
-        if ($this->buffer) {
-            $content = $this->buffer->read($length);
-        }
-
         // More data needs to be read to meet the limit, so pull from the file
+        $content = $this->buffer ? $this->buffer->read($length) : '';
         if (($remaining = $length - strlen($content)) > 0) {
             $content .= $current->getContent()->read($remaining);
         }
 
         return $content;
+    }
+
+    private function getFieldString($key)
+    {
+        return sprintf("--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n",
+            $this->boundary, $key, $this->fields[$key]);
+    }
+
+    private function getFileHeaders(FormFileInterface $file)
+    {
+        return "--{$this->boundary}\r\n" . $file->getHeaders() . "\r\n\r\n";
     }
 }
