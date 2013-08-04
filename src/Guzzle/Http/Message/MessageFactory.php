@@ -119,7 +119,7 @@ class MessageFactory implements MessageFactoryInterface
                 $request->getFormFields()->set($key, $value);
             } else {
                 $foundFile = true;
-                $request->getFormFiles()->addFile(FormFile::create($value, $key));
+                $request->getFormFiles()->addFile(FormFile::create($key, $value));
             }
         }
 

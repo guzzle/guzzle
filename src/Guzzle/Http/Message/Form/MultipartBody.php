@@ -23,6 +23,7 @@ class MultipartBody implements StreamInterface
     private $pos = 0;
     private $currentFile = 0;
     private $currentField = 0;
+    private $sentLast;
     private $boundary;
 
     public function __construct()
@@ -248,6 +249,11 @@ class MultipartBody implements StreamInterface
             $content .= $this->readData($delta);
         }
 
+        if ($content === '' && !$this->sentLast) {
+            $this->sentLast = true;
+            return "\r\n--{$this->boundary}--";
+        }
+
         return $content;
     }
 
@@ -275,7 +281,7 @@ class MultipartBody implements StreamInterface
             }
         }
 
-        $this->buffer = null;
+        $this->buffer = $this->sentLast = null;
         $this->pos = $this->currentField = $this->currentFile = 0;
         $this->bufferedHeaders = [];
 
@@ -332,7 +338,7 @@ class MultipartBody implements StreamInterface
         $name = $this->fields->getKeys()[++$this->currentField - 1];
         $this->buffer = Stream::fromString(
             sprintf(
-                "--%s\r\ncontent-disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n",
+                "--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n",
                 $this->boundary,
                 $name,
                 $this->fields[$name]
@@ -352,9 +358,10 @@ class MultipartBody implements StreamInterface
     private function readFile($length)
     {
         $key = $this->currentFile;
+        $current = $this->files[$key];
 
         // Got to the next file and recursively return the read value
-        if ($this->files[$key]->getContent()->eof()) {
+        if ($current->getContent()->eof()) {
             if (++$this->currentFile == count($this->files)) {
                 return '';
             }
@@ -363,7 +370,7 @@ class MultipartBody implements StreamInterface
 
         // If this is the start of a file, then send the headers to the read buffer
         if (!isset($this->bufferedHeaders[$this->currentFile])) {
-            $headers = "--{$this->boundary}\r\n" . $this->files[$key]->getHeaders() . "\r\n";
+            $headers = "--{$this->boundary}\r\n" . $current->getHeaders() . "\r\n";
             $this->buffer = Stream::fromString($headers . "\r\n");
             $this->bufferedHeaders[$this->currentFile] = true;
         }
@@ -375,7 +382,7 @@ class MultipartBody implements StreamInterface
 
         // More data needs to be read to meet the limit, so pull from the file
         if (($remaining = $length - strlen($content)) > 0) {
-            $content .= $this->files[$key]->getContent()->read($remaining);
+            $content .= $current->getContent()->read($remaining);
         }
 
         return $content;
