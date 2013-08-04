@@ -15,8 +15,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class RedirectPlugin implements EventSubscriberInterface
 {
-    const STRICT_REDIRECTS = 'redirect.strict';
-    const DISABLE = 'redirect.disable';
+    const STRICT_REDIRECTS = 'strict_redirects';
+    const MAX_REDIRECTS = 'max_redirects';
 
     /** @var int Default number of redirects allowed when no setting is supplied by a request */
     protected $defaultMaxRedirects = 5;
@@ -35,16 +35,12 @@ class RedirectPlugin implements EventSubscriberInterface
     public function onRequestSent(RequestAfterSendEvent $event)
     {
         $request = $event->getRequest();
-        if ($request->getTransferOptions()[self::DISABLE]) {
-            return;
-        }
-
-        $redirectResponse = $response = $event->getResponse();
         $redirectCount = 0;
+        $redirectResponse = $response = $event->getResponse();
 
         while ($redirectResponse->isRedirect() && $redirectResponse->hasHeader('Location')) {
             if (++$redirectCount > $this->defaultMaxRedirects) {
-                throw new TooManyRedirectsException('Redirected too many times: ' . $redirectCount, $request);
+                throw new TooManyRedirectsException("Will not follow more than {$redirectCount} redirects", $request);
             }
             $redirectRequest = $this->createRedirectRequest($request, $response);
             $redirectResponse = $event->getClient()->send($redirectRequest);
@@ -72,9 +68,9 @@ class RedirectPlugin implements EventSubscriberInterface
         $strict = $request->getTransferOptions()[self::STRICT_REDIRECTS];
 
         // Use a GET request if this is an entity enclosing request and we are not forcing RFC compliance, but rather
-        // emulating what all browsers would do
+        // emulating what all browsers would do. Be sure to disable redirects on the clone.
         $redirectRequest = clone $request;
-        $redirectRequest->getTransferOptions()[self::DISABLE] = true;
+        $redirectRequest->getEventDispatcher()->removeSubscriber($this);
         if ($request->getBody() && !$strict && $response->getStatusCode() <= 302) {
             $request->setMethod('GET');
             $request->setBody(null);
@@ -122,9 +118,7 @@ class RedirectPlugin implements EventSubscriberInterface
             // Only rewind the body if some of it has been read already, and throw an exception if the rewind fails
             if ($body->ftell() && !$body->rewind()) {
                 throw new CouldNotRewindStreamException(
-                    'Unable to rewind the non-seekable entity body of the request after redirecting. cURL probably '
-                    . 'sent part of body before the redirect occurred. Try adding acustom rewind function using on the '
-                    . 'entity body of the request using setRewindFunction().',
+                    'Unable to rewind the non-seekable entity body of the request after redirecting',
                     $redirectRequest
                 );
             }

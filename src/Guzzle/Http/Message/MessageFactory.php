@@ -263,7 +263,7 @@ class MessageFactory implements MessageFactoryInterface
         $request->getTransferOptions()->set('verify', $value);
     }
 
-    private function visit_adapter_options(RequestInterface $request, $value)
+    private function visit_transfer_options(RequestInterface $request, $value)
     {
         if (!is_array($value)) {
             throw new \InvalidArgumentException('adapter_options value must be an array');

@@ -24,7 +24,8 @@ interface MessageFactoryInterface
      *            username in index [0], the password in index [2], and can optionally contain the authentication type
      *            in index [3]. The authentication types are: "Basic", "Digest", "NTLM", "Any" (defaults to "Basic").
      *        "cookies": Associative array of cookies
-     *        "allow_redirects": Set to false to disable redirects
+     *        "allow_redirects": Set to false to disable redirects. Set to "strict" to enable strict redirects that
+     *            convert POST requests to GET requests on a redirect.
      *        "save_to": String, fopen resource, or EntityBody object used to store the body of the response
      *        "events": Associative array mapping event names to a closure or array of (priority, closure)
      *        "plugins": Array of plugins to add to the request
@@ -42,7 +43,7 @@ interface MessageFactoryInterface
      *            the certificate.
      *        "proxy": Specify an HTTP proxy (e.g. "http://username:password@192.168.16.1:10")
      *        "debug": Set to true to display all data sent over the wire
-     *        "adapter_options": Associative array of options that are forwarded to adapters using a request's
+     *        "transfer_options": Associative array of options that are forwarded to adapters using a request's
      *             TransferOptions collection.
      *
      * @return RequestInterface
