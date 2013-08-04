@@ -258,9 +258,19 @@ class Request extends AbstractMessage implements RequestInterface
             }
         }
 
-        // Always add the Expect 100-Continue header if the body cannot be rewound
-        if ($this->body && !$this->body->isSeekable()) {
-            $this->setHeader('Expect', '100-Continue');
+        // Determine if the Expect header should be used
+        if ($this->body) {
+            $addExpect = false;
+            if (null !== ($expect = $this->getTransferOptions()['expect'])) {
+                $size = $this->body->getSize();
+                $addExpect = $size === null ? true : $size > $expect;
+            } elseif (!$this->body->isSeekable()) {
+                // Always add the Expect 100-Continue header if the body cannot be rewound
+                $addExpect = true;
+            }
+            if ($addExpect) {
+                $this->setHeader('Expect', '100-Continue');
+            }
         }
 
         // Never send a Transfer-Encoding: chunked and Content-Length header in the same request

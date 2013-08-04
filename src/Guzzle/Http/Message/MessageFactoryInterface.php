@@ -45,6 +45,11 @@ interface MessageFactoryInterface
      *        "debug": Set to true to display all data sent over the wire
      *        "transfer_options": Associative array of options that are forwarded to adapters using a request's
      *             TransferOptions collection.
+     *        "expect": Set to true to enable "Expect: 100-Continue" headers for requests that send a body. Set to
+     *             false to disable for all requests. So to a number so that the size of the payload must be greater
+     *             than the number in order to send the Expect header. Setting to a number will send the Expect header
+     *             for all requests in which the size of the payload cannot be determined or where the body is not
+     *             rewindable.
      *
      * @return RequestInterface
      */

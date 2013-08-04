@@ -271,4 +271,9 @@ class MessageFactory implements MessageFactoryInterface
 
         $request->getTransferOptions()->overwriteWith($value);
     }
+
+    private function visit_expect(RequestInterface $request, $value)
+    {
+        $request->getTransferOptions()['expect'] = $value;
+    }
 }
