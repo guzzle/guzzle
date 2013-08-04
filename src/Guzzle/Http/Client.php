@@ -75,10 +75,7 @@ class Client implements ClientInterface
     {
         if (extension_loaded('curl')) {
             return ini_get('allow_url_fopen')
-                ? new StreamingProxyAdapter(
-                    new CurlAdapter(),
-                    new StreamAdapter()
-                )
+                ? new StreamingProxyAdapter(new CurlAdapter(), new StreamAdapter())
                 : new CurlAdapter();
         } elseif (ini_get('allow_url_fopen')) {
             return new StreamAdapter();

@@ -51,13 +51,12 @@ class MultipartBody implements StreamInterface
 
     public function __toString()
     {
-        if ($this->pos !== 0) {
-            $this->rewind();
-        }
-
         $buffer = '';
-        while (!$this->eof()) {
-            $buffer .= $this->read(1048576);
+        if ($this->rewind()) {
+            while (!$this->eof()) {
+                $buffer .= $this->read(1048576);
+            }
+            $this->rewind();
         }
 
         return $buffer;

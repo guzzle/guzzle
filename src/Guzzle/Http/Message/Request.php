@@ -248,9 +248,7 @@ class Request extends AbstractMessage implements RequestInterface
         if (!$this->body) {
             if ($this->formFiles && count($this->formFiles)) {
                 $body = MultipartBody::fromRequest($this);
-                if (!$this->hasHeader('Content-Type')) {
-                    $this->setHeader('Content-Type', 'multipart/form-data; boundary=' . $body->getBoundary());
-                }
+                $this->setHeader('Content-Type', 'multipart/form-data; boundary=' . $body->getBoundary());
                 $this->setBody($body);
             } elseif ($this->formFields && count($this->getFormFields())) {
                 if (!$this->hasHeader('Content-Type')) {
@@ -260,14 +258,14 @@ class Request extends AbstractMessage implements RequestInterface
             }
         }
 
+        // Always add the Expect 100-Continue header if the body cannot be rewound
+        if ($this->body && !$this->body->isSeekable()) {
+            $this->setHeader('Expect', '100-Continue');
+        }
+
         // Never send a Transfer-Encoding: chunked and Content-Length header in the same request
         if ((string) $this->getHeader('Transfer-Encoding') == 'chunked') {
             $this->removeHeader('Content-Length');
-        }
-
-        // Always add the Expect 100-Continue header if the body cannot be rewound
-        if (!$this->body->isSeekable()) {
-            $this->setHeader('Expect', '100-Continue');
         }
 
         return $this;

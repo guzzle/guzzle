@@ -26,7 +26,7 @@ class RequestAfterSendEvent extends AbstractRequestEvent
             // Emit the 'request.error' event for the request
             $this['request']->getEventDispatcher()->dispatch(
                 'request.error',
-                new RequestAfterSendEvent($this['request'], $this->transaction)
+                new RequestErrorEvent($this['request'], $this->transaction)
             );
         }
     }

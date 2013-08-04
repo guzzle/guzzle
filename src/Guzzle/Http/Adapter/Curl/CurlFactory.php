@@ -85,12 +85,10 @@ class CurlFactory
             unset($options[CURLOPT_READFUNCTION]);
         } else {
             $options[CURLOPT_CUSTOMREQUEST] = $method;
-            if ($request->getBody()) {
+            if (!$request->getBody()) {
+                unset($options[CURLOPT_READFUNCTION]);
+            } else {
                 $this->applyBody($request, $options);
-                // If the Expect header is not present, prevent curl from adding it
-                if (!$request->hasHeader('Expect')) {
-                    $options[CURLOPT_HTTPHEADER][] = 'Expect:';
-                }
             }
         }
     }
@@ -103,14 +101,20 @@ class CurlFactory
             // Don't duplicate the Content-Length header
             unset($options['_headers']['Content-Length']);
             unset($options['_headers']['Transfer-Encoding']);
+            $request->removeHeader('Transfer-Encoding');
         } else {
             $options[CURLOPT_UPLOAD] = true;
             // Let cURL handle setting the Content-Length header
-            if ($len = $request->getHeader('Content-Length')) {
+            if (null !== ($len = $request->getHeader('Content-Length'))) {
                 $options[CURLOPT_INFILESIZE] = (int) (string) $len;
                 unset($options['_headers']['Content-Length']);
             }
-            $request->getBody()->seek(0);
+            $request->getBody()->rewind();
+        }
+
+        // If the Expect header is not present, prevent curl from adding it
+        if (!$request->hasHeader('Expect')) {
+            $options[CURLOPT_HTTPHEADER][] = 'Expect:';
         }
     }
 
@@ -118,6 +122,11 @@ class CurlFactory
     {
         foreach ($options['_headers'] as $key => $value) {
             $options[CURLOPT_HTTPHEADER][] = $key . ': ' . $value;
+        }
+
+        // Remove the Expect header if one was not set
+        if (!$request->hasHeader('Accept')) {
+            $options[CURLOPT_HTTPHEADER][] = 'Accept:';
         }
     }
 
