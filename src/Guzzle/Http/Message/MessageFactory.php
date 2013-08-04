@@ -4,6 +4,7 @@ namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
 use Guzzle\Http\HttpErrorPlugin;
+use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Form\FormFile;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Plugin\Log\LogPlugin;
@@ -260,5 +261,14 @@ class MessageFactory implements MessageFactoryInterface
     private function visit_verify(RequestInterface $request, $value)
     {
         $request->getTransferOptions()->set('verify', $value);
+    }
+
+    private function visit_adapter_options(RequestInterface $request, $value)
+    {
+        if (!is_array($value)) {
+            throw new \InvalidArgumentException('adapter_options value must be an array');
+        }
+
+        $request->getTransferOptions()->overwriteWith($value);
     }
 }

@@ -42,6 +42,8 @@ interface MessageFactoryInterface
      *            the certificate.
      *        "proxy": Specify an HTTP proxy (e.g. "http://username:password@192.168.16.1:10")
      *        "debug": Set to true to display all data sent over the wire
+     *        "adapter_options": Associative array of options that are forwarded to adapters using a request's
+     *             TransferOptions collection.
      *
      * @return RequestInterface
      */
