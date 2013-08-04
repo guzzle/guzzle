@@ -12,6 +12,7 @@ class HeaderFactory implements HeaderFactoryInterface
 
     /** @var array */
     protected $mapping = array(
+        'cookie'        => 'Guzzle\Http\Header\Cookie',
         'cache-control' => 'Guzzle\Http\Header\CacheControl',
         'link'          => 'Guzzle\Http\Header\Link',
     );
