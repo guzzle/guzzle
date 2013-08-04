@@ -3,13 +3,8 @@
 namespace Guzzle\Service;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Exception\InvalidArgumentException;
-use Guzzle\Common\Exception\BadMethodCallException;
 use Guzzle\Common\Version;
-use Guzzle\Inflection\InflectorInterface;
-use Guzzle\Inflection\Inflector;
 use Guzzle\Http\Client as HttpClient;
-use Guzzle\Http\Exception\MultiTransferException;
 use Guzzle\Service\Exception\CommandTransferException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Service\Command\CommandInterface;
@@ -34,9 +29,6 @@ class Client extends HttpClient implements ClientInterface
 
     /** @var ResourceIteratorFactoryInterface */
     protected $resourceIteratorFactory;
-
-    /** @var InflectorInterface Inflector associated with the service/client */
-    protected $inflector;
 
     /**
      * Basic factory method to create a new client. Extend this method in subclasses to build more complex clients.
@@ -158,34 +150,6 @@ class Client extends HttpClient implements ClientInterface
     public function getDescription()
     {
         return $this->serviceDescription;
-    }
-
-    /**
-     * Set the inflector used with the client
-     *
-     * @param InflectorInterface $inflector Inflection object
-     *
-     * @return self
-     */
-    public function setInflector(InflectorInterface $inflector)
-    {
-        $this->inflector = $inflector;
-
-        return $this;
-    }
-
-    /**
-     * Get the inflector used with the client
-     *
-     * @return self
-     */
-    public function getInflector()
-    {
-        if (!$this->inflector) {
-            $this->inflector = Inflector::getDefault();
-        }
-
-        return $this->inflector;
     }
 
     /**
