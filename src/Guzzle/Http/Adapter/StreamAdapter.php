@@ -182,8 +182,14 @@ class StreamAdapter implements AdapterInterface
             return $context;
         }, $request, $options);
 
-        return $this->createResource(function () use ($request, &$http_response_header, $context) {
-            return fopen($request->getUrl(), 'r', null, $context);
+        $url = $request->getUrl();
+        // Add automatic gzip decompression
+        if (strpos($request->getHeader('Accept-Encoding'), 'gzip') !== false) {
+            $url = 'compress.zlib://' . $url;
+        }
+
+        return $this->createResource(function () use ($url, &$http_response_header, $context) {
+            return fopen($url, 'r', null, $context);
         }, $request, $options);
     }
 

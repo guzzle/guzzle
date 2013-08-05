@@ -55,7 +55,7 @@ class MultipartBody implements StreamInterface
         $buffer = '';
         if ($this->rewind()) {
             while (!$this->eof()) {
-                $buffer .= $this->read(1048576);
+                $buffer .= $this->read(32768);
             }
             $this->rewind();
         }
@@ -276,16 +276,9 @@ class MultipartBody implements StreamInterface
         return $this->seek(0);
     }
 
-    /**
-     * @throws \BadMethodCallException
-     */
     public function seek($offset, $whence = SEEK_SET)
     {
-        if ($offset != 0 || $whence != SEEK_SET) {
-            throw new \BadMethodCallException(__CLASS__ . ' only supports seeking to byte 0');
-        }
-
-        if (!$this->isSeekable()) {
+        if ($offset != 0 || $whence != SEEK_SET || !$this->isSeekable()) {
             return false;
         }
 

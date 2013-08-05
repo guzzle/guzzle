@@ -121,26 +121,6 @@ class CachingStream implements StreamInterface
         return $this->stream->write($string);
     }
 
-    /**
-     * {@inheritdoc}
-     * @link http://php.net/manual/en/function.fgets.php
-     */
-    public function readLine($maxLength = null)
-    {
-        $buffer = '';
-        $size = 0;
-        while (!$this->eof()) {
-            $byte = $this->read(1);
-            $buffer .= $byte;
-            // Break when a new line is found or the max length - 1 is reached
-            if ($byte == PHP_EOL || ++$size == $maxLength - 1) {
-                break;
-            }
-        }
-
-        return $buffer;
-    }
-
     public function eof()
     {
         return $this->stream->eof() && $this->remoteStream->eof();

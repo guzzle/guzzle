@@ -8,7 +8,7 @@ namespace Guzzle\Stream;
 trait StreamDecorator
 {
     /** @var StreamInterface Decorated stream */
-    private $stream;
+    protected $stream;
 
     /**
      * @param StreamInterface $stream Stream to decorate
@@ -20,7 +20,15 @@ trait StreamDecorator
 
     public function __toString()
     {
-        return (string) $this->stream;
+        $buffer = '';
+        if ($this->rewind()) {
+            while (!$this->eof()) {
+                $buffer .= $this->read(32768);
+            }
+            $this->rewind();
+        }
+
+        return $buffer;
     }
 
     /**
@@ -129,7 +137,20 @@ trait StreamDecorator
 
     public function readLine($maxLength = null)
     {
-        return $this->stream->readLine($maxLength);
+        $buffer = '';
+        $size = 0;
+        while (!$this->eof() && strlen($buffer) < $maxLength) {
+            if (false === ($byte = $this->read(1))) {
+                return $buffer;
+            }
+            $buffer .= $byte;
+            // Break when a new line is found or the max length - 1 is reached
+            if ($byte == PHP_EOL || ++$size == $maxLength - 1) {
+                break;
+            }
+        }
+
+        return $buffer;
     }
 
     public function write($string)

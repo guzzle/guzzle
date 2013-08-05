@@ -276,4 +276,9 @@ class MessageFactory implements MessageFactoryInterface
     {
         $request->getTransferOptions()['expect'] = $value;
     }
+
+    private function visit_stream(RequestInterface $request, $value)
+    {
+        $request->getTransferOptions()['stream'] = $value;
+    }
 }
