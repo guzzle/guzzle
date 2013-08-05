@@ -16,10 +16,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class RedirectPlugin implements EventSubscriberInterface
 {
     const STRICT_REDIRECTS = 'strict_redirects';
-    const MAX_REDIRECTS = 'max_redirects';
-
-    /** @var int Default number of redirects allowed when no setting is supplied by a request */
-    protected $defaultMaxRedirects = 5;
+    private $defaultMaxRedirects = 5;
 
     public static function getSubscribedEvents()
     {
@@ -63,7 +60,7 @@ class RedirectPlugin implements EventSubscriberInterface
      * @return RequestInterface Returns a new redirect request
      * @throws CouldNotRewindStreamException If the body needs to be rewound but cannot
      */
-    protected function createRedirectRequest(RequestInterface $request, ResponseInterface $response)
+    private function createRedirectRequest(RequestInterface $request, ResponseInterface $response)
     {
         $strict = $request->getTransferOptions()[self::STRICT_REDIRECTS];
 
