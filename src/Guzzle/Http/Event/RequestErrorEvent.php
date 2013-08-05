@@ -22,12 +22,7 @@ class RequestErrorEvent extends AbstractRequestEvent
         $request = $this->getRequest();
         $this->transaction[$request] = $response;
         $this->stopPropagation();
-
-        // Emit the after_send event as if the request succeeded
-        $request->getEventDispatcher()->dispatch(
-            'request.after_send',
-            new RequestAfterSendEvent($request, $this->transaction)
-        );
+        $this->emitAfterSend();
     }
 
     /**

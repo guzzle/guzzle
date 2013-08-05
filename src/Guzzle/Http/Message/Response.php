@@ -100,7 +100,6 @@ class Response extends AbstractMessage implements ResponseInterface
         $response->setStatus($data['code'])
             ->setHeaders($data['headers'])
             ->setProtocolVersion($data['version'])
-            ->setReasonPhrase($data['reason_phrase'])
             ->setStatus($data['code'], $data['reason_phrase']);
 
         if (strlen($data['body']) > 0) {

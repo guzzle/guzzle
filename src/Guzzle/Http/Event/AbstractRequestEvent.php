@@ -41,4 +41,26 @@ abstract class AbstractRequestEvent extends Event
     {
         return $this['request'];
     }
+
+    /**
+     * Emit an error event
+     */
+    protected function emitError()
+    {
+        $this['request']->getEventDispatcher()->dispatch(
+            'request.error',
+            new RequestErrorEvent($this['request'], $this->transaction)
+        );
+    }
+
+    /**
+     * Emit an after_send event
+     */
+    protected function emitAfterSend()
+    {
+        $this['request']->getEventDispatcher()->dispatch(
+            'request.after_send',
+            new RequestAfterSendEvent($this['request'], $this->transaction)
+        );
+    }
 }
