@@ -2,9 +2,10 @@
 
 namespace Guzzle\Plugin\History;
 
-use Guzzle\Common\Event;
+use Guzzle\Http\Event\RequestAfterSendEvent;
+use Guzzle\Http\Event\RequestErrorEvent;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\Response;
+use Guzzle\Http\Message\ResponseInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -13,14 +14,17 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Countable
 {
     /** @var int The maximum number of requests to maintain in the history */
-    protected $limit = 10;
+    private $limit = 10;
 
     /** @var array Requests and responses that have passed through the plugin */
-    protected $transactions = array();
+    private $transactions = [];
 
     public static function getSubscribedEvents()
     {
-        return array('request.sent' => array('onRequestSent', 9999));
+        return [
+            'request.after_send' => ['onRequestSent', 9999],
+            'request.error' => ['onRequestError', 9999],
+        ];
     }
 
     /**
@@ -39,75 +43,19 @@ class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Co
         return implode("\n", $lines);
     }
 
-    /**
-     * Add a request to the history
-     *
-     * @param RequestInterface $request  Request to add
-     * @param Response         $response Response of the request
-     *
-     * @return HistoryPlugin
-     */
-    public function add(RequestInterface $request, Response $response = null)
+    public function onRequestSent(RequestAfterSendEvent $event)
     {
-        if (!$response && $request->getResponse()) {
-            $response = $request->getResponse();
-        }
-
-        $this->transactions[] = array('request' => $request, 'response' => $response);
-        if (count($this->transactions) > $this->getlimit()) {
-            array_shift($this->transactions);
-        }
-
-        return $this;
+        $this->add($event->getRequest(), $event->getResponse());
     }
 
-    /**
-     * Set the max number of requests to store
-     *
-     * @param int $limit Limit
-     *
-     * @return HistoryPlugin
-     */
-    public function setLimit($limit)
+    public function onRequestError(RequestErrorEvent $event)
     {
-        $this->limit = (int) $limit;
-
-        return $this;
+        $this->add($event->getRequest(), $event->getResponse());
     }
 
-    /**
-     * Get the request limit
-     *
-     * @return int
-     */
-    public function getLimit()
-    {
-        return $this->limit;
-    }
-
-    /**
-     * Get all of the raw transactions in the form of an array of associative arrays containing
-     * 'request' and 'response' keys.
-     *
-     * @return array
-     */
-    public function getAll()
-    {
-        return $this->transactions;
-    }
-
-    /**
-     * Get the requests in the history
-     *
-     * @return \ArrayIterator
-     */
     public function getIterator()
     {
-        // Return an iterator just like the old iteration of the HistoryPlugin for BC compatibility (use getAll())
-        return new \ArrayIterator(array_map(function ($entry) {
-            $entry['request']->getParams()->set('actual_response', $entry['response']);
-            return $entry['request'];
-        }, $this->transactions));
+        return new \ArrayIterator($this->transactions);
     }
 
     /**
@@ -127,37 +75,38 @@ class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Co
      */
     public function getLastRequest()
     {
-        $last = end($this->transactions);
-
-        return $last['request'];
+        return end($this->transactions)['request'];
     }
 
     /**
      * Get the last response in the history
      *
-     * @return Response|null
+     * @return ResponseInterface|null
      */
     public function getLastResponse()
     {
-        $last = end($this->transactions);
-
-        return isset($last['response']) ? $last['response'] : null;
+        return end($this->transactions)['response'];
     }
 
     /**
      * Clears the history
-     *
-     * @return HistoryPlugin
      */
     public function clear()
     {
         $this->transactions = array();
-
-        return $this;
     }
 
-    public function onRequestSent(Event $event)
+    /**
+     * Add a request to the history
+     *
+     * @param RequestInterface  $request  Request to add
+     * @param ResponseInterface $response Response of the request
+     */
+    private function add(RequestInterface $request, ResponseInterface $response = null)
     {
-        $this->add($event['request'], $event['response']);
+        $this->transactions[] = array('request' => $request, 'response' => $response);
+        if (count($this->transactions) > $this->limit) {
+            array_shift($this->transactions);
+        }
     }
 }
