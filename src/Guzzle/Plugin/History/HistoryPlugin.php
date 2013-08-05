@@ -53,9 +53,19 @@ class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Co
         $this->add($event->getRequest(), $event->getResponse());
     }
 
+    /**
+     * Returns an iterable hash mapping requests to responses
+     *
+     * @return \SplObjectStorage|\Traversable
+     */
     public function getIterator()
     {
-        return new \ArrayIterator($this->transactions);
+        $iterator = new \SplObjectStorage();
+        foreach ($this->transactions as $t) {
+            $iterator[$t['request']] = $t['response'];
+        }
+
+        return $iterator;
     }
 
     /**
