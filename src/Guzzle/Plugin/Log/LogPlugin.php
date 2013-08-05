@@ -21,7 +21,7 @@ class LogPlugin implements EventSubscriberInterface
     private $logger;
 
     /** @var MessageFormatter Formatter used to format messages before logging */
-    protected $formatter;
+    private $formatter;
 
     /**
      * @param LoggerInterface         $logger     Logger used to log messages
