@@ -48,8 +48,8 @@ class LogPlugin implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            'request.after_send' => ['onRequestAfterSend', -999],
-            'request.error'      => ['onRequestError', 999]
+            'request.after_send' => ['onRequestAfterSend', 9999],
+            'request.error'      => ['onRequestError', 9999]
         ];
     }
 
