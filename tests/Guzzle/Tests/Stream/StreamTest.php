@@ -64,7 +64,7 @@ class StreamTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('data', (string) $stream);
         unset($stream);
 
-        $handle = fopen(__DIR__ . '/../TestData/FileBody.txt', 'w');
+        $handle = fopen(__DIR__ . '/../TestData/FileBody.txt', 'r');
         $stream = new Stream($handle);
         $this->assertEquals('', (string) $stream);
         unset($stream);
