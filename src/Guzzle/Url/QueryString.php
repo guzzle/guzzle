@@ -82,7 +82,24 @@ class QueryString extends Collection
             $this->aggregator = new PhpAggregator();
         }
 
-        return $this->aggregator->aggregate($this->data, $this->encoding);
+        $result = '';
+        $query = $this->aggregator->aggregate($this->data);
+        foreach ($query as $key => $values) {
+            foreach ($values as $value) {
+                if ($result) {
+                    $result .= '&';
+                }
+                if ($this->encoding == self::RFC1738) {
+                    $result .= urlencode($key) . '=' . urlencode($value);
+                } elseif ($this->encoding == self::RFC3986) {
+                    $result .= rawurlencode($key) . '=' . rawurldecode($value);
+                } else {
+                    $result .= $key . '=' . $value;
+                }
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -102,7 +119,7 @@ class QueryString extends Collection
     /**
      * Specify how values are URL encoded
      *
-     * @param int $type One of RFC1738 or RFC3986
+     * @param string|bool $type One of 'RFC1738', 'RFC3986', or false to disable encoding
      *
      * @return self
      */

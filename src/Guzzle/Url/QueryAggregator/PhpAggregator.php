@@ -7,15 +7,20 @@ use Guzzle\Url\QueryString;
 /**
  * Aggregates nested query string variables using PHP style []
  */
-class PhpAggregator implements QueryAggregatorInterface
+class PhpAggregator extends AbstractAggregator
 {
-    public function aggregate(array $query, $encType)
+    private $numericIndices;
+
+    /**
+     * @param bool $numericIndices Set to false to disable numeric indices (e.g. foo[] = bar vs foo[0] = bar)
+     */
+    public function __construct($numericIndices = true)
     {
-        return http_build_query(
-            $query,
-            null,
-            '&',
-            $encType == QueryString::RFC3986 ? PHP_QUERY_RFC3986 : PHP_QUERY_RFC1738
-        );
+        $this->numericIndices = $numericIndices;
+    }
+
+    protected function createPrefixKey($key, $prefix)
+    {
+        return !$this->numericIndices && is_int($key) ? "{$prefix}[]" : "{$prefix}[{$key}]";
     }
 }

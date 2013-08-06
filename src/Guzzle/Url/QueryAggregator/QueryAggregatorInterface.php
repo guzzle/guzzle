@@ -5,20 +5,16 @@ namespace Guzzle\Url\QueryAggregator;
 use Guzzle\Url\QueryString;
 
 /**
- * Interface used for aggregating a query string into a string
- *
- * Null values must not be represented in the query string. An empty string must
- * still be present when a query string is cast to a string (e.g. "foo=").
+ * Interface used for aggregating multi-value query string parameters into a flattened array
  */
 interface QueryAggregatorInterface
 {
     /**
-     * Aggregate a query string array into a string
+     * Aggregate a query string array into a flattened array
      *
-     * @param array  $query   Query string parameters
-     * @param string $encType How parameters are url encoded
+     * @param array  $query Query string parameters
      *
-     * @return string
+     * @return array
      */
-    public function aggregate(array $query, $encType);
+    public function aggregate(array $query);
 }
