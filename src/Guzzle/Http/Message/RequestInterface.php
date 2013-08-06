@@ -142,14 +142,14 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      *
      * @return QueryString
      */
-    public function getFormFields();
+    public function getPostFields();
 
     /**
      * Get an array of form files to send in the body of the request
      *
      * @return FormFileCollection
      */
-    public function getFormFiles();
+    public function getPostFiles();
 
     /**
      * Prepare a request for sending over the wire. For example, this method should ensure that POST fields and files

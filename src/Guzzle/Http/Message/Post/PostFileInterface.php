@@ -1,14 +1,14 @@
 <?php
 
-namespace Guzzle\Http\Message\Form;
+namespace Guzzle\Http\Message\Post;
 
 use Guzzle\Http\Message\HasHeadersInterface;
 use Guzzle\Stream\StreamInterface;
 
 /**
- * Form file upload interface
+ * Post file upload interface
  */
-interface FormFileInterface extends HasHeadersInterface
+interface PostFileInterface extends HasHeadersInterface
 {
     /**
      * Get the name of the form field

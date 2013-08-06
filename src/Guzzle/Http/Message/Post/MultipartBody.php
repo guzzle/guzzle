@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Http\Message\Form;
+namespace Guzzle\Http\Message\Post;
 
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Mimetypes;
@@ -42,8 +42,8 @@ class MultipartBody implements StreamInterface
     public static function fromRequest(RequestInterface $request)
     {
         $body = new self();
-        $body->setFields($request->getFormFields());
-        foreach ($request->getFormFiles() as $file) {
+        $body->setFields($request->getPostFields());
+        foreach ($request->getPostFiles() as $file) {
             $body->addFile($file);
         }
 
@@ -132,11 +132,11 @@ class MultipartBody implements StreamInterface
     /**
      * Add a file to the stream
      *
-     * @param FormFileInterface $file Form file
+     * @param PostFileInterface $file Post file
      *
      * @return self
      */
-    public function addFile(FormFileInterface $file)
+    public function addFile(PostFileInterface $file)
     {
         $this->size = null;
         $this->files[] = $file;
@@ -385,7 +385,7 @@ class MultipartBody implements StreamInterface
             $this->boundary, $key, $this->fields[$key]);
     }
 
-    private function getFileHeaders(FormFileInterface $file)
+    private function getFileHeaders(PostFileInterface $file)
     {
         return "--{$this->boundary}\r\n" . $file->getHeaders() . "\r\n\r\n";
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Http\Message\Form;
+namespace Guzzle\Http\Message\Post;
 
 use Guzzle\Http\Message\HasHeaders;
 use Guzzle\Http\Mimetypes;
@@ -8,9 +8,9 @@ use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
 
 /**
- * Form file upload
+ * Post file upload
  */
-class FormFile implements FormFileInterface
+class PostFile implements PostFileInterface
 {
     use HasHeaders;
 
@@ -18,10 +18,10 @@ class FormFile implements FormFileInterface
     private $filename;
 
     /**
-     * Factory method used to create a FormFile from a number of different types
+     * Factory method used to create a PostFile from a number of different types
      *
      * @param string                                            $name Name of the form field
-     * @param FormFileInterface|StreamInterface|resource|string $data Data used to create the file
+     * @param PostFileInterface|StreamInterface|resource|string $data Data used to create the file
      *
      * @return self
      */

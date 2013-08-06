@@ -1,11 +1,11 @@
 <?php
 
-namespace Guzzle\Http\Message\Form;
+namespace Guzzle\Http\Message\Post;
 
 /**
  * Holds a collection of form files to be sent in a request
  */
-class FormFileCollection implements \Countable, \IteratorAggregate
+class PostFileCollection implements \Countable, \IteratorAggregate
 {
     /** @var array */
     private $files;
@@ -13,9 +13,9 @@ class FormFileCollection implements \Countable, \IteratorAggregate
     /**
      * Add a file to the collection
      *
-     * @param FormFileInterface $file File to add
+     * @param PostFileInterface $file File to add
      */
-    public function addFile(FormFileInterface $file)
+    public function addFile(PostFileInterface $file)
     {
         $this->files[] = $file;
     }
