@@ -5,7 +5,7 @@ namespace Guzzle\Http\Message;
 use Guzzle\Common\Collection;
 use Guzzle\Http\HttpErrorPlugin;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\Form\FormFile;
+use Guzzle\Http\Message\Post\PostFile;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Plugin\Log\LogPlugin;
 use Guzzle\Url\QueryString;
@@ -66,7 +66,7 @@ class MessageFactory implements MessageFactoryInterface
 
         if ($body) {
             if (is_array($body)) {
-                $this->addFormData($request, $body);
+                $this->addPostData($request, $body);
             } else {
                 $request->setBody($body, (string) $request->getHeader('Content-Type'));
             }
@@ -111,15 +111,15 @@ class MessageFactory implements MessageFactoryInterface
      * @param RequestInterface $request Request to update
      * @param array            $body    Body to apply
      */
-    protected function addFormData(RequestInterface $request, array $body)
+    protected function addPostData(RequestInterface $request, array $body)
     {
         $foundFile = false;
         foreach ($body as $key => $value) {
             if (is_string($value) || is_array($value)) {
-                $request->getFormFields()->set($key, $value);
+                $request->getPostFields()->set($key, $value);
             } else {
                 $foundFile = true;
-                $request->getFormFiles()->addFile(FormFile::create($key, $value));
+                $request->getPostFiles()->addFile(PostFile::create($key, $value));
             }
         }
 
