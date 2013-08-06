@@ -139,6 +139,9 @@ class MessageFactory implements MessageFactoryInterface
             $method = "visit_{$key}";
             if (isset($methods[$method])) {
                 $this->{$method}($request, $value);
+            } else {
+                // Set on the transfer options by default if no visitor is found
+                $request->getTransferOptions()[$key] = $value;
             }
         }
     }
@@ -147,7 +150,7 @@ class MessageFactory implements MessageFactoryInterface
     {
         if ($value !== false) {
             if ($value == 'strict') {
-                $request->getTransferOptions()->set(RedirectPlugin::STRICT_REDIRECTS, true);
+                $request->getTransferOptions()[RedirectPlugin::STRICT_REDIRECTS] = true;
             }
             $request->getEventDispatcher()->addSubscriber($this->redirectPlugin);
         }
@@ -173,7 +176,7 @@ class MessageFactory implements MessageFactoryInterface
             $request->setHeader('Authorization', 'Basic ' . base64_encode("$value[0]:$value[1]"));
         } else {
             // Rely on an adapter to implement the authorization protocol (e.g. cURL)
-            $request->getTransferOptions()->set('auth', $value);
+            $request->getTransferOptions()['auth'] = $value;
         }
     }
 
@@ -241,39 +244,5 @@ class MessageFactory implements MessageFactoryInterface
         foreach ($value as $plugin) {
             $request->addSubscriber($plugin);
         }
-    }
-
-    private function visit_save_to(RequestInterface $request, $value)
-    {
-        $request->getTransferOptions()->set('save_to', $value);
-    }
-
-    private function visit_debug(RequestInterface $request, $value)
-    {
-        $request->getTransferOptions()->set('debug', $value);
-    }
-
-    private function visit_verify(RequestInterface $request, $value)
-    {
-        $request->getTransferOptions()->set('verify', $value);
-    }
-
-    private function visit_transfer_options(RequestInterface $request, $value)
-    {
-        if (!is_array($value)) {
-            throw new \InvalidArgumentException('adapter_options value must be an array');
-        }
-
-        $request->getTransferOptions()->overwriteWith($value);
-    }
-
-    private function visit_expect(RequestInterface $request, $value)
-    {
-        $request->getTransferOptions()['expect'] = $value;
-    }
-
-    private function visit_stream(RequestInterface $request, $value)
-    {
-        $request->getTransferOptions()['stream'] = $value;
     }
 }
