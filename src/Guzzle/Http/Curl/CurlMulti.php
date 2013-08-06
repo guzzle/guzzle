@@ -129,7 +129,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         $multiException = new MultiTransferException('Errors during multi transfer');
 
         while ($e = array_shift($exceptions)) {
-            $multiException->addFailedRequestWithException($e['request'],$e['exception']);
+            $multiException->addFailedRequestWithException($e['request'], $e['exception']);
         }
 
         // Add successful requests

@@ -53,10 +53,10 @@ class MultiTransferException extends ExceptionCollection
     }
 
     /**
-     * Add to the array of failed requests and associate with exceptions 
+     * Add to the array of failed requests and associate with exceptions
      *
-     * @param RequestInterface $request Failed request
-     * @param \Exception $exception Exception to add and associate with
+     * @param RequestInterface $request   Failed request
+     * @param \Exception       $exception Exception to add and associate with
      *
      * @return self
      */
@@ -67,6 +67,20 @@ class MultiTransferException extends ExceptionCollection
              ->exceptionForRequest[spl_object_hash($request)] = $exception;
 
         return $this;
+    }
+
+    /**
+     * Get the Exception that caused the given $request to fail
+     *
+     * @param RequestInterface $request Failed command
+     *
+     * @return \Exception|null
+     */
+    public function getExceptionForFailedRequest(RequestInterface $request)
+    {
+        $oid = spl_object_hash($request);
+
+        return isset($this->exceptionForRequest[$oid]) ? $this->exceptionForRequest[$oid] : null;
     }
 
     /**
@@ -127,20 +141,5 @@ class MultiTransferException extends ExceptionCollection
     public function containsRequest(RequestInterface $request)
     {
         return in_array($request, $this->failedRequests, true) || in_array($request, $this->successfulRequests, true);
-    }
-
-    /**
-     * Get the Exception that caused the given $request to fail
-     * 
-     * @param RequestInterface $request Failed command
-     *
-     * @return \Exception|null
-     */
-    public function getExceptionForFailedRequest(RequestInterface $request) {
-        $oid = spl_object_hash($request);
-        if (array_key_exists($oid, $this->exceptionForRequest)) {
-            return $this->exceptionForRequest[$oid];
-        }
-        return null;
     }
 }

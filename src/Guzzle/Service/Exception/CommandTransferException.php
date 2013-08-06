@@ -24,21 +24,26 @@ class CommandTransferException extends MultiTransferException
     {
         $ce = new self($e->getMessage(), $e->getCode(), $e->getPrevious());
         $ce->setSuccessfulRequests($e->getSuccessfulRequests());
+
         $alreadyAddedExceptions = array();
         foreach ($e->getFailedRequests() as $request) {
-            $re = $e->getExceptionForFailedRequest($request);
-            if ($re) {
+            if ($re = $e->getExceptionForFailedRequest($request)) {
                 $alreadyAddedExceptions[] = $re;
                 $ce->addFailedRequestWithException($request, $re);
             } else {
                 $ce->addFailedRequest($request);
             }
         }
-        foreach ($e as $ex) {
-            if (!in_array($ex, $alreadyAddedExceptions)) {
-                $ce->add($ex);
+
+        // Add any exceptions that did not map to a request
+        if (count($alreadyAddedExceptions) < count($e)) {
+            foreach ($e as $ex) {
+                if (!in_array($ex, $alreadyAddedExceptions)) {
+                    $ce->add($ex);
+                }
             }
         }
+
         return $ce;
     }
 
@@ -102,12 +107,13 @@ class CommandTransferException extends MultiTransferException
 
     /**
      * Get the Exception that caused the given $command to fail
-     * 
+     *
      * @param CommandInterface $command Failed command
      *
-     * @return \Exception
+     * @return \Exception|null
      */
-    public function getExceptionForFailedCommand(CommandInterface $command) {
+    public function getExceptionForFailedCommand(CommandInterface $command)
+    {
         return $this->getExceptionForFailedRequest($command->getRequest());
     }
 }
