@@ -230,11 +230,6 @@ class Stream implements StreamInterface
         return $this->meta[self::IS_WRITABLE];
     }
 
-    public function isLocal()
-    {
-        return $this->meta[self::IS_LOCAL];
-    }
-
     public function isSeekable()
     {
         return $this->meta[self::SEEKABLE];

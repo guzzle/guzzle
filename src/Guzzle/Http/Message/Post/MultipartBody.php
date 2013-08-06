@@ -2,7 +2,6 @@
 
 namespace Guzzle\Http\Message\Post;
 
-use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Mimetypes;
 use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
@@ -14,7 +13,7 @@ use Guzzle\Url\QueryString;
 class MultipartBody implements StreamInterface
 {
     /** @var StreamInterface */
-    private $files = [];
+    private $files;
     private $fields;
     private $metadata = ['mode' => 'r'];
     private $size;
@@ -26,28 +25,24 @@ class MultipartBody implements StreamInterface
     private $sentLast;
     private $boundary;
 
-    public function __construct()
-    {
-        $this->boundary = uniqid();
-        $this->postFields = new QueryString();
-    }
-
     /**
-     * Create a MultipartBody from a request object's form fields and files
-     *
-     * @param RequestInterface $request Request to create from
-     *
-     * @return MultipartBody
+     * @param array  $fields   Associative array of field names to values where each value is a string
+     * @param array  $files    Associative array of PostFileInterface objects
+     * @param string $boundary You can optionally provide a specific boundary
+     * @throws \InvalidArgumentException
      */
-    public static function fromRequest(RequestInterface $request)
+    public function __construct(array $fields = [], array $files = [], $boundary = null)
     {
-        $body = new self();
-        $body->setFields($request->getPostFields());
-        foreach ($request->getPostFiles() as $file) {
-            $body->addFile($file);
-        }
+        $this->boundary = $boundary ?: uniqid();
+        $this->fields = $fields;
+        $this->files = $files;
 
-        return $body;
+        // Ensure each file is a PostFileInterface
+        foreach ($this->files as $file) {
+            if (!$file instanceof PostFileInterface) {
+                throw new \InvalidArgumentException('All POST fields must implement PostFieldInterface');
+            }
+        }
     }
 
     public function __toString()
@@ -71,77 +66,6 @@ class MultipartBody implements StreamInterface
     public function getBoundary()
     {
         return $this->boundary;
-    }
-
-    /**
-     * Set a specific boundary
-     *
-     * @param string $boundary Boundary to set
-     *
-     * @return self
-     */
-    public function setBoundary($boundary)
-    {
-        $this->boundary = $boundary;
-
-        return $this;
-    }
-
-    /**
-     * Set a specific field value
-     *
-     * @param string $name  Field name
-     * @param string $value Field value
-     *
-     * @return self
-     */
-    public function setField($name, $value)
-    {
-        $this->fields[$name] = $value;
-
-        return $this;
-    }
-
-    /**
-     * Replace all existing POST fields
-     *
-     * @param QueryString $fields Fields
-     *
-     * @return self
-     */
-    public function setFields(QueryString $fields)
-    {
-        $this->fields = $fields;
-
-        return $this;
-    }
-
-    /**
-     * Remove all files from the stream
-     *
-     * @return self
-     */
-    public function clearFiles()
-    {
-        $this->currentFile = 0;
-        $this->files = [];
-
-        return $this;
-    }
-
-    /**
-     * Add a file to the stream
-     *
-     * @param PostFileInterface $file Post file
-     *
-     * @return self
-     */
-    public function addFile(PostFileInterface $file)
-    {
-        $this->size = null;
-        $this->files[] = $file;
-
-        return $this;
     }
 
     public function close()
@@ -244,7 +168,7 @@ class MultipartBody implements StreamInterface
                 }
                 $this->size += strlen($this->getFileHeaders($file)) + $size;
             }
-            foreach ($this->fields->getKeys() as $key) {
+            foreach (array_keys($this->fields) as $key) {
                 $this->size += strlen($this->getFieldString($key));
             }
             $this->size += strlen("\r\n--{$this->boundary}--");
@@ -342,7 +266,7 @@ class MultipartBody implements StreamInterface
      */
     private function readField($length)
     {
-        $name = $this->fields->getKeys()[++$this->currentField - 1];
+        $name = array_keys($this->fields)[++$this->currentField - 1];
         $this->buffer = Stream::fromString($this->getFieldString($name));
 
         return $this->buffer->read($length);

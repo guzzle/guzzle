@@ -83,13 +83,6 @@ interface StreamInterface
     public function isWritable();
 
     /**
-     * Check if the stream is a local stream vs a remote stream
-     *
-     * @return bool
-     */
-    public function isLocal();
-
-    /**
      * Check if the string is repeatable
      *
      * @return bool

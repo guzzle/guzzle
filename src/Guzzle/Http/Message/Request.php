@@ -5,8 +5,7 @@ namespace Guzzle\Http\Message;
 use Guzzle\Common\HasDispatcher;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Header\HeaderInterface;
-use Guzzle\Http\Message\Post\PostFileCollection;
-use Guzzle\Http\Message\Post\MultipartBody;
+use Guzzle\Http\Message\Post\PostBody;
 use Guzzle\Url\QueryString;
 use Guzzle\Url\Url;
 
@@ -25,12 +24,6 @@ class Request extends AbstractMessage implements RequestInterface
 
     /** @var Collection Transfer options */
     private $transferOptions;
-
-    /** @var QueryString Post fields */
-    private $formFields;
-
-    /** @var PostFileCollection Post files */
-    private $formFiles;
 
     /**
      * @param string           $method  HTTP method
@@ -71,12 +64,6 @@ class Request extends AbstractMessage implements RequestInterface
     {
         if ($this->eventDispatcher) {
             $this->eventDispatcher = clone $this->eventDispatcher;
-        }
-        if ($this->formFields) {
-            $this->formFields = clone $this->formFields;
-        }
-        if ($this->formFiles) {
-            $this->formFiles = clone $this->formFiles;
         }
         $this->transferOptions = clone $this->transferOptions;
         $this->url = clone $this->url;
@@ -224,42 +211,15 @@ class Request extends AbstractMessage implements RequestInterface
         return $resource;
     }
 
-    public function getPostFields()
-    {
-        if (!$this->formFields) {
-            $this->formFields = new QueryString();
-        }
-
-        return $this->formFields;
-    }
-
-    public function getPostFiles()
-    {
-        if (!$this->formFiles) {
-            $this->formFiles = new PostFileCollection();
-        }
-
-        return $this->formFiles;
-    }
-
     public function prepare()
     {
         // Set the appropriate Content-Type for a request if one is not set and there are form fields
-        if (!$this->body) {
-            if ($this->formFiles && count($this->formFiles)) {
-                $body = MultipartBody::fromRequest($this);
-                $this->setHeader('Content-Type', 'multipart/form-data; boundary=' . $body->getBoundary());
-                $this->setBody($body);
-            } elseif ($this->formFields && count($this->getPostFields())) {
-                if (!$this->hasHeader('Content-Type')) {
-                    $this->setHeader('Content-Type', 'application/x-www-form-urlencoded');
-                }
-                $this->setBody((string) $this->formFields);
-            }
-        }
-
-        // Determine if the Expect header should be used
         if ($this->body) {
+            // Synchronize the POST body with the request's headers
+            if ($this->body instanceof PostBody) {
+                $this->body->applyRequestHeaders($this);
+            }
+            // Determine if the Expect header should be used
             $addExpect = false;
             if (null !== ($expect = $this->getTransferOptions()['expect'])) {
                 $size = $this->body->getSize();

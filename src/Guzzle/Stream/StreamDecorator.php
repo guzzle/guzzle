@@ -103,11 +103,6 @@ trait StreamDecorator
         return $this->stream->isWritable();
     }
 
-    public function isLocal()
-    {
-        return $this->stream->isLocal();
-    }
-
     public function isSeekable()
     {
         return $this->stream->isSeekable();
