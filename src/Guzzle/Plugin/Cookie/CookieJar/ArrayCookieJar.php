@@ -4,8 +4,7 @@ namespace Guzzle\Plugin\Cookie\CookieJar;
 
 use Guzzle\Plugin\Cookie\Cookie;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\Response;
-use Guzzle\Parser\ParserRegistry;
+use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Plugin\Cookie\Exception\InvalidCookieException;
 
 /**
@@ -184,7 +183,7 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
         return new \ArrayIterator($this->cookies);
     }
 
-    public function addCookiesFromResponse(Response $response, RequestInterface $request = null)
+    public function addCookiesFromResponse(ResponseInterface $response, RequestInterface $request = null)
     {
         if ($cookieHeader = $response->getHeader('Set-Cookie')) {
             $parser = ParserRegistry::getInstance()->getParser('cookie');
