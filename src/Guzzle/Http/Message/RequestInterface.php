@@ -3,7 +3,7 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\HasDispatcherInterface;
-use Guzzle\Http\Message\Form\FormFileCollection;
+use Guzzle\Http\Message\Post\PostFileCollection;
 use Guzzle\Url\Url;
 use Guzzle\Url\QueryString;
 
@@ -147,7 +147,7 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     /**
      * Get an array of form files to send in the body of the request
      *
-     * @return FormFileCollection
+     * @return PostFileCollection
      */
     public function getPostFiles();
 
