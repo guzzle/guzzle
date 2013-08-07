@@ -62,7 +62,7 @@ class RedirectPlugin implements EventSubscriberInterface
      */
     private function createRedirectRequest(RequestInterface $request, ResponseInterface $response)
     {
-        $strict = $request->getTransferOptions()[self::STRICT_REDIRECTS];
+        $strict = $request->getConfig()[self::STRICT_REDIRECTS];
 
         // Use a GET request if this is an entity enclosing request and we are not forcing RFC compliance, but rather
         // emulating what all browsers would do. Be sure to disable redirects on the clone.

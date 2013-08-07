@@ -2,9 +2,6 @@
 
 namespace Guzzle\Common;
 
-use Guzzle\Common\Exception\InvalidArgumentException;
-use Guzzle\Common\Exception\RuntimeException;
-
 /**
  * Key value pair collection object
  */
@@ -28,14 +25,14 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
      * @param array $required Required parameter names
      *
      * @return self
-     * @throws InvalidArgumentException if a parameter is missing
+     * @throws \InvalidArgumentException if a parameter is missing
      */
     public static function fromConfig(array $config = array(), array $defaults = array(), array $required = array())
     {
         $data = $config + $defaults;
 
         if ($missing = array_diff($required, array_keys($data))) {
-            throw new InvalidArgumentException('Config is missing the following keys: ' . implode(', ', $missing));
+            throw new \InvalidArgumentException('Config is missing the following keys: ' . implode(', ', $missing));
         }
 
         return new self($data);
@@ -282,7 +279,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
      * @param mixed  $value Value to set at the key
      *
      * @return self
-     * @throws RuntimeException when trying to setPath using a nested path that travels through a scalar value
+     * @throws \RuntimeException when trying to setPath using a nested path that travels through a scalar value
      */
     public function setPath($path, $value)
     {
@@ -290,7 +287,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
         $queue = explode('/', $path);
         while (null !== ($key = array_shift($queue))) {
             if (!is_array($current)) {
-                throw new RuntimeException("Trying to setPath {$path}, but {$key} is set and is not an array");
+                throw new \RuntimeException("Trying to setPath {$path}, but {$key} is set and is not an array");
             } elseif (!$queue) {
                 $current[$key] = $value;
             } elseif (isset($current[$key])) {

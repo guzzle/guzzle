@@ -221,7 +221,7 @@ class Request extends AbstractMessage implements RequestInterface
             }
             // Determine if the Expect header should be used
             $addExpect = false;
-            if (null !== ($expect = $this->getTransferOptions()['expect'])) {
+            if (null !== ($expect = $this->getConfig()['expect'])) {
                 $size = $this->body->getSize();
                 $addExpect = $size === null ? true : $size > $expect;
             } elseif (!$this->body->isSeekable()) {
