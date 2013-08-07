@@ -4,14 +4,14 @@ namespace Guzzle\Http\Message\Post;
 
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Stream\Stream;
-use Guzzle\Stream\StreamInterface;
 use Guzzle\Url\QueryAggregator\PhpAggregator;
 use Guzzle\Url\QueryAggregator\QueryAggregatorInterface;
+use Guzzle\Url\QueryString;
 
 /**
  * Holds POST fields and files and creates a streaming body when read methods are called on the object.
  */
-class PostBody implements StreamInterface
+class PostBody implements PostBodyInterface
 {
     private $body;
     private $fields = [];
@@ -19,12 +19,8 @@ class PostBody implements StreamInterface
     private $metadata = [];
     private $aggregator;
     private $size;
+    private $forceMultipart = false;
 
-    /**
-     * Apply headers to the request appropriate for the current state of the object
-     *
-     * @param RequestInterface $request Request
-     */
     public function applyRequestHeaders(RequestInterface $request)
     {
         if ($this->files) {
@@ -39,6 +35,20 @@ class PostBody implements StreamInterface
     }
 
     /**
+     * Set to true to force a multipart upload even if there are no files
+     *
+     * @param bool $force Set to true to force multipart uploads or false to remove this flag
+     *
+     * @return self
+     */
+    public function forceMultipartUpload($force)
+    {
+        $this->forceMultipart = $force;
+
+        return $this;
+    }
+
+    /**
      * Set the aggregation strategy that will be used to turn multi-valued fields into a string
      *
      * @param QueryAggregatorInterface $aggregator
@@ -48,14 +58,6 @@ class PostBody implements StreamInterface
         $this->aggregator = $aggregator;
     }
 
-    /**
-     * Set a specific field
-     *
-     * @param string       $name  Name of the field to set
-     * @param string|array $value Value to set
-     *
-     * @return $this
-     */
     public function setField($name, $value)
     {
         $this->fields[$name] = $value;
@@ -64,25 +66,19 @@ class PostBody implements StreamInterface
         return $this;
     }
 
-    /**
-     * Get a specific field by name
-     *
-     * @param string $name Name of the POST field to retrieve
-     *
-     * @return string|null
-     */
+    public function replaceFields(array $fields)
+    {
+        $this->fields = $fields;
+        $this->mutate();
+
+        return $this;
+    }
+
     public function getField($name)
     {
         return isset($this->fields[$name]) ? $this->fields[$name] : null;
     }
 
-    /**
-     * Remove a field by name
-     *
-     * @param string $name Name of the field to remove
-     *
-     * @return $this
-     */
     public function removeField($name)
     {
         unset($this->fields[$name]);
@@ -91,45 +87,21 @@ class PostBody implements StreamInterface
         return $this;
     }
 
-    /**
-     * Returns an associative array of names to values
-     *
-     * @return array
-     */
     public function getFields()
     {
         return $this->fields;
     }
 
-    /**
-     * Returns true if a field is set
-     *
-     * @param string $name Name of the field to set
-     *
-     * @return bool
-     */
     public function hasField($name)
     {
         return isset($this->fields[$name]);
     }
 
-    /**
-     * Get all of the files
-     *
-     * @return array Returns an array of PostFileInterface objects
-     */
     public function getFiles()
     {
         return $this->files;
     }
 
-    /**
-     * Add a file to the POST
-     *
-     * @param PostFileInterface $file File to add
-     *
-     * @return $this
-     */
     public function addFile(PostFileInterface $file)
     {
         $this->files[] = $file;
@@ -138,11 +110,6 @@ class PostBody implements StreamInterface
         return $this;
     }
 
-    /**
-     * Remove all files from the collection
-     *
-     * @return $this
-     */
     public function clearFiles()
     {
         $this->files = [];
@@ -282,7 +249,7 @@ class PostBody implements StreamInterface
     {
         if ($this->body) {
             return $this->body;
-        } elseif ($this->files) {
+        } elseif ($this->files || $this->forceMultipart) {
             return $this->body = $this->createMultipart();
         } elseif ($this->fields) {
             return $this->body = $this->createUrlEncoded();
@@ -312,11 +279,13 @@ class PostBody implements StreamInterface
      */
     private function createMultipart()
     {
-        // Account for fields with an array value
         $fields = $this->fields;
-        foreach ($fields as &$field) {
+        $query = (new QueryString())->setEncodingType(false);
+
+        // Account for fields with an array value
+        foreach ($fields as $name => &$field) {
             if (is_array($field)) {
-                $field = urldecode($this->getAggregator()->aggregate($field, PHP_QUERY_RFC1738));
+                $field = (string) $query->replace([$name => $field]);
             }
         }
 
@@ -330,7 +299,11 @@ class PostBody implements StreamInterface
      */
     private function createUrlEncoded()
     {
-        return Stream::fromString($this->getAggregator()->aggregate($this->fields, PHP_QUERY_RFC1738));
+        $query = (new QueryString($this->fields))
+            ->setAggregator($this->getAggregator())
+            ->setEncodingType(QueryString::RFC1738);
+
+        return Stream::fromString($query);
     }
 
     /**
