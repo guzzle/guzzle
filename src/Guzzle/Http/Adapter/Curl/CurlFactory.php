@@ -40,11 +40,11 @@ class CurlFactory
 
     protected function getDefaultOptions(RequestInterface $request, ResponseInterface $response)
     {
-        $transfer = $request->getTransferOptions();
+        $config = $request->getConfig();
         $mediator = new RequestMediator($request, $response);
         $options = array(
             CURLOPT_URL            => $request->getUrl(),
-            CURLOPT_CONNECTTIMEOUT => $transfer['connect_timeout'] ?: 150,
+            CURLOPT_CONNECTTIMEOUT => $config['connect_timeout'] ?: 150,
             CURLOPT_RETURNTRANSFER => false,
             CURLOPT_HEADER         => false,
             CURLOPT_PORT           => $request->getPort(),
@@ -96,7 +96,7 @@ class CurlFactory
     protected function applyBody(RequestInterface $request, array &$options)
     {
         // You can send the body as a string using curl's CURLOPT_POSTFIELDS
-        if (isset($request->getTransferOptions()['adapter']['body_as_string'])) {
+        if (isset($request->getConfig()['adapter']['body_as_string'])) {
             $options[CURLOPT_POSTFIELDS] = (string) $request->getBody();
             // Don't duplicate the Content-Length header
             unset($options['_headers']['Content-Length']);
@@ -137,7 +137,7 @@ class CurlFactory
             $methods = array_flip(get_class_methods(__CLASS__));
         }
 
-        foreach ($request->getTransferOptions()->toArray() as $key => $value) {
+        foreach ($request->getConfig()->toArray() as $key => $value) {
             $method = "visit_{$key}";
             if (isset($methods[$method])) {
                 $this->{$method}($request, $options, $value);

@@ -49,7 +49,7 @@ class StreamAdapter implements AdapterInterface
             $this->processResponseHeaders($http_response_header, $response);
         }
 
-        if ($request->getTransferOptions()['stream']) {
+        if ($request->getConfig()['stream']) {
             $this->applyStreamingBody($request, $response, $stream);
         } else{
             $this->applySaveToBody($request, $response, $stream);
@@ -63,7 +63,7 @@ class StreamAdapter implements AdapterInterface
     private function applyStreamingBody(RequestInterface $request, ResponseInterface $response, $stream)
     {
         // Streaming response, so do not read up front
-        if ($request->getTransferOptions()['save_to']) {
+        if ($request->getConfig()['save_to']) {
             throw new \LogicException('Cannot stream a response and write to a destination simultaneously');
         }
         $response->setBody($stream);
@@ -74,7 +74,7 @@ class StreamAdapter implements AdapterInterface
      */
     private function applySaveToBody(RequestInterface $request, ResponseInterface $response, $stream)
     {
-        if ($saveTo = $request->getTransferOptions()['save_to']) {
+        if ($saveTo = $request->getConfig()['save_to']) {
             // Stream the response into the destination stream
             $saveTo = is_string($saveTo) ? Stream::factory(fopen($saveTo, 'w')) : Stream::factory($saveTo);
         } else {
@@ -161,7 +161,7 @@ class StreamAdapter implements AdapterInterface
             'content' => (string) $request->getBody()
         ]];
 
-        foreach ($request->getTransferOptions()->toArray() as $key => $value) {
+        foreach ($request->getConfig()->toArray() as $key => $value) {
             $method = "visit_{$key}";
             if (isset($methods[$method])) {
                 $this->{$method}($request, $options, $value);

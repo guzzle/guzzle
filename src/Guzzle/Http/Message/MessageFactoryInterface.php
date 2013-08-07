@@ -43,13 +43,13 @@ interface MessageFactoryInterface
      *            the certificate.
      *        "proxy": Specify an HTTP proxy (e.g. "http://username:password@192.168.16.1:10")
      *        "debug": Set to true to display all data sent over the wire
-     *        "transfer_options": Associative array of options that are forwarded to adapters using a request's
-     *             TransferOptions collection.
+     *        "request_config": Associative array of options that are forwarded to a request's config collection.
+     *            These values are used as configuration options that can be consumed by plugins and adapters.
      *        "expect": Set to true to enable "Expect: 100-Continue" headers for requests that send a body. Set to
-     *             false to disable for all requests. So to a number so that the size of the payload must be greater
-     *             than the number in order to send the Expect header. Setting to a number will send the Expect header
-     *             for all requests in which the size of the payload cannot be determined or where the body is not
-     *             rewindable.
+     *            false to disable for all requests. So to a number so that the size of the payload must be greater
+     *            than the number in order to send the Expect header. Setting to a number will send the Expect header
+     *            for all requests in which the size of the payload cannot be determined or where the body is not
+     *            rewindable.
      *
      * @return RequestInterface
      */

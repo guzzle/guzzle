@@ -27,7 +27,7 @@ class StreamingProxyAdapter implements AdapterInterface
         $streaming = $default = array();
 
         foreach ($transaction as $request) {
-            if ($request->getTransferOptions()['stream']) {
+            if ($request->getConfig()['stream']) {
                 $streaming[] = $request;
             } else {
                 $default[] = $request;

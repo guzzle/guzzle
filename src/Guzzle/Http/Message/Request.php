@@ -241,7 +241,7 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
-    public function getTransferOptions()
+    public function getConfig()
     {
         return $this->transferOptions;
     }

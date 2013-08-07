@@ -145,9 +145,9 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     public function prepare();
 
     /**
-     * Get the transfer options bag owned by the request
+     * Get the request's configuration options
      *
      * @return \Guzzle\Common\Collection
      */
-    public function getTransferOptions();
+    public function getConfig();
 }

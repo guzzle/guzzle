@@ -141,7 +141,7 @@ class MessageFactory implements MessageFactoryInterface
                 $this->{$method}($request, $value);
             } else {
                 // Set on the transfer options by default if no visitor is found
-                $request->getTransferOptions()[$key] = $value;
+                $request->getConfig()[$key] = $value;
             }
         }
     }
@@ -150,7 +150,7 @@ class MessageFactory implements MessageFactoryInterface
     {
         if ($value !== false) {
             if ($value == 'strict') {
-                $request->getTransferOptions()[RedirectPlugin::STRICT_REDIRECTS] = true;
+                $request->getConfig()[RedirectPlugin::STRICT_REDIRECTS] = true;
             }
             $request->getEventDispatcher()->addSubscriber($this->redirectPlugin);
         }
@@ -176,7 +176,7 @@ class MessageFactory implements MessageFactoryInterface
             $request->setHeader('Authorization', 'Basic ' . base64_encode("$value[0]:$value[1]"));
         } else {
             // Rely on an adapter to implement the authorization protocol (e.g. cURL)
-            $request->getTransferOptions()['auth'] = $value;
+            $request->getConfig()['auth'] = $value;
         }
     }
 
