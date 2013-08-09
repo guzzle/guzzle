@@ -2,8 +2,6 @@
 
 namespace Guzzle\Iterator;
 
-use Guzzle\Common\Exception\InvalidArgumentException;
-
 /**
  * Maps values before yielding
  */
@@ -13,17 +11,14 @@ class MapIterator extends \IteratorIterator
     protected $callback;
 
     /**
-     * @param \Traversable   $iterator Traversable iterator
-     * @param array|\Closure $callback Callback used for iterating
+     * @param \Traversable $iterator Traversable iterator
+     * @param callable     $callback Callback used for iterating
      *
-     * @throws InvalidArgumentException if the callback if not callable
+     * @throws \InvalidArgumentException if the callback if not callable
      */
-    public function __construct(\Traversable $iterator, $callback)
+    public function __construct(\Traversable $iterator, callable $callback)
     {
         parent::__construct($iterator);
-        if (!is_callable($callback)) {
-            throw new InvalidArgumentException('The callback must be callable');
-        }
         $this->callback = $callback;
     }
 

@@ -12,14 +12,18 @@ abstract class AbstractRequestEvent extends Event
     /** @var Transaction */
     protected $transaction;
 
+    /** @var RequestInterface $request */
+    private $request;
+
     /**
      * @param RequestInterface        $request
      * @param Transaction             $transaction Transaction that contains the request
      */
     public function __construct(RequestInterface $request, Transaction $transaction)
     {
+        parent::__construct();
         $this->transaction = $transaction;
-        parent::__construct(['request' => $request, 'client' => $transaction->getClient()]);
+        $this->request = $request;
     }
 
     /**
@@ -39,7 +43,7 @@ abstract class AbstractRequestEvent extends Event
      */
     public function getRequest()
     {
-        return $this['request'];
+        return $this->request;
     }
 
     /**
@@ -47,9 +51,9 @@ abstract class AbstractRequestEvent extends Event
      */
     protected function emitError()
     {
-        $this['request']->getEventDispatcher()->dispatch(
+        $this->request->getEventDispatcher()->dispatch(
             'request.error',
-            new RequestErrorEvent($this['request'], $this->transaction)
+            new RequestErrorEvent($this->request, $this->transaction)
         );
     }
 
@@ -58,9 +62,9 @@ abstract class AbstractRequestEvent extends Event
      */
     protected function emitAfterSend()
     {
-        $this['request']->getEventDispatcher()->dispatch(
+        $this->request->getEventDispatcher()->dispatch(
             'request.after_send',
-            new RequestAfterSendEvent($this['request'], $this->transaction)
+            new RequestAfterSendEvent($this->request, $this->transaction)
         );
     }
 }

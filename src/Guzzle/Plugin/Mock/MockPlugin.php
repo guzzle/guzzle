@@ -69,7 +69,7 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
             $response = file_exists($response)
                 ? Response::fromMessage(file_get_contents($response))
                 : Response::fromMessage($response);
-        } elseif ($response instanceof ResponseInterface) {
+        } elseif (!($response instanceof ResponseInterface)) {
             throw new \InvalidArgumentException('Response must a message string, response object, or path to a file');
         }
 

@@ -4,6 +4,7 @@ namespace Guzzle\Http\Adapter\Curl;
 
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
+use Guzzle\Stream\Stream;
 
 /**
  * Creates curl resources from a request and response object
@@ -29,7 +30,7 @@ class CurlFactory
     {
         $options = $this->getDefaultOptions($request, $response);
         $this->applyMethod($request, $options);
-        $this->applyTransferOptions($request, $options);
+        $this->applyTransferOptions($request, $response, $options);
         $this->applyHeaders($request, $options);
         $handle = curl_init();
         unset($options['_headers']);
@@ -130,7 +131,7 @@ class CurlFactory
         }
     }
 
-    protected function applyTransferOptions(RequestInterface $request, array &$options)
+    protected function applyTransferOptions(RequestInterface $request, ResponseInterface $response, array &$options)
     {
         static $methods;
         if (!$methods) {
@@ -140,12 +141,12 @@ class CurlFactory
         foreach ($request->getConfig()->toArray() as $key => $value) {
             $method = "visit_{$key}";
             if (isset($methods[$method])) {
-                $this->{$method}($request, $options, $value);
+                $this->{$method}($request, $response, $options, $value);
             }
         }
     }
 
-    protected function visit_debug(RequestInterface $request, &$options, $value)
+    protected function visit_debug(RequestInterface $request, ResponseInterface $response, &$options, $value)
     {
         if (is_resource($value)) {
             $options[CURLOPT_VERBOSE] = true;
@@ -155,22 +156,22 @@ class CurlFactory
         }
     }
 
-    protected function visit_proxy(RequestInterface $request, &$options, $value)
+    protected function visit_proxy(RequestInterface $request, ResponseInterface $response, &$options, $value)
     {
         $options[CURLOPT_PROXY] = $value;
     }
 
-    protected function visit_timeout(RequestInterface $request, &$options, $value)
+    protected function visit_timeout(RequestInterface $request, ResponseInterface $response, &$options, $value)
     {
         $options[CURLOPT_TIMEOUT_MS] = $value * 1000;
     }
 
-    protected function visit_connect_timeout(RequestInterface $request, &$options, $value)
+    protected function visit_connect_timeout(RequestInterface $request, ResponseInterface $response, &$options, $value)
     {
         $options[CURLOPT_CONNECTTIMEOUT_MS] = $value * 1000;
     }
 
-    protected function visit_verify(RequestInterface $request, &$options, $value)
+    protected function visit_verify(RequestInterface $request, ResponseInterface $response, &$options, $value)
     {
         if ($value === false) {
             unset($options[CURLOPT_CAINFO]);
@@ -185,7 +186,7 @@ class CurlFactory
         }
     }
 
-    protected function visit_cert(RequestInterface $request, &$options, $value)
+    protected function visit_cert(RequestInterface $request, ResponseInterface $response, &$options, $value)
     {
         if (is_array($value)) {
             $options[CURLOPT_SSLCERT] = $value[0];
@@ -195,7 +196,7 @@ class CurlFactory
         }
     }
 
-    protected function visit_ssl_key(RequestInterface $request, &$options, $value)
+    protected function visit_ssl_key(RequestInterface $request, ResponseInterface $response, &$options, $value)
     {
         if (is_array($value)) {
             $options[CURLOPT_SSLKEY] = $value[0];
@@ -205,7 +206,7 @@ class CurlFactory
         }
     }
 
-    protected function visit_auth(RequestInterface $request, &$options, $value)
+    protected function visit_auth(RequestInterface $request, ResponseInterface $response, &$options, $value)
     {
         static $authMap = array(
             'basic'  => CURLAUTH_BASIC,
@@ -222,5 +223,14 @@ class CurlFactory
         $scheme = $authMap[$scheme];
         $options[CURLOPT_HTTPAUTH] = $scheme;
         $options[CURLOPT_USERPWD] = $value[0] . ':' . $value[1];
+    }
+
+    protected function visit_save_to(RequestInterface $request, ResponseInterface $response, &$options, $value)
+    {
+        $saveTo = is_string($value)
+            ? Stream::factory(fopen($value, 'w'))
+            : Stream::factory($value);
+
+        $response->setBody($saveTo);
     }
 }

@@ -32,7 +32,7 @@ class RequestErrorEvent extends AbstractRequestEvent
      */
     public function getException()
     {
-        return $this->transaction[$this['request']];
+        return $this->transaction[$this->getRequest()];
     }
 
     /**

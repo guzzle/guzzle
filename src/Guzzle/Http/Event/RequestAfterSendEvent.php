@@ -19,7 +19,7 @@ class RequestAfterSendEvent extends AbstractRequestEvent
      */
     public function intercept($result)
     {
-        $this->transaction[$this['request']] = $result;
+        $this->transaction[$this->getRequest()] = $result;
         $this->stopPropagation();
 
         if ($result instanceof RequestException) {
@@ -34,6 +34,6 @@ class RequestAfterSendEvent extends AbstractRequestEvent
      */
     public function getResponse()
     {
-        return $this->transaction[$this['request']];
+        return $this->transaction[$this->getRequest()];
     }
 }
