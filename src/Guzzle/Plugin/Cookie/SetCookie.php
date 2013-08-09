@@ -2,15 +2,13 @@
 
 namespace Guzzle\Plugin\Cookie;
 
-use Guzzle\Common\ToArrayInterface;
-
 /**
  * Set-Cookie object
  */
-class Cookie implements ToArrayInterface
+class SetCookie
 {
     /** @var array Cookie data */
-    protected $data;
+    private $data;
 
     /**
      * @var string ASCII codes not valid for for use in a cookie name
@@ -19,14 +17,29 @@ class Cookie implements ToArrayInterface
      * A valid token may contain any CHAR except CTLs (ASCII 0 - 31 or 127)
      * or any of the following separators
      */
-    protected static $invalidCharString;
+    private static $invalidCharString;
+
+    /** @var array Cookie part names to snake_case array values */
+    private static $cookieParts = array(
+        'domain'      => 'Domain',
+        'path'        => 'Path',
+        'max_age'     => 'Max-Age',
+        'expires'     => 'Expires',
+        'version'     => 'Version',
+        'secure'      => 'Secure',
+        'port'        => 'Port',
+        'discard'     => 'Discard',
+        'comment'     => 'Comment',
+        'comment_url' => 'Comment-Url',
+        'http_only'   => 'HttpOnly'
+    );
 
     /**
      * Gets an array of invalid cookie characters
      *
      * @return array
      */
-    protected static function getInvalidCharacters()
+    private static function getInvalidCharacters()
     {
         if (!self::$invalidCharString) {
             self::$invalidCharString = implode('', array_map('chr', array_merge(
@@ -37,6 +50,74 @@ class Cookie implements ToArrayInterface
         }
 
         return self::$invalidCharString;
+    }
+
+
+
+    /**
+     * Create a new SetCookie object from a string
+     *
+     * @param string $cookie Set-Cookie header string
+     *
+     * @return self
+     */
+    public static function fromString($cookie)
+    {
+        // Explode the cookie string using a series of semicolons
+        $pieces = array_filter(array_map('trim', explode(';', $cookie)));
+
+        // The name of the cookie (first kvp) must include an equal sign.
+        if (empty($pieces) || !strpos($pieces[0], '=')) {
+            return false;
+        }
+
+        // Create the default return array
+        $data = array_merge(array_fill_keys(array_keys(self::$cookieParts), null), array(
+            'cookies'   => array(),
+            'data'      => array(),
+            'path'      => '/',
+            'http_only' => false,
+            'discard'   => false,
+            'domain'    => false
+        ));
+        $foundNonCookies = 0;
+
+        // Add the cookie pieces into the parsed data array
+        foreach ($pieces as $part) {
+
+            $cookieParts = explode('=', $part, 2);
+            $key = trim($cookieParts[0]);
+
+            if (count($cookieParts) == 1) {
+                // Can be a single value (e.g. secure, httpOnly)
+                $value = true;
+            } else {
+                // Be sure to strip wrapping quotes
+                $value = trim($cookieParts[1], " \n\r\t\0\x0B\"");
+            }
+
+            // Only check for non-cookies when cookies have been found
+            if (!empty($data['cookies'])) {
+                foreach (self::$cookieParts as $mapValue => $search) {
+                    if (!strcasecmp($search, $key)) {
+                        $data[$mapValue] = $mapValue == 'port' ? array_map('trim', explode(',', $value)) : $value;
+                        $foundNonCookies++;
+                        continue 2;
+                    }
+                }
+            }
+
+            // If cookies have not yet been retrieved, or this value was not found in the pieces array, treat it as a
+            // cookie. IF non-cookies have been parsed, then this isn't a cookie, it's cookie data. Cookies then data.
+            $data[$foundNonCookies ? 'data' : 'cookies'][$key] = $value;
+        }
+
+        // Calculate the expires date
+        if (!$data['expires'] && $data['max_age']) {
+            $data['expires'] = time() + (int) $data['max_age'];
+        }
+
+        return new self($data);
     }
 
     /**
@@ -70,14 +151,9 @@ class Cookie implements ToArrayInterface
         }
     }
 
-    /**
-     * Get the cookie as an array
-     *
-     * @return array
-     */
-    public function toArray()
+    public function __toString()
     {
-        return $this->data;
+        return implode('; ', $this->toArray());
     }
 
     /**
@@ -95,7 +171,7 @@ class Cookie implements ToArrayInterface
      *
      * @param string $name Cookie name
      *
-     * @return Cookie
+     * @return self
      */
     public function setName($name)
     {
@@ -117,7 +193,7 @@ class Cookie implements ToArrayInterface
      *
      * @param string $value Cookie value
      *
-     * @return Cookie
+     * @return self
      */
     public function setValue($value)
     {
@@ -139,7 +215,7 @@ class Cookie implements ToArrayInterface
      *
      * @param string $domain
      *
-     * @return Cookie
+     * @return self
      */
     public function setDomain($domain)
     {
@@ -161,7 +237,7 @@ class Cookie implements ToArrayInterface
      *
      * @param string $path Path of the cookie
      *
-     * @return Cookie
+     * @return self
      */
     public function setPath($path)
     {
@@ -183,7 +259,7 @@ class Cookie implements ToArrayInterface
      *
      * @param int $maxAge Max age of the cookie in seconds
      *
-     * @return Cookie
+     * @return self
      */
     public function setMaxAge($maxAge)
     {
@@ -205,7 +281,7 @@ class Cookie implements ToArrayInterface
      *
      * @param int $timestamp Unix timestamp
      *
-     * @return Cookie
+     * @return self
      */
     public function setExpires($timestamp)
     {
@@ -227,7 +303,7 @@ class Cookie implements ToArrayInterface
      *
      * @param string|int $version Version to set
      *
-     * @return Cookie
+     * @return self
      */
     public function setVersion($version)
     {
@@ -249,7 +325,7 @@ class Cookie implements ToArrayInterface
      *
      * @param bool $secure Set to true or false if secure
      *
-     * @return Cookie
+     * @return self
      */
     public function setSecure($secure)
     {
@@ -271,7 +347,7 @@ class Cookie implements ToArrayInterface
      *
      * @param bool $discard Set to true or false if this is a session cookie
      *
-     * @return Cookie
+     * @return self
      */
     public function setDiscard($discard)
     {
@@ -293,7 +369,7 @@ class Cookie implements ToArrayInterface
      *
      * @param string $comment Cookie comment
      *
-     * @return Cookie
+     * @return self
      */
     public function setComment($comment)
     {
@@ -315,7 +391,7 @@ class Cookie implements ToArrayInterface
      *
      * @param string $commentUrl Cookie comment URL for more information
      *
-     * @return Cookie
+     * @return self
      */
     public function setCommentUrl($commentUrl)
     {
@@ -337,7 +413,7 @@ class Cookie implements ToArrayInterface
      *
      * @param array $ports Array of acceptable ports
      *
-     * @return Cookie
+     * @return self
      */
     public function setPorts(array $ports)
     {
@@ -359,7 +435,7 @@ class Cookie implements ToArrayInterface
      *
      * @param bool $httpOnly Set to true or false if this is HTTP only
      *
-     * @return Cookie
+     * @return self
      */
     public function setHttpOnly($httpOnly)
     {
@@ -394,7 +470,7 @@ class Cookie implements ToArrayInterface
      * @param string $name  Name of the attribute to set
      * @param string $value Value to set
      *
-     * @return Cookie
+     * @return self
      */
     public function setAttribute($name, $value)
     {
@@ -502,7 +578,7 @@ class Cookie implements ToArrayInterface
      * @param string $key   Key to set
      * @param string $value Value to set
      *
-     * @return Cookie
+     * @return self
      */
     private function setData($key, $value)
     {
