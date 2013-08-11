@@ -32,6 +32,20 @@ trait HasHeaders
         return $this;
     }
 
+    /**
+     * Get the header factory to use to create headers
+     *
+     * @return HeaderFactoryInterface
+     */
+    public function getHeaderFactory()
+    {
+        if (!$this->headerFactory) {
+            $this->headerFactory = HeaderFactory::getInstance();
+        }
+
+        return $this->headerFactory;
+    }
+
     public function addHeader($header, $value = null)
     {
         if (isset($this->headers[$header])) {
@@ -39,7 +53,7 @@ trait HasHeaders
         } elseif ($value instanceof HeaderInterface) {
             return $this->headers[$header] = $value;
         } else {
-            return $this->headers[$header] = $this->headerFactory->createHeader($header, $value);
+            return $this->headers[$header] = $this->getHeaderFactory()->createHeader($header, $value);
         }
     }
 
@@ -96,7 +110,6 @@ trait HasHeaders
      */
     protected function initHeaders()
     {
-        $this->headerFactory = HeaderFactory::getInstance();
         $this->headers = new HeaderCollection();
     }
 }
