@@ -7,11 +7,6 @@ namespace Guzzle\Http\Header;
  */
 class Cookie extends DefaultHeader
 {
-    public function __construct($name, $values = array())
-    {
-        parent::__construct($name, $values, ';');
-    }
-
     /**
      * Add a cookie
      *
@@ -22,7 +17,15 @@ class Cookie extends DefaultHeader
      */
     public function addCookie($name, $value)
     {
-        return $this->add("{$name}={$value}");
+        // Quote the value if it is not already and contains problematic characters
+        if (substr($value, 0, 1) !== '"' && substr($value, -1, 1) !== '"' && strpbrk($value, ';,')) {
+            $value = '"' . $value . '"';
+        }
+
+        $val = "{$name}={$value}";
+        $this->values = [isset($this->values[0]) ? "{$this->values[0]}; {$val}": $val];
+
+        return $this;
     }
 
     /**
@@ -48,10 +51,11 @@ class Cookie extends DefaultHeader
     {
         $values = $this->getCookies();
         unset($values[$name]);
-        $this->values = [];
-        foreach ($values as $k => $v) {
-            $this->values[] = $k . '=' . $v;
+        $this->values = [''];
+        foreach ($values as $key => $value) {
+            $this->values[0] .= "{$key}={$value}; ";
         }
+        $this->values[0] = rtrim($this->values[0], '; ');
 
         return $this;
     }
@@ -77,12 +81,6 @@ class Cookie extends DefaultHeader
      */
     public function getCookies()
     {
-        $values = [];
-        foreach ($this->toArray() as $value) {
-            $parts = explode('=', $value);
-            $values[$parts[0]] = isset($parts[1]) ? $parts[1] : null;
-        }
-
-        return $values;
+        return $this->parseParams()[0];
     }
 }

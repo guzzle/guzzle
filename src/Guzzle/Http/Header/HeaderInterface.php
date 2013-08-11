@@ -39,22 +39,6 @@ interface HeaderInterface extends ToArrayInterface, \Countable, \IteratorAggrega
     public function setName($name);
 
     /**
-     * Change the glue used to implode the values
-     *
-     * @param string $glue Glue used to implode multiple values
-     *
-     * @return self
-     */
-    public function setGlue($glue);
-
-    /**
-     * Get the glue used to implode multiple values into a string
-     *
-     * @return string
-     */
-    public function getGlue();
-
-    /**
      * Remove a specific value from the header
      *
      * @param string $searchValue Value to remove

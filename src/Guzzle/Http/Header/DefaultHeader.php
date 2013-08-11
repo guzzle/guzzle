@@ -8,18 +8,15 @@ namespace Guzzle\Http\Header;
 class DefaultHeader implements HeaderInterface
 {
     protected $values = array();
-    protected $glue;
     private $headerName;
 
     /**
      * @param string       $name   Name of the header
      * @param array|string $values Values of the header as an array or a scalar
-     * @param string       $glue   Glue used to combine multiple values into a string
      */
-    public function __construct($name, $values = array(), $glue = ',')
+    public function __construct($name, $values = array())
     {
         $this->headerName = trim($name);
-        $this->glue = $glue;
 
         foreach ((array) $values as $value) {
             foreach ((array) $value as $v) {
@@ -30,7 +27,7 @@ class DefaultHeader implements HeaderInterface
 
     public function __toString()
     {
-        return implode($this->glue . ' ', $this->toArray());
+        return implode(', ', $this->toArray());
     }
 
     public function add($value)
@@ -50,18 +47,6 @@ class DefaultHeader implements HeaderInterface
         $this->headerName = $name;
 
         return $this;
-    }
-
-    public function setGlue($glue)
-    {
-        $this->glue = $glue;
-
-        return $this;
-    }
-
-    public function getGlue()
-    {
-        return $this->glue;
     }
 
     public function hasValue($searchValue)
@@ -119,8 +104,7 @@ class DefaultHeader implements HeaderInterface
     /**
      * Normalize the header to be a single header with an array of values.
      *
-     * If any values of the header contains the glue string value (e.g. ","), then the value will be exploded into
-     * multiple entries in the header.
+     * If any values of the header contains a comma, then the value will be exploded into multiple entries in the header
      *
      * @return self
      */
@@ -129,8 +113,8 @@ class DefaultHeader implements HeaderInterface
         $values = $this->toArray();
 
         for ($i = 0, $total = count($values); $i < $total; $i++) {
-            if (strpos($values[$i], $this->glue) !== false) {
-                foreach (preg_split('/' . preg_quote($this->glue) . '(?=([^"]*"[^"]*")*[^"]*$)/', $values[$i]) as $v) {
+            if (strpos($values[$i], ',') !== false) {
+                foreach (preg_split('/,(?=([^"]*"[^"]*")*[^"]*$)/', $values[$i]) as $v) {
                     $values[] = trim($v);
                 }
                 unset($values[$i]);
@@ -151,7 +135,7 @@ class DefaultHeader implements HeaderInterface
      */
     private function trimHeader($str)
     {
-        static $trimmed = "\"'  \n\t";
+        static $trimmed = "\"'  \n\t\r";
 
         return trim($str, $trimmed);
     }
