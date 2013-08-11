@@ -386,7 +386,7 @@ class SetCookie implements ToArrayInterface
 
         // Check if any of the invalid characters are present in the cookie name
         if (preg_match("/[=,; \t\r\n\013\014]/", $name)) {
-            return "Cookie name  must not cannot invalid characters: =,; \\t\\r\\n\\013\\014";
+            return "Cookie name must not cannot invalid characters: =,; \\t\\r\\n\\013\\014";
         }
 
         // Value must not be empty, but can be 0
