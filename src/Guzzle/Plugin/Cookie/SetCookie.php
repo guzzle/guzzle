@@ -2,40 +2,38 @@
 
 namespace Guzzle\Plugin\Cookie;
 
+use Guzzle\Common\ToArrayInterface;
+
 /**
  * Set-Cookie object
  */
-class SetCookie
+class SetCookie implements ToArrayInterface
 {
+    /** @var array */
+    private static $defaults = [
+        'Name'     => null,
+        'Value'    => null,
+        'Domain'   => null,
+        'Path'     => '/',
+        'Max-Age'  => null,
+        'Expires'  => null,
+        'Secure'   => false,
+        'Discard'  => false,
+        'HttpOnly' => false
+    ];
+
+    /** @var string ASCII codes not valid for for use in a cookie name */
+    private static $invalidCharString;
+
     /** @var array Cookie data */
     private $data;
 
     /**
-     * @var string ASCII codes not valid for for use in a cookie name
+     * Gets an array of invalid cookie characters
      *
      * Cookie names are defined as 'token', according to RFC 2616, Section 2.2
      * A valid token may contain any CHAR except CTLs (ASCII 0 - 31 or 127)
      * or any of the following separators
-     */
-    private static $invalidCharString;
-
-    /** @var array Cookie part names to snake_case array values */
-    private static $cookieParts = array(
-        'domain'      => 'Domain',
-        'path'        => 'Path',
-        'max_age'     => 'Max-Age',
-        'expires'     => 'Expires',
-        'version'     => 'Version',
-        'secure'      => 'Secure',
-        'port'        => 'Port',
-        'discard'     => 'Discard',
-        'comment'     => 'Comment',
-        'comment_url' => 'Comment-Url',
-        'http_only'   => 'HttpOnly'
-    );
-
-    /**
-     * Gets an array of invalid cookie characters
      *
      * @return array
      */
@@ -52,8 +50,6 @@ class SetCookie
         return self::$invalidCharString;
     }
 
-
-
     /**
      * Create a new SetCookie object from a string
      *
@@ -63,58 +59,39 @@ class SetCookie
      */
     public static function fromString($cookie)
     {
+        // Create the default return array
+        $data = self::$defaults;
         // Explode the cookie string using a series of semicolons
         $pieces = array_filter(array_map('trim', explode(';', $cookie)));
-
         // The name of the cookie (first kvp) must include an equal sign.
         if (empty($pieces) || !strpos($pieces[0], '=')) {
-            return false;
+            return new self($data);
         }
-
-        // Create the default return array
-        $data = array_merge(array_fill_keys(array_keys(self::$cookieParts), null), array(
-            'cookies'   => array(),
-            'data'      => array(),
-            'path'      => '/',
-            'http_only' => false,
-            'discard'   => false,
-            'domain'    => false
-        ));
-        $foundNonCookies = 0;
 
         // Add the cookie pieces into the parsed data array
         foreach ($pieces as $part) {
 
             $cookieParts = explode('=', $part, 2);
             $key = trim($cookieParts[0]);
-
-            if (count($cookieParts) == 1) {
-                // Can be a single value (e.g. secure, httpOnly)
-                $value = true;
-            } else {
-                // Be sure to strip wrapping quotes
-                $value = trim($cookieParts[1], " \n\r\t\0\x0B\"");
-            }
+            $value = isset($cookieParts[1]) ? trim($cookieParts[1], " \n\r\t\0\x0B\"") : true;
 
             // Only check for non-cookies when cookies have been found
-            if (!empty($data['cookies'])) {
-                foreach (self::$cookieParts as $mapValue => $search) {
+            if (empty($data['Name'])) {
+                $data['Name'] = $key;
+                $data['Value'] = $value;
+            } else {
+                foreach (array_keys(self::$defaults) as $search) {
                     if (!strcasecmp($search, $key)) {
-                        $data[$mapValue] = $mapValue == 'port' ? array_map('trim', explode(',', $value)) : $value;
-                        $foundNonCookies++;
+                        $data[$search] = $value;
                         continue 2;
                     }
                 }
             }
-
-            // If cookies have not yet been retrieved, or this value was not found in the pieces array, treat it as a
-            // cookie. IF non-cookies have been parsed, then this isn't a cookie, it's cookie data. Cookies then data.
-            $data[$foundNonCookies ? 'data' : 'cookies'][$key] = $value;
         }
 
-        // Calculate the expires date
-        if (!$data['expires'] && $data['max_age']) {
-            $data['expires'] = time() + (int) $data['max_age'];
+        // Calculate the Expires date
+        if (!$data['Expires'] && $data['MaxAge']) {
+            $data['Expires'] = time() + (int) $data['MaxAge'];
         }
 
         return new self($data);
@@ -125,26 +102,10 @@ class SetCookie
      */
     public function __construct(array $data = array())
     {
-        static $defaults = array(
-            'name'        => '',
-            'value'       => '',
-            'domain'      => '',
-            'path'        => '/',
-            'expires'     => null,
-            'max_age'     => 0,
-            'comment'     => null,
-            'comment_url' => null,
-            'port'        => array(),
-            'version'     => null,
-            'secure'      => false,
-            'discard'     => false,
-            'http_only'   => false
-        );
-
-        $this->data = array_merge($defaults, $data);
-        // Extract the expires value and turn it into a UNIX timestamp if needed
+        $this->data = array_replace(self::$defaults, $data);
+        // Extract the Expires value and turn it into a UNIX timestamp if needed
         if (!$this->getExpires() && $this->getMaxAge()) {
-            // Calculate the expires date
+            // Calculate the Expires date
             $this->setExpires(time() + (int) $this->getMaxAge());
         } elseif ($this->getExpires() && !is_numeric($this->getExpires())) {
             $this->setExpires(strtotime($this->getExpires()));
@@ -153,7 +114,23 @@ class SetCookie
 
     public function __toString()
     {
-        return implode('; ', $this->toArray());
+        $str = $this->data['Name'] . '=' . $this->data['Value'] . '; ';
+        foreach ($this->data as $k => $v) {
+            if ($k != 'Name' && $k != 'Value'&& $v !== null && $v !== false) {
+                if ($k == 'Expires') {
+                    $str .= 'Expires=' . gmdate('D, d M Y H:i:s \G\M\T', $v) . '; ';
+                } else {
+                    $str .= ($v === true ? $k : "{$k}={$v}") . '; ';
+                }
+            }
+        }
+
+        return rtrim($str, '; ');
+    }
+
+    public function toArray()
+    {
+        return $this->data;
     }
 
     /**
@@ -163,7 +140,7 @@ class SetCookie
      */
     public function getName()
     {
-        return $this->data['name'];
+        return $this->data['Name'];
     }
 
     /**
@@ -175,7 +152,9 @@ class SetCookie
      */
     public function setName($name)
     {
-        return $this->setData('name', $name);
+        $this->data['Name'] = $name;
+
+        return $this;
     }
 
     /**
@@ -185,7 +164,7 @@ class SetCookie
      */
     public function getValue()
     {
-        return $this->data['value'];
+        return $this->data['Value'];
     }
 
     /**
@@ -197,7 +176,9 @@ class SetCookie
      */
     public function setValue($value)
     {
-        return $this->setData('value', $value);
+        $this->data['Value'] = $value;
+
+        return $this;
     }
 
     /**
@@ -207,7 +188,7 @@ class SetCookie
      */
     public function getDomain()
     {
-        return $this->data['domain'];
+        return $this->data['Domain'];
     }
 
     /**
@@ -219,7 +200,9 @@ class SetCookie
      */
     public function setDomain($domain)
     {
-        return $this->setData('domain', $domain);
+        $this->data['Domain'] = $domain;
+
+        return $this;
     }
 
     /**
@@ -229,7 +212,7 @@ class SetCookie
      */
     public function getPath()
     {
-        return $this->data['path'];
+        return $this->data['Path'];
     }
 
     /**
@@ -241,7 +224,9 @@ class SetCookie
      */
     public function setPath($path)
     {
-        return $this->setData('path', $path);
+        $this->data['Path'] = $path;
+
+        return $this;
     }
 
     /**
@@ -251,7 +236,7 @@ class SetCookie
      */
     public function getMaxAge()
     {
-        return $this->data['max_age'];
+        return $this->data['MaxAge'];
     }
 
     /**
@@ -263,17 +248,19 @@ class SetCookie
      */
     public function setMaxAge($maxAge)
     {
-        return $this->setData('max_age', $maxAge);
+        $this->data['MaxAge'] = $maxAge;
+
+        return $this;
     }
 
     /**
-     * The UNIX timestamp when the cookie expires
+     * The UNIX timestamp when the cookie Expires
      *
      * @return mixed
      */
     public function getExpires()
     {
-        return $this->data['expires'];
+        return $this->data['Expires'];
     }
 
     /**
@@ -285,29 +272,9 @@ class SetCookie
      */
     public function setExpires($timestamp)
     {
-        return $this->setData('expires', $timestamp);
-    }
+        $this->data['Expires'] = $timestamp;
 
-    /**
-     * Version of the cookie specification. RFC 2965 is 1
-     *
-     * @return mixed
-     */
-    public function getVersion()
-    {
-        return $this->data['version'];
-    }
-
-    /**
-     * Set the cookie version
-     *
-     * @param string|int $version Version to set
-     *
-     * @return self
-     */
-    public function setVersion($version)
-    {
-        return $this->setData('version', $version);
+        return $this;
     }
 
     /**
@@ -317,7 +284,7 @@ class SetCookie
      */
     public function getSecure()
     {
-        return $this->data['secure'];
+        return $this->data['Secure'];
     }
 
     /**
@@ -329,7 +296,9 @@ class SetCookie
      */
     public function setSecure($secure)
     {
-        return $this->setData('secure', (bool) $secure);
+        $this->data['Secure'] = $secure;
+
+        return $this;
     }
 
     /**
@@ -339,7 +308,7 @@ class SetCookie
      */
     public function getDiscard()
     {
-        return $this->data['discard'];
+        return $this->data['Discard'];
     }
 
     /**
@@ -351,73 +320,9 @@ class SetCookie
      */
     public function setDiscard($discard)
     {
-        return $this->setData('discard', $discard);
-    }
+        $this->data['Discard'] = $discard;
 
-    /**
-     * Get the comment
-     *
-     * @return string|null
-     */
-    public function getComment()
-    {
-        return $this->data['comment'];
-    }
-
-    /**
-     * Set the comment of the cookie
-     *
-     * @param string $comment Cookie comment
-     *
-     * @return self
-     */
-    public function setComment($comment)
-    {
-        return $this->setData('comment', $comment);
-    }
-
-    /**
-     * Get the comment URL of the cookie
-     *
-     * @return string|null
-     */
-    public function getCommentUrl()
-    {
-        return $this->data['comment_url'];
-    }
-
-    /**
-     * Set the comment URL of the cookie
-     *
-     * @param string $commentUrl Cookie comment URL for more information
-     *
-     * @return self
-     */
-    public function setCommentUrl($commentUrl)
-    {
-        return $this->setData('comment_url', $commentUrl);
-    }
-
-    /**
-     * Get an array of acceptable ports this cookie can be used with
-     *
-     * @return array
-     */
-    public function getPorts()
-    {
-        return $this->data['port'];
-    }
-
-    /**
-     * Set a list of acceptable ports this cookie can be used with
-     *
-     * @param array $ports Array of acceptable ports
-     *
-     * @return self
-     */
-    public function setPorts(array $ports)
-    {
-        return $this->setData('port', $ports);
+        return $this;
     }
 
     /**
@@ -427,7 +332,7 @@ class SetCookie
      */
     public function getHttpOnly()
     {
-        return $this->data['http_only'];
+        return $this->data['HttpOnly'];
     }
 
     /**
@@ -439,42 +344,7 @@ class SetCookie
      */
     public function setHttpOnly($httpOnly)
     {
-        return $this->setData('http_only', $httpOnly);
-    }
-
-    /**
-     * Get an array of extra cookie data
-     *
-     * @return array
-     */
-    public function getAttributes()
-    {
-        return $this->data['data'];
-    }
-
-    /**
-     * Get a specific data point from the extra cookie data
-     *
-     * @param string $name Name of the data point to retrieve
-     *
-     * @return null|string
-     */
-    public function getAttribute($name)
-    {
-        return array_key_exists($name, $this->data['data']) ? $this->data['data'][$name] : null;
-    }
-
-    /**
-     * Set a cookie data attribute
-     *
-     * @param string $name  Name of the attribute to set
-     * @param string $value Value to set
-     *
-     * @return self
-     */
-    public function setAttribute($name, $value)
-    {
-        $this->data['data'][$name] = $value;
+        $this->data['HttpOnly'] = $httpOnly;
 
         return $this;
     }
@@ -514,18 +384,6 @@ class SetCookie
         }
 
         return (bool) preg_match('/\.' . preg_quote($cookieDomain) . '$/i', $domain);
-    }
-
-    /**
-     * Check if the cookie is compatible with a specific port
-     *
-     * @param int $port Port to check
-     *
-     * @return bool
-     */
-    public function matchesPort($port)
-    {
-        return count($this->getPorts()) == 0 || in_array($port, $this->getPorts());
     }
 
     /**
@@ -570,20 +428,5 @@ class SetCookie
         }
 
         return true;
-    }
-
-    /**
-     * Set a value and return the cookie object
-     *
-     * @param string $key   Key to set
-     * @param string $value Value to set
-     *
-     * @return self
-     */
-    private function setData($key, $value)
-    {
-        $this->data[$key] = $value;
-
-        return $this;
     }
 }
