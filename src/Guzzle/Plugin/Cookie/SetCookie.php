@@ -22,33 +22,8 @@ class SetCookie implements ToArrayInterface
         'HttpOnly' => false
     ];
 
-    /** @var string ASCII codes not valid for for use in a cookie name */
-    private static $invalidCharString;
-
     /** @var array Cookie data */
     private $data;
-
-    /**
-     * Gets an array of invalid cookie characters
-     *
-     * Cookie names are defined as 'token', according to RFC 2616, Section 2.2
-     * A valid token may contain any CHAR except CTLs (ASCII 0 - 31 or 127)
-     * or any of the following separators
-     *
-     * @return array
-     */
-    private static function getInvalidCharacters()
-    {
-        if (!self::$invalidCharString) {
-            self::$invalidCharString = implode('', array_map('chr', array_merge(
-                range(0, 32),
-                array(34, 40, 41, 44, 47),
-                array(58, 59, 60, 61, 62, 63, 64, 91, 92, 93, 123, 125, 127)
-            )));
-        }
-
-        return self::$invalidCharString;
-    }
 
     /**
      * Create a new SetCookie object from a string
@@ -410,8 +385,8 @@ class SetCookie implements ToArrayInterface
         }
 
         // Check if any of the invalid characters are present in the cookie name
-        if (strpbrk($name, self::getInvalidCharacters()) !== false) {
-            return 'The cookie name must not contain invalid characters: ' . $name;
+        if (preg_match("/[=,; \t\r\n\013\014]/", $name)) {
+            return "Cookie name  must not cannot invalid characters: =,; \\t\\r\\n\\013\\014";
         }
 
         // Value must not be empty, but can be 0
