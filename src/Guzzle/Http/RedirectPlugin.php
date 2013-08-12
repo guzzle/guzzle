@@ -92,7 +92,7 @@ class RedirectPlugin implements EventSubscriberInterface
 
         // If the location is not absolute, then combine it with the original URL
         if (!$location->isAbsolute()) {
-            $originalUrl = $redirectRequest->getUrl();
+            $originalUrl = Url::fromString($redirectRequest->getUrl());
             // Remove query string parameters and just take what is present on the redirect Location header
             $originalUrl->getQuery()->clear();
             $location = $originalUrl->combine((string) $location);
