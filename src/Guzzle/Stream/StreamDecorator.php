@@ -20,15 +20,19 @@ trait StreamDecorator
 
     public function __toString()
     {
-        $buffer = '';
-        if ($this->rewind()) {
-            while (!$this->eof()) {
-                $buffer .= $this->read(32768);
+        try {
+            $buffer = '';
+            if ($this->rewind()) {
+                while (!$this->eof()) {
+                    $buffer .= $this->read(32768);
+                }
+                $this->rewind();
             }
-            $this->rewind();
+            return $buffer;
+        } catch (\Exception $e) {
+            // Really, PHP? https://bugs.php.net/bug.php?id=53648
+            trigger_error((string) $e, E_USER_ERROR);
         }
-
-        return $buffer;
     }
 
     /**
