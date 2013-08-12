@@ -10,7 +10,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Verifies the message integrity of a response only after the entire response body has been read
  */
-class ReactiveResponseIntegrityPlugin implements EventSubscriberInterface
+class StreamingResponseIntegrityPlugin implements EventSubscriberInterface
 {
     private $hash;
     private $header;
