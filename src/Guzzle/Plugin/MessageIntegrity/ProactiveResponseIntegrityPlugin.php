@@ -9,9 +9,9 @@ use Guzzle\Stream\StreamInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Verifies the message integrity based on a response header using a {@see HashInterface} object
+ * Verifies the message integrity of a response after all of the data has been recieved
  */
-class ResponseIntegrityPlugin implements EventSubscriberInterface
+class ProactiveResponseIntegrityPlugin implements EventSubscriberInterface
 {
     private $hash;
     private $header;
