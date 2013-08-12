@@ -39,7 +39,7 @@ class RedirectPlugin implements EventSubscriberInterface
             if (++$redirectCount > $this->defaultMaxRedirects) {
                 throw new TooManyRedirectsException("Will not follow more than {$redirectCount} redirects", $request);
             }
-            $redirectRequest = $this->createRedirectRequest($request, $response);
+            $redirectRequest = $this->createRedirectRequest($request, $redirectResponse);
             $redirectResponse = $event->getClient()->send($redirectRequest);
         }
 
@@ -92,7 +92,7 @@ class RedirectPlugin implements EventSubscriberInterface
 
         // If the location is not absolute, then combine it with the original URL
         if (!$location->isAbsolute()) {
-            $originalUrl = $redirectRequest->getUrl(true);
+            $originalUrl = $redirectRequest->getUrl();
             // Remove query string parameters and just take what is present on the redirect Location header
             $originalUrl->getQuery()->clear();
             $location = $originalUrl->combine((string) $location);
