@@ -3,7 +3,7 @@
 namespace Guzzle\Plugin\Cache;
 
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\Response;
+use Guzzle\Http\Message\ResponseInterface;
 
 /**
  * Interface used to cache HTTP requests
@@ -15,17 +15,17 @@ interface CacheStorageInterface
      *
      * @param RequestInterface $request
      *
-     * @return null|Response
+     * @return null|ResponseInterface
      */
     public function fetch(RequestInterface $request);
 
     /**
      * Cache an HTTP request
      *
-     * @param RequestInterface $request  Request being cached
-     * @param Response         $response Response to cache
+     * @param RequestInterface  $request  Request being cached
+     * @param ResponseInterface $response Response to cache
      */
-    public function cache(RequestInterface $request, Response $response);
+    public function cache(RequestInterface $request, ResponseInterface $response);
 
     /**
      * Deletes cache entries that match a request

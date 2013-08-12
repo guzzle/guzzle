@@ -3,7 +3,7 @@
 namespace Guzzle\Plugin\Cache;
 
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\Response;
+use Guzzle\Http\Message\ResponseInterface;
 
 /**
  * Never performs cache revalidation and just assumes the request is still ok
@@ -12,7 +12,7 @@ class SkipRevalidation extends DefaultRevalidation
 {
     public function __construct() {}
 
-    public function revalidate(RequestInterface $request, Response $response)
+    public function revalidate(RequestInterface $request, ResponseInterface $response)
     {
         return true;
     }

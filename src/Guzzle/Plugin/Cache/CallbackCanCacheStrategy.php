@@ -2,7 +2,6 @@
 
 namespace Guzzle\Plugin\Cache;
 
-use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
 
@@ -18,21 +17,11 @@ class CallbackCanCacheStrategy extends DefaultCanCacheStrategy
     protected $responseCallback;
 
     /**
-     * @param \Closure|array|mixed $requestCallback  Callable method to invoke for requests
-     * @param \Closure|array|mixed $responseCallback Callable method to invoke for responses
-     *
-     * @throws InvalidArgumentException
+     * @param callable $requestCallback  Callable method to invoke for requests
+     * @param callable $responseCallback Callable method to invoke for responses
      */
-    public function __construct($requestCallback = null, $responseCallback = null)
+    public function __construct(callable $requestCallback = null, callable $responseCallback = null)
     {
-        if ($requestCallback && !is_callable($requestCallback)) {
-            throw new InvalidArgumentException('Method must be callable');
-        }
-
-        if ($responseCallback && !is_callable($responseCallback)) {
-            throw new InvalidArgumentException('Method must be callable');
-        }
-
         $this->requestCallback = $requestCallback;
         $this->responseCallback = $responseCallback;
     }

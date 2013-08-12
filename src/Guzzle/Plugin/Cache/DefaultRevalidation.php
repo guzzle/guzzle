@@ -3,7 +3,7 @@
 namespace Guzzle\Plugin\Cache;
 
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\Response;
+use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Http\Exception\BadResponseException;
 
 /**
@@ -27,7 +27,7 @@ class DefaultRevalidation implements RevalidationInterface
         $this->canCache = $canCache ?: new DefaultCanCacheStrategy();
     }
 
-    public function revalidate(RequestInterface $request, Response $response)
+    public function revalidate(RequestInterface $request, ResponseInterface $response)
     {
         try {
             $revalidate = $this->createRevalidationRequest($request, $response);
@@ -46,7 +46,7 @@ class DefaultRevalidation implements RevalidationInterface
         return false;
     }
 
-    public function shouldRevalidate(RequestInterface $request, Response $response)
+    public function shouldRevalidate(RequestInterface $request, ResponseInterface $response)
     {
         if ($request->getMethod() != RequestInterface::GET) {
             return false;
@@ -87,12 +87,12 @@ class DefaultRevalidation implements RevalidationInterface
     /**
      * Creates a request to use for revalidation
      *
-     * @param RequestInterface $request  Request
-     * @param Response         $response Response to revalidate
+     * @param RequestInterface  $request  Request
+     * @param ResponseInterface $response Response to revalidate
      *
      * @return RequestInterface returns a revalidation request
      */
-    protected function createRevalidationRequest(RequestInterface $request, Response $response)
+    protected function createRevalidationRequest(RequestInterface $request, ResponseInterface $response)
     {
         $revalidate = clone $request;
         $revalidate->removeHeader('Pragma')
@@ -119,12 +119,12 @@ class DefaultRevalidation implements RevalidationInterface
     /**
      * Handles a 200 response response from revalidating. The server does not support validation, so use this response.
      *
-     * @param RequestInterface $request          Request that was sent
-     * @param Response         $validateResponse Response received
+     * @param RequestInterface  $request          Request that was sent
+     * @param ResponseInterface $validateResponse Response received
      *
      * @return bool Returns true if valid, false if invalid
      */
-    protected function handle200Response(RequestInterface $request, Response $validateResponse)
+    protected function handle200Response(RequestInterface $request, ResponseInterface $validateResponse)
     {
         $request->setResponse($validateResponse);
         if ($this->canCache->canCacheResponse($validateResponse)) {
@@ -137,14 +137,17 @@ class DefaultRevalidation implements RevalidationInterface
     /**
      * Handle a 304 response and ensure that it is still valid
      *
-     * @param RequestInterface $request          Request that was sent
-     * @param Response         $validateResponse Response received
-     * @param Response         $response         Original cached response
+     * @param RequestInterface  $request          Request that was sent
+     * @param ResponseInterface $validateResponse Response received
+     * @param ResponseInterface $response         Original cached response
      *
      * @return bool Returns true if valid, false if invalid
      */
-    protected function handle304Response(RequestInterface $request, Response $validateResponse, Response $response)
-    {
+    protected function handle304Response(
+        RequestInterface $request,
+        ResponseInterface $validateResponse,
+        ResponseInterface $response
+    ) {
         static $replaceHeaders = array('Date', 'Expires', 'Cache-Control', 'ETag', 'Last-Modified');
 
         // Make sure that this response has the same ETag

@@ -3,7 +3,7 @@
 namespace Guzzle\Plugin\Cache;
 
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\Response;
+use Guzzle\Http\Message\ResponseInterface;
 
 /**
  * Default strategy used to determine of an HTTP request can be cached
@@ -25,7 +25,7 @@ class DefaultCanCacheStrategy implements CanCacheStrategyInterface
         return true;
     }
 
-    public function canCacheResponse(Response $response)
+    public function canCacheResponse(ResponseInterface $response)
     {
         return $response->isSuccessful() && $response->canCache();
     }
