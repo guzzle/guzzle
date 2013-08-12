@@ -60,7 +60,7 @@ abstract class AbstractMessage implements MessageInterface
         if ($body === null) {
             // Setting a null body will remove the body of the request
             $this->body = null;
-            $this->setHeader('Content-Length', 0);
+            $this->removeHeader('Content-Length');
             $this->removeHeader('Transfer-Encoding');
         } else {
             $this->body = Stream::factory($body);

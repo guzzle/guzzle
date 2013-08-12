@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http\Adapter;
 
+use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Event\RequestAfterSendEvent;
 use Guzzle\Http\Event\RequestErrorEvent;
 use Guzzle\Http\Exception\RequestException;
@@ -48,6 +49,8 @@ class StreamAdapter implements AdapterInterface
         if (isset($http_response_header)) {
             $this->processResponseHeaders($http_response_header, $response);
         }
+
+        $request->dispatch(RequestEvents::GOT_HEADERS, ['request' => $request, 'response' => $response]);
 
         if ($request->getConfig()['stream']) {
             $this->applyStreamingBody($request, $response, $stream);
