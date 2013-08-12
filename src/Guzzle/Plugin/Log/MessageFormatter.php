@@ -27,6 +27,8 @@ use Guzzle\Http\Message\ResponseInterface;
  * - {error}:         Any error messages (if available)
  * - {req_header_*}:  Replace `*` with the lowercased name of a request header to add to the message
  * - {res_header_*}:  Replace `*` with the lowercased name of a response header to add to the message
+ * - {req_headers}:   Request headers
+ * - {res_headers}:   Response headers
  * - {req_body}:      Request body
  * - {res_body}:      Response body
  */
@@ -94,6 +96,12 @@ class MessageFormatter
                         break;
                     case 'response':
                         $result = $response;
+                        break;
+                    case 'req_headers':
+                        $result = $request->getStartLine() . "\r\n" . $request->getHeaders();
+                        break;
+                    case 'res_headers':
+                        $result = $response->getStartLine() . "\r\n" . $response->getHeaders();
                         break;
                     case 'req_body':
                         $result = $request->getBody();
