@@ -2,7 +2,7 @@
 
 namespace Guzzle\Plugin\Cookie\CookieJar;
 
-use Guzzle\Plugin\Cookie\Cookie;
+use Guzzle\Plugin\Cookie\SetCookie;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
 
@@ -47,11 +47,11 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
     /**
      * Add a cookie to the cookie cookieJar
      *
-     * @param Cookie $cookie Cookie to add
+     * @param SetCookie $cookie Cookie to add
      *
      * @return bool Returns true on success or false on failure
      */
-    public function add(Cookie $cookie);
+    public function add(SetCookie $cookie);
 
     /**
      * Add cookies from a {@see Guzzle\Http\Message\Response} object
@@ -79,7 +79,7 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      * @param bool   $skipDiscardable Set to TRUE to skip cookies with the Discard attribute.
      * @param bool   $skipExpired     Set to FALSE to include expired
      *
-     * @return array Returns an array of Cookie objects
+     * @return array Returns an array of SetCookie objects
      */
     public function all($domain = null, $path = null, $name = null, $skipDiscardable = false, $skipExpired = true);
 }

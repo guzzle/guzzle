@@ -2,7 +2,7 @@
 
 namespace Guzzle\Plugin\Cookie\CookieJar;
 
-use Guzzle\Plugin\Cookie\Cookie;
+use Guzzle\Plugin\Cookie\SetCookie;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Plugin\Cookie\Exception\InvalidCookieException;
@@ -41,7 +41,7 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
     public function remove($domain = null, $path = null, $name = null)
     {
         $cookies = $this->all($domain, $path, $name, false, false);
-        $this->cookies = array_filter($this->cookies, function (Cookie $cookie) use ($cookies) {
+        $this->cookies = array_filter($this->cookies, function (SetCookie $cookie) use ($cookies) {
             return !in_array($cookie, $cookies, true);
         });
 
@@ -50,7 +50,7 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
 
     public function removeTemporary()
     {
-        $this->cookies = array_filter($this->cookies, function (Cookie $cookie) {
+        $this->cookies = array_filter($this->cookies, function (SetCookie $cookie) {
             return !$cookie->getDiscard() && $cookie->getExpires();
         });
 
@@ -60,7 +60,7 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
     public function removeExpired()
     {
         $currentTime = time();
-        $this->cookies = array_filter($this->cookies, function (Cookie $cookie) use ($currentTime) {
+        $this->cookies = array_filter($this->cookies, function (SetCookie $cookie) use ($currentTime) {
             return !$cookie->getExpires() || $currentTime < $cookie->getExpires();
         });
 
@@ -69,7 +69,7 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
 
     public function all($domain = null, $path = null, $name = null, $skipDiscardable = false, $skipExpired = true)
     {
-        return array_values(array_filter($this->cookies, function (Cookie $cookie) use (
+        return array_values(array_filter($this->cookies, function (SetCookie $cookie) use (
             $domain,
             $path,
             $name,
@@ -84,7 +84,7 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
         }));
     }
 
-    public function add(Cookie $cookie)
+    public function add(SetCookie $cookie)
     {
         // Only allow cookies with set and valid domain, name, value
         $result = $cookie->validate();
@@ -99,10 +99,9 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
         // Resolve conflicts with previously set cookies
         foreach ($this->cookies as $i => $c) {
 
-            // Two cookies are identical, when their path, domain, port and name are identical
+            // Two cookies are identical, when their path, and domain are identical
             if ($c->getPath() != $cookie->getPath() ||
                 $c->getDomain() != $cookie->getDomain() ||
-                $c->getPorts() != $cookie->getPorts() ||
                 $c->getName() != $cookie->getName()
             ) {
                 continue;
@@ -143,7 +142,7 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
     public function serialize()
     {
         // Only serialize long term cookies and unexpired cookies
-        return json_encode(array_map(function (Cookie $cookie) {
+        return json_encode(array_map(function (SetCookie $cookie) {
             return $cookie->toArray();
         }, $this->all(null, null, null, true, true)));
     }
@@ -158,7 +157,7 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
             $this->cookies = array();
         } else {
             $this->cookies = array_map(function (array $cookie) {
-                return new Cookie($cookie);
+                return new SetCookie($cookie);
             }, $data);
         }
     }
@@ -186,21 +185,10 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
     public function addCookiesFromResponse(ResponseInterface $response, RequestInterface $request = null)
     {
         if ($cookieHeader = $response->getHeader('Set-Cookie')) {
-            $parser = ParserRegistry::getInstance()->getParser('cookie');
             foreach ($cookieHeader as $cookie) {
-                if ($parsed = $request
-                    ? $parser->parseCookie($cookie, $request->getHost(), $request->getPath())
-                    : $parser->parseCookie($cookie)
-                ) {
-                    // Break up cookie v2 into multiple cookies
-                    foreach ($parsed['cookies'] as $key => $value) {
-                        $row = $parsed;
-                        $row['name'] = $key;
-                        $row['value'] = $value;
-                        unset($row['cookies']);
-                        $this->add(new Cookie($row));
-                    }
-                }
+                $sc = SetCookie::fromString($cookie);
+                $sc->setDomain($request->getHost());
+                $this->add($sc);
             }
         }
     }
@@ -211,7 +199,7 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
         $cookies = $this->all($request->getHost(), $request->getPath());
         // Remove ineligible cookies
         foreach ($cookies as $index => $cookie) {
-            if (!$cookie->matchesPort($request->getPort()) || ($cookie->getSecure() && $request->getScheme() != 'https')) {
+            if ($cookie->getSecure() && $request->getScheme() != 'https') {
                 unset($cookies[$index]);
             }
         };

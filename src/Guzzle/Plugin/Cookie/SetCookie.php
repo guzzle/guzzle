@@ -65,8 +65,8 @@ class SetCookie implements ToArrayInterface
         }
 
         // Calculate the Expires date
-        if (!$data['Expires'] && $data['MaxAge']) {
-            $data['Expires'] = time() + (int) $data['MaxAge'];
+        if (!$data['Expires'] && $data['Max-Age']) {
+            $data['Expires'] = time() + (int) $data['Max-Age'];
         }
 
         return new self($data);
@@ -211,7 +211,7 @@ class SetCookie implements ToArrayInterface
      */
     public function getMaxAge()
     {
-        return $this->data['MaxAge'];
+        return $this->data['Max-Age'];
     }
 
     /**
@@ -223,7 +223,7 @@ class SetCookie implements ToArrayInterface
      */
     public function setMaxAge($maxAge)
     {
-        $this->data['MaxAge'] = $maxAge;
+        $this->data['Max-Age'] = $maxAge;
 
         return $this;
     }

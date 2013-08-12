@@ -2,7 +2,8 @@
 
 namespace Guzzle\Plugin\Cookie;
 
-use Guzzle\Common\Event;
+use Guzzle\Http\Event\RequestAfterSendEvent;
+use Guzzle\Http\Event\RequestBeforeSendEvent;
 use Guzzle\Plugin\Cookie\CookieJar\ArrayCookieJar;
 use Guzzle\Plugin\Cookie\CookieJar\CookieJarInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -25,10 +26,10 @@ class CookiePlugin implements EventSubscriberInterface
 
     public static function getSubscribedEvents()
     {
-        return array(
-            'request.before_send' => array('onRequestBeforeSend', 125),
-            'request.sent'        => array('onRequestSent', 125)
-        );
+        return [
+            'request.before_send' => ['onRequestBeforeSend', 125],
+            'request.after_send'  => ['onRequestSent', 125]
+        ];
     }
 
     /**
@@ -41,30 +42,20 @@ class CookiePlugin implements EventSubscriberInterface
         return $this->cookieJar;
     }
 
-    /**
-     * Add cookies before a request is sent
-     *
-     * @param Event $event
-     */
-    public function onRequestBeforeSend(Event $event)
+    public function onRequestBeforeSend(RequestBeforeSendEvent $event)
     {
-        $request = $event['request'];
-        if (!$request->getParams()->get('cookies.disable')) {
-            $request->removeHeader('Cookie');
-            // Find cookies that match this request
-            foreach ($this->cookieJar->getMatchingCookies($request) as $cookie) {
-                $request->addCookie($cookie->getName(), $cookie->getValue());
+        $event->getRequest()->removeHeader('Cookie');
+        // Find cookies that match this request
+        if ($matching = $this->cookieJar->getMatchingCookies($event->getRequest())) {
+            $event->getRequest()->addHeader('Cookie');
+            foreach ($matching as $cookie) {
+                $event->getRequest()->getHeader('Cookie')->addCookie($cookie->getName(), $cookie->getValue());
             }
         }
     }
 
-    /**
-     * Extract cookies from a sent request
-     *
-     * @param Event $event
-     */
-    public function onRequestSent(Event $event)
+    public function onRequestSent(RequestAfterSendEvent $event)
     {
-        $this->cookieJar->addCookiesFromResponse($event['response'], $event['request']);
+        $this->cookieJar->addCookiesFromResponse($event->getResponse(), $event->getRequest());
     }
 }
