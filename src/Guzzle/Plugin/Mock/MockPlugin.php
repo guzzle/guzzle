@@ -5,6 +5,7 @@ namespace Guzzle\Plugin\Mock;
 use Guzzle\Common\AbstractHasDispatcher;
 use Guzzle\Http\Event\RequestBeforeSendEvent;
 use Guzzle\Http\Exception\RequestException;
+use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\ResponseInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -40,6 +41,8 @@ class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterfa
         if ($this->queue) {
             $item = array_shift($this->queue);
             $request = $event->getRequest();
+            // Emulate the receiving of the response headers
+            $request->dispatch(RequestEvents::GOT_HEADERS, ['request' => $request, 'response' => $item]);
             // Emulate reading a response body
             if ($item instanceof ResponseInterface && $this->readBodies && $request->getBody()) {
                 while (!$request->getBody()->eof()) {
