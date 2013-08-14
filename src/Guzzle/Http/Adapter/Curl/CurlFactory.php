@@ -100,18 +100,23 @@ class CurlFactory
 
     protected function applyBody(RequestInterface $request, array &$options)
     {
+        if (null !== ($len = $request->getHeader('Content-Length'))) {
+            $size = (int) (string) $len;
+        } else {
+            $size = null;
+        }
+
         // You can send the body as a string using curl's CURLOPT_POSTFIELDS
-        if (isset($request->getConfig()['adapter']['body_as_string'])) {
+        if (($size !== null && $size < 32768) || isset($request->getConfig()['adapter']['body_as_string'])) {
             $options[CURLOPT_POSTFIELDS] = (string) $request->getBody();
             // Don't duplicate the Content-Length header
             unset($options['_headers']['Content-Length']);
             unset($options['_headers']['Transfer-Encoding']);
-            $request->removeHeader('Transfer-Encoding');
         } else {
             $options[CURLOPT_UPLOAD] = true;
             // Let cURL handle setting the Content-Length header
-            if (null !== ($len = $request->getHeader('Content-Length'))) {
-                $options[CURLOPT_INFILESIZE] = (int) (string) $len;
+            if ($size !== null) {
+                $options[CURLOPT_INFILESIZE] = $size;
                 unset($options['_headers']['Content-Length']);
             }
             $request->getBody()->rewind();
