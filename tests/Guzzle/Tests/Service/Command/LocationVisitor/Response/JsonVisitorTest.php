@@ -43,15 +43,15 @@ class JsonVisitorTest extends AbstractResponseVisitorTest
 
     /**
      * @group issue-317
-     * @link https://github.com/guzzle/guzzle/issues/317
+     * @link  https://github.com/guzzle/guzzle/issues/317
      */
     public function testTopLevelFlattenedArray()
     {
         $visitor = new Visitor();
         $param = new Parameter(array(
-            'name' => 'foo',
-            'type' => 'array',
-            'data' => array(
+            'name'  => 'foo',
+            'type'  => 'array',
+            'data'  => array(
                 'jsonFlattened' => true
             ),
             'items' => array(
@@ -67,23 +67,23 @@ class JsonVisitorTest extends AbstractResponseVisitorTest
 
     /**
      * @group issue-317
-     * @link https://github.com/guzzle/guzzle/issues/317
+     * @link  https://github.com/guzzle/guzzle/issues/317
      */
     public function testTopLevelFlattenedArrayOfObjects()
     {
         $visitor = new Visitor();
         $param = new Parameter(array(
-            'name' => 'foo',
-            'type' => 'array',
-            'data' => array(
+            'name'  => 'foo',
+            'type'  => 'array',
+            'data'  => array(
                 'jsonFlattened' => true
             ),
             'items' => array(
-                'type'    => 'object',
+                'type'       => 'object',
                 'properties' => array(
                     'name' => array(
                         'filters' => 'strtoupper',
-                        'type' => 'integer'
+                        'type'    => 'integer'
                     )
                 )
             )

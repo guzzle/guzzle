@@ -73,18 +73,18 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @group issue-317
-     * @link https://github.com/guzzle/guzzle/issues/317
+     * @link  https://github.com/guzzle/guzzle/issues/317
      */
     public function testExplicitTopLevelLocation()
     {
         $parser = OperationResponseParser::getInstance();
         $description = ServiceDescription::factory(array(
             'operations' => array('test' => array('responseClass' => 'Foo')),
-            'models' => array(
+            'models'     => array(
                 'Foo' => array(
-                    'type'       => 'array',
-                    'location'   => 'json',
-                    'items' => array(
+                    'type'     => 'array',
+                    'location' => 'json',
+                    'items'    => array(
                         'type' => 'object'
                     )
                 )
@@ -111,24 +111,24 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @group issue-317
-     * @link https://github.com/guzzle/guzzle/issues/317
+     * @link  https://github.com/guzzle/guzzle/issues/317
      */
     public function testJsonResponseWithArrayAndTopLevelFlattening()
     {
         $parser = OperationResponseParser::getInstance();
         $description = ServiceDescription::factory(array(
             'operations' => array('test' => array('responseClass' => 'Foo')),
-            'models' => array(
+            'models'     => array(
                 'Foo' => array(
                     'type'       => 'object',
                     'properties' => array(
-                        'body'    => array(
-                            'type' => 'array',
+                        'body'   => array(
+                            'type'     => 'array',
                             'location' => 'json',
-                            'data' => array(
+                            'data'     => array(
                                 'jsonFlattened' => true
                             ),
-                            'items' => array(
+                            'items'    => array(
                                 'type' => 'object'
                             )
                         ),
@@ -146,7 +146,7 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
         ), '[{"baz":"bar","enigma":"123"},{"baz":"foo","enigma":"321"}]'), true);
         $result = $op->execute();
         $this->assertEquals(array(
-            'body' => array(
+            'body'   => array(
                 array(
                     'baz'    => 'bar',
                     'enigma' => '123',
@@ -160,7 +160,6 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
             'phrase' => 'OK'
         ), $result->toArray());
     }
-
 
     public function testSkipsUnkownModels()
     {
