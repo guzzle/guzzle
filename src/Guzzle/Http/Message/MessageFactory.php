@@ -146,6 +146,15 @@ class MessageFactory implements MessageFactoryInterface
         }
     }
 
+    private function visit_config(RequestInterface $request, $value)
+    {
+        if (!is_array($value)) {
+            throw new \InvalidArgumentException('config value must be an associative array');
+        }
+
+        $request->getConfig()->overwriteWith($value);
+    }
+
     private function visit_allow_redirects(RequestInterface $request, $value)
     {
         if ($value !== false) {

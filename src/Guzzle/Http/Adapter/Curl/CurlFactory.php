@@ -32,8 +32,12 @@ class CurlFactory
         $this->applyMethod($request, $options);
         $this->applyTransferOptions($request, $response, $options);
         $this->applyHeaders($request, $options);
-        $handle = curl_init();
         unset($options['_headers']);
+        // Add adapter options from the request's configuration options
+        if ($config = $request->getConfig()['curl']) {
+            $options = $config + $options;
+        }
+        $handle = curl_init();
         curl_setopt_array($handle, $options);
 
         return $handle;
