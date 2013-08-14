@@ -21,7 +21,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class LogPlugin implements EventSubscriberInterface
 {
     /** @var LogAdapterInterface Adapter responsible for writing log data */
-    private $logAdapter;
+    protected $logAdapter;
 
     /** @var MessageFormatter Formatter used to format messages before logging */
     protected $formatter;
