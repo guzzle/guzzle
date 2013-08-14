@@ -161,6 +161,56 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
         ), $result);
     }
 
+    /**
+     * @group issue-399
+     * @link https://github.com/guzzle/guzzle/issues/399
+     */
+    public function testAdditionalPropertiesDisabledDiscardsData()
+    {
+        $parser = OperationResponseParser::getInstance();
+        $description = ServiceDescription::factory(array(
+            'operations' => array('test' => array('responseClass' => 'Foo')),
+            'models'     => array(
+                'Foo' => array(
+                    'type'       => 'object',
+                    'additionalProperties' => false,
+                    'properties' => array(
+                        'name'   => array(
+                            'location' => 'json',
+                            'type'     => 'string',
+                        ),
+                        'nested' => array(
+                            'location'             => 'json',
+                            'type'                 => 'object',
+                            'additionalProperties' => false,
+                            'properties'           => array(
+                                'width' => array(
+                                    'type' => 'integer'
+                                )
+                            ),
+                        ),
+                        'code'   => array('location' => 'statusCode')
+                    ),
+
+                )
+            )
+        ));
+
+        $operation = $description->getOperation('test');
+        $op = new OperationCommand(array(), $operation);
+        $op->setResponseParser($parser)->setClient(new Client());
+        $json = '{"name":"test", "volume":2.0, "nested":{"width":10,"bogus":1}}';
+        $op->prepare()->setResponse(new Response(200, array('Content-Type' => 'application/json'), $json), true);
+        $result = $op->execute()->toArray();
+        $this->assertEquals(array(
+            'name' => 'test',
+            'nested' => array(
+                'width' => 10,
+            ),
+            'code' => 200
+        ), $result);
+    }
+
     public function testCreatesCustomResponseClassInterface()
     {
         $parser = OperationResponseParser::getInstance();

@@ -118,7 +118,7 @@ class OperationResponseParser extends DefaultResponseParser
      */
     protected function visitResult(Parameter $model, CommandInterface $command, Response $response)
     {
-        $foundVisitors = $result = array();
+        $foundVisitors = $result = $knownProps = array();
         $props = $model->getProperties();
 
         foreach ($props as $schema) {
@@ -138,9 +138,15 @@ class OperationResponseParser extends DefaultResponseParser
 
         // Apply the parameter value with the location visitor
         foreach ($props as $schema) {
+            $knownProps[$schema->getName()] = 1;
             if ($location = $schema->getLocation()) {
                 $foundVisitors[$location]->visit($command, $response, $schema, $result);
             }
+        }
+
+        // Remove any unknown and potentially unsafe top-level properties
+        if ($model->getAdditionalProperties() === false) {
+            $result = array_intersect_key($result, $knownProps);
         }
 
         // Call the after() method of each found visitor
