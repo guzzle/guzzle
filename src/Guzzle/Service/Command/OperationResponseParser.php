@@ -2,7 +2,6 @@
 
 namespace Guzzle\Service\Command;
 
-use Guzzle\Common\Event;
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Command\LocationVisitor\VisitorFlyweight;
 use Guzzle\Service\Command\LocationVisitor\Response\ResponseVisitorInterface;
