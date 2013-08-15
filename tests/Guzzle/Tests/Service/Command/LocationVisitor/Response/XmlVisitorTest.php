@@ -366,4 +366,50 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             )
         ), $value);
     }
+
+    /**
+     * @group issue-399
+     * @link  https://github.com/guzzle/guzzle/issues/399
+     */
+    public function testDiscardingUnknownProperties()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'name'                 => 'foo',
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'properties'           => array(
+                'bar' => array(
+                    'type' => 'string',
+                    'name' => 'bar',
+                ),
+            ),
+        ));
+        $this->value = array('foo' => array('bar' => 15, 'unknown' => 'Unknown'));
+        $visitor->visit($this->command, $this->response, $param, $this->value);
+        $this->assertEquals(array('foo' => array('bar' => 15)), $this->value);
+    }
+
+    /**
+     * @group issue-399
+     * @link  https://github.com/guzzle/guzzle/issues/399
+     */
+    public function testDiscardingUnknownPropertiesWithAliasing()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'name'                 => 'foo',
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'properties'           => array(
+                'bar' => array(
+                    'name'   => 'bar',
+                    'sentAs' => 'baz',
+                ),
+            ),
+        ));
+        $this->value = array('foo' => array('baz' => 15, 'unknown' => 'Unknown'));
+        $visitor->visit($this->command, $this->response, $param, $this->value);
+        $this->assertEquals(array('foo' => array('bar' => 15)), $this->value);
+    }
 }

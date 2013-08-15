@@ -60,4 +60,39 @@ class HeaderVisitorTest extends AbstractResponseVisitorTest
             )
         ), $this->value);
     }
+
+    /**
+     * @group issue-399
+     * @link  https://github.com/guzzle/guzzle/issues/399
+     */
+    public function testDiscardingUnknownHeaders()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'location'             => 'header',
+            'name'                 => 'Content-Type',
+            'additionalParameters' => false
+        ));
+        $visitor->visit($this->command, $this->response, $param, $this->value);
+        $this->assertEquals('text/plain', $this->value['Content-Type']);
+        $this->assertArrayNotHasKey('X-Foo', $this->value);
+    }
+
+    /**
+     * @group issue-399
+     * @link  https://github.com/guzzle/guzzle/issues/399
+     */
+    public function testDiscardingUnknownPropertiesWithAliasing()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'location'             => 'header',
+            'name'                 => 'ContentType',
+            'sentAs'               => 'Content-Type',
+            'additionalParameters' => false
+        ));
+        $visitor->visit($this->command, $this->response, $param, $this->value);
+        $this->assertEquals('text/plain', $this->value['ContentType']);
+        $this->assertArrayNotHasKey('X-Foo', $this->value);
+    }
 }
