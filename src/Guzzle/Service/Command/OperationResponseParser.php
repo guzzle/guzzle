@@ -145,7 +145,7 @@ class OperationResponseParser extends DefaultResponseParser
         }
 
         // Remove any unknown and potentially unsafe top-level properties
-        if ($model->getAdditionalProperties() === false) {
+        if ($additional === false) {
             $result = array_intersect_key($result, $knownProps);
         }
 
