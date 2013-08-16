@@ -5,6 +5,7 @@ namespace Guzzle\Tests\Service\Command\LocationVisitor\Response;
 use Guzzle\Service\Description\Parameter;
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Command\LocationVisitor\Response\XmlVisitor as Visitor;
+use SimpleXMLElement;
 
 /**
  * @covers Guzzle\Service\Command\LocationVisitor\Response\XmlVisitor
@@ -22,13 +23,12 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             ->will($this->returnValue(new Response(200, null, '<foo><Bar>test</Bar></foo>')));
         $result = array();
         $visitor->before($command, $result);
-        $this->assertEquals(array('Bar' => 'test'), $result);
+        $this->assertInstanceOf('SimpleXMLElement', $visitor->getXml());
+        $this->assertEquals('test', $visitor->getXml()->Bar);
     }
 
     public function testBeforeMethodParsesXmlWithNamespace()
     {
-        $this->markTestSkipped("Response/XmlVisitor cannot accept 'xmlns' in response, see #368 (http://git.io/USa1mA).");
-
         $visitor = new Visitor();
         $command = $this->getMockBuilder('Guzzle\Service\Command\AbstractCommand')
             ->setMethods(array('getResponse'))
@@ -38,32 +38,20 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             ->will($this->returnValue(new Response(200, null, '<foo xmlns="urn:foo"><bar:Bar xmlns:bar="urn:bar">test</bar:Bar></foo>')));
         $result = array();
         $visitor->before($command, $result);
-        $this->assertEquals(array('Bar' => 'test'), $result);
-    }
-
-    public function testBeforeMethodParsesNestedXml()
-    {
-        $visitor = new Visitor();
-        $command = $this->getMockBuilder('Guzzle\Service\Command\AbstractCommand')
-            ->setMethods(array('getResponse'))
-            ->getMockForAbstractClass();
-        $command->expects($this->once())
-            ->method('getResponse')
-            ->will($this->returnValue(new Response(200, null, '<foo><Items><Bar>test</Bar></Items></foo>')));
-        $result = array();
-        $visitor->before($command, $result);
-        $this->assertEquals(array('Items' => array('Bar' => 'test')), $result);
+        $this->assertInstanceOf('SimpleXMLElement', $visitor->getXml());
+        $this->assertEquals('test', $visitor->getXml()->children('bar', true)->Bar);
     }
 
     public function testCanExtractAndRenameTopLevelXmlValues()
     {
+        $value = array();
         $visitor = new Visitor();
         $param = new Parameter(array(
             'location' => 'xml',
             'name'     => 'foo',
             'sentAs'   => 'Bar'
         ));
-        $value = array('Bar' => 'test');
+        $visitor->setXml(new SimpleXMLElement('<xml><Bar>test</Bar></xml>'));
         $visitor->visit($this->command, $this->response, $param, $value);
         $this->assertArrayHasKey('foo', $value);
         $this->assertEquals('test', $value['foo']);
@@ -87,8 +75,9 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             )
         ));
 
-        $xml = new \SimpleXMLElement('<Test><Foo><Bar>1</Bar><Baz>2</Baz></Foo></Test>');
-        $value = json_decode(json_encode($xml), true);
+        $value = array();
+        $xml = new SimpleXMLElement('<Test><Foo><Bar>1</Bar><Baz>2</Baz></Foo></Test>');
+        $visitor->setXml($xml);
         $visitor->visit($this->command, $this->response, $param, $value);
         $this->assertEquals(array(
             'foo' => array(
@@ -110,11 +99,13 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             'items'    => array('type' => 'string')
         ));
 
-        $value = array('foo' => array('bar', 'baz'));
+        $value = array();
+        $visitor->setXml(new SimpleXMLElement('<xml><foo>bar</foo><foo>baz</foo></xml>'));
         $visitor->visit($this->command, $this->response, $param, $value);
         $this->assertEquals(array('foo' => array('bar', 'baz')), $value);
 
-        $value = array('foo' => 'bar');
+        $value = array();
+        $visitor->setXml(new SimpleXMLElement('<xml><foo>bar</foo></xml>'));
         $visitor->visit($this->command, $this->response, $param, $value);
         $this->assertEquals(array('foo' => array('bar')), $value);
     }
@@ -159,8 +150,10 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
     public function testEnsuresWrappedArraysAreInCorrectLocations($param, $xml, $result)
     {
         $visitor = new Visitor();
-        $xml = new \SimpleXMLElement($xml);
-        $value = json_decode(json_encode($xml), true);
+        $xml = new SimpleXMLElement($xml);
+//        $value = json_decode(json_encode($xml), true);
+        $value = array();
+        $visitor->setXml($xml);
         $visitor->visit($this->command, $this->response, $param, $value);
         $this->assertEquals($result, $value);
     }
@@ -214,22 +207,25 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             )
         ));
 
-        $value = array(
-            'instancesSet' => array (
-                'item' => array (
-                    'instanceId' => 'i-3ea74257',
-                    'currentState' => array(
-                        'code' => '32',
-                        'name' => 'shutting-down',
-                    ),
-                    'previousState' => array(
-                        'code' => '16',
-                        'name' => 'running',
-                    ),
-                ),
-            )
-        );
-
+        $value = array();
+        $xml = new SimpleXMLElement('
+            <xml>
+                <instancesSet>
+                    <item>
+                        <instanceId>i-3ea74257</instanceId>
+                        <currentState>
+                            <code>32</code>
+                            <name>shutting-down</name>
+                        </currentState>
+                        <previousState>
+                            <code>16</code>
+                            <name>running</name>
+                        </previousState>
+                    </item>
+                </instancesSet>
+            </xml>
+        ');
+        $visitor->setXml($xml);
         $visitor->visit($this->command, $this->response, $param, $value);
 
         $this->assertEquals(array(
@@ -307,8 +303,18 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             )
         ));
 
-        $xml = '<wrap><RunningQueues><item queue_id="q-3ea74257"><CurrentState code="32" name="processing" /><PreviousState code="16" name="wait" /></item></RunningQueues></wrap>';
-        $value = json_decode(json_encode(new \SimpleXMLElement($xml)), true);
+        $xml = new SimpleXMLElement('
+            <wrap>
+                <RunningQueues>
+                    <item queue_id="q-3ea74257">
+                        <CurrentState code="32" name="processing" />
+                        <PreviousState code="16" name="wait" />
+                    </item>
+                </RunningQueues>
+            </wrap>
+        ');
+        $value = array();
+        $visitor->setXml($xml);
         $visitor->visit($this->command, $this->response, $param, $value);
 
         $this->assertEquals(array(
@@ -349,14 +355,7 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             )
         ));
 
-        $value = array();
-        $visitor->visit($this->command, $this->response, $param, $value);
-
-        $value = array(
-            'Foo' => array(
-                'Bar' => array()
-            )
-        );
+        $visitor->setXml(new SimpleXMLElement('<xml><Foo><Bar></Bar></Foo></xml>'));
         $visitor->visit($this->command, $this->response, $param, $value);
         $this->assertEquals(array(
             'Foo' => array(
@@ -385,9 +384,21 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
                 ),
             ),
         ));
-        $this->value = array('foo' => array('bar' => 15, 'unknown' => 'Unknown'));
-        $visitor->visit($this->command, $this->response, $param, $this->value);
-        $this->assertEquals(array('foo' => array('bar' => 15)), $this->value);
+        $value = array();
+        $visitor->setXml(new SimpleXMLElement('
+            <xml>
+                <foo>
+                    <bar>15</bar>
+                    <unknown>discard me</unknown>
+                </foo>
+            </xml>
+        '));
+        $visitor->visit($this->command, $this->response, $param, $value);
+        $this->assertEquals(array(
+            'foo' => array(
+                'bar' => 15
+            )
+        ), $value);
     }
 
     /**
@@ -408,8 +419,106 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
                 ),
             ),
         ));
-        $this->value = array('foo' => array('baz' => 15, 'unknown' => 'Unknown'));
-        $visitor->visit($this->command, $this->response, $param, $this->value);
-        $this->assertEquals(array('foo' => array('bar' => 15)), $this->value);
+        $value = array();
+        $visitor->setXml(new SimpleXMLElement('
+            <xml>
+                <foo>
+                    <baz>15</baz>
+                    <unknown>discard me</unknown>
+                </foo>
+            </xml>
+        '));
+        $visitor->visit($this->command, $this->response, $param, $value);
+        $this->assertEquals(array(
+            'foo' => array(
+                'bar' => 15
+            )
+        ), $value);
+    }
+
+    public function testProcessingOfNestedAdditionalProperties()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'name'                 => 'foo',
+            'type'                 => 'object',
+            'additionalProperties' => true,
+            'properties'           => array(
+                'bar' => array(
+                    'name'   => 'bar',
+                    'sentAs' => 'baz',
+                ),
+                'nestedNoAdditional' => array(
+                    'type' => 'object',
+                    'additionalProperties' => false,
+                    'properties' => array(
+                        'id' => array(
+                            'type' => 'integer'
+                        )
+                    )
+                ),
+                'nestedWithAdditional' => array(
+                    'type' => 'object',
+                    'additionalProperties' => true,
+                ),
+                'nestedWithAdditionalSchema' => array(
+                    'type' => 'object',
+                    'additionalProperties' => array(
+                        'type' => 'array',
+                        'items' => array(
+                            'type' => 'string'
+                        )
+                    ),
+                ),
+            ),
+        ));
+        $value = array();
+        $visitor->setXml(new SimpleXMLElement('
+            <xml>
+                <foo>
+                    <baz>15</baz>
+                    <additional>include me</additional>
+                    <nestedNoAdditional>
+                        <id>15</id>
+                        <unknown>discard me</unknown>
+                    </nestedNoAdditional>
+                    <nestedWithAdditional>
+                        <id>15</id>
+                        <additional>include me</additional>
+                    </nestedWithAdditional>
+                    <nestedWithAdditionalSchema>
+                        <arrayA>
+                            <item>1</item>
+                            <item>2</item>
+                            <item>3</item>
+                        </arrayA>
+                        <arrayB>
+                            <item>A</item>
+                            <item>B</item>
+                            <item>C</item>
+                        </arrayB>
+                    </nestedWithAdditionalSchema>
+                </foo>
+            </xml>
+        '));
+        $visitor->visit($this->command, $this->response, $param, $value);
+        $this->assertEquals(array(
+            'foo' => array(
+                'bar'                        => '15',
+                'additional'                 => 'include me',
+                'nestedNoAdditional'         => array(
+                    'id' => '15'
+                ),
+                'nestedWithAdditional'       => array(
+                    'id'         => '15',
+                    'additional' => 'include me'
+                ),
+                'nestedWithAdditionalSchema' => array(
+                    'arrayA' => array('1', '2', '3'),
+                    'arrayB' => array('A', 'B', 'C'),
+                )
+
+            )
+        ), $value);
     }
 }

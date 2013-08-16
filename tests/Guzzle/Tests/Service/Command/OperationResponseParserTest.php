@@ -123,7 +123,7 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($brokenXml, (string) $result['baz']);
     }
 
-    public function testVisitsAdditionalProperties()
+    public function testVisitsAdditionalPropertiesWithJson()
     {
         $parser = OperationResponseParser::getInstance();
         $description = ServiceDescription::factory(array(
@@ -160,6 +160,59 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
             array('a' => 'BAZ')
         ), $result);
     }
+
+    public function testVisitsAdditionalPropertiesWithXML()
+    {
+        $parser = OperationResponseParser::getInstance();
+        $description = ServiceDescription::factory(array(
+            'operations' => array('test' => array('responseClass' => 'Foo')),
+            'models'     => array(
+                'Foo' => array(
+                    'type'                 => 'object',
+                    'additionalProperties' => array(
+                        'location'             => 'xml',
+                        'type'                 => 'object',
+                        'additionalProperties' => false,
+                        'properties'           => array(
+                            'id' => array(
+                                'type' => 'integer'
+                            )
+                        )
+                    )
+                )
+            )
+        ));
+        $operation = $description->getOperation('test');
+        $op = new OperationCommand(array(), $operation);
+        $op->setResponseParser($parser)->setClient(new Client());
+        $xml = '
+            <xml>
+                <foo>
+                    <nestedNoAdditional>
+                        <id>15</id>
+                        <unknown>discard me</unknown>
+                    </nestedNoAdditional>
+                    <nestedNoAdditional2>
+                        <id>25</id>
+                        <unknown>discard me</unknown>
+                    </nestedNoAdditional2>
+                </foo>
+            </xml>
+        ';
+        $op->prepare()->setResponse(new Response(200, array('Content-Type' => 'application/xml'), $xml), true);
+        $result = $op->execute()->toArray();
+        $this->assertEquals(array(
+            'foo' => array(
+                'nestedNoAdditional'  => array(
+                    'id' => '15'
+                ),
+                'nestedNoAdditional2' => array(
+                    'id' => '25'
+                ),
+            )
+        ), $result);
+    }
+
 
     /**
      * @group issue-399
