@@ -66,7 +66,7 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             'sentAs'   => 'Foo',
             'type'     => 'array',
             'items'    => array(
-                'type' => 'object',
+                'type'       => 'object',
                 'properties' => array(
                     'Bar' => array('type' => 'string'),
                     'Baz' => array('type' => 'string'),
@@ -81,7 +81,7 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
         $visitor->visit($this->command, $this->response, $param, $value);
         $this->assertEquals(array(
             'foo' => array(
-                array (
+                array(
                     'Bar' => '1',
                     'Baz' => '2'
                 )
@@ -117,8 +117,8 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             'name'     => 'Items',
             'type'     => 'array',
             'items'    => array(
-                'type' => 'object',
-                'name' => 'Item',
+                'type'       => 'object',
+                'name'       => 'Item',
                 'properties' => array(
                     'Bar' => array('type' => 'string'),
                     'Baz' => array('type' => 'string')
@@ -167,38 +167,38 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             'location' => 'xml',
             'sentAs'   => 'instancesSet',
             'items'    => array(
-                'name' => 'item',
-                'type' => 'object',
-                'sentAs' => 'item',
+                'name'       => 'item',
+                'type'       => 'object',
+                'sentAs'     => 'item',
                 'properties' => array(
-                    'InstanceId' => array(
+                    'InstanceId'    => array(
                         'type'   => 'string',
                         'sentAs' => 'instanceId',
                     ),
-                    'CurrentState' => array(
-                        'type'   => 'object',
-                        'sentAs' => 'currentState',
+                    'CurrentState'  => array(
+                        'type'       => 'object',
+                        'sentAs'     => 'currentState',
                         'properties' => array(
                             'Code' => array(
-                                'type' => 'numeric',
+                                'type'   => 'numeric',
                                 'sentAs' => 'code',
                             ),
                             'Name' => array(
-                                'type' => 'string',
+                                'type'   => 'string',
                                 'sentAs' => 'name',
                             ),
                         ),
                     ),
                     'PreviousState' => array(
-                        'type'   => 'object',
-                        'sentAs' => 'previousState',
+                        'type'       => 'object',
+                        'sentAs'     => 'previousState',
                         'properties' => array(
                             'Code' => array(
-                                'type' => 'numeric',
+                                'type'   => 'numeric',
                                 'sentAs' => 'code',
                             ),
                             'Name' => array(
-                                'type' => 'string',
+                                'type'   => 'string',
                                 'sentAs' => 'name',
                             ),
                         ),
@@ -231,8 +231,8 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
         $this->assertEquals(array(
             'TerminatingInstances' => array(
                 array(
-                    'InstanceId' => 'i-3ea74257',
-                    'CurrentState' => array(
+                    'InstanceId'    => 'i-3ea74257',
+                    'CurrentState'  => array(
                         'Code' => '32',
                         'Name' => 'shutting-down',
                     ),
@@ -253,17 +253,17 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             'type'     => 'array',
             'location' => 'xml',
             'items'    => array(
-                'type' => 'object',
-                'sentAs' => 'item',
+                'type'       => 'object',
+                'sentAs'     => 'item',
                 'properties' => array(
-                    'QueueId' => array(
+                    'QueueId'       => array(
                         'type'   => 'string',
                         'sentAs' => 'queue_id',
                         'data'   => array(
                             'xmlAttribute' => true,
                         ),
                     ),
-                    'CurrentState' => array(
+                    'CurrentState'  => array(
                         'type'       => 'object',
                         'properties' => array(
                             'Code' => array(
@@ -320,8 +320,8 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
         $this->assertEquals(array(
             'RunningQueues' => array(
                 array(
-                    'QueueId' => 'q-3ea74257',
-                    'CurrentState' => array(
+                    'QueueId'       => 'q-3ea74257',
+                    'CurrentState'  => array(
                         'Code' => '32',
                         'Name' => 'processing',
                     ),
@@ -341,15 +341,15 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             'name'     => 'Foo',
             'type'     => 'array',
             'location' => 'xml',
-            'items' => array(
-                'type' => 'object',
+            'items'    => array(
+                'type'       => 'object',
                 'properties' => array(
                     'Baz' => array('type' => 'array'),
                     'Bar' => array(
-                        'type'   => 'object',
+                        'type'       => 'object',
                         'properties' => array(
                             'Baz' => array('type' => 'array'),
-                         )
+                        )
                     )
                 )
             )
@@ -444,27 +444,27 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             'type'                 => 'object',
             'additionalProperties' => true,
             'properties'           => array(
-                'bar' => array(
+                'bar'                        => array(
                     'name'   => 'bar',
                     'sentAs' => 'baz',
                 ),
-                'nestedNoAdditional' => array(
-                    'type' => 'object',
+                'nestedNoAdditional'         => array(
+                    'type'                 => 'object',
                     'additionalProperties' => false,
-                    'properties' => array(
+                    'properties'           => array(
                         'id' => array(
                             'type' => 'integer'
                         )
                     )
                 ),
-                'nestedWithAdditional' => array(
-                    'type' => 'object',
+                'nestedWithAdditional'       => array(
+                    'type'                 => 'object',
                     'additionalProperties' => true,
                 ),
                 'nestedWithAdditionalSchema' => array(
-                    'type' => 'object',
+                    'type'                 => 'object',
                     'additionalProperties' => array(
-                        'type' => 'array',
+                        'type'  => 'array',
                         'items' => array(
                             'type' => 'string'
                         )
