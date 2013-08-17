@@ -45,11 +45,12 @@ class XmlVisitor extends AbstractResponseVisitor
         if ($additional instanceof Parameter) {
             // Process all child elements according to the given schema
             foreach ($this->xml->children() as $node) {
-                if ($node->getName() != $sentAs) {
+                $name = $node->getName();
+                if ($name != $sentAs) {
                     $value[$name] = $this->recursiveProcess($additional, $node);
                 }
             }
-        } elseif ($additional === true) {
+        } elseif ($additional === null || $additional === true) {
             // Blindly transform the XML into an array preserving as much data as possible
             $array = static::xmlToArray($this->xml);
             $value = array_merge($array, $value);
@@ -141,7 +142,7 @@ class XmlVisitor extends AbstractResponseVisitor
                     $result[$sentAs] = $this->recursiveProcess($additional, $childNode);
                 }
             }
-        } elseif ($additional === true) {
+        } elseif ($additional === null || $additional === true) {
             // Blindly transform the XML into an array preserving as much data as possible
             $array = static::xmlToArray($node);
 
