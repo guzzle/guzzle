@@ -32,7 +32,7 @@ class HeaderVisitor extends AbstractResponseVisitor
         if ($additional instanceof Parameter) {
             if ($prefix = $param->getSentAs()) {
                 // Process prefixed headers
-                $this->processPrefixedHeaders($response, $additional, $value);
+                $this->processPrefixedHeaders($prefix, $response, $param, $value);
 
             } else {
                 // Process all headers with the additionalProperties schema
@@ -48,15 +48,15 @@ class HeaderVisitor extends AbstractResponseVisitor
     /**
      * Process a prefixed header array
      *
+     * @param string    $prefix   Header prefix to use
      * @param Response  $response Response that contains the headers
      * @param Parameter $param    Parameter object
      * @param array     $value    Value response array to modify
      */
-    protected function processPrefixedHeaders(Response $response, Parameter $param, &$value)
+    protected function processPrefixedHeaders($prefix, Response $response, Parameter $param, &$value)
     {
         // Grab prefixed headers that should be placed into an array with the prefix stripped
         $container = $param->getName();
-        $prefix = $param->getSentAs();
         $len = strlen($prefix);
         $headers = $response->getHeaders()->toArray();
 

@@ -52,7 +52,9 @@ class XmlVisitor extends AbstractResponseVisitor
             }
         } elseif ($additional === null || $additional === true) {
             // Blindly transform the XML into an array preserving as much data as possible
+            // and skipping the already processed property
             $array = static::xmlToArray($this->xml);
+            unset($array[$sentAs]);
             $value = array_merge($array, $value);
         }
     }

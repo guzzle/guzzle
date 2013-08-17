@@ -56,7 +56,10 @@ class JsonVisitor extends AbstractResponseVisitor
             }
         } elseif ($additional === null || $additional === true) {
             // Blindly merge the JSON into resulting array
-            $value = array_merge($this->json, $value);
+            // skipping the already processed property
+            $json = $this->json;
+            unset($json[$key]);
+            $value = array_merge($json, $value);
         }
     }
 
