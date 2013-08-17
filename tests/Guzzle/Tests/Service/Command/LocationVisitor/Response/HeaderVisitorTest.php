@@ -71,7 +71,7 @@ class HeaderVisitorTest extends AbstractResponseVisitorTest
         $param = new Parameter(array(
             'location'             => 'header',
             'name'                 => 'Content-Type',
-            'additionalParameters' => false
+            'additionalProperties' => false
         ));
         $visitor->visit($this->command, $this->response, $param, $this->value);
         $this->assertEquals('text/plain', $this->value['Content-Type']);
@@ -89,7 +89,7 @@ class HeaderVisitorTest extends AbstractResponseVisitorTest
             'location'             => 'header',
             'name'                 => 'ContentType',
             'sentAs'               => 'Content-Type',
-            'additionalParameters' => false
+            'additionalProperties' => false
         ));
         $visitor->visit($this->command, $this->response, $param, $this->value);
         $this->assertEquals('text/plain', $this->value['ContentType']);
