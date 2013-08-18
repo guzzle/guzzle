@@ -548,7 +548,7 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
                                 'type' => 'numeric',
                             ),
                             'bar' => array(
-                                'type' => 'object',
+                                'type'       => 'object',
                                 'properties' => array(
                                     'attribute' => array(
                                         'type' => 'string',
