@@ -521,4 +521,279 @@ class XmlVisitorTest extends AbstractResponseVisitorTest
             )
         ), $value);
     }
+
+    public function testUnderstandsNamespaces()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'name'     => 'nstest',
+            'type'     => 'array',
+            'location' => 'xml',
+            'items'    => array(
+                'name'       => 'item',
+                'type'       => 'object',
+                'sentAs'     => 'item',
+                'properties' => array(
+                    'id'           => array(
+                        'type' => 'string',
+                    ),
+                    'isbn:number'  => array(
+                        'type' => 'string',
+                    ),
+                    'meta'         => array(
+                        'type'       => 'object',
+                        'sentAs'     => 'abstract:meta',
+                        'properties' => array(
+                            'foo' => array(
+                                'type' => 'numeric',
+                            ),
+                            'bar' => array(
+                                'type' => 'object',
+                                'properties' => array(
+                                    'attribute' => array(
+                                        'type' => 'string',
+                                        'data' => array(
+                                            'xmlAttribute' => true,
+                                            'xmlNs'        => 'abstract'
+                                        ),
+                                    )
+                                )
+                            ),
+                        ),
+                    ),
+                    'gamma'        => array(
+                        'type'                 => 'object',
+                        'data'                 => array(
+                            'xmlNs' => 'abstract'
+                        ),
+                        'additionalProperties' => true
+                    ),
+                    'nonExistent'  => array(
+                        'type'                 => 'object',
+                        'data'                 => array(
+                            'xmlNs' => 'abstract'
+                        ),
+                        'additionalProperties' => true
+                    ),
+                    'nonExistent2' => array(
+                        'type'                 => 'object',
+                        'additionalProperties' => true
+                    ),
+                ),
+            )
+        ));
+
+        $value = array();
+        $xml = new SimpleXMLElement('
+            <xml>
+                <nstest xmlns:isbn="urn:ISBN:0-395-36341-6" xmlns:abstract="urn:my.org:abstract">
+                    <item>
+                        <id>101</id>
+                        <isbn:number>1568491379</isbn:number>
+                        <abstract:meta>
+                            <foo>10</foo>
+                            <bar abstract:attribute="foo"></bar>
+                        </abstract:meta>
+                        <abstract:gamma>
+                            <foo>bar</foo>
+                        </abstract:gamma>
+                    </item>
+                    <item>
+                        <id>102</id>
+                        <isbn:number>1568491999</isbn:number>
+                        <abstract:meta>
+                            <foo>20</foo>
+                            <bar abstract:attribute="bar"></bar>
+                        </abstract:meta>
+                        <abstract:gamma>
+                            <foo>baz</foo>
+                        </abstract:gamma>
+                    </item>
+                </nstest>
+            </xml>
+        ');
+        $visitor->setXml($xml);
+        $visitor->visit($this->command, $this->response, $param, $value);
+
+        $this->assertEquals(array(
+            'nstest' => array(
+                array(
+                    'id'          => '101',
+                    'isbn:number' => 1568491379,
+                    'meta'        => array(
+                        'foo' => 10,
+                        'bar' => array(
+                            'attribute' => 'foo'
+                        ),
+                    ),
+                    'gamma'       => array(
+                        'foo' => 'bar'
+                    )
+                ),
+                array(
+                    'id'          => '102',
+                    'isbn:number' => 1568491999,
+                    'meta'        => array(
+                        'foo' => 20,
+                        'bar' => array(
+                            'attribute' => 'bar'
+                        ),
+                    ),
+                    'gamma'       => array(
+                        'foo' => 'baz'
+                    )
+                ),
+            )
+        ), $value);
+    }
+
+    public function testCanWalkUndefinedPropertiesWithNamespace()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'name'     => 'nstest',
+            'type'     => 'array',
+            'location' => 'xml',
+            'items'    => array(
+                'name'                 => 'item',
+                'type'                 => 'object',
+                'sentAs'               => 'item',
+                'additionalProperties' => array(
+                    'type' => 'object',
+                    'data' => array(
+                        'xmlNs' => 'abstract'
+                    ),
+                ),
+                'properties'           => array(
+                    'id'          => array(
+                        'type' => 'string',
+                    ),
+                    'isbn:number' => array(
+                        'type' => 'string',
+                    )
+                )
+            )
+        ));
+
+        $value = array();
+        $xml = new SimpleXMLElement('
+            <xml>
+                <nstest xmlns:isbn="urn:ISBN:0-395-36341-6" xmlns:abstract="urn:my.org:abstract">
+                    <item>
+                        <id>101</id>
+                        <isbn:number>1568491379</isbn:number>
+                        <abstract:meta>
+                            <foo>10</foo>
+                            <bar>baz</bar>
+                        </abstract:meta>
+                    </item>
+                    <item>
+                        <id>102</id>
+                        <isbn:number>1568491999</isbn:number>
+                        <abstract:meta>
+                            <foo>20</foo>
+                            <bar>foo</bar>
+                        </abstract:meta>
+                    </item>
+                </nstest>
+            </xml>
+        ');
+        $visitor->setXml($xml);
+        $visitor->visit($this->command, $this->response, $param, $value);
+
+        $this->assertEquals(array(
+            'nstest' => array(
+                array(
+                    'id'          => '101',
+                    'isbn:number' => 1568491379,
+                    'meta'        => array(
+                        'foo' => 10,
+                        'bar' => 'baz'
+                    )
+                ),
+                array(
+                    'id'          => '102',
+                    'isbn:number' => 1568491999,
+                    'meta'        => array(
+                        'foo' => 20,
+                        'bar' => 'foo'
+                    )
+                ),
+            )
+        ), $value);
+    }
+
+    public function testCanWalkSimpleArrayWithNamespace()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'name'     => 'nstest',
+            'type'     => 'array',
+            'location' => 'xml',
+            'items'    => array(
+                'type'   => 'string',
+                'sentAs' => 'number',
+                'data'   => array(
+                    'xmlNs' => 'isbn'
+                )
+            )
+        ));
+
+        $value = array();
+        $xml = new SimpleXMLElement('
+            <xml>
+                <nstest xmlns:isbn="urn:ISBN:0-395-36341-6">
+                    <isbn:number>1568491379</isbn:number>
+                    <isbn:number>1568491999</isbn:number>
+                    <isbn:number>1568492999</isbn:number>
+                </nstest>
+            </xml>
+        ');
+        $visitor->setXml($xml);
+        $visitor->visit($this->command, $this->response, $param, $value);
+
+        $this->assertEquals(array(
+            'nstest' => array(
+                1568491379,
+                1568491999,
+                1568492999,
+            )
+        ), $value);
+    }
+
+    public function testCanWalkSimpleArrayWithNamespace2()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'name'     => 'nstest',
+            'type'     => 'array',
+            'location' => 'xml',
+            'items'    => array(
+                'type'   => 'string',
+                'sentAs' => 'isbn:number',
+            )
+        ));
+
+        $value = array();
+        $xml = new SimpleXMLElement('
+            <xml>
+                <nstest xmlns:isbn="urn:ISBN:0-395-36341-6">
+                    <isbn:number>1568491379</isbn:number>
+                    <isbn:number>1568491999</isbn:number>
+                    <isbn:number>1568492999</isbn:number>
+                </nstest>
+            </xml>
+        ');
+        $visitor->setXml($xml);
+        $visitor->visit($this->command, $this->response, $param, $value);
+
+        $this->assertEquals(array(
+            'nstest' => array(
+                1568491379,
+                1568491999,
+                1568492999,
+            )
+        ), $value);
+    }
+
 }
