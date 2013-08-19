@@ -98,9 +98,21 @@ class JsonVisitor extends AbstractResponseVisitor
                     }
                 }
 
-                // Remove any unknown and potentially unsafe properties
-                if ($param->getAdditionalProperties() === false) {
-                    $result = array_intersect_key($result, $knownProperties);
+                $additional = $param->getAdditionalProperties();
+                if ($additional instanceof Parameter) {
+                    // Process all child elements according to the given schema
+                    foreach ($value as $prop => $val) {
+                        if (is_int($prop)) {
+                            $result[] = $this->recursiveProcess($additional, $val);
+                        } elseif ($prop != $key) {
+                            $result[$prop] = $this->recursiveProcess($additional, $val);
+                        }
+                    }
+                } elseif ($additional === null || $additional === true) {
+                    // Blindly merge the JSON into resulting array
+                    // skipping the already processed property
+                    $value = array_diff_key($value, $knownProperties);
+                    $result = array_merge($value, $result);
                 }
             }
         } else {
