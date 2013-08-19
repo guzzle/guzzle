@@ -4,6 +4,7 @@ namespace Guzzle\Tests\Service\Resource;
 
 use Guzzle\Service\Resource\ResourceIterator;
 use Guzzle\Tests\Service\Mock\Model\MockCommandIterator;
+use Guzzle\Tests\Service\Mock\Model\MockCommandIterator2;
 
 /**
  * @group server
@@ -119,6 +120,35 @@ class ResourceIteratorTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(6, count($ri));
         $this->assertEquals(array('d', 'e', 'f', 'g', 'h', 'i'), $data);
     }
+
+    public function testUseWithTopLevelArrayInJson()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 200 OK\r\nContent-Length: 15\r\n\r\n[\"d\", \"e\", \"f\"]",
+            "HTTP/1.1 200 OK\r\nContent-Length: 15\r\n\r\n[\"g\", \"h\", \"i\"]",
+            "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\n[\"j\"]",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
+        ));
+
+        $ri = new MockCommandIterator2($this->getServiceBuilder()->get('mock')->getCommand('iterable_command'));
+
+        // Ensure that the key is never < 0
+        $this->assertEquals(0, $ri->key());
+        $this->assertEquals(0, count($ri));
+
+        // Ensure that the iterator can be used as KVP array
+        $data = array();
+        foreach ($ri as $key => $value) {
+            $this->assertTrue(is_string($value) && strlen($value) > 0);
+            $data[$key] = $value;
+        }
+
+        // Ensure that the iterate is countable
+        $this->assertEquals(7, count($ri));
+        $this->assertEquals(array('d', 'e', 'f', 'g', 'h', 'i', 'j'), $data);
+    }
+
 
     public function testBailsWhenSendReturnsNoResults()
     {
