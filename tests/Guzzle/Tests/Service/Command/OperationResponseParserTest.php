@@ -217,6 +217,56 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
         ), $result);
     }
 
+    public function testVisitsNestedAdditionalPropertiesWithJson()
+    {
+        $parser = OperationResponseParser::getInstance();
+        $description = ServiceDescription::factory(array(
+            'operations' => array('test' => array('responseClass' => 'Foo')),
+            'models'     => array(
+                'Foo' => array(
+                    'type'                 => 'object',
+                    'properties'           => array(
+                        'data' => array(
+                            'location'             => 'json',
+                            'type'                 => 'object',
+                            'additionalProperties' => true,
+                            'properties'           => array(
+                                'a' => array(
+                                    'type'    => 'string',
+                                    'filters' => 'strtoupper'
+                                )
+                            )
+                        ),
+                        'code' => array(
+                            'location' => 'statusCode'
+                        )
+                    ),
+                    'additionalProperties' => false
+                )
+            )
+        ));
+
+        $operation = $description->getOperation('test');
+        $op = new OperationCommand(array(), $operation);
+        $op->setResponseParser($parser)->setClient(new Client());
+        $json = '{
+            "data" : {
+                "a":"test",
+                "weight": 2.15,
+                "height": 3.30
+            }
+        }';
+        $op->prepare()->setResponse(new Response(200, array('Content-Type' => 'application/json'), $json), true);
+        $result = $op->execute()->toArray();
+        $this->assertEquals(array(
+            'code' => 200,
+            'data' => array(
+                'a' => 'TEST',
+                'weight' => 2.15,
+                'height' => 3.30
+            )
+        ), $result);
+    }
 
     /**
      * @group issue-399
