@@ -4,7 +4,7 @@ namespace Guzzle\Tests\Service\Command\LocationVisitor\Response;
 
 use Guzzle\Service\Description\Parameter;
 use Guzzle\Http\Message\Response;
-use Guzzle\Service\Command\LocationVisitor\Response\JsonVisitor as Visitor;
+use Guzzle\Tests\Service\Mock\Response\JsonVisitor as Visitor;
 
 /**
  * @covers Guzzle\Service\Command\LocationVisitor\Response\JsonVisitor

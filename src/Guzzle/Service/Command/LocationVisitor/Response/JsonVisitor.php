@@ -124,22 +124,4 @@ class JsonVisitor extends AbstractResponseVisitor
 
         return $result;
     }
-
-    /**
-     * @param array $json
-     */
-    public function setJson(array $json)
-    {
-        $this->json = $json;
-    }
-
-    /**
-     * @return array
-     */
-    public function getJson()
-    {
-        return $this->json;
-    }
-
-
 }

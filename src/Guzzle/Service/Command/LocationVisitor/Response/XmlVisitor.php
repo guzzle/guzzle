@@ -191,22 +191,6 @@ class XmlVisitor extends AbstractResponseVisitor
     }
 
     /**
-     * @return SimpleXMLElement
-     */
-    public function getXml()
-    {
-        return $this->xml;
-    }
-
-    /**
-     * @param SimpleXMLElement $xml
-     */
-    public function setXml(SimpleXMLElement $xml)
-    {
-        $this->xml = $xml;
-    }
-
-    /**
      * @param SimpleXMLElement $xml
      * @param int              $nesting
      * @param null             $ns
