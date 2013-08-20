@@ -196,22 +196,24 @@ class XmlVisitor extends AbstractResponseVisitor
      * @param null             $ns
      * @return array
      */
-    protected function xmlToArray(SimpleXMLElement $xml, $ns = null, $nesting = 0)
+    public static function xmlToArray(SimpleXMLElement $xml, $ns = null, $nesting = 0)
     {
         $result = array();
         $attributes = (array)$xml->attributes($ns, true);
         $children = $xml->children($ns, true);
 
         foreach ($children as $name => $child) {
-            // Look around and check if previous or next element has the same name
-            // which would suggest a conversion to a list (numeric array)
-            if ($sibling = $child->xpath('preceding-sibling::* | following-sibling::*')) {
-                if (current($sibling)->getName() === $name) {
-                    $result[$name][] = static::xmlToArray($child, $ns, $nesting + 1);
-                    continue;
+            if (isset($result[$name])) {
+                // A child element with this name exists so we're assuming that the
+                // node contains a list of elements
+                if (!is_array($result[$name])) {
+                    $result[$name] = array($result[$name]);
                 }
+                $result[$name][] = static::xmlToArray($child, $ns, $nesting + 1);
+            } else {
+                //
+                $result[$name] = static::xmlToArray($child, $ns, $nesting + 1);
             }
-            $result[$name] = static::xmlToArray($child, $ns, $nesting + 1);
         }
 
         // Extract text from node
