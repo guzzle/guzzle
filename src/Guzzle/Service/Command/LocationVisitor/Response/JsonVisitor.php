@@ -124,4 +124,10 @@ class JsonVisitor extends AbstractResponseVisitor
 
         return $result;
     }
+
+    public function after(CommandInterface $command)
+    {
+        // Free up memory
+        $this->json = array();
+    }
 }
