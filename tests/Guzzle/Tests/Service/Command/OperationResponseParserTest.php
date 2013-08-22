@@ -452,16 +452,17 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
      * @group issue-317
      * @link  https://github.com/guzzle/guzzle/issues/317
      */
-    public function testExplicitTopLevelLocation()
+    public function testTopLevelLocationWithArray()
     {
         $parser = OperationResponseParser::getInstance();
         $description = ServiceDescription::factory(array(
             'operations' => array('test' => array('responseClass' => 'Foo')),
             'models'     => array(
                 'Foo' => array(
-                    'type'     => 'array',
-                    'location' => 'json',
-                    'items'    => array(
+                    'type'                 => 'array',
+                    'location'             => 'json',
+                    'additionalProperties' => false,
+                    'items'                => array(
                         'type' => 'object'
                     )
                 )
@@ -490,17 +491,18 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
      * @group issue-317
      * @link  https://github.com/guzzle/guzzle/issues/317
      */
-    public function testLocationSpecifiedInItems()
+    public function testLocationSpecifiedInItemsWithArray()
     {
         $parser = OperationResponseParser::getInstance();
         $description = ServiceDescription::factory(array(
             'operations' => array('test' => array('responseClass' => 'Foo')),
             'models'     => array(
                 'Foo' => array(
-                    'type'     => 'array',
-                    'items'    => array(
+                    'type'                 => 'array',
+                    'additionalProperties' => false,
+                    'items'                => array(
                         'location' => 'json',
-                        'type' => 'object'
+                        'type'     => 'object'
                     )
                 )
             )
@@ -528,7 +530,7 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
      * @group issue-317
      * @link  https://github.com/guzzle/guzzle/issues/317
      */
-    public function testJsonResponseWithArrayAndTopLevelFlattening()
+    public function testJsonResponseWithTopLevelArray()
     {
         $parser = OperationResponseParser::getInstance();
         $description = ServiceDescription::factory(array(
@@ -540,7 +542,7 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
                         'body'   => array(
                             'type'                 => 'array',
                             'location'             => 'json',
-                            'sentAs'               => true,
+                            'sentAs'               => '',       // the incoming array is on the top-level (no property)
                             'additionalProperties' => false,
                             'items'                => array(
                                 'type' => 'object'
@@ -570,6 +572,157 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
                     'enigma' => '321',
                 )
             ),
+            'code'   => 200,
+            'phrase' => 'OK'
+        ), $result->toArray());
+    }
+
+    /**
+     * @group issue-317
+     * @link  https://github.com/guzzle/guzzle/issues/317
+     */
+    public function testJsonResponseWithTopLevelArrayAndFlattening()
+    {
+        $parser = OperationResponseParser::getInstance();
+        $description = ServiceDescription::factory(array(
+            'operations' => array('test' => array('responseClass' => 'Foo')),
+            'models'     => array(
+                'Foo' => array(
+                    'type'       => 'object',
+                    'properties' => array(
+                        'body'   => array(
+                            'type'                 => 'array',
+                            'location'             => 'json',
+                            'name'                 => '',       // no name provided, merge it with main result array
+                            'sentAs'               => '',       // the incoming array is on the top-level
+                            'additionalProperties' => false,
+                            'items'                => array(
+                                'type' => 'object'
+                            )
+                        ),
+                        'code'   => array('location' => 'statusCode'),
+                        'phrase' => array('location' => 'reasonPhrase'),
+                    )
+                )
+            )
+        ));
+        $operation = $description->getOperation('test');
+        $op = new OperationCommand(array(), $operation);
+        $op->setResponseParser($parser)->setClient(new Client());
+        $op->prepare()->setResponse(new Response(200, array(
+            'Content-Type' => 'application/json'
+        ), '[{"baz":"bar","enigma":"123"},{"baz":"foo","enigma":"321"}]'), true);
+        $result = $op->execute();
+        $this->assertEquals(array(
+            array(
+                'baz'    => 'bar',
+                'enigma' => '123',
+            ),
+            array(
+                'baz'    => 'foo',
+                'enigma' => '321',
+            ),
+            'code'   => 200,
+            'phrase' => 'OK'
+        ), $result->toArray());
+    }
+
+    /**
+     * @group issue-317
+     * @link  https://github.com/guzzle/guzzle/issues/317
+     */
+    public function testJsonResponseWithTopLevelArrayAndFlattening2()
+    {
+        $parser = OperationResponseParser::getInstance();
+        $description = ServiceDescription::factory(array(
+            'operations' => array('test' => array('responseClass' => 'Foo')),
+            'models'     => array(
+                'Foo' => array(
+                    'type'       => 'object',
+                    'properties' => array(
+                        'code'   => array('location' => 'statusCode'),
+                        'phrase' => array('location' => 'reasonPhrase'),
+                        'body'   => array(
+                            'type'                 => 'array',
+                            'location'             => 'json',
+                            'name'                 => '',       // no name provided, merge it with main result array
+                            'sentAs'               => '',       // the incoming array is on the top-level
+                            'additionalProperties' => false,
+                            'items'                => array(
+                                'type' => 'object'
+                            )
+                        ),
+                    )
+                )
+            )
+        ));
+        $operation = $description->getOperation('test');
+        $op = new OperationCommand(array(), $operation);
+        $op->setResponseParser($parser)->setClient(new Client());
+        $op->prepare()->setResponse(new Response(200, array(
+            'Content-Type' => 'application/json'
+        ), '[{"baz":"bar","enigma":"123"},{"baz":"foo","enigma":"321"}]'), true);
+        $result = $op->execute();
+        $this->assertEquals(array(
+            array(
+                'baz'    => 'bar',
+                'enigma' => '123',
+            ),
+            array(
+                'baz'    => 'foo',
+                'enigma' => '321',
+            ),
+            'code'   => 200,
+            'phrase' => 'OK'
+        ), $result->toArray());
+    }
+
+    public function testJsonResponseAndEmptyObjectNameFlattensResult()
+    {
+        $parser = OperationResponseParser::getInstance();
+        $description = ServiceDescription::factory(array(
+            'operations' => array('test' => array('responseClass' => 'Foo')),
+            'models'     => array(
+                'Foo' => array(
+                    'type'       => 'object',
+                    'properties' => array(
+                        'results' => array(
+                            'type'                 => 'object',
+                            'location'             => 'json',
+                            'sentAs'               => 'results', // it's coming as "results" inside JSON
+                            'name'                 => '',        // no name provided, merge it with main result array
+                            'additionalProperties' => false,
+                            'properties'           => array(
+                                'baz'    => array(
+                                    'type' => 'string'
+                                ),
+                                'knight' => array(
+                                    'type' => 'string'
+                                ),
+                            )
+                        ),
+                        'code'    => array('location' => 'statusCode'),
+                        'phrase'  => array('location' => 'reasonPhrase'),
+                    )
+                )
+            )
+        ));
+        $operation = $description->getOperation('test');
+        $op = new OperationCommand(array(), $operation);
+        $op->setResponseParser($parser)->setClient(new Client());
+        $json = '
+        {
+            "results": {
+                "baz":"bar",
+                "enigma":"123",
+                "knight":"rider"
+            }
+        }';
+        $op->prepare()->setResponse(new Response(200, array('Content-Type' => 'application/json'), $json), true);
+        $result = $op->execute();
+        $this->assertEquals(array(
+            'baz'    => 'bar',
+            'knight' => 'rider',
             'code'   => 200,
             'phrase' => 'OK'
         ), $result->toArray());

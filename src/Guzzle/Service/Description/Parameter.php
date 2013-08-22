@@ -731,7 +731,9 @@ class Parameter
         }
 
         if (!($this->properties[$name] instanceof self)) {
-            $this->properties[$name]['name'] = $name;
+            if(!isset($this->properties[$name]['name'])) {
+                $this->properties[$name]['name'] = $name;
+            }
             $this->properties[$name] = new static($this->properties[$name], $this->serviceDescription);
             $this->properties[$name]->setParent($this);
         }

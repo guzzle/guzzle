@@ -37,17 +37,28 @@ class JsonVisitor extends AbstractResponseVisitor
         $context = null
     )
     {
-        $name = $param->getName();
-        $key = $param->getWireName();
-        if($param->getType() == 'array' && ($key === true || empty($key))) {
-            // Treat as a list
-            if (empty($name)) {
-                $value = $this->recursiveProcess($param, $this->json);
+        $name   = $param->getName();
+        $sentAs = $param->getSentAs();
+        $key    = $param->getWireName();
+
+        $treatAsList = $param->getType() == 'array' && (empty($key) || ($sentAs === '') || $context);
+
+        if($treatAsList) {
+            // Treat as javascript array
+            if ($context || empty($name)) {
+                // top-level `array` or an empty name
+                $value = array_merge($value, $this->recursiveProcess($param, $this->json));
             } else {
+                // name provided, store it under a key in the array
                 $value[$name] = $this->recursiveProcess($param, $this->json);
             }
-        }elseif (isset($this->json[$key])) {
-            $value[$name] = $this->recursiveProcess($param, $this->json[$key]);
+        } elseif (isset($this->json[$key])) {
+            // Treat as a javascript object
+            if (empty($name)) {
+                $value = array_merge($value, $this->recursiveProcess($param, $this->json[$key]));
+            } else {
+                $value[$name] = $this->recursiveProcess($param, $this->json[$key]);
+            }
         }
 
         // Handle additional, undefined properties

@@ -168,7 +168,7 @@ class OperationResponseParser extends DefaultResponseParser
             $model->setName(null);
 
             // Run the visitor against main schema and allow it visit all undefined properties
-            $foundVisitors[$location]->visit($command, $response, $model, $result);
+            $foundVisitors[$location]->visit($command, $response, $model, $result, true);
 
             // Restore names
             $model->setSentAs($oldWireName);
@@ -193,11 +193,11 @@ class OperationResponseParser extends DefaultResponseParser
             )
         ) {
             // Visit items of a top-level array
-            $foundVisitors[$location]->visit($command, $response, $model, $result);
+            $foundVisitors[$location]->visit($command, $response, $model, $result, true);
         }
 
         // Remove any unknown and potentially unsafe top-level properties
-        if ($additional === false) {
+        if ($type == 'object' && $additional === false) {
             $result = array_intersect_key($result, $knownProps);
         }
 
