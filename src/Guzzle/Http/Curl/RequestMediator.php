@@ -114,7 +114,12 @@ class RequestMediator
             ));
         }
 
-        return $this->request->getResponse()->getBody()->write($write);
+        if ($this->request->getResponse()) {
+            return $this->request->getResponse()->getBody()->write($write);
+        } else {
+            // Unexpected data received before response headers - abort transfer
+            return 0;
+        }
     }
 
     /**
