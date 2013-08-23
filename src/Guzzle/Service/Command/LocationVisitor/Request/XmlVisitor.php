@@ -236,10 +236,21 @@ class XmlVisitor extends AbstractRequestVisitor
      */
     protected function addXmlObject(\XMLWriter $xmlWriter, Parameter $param, &$value)
     {
+        $noAttributes = array();
+        // add values which have attriutes
         foreach ($value as $name => $v) {
-            if ($property = $param->getProperty($name)) {
-                $this->addXml($xmlWriter, $property, $v);
+            $property = $param->getProperty($name);
+            if ($property) {
+                if ($property->getData('xmlAttribute')) {
+                    $this->addXml($xmlWriter, $property, $v);
+                } else {
+                    $noAttributes[] = array('value' => $v, 'property' => $property);
+                }
             }
+        }
+        // now add values with no attributes
+        foreach ($noAttributes as $element) {
+            $this->addXml($xmlWriter, $element['property'], $element['value']);
         }
     }
 }
