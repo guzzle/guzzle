@@ -239,8 +239,7 @@ class XmlVisitor extends AbstractRequestVisitor
         $noAttributes = array();
         // add values which have attriutes
         foreach ($value as $name => $v) {
-            $property = $param->getProperty($name);
-            if ($property) {
+            if ($property = $param->getProperty($name)) {
                 if ($property->getData('xmlAttribute')) {
                     $this->addXml($xmlWriter, $property, $v);
                 } else {
