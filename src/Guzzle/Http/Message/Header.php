@@ -81,7 +81,8 @@ class Header implements HeaderInterface
 
         for ($i = 0, $total = count($values); $i < $total; $i++) {
             if (strpos($values[$i], $this->glue) !== false) {
-                foreach (explode($this->glue, $values[$i]) as $v) {
+                // Explode on glue when the glue is not inside of a comma
+                foreach (preg_split('/' . preg_quote($this->glue) . '(?=([^"]*"[^"]*")*[^"]*$)/', $values[$i]) as $v) {
                     $values[] = trim($v);
                 }
                 unset($values[$i]);

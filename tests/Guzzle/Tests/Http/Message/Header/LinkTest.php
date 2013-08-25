@@ -48,4 +48,16 @@ class LinkTest extends GuzzleTestCase
             (string) $link
         );
     }
+
+    public function testCanParseLinksWithCommas()
+    {
+        $link = new Link('Link', '<http://example.com/TheBook/chapter1>; rel="previous"; title="start, index"');
+        $this->assertEquals(array(
+            array(
+                'rel' => 'previous',
+                'title' => 'start, index',
+                'url' => 'http://example.com/TheBook/chapter1',
+            )
+        ), $link->getLinks());
+    }
 }
