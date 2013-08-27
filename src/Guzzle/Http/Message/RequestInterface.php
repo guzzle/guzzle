@@ -137,14 +137,6 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     public function setPort($port);
 
     /**
-     * Prepare a request for sending over the wire. For example, this method should ensure that POST fields and files
-     * are set in the body of the request, appropriate headers are set on the request, etc...
-     *
-     * @return self
-     */
-    public function prepare();
-
-    /**
      * Get the request's configuration options
      *
      * @return \Guzzle\Common\Collection

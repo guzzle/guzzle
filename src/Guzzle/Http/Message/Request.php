@@ -5,7 +5,6 @@ namespace Guzzle\Http\Message;
 use Guzzle\Common\HasDispatcher;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Header\HeaderInterface;
-use Guzzle\Http\Message\Post\PostBody;
 use Guzzle\Url\QueryString;
 use Guzzle\Url\Url;
 
@@ -33,6 +32,7 @@ class Request extends AbstractMessage implements RequestInterface
      * @param mixed            $body    Body to send with the request
      * @param array            $options Array of options to use with the request
      *                                  - header_factory: Header factory to use with the message
+     *                                  - event_dispatcher: Event dispatcher to use with the request
      */
     public function __construct($method, $url, $headers = [], $body = null, array $options = [])
     {
@@ -40,6 +40,12 @@ class Request extends AbstractMessage implements RequestInterface
         $this->method = strtoupper($method);
         $this->transferOptions = new Collection();
         $this->setUrl($url);
+
+        if (isset($options['event_dispatcher'])) {
+            $this->setEventDispatcher($options['event_dispatcher']);
+        }
+
+        $this->addPrepareEvent();
 
         if ($body) {
             $this->setBody($body);
@@ -197,38 +203,21 @@ class Request extends AbstractMessage implements RequestInterface
         return $resource;
     }
 
-    public function prepare()
-    {
-        // Set the appropriate Content-Type for a request if one is not set and there are form fields
-        if ($this->body) {
-            // Synchronize the POST body with the request's headers
-            if ($this->body instanceof PostBody) {
-                $this->body->applyRequestHeaders($this);
-            }
-            // Determine if the Expect header should be used
-            $addExpect = false;
-            if (null !== ($expect = $this->getConfig()['expect'])) {
-                $size = $this->body->getSize();
-                $addExpect = $size === null ? true : $size > $expect;
-            } elseif (!$this->body->isSeekable()) {
-                // Always add the Expect 100-Continue header if the body cannot be rewound
-                $addExpect = true;
-            }
-            if ($addExpect) {
-                $this->setHeader('Expect', '100-Continue');
-            }
-        }
-
-        // Never send a Transfer-Encoding: chunked and Content-Length header in the same request
-        if ((string) $this->getHeader('Transfer-Encoding') == 'chunked') {
-            $this->removeHeader('Content-Length');
-        }
-
-        return $this;
-    }
-
     public function getConfig()
     {
         return $this->transferOptions;
+    }
+
+    /**
+     * Adds a subscriber that ensures a request's body is prepared before sending
+     */
+    private function addPrepareEvent()
+    {
+        static $subscriber;
+        if (!$subscriber) {
+            $subscriber = new PrepareRequestBodySubscriber();
+        }
+
+        $this->getEventDispatcher()->addSubscriber($subscriber);
     }
 }

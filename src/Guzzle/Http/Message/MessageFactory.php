@@ -58,12 +58,13 @@ class MessageFactory implements MessageFactoryInterface
         $body = null,
         array $options = array()
     ) {
-        $request = new Request($method, $url, $headers);
-
-        if (isset($options['dispatcher'])) {
-            $request->setEventDispatcher($options['dispatcher']);
-            unset($options['dispatcher']);
-        }
+        $request = new Request(
+            $method,
+            $url,
+            $headers,
+            null,
+            isset($options['constructor_options']) ? $options['constructor_options'] : []
+        );
 
         if ($body) {
             if (is_array($body)) {

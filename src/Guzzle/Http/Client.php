@@ -126,7 +126,7 @@ class Client implements ClientInterface
         }
 
         // Use a clone of the client's event dispatcher
-        $options['dispatcher'] = clone $this->getEventDispatcher();
+        $options['constructor_options'] = ['event_dispatcher' => clone $this->getEventDispatcher()];
         $request = $this->messageFactory->createRequest($method, (string) $url, $headers, $body, $options);
 
         if ($this->userAgent && !$request->hasHeader('User-Agent')) {
@@ -269,15 +269,10 @@ class Client implements ClientInterface
      */
     private function preSend(RequestInterface $request, Transaction $transaction)
     {
-        $event = new RequestBeforeSendEvent($request, $transaction);
-        if (!$request->getEventDispatcher()->dispatch('request.before_send', $event)->isPropagationStopped()) {
-            // The request.prepared event SHOULD be used for things like logging, signing, etc. You MUST be careful to
-            // ensure that you are cooperating with other events when modifying a request during this event.
-            $request->prepare();
-            $request->getEventDispatcher()->dispatch('request.prepared', $event);
-        }
-
-        return $event;
+        return $request->getEventDispatcher()->dispatch(
+            'request.before_send',
+            new RequestBeforeSendEvent($request, $transaction)
+        );
     }
 
     /**
