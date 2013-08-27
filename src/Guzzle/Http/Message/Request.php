@@ -31,10 +31,12 @@ class Request extends AbstractMessage implements RequestInterface
      *                                  full URL. If query string parameters are present they will be parsed as well.
      * @param array|Collection $headers HTTP headers
      * @param mixed            $body    Body to send with the request
+     * @param array            $options Array of options to use with the request
+     *                                  - header_factory: Header factory to use with the message
      */
-    public function __construct($method, $url, $headers = array(), $body = null)
+    public function __construct($method, $url, $headers = [], $body = null, array $options = [])
     {
-        parent::__construct();
+        parent::__construct($options);
         $this->method = strtoupper($method);
         $this->transferOptions = new Collection();
         $this->setUrl($url);

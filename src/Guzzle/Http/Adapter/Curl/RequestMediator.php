@@ -45,13 +45,11 @@ class RequestMediator
 
         if (substr($header, 0, 5) == 'HTTP/') {
             $startLine = explode(' ', $header, 3);
-            $code = $startLine[1];
-            // Only download the body of the response to the specified response
-            // body when a successful response is received.
-            if ($code >= 300 || $code < 200) {
+            // Only download the body to a target body when a successful response is received
+            if ($startLine[1][0] != '2') {
                 $this->response->setBody(null);
             }
-            $this->response->setStatus($code, isset($startLine[2]) ? $startLine[2] : '');
+            $this->response->setStatus($startLine[1], isset($startLine[2]) ? $startLine[2] : '');
             $this->response->setProtocolVersion(substr($startLine[0], -3));
         } elseif ($pos = strpos($header, ':')) {
             $this->response->addHeader(substr($header, 0, $pos), substr($header, $pos + 1));

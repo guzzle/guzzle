@@ -39,7 +39,9 @@ class CurlAdapter implements AdapterInterface
      */
     public function __construct(array $options = array())
     {
-        $this->factory = isset($options['factory']) ? $options['factory'] : CurlFactory::getInstance();
+        $this->factory = isset($options['factory'])
+            ? $options['factory']
+            : new CurlFactory();
     }
 
     /**

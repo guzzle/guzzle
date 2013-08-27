@@ -22,7 +22,7 @@ class HeaderFactory implements HeaderFactoryInterface
      *
      * @return self
      */
-    public static function getInstance()
+    public static function getDefaultFactory()
     {
         if (!self::$instance) {
             self::$instance = new self();

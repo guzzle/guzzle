@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http\Message\Post;
 
+use Guzzle\Http\Header\HeaderCollection;
 use Guzzle\Http\Message\HasHeaders;
 use Guzzle\Http\Mimetypes;
 use Guzzle\Stream\Stream;
@@ -44,11 +45,10 @@ class PostFile implements PostFileInterface
      */
     public function __construct($name, StreamInterface $content, $filename = null, array $headers = [])
     {
-        $this->initHeaders();
+        $this->headers = new HeaderCollection($headers);
         $this->content = $content;
         $this->name = $name;
         $this->filename = $filename ?: basename($this->content->getUri());
-        $this->setHeaders($headers);
 
         // Account for nested MultipartBody objects
         if ($content instanceof MultipartBody) {

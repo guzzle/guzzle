@@ -3,9 +3,8 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Common\Collection;
+use Guzzle\Http\Header\HeaderCollection;
 use Guzzle\Http\Header\HeaderFactory;
-use Guzzle\Http\Header\HeaderFactoryInterface;
-use Guzzle\Http\Header\HeaderInterface;
 use Guzzle\Http\Mimetypes;
 use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
@@ -23,9 +22,13 @@ abstract class AbstractMessage implements MessageInterface
     /** @var string HTTP protocol version of the message */
     private $protocolVersion = '1.1';
 
-    public function __construct()
+    public function __construct(array $options = [])
     {
-        $this->initHeaders();
+        $this->headerFactory = isset($options['header_factory'])
+            ? $options['header_factory']
+            : HeaderFactory::getDefaultFactory();
+
+        $this->headers = new HeaderCollection();
     }
 
     public function __toString()

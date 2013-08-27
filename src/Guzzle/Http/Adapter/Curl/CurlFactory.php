@@ -11,21 +11,6 @@ use Guzzle\Stream\Stream;
  */
 class CurlFactory
 {
-    /** @var self */
-    private static $instance;
-
-    /**
-     * @return self
-     */
-    public static function getInstance()
-    {
-        if (!static::$instance) {
-            static::$instance = new static();
-        }
-
-        return static::$instance;
-    }
-
     public function createHandle(RequestInterface $request, ResponseInterface $response)
     {
         $options = $this->getDefaultOptions($request, $response);

@@ -113,10 +113,12 @@ class Response extends AbstractMessage implements ResponseInterface
      * @param string                          $statusCode The response status code (e.g. 200, 404, etc)
      * @param array                           $headers    The response headers
      * @param string|resource|StreamInterface $body       The body of the response
+     * @param array                           $options    Response message options
+     *                                                    - header_factory: Factory used to create headers
      */
-    public function __construct($statusCode = null, array $headers = null, $body = null)
+    public function __construct($statusCode = null, array $headers = null, $body = null, array $options = [])
     {
-        parent::__construct();
+        parent::__construct($options);
         if ($statusCode) {
             $this->setStatus($statusCode);
         }

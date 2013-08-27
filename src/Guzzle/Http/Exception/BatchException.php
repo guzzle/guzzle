@@ -11,7 +11,7 @@ use Guzzle\Http\ClientInterface;
 class BatchException extends TransferException
 {
     /** @var Transaction */
-    protected $transaction;
+    private $transaction;
 
     public function __construct(
         Transaction $transaction,

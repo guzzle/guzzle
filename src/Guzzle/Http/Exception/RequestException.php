@@ -11,10 +11,10 @@ use Guzzle\Http\Message\ResponseInterface;
 class RequestException extends TransferException
 {
     /** @var RequestInterface */
-    protected $request;
+    private $request;
 
     /** @var ResponseInterface */
-    protected $response;
+    private $response;
 
     public function __construct(
         $message = '',

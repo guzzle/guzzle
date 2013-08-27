@@ -16,35 +16,7 @@ trait HasHeaders
     protected $headers;
 
     /** @var HeaderFactoryInterface $headerFactory */
-    private $headerFactory;
-
-    /**
-     * Set the header factory to use to create headers
-     *
-     * @param HeaderFactoryInterface $factory
-     *
-     * @return self
-     */
-    public function setHeaderFactory(HeaderFactoryInterface $factory)
-    {
-        $this->headerFactory = $factory;
-
-        return $this;
-    }
-
-    /**
-     * Get the header factory to use to create headers
-     *
-     * @return HeaderFactoryInterface
-     */
-    public function getHeaderFactory()
-    {
-        if (!$this->headerFactory) {
-            $this->headerFactory = HeaderFactory::getInstance();
-        }
-
-        return $this->headerFactory;
-    }
+    protected  $headerFactory;
 
     public function addHeader($header, $value = null)
     {
@@ -53,7 +25,7 @@ trait HasHeaders
         } elseif ($value instanceof HeaderInterface) {
             return $this->headers[$header] = $value;
         } else {
-            return $this->headers[$header] = $this->getHeaderFactory()->createHeader($header, $value);
+            return $this->headers[$header] = $this->headerFactory->createHeader($header, $value);
         }
     }
 
@@ -103,13 +75,5 @@ trait HasHeaders
         unset($this->headers[$header]);
 
         return $this;
-    }
-
-    /**
-     * This method must be called when using this trait!
-     */
-    protected function initHeaders()
-    {
-        $this->headers = new HeaderCollection();
     }
 }
