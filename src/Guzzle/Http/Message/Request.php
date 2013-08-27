@@ -72,22 +72,6 @@ class Request extends AbstractMessage implements RequestInterface
         $this->headers = clone $this->headers;
     }
 
-    public function serialize()
-    {
-        return json_encode(array(
-            'method'  => $this->method,
-            'url'     => $this->getUrl(),
-            'headers' => $this->headers->toArray(),
-            'body'    => (string) $this->body
-        ));
-    }
-
-    public function unserialize($serialize)
-    {
-        $data = json_decode($serialize, true);
-        $this->__construct($data['method'], $data['url'], $data['headers'], $data['body']);
-    }
-
     public function getStartLine()
     {
         return trim($this->method . ' ' . $this->getResource()) . ' '

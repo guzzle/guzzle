@@ -130,21 +130,6 @@ class Response extends AbstractMessage implements ResponseInterface
         }
     }
 
-    public function serialize()
-    {
-        return json_encode(array(
-            'status'  => $this->statusCode,
-            'body'    => (string) $this->body,
-            'headers' => $this->headers->toArray()
-        ));
-    }
-
-    public function unserialize($serialize)
-    {
-        $data = json_decode($serialize, true);
-        $this->__construct($data['status'], $data['headers'], $data['body']);
-    }
-
     public function getStartLine()
     {
         return sprintf('HTTP/%s %d %s', $this->getProtocolVersion(), $this->statusCode, $this->reasonPhrase);

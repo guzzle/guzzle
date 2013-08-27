@@ -8,7 +8,7 @@ use Guzzle\Stream\StreamInterface;
 /**
  * Request and response message interface
  */
-interface MessageInterface extends \Serializable, HasHeadersInterface
+interface MessageInterface extends HasHeadersInterface
 {
     /**
      * Get a string represenation of the message
