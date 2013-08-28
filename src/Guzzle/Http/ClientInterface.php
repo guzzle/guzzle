@@ -131,16 +131,6 @@ interface ClientInterface extends HasDispatcherInterface
     public function getBaseUrl();
 
     /**
-     * Set the User-Agent header to be used on all requests sent from the client
-     *
-     * @param string $userAgent      User agent string
-     * @param bool   $includeDefault Set to true to prepend the value to Guzzle's default user agent string
-     *
-     * @return self
-     */
-    public function setUserAgent($userAgent, $includeDefault = false);
-
-    /**
      * Set a default request option on the client that will be used as a default for each request
      *
      * @param string $keyOrPath request.options key (e.g. allow_redirects) or path to a nested key (e.g. headers/foo)
