@@ -16,10 +16,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterface, \Countable
 {
     /** @var array Array of mock responses / exceptions */
-    protected $queue = [];
+    private $queue = [];
 
     /** @var bool Whether or not to consume an entity body when a mock response is served */
-    protected $readBodies;
+    private $readBodies;
 
     /**
      * @param array $items      Array of responses or exceptions to queue
