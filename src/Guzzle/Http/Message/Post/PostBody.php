@@ -4,6 +4,7 @@ namespace Guzzle\Http\Message\Post;
 
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Stream\Stream;
+use Guzzle\Stream\StreamMetadata;
 use Guzzle\Url\QueryAggregator\PhpAggregator;
 use Guzzle\Url\QueryAggregator\QueryAggregatorInterface;
 use Guzzle\Url\QueryString;
@@ -13,14 +14,20 @@ use Guzzle\Url\QueryString;
  */
 class PostBody implements PostBodyInterface
 {
+    use StreamMetadata;
+
     private $body;
     private $fields = [];
     private $files = [];
-    private $metadata = [];
     private $aggregator;
     private $size;
     private $forceMultipart = false;
 
+    /**
+     * Applies request headers to a request based on the POST state
+     *
+     * @param RequestInterface $request Request to update
+     */
     public function applyRequestHeaders(RequestInterface $request)
     {
         if ($this->files) {
@@ -136,22 +143,6 @@ class PostBody implements PostBodyInterface
     public function close()
     {
         return $this->body ? $this->body->close : true;
-    }
-
-    public function getMetadata($key = null)
-    {
-        if ($key === null) {
-            return $this->metadata;
-        } else {
-            return isset($this->metadata[$key]) ? $this->metadata[$key] : null;
-        }
-    }
-
-    public function setMetadata($key, $value)
-    {
-        $this->metadata[$key] = $value;
-
-        return $this;
     }
 
     public function getStream()
@@ -280,7 +271,9 @@ class PostBody implements PostBodyInterface
     private function createMultipart()
     {
         $fields = $this->fields;
-        $query = (new QueryString())->setEncodingType(false);
+        $query = (new QueryString())
+            ->setEncodingType(false)
+            ->setAggregator($this->getAggregator());
 
         // Account for fields with an array value
         foreach ($fields as $name => &$field) {
@@ -289,7 +282,7 @@ class PostBody implements PostBodyInterface
             }
         }
 
-        return new MultipartBody($this->fields, $this->files);
+        return new MultipartBody($fields, $this->files);
     }
 
     /**

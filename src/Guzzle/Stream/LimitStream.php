@@ -81,6 +81,7 @@ class LimitStream implements StreamInterface
      * @param int $offset Offset to seek to and begin byte limiting from
      *
      * @return self
+     * @throws \RuntimeException
      */
     public function setOffset($offset)
     {

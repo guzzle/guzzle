@@ -5,6 +5,7 @@ namespace Guzzle\Http\Message\Post;
 use Guzzle\Http\Mimetypes;
 use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
+use Guzzle\Stream\StreamMetadata;
 use Guzzle\Url\QueryString;
 
 /**
@@ -12,10 +13,11 @@ use Guzzle\Url\QueryString;
  */
 class MultipartBody implements StreamInterface
 {
+    use StreamMetadata;
+
     /** @var StreamInterface */
     private $files;
     private $fields;
-    private $metadata = ['mode' => 'r'];
     private $size;
     private $buffer;
     private $bufferedHeaders = [];
@@ -36,6 +38,7 @@ class MultipartBody implements StreamInterface
         $this->boundary = $boundary ?: uniqid();
         $this->fields = $fields;
         $this->files = $files;
+        $this->meta['mode'] = 'r';
 
         // Ensure each file is a PostFileInterface
         foreach ($this->files as $file) {
@@ -71,25 +74,6 @@ class MultipartBody implements StreamInterface
     public function close()
     {
         $this->fields = $this->files = [];
-    }
-
-    public function getMetadata($key = null)
-    {
-        return isset($this->metadata[$key]) ? $this->metadata[$key] : null;
-    }
-
-    /**
-     * @throws \InvalidArgumentException When trying to change the value of "mode"
-     */
-    public function setMetadata($key, $value)
-    {
-        if ($key == 'mode') {
-            throw new \InvalidArgumentException("Cannot change immutable value of stream: {$key}");
-        }
-
-        $this->metadata[$key] = $value;
-
-        return $this;
     }
 
     /**

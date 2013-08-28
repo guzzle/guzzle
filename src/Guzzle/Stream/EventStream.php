@@ -2,7 +2,6 @@
 
 namespace Guzzle\Stream;
 
-use Guzzle\Common\Event;
 use Guzzle\Common\HasDispatcher;
 use Guzzle\Common\HasDispatcherInterface;
 
