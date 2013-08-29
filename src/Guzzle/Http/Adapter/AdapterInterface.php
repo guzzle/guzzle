@@ -10,9 +10,9 @@ interface AdapterInterface
     /**
      * Transfers one or more HTTP requests and populates responses
      *
-     * @param Transaction $transaction Hash of request to response object with an associated client
+     * @param Transaction $transaction Transaction abject to populate
      *
-     * @return Transaction Returns a hash mapping RequestInterface to ResponseInterface objects or AdapterExceptions
+     * @return Transaction Returns a hash mapping RequestInterface to ResponseInterface objects or RequestExceptions
      */
     public function send(Transaction $transaction);
 }
