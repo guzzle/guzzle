@@ -37,7 +37,6 @@ class CurlFactory
             CURLOPT_CONNECTTIMEOUT => $config['connect_timeout'] ?: 150,
             CURLOPT_RETURNTRANSFER => false,
             CURLOPT_HEADER         => false,
-            CURLOPT_PORT           => $request->getPort(),
             CURLOPT_WRITEFUNCTION  => array($mediator, 'writeResponseBody'),
             CURLOPT_HEADERFUNCTION => array($mediator, 'receiveResponseHeader'),
             CURLOPT_READFUNCTION   => array($mediator, 'readRequestBody'),

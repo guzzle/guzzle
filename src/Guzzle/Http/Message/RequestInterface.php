@@ -73,14 +73,14 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     public function setMethod($method);
 
     /**
-     * Get the URI scheme of the request (http, https, ftp, etc)
+     * Get the URI scheme of the request (http, https, etc)
      *
      * @return string
      */
     public function getScheme();
 
     /**
-     * Set the URI scheme of the request (http, https, ftp, etc)
+     * Set the URI scheme of the request (http, https, etc)
      *
      * @param string $scheme Scheme to set
      *
@@ -119,22 +119,6 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
      * @return self
      */
     public function setPath($path);
-
-    /**
-     * Get the port that the request will be sent on if it has been set
-     *
-     * @return int|null
-     */
-    public function getPort();
-
-    /**
-     * Set the port that the request will be sent on
-     *
-     * @param int $port Port number to set
-     *
-     * @return self
-     */
-    public function setPort($port);
 
     /**
      * Get the request's configuration options

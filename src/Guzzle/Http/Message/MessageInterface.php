@@ -18,13 +18,6 @@ interface MessageInterface extends HasHeadersInterface
     public function __toString();
 
     /**
-     * Get the start line of the message (e.g. "HTTP/1.1 200 OK")
-     *
-     * @return string
-     */
-    public function getStartLine();
-
-    /**
      * Set the HTTP protocol version of the request (e.g. 1.1 or 1.0)
      *
      * @param string $protocol HTTP protocol version to use with the request

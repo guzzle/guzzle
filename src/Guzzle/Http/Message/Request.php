@@ -85,9 +85,6 @@ class Request extends AbstractMessage implements RequestInterface
             . '/' . $this->getProtocolVersion();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setBody($body, $contentType = null)
     {
         parent::setBody($body, $contentType);
@@ -108,8 +105,7 @@ class Request extends AbstractMessage implements RequestInterface
     public function setUrl($url)
     {
         $this->url = $url instanceof Url ? $url : Url::fromString($url);
-        // Update the port and host header
-        $this->setPort($this->url->getPort());
+        $this->updateHostHeaderFromUrl();
 
         return $this;
     }
@@ -156,7 +152,7 @@ class Request extends AbstractMessage implements RequestInterface
     public function setHost($host)
     {
         $this->url->setHost($host);
-        $this->setPort($this->url->getPort());
+        $this->updateHostHeaderFromUrl();
 
         return $this;
     }
@@ -169,26 +165,6 @@ class Request extends AbstractMessage implements RequestInterface
     public function setPath($path)
     {
         $this->url->setPath($path);
-
-        return $this;
-    }
-
-    public function getPort()
-    {
-        return $this->url->getPort();
-    }
-
-    public function setPort($port)
-    {
-        $this->url->setPort($port);
-
-        // Include the port in the Host header if it is not the default port for the scheme of the URL
-        $scheme = $this->url->getScheme();
-        if (($scheme == 'http' && $port != 80) || ($scheme == 'https' && $port != 443)) {
-            $this->setHeader('Host', $this->url->getHost() . ':' . $port);
-        } else {
-            $this->setHeader('Host', $this->url->getHost());
-        }
 
         return $this;
     }
@@ -219,5 +195,15 @@ class Request extends AbstractMessage implements RequestInterface
         }
 
         $this->getEventDispatcher()->addSubscriber($subscriber);
+    }
+
+    private function updateHostHeaderFromUrl()
+    {
+        // Include the port in the Host header if it is not the default port for the scheme of the URL
+        if ($port = $this->url->getPort()) {
+            $this->setHeader('Host', $this->url->getHost() . ':' . $port);
+        } else {
+            $this->setHeader('Host', $this->url->getHost());
+        }
     }
 }
