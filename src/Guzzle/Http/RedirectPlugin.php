@@ -35,7 +35,7 @@ class RedirectPlugin implements EventSubscriberInterface
         $redirectCount = 0;
         $redirectResponse = $response = $event->getResponse();
 
-        while ($redirectResponse->isRedirect() && $redirectResponse->hasHeader('Location')) {
+        while (substr($redirectResponse->getStatusCode(), 0, 1) == '3' && $redirectResponse->hasHeader('Location')) {
             if (++$redirectCount > $this->defaultMaxRedirects) {
                 throw new TooManyRedirectsException("Will not follow more than {$redirectCount} redirects", $request);
             }

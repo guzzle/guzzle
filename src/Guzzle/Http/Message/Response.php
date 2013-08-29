@@ -167,31 +167,6 @@ class Response extends AbstractMessage implements ResponseInterface
         return $this->reasonPhrase;
     }
 
-    public function isClientError()
-    {
-        return $this->statusCode >= 400 && $this->statusCode < 500;
-    }
-
-    public function isInformational()
-    {
-        return $this->statusCode < 200;
-    }
-
-    public function isRedirect()
-    {
-        return $this->statusCode >= 300 && $this->statusCode < 400;
-    }
-
-    public function isServerError()
-    {
-        return $this->statusCode >= 500 && $this->statusCode < 600;
-    }
-
-    public function isSuccessful()
-    {
-        return $this->statusCode >= 200 && $this->statusCode < 300;
-    }
-
     public function json()
     {
         $data = json_decode((string) $this->body, true);

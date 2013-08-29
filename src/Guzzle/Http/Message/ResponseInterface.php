@@ -30,41 +30,6 @@ interface ResponseInterface extends MessageInterface
     public function getReasonPhrase();
 
     /**
-     * Checks if HTTP Status code is Information (1xx)
-     *
-     * @return bool
-     */
-    public function isInformational();
-
-    /**
-     * Checks if HTTP Status code is Successful (2xx)
-     *
-     * @return bool
-     */
-    public function isSuccessful();
-
-    /**
-     * Checks if HTTP Status code is a Redirect (3xx)
-     *
-     * @return bool
-     */
-    public function isRedirect();
-
-    /**
-     * Checks if HTTP Status code is a Client Error (4xx)
-     *
-     * @return bool
-     */
-    public function isClientError();
-
-    /**
-     * Checks if HTTP Status code is Server Error (5xx)
-     *
-     * @return bool
-     */
-    public function isServerError();
-
-    /**
      * Get the effective URL that resulted in this response (e.g. the last redirect URL)
      *
      * @return string

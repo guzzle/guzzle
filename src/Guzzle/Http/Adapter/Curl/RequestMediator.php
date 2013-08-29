@@ -53,7 +53,7 @@ class RequestMediator
             $this->response->setProtocolVersion(substr($startLine[0], -3));
         } elseif ($pos = strpos($header, ':')) {
             $this->response->addHeader(substr($header, 0, $pos), substr($header, $pos + 1));
-        } elseif ($header == '' && !$this->response->isInformational()) {
+        } elseif ($header == '' && $this->response->getStatusCode() >= 200) {
             $this->request->dispatch(RequestEvents::GOT_HEADERS, [
                 'request' => $this->request,
                 'response' => $this->response
