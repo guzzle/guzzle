@@ -79,7 +79,7 @@ class OperationCommandTest extends \Guzzle\Tests\GuzzleTestCase
             'Content-Type' => 'application/xml'
         ), '<Foo><Baz>Bar</Baz></Foo>'), true);
         $result = $op->execute();
-        $this->assertEquals(new Model(array('Baz' => 'Bar'), $description->getModel('bar')), $result);
+        $this->assertEquals(new Model(array('Baz' => 'Bar')), $result);
     }
 
     public function testAllowsRawResponses()

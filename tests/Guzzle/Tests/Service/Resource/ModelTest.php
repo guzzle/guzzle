@@ -46,4 +46,20 @@ class ModelTest extends \Guzzle\Tests\GuzzleTestCase
         });
         $this->assertEquals(array('Bar' => 'a'), $model->toArray());
     }
+
+    public function testDoesNotIncludeEmptyStructureInString()
+    {
+        $model = new Model(array('Foo' => 'baz'));
+        $str = (string) $model;
+        $this->assertContains('Debug output of model', $str);
+        $this->assertNotContains('Model structure', $str);
+    }
+
+    public function testDoesIncludeModelStructureInString()
+    {
+        $model = new Model(array('Foo' => 'baz'), new Parameter(array('name' => 'Foo')));
+        $str = (string) $model;
+        $this->assertContains('Debug output of Foo model', $str);
+        $this->assertContains('Model structure', $str);
+    }
 }

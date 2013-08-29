@@ -22,6 +22,9 @@ class OperationResponseParser extends DefaultResponseParser
     /** @var self */
     protected static $instance;
 
+    /** @var bool */
+    private $schemaInModels;
+
     /**
      * @return self
      * @codeCoverageIgnore
@@ -36,11 +39,13 @@ class OperationResponseParser extends DefaultResponseParser
     }
 
     /**
-     * @param VisitorFlyweight $factory Factory to use when creating visitors
+     * @param VisitorFlyweight $factory        Factory to use when creating visitors
+     * @param bool             $schemaInModels Set to true to inject schemas into models
      */
-    public function __construct(VisitorFlyweight $factory)
+    public function __construct(VisitorFlyweight $factory, $schemaInModels = false)
     {
         $this->factory = $factory;
+        $this->schemaInModels = $schemaInModels;
     }
 
     /**
@@ -75,9 +80,10 @@ class OperationResponseParser extends DefaultResponseParser
             return parent::handleParsing($command, $response, $contentType);
         } elseif ($command[AbstractCommand::RESPONSE_PROCESSING] != AbstractCommand::TYPE_MODEL) {
             // Returns a model with no visiting if the command response processing is not model
-            return new Model(parent::handleParsing($command, $response, $contentType), $model);
+            return new Model(parent::handleParsing($command, $response, $contentType));
         } else {
-            return new Model($this->visitResult($model, $command, $response), $model);
+            // Only inject the schema into the model if "schemaInModel" is true
+            return new Model($this->visitResult($model, $command, $response), $this->schemaInModels ? $model : null);
         }
     }
 

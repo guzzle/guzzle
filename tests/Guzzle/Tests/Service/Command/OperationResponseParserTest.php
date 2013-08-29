@@ -99,6 +99,20 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
         ), $result->toArray());
     }
 
+    public function testCanInjectModelSchemaIntoModels()
+    {
+        $parser = new OperationResponseParser(VisitorFlyweight::getInstance(), true);
+        $desc = $this->getDescription();
+        $operation = $desc->getOperation('test');
+        $op = new OperationCommand(array(), $operation);
+        $op->setResponseParser($parser)->setClient(new Client());
+        $op->prepare()->setResponse(new Response(200, array(
+            'Content-Type' => 'application/json'
+        ), '{"baz":"bar","enigma":"123"}'), true);
+        $result = $op->execute();
+        $this->assertSame($result->getStructure(), $desc->getModel('Foo'));
+    }
+
     public function testDoesNotParseXmlWhenNotUsingXmlVisitor()
     {
         $parser = OperationResponseParser::getInstance();
