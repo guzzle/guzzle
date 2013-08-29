@@ -59,6 +59,6 @@ class Model extends Collection
             $output .= '  ' . json_encode($this->structure->toArray()) . "\n\n";
         }
 
-        return $output;
+        return $output . "\n";
     }
 }
