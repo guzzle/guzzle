@@ -26,7 +26,7 @@ class MessageParser implements MessageParserInterface
         $parsed = [
             'method'   => strtoupper($parts['start_line'][0]),
             'protocol' => $protocol,
-            'version'  => $version,
+            'protocol_version' => $version,
             'headers'  => $parts['headers'],
             'body'     => $parts['body']
         ];
@@ -45,12 +45,12 @@ class MessageParser implements MessageParserInterface
         list($protocol, $version) = explode('/', trim($parts['start_line'][0]));
 
         return [
-            'protocol'      => $protocol,
-            'version'       => $version,
-            'code'          => $parts['start_line'][1],
-            'reason_phrase' => isset($parts['start_line'][2]) ? $parts['start_line'][2] : '',
-            'headers'       => $parts['headers'],
-            'body'          => $parts['body']
+            'protocol'         => $protocol,
+            'protocol_version' => $version,
+            'code'             => $parts['start_line'][1],
+            'reason_phrase'    => isset($parts['start_line'][2]) ? $parts['start_line'][2] : '',
+            'headers'          => $parts['headers'],
+            'body'             => $parts['body']
         ];
     }
 

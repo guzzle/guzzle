@@ -93,22 +93,11 @@ class Response implements ResponseInterface
      */
     public static function fromMessage($message)
     {
-        $parser = new MessageParser();
-        if (!($data = $parser->parseResponse($message))) {
+        if (!($data = (new MessageParser())->parseResponse($message))) {
             throw new \InvalidArgumentException('Unable to parse response message');
         }
 
-        $response = new static();
-        $response->setStatus($data['code'])
-            ->setHeaders($data['headers'])
-            ->setProtocolVersion($data['version'])
-            ->setStatus($data['code'], $data['reason_phrase']);
-
-        if (strlen($data['body']) > 0) {
-            $response->setBody($data['body']);
-        }
-
-        return $response;
+        return new static($data['code'], $data['headers'], $data['body'], $data);
     }
 
     /**
@@ -117,13 +106,20 @@ class Response implements ResponseInterface
      * @param string|resource|StreamInterface $body       The body of the response
      * @param array                           $options    Response message options
      *                                                    - header_factory: Factory used to create headers
+     *                                                    - reason_phrase: Set a custom reason phrease
+     *                                                    - protocol_version: Set a custom protocol version
      */
-    public function __construct($statusCode = null, array $headers = [], $body = null, array $options = [])
+    public function __construct($statusCode, array $headers = [], $body = null, array $options = [])
     {
         $this->initializeMessage($options);
-        if ($statusCode) {
-            $this->setStatus($statusCode);
+        $this->statusCode = (string) $statusCode;
+
+        if (isset($options['reason_phrase'])) {
+            $this->reasonPhrase = $options['reason_phrase'];
+        } elseif (isset(self::$statusTexts[$this->statusCode])) {
+            $this->reasonPhrase = self::$statusTexts[$this->statusCode];
         }
+
         if ($headers) {
             $this->setHeaders($headers);
         }
@@ -146,19 +142,6 @@ class Response implements ResponseInterface
         }
 
         return $this->body;
-    }
-
-    public function setStatus($statusCode, $reasonPhrase = '')
-    {
-        $this->statusCode = (string) $statusCode;
-
-        if (!$reasonPhrase && isset(self::$statusTexts[$this->statusCode])) {
-            $this->reasonPhrase = self::$statusTexts[$this->statusCode];
-        } else {
-            $this->reasonPhrase = $reasonPhrase;
-        }
-
-        return $this;
     }
 
     public function getStatusCode()

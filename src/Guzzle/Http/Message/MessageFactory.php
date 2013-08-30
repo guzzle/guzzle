@@ -51,13 +51,8 @@ class MessageFactory implements MessageFactoryInterface
         return new Response($statusCode, $headers, $body, $options);
     }
 
-    public function createRequest(
-        $method,
-        $url,
-        array $headers = [],
-        $body = null,
-        array $options = array()
-    ) {
+    public function createRequest($method, $url, array $headers = [], $body = null, array $options = [])
+    {
         $request = new Request(
             $method,
             $url,
@@ -94,8 +89,9 @@ class MessageFactory implements MessageFactoryInterface
             $parsed['method'],
             Url::buildUrl($parsed['request_url']),
             $parsed['headers'],
-            $parsed['body']
-        )->setProtocolVersion($parsed['version']);
+            $parsed['body'],
+            $parsed
+        );
 
         // "Expect: 100-Continue" header is added when using a raw request body for PUT or POST requests.
         // This factory method should accurately reflect the message, so here we are removing the Expect

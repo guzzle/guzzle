@@ -5,16 +5,6 @@ namespace Guzzle\Http\Message;
 interface ResponseInterface extends MessageInterface
 {
     /**
-     * Set the response status
-     *
-     * @param string $statusCode   Response status code to set (e.g., "200")
-     * @param string $reasonPhrase Response reason phrase (e.g., "OK")
-     *
-     * @return self
-     */
-    public function setStatus($statusCode, $reasonPhrase = null);
-
-    /**
      * Get the response status code (e.g. "200", "404", etc)
      *
      * @return string
