@@ -8,7 +8,7 @@ namespace Guzzle\Http\Adapter;
 interface AdapterInterface
 {
     /**
-     * Transfers one or more HTTP requests and populates responses
+     * Transfers an HTTP request and populates a response
      *
      * @param Transaction $transaction Transaction abject to populate
      *

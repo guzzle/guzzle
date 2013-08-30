@@ -5,25 +5,21 @@ namespace Guzzle\Http\Event;
 use Guzzle\Common\Event;
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\ClientInterface;
+use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\RequestInterface;
 
 abstract class AbstractRequestEvent extends Event
 {
     /** @var Transaction */
-    protected $transaction;
-
-    /** @var RequestInterface $request */
-    private $request;
+    private $transaction;
 
     /**
-     * @param RequestInterface        $request
-     * @param Transaction             $transaction Transaction that contains the request
+     * @param Transaction $transaction Transaction that contains the request
      */
-    public function __construct(RequestInterface $request, Transaction $transaction)
+    public function __construct(Transaction $transaction)
     {
         parent::__construct();
         $this->transaction = $transaction;
-        $this->request = $request;
     }
 
     /**
@@ -43,17 +39,25 @@ abstract class AbstractRequestEvent extends Event
      */
     public function getRequest()
     {
-        return $this->request;
+        return $this->transaction->getRequest();
+    }
+
+    /**
+     * @return Transaction
+     */
+    protected function getTransaction()
+    {
+        return $this->transaction;
     }
 
     /**
      * Emit an error event
      */
-    protected function emitError()
+    protected function emitError(RequestException $exception)
     {
-        $this->request->getEventDispatcher()->dispatch(
+        $this->transaction->getRequest()->getEventDispatcher()->dispatch(
             'request.error',
-            new RequestErrorEvent($this->request, $this->transaction)
+            new RequestErrorEvent($this->transaction, $exception)
         );
     }
 
@@ -62,9 +66,9 @@ abstract class AbstractRequestEvent extends Event
      */
     protected function emitAfterSend()
     {
-        $this->request->getEventDispatcher()->dispatch(
+        $this->transaction->getRequest()->getEventDispatcher()->dispatch(
             'request.after_send',
-            new RequestAfterSendEvent($this->request, $this->transaction)
+            new RequestAfterSendEvent($this->transaction)
         );
     }
 }

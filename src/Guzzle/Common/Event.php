@@ -14,7 +14,7 @@ class Event extends SymfonyEvent implements ToArrayInterface, \ArrayAccess, \Ite
     /**
      * @param array $context Contextual information
      */
-    public function __construct(array $context = array())
+    public function __construct(array $context = [])
     {
         $this->data = $context;
     }

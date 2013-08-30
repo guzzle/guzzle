@@ -4,9 +4,7 @@ namespace Guzzle\Http;
 
 use Guzzle\Common\Collection;
 use Guzzle\Http\Exception\AdapterException;
-use Guzzle\Http\Exception\BatchException;
 use Guzzle\Common\HasDispatcherInterface;
-use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Stream\StreamInterface;
@@ -112,16 +110,6 @@ interface ClientInterface extends HasDispatcherInterface
      * @throws AdapterException When an error is encountered (network or HTTP errors)
      */
     public function send(RequestInterface $request);
-
-    /**
-     * Send one or more requests in parallel
-     *
-     * @param array $requests RequestInterface objects to send
-     *
-     * @return Transaction Returns a hash map object of request to response objects
-     * @throws BatchException
-     */
-    public function batch(array $requests);
 
     /**
      * Get the client's base URL

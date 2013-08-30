@@ -4,6 +4,7 @@ namespace Guzzle\Http\Event;
 
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\ResponseInterface;
+use Guzzle\Http\Adapter\Transaction;
 
 /**
  * Event object emitted after a request has been sent and an error was encountered
@@ -12,6 +13,18 @@ use Guzzle\Http\Message\ResponseInterface;
  */
 class RequestErrorEvent extends AbstractRequestEvent
 {
+    private $exception;
+
+    /**
+     * @param Transaction      $transaction Transaction that contains the request
+     * @param RequestException $e           Exception encountered
+     */
+    public function __construct(Transaction $transaction, RequestException $e)
+    {
+        parent::__construct($transaction);
+        $this->exception = $e;
+    }
+
     /**
      * Intercept the exception and inject a response
      *
@@ -19,8 +32,7 @@ class RequestErrorEvent extends AbstractRequestEvent
      */
     public function intercept(ResponseInterface $response)
     {
-        $request = $this->getRequest();
-        $this->transaction[$request] = $response;
+        $this->getTransaction()->setResponse($response);
         $this->stopPropagation();
         $this->emitAfterSend();
     }
@@ -32,17 +44,7 @@ class RequestErrorEvent extends AbstractRequestEvent
      */
     public function getException()
     {
-        return $this->transaction[$this->getRequest()];
-    }
-
-    /**
-     * Check if the exception has a response
-     *
-     * @return bool
-     */
-    public function hasResponse()
-    {
-        return $this->getException()->hasResponse();
+        return $this->exception;
     }
 
     /**

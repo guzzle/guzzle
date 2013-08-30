@@ -21,14 +21,13 @@ class RequestBeforeSendEvent extends AbstractRequestEvent
      */
     public function intercept($result)
     {
-        $request = $this->getRequest();
-        $this->transaction[$request] = $result;
         $this->stopPropagation();
 
         if ($result instanceof ResponseInterface) {
+            $this->getTransaction()->setResponse($result);
             $this->emitAfterSend();
         } else {
-            $this->emitError();
+            $this->emitError($result);
         }
     }
 }

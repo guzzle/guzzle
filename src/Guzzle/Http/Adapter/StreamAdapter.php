@@ -17,39 +17,34 @@ class StreamAdapter implements AdapterInterface
 {
     public function send(Transaction $transaction)
     {
-        foreach ($transaction as $request) {
-            try {
-                $this->createResponse($request, $transaction[$request]);
-                $request->getEventDispatcher()->dispatch(
-                    'request.after_send',
-                    new RequestAfterSendEvent($request, $transaction)
-                );
-            } catch (RequestException $e) {
-                $transaction[$request] = $e;
-                $request->getEventDispatcher()->dispatch(
-                    'request.error',
-                    new RequestErrorEvent($request, $transaction)
-                );
+        try {
+            $this->createResponse($transaction);
+            $transaction->getRequest()->getEventDispatcher()->dispatch(
+                'request.after_send',
+                new RequestAfterSendEvent($transaction)
+            );
+        } catch (RequestException $e) {
+            if (!$transaction->getRequest()->getEventDispatcher()->dispatch(
+                'request.error',
+                new RequestErrorEvent($transaction, $e)
+            )->isPropagationStopped()) {
+                throw $e;
             }
         }
 
-        return $transaction;
+        return $transaction->getResponse();
     }
 
     /**
-     * @param RequestInterface  $request  Request to send
-     * @param ResponseInterface $response Response to populate
+     * @param Transaction
      * @throws \LogicException if you attempt to stream and specify a write_to option
      */
-    private function createResponse(RequestInterface $request, ResponseInterface $response)
+    private function createResponse(Transaction $transaction)
     {
+        $request = $transaction->getRequest();
         $stream = $this->createStream($request, $http_response_header);
-
         // Track the response headers of the request
-        if (isset($http_response_header)) {
-            $this->processResponseHeaders($http_response_header, $response);
-        }
-
+        $response = $this->createResponseObject($http_response_header, $transaction, $stream);
         $request->dispatch(RequestEvents::GOT_HEADERS, ['request' => $request, 'response' => $response]);
 
         if ($request->getConfig()['stream']) {
@@ -92,17 +87,25 @@ class StreamAdapter implements AdapterInterface
         $response->setBody($saveTo);
     }
 
-    private function processResponseHeaders($headers, ResponseInterface $response)
+    private function createResponseObject($headers, Transaction $transaction, $stream)
     {
         $parts = explode(' ', array_shift($headers), 3);
-        $response->setProtocolVersion(substr($parts[0], -3));
-        $response->setStatus($parts[1], isset($parts[2]) ? $parts[2] : null);
+        $options = ['protocol_version' => substr($parts[0], -3)];
+        if (isset($parts[2])) {
+            $options['reason_phrase'] = $parts[2];
+        }
 
         // Set the size on the stream if it was returned in the response
+        $responseHeaders = [];
         foreach ($headers as $header) {
-            $parts = explode(':', $header, 2);
-            $response->addHeader($parts[0], isset($parts[1]) ? $parts[1] : '');
+            $headerParts = explode(':', $header, 2);
+            $responseHeaders[$headerParts[0]] = isset($headerParts[1]) ? $headerParts[1] : '';
         }
+
+        $response = $transaction->getMessageFactory()->createResponse($parts[1], $responseHeaders, $stream, $options);
+        $transaction->setResponse($response);
+
+        return $response;
     }
 
     /**

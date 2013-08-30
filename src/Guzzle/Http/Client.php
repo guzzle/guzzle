@@ -188,48 +188,19 @@ class Client implements ClientInterface
 
     public function send(RequestInterface $request)
     {
-        $transaction = new Transaction($this);
-        if (!$this->preSend($request, $transaction)->isPropagationStopped()) {
-            $transaction[$request] = $this->messageFactory->createResponse();
+        $transaction = new Transaction($this, $request, $this->messageFactory);
+
+        if (!$request->getEventDispatcher()->dispatch(
+            'request.before_send',
+            new RequestBeforeSendEvent($transaction)
+        )->isPropagationStopped()) {
             $this->adapter->send($transaction);
         }
 
-        if ($transaction[$request] instanceof \Exception) {
-            throw $transaction[$request];
-        }
+        $response = $transaction->getResponse();
+        $this->addEffectiveUrl($request, $response);
 
-        $this->addEffectiveUrl($request, $transaction[$request]);
-
-        return $transaction[$request];
-    }
-
-    public function batch(array $requests)
-    {
-        $transaction = new Transaction($this);
-        $intercepted = new Transaction($this);
-
-        foreach ($requests as $request) {
-            if ($this->preSend($request, $transaction)->isPropagationStopped()) {
-                $this->addEffectiveUrl($request, $transaction[$request]);
-                $intercepted[$request] = $transaction[$request];
-                unset($transaction[$request]);
-            } else {
-                $transaction[$request] = $this->messageFactory->createResponse();
-                $this->addEffectiveUrl($request, $transaction[$request]);
-            }
-        }
-
-        if (count($transaction)) {
-            $this->adapter->send($transaction);
-        }
-
-        $transaction->addAll($intercepted);
-
-        if ($transaction->hasExceptions()) {
-            throw new BatchException($transaction);
-        }
-
-        return $transaction;
+        return $response;
     }
 
     /**
@@ -257,22 +228,6 @@ class Client implements ClientInterface
         if (!$response->getEffectiveUrl()) {
             $response->setEffectiveUrl($request->getUrl());
         }
-    }
-
-    /**
-     * Emits a request.before_send event, prepares for sending over the wire, and emits a request.prepared event
-     *
-     * @param RequestInterface $request Request about to be sent
-     * @param Transaction      $transaction Transaction
-     *
-     * @return RequestBeforeSendEvent
-     */
-    private function preSend(RequestInterface $request, Transaction $transaction)
-    {
-        return $request->getEventDispatcher()->dispatch(
-            'request.before_send',
-            new RequestBeforeSendEvent($request, $transaction)
-        );
     }
 
     /**
