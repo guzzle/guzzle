@@ -22,13 +22,6 @@ trait MessageTrait
     /** @var string HTTP protocol version of the message */
     private $protocolVersion = '1.1';
 
-    public function setProtocolVersion($protocol)
-    {
-        $this->protocolVersion = $protocol;
-
-        return $this;
-    }
-
     public function getProtocolVersion()
     {
         return $this->protocolVersion;
@@ -65,6 +58,10 @@ trait MessageTrait
         $this->headerFactory = isset($options['header_factory'])
             ? $options['header_factory']
             : HeaderFactory::getDefaultFactory();
+
+        if (isset($options['protocol_version'])) {
+            $this->protocolVersion = $options['protocol_version'];
+        }
 
         $this->headers = new HeaderCollection();
     }

@@ -18,15 +18,6 @@ interface MessageInterface extends HasHeadersInterface
     public function __toString();
 
     /**
-     * Set the HTTP protocol version of the request (e.g. 1.1 or 1.0)
-     *
-     * @param string $protocol HTTP protocol version to use with the request
-     *
-     * @return self
-     */
-    public function setProtocolVersion($protocol);
-
-    /**
      * Get the HTTP protocol version of the message
      *
      * @return string

@@ -11,11 +11,9 @@ use Guzzle\Http\Adapter\StreamingProxyAdapter;
 use Guzzle\Http\Adapter\Curl\CurlAdapter;
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Event\RequestBeforeSendEvent;
-use Guzzle\Http\Exception\BatchException;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\MessageFactoryInterface;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Url\Url;
 use Guzzle\Url\UriTemplate;
 
@@ -201,7 +199,9 @@ class Client implements ClientInterface
         }
 
         $response = $transaction->getResponse();
-        $this->addEffectiveUrl($request, $response);
+        if (!$response->getEffectiveUrl()) {
+            $response->setEffectiveUrl($request->getUrl());
+        }
 
         return $response;
     }
@@ -224,13 +224,6 @@ class Client implements ClientInterface
     protected function getDefaultOptions()
     {
         return ['allow_redirects' => true, 'exceptions' => true, 'verify' => __DIR__ . '/Resources/cacert.pem'];
-    }
-
-    private function addEffectiveUrl(RequestInterface $request, ResponseInterface $response)
-    {
-        if (!$response->getEffectiveUrl()) {
-            $response->setEffectiveUrl($request->getUrl());
-        }
     }
 
     /**
