@@ -56,7 +56,7 @@ class Client implements ClientInterface
         $this->userAgent = $this->getDefaultUserAgent();
         $this->baseUrl = $this->buildUrl($this->config['base_url']);
         $this->messageFactory = $this->config['message_factory'] ?: MessageFactory::getInstance();
-        $this->adapter = $this->config['adapter'] ?: self::getDefaultAdapter();
+        $this->adapter = $this->config['adapter'] ?: $this->getDefaultAdapter();
         // Add default request options
         if (!$this->config['defaults']) {
             $this->config['defaults'] = $this->getDefaultOptions();
@@ -71,14 +71,17 @@ class Client implements ClientInterface
      * @return AdapterInterface
      * @throws \RuntimeException
      */
-    public static function getDefaultAdapter()
+    private function getDefaultAdapter()
     {
         if (extension_loaded('curl')) {
             return ini_get('allow_url_fopen')
-                ? new StreamingProxyAdapter(new CurlAdapter(), new StreamAdapter())
-                : new CurlAdapter();
+                ? new StreamingProxyAdapter(
+                    new CurlAdapter($this->messageFactory),
+                    new StreamAdapter($this->messageFactory)
+                )
+                : new CurlAdapter($this->messageFactory);
         } elseif (ini_get('allow_url_fopen')) {
-            return new StreamAdapter();
+            return new StreamAdapter($this->messageFactory);
         } else {
             throw new \RuntimeException('The curl extension must be installed or you must set allow_url_fopen to true');
         }

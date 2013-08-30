@@ -6,6 +6,7 @@ use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Event\RequestAfterSendEvent;
 use Guzzle\Http\Event\RequestErrorEvent;
 use Guzzle\Http\Exception\RequestException;
+use Guzzle\Http\Message\MessageFactoryInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Stream\Stream;
@@ -15,6 +16,17 @@ use Guzzle\Stream\Stream;
  */
 class StreamAdapter implements AdapterInterface
 {
+    /** @var MessageFactoryInterface */
+    private $messageFactory;
+
+    /**
+     * @param MessageFactoryInterface $messageFactory
+     */
+    public function __construct(MessageFactoryInterface $messageFactory)
+    {
+        $this->messageFactory = $messageFactory;
+    }
+
     public function send(Transaction $transaction)
     {
         try {
@@ -102,7 +114,7 @@ class StreamAdapter implements AdapterInterface
             $responseHeaders[$headerParts[0]] = isset($headerParts[1]) ? $headerParts[1] : '';
         }
 
-        $response = $transaction->getMessageFactory()->createResponse($parts[1], $responseHeaders, $stream, $options);
+        $response = $this->messageFactory->createResponse($parts[1], $responseHeaders, $stream, $options);
         $transaction->setResponse($response);
 
         return $response;

@@ -3,6 +3,7 @@
 namespace Guzzle\Http\Adapter\Curl;
 
 use Guzzle\Http\Adapter\Transaction;
+use Guzzle\Http\Message\MessageFactoryInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Stream\Stream;
 
@@ -11,10 +12,10 @@ use Guzzle\Stream\Stream;
  */
 class CurlFactory
 {
-    public function createHandle(Transaction $transaction)
+    public function createHandle(Transaction $transaction, MessageFactoryInterface $messageFactory)
     {
         $request = $transaction->getRequest();
-        $mediator = new RequestMediator($transaction);
+        $mediator = new RequestMediator($transaction, $messageFactory);
         $options = $this->getDefaultOptions($request, $mediator);
         $this->applyMethod($request, $options);
         $this->applyTransferOptions($request, $mediator, $options);

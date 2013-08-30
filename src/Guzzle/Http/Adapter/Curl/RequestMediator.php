@@ -4,6 +4,7 @@ namespace Guzzle\Http\Adapter\Curl;
 
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Event\RequestEvents;
+use Guzzle\Http\Message\MessageFactoryInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
@@ -15,6 +16,8 @@ class RequestMediator
 {
     /** @var Transaction */
     private $transaction;
+    /** @var MessageFactoryInterface */
+    private $messageFactory;
     private $statusCode;
     private $reasonPhrase;
     private $headers = [];
@@ -22,11 +25,13 @@ class RequestMediator
     private $protocolVersion;
 
     /**
-     * @param Transaction $transaction Transaction to populate
+     * @param Transaction             $transaction    Transaction to populate
+     * @param MessageFactoryInterface $messageFactory Message factory used to create responses
      */
-    public function __construct(Transaction $transaction)
+    public function __construct(Transaction $transaction, MessageFactoryInterface $messageFactory)
     {
         $this->transaction = $transaction;
+        $this->messageFactory = $messageFactory;
     }
 
     /**
@@ -65,7 +70,7 @@ class RequestMediator
         } elseif ($pos = strpos($header, ':')) {
             $this->headers[substr($header, 0, $pos)] = substr($header, $pos + 1);
         } elseif ($header == '' && $this->statusCode >= 200) {
-            $response = $this->transaction->getMessageFactory()->createResponse(
+            $response = $this->messageFactory->createResponse(
                 $this->statusCode,
                 $this->headers,
                 $this->body,

@@ -8,6 +8,7 @@ use Guzzle\Http\Event\RequestAfterSendEvent;
 use Guzzle\Http\Event\RequestErrorEvent;
 use Guzzle\Http\Exception\AdapterException;
 use Guzzle\Http\Exception\RequestException;
+use Guzzle\Http\Message\MessageFactoryInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Stream\Stream;
 
@@ -18,30 +19,22 @@ class CurlAdapter implements AdapterInterface
 {
     /** @var CurlFactory */
     private $factory;
-
     /** @var array Array of curl multi handles */
     private $multiHandles = array();
-
     /** @var array Array of curl multi handles */
     private $multiOwned = array();
-
-    /** @var array cURL multi error values and codes */
-    private static $multiErrors = array(
-        CURLM_BAD_HANDLE      => array('CURLM_BAD_HANDLE', 'The passed-in handle is not a valid CURLM handle.'),
-        CURLM_BAD_EASY_HANDLE => array('CURLM_BAD_EASY_HANDLE', "An easy handle was not good/valid. It could mean that it isn't an easy handle at all, or possibly that the handle already is in used by this or another multi handle."),
-        CURLM_OUT_OF_MEMORY   => array('CURLM_OUT_OF_MEMORY', 'You are doomed.'),
-        CURLM_INTERNAL_ERROR  => array('CURLM_INTERNAL_ERROR', 'This can only be returned if libcurl bugs. Please report it to us!')
-    );
+    /** @var MessageFactoryInterface */
+    private $messageFactory;
 
     /**
-     * @param array $options Array of options to use with the adapter
-     *                       - factory: Optional factory used to create cURL handles
+     * @param MessageFactoryInterface $messageFactory
+     * @param array                   $options Array of options to use with the adapter
+     *                                         - handle_factory: Optional factory used to create cURL handles
      */
-    public function __construct(array $options = array())
+    public function __construct(MessageFactoryInterface $messageFactory, array $options = [])
     {
-        $this->factory = isset($options['factory'])
-            ? $options['factory']
-            : new CurlFactory();
+        $this->messageFactory = $messageFactory;
+        $this->factory = isset($options['handle_factory']) ? $options['handle_factory'] : new CurlFactory();
     }
 
     /**
@@ -86,7 +79,7 @@ class CurlAdapter implements AdapterInterface
 
     private function prepare(Transaction $transaction, array $context)
     {
-        $handle = $this->factory->createHandle($transaction);
+        $handle = $this->factory->createHandle($transaction, $this->messageFactory);
         $this->checkCurlResult(curl_multi_add_handle($context['multi'], $handle));
         $context['handles'][$transaction] = $handle;
     }
@@ -194,10 +187,10 @@ class CurlAdapter implements AdapterInterface
     private function checkCurlResult($code)
     {
         if ($code != CURLM_OK && $code != CURLM_CALL_MULTI_PERFORM) {
-            throw new AdapterException(isset(self::$multiErrors[$code])
-                ? sprintf('cURL error %s: %s (%s)', $code, self::$multiErrors[$code][0], self::$multiErrors[$code][1])
-                : 'Unexpected cURL error: ' . $code
-            );
+            $buffer = function_exists('curl_multi_strerror')
+                ? curl_multi_strerror($code)
+                : 'See http://curl.haxx.se/libcurl/c/libcurl-errors.html for an explanation of cURL errors';
+            throw new AdapterException(sprintf('cURL error %s: %s', $code, $buffer));
         }
     }
 

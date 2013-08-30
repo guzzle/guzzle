@@ -3,7 +3,6 @@
 namespace Guzzle\Http\Adapter;
 
 use Guzzle\Http\ClientInterface;
-use Guzzle\Http\Message\MessageFactoryInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
 
@@ -15,22 +14,15 @@ class Transaction
     private $request;
     /** @var ResponseInterface */
     private $response;
-    /** @var MessageFactoryInterface */
-    private $messageFactory;
 
     /**
-     * @param ClientInterface         $client  Client that is used to send the requests
-     * @param RequestInterface        $request
-     * @param MessageFactoryInterface $messageFactory Message factory used with the Transaction
+     * @param ClientInterface  $client  Client that is used to send the requests
+     * @param RequestInterface $request
      */
-    public function __construct(
-        ClientInterface $client,
-        RequestInterface $request,
-        MessageFactoryInterface $messageFactory
-    ) {
+    public function __construct(ClientInterface $client, RequestInterface $request)
+    {
         $this->client = $client;
         $this->request = $request;
-        $this->messageFactory = $messageFactory;
     }
 
     /**
@@ -65,13 +57,5 @@ class Transaction
     public function getClient()
     {
         return $this->client;
-    }
-
-    /**
-     * @return MessageFactoryInterface
-     */
-    public function getMessageFactory()
-    {
-        return $this->messageFactory;
     }
 }
