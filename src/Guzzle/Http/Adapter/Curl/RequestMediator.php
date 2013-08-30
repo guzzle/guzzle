@@ -2,31 +2,41 @@
 
 namespace Guzzle\Http\Adapter\Curl;
 
+use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Event\RequestEvents;
-use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Stream\Stream;
+use Guzzle\Stream\StreamInterface;
 
 /**
  * Mediator between curl handles and request objects
  */
 class RequestMediator
 {
-    /** @var RequestInterface */
-    private $request;
-
-    /** @var ResponseInterface */
-    private $response;
+    /** @var Transaction */
+    private $transaction;
+    private $statusCode;
+    private $reasonPhrase;
+    private $headers = [];
+    private $body;
+    private $protocolVersion;
 
     /**
-     * @param RequestInterface  $request Request to mediate
-     * @param ResponseInterface $response Response to populate
+     * @param Transaction $transaction Transaction to populate
      */
-    public function __construct(RequestInterface $request, ResponseInterface $response)
+    public function __construct(Transaction $transaction)
     {
-        $this->request = $request;
-        $this->response = $response;
+        $this->transaction = $transaction;
+    }
+
+    /**
+     * Set the body that will hold the response body
+     *
+     * @param StreamInterface $body Response body
+     */
+    public function setResponseBody(StreamInterface $body = null)
+    {
+        $this->body = $body;
     }
 
     /**
@@ -47,17 +57,25 @@ class RequestMediator
             $startLine = explode(' ', $header, 3);
             // Only download the body to a target body when a successful response is received
             if ($startLine[1][0] != '2') {
-                $this->response->setBody(null);
+                $this->body = null;
             }
-            $this->response->setStatus($startLine[1], isset($startLine[2]) ? $startLine[2] : '');
-            $this->response->setProtocolVersion(substr($startLine[0], -3));
+            $this->statusCode = $startLine[1];
+            $this->reasonPhrase = isset($startLine[2]) ? $startLine[2] : null;
+            $this->protocolVersion = substr($startLine[0], -3);
         } elseif ($pos = strpos($header, ':')) {
-            $this->response->addHeader(substr($header, 0, $pos), substr($header, $pos + 1));
-        } elseif ($header == '' && $this->response->getStatusCode() >= 200) {
-            $this->request->dispatch(RequestEvents::GOT_HEADERS, [
-                'request' => $this->request,
-                'response' => $this->response
-            ]);
+            $this->headers[substr($header, 0, $pos)] = substr($header, $pos + 1);
+        } elseif ($header == '' && $this->statusCode >= 200) {
+            $response = $this->transaction->getMessageFactory()->createResponse(
+                $this->statusCode,
+                $this->headers,
+                $this->body,
+                ['protocol_version' => $this->protocolVersion, 'reason_phrase' => $this->reasonPhrase]
+            );
+            $this->headers = $this->body = null;
+            $this->transaction->setResponse($response);
+            $request = $this->transaction->getRequest();
+            // Allows events to react before downloading any of the body
+            $request->dispatch(RequestEvents::GOT_HEADERS, ['request' => $request, 'response' => $response]);
         }
 
         return $length;
@@ -73,7 +91,9 @@ class RequestMediator
      */
     public function writeResponseBody($curl, $write)
     {
-        return $this->response->getBody()->write($write);
+        if ($response = $this->transaction->getResponse()) {
+            return $response->getBody()->write($write);
+        }
     }
 
     /**

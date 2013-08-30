@@ -2,8 +2,8 @@
 
 namespace Guzzle\Http\Adapter\Curl;
 
+use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Stream\Stream;
 
 /**
@@ -11,11 +11,13 @@ use Guzzle\Stream\Stream;
  */
 class CurlFactory
 {
-    public function createHandle(RequestInterface $request, ResponseInterface $response)
+    public function createHandle(Transaction $transaction)
     {
-        $options = $this->getDefaultOptions($request, $response);
+        $request = $transaction->getRequest();
+        $mediator = new RequestMediator($transaction);
+        $options = $this->getDefaultOptions($request, $mediator);
         $this->applyMethod($request, $options);
-        $this->applyTransferOptions($request, $response, $options);
+        $this->applyTransferOptions($request, $mediator, $options);
         $this->applyHeaders($request, $options);
         unset($options['_headers']);
         // Add adapter options from the request's configuration options
@@ -28,10 +30,9 @@ class CurlFactory
         return $handle;
     }
 
-    protected function getDefaultOptions(RequestInterface $request, ResponseInterface $response)
+    protected function getDefaultOptions(RequestInterface $request, RequestMediator $mediator)
     {
         $config = $request->getConfig();
-        $mediator = new RequestMediator($request, $response);
         $options = array(
             CURLOPT_URL            => $request->getUrl(),
             CURLOPT_CONNECTTIMEOUT => $config['connect_timeout'] ?: 150,
@@ -124,7 +125,7 @@ class CurlFactory
         }
     }
 
-    protected function applyTransferOptions(RequestInterface $request, ResponseInterface $response, array &$options)
+    protected function applyTransferOptions(RequestInterface $request, RequestMediator $mediator, array &$options)
     {
         static $methods;
         if (!$methods) {
@@ -134,12 +135,12 @@ class CurlFactory
         foreach ($request->getConfig()->toArray() as $key => $value) {
             $method = "visit_{$key}";
             if (isset($methods[$method])) {
-                $this->{$method}($request, $response, $options, $value);
+                $this->{$method}($request, $mediator, $options, $value);
             }
         }
     }
 
-    protected function visit_debug(RequestInterface $request, ResponseInterface $response, &$options, $value)
+    protected function visit_debug(RequestInterface $request, RequestMediator $mediator, &$options, $value)
     {
         if (is_resource($value)) {
             $options[CURLOPT_VERBOSE] = true;
@@ -149,22 +150,22 @@ class CurlFactory
         }
     }
 
-    protected function visit_proxy(RequestInterface $request, ResponseInterface $response, &$options, $value)
+    protected function visit_proxy(RequestInterface $request, RequestMediator $mediator, &$options, $value)
     {
         $options[CURLOPT_PROXY] = $value;
     }
 
-    protected function visit_timeout(RequestInterface $request, ResponseInterface $response, &$options, $value)
+    protected function visit_timeout(RequestInterface $request, RequestMediator $mediator, &$options, $value)
     {
         $options[CURLOPT_TIMEOUT_MS] = $value * 1000;
     }
 
-    protected function visit_connect_timeout(RequestInterface $request, ResponseInterface $response, &$options, $value)
+    protected function visit_connect_timeout(RequestInterface $request, RequestMediator $mediator, &$options, $value)
     {
         $options[CURLOPT_CONNECTTIMEOUT_MS] = $value * 1000;
     }
 
-    protected function visit_verify(RequestInterface $request, ResponseInterface $response, &$options, $value)
+    protected function visit_verify(RequestInterface $request, RequestMediator $mediator, &$options, $value)
     {
         if ($value === false) {
             unset($options[CURLOPT_CAINFO]);
@@ -179,7 +180,7 @@ class CurlFactory
         }
     }
 
-    protected function visit_cert(RequestInterface $request, ResponseInterface $response, &$options, $value)
+    protected function visit_cert(RequestInterface $request, RequestMediator $mediator, &$options, $value)
     {
         if (is_array($value)) {
             $options[CURLOPT_SSLCERT] = $value[0];
@@ -189,7 +190,7 @@ class CurlFactory
         }
     }
 
-    protected function visit_ssl_key(RequestInterface $request, ResponseInterface $response, &$options, $value)
+    protected function visit_ssl_key(RequestInterface $request, RequestMediator $mediator, &$options, $value)
     {
         if (is_array($value)) {
             $options[CURLOPT_SSLKEY] = $value[0];
@@ -199,7 +200,7 @@ class CurlFactory
         }
     }
 
-    protected function visit_auth(RequestInterface $request, ResponseInterface $response, &$options, $value)
+    protected function visit_auth(RequestInterface $request, RequestMediator $mediator, &$options, $value)
     {
         static $authMap = array(
             'basic'  => CURLAUTH_BASIC,
@@ -218,12 +219,9 @@ class CurlFactory
         $options[CURLOPT_USERPWD] = $value[0] . ':' . $value[1];
     }
 
-    protected function visit_save_to(RequestInterface $request, ResponseInterface $response, &$options, $value)
+    protected function visit_save_to(RequestInterface $request, RequestMediator $mediator, &$options, $value)
     {
-        $saveTo = is_string($value)
-            ? Stream::factory(fopen($value, 'w'))
-            : Stream::factory($value);
-
-        $response->setBody($saveTo);
+        $saveTo = is_string($value) ? Stream::factory(fopen($value, 'w')) : Stream::factory($value);
+        $mediator->setResponseBody($saveTo);
     }
 }

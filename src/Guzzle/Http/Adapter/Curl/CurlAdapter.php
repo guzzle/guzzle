@@ -58,31 +58,37 @@ class CurlAdapter implements AdapterInterface
 
     public function send(Transaction $transaction)
     {
+        $this->batch([$transaction]);
+
+        return $transaction->getResponse();
+    }
+
+    public function batch(array $transactions)
+    {
         $context = [
-            'transaction' => $transaction,
-            'handles'     => new \SplObjectStorage(),
-            'multi'       => $this->checkoutMultiHandle()
+            'transactions' => $transactions,
+            'handles'      => new \SplObjectStorage(),
+            'multi'        => $this->checkoutMultiHandle(),
+            'errors'       => []
         ];
 
-        foreach ($transaction as $request) {
+        foreach ($transactions as $transaction) {
             try {
-                $this->prepare($request, $context);
+                $this->prepare($transaction, $context);
             } catch (RequestException $e) {
-                $context['transaction'][$request] = $e;
+                $context['errors'][] = [$transaction, $e];
             }
         }
 
         $this->perform($context);
         $this->releaseMultiHandle($context['multi']);
-
-        return $context['transaction'];
     }
 
-    private function prepare(RequestInterface $request, array $context)
+    private function prepare(Transaction $transaction, array $context)
     {
-        $handle = $this->factory->createHandle($request, $context['transaction'][$request]);
+        $handle = $this->factory->createHandle($transaction);
         $this->checkCurlResult(curl_multi_add_handle($context['multi'], $handle));
-        $context['handles'][$request] = $handle;
+        $context['handles'][$transaction] = $handle;
     }
 
     /**
@@ -110,32 +116,35 @@ class CurlAdapter implements AdapterInterface
     /**
      * Check for errors and fix headers of a request based on a curl response
      *
-     * @param RequestInterface  $request Request to process
-     * @param array             $curl    Curl data
-     * @param array             $context Array of context information of the transfer
+     * @param Transaction $transaction Transaction to process
+     * @param array       $curl        Curl data
+     * @param array       $context     Array of context information of the transfer
      *
      * @throws RequestException on error
      */
-    private function processResponse(RequestInterface $request, array $curl, array $context)
+    private function processResponse(Transaction $transaction, array $curl, array $context)
     {
-        if (isset($context['handles'][$request])) {
-            curl_multi_remove_handle($context['multi'], $context['handles'][$request]);
-            curl_close($context['handles'][$request]);
-            unset($context['handles'][$request]);
+        if (isset($context['handles'][$transaction])) {
+            curl_multi_remove_handle($context['multi'], $context['handles'][$transaction]);
+            curl_close($context['handles'][$transaction]);
+            unset($context['handles'][$transaction]);
         }
+
+        $request = $transaction->getRequest();
 
         try {
             $this->isCurlException($request, $curl);
             $request->getEventDispatcher()->dispatch(
                 'request.after_send',
-                new RequestAfterSendEvent($request, $context['transaction'])
+                new RequestAfterSendEvent($transaction)
             );
         } catch (RequestException $e) {
-            $context['transaction'][$request] = $e;
-            $request->getEventDispatcher()->dispatch(
+            if (!$request->getEventDispatcher()->dispatch(
                 'request.error',
-                new RequestErrorEvent($request, $context['transaction'])
-            );
+                new RequestErrorEvent($transaction, $e)
+            )->isPropagationStopped()) {
+                $context['errors'][] = [$transaction, $e];
+            }
         }
     }
 
@@ -145,9 +154,9 @@ class CurlAdapter implements AdapterInterface
     private function processMessages(array $context)
     {
         while ($done = curl_multi_info_read($context['multi'])) {
-            foreach ($context['handles'] as $request) {
-                if ($context['handles'][$request] === $done['handle']) {
-                    $this->processResponse($request, $done, $context);
+            foreach ($context['handles'] as $transaction) {
+                if ($context['handles'][$transaction] === $done['handle']) {
+                    $this->processResponse($transaction, $done, $context);
                     continue 2;
                 }
             }
