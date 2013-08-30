@@ -46,9 +46,14 @@ class MessageFactory implements MessageFactoryInterface
         $this->redirectPlugin = new RedirectPlugin();
     }
 
-    public function createResponse()
+    public function createResponse($statusCode = null, array $options = [])
     {
-        return new Response();
+        return new Response(
+            $statusCode,
+            isset($options['headers']) ? $options['headers'] : [],
+            isset($options['body']) ? $options['body'] : null,
+            $options
+        );
     }
 
     public function createRequest(

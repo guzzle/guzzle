@@ -56,9 +56,17 @@ interface MessageFactoryInterface
     public function createRequest($method, $url, array $headers = [], $body = null, array $options = array());
 
     /**
-     * Create a response object
+     * Creates a response
+     *
+     * @param string $statusCode HTTP status code
+     * @param array  $options    Response options
+     *                           - reason_phrase: Response reason phrase
+     *                           - protocol_version: HTTP protocol version
+     *                           - headers: Array of headers
+     *                           - body: Response body
+     *                           - header_factory: Factory used to create headers
      *
      * @return ResponseInterface
      */
-    public function createResponse();
+    public function createResponse($statusCode = null, array $options = []);
 }

@@ -118,7 +118,7 @@ class Response implements ResponseInterface
      * @param array                           $options    Response message options
      *                                                    - header_factory: Factory used to create headers
      */
-    public function __construct($statusCode = null, array $headers = null, $body = null, array $options = [])
+    public function __construct($statusCode = null, array $headers = [], $body = null, array $options = [])
     {
         $this->initializeMessage($options);
         if ($statusCode) {
