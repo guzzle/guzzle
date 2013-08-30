@@ -9,8 +9,8 @@ use Symfony\Component\EventDispatcher\Event as SymfonyEvent;
  */
 class Event extends SymfonyEvent implements ToArrayInterface, \ArrayAccess, \IteratorAggregate
 {
-    use HasData;
-    
+    use HasDataTrait;
+
     /**
      * @param array $context Contextual information
      */

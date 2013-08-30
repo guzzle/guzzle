@@ -2,7 +2,7 @@
 
 namespace Guzzle\Service\Builder;
 
-use Guzzle\Common\AbstractHasDispatcher;
+use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Service\ClientInterface;
 use Guzzle\Service\Exception\ServiceBuilderException;
 use Guzzle\Service\Exception\ServiceNotFoundException;
@@ -13,8 +13,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *
  * Clients and data can be set, retrieved, and removed by accessing the service builder like an associative array.
  */
-class ServiceBuilder extends AbstractHasDispatcher implements ServiceBuilderInterface, \ArrayAccess, \Serializable
+class ServiceBuilder implements ServiceBuilderInterface, \ArrayAccess, \Serializable
 {
+    use HasDispatcherTrait;
+
     /** @var array Service builder configuration data */
     protected $builderConfig = array();
 

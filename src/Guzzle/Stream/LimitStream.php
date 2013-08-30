@@ -7,7 +7,7 @@ namespace Guzzle\Stream;
  */
 class LimitStream implements StreamInterface
 {
-    use StreamDecorator;
+    use StreamDecoratorTrait;
 
     /** @var int Offset to start reading from */
     private $offset;

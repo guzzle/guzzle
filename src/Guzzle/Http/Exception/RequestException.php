@@ -44,10 +44,10 @@ class RequestException extends TransferException
         if (!$response) {
             $label = 'Error completing request';
             $className = __CLASS__;
-        } elseif ($response->isClientError()) {
+        } elseif ($response->getStatusCode()[0] == '4') {
             $label = 'Client error response';
             $className = __NAMESPACE__ . '\\ClientErrorResponseException';
-        } elseif ($response->isServerError()) {
+        } elseif ($response->getStatusCode()[0] == '5') {
             $label = 'Server error response';
             $className = __NAMESPACE__ . '\\ServerErrorResponseException';
         } else {

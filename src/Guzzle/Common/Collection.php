@@ -7,7 +7,7 @@ namespace Guzzle\Common;
  */
 class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArrayInterface
 {
-    use HasData;
+    use HasDataTrait;
 
     /**
      * @param array $data Associative array of data to set

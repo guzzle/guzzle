@@ -5,7 +5,7 @@ namespace Guzzle\Common;
 /**
  * Trait implementing ToArrayInterface, \ArrayAccess, \Countable, and \IteratorAggregate
  */
-trait HasData
+trait HasDataTrait
 {
     /** @var array */
     protected $data;
@@ -39,7 +39,7 @@ trait HasData
     {
         return $this->data;
     }
-    
+
     public function count()
     {
         return count($this->data);

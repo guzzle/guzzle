@@ -7,7 +7,7 @@ namespace Guzzle\Stream;
  */
 class Stream implements StreamInterface
 {
-    use StreamMetadata;
+    use StreamMetadataTrait;
 
     const STREAM_TYPE = 'stream_type';
     const WRAPPER_TYPE = 'wrapper_type';

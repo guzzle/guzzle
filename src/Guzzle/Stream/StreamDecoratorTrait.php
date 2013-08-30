@@ -5,10 +5,10 @@ namespace Guzzle\Stream;
 /**
  * Stream decorator trait
  */
-trait StreamDecorator
+trait StreamDecoratorTrait
 {
     /** @var StreamInterface Decorated stream */
-    protected $stream;
+    private $stream;
 
     /**
      * @param StreamInterface $stream Stream to decorate

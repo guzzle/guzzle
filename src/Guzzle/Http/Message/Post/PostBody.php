@@ -4,7 +4,7 @@ namespace Guzzle\Http\Message\Post;
 
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Stream\Stream;
-use Guzzle\Stream\StreamMetadata;
+use Guzzle\Stream\StreamMetadataTrait;
 use Guzzle\Url\QueryAggregator\PhpAggregator;
 use Guzzle\Url\QueryAggregator\QueryAggregatorInterface;
 use Guzzle\Url\QueryString;
@@ -14,7 +14,7 @@ use Guzzle\Url\QueryString;
  */
 class PostBody implements PostBodyInterface
 {
-    use StreamMetadata;
+    use StreamMetadataTrait;
 
     private $body;
     private $fields = [];

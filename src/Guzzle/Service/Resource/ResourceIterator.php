@@ -2,11 +2,13 @@
 
 namespace Guzzle\Service\Resource;
 
-use Guzzle\Common\AbstractHasDispatcher;
+use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Service\Command\CommandInterface;
 
-abstract class ResourceIterator extends AbstractHasDispatcher implements ResourceIteratorInterface
+abstract class ResourceIterator implements ResourceIteratorInterface
 {
+    use HasDispatcherTrait;
+
     /** @var CommandInterface Command used to send requests */
     protected $command;
 

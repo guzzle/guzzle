@@ -7,17 +7,17 @@ interface ResponseInterface extends MessageInterface
     /**
      * Set the response status
      *
-     * @param int    $statusCode   Response status code to set
-     * @param string $reasonPhrase Response reason phrase
+     * @param string $statusCode   Response status code to set (e.g., "200")
+     * @param string $reasonPhrase Response reason phrase (e.g., "OK")
      *
      * @return self
      */
     public function setStatus($statusCode, $reasonPhrase = null);
 
     /**
-     * Get the response status code
+     * Get the response status code (e.g. "200", "404", etc)
      *
-     * @return integer
+     * @return string
      */
     public function getStatusCode();
 

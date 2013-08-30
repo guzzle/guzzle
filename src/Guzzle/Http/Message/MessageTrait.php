@@ -10,41 +10,17 @@ use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
 
 /**
- * Abstract HTTP request/response message
+ * HTTP request/response message trait
  */
-abstract class AbstractMessage implements MessageInterface
+trait MessageTrait
 {
-    use HasHeaders;
+    use HasHeadersTrait;
 
     /** @var StreamInterface Message body */
-    protected $body;
+    private $body;
 
     /** @var string HTTP protocol version of the message */
     private $protocolVersion = '1.1';
-
-    public function __construct(array $options = [])
-    {
-        $this->headerFactory = isset($options['header_factory'])
-            ? $options['header_factory']
-            : HeaderFactory::getDefaultFactory();
-
-        $this->headers = new HeaderCollection();
-    }
-
-    public function __toString()
-    {
-        return sprintf("%s\r\n%s\r\n\r\n%s", $this->getStartLine(), $this->headers, $this->body);
-    }
-
-    /**
-     * Get a string representation of the start line and headers
-     *
-     * @return string
-     */
-    public function getRawHeaders()
-    {
-        return $this->getStartLine() . "\r\n" . $this->getHeaders();
-    }
 
     public function setProtocolVersion($protocol)
     {
@@ -82,5 +58,14 @@ abstract class AbstractMessage implements MessageInterface
         }
 
         return $this;
+    }
+
+    private function initializeMessage(array $options = [])
+    {
+        $this->headerFactory = isset($options['header_factory'])
+            ? $options['header_factory']
+            : HeaderFactory::getDefaultFactory();
+
+        $this->headers = new HeaderCollection();
     }
 }

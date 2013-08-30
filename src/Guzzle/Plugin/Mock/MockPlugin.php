@@ -2,7 +2,7 @@
 
 namespace Guzzle\Plugin\Mock;
 
-use Guzzle\Common\AbstractHasDispatcher;
+use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Http\Event\RequestBeforeSendEvent;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Event\RequestEvents;
@@ -13,8 +13,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Queues mock responses or exceptions and delivers mock responses or exceptions in a fifo order.
  */
-class MockPlugin extends AbstractHasDispatcher implements EventSubscriberInterface, \Countable
+class MockPlugin implements EventSubscriberInterface, \Countable
 {
+    use HasDispatcherTrait;
+
     /** @var array Array of mock responses / exceptions */
     private $queue = [];
 

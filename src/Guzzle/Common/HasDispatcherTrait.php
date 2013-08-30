@@ -7,17 +7,12 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Class that holds an event dispatcher
+ * Trait that implemements the methods of HasDispatcherInterface
  */
-class AbstractHasDispatcher implements HasDispatcherInterface
+trait HasDispatcherTrait
 {
     /** @var EventDispatcherInterface */
     protected $eventDispatcher;
-
-    public static function getAllEvents()
-    {
-        return array();
-    }
 
     public function setEventDispatcher(EventDispatcherInterface $eventDispatcher)
     {
@@ -35,7 +30,7 @@ class AbstractHasDispatcher implements HasDispatcherInterface
         return $this->eventDispatcher;
     }
 
-    public function dispatch($eventName, array $context = array())
+    public function dispatch($eventName, array $context = [])
     {
         return $this->getEventDispatcher()->dispatch($eventName, new Event($context));
     }

@@ -10,13 +10,13 @@ use Guzzle\Http\Header\HeaderInterface;
 /**
  * Trait that implements HasHeadersInterface
  */
-trait HasHeaders
+trait HasHeadersTrait
 {
     /** @var HeaderCollection HTTP header collection */
-    protected $headers;
+    private $headers;
 
     /** @var HeaderFactoryInterface $headerFactory */
-    protected  $headerFactory;
+    private  $headerFactory;
 
     public function addHeader($header, $value = null)
     {

@@ -7,7 +7,7 @@ namespace Guzzle\Stream;
  */
 class CachingStream implements StreamInterface
 {
-    use StreamDecorator;
+    use StreamDecoratorTrait;
 
     /** @var StreamInterface Remote stream used to actually pull data onto the buffer */
     private $remoteStream;

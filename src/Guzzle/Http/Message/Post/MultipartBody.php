@@ -5,7 +5,7 @@ namespace Guzzle\Http\Message\Post;
 use Guzzle\Http\Mimetypes;
 use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
-use Guzzle\Stream\StreamMetadata;
+use Guzzle\Stream\StreamMetadataTrait;
 use Guzzle\Url\QueryString;
 
 /**
@@ -13,7 +13,7 @@ use Guzzle\Url\QueryString;
  */
 class MultipartBody implements StreamInterface
 {
-    use StreamMetadata;
+    use StreamMetadataTrait;
 
     /** @var StreamInterface */
     private $files;

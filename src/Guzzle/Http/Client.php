@@ -3,7 +3,7 @@
 namespace Guzzle\Http;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\HasDispatcher;
+use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Common\Version;
 use Guzzle\Http\Adapter\AdapterInterface;
 use Guzzle\Http\Adapter\StreamAdapter;
@@ -24,7 +24,7 @@ use Guzzle\Url\UriTemplate;
  */
 class Client implements ClientInterface
 {
-    use HasDispatcher;
+    use HasDispatcherTrait;
 
     /** @var MessageFactoryInterface Request factory used by the client */
     private $messageFactory;

@@ -20,7 +20,6 @@ use Guzzle\Http\Message\ResponseInterface;
  * - {protocol}:      Request protocol
  * - {version}:       Protocol version
  * - {resource}:      Resource of the request (path + query + fragment)
- * - {port}:          Port of the request
  * - {hostname}:      Hostname of the machine that sent the request
  * - {code}:          Status code of the response (if available)
  * - {phrase}:        Reason phrase of the response  (if available)
@@ -132,9 +131,6 @@ class MessageFormatter
                         break;
                     case 'hostname':
                         $result = gethostname();
-                        break;
-                    case 'port':
-                        $result = $request->getPort();
                         break;
                     case 'code':
                         $result = $response ? $response->getStatusCode() : '';

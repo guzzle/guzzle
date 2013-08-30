@@ -3,7 +3,7 @@
 namespace Guzzle\Http\Message\Post;
 
 use Guzzle\Http\Header\HeaderCollection;
-use Guzzle\Http\Message\HasHeaders;
+use Guzzle\Http\Message\HasHeadersTrait;
 use Guzzle\Http\Mimetypes;
 use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
@@ -13,7 +13,7 @@ use Guzzle\Stream\StreamInterface;
  */
 class PostFile implements PostFileInterface
 {
-    use HasHeaders;
+    use HasHeadersTrait;
 
     private $name;
     private $filename;

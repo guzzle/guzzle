@@ -2,7 +2,7 @@
 
 namespace Guzzle\Stream;
 
-use Guzzle\Common\HasDispatcher;
+use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Common\HasDispatcherInterface;
 
 /**
@@ -10,8 +10,7 @@ use Guzzle\Common\HasDispatcherInterface;
  */
 class EventStream implements StreamInterface, HasDispatcherInterface
 {
-    use StreamDecorator;
-    use HasDispatcher;
+    use StreamDecorator, HasDispatcherTrait;
 
     public function read($length)
     {

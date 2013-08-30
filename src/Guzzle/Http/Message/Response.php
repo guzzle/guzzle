@@ -8,8 +8,10 @@ use Guzzle\Stream\StreamInterface;
 /**
  * Guzzle HTTP response object
  */
-class Response extends AbstractMessage implements ResponseInterface
+class Response implements ResponseInterface
 {
+    use MessageTrait;
+
     /** @var array Array of reason phrases and their corresponding status codes */
     private static $statusTexts = array(
         100 => 'Continue',
@@ -118,7 +120,7 @@ class Response extends AbstractMessage implements ResponseInterface
      */
     public function __construct($statusCode = null, array $headers = null, $body = null, array $options = [])
     {
-        parent::__construct($options);
+        $this->initializeMessage($options);
         if ($statusCode) {
             $this->setStatus($statusCode);
         }
@@ -130,9 +132,11 @@ class Response extends AbstractMessage implements ResponseInterface
         }
     }
 
-    public function getStartLine()
+    public function __toString()
     {
-        return sprintf('HTTP/%s %d %s', $this->getProtocolVersion(), $this->statusCode, $this->reasonPhrase);
+        $startLine = sprintf('HTTP/%s %d %s', $this->getProtocolVersion(), $this->statusCode, $this->reasonPhrase);
+
+        return sprintf("%s\r\n%s\r\n\r\n%s", $startLine, $this->headers, $this->body);
     }
 
     public function getBody()
@@ -146,7 +150,7 @@ class Response extends AbstractMessage implements ResponseInterface
 
     public function setStatus($statusCode, $reasonPhrase = '')
     {
-        $this->statusCode = (int) $statusCode;
+        $this->statusCode = (string) $statusCode;
 
         if (!$reasonPhrase && isset(self::$statusTexts[$this->statusCode])) {
             $this->reasonPhrase = self::$statusTexts[$this->statusCode];

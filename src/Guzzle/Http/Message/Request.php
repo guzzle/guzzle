@@ -2,7 +2,7 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Common\HasDispatcher;
+use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Header\HeaderInterface;
 use Guzzle\Url\QueryString;
@@ -11,9 +11,11 @@ use Guzzle\Url\Url;
 /**
  * HTTP request class to send requests
  */
-class Request extends AbstractMessage implements RequestInterface
+class Request implements RequestInterface
 {
-    use HasDispatcher;
+    use HasDispatcherTrait, MessageTrait {
+        MessageTrait::setBody as applyBody;
+    }
 
     /** @var Url HTTP Url */
     private $url;
@@ -36,7 +38,7 @@ class Request extends AbstractMessage implements RequestInterface
      */
     public function __construct($method, $url, $headers = [], $body = null, array $options = [])
     {
-        parent::__construct($options);
+        $this->initializeMessage($options);
         $this->method = strtoupper($method);
         $this->transferOptions = new Collection();
         $this->setUrl($url);
@@ -78,16 +80,16 @@ class Request extends AbstractMessage implements RequestInterface
         $this->headers = clone $this->headers;
     }
 
-    public function getStartLine()
+    public function __toString()
     {
-        return trim($this->method . ' ' . $this->getResource()) . ' '
-            . strtoupper(str_replace('https', 'http', $this->url->getScheme()))
-            . '/' . $this->getProtocolVersion();
+        $startLine = trim($this->method . ' ' . $this->getResource()) . ' HTTP/' . $this->getProtocolVersion();
+
+        return sprintf("%s\r\n%s\r\n\r\n%s", $startLine, $this->headers, $this->body);
     }
 
     public function setBody($body, $contentType = null)
     {
-        parent::setBody($body, $contentType);
+        $this->applyBody($body, $contentType);
 
         // Use chunked Transfer-Encoding if there is no content-length header
         if ($body !== null && !$this->hasHeader('Content-Length') && '1.1' == $this->getProtocolVersion()) {

@@ -4,7 +4,7 @@ namespace Guzzle\Plugin\MessageIntegrity;
 
 use Guzzle\Stream\StreamInterface;
 use Guzzle\Stream\StreamDecorator;
-use Guzzle\Common\HasDispatcher;
+use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Common\HasDispatcherInterface;
 
 /**
@@ -13,8 +13,7 @@ use Guzzle\Common\HasDispatcherInterface;
  */
 class ReadIntegrityStream implements StreamInterface, HasDispatcherInterface
 {
-    use StreamDecorator;
-    use HasDispatcher;
+    use StreamDecorator, HasDispatcherTrait;
 
     /** @var HashInterface */
     private $hash;
