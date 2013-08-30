@@ -12,7 +12,7 @@ interface AdapterInterface
      *
      * @param Transaction $transaction Transaction abject to populate
      *
-     * @return Transaction Returns a hash mapping RequestInterface to ResponseInterface objects or RequestExceptions
+     * @return Transaction
      */
     public function send(Transaction $transaction);
 }

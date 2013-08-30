@@ -3,108 +3,70 @@
 namespace Guzzle\Http\Adapter;
 
 use Guzzle\Http\ClientInterface;
-use Guzzle\Http\Exception\RequestException;
+use Guzzle\Http\Message\MessageFactoryInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
+use Guzzle\Stream\StreamInterface;
 
-/**
- * SplObjectStorage object that only allows Requests that map to Responses or Exception
- */
-class Transaction extends \SplObjectStorage
+class Transaction
 {
     /** @var ClientInterface */
     private $client;
 
+    /** @var RequestInterface */
+    private $request;
+
+    /** @var ResponseInterface */
+    private $response;
+
+    /** @var MessageFactoryInterface */
+    private $messageFactory;
+
     /**
-     * @param ClientInterface $client Client that is used to send the requests
+     * @param ClientInterface         $client  Client that is used to send the requests
+     * @param RequestInterface        $request
+     * @param MessageFactoryInterface $messageFactory
      */
-    public function __construct(ClientInterface $client)
-    {
+    public function __construct(
+        ClientInterface $client,
+        RequestInterface $request,
+        MessageFactoryInterface $messageFactory
+    ) {
         $this->client = $client;
-    }
-
-    public function offsetSet($object, $data = null)
-    {
-        if (!($object instanceof RequestInterface)) {
-            throw new \InvalidArgumentException('Offset must be a request');
-        }
-
-        if (!($data instanceof ResponseInterface || $data instanceof RequestException)) {
-            throw new \InvalidArgumentException('Value must be a response or RequestException');
-        }
-
-        parent::offsetSet($object, $data);
+        $this->request = $request;
+        $this->messageFactory = $messageFactory;
     }
 
     /**
-     * Get an array of results of the transaction. Each item in the array is
-     * either a {@see ResponseInterface} or {@see RequestException} object.
-     *
-     * @return array
+     * @return RequestInterface
      */
-    public function getResults()
+    public function getRequest()
     {
-        $responses = [];
-        foreach ($this as $request) {
-            $responses[] = $this[$request];
-        }
-
-        return $responses;
+        return $this->request;
     }
 
     /**
-     * Get a Transaction object that only contains valid responses
-     *
-     * @return \SplObjectStorage Map of responses to requests
+     * @return ResponseInterface|null
      */
-    public function getResponses()
+    public function getResponse()
     {
-        $hash = new \SplObjectStorage();
-        foreach ($this as $request) {
-            if ($this[$request] instanceof ResponseInterface) {
-                $hash[$this[$request]] = $request;
-            }
-        }
-
-        return $hash;
+        return $this->response;
     }
 
     /**
-     * Check if the transaction has any exceptions
+     * Set a response on the transaction
      *
-     * @return bool
+     * @param string          $statusCode   HTTP response status code
+     * @param string          $reasonPhrase Response reason phrase
+     * @param array           $headers      Headers of the response
+     * @param StreamInterface $body         Response body
      */
-    public function hasExceptions()
+    public function setResponse($statusCode, $reasonPhrase, array $headers, StreamInterface $body)
     {
-        foreach ($this as $request) {
-            if ($this[$request] instanceof \Exception) {
-                return true;
-            }
-        }
-
-        return false;
+        $this->response = $this->messageFactory->createResponse($statusCode, $reasonPhrase, $headers, $body);
     }
 
     /**
-     * Get a Transaction object that only contains exceptions
-     *
-     * @return \SplObjectStorage Map of exceptions to requests
-     */
-    public function getExceptions()
-    {
-        $transaction = new \SplObjectStorage();
-        foreach ($this as $request) {
-            if ($this[$request] instanceof \Exception) {
-                $transaction[$this[$request]] = $request;
-            }
-        }
-
-        return $transaction;
-    }
-
-    /**
-     * Get the client that sent the requests
-     *
      * @return ClientInterface
      */
     public function getClient()
