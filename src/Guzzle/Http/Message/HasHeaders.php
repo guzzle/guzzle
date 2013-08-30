@@ -29,15 +29,6 @@ trait HasHeaders
         }
     }
 
-    public function addHeaders(array $headers)
-    {
-        foreach ($headers as $key => $value) {
-            $this->addHeader($key, $value);
-        }
-
-        return $this;
-    }
-
     public function getHeader($header)
     {
         return $this->headers[$header];

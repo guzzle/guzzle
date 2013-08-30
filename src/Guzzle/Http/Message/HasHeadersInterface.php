@@ -11,23 +11,11 @@ use Guzzle\Http\Header\HeaderCollection;
 interface HasHeadersInterface
 {
     /**
-     * Add a header to an existing collection of headers.
+     * Get all headers as a collection
      *
-     * @param string $header Header name to add
-     * @param string $value  Value of the header
-     *
-     * @return HeaderInterface Returns the added header object
+     * @return HeaderCollection
      */
-    public function addHeader($header, $value = null);
-
-    /**
-     * Add and merge in an array of HTTP headers.
-     *
-     * @param array $headers Associative array of header data.
-     *
-     * @return self
-     */
-    public function addHeaders(array $headers);
+    public function getHeaders();
 
     /**
      * Retrieve an HTTP header by name. Performs a case-insensitive search of all headers.
@@ -37,13 +25,6 @@ interface HasHeadersInterface
      * @return HeaderInterface|null
      */
     public function getHeader($header);
-
-    /**
-     * Get all headers as a collection
-     *
-     * @return HeaderCollection
-     */
-    public function getHeaders();
 
     /**
      * Check if the specified header is present.
@@ -62,6 +43,16 @@ interface HasHeadersInterface
      * @return self
      */
     public function removeHeader($header);
+
+    /**
+     * Add a header to an existing collection of headers.
+     *
+     * @param string $header Header name to add
+     * @param string $value  Value of the header
+     *
+     * @return HeaderInterface Returns the added header object
+     */
+    public function addHeader($header, $value = null);
 
     /**
      * Set an HTTP header and overwrite any existing value for the header
