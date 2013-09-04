@@ -7,7 +7,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Trait that implemements the methods of HasDispatcherInterface
+ * Trait that implements the methods of HasDispatcherInterface
  */
 trait HasDispatcherTrait
 {
