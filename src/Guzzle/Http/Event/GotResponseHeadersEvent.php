@@ -3,7 +3,7 @@
 namespace Guzzle\Http\Event;
 
 use Guzzle\Http\Message\ResponseInterface;
-use Guzzle\Http\Adapter\Transaction;
+use Guzzle\Http\Adapter\TransactionInterface;
 use Guzzle\Http\Header\HeaderCollection;
 
 /**
@@ -14,9 +14,9 @@ use Guzzle\Http\Header\HeaderCollection;
 class GotResponseHeadersEvent extends AbstractRequestEvent
 {
     /**
-     * @param Transaction $transaction Transaction that contains the request and response
+     * @param TransactionInterface $transaction Transaction that contains the request and response
      */
-    public function __construct(Transaction $transaction)
+    public function __construct(TransactionInterface $transaction)
     {
         parent::__construct($transaction);
     }

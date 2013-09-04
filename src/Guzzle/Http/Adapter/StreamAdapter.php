@@ -28,7 +28,7 @@ class StreamAdapter implements AdapterInterface
         $this->messageFactory = $messageFactory;
     }
 
-    public function send(Transaction $transaction)
+    public function send(TransactionInterface $transaction)
     {
         try {
             $this->createResponse($transaction);
@@ -49,10 +49,10 @@ class StreamAdapter implements AdapterInterface
     }
 
     /**
-     * @param Transaction
+     * @param TransactionInterface
      * @throws \LogicException if you attempt to stream and specify a write_to option
      */
-    private function createResponse(Transaction $transaction)
+    private function createResponse(TransactionInterface $transaction)
     {
         $request = $transaction->getRequest();
         $stream = $this->createStream($request, $http_response_header);
@@ -100,7 +100,7 @@ class StreamAdapter implements AdapterInterface
         $response->setBody($saveTo);
     }
 
-    private function createResponseObject($headers, Transaction $transaction, $stream)
+    private function createResponseObject($headers, TransactionInterface $transaction, $stream)
     {
         $parts = explode(' ', array_shift($headers), 3);
         $options = ['protocol_version' => substr($parts[0], -3)];

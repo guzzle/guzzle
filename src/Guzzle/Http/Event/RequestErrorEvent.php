@@ -4,7 +4,7 @@ namespace Guzzle\Http\Event;
 
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\ResponseInterface;
-use Guzzle\Http\Adapter\Transaction;
+use Guzzle\Http\Adapter\TransactionInterface;
 
 /**
  * Event object emitted after a request has been sent and an error was encountered
@@ -16,10 +16,10 @@ class RequestErrorEvent extends AbstractRequestEvent
     private $exception;
 
     /**
-     * @param Transaction      $transaction Transaction that contains the request
-     * @param RequestException $e           Exception encountered
+     * @param TransactionInterface $transaction Transaction that contains the request
+     * @param RequestException     $e           Exception encountered
      */
-    public function __construct(Transaction $transaction, RequestException $e)
+    public function __construct(TransactionInterface $transaction, RequestException $e)
     {
         parent::__construct($transaction);
         $this->exception = $e;

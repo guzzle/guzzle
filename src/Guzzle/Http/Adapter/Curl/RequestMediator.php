@@ -2,7 +2,7 @@
 
 namespace Guzzle\Http\Adapter\Curl;
 
-use Guzzle\Http\Adapter\Transaction;
+use Guzzle\Http\Adapter\TransactionInterface;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Event\GotResponseHeadersEvent;
 use Guzzle\Http\Message\MessageFactoryInterface;
@@ -15,7 +15,7 @@ use Guzzle\Stream\StreamInterface;
  */
 class RequestMediator
 {
-    /** @var Transaction */
+    /** @var TransactionInterface */
     private $transaction;
     /** @var MessageFactoryInterface */
     private $messageFactory;
@@ -26,10 +26,10 @@ class RequestMediator
     private $protocolVersion;
 
     /**
-     * @param Transaction             $transaction    Transaction to populate
+     * @param TransactionInterface    $transaction    Transaction to populate
      * @param MessageFactoryInterface $messageFactory Message factory used to create responses
      */
-    public function __construct(Transaction $transaction, MessageFactoryInterface $messageFactory)
+    public function __construct(TransactionInterface $transaction, MessageFactoryInterface $messageFactory)
     {
         $this->transaction = $transaction;
         $this->messageFactory = $messageFactory;

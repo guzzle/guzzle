@@ -10,7 +10,7 @@ interface BatchAdapterInterface
     /**
      * Transfers multiple HTTP requests in parallel
      *
-     * @param array $transactions Array of Transaction objects
+     * @param array $transactions Array of TransactionInterface objects
      */
     public function batch(array $transactions);
 }

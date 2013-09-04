@@ -4,7 +4,7 @@ namespace Guzzle\Http\Adapter\Curl;
 
 use Guzzle\Http\Adapter\AdapterInterface;
 use Guzzle\Http\Adapter\BatchAdapterInterface;
-use Guzzle\Http\Adapter\Transaction;
+use Guzzle\Http\Adapter\TransactionInterface;
 use Guzzle\Http\Event\RequestAfterSendEvent;
 use Guzzle\Http\Event\RequestErrorEvent;
 use Guzzle\Http\Exception\AdapterException;
@@ -51,7 +51,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
         }
     }
 
-    public function send(Transaction $transaction)
+    public function send(TransactionInterface $transaction)
     {
         if ($transaction->getRequest()->getConfig()['future']) {
             $transaction->getRequest()->getConfig()->set('future', false);
@@ -90,7 +90,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
         }
     }
 
-    private function prepare(Transaction $transaction, array $context)
+    private function prepare(TransactionInterface $transaction, array $context)
     {
         $handle = $this->factory->createHandle($transaction, $this->messageFactory);
         $this->checkCurlResult(curl_multi_add_handle($context['multi'], $handle));
@@ -100,7 +100,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
     /**
      * Execute and select curl handles
      *
-     * @param array $context Transaction context
+     * @param array $context TransactionInterface context
      */
     private function perform(array $context)
     {
@@ -122,13 +122,13 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
     /**
      * Check for errors and fix headers of a request based on a curl response
      *
-     * @param Transaction $transaction Transaction to process
-     * @param array       $curl        Curl data
-     * @param array       $context     Array of context information of the transfer
+     * @param TransactionInterface $transaction Transaction to process
+     * @param array                $curl        Curl data
+     * @param array                $context     Array of context information of the transfer
      *
      * @throws RequestException on error
      */
-    private function processResponse(Transaction $transaction, array $curl, array $context)
+    private function processResponse(TransactionInterface $transaction, array $curl, array $context)
     {
         if (isset($context['handles'][$transaction])) {
             curl_multi_remove_handle($context['multi'], $context['handles'][$transaction]);

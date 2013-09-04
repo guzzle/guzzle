@@ -3,20 +3,20 @@
 namespace Guzzle\Http\Event;
 
 use Guzzle\Common\Event;
-use Guzzle\Http\Adapter\Transaction;
+use Guzzle\Http\Adapter\TransactionInterface;
 use Guzzle\Http\ClientInterface;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\RequestInterface;
 
 abstract class AbstractRequestEvent extends Event
 {
-    /** @var Transaction */
+    /** @var TransactionInterface */
     private $transaction;
 
     /**
-     * @param Transaction $transaction Transaction that contains the request
+     * @param TransactionInterface $transaction Transaction that contains the request
      */
-    public function __construct(Transaction $transaction)
+    public function __construct(TransactionInterface $transaction)
     {
         parent::__construct();
         $this->transaction = $transaction;
@@ -43,7 +43,7 @@ abstract class AbstractRequestEvent extends Event
     }
 
     /**
-     * @return Transaction
+     * @return TransactionInterface
      */
     protected function getTransaction()
     {

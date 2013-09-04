@@ -10,9 +10,7 @@ interface AdapterInterface
     /**
      * Transfers an HTTP request and populates a response
      *
-     * @param Transaction $transaction Transaction abject to populate
-     *
-     * @return Transaction
+     * @param TransactionInterface $transaction Transaction abject to populate
      */
-    public function send(Transaction $transaction);
+    public function send(TransactionInterface $transaction);
 }
