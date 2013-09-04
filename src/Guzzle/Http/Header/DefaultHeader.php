@@ -91,7 +91,11 @@ class DefaultHeader implements HeaderInterface
                     continue;
                 }
                 $pieces = array_map($callback, $matches[0]);
-                $part[$pieces[0]] = isset($pieces[1]) ? $pieces[1] : '';
+                if (isset($pieces[1])) {
+                    $part[$pieces[0]] = $pieces[1];
+                } else {
+                    $part[] = $pieces[0];
+                }
             }
             if ($part) {
                 $params[] = $part;

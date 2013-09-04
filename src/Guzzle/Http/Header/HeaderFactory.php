@@ -10,13 +10,6 @@ class HeaderFactory implements HeaderFactoryInterface
     /** @var self */
     private static $instance;
 
-    /** @var array */
-    protected $mapping = array(
-        'cookie'        => 'Guzzle\Http\Header\Cookie',
-        'cache-control' => 'Guzzle\Http\Header\CacheControl',
-        'link'          => 'Guzzle\Http\Header\Link',
-    );
-
     /**
      * Get an instance of the default header factory
      *
@@ -33,10 +26,6 @@ class HeaderFactory implements HeaderFactoryInterface
 
     public function createHeader($header, $value = null)
     {
-        $lowercase = strtolower($header);
-
-        return isset($this->mapping[$lowercase])
-            ? new $this->mapping[$lowercase]($header, $value)
-            : new DefaultHeader($header, $value);
+        return new DefaultHeader($header, $value);
     }
 }

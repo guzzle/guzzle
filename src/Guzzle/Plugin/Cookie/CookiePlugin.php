@@ -45,17 +45,29 @@ class CookiePlugin implements EventSubscriberInterface
     public function onRequestBeforeSend(RequestBeforeSendEvent $event)
     {
         $event->getRequest()->removeHeader('Cookie');
+
         // Find cookies that match this request
         if ($matching = $this->cookieJar->getMatchingCookies($event->getRequest())) {
-            $event->getRequest()->addHeader('Cookie');
+            $cookies = [];
             foreach ($matching as $cookie) {
-                $event->getRequest()->getHeader('Cookie')->addCookie($cookie->getName(), $cookie->getValue());
+                $cookies[] = $cookie->getName() . '=' . $this->getCookieValue($cookie->getValue());
             }
+            $event->getRequest()->setHeader('Cookie', implode(';', $cookies));
         }
     }
 
     public function onRequestSent(RequestAfterSendEvent $event)
     {
         $this->cookieJar->addCookiesFromResponse($event->getResponse(), $event->getRequest());
+    }
+
+    private function getCookieValue($value)
+    {
+        // Quote the value if it is not already and contains problematic characters
+        if (substr($value, 0, 1) !== '"' && substr($value, -1, 1) !== '"' && strpbrk($value, ';,')) {
+            $value = '"' . $value . '"';
+        }
+
+        return $value;
     }
 }
