@@ -99,21 +99,6 @@ class Client implements ClientInterface
     }
 
     /**
-     * Set a default request option on the client that will be used as a default for each request
-     *
-     * @param string $keyOrPath request.options key (e.g. allow_redirects) or path to a nested key (e.g. headers/foo)
-     * @param mixed  $value     Value to set
-     *
-     * @return $this
-     */
-    public function setDefaultOption($keyOrPath, $value)
-    {
-        $this->config->setPath("defaults/{$keyOrPath}", $value);
-
-        return $this;
-    }
-
-    /**
      * Retrieve a default request option from the client
      *
      * @param string $keyOrPath request.options key (e.g. allow_redirects) or path to a nested key (e.g. headers/foo)

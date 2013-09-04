@@ -117,14 +117,4 @@ interface ClientInterface extends HasDispatcherInterface
      * @return string|null
      */
     public function getBaseUrl();
-
-    /**
-     * Set a default request option on the client that will be used as a default for each request
-     *
-     * @param string $keyOrPath request.options key (e.g. allow_redirects) or path to a nested key (e.g. headers/foo)
-     * @param mixed  $value     Value to set
-     *
-     * @return self
-     */
-    public function setDefaultOption($keyOrPath, $value);
 }
