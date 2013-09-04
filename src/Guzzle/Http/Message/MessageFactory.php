@@ -2,7 +2,6 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Common\Collection;
 use Guzzle\Http\HttpErrorPlugin;
 use Guzzle\Http\Message\Post\PostBody;
 use Guzzle\Http\Message\RequestInterface;

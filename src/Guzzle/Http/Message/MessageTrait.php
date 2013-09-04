@@ -2,7 +2,6 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Common\Collection;
 use Guzzle\Http\Header\HeaderCollection;
 use Guzzle\Http\Header\HeaderFactory;
 use Guzzle\Http\Mimetypes;

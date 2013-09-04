@@ -18,7 +18,6 @@ abstract class AbstractRequestEvent extends Event
      */
     public function __construct(TransactionInterface $transaction)
     {
-        parent::__construct();
         $this->transaction = $transaction;
     }
 

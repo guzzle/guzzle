@@ -4,7 +4,6 @@ namespace Guzzle\Common;
 
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Trait that implements the methods of HasDispatcherInterface
@@ -12,7 +11,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 trait HasDispatcherTrait
 {
     /** @var EventDispatcherInterface */
-    protected $eventDispatcher;
+    private $eventDispatcher;
 
     public function getEventDispatcher()
     {
@@ -21,17 +20,5 @@ trait HasDispatcherTrait
         }
 
         return $this->eventDispatcher;
-    }
-
-    public function dispatch($eventName, array $context = [])
-    {
-        return $this->getEventDispatcher()->dispatch($eventName, new Event($context));
-    }
-
-    public function addSubscriber(EventSubscriberInterface $subscriber)
-    {
-        $this->getEventDispatcher()->addSubscriber($subscriber);
-
-        return $this;
     }
 }

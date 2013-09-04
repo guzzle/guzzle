@@ -4,7 +4,7 @@ namespace Guzzle\Http;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\HasDispatcherTrait;
-use Guzzle\Common\Version;
+use Guzzle\Version;
 use Guzzle\Http\Adapter\AdapterInterface;
 use Guzzle\Http\Adapter\FutureProxyAdapter;
 use Guzzle\Http\Adapter\StreamAdapter;

@@ -2,7 +2,6 @@
 
 namespace Guzzle\Http;
 
-use Guzzle\Common\Collection;
 use Guzzle\Http\Exception\AdapterException;
 use Guzzle\Common\HasDispatcherInterface;
 use Guzzle\Http\Message\RequestInterface;
