@@ -14,13 +14,6 @@ trait HasDispatcherTrait
     /** @var EventDispatcherInterface */
     protected $eventDispatcher;
 
-    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher)
-    {
-        $this->eventDispatcher = $eventDispatcher;
-
-        return $this;
-    }
-
     public function getEventDispatcher()
     {
         if (!$this->eventDispatcher) {

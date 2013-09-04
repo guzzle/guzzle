@@ -44,7 +44,7 @@ class Request implements RequestInterface
         $this->setUrl($url);
 
         if (isset($options['event_dispatcher'])) {
-            $this->setEventDispatcher($options['event_dispatcher']);
+            $this->eventDispatcher = $options['event_dispatcher'];
         }
 
         $this->addPrepareEvent();

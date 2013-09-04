@@ -30,5 +30,5 @@ final class RequestEvents
      *
      * The event context contains 'request' and 'response' keys.
      */
-    const GOT_HEADERS = 'request.got_headers';
+    const RESPONSE_HEADERS = 'request.response_headers';
 }

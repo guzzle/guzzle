@@ -11,15 +11,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 interface HasDispatcherInterface
 {
     /**
-     * Set the EventDispatcher of the request
-     *
-     * @param EventDispatcherInterface $eventDispatcher
-     *
-     * @return self
-     */
-    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher);
-
-    /**
      * Get the EventDispatcher of the request
      *
      * @return EventDispatcherInterface

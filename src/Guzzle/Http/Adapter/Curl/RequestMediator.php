@@ -4,6 +4,7 @@ namespace Guzzle\Http\Adapter\Curl;
 
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Event\RequestEvents;
+use Guzzle\Http\Event\GotResponseHeadersEvent;
 use Guzzle\Http\Message\MessageFactoryInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Stream\Stream;
@@ -80,7 +81,10 @@ class RequestMediator
             $this->transaction->setResponse($response);
             $request = $this->transaction->getRequest();
             // Allows events to react before downloading any of the body
-            $request->dispatch(RequestEvents::GOT_HEADERS, ['request' => $request, 'response' => $response]);
+            $request->getEventDispatcher()->dispatch(
+                RequestEvents::RESPONSE_HEADERS,
+                new GotResponseHeadersEvent($this->transaction)
+            );
         }
 
         return $length;
