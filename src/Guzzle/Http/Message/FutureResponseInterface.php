@@ -3,7 +3,7 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Http\Adapter\Transaction;
-use Guzzle\Http\Adapter\BatchAdapterInterface;
+use Guzzle\Http\Adapter\AdapterInterface;
 
 /**
  * Represents a response that has been acknowledged by an Async capable adapter that can later be sent in parallel
@@ -21,7 +21,7 @@ interface FutureResponseInterface extends ResponseInterface
     /**
      * Get the HTTP adapter that should be used when transferring
      *
-     * @return BatchAdapterInterface
+     * @return AdapterInterface
      */
     public function getAdapter();
 }

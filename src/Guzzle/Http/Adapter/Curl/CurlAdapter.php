@@ -9,7 +9,6 @@ use Guzzle\Http\Event\RequestAfterSendEvent;
 use Guzzle\Http\Event\RequestErrorEvent;
 use Guzzle\Http\Exception\AdapterException;
 use Guzzle\Http\Exception\RequestException;
-use Guzzle\Http\Message\FutureResponse;
 use Guzzle\Http\Message\MessageFactoryInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Stream\Stream;
@@ -53,13 +52,6 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
 
     public function send(TransactionInterface $transaction)
     {
-        if ($transaction->getRequest()->getConfig()['future']) {
-            $transaction->getRequest()->getConfig()->set('future', false);
-            $response = new FutureResponse($transaction, $this);
-            $transaction->setResponse($response);
-            return $response;
-        }
-
         $this->batch([$transaction]);
 
         return $transaction->getResponse();

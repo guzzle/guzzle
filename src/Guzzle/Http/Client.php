@@ -6,6 +6,7 @@ use Guzzle\Common\Collection;
 use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Common\Version;
 use Guzzle\Http\Adapter\AdapterInterface;
+use Guzzle\Http\Adapter\FutureProxyAdapter;
 use Guzzle\Http\Adapter\StreamAdapter;
 use Guzzle\Http\Adapter\StreamingProxyAdapter;
 use Guzzle\Http\Adapter\Curl\CurlAdapter;
@@ -71,18 +72,25 @@ class Client implements ClientInterface
      */
     private function getDefaultAdapter()
     {
+        $batchClient = null;
+
         if (extension_loaded('curl')) {
-            return ini_get('allow_url_fopen')
-                ? new StreamingProxyAdapter(
-                    new CurlAdapter($this->messageFactory),
+            if (!ini_get('allow_url_fopen')) {
+                $batchClient = $adapter = new CurlAdapter($this->messageFactory);
+            } else {
+                $batchClient = new CurlAdapter($this->messageFactory);
+                $adapter = new StreamingProxyAdapter(
+                    $batchClient,
                     new StreamAdapter($this->messageFactory)
-                )
-                : new CurlAdapter($this->messageFactory);
+                );
+            }
         } elseif (ini_get('allow_url_fopen')) {
-            return new StreamAdapter($this->messageFactory);
+            $batchClient = $adapter = new StreamAdapter($this->messageFactory);
         } else {
             throw new \RuntimeException('The curl extension must be installed or you must set allow_url_fopen to true');
         }
+
+        return new FutureProxyAdapter($adapter, $batchClient);
     }
 
     public function getConfig($key)

@@ -2,7 +2,7 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Http\Adapter\BatchAdapterInterface;
+use Guzzle\Http\Adapter\AdapterInterface;
 use Guzzle\Http\Adapter\Transaction;
 
 class FutureResponse implements FutureResponseInterface
@@ -11,7 +11,7 @@ class FutureResponse implements FutureResponseInterface
     private $transaction;
     private $response;
 
-    public function __construct(Transaction $transaction, BatchAdapterInterface $adapter)
+    public function __construct(Transaction $transaction, AdapterInterface $adapter)
     {
         $this->transaction = $transaction;
         $this->adapter = $adapter;
@@ -120,7 +120,7 @@ class FutureResponse implements FutureResponseInterface
     private function getResponse()
     {
         if (!$this->response) {
-            $this->getAdapter()->batch([$this->getTransaction()]);
+            $this->getAdapter()->send($this->getTransaction());
         }
 
         return $this->transaction->getResponse();
