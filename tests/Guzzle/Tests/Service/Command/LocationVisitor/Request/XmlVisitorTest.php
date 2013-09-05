@@ -305,7 +305,7 @@ class XmlVisitorTest extends AbstractVisitorTestCase
         $command = $this->getMockBuilder('Guzzle\Service\Command\OperationCommand')
             ->setConstructorArgs(array($input, $operation))
             ->getMockForAbstractClass();
-        $command->setClient(new Client());
+        $command->setClient(new Client('http://www.test.com/some/path.php'));
         $request = $command->prepare();
         if (!empty($input)) {
             $this->assertEquals('application/xml', (string) $request->getHeader('Content-Type'));
