@@ -4,7 +4,6 @@ namespace Guzzle\Plugin\MessageIntegrity;
 
 use Guzzle\Common\Event;
 use Guzzle\Http\Message\ResponseInterface;
-use Guzzle\Stream\Stream;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

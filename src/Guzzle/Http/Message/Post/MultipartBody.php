@@ -2,11 +2,9 @@
 
 namespace Guzzle\Http\Message\Post;
 
-use Guzzle\Http\Mimetypes;
 use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
 use Guzzle\Stream\StreamMetadataTrait;
-use Guzzle\Url\QueryString;
 
 /**
  * Stream that when read returns bytes for a streaming multipart/form-data body

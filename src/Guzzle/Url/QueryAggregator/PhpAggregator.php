@@ -2,8 +2,6 @@
 
 namespace Guzzle\Url\QueryAggregator;
 
-use Guzzle\Url\QueryString;
-
 /**
  * Aggregates nested query string variables using PHP style []
  */

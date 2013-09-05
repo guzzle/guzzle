@@ -2,8 +2,6 @@
 
 namespace Guzzle\Url\QueryAggregator;
 
-use Guzzle\Url\QueryString;
-
 /**
  * Interface used for aggregating multi-value query string parameters into a flattened array
  */

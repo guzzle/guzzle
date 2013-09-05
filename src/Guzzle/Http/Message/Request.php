@@ -5,7 +5,6 @@ namespace Guzzle\Http\Message;
 use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Header\HeaderInterface;
-use Guzzle\Url\QueryString;
 use Guzzle\Url\Url;
 
 /**

@@ -7,8 +7,6 @@ use Guzzle\Http\Message\Post\PostBody;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Post\PostFile;
 use Guzzle\Http\RedirectPlugin;
-use Guzzle\Plugin\Log\LogPlugin;
-use Guzzle\Url\QueryString;
 use Guzzle\Url\Url;
 
 /**

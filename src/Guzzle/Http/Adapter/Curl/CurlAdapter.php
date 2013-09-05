@@ -11,7 +11,6 @@ use Guzzle\Http\Exception\AdapterException;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\MessageFactoryInterface;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Stream\Stream;
 
 /**
  * HTTP adapter that uses cURL as a transport layer

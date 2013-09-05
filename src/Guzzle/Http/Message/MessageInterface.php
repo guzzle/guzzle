@@ -2,7 +2,6 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Http\Header;
 use Guzzle\Stream\StreamInterface;
 
 /**
