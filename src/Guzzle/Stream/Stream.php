@@ -247,16 +247,38 @@ class Stream implements StreamInterface
         return fread($this->stream, $length);
     }
 
-    public function readLine($maxLength = null)
-    {
-        return $maxLength ? fgets($this->getStream(), $maxLength) : fgets($this->getStream());
-    }
-
     public function write($string)
     {
         // We can't know the size after writing anything
         $this->size = null;
 
         return fwrite($this->stream, $string);
+    }
+
+    /**
+     * Read a line from the stream up to the maximum allowed buffer length
+     *
+     * @param StreamInterface $stream    Stream to read from
+     * @param int             $maxLength Maximum buffer length
+     *
+     * @return string|bool
+     */
+    public static function readLine(StreamInterface $stream, $maxLength = null)
+    {
+        $buffer = '';
+        $size = 0;
+
+        while (!$stream->eof()) {
+            if (false === ($byte = $stream->read(1))) {
+                return $buffer;
+            }
+            $buffer .= $byte;
+            // Break when a new line is found or the max length - 1 is reached
+            if ($byte == PHP_EOL || ++$size == $maxLength - 1) {
+                break;
+            }
+        }
+
+        return $buffer;
     }
 }
