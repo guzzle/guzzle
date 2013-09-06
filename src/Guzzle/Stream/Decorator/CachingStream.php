@@ -26,7 +26,7 @@ class CachingStream implements ReadableStreamInterface
         DuplexStreamInterface $target = null
     ) {
         $this->remoteStream = $stream;
-        $this->stream = $target ?: new Stream(fopen('php://temp', 'r+'));
+        $this->stream = $target ?: StreamFactory::create(fopen('php://temp', 'r+'));
     }
 
     public function getSize()

@@ -13,6 +13,20 @@ interface StreamInterface
     public function close();
 
     /**
+     * Separate the underlying raw stream from the Stream.
+     *
+     * After the raw stream has been detached, the buffer is in an unusable state.
+     */
+    public function detach();
+
+    /**
+     * Get the size of the stream if known
+     *
+     * @return int|null Returns the size in bytes if known, or null if unknown
+     */
+    public function getSize();
+
+    /**
      * Returns the current position of the file read/write pointer
      *
      * @return int|bool Returns the position of the file pointer or false on error
@@ -36,20 +50,6 @@ interface StreamInterface
      * @link   http://www.php.net/manual/en/function.fseek.php
      */
     public function seek($offset, $whence = SEEK_SET);
-
-    /**
-     * Get the size of the stream if able
-     *
-     * @return int|bool
-     */
-    public function getSize();
-
-    /**
-     * Separate the underlying raw stream from the Stream.
-     *
-     * After the raw stream has been detached, the buffer is in an unusable state.
-     */
-    public function detach();
 
     /**
      * Get stream metadata as an associative array or retrieve a specific key.
