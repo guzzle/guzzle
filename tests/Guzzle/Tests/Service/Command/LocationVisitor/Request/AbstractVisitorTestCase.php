@@ -20,7 +20,7 @@ abstract class AbstractVisitorTestCase extends \Guzzle\Tests\GuzzleTestCase
     public function setUp()
     {
         $this->command = new MockCommand();
-        $this->request = new EntityEnclosingRequest('POST', 'http://www.test.com');
+        $this->request = new EntityEnclosingRequest('POST', 'http://www.test.com/some/path.php');
         $this->validator = new SchemaValidator();
     }
 
