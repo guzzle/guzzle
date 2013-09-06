@@ -68,11 +68,11 @@ class XmlVisitor extends AbstractRequestVisitor
         }
 
         if ($xml) {
-            $request->setBody($xml);
             // Don't overwrite the Content-Type if one is set
             if ($this->contentType && !$request->hasHeader('Content-Type')) {
                 $request->setHeader('Content-Type', $this->contentType);
             }
+            $request->setBody($xml);
         }
     }
 
