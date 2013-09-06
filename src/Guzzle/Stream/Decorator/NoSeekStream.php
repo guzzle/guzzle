@@ -3,16 +3,11 @@
 namespace Guzzle\Stream;
 
 /**
- * Stream decorator that prevents a stream from being seeked
+ * Stream decorator that prevents a readable stream from being seeked
  */
-class NoSeekStream implements StreamInterface
+class NoSeekStream implements ReadableStreamInterface
 {
-    use StreamDecoratorTrait;
-
-    public function rewind()
-    {
-        return false;
-    }
+    use ReadableStreamDecoratorTrait;
 
     public function seek($offset, $whence = SEEK_SET)
     {

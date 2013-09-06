@@ -31,13 +31,6 @@ interface ReadableStreamInterface extends StreamInterface
     public function read($length);
 
     /**
-     * Returns true if the stream can be read from.
-     *
-     * @return bool
-     */
-    public function isReadable();
-
-    /**
      * Returns true if the stream is at the end of the stream.
      *
      * @return bool

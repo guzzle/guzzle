@@ -5,9 +5,9 @@ namespace Guzzle\Stream;
 /**
  * Decorator used to return only a subset of a stream
  */
-class LimitStream implements StreamInterface
+class LimitStream implements ReadableStreamInterface
 {
-    use StreamDecoratorTrait;
+    use ReadableStreamDecoratorTrait;
 
     /** @var int Offset to start reading from */
     private $offset;
@@ -16,15 +16,15 @@ class LimitStream implements StreamInterface
     private $limit;
 
     /**
-     * @param StreamInterface $stream Stream to wrap
-     * @param int             $offset Position to seek to before reading (only works on seekable streams)
-     * @param int             $limit  Total number of bytes to allow to be read from the stream. Pass -1 for no limit.
+     * @param ReadableStreamInterface $stream Stream to wrap
+     * @param int                     $offset Position to seek to before reading (only works on seekable streams)
+     * @param int                     $limit  Total number of bytes to allow to be read from the stream. Pass -1 for no limit.
      */
-    public function __construct(StreamInterface $stream, $offset = 0, $limit = -1)
+    public function __construct(ReadableStreamInterface $stream, $offset = 0, $limit = -1)
     {
         $this->stream = $stream;
         $this->setOffset($offset);
-        $this->setLimit($limit);
+        $this->limit = $limit;
     }
 
     /**
@@ -75,6 +75,22 @@ class LimitStream implements StreamInterface
         }
     }
 
+    public function read($length)
+    {
+        if ($this->limit == -1) {
+            return $this->stream->read($length);
+        }
+
+        // Check if the current position is less than the total allowed bytes + original offset
+        $remaining = ($this->offset + $this->limit) - $this->stream->tell();
+        if ($remaining > 0) {
+            // Only return the amount of requested data, ensuring that the byte limit is not exceeded
+            return $this->stream->read(min($remaining, $length));
+        } else {
+            return false;
+        }
+    }
+
     /**
      * Set the offset to start limiting from
      *
@@ -83,7 +99,7 @@ class LimitStream implements StreamInterface
      * @return self
      * @throws \RuntimeException
      */
-    public function setOffset($offset)
+    private function setOffset($offset)
     {
         $this->offset = $offset;
         $current = $this->stream->tell();
@@ -99,35 +115,5 @@ class LimitStream implements StreamInterface
         }
 
         return $this;
-    }
-
-    /**
-     * Set the limit of bytes that the decorator allows to be read from the stream
-     *
-     * @param int $limit Number of bytes to allow to be read from the stream. Use -1 for no limit.
-     *
-     * @return self
-     */
-    public function setLimit($limit)
-    {
-        $this->limit = $limit;
-
-        return $this;
-    }
-
-    public function read($length)
-    {
-        if ($this->limit == -1) {
-            return $this->stream->read($length);
-        }
-
-        // Check if the current position is less than the total allowed bytes + original offset
-        $remaining = ($this->offset + $this->limit) - $this->stream->tell();
-        if ($remaining > 0) {
-            // Only return the amount of requested data, ensuring that the byte limit is not exceeded
-            return $this->stream->read(min($remaining, $length));
-        } else {
-            return false;
-        }
     }
 }

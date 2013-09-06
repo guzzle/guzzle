@@ -2,7 +2,7 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Stream\Stream;
+use Guzzle\Stream\StreamFactory;
 use Guzzle\Stream\StreamInterface;
 
 /**
@@ -138,7 +138,7 @@ class Response implements ResponseInterface
     public function getBody()
     {
         if (!$this->body) {
-            $this->body = Stream::factory();
+            $this->body = StreamFactory::create();
         }
 
         return $this->body;
