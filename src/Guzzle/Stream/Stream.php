@@ -3,9 +3,9 @@
 namespace Guzzle\Stream;
 
 /**
- * PHP stream implementation
+ * Stream implementation that implements both Readable and Writable
  */
-class Stream implements StreamInterface
+class Stream implements ReadableStreamInterface, WritableStreamInterface
 {
     use StreamMetadataTrait;
 
@@ -42,7 +42,7 @@ class Stream implements StreamInterface
      * @param resource|string|StreamInterface $resource Entity body data
      * @param int                             $size     Size of the data contained in the resource
      *
-     * @return StreamInterface
+     * @return self
      * @throws \InvalidArgumentException if the $resource arg is not a resource or string
      */
     public static function factory($resource = '', $size = null)
@@ -65,38 +65,27 @@ class Stream implements StreamInterface
                 return self::fromString(http_build_query($resource));
         }
 
-        throw new \InvalidArgumentException('Invalid resource type');
-    }
-
-    /**
-     * Create a new stream from a string
-     *
-     * @param string $string String of data
-     *
-     * @return StreamInterface
-     */
-    public static function fromString($string)
-    {
-        $stream = fopen('php://temp', 'r+');
-        if ($string !== '') {
-            fwrite($stream, $string);
-            rewind($stream);
-        }
-
-        return new static($stream);
+        throw new \InvalidArgumentException(sprintf(
+            'Invalid resource type provided to %s: %s',
+            __METHOD__,
+            gettype($resource)
+        ));
     }
 
     /**
      * Calculate a hash of a Stream
      *
-     * @param StreamInterface $stream    Stream to calculate the hash for
-     * @param string          $algo      Hash algorithm (e.g. md5, crc32, etc)
-     * @param bool            $rawOutput Whether or not to use raw output
+     * @param ReadableStreamInterface $stream    Stream to calculate the hash for
+     * @param string                  $algo      Hash algorithm (e.g. md5, crc32, etc)
+     * @param bool                    $rawOutput Whether or not to use raw output
      *
      * @return bool|string Returns false on failure or a hash string on success
      */
-    public static function getHash(StreamInterface $stream, $algo, $rawOutput = false)
-    {
+    public static function getHash(
+        ReadableStreamInterface $stream,
+        $algo,
+        $rawOutput = false
+    ) {
         $pos = $stream->tell();
         if (!$stream->seek(0)) {
             return false;
@@ -111,6 +100,35 @@ class Stream implements StreamInterface
         $stream->seek($pos);
 
         return $out;
+    }
+
+    /**
+     * Read a line from the stream up to the maximum allowed buffer length
+     *
+     * @param ReadableStreamInterface $stream    Stream to read from
+     * @param int                     $maxLength Maximum buffer length
+     *
+     * @return string|bool
+     */
+    public static function readLine(
+        ReadableStreamInterface $stream,
+        $maxLength = null
+    ) {
+        $buffer = '';
+        $size = 0;
+
+        while (!$stream->eof()) {
+            if (false === ($byte = $stream->read(1))) {
+                return $buffer;
+            }
+            $buffer .= $byte;
+            // Break when a new line is found or the max length - 1 is reached
+            if ($byte == PHP_EOL || ++$size == $maxLength - 1) {
+                break;
+            }
+        }
+
+        return $buffer;
     }
 
     /**
@@ -159,22 +177,13 @@ class Stream implements StreamInterface
         if (is_resource($this->stream)) {
             fclose($this->stream);
         }
+        $this->detach();
+    }
+
+    public function detach()
+    {
         $this->meta = [];
-    }
-
-    public function getStream()
-    {
-        return $this->stream;
-    }
-
-    public function detachStream()
-    {
         $this->stream = null;
-    }
-
-    public function getUri()
-    {
-        return $this->meta['uri'];
     }
 
     public function getSize()
@@ -234,12 +243,9 @@ class Stream implements StreamInterface
 
     public function seek($offset, $whence = SEEK_SET)
     {
-        return $this->meta[self::SEEKABLE] ? fseek($this->stream, $offset, $whence) === 0 : false;
-    }
-
-    public function rewind()
-    {
-        return $this->seek(0);
+        return $this->meta[self::SEEKABLE]
+            ? fseek($this->stream, $offset, $whence) === 0
+            : false;
     }
 
     public function read($length)
@@ -256,29 +262,20 @@ class Stream implements StreamInterface
     }
 
     /**
-     * Read a line from the stream up to the maximum allowed buffer length
+     * Create a new stream from a string
      *
-     * @param StreamInterface $stream    Stream to read from
-     * @param int             $maxLength Maximum buffer length
+     * @param string $string String of data
      *
-     * @return string|bool
+     * @return StreamInterface
      */
-    public static function readLine(StreamInterface $stream, $maxLength = null)
+    protected static function fromString($string)
     {
-        $buffer = '';
-        $size = 0;
-
-        while (!$stream->eof()) {
-            if (false === ($byte = $stream->read(1))) {
-                return $buffer;
-            }
-            $buffer .= $byte;
-            // Break when a new line is found or the max length - 1 is reached
-            if ($byte == PHP_EOL || ++$size == $maxLength - 1) {
-                break;
-            }
+        $stream = fopen('php://temp', 'r+');
+        if ($string !== '') {
+            fwrite($stream, $string);
+            rewind($stream);
         }
 
-        return $buffer;
+        return new static($stream);
     }
 }

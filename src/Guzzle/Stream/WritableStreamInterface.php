@@ -2,7 +2,10 @@
 
 namespace Guzzle\Stream;
 
-interface WritableStreamInterface
+/**
+ * Streams that implement WritableStreamInterface may be written to.
+ */
+interface WritableStreamInterface extends StreamInterface
 {
     /**
      * Check if the stream is writable
@@ -16,7 +19,8 @@ interface WritableStreamInterface
      *
      * @param string $string The string that is to be written.
      *
-     * @return int|bool Returns the number of bytes written to the stream on success or FALSE on failure.
+     * @return int|bool Returns the number of bytes written to the stream on
+     *                  success or FALSE on failure.
      */
     public function write($string);
 }
