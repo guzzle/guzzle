@@ -24,4 +24,11 @@ interface FutureResponseInterface extends ResponseInterface
      * @return AdapterInterface
      */
     public function getAdapter();
+
+    /**
+     * Send the postponed HTTP request if it has not already sent
+     *
+     * @return self
+     */
+    public function send();
 }

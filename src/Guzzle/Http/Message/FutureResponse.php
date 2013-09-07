@@ -17,6 +17,13 @@ class FutureResponse implements FutureResponseInterface
         $this->adapter = $adapter;
     }
 
+    public function send()
+    {
+        $this->getResponse();
+
+        return $this;
+    }
+
     public function getTransaction()
     {
         return $this->transaction;
