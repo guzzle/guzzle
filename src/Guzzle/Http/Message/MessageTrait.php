@@ -5,8 +5,8 @@ namespace Guzzle\Http\Message;
 use Guzzle\Http\Header\HeaderCollection;
 use Guzzle\Http\Header\HeaderFactory;
 use Guzzle\Http\Mimetypes;
-use Guzzle\Stream\Stream;
-use Guzzle\Stream\StreamInterface;
+use Guzzle\Stream\StreamFactory;
+use Guzzle\Stream\ReadableStreamInterface;
 
 /**
  * HTTP request/response message trait
@@ -15,7 +15,7 @@ trait MessageTrait
 {
     use HasHeadersTrait;
 
-    /** @var StreamInterface Message body */
+    /** @var ReadableStreamInterface Message body */
     private $body;
 
     /** @var string HTTP protocol version of the message */
@@ -34,10 +34,10 @@ trait MessageTrait
             $this->removeHeader('Content-Length');
             $this->removeHeader('Transfer-Encoding');
         } else {
-            $this->body = Stream::factory($body);
+            $this->body = StreamFactory::create($body);
             // Auto detect the Content-Type from the path of the request if possible
             if ($contentType === null && !$this->hasHeader('Content-Type')) {
-                $contentType = Mimetypes::getInstance()->fromFilename($this->body->getUri());
+                $contentType = Mimetypes::getInstance()->fromFilename($this->body->getMetadata('uri'));
             }
             if ($contentType) {
                 $this->setHeader('Content-Type', $contentType);

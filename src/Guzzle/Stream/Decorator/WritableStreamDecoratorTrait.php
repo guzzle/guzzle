@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Stream;
+namespace Guzzle\Stream\Decorator;
 
 /**
  * Stream decorator trait implementing {@see \Guzzle\Stream\WritableStreamInterface}

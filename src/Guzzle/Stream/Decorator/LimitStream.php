@@ -1,6 +1,8 @@
 <?php
 
-namespace Guzzle\Stream;
+namespace Guzzle\Stream\Decorator;
+
+use Guzzle\Stream\ReadableStreamInterface;
 
 /**
  * Decorator used to return only a subset of a stream

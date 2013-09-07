@@ -1,6 +1,10 @@
 <?php
 
-namespace Guzzle\Stream;
+namespace Guzzle\Stream\Decorator;
+
+use Guzzle\Stream\StreamFactory;
+use Guzzle\Stream\ReadableStreamInterface;
+use Guzzle\Stream\DuplexStreamInterface;
 
 /**
  * Stream decorator that can cache previously read bytes from a sequentially read stream

@@ -2,14 +2,15 @@
 
 namespace Guzzle\Http\Message\Post;
 
-use Guzzle\Stream\Stream;
+use Guzzle\Stream\ReadableStreamInterface;
+use Guzzle\Stream\StreamFactory;
 use Guzzle\Stream\StreamInterface;
 use Guzzle\Stream\StreamMetadataTrait;
 
 /**
  * Stream that when read returns bytes for a streaming multipart/form-data body
  */
-class MultipartBody implements StreamInterface
+class MultipartBody implements ReadableStreamInterface
 {
     use StreamMetadataTrait;
 
@@ -49,11 +50,11 @@ class MultipartBody implements StreamInterface
     public function __toString()
     {
         $buffer = '';
-        if ($this->rewind()) {
+        if ($this->seek(0)) {
             while (!$this->eof()) {
                 $buffer .= $this->read(32768);
             }
-            $this->rewind();
+            $this->seek(0);
         }
 
         return $buffer;
@@ -74,22 +75,7 @@ class MultipartBody implements StreamInterface
         $this->fields = $this->files = [];
     }
 
-    /**
-     * Casts the body to a string, then returns a PHP temp stream representation of the body
-     *
-     * @return resource
-     */
-    public function getStream()
-    {
-        return Stream::factory((string) $this)->getStream();
-    }
-
-    public function detachStream() {}
-
-    public function getUri()
-    {
-        return false;
-    }
+    public function detach() {}
 
     /**
      * The stream has reached an EOF when all of the fields and files have been read
@@ -103,21 +89,6 @@ class MultipartBody implements StreamInterface
     public function tell()
     {
         return $this->pos;
-    }
-
-    public function isReadable()
-    {
-        return true;
-    }
-
-    public function isWritable()
-    {
-        return false;
-    }
-
-    public function isLocal()
-    {
-        return false;
     }
 
     /**
@@ -177,11 +148,6 @@ class MultipartBody implements StreamInterface
         return $content;
     }
 
-    public function rewind()
-    {
-        return $this->seek(0);
-    }
-
     public function seek($offset, $whence = SEEK_SET)
     {
         if ($offset != 0 || $whence != SEEK_SET || !$this->isSeekable()) {
@@ -189,7 +155,7 @@ class MultipartBody implements StreamInterface
         }
 
         foreach ($this->files as $file) {
-            if (!$file->getContent()->rewind()) {
+            if (!$file->getContent()->seek(0)) {
                 throw new \RuntimeException('Rewind on multipart file failed even though it shouldn\'t have');
             }
         }
@@ -199,22 +165,6 @@ class MultipartBody implements StreamInterface
         $this->bufferedHeaders = [];
 
         return true;
-    }
-
-    /**
-     * @throws \BadMethodCallException
-     */
-    public function readLine($maxLength = null)
-    {
-        throw new \BadMethodCallException(__CLASS__ . ' does not support ' . __METHOD__);
-    }
-
-    /**
-     * @throws \BadMethodCallException
-     */
-    public function write($string)
-    {
-        throw new \BadMethodCallException(__CLASS__ . ' does not support ' . __METHOD__);
     }
 
     /**

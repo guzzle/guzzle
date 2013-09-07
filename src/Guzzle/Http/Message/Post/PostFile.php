@@ -5,8 +5,8 @@ namespace Guzzle\Http\Message\Post;
 use Guzzle\Http\Header\HeaderCollection;
 use Guzzle\Http\Message\HasHeadersTrait;
 use Guzzle\Http\Mimetypes;
-use Guzzle\Stream\Stream;
-use Guzzle\Stream\StreamInterface;
+use Guzzle\Stream\StreamFactory;
+use Guzzle\Stream\ReadableStreamInterface;
 
 /**
  * Post file upload
@@ -21,34 +21,28 @@ class PostFile implements PostFileInterface
     /**
      * Factory method used to create a PostFile from a number of different types
      *
-     * @param string                                            $name Name of the form field
-     * @param PostFileInterface|StreamInterface|resource|string $data Data used to create the file
+     * @param string                                                    $name Name of the form field
+     * @param PostFileInterface|ReadableStreamInterface|resource|string $data Data used to create the file
      *
      * @return self
      */
     public static function create($name, $data)
     {
-        if ($data instanceof self) {
-            return $data;
-        } elseif ($data instanceof StreamInterface) {
-            return new self($name, $data);
-        } else {
-            return self::create($name, Stream::factory($data));
-        }
+        return $data instanceof self ? $data : new self($name, $data);
     }
 
     /**
-     * @param null            $name     Name of the form field
-     * @param StreamInterface $content  Data to send
-     * @param null            $filename Filename content-disposition attribute
-     * @param array           $headers  Array of headers to set on the file (can override any default headers)
+     * @param null                    $name     Name of the form field
+     * @param ReadableStreamInterface $content  Data to send
+     * @param null                    $filename Filename content-disposition attribute
+     * @param array                   $headers  Array of headers to set on the file (can override any default headers)
      */
-    public function __construct($name, StreamInterface $content, $filename = null, array $headers = [])
+    public function __construct($name, ReadableStreamInterface $content, $filename = null, array $headers = [])
     {
         $this->headers = new HeaderCollection($headers);
         $this->content = $content;
         $this->name = $name;
-        $this->filename = $filename ?: basename($this->content->getUri());
+        $this->filename = $filename ?: basename($this->content->getMetadata('uri'));
 
         // Account for nested MultipartBody objects
         if ($content instanceof MultipartBody) {

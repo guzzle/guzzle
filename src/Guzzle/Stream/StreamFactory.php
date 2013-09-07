@@ -31,7 +31,7 @@ class StreamFactory
      * @param resource|string|StreamInterface $resource Entity body data
      * @param int                             $size     Size of the data contained in the resource
      *
-     * @return self
+     * @return StreamInterface
      * @throws \InvalidArgumentException if the $resource arg is not a resource or string
      */
     public static function create($resource = '', $size = null)

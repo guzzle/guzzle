@@ -1,6 +1,8 @@
 <?php
 
-namespace Guzzle\Stream;
+namespace Guzzle\Stream\Decorator;
+
+use Guzzle\Stream\ReadableStreamInterface;
 
 /**
  * Stream decorator that prevents a readable stream from being seeked
