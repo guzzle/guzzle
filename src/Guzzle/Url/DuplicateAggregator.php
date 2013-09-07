@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Url\QueryAggregator;
+namespace Guzzle\Url;
 
 /**
  * Aggregates nested query string variables using PHP style arrays, but does not

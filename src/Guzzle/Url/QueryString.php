@@ -3,9 +3,6 @@
 namespace Guzzle\Url;
 
 use Guzzle\Common\Collection;
-use Guzzle\Url\QueryAggregator\DuplicateAggregator;
-use Guzzle\Url\QueryAggregator\QueryAggregatorInterface;
-use Guzzle\Url\QueryAggregator\PhpAggregator;
 
 /**
  * Manages query string variables and can aggregate them into a string

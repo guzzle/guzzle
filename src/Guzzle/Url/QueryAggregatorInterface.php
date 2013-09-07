@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Url\QueryAggregator;
+namespace Guzzle\Url;
 
 /**
  * Interface used for aggregating multi-value query string parameters into a flattened array

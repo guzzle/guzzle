@@ -6,8 +6,8 @@ use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Stream\StreamFactory;
 use Guzzle\Stream\ReadableStreamInterface;
 use Guzzle\Stream\StreamMetadataTrait;
-use Guzzle\Url\QueryAggregator\PhpAggregator;
-use Guzzle\Url\QueryAggregator\QueryAggregatorInterface;
+use Guzzle\Url\PhpAggregator;
+use Guzzle\Url\QueryAggregatorInterface;
 use Guzzle\Url\QueryString;
 
 /**
