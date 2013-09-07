@@ -72,25 +72,20 @@ class Client implements ClientInterface
      */
     private function getDefaultAdapter()
     {
-        $batchClient = null;
-
         if (extension_loaded('curl')) {
             if (!ini_get('allow_url_fopen')) {
-                $batchClient = $adapter = new CurlAdapter($this->messageFactory);
+                return new FutureProxyAdapter(new CurlAdapter($this->messageFactory));
             } else {
-                $batchClient = new CurlAdapter($this->messageFactory);
-                $adapter = new StreamingProxyAdapter(
-                    $batchClient,
-                    new StreamAdapter($this->messageFactory)
+                return new StreamingProxyAdapter(
+                    new FutureProxyAdapter(new CurlAdapter($this->messageFactory)),
+                    new FutureProxyAdapter(new StreamAdapter($this->messageFactory))
                 );
             }
         } elseif (ini_get('allow_url_fopen')) {
-            $batchClient = $adapter = new StreamAdapter($this->messageFactory);
+            return new FutureProxyAdapter(new StreamAdapter($this->messageFactory));
         } else {
             throw new \RuntimeException('The curl extension must be installed or you must set allow_url_fopen to true');
         }
-
-        return new FutureProxyAdapter($adapter, $batchClient);
     }
 
     public function getConfig($key)

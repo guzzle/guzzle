@@ -128,8 +128,9 @@ class FutureResponse implements FutureResponseInterface
     {
         if (!$this->response) {
             $this->getAdapter()->send($this->getTransaction());
+            $this->response = $this->transaction->getResponse();
         }
 
-        return $this->transaction->getResponse();
+        return $this->response;
     }
 }

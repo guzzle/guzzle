@@ -10,7 +10,7 @@ use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\MessageFactoryInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
-use Guzzle\Stream\Stream;
+use Guzzle\Stream\StreamFactory;
 
 /**
  * HTTP adapter that uses PHP's HTTP stream wrapper
@@ -44,8 +44,6 @@ class StreamAdapter implements AdapterInterface
                 throw $e;
             }
         }
-
-        return $transaction->getResponse();
     }
 
     /**
@@ -56,48 +54,38 @@ class StreamAdapter implements AdapterInterface
     {
         $request = $transaction->getRequest();
         $stream = $this->createStream($request, $http_response_header);
+
+        if (!$request->getConfig()['stream']) {
+            $stream = $this->getSaveToBody($request, $stream);
+        }
+
         // Track the response headers of the request
-        $response = $this->createResponseObject($http_response_header, $transaction, $stream);
-        $request->dispatch(RequestEvents::RESPONSE_HEADERS, new GotResponseHeadersEvent($transaction));
-
-        if ($request->getConfig()['stream']) {
-            $this->applyStreamingBody($request, $response, $stream);
-        } else{
-            $this->applySaveToBody($request, $response, $stream);
-        }
-    }
-
-    /**
-     * Configure the response to use a streaming body
-     * @throws \LogicException when using both the stream and save_to option
-     */
-    private function applyStreamingBody(RequestInterface $request, ResponseInterface $response, $stream)
-    {
-        // Streaming response, so do not read up front
-        if ($request->getConfig()['save_to']) {
-            throw new \LogicException('Cannot stream a response and write to a destination simultaneously');
-        }
-        $response->setBody($stream);
+        $this->createResponseObject($http_response_header, $transaction, $stream);
     }
 
     /**
      * Drain the steam into the destination stream
      */
-    private function applySaveToBody(RequestInterface $request, ResponseInterface $response, $stream)
+    private function getSaveToBody(RequestInterface $request, $stream)
     {
         if ($saveTo = $request->getConfig()['save_to']) {
             // Stream the response into the destination stream
-            $saveTo = is_string($saveTo) ? Stream::factory(fopen($saveTo, 'w')) : Stream::factory($saveTo);
+            $saveTo = is_string($saveTo)
+                ? StreamFactory::create(fopen($saveTo, 'r+'))
+                : StreamFactory::create($saveTo);
         } else {
             // Stream into the default temp stream
-            $saveTo = Stream::factory();
+            $saveTo = StreamFactory::create();
         }
 
         while (!feof($stream)) {
             $saveTo->write(fread($stream, 8096));
         }
+
         fclose($stream);
-        $response->setBody($saveTo);
+        $saveTo->seek(0);
+
+        return $saveTo;
     }
 
     private function createResponseObject($headers, TransactionInterface $transaction, $stream)
@@ -117,6 +105,11 @@ class StreamAdapter implements AdapterInterface
 
         $response = $this->messageFactory->createResponse($parts[1], $responseHeaders, $stream, $options);
         $transaction->setResponse($response);
+
+        $transaction->getRequest()->getEventDispatcher()->dispatch(
+            RequestEvents::RESPONSE_HEADERS,
+            new GotResponseHeadersEvent($transaction)
+        );
 
         return $response;
     }

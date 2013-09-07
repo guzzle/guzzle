@@ -7,10 +7,6 @@ namespace Guzzle\Stream\Php;
  */
 trait ReadableTrait
 {
-    abstract function isSeekable();
-    abstract function seek($offset, $whence = 0);
-    abstract function tell();
-
     /**
      * @see \Guzzle\Stream\ReadableStreamInterface::__toString
      */
@@ -21,7 +17,7 @@ trait ReadableTrait
         }
 
         $originalPos = $this->tell();
-        $body = stream_get_contents($this->stream, -1, 0);
+        $body = (string) stream_get_contents($this->stream, -1, 0);
         $this->seek($originalPos);
 
         return $body;

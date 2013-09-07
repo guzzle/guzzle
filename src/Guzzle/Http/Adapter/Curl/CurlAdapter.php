@@ -52,8 +52,6 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
     public function send(TransactionInterface $transaction)
     {
         $this->batch([$transaction]);
-
-        return $transaction->getResponse();
     }
 
     public function batch(array $transactions)
