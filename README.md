@@ -173,7 +173,7 @@ $response = Guzzle::post('http://guzzlephp.org', [
 * body: Body of a request, including an EntityBody, string, or array when sending POST requests. Setting a body for a
   GET request will set where the response body is downloaded.
 * auth: Array of HTTP authentication parameters to use with the request. The array must contain the
-  username in index [0], the password in index [2], and can optionally contain the authentication type in index [3].
+  username in index [0], the password in index [1], and can optionally contain the authentication type in index [2].
   The authentication types are: "Basic", "Digest". The default auth type is "Basic".
 * cookies: Associative array of cookies
 * allow_redirects: Set to false to disable redirects
