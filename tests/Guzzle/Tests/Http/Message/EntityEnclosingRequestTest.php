@@ -416,13 +416,6 @@ class EntityEnclosingRequestTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($request->getParams()->get(RedirectPlugin::DISABLE));
     }
 
-    public function testSetsContentTypeWhenSettingBodyByGuessingFromPath()
-    {
-        $request = new EntityEnclosingRequest('PUT', 'http://test.com/foo.json');
-        $request->setBody('{"a":"b"}');
-        $this->assertEquals('application/json', (string) $request->getHeader('Content-Type'));
-    }
-
     public function testSetsContentTypeWhenSettingBodyByGuessingFromEntityBody()
     {
         $request = new EntityEnclosingRequest('PUT', 'http://test.com/foo');
