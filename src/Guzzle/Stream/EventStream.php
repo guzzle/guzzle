@@ -14,21 +14,21 @@ class EventStream implements StreamInterface, HasDispatcherInterface
 
     public function read($length)
     {
-        $event = ['stream' => $this, 'length' => $length, 'data' => $this->stream->read($length)];
-        $this->getEventDispatcher()->dispatch('stream.read', $event);
+        $data = $this->stream->read($length);
+        $this->getEventDispatcher()->dispatch('stream.read', new IoEvent($this, $data, $length));
 
         if ($this->eof()) {
-            $this->getEventDispatcher()->dispatch('stream.eof', ['stream' => $this]);
+            $this->getEventDispatcher()->dispatch('stream.eof', new IoEvent($this));
         }
 
-        return $event['data'];
+        return $data;
     }
 
     public function write($string)
     {
-        $event = ['stream' => $this, 'length' => $this->stream->write($string), 'data' => $string];
-        $this->getEventDispatcher()->dispatch('stream.write', $event);
+        $length = $this->stream->write($string);
+        $this->getEventDispatcher()->dispatch('stream.write', new IoEvent($this, $string, $length));
 
-        return $event['length'];
+        return $length;
     }
 }
