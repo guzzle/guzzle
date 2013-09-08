@@ -16,9 +16,15 @@ class ChunkedIterator extends \IteratorIterator
     /**
      * @param \Traversable $iterator  Traversable iterator
      * @param int          $chunkSize Size to make each chunk
+     * @throws \InvalidArgumentException
      */
     public function __construct(\Traversable $iterator, $chunkSize)
     {
+        $chunkSize = (int) $chunkSize;
+        if ($chunkSize < 0 ) {
+            throw new \InvalidArgumentException("The chunk size must be equal or greater than zero; $chunkSize given");
+        }
+
         parent::__construct($iterator);
         $this->chunkSize = $chunkSize;
     }
