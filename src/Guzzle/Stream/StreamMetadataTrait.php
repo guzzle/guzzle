@@ -10,18 +10,8 @@ trait StreamMetadataTrait
     /** @var array Stream metadata */
     private $meta = array();
 
-    /**
-     * @see StreamInterface::getMetadata
-     */
     public function getMetadata($key = null)
     {
         return !$key ? $this->meta : (isset($this->meta[$key]) ? $this->meta[$key] : null);
-    }
-
-    public function setMetadata($key, $value)
-    {
-        $this->meta[$key] = $value;
-
-        return $this;
     }
 }

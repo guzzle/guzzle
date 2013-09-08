@@ -2,15 +2,14 @@
 
 namespace Guzzle\Http\Message\Post;
 
-use Guzzle\Stream\ReadableStreamInterface;
-use Guzzle\Stream\StreamFactory;
+use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
 use Guzzle\Stream\StreamMetadataTrait;
 
 /**
  * Stream that when read returns bytes for a streaming multipart/form-data body
  */
-class MultipartBody implements ReadableStreamInterface
+class MultipartBody implements StreamInterface
 {
     use StreamMetadataTrait;
 
@@ -91,6 +90,21 @@ class MultipartBody implements ReadableStreamInterface
         return $this->pos;
     }
 
+    public function isReadable()
+    {
+        return true;
+    }
+
+    public function isWritable()
+    {
+        return false;
+    }
+
+    public function isLocal()
+    {
+        return false;
+    }
+
     /**
      * The steam is seekable by default, but all attached files must be seekable too
      * {@inheritdoc}
@@ -165,6 +179,11 @@ class MultipartBody implements ReadableStreamInterface
         $this->bufferedHeaders = [];
 
         return true;
+    }
+
+    public function write($string)
+    {
+        return false;
     }
 
     /**

@@ -1,19 +1,15 @@
 <?php
 
-namespace Guzzle\Stream\Decorator;
-
-use Guzzle\Stream\StreamFactory;
-use Guzzle\Stream\ReadableStreamInterface;
-use Guzzle\Stream\DuplexStreamInterface;
+namespace Guzzle\Stream;
 
 /**
  * Stream decorator that can cache previously read bytes from a sequentially read stream
  */
-class CachingStream implements ReadableStreamInterface
+class CachingStream implements StreamInterface
 {
-    use ReadableStreamDecoratorTrait;
+    use StreamDecoratorTrait;
 
-    /** @var ReadableStreamInterface Remote stream used to actually pull data onto the buffer */
+    /** @var StreamInterface Remote stream used to actually pull data onto the buffer */
     private $remoteStream;
 
     /** @var int The number of bytes to skip reading due to a write on the temporary buffer */
@@ -22,15 +18,35 @@ class CachingStream implements ReadableStreamInterface
     /**
      * We will treat the buffer object as the body of the stream
      *
-     * @param ReadableStreamInterface $stream Stream to cache
-     * @param DuplexStreamInterface   $target Optionally specify where data is cached
+     * @param StreamInterface $stream Stream to cache
+     * @param StreamInterface $target Optionally specify where data is cached
      */
-    public function __construct(
-        ReadableStreamInterface $stream,
-        DuplexStreamInterface $target = null
-    ) {
+    public function __construct(StreamInterface $stream, StreamInterface $target = null)
+    {
         $this->remoteStream = $stream;
-        $this->stream = $target ?: StreamFactory::create(fopen('php://temp', 'r+'));
+        $this->stream = $target ?: new Stream(fopen('php://temp', 'r+'));
+    }
+
+    /**
+     * Will give the contents of the buffer followed by the exhausted remote stream.
+     *
+     * Warning: Loads the entire stream into memory
+     *
+     * @return string
+     */
+    public function __toString()
+    {
+        $pos = $this->tell();
+        $this->rewind();
+
+        $str = '';
+        while (!$this->eof()) {
+            $str .= $this->read(16384);
+        }
+
+        $this->seek($pos);
+
+        return $str;
     }
 
     public function getSize()
@@ -62,6 +78,11 @@ class CachingStream implements ReadableStreamInterface
         return $this->stream->seek($byte);
     }
 
+    public function rewind()
+    {
+        return $this->seek(0);
+    }
+
     public function read($length)
     {
         // Perform a regular read on any previously read data from the buffer
@@ -88,6 +109,18 @@ class CachingStream implements ReadableStreamInterface
         return $data;
     }
 
+    public function write($string)
+    {
+        // When appending to the end of the currently read stream, you'll want to skip bytes from being read from
+        // the remote stream to emulate other stream wrappers. Basically replacing bytes of data of a fixed length.
+        $overflow = (strlen($string) + $this->tell()) - $this->remoteStream->tell();
+        if ($overflow > 0) {
+            $this->skipReadBytes += $overflow;
+        }
+
+        return $this->stream->write($string);
+    }
+
     public function eof()
     {
         return $this->stream->eof() && $this->remoteStream->eof();
@@ -99,5 +132,27 @@ class CachingStream implements ReadableStreamInterface
     public function close()
     {
         $this->remoteStream->close() && $this->stream->close();
+    }
+
+    public function getMetaData($key = null)
+    {
+        return $this->remoteStream->getMetaData($key);
+    }
+
+    public function setMetaData($key, $value)
+    {
+        $this->remoteStream->setMetaData($key, $value);
+
+        return $this;
+    }
+
+    public function getStream()
+    {
+        return $this->remoteStream->getStream();
+    }
+
+    public function getUri()
+    {
+        return $this->remoteStream->getUri();
     }
 }

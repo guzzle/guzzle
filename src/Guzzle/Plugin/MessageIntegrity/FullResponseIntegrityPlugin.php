@@ -61,7 +61,7 @@ class FullResponseIntegrityPlugin implements EventSubscriberInterface
 
     private function matchesHash(RequestAfterSendEvent $event, $hash, StreamInterface $body)
     {
-        $body->rewind();
+        $body->seek(0);
         while (!$body->eof()) {
             $this->hash->update($body->read(16384));
         }

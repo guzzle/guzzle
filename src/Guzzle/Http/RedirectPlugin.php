@@ -113,7 +113,7 @@ class RedirectPlugin implements EventSubscriberInterface
         if ($redirectRequest->getBody()) {
             $body = $redirectRequest->getBody();
             // Only rewind the body if some of it has been read already, and throw an exception if the rewind fails
-            if ($body->ftell() && !$body->rewind()) {
+            if ($body->tell() && !$body->seek(0)) {
                 throw new CouldNotRewindStreamException(
                     'Unable to rewind the non-seekable entity body of the request after redirecting',
                     $redirectRequest

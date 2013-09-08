@@ -3,8 +3,8 @@
 namespace Guzzle\Http\Message\Post;
 
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Stream\StreamFactory;
-use Guzzle\Stream\ReadableStreamInterface;
+use Guzzle\Stream\Stream;
+use Guzzle\Stream\StreamInterface;
 use Guzzle\Stream\StreamMetadataTrait;
 use Guzzle\Url\PhpAggregator;
 use Guzzle\Url\QueryAggregatorInterface;
@@ -172,6 +172,16 @@ class PostBody implements PostBodyInterface
         return true;
     }
 
+    public function isReadable()
+    {
+        return true;
+    }
+
+    public function isWritable()
+    {
+        return false;
+    }
+
     public function getSize()
     {
         if (!$this->size) {
@@ -191,6 +201,11 @@ class PostBody implements PostBodyInterface
         return $this->getBody()->read($length);
     }
 
+    public function write($string)
+    {
+        return false;
+    }
+
     /**
      * Return a stream object that is built from the POST fields and files. If one has already been
      * created, the previously created stream will be returned.
@@ -204,7 +219,7 @@ class PostBody implements PostBodyInterface
         } elseif ($this->fields) {
             return $this->body = $this->createUrlEncoded();
         } else {
-            return $this->body = StreamFactory::create('');
+            return $this->body = Stream::factory('');
         }
     }
 
@@ -247,7 +262,7 @@ class PostBody implements PostBodyInterface
     /**
      * Creates an application/x-www-form-urlencoded stream body
      *
-     * @return ReadableStreamInterface
+     * @return StreamInterface
      */
     private function createUrlEncoded()
     {
@@ -255,7 +270,7 @@ class PostBody implements PostBodyInterface
             ->setAggregator($this->getAggregator())
             ->setEncodingType(QueryString::RFC1738);
 
-        return StreamFactory::create($query);
+        return Stream::factory($query);
     }
 
     /**

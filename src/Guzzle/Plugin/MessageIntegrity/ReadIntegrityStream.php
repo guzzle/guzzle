@@ -2,9 +2,8 @@
 
 namespace Guzzle\Plugin\MessageIntegrity;
 
-use Guzzle\Stream\Decorator\ReadableStreamDecoratorTrait;
+use Guzzle\Stream\StreamDecoratorTrait;
 use Guzzle\Stream\StreamInterface;
-use Guzzle\Stream\Decorator\StreamDecoratorTrait;
 use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Common\HasDispatcherInterface;
 
@@ -14,12 +13,14 @@ use Guzzle\Common\HasDispatcherInterface;
  */
 class ReadIntegrityStream implements StreamInterface, HasDispatcherInterface
 {
-    use ReadableStreamDecoratorTrait, HasDispatcherTrait;
+    use StreamDecoratorTrait, HasDispatcherTrait;
 
     /** @var HashInterface */
     private $hash;
+
     /** @var callable */
     private $validationCallback;
+
     /** @var int Last position that the hash was updated at */
     private $lastHashPos = 0;
 

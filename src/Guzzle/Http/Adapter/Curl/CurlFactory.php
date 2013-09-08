@@ -105,7 +105,7 @@ class CurlFactory
                 $options[CURLOPT_INFILESIZE] = $size;
                 unset($options['_headers']['Content-Length']);
             }
-            $request->getBody()->rewind();
+            $request->getBody()->seek(0);
         }
 
         // If the Expect header is not present, prevent curl from adding it

@@ -5,8 +5,7 @@ namespace Guzzle\Http\Message\Post;
 use Guzzle\Http\Header\HeaderCollection;
 use Guzzle\Http\Message\HasHeadersTrait;
 use Guzzle\Http\Mimetypes;
-use Guzzle\Stream\StreamFactory;
-use Guzzle\Stream\ReadableStreamInterface;
+use Guzzle\Stream\StreamInterface;
 
 /**
  * Post file upload
@@ -21,8 +20,8 @@ class PostFile implements PostFileInterface
     /**
      * Factory method used to create a PostFile from a number of different types
      *
-     * @param string                                                    $name Name of the form field
-     * @param PostFileInterface|ReadableStreamInterface|resource|string $data Data used to create the file
+     * @param string                                            $name Name of the form field
+     * @param PostFileInterface|StreamInterface|resource|string $data Data used to create the file
      *
      * @return self
      */
@@ -32,12 +31,12 @@ class PostFile implements PostFileInterface
     }
 
     /**
-     * @param null                    $name     Name of the form field
-     * @param ReadableStreamInterface $content  Data to send
-     * @param null                    $filename Filename content-disposition attribute
-     * @param array                   $headers  Array of headers to set on the file (can override any default headers)
+     * @param null            $name     Name of the form field
+     * @param StreamInterface $content  Data to send
+     * @param null            $filename Filename content-disposition attribute
+     * @param array           $headers  Array of headers to set on the file (can override any default headers)
      */
-    public function __construct($name, ReadableStreamInterface $content, $filename = null, array $headers = [])
+    public function __construct($name, StreamInterface $content, $filename = null, array $headers = [])
     {
         $this->headers = new HeaderCollection($headers);
         $this->content = $content;
