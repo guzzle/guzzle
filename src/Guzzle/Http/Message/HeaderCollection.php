@@ -162,18 +162,18 @@ class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, 
      */
     public function parseHeader($name)
     {
+        static $trimmed = "\"'  \n\t\r";
         $params = $matches = [];
-        $callback = [$this, 'trimHeader'];
 
         foreach ($this->normalizeHeader($name) as $val) {
             $part = array();
             foreach (preg_split('/;(?=([^"]*"[^"]*")*[^"]*$)/', $val) as $kvp) {
                 preg_match_all('/<[^>]+>|[^=]+/', $kvp, $matches);
-                $pieces = array_map($callback, $matches[0]);
+                $pieces = $matches[0];
                 if (isset($pieces[1])) {
-                    $part[$pieces[0]] = $pieces[1];
+                    $part[trim($pieces[0], $trimmed)] = trim($pieces[1], $trimmed);
                 } else {
-                    $part[] = $pieces[0];
+                    $part[] = trim($pieces[0], $trimmed);
                 }
             }
             $params[] = $part;
@@ -206,19 +206,5 @@ class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, 
         }
 
         return $values;
-    }
-
-    /**
-     * Trim a header by removing excess spaces and wrapping quotes
-     *
-     * @param $str
-     *
-     * @return string
-     */
-    private function trimHeader($str)
-    {
-        static $trimmed = "\"'  \n\t\r";
-
-        return trim($str, $trimmed);
     }
 }
