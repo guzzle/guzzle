@@ -15,10 +15,10 @@ class EventStream implements StreamInterface, HasDispatcherInterface
     public function read($length)
     {
         $event = ['stream' => $this, 'length' => $length, 'data' => $this->stream->read($length)];
-        $this->dispatch('stream.read', $event);
+        $this->getEventDispatcher()->dispatch('stream.read', $event);
 
         if ($this->eof()) {
-            $this->dispatch('stream.eof', ['stream' => $this]);
+            $this->getEventDispatcher()->dispatch('stream.eof', ['stream' => $this]);
         }
 
         return $event['data'];
@@ -27,7 +27,7 @@ class EventStream implements StreamInterface, HasDispatcherInterface
     public function write($string)
     {
         $event = ['stream' => $this, 'length' => $this->stream->write($string), 'data' => $string];
-        $this->dispatch('stream.write', $event);
+        $this->getEventDispatcher()->dispatch('stream.write', $event);
 
         return $event['length'];
     }

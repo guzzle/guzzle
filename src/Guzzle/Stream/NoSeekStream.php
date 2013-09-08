@@ -9,11 +9,6 @@ class NoSeekStream implements StreamInterface
 {
     use StreamDecoratorTrait;
 
-    public function rewind()
-    {
-        return false;
-    }
-
     public function seek($offset, $whence = SEEK_SET)
     {
         return false;

@@ -37,7 +37,7 @@ class CachingStream implements StreamInterface
     public function __toString()
     {
         $pos = $this->tell();
-        $this->rewind();
+        $this->seek(0);
 
         $str = '';
         while (!$this->eof()) {
@@ -76,11 +76,6 @@ class CachingStream implements StreamInterface
         }
 
         return $this->stream->seek($byte);
-    }
-
-    public function rewind()
-    {
-        return $this->seek(0);
     }
 
     public function read($length)
@@ -137,22 +132,5 @@ class CachingStream implements StreamInterface
     public function getMetaData($key = null)
     {
         return $this->remoteStream->getMetaData($key);
-    }
-
-    public function setMetaData($key, $value)
-    {
-        $this->remoteStream->setMetaData($key, $value);
-
-        return $this;
-    }
-
-    public function getStream()
-    {
-        return $this->remoteStream->getStream();
-    }
-
-    public function getUri()
-    {
-        return $this->remoteStream->getUri();
     }
 }
