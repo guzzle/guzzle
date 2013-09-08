@@ -1,6 +1,23 @@
 CHANGELOG
 =========
 
+3.7.3 (2013-09-08)
+------------------
+
+* Added the ability to get the exception associated with a request/command when using `MultiTransferException` and
+  `CommandTransferException`.
+* Setting `additionalParameters` of a response to false is now honored when parsing responses with a service description
+* Schemas are only injected into response models when explicitly configured.
+* No longer guessing Content-Type based on the path of a request. Content-Type is now only guessed based on the path of
+  an EntityBody.
+* Bug fix: ChunkedIterator can now properly chunk a \Traversable as well as an \Iterator.
+* Bug fix: FilterIterator now relies on `\Iterator` instead of `\Traversable`.
+* Bug fix: Gracefully handling malformed responses in RequestMediator::writeResponseBody()
+* Bug fix: Replaced call to canCache with canCacheRequest in the CallbackCanCacheStrategy of the CachePlugin
+* Bug fix: Visiting XML attributes first before visting XML children when serializing requests
+* Bug fix: Properly parsing headers that contain commas contained in quotes
+* Bug fix: mimetype guessing based on a filename is now case-insensitive
+
 3.7.2 (2013-08-02)
 ------------------
 
