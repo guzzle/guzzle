@@ -122,6 +122,14 @@ class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, 
         return $this->headers;
     }
 
+    /**
+     * Gets the string representation of a header. Multiple values are
+     * concatentated using commas.
+     *
+     * @param string $name Name of the header to retrieve
+     *
+     * @return string|null
+     */
     public function getHeaderString($name)
     {
         $l = strtolower($name);
@@ -129,6 +137,12 @@ class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, 
         return isset($this->strings[$l]) ? $this->strings[$l] : null;
     }
 
+    /**
+     * Gets an array of header names mapping to a string of comma separated
+     * values
+     *
+     * @return array
+     */
     public function getHeaderStrings()
     {
         $result = [];
@@ -139,6 +153,13 @@ class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, 
         return $result;
     }
 
+    /**
+     * Parse a header into an array key-value pairs
+     *
+     * @param string $name Name of the header to parse
+     *
+     * @return array
+     */
     public function parseHeader($name)
     {
         $params = $matches = [];
@@ -161,6 +182,14 @@ class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, 
         return $params;
     }
 
+    /**
+     * Converts an array of header values that may contain comma separated
+     * headers into an array of headers.
+     *
+     * @param string $name Header to normalized
+     *
+     * @return array
+     */
     private function normalizeHeader($name)
     {
         if (!($values = $this[$name])) {
