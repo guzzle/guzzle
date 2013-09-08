@@ -39,7 +39,7 @@ class OauthPlugin implements EventSubscriberInterface
      *     - string 'version'              OAuth version.  Defaults to 1.0
      *     - string 'signature_method'     Custom signature method
      *     - bool   'disable_post_params'  Set to true to prevent POST parameters from being signed
-     *     - array|Closure 'signature_callback' Custom signature callback that accepts a string to sign and a signing key
+     *     - callable 'signature_callback' Custom signature callback that accepts a string to sign and a signing key
      */
     public function __construct($config)
     {

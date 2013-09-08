@@ -230,17 +230,23 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
     }
 
     /**
-     * Returns a Collection containing all the elements of the collection after applying the callback function to each
-     * one. The Closure should accept three parameters: (string) $key, (string) $value, (array) $context and return a
-     * modified value
+     * Returns a Collection containing all the elements of the collection after
+     * applying the callback function to each one.
      *
-     * @param \Closure $closure Closure to apply
-     * @param array    $context Context to pass to the closure
+     * The callable should accept three arguments:
+     * - (string) $key
+     * - (string) $value
+     * - (array) $context
+     *
+     * The callable must return a the altered or unaltered value.
+     *
+     * @param callable $closure Map function to apply
+     * @param array    $context Context to pass to the callable
      * @param bool     $static  Set to TRUE to use the same class as the return rather than returning a Collection
      *
      * @return Collection
      */
-    public function map(\Closure $closure, array $context = array(), $static = true)
+    public function map(callable $closure, array $context = array(), $static = true)
     {
         $collection = $static ? new static() : new self();
         foreach ($this as $key => $value) {
@@ -251,16 +257,20 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
     }
 
     /**
-     * Iterates over each key value pair in the collection passing them to the Closure. If the  Closure function returns
-     * true, the current value from input is returned into the result Collection.  The Closure must accept three
-     * parameters: (string) $key, (string) $value and return Boolean TRUE or FALSE for each value.
+     * Iterates over each key value pair in the collection passing them to the
+     * callable. If the callable returns true, the current value from input is
+     * returned into the result Collection.
      *
-     * @param \Closure $closure Closure evaluation function
+     * The callable must accept two arguments:
+     * - (string) $key
+     * - (string) $value
+     *
+     * @param callable $closure Evaluation function
      * @param bool     $static  Set to TRUE to use the same class as the return rather than returning a Collection
      *
      * @return Collection
      */
-    public function filter(\Closure $closure, $static = true)
+    public function filter(callable $closure, $static = true)
     {
         $collection = ($static) ? new static() : new self();
         foreach ($this->data as $key => $value) {

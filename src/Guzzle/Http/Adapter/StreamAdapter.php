@@ -116,7 +116,7 @@ class StreamAdapter implements AdapterInterface
     /**
      * Create a resource and check to ensure it was created successfully
      *
-     * @param callable         $callback Closure to invoke that must return a valid resource
+     * @param callable         $callback Callable to invoke that must return a valid resource
      * @param RequestInterface $request  Request used when throwing exceptions
      * @param array            $options  Options used when throwing exceptions
      *
