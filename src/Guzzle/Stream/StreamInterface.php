@@ -107,13 +107,8 @@ interface StreamInterface
     /**
      * Get stream metadata as an associative array or retrieve a specific key.
      *
-     * Stream metadata should mimic PHP's stream_get_meta_data when appropriate.
-     *
-     * - timed_out (bool) - TRUE if the stream timed out while waiting for data on the
-     *   last call to fread() or fgets().
-     * - blocked (bool) - TRUE if the stream is in blocking IO mode. See
-     *   stream_set_blocking().
-     * - eof (bool) - TRUE if the stream has reached end-of-file.
+     * Stream metadata should mimic PHP's stream_get_meta_data when
+     * appropriate. For example:
      * - stream_type (string) - a label describing the underlying implementation of
      *   the stream.
      * - wrapper_type (string) - a label describing the protocol wrapper
