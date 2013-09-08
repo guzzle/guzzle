@@ -3,10 +3,17 @@
 namespace Guzzle\Http\Message;
 
 /**
- * Default request and response parser used by Guzzle. Optimized for speed.
+ * Request and response parser used by Guzzle
  */
-class MessageParser implements MessageParserInterface
+class MessageParser
 {
+    /**
+     * Parse an HTTP request message into an associative array of parts.
+     *
+     * @param string $message HTTP request to parse
+     *
+     * @return array|bool Returns false if the message is invalid
+     */
     public function parseRequest($message)
     {
         if (!($parts = $this->parseMessage($message))) {
@@ -36,6 +43,13 @@ class MessageParser implements MessageParserInterface
         return $parsed;
     }
 
+    /**
+     * Parse an HTTP response message into an associative array of parts.
+     *
+     * @param string $message HTTP response to parse
+     *
+     * @return array|bool Returns false if the message is invalid
+     */
     public function parseResponse($message)
     {
         if (!($parts = $this->parseMessage($message))) {
