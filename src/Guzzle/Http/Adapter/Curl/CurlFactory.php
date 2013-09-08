@@ -116,7 +116,7 @@ class CurlFactory
 
     protected function applyHeaders(RequestInterface $request, array &$options)
     {
-        foreach ($options['_headers'] as $key => $value) {
+        foreach ($options['_headers']->getHeaderStrings() as $key => $value) {
             $options[CURLOPT_HTTPHEADER][] = $key . ': ' . $value;
         }
 

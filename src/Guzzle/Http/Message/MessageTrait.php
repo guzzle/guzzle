@@ -2,8 +2,6 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Http\Header\HeaderCollection;
-use Guzzle\Http\Header\HeaderFactory;
 use Guzzle\Http\Mimetypes;
 use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
@@ -54,10 +52,6 @@ trait MessageTrait
 
     private function initializeMessage(array $options = [])
     {
-        $this->headerFactory = isset($options['header_factory'])
-            ? $options['header_factory']
-            : HeaderFactory::getDefaultFactory();
-
         if (isset($options['protocol_version'])) {
             $this->protocolVersion = $options['protocol_version'];
         }

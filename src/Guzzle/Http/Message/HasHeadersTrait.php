@@ -2,11 +2,6 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Http\Header\HeaderCollection;
-use Guzzle\Http\Header\HeaderFactory;
-use Guzzle\Http\Header\HeaderFactoryInterface;
-use Guzzle\Http\Header\HeaderInterface;
-
 /**
  * Trait that implements HasHeadersInterface
  */
@@ -15,23 +10,22 @@ trait HasHeadersTrait
     /** @var HeaderCollection HTTP header collection */
     private $headers;
 
-    /** @var HeaderFactoryInterface $headerFactory */
-    private  $headerFactory;
-
-    public function addHeader($header, $value = null)
+    public function addHeader($header, $value)
     {
-        if (isset($this->headers[$header])) {
-            return $this->headers[$header]->add($value);
-        } elseif ($value instanceof HeaderInterface) {
-            return $this->headers[$header] = $value;
+        if (is_array($value)) {
+            foreach ($value as $v) {
+                $this->headers->add($header, $v);
+            }
         } else {
-            return $this->headers[$header] = $this->headerFactory->createHeader($header, $value);
+            $this->headers->add($header, $value);
         }
+
+        return $this;
     }
 
     public function getHeader($header)
     {
-        return $this->headers[$header];
+        return $this->headers->getHeaderString($header);
     }
 
     public function getHeaders()
@@ -39,7 +33,7 @@ trait HasHeadersTrait
         return $this->headers;
     }
 
-    public function setHeader($header, $value = null)
+    public function setHeader($header, $value)
     {
         unset($this->headers[$header]);
 

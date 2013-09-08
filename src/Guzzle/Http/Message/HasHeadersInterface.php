@@ -2,9 +2,6 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Http\Header\HeaderInterface;
-use Guzzle\Http\Header\HeaderCollection;
-
 /**
  * A class that implements this interface contains a bag of HTTP headers
  */
@@ -22,7 +19,7 @@ interface HasHeadersInterface
      *
      * @param string $header Header to retrieve.
      *
-     * @return HeaderInterface|null
+     * @return string|null
      */
     public function getHeader($header);
 
@@ -50,9 +47,9 @@ interface HasHeadersInterface
      * @param string $header Header name to add
      * @param string $value  Value of the header
      *
-     * @return HeaderInterface Returns the added header object
+     * @return self
      */
-    public function addHeader($header, $value = null);
+    public function addHeader($header, $value);
 
     /**
      * Set an HTTP header and overwrite any existing value for the header
@@ -60,9 +57,9 @@ interface HasHeadersInterface
      * @param string $header Name of the header to set.
      * @param mixed  $value  Value to set.
      *
-     * @return HeaderInterface Returns the set header object
+     * @return self
      */
-    public function setHeader($header, $value = null);
+    public function setHeader($header, $value);
 
     /**
      * Overwrite all HTTP headers with the supplied array of headers
