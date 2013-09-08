@@ -45,6 +45,6 @@ class ChunkedIterator extends \IteratorIterator
 
     public function valid()
     {
-        return !empty($this->chunk);
+        return (bool) $this->chunk;
     }
 }
