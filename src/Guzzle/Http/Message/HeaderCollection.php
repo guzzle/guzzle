@@ -2,27 +2,21 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Common\ToArrayInterface;
-
-/**
- * Provides a case-insensitive collection of headers
- */
-class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, ToArrayInterface
+class HeaderCollection implements \IteratorAggregate, HeaderCollectionInterface
 {
     /** @var array */
-    private $headers;
-
-    /** @var array Normalized headers */
-    private $normalized = [];
+    private $headers = [];
 
     /** @var array String headers */
-    private $strings = [];
+    private $normalized = [];
 
+    /**
+     * @param array $headers Associative array of header names to an array of string values
+     */
     public function __construct($headers = [])
     {
-        $this->headers = $headers;
-        foreach ($headers as $key => $value) {
-            $this->normalized[strtolower($key)] = $value;
+        foreach ($headers as $name => $value) {
+            $this->addHeader($name, $value);
         }
     }
 
@@ -33,50 +27,36 @@ class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, 
             $result .= $name . ': ' . implode(', ', $headers) . "\r\n";
         }
 
-        return rtrim($result);
+        return substr($result, 0, -2);
     }
 
-    /**
-     * Clears the header collection
-     */
+    public function getIterator()
+    {
+        return new \ArrayIterator($this->headers);
+    }
+
     public function clear()
     {
-        $this->headers = $this->normalized = $this->strings = [];
+        $this->headers = $this->normalized = [];
     }
 
-    /**
-     * Set a header on the collection
-     *
-     * @param string $name  Name of the header
-     * @param string $value Value of the header
-     *
-     * @return self
-     */
-    public function add($name, $value)
+    public function addHeader($name, $value)
     {
         $value = trim($value);
+        $name = trim($name);
         $key = strtolower($name);
 
         if (!isset($this->normalized[$key])) {
-            $this->strings[$key] = $value;
-            $this->normalized[$key] = [$value];
+            $this->normalized[$key] = $value;
             $this->headers[$name] = [$value];
         } else {
-            $this->strings[$key] .= ', ' . $value;
-            $this->normalized[$key][] = $value;
+            $this->normalized[$key] .= ', ' . $value;
             if (!isset($this->headers[$name])) {
                 $this->headers[$name] = [$value];
             } else {
                 $this->headers[$name][] = $value;
             }
         }
-
-        return $this;
-    }
-
-    public function count()
-    {
-        return count($this->headers);
     }
 
     public function offsetExists($offset)
@@ -86,75 +66,49 @@ class HeaderCollection implements \IteratorAggregate, \Countable, \ArrayAccess, 
 
     public function offsetGet($offset)
     {
-        $l = strtolower($offset);
+        $values = [];
+        foreach ($this->headers as $name => $value) {
+            if (!strcasecmp($name, $offset)) {
+                $values[] = $value;
+            }
+        }
 
-        return isset($this->normalized[$l]) ? $this->normalized[$l] : null;
+        return $values ?: null;
     }
 
     public function offsetSet($offset, $value)
     {
-        $this->add($offset, $value);
+        unset($this[$offset]);
+        foreach ((array) $value as $v) {
+            $this->addHeader($offset, $v);
+        }
     }
 
     public function offsetUnset($offset)
     {
         $lower = strtolower($offset);
 
-        // Remove from the normalized headers
-        unset($this->normalized[$lower]);
-        unset($this->strings[$lower]);
-
-        // Remove from the cased headers
-        foreach ($this->headers as $key => $value) {
-            if (!strcasecmp($key, $offset)) {
-                unset($this->headers[$key]);
+        // Only perform the case-insensitive checks if needed
+        if (isset($this->normalized[$lower])) {
+            unset($this->normalized[$lower]);
+            // Remove from the cased headers
+            foreach ($this->headers as $key => $value) {
+                if (strtolower($key) === $lower) {
+                    unset($this->headers[$key]);
+                }
             }
         }
     }
 
-    public function getIterator()
-    {
-        return new \ArrayIterator($this->headers);
-    }
-
-    public function toArray()
-    {
-        return $this->headers;
-    }
-
-    /**
-     * Gets the string representation of a header. Multiple values are
-     * concatentated using commas.
-     *
-     * @param string $name Name of the header to retrieve
-     *
-     * @return string|null
-     */
     public function getHeaderString($name)
     {
         $l = strtolower($name);
 
-        return isset($this->strings[$l]) ? $this->strings[$l] : null;
+        return isset($this->normalized[$l]) ? $this->normalized[$l] : null;
     }
 
     /**
-     * Gets an array of header names mapping to a string of comma separated
-     * values
-     *
-     * @return array
-     */
-    public function getHeaderStrings()
-    {
-        $result = [];
-        foreach ($this->headers as $name => $values) {
-            $result[$name] = implode(', ', $values);
-        }
-
-        return $result;
-    }
-
-    /**
-     * Parse a header into an array key-value pairs
+     * Parse a parameterized header into an array key-value pairs.
      *
      * @param string $name Name of the header to parse
      *

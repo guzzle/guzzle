@@ -116,8 +116,8 @@ class CurlFactory
 
     protected function applyHeaders(RequestInterface $request, array &$options)
     {
-        foreach ($options['_headers']->getHeaderStrings() as $key => $value) {
-            $options[CURLOPT_HTTPHEADER][] = $key . ': ' . $value;
+        foreach (explode("\r\n", $options['_headers']) as $line) {
+            $options[CURLOPT_HTTPHEADER][] = $line;
         }
 
         // Remove the Expect header if one was not set
