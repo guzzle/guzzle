@@ -117,13 +117,6 @@ class HeaderCollection implements
         return isset($this->normalized[$l]) ? $this->normalized[$l] : null;
     }
 
-    /**
-     * Parse a parameterized header into an array key-value pairs.
-     *
-     * @param string $name Name of the header to parse
-     *
-     * @return array
-     */
     public function parseHeader($name)
     {
         static $trimmed = "\"'  \n\t\r";

@@ -38,6 +38,34 @@ interface HeaderCollectionInterface extends \Traversable, \ArrayAccess
     public function getHeaderString($name);
 
     /**
+     * Parse a parameterized header into an array key-value pairs.
+     *
+     * The parsed return value is an array of associative arrays. For every
+     * distinct header value, there is an associative array containing key
+     * value pair data.
+     *
+     * For example, given the following header:
+     *
+     *     Foo: Baz, Bar; test=abc; other=def
+     *
+     * The header will be parsed into the following array structure:
+     *
+     *     array(
+     *         array('Baz'),
+     *         array(
+     *             0 => 'Bar',
+     *             'test' => 'abc',
+     *             'other' => 'def'
+     *         )
+     *     );
+     *
+     * @param string $name Name of the header to parse into parameters
+     *
+     * @return array
+     */
+    public function parseHeader($name);
+
+    /**
      * Remove all headers from the collection.
      */
     public function clear();
