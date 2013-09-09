@@ -106,8 +106,7 @@ interface StreamInterface
      *                    them. Fewer than $length bytes may be returned if
      *                    underlying stream call returns fewer bytes.
      *
-     * @return string|bool Returns the data read from the stream or false on
-     *                     failure or when the end of the stream is reached.
+     * @return string     Returns the data read from the stream.
      */
     public function read($length);
 }
