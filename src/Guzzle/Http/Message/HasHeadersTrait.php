@@ -14,10 +14,10 @@ trait HasHeadersTrait
     {
         if (is_array($value)) {
             foreach ($value as $v) {
-                $this->headers->addHeader($header, $v);
+                $this->headers->add($header, $v);
             }
         } else {
-            $this->headers->addHeader($header, $value);
+            $this->headers->add($header, $value);
         }
 
         return $this;

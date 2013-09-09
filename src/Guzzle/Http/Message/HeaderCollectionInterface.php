@@ -26,6 +26,23 @@ interface HeaderCollectionInterface extends \Traversable, \ArrayAccess
     public function __toString();
 
     /**
+     * Remove all headers from the collection.
+     */
+    public function clear();
+
+    /**
+     * Add a header to the collection.
+     *
+     * Adding a header does not overwrite any existing headers of the same
+     * case-insensitive name. If a header of the same case-insensitive name
+     * already exists, then this header value is appended.
+     *
+     * @param string $name  Header name
+     * @param string $value Header value
+     */
+    public function add($name, $value);
+
+    /**
      * Finds all headers that match the provided name and returns a string
      * containing each matching header value concatenated used with a comma
      * followed by a space: ", ". If no matching headers are found, then this
@@ -59,28 +76,11 @@ interface HeaderCollectionInterface extends \Traversable, \ArrayAccess
      *         )
      *     );
      *
-     * @param string $name Name of the header to parse into parameters
+     * @param string $headerName Name of the header to parse into parameters
      *
      * @return array
      */
-    public function parseHeader($name);
-
-    /**
-     * Remove all headers from the collection.
-     */
-    public function clear();
-
-    /**
-     * Add a header to the collection.
-     *
-     * Adding a header does not overwrite any existing headers of the same
-     * case-insensitive name. If a header of the same case-insensitive name
-     * already exists, then this header value is appended.
-     *
-     * @param string $name  Header name
-     * @param string $value Header value
-     */
-    public function addHeader($name, $value);
+    public function parseParams($headerName);
 
     /**
      * Checks if a header exists by the given case-insensitive name

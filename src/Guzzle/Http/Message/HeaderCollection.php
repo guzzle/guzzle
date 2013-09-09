@@ -21,7 +21,7 @@ class HeaderCollection implements
     public function __construct($headers = [])
     {
         foreach ($headers as $name => $value) {
-            $this->addHeader($name, $value);
+            $this->add($name, $value);
         }
     }
 
@@ -50,7 +50,7 @@ class HeaderCollection implements
         $this->headers = $this->normalized = [];
     }
 
-    public function addHeader($name, $value)
+    public function add($name, $value)
     {
         $value = trim($value);
         $name = trim($name);
@@ -79,7 +79,7 @@ class HeaderCollection implements
         $values = [];
         foreach ($this->headers as $name => $value) {
             if (!strcasecmp($name, $offset)) {
-                $values[] = $value;
+                $values = array_merge($values, $value);
             }
         }
 
@@ -90,7 +90,7 @@ class HeaderCollection implements
     {
         unset($this[$offset]);
         foreach ((array) $value as $v) {
-            $this->addHeader($offset, $v);
+            $this->add($offset, $v);
         }
     }
 
@@ -117,7 +117,7 @@ class HeaderCollection implements
         return isset($this->normalized[$l]) ? $this->normalized[$l] : null;
     }
 
-    public function parseHeader($name)
+    public function parseParams($name)
     {
         static $trimmed = "\"'  \n\t\r";
         $params = $matches = [];
