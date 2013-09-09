@@ -2,7 +2,12 @@
 
 namespace Guzzle\Http\Message;
 
-class HeaderCollection implements \IteratorAggregate, HeaderCollectionInterface
+use Guzzle\Common\ToArrayInterface;
+
+class HeaderCollection implements
+    \IteratorAggregate,
+    HeaderCollectionInterface,
+    ToArrayInterface
 {
     /** @var array */
     private $headers = [];
@@ -33,6 +38,11 @@ class HeaderCollection implements \IteratorAggregate, HeaderCollectionInterface
     public function getIterator()
     {
         return new \ArrayIterator($this->headers);
+    }
+
+    public function toArray()
+    {
+        return $this->headers;
     }
 
     public function clear()
