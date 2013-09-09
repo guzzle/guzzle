@@ -115,15 +115,7 @@ class Stream implements StreamInterface
 
     public function __toString()
     {
-        if (!$this->isReadable() || (!$this->seekable && $this->eof())) {
-            return '';
-        }
-
-        $originalPos = $this->tell();
-        $body = stream_get_contents($this->stream, -1, 0);
-        $this->seek($originalPos);
-
-        return $body;
+        return stream_get_contents($this->stream, -1);
     }
 
     public function close()

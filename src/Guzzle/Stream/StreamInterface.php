@@ -8,10 +8,10 @@ namespace Guzzle\Stream;
 interface StreamInterface
 {
     /**
-     * Convert the stream to a string by calling read until the end of the
-     * stream is reached.
+     * Reads the remainder of the stream from the current position until the
+     * end of the stream is reached.
      *
-     * Warning: This will attempt to load the entire stream into memory.
+     * Warning: This could attempt to load a large amount of data into memory.
      *
      * @return string
      */
