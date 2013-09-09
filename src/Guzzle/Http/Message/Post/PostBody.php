@@ -5,7 +5,6 @@ namespace Guzzle\Http\Message\Post;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
-use Guzzle\Stream\StreamMetadataTrait;
 use Guzzle\Url\PhpAggregator;
 use Guzzle\Url\QueryAggregatorInterface;
 use Guzzle\Url\QueryString;
@@ -15,8 +14,6 @@ use Guzzle\Url\QueryString;
  */
 class PostBody implements PostBodyInterface
 {
-    use StreamMetadataTrait;
-
     private $body;
     private $fields = [];
     private $files = [];
@@ -189,6 +186,11 @@ class PostBody implements PostBodyInterface
         }
 
         return $this->size;
+    }
+
+    public function getUri()
+    {
+        return null;
     }
 
     public function seek($offset, $whence = SEEK_SET)

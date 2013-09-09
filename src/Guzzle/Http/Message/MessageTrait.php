@@ -35,7 +35,7 @@ trait MessageTrait
             $this->body = Stream::factory($body);
             // Auto detect the Content-Type from the path of the request if possible
             if ($contentType === null && !$this->hasHeader('Content-Type')) {
-                $contentType = Mimetypes::getInstance()->fromFilename($this->body->getMetadata('uri'));
+                $contentType = Mimetypes::getInstance()->fromFilename($this->body->getUri());
             }
             if ($contentType) {
                 $this->setHeader('Content-Type', $contentType);

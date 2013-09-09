@@ -4,15 +4,12 @@ namespace Guzzle\Http\Message\Post;
 
 use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
-use Guzzle\Stream\StreamMetadataTrait;
 
 /**
  * Stream that when read returns bytes for a streaming multipart/form-data body
  */
 class MultipartBody implements StreamInterface
 {
-    use StreamMetadataTrait;
-
     /** @var StreamInterface */
     private $files;
     private $fields;
@@ -142,6 +139,11 @@ class MultipartBody implements StreamInterface
         }
 
         return $this->size;
+    }
+
+    public function getUri()
+    {
+        return null;
     }
 
     public function read($length)

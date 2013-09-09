@@ -3,7 +3,7 @@
 namespace Guzzle\Stream;
 
 /**
- * Base stream interface
+ * Describes a stream instance.
  */
 interface StreamInterface
 {
@@ -35,6 +35,13 @@ interface StreamInterface
      * @return int|null Returns the size in bytes if known, or null if unknown
      */
     public function getSize();
+
+    /**
+     * Get the filename/URL associated with the stream (if known)
+     *
+     * @return null|string
+     */
+    public function getUri();
 
     /**
      * Returns the current position of the file read/write pointer
@@ -103,30 +110,4 @@ interface StreamInterface
      *                     failure or when the end of the stream is reached.
      */
     public function read($length);
-
-    /**
-     * Get stream metadata as an associative array or retrieve a specific key.
-     *
-     * Stream metadata should mimic PHP's stream_get_meta_data when
-     * appropriate. For example:
-     * - stream_type (string) - a label describing the underlying implementation of
-     *   the stream.
-     * - wrapper_type (string) - a label describing the protocol wrapper
-     *   implementation layered over the stream.
-     * - wrapper_data (mixed) - wrapper specific data attached to this stream.
-     * - filters (array) - and array containing the names of any filters that have
-     *   been stacked onto this stream.
-     * - mode (string) - the type of access required for this stream
-     * - seekable (bool) - whether the current stream can be seeked.
-     * - uri (string) - the URI/filename associated with this stream.
-     *
-     * @param string $key Specific metadata to retrieve.
-     *
-     * @return array|mixed|null Returns an associative array if no key is
-     *                          no key is provided. Returns a specific key
-     *                          value if a key is provided and the value is
-     *                          found, or null if the key is not found.
-     * @see http://php.net/manual/en/function.stream-get-meta-data.php
-     */
-    public function getMetadata($key = null);
 }

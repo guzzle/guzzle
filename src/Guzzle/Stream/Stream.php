@@ -7,8 +7,6 @@ namespace Guzzle\Stream;
  */
 class Stream implements StreamInterface
 {
-    use StreamMetadataTrait;
-
     /** @var resource Stream resource */
     private $stream;
 
@@ -19,6 +17,9 @@ class Stream implements StreamInterface
     private $seekable;
     private $readable;
     private $writable;
+
+    /** @var array Stream metadata */
+    private $meta = [];
 
     /** @var array Hash table of readable and writeable stream types for fast lookups */
     protected static $readWriteHash = array(
@@ -156,6 +157,11 @@ class Stream implements StreamInterface
         return false;
     }
 
+    public function getUri()
+    {
+        return $this->meta['uri'];
+    }
+
     public function isReadable()
     {
         return $this->readable;
@@ -204,6 +210,25 @@ class Stream implements StreamInterface
         $this->size = null;
 
         return fwrite($this->stream, $string);
+    }
+
+    /**
+     * Get stream metadata as an associative array or retrieve a specific key.
+     *
+     * The keys returned are identical to the keys returned from PHP's
+     * stream_get_meta_data() function.
+     *
+     * @param string $key Specific metadata to retrieve.
+     *
+     * @return array|mixed|null Returns an associative array if no key is
+     *                          no key is provided. Returns a specific key
+     *                          value if a key is provided and the value is
+     *                          found, or null if the key is not found.
+     * @see http://php.net/manual/en/function.stream-get-meta-data.php
+     */
+    public function getMetadata($key = null)
+    {
+        return !$key ? $this->meta : (isset($this->meta[$key]) ? $this->meta[$key] : null);
     }
 
     /**
