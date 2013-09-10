@@ -14,12 +14,12 @@ namespace Guzzle\Http\Message;
 interface HeaderCollectionInterface extends \Traversable, \ArrayAccess
 {
     /**
-     * Convert the header collection into a string containing header names and
-     * values concatenated using "\r\n".
-     *
-     * For example, this method should return
-     * "Content-Type: text/html
-     * X-Foo: baz, bar"
+     * Convert the header collection to a string that can be used as the HTTP
+     * headers of a message where each header line consists of the header
+     * name followed by a colon, followed by a space, followed by the header
+     * value. Multiple header values MAY be spread across multiple lines or
+     * concatenated into a single line using a comma. In accordance with
+     * RFC 2616, header lines MUST be concatenated using "\r\n".
      *
      * @return string
      */
