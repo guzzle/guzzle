@@ -52,7 +52,7 @@ interface HasHeadersInterface
     public function addHeader($header, $value);
 
     /**
-     * Set an HTTP header and overwrite any existing value for the header
+     * Sets an HTTP header and overwrites any existing values for the header.
      *
      * @param string $header Name of the header to set.
      * @param mixed  $value  Value to set.
