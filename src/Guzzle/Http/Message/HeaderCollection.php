@@ -12,6 +12,9 @@ class HeaderCollection implements
     /** @var array */
     private $headers = [];
 
+    /** @var array */
+    private $headerNames = [];
+
     /** @var array String headers */
     private $normalized = [];
 
@@ -28,8 +31,8 @@ class HeaderCollection implements
     public function __toString()
     {
         $result = '';
-        foreach ($this->headers as $name => $headers) {
-            $result .= $name . ': ' . implode(', ', $headers) . "\r\n";
+        foreach ($this->normalized as $name => $str) {
+            $result .= "{$this->headerNames[$name]}: {$str}\r\n";
         }
 
         return substr($result, 0, -2);
@@ -37,17 +40,17 @@ class HeaderCollection implements
 
     public function getIterator()
     {
-        return new \ArrayIterator($this->headers);
+        return new \ArrayIterator($this->toArray());
     }
 
     public function toArray()
     {
-        return $this->headers;
+        return array_combine($this->headerNames, $this->headers);
     }
 
     public function clear()
     {
-        $this->headers = $this->normalized = [];
+        $this->headers = $this->normalized = $this->headerNames = [];
     }
 
     public function add($name, $value)
@@ -55,17 +58,14 @@ class HeaderCollection implements
         $value = trim($value);
         $name = trim($name);
         $key = strtolower($name);
+        $this->headerNames[$key] = $name;
 
         if (!isset($this->normalized[$key])) {
             $this->normalized[$key] = $value;
-            $this->headers[$name] = [$value];
+            $this->headers[$key] = [$value];
         } else {
             $this->normalized[$key] .= ', ' . $value;
-            if (!isset($this->headers[$name])) {
-                $this->headers[$name] = [$value];
-            } else {
-                $this->headers[$name][] = $value;
-            }
+            $this->headers[$key][] = $value;
         }
     }
 
@@ -76,14 +76,7 @@ class HeaderCollection implements
 
     public function offsetGet($offset)
     {
-        $values = [];
-        foreach ($this->headers as $name => $value) {
-            if (!strcasecmp($name, $offset)) {
-                $values = array_merge($values, $value);
-            }
-        }
-
-        return $values ?: null;
+        return isset($this->headers[$offset]) ? $this->headers[$offset] : null;
     }
 
     public function offsetSet($offset, $value)
@@ -98,15 +91,10 @@ class HeaderCollection implements
     {
         $lower = strtolower($offset);
 
-        // Only perform the case-insensitive checks if needed
         if (isset($this->normalized[$lower])) {
             unset($this->normalized[$lower]);
-            // Remove from the cased headers
-            foreach ($this->headers as $key => $value) {
-                if (strtolower($key) === $lower) {
-                    unset($this->headers[$key]);
-                }
-            }
+            unset($this->headers[$lower]);
+            unset($this->headerNames[$lower]);
         }
     }
 
@@ -123,7 +111,7 @@ class HeaderCollection implements
         $params = $matches = [];
 
         foreach ($this->normalizeHeader($name) as $val) {
-            $part = array();
+            $part = [];
             foreach (preg_split('/;(?=([^"]*"[^"]*")*[^"]*$)/', $val) as $kvp) {
                 preg_match_all('/<[^>]+>|[^=]+/', $kvp, $matches);
                 $pieces = $matches[0];

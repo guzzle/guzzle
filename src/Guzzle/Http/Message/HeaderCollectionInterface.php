@@ -67,14 +67,14 @@ interface HeaderCollectionInterface extends \Traversable, \ArrayAccess
      *
      * The header will be parsed into the following array structure:
      *
-     *     array(
-     *         array('Baz'),
-     *         array(
-     *             0 => 'Bar',
-     *             'test' => 'abc',
+     *     [
+     *         [0 => 'Baz'],
+     *         [
+     *             0       => 'Bar',
+     *             'test'  => 'abc',
      *             'other' => 'def'
-     *         )
-     *     );
+     *         ]
+     *     ];
      *
      * @param string $headerName Name of the header to parse into parameters
      *
