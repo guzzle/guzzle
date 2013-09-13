@@ -37,13 +37,6 @@ interface StreamInterface
     public function getSize();
 
     /**
-     * Get the filename/URL associated with the stream (if known)
-     *
-     * @return null|string
-     */
-    public function getUri();
-
-    /**
      * Returns the current position of the file read/write pointer
      *
      * @return int|bool Returns the position of the file pointer or false on error

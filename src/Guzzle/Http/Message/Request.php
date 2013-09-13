@@ -86,9 +86,9 @@ class Request implements RequestInterface
         return sprintf("%s\r\n%s\r\n\r\n%s", $startLine, $this->headers, $this->body);
     }
 
-    public function setBody($body, $contentType = null)
+    public function setBody($body)
     {
-        $this->applyBody($body, $contentType);
+        $this->applyBody($body);
 
         // Use chunked Transfer-Encoding if there is no content-length header
         if ($body !== null && !$this->hasHeader('Content-Length') && '1.1' == $this->getProtocolVersion()) {

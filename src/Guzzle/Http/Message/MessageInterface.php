@@ -10,7 +10,7 @@ use Guzzle\Stream\StreamInterface;
 interface MessageInterface extends HasHeadersInterface
 {
     /**
-     * Get a string represenation of the message
+     * Get a string representation of the message
      *
      * @return string
      */
@@ -26,13 +26,13 @@ interface MessageInterface extends HasHeadersInterface
     /**
      * Set the body of the message
      *
-     * @param null|string|resource|StreamInterface  $body        Body of the message
-     * @param string                                $contentType Content-Type to set. Leave null to use an existing
-     *                                                           Content-Type or to guess the Content-Type
+     * @param null|string|resource|StreamInterface  $body Body of the message
+     *
      * @return self
-     * @throws \LogicException when set on a request if the protocol is < 1.1 and Content-Length cannot be determined
+     * @throws \LogicException When the protocol version is < 1.1 and the
+     *                         Content-Length cannot be determined.
      */
-    public function setBody($body, $contentType = null);
+    public function setBody($body);
 
     /**
      * Get the body of the message

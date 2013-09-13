@@ -149,11 +149,6 @@ class Stream implements StreamInterface
         return false;
     }
 
-    public function getUri()
-    {
-        return $this->meta['uri'];
-    }
-
     public function isReadable()
     {
         return $this->readable;
