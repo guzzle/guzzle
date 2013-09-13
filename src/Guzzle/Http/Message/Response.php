@@ -867,16 +867,32 @@ class Response extends AbstractMessage implements \Serializable
     /**
      * Parse the XML response body and return a SimpleXMLElement
      *
+     * @param bool $disableExtEntities If set to true, external entities will not be loaded
+     *
      * @return \SimpleXMLElement
      * @throws RuntimeException if the response body is not in XML format
      */
-    public function xml()
+    public function xml($disableExtEntities = false)
     {
+        if ($disableExtEntities) {
+            $disableEntities = libxml_disable_entity_loader(true);
+        }
+
         try {
             // Allow XML to be retrieved even if there is no response body
             $xml = new \SimpleXMLElement((string) $this->body ?: '<root />');
         } catch (\Exception $e) {
+            // Reset the internal state again
+            if ($disableExtEntities) {
+                libxml_disable_entity_loader($disableEntities);
+            }
+
             throw new RuntimeException('Unable to parse response body into XML: ' . $e->getMessage());
+        }
+
+        // Reset the internal state again
+        if ($disableExtEntities) {
+            libxml_disable_entity_loader($disableEntities);
         }
 
         return $xml;
