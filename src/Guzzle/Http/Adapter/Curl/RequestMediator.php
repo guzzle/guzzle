@@ -102,6 +102,8 @@ class RequestMediator
     {
         if ($response = $this->transaction->getResponse()) {
             return $response->getBody()->write($write);
+        } else {
+            return 0;
         }
     }
 
@@ -116,6 +118,6 @@ class RequestMediator
      */
     public function readRequestBody($ch, $fd, $length)
     {
-        return (string) $this->request->getBody()->read($length);
+        return (string) $this->transaction->getRequest()->getBody()->read($length);
     }
 }
