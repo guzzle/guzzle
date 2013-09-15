@@ -2,7 +2,6 @@
 
 namespace Guzzle\Http\Message\Post;
 
-use Guzzle\Http\Header\HeaderCollection;
 use Guzzle\Http\Message\HasHeadersTrait;
 use Guzzle\Http\Mimetypes;
 use Guzzle\Stream\StreamInterface;
@@ -38,7 +37,6 @@ class PostFile implements PostFileInterface
      */
     public function __construct($name, StreamInterface $content, $filename = null, array $headers = [])
     {
-        $this->headers = new HeaderCollection($headers);
         $this->content = $content;
         $this->name = $name;
         $this->filename = $filename ?: basename($this->content->getMetadata('uri'));
@@ -56,13 +54,13 @@ class PostFile implements PostFileInterface
         }
 
         // Set a default content-disposition header if one was no provided
-        if (!isset($this->headers['content-disposition'])) {
+        if (!$this->hasHeader('content-disposition')) {
             $disposition = 'form-data; filename="' . $this->filename . '"; name="' . $name . '"';
             $this->setHeader('Content-Disposition', $disposition);
         }
 
         // Set a default Content-Type if one was not supplied
-        if (!isset($this->headers['Content-Type'])) {
+        if (!$this->hasHeader('Content-Type')) {
             $this->setHeader('Content-Type', Mimetypes::getInstance()->fromFilename($this->filename) ?: 'text/plain');
         }
     }
