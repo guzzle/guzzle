@@ -4,6 +4,7 @@ namespace Guzzle\Http\Message;
 
 use Guzzle\Http\Adapter\AdapterInterface;
 use Guzzle\Http\Adapter\Transaction;
+use Guzzle\Stream\StreamInterface;
 
 class FutureResponse implements FutureResponseInterface
 {
@@ -79,7 +80,7 @@ class FutureResponse implements FutureResponseInterface
         return $this->getResponse()->getProtocolVersion();
     }
 
-    public function setBody($body, $contentType = null)
+    public function setBody(StreamInterface $body = null)
     {
         return $this;
     }
