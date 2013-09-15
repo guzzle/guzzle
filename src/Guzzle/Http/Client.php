@@ -54,7 +54,7 @@ class Client implements ClientInterface
         $this->config = new Collection($config);
         $this->userAgent = $this->getDefaultUserAgent();
         $this->baseUrl = $this->buildUrl($this->config['base_url']);
-        $this->messageFactory = $this->config['message_factory'] ?: MessageFactory::getInstance();
+        $this->messageFactory = $this->config['message_factory'] ?: new MessageFactory();
         $this->adapter = $this->config['adapter'] ?: $this->getDefaultAdapter();
         // Add default request options
         if (!$this->config['defaults']) {

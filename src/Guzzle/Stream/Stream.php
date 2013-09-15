@@ -5,7 +5,7 @@ namespace Guzzle\Stream;
 /**
  * PHP stream implementation
  */
-class Stream implements StreamInterface
+class Stream implements HasMetadataStreamInterface
 {
     /** @var resource Stream resource */
     private $stream;

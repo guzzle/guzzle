@@ -8,8 +8,8 @@ namespace Guzzle\Http\Message;
 interface HeaderValuesInterface extends \Countable, \Traversable, \ArrayAccess
 {
     /**
-     * Convert the header to a string, concatenating multiple values using
-     * a comma.
+     * Convert the header values to a string, concatenating multiple values
+     * using a comma.
      *
      * @return string
      */

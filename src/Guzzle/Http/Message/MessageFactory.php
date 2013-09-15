@@ -14,28 +14,11 @@ use Guzzle\Url\Url;
  */
 class MessageFactory implements MessageFactoryInterface
 {
-    /** @var MessageFactory Singleton instance of the default request factory */
-    private static $instance;
-
     /** @var HttpErrorPlugin */
     private $errorPlugin;
 
     /** @var RedirectPlugin */
     private $redirectPlugin;
-
-    /**
-     * Get a cached instance of the default request factory
-     *
-     * @return MessageFactory
-     */
-    public static function getInstance()
-    {
-        if (!static::$instance) {
-            static::$instance = new static();
-        }
-
-        return static::$instance;
-    }
 
     public function __construct()
     {
@@ -43,7 +26,7 @@ class MessageFactory implements MessageFactoryInterface
         $this->redirectPlugin = new RedirectPlugin();
     }
 
-    public function createResponse($statusCode = null, array $headers = [], $body = null, array $options = [])
+    public function createResponse($statusCode , array $headers = [], $body = null, array $options = [])
     {
         return new Response($statusCode, $headers, $body, $options);
     }
@@ -62,7 +45,7 @@ class MessageFactory implements MessageFactoryInterface
             if (is_array($body)) {
                 $this->addPostData($request, $body);
             } else {
-                $request->setBody($body, (string) $request->getHeader('Content-Type'));
+                $request->setBody($body);
             }
         }
 
@@ -218,9 +201,16 @@ class MessageFactory implements MessageFactoryInterface
             throw new \InvalidArgumentException('cookies value must be an array');
         }
 
-        foreach ($value as $name => $v) {
-            $request->addHeader('Cookie')->add("{$name}={$v}");
+        $cookies = [];
+        foreach ($value as $name => $cookie) {
+            // Quote the value if it is not already and contains problematic characters
+            if (substr($cookie, 0, 1) !== '"' && substr($cookie, -1, 1) !== '"' && strpbrk($cookie, ';,')) {
+                $cookie = '"' . str_replace('"', '\\"', $cookie) . '"';
+            }
+            $cookies[] = "{$name}={$cookie}";
         }
+
+        $request->setHeader('Cookie', implode('; ', $cookies));
     }
 
     private function visit_events(RequestInterface $request, $value)

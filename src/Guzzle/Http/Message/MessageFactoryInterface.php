@@ -67,5 +67,5 @@ interface MessageFactoryInterface
      *
      * @return ResponseInterface
      */
-    public function createResponse($statusCode = null, array $headers = [], $body = null, array $options = []);
+    public function createResponse($statusCode, array $headers = [], $body = null, array $options = []);
 }

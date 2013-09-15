@@ -14,10 +14,14 @@ use Guzzle\Url\QueryString;
  */
 class PostBody implements PostBodyInterface
 {
+    /** @var StreamInterface */
     private $body;
+
+    /** @var QueryAggregatorInterface */
+    private $aggregator;
+
     private $fields = [];
     private $files = [];
-    private $aggregator;
     private $size;
     private $forceMultipart = false;
 
@@ -140,7 +144,7 @@ class PostBody implements PostBodyInterface
 
     public function close()
     {
-        return $this->body ? $this->body->close : true;
+        return $this->body ? $this->body->close() : true;
     }
 
     public function detach()
@@ -153,7 +157,7 @@ class PostBody implements PostBodyInterface
     public function eof()
     {
         if ($this->body) {
-            return $this->body->eof;
+            return $this->body->eof();
         } else {
             return (bool) ($this->fields ?: $this->files);
         }
