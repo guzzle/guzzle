@@ -76,7 +76,14 @@ class Request implements RequestInterface
             $result .= "\r\n{$name}: {$value}";
         }
 
-        return $result . "\r\n\n\n" . $this->body;
+        $result .= "\r\n\r\n";
+
+        if ($this->body) {
+            $this->body->seek(0);
+            $result .= $this->body;
+        }
+
+        return  $result;
     }
 
     public function setBody(StreamInterface $body = null)

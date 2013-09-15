@@ -135,7 +135,14 @@ class Response implements ResponseInterface
             $result .= "\r\n{$name}: {$value}";
         }
 
-        return $result . "\r\n\r\n" . $this->body;
+        $result .= "\r\n\r\n";
+
+        if ($this->body) {
+            $this->body->seek(0);
+            $result .= $this->body;
+        }
+
+        return  $result;
     }
 
     public function getBody()
