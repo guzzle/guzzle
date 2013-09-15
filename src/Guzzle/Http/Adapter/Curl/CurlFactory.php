@@ -46,7 +46,7 @@ class CurlFactory
                 ? CURL_HTTP_VERSION_1_0 : CURL_HTTP_VERSION_1_1,
             CURLOPT_SSL_VERIFYPEER => 1,
             CURLOPT_SSL_VERIFYHOST => 2,
-            '_headers'             => clone $request->getHeaders()
+            '_headers'             => $request->getHeaders()
         );
 
         if (defined('CURLOPT_PROTOCOLS')) {
@@ -96,14 +96,14 @@ class CurlFactory
         if (($size !== null && $size < 32768) || isset($request->getConfig()['adapter']['body_as_string'])) {
             $options[CURLOPT_POSTFIELDS] = (string) $request->getBody();
             // Don't duplicate the Content-Length header
-            unset($options['_headers']['Content-Length']);
-            unset($options['_headers']['Transfer-Encoding']);
+            $this->removeHeader('Content-Length', $options);
+            $this->removeHeader('Transfer-Encoding', $options);
         } else {
             $options[CURLOPT_UPLOAD] = true;
             // Let cURL handle setting the Content-Length header
             if ($size !== null) {
                 $options[CURLOPT_INFILESIZE] = $size;
-                unset($options['_headers']['Content-Length']);
+                $this->removeHeader('Content-Length', $options);
             }
             $request->getBody()->seek(0);
         }
@@ -116,8 +116,8 @@ class CurlFactory
 
     protected function applyHeaders(RequestInterface $request, array &$options)
     {
-        foreach (explode("\r\n", $options['_headers']) as $line) {
-            $options[CURLOPT_HTTPHEADER][] = $line;
+        foreach ($options['_headers'] as $name => $values) {
+            $options[CURLOPT_HTTPHEADER][] = "{$name}: {$values}";
         }
 
         // Remove the Expect header if one was not set
@@ -224,5 +224,21 @@ class CurlFactory
     {
         $saveTo = is_string($value) ? Stream::factory(fopen($value, 'w')) : Stream::factory($value);
         $mediator->setResponseBody($saveTo);
+    }
+
+    /**
+     * Remove a header from the options array
+     *
+     * @param string $name    Case-insensitive header to remove
+     * @param array  $options Array of options to modify
+     */
+    private function removeHeader($name, array &$options)
+    {
+        foreach (array_keys($options['_headers']) as $key) {
+            if (!strcasecmp($key, $name)) {
+                unset($options['_headers'][$key]);
+                return;
+            }
+        }
     }
 }

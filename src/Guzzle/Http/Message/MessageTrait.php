@@ -53,7 +53,5 @@ trait MessageTrait
         if (isset($options['protocol_version'])) {
             $this->protocolVersion = $options['protocol_version'];
         }
-
-        $this->headers = new HeaderCollection();
     }
 }

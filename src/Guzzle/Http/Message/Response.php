@@ -130,9 +130,12 @@ class Response implements ResponseInterface
 
     public function __toString()
     {
-        $startLine = sprintf('HTTP/%s %d %s', $this->getProtocolVersion(), $this->statusCode, $this->reasonPhrase);
+        $result = sprintf('HTTP/%s %d %s', $this->getProtocolVersion(), $this->statusCode, $this->reasonPhrase);
+        foreach ($this->getHeaders() as $name => $value) {
+            $result .= "\r\n{$name}: {$value}";
+        }
 
-        return sprintf("%s\r\n%s\r\n\r\n%s", $startLine, $this->headers, $this->body);
+        return $result . "\r\n\r\n" . $this->body;
     }
 
     public function getBody()

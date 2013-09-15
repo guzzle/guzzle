@@ -8,41 +8,53 @@ namespace Guzzle\Http\Message;
 interface HasHeadersInterface
 {
     /**
-     * Get all headers as a collection
+     * Gets all headers.
      *
-     * @return HeaderCollection
+     * The keys represent the header name as it will be sent over the wire, and
+     * each value is a HeaderValuesInterface object that can be used like an
+     * array or cast to a string.
+     *
+     *     // Represent the headers as a string
+     *     foreach ($message->getHeaders() as $name => $values) {
+     *         echo "{$name}: {$values}\r\n";
+     *     }
+     *
+     * @return array Returns an associative array of the message's headers
      */
     public function getHeaders();
 
     /**
-     * Retrieve an HTTP header by name. Performs a case-insensitive search of all headers.
+     * Retrieve an HTTP header by name.
      *
-     * @param string $header Header to retrieve.
+     * @param string $header Header name.
      *
-     * @return string|null
+     * @return HeaderValuesInterface|null Header values, or null if not set.
      */
     public function getHeader($header);
 
     /**
-     * Check if the specified header is present.
+     * Checks if a header exists by the given case-insensitive name.
      *
-     * @param string $header The header to check.
+     * @param string $header Case-insensitive header name.
      *
-     * @return bool
+     * @return bool Returns true if any header names match the given header
+     *              name using a case-insensitive string comparison. Returns
+     *              false if no matching header name is found in the message.
      */
     public function hasHeader($header);
 
     /**
-     * Remove a specific HTTP header.
+     * Remove a specific header by case-insensitive name.
      *
-     * @param string $header HTTP header to remove.
+     * @param string $header HTTP header to remove
      *
      * @return self
      */
     public function removeHeader($header);
 
     /**
-     * Add a header to an existing collection of headers.
+     * Appends a header value to any existing values associated with the
+     * given header name.
      *
      * @param string $header Header name to add
      * @param string $value  Value of the header
@@ -52,21 +64,29 @@ interface HasHeadersInterface
     public function addHeader($header, $value);
 
     /**
-     * Sets an HTTP header and overwrites any existing values for the header.
+     * Sets a header, replacing any existing values of any headers with the
+     * same case-insensitive name.
      *
-     * @param string $header Name of the header to set.
-     * @param mixed  $value  Value to set.
+     * The header values MUST be a string, array of HeaderValuesInterface
+     * object.
      *
-     * @return self
+     * @param string                             $header Header name
+     * @param string|array|HeaderValuesInterface $value  Header value(s)
+     *
+     * @return self Returns the message.
      */
     public function setHeader($header, $value);
 
     /**
-     * Overwrite all HTTP headers with the supplied array of headers
+     * Sets headers, replacing any headers that have already been set on the
+     * message.
      *
-     * @param array $headers Associative array of header data.
+     * The array keys MUST be either a string, array of strings, or a
+     * HeaderValuesInterface object.
      *
-     * @return self
+     * @param array $headers Headers to set.
+     *
+     * @return self Returns the message.
      */
     public function setHeaders(array $headers);
 }

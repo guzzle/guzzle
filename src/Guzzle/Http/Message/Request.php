@@ -4,7 +4,6 @@ namespace Guzzle\Http\Message;
 
 use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Common\Collection;
-use Guzzle\Http\Header\HeaderInterface;
 use Guzzle\Url\Url;
 
 /**
@@ -52,20 +51,8 @@ class Request implements RequestInterface
             $this->setBody($body);
         }
 
-        if ($headers) {
-            // Special handling for multi-value headers
-            foreach ($headers as $key => $value) {
-                // Deal with collisions with Host and Authorization
-                if ($key == 'host' || $key == 'Host') {
-                    $this->setHeader($key, $value);
-                } elseif ($value instanceof HeaderInterface) {
-                    $this->addHeader($key, $value);
-                } else {
-                    foreach ((array) $value as $v) {
-                        $this->addHeader($key, $v);
-                    }
-                }
-            }
+        foreach ($headers as $key => $value) {
+            $this->setHeader($key, $value);
         }
     }
 
@@ -76,14 +63,19 @@ class Request implements RequestInterface
         }
         $this->transferOptions = clone $this->transferOptions;
         $this->url = clone $this->url;
-        $this->headers = clone $this->headers;
+        $this->headers = array_map(function ($header) {
+            return clone $header;
+        }, $this->headers);
     }
 
     public function __toString()
     {
-        $startLine = trim($this->method . ' ' . $this->getResource()) . ' HTTP/' . $this->getProtocolVersion();
+        $result = trim($this->method . ' ' . $this->getResource()) . ' HTTP/' . $this->getProtocolVersion();
+        foreach ($this->getHeaders() as $name => $value) {
+            $result .= "\r\n{$name}: {$value}";
+        }
 
-        return sprintf("%s\r\n%s\r\n\r\n%s", $startLine, $this->headers, $this->body);
+        return $result . "\r\n\n\n" . $this->body;
     }
 
     public function setBody($body)
