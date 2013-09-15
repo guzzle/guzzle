@@ -24,7 +24,7 @@ trait MessageTrait
         return $this->protocolVersion;
     }
 
-    public function setBody($body)
+    public function setBody(StreamInterface $body = null)
     {
         if ($body === null) {
             // Setting a null body will remove the body of the request
@@ -32,12 +32,7 @@ trait MessageTrait
             $this->removeHeader('Content-Length');
             $this->removeHeader('Transfer-Encoding');
         } else {
-            $this->body = Stream::factory($body);
-            // Auto detect the Content-Type from the body if possible
-            if (!$this->hasHeader('Content-Type')) {
-                $contentType = Mimetypes::getInstance()->fromFilename($this->body->getUri());
-                $this->setHeader('Content-Type', $contentType);
-            }
+            $this->body = $body;
             // Set the Content-Length header if it can be determined
             $size = $this->body->getSize();
             if ($size !== null && $size !== false) {

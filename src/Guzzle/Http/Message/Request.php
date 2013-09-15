@@ -4,6 +4,7 @@ namespace Guzzle\Http\Message;
 
 use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Common\Collection;
+use Guzzle\Stream\StreamInterface;
 use Guzzle\Url\Url;
 
 /**
@@ -78,7 +79,7 @@ class Request implements RequestInterface
         return $result . "\r\n\n\n" . $this->body;
     }
 
-    public function setBody($body)
+    public function setBody(StreamInterface $body = null)
     {
         $this->applyBody($body);
 

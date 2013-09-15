@@ -24,15 +24,16 @@ interface MessageInterface extends HasHeadersInterface
     public function getProtocolVersion();
 
     /**
-     * Set the body of the message
+     * Sets the body of the message.
      *
-     * @param null|string|resource|StreamInterface  $body Body of the message
+     * The body MUST be a StreamInterface object. Setting the body to null MUST
+     * remove the existing body.
      *
-     * @return self
-     * @throws \LogicException When the protocol version is < 1.1 and the
-     *                         Content-Length cannot be determined.
+     * @param StreamInterface|null $body Body.
+     *
+     * @return self Returns the message.
      */
-    public function setBody($body);
+    public function setBody(StreamInterface $body = null);
 
     /**
      * Get the body of the message
