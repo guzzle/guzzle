@@ -27,18 +27,22 @@ interface RequestInterface extends MessageInterface, HasDispatcherInterface
     public function __toString();
 
     /**
-     * Set the URL of the request
+     * Sets the request URL.
      *
-     * @param string $url|Url Full URL to set including query string
+     * The URL MUST be a string, or an object that implements the
+     * `__toString()` method.
      *
-     * @return self
+     * @param string $url Request URL.
+     *
+     * @return self Reference to the request.
+     * @throws \InvalidArgumentException If the URL is invalid.
      */
     public function setUrl($url);
 
     /**
-     * Get the URL of the request
+     * Gets the request URL.
      *
-     * @return string
+     * @return string Returns the URL as a string.
      */
     public function getUrl();
 

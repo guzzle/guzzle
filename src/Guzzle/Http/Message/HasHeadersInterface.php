@@ -24,7 +24,7 @@ interface HasHeadersInterface
     public function getHeaders();
 
     /**
-     * Retrieve an HTTP header by name.
+     * Retrieve a header by name.
      *
      * @param string $header Header name.
      *
@@ -67,8 +67,8 @@ interface HasHeadersInterface
      * Sets a header, replacing any existing values of any headers with the
      * same case-insensitive name.
      *
-     * The header values MUST be a string, array of HeaderValuesInterface
-     * object.
+     * The header values MUST be a string, an array of strings, or a
+     * HeaderValuesInterface object.
      *
      * @param string                             $header Header name
      * @param string|array|HeaderValuesInterface $value  Header value(s)
@@ -81,8 +81,8 @@ interface HasHeadersInterface
      * Sets headers, replacing any headers that have already been set on the
      * message.
      *
-     * The array keys MUST be either a string, array of strings, or a
-     * HeaderValuesInterface object.
+     * The array keys MUST be a string. The array values must be either a
+     * string, array of strings, or a HeaderValuesInterface object.
      *
      * @param array $headers Headers to set.
      *
