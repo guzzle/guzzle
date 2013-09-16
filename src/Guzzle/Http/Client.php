@@ -224,7 +224,7 @@ class Client implements ClientInterface
      *
      * @return string
      */
-    private function expandTemplate($template, array $variables = [])
+    private function expandTemplate($template, array $variables)
     {
         return function_exists('uri_template')
             ? uri_template($template, $variables)
@@ -240,18 +240,17 @@ class Client implements ClientInterface
      */
     private function buildUrl($url)
     {
-        if ($url) {
-            if (is_array($url)) {
-                list($url, $templateVars) = $url;
-            } else {
-                $templateVars = [];
-            }
-            if (substr($url, 0, 4) === 'http') {
-                // Use absolute URLs as-is
-                $url = $this->expandTemplate($url, $templateVars);
-            } else {
-                $url = Url::fromString($this->getBaseUrl())->combine($this->expandTemplate($url, $templateVars));
-            }
+        if (is_array($url)) {
+            list($url, $templateVars) = $url;
+        } else {
+            $templateVars = [];
+        }
+
+        if (substr($url, 0, 4) === 'http') {
+            // Use absolute URLs as-is
+            $url = $this->expandTemplate($url, $templateVars);
+        } else {
+            $url = Url::fromString($this->getBaseUrl())->combine($this->expandTemplate($url, $templateVars));
         }
 
         return (string) $url;
