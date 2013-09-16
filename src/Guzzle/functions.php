@@ -6,21 +6,6 @@ use Guzzle\Http\Client;
 use Guzzle\Http\Message\ResponseInterface;
 
 /**
- * Get the global Guzzle client used with the helper methods
- *
- * @return Client
- */
-function getDefaultClient()
-{
-    static $client;
-    if (!$client) {
-        $client = new Client();
-    }
-
-    return $client;
-}
-
-/**
  * Send a custom request
  *
  * @param string $method  HTTP request method (GET, POST, HEAD, DELETE, PUT, etc)
@@ -33,9 +18,12 @@ function getDefaultClient()
  */
 function request($method, $url, array $headers = [], $body = null, $options = [])
 {
-    $request = getDefaultClient()->createRequest($method, $url, $headers, $body, $options);
+    static $client;
+    if (!$client) {
+        $client = new Client();
+    }
 
-    return getDefaultClient()->send($request);
+    return $client->send($client->createRequest($method, $url, $headers, $body, $options));
 }
 
 /**
