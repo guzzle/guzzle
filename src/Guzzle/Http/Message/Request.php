@@ -200,11 +200,12 @@ class Request implements RequestInterface
 
     private function updateHostHeaderFromUrl()
     {
-        // Include the port in the Host header if it is not the default port for the scheme of the URL
-        if ($port = $this->url->getPort()) {
-            $this->setHeader('Host', $this->url->getHost() . ':' . $port);
-        } else {
+        $port = $this->url->getPort();
+        $scheme = $this->url->getScheme();
+        if (($port == 80 && $scheme == 'http') || ($port == 443 && $scheme == 'https')) {
             $this->setHeader('Host', $this->url->getHost());
+        }  else {
+            $this->setHeader('Host', $this->url->getHost() . ':' . $port);
         }
     }
 }
