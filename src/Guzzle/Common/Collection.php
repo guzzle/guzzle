@@ -12,7 +12,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
     /**
      * @param array $data Associative array of data to set
      */
-    public function __construct(array $data = array())
+    public function __construct(array $data = [])
     {
         $this->data = $data;
     }
@@ -27,7 +27,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
      * @return self
      * @throws \InvalidArgumentException if a parameter is missing
      */
-    public static function fromConfig(array $config = array(), array $defaults = array(), array $required = array())
+    public static function fromConfig(array $config = [], array $defaults = [], array $required = [])
     {
         $data = $config + $defaults;
 
@@ -45,21 +45,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
      */
     public function clear()
     {
-        $this->data = array();
+        $this->data = [];
 
         return $this;
-    }
-
-    /**
-     * Get all or a subset of matching key value pairs
-     *
-     * @param array $keys Pass an array of keys to retrieve only a subset of key value pairs
-     *
-     * @return array Returns an array of all matching key value pairs
-     */
-    public function getAll(array $keys = null)
-    {
-        return $keys ? array_intersect_key($this->data, array_flip($keys)) : $this->data;
     }
 
     /**
@@ -148,24 +136,6 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
     }
 
     /**
-     * Case insensitive search the keys in the collection
-     *
-     * @param string $key Key to search for
-     *
-     * @return bool|string Returns false if not found, otherwise returns the key
-     */
-    public function keySearch($key)
-    {
-        foreach (array_keys($this->data) as $k) {
-            if (!strcasecmp($k, $key)) {
-                return $k;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Checks if any keys contains a certain value
      *
      * @param string $value Value to search for
@@ -174,7 +144,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
      */
     public function hasValue($value)
     {
-        return array_search($value, $this->data);
+        return array_search($value, $this->data, true);
     }
 
     /**
@@ -242,15 +212,14 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
      *
      * @param callable $closure Map function to apply
      * @param array    $context Context to pass to the callable
-     * @param bool     $static  Set to TRUE to use the same class as the return rather than returning a Collection
      *
      * @return Collection
      */
-    public function map(callable $closure, array $context = array(), $static = true)
+    public function map(callable $closure, array $context = [])
     {
-        $collection = $static ? new static() : new self();
+        $collection = new static();
         foreach ($this as $key => $value) {
-            $collection->add($key, $closure($key, $value, $context));
+            $collection[$key] = $closure($key, $value, $context);
         }
 
         return $collection;
@@ -266,16 +235,15 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
      * - (string) $value
      *
      * @param callable $closure Evaluation function
-     * @param bool     $static  Set to TRUE to use the same class as the return rather than returning a Collection
      *
      * @return Collection
      */
-    public function filter(callable $closure, $static = true)
+    public function filter(callable $closure)
     {
-        $collection = ($static) ? new static() : new self();
+        $collection = new static();
         foreach ($this->data as $key => $value) {
             if ($closure($key, $value)) {
-                $collection->add($key, $value);
+                $collection[$key] = $value;
             }
         }
 
@@ -303,7 +271,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
             } elseif (isset($current[$key])) {
                 $current =& $current[$key];
             } else {
-                $current[$key] = array();
+                $current[$key] = [];
                 $current =& $current[$key];
             }
         }
