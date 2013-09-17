@@ -19,8 +19,10 @@ trait HasHeadersTrait
 
         if (!isset($this->headers[$name])) {
             $this->headerNames[$name] = $header;
-            $this->headers[$name] = new HeaderValues($value);
-        } elseif (is_string($value)) {
+            $this->headers[$name] = new HeaderValues();
+        }
+
+        if (is_string($value)) {
             $this->headers[$name][] = $value;
         } elseif (is_array($value) || $value instanceof HeaderValues) {
             foreach ($value as $v) {
@@ -54,7 +56,7 @@ trait HasHeadersTrait
         $this->headerNames[$name] = $header;
 
         if (!($value instanceof HeaderValuesInterface)) {
-             $value = new HeaderValues($value);
+            $value = new HeaderValues((array) $value);
         }
 
         $this->headers[$name] = $value;

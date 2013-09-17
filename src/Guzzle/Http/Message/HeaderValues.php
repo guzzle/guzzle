@@ -8,11 +8,11 @@ class HeaderValues implements \IteratorAggregate, HeaderValuesInterface
     protected $values = [];
 
     /**
-     * @param array|string $values Values of the header as an array or a scalar
+     * @param array $values Values of the header
      */
-    public function __construct($values = [])
+    public function __construct(array $values = [])
     {
-        foreach ((array) $values as $value) {
+        foreach ($values as $value) {
             $this->values[] = trim($value);
         }
     }
@@ -35,7 +35,11 @@ class HeaderValues implements \IteratorAggregate, HeaderValuesInterface
 
     public function offsetSet($offset, $value)
     {
-        $this->values[(int) $offset] = $value;
+        if (null === $offset) {
+            $this->values[] = trim($value);
+        } else {
+            $this->values[$offset] = trim($value);
+        }
     }
 
     public function offsetUnset($offset)
