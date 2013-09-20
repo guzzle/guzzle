@@ -289,35 +289,22 @@ class Url
             return $this;
         }
 
-        // Replace // and /./ with /
-        $this->path = str_replace(array('/./', '//'), '/', $this->path);
-
-        // Remove dot segments
-        if (strpos($this->path, '..') !== false) {
-
-            // Remove trailing relative paths if possible
-            $segments = $this->getPathSegments();
-            $last = end($segments);
-            $trailingSlash = false;
-            if ($last === '') {
-                array_pop($segments);
-                $trailingSlash = true;
+        $results = array();
+        $segments = $this->getPathSegments();
+        foreach ($segments as $segment) {
+            if ($segment == '..') {
+                array_pop($results);
+            } elseif ($segment != '.' && $segment != '') {
+                $results[] = $segment;
             }
+        }
 
-            while ($last == '..' || $last == '.') {
-                if ($last == '..') {
-                    array_pop($segments);
-                    $last = array_pop($segments);
-                }
-                if ($last == '.' || $last == '') {
-                    $last = array_pop($segments);
-                }
-            }
+        // Combine the normalized parts and add the leading slash if needed
+        $this->path = ($this->path[0] == '/' ? '/' : '') . implode('/', $results);
 
-            $this->path = implode('/', $segments);
-            if ($trailingSlash) {
-                $this->path .= '/';
-            }
+        // Add the trailing slash if necessary
+        if ($this->path != '/' && end($segments) == '') {
+            $this->path .= '/';
         }
 
         return $this;
