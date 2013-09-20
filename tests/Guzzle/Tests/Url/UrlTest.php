@@ -205,7 +205,12 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
             array('/./foo/bar/baz/pho/../..', '/foo/bar'),
             array('*', '*'),
             array('/foo', '/foo'),
-            array('/abc/123/../foo/', '/abc/foo/')
+            array('/abc/123/../foo/', '/abc/foo/'),
+            array('/a/b/c/./../../g', '/a/g'),
+            array('/b/c/./../../g', '/g'),
+            array('/b/c/./../../g', '/g'),
+            array('/c/./../../g', '/g'),
+            array('/./../../g', '/g'),
         );
     }
 
