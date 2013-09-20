@@ -11,9 +11,6 @@ class UriTemplate
 {
     const DEFAULT_PATTERN = '/\{([^\}]+)\}/';
 
-    /** @var self */
-    private static $instance;
-
     /** @var string URI template */
     private $template;
 
@@ -38,15 +35,6 @@ class UriTemplate
         '%3A', '%2F', '%3F', '%23', '%5B', '%5D', '%40', '%21', '%24', '%26', '%27', '%28', '%29', '%2A', '%2B', '%2C',
         '%3B', '%3D'
     );
-
-    public static function getInstance()
-    {
-        if (!self::$instance) {
-            self::$instance = new self();
-        }
-
-        return self::$instance;
-    }
 
     public function expand($template, array $variables)
     {

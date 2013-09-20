@@ -93,7 +93,7 @@ class Url
         }
 
         // Add the query string if present
-        if (isset($parts['query'])) {
+        if (isset($parts['query']) && strlen($parts['query'])) {
             $url .= '?' . $parts['query'];
         }
 
@@ -173,7 +173,7 @@ class Url
             'host' => $this->host,
             'port' => $this->port,
             'path' => $this->getPath(),
-            'query' => (string) $this->query ?: null,
+            'query' => (string) $this->query,
             'fragment' => $this->fragment,
         );
     }
@@ -294,7 +294,7 @@ class Url
             return $this;
         }
 
-        $results = array();
+        $results = [];
         $segments = $this->getPathSegments();
         foreach ($segments as $segment) {
             if ($segment == '..') {

@@ -39,6 +39,9 @@ class Client implements ClientInterface
     /** @var Collection Parameter object holding configuration data */
     private $config;
 
+    /** @var UriTemplate */
+    private static $uriTemplate;
+
     /**
      * Clients accept an array of constructor parameters.
      *
@@ -226,9 +229,15 @@ class Client implements ClientInterface
      */
     private function expandTemplate($template, array $variables)
     {
-        return function_exists('uri_template')
-            ? uri_template($template, $variables)
-            : UriTemplate::getInstance()->expand($template, $variables);
+        if (function_exists('uri_template')) {
+            return uri_template($template, $variables);
+        }
+
+        if (!self::$uriTemplate) {
+            self::$uriTemplate = new UriTemplate();
+        }
+
+        return self::$uriTemplate->expand($template, $variables);
     }
 
     /**

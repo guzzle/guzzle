@@ -80,18 +80,26 @@ class QueryString extends Collection
         }
 
         $result = '';
-        $query = $this->aggregator->aggregate($this->data);
-        foreach ($query as $key => $values) {
+        foreach ($this->aggregator->aggregate($this->data) as $key => $values) {
             foreach ($values as $value) {
                 if ($result) {
                     $result .= '&';
                 }
                 if ($this->encoding == self::RFC1738) {
-                    $result .= urlencode($key) . '=' . urlencode($value);
+                    $result .= urlencode($key);
+                    if ($value !== null) {
+                        $result .= '=' . urlencode($value);
+                    }
                 } elseif ($this->encoding == self::RFC3986) {
-                    $result .= rawurlencode($key) . '=' . rawurldecode($value);
+                    $result .= rawurlencode($key);
+                    if ($value !== null) {
+                        $result .= '=' . rawurlencode($value);
+                    }
                 } else {
-                    $result .= $key . '=' . $value;
+                    $result .= $key;
+                    if ($value !== null) {
+                        $result .= '=' . $value;
+                    }
                 }
             }
         }
@@ -119,10 +127,15 @@ class QueryString extends Collection
      * @param string|bool $type One of 'RFC1738', 'RFC3986', or false to disable encoding
      *
      * @return self
+     * @throws \InvalidArgumentException
      */
     public function setEncodingType($type)
     {
-        $this->encoding = $type;
+        if ($type === false || $type === self::RFC1738 || $type === self::RFC3986) {
+            $this->encoding = $type;
+        } else {
+            throw new \InvalidArgumentException('Invalid URL encoding type');
+        }
 
         return $this;
     }
