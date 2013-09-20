@@ -284,11 +284,12 @@ class Url
     }
 
     /**
-     * Normalize the URL so that double slashes and relative paths are removed
+     * Removes dot segments from a URL
      *
      * @return Url
+     * @link http://tools.ietf.org/html/rfc3986#section-5.2.4
      */
-    public function normalizePath()
+    public function removeDotSegments()
     {
         if (!$this->path || $this->path == '/' || $this->path == '*') {
             return $this;
@@ -533,7 +534,7 @@ class Url
             } else {
                 $this->path .= '/' . $path;
             }
-            $this->normalizePath();
+            $this->removeDotSegments();
             $this->query = $query;
         }
 
