@@ -3,11 +3,10 @@
 namespace Guzzle\Tests\Common;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\Exception\InvalidArgumentException;
-use Guzzle\Http\QueryString;
 
 /**
  * @covers Guzzle\Common\Collection
+ * @covers Guzzle\Common\HasDataTrait
  */
 class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
 {
@@ -22,7 +21,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
     public function testConstructorCanBeCalledWithNoParams()
     {
         $this->coll = new Collection();
-        $p = $this->coll->getAll();
+        $p = $this->coll->toArray();
         $this->assertEmpty($p, '-> Collection must be empty when no data is passed');
     }
 
@@ -33,8 +32,8 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
             'test_2' => 'value2'
         );
         $this->coll = new Collection($testData);
-        $this->assertEquals($this->coll->getAll(), $testData, '-> getAll() must return the data passed in the constructor');
-        $this->assertEquals($this->coll->getAll(), $this->coll->toArray());
+        $this->assertEquals($this->coll->toArray(), $testData);
+        $this->assertEquals($this->coll->toArray(), $this->coll->toArray());
     }
 
     public function testImplementsIteratorAggregate()
@@ -54,11 +53,11 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
     public function testCanAddValuesToExistingKeysByUsingArray()
     {
         $this->coll->add('test', 'value1');
-        $this->assertEquals($this->coll->getAll(), array('test' => 'value1'));
+        $this->assertEquals($this->coll->toArray(), array('test' => 'value1'));
         $this->coll->add('test', 'value2');
-        $this->assertEquals($this->coll->getAll(), array('test' => array('value1', 'value2')));
+        $this->assertEquals($this->coll->toArray(), array('test' => array('value1', 'value2')));
         $this->coll->add('test', 'value3');
-        $this->assertEquals($this->coll->getAll(), array('test' => array('value1', 'value2', 'value3')));
+        $this->assertEquals($this->coll->toArray(), array('test' => array('value1', 'value2', 'value3')));
     }
 
     public function testHandlesMergingInDisparateDataSources()
@@ -69,7 +68,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
             'test3' => array('value3', 'value4')
         );
         $this->coll->merge($params);
-        $this->assertEquals($this->coll->getAll(), $params);
+        $this->assertEquals($this->coll->toArray(), $params);
 
         // Pass the same object to itself
         $this->assertEquals($this->coll->merge($this->coll), $this->coll);
@@ -85,27 +84,14 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         // Clear a specific parameter by name
         $this->coll->remove('test');
 
-        $this->assertEquals($this->coll->getAll(), array(
+        $this->assertEquals($this->coll->toArray(), array(
             'test2' => 'value2'
         ));
 
         // Clear all parameters
         $this->coll->clear();
 
-        $this->assertEquals($this->coll->getAll(), array());
-    }
-
-    public function testGetsValuesByKey()
-    {
-        $this->assertNull($this->coll->get('test'));
-        $this->coll->add('test', 'value');
-        $this->assertEquals('value', $this->coll->get('test'));
-        $this->coll->set('test2', 'v2');
-        $this->coll->set('test3', 'v3');
-        $this->assertEquals(array(
-            'test' => 'value',
-            'test2' => 'v2'
-        ), $this->coll->getAll(array('test', 'test2')));
+        $this->assertEquals($this->coll->toArray(), array());
     }
 
     public function testProvidesKeys()
@@ -147,22 +133,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($this->coll->hasValue('val'));
     }
 
-    public function testCanGetAllValuesByArray()
-    {
-        $this->coll->add('foo', 'bar');
-        $this->coll->add('tEsT', 'value');
-        $this->coll->add('tesTing', 'v2');
-        $this->coll->add('key', 'v3');
-        $this->assertNull($this->coll->get('test'));
-        $this->assertEquals(array(
-            'foo'     => 'bar',
-            'tEsT'    => 'value',
-            'tesTing' => 'v2'
-        ), $this->coll->getAll(array(
-            'foo', 'tesTing', 'tEsT'
-        )));
-    }
-
     public function testImplementsCount()
     {
         $data = new Collection();
@@ -197,7 +167,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
             'test2' => 'value2',
             'test3' => array('value3', 'value4'),
             'different_key' => 'new value'
-        ), $this->coll->getAll());
+        ), $this->coll->toArray());
     }
 
     public function testAllowsFunctionalFilter()
@@ -218,7 +188,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array(
             'number' => 'ten',
             'same_number' => 'ten'
-        ), $filtered->getAll());
+        ), $filtered->toArray());
     }
 
     public function testAllowsFunctionalMapping()
@@ -239,7 +209,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
             'number_1' => 1,
             'number_2' => 4,
             'number_3' => 9
-        ), $mapped->getAll());
+        ), $mapped->toArray());
     }
 
     public function testImplementsArrayAccess()
@@ -260,20 +230,6 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertFalse($this->coll->offsetExists('k1'));
     }
 
-    public function testUsesStaticWhenCreatingNew()
-    {
-        $qs = new QueryString(array(
-            'a' => 'b',
-            'c' => 'd'
-        ));
-
-        $this->assertInstanceOf('Guzzle\\Http\\QueryString', $qs->map(function($a, $b) {}));
-        $this->assertInstanceOf('Guzzle\\Common\\Collection', $qs->map(function($a, $b) {}, array(), false));
-
-        $this->assertInstanceOf('Guzzle\\Http\\QueryString', $qs->filter(function($a, $b) {}));
-        $this->assertInstanceOf('Guzzle\\Common\\Collection', $qs->filter(function($a, $b) {}, false));
-    }
-
     public function testCanReplaceAllData()
     {
         $this->assertSame($this->coll, $this->coll->replace(array(
@@ -282,50 +238,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
 
         $this->assertEquals(array(
             'a' => '123'
-        ), $this->coll->getAll());
-    }
-
-    public function dataProvider()
-    {
-        return array(
-            array('this_is_a_test', '{a}_is_a_{b}', array(
-                'a' => 'this',
-                'b' => 'test'
-            )),
-            array('this_is_a_test', '{abc}_is_a_{0}', array(
-                'abc' => 'this',
-                0 => 'test'
-            )),
-            array('this_is_a_test', '{abc}_is_a_{0}', array(
-                'abc' => 'this',
-                0 => 'test'
-            )),
-            array('this_is_a_test', 'this_is_a_test', array(
-                'abc' => 'this'
-            )),
-            array('{abc}_is_{not_found}a_{0}', '{abc}_is_{not_found}a_{0}', array())
-        );
-    }
-
-    /**
-     * @dataProvider dataProvider
-     */
-    public function testInjectsConfigData($output, $input, $config)
-    {
-        $collection = new Collection($config);
-        $this->assertEquals($output, $collection->inject($input));
-    }
-
-    public function testCanSearchByKey()
-    {
-        $collection = new Collection(array(
-            'foo' => 'bar',
-            'BaZ' => 'pho'
-        ));
-
-        $this->assertEquals('foo', $collection->keySearch('FOO'));
-        $this->assertEquals('BaZ', $collection->keySearch('baz'));
-        $this->assertEquals(false, $collection->keySearch('Bar'));
+        ), $this->coll->toArray());
     }
 
     public function testPreparesFromConfig()
@@ -343,12 +256,12 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
             'a' => '123',
             'b' => 'lol',
             'base_url' => 'http://www.test.com/'
-        ), $c->getAll());
+        ), $c->toArray());
 
         try {
             $c = Collection::fromConfig(array(), array(), array('a'));
             $this->fail('Exception not throw when missing config');
-        } catch (InvalidArgumentException $e) {
+        } catch (\InvalidArgumentException $e) {
         }
     }
 
@@ -430,36 +343,9 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
             array($c, 'bam', $data['bam']),
             array($c, 'baz/mesa', $data['baz']['mesa']),
             array($c, 'baz/mesa/jar', 'jar'),
-            // Merge everything two levels under baz
-            array($c, 'baz/*', array(
-                'jar' => 'jar',
-                'array' => array_merge($data['baz']['mesa']['array'], $data['baz']['bar']['array']),
-                'baz' => 'bam'
-            )),
             // Does not barf on missing keys
             array($c, 'fefwfw', null),
-            // Does not barf when a wildcard does not resolve correctly
-            array($c, '*/*/*/*/*/wefwfe', array()),
-            // Allows custom separator
-            array($c, '*|mesa', $data['baz']['mesa'], '|'),
-            // Merge all 'array' keys two levels under baz (the trailing * does not hurt the results)
-            array($c, 'baz/*/array/*', array_merge($data['baz']['mesa']['array'], $data['baz']['bar']['array'])),
-            // Merge all 'array' keys two levels under baz
-            array($c, 'baz/*/array', array_merge($data['baz']['mesa']['array'], $data['baz']['bar']['array'])),
-            array($c, 'baz/mesa/array', $data['baz']['mesa']['array']),
-            // Having a trailing * does not hurt the results
-            array($c, 'baz/mesa/array/*', $data['baz']['mesa']['array']),
-            // Merge of anything one level deep
-            array($c, '*', array_merge(array('bar'), $data['baz'], $data['bam'])),
-            // Funky merge of anything two levels deep
-            array($c, '*/*', array(
-                'jar' => 'jar',
-                'array' => array('a', 'b', 'c', 'd', 'e', 'f', 'h', 'i'),
-                'baz' => 'bam',
-                'foo' => array(1, 2)
-            )),
-            // Funky merge of all 'array' keys that are two levels deep
-            array($c, '*/*/array', array('a', 'b', 'c', 'd', 'e', 'f', 'h', 'i'))
+            array($c, 'baz/mesa/array', $data['baz']['mesa']['array'])
         );
     }
 
@@ -475,7 +361,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
     {
         $c = new Collection(array('foo' => 1, 'baz' => 2, 'bar' => 3));
         $c->overwriteWith(array('foo' => 10, 'bar' => 300));
-        $this->assertEquals(array('foo' => 10, 'baz' => 2, 'bar' => 300), $c->getAll());
+        $this->assertEquals(array('foo' => 10, 'baz' => 2, 'bar' => 300), $c->toArray());
     }
 
     public function testOverwriteWithCollection()
@@ -483,7 +369,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $c = new Collection(array('foo' => 1, 'baz' => 2, 'bar' => 3));
         $b = new Collection(array('foo' => 10, 'bar' => 300));
         $c->overwriteWith($b);
-        $this->assertEquals(array('foo' => 10, 'baz' => 2, 'bar' => 300), $c->getAll());
+        $this->assertEquals(array('foo' => 10, 'baz' => 2, 'bar' => 300), $c->toArray());
     }
 
     public function testOverwriteWithTraversable()
@@ -491,7 +377,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $c = new Collection(array('foo' => 1, 'baz' => 2, 'bar' => 3));
         $b = new Collection(array('foo' => 10, 'bar' => 300));
         $c->overwriteWith($b->getIterator());
-        $this->assertEquals(array('foo' => 10, 'baz' => 2, 'bar' => 300), $c->getAll());
+        $this->assertEquals(array('foo' => 10, 'baz' => 2, 'bar' => 300), $c->toArray());
     }
 
     public function testCanSetNestedPathValueThatDoesNotExist()
@@ -509,7 +395,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @expectedException \Guzzle\Common\Exception\RuntimeException
+     * @expectedException \RuntimeException
      */
     public function testVerifiesNestedPathIsValidAtExactLevel()
     {
@@ -519,7 +405,7 @@ class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
     }
 
     /**
-     * @expectedException \Guzzle\Common\Exception\RuntimeException
+     * @expectedException \RuntimeException
      */
     public function testVerifiesThatNestedPathIsValidAtAnyLevel()
     {
