@@ -856,7 +856,7 @@ class Response extends AbstractMessage implements \Serializable
      */
     public function json()
     {
-        $data = json_decode((string) $this->body, true);
+        $data = json_decode( $this->stripBOM((string) $this->body), true);
         if (JSON_ERROR_NONE !== json_last_error()) {
             throw new RuntimeException('Unable to parse response body into JSON: ' . json_last_error());
         }
@@ -881,7 +881,7 @@ class Response extends AbstractMessage implements \Serializable
 
         try {
             // Allow XML to be retrieved even if there is no response body
-            $xml = new \SimpleXMLElement((string) $this->body ?: '<root />');
+            $xml = new \SimpleXMLElement($this->stripBOM((string) $this->body) ?: '<root />');
             libxml_disable_entity_loader($disableEntities);
         } catch (\Exception $e) {
             libxml_disable_entity_loader($disableEntities);
@@ -889,6 +889,18 @@ class Response extends AbstractMessage implements \Serializable
         }
 
         return $xml;
+    }
+
+
+    protected function stripBOM( $body )
+    {
+        if ( substr($body,0,3) === "\xef\xbb\xbf" )  // UTF-8
+            $body = substr($body,3);
+        else if ( substr($body,0,4) === "\xff\xfe\x00\x00" || substr($body,0,4) === "\x00\x00\xfe\xff" )  // UTF-32
+            $body = substr($body,4);
+        else if ( substr($body,0,2) === "\xff\xfe" || substr($body,0,2) === "\xfe\xff" )  // UTF-16
+            $body = substr($body,2);
+        return $body;
     }
 
     /**
