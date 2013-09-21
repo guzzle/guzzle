@@ -5,7 +5,7 @@ namespace Guzzle\Stream;
 /**
  * Represents a stream that contains metadata
  */
-interface HasMetadataStreamInterface extends StreamInterface
+interface MetadataStreamInterface extends StreamInterface
 {
     /**
      * Get stream metadata as an associative array or retrieve a specific key.

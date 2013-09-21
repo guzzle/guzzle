@@ -8,7 +8,7 @@ use Guzzle\Common\HasDispatcherInterface;
 /**
  * Stream decorator that emits events for read and write methods
  */
-class EventStream implements StreamInterface, HasDispatcherInterface
+class EventStream implements StreamInterface, MetadataStreamInterface, HasDispatcherInterface
 {
     use StreamDecoratorTrait, HasDispatcherTrait;
 

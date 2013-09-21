@@ -5,7 +5,7 @@ namespace Guzzle\Stream;
 /**
  * Stream decorator that can cache previously read bytes from a sequentially read stream
  */
-class CachingStream implements StreamInterface
+class CachingStream implements StreamInterface, MetadataStreamInterface
 {
     use StreamDecoratorTrait;
 
@@ -131,6 +131,8 @@ class CachingStream implements StreamInterface
 
     public function getMetaData($key = null)
     {
-        return $this->remoteStream->getMetaData($key);
+        return $this->remoteStream instanceof MetadataStreamInterface
+            ? $this->remoteStream->getMetaData($key)
+            : null;
     }
 }

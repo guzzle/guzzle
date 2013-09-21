@@ -5,7 +5,7 @@ namespace Guzzle\Stream;
 /**
  * Stread decorator that prevents a stream from being seeked
  */
-class NoSeekStream implements StreamInterface
+class NoSeekStream implements StreamInterface, MetadataStreamInterface
 {
     use StreamDecoratorTrait;
 
