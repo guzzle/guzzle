@@ -8,8 +8,8 @@ namespace Guzzle\Stream;
 interface StreamInterface
 {
     /**
-     * Reads the remainder of the stream from the current position until the
-     * end of the stream is reached.
+     * Attempts to seek to the beginning of the stream and reads all data into
+     * a string until the end of the stream is reached.
      *
      * Warning: This could attempt to load a large amount of data into memory.
      *
@@ -102,4 +102,13 @@ interface StreamInterface
      * @return string     Returns the data read from the stream.
      */
     public function read($length);
+
+    /**
+     * Returns the remaining contents in a string, up to maxlength bytes.
+     *
+     * @param int $maxLength The maximum bytes to read. Defaults to -1 (read
+     *                       all the remaining buffer).
+     * @return string
+     */
+    public function getContents($maxLength = -1);
 }

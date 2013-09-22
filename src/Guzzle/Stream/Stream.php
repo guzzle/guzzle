@@ -46,22 +46,18 @@ class Stream implements MetadataStreamInterface
      */
     public static function factory($resource = '', $size = null)
     {
-        if ($resource instanceof StreamInterface) {
-            return $resource;
-        }
-
         switch (gettype($resource)) {
             case 'string':
                 return self::fromString($resource);
             case 'resource':
                 return new static($resource, $size);
             case 'object':
-                if (method_exists($resource, '__toString')) {
+                if ($resource instanceof StreamInterface) {
+                    return $resource;
+                } elseif (method_exists($resource, '__toString')) {
                     return self::fromString((string) $resource);
                 }
                 break;
-            case 'array':
-                return self::fromString(http_build_query($resource));
         }
 
         throw new \InvalidArgumentException('Invalid resource type');
@@ -79,7 +75,6 @@ class Stream implements MetadataStreamInterface
         $stream = fopen('php://temp', 'r+');
         if ($string !== '') {
             fwrite($stream, $string);
-            rewind($stream);
         }
 
         return new static($stream);
@@ -115,7 +110,14 @@ class Stream implements MetadataStreamInterface
 
     public function __toString()
     {
-        return stream_get_contents($this->stream, -1);
+        $this->seek(0);
+
+        return (string) stream_get_contents($this->stream);
+    }
+
+    public function getContents($maxLength = -1)
+    {
+        return stream_get_contents($this->stream, $maxLength);
     }
 
     public function close()
@@ -151,17 +153,17 @@ class Stream implements MetadataStreamInterface
 
     public function isReadable()
     {
-        return $this->readable;
+        return $this->stream && $this->readable;
     }
 
     public function isWritable()
     {
-        return $this->writable;
+        return $this->stream && $this->writable;
     }
 
     public function isSeekable()
     {
-        return $this->seekable;
+        return $this->stream && $this->seekable;
     }
 
     public function eof()
