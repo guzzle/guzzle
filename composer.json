@@ -44,7 +44,7 @@
     },
 
     "require": {
-        "php": ">=5.3.2",
+        "php": ">=5.3.3",
         "ext-curl": "*",
         "symfony/event-dispatcher": ">=2.1"
     },
