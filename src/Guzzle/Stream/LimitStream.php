@@ -17,23 +17,14 @@ class LimitStream implements StreamInterface, MetadataStreamInterface
 
     /**
      * @param StreamInterface $stream Stream to wrap
-     * @param int             $offset Position to seek to before reading (only works on seekable streams)
      * @param int             $limit  Total number of bytes to allow to be read from the stream. Pass -1 for no limit.
+     * @param int|null        $offset Position to seek to before reading (only works on seekable streams)
      */
-    public function __construct(StreamInterface $stream, $offset = 0, $limit = -1)
+    public function __construct(StreamInterface $stream, $limit = -1, $offset = 0)
     {
         $this->stream = $stream;
-        $this->setOffset($offset);
         $this->setLimit($limit);
-    }
-
-    /**
-     * Returns only a subset of the decorated stream when cast as a string
-     * {@inheritdoc}
-     */
-    public function __toString()
-    {
-        return substr((string) $this->stream, $this->offset, $this->limit) ?: '';
+        $this->setOffset($offset);
     }
 
     public function eof()
@@ -41,7 +32,8 @@ class LimitStream implements StreamInterface, MetadataStreamInterface
         if ($this->limit == -1) {
             return $this->stream->eof();
         } else {
-            return (($this->offset + $this->limit) - $this->stream->tell()) <= 0;
+            $tell = $this->stream->tell();
+            return $tell === false || (($this->offset + $this->limit) - $tell) <= 0;
         }
     }
 
@@ -68,11 +60,26 @@ class LimitStream implements StreamInterface, MetadataStreamInterface
     {
         if ($whence != SEEK_SET) {
             return false;
-        } elseif ($this->limit == -1) {
-            return $offset == 0 ? $this->stream->seek(0) : false;
-        } else {
-            return $this->stream->seek(max($this->offset, min($this->offset + $this->limit, $offset)));
         }
+
+        if ($offset < $this->offset) {
+            $offset = $this->offset;
+        }
+
+        if ($this->limit !== -1 && $offset > ($this->offset + $this->limit)) {
+            $offset = $this->offset + $this->limit;
+        }
+
+        return $this->stream->seek($offset);
+    }
+
+    /**
+     * Give a relative tell()
+     * {@inheritdoc}
+     */
+    public function tell()
+    {
+        return $this->stream->tell() - $this->offset;
     }
 
     /**

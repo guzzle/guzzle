@@ -5,7 +5,6 @@ namespace Guzzle\Tests\Stream;
 use Guzzle\Stream\Stream;
 
 /**
- * @group server
  * @covers Guzzle\Stream\Stream
  */
 class StreamTest extends \Guzzle\Tests\GuzzleTestCase

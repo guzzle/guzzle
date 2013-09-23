@@ -128,11 +128,4 @@ class CachingStream implements StreamInterface, MetadataStreamInterface
     {
         $this->remoteStream->close() && $this->stream->close();
     }
-
-    public function getMetaData($key = null)
-    {
-        return $this->remoteStream instanceof MetadataStreamInterface
-            ? $this->remoteStream->getMetaData($key)
-            : null;
-    }
 }

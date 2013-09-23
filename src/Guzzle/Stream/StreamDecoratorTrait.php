@@ -23,11 +23,9 @@ trait StreamDecoratorTrait
         $buffer = '';
 
         try {
-            if ($this->seek(0)) {
-                while (!$this->eof()) {
-                    $buffer .= $this->read(32768);
-                }
-                $this->seek(0);
+            $this->seek(0);
+            while (!$this->eof()) {
+                $buffer .= $this->read(32768);
             }
         } catch (\Exception $e) {
             // Really, PHP? https://bugs.php.net/bug.php?id=53648
@@ -47,7 +45,10 @@ trait StreamDecoratorTrait
      */
     public function __call($method, array $args)
     {
-        return call_user_func_array(array($this->stream, $method), $args);
+        $result = call_user_func_array(array($this->stream, $method), $args);
+
+        // Always return the wrapped object if the result is a return $this
+        return $result === $this->stream ? $this : $result;
     }
 
     public function close()
@@ -107,6 +108,26 @@ trait StreamDecoratorTrait
     public function read($length)
     {
         return $this->stream->read($length);
+    }
+
+    public function getContents($maxLength = -1)
+    {
+        $buffer = '';
+        if ($maxLength == 0) {
+            return $buffer;
+        }
+
+        while (!$this->eof()) {
+            if ($maxLength == -1) {
+                $buffer .= $this->read(32768);
+            } elseif (strlen($buffer) < $maxLength) {
+                $buffer .= $this->read(max(1, min($maxLength, $maxLength - strlen($buffer))));
+            } else {
+                break;
+            }
+        }
+
+        return $buffer;
     }
 
     public function write($string)
