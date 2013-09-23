@@ -57,6 +57,23 @@ class MessageFactory implements MessageFactoryInterface
     }
 
     /**
+     * Create a request from an HTTP message string
+     *
+     * @param string $message Message to parse
+     *
+     * @return RequestInterface
+     */
+    public function fromMessage($message)
+    {
+        static $parser;
+        if (!$parser) {
+            $parser = new MessageParser();
+        }
+
+        return $this->fromParsedRequest($parser->parseRequest($message));
+    }
+
+    /**
      * Create a request using an array returned from a MessageParserInterface
      *
      * @param array $parsed Parsed request data
@@ -235,7 +252,7 @@ class MessageFactory implements MessageFactoryInterface
         }
 
         foreach ($value as $plugin) {
-            $request->addSubscriber($plugin);
+            $request->getEventDispatcher()->addSubscriber($plugin);
         }
     }
 }

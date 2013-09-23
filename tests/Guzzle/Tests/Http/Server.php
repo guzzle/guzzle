@@ -3,11 +3,8 @@
 namespace Guzzle\Tests\Http;
 
 use Guzzle\Http\Exception\BadResponseException;
-use Guzzle\Common\Exception\RuntimeException;
-use Guzzle\Http\Message\Request;
+use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\Response;
-use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Client;
 
 /**
@@ -51,11 +48,11 @@ class Server
 
     /**
      * Flush the received requests from the server
-     * @throws RuntimeException
+     * @throws \RuntimeException
      */
     public function flush()
     {
-        $this->client->delete('guzzle-server/requests')->send();
+        $this->client->delete('guzzle-server/requests');
     }
 
     /**
@@ -87,8 +84,7 @@ class Server
             );
         }
 
-        $request = $this->client->put('guzzle-server/responses', null, json_encode($data));
-        $request->send();
+        $this->client->put('guzzle-server/responses', null, json_encode($data));
     }
 
     /**
@@ -103,7 +99,7 @@ class Server
         }
 
         try {
-            $this->client->get('guzzle-server/perf', array(), array('timeout' => 5))->send();
+            $this->client->get('guzzle-server/perf', array(), array('timeout' => 5));
             return $this->running = true;
         } catch (\Exception $e) {
             return false;
@@ -138,15 +134,16 @@ class Server
      *      requests will be returned as strings.
      *
      * @return array
-     * @throws RuntimeException
+     * @throws \RuntimeException
      */
     public function getReceivedRequests($hydrate = false)
     {
-        $response = $this->client->get('guzzle-server/requests')->send();
-        $data = array_filter(explode(self::REQUEST_DELIMITER, $response->getBody(true)));
+        $response = $this->client->get('guzzle-server/requests');
+        $data = array_filter(explode(self::REQUEST_DELIMITER, (string) $response->getBody()));
         if ($hydrate) {
-            $data = array_map(function($message) {
-                return RequestFactory::getInstance()->fromMessage($message);
+            $factory = new MessageFactory();
+            $data = array_map(function($message) use ($factory) {
+                return $factory->fromMessage($message);
             }, $data);
         }
 
@@ -164,7 +161,7 @@ class Server
             $start = time();
             while (!$this->isRunning() && time() - $start < 5);
             if (!$this->running) {
-                throw new RuntimeException(
+                throw new \RuntimeException(
                     'Unable to contact server.js. Have you installed node.js v0.5.0+? node must be in your path.'
                 );
             }
@@ -181,6 +178,6 @@ class Server
         }
 
         $this->running = false;
-        $this->client->delete('guzzle-server')->send();
+        $this->client->delete('guzzle-server');
     }
 }

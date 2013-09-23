@@ -93,7 +93,12 @@ class Response implements ResponseInterface
      */
     public static function fromMessage($message)
     {
-        if (!($data = (new MessageParser())->parseResponse($message))) {
+        static $factory;
+        if (!$factory) {
+            $factory = new MessageParser();
+        }
+
+        if (!($data = ($factory->parseResponse($message)))) {
             throw new \InvalidArgumentException('Unable to parse response message');
         }
 
