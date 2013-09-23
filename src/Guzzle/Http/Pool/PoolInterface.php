@@ -2,31 +2,24 @@
 
 namespace Guzzle\Http\Pool;
 
-use Guzzle\Http\Message\RequestInterface;
-
 /**
  * Send FutureRequest objects in parallel
  */
 interface PoolInterface
 {
     /**
-     * Add a request to the pool
+     * Sends each request (batchable and non-batchable) and yields
+     * RequestInterface objects as the key and ResponseInterface
+     * objects as the value.
      *
-     * @param RequestInterface $request Request to add
-     */
-    public function addRequest(RequestInterface $request);
-
-    /**
-     * Send all requests in the pool
-     */
-    public function send();
-
-    /**
-     * Generator that sends each queued request (batchable and non-batchable)
-     * and yields RequestInterface objects matching to ResponseInterface
-     * objects
+     * You can convert the result of this method to an array
+     * using iterator_to_array():
      *
-     * @return \Generator|void
+     *     $responses = iterator_to_array($pool->send($requestArray), false);
+     *
+     * @param \Traversable $requests Array, iterator, or Generator that
+     *                               returns RequestInterface objects
+     * @return \Generator
      */
-    public function yieldResponses();
+    public function send($requests);
 }
