@@ -257,12 +257,12 @@ class Client implements ClientInterface
 
         if (substr($url, 0, 4) === 'http') {
             // Use absolute URLs as-is
-            $url = $this->expandTemplate($url, $templateVars);
-        } else {
-            $url = Url::fromString($this->getBaseUrl())->combine($this->expandTemplate($url, $templateVars));
+            return $this->expandTemplate($url, $templateVars);
         }
 
-        return (string) $url;
+        return (string) Url::fromString(
+            $this->getBaseUrl())->combine($this->expandTemplate($url, $templateVars)
+        );
     }
 
     /**
