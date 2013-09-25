@@ -65,8 +65,8 @@ class Client implements ClientInterface
      *                      - base_url: Base URL of the client that is merged into relative URLs. Can be a string or
      *                                  an array that contains a URI template followed by an associative array of
      *                                  expansion variables to inject into the URI template.
-     *                      - message_factory: Factory used to create request and response object
      *                      - adapter: Adapter used to transfer requests
+     *                      - message_factory: Factory used to create request and response object
      *                      - defaults: Default request options to apply to each request
      */
     public function __construct(array $config = [])
@@ -140,7 +140,7 @@ class Client implements ClientInterface
 
         $this->getEventDispatcher()->dispatch(
             ClientEvents::CREATE_REQUEST,
-            new ClientCreateRequestEvent($this, $request)
+            new ClientCreateRequestEvent($this, $request, $options)
         );
 
         return $request;
@@ -183,7 +183,7 @@ class Client implements ClientInterface
 
     public function options($url = null, array $headers = [], array $options = [])
     {
-        return $this->send($this->createRequest('OPTIONS', $url, $headers, $options));
+        return $this->send($this->createRequest('OPTIONS', $url, $headers, null, $options));
     }
 
     public function send(RequestInterface $request)

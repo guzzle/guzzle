@@ -13,15 +13,18 @@ class ClientCreateRequestEvent extends Event
 {
     private $client;
     private $request;
+    private $options;
 
     /**
-     * @param ClientInterface  $client Client that created the request
+     * @param ClientInterface  $client  Client that created the request
      * @param RequestInterface $request Request that was created
+     * @param array            $options Request options
      */
-    public function __construct(ClientInterface $client, RequestInterface $request)
+    public function __construct(ClientInterface $client, RequestInterface $request, array $options)
     {
         $this->client = $client;
         $this->request = $request;
+        $this->options = $options;
     }
 
     /**
@@ -42,5 +45,15 @@ class ClientCreateRequestEvent extends Event
     public function getClient()
     {
         return $this->client;
+    }
+
+    /**
+     * Get the request options set on the request
+     *
+     * @return array
+     */
+    public function getRequestOptions()
+    {
+        return $this->options;
     }
 }

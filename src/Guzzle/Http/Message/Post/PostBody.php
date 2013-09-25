@@ -142,6 +142,11 @@ class PostBody implements PostBodyInterface
         return (string) $this->getBody();
     }
 
+    public function getContents($maxLength = -1)
+    {
+        return $this->getBody()->getContents();
+    }
+
     public function close()
     {
         return $this->body ? $this->body->close() : true;
