@@ -4,13 +4,10 @@ namespace Guzzle\Tests\Message;
 
 use Guzzle\Common\Collection;
 use Guzzle\Http\ClientInterface;
-use Guzzle\Http\EntityBody;
-use Guzzle\Http\HttpException;
 use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\Message\Response;
 
 /**
- * @group server
  * @covers Guzzle\Http\Message\Response
  */
 class ResponseTest extends \Guzzle\Tests\GuzzleTestCase

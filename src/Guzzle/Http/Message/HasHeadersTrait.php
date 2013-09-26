@@ -28,6 +28,8 @@ trait HasHeadersTrait
             foreach ($value as $v) {
                 $this->headers[$name][] = $v;
             }
+        } else {
+            throw new \InvalidArgumentException('Invalid header value provided');
         }
 
         return $this;
@@ -55,11 +57,15 @@ trait HasHeadersTrait
         $name = strtolower($header);
         $this->headerNames[$name] = $header;
 
-        if (!($value instanceof HeaderValuesInterface)) {
-            $value = new HeaderValues((array) $value);
+        if (is_string($value)) {
+            $this->headers[$name] = new HeaderValues([$value]);
+        } elseif (is_array($value)) {
+            $this->headers[$name] = new HeaderValues($value);
+        } elseif ($value instanceof HeaderValuesInterface) {
+            $this->headers[$name] = $value;
+        } else {
+            throw new \InvalidArgumentException('Invalid header value provided');
         }
-
-        $this->headers[$name] = $value;
 
         return $this;
     }
