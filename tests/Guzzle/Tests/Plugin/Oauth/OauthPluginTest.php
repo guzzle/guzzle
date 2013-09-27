@@ -50,6 +50,7 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('dracula', $config['token_secret']);
         $this->assertEquals('1.0', $config['version']);
         $this->assertEquals('HMAC-SHA1', $config['signature_method']);
+        $this->assertEquals('header', $config['request_method']);
     }
 
     public function testCreatesStringToSignFromPostRequest()
@@ -214,6 +215,54 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         // in the Authorization header. However Guzzle does not do this, so we just perform a simple check
         // on length to validate the Authorization header is composed of only the strings above.
         $this->assertEquals($totalLength, strlen($authorizationHeader), 'Authorization has extra characters i.e. contains extra elements compared to stringsToCheck.');
+    }
+
+    public function testSignsOauthQueryStringRequest()
+    {
+        $config = array_merge(
+            $this->config,
+            ['request_method' => OauthPlugin::REQUEST_METHOD_QUERY]
+        );
+
+        $p = new OauthPlugin($config);
+        $event = new Event(array(
+            'request' => $this->getRequest(),
+            'timestamp' => self::TIMESTAMP
+        ));
+        $params = $p->onRequestBeforeSend($event);
+
+        $this->assertFalse($event['request']->hasHeader('Authorization'));
+
+        $stringsToCheck = array(
+            'a=b',
+            'c=d',
+            'oauth_consumer_key=foo',
+            'oauth_nonce='.urlencode($params['oauth_nonce']),
+            'oauth_signature='.urlencode($params['oauth_signature']),
+            'oauth_signature_method=HMAC-SHA1',
+            'oauth_timestamp='.self::TIMESTAMP,
+            'oauth_token=count',
+            'oauth_version=1.0',
+        );
+
+        $queryString = (string) $event['request']->getQuery();
+
+        $totalLength = strlen('?');
+
+        //Separator is not used before first parameter.
+        $separator = '';
+
+        foreach ($stringsToCheck as $stringToCheck) {
+            $this->assertContains($stringToCheck, $queryString);
+            $totalLength += strlen($separator);
+            $totalLength += strlen($stringToCheck);
+            $separator = '&';
+        }
+
+        // Removes the last query string separator '&'
+        $totalLength -= 1;
+
+        $this->assertEquals($totalLength, strlen($queryString), 'Query string has extra characters i.e. contains extra elements compared to stringsToCheck.');
     }
 
     public function testDoesNotAddFalseyValuesToAuthorization()
