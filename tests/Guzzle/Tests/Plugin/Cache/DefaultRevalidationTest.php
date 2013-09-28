@@ -20,7 +20,7 @@ use Guzzle\Tests\Http\Server;
  * @covers Guzzle\Plugin\Cache\DefaultRevalidation
  * @group server
  */
-class DefaultRevalidationTest extends \Guzzle\Tests\GuzzleTestCase
+class DefaultRevalidationTest extends \PHPUnit_Framework_TestCase
 {
     protected function getHttpDate($time)
     {

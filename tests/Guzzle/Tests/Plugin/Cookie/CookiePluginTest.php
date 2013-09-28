@@ -13,7 +13,7 @@ use Guzzle\Plugin\Cookie\CookiePlugin;
  * @group server
  * @covers Guzzle\Plugin\Cookie\CookiePlugin
  */
-class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
+class CookiePluginTest extends \PHPUnit_Framework_TestCase
 {
     public function testExtractsAndStoresCookies()
     {

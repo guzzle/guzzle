@@ -8,7 +8,7 @@ use Guzzle\Url\PhpAggregator;
  * @covers \Guzzle\Url\PhpAggregator
  * @covers \Guzzle\Url\AbstractAggregator
  */
-class PhpAggregatorTest extends \Guzzle\Tests\GuzzleTestCase
+class PhpAggregatorTest extends \PHPUnit_Framework_TestCase
 {
     private $encodeData = [
         't' => [

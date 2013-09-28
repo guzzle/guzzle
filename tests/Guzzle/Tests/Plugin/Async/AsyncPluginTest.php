@@ -13,7 +13,7 @@ use Guzzle\Http\Client;
 /**
  * @covers Guzzle\Plugin\Async\AsyncPlugin
  */
-class AsyncPluginTest extends \Guzzle\Tests\GuzzleTestCase
+class AsyncPluginTest extends \PHPUnit_Framework_TestCase
 {
     public function testSubscribesToEvents()
     {

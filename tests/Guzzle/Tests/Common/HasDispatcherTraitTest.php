@@ -13,7 +13,7 @@ class AbstractHasDispatcher implements HasDispatcherInterface
 /**
  * @covers Guzzle\Common\HasDispatcherTrait
  */
-class HasDispatcherTraitTest extends \Guzzle\Tests\GuzzleTestCase
+class HasDispatcherTraitTest extends \PHPUnit_Framework_TestCase
 {
     public function testHelperAttachesSubscribers()
     {

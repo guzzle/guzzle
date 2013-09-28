@@ -7,7 +7,7 @@ use Guzzle\Plugin\Backoff\LinearBackoffStrategy;
 /**
  * @covers Guzzle\Plugin\Backoff\LinearBackoffStrategy
  */
-class LinearBackoffStrategyTest extends \Guzzle\Tests\GuzzleTestCase
+class LinearBackoffStrategyTest extends \PHPUnit_Framework_TestCase
 {
     public function testRetriesWithLinearDelay()
     {

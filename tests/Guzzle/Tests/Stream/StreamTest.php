@@ -7,7 +7,7 @@ use Guzzle\Stream\Stream;
 /**
  * @covers Guzzle\Stream\Stream
  */
-class StreamTest extends \Guzzle\Tests\GuzzleTestCase
+class StreamTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @expectedException \InvalidArgumentException

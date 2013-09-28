@@ -9,7 +9,7 @@ use Guzzle\Plugin\Cache\DefaultCanCacheStrategy;
 /**
  * @covers Guzzle\Plugin\Cache\DefaultCanCacheStrategy
  */
-class DefaultCanCacheStrategyTest extends \Guzzle\Tests\GuzzleTestCase
+class DefaultCanCacheStrategyTest extends \PHPUnit_Framework_TestCase
 {
     public function testReturnsRequestcanCacheRequest()
     {

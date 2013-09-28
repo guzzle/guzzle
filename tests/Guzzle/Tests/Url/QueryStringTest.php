@@ -5,7 +5,7 @@ namespace Guzzle\Tests\Url;
 use Guzzle\Url\QueryString;
 use Guzzle\Url\DuplicateAggregator;
 
-class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
+class QueryStringTest extends \PHPUnit_Framework_TestCase
 {
     public function testCanCastToString()
     {

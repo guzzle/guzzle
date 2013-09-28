@@ -9,7 +9,7 @@ use Guzzle\Plugin\Cache\DenyRevalidation;
 /**
  * @covers Guzzle\Plugin\Cache\DenyRevalidation
  */
-class DenyRevalidationTest extends \Guzzle\Tests\GuzzleTestCase
+class DenyRevalidationTest extends \PHPUnit_Framework_TestCase
 {
     public function testDeniesRequestRevalidation()
     {

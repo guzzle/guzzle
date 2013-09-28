@@ -9,7 +9,7 @@ use Guzzle\Plugin\Backoff\CallbackBackoffStrategy;
 /**
  * @covers Guzzle\Plugin\Backoff\AbstractBackoffStrategy
  */
-class AbstractBackoffStrategyTest extends \Guzzle\Tests\GuzzleTestCase
+class AbstractBackoffStrategyTest extends \PHPUnit_Framework_TestCase
 {
     protected function getMockStrategy()
     {

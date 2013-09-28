@@ -10,7 +10,7 @@ use Guzzle\Plugin\Backoff\ConstantBackoffStrategy;
 /**
  * @covers Guzzle\Plugin\Backoff\TruncatedBackoffStrategy
  */
-class TruncatedBackoffStrategyTest extends \Guzzle\Tests\GuzzleTestCase
+class TruncatedBackoffStrategyTest extends \PHPUnit_Framework_TestCase
 {
     public function testRetriesWhenLessThanMax()
     {

@@ -9,7 +9,7 @@ use Guzzle\Http\Message\Response;
  * @covers Guzzle\Plugin\Backoff\ReasonPhraseBackoffStrategy
  * @covers Guzzle\Plugin\Backoff\AbstractErrorCodeBackoffStrategy
  */
-class ReasonPhraseBackoffStrategyTest extends \Guzzle\Tests\GuzzleTestCase
+class ReasonPhraseBackoffStrategyTest extends \PHPUnit_Framework_TestCase
 {
     public function testRetriesWhenCodeMatches()
     {

@@ -7,7 +7,7 @@ use Guzzle\Http\Mimetypes;
 /**
  * @covers Guzzle\Http\Mimetypes
  */
-class MimetypesTest extends \Guzzle\Tests\GuzzleTestCase
+class MimetypesTest extends \PHPUnit_Framework_TestCase
 {
     public function testGetsFromExtension()
     {

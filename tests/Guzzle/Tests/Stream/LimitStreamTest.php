@@ -8,7 +8,7 @@ use Guzzle\Stream\LimitStream;
 /**
  * @covers Guzzle\Stream\LimitStream
  */
-class LimitStreamTest extends \Guzzle\Tests\GuzzleTestCase
+class LimitStreamTest extends \PHPUnit_Framework_TestCase
 {
     /** @var LimitStream */
     protected $body;

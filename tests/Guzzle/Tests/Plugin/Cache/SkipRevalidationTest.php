@@ -9,7 +9,7 @@ use Guzzle\Plugin\Cache\SkipRevalidation;
 /**
  * @covers Guzzle\Plugin\Cache\SkipRevalidation
  */
-class SkipRevalidationTest extends \Guzzle\Tests\GuzzleTestCase
+class SkipRevalidationTest extends \PHPUnit_Framework_TestCase
 {
     public function testSkipsRequestRevalidation()
     {

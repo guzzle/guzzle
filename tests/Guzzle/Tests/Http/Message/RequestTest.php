@@ -19,7 +19,7 @@ use Guzzle\Http\Exception\BadResponseException;
  * @covers Guzzle\Http\Message\Request
  * @covers Guzzle\Http\Message\AbstractMessage
  */
-class RequestTest extends \Guzzle\Tests\GuzzleTestCase
+class RequestTest extends \PHPUnit_Framework_TestCase
 {
     /** @var Request */
     protected $request;

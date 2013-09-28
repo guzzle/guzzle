@@ -8,7 +8,7 @@ use Guzzle\Url\Url;
 /**
  * @covers Guzzle\Url\Url
  */
-class UrlTest extends \Guzzle\Tests\GuzzleTestCase
+class UrlTest extends \PHPUnit_Framework_TestCase
 {
     public function testEmptyUrl()
     {

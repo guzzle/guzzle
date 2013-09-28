@@ -8,7 +8,7 @@ use Guzzle\Stream\CachingStream;
 /**
  * @covers Guzzle\Stream\CachingStream
  */
-class CachingStreamTest extends \Guzzle\Tests\GuzzleTestCase
+class CachingStreamTest extends \PHPUnit_Framework_TestCase
 {
     /** @var CachingStream */
     protected $body;

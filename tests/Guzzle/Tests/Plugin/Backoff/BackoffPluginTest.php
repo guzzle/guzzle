@@ -22,7 +22,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * @group server
  * @covers Guzzle\Plugin\Backoff\BackoffPlugin
  */
-class BackoffPluginTest extends \Guzzle\Tests\GuzzleTestCase implements EventSubscriberInterface
+class BackoffPluginTest extends \PHPUnit_Framework_TestCase implements EventSubscriberInterface
 {
     protected $retried;
 

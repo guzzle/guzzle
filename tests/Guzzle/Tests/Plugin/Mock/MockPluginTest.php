@@ -12,7 +12,7 @@ use Guzzle\Http\Exception\CurlException;
 /**
  * @covers Guzzle\Plugin\Mock\MockPlugin
  */
-class MockPluginTest extends \Guzzle\Tests\GuzzleTestCase
+class MockPluginTest extends \PHPUnit_Framework_TestCase
 {
     public function testDescribesSubscribedEvents()
     {

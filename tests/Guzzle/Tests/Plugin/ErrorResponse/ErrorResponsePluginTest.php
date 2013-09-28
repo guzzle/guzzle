@@ -11,7 +11,7 @@ use Guzzle\Tests\Mock\ErrorResponseMock;
 /**
  * @covers \Guzzle\Plugin\ErrorResponse\ErrorResponsePlugin
  */
-class ErrorResponsePluginTest extends \Guzzle\Tests\GuzzleTestCase
+class ErrorResponsePluginTest extends \PHPUnit_Framework_TestCase
 {
     protected $client;
 

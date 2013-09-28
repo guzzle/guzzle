@@ -9,7 +9,7 @@ use Guzzle\Common\Event;
 /**
  * @covers Guzzle\Plugin\Oauth\OauthPlugin
  */
-class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
+class OauthPluginTest extends \PHPUnit_Framework_TestCase
 {
     const TIMESTAMP = '1327274290';
     const NONCE = 'e7aa11195ca58349bec8b5ebe351d3497eb9e603';

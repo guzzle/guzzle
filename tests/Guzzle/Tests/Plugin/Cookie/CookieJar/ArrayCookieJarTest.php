@@ -10,7 +10,7 @@ use Guzzle\Http\Message\Request;
 /**
  * @covers Guzzle\Plugin\Cookie\CookieJar\ArrayCookieJar
  */
-class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
+class ArrayCookieJarTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @var ArrayCookieJar

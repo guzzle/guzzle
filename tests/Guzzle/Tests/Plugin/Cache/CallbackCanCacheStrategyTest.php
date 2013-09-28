@@ -13,7 +13,7 @@ use Guzzle\Plugin\Cache\CallbackCanCacheStrategy;
 /**
  * @covers Guzzle\Plugin\Cache\CallbackCanCacheStrategy
  */
-class CallbackCanCacheStrategyTest extends \Guzzle\Tests\GuzzleTestCase
+class CallbackCanCacheStrategyTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @expectedException \Guzzle\Common\Exception\InvalidArgumentException

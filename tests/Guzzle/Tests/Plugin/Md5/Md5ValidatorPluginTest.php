@@ -10,7 +10,7 @@ use Guzzle\Plugin\Md5\Md5ValidatorPlugin;
 /**
  * @covers Guzzle\Plugin\Md5\Md5ValidatorPlugin
  */
-class Md5ValidatorPluginTest extends \Guzzle\Tests\GuzzleTestCase
+class Md5ValidatorPluginTest extends \PHPUnit_Framework_TestCase
 {
     public function testValidatesMd5()
     {

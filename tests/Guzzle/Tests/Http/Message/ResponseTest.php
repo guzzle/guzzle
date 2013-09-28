@@ -10,7 +10,7 @@ use Guzzle\Http\Message\Response;
 /**
  * @covers Guzzle\Http\Message\Response
  */
-class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
+class ResponseTest extends \PHPUnit_Framework_TestCase
 {
     /** @var Response The response object to test */
     protected $response;

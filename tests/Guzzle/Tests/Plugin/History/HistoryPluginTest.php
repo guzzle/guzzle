@@ -11,7 +11,7 @@ use Guzzle\Plugin\Mock\MockPlugin;
 /**
  * @covers Guzzle\Plugin\History\HistoryPlugin
  */
-class HistoryPluginTest extends \Guzzle\Tests\GuzzleTestCase
+class HistoryPluginTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * Adds multiple requests to a plugin

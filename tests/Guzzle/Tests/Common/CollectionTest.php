@@ -8,7 +8,7 @@ use Guzzle\Common\Collection;
  * @covers Guzzle\Common\Collection
  * @covers Guzzle\Common\HasDataTrait
  */
-class CollectionTest extends \Guzzle\Tests\GuzzleTestCase
+class CollectionTest extends \PHPUnit_Framework_TestCase
 {
     /** @var Collection */
     protected $coll;

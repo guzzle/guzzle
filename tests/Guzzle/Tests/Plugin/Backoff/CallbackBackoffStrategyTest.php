@@ -7,7 +7,7 @@ use Guzzle\Plugin\Backoff\CallbackBackoffStrategy;
 /**
  * @covers Guzzle\Plugin\Backoff\CallbackBackoffStrategy
  */
-class CallbackBackoffStrategyTest extends \Guzzle\Tests\GuzzleTestCase
+class CallbackBackoffStrategyTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @expectedException Guzzle\Common\Exception\InvalidArgumentException

@@ -14,7 +14,7 @@ use Guzzle\Common\Event;
  * @group server
  * @covers Guzzle\Plugin\Log\LogPlugin
  */
-class LogPluginTest extends \Guzzle\Tests\GuzzleTestCase
+class LogPluginTest extends \PHPUnit_Framework_TestCase
 {
     protected $adapter;
 

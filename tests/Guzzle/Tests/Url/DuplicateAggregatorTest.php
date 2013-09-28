@@ -8,7 +8,7 @@ use Guzzle\Url\DuplicateAggregator;
  * @covers \Guzzle\Url\DuplicateAggregator
  * @covers \Guzzle\Url\AbstractAggregator
  */
-class DuplicateAggregatorTest extends \Guzzle\Tests\GuzzleTestCase
+class DuplicateAggregatorTest extends \PHPUnit_Framework_TestCase
 {
     private $encodeData = [
         't' => [

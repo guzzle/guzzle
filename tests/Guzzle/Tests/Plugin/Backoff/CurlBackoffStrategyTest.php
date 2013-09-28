@@ -10,7 +10,7 @@ use Guzzle\Http\Exception\CurlException;
  * @covers Guzzle\Plugin\Backoff\CurlBackoffStrategy
  * @covers Guzzle\Plugin\Backoff\AbstractErrorCodeBackoffStrategy
  */
-class CurlBackoffStrategyTest extends \Guzzle\Tests\GuzzleTestCase
+class CurlBackoffStrategyTest extends \PHPUnit_Framework_TestCase
 {
     public function testRetriesWithExponentialDelay()
     {

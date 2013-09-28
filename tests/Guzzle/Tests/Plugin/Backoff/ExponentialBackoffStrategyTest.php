@@ -7,7 +7,7 @@ use Guzzle\Plugin\Backoff\ExponentialBackoffStrategy;
 /**
  * @covers Guzzle\Plugin\Backoff\ExponentialBackoffStrategy
  */
-class ExponentialBackoffStrategyTest extends \Guzzle\Tests\GuzzleTestCase
+class ExponentialBackoffStrategyTest extends \PHPUnit_Framework_TestCase
 {
     public function testRetriesWithExponentialDelay()
     {

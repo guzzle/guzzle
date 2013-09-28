@@ -8,7 +8,7 @@ use Guzzle\Stream\NoSeekStream;
 /**
  * @covers Guzzle\Stream\NoSeekStream
  */
-class NoSeekStreamTest extends \Guzzle\Tests\GuzzleTestCase
+class NoSeekStreamTest extends \PHPUnit_Framework_TestCase
 {
     public function testCannotSeek()
     {

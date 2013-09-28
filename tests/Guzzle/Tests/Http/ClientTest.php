@@ -12,7 +12,7 @@ use Guzzle\Http\Message\Response;
 /**
  * @covers Guzzle\Http\Client
  */
-class ClientTest extends \Guzzle\Tests\GuzzleTestCase
+class ClientTest extends \PHPUnit_Framework_TestCase
 {
     public function testProvidesDefaultUserAgent()
     {

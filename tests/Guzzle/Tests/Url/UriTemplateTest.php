@@ -3,12 +3,11 @@
 namespace Guzzle\Tests\Parsers\UriTemplate;
 
 use Guzzle\Url\UriTemplate;
-use Guzzle\Tests\GuzzleTestCase;
 
 /**
  * @covers Guzzle\Url\UriTemplate
  */
-class UriTemplateTest extends GuzzleTestCase
+class UriTemplateTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @return array

@@ -7,7 +7,7 @@ use Guzzle\Plugin\Cookie\Cookie;
 /**
  * @covers Guzzle\Plugin\Cookie\Cookie
  */
-class CookieTest extends \Guzzle\Tests\GuzzleTestCase
+class CookieTest extends \PHPUnit_Framework_TestCase
 {
     public function testInitializesDefaultValues()
     {

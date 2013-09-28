@@ -16,16 +16,20 @@ class MockAdapter implements AdapterInterface
     /**
      * Set the response that will be served by the adapter
      *
-     * @param ResponseInterface $response Response to serve
+     * @param ResponseInterface|callable $response Response to serve or function to invoke that handles a transaction
      */
-    public function setResponse(ResponseInterface $response)
+    public function setResponse($response)
     {
         $this->response = $response;
     }
 
     public function send(TransactionInterface $transaction)
     {
-        $transaction->setResponse($this->response);
+        if (is_callable($this->response)) {
+            $transaction->setResponse($this->response($transaction));
+        } else {
+            $transaction->setResponse($this->response);
+        }
         $transaction->getRequest()->getEventDispatcher()->dispatch(
             RequestEvents::AFTER_SEND,
             new RequestAfterSendEvent($transaction)

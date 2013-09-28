@@ -12,7 +12,7 @@ use Guzzle\Http\Message\RequestFactory;
 /**
  * @covers Guzzle\Plugin\Backoff\BackoffLogger
  */
-class BackoffLoggerTest extends \Guzzle\Tests\GuzzleTestCase
+class BackoffLoggerTest extends \PHPUnit_Framework_TestCase
 {
     public $message;
 

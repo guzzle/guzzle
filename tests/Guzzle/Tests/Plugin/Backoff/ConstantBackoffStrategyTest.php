@@ -7,7 +7,7 @@ use Guzzle\Plugin\Backoff\ConstantBackoffStrategy;
 /**
  * @covers Guzzle\Plugin\Backoff\ConstantBackoffStrategy
  */
-class ConstantBackoffStrategyTest extends \Guzzle\Tests\GuzzleTestCase
+class ConstantBackoffStrategyTest extends \PHPUnit_Framework_TestCase
 {
     public function testRetriesWithConstantDelay()
     {
