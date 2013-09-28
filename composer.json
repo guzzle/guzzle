@@ -22,7 +22,8 @@
     "autoload": {
         "psr-0": {
             "Guzzle": "src/"
-        }
+        },
+        "files": ["src/Guzzle/functions.php"]
     },
 
     "require-dev": {

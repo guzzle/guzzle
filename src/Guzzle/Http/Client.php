@@ -39,9 +39,6 @@ class Client implements ClientInterface
     /** @var Collection Parameter object holding configuration data */
     private $config;
 
-    /** @var UriTemplate */
-    private static $uriTemplate;
-
     /**
      * Clients accept an array of constructor parameters.
      *
@@ -220,27 +217,6 @@ class Client implements ClientInterface
     }
 
     /**
-     * Expand a URI template
-     *
-     * @param string $template  Template to expand
-     * @param array  $variables Variables to inject
-     *
-     * @return string
-     */
-    private function expandTemplate($template, array $variables)
-    {
-        if (function_exists('uri_template')) {
-            return uri_template($template, $variables);
-        }
-
-        if (!self::$uriTemplate) {
-            self::$uriTemplate = new UriTemplate();
-        }
-
-        return self::$uriTemplate->expand($template, $variables);
-    }
-
-    /**
      * Expand a URI template and inherit from the base URL if it's relative
      *
      * @param string|array $url URL or URI template to expand
@@ -249,20 +225,20 @@ class Client implements ClientInterface
      */
     private function buildUrl($url)
     {
-        if (is_array($url)) {
-            list($url, $templateVars) = $url;
-        } else {
-            $templateVars = [];
+        if (!is_array($url)) {
+            // Use absolute URLs as is
+            return substr($url, 0, 4) === 'http'
+                ? (string) $url
+                : (string) Url::fromString($this->getBaseUrl())->combine($url);
         }
 
+        list($url, $templateVars) = $url;
         if (substr($url, 0, 4) === 'http') {
-            // Use absolute URLs as-is
-            return $this->expandTemplate($url, $templateVars);
+            return \Guzzle\uriTemplate($url, $templateVars);
         }
 
-        return (string) Url::fromString(
-            $this->getBaseUrl())->combine($this->expandTemplate($url, $templateVars)
-        );
+        return (string) Url::fromString($this->getBaseUrl())
+            ->combine(\Guzzle\uriTemplate($url, $templateVars));
     }
 
     /**

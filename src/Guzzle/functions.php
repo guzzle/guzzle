@@ -4,6 +4,7 @@ namespace Guzzle;
 
 use Guzzle\Http\Client;
 use Guzzle\Http\Message\ResponseInterface;
+use Guzzle\Url\UriTemplate;
 
 /**
  * Send a custom request
@@ -125,4 +126,24 @@ function patch($url, array $headers = [], $body = null, $options = [])
 function options($url, array $headers = [], $options = [])
 {
     return request('OPTIONS', $url, $headers, $options);
+}
+
+/**
+ * Expands a URI template
+ *
+ * @param string $template  URI template
+ * @param array  $variables Template variables
+ */
+function uriTemplate($template, array $variables)
+{
+    if (function_exists('uri_template')) {
+        return uri_template($template, $variables);
+    }
+
+    static $uriTemplate;
+    if (!$uriTemplate) {
+        $uriTemplate = new UriTemplate();
+    }
+
+    return $uriTemplate->expand($template, $variables);
 }
