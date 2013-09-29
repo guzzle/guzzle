@@ -10,7 +10,7 @@ class HasThem implements HasHeadersInterface {
     use HasHeadersTrait;
 }
 
-class testHasHeadersTraitTest extends \PHPUnit_Framework_TestCase
+class HasHeadersTraitTest extends \PHPUnit_Framework_TestCase
 {
     public function testAddsHeadersWhenNotPresent()
     {
