@@ -129,7 +129,7 @@ class Response implements ResponseInterface
             $this->setHeaders($headers);
         }
         if ($body !== null) {
-            $this->setBody($body);
+            $this->setBody(Stream::factory($body));
         }
     }
 

@@ -26,7 +26,7 @@ class HttpErrorPlugin implements EventSubscriberInterface
     {
         $code = (string) $event->getResponse()->getStatusCode();
         // Throw an exception for an unsuccessful response
-        if ($code[0] !== '2' && $code !== '304') {
+        if ($code[0] === '4' || $code[0] === '5') {
             $event->intercept(RequestException::create($event->getRequest(), $event->getResponse()));
         }
     }

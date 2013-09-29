@@ -153,7 +153,7 @@ class MessageFactory implements MessageFactoryInterface
     private function visit_allow_redirects(RequestInterface $request, $value)
     {
         if ($value !== false) {
-            if ($value == 'strict') {
+            if ($value === 'strict') {
                 $request->getConfig()[RedirectPlugin::STRICT_REDIRECTS] = true;
             }
             $request->getEventDispatcher()->addSubscriber($this->redirectPlugin);

@@ -3,9 +3,11 @@
 namespace Guzzle\Plugin\Mock;
 
 use Guzzle\Common\HasDispatcherTrait;
+use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Event\RequestBeforeSendEvent;
-use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Event\RequestEvents;
+use Guzzle\Http\Event\GotResponseHeadersEvent;
+use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\ResponseInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -44,7 +46,11 @@ class MockPlugin implements EventSubscriberInterface, \Countable
             $item = array_shift($this->queue);
             $request = $event->getRequest();
             // Emulate the receiving of the response headers
-            $request->dispatch(RequestEvents::GOT_HEADERS, ['request' => $request, 'response' => $item]);
+            $transaction = new Transaction($event->getClient(), $request);
+            $request->getEventDispatcher()->dispatch(
+                RequestEvents::RESPONSE_HEADERS,
+                new GotResponseHeadersEvent($transaction)
+            );
             // Emulate reading a response body
             if ($item instanceof ResponseInterface && $this->readBodies && $request->getBody()) {
                 while (!$request->getBody()->eof()) {

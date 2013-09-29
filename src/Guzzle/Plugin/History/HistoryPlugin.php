@@ -69,6 +69,18 @@ class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Co
     }
 
     /**
+     * Get all of the requests sent through the plugin
+     *
+     * @return array
+     */
+    public function getRequests()
+    {
+        return array_map(function ($t) {
+            return $t['request'];
+        }, $this->transactions);
+    }
+
+    /**
      * Get the number of requests in the history
      *
      * @return int

@@ -69,8 +69,8 @@ class RedirectPlugin implements EventSubscriberInterface
         $redirectRequest = clone $request;
         $redirectRequest->getEventDispatcher()->removeSubscriber($this);
         if ($request->getBody() && !$strict && $response->getStatusCode() <= 302) {
-            $request->setMethod('GET');
-            $request->setBody(null);
+            $redirectRequest->setMethod('GET');
+            $redirectRequest->setBody(null);
         }
 
         $this->setRedirectUrl($redirectRequest, $response);
