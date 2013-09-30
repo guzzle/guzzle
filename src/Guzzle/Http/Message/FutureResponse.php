@@ -53,15 +53,15 @@ class FutureResponse implements FutureResponseInterface
     public function getEffectiveUrl()
     {
         // Clients attempt to set an effective URL, so don't trigger a call
-        if (!$this->response) {
-            return null;
-        } else {
-            $this->getResponse()->getEffectiveUrl();
-        }
+        return !$this->response
+            ? null
+            : $this->getResponse()->getEffectiveUrl();
     }
 
     public function setEffectiveUrl($url)
     {
+        $this->getResponse()->setEffectiveUrl($url);
+
         return $this;
     }
 
@@ -82,6 +82,8 @@ class FutureResponse implements FutureResponseInterface
 
     public function setBody(StreamInterface $body = null)
     {
+        $this->getResponse()->setBody($body);
+
         return $this;
     }
 
