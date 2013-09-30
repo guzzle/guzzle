@@ -102,11 +102,17 @@ class RequestMediator
      */
     public function writeResponseBody($curl, $write)
     {
-        if ($response = $this->transaction->getResponse()) {
-            return $response->getBody()->write($write);
-        } else {
+        if (!($response = $this->transaction->getResponse())) {
             return 0;
         }
+
+        // Add a default body on the response if one was not found
+        if (!($body = $response->getBody())) {
+            $body = new Stream(fopen('php://temp', 'r+'));
+            $response->setBody($body);
+        }
+
+        return $body->write($write);
     }
 
     /**
