@@ -150,15 +150,6 @@ class Response implements ResponseInterface
         return  $result;
     }
 
-    public function getBody()
-    {
-        if (!$this->body) {
-            $this->body = Stream::factory();
-        }
-
-        return $this->body;
-    }
-
     public function getStatusCode()
     {
         return $this->statusCode;

@@ -25,6 +25,11 @@ trait MessageTrait
         return $this->protocolVersion;
     }
 
+    public function getBody()
+    {
+        return $this->body;
+    }
+
     public function setBody(StreamInterface $body = null)
     {
         if ($body === null) {
@@ -55,7 +60,7 @@ trait MessageTrait
         return $this;
     }
 
-    private function initializeMessage(array $options = [])
+    protected function initializeMessage(array $options = [])
     {
         if (isset($options['protocol_version'])) {
             $this->protocolVersion = $options['protocol_version'];

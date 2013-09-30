@@ -98,11 +98,6 @@ class Request implements RequestInterface
         return $this;
     }
 
-    public function getBody()
-    {
-        return $this->body;
-    }
-
     public function setUrl($url)
     {
         $this->url = $url instanceof Url ? $url : Url::fromString($url);
