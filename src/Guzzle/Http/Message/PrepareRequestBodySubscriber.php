@@ -21,12 +21,17 @@ class PrepareRequestBodySubscriber implements EventSubscriberInterface
         $request = $event->getRequest();
 
         // Set the appropriate Content-Type for a request if one is not set and there are form fields
-        if ($body = $request->getBody()) {
-            // Synchronize the POST body with the request's headers
-            if ($body instanceof PostBodyInterface) {
-                $body->applyRequestHeaders($request);
-            }
-            // Determine if the Expect header should be used
+        if (!($body = $request->getBody())) {
+            return;
+        }
+
+        // Synchronize the POST body with the request's headers
+        if ($body instanceof PostBodyInterface) {
+            $body->applyRequestHeaders($request);
+        }
+
+        // Determine if the Expect header should be used
+        if (!$request->hasHeader('Expect')) {
             $addExpect = false;
             if (null !== ($expect = $request->getConfig()['expect'])) {
                 $size = $body->getSize();
