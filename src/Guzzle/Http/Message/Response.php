@@ -102,19 +102,24 @@ class Response implements ResponseInterface
             throw new \InvalidArgumentException('Unable to parse response message');
         }
 
-        return new static($data['code'], $data['headers'], $data['body'], $data);
+        return new static(
+            $data['code'],
+            $data['headers'],
+            $data['body'] !== '' ? Stream::factory($data['body']) : null,
+            $data
+        );
     }
 
     /**
-     * @param string                          $statusCode The response status code (e.g. 200, 404, etc)
-     * @param array                           $headers    The response headers
-     * @param string|resource|StreamInterface $body       The body of the response
-     * @param array                           $options    Response message options
-     *                                                    - header_factory: Factory used to create headers
-     *                                                    - reason_phrase: Set a custom reason phrease
-     *                                                    - protocol_version: Set a custom protocol version
+     * @param string          $statusCode The response status code (e.g. 200, 404, etc)
+     * @param array           $headers    The response headers
+     * @param StreamInterface $body       The body of the response
+     * @param array           $options    Response message options
+     *                                    - header_factory: Factory used to create headers
+     *                                    - reason_phrase: Set a custom reason phrease
+     *                                    - protocol_version: Set a custom protocol version
      */
-    public function __construct($statusCode, array $headers = [], $body = null, array $options = [])
+    public function __construct($statusCode, array $headers = [], StreamInterface $body = null, array $options = [])
     {
         $this->initializeMessage($options);
         $this->statusCode = (string) $statusCode;
@@ -128,8 +133,9 @@ class Response implements ResponseInterface
         if ($headers) {
             $this->setHeaders($headers);
         }
-        if ($body !== null) {
-            $this->setBody(Stream::factory($body));
+
+        if ($body) {
+            $this->setBody($body);
         }
     }
 
