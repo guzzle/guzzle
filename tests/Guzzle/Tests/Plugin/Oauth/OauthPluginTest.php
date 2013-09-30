@@ -265,6 +265,26 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($totalLength, strlen($queryString), 'Query string has extra characters i.e. contains extra elements compared to stringsToCheck.');
     }
 
+    public function testInvalidMethodException()
+    {
+        $this->setExpectedException(
+            'Guzzle\Plugin\Oauth\Exception\InvalidMethodException'
+        );
+
+        $config = array_merge(
+            $this->config,
+            ['request_method' => 'FakeMethod']
+        );
+
+        $p = new OauthPlugin($config);
+        $event = new Event(array(
+            'request' => $this->getRequest(),
+            'timestamp' => self::TIMESTAMP
+        ));
+
+        $params = $p->onRequestBeforeSend($event);
+    }
+
     public function testDoesNotAddFalseyValuesToAuthorization()
     {
         unset($this->config['token']);

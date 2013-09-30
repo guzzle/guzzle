@@ -9,6 +9,7 @@ use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Url;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Guzzle\Plugin\Oauth\Exception\InvalidMethodException;
 
 /**
  * OAuth signing plugin
@@ -17,7 +18,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class OauthPlugin implements EventSubscriberInterface
 {
     /**
-     * Customer request method constants. See http://oauth.net/core/1.0/#consumer_req_param
+     * Consumer request method constants. See http://oauth.net/core/1.0/#consumer_req_param
      */
     const REQUEST_METHOD_HEADER = 'header';
     const REQUEST_METHOD_QUERY  = 'query';
@@ -29,7 +30,7 @@ class OauthPlugin implements EventSubscriberInterface
      * Create a new OAuth 1.0 plugin
      *
      * @param array $config Configuration array containing these parameters:
-     *     - string 'request_method'       Customer request method. Use the class constants.
+     *     - string 'request_method'       Consumer request method. Use the class constants.
      *     - string 'callback'             OAuth callback
      *     - string 'consumer_key'         Consumer key
      *     - string 'consumer_secret'      Consumer secret
@@ -80,19 +81,22 @@ class OauthPlugin implements EventSubscriberInterface
         $authorizationParams['oauth_signature']  = $this->getSignature($request, $timestamp, $nonce);
 
         switch ($this->config['request_method']) {
-        case self::REQUEST_METHOD_HEADER:
-            $request->setHeader(
-                'Authorization',
-                $this->buildAuthorizationHeader($authorizationParams)
-            );
-            break;
-        case self::REQUEST_METHOD_QUERY:
-            foreach ($authorizationParams as $key => $value) {
-                $request->getQuery()->add($key, $value);
-            }
-            break;
-        default:
-            break;
+            case self::REQUEST_METHOD_HEADER:
+                $request->setHeader(
+                    'Authorization',
+                    $this->buildAuthorizationHeader($authorizationParams)
+                );
+                break;
+            case self::REQUEST_METHOD_QUERY:
+                foreach ($authorizationParams as $key => $value) {
+                    $request->getQuery()->set($key, $value);
+                }
+                break;
+            default:
+                throw new InvalidMethodException(sprintf(
+                    'Invalid consumer method "%s"',
+                    $this->config['request_method']
+                ));
         }
 
         return $authorizationParams;
