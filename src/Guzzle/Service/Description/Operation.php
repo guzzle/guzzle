@@ -507,7 +507,7 @@ class Operation implements OperationInterface
     /**
      * Get the additionalParameters of the operation
      *
-     * @return Paramter|null
+     * @return Parameter|null
      */
     public function getAdditionalParameters()
     {
