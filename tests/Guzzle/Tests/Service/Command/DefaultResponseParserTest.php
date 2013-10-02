@@ -21,7 +21,7 @@ class DefaultResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
         $request->setResponse(new Response(200, array(
             'Content-Type' => 'application/xml'
         ), '<Foo><Baz>Bar</Baz></Foo>'), true);
-        $this->assertInstanceOf('SimpleXMLElement', $op->execute());
+        $this->assertInstanceOf(array('Foo' => array('Baz' => 'Bar')), $op->execute());
     }
 
     public function testParsesJsonResponses()

@@ -865,13 +865,13 @@ class Response extends AbstractMessage implements \Serializable
     }
 
     /**
-     * Parse the XML response body and return a \SimpleXMLElement.
+     * Parse the XML response body and return an array
      *
      * In order to prevent XXE attacks, this method disables loading external
      * entities. If you rely on external entities, then you must parse the
      * XML response manually by accessing the response body directly.
      *
-     * @return \SimpleXMLElement
+     * @return array
      * @throws RuntimeException if the response body is not in XML format
      * @link http://websec.io/2012/08/27/Preventing-XXE-in-PHP.html
      */
@@ -888,7 +888,7 @@ class Response extends AbstractMessage implements \Serializable
             throw new RuntimeException('Unable to parse response body into XML: ' . $e->getMessage());
         }
 
-        return $xml;
+        return json_decode(json_encode($xml), true);
     }
 
     /**
