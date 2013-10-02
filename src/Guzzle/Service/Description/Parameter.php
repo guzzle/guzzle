@@ -189,9 +189,11 @@ class Parameter
      */
     public function getValue($value)
     {
-        return $this->static || ($this->default !== null && $value === null && ($this->type != 'boolean' || $value !== false))
-            ? $this->default
-            : $value;
+        if ($this->static || ($this->default !== null && $value === null)) {
+            return $this->default;
+        }
+
+        return $value;
     }
 
     /**
