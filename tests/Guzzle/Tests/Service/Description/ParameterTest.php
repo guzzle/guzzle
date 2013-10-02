@@ -71,6 +71,15 @@ class ParameterTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('foo', $p->getValue('foo'));
     }
 
+    public function testZeroValueDoesNotCauseDefaultToBeReturned()
+    {
+        $d = $this->data;
+        $d['default'] = '1';
+        $d['static'] = null;
+        $p = new Parameter($d);
+        $this->assertEquals('0', $p->getValue('0'));
+    }
+
     public function testFiltersValues()
     {
         $d = $this->data;
