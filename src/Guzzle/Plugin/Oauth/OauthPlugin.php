@@ -9,7 +9,6 @@ use Guzzle\Http\Message\EntityEnclosingRequestInterface;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\Url;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Guzzle\Plugin\Oauth\Exception\InvalidMethodException;
 
 /**
  * OAuth signing plugin
@@ -71,6 +70,7 @@ class OauthPlugin implements EventSubscriberInterface
      *
      * @param Event $event Event received
      * @return array
+     * @throws \InvalidArgumentException
      */
     public function onRequestBeforeSend(Event $event)
     {
@@ -93,7 +93,7 @@ class OauthPlugin implements EventSubscriberInterface
                 }
                 break;
             default:
-                throw new InvalidMethodException(sprintf(
+                throw new \InvalidArgumentException(sprintf(
                     'Invalid consumer method "%s"',
                     $this->config['request_method']
                 ));
