@@ -60,7 +60,11 @@ class FutureResponse implements FutureResponseInterface
 
     public function setEffectiveUrl($url)
     {
-        $this->getResponse()->setEffectiveUrl($url);
+        // Effective URLs are only set on an existing response. Don't trigger
+        // a send unles a response already exists.
+        if ($this->response) {
+            $this->response->setEffectiveUrl($url);
+        }
 
         return $this;
     }
