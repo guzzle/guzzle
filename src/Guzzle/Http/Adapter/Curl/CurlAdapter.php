@@ -162,10 +162,13 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
             return;
         }
 
-        // Emit request.error?
-
         throw new RequestException(
-            sprintf('[curl] Error code %s [url] %s', $curl['result'], $request->getUrl()),
+            sprintf(
+                '[curl] (#%s) %s [url] %s',
+                $curl['result'],
+                curl_strerror($curl['result']),
+                $request->getUrl()
+            ),
             $request
         );
     }
