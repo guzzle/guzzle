@@ -3,7 +3,7 @@
 namespace Guzzle\Http\Adapter;
 
 /**
- * Adapter interface used to transfer HTTP requests
+ * Adapter interface used to transfer multiple HTTP requests
  */
 interface BatchAdapterInterface extends AdapterInterface
 {

@@ -6,6 +6,9 @@ use Guzzle\Http\ClientInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
 
+/**
+ * Represents a transactions that consists of a request, response, and client
+ */
 interface TransactionInterface
 {
     /**

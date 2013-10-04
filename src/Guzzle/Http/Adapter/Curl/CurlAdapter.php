@@ -59,24 +59,19 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
         $context = [
             'transactions' => $transactions,
             'handles'      => new \SplObjectStorage(),
-            'multi'        => $this->checkoutMultiHandle(),
-            'errors'       => []
+            'multi'        => $this->checkoutMultiHandle()
         ];
 
         foreach ($transactions as $transaction) {
             try {
                 $this->prepare($transaction, $context);
             } catch (RequestException $e) {
-                $context['errors'][] = [$transaction, $e];
+                $this->onError($transaction, $e);
             }
         }
 
         $this->perform($context);
         $this->releaseMultiHandle($context['multi']);
-
-        if ($context['errors']) {
-            // @TODO throw BatchException
-        }
     }
 
     private function prepare(TransactionInterface $transaction, array $context)
@@ -134,12 +129,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
                 new RequestAfterSendEvent($transaction)
             );
         } catch (RequestException $e) {
-            if (!$request->getEventDispatcher()->dispatch(
-                'request.error',
-                new RequestErrorEvent($transaction, $e)
-            )->isPropagationStopped()) {
-                $context['errors'][] = [$transaction, $e];
-            }
+            $this->onError($transaction, $e);
         }
     }
 
@@ -230,6 +220,19 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
         while (--$over > -1) {
             curl_multi_close(array_pop($this->multiHandles));
             array_pop($this->multiOwned);
+        }
+    }
+
+    /**
+     * Handle an error
+     */
+    private function onError(TransactionInterface $transaction, \Exception $e)
+    {
+        if (!$transaction->getRequest()->getEventDispatcher()->dispatch(
+            'request.error',
+            new RequestErrorEvent($transaction, $e)
+        )->isPropagationStopped()) {
+            throw $e;
         }
     }
 }
