@@ -4,7 +4,6 @@ namespace Guzzle\Http\Message;
 
 use Guzzle\Http\Mimetypes;
 use Guzzle\Stream\MetadataStreamInterface;
-use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
 
 /**

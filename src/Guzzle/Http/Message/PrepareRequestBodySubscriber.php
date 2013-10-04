@@ -4,6 +4,7 @@ namespace Guzzle\Http\Message;
 
 use Guzzle\Http\Event\RequestBeforeSendEvent;
 use Guzzle\Http\Message\Post\PostBodyInterface;
+use Guzzle\Stream\StreamInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -30,6 +31,16 @@ class PrepareRequestBodySubscriber implements EventSubscriberInterface
             $body->applyRequestHeaders($request);
         }
 
+        $this->addExpectHeader($request, $body);
+
+        // Never send a Transfer-Encoding: chunked and Content-Length header in the same request
+        if ((string) $request->getHeader('Transfer-Encoding') == 'chunked') {
+            $request->removeHeader('Content-Length');
+        }
+    }
+
+    protected function addExpectHeader(RequestInterface $request, StreamInterface $body)
+    {
         // Determine if the Expect header should be used
         if (!$request->hasHeader('Expect')) {
             $addExpect = false;
@@ -43,11 +54,6 @@ class PrepareRequestBodySubscriber implements EventSubscriberInterface
             if ($addExpect) {
                 $request->setHeader('Expect', '100-Continue');
             }
-        }
-
-        // Never send a Transfer-Encoding: chunked and Content-Length header in the same request
-        if ((string) $request->getHeader('Transfer-Encoding') == 'chunked') {
-            $request->removeHeader('Content-Length');
         }
     }
 }
