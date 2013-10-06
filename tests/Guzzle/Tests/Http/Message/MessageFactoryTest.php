@@ -4,7 +4,6 @@ namespace Guzzle\Tests\Http\Message;
 
 use Guzzle\Http\Client;
 use Guzzle\Http\Event\RequestEvents;
-use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\RedirectPlugin;
