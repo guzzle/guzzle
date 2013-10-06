@@ -1,7 +1,8 @@
 <?php
 
-namespace Guzzle\Http\Message;
+namespace Guzzle\Http\Subscriber;
 
+use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Event\RequestBeforeSendEvent;
 use Guzzle\Http\Message\Post\PostBodyInterface;
 use Guzzle\Stream\StreamInterface;
@@ -10,7 +11,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Prepares requests with a body before sending
  */
-class PrepareRequestBodySubscriber implements EventSubscriberInterface
+class PrepareRequestBody implements EventSubscriberInterface
 {
     public static function getSubscribedEvents()
     {
@@ -46,7 +47,7 @@ class PrepareRequestBodySubscriber implements EventSubscriberInterface
             $addExpect = false;
             if (null !== ($expect = $request->getConfig()['expect'])) {
                 $size = $body->getSize();
-                $addExpect = $size === null ? true : $size > $expect;
+                $addExpect = $size === null ? true : $size >= (int) $expect;
             } elseif (!$body->isSeekable()) {
                 // Always add the Expect 100-Continue header if the body cannot be rewound
                 $addExpect = true;

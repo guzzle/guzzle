@@ -3,16 +3,13 @@
 namespace Guzzle\Tests\Plugin\Redirect;
 
 use Guzzle\Http\Client;
-use Guzzle\Http\RedirectPlugin;
-use Guzzle\Http\Exception\TooManyRedirectsException;
 use Guzzle\Plugin\History\HistoryPlugin;
 use Guzzle\Plugin\Mock\MockPlugin;
-use Guzzle\Stream\Stream;
 
 /**
- * @covers Guzzle\Http\RedirectPlugin
+ * @covers Guzzle\Http\Subscriber\Redirect
  */
-class RedirectPluginTest extends \PHPUnit_Framework_TestCase
+class RedirectTest extends \PHPUnit_Framework_TestCase
 {
     public function testRedirectsRequests()
     {

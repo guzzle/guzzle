@@ -2,10 +2,10 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Http\HttpErrorPlugin;
+use Guzzle\Http\Subscriber\HttpError;
 use Guzzle\Http\Message\Post\PostBody;
 use Guzzle\Http\Message\Post\PostFile;
-use Guzzle\Http\RedirectPlugin;
+use Guzzle\Http\Subscriber\Redirect;
 use Guzzle\Stream\Stream;
 use Guzzle\Url\Url;
 
@@ -14,16 +14,16 @@ use Guzzle\Url\Url;
  */
 class MessageFactory implements MessageFactoryInterface
 {
-    /** @var HttpErrorPlugin */
+    /** @var HttpError */
     private $errorPlugin;
 
-    /** @var RedirectPlugin */
+    /** @var Redirect */
     private $redirectPlugin;
 
     public function __construct()
     {
-        $this->errorPlugin = new HttpErrorPlugin();
-        $this->redirectPlugin = new RedirectPlugin();
+        $this->errorPlugin = new HttpError();
+        $this->redirectPlugin = new Redirect();
     }
 
     public function createResponse($statusCode , array $headers = [], $body = null, array $options = [])
@@ -132,7 +132,7 @@ class MessageFactory implements MessageFactoryInterface
         static $methods;
         static $map = [
             'connect_timeout' => 1, 'timeout' => 1, 'verify' => 1, 'future' => 1, 'ssl_key' => 1, 'ssl_cert' => 1,
-            'proxy' => 1, 'debug' => 1, 'save_to' => 1, 'stream' => 1
+            'proxy' => 1, 'debug' => 1, 'save_to' => 1, 'stream' => 1, 'expect' => 1
         ];
 
         if (!$methods) {
@@ -165,9 +165,9 @@ class MessageFactory implements MessageFactoryInterface
     {
         if ($value !== false) {
             if ($value === 'strict') {
-                $request->getConfig()[RedirectPlugin::STRICT_REDIRECTS] = true;
+                $request->getConfig()[Redirect::STRICT_REDIRECTS] = true;
             } elseif (is_int($value)) {
-                $request->getConfig()[RedirectPlugin::MAX_REDIRECTS] = $value;
+                $request->getConfig()[Redirect::MAX_REDIRECTS] = $value;
             }
             $request->getEventDispatcher()->addSubscriber($this->redirectPlugin);
         }

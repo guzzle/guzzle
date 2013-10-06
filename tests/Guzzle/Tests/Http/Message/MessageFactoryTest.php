@@ -6,7 +6,7 @@ use Guzzle\Http\Client;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\MessageFactory;
-use Guzzle\Http\RedirectPlugin;
+use Guzzle\Http\Subscriber\Redirect;
 use Guzzle\Plugin\Mock\MockPlugin;
 use Guzzle\Stream\Stream;
 
@@ -122,13 +122,13 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     public function testCanEnableStrictRedirects()
     {
         $request = (new MessageFactory)->createRequest('GET', '/', [], null, ['allow_redirects' => 'strict']);
-        $this->assertTrue($request->getConfig()->get(RedirectPlugin::STRICT_REDIRECTS));
+        $this->assertTrue($request->getConfig()->get(Redirect::STRICT_REDIRECTS));
     }
 
     public function testCanEnableStrictRedirectsWithInt()
     {
         $request = (new MessageFactory)->createRequest('GET', '/', [], null, ['allow_redirects' => 10]);
-        $this->assertEquals(10, $request->getConfig()->get(RedirectPlugin::MAX_REDIRECTS));
+        $this->assertEquals(10, $request->getConfig()->get(Redirect::MAX_REDIRECTS));
     }
 
     public function testCanAddCookies()

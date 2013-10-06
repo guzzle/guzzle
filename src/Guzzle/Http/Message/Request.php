@@ -4,6 +4,7 @@ namespace Guzzle\Http\Message;
 
 use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Common\Collection;
+use Guzzle\Http\Subscriber\PrepareRequestBody;
 use Guzzle\Stream\StreamInterface;
 use Guzzle\Url\Url;
 
@@ -187,7 +188,7 @@ class Request implements RequestInterface
     {
         static $subscriber;
         if (!$subscriber) {
-            $subscriber = new PrepareRequestBodySubscriber();
+            $subscriber = new PrepareRequestBody();
         }
 
         $this->getEventDispatcher()->addSubscriber($subscriber);
