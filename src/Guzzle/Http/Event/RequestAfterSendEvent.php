@@ -2,29 +2,25 @@
 
 namespace Guzzle\Http\Event;
 
-use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\ResponseInterface;
 
 /**
  * Event object emitted after a request has been sent.
  *
- * You may change the result value associated with a request using the setResult() method of the event.
+ * You may change the Response associated with the request using the
+ * intercept() method of the event.
  */
 class RequestAfterSendEvent extends AbstractRequestEvent
 {
     /**
-     * Intercept the request and associate aa response or exception
+     * Intercept the request and associate a response
      *
-     * @param ResponseInterface|RequestException $result Result to set for the request
+     * @param ResponseInterface $response Response to set
      */
-    public function intercept($result)
+    public function intercept(ResponseInterface $response)
     {
-        if ($result instanceof RequestException) {
-            $this->emitError($result);
-        } else {
-            $this->getTransaction()->setResponse($result);
-            $this->stopPropagation();
-        }
+        $this->getTransaction()->setResponse($response);
+        $this->stopPropagation();
     }
 
     /**

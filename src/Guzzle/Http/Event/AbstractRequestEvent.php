@@ -5,7 +5,6 @@ namespace Guzzle\Http\Event;
 use Guzzle\Common\Event;
 use Guzzle\Http\Adapter\TransactionInterface;
 use Guzzle\Http\ClientInterface;
-use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\RequestInterface;
 
 abstract class AbstractRequestEvent extends Event
@@ -50,23 +49,12 @@ abstract class AbstractRequestEvent extends Event
     }
 
     /**
-     * Emit an error event
-     */
-    protected function emitError(RequestException $exception)
-    {
-        $this->transaction->getRequest()->getEventDispatcher()->dispatch(
-            'request.error',
-            new RequestErrorEvent($this->transaction, $exception)
-        );
-    }
-
-    /**
      * Emit an after_send event
      */
     protected function emitAfterSend()
     {
         $this->transaction->getRequest()->getEventDispatcher()->dispatch(
-            'request.after_send',
+            RequestEvents::AFTER_SEND,
             new RequestAfterSendEvent($this->transaction)
         );
     }

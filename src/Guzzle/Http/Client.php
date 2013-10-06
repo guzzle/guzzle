@@ -4,8 +4,12 @@ namespace Guzzle\Http;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\HasDispatcherTrait;
+use Guzzle\Http\Adapter\TransactionInterface;
 use Guzzle\Http\Event\ClientCreateRequestEvent;
 use Guzzle\Http\Event\ClientEvents;
+use Guzzle\Http\Event\RequestEvents;
+use Guzzle\Http\Event\RequestErrorEvent;
+use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\FutureResponseInterface;
 use Guzzle\Version;
 use Guzzle\Http\Adapter\AdapterInterface;
@@ -19,7 +23,6 @@ use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\MessageFactoryInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Url\Url;
-use Guzzle\Url\UriTemplate;
 
 /**
  * HTTP client
@@ -187,21 +190,47 @@ class Client implements ClientInterface
     public function send(RequestInterface $request)
     {
         $transaction = new Transaction($this, $request, $this->messageFactory);
+        $send = false;
 
-        if (!$request->getEventDispatcher()->dispatch(
-            'request.before_send',
-            new RequestBeforeSendEvent($transaction)
-        )->isPropagationStopped()) {
+        try {
+            $send = !$request->getEventDispatcher()->dispatch(
+                RequestEvents::BEFORE_SEND,
+                new RequestBeforeSendEvent($transaction)
+            )->isPropagationStopped();
+        } catch (\Exception $e) {
+            $this->handleSendError($e, $request, $transaction);
+        }
+
+        if ($send) {
             $this->adapter->send($transaction);
         }
 
-        $response = $transaction->getResponse();
-
-        if (!($response instanceof FutureResponseInterface) && !$response->getEffectiveUrl()) {
+        if (!($response = $transaction->getResponse())) {
+            throw new \RuntimeException('No response was associated with the transaction');
+        } elseif (!($response instanceof FutureResponseInterface) && !$response->getEffectiveUrl()) {
             $response->setEffectiveUrl($request->getUrl());
         }
 
         return $response;
+    }
+
+    /**
+     * Handle a client error
+     */
+    private function handleSendError(\Exception $e, RequestInterface $request, TransactionInterface $transaction)
+    {
+        // Convert non-request exception to a wrapped exception
+        if (!($e instanceof RequestException)) {
+            $e = new RequestException($e->getMessage(), $request, null, $e);
+        }
+
+        // Dispatch an event and allow interception
+        if (!$transaction->getRequest()->getEventDispatcher()->dispatch(
+            RequestEvents::ERROR,
+            new RequestErrorEvent($transaction, $e)
+        )->isPropagationStopped()) {
+            throw $e;
+        }
     }
 
     /**

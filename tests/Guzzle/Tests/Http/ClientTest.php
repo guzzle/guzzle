@@ -8,6 +8,7 @@ use Guzzle\Http\Event\ClientEvents;
 use Guzzle\Http\Event\RequestBeforeSendEvent;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Message\Response;
+use Guzzle\Http\Exception\RequestException;
 
 /**
  * @covers Guzzle\Http\Client
@@ -258,5 +259,56 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         );
         $this->assertSame($response2, $client->get('http://test.com'));
         $this->assertEquals('http://test.com', $response2->getEffectiveUrl());
+    }
+
+    /**
+     * @expectedException \RuntimeException
+     * @expectedExceptionMessage No response
+     */
+    public function testEnsuresResponseIsPresentAfterSending()
+    {
+        $client = new Client();
+        $client->getEventDispatcher()->addListener(RequestEvents::BEFORE_SEND, function ($e) {
+            $e->stopPropagation();
+        });
+        $client->get('/');
+    }
+
+    public function testClientHandlesErrorsDuringBeforeSend()
+    {
+        $client = new Client();
+        $client->getEventDispatcher()->addListener(RequestEvents::BEFORE_SEND, function ($e) {
+            throw new RequestException('foo', $e->getRequest());
+        });
+        $client->getEventDispatcher()->addListener(RequestEvents::ERROR, function ($e) {
+            $e->intercept(new Response(200));
+        });
+        $this->assertEquals(200, $client->get('/')->getStatusCode());
+    }
+
+    /**
+     * @expectedException \Guzzle\Http\Exception\RequestException
+     * @expectedExceptionMessage foo
+     */
+    public function testClientHandlesErrorsDuringBeforeSendAndThrowsIfUnhandled()
+    {
+        $client = new Client();
+        $client->getEventDispatcher()->addListener(RequestEvents::BEFORE_SEND, function ($e) {
+            throw new RequestException('foo', $e->getRequest());
+        });
+        $client->get('/');
+    }
+
+    /**
+     * @expectedException \Guzzle\Http\Exception\RequestException
+     * @expectedExceptionMessage foo
+     */
+    public function testClientHandlesErrorsDuringBeforeSendAndThrowsIfUnhandledAndWrapsThem()
+    {
+        $client = new Client();
+        $client->getEventDispatcher()->addListener(RequestEvents::BEFORE_SEND, function ($e) {
+            throw new \Exception('foo');
+        });
+        $client->get('/');
     }
 }
