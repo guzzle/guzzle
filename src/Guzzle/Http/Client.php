@@ -6,6 +6,7 @@ use Guzzle\Common\Collection;
 use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Http\Event\ClientCreateRequestEvent;
 use Guzzle\Http\Event\ClientEvents;
+use Guzzle\Http\Message\FutureResponseInterface;
 use Guzzle\Version;
 use Guzzle\Http\Adapter\AdapterInterface;
 use Guzzle\Http\Adapter\FutureProxyAdapter;
@@ -195,7 +196,8 @@ class Client implements ClientInterface
         }
 
         $response = $transaction->getResponse();
-        if (!$response->getEffectiveUrl()) {
+
+        if (!($response instanceof FutureResponseInterface) && !$response->getEffectiveUrl()) {
             $response->setEffectiveUrl($request->getUrl());
         }
 

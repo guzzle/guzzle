@@ -32,7 +32,21 @@ class ExceptionHandlerPool implements PoolInterface
     {
         // Store a list of failed requests
         $failed = new \SplObjectStorage();
+        $filtered = $this->getFilteredRequests($requests, $failed);
 
+        foreach ($this->pool->send($filtered) as $request => $response) {
+            if (!$failed->contains($request)) {
+                // Only yield successful requests
+                yield $request => $response;
+            } else {
+                // Remove requests from the failed list after passing
+                $failed->detach($request);
+            }
+        }
+    }
+
+    private function getFilteredRequests($requests, \SplObjectStorage $failed)
+    {
         // Wrap the passed in handler to stop event propagation, thereby preventing exceptions
         $handler = function (RequestErrorEvent $event) use ($failed) {
             $event->stopPropagation();
@@ -52,14 +66,6 @@ class ExceptionHandlerPool implements PoolInterface
             }
         };
 
-        foreach ($this->pool->send($filtered($requests)) as $request => $response) {
-            if (!$failed->contains($request)) {
-                // Only yield successful requests
-                yield $request => $response;
-            } else {
-                // Remove requests from the failed list after passing
-                $failed->detach($request);
-            }
-        }
+        return $filtered($requests);
     }
 }

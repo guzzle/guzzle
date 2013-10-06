@@ -66,7 +66,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
             try {
                 $this->prepare($transaction, $context);
             } catch (RequestException $e) {
-                $this->onError($transaction, $e);
+                $this->onError($transaction, $e, $context);
             }
         }
 
@@ -129,7 +129,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
                 new RequestAfterSendEvent($transaction)
             );
         } catch (RequestException $e) {
-            $this->onError($transaction, $e);
+            $this->onError($transaction, $e, $context);
         }
     }
 
@@ -229,12 +229,17 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
     /**
      * Handle an error
      */
-    private function onError(TransactionInterface $transaction, \Exception $e)
+    private function onError(TransactionInterface $transaction, \Exception $e, array $context)
     {
         if (!$transaction->getRequest()->getEventDispatcher()->dispatch(
             'request.error',
             new RequestErrorEvent($transaction, $e)
         )->isPropagationStopped()) {
+            // Clean up multi handles and context
+            foreach ($context['handles'] as $transaction) {
+                curl_close($context['handles'][$transaction]);
+            }
+            $this->releaseMultiHandle($context['multi']);
             throw $e;
         }
     }
