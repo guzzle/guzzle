@@ -177,7 +177,7 @@ class CurlFactory
             $options[CURLOPT_SSL_VERIFYPEER] = true;
             if ($value !== true) {
                 if (!file_exists($value)) {
-                    throw new \RuntimeException('SSL Certificate file not found: ' . $value);
+                    throw new \RuntimeException("SSL certificate authority file not found: {$value}");
                 }
                 $options[CURLOPT_CAINFO] = $value;
             }
@@ -187,21 +187,29 @@ class CurlFactory
     protected function visit_cert(RequestInterface $request, RequestMediator $mediator, &$options, $value)
     {
         if (is_array($value)) {
-            $options[CURLOPT_SSLCERT] = $value[0];
             $options[CURLOPT_SSLCERTPASSWD] = $value[1];
-        } else {
-            $options[CURLOPT_SSLCERT] = $value;
+            $value = $value[0];
         }
+
+        if (!file_exists($value)) {
+            throw new \RuntimeException("SSL certificate not found: {$value}");
+        }
+
+        $options[CURLOPT_SSLCERT] = $value;
     }
 
     protected function visit_ssl_key(RequestInterface $request, RequestMediator $mediator, &$options, $value)
     {
         if (is_array($value)) {
-            $options[CURLOPT_SSLKEY] = $value[0];
             $options[CURLOPT_SSLKEYPASSWD] = $value[1];
-        } else {
-            $options[CURLOPT_SSLKEY] = $value;
+            $value = $value[0];
         }
+
+        if (!file_exists($value)) {
+            throw new \RuntimeException("SSL private key not found: {$value}");
+        }
+
+        $options[CURLOPT_SSLKEY] = $value;
     }
 
     protected function visit_auth(RequestInterface $request, RequestMediator $mediator, &$options, $value)
@@ -215,7 +223,7 @@ class CurlFactory
 
         $scheme = isset($value[2]) ? strtolower($value[2]) : 'basic';
         if (!isset($authMap[$scheme])) {
-            throw new \InvalidArgumentException('Invalud authentication scheme: ' . $scheme);
+            throw new \InvalidArgumentException('Invalid authentication scheme: ' . $scheme);
         }
 
         $scheme = $authMap[$scheme];

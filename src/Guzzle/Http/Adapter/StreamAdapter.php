@@ -220,7 +220,7 @@ class StreamAdapter implements AdapterInterface
             $options['http']['verify_peer'] = true;
             if ($value !== true) {
                 if (!file_exists($value)) {
-                    throw new \RuntimeException('SSL Certificate file not found: ' . $value);
+                    throw new \RuntimeException("SSL certificate authority file not found: {$value}");
                 }
                 $options['http']['allow_self_signed'] = true;
                 $options['http']['cafile'] = $value;
@@ -233,11 +233,15 @@ class StreamAdapter implements AdapterInterface
     private function visit_cert(RequestInterface $request, &$options, $value)
     {
         if (is_array($value)) {
-            $options['http']['local_cert'] = $value[0];
             $options['http']['passphrase'] = $value[1];
-        } else {
-            $options['http']['local_cert'] = $value;
+            $value = $value[0];
         }
+
+        if (!file_exists($value)) {
+            throw new \RuntimeException("SSL certificate not found: {$value}");
+        }
+
+        $options['http']['local_cert'] = $value;
     }
 
     private function visit_debug(RequestInterface $request, &$options, $value)
