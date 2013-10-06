@@ -176,6 +176,9 @@ class CurlFactory
             $options[CURLOPT_SSL_VERIFYHOST] = 2;
             $options[CURLOPT_SSL_VERIFYPEER] = true;
             if ($value !== true) {
+                if (!file_exists($value)) {
+                    throw new \RuntimeException('SSL Certificate file not found: ' . $value);
+                }
                 $options[CURLOPT_CAINFO] = $value;
             }
         }

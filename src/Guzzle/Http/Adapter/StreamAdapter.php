@@ -219,6 +219,9 @@ class StreamAdapter implements AdapterInterface
         if ($value === true || is_string($value)) {
             $options['http']['verify_peer'] = true;
             if ($value !== true) {
+                if (!file_exists($value)) {
+                    throw new \RuntimeException('SSL Certificate file not found: ' . $value);
+                }
                 $options['http']['allow_self_signed'] = true;
                 $options['http']['cafile'] = $value;
             }
