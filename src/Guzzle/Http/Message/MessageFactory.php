@@ -166,6 +166,8 @@ class MessageFactory implements MessageFactoryInterface
         if ($value !== false) {
             if ($value === 'strict') {
                 $request->getConfig()[RedirectPlugin::STRICT_REDIRECTS] = true;
+            } elseif (is_int($value)) {
+                $request->getConfig()[RedirectPlugin::MAX_REDIRECTS] = $value;
             }
             $request->getEventDispatcher()->addSubscriber($this->redirectPlugin);
         }

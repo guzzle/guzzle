@@ -126,6 +126,12 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($request->getConfig()->get(RedirectPlugin::STRICT_REDIRECTS));
     }
 
+    public function testCanEnableStrictRedirectsWithInt()
+    {
+        $request = (new MessageFactory)->createRequest('GET', '/', [], null, ['allow_redirects' => 10]);
+        $this->assertEquals(10, $request->getConfig()->get(RedirectPlugin::MAX_REDIRECTS));
+    }
+
     public function testCanAddCookies()
     {
         $request = (new MessageFactory)->createRequest('GET', '/', [], null, ['cookies' => ['Foo' => 'Bar']]);

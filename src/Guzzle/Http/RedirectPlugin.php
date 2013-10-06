@@ -16,7 +16,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class RedirectPlugin implements EventSubscriberInterface
 {
     const STRICT_REDIRECTS = 'strict_redirects';
-    private $defaultMaxRedirects = 5;
+    const MAX_REDIRECTS = 'max_redirects';
 
     public static function getSubscribedEvents()
     {
@@ -34,9 +34,10 @@ class RedirectPlugin implements EventSubscriberInterface
         $request = $event->getRequest();
         $redirectCount = 0;
         $redirectResponse = $response = $event->getResponse();
+        $max = $request->getConfig()->get(self::MAX_REDIRECTS) ?: 5;
 
         while (substr($redirectResponse->getStatusCode(), 0, 1) == '3' && $redirectResponse->hasHeader('Location')) {
-            if (++$redirectCount > $this->defaultMaxRedirects) {
+            if (++$redirectCount > $max) {
                 throw new TooManyRedirectsException("Will not follow more than {$redirectCount} redirects", $request);
             }
             $redirectRequest = $this->createRedirectRequest($request, $redirectResponse);
