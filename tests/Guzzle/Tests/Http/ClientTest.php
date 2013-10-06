@@ -215,6 +215,15 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function testUsesBaseUrlCombinedWithProvidedUrlViaUriTemplate()
+    {
+        $client = new Client(['base_url' => 'http://www.foo.com/baz?bam=bar']);
+        $this->assertEquals(
+            'http://www.foo.com/baz/bar/123',
+            $client->createRequest('GET', ['bar/{bam}', ['bam' => '123']])->getUrl()
+        );
+    }
+
     public function testSettingAbsoluteUrlOverridesBaseUrl()
     {
         $client = new Client(['base_url' => 'http://www.foo.com/baz?bam=bar']);
