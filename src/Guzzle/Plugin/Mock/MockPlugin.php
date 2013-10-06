@@ -8,7 +8,7 @@ use Guzzle\Http\Event\RequestBeforeSendEvent;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Event\GotResponseHeadersEvent;
 use Guzzle\Http\Exception\RequestException;
-use Guzzle\Http\Message\Response;
+use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\ResponseInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -25,12 +25,16 @@ class MockPlugin implements EventSubscriberInterface, \Countable
     /** @var bool Whether or not to consume an entity body when a mock response is served */
     private $readBodies;
 
+    /** @var MessageFactory */
+    private $factory;
+
     /**
      * @param array $items      Array of responses or exceptions to queue
      * @param bool  $readBodies Set to false to not consume the entity body of a request when a mock is served
      */
     public function __construct(array $items = [], $readBodies = true)
     {
+        $this->factory = new MessageFactory();
         $this->readBodies = $readBodies;
         $this->addMultiple($items);
     }
@@ -78,8 +82,8 @@ class MockPlugin implements EventSubscriberInterface, \Countable
     {
         if (is_string($response)) {
             $response = file_exists($response)
-                ? Response::fromMessage(file_get_contents($response))
-                : Response::fromMessage($response);
+                ? $this->factory->fromMessage(file_get_contents($response))
+                : $this->factory->fromMessage($response);
         } elseif (!($response instanceof ResponseInterface)) {
             throw new \InvalidArgumentException('Response must a message string, response object, or path to a file');
         }

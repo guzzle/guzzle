@@ -2,7 +2,6 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
 
 /**
@@ -82,33 +81,6 @@ class Response implements ResponseInterface
 
     /** @var string The effective URL that returned this response */
     private $effectiveUrl;
-
-    /**
-     * Create a new Response based on a message string
-     *
-     * @param string $message Response message
-     *
-     * @return self
-     * @throws \InvalidArgumentException if the message cannot be parsed
-     */
-    public static function fromMessage($message)
-    {
-        static $factory;
-        if (!$factory) {
-            $factory = new MessageParser();
-        }
-
-        if (!($data = ($factory->parseResponse($message)))) {
-            throw new \InvalidArgumentException('Unable to parse response message');
-        }
-
-        return new static(
-            $data['code'],
-            $data['headers'],
-            $data['body'] !== '' ? Stream::factory($data['body']) : null,
-            $data
-        );
-    }
 
     /**
      * @param string          $statusCode The response status code (e.g. 200, 404, etc)

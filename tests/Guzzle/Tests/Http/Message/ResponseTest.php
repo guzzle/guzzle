@@ -38,37 +38,6 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\nfoo", (string) $response);
     }
 
-    public function testCreatesFromMessage()
-    {
-        $response = Response::fromMessage("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ntest");
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals('4', $response->getHeader('Content-Length'));
-        $this->assertEquals('test', $response->getBody(true));
-
-        // Make sure that automatic Content-Length works
-        $response = Response::fromMessage("HTTP/1.1 200 OK\r\n\r\ntest");
-        $this->assertEquals('4', $response->getHeader('Content-Length'));
-        $this->assertEquals('test', $response->getBody(true));
-    }
-
-    public function testFactoryCanCreateHeadResponses()
-    {
-        $response = Response::fromMessage("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\n");
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals(null, $response->getBody());
-        $this->assertEquals('4', $response->getHeader('Content-Length'));
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testFactoryRequiresMessage()
-    {
-        Response::fromMessage('');
-    }
-
     public function testParsesJsonResponses()
     {
         $response = new Response(200, [], Stream::factory('{"foo": "bar"}'));

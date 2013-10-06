@@ -56,6 +56,26 @@ class MultipartBody implements StreamInterface
         return $buffer;
     }
 
+    public function getContents($maxLength = -1)
+    {
+        $buffer = '';
+
+        while (!$this->eof()) {
+            if ($maxLength === -1) {
+                $read = 32768;
+            } else {
+                $len = strlen($buffer);
+                if ($len == $maxLength) {
+                    break;
+                }
+                $read = min(32768, $maxLength - $len);
+            }
+            $buffer .= $this->read($read);
+        }
+
+        return $buffer;
+    }
+
     /**
      * Get the boundary
      *
@@ -264,6 +284,11 @@ class MultipartBody implements StreamInterface
 
     private function getFileHeaders(PostFileInterface $file)
     {
-        return "--{$this->boundary}\r\n" . $file->getHeaders() . "\r\n\r\n";
+        $headers = '';
+        foreach ($file->getHeaders() as $key => $value) {
+            $headers .= $key . ': ' . $value . "\r\n";
+        }
+
+        return "--{$this->boundary}\r\n" . trim($headers) . "\r\n\r\n";
     }
 }

@@ -4,6 +4,9 @@ namespace Guzzle\Tests\Http\Message;
 
 use Guzzle\Http\Message\HeaderValues;
 
+/**
+ * @covers Guzzle\Http\Message\HeaderValues
+ */
 class HeaderValuesTest extends \PHPUnit_Framework_TestCase
 {
     public function testCanSetInConstructor()

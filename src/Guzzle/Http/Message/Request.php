@@ -197,10 +197,12 @@ class Request implements RequestInterface
     {
         $port = $this->url->getPort();
         $scheme = $this->url->getScheme();
-        if (($port == 80 && $scheme == 'http') || ($port == 443 && $scheme == 'https')) {
-            $this->setHeader('Host', $this->url->getHost());
-        }  else {
-            $this->setHeader('Host', $this->url->getHost() . ':' . $port);
+        if ($host = $this->url->getHost()) {
+            if (($port == 80 && $scheme == 'http') || ($port == 443 && $scheme == 'https')) {
+                $this->setHeader('Host', $this->url->getHost());
+            }  else {
+                $this->setHeader('Host', $this->url->getHost() . ':' . $port);
+            }
         }
     }
 }

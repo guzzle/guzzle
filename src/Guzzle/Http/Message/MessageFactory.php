@@ -4,7 +4,6 @@ namespace Guzzle\Http\Message;
 
 use Guzzle\Http\HttpErrorPlugin;
 use Guzzle\Http\Message\Post\PostBody;
-use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Post\PostFile;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Stream\Stream;
@@ -29,6 +28,10 @@ class MessageFactory implements MessageFactoryInterface
 
     public function createResponse($statusCode , array $headers = [], $body = null, array $options = [])
     {
+        if (null !== $body) {
+            $body = Stream::factory($body);
+        }
+
         return new Response($statusCode, $headers, $body, $options);
     }
 
@@ -41,6 +44,8 @@ class MessageFactory implements MessageFactoryInterface
             null,
             isset($options['constructor_options']) ? $options['constructor_options'] : []
         );
+
+        unset($options['constructor_options']);
 
         if ($body) {
             if (is_array($body)) {
@@ -58,11 +63,12 @@ class MessageFactory implements MessageFactoryInterface
     }
 
     /**
-     * Create a request from an HTTP message string
+     * Create a request or response object from an HTTP message string
      *
      * @param string $message Message to parse
      *
-     * @return RequestInterface
+     * @return RequestInterface|ResponseInterface
+     * @throws \InvalidArgumentException if unable to parse a message
      */
     public function fromMessage($message)
     {
@@ -71,34 +77,33 @@ class MessageFactory implements MessageFactoryInterface
             $parser = new MessageParser();
         }
 
-        return $this->fromParsedRequest($parser->parseRequest($message));
-    }
-
-    /**
-     * Create a request using an array returned from a MessageParserInterface
-     *
-     * @param array $parsed Parsed request data
-     *
-     * @return RequestInterface
-     */
-    public function fromParsedRequest(array $parsed)
-    {
-        $request = $this->createRequest(
-            $parsed['method'],
-            Url::buildUrl($parsed['request_url']),
-            $parsed['headers'],
-            $parsed['body'],
-            $parsed
-        );
-
-        // "Expect: 100-Continue" header is added when using a raw request body for PUT or POST requests.
-        // This factory method should accurately reflect the message, so here we are removing the Expect
-        // header if one was not supplied in the message.
-        if (!isset($parsed['headers']['Expect']) && !isset($parsed['headers']['expect'])) {
-            $request->removeHeader('Expect');
+        // Parse a response
+        if (strtoupper(substr($message, 0, 4)) == 'HTTP') {
+            $data = $parser->parseResponse($message);
+            return $this->createResponse(
+                $data['code'],
+                $data['headers'],
+                $data['body'] === '' ? null : $data['body'],
+                $data
+            );
         }
 
-        return $request;
+        // Parse a request
+        if (!($data = ($parser->parseRequest($message)))) {
+            throw new \InvalidArgumentException('Unable to parse request message');
+        }
+
+        return $this->createRequest(
+            $data['method'],
+            Url::buildUrl($data['request_url']),
+            $data['headers'],
+            $data['body'] === '' ? null : $data['body'],
+            [
+                'constructor_options' => [
+                    'protocol_version' => $data['protocol_version']
+                ]
+            ]
+        );
     }
 
     /**
@@ -125,6 +130,11 @@ class MessageFactory implements MessageFactoryInterface
     protected function applyOptions(RequestInterface $request, array $options = array())
     {
         static $methods;
+        static $map = [
+            'connect_timeout' => 1, 'timeout' => 1, 'verify' => 1, 'future' => 1, 'ssl_key' => 1, 'ssl_cert' => 1,
+            'proxy' => 1, 'debug' => 1, 'save_to' => 1
+        ];
+
         if (!$methods) {
             $methods = array_flip(get_class_methods(__CLASS__));
         }
@@ -134,9 +144,10 @@ class MessageFactory implements MessageFactoryInterface
             $method = "visit_{$key}";
             if (isset($methods[$method])) {
                 $this->{$method}($request, $value);
+            } elseif (isset($map[$key])) {
+                $request->getConfig()->set($key, $value);
             } else {
-                // Set on the transfer options by default if no visitor is found
-                $request->getConfig()[$key] = $value;
+                throw new \InvalidArgumentException("No method is configured to handle the {$key} config key");
             }
         }
     }
@@ -175,12 +186,12 @@ class MessageFactory implements MessageFactoryInterface
             );
         }
 
-        if (!isset($auth[2]) || strtolower($auth[2]) == 'basic') {
+        if (!isset($value[2]) || strtolower($value[2]) === 'basic') {
             // We can easily handle simple basic Auth in the factory
             $request->setHeader('Authorization', 'Basic ' . base64_encode("$value[0]:$value[1]"));
         } else {
             // Rely on an adapter to implement the authorization protocol (e.g. cURL)
-            $request->getConfig()['auth'] = $value;
+            $request->getConfig()->set('auth', $value);
         }
     }
 

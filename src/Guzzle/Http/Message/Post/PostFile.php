@@ -5,6 +5,7 @@ namespace Guzzle\Http\Message\Post;
 use Guzzle\Http\Message\HasHeadersTrait;
 use Guzzle\Http\Mimetypes;
 use Guzzle\Stream\MetadataStreamInterface;
+use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
 
 /**
@@ -27,7 +28,9 @@ class PostFile implements PostFileInterface
      */
     public static function create($name, $data)
     {
-        return $data instanceof self ? $data : new self($name, $data);
+        return $data instanceof PostFileInterface
+            ? $data
+            : new self($name, Stream::factory($data));
     }
 
     /**
