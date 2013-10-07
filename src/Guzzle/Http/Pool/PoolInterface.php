@@ -19,7 +19,7 @@ interface PoolInterface
      *
      * @param \Traversable $requests Array, iterator, or Generator that
      *                               returns RequestInterface objects
-     * @return \Generator
+     * @return \Iterator
      */
     public function send($requests);
 }

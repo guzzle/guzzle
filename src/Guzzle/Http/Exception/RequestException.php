@@ -42,9 +42,10 @@ class RequestException extends TransferException
         \Exception $previous = null
     ) {
         if (!$response) {
-            $label = 'Error completing request';
-            $className = __CLASS__;
-        } elseif ($response->getStatusCode()[0] == '4') {
+            return new self('Error completing request', $request, null, $previous);
+        }
+
+        if ($response->getStatusCode()[0] == '4') {
             $label = 'Client error response';
             $className = __NAMESPACE__ . '\\ClientErrorResponseException';
         } elseif ($response->getStatusCode()[0] == '5') {
