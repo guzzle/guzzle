@@ -1,6 +1,7 @@
 <?php
 
 namespace Guzzle\Tests\Http\Message;
+
 use Guzzle\Http\Message\Request;
 use Guzzle\Stream\Stream;
 use Symfony\Component\EventDispatcher\EventDispatcher;

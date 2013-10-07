@@ -17,41 +17,30 @@ class PostFile implements PostFileInterface
 
     private $name;
     private $filename;
-
-    /**
-     * Factory method used to create a PostFile from a number of different types
-     *
-     * @param string                                            $name Name of the form field
-     * @param PostFileInterface|StreamInterface|resource|string $data Data used to create the file
-     *
-     * @return self
-     */
-    public static function create($name, $data)
-    {
-        return $data instanceof PostFileInterface
-            ? $data
-            : new self($name, Stream::factory($data));
-    }
+    private $content;
 
     /**
      * @param null            $name     Name of the form field
-     * @param StreamInterface $content  Data to send
+     * @param mixed           $content  Data to send
      * @param null            $filename Filename content-disposition attribute
      * @param array           $headers  Array of headers to set on the file (can override any default headers)
      * @throws \RuntimeException if the filename is not passed or cannot be determined
      */
-    public function __construct($name, StreamInterface $content, $filename = null, array $headers = [])
+    public function __construct($name, $content, $filename = null, array $headers = [])
     {
-        $this->content = $content;
+        $this->setHeaders($headers);
         $this->name = $name;
-        $this->filename = $filename;
-
-        if (!$this->filename && $content instanceof MetadataStreamInterface) {
-            $this->filename = $content->getMetadata('uri');
+        if (!($this->content instanceof StreamInterface)) {
+            $this->content = Stream::factory($content);
         }
 
-        if (!$this->filename) {
-            throw new \RuntimeException('Could not determine filename from arguments or stream');
+        $this->filename = $filename;
+        if (!$this->filename && $this->content instanceof MetadataStreamInterface) {
+            $this->filename = $this->content->getMetadata('uri');
+        }
+
+        if (!$this->filename || substr($this->filename, 0, 6) === 'php://') {
+            $this->filename = $this->name;
         }
 
         // Account for nested MultipartBody objects

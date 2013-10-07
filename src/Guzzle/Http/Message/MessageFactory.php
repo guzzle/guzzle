@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http\Message;
 
+use Guzzle\Http\Message\Post\PostFileInterface;
 use Guzzle\Http\Subscriber\HttpError;
 use Guzzle\Http\Message\Post\PostBody;
 use Guzzle\Http\Message\Post\PostFile;
@@ -118,8 +119,10 @@ class MessageFactory implements MessageFactoryInterface
         foreach ($body as $key => $value) {
             if (is_string($value) || is_array($value)) {
                 $post->setField($key, $value);
+            } elseif ($value instanceof PostFileInterface) {
+                $post->addFile($value);
             } else {
-                $post->addFile(PostFile::create($key, $value));
+                $post->addFile(new PostFile($key, $value));
             }
         }
 
