@@ -189,7 +189,7 @@ class Client implements ClientInterface
 
     public function send(RequestInterface $request)
     {
-        $transaction = new Transaction($this, $request, $this->messageFactory);
+        $transaction = new Transaction($this, $request);
         $send = false;
 
         try {
