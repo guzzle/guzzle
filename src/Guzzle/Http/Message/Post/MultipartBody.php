@@ -45,9 +45,7 @@ class MultipartBody implements StreamInterface
 
     public function __toString()
     {
-        if (!$this->seek(0)) {
-            return '';
-        }
+        $this->seek(0);
 
         return $this->getContents();
     }
@@ -58,13 +56,13 @@ class MultipartBody implements StreamInterface
 
         while (!$this->eof()) {
             if ($maxLength === -1) {
-                $read = 32768;
+                $read = 1048576;
             } else {
                 $len = strlen($buffer);
                 if ($len == $maxLength) {
                     break;
                 }
-                $read = min(32768, $maxLength - $len);
+                $read = min(1048576, $maxLength - $len);
             }
             $buffer .= $this->read($read);
         }
@@ -84,10 +82,13 @@ class MultipartBody implements StreamInterface
 
     public function close()
     {
-        $this->fields = $this->files = [];
+        $this->detach();
     }
 
-    public function detach() {}
+    public function detach()
+    {
+        $this->fields = $this->files = [];
+    }
 
     /**
      * The stream has reached an EOF when all of the fields and files have been read
@@ -109,11 +110,6 @@ class MultipartBody implements StreamInterface
     }
 
     public function isWritable()
-    {
-        return false;
-    }
-
-    public function isLocal()
     {
         return false;
     }

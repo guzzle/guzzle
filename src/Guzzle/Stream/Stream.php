@@ -252,7 +252,7 @@ class Stream implements MetadataStreamInterface
         }
 
         $ctx = hash_init($algo);
-        while ($data = $stream->read(8192)) {
+        while ($data = $stream->read(1048576)) {
             hash_update($ctx, $data);
         }
 

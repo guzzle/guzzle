@@ -30,8 +30,9 @@ class PostFile implements PostFileInterface
     {
         $this->setHeaders($headers);
         $this->name = $name;
+        $this->content = $content;
         if (!($this->content instanceof StreamInterface)) {
-            $this->content = Stream::factory($content);
+            $this->content = Stream::factory($content, true);
         }
 
         $this->filename = $filename;
