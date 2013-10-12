@@ -57,7 +57,7 @@ class PostFile implements PostFileInterface
 
         // Set a default content-disposition header if one was no provided
         if (!$this->hasHeader('content-disposition')) {
-            $disposition = 'form-data; filename="' . $this->filename . '"; name="' . $name . '"';
+            $disposition = 'form-data; filename="' . basename($this->filename) . '"; name="' . $name . '"';
             $this->setHeader('Content-Disposition', $disposition);
         }
 

@@ -12,11 +12,11 @@ class PostFileTest extends \PHPUnit_Framework_TestCase
 {
     public function testCreatesFromString()
     {
-        $p = new PostFile('foo', 'hi', 'test.php');
+        $p = new PostFile('foo', 'hi', '/path/to/test.php');
         $this->assertInstanceOf('Guzzle\Http\Message\Post\PostFileInterface', $p);
         $this->assertEquals('hi', $p->getContent());
         $this->assertEquals('foo', $p->getName());
-        $this->assertEquals('test.php', $p->getFilename());
+        $this->assertEquals('/path/to/test.php', $p->getFilename());
         $this->assertEquals('form-data; filename="test.php"; name="foo"', $p->getHeader('content-disposition'));
     }
 
