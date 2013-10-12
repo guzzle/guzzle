@@ -22,7 +22,6 @@ class PostBody implements PostBodyInterface
 
     private $fields = [];
     private $files = [];
-    private $size;
     private $forceMultipart = false;
 
     /**
@@ -32,7 +31,7 @@ class PostBody implements PostBodyInterface
      */
     public function applyRequestHeaders(RequestInterface $request)
     {
-        if ($this->files) {
+        if ($this->files || $this->forceMultipart) {
             $request->setHeader('Content-Type', 'multipart/form-data; boundary=' . $this->getBody()->getBoundary());
         } elseif ($this->fields) {
             $request->setHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -161,11 +160,7 @@ class PostBody implements PostBodyInterface
 
     public function eof()
     {
-        if ($this->body) {
-            return $this->body->eof();
-        } else {
-            return (bool) ($this->fields ?: $this->files);
-        }
+        return $this->getBody()->eof();
     }
 
     public function tell()
@@ -190,16 +185,7 @@ class PostBody implements PostBodyInterface
 
     public function getSize()
     {
-        if (!$this->size) {
-            $this->size = $this->getBody()->getSize();
-        }
-
-        return $this->size;
-    }
-
-    public function getUri()
-    {
-        return null;
+        return $this->getBody()->getSize();
     }
 
     public function seek($offset, $whence = SEEK_SET)
