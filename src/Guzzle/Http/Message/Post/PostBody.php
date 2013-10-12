@@ -267,7 +267,7 @@ class PostBody implements PostBodyInterface
             ->setAggregator($this->getAggregator())
             ->setEncodingType(QueryString::RFC1738);
 
-        return Stream::factory($query);
+        return Stream::factory($query, true);
     }
 
     /**
