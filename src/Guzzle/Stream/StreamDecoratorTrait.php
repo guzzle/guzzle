@@ -20,16 +20,31 @@ trait StreamDecoratorTrait
 
     public function __toString()
     {
-        $buffer = '';
-
         try {
             $this->seek(0);
-            while (!$this->eof()) {
-                $buffer .= $this->read(32768);
-            }
+            return $this->getContents();
         } catch (\Exception $e) {
             // Really, PHP? https://bugs.php.net/bug.php?id=53648
             trigger_error('StreamDecorator::__toString exception: ' . (string) $e, E_USER_ERROR);
+            return '';
+        }
+    }
+
+    public function getContents($maxLength = -1)
+    {
+        $buffer = '';
+        if ($maxLength == 0) {
+            return $buffer;
+        }
+
+        while (!$this->eof()) {
+            if ($maxLength == -1) {
+                $buffer .= $this->read(32768);
+            } elseif (strlen($buffer) < $maxLength) {
+                $buffer .= $this->read(max(1, min($maxLength, $maxLength - strlen($buffer))));
+            } else {
+                break;
+            }
         }
 
         return $buffer;
@@ -108,26 +123,6 @@ trait StreamDecoratorTrait
     public function read($length)
     {
         return $this->stream->read($length);
-    }
-
-    public function getContents($maxLength = -1)
-    {
-        $buffer = '';
-        if ($maxLength == 0) {
-            return $buffer;
-        }
-
-        while (!$this->eof()) {
-            if ($maxLength == -1) {
-                $buffer .= $this->read(32768);
-            } elseif (strlen($buffer) < $maxLength) {
-                $buffer .= $this->read(max(1, min($maxLength, $maxLength - strlen($buffer))));
-            } else {
-                break;
-            }
-        }
-
-        return $buffer;
     }
 
     public function write($string)

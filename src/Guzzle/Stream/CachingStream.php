@@ -27,28 +27,6 @@ class CachingStream implements StreamInterface, MetadataStreamInterface
         $this->stream = $target ?: new Stream(fopen('php://temp', 'r+'));
     }
 
-    /**
-     * Will give the contents of the buffer followed by the exhausted remote stream.
-     *
-     * Warning: Loads the entire stream into memory
-     *
-     * @return string
-     */
-    public function __toString()
-    {
-        $pos = $this->tell();
-        $this->seek(0);
-
-        $str = '';
-        while (!$this->eof()) {
-            $str .= $this->read(16384);
-        }
-
-        $this->seek($pos);
-
-        return $str;
-    }
-
     public function getSize()
     {
         return max($this->stream->getSize(), $this->remoteStream->getSize());

@@ -45,15 +45,11 @@ class MultipartBody implements StreamInterface
 
     public function __toString()
     {
-        $buffer = '';
-        if ($this->seek(0)) {
-            while (!$this->eof()) {
-                $buffer .= $this->read(32768);
-            }
-            $this->seek(0);
+        if (!$this->seek(0)) {
+            return '';
         }
 
-        return $buffer;
+        return $this->getContents();
     }
 
     public function getContents($maxLength = -1)
@@ -135,11 +131,6 @@ class MultipartBody implements StreamInterface
         }
 
         return true;
-    }
-
-    public function setSize($size)
-    {
-        $this->size = $size;
     }
 
     public function getSize()
