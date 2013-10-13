@@ -32,8 +32,8 @@ class RequestErrorEvent extends AbstractRequestEvent
      */
     public function intercept(ResponseInterface $response)
     {
-        $this->getTransaction()->setResponse($response);
         $this->stopPropagation();
+        $this->getTransaction()->setResponse($response);
         $this->emitAfterSend();
     }
 
