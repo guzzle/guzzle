@@ -154,6 +154,7 @@ class PostBody implements PostBodyInterface
     public function detach()
     {
         $this->body = null;
+        $this->fields = $this->files = [];
 
         return $this;
     }

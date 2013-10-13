@@ -7,6 +7,7 @@ use Guzzle\Http\Adapter\BatchAdapterInterface;
 use Guzzle\Http\Adapter\TransactionInterface;
 use Guzzle\Http\Event\RequestAfterSendEvent;
 use Guzzle\Http\Event\RequestErrorEvent;
+use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Exception\AdapterException;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\MessageFactoryInterface;
@@ -52,6 +53,8 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
     public function send(TransactionInterface $transaction)
     {
         $this->batch([$transaction]);
+
+        return $transaction->getResponse();
     }
 
     public function batch(array $transactions)
@@ -125,7 +128,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
         try {
             $this->isCurlException($request, $curl);
             $request->getEventDispatcher()->dispatch(
-                'request.after_send',
+                RequestEvents::AFTER_SEND,
                 new RequestAfterSendEvent($transaction)
             );
         } catch (RequestException $e) {
@@ -232,7 +235,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
     private function onError(TransactionInterface $transaction, \Exception $e, array $context)
     {
         if (!$transaction->getRequest()->getEventDispatcher()->dispatch(
-            'request.error',
+            RequestEvents::ERROR,
             new RequestErrorEvent($transaction, $e)
         )->isPropagationStopped()) {
             // Clean up multi handles and context

@@ -5,9 +5,11 @@ namespace Guzzle\Http\Adapter;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Event\RequestAfterSendEvent;
 use Guzzle\Http\Message\ResponseInterface;
+use Guzzle\Http\Event\RequestErrorEvent;
 
 /**
  * Adapter that can be used to associate mock responses with a transaction
+ * while still emulating the event workflow of real adapters.
  */
 class MockAdapter implements AdapterInterface
 {
@@ -25,14 +27,25 @@ class MockAdapter implements AdapterInterface
 
     public function send(TransactionInterface $transaction)
     {
-        if (is_callable($this->response)) {
-            $transaction->setResponse($this->response($transaction));
-        } else {
-            $transaction->setResponse($this->response);
+        try {
+            $transaction->setResponse(
+                is_callable($this->response)
+                    ? $this->response($transaction)
+                    : $this->response
+            );
+            $transaction->getRequest()->getEventDispatcher()->dispatch(
+                RequestEvents::AFTER_SEND,
+                new RequestAfterSendEvent($transaction)
+            );
+        } catch (\Exception $e) {
+            if (!$transaction->getRequest()->getEventDispatcher()->dispatch(
+                RequestEvents::ERROR,
+                new RequestErrorEvent($transaction, $e)
+            )->isPropagationStopped()) {
+                throw $e;
+            }
         }
-        $transaction->getRequest()->getEventDispatcher()->dispatch(
-            RequestEvents::AFTER_SEND,
-            new RequestAfterSendEvent($transaction)
-        );
+
+        return $transaction->getResponse();
     }
 }

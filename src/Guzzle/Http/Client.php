@@ -190,22 +190,24 @@ class Client implements ClientInterface
     public function send(RequestInterface $request)
     {
         $transaction = new Transaction($this, $request);
-        $send = false;
+        $response = null;
 
         try {
-            $send = !$request->getEventDispatcher()->dispatch(
+            if ($request->getEventDispatcher()->dispatch(
                 RequestEvents::BEFORE_SEND,
                 new RequestBeforeSendEvent($transaction)
-            )->isPropagationStopped();
+            )->isPropagationStopped()) {
+                $response = $transaction->getResponse();
+            }
         } catch (\Exception $e) {
-            $this->handleSendError($e, $request, $transaction);
+            $response = $this->handleSendError($e, $request, $transaction);
         }
 
-        if ($send) {
-            $this->adapter->send($transaction);
+        if (!$response) {
+            $response = $this->adapter->send($transaction);
         }
 
-        if (!($response = $transaction->getResponse())) {
+        if (!$response) {
             throw new \RuntimeException('No response was associated with the transaction');
         } elseif (!($response instanceof FutureResponseInterface) && !$response->getEffectiveUrl()) {
             $response->setEffectiveUrl($request->getUrl());
@@ -225,12 +227,14 @@ class Client implements ClientInterface
         }
 
         // Dispatch an event and allow interception
-        if (!$transaction->getRequest()->getEventDispatcher()->dispatch(
+        if (!$request->getEventDispatcher()->dispatch(
             RequestEvents::ERROR,
             new RequestErrorEvent($transaction, $e)
         )->isPropagationStopped()) {
             throw $e;
         }
+
+        return $transaction->getResponse();
     }
 
     /**

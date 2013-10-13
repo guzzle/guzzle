@@ -3,7 +3,7 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Http\Adapter\AdapterInterface;
-use Guzzle\Http\Adapter\Transaction;
+use Guzzle\Http\Adapter\TransactionInterface;
 use Guzzle\Stream\StreamInterface;
 
 class FutureResponse implements FutureResponseInterface
@@ -12,7 +12,7 @@ class FutureResponse implements FutureResponseInterface
     private $transaction;
     private $response;
 
-    public function __construct(Transaction $transaction, AdapterInterface $adapter)
+    public function __construct(TransactionInterface $transaction, AdapterInterface $adapter)
     {
         $this->transaction = $transaction;
         $this->adapter = $adapter;

@@ -26,9 +26,11 @@ class FutureProxyAdapter implements AdapterInterface
     {
         if ($transaction->getRequest()->getConfig()['future']) {
             $transaction->getRequest()->getConfig()->set('future', false);
-            $transaction->setResponse(new FutureResponse($transaction, $this->futureAdapter));
-        } else {
-            $this->defaultAdapter->send($transaction);
+            $response = new FutureResponse($transaction, $this->futureAdapter);
+            $transaction->setResponse($response);
+            return $response;
         }
+
+        return $this->defaultAdapter->send($transaction);
     }
 }

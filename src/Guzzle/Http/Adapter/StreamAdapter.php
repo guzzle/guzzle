@@ -32,21 +32,22 @@ class StreamAdapter implements AdapterInterface
         try {
             $this->createResponse($transaction);
             $transaction->getRequest()->getEventDispatcher()->dispatch(
-                'request.after_send',
+                RequestEvents::AFTER_SEND,
                 new RequestAfterSendEvent($transaction)
             );
         } catch (RequestException $e) {
             if (!$transaction->getRequest()->getEventDispatcher()->dispatch(
-                'request.error',
+                RequestEvents::ERROR,
                 new RequestErrorEvent($transaction, $e)
             )->isPropagationStopped()) {
                 throw $e;
             }
         }
+
+        return $transaction->getResponse();
     }
 
     /**
-     * @param TransactionInterface
      * @throws \LogicException if you attempt to stream and specify a write_to option
      */
     private function createResponse(TransactionInterface $transaction)
