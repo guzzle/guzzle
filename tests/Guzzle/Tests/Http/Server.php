@@ -43,7 +43,7 @@ class Server
     public function __construct($port = null)
     {
         $this->port = $port ?: self::DEFAULT_PORT;
-        $this->client = new Client($this->getUrl());
+        $this->client = new Client(['base_url' => $this->getUrl()]);
     }
 
     /**
