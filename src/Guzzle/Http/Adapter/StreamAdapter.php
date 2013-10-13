@@ -150,8 +150,6 @@ class StreamAdapter implements AdapterInterface
     /**
      * Create the stream for the request with the context options.
      *
-     * Stream context parameters may be set in the '_params' option key.
-     *
      * @param RequestInterface $request              Request being sent
      * @param mixed            $http_response_header Value is populated by stream wrapper
      *
@@ -164,9 +162,15 @@ class StreamAdapter implements AdapterInterface
             $methods = array_flip(get_class_methods(__CLASS__));
         }
 
+        $headers = '';
+        foreach ($request->getHeaders() as $name => $header) {
+            $headers .= "{$name}: {$header}\r\n";
+        }
+
+        $params = [];
         $options = ['http' => [
             'method' => $request->getMethod(),
-            'header' => (string) $request->getHeaders(),
+            'header' => trim($headers),
             'protocol_version' => '1.0',
             'ignore_errors' => true,
             'follow_location' => 0,
@@ -176,22 +180,12 @@ class StreamAdapter implements AdapterInterface
         foreach ($request->getConfig()->toArray() as $key => $value) {
             $method = "visit_{$key}";
             if (isset($methods[$method])) {
-                $this->{$method}($request, $options, $value);
+                $this->{$method}($request, $options, $value, $params);
             }
-        }
-
-        $params = null;
-        if (isset($options['_params'])) {
-            $params = $options['_params'];
-            unset($options['_params']);
         }
 
         $context = $this->createResource(function () use ($request, $options, $params) {
-            $context = stream_context_create($options);
-            if ($params) {
-                stream_context_set_params($context, $params);
-            }
-            return $context;
+            return stream_context_create($options, $params);
         }, $request, $options);
 
         $url = $request->getUrl();
@@ -205,17 +199,17 @@ class StreamAdapter implements AdapterInterface
         }, $request, $options);
     }
 
-    private function visit_proxy(RequestInterface $request, &$options, $value)
+    private function visit_proxy(RequestInterface $request, &$options, $value, &$params)
     {
         $options['http']['proxy'] = $value;
     }
 
-    private function visit_timeout(RequestInterface $request, &$options, $value)
+    private function visit_timeout(RequestInterface $request, &$options, $value, &$params)
     {
         $options['http']['timeout'] = $value;
     }
 
-    private function visit_verify(RequestInterface $request, &$options, $value)
+    private function visit_verify(RequestInterface $request, &$options, $value, &$params)
     {
         if ($value === true || is_string($value)) {
             $options['http']['verify_peer'] = true;
@@ -231,7 +225,7 @@ class StreamAdapter implements AdapterInterface
         }
     }
 
-    private function visit_cert(RequestInterface $request, &$options, $value)
+    private function visit_cert(RequestInterface $request, &$options, $value, &$params)
     {
         if (is_array($value)) {
             $options['http']['passphrase'] = $value[1];
@@ -245,48 +239,46 @@ class StreamAdapter implements AdapterInterface
         $options['http']['local_cert'] = $value;
     }
 
-    private function visit_debug(RequestInterface $request, &$options, $value)
+    private function visit_debug(RequestInterface $request, &$options, $value, &$params)
     {
         if (!is_resource($value)) {
             $value = fopen('php://output', 'w');
         }
 
-        $options['_params'] = array(
-            'notification' => function (
-                $code,
-                $severity,
-                $message,
-                $message_code,
-                $bytes_transferred,
-                $bytes_max
-            ) use ($request, $value) {
-                fwrite($value, '<' . $request->getUrl() . '>: ');
-                switch ($code) {
-                    case STREAM_NOTIFY_COMPLETED:
-                        fwrite($value, 'Completed request to ' . $request->getUrl() . "\n");
-                        break;
-                    case STREAM_NOTIFY_FAILURE:
-                        fwrite($value, "Failure: {$message_code} {$message} \n");
-                        break;
-                    case STREAM_NOTIFY_RESOLVE:
-                    case STREAM_NOTIFY_AUTH_REQUIRED:
-                    case STREAM_NOTIFY_AUTH_RESULT:
-                        var_dump($code, $severity, $message, $message_code, $bytes_transferred, $bytes_max);
-                        break;
-                    case STREAM_NOTIFY_CONNECT:
-                        fputs($value, "Connected...\n");
-                        break;
-                    case STREAM_NOTIFY_FILE_SIZE_IS:
-                        fputs($value, "Got the filesize: {$bytes_max}\n");
-                        break;
-                    case STREAM_NOTIFY_MIME_TYPE_IS:
-                        fputs($value, "Found the mime-type: {$message}\n");
-                        break;
-                    case STREAM_NOTIFY_PROGRESS:
-                        fputs($value, "Downloaded {$bytes_transferred} bytes\n");
-                        break;
-                }
+        $params['notification'] = function (
+            $code,
+            $severity,
+            $message,
+            $message_code,
+            $bytes_transferred,
+            $bytes_max
+        ) use ($request, $value) {
+            fwrite($value, '<' . $request->getUrl() . '>: ');
+            switch ($code) {
+                case STREAM_NOTIFY_COMPLETED:
+                    fwrite($value, 'Completed request to ' . $request->getUrl() . "\n");
+                    break;
+                case STREAM_NOTIFY_FAILURE:
+                    fwrite($value, "Failure: {$message_code} {$message} \n");
+                    break;
+                case STREAM_NOTIFY_RESOLVE:
+                case STREAM_NOTIFY_AUTH_REQUIRED:
+                case STREAM_NOTIFY_AUTH_RESULT:
+                    var_dump($code, $severity, $message, $message_code, $bytes_transferred, $bytes_max);
+                    break;
+                case STREAM_NOTIFY_CONNECT:
+                    fputs($value, "Connected...\n");
+                    break;
+                case STREAM_NOTIFY_FILE_SIZE_IS:
+                    fputs($value, "Got the filesize: {$bytes_max}\n");
+                    break;
+                case STREAM_NOTIFY_MIME_TYPE_IS:
+                    fputs($value, "Found the mime-type: {$message}\n");
+                    break;
+                case STREAM_NOTIFY_PROGRESS:
+                    fputs($value, "Downloaded {$bytes_transferred} bytes\n");
+                    break;
             }
-        );
+        };
     }
 }
