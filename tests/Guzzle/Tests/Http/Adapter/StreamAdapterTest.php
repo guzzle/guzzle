@@ -85,6 +85,22 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($mockResponse, $client->send($request));
     }
 
+    public function testEmitsAfterSendEvent()
+    {
+        $ee = null;
+        self::$server->flush();
+        self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
+        $client = new Client(['adapter' => new StreamAdapter(new MessageFactory())]);
+        $request = $client->createRequest('GET', self::$server->getUrl());
+        $request->getEventDispatcher()->addListener(RequestEvents::AFTER_SEND, function ($e) use (&$ee) {
+            $ee = $e;
+        });
+        $client->send($request);
+        $this->assertInstanceOf('Guzzle\Http\Event\RequestAfterSendEvent', $ee);
+        $this->assertSame($request, $ee->getRequest());
+        $this->assertEquals(200, $ee->getResponse()->getStatusCode());
+    }
+
     public function testStreamAttributeKeepsStreamOpen()
     {
         self::$server->flush();
