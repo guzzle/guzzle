@@ -35,7 +35,7 @@ class LimitStreamTest extends \PHPUnit_Framework_TestCase
 
     public function testReturnsSubsetWhenCastToString()
     {
-        $body = Stream::factory('foo_baz_bar', true);
+        $body = Stream::factory('foo_baz_bar');
         $limited = new LimitStream($body, 3, 4);
         $this->assertEquals('baz', (string) $limited);
     }

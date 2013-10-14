@@ -41,7 +41,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $s = new PrepareRequestBody();
         $t = $this->getTrans();
         $t->getRequest()->getConfig()->set('expect', true);
-        $t->getRequest()->setBody(Stream::factory('foo', true));
+        $t->getRequest()->setBody(Stream::factory('foo'));
         $s->onRequestBeforeSend(new RequestBeforeSendEvent($t));
         $this->assertEquals('100-Continue', $t->getRequest()->getHeader('Expect'));
     }
@@ -51,7 +51,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $s = new PrepareRequestBody();
         $t = $this->getTrans();
         $t->getRequest()->getConfig()->set('expect', 2);
-        $t->getRequest()->setBody(Stream::factory('foo', true));
+        $t->getRequest()->setBody(Stream::factory('foo'));
         $s->onRequestBeforeSend(new RequestBeforeSendEvent($t));
         $this->assertTrue($t->getRequest()->hasHeader('Expect'));
     }
@@ -61,7 +61,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $s = new PrepareRequestBody();
         $t = $this->getTrans();
         $t->getRequest()->getConfig()->set('expect', 10);
-        $t->getRequest()->setBody(Stream::factory('foo', true));
+        $t->getRequest()->setBody(Stream::factory('foo'));
         $s->onRequestBeforeSend(new RequestBeforeSendEvent($t));
         $this->assertFalse($t->getRequest()->hasHeader('Expect'));
     }
@@ -70,7 +70,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
     {
         $s = new PrepareRequestBody();
         $t = $this->getTrans();
-        $t->getRequest()->setBody(new NoSeekStream(Stream::factory('foo', true)));
+        $t->getRequest()->setBody(new NoSeekStream(Stream::factory('foo')));
         $s->onRequestBeforeSend(new RequestBeforeSendEvent($t));
         $this->assertTrue($t->getRequest()->hasHeader('Expect'));
     }
@@ -79,7 +79,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
     {
         $s = new PrepareRequestBody();
         $t = $this->getTrans();
-        $t->getRequest()->setBody(Stream::factory('foo', true));
+        $t->getRequest()->setBody(Stream::factory('foo'));
         $t->getRequest()->setHeader('Transfer-Encoding', 'chunked');
         $s->onRequestBeforeSend(new RequestBeforeSendEvent($t));
         $this->assertFalse($t->getRequest()->hasHeader('Content-Length'));

@@ -35,6 +35,9 @@ class Server
     /** @var Client */
     private $client;
 
+    /** @var MessageFactory */
+    private $factory;
+
     /**
      * Create a new scripted server
      *
@@ -44,6 +47,7 @@ class Server
     {
         $this->port = $port ?: self::DEFAULT_PORT;
         $this->client = new Client(['base_url' => $this->getUrl()]);
+        $this->factory = new MessageFactory();
     }
 
     /**
@@ -66,25 +70,25 @@ class Server
      */
     public function enqueue($responses)
     {
-        $data = array();
+        $data = [];
         foreach ((array) $responses as $response) {
 
             // Create the response object from a string
             if (is_string($response)) {
-                $response = Response::fromMessage($response);
+                $response = $this->factory->fromMessage($response);
             } elseif (!($response instanceof Response)) {
                 throw new BadResponseException('Responses must be strings or implement Response');
             }
 
-            $data[] = array(
+            $data[] = [
                 'statusCode'   => $response->getStatusCode(),
                 'reasonPhrase' => $response->getReasonPhrase(),
-                'headers'      => $response->getHeaders()->toArray(),
-                'body'         => $response->getBody(true)
-            );
+                'headers'      => array_map(function ($h) { return (string) $h; }, $response->getHeaders()),
+                'body'         => (string) $response->getBody()
+            ];
         }
 
-        $this->client->put('guzzle-server/responses', null, json_encode($data));
+        $this->client->put('guzzle-server/responses', [], json_encode($data));
     }
 
     /**
@@ -99,7 +103,7 @@ class Server
         }
 
         try {
-            $this->client->get('guzzle-server/perf', array(), array('timeout' => 5));
+            $this->client->get('guzzle-server/perf', [], ['timeout' => 5]);
             return $this->running = true;
         } catch (\Exception $e) {
             return false;
@@ -141,7 +145,7 @@ class Server
         $response = $this->client->get('guzzle-server/requests');
         $data = array_filter(explode(self::REQUEST_DELIMITER, (string) $response->getBody()));
         if ($hydrate) {
-            $factory = new MessageFactory();
+            $factory = $this->factory;
             $data = array_map(function($message) use ($factory) {
                 return $factory->fromMessage($message);
             }, $data);
@@ -159,7 +163,9 @@ class Server
             exec('node ' . __DIR__ . \DIRECTORY_SEPARATOR . 'server.js ' . $this->port . ' >> /tmp/server.log 2>&1 &');
             // Wait at most 5 seconds for the server the setup before proceeding
             $start = time();
-            while (!$this->isRunning() && time() - $start < 5);
+            while (!$this->isRunning() && time() - $start < 5) {
+                usleep(100000);
+            }
             if (!$this->running) {
                 throw new \RuntimeException(
                     'Unable to contact server.js. Have you installed node.js v0.5.0+? node must be in your path.'

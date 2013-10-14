@@ -18,7 +18,7 @@ class CachingStreamTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $this->decorated = Stream::factory('testing', true);
+        $this->decorated = Stream::factory('testing');
         $this->body = new CachingStream($this->decorated);
     }
 

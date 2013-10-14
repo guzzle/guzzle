@@ -88,7 +88,7 @@ class StreamAdapter implements AdapterInterface
         return $saveTo;
     }
 
-    private function createResponseObject($headers, TransactionInterface $transaction, $stream)
+    private function createResponseObject(array $headers, TransactionInterface $transaction, $stream)
     {
         $parts = explode(' ', array_shift($headers), 3);
         $options = ['protocol_version' => substr($parts[0], -3)];
@@ -132,7 +132,7 @@ class StreamAdapter implements AdapterInterface
         error_reporting($level);
 
         // If the resource could not be created, then grab the last error and throw an exception
-        if (false === $resource) {
+        if (!is_resource($resource)) {
             $message = 'Error creating resource. [url] ' . $request->getUrl() . ' ';
             if (isset($options['http']['proxy'])) {
                 $message .= "[proxy] {$options['http']['proxy']} ";
@@ -140,7 +140,6 @@ class StreamAdapter implements AdapterInterface
             foreach (error_get_last() as $key => $value) {
                 $message .= "[{$key}] {$value} ";
             }
-
             throw new RequestException(trim($message), $request);
         }
 
@@ -195,6 +194,10 @@ class StreamAdapter implements AdapterInterface
         }
 
         return $this->createResource(function () use ($url, &$http_response_header, $context) {
+            if (false === strpos($url, 'http')) {
+                trigger_error('URL is invalid', E_USER_WARNING);
+                return null;
+            }
             return fopen($url, 'r', null, $context);
         }, $request, $options);
     }

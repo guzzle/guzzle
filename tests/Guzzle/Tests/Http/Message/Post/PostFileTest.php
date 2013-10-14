@@ -49,7 +49,7 @@ class PostFileTest extends \PHPUnit_Framework_TestCase
 
     public function testCanAddHeaders()
     {
-        $p = new PostFile('foo', Stream::factory('hi', true), 'test.php', [
+        $p = new PostFile('foo', Stream::factory('hi'), 'test.php', [
             'X-Foo' => '123',
             'Content-Disposition' => 'bar'
         ]);

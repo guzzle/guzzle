@@ -313,13 +313,13 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
 
     public function testCanAddSslCert()
     {
-        $request = (new MessageFactory())->createRequest('GET', '/', [], null, ['ssl_cert' => '/foo.pem']);
-        $this->assertEquals('/foo.pem', $request->getConfig()->get('ssl_cert'));
+        $request = (new MessageFactory())->createRequest('GET', '/', [], null, ['cert' => '/foo.pem']);
+        $this->assertEquals('/foo.pem', $request->getConfig()->get('cert'));
     }
 
     public function testCanAddSslCertPassword()
     {
-        $request = (new MessageFactory())->createRequest('GET', '/', [], null, ['ssl_cert' => ['/foo.pem', 'bar']]);
-        $this->assertEquals(['/foo.pem', 'bar'], $request->getConfig()->get('ssl_cert'));
+        $request = (new MessageFactory())->createRequest('GET', '/', [], null, ['cert' => ['/foo.pem', 'bar']]);
+        $this->assertEquals(['/foo.pem', 'bar'], $request->getConfig()->get('cert'));
     }
 }

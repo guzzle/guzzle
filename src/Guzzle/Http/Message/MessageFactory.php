@@ -134,7 +134,7 @@ class MessageFactory implements MessageFactoryInterface
     {
         static $methods;
         static $map = [
-            'connect_timeout' => 1, 'timeout' => 1, 'verify' => 1, 'future' => 1, 'ssl_key' => 1, 'ssl_cert' => 1,
+            'connect_timeout' => 1, 'timeout' => 1, 'verify' => 1, 'future' => 1, 'ssl_key' => 1, 'cert' => 1,
             'proxy' => 1, 'debug' => 1, 'save_to' => 1, 'stream' => 1, 'expect' => 1
         ];
 

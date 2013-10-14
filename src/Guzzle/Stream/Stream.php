@@ -39,17 +39,16 @@ class Stream implements MetadataStreamInterface
      * Create a new stream based on the input type
      *
      * @param resource|string|StreamInterface $resource Entity body data
-     * @param bool                            $rewind   Set to true to rewind the stream to the beginning
      * @param int                             $size     Size of the data contained in the resource
      *
      * @return StreamInterface
      * @throws \InvalidArgumentException if the $resource arg is not a resource or string
      */
-    public static function factory($resource = '', $rewind = false, $size = null)
+    public static function factory($resource = '', $size = null)
     {
         switch (gettype($resource)) {
             case 'string':
-                return self::fromString($resource, $rewind);
+                return self::fromString($resource);
             case 'resource':
                 $result = new static($resource, $size);
                 break;
@@ -58,14 +57,10 @@ class Stream implements MetadataStreamInterface
                     $result = $resource;
                     break;
                 } elseif (method_exists($resource, '__toString')) {
-                    return self::fromString((string) $resource, $rewind);
+                    return self::fromString((string) $resource);
                 }
             default:
                 throw new \InvalidArgumentException('Invalid resource type');
-        }
-
-        if ($rewind) {
-            $result->seek(0);
         }
 
         return $result;
@@ -75,18 +70,15 @@ class Stream implements MetadataStreamInterface
      * Create a new stream from a string
      *
      * @param string $string String of data
-     * @param bool   $rewind Set to true to seek to byte 0 of the stream
      *
      * @return StreamInterface
      */
-    public static function fromString($string, $rewind = false)
+    public static function fromString($string)
     {
         $stream = fopen('php://temp', 'r+');
         if ($string !== '') {
             fwrite($stream, $string);
-            if ($rewind) {
-                fseek($stream, 0);
-            }
+            fseek($stream, 0);
         }
 
         return new static($stream);

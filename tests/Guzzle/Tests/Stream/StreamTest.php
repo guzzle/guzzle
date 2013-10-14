@@ -121,12 +121,12 @@ class StreamTest extends \PHPUnit_Framework_TestCase
         $stream->close();
     }
 
-    public function testSeeksToBeginningOfResource()
+    public function testKeepsPositionOfResource()
     {
         $h = fopen(__FILE__, 'r');
         fseek($h, 10);
-        $stream = Stream::factory($h, true);
-        $this->assertEquals(0, $stream->tell());
+        $stream = Stream::factory($h);
+        $this->assertEquals(10, $stream->tell());
         $stream->close();
     }
 
@@ -144,8 +144,7 @@ class StreamTest extends \PHPUnit_Framework_TestCase
     {
         $stream = Stream::fromString('foo');
         $this->assertInstanceOf('Guzzle\Stream\Stream', $stream);
-        $this->assertEquals('', $stream->getContents());
-        $this->assertEquals('foo', (string) $stream);
+        $this->assertEquals('foo', $stream->getContents());
         $stream->close();
     }
 
@@ -182,7 +181,7 @@ class StreamTest extends \PHPUnit_Framework_TestCase
 
     public function testReadsLines()
     {
-        $s = Stream::factory("foo\nbaz\nbar", true);
+        $s = Stream::factory("foo\nbaz\nbar");
         $this->assertEquals("foo\n", Stream::readLine($s));
         $this->assertEquals("baz\n", Stream::readLine($s));
         $this->assertEquals("bar", Stream::readLine($s));
@@ -190,7 +189,7 @@ class StreamTest extends \PHPUnit_Framework_TestCase
 
     public function testReadsLinesUpToMaxLength()
     {
-        $s = Stream::factory("12345\n", true);
+        $s = Stream::factory("12345\n");
         $this->assertEquals("123", Stream::readLine($s, 4));
         $this->assertEquals("45\n", Stream::readLine($s));
     }
@@ -217,13 +216,13 @@ class StreamTest extends \PHPUnit_Framework_TestCase
 
     public function testCalculatesHash()
     {
-        $s = Stream::factory('foobazbar', true);
+        $s = Stream::factory('foobazbar');
         $this->assertEquals(md5('foobazbar'), Stream::getHash($s, 'md5'));
     }
 
     public function testCalculatesHashSeeksToOriginalPosition()
     {
-        $s = Stream::factory('foobazbar', true);
+        $s = Stream::factory('foobazbar');
         $s->seek(4);
         $this->assertEquals(md5('foobazbar'), Stream::getHash($s, 'md5'));
         $this->assertEquals(4, $s->tell());

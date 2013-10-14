@@ -24,7 +24,8 @@ class StreamDecoratorTraitTest extends \PHPUnit_Framework_TestCase
     {
         $this->c = fopen('php://temp', 'r+');
         fwrite($this->c, 'foo');
-        $this->a = Stream::factory($this->c, true);
+        fseek($this->c, 0);
+        $this->a = Stream::factory($this->c);
         $this->b = new Str($this->a);
     }
 

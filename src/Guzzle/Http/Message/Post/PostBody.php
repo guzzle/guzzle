@@ -217,7 +217,7 @@ class PostBody implements PostBodyInterface
         } elseif ($this->fields) {
             return $this->body = $this->createUrlEncoded();
         } else {
-            return $this->body = Stream::factory('');
+            return $this->body = Stream::factory();
         }
     }
 
@@ -268,7 +268,7 @@ class PostBody implements PostBodyInterface
             ->setAggregator($this->getAggregator())
             ->setEncodingType(QueryString::RFC1738);
 
-        return Stream::factory($query, true);
+        return Stream::factory($query);
     }
 
     /**
