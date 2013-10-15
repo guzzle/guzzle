@@ -200,6 +200,12 @@ class CurlHandle
             $curlOptions[CURLOPT_PROGRESSFUNCTION] = function () use ($mediator, $handle) {
                 $args = func_get_args();
                 $args[] = $handle;
+
+                // PHP 5.5 pushed the handle onto the start of the args
+                if (is_resource($args[0])) {
+                    array_shift($args);
+                }
+
                 call_user_func_array(array($mediator, 'progress'), $args);
             };
             $curlOptions[CURLOPT_NOPROGRESS] = false;
