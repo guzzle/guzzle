@@ -107,7 +107,7 @@ class DefaultRevalidation implements RevalidationInterface
         $dispatcher = $revalidate->getEventDispatcher();
         foreach ($dispatcher->getListeners() as $eventName => $listeners) {
             foreach ($listeners as $listener) {
-                if ($listener[0] instanceof CachePlugin) {
+                if (is_array($listener) && $listener[0] instanceof CachePlugin) {
                     $dispatcher->removeListener($eventName, $listener);
                 }
             }
