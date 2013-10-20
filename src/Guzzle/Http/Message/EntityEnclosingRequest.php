@@ -181,7 +181,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
         return $this;
     }
 
-    public function addPostFile($field, $filename = null, $contentType = null)
+    public function addPostFile($field, $filename = null, $contentType = null, $postname = null)
     {
         $data = null;
 
@@ -197,7 +197,7 @@ class EntityEnclosingRequest extends Request implements EntityEnclosingRequestIn
             throw new RequestException('The path to a file must be a string');
         } elseif (!empty($filename)) {
             // Adding an empty file will cause cURL to error out
-            $data = new PostFile($field, $filename, $contentType);
+            $data = new PostFile($field, $filename, $contentType, $postname);
         }
 
         if ($data) {
