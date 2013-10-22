@@ -43,8 +43,8 @@ class LimitStream implements StreamInterface, MetadataStreamInterface
      */
     public function getSize()
     {
-        if (false === ($length = $this->stream->getSize())) {
-            return false;
+        if (null === ($length = $this->stream->getSize())) {
+            return null;
         } elseif ($this->limit == -1) {
             return $length - $this->offset;
         } else {

@@ -42,7 +42,7 @@ trait MessageTrait
 
             // Set the Content-Length header if it can be determined
             $size = $this->body->getSize();
-            if ($size !== null && $size !== false) {
+            if ($size !== null && !$this->hasHeader('Content-Length')) {
                 $this->setHeader('Content-Length', $size);
             }
 

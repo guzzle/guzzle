@@ -152,7 +152,7 @@ class Stream implements MetadataStreamInterface
             return $this->size;
         }
 
-        return false;
+        return null;
     }
 
     public function isReadable()

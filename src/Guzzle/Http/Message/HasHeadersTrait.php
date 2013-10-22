@@ -15,6 +15,7 @@ trait HasHeadersTrait
 
     public function addHeader($header, $value)
     {
+        $header = trim($header);
         $name = strtolower($header);
 
         if (!isset($this->headers[$name])) {
@@ -54,6 +55,7 @@ trait HasHeadersTrait
 
     public function setHeader($header, $value)
     {
+        $header = trim($header);
         $name = strtolower($header);
         $this->headerNames[$name] = $header;
 

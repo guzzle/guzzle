@@ -23,8 +23,8 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         ]);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals([
-            'foo' => 'bar',
-            'Content-Length' => '4'
+            'Content-Length' => '4',
+            'foo' => 'bar'
         ], $response->getHeaders());
         $this->assertEquals('test', $response->getBody());
         $this->assertEquals(1.0, $response->getProtocolVersion());
