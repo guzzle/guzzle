@@ -304,12 +304,15 @@ class RequestFactory implements RequestFactoryInterface
 
     protected function visit_debug(RequestInterface $request, $value, $flags)
     {
-        if (class_exists('Guzzle\Plugin\Log\LogPlugin')) {
-            $request->addSubscriber(LogPlugin::getDebugPlugin());
-        } else {
-            // @codeCoverageIgnoreStart
-            $request->getCurlOptions()->set(CURLOPT_VERBOSE, true);
-            // @codeCoverageIgnoreEnd
+        // check for true-ish value
+        if($value) {
+            if (class_exists('Guzzle\Plugin\Log\LogPlugin')) {
+                $request->addSubscriber(LogPlugin::getDebugPlugin());
+            } else {
+                // @codeCoverageIgnoreStart
+                $request->getCurlOptions()->set(CURLOPT_VERBOSE, true);
+                // @codeCoverageIgnoreEnd
+            }
         }
     }
 
