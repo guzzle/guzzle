@@ -304,8 +304,7 @@ class RequestFactory implements RequestFactoryInterface
 
     protected function visit_debug(RequestInterface $request, $value, $flags)
     {
-        // check for true-ish value
-        if($value) {
+        if ($value) {
             if (class_exists('Guzzle\Plugin\Log\LogPlugin')) {
                 $request->addSubscriber(LogPlugin::getDebugPlugin());
             } else {
