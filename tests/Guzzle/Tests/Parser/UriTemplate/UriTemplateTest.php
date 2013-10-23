@@ -93,4 +93,14 @@ class UriTemplateTest extends AbstractUriTemplateTest
 
         $this->assertEquals('http://example.com/foo/bar/one,two?query=test&more%5B0%5D=fun&more%5B1%5D=ice%20cream&baz%5Bbar%5D=fizz&baz%5Btest%5D=buzz&bam=boo', $result);
     }
+
+    /**
+     * @ticket https://github.com/guzzle/guzzle/issues/426
+     */
+    public function testSetRegex()
+    {
+        $template = new UriTemplate();
+        $template->setRegex('/\<\$(.+)\>/');
+        $this->assertSame('/foo', $template->expand('/<$a>', array('a' => 'foo')));
+    }
 }
