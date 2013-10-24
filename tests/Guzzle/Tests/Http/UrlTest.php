@@ -245,4 +245,45 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $url->addPath('?');
         $this->assertEquals('http://foo.com/baz%20bar/%3F?a=b', (string) $url);
     }
+
+    /**
+     * @link http://tools.ietf.org/html/rfc3986#section-5.4.1
+     */
+    public function rfc3986UrlProvider()
+    {
+        return array(
+            array('g', 'http://a/b/c/g'),
+            array('./g', 'http://a/b/c/g'),
+            array('g/', 'http://a/b/c/g/'),
+            array('/g', 'http://a/g'),
+            array('//g', 'http://g'),
+            array('?y', 'http://a/b/c/d;p?y'),
+            array('g?y', 'http://a/b/c/g?y'),
+            array('#s', 'http://a/b/c/d;p?q=#s'),
+            array('g#s', 'http://a/b/c/g#s'),
+            array('g?y#s', 'http://a/b/c/g?y=#s'),
+            array(';x', 'http://a/b/c/;x'),
+            array('g;x', 'http://a/b/c/g;x'),
+            array('g;x?y#s', 'http://a/b/c/g;x?y=#s'),
+            array('', 'http://a/b/c/d;p?q'),
+            array('.', 'http://a/b/c'),
+            array('./', 'http://a/b/c/'),
+            array('..', 'http://a/b'),
+            array('../', 'http://a/b/'),
+            array('../g', 'http://a/b/g'),
+            array('../..', 'http://a/'),
+            array('../../', 'http://a/'),
+            array('../../g', 'http://a/g')
+        );
+    }
+
+    /**
+     * @dataProvider rfc3986UrlProvider
+     */
+    public function testCombinesUrlsUsingRfc3986($relative, $result)
+    {
+        $a = Url::factory('http://a/b/c/d;p?q');
+        $b = Url::factory($relative);
+        $this->assertEquals($result, trim((string) $a->combine($b, true), '='));
+    }
 }
