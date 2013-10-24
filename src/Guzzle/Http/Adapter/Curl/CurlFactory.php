@@ -23,6 +23,7 @@ class CurlFactory
         unset($options['_headers']);
         // Add adapter options from the request's configuration options
         if ($config = $request->getConfig()['curl']) {
+            unset($config['body_as_string']);
             $options = $config + $options;
         }
         $handle = curl_init();
@@ -58,7 +59,7 @@ class CurlFactory
         if ($acceptEncodingHeader = $request->getHeader('Accept-Encoding')) {
             $options[CURLOPT_ENCODING] = (string) $acceptEncodingHeader;
             // Let cURL set the Accept-Encoding header, prevents duplicate values
-            $request->removeHeader('Accept-Encoding');
+            $this->removeHeader('Accept-Encoding', $options);
         }
 
         return $options;
@@ -93,7 +94,7 @@ class CurlFactory
         }
 
         // You can send the body as a string using curl's CURLOPT_POSTFIELDS
-        if (($size !== null && $size < 32768) || isset($request->getConfig()['adapter']['body_as_string'])) {
+        if (($size !== null && $size < 32768) || isset($request->getConfig()['curl']['body_as_string'])) {
             $options[CURLOPT_POSTFIELDS] = (string) $request->getBody();
             // Don't duplicate the Content-Length header
             $this->removeHeader('Content-Length', $options);
