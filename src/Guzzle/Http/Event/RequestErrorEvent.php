@@ -11,17 +11,18 @@ use Guzzle\Http\Adapter\TransactionInterface;
  *
  * You may intercept the exception and inject a response into the event to rescue the request.
  */
-class RequestErrorEvent extends AbstractRequestEvent
+class RequestErrorEvent extends AbstractTransferStatsEvent
 {
     private $exception;
 
     /**
-     * @param TransactionInterface $transaction Transaction that contains the request
-     * @param RequestException     $e           Exception encountered
+     * @param TransactionInterface $transaction   Transaction that contains the request
+     * @param RequestException     $e             Exception encountered
+     * @param array                $transferStats Array of transfer statistics
      */
-    public function __construct(TransactionInterface $transaction, RequestException $e)
+    public function __construct(TransactionInterface $transaction, RequestException $e, $transferStats = [])
     {
-        parent::__construct($transaction);
+        parent::__construct($transaction, $transferStats);
         $this->exception = $e;
     }
 

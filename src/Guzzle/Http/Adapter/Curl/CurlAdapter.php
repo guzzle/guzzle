@@ -69,7 +69,10 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
             try {
                 $this->prepare($transaction, $context);
             } catch (RequestException $e) {
-                $this->onError($transaction, $e, $context);
+                $stats = is_resource($context['handles'][$transaction])
+                    ? curl_getinfo($context['handles'][$transaction])
+                    : [];
+                $this->onError($transaction, $e, $context, $stats);
             }
         }
 
@@ -118,9 +121,12 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
     private function processResponse(TransactionInterface $transaction, array $curl, array $context)
     {
         if (isset($context['handles'][$transaction])) {
+            $stats = curl_getinfo($context['handles'][$transaction]);
             curl_multi_remove_handle($context['multi'], $context['handles'][$transaction]);
             curl_close($context['handles'][$transaction]);
             unset($context['handles'][$transaction]);
+        } else {
+            $stats = [];
         }
 
         $request = $transaction->getRequest();
@@ -129,10 +135,10 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
             $this->isCurlException($request, $curl);
             $request->getEventDispatcher()->dispatch(
                 RequestEvents::AFTER_SEND,
-                new RequestAfterSendEvent($transaction)
+                new RequestAfterSendEvent($transaction, $stats)
             );
         } catch (RequestException $e) {
-            $this->onError($transaction, $e, $context);
+            $this->onError($transaction, $e, $context, $stats);
         }
     }
 
@@ -232,11 +238,11 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
     /**
      * Handle an error
      */
-    private function onError(TransactionInterface $transaction, \Exception $e, array $context)
+    private function onError(TransactionInterface $transaction, \Exception $e, array $context, array $stats)
     {
         if (!$transaction->getRequest()->getEventDispatcher()->dispatch(
             RequestEvents::ERROR,
-            new RequestErrorEvent($transaction, $e)
+            new RequestErrorEvent($transaction, $e, $stats)
         )->isPropagationStopped()) {
             // Clean up multi handles and context
             foreach ($context['handles'] as $transaction) {
