@@ -4,6 +4,7 @@ namespace Guzzle\Tests\Http\Adapter\Curl;
 
 require_once __DIR__ . '/../../Server.php';
 
+use Guzzle\Http\Adapter\Curl\CurlAdapter;
 use Guzzle\Stream\Stream;
 use Guzzle\Tests\Http\Server;
 use Guzzle\Http\Adapter\Curl\CurlFactory;
@@ -11,6 +12,7 @@ use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Client;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\Request;
+use Guzzle\Http\Message\RequestInterface;
 
 /**
  * @covers Guzzle\Http\Adapter\Curl\CurlFactory
@@ -38,9 +40,10 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $request = new Request('PUT', self::$server->getUrl() . 'haha', ['Hi' => ' 123'], Stream::factory('testing'));
         $stream = Stream::factory();
         $request->getConfig()->set('save_to', $stream);
+        $request->getConfig()->set('verify', true);
 
         $t = new Transaction(new Client(), $request);
-        $f = new CurlFactory();
+        $f = new IntroFactory();
         $h = $f->createHandle($t, new MessageFactory());
         $this->assertInternalType('resource', $h);
         curl_exec($h);
@@ -59,6 +62,9 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('testing', $sent->getBody());
         $this->assertEquals('1.1', $sent->getProtocolVersion());
         $this->assertEquals('hi', (string) $stream);
+
+        $this->assertEquals(2, $f->last[CURLOPT_SSL_VERIFYHOST]);
+        $this->assertEquals(true, $f->last[CURLOPT_SSL_VERIFYPEER]);
     }
 
     public function testSendsHeadRequests()
@@ -132,5 +138,130 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('foo', $t->getResponse()->getBody());
         $sent = self::$server->getReceivedRequests(true)[0];
         $this->assertContains('gzip', (string) $sent->getHeader('Accept-Encoding'));
+    }
+
+    public function testAddsDebugInfoToBuffer()
+    {
+        $r = fopen('php://temp', 'r+');
+        self::$server->flush();
+        self::$server->enqueue(["HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\nfoo"]);
+        $request = new Request('GET', self::$server->getUrl());
+        $request->getConfig()->set('debug', $r);
+        $t = new Transaction(new Client(), $request);
+        $h = (new CurlFactory())->createHandle($t, new MessageFactory());
+        curl_exec($h);
+        curl_close($h);
+        rewind($r);
+        $this->assertNotEmpty(stream_get_contents($r));
+    }
+
+    public function testAddsProxyOptions()
+    {
+        $request = new Request('GET', self::$server->getUrl());
+        $request->getConfig()->set('proxy', '123');
+        $request->getConfig()->set('connect_timeout', 1);
+        $request->getConfig()->set('timeout', 2);
+        $request->getConfig()->set('cert', __FILE__);
+        $request->getConfig()->set('ssl_key', [__FILE__, '123']);
+        $request->getConfig()->set('verify', false);
+        $t = new Transaction(new Client(), $request);
+        $f = new IntroFactory();
+        curl_close($f->createHandle($t, new MessageFactory()));
+        $this->assertEquals('123', $f->last[CURLOPT_PROXY]);
+        $this->assertEquals(1000, $f->last[CURLOPT_CONNECTTIMEOUT_MS]);
+        $this->assertEquals(2000, $f->last[CURLOPT_TIMEOUT_MS]);
+        $this->assertEquals(__FILE__, $f->last[CURLOPT_SSLCERT]);
+        $this->assertEquals(__FILE__, $f->last[CURLOPT_SSLKEY]);
+        $this->assertEquals('123', $f->last[CURLOPT_SSLKEYPASSWD]);
+        $this->assertEquals(0, $f->last[CURLOPT_SSL_VERIFYHOST]);
+        $this->assertEquals(false, $f->last[CURLOPT_SSL_VERIFYPEER]);
+    }
+
+    /**
+     * @expectedException \RuntimeException
+     */
+    public function testEnsuresCertExists()
+    {
+        $request = new Request('GET', self::$server->getUrl());
+        $request->getConfig()->set('cert', __FILE__ . 'ewfwef');
+        (new IntroFactory())->createHandle(new Transaction(new Client(), $request), new MessageFactory());
+    }
+
+    /**
+     * @expectedException \RuntimeException
+     */
+    public function testEnsuresKeyExists()
+    {
+        $request = new Request('GET', self::$server->getUrl());
+        $request->getConfig()->set('ssl_key', __FILE__ . 'ewfwef');
+        (new IntroFactory())->createHandle(new Transaction(new Client(), $request), new MessageFactory());
+    }
+
+    /**
+     * @expectedException \RuntimeException
+     */
+    public function testEnsuresCacertExists()
+    {
+        $request = new Request('GET', self::$server->getUrl());
+        $request->getConfig()->set('verify', __FILE__ . 'ewfwef');
+        (new IntroFactory())->createHandle(new Transaction(new Client(), $request), new MessageFactory());
+    }
+
+    public function testClientUsesSslByDefault()
+    {
+        self::$server->flush();
+        self::$server->enqueue(["HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\nfoo"]);
+        $f = new IntroFactory();
+        $client = new Client([
+            'base_url' => self::$server->getUrl(),
+            'adapter' => new CurlAdapter(new MessageFactory(), ['handle_factory' => $f])
+        ]);
+        $client->get();
+        $this->assertEquals(2, $f->last[CURLOPT_SSL_VERIFYHOST]);
+        $this->assertEquals(true, $f->last[CURLOPT_SSL_VERIFYPEER]);
+        $this->assertFileExists($f->last[CURLOPT_CAINFO]);
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage Invalid authentication scheme: foo
+     */
+    public function testValidatesAuthType()
+    {
+        $request = new Request('GET', self::$server->getUrl());
+        $request->getConfig()->set('auth', ['a', 'b', 'foo']);
+        (new IntroFactory())->createHandle(new Transaction(new Client(), $request), new MessageFactory());
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage auth must be an array that contains a username and password
+     */
+    public function testValidatesAuthArray()
+    {
+        $request = new Request('GET', self::$server->getUrl());
+        $request->getConfig()->set('auth', 'foo');
+        (new IntroFactory())->createHandle(new Transaction(new Client(), $request), new MessageFactory());
+    }
+
+    public function testAddsAuth()
+    {
+        $request = new Request('GET', self::$server->getUrl());
+        $request->getConfig()->set('auth', ['a', 'b', 'digest']);
+        $f = new IntroFactory();
+        curl_close($f->createHandle(new Transaction(new Client(), $request), new MessageFactory()));
+        $this->assertEquals('a:b', $f->last[CURLOPT_USERPWD]);
+        $this->assertEquals(CURLAUTH_DIGEST, $f->last[CURLOPT_HTTPAUTH]);
+    }
+}
+
+class IntroFactory extends CurlFactory
+{
+    public $last;
+
+    protected function applyHeaders(RequestInterface $request, array &$options)
+    {
+        parent::applyHeaders($request, $options);
+        $this->last = $options;
     }
 }

@@ -144,11 +144,9 @@ class CurlFactory
 
     protected function visit_debug(RequestInterface $request, RequestMediator $mediator, &$options, $value)
     {
-        if (is_resource($value)) {
+        if ($value) {
             $options[CURLOPT_VERBOSE] = true;
-            $options[CURLOPT_STDERR] = $value;
-        } else {
-            $options[CURLOPT_VERBOSE] = $value;
+            $options[CURLOPT_STDERR] = is_resource($value) ? $value : fopen('php://output', 'w');
         }
     }
 
@@ -187,11 +185,6 @@ class CurlFactory
 
     protected function visit_cert(RequestInterface $request, RequestMediator $mediator, &$options, $value)
     {
-        if (is_array($value)) {
-            $options[CURLOPT_SSLCERTPASSWD] = $value[1];
-            $value = $value[0];
-        }
-
         if (!file_exists($value)) {
             throw new \RuntimeException("SSL certificate not found: {$value}");
         }
@@ -221,6 +214,10 @@ class CurlFactory
             'ntlm'   => CURLAUTH_NTLM,
             'any'    => CURLAUTH_ANY
         );
+
+        if (!is_array($value) || !isset($value[0]) || !isset($value[1])) {
+            throw new \InvalidArgumentException('auth must be an array that contains a username and password');
+        }
 
         $scheme = isset($value[2]) ? strtolower($value[2]) : 'basic';
         if (!isset($authMap[$scheme])) {
