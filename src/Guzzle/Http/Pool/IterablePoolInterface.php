@@ -5,7 +5,7 @@ namespace Guzzle\Http\Pool;
 /**
  * Send FutureRequest objects in parallel
  */
-interface PoolInterface
+interface IterablePoolInterface
 {
     /**
      * Sends each request (batchable and non-batchable) and yields

@@ -9,20 +9,20 @@ use Guzzle\Http\Event\RequestEvents;
  * Decorates a PoolInterface object and passes exceptions to a callable rather
  * than throwing them as they occur.
  */
-class ExceptionHandlerPool implements PoolInterface
+class ExceptionHandlerPool implements IterablePoolInterface
 {
     /** @var callable */
     private $handler;
 
-    /** @var PoolInterface */
+    /** @var IterablePoolInterface */
     private $pool;
 
     /**
-     * @param PoolInterface $pool    Pool to wrap and handle exceptions
+     * @param IterablePoolInterface $pool    Pool to wrap and handle exceptions
      * @param callable      $handler Method to invoke when an exception occurs.
      *                               The method will receive a RequestException.
      */
-    public function __construct(PoolInterface $pool, callable $handler)
+    public function __construct(IterablePoolInterface $pool, callable $handler)
     {
         $this->pool = $pool;
         $this->handler = $handler;

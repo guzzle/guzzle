@@ -6,7 +6,7 @@ use Guzzle\Http\Adapter\BatchAdapterInterface;
 use Guzzle\Http\ClientInterface;
 use Guzzle\Http\Message\FutureResponseInterface;
 
-class Pool implements PoolInterface
+class Pool implements IterablePoolInterface
 {
     /** @var ClientInterface Client used to send requests */
     private $client;
