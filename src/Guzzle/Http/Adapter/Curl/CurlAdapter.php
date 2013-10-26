@@ -18,6 +18,8 @@ use Guzzle\Http\Message\RequestInterface;
  */
 class CurlAdapter implements AdapterInterface, BatchAdapterInterface
 {
+    const ERROR_STR = 'See http://curl.haxx.se/libcurl/c/libcurl-errors.html for an explanation of cURL errors';
+
     /** @var CurlFactory */
     private $factory;
     /** @var array Array of curl multi handles */
@@ -69,7 +71,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
             try {
                 $this->prepare($transaction, $context);
             } catch (RequestException $e) {
-                $stats = is_resource($context['handles'][$transaction])
+                $stats = isset($context['handles'][$transaction]) && is_resource($context['handles'][$transaction])
                     ? curl_getinfo($context['handles'][$transaction])
                     : [];
                 $this->onError($transaction, $e, $context, $stats);
@@ -120,15 +122,10 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
      */
     private function processResponse(TransactionInterface $transaction, array $curl, array $context)
     {
-        if (isset($context['handles'][$transaction])) {
-            $stats = curl_getinfo($context['handles'][$transaction]);
-            curl_multi_remove_handle($context['multi'], $context['handles'][$transaction]);
-            curl_close($context['handles'][$transaction]);
-            unset($context['handles'][$transaction]);
-        } else {
-            $stats = [];
-        }
-
+        $stats = curl_getinfo($context['handles'][$transaction]);
+        curl_multi_remove_handle($context['multi'], $context['handles'][$transaction]);
+        curl_close($context['handles'][$transaction]);
+        unset($context['handles'][$transaction]);
         $request = $transaction->getRequest();
 
         try {
@@ -175,7 +172,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
             sprintf(
                 '[curl] (#%s) %s [url] %s',
                 $curl['result'],
-                curl_strerror($curl['result']),
+                function_exists('curl_strerror') ? curl_strerror($curl['result']) : self::ERROR_STR,
                 $request->getUrl()
             ),
             $request
@@ -191,9 +188,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
     private function checkCurlResult($code)
     {
         if ($code != CURLM_OK && $code != CURLM_CALL_MULTI_PERFORM) {
-            $buffer = function_exists('curl_multi_strerror')
-                ? curl_multi_strerror($code)
-                : 'See http://curl.haxx.se/libcurl/c/libcurl-errors.html for an explanation of cURL errors';
+            $buffer = function_exists('curl_multi_strerror') ? curl_multi_strerror($code) : self::ERROR_STR;
             throw new AdapterException(sprintf('cURL error %s: %s', $code, $buffer));
         }
     }
