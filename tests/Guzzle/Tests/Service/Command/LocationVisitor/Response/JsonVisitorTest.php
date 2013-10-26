@@ -4,14 +4,14 @@ namespace Guzzle\Tests\Service\Command\LocationVisitor\Response;
 
 use Guzzle\Service\Description\Parameter;
 use Guzzle\Http\Message\Response;
-use Guzzle\Service\Command\LocationVisitor\Response\JsonVisitor as Visitor;
+use Guzzle\Tests\Service\Mock\Response\JsonVisitor as Visitor;
 
 /**
  * @covers Guzzle\Service\Command\LocationVisitor\Response\JsonVisitor
  */
 class JsonVisitorTest extends AbstractResponseVisitorTest
 {
-    public function testBeforeMethodParsesXml()
+    public function testBeforeMethodParsesJson()
     {
         $visitor = new Visitor();
         $command = $this->getMockBuilder('Guzzle\Service\Command\AbstractCommand')
@@ -22,7 +22,7 @@ class JsonVisitorTest extends AbstractResponseVisitorTest
             ->will($this->returnValue(new Response(200, null, '{"foo":"bar"}')));
         $result = array();
         $visitor->before($command, $result);
-        $this->assertEquals(array('foo' => 'bar'), $result);
+        $this->assertEquals(array('foo' => 'bar'), $visitor->getJson());
     }
 
     public function testVisitsLocation()
@@ -36,9 +36,11 @@ class JsonVisitorTest extends AbstractResponseVisitorTest
                 'type'    => 'string'
             )
         ));
-        $this->value = array('foo' => array('a', 'b', 'c'));
-        $visitor->visit($this->command, $this->response, $param, $this->value);
-        $this->assertEquals(array('A', 'B', 'C'), $this->value['foo']);
+        $value = array();
+        $json = array('foo' => array('a', 'b', 'c'));
+        $visitor->setJson($json);
+        $visitor->visit($this->command, $this->response, $param, $value);
+        $this->assertEquals(array('A', 'B', 'C'), $value['foo']);
     }
 
     public function testRenamesTopLevelValues()
@@ -49,9 +51,11 @@ class JsonVisitorTest extends AbstractResponseVisitorTest
             'sentAs' => 'Baz',
             'type'   => 'string',
         ));
-        $this->value = array('Baz' => 'test');
-        $visitor->visit($this->command, $this->response, $param, $this->value);
-        $this->assertEquals(array('foo' => 'test'), $this->value);
+        $value = array();
+        $json = array('Baz' => 'test');
+        $visitor->setJson($json);
+        $visitor->visit($this->command, $this->response, $param, $value);
+        $this->assertEquals(array('foo' => 'test'), $value);
     }
 
     public function testRenamesDoesNotFailForNonExistentKey()
@@ -83,9 +87,11 @@ class JsonVisitorTest extends AbstractResponseVisitorTest
                 'bar' => array('filters' => 'strtolower')
             )
         ));
-        $this->value = array('foo' => array('foo' => 'hello', 'bar' => 'THERE'));
-        $visitor->visit($this->command, $this->response, $param, $this->value);
-        $this->assertEquals(array('foo' => 'HELLO', 'bar' => 'there'), $this->value['foo']);
+        $value = array();
+        $json = array('foo' => array('foo' => 'hello', 'bar' => 'THERE'));
+        $visitor->setJson($json);
+        $visitor->visit($this->command, $this->response, $param, $value);
+        $this->assertEquals(array('foo' => 'HELLO', 'bar' => 'there'), $value['foo']);
     }
 
     /**
@@ -106,9 +112,11 @@ class JsonVisitorTest extends AbstractResponseVisitorTest
                 ),
             ),
         ));
-        $this->value = array('foo' => array('bar' => 15, 'unknown' => 'Unknown'));
-        $visitor->visit($this->command, $this->response, $param, $this->value);
-        $this->assertEquals(array('foo' => array('bar' => 15)), $this->value);
+        $value = array();
+        $json = array('foo' => array('bar' => 15, 'unknown' => 'Unknown'));
+        $visitor->setJson($json);
+        $visitor->visit($this->command, $this->response, $param, $value);
+        $this->assertEquals(array('foo' => array('bar' => 15)), $value);
     }
 
     /**
@@ -129,9 +137,11 @@ class JsonVisitorTest extends AbstractResponseVisitorTest
                 ),
             ),
         ));
-        $this->value = array('foo' => array('baz' => 15, 'unknown' => 'Unknown'));
-        $visitor->visit($this->command, $this->response, $param, $this->value);
-        $this->assertEquals(array('foo' => array('bar' => 15)), $this->value);
+        $value = array();
+        $json = array('foo' => array('baz' => 15, 'unknown' => 'Unknown'));
+        $visitor->setJson($json);
+        $visitor->visit($this->command, $this->response, $param, $value);
+        $this->assertEquals(array('foo' => array('bar' => 15)), $value);
     }
 
 }

@@ -16,10 +16,17 @@ use Guzzle\Service\Command\CommandInterface;
  */
 class JsonVisitor extends AbstractResponseVisitor
 {
+    /**
+     * The JSON document being visited
+     *
+     * @var array
+     */
+    protected $json = array();
+
     public function before(CommandInterface $command, array &$result)
     {
-        // Ensure that the result of the command is always rooted with the parsed JSON data
-        $result = $command->getResponse()->json();
+        // Parse JSON from command response
+        $this->json = $command->getResponse()->json();
     }
 
     public function visit(
@@ -27,16 +34,50 @@ class JsonVisitor extends AbstractResponseVisitor
         Response $response,
         Parameter $param,
         &$value,
-        $context =  null
-    ) {
-        $name = $param->getName();
-        $key = $param->getWireName();
-        if (isset($value[$key])) {
-            $this->recursiveProcess($param, $value[$key]);
-            if ($key != $name) {
-                $value[$name] = $value[$key];
-                unset($value[$key]);
+        $context = null
+    )
+    {
+        $name   = $param->getName();
+        $sentAs = $param->getSentAs();
+        $key    = $param->getWireName();
+
+        $treatAsList = $param->getType() == 'array' && (empty($key) || ($sentAs === '') || $context);
+
+        if($treatAsList) {
+            // Treat as javascript array
+            if ($context || empty($name)) {
+                // top-level `array` or an empty name
+                $value = array_merge($value, $this->recursiveProcess($param, $this->json));
+            } else {
+                // name provided, store it under a key in the array
+                $value[$name] = $this->recursiveProcess($param, $this->json);
             }
+        } elseif (isset($this->json[$key])) {
+            // Treat as a javascript object
+            if (empty($name)) {
+                $value = array_merge($value, $this->recursiveProcess($param, $this->json[$key]));
+            } else {
+                $value[$name] = $this->recursiveProcess($param, $this->json[$key]);
+            }
+        }
+
+        // Handle additional, undefined properties
+        $additional = $param->getAdditionalProperties();
+        if ($additional instanceof Parameter) {
+            // Process all child elements according to the given schema
+            foreach ($this->json as $prop => $val) {
+                if (is_int($prop)) {
+                    $value[] = $this->recursiveProcess($additional, $val);
+                } elseif ($prop != $key) {
+                    $value[$prop] = $this->recursiveProcess($additional, $val);
+                }
+            }
+        } elseif ($additional === null || $additional === true) {
+            // Blindly merge the JSON into resulting array
+            // skipping the already processed property
+            $json = $this->json;
+            unset($json[$key]);
+            $value = array_merge($json, $value);
         }
     }
 
@@ -45,18 +86,21 @@ class JsonVisitor extends AbstractResponseVisitor
      *
      * @param Parameter $param API parameter being validated
      * @param mixed     $value Value to validate and process. The value may change during this process.
+     * @return mixed|null
      */
-    protected function recursiveProcess(Parameter $param, &$value)
+    protected function recursiveProcess(Parameter $param, $value)
     {
         if ($value === null) {
-            return;
+            return null;
         }
 
         if (is_array($value)) {
+            $result = array();
             $type = $param->getType();
             if ($type == 'array') {
-                foreach ($value as &$item) {
-                    $this->recursiveProcess($param->getItems(), $item);
+                $items = $param->getItems();
+                foreach ($value as $val) {
+                    $result[] = $this->recursiveProcess($items, $val);
                 }
             } elseif ($type == 'object' && !isset($value[0])) {
                 // On the above line, we ensure that the array is associative and not numerically indexed
@@ -67,22 +111,41 @@ class JsonVisitor extends AbstractResponseVisitor
                         $key = $property->getWireName();
                         $knownProperties[$name] = 1;
                         if (isset($value[$key])) {
-                            $this->recursiveProcess($property, $value[$key]);
-                            if ($key != $name) {
-                                $value[$name] = $value[$key];
-                                unset($value[$key]);
-                            }
+                            $result[$name] = $this->recursiveProcess($property, $value[$key]);
                         }
                     }
                 }
 
-                // Remove any unknown and potentially unsafe properties
-                if ($param->getAdditionalProperties() === false) {
-                    $value = array_intersect_key($value, $knownProperties);
+                $additional = $param->getAdditionalProperties();
+                if ($additional instanceof Parameter) {
+                    // Process all child elements according to the given schema
+                    foreach ($value as $prop => $val) {
+                        if (is_int($prop)) {
+                            $result[] = $this->recursiveProcess($additional, $val);
+                        } elseif ($prop != $key) {
+                            $result[$prop] = $this->recursiveProcess($additional, $val);
+                        }
+                    }
+                } elseif ($additional === null || $additional === true) {
+                    // Blindly merge the JSON into resulting array
+                    // skipping the already processed property
+                    $value = array_diff_key($value, $knownProperties);
+                    $result = array_merge($value, $result);
                 }
             }
+        } else {
+            // A scalar
+            $result = $value;
         }
 
-        $value = $param->filter($value);
+        $result = $param->filter($result);
+
+        return $result;
+    }
+
+    public function after(CommandInterface $command)
+    {
+        // Free up memory
+        $this->json = array();
     }
 }

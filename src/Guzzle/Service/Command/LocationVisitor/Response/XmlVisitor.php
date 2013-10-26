@@ -5,16 +5,24 @@ namespace Guzzle\Service\Command\LocationVisitor\Response;
 use Guzzle\Http\Message\Response;
 use Guzzle\Service\Description\Parameter;
 use Guzzle\Service\Command\CommandInterface;
+use SimpleXMLElement;
 
 /**
  * Location visitor used to marshal XML response data into a formatted array
  */
 class XmlVisitor extends AbstractResponseVisitor
 {
+    /**
+     * XML document being visited.
+     *
+     * @var SimpleXMLElement
+     */
+    protected $xml;
+
     public function before(CommandInterface $command, array &$result)
     {
-        // Set the result of the command to the array conversion of the XML body
-        $result = json_decode(json_encode($command->getResponse()->xml()), true);
+        // Retrieve XML structure for processing
+        $this->xml = $command->getResponse()->xml();
     }
 
     public function visit(
@@ -22,128 +30,213 @@ class XmlVisitor extends AbstractResponseVisitor
         Response $response,
         Parameter $param,
         &$value,
-        $context =  null
-    ) {
-        $sentAs = $param->getWireName();
+        $context = null
+    )
+    {
         $name = $param->getName();
-        if (isset($value[$sentAs])) {
-            $this->recursiveProcess($param, $value[$sentAs]);
-            if ($name != $sentAs) {
-                $value[$name] = $value[$sentAs];
-                unset($value[$sentAs]);
+        $sentAs = $param->getWireName();
+        $ns = null;
+        if (strstr($sentAs, ':')) {
+            list($ns, $sentAs) = explode(':', $sentAs);
+        }
+
+        // Process the primary property
+        if (count($this->xml->children($ns, true)->{$sentAs})) {
+            $node = $this->xml->children($ns, true)->{$sentAs};
+            $value[$name] = $this->recursiveProcess($param, $node);
+        }
+
+        // Handle additional, undefined properties
+        $additional = $param->getAdditionalProperties();
+        if ($additional instanceof Parameter) {
+            // Process all child elements according to the given schema
+            $ns = $additional->getData('xmlNs');
+            $children = $this->xml->children($ns, true);
+            foreach ($children as $node) {
+                $name = $node->getName();
+                if ($name != $sentAs) {
+                    $value[$name] = $this->recursiveProcess($additional, $node);
+                }
             }
+        } elseif ($additional === null || $additional === true) {
+            // Blindly transform the XML into an array preserving as much data as possible
+            // and skipping the already processed property
+            $array = static::xmlToArray($this->xml);
+            unset($array[$sentAs]);
+            $value = array_merge($array, $value);
         }
     }
 
     /**
      * Recursively process a parameter while applying filters
      *
-     * @param Parameter $param API parameter being processed
-     * @param mixed     $value Value to validate and process. The value may change during this process.
+     * @param Parameter         $param API parameter being processed
+     * @param \SimpleXMLElement $node  Node being processed
+     * @return array
      */
-    protected function recursiveProcess(Parameter $param, &$value)
+    protected function recursiveProcess(Parameter $param, SimpleXMLElement $node)
     {
+        $result = array();
         $type = $param->getType();
 
-        if (!is_array($value)) {
-            if ($type == 'array') {
-                // Cast to an array if the value was a string, but should be an array
-                $this->recursiveProcess($param->getItems(), $value);
-                $value = array($value);
+        if ($type == 'array') {
+            // Cast to an array if the value was a string, but should be an array
+            $items = $param->getItems();
+            $sentAs = $items->getWireName();
+            $ns = null;
+            if (strstr($sentAs, ':')) {
+                // Get namespace from the wire name
+                list($ns, $sentAs) = explode(':', $sentAs);
+            } else {
+                // Get namespace from data
+                $ns = $items->getData('xmlNs');
+            }
+
+            if ($sentAs) {
+                // A collection of named, repeating nodes (i.e. <collection><foo></foo><foo></foo></collection>)
+                $children = $node->children($ns, true)->{$sentAs};
+                foreach ($children as $child) {
+                    $result[] = $this->recursiveProcess($items, $child);
+                }
+            } else {
+                // A general collection of nodes
+                foreach ($node as $child) {
+                    $result[] = $this->recursiveProcess($items, $child);
+                }
             }
         } elseif ($type == 'object') {
-            $this->processObject($param, $value);
-        } elseif ($type == 'array') {
-            $this->processArray($param, $value);
-        }
-
-        if ($value !== null) {
-            $value = $param->filter($value);
-        }
-    }
-
-    /**
-     * Process an array
-     *
-     * @param Parameter $param API parameter being parsed
-     * @param mixed     $value Value to process
-     */
-    protected function processArray(Parameter $param, &$value)
-    {
-        // Convert the node if it was meant to be an array
-        if (!isset($value[0])) {
-            // Collections fo nodes are sometimes wrapped in an additional array. For example:
-            // <Items><Item><a>1</a></Item><Item><a>2</a></Item></Items> should become:
-            // array('Items' => array(array('a' => 1), array('a' => 2))
-            // Some nodes are not wrapped. For example: <Foo><a>1</a></Foo><Foo><a>2</a></Foo>
-            // should become array('Foo' => array(array('a' => 1), array('a' => 2))
-            if ($param->getItems() && isset($value[$param->getItems()->getWireName()])) {
-                // Account for the case of a collection wrapping wrapped nodes: Items => Item[]
-                $value = $value[$param->getItems()->getWireName()];
-                // If the wrapped node only had one value, then make it an array of nodes
-                if (!isset($value[0]) || !is_array($value)) {
-                    $value = array($value);
-                }
-            } elseif (!empty($value)) {
-                // Account for repeated nodes that must be an array: Foo => Baz, Foo => Baz, but only if the
-                // value is set and not empty
-                $value = array($value);
+            $result = $this->processObject($param, $node);
+        } else {
+            // We are probably handling a flat data node (i.e. string or integer), so
+            // let's check if it's childless, which indicates a node containing plain text.
+            if ($node->children()->count() == 0) {
+                // Retrieve text from node
+                $result = (string)$node;
             }
         }
 
-        foreach ($value as &$item) {
-            $this->recursiveProcess($param->getItems(), $item);
+        // Filter out the value
+        if (!empty($result)) {
+            $result = $param->filter($result);
         }
+
+        return $result;
     }
 
     /**
      * Process an object
      *
-     * @param Parameter $param API parameter being parsed
-     * @param mixed     $value Value to process
+     * @param Parameter        $param API parameter being parsed
+     * @param SimpleXMLElement $node  Value to process
+     * @return array
      */
-    protected function processObject(Parameter $param, &$value)
+    protected function processObject(Parameter $param, SimpleXMLElement $node)
     {
-        // Ensure that the array is associative and not numerically indexed
-        if (!isset($value[0]) && ($properties = $param->getProperties())) {
-            $knownProperties = array();
+        $result = $knownProps = array();
+
+        // Handle known properties
+        if ($properties = $param->getProperties()) {
             foreach ($properties as $property) {
                 $name = $property->getName();
                 $sentAs = $property->getWireName();
-                $knownProperties[$name] = 1;
+                $knownProps[$sentAs] = 1;
+                $ns = null;
+                if (strstr($sentAs, ':')) {
+                    list($ns, $sentAs) = explode(':', $sentAs);
+                } else {
+                    $ns = $property->getData('xmlNs');
+                }
+
                 if ($property->getData('xmlAttribute')) {
-                    $this->processXmlAttribute($property, $value);
-                } elseif (isset($value[$sentAs])) {
-                    $this->recursiveProcess($property, $value[$sentAs]);
-                    if ($name != $sentAs) {
-                        $value[$name] = $value[$sentAs];
-                        unset($value[$sentAs]);
-                    }
+                    // Handle XML attributes
+                    $result[$name] = (string)$node->attributes($ns, true)->{$sentAs};
+
+                } elseif (count($node->children($ns, true)->{$sentAs})) {
+                    // Found a child node matching wire name
+                    $childNode = $node->children($ns, true)->{$sentAs};
+                    $result[$name] = $this->recursiveProcess($property, $childNode);
                 }
             }
-
-            // Remove any unknown and potentially unsafe properties
-            if ($param->getAdditionalProperties() === false) {
-                $value = array_intersect_key($value, $knownProperties);
-            }
         }
+
+        // Handle additional, undefined properties
+        $additional = $param->getAdditionalProperties();
+        if ($additional instanceof Parameter) {
+            // Process all child elements according to the given schema
+            $children = $node->children($additional->getData('xmlNs'), true);
+            foreach ($children as $childNode) {
+                $sentAs = $childNode->getName();
+                if (!isset($knownProps[$sentAs])) {
+                    $result[$sentAs] = $this->recursiveProcess($additional, $childNode);
+                }
+            }
+        } elseif ($additional === null || $additional === true) {
+            // Blindly transform the XML into an array preserving as much data as possible
+            $array = static::xmlToArray($node);
+
+            // Remove processed, aliased properties
+            $array = array_diff_key($array, $knownProps);
+
+            // Merge it together with the original result
+            $result = array_merge($array, $result);
+        }
+
+        return $result;
+    }
+
+    public function after(CommandInterface $command)
+    {
+        // Free up memory
+        $this->xml = null;
     }
 
     /**
-     * Process an XML attribute property
-     *
-     * @param Parameter $property Property to process
-     * @param array     $value    Value to process and update
+     * @param SimpleXMLElement $xml
+     * @param int              $nesting
+     * @param null             $ns
+     * @return array
      */
-    protected function processXmlAttribute(Parameter $property, array &$value)
+    public static function xmlToArray(SimpleXMLElement $xml, $ns = null, $nesting = 0)
     {
-        $sentAs = $property->getWireName();
-        if (isset($value['@attributes'][$sentAs])) {
-            $value[$property->getName()] = $value['@attributes'][$sentAs];
-            unset($value['@attributes'][$sentAs]);
-            if (empty($value['@attributes'])) {
-                unset($value['@attributes']);
+        $result = array();
+        $attributes = (array)$xml->attributes($ns, true);
+        $children = $xml->children($ns, true);
+
+        foreach ($children as $name => $child) {
+            if (isset($result[$name])) {
+                // A child element with this name exists so we're assuming that the
+                // node contains a list of elements
+                if (!is_array($result[$name])) {
+                    $result[$name] = array($result[$name]);
+                }
+                $result[$name][] = static::xmlToArray($child, $ns, $nesting + 1);
+            } else {
+                //
+                $result[$name] = static::xmlToArray($child, $ns, $nesting + 1);
             }
         }
+
+        // Extract text from node
+        $text = trim((string)$xml);
+        if (empty($text)) {
+            $text = null;
+        }
+
+        // Process attributes
+        if (!empty($attributes)) {
+            if (!is_null($text)) {
+                $result['value'] = $text;
+                $result = array_merge($attributes, $result);
+            }
+        } else if (!is_null($text)) {
+            $result = $text;
+        }
+
+        // Make sure we're always returning an array
+        if (!is_array($result) && $nesting == 0) {
+            $result = array($result);
+        }
+
+        return $result;
     }
 }

@@ -125,9 +125,23 @@ class OperationResponseParser extends DefaultResponseParser
     {
         $foundVisitors = $result = $knownProps = array();
         $props = $model->getProperties();
+        $type = $model->getType();
 
-        foreach ($props as $schema) {
-            if ($location = $schema->getLocation()) {
+        if ($type == 'object') {
+            // Use 'location' from all individual defined properties
+            foreach ($props as $schema) {
+                if ($location = $schema->getLocation()) {
+                    // Trigger the before method on the first found visitor of this type
+                    if (!isset($foundVisitors[$location])) {
+                        $foundVisitors[$location] = $this->factory->getResponseVisitor($location);
+                        $foundVisitors[$location]->before($command, $result);
+                    }
+                }
+            }
+        } elseif ($type == 'array') {
+            // Use 'location' from items schema
+            $items = $model->getItems();
+            if ($items instanceof Parameter && ($location = $items->getLocation())) {
                 // Trigger the before method on the first found visitor of this type
                 if (!isset($foundVisitors[$location])) {
                     $foundVisitors[$location] = $this->factory->getResponseVisitor($location);
@@ -136,21 +150,60 @@ class OperationResponseParser extends DefaultResponseParser
             }
         }
 
-        // Visit additional properties when it is an actual schema
-        if (($additional = $model->getAdditionalProperties()) instanceof Parameter) {
-            $this->visitAdditionalProperties($model, $command, $response, $additional, $result, $foundVisitors);
-        }
-
-        // Apply the parameter value with the location visitor
-        foreach ($props as $schema) {
-            $knownProps[$schema->getName()] = 1;
-            if ($location = $schema->getLocation()) {
-                $foundVisitors[$location]->visit($command, $response, $schema, $result);
+        // Use 'location' defined on the top of the model
+        if ($location = $model->getLocation()) {
+            if (!isset($foundVisitors[$location])) {
+                $foundVisitors[$location] = $this->factory->getResponseVisitor($location);
+                $foundVisitors[$location]->before($command, $result);
             }
         }
 
+        // If top-level additionalProperties is a schema, use it together with main schema
+        if (($additional = $model->getAdditionalProperties()) instanceof Parameter) {
+            $location = $model->getAdditionalProperties()->getLocation();
+            if (!isset($foundVisitors[$location])) {
+                $foundVisitors[$location] = $this->factory->getResponseVisitor($location);
+                $foundVisitors[$location]->before($command, $result);
+            }
+
+            // Remove the main model name from schema definition so it doesn't try to
+            // match any particular property...
+            $oldWireName = $model->getWireName();
+            $oldName = $model->getName();
+            $model->setSentAs(null);
+            $model->setName(null);
+
+            // Run the visitor against main schema and allow it visit all undefined properties
+            $foundVisitors[$location]->visit($command, $response, $model, $result, true);
+
+            // Restore names
+            $model->setSentAs($oldWireName);
+            $model->setName($oldName);
+        }
+
+        // Visit items
+        if ($type == 'object') {
+            // Visit items for each defined property
+            foreach ($props as $schema) {
+                $knownProps[$schema->getName()] = 1;
+                if ($location = $schema->getLocation()) {
+                    $foundVisitors[$location]->visit($command, $response, $schema, $result);
+                }
+            }
+        } elseif (
+            ($model->getType() == 'array') &&               // the model is an 'array',
+            ($items = $model->getItems()) &&                // 'items' are defined,
+            (
+                ($location = $items->getLocation()) ||      // 'items' has 'location' specified
+                ($location = $model->getLocation())         // or the model has one
+            )
+        ) {
+            // Visit items of a top-level array
+            $foundVisitors[$location]->visit($command, $response, $model, $result, true);
+        }
+
         // Remove any unknown and potentially unsafe top-level properties
-        if ($additional === false) {
+        if ($type == 'object' && $additional === false) {
             $result = array_intersect_key($result, $knownProps);
         }
 
@@ -160,36 +213,5 @@ class OperationResponseParser extends DefaultResponseParser
         }
 
         return $result;
-    }
-
-    protected function visitAdditionalProperties(
-        Parameter $model,
-        CommandInterface $command,
-        Response $response,
-        Parameter $additional,
-        &$result,
-        array &$foundVisitors
-    ) {
-        // Only visit when a location is specified
-        if ($location = $additional->getLocation()) {
-            if (!isset($foundVisitors[$location])) {
-                $foundVisitors[$location] = $this->factory->getResponseVisitor($location);
-                $foundVisitors[$location]->before($command, $result);
-            }
-            // Only traverse if an array was parsed from the before() visitors
-            if (is_array($result)) {
-                // Find each additional property
-                foreach (array_keys($result) as $key) {
-                    // Check if the model actually knows this property. If so, then it is not additional
-                    if (!$model->getProperty($key)) {
-                        // Set the name to the key so that we can parse it with each visitor
-                        $additional->setName($key);
-                        $foundVisitors[$location]->visit($command, $response, $additional, $result);
-                    }
-                }
-                // Reset the additionalProperties name to null
-                $additional->setName(null);
-            }
-        }
     }
 }
