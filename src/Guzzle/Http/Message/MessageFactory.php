@@ -253,11 +253,12 @@ class MessageFactory implements MessageFactoryInterface
             throw new \InvalidArgumentException('events value must be an array');
         }
 
+        $dispatcher = $request->getEventDispatcher();
         foreach ($value as $name => $method) {
             if (is_array($method)) {
-                $request->getEventDispatcher()->addListener($name, $method[0], $method[1]);
+                $dispatcher->addListener($name, $method[0], $method[1]);
             } else {
-                $request->getEventDispatcher()->addListener($name, $method);
+                $dispatcher->addListener($name, $method);
             }
         }
     }
@@ -268,8 +269,9 @@ class MessageFactory implements MessageFactoryInterface
             throw new \InvalidArgumentException('plugins value must be an array');
         }
 
+        $dispatcher = $request->getEventDispatcher();
         foreach ($value as $plugin) {
-            $request->getEventDispatcher()->addSubscriber($plugin);
+            $dispatcher->addSubscriber($plugin);
         }
     }
 }
