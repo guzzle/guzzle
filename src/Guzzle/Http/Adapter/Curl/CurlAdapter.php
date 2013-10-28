@@ -221,7 +221,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
      */
     private function releaseMultiHandle($handle)
     {
-        $this->multiOwned[(int) $handle] = false;
+        unset($this->multiOwned[(int) $handle]);
         // Prune excessive handles
         $over = count($this->multiHandles) - 3;
         while (--$over > -1) {
@@ -241,6 +241,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
         )->isPropagationStopped()) {
             // Clean up multi handles and context
             foreach ($context['handles'] as $transaction) {
+                curl_multi_remove_handle($context['multi'], $context['handles'][$transaction]);
                 curl_close($context['handles'][$transaction]);
             }
             $this->releaseMultiHandle($context['multi']);
