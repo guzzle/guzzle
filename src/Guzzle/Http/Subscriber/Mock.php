@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Plugin\Mock;
+namespace Guzzle\Http\Subscriber;
 
 use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Http\Adapter\Transaction;
@@ -15,7 +15,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Queues mock responses or exceptions and delivers mock responses or exceptions in a fifo order.
  */
-class MockPlugin implements EventSubscriberInterface, \Countable
+class Mock implements EventSubscriberInterface, \Countable
 {
     use HasDispatcherTrait;
 
@@ -41,28 +41,36 @@ class MockPlugin implements EventSubscriberInterface, \Countable
 
     public static function getSubscribedEvents()
     {
-        return ['request.before_send' => ['onRequestBeforeSend', -999]];
+        return [RequestEvents::BEFORE_SEND => ['onRequestBeforeSend', -999]];
     }
 
+    /**
+     * @throws \OutOfBoundsException|\Exception
+     */
     public function onRequestBeforeSend(RequestBeforeSendEvent $event)
     {
-        if ($this->queue) {
-            $item = array_shift($this->queue);
-            $request = $event->getRequest();
-            // Emulate the receiving of the response headers
-            $transaction = new Transaction($event->getClient(), $request);
-            $request->getEventDispatcher()->dispatch(
-                RequestEvents::RESPONSE_HEADERS,
-                new GotResponseHeadersEvent($transaction)
-            );
-            // Emulate reading a response body
-            if ($item instanceof ResponseInterface && $this->readBodies && $request->getBody()) {
-                while (!$request->getBody()->eof()) {
-                    $request->getBody()->read(8096);
-                }
-            }
-            $event->intercept($item);
+        if (!$item = array_shift($this->queue)) {
+            throw new \OutOfBoundsException('Mock queue is empty');
+        } elseif ($item instanceof RequestException) {
+            throw $item;
         }
+
+        // Emulate the receiving of the response headers
+        $request = $event->getRequest();
+        $transaction = new Transaction($event->getClient(), $request);
+        $request->getEventDispatcher()->dispatch(
+            RequestEvents::RESPONSE_HEADERS,
+            new GotResponseHeadersEvent($transaction)
+        );
+
+        // Emulate reading a response body
+        if ($this->readBodies && $request->getBody()) {
+            while (!$request->getBody()->eof()) {
+                $request->getBody()->read(8096);
+            }
+        }
+
+        $event->intercept($item);
     }
 
     public function count()

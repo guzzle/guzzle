@@ -1,8 +1,7 @@
 <?php
 
-namespace Guzzle\Plugin\Cookie\CookieJar;
+namespace Guzzle\Http\Subscriber\CookieJar;
 
-use Guzzle\Plugin\Cookie\SetCookie;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
 
@@ -56,10 +55,10 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
     /**
      * Add cookies from a {@see Guzzle\Http\Message\Response} object
      *
-     * @param ResponseInterface $response Response object
      * @param RequestInterface  $request  Request that received the response
+     * @param ResponseInterface $response Response object
      */
-    public function addCookiesFromResponse(ResponseInterface $response, RequestInterface $request = null);
+    public function addCookiesFromResponse(RequestInterface $request, ResponseInterface $response);
 
     /**
      * Get cookies matching a request object

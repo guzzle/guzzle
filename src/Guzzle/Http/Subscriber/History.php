@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Plugin\History;
+namespace Guzzle\Http\Subscriber;
 
 use Guzzle\Http\Event\RequestAfterSendEvent;
 use Guzzle\Http\Event\RequestErrorEvent;
@@ -11,10 +11,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Maintains a list of requests and responses sent using a request or client
  */
-class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Countable
+class History implements EventSubscriberInterface, \IteratorAggregate, \Countable
 {
     /** @var int The maximum number of requests to maintain in the history */
-    private $limit = 10;
+    private $limit;
 
     /** @var array Requests and responses that have passed through the plugin */
     private $transactions = [];
@@ -25,6 +25,11 @@ class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Co
             'request.after_send' => ['onRequestSent', 9999],
             'request.error' => ['onRequestError', 9999],
         ];
+    }
+
+    public function __construct($limit = 10)
+    {
+        $this->limit = $limit;
     }
 
     /**
@@ -54,18 +59,14 @@ class HistoryPlugin implements EventSubscriberInterface, \IteratorAggregate, \Co
     }
 
     /**
-     * Returns an iterable hash mapping requests to responses
+     * Returns an Iterator that yields associative array values where each
+     * associative array contains a 'request' and 'response' key.
      *
-     * @return \SplObjectStorage|\Traversable
+     * @return \Iterator
      */
     public function getIterator()
     {
-        $iterator = new \SplObjectStorage();
-        foreach ($this->transactions as $t) {
-            $iterator[$t['request']] = $t['response'];
-        }
-
-        return $iterator;
+        return new \ArrayIterator($this->transactions);
     }
 
     /**

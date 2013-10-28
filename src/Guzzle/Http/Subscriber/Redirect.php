@@ -3,6 +3,7 @@
 namespace Guzzle\Http\Subscriber;
 
 use Guzzle\Http\Event\RequestAfterSendEvent;
+use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Exception\TooManyRedirectsException;
 use Guzzle\Http\Exception\CouldNotRewindStreamException;
 use Guzzle\Http\Message\RequestInterface;
@@ -20,7 +21,7 @@ class Redirect implements EventSubscriberInterface
 
     public static function getSubscribedEvents()
     {
-        return ['request.after_send' => 'onRequestSent'];
+        return [RequestEvents::AFTER_SEND => ['onRequestSent', -10]];
     }
 
     /**

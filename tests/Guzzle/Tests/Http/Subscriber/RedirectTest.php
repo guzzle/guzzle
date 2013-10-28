@@ -3,8 +3,8 @@
 namespace Guzzle\Tests\Plugin\Redirect;
 
 use Guzzle\Http\Client;
-use Guzzle\Plugin\History\HistoryPlugin;
-use Guzzle\Plugin\Mock\MockPlugin;
+use Guzzle\Http\Subscriber\History;
+use Guzzle\Http\Subscriber\Mock;
 
 /**
  * @covers Guzzle\Http\Subscriber\Redirect
@@ -13,8 +13,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
 {
     public function testRedirectsRequests()
     {
-        $mock = new MockPlugin();
-        $history = new HistoryPlugin();
+        $mock = new Mock();
+        $history = new History();
         $mock->addMultiple([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect1\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect2\r\nContent-Length: 0\r\n\r\n",
@@ -46,7 +46,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
      */
     public function testCanLimitNumberOfRedirects()
     {
-        $mock = new MockPlugin([
+        $mock = new Mock([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect1\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect2\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect3\r\nContent-Length: 0\r\n\r\n",
@@ -61,8 +61,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
 
     public function testDefaultBehaviorIsToRedirectWithGetForEntityEnclosingRequests()
     {
-        $h = new HistoryPlugin();
-        $mock = new MockPlugin([
+        $h = new History();
+        $mock = new Mock([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
@@ -81,8 +81,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
 
     public function testCanRedirectWithStrictRfcCompliance()
     {
-        $h = new HistoryPlugin();
-        $mock = new MockPlugin([
+        $h = new History();
+        $mock = new Mock([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
@@ -101,8 +101,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
 
     public function testRewindsStreamWhenRedirectingIfNeeded()
     {
-        $h = new HistoryPlugin();
-        $mock = new MockPlugin([
+        $h = new History();
+        $mock = new Mock([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]);
@@ -126,8 +126,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
      */
     public function testThrowsExceptionWhenStreamCannotBeRewound()
     {
-        $h = new HistoryPlugin();
-        $mock = new MockPlugin([
+        $h = new History();
+        $mock = new Mock([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]);
@@ -148,7 +148,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
     public function testRedirectsCanBeDisabledPerRequest()
     {
         $client = new Client();
-        $client->getEventDispatcher()->addSubscriber(new MockPlugin([
+        $client->getEventDispatcher()->addSubscriber(new Mock([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]));
@@ -158,9 +158,9 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
 
     public function testCanRedirectWithNoLeadingSlashAndQuery()
     {
-        $h = new HistoryPlugin();
+        $h = new History();
         $client = new Client(['base_url' => 'http://www.foo.com']);
-        $client->getEventDispatcher()->addSubscriber(new MockPlugin([
+        $client->getEventDispatcher()->addSubscriber(new Mock([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: redirect?foo=bar\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]));
@@ -174,11 +174,11 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
     public function testHandlesRedirectsWithSpacesProperly()
     {
         $client = new Client(['base_url' => 'http://www.foo.com']);
-        $client->getEventDispatcher()->addSubscriber(new MockPlugin([
+        $client->getEventDispatcher()->addSubscriber(new Mock([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect 1\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
         ]));
-        $h = new HistoryPlugin();
+        $h = new History();
         $client->getEventDispatcher()->addSubscriber($h);
         $client->get('/foo');
         $reqs = $h->getRequests();

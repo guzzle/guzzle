@@ -8,7 +8,7 @@ use Guzzle\Http\Subscriber\HttpError;
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Client;
-use Guzzle\Plugin\Mock\MockPlugin;
+use Guzzle\Http\Subscriber\Mock;
 
 /**
  * @covers Guzzle\Http\Subscriber\HttpError
@@ -53,7 +53,7 @@ class HttpErrorTest extends \PHPUnit_Framework_TestCase
     public function testFullTransaction()
     {
         $client = new Client();
-        $client->getEventDispatcher()->addSubscriber(new MockPlugin([
+        $client->getEventDispatcher()->addSubscriber(new Mock([
             new Response(403)
         ]));
         $client->get('/');

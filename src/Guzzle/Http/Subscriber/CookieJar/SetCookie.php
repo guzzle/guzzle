@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Plugin\Cookie;
+namespace Guzzle\Http\Subscriber\CookieJar;
 
 use Guzzle\Common\ToArrayInterface;
 
@@ -61,12 +61,8 @@ class SetCookie implements ToArrayInterface
                         continue 2;
                     }
                 }
+                $data[$key] = $value;
             }
-        }
-
-        // Calculate the Expires date
-        if (!$data['Expires'] && $data['Max-Age']) {
-            $data['Expires'] = time() + (int) $data['Max-Age'];
         }
 
         return new self($data);
@@ -75,15 +71,15 @@ class SetCookie implements ToArrayInterface
     /**
      * @param array $data Array of cookie data provided by a Cookie parser
      */
-    public function __construct(array $data = array())
+    public function __construct(array $data = [])
     {
         $this->data = array_replace(self::$defaults, $data);
         // Extract the Expires value and turn it into a UNIX timestamp if needed
         if (!$this->getExpires() && $this->getMaxAge()) {
             // Calculate the Expires date
-            $this->setExpires(time() + (int) $this->getMaxAge());
+            $this->setExpires(time() + $this->getMaxAge());
         } elseif ($this->getExpires() && !is_numeric($this->getExpires())) {
-            $this->setExpires(strtotime($this->getExpires()));
+            $this->setExpires($this->getExpires());
         }
     }
 
@@ -247,7 +243,7 @@ class SetCookie implements ToArrayInterface
      */
     public function setExpires($timestamp)
     {
-        $this->data['Expires'] = $timestamp;
+        $this->data['Expires'] = is_numeric($timestamp) ? (int) $timestamp : strtotime($timestamp);
 
         return $this;
     }
