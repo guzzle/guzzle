@@ -3,6 +3,9 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Http\Message\Post\PostFileInterface;
+use Guzzle\Http\Subscriber\Cookie;
+use Guzzle\Http\Subscriber\CookieJar\ArrayCookieJar;
+use Guzzle\Http\Subscriber\CookieJar\CookieJarInterface;
 use Guzzle\Http\Subscriber\HttpError;
 use Guzzle\Http\Message\Post\PostBody;
 use Guzzle\Http\Message\Post\PostFile;
@@ -231,20 +234,18 @@ class MessageFactory implements MessageFactoryInterface
 
     private function visit_cookies(RequestInterface $request, $value)
     {
-        if (!is_array($value)) {
-            throw new \InvalidArgumentException('cookies value must be an array');
+        if ($value === true) {
+            static $cookie = null;
+            $request->getEventDispatcher()->addSubscriber($cookie = $cookie ?: new Cookie());
+        } elseif (is_array($value)) {
+            $request->getEventDispatcher()->addSubscriber(
+                new Cookie(ArrayCookieJar::fromArray($value, $request->getHost()))
+            );
+        } elseif ($value instanceof CookieJarInterface) {
+            $request->getEventDispatcher()->addSubscriber(new Cookie($value));
+        } elseif ($value !== false) {
+            throw new \InvalidArgumentException('cookies must be an array, true, or a CookieJarInterface object');
         }
-
-        $cookies = [];
-        foreach ($value as $name => $cookie) {
-            // Quote the value if it is not already and contains problematic characters
-            if (substr($cookie, 0, 1) !== '"' && substr($cookie, -1, 1) !== '"' && strpbrk($cookie, ';,')) {
-                $cookie = '"' . str_replace('"', '\\"', $cookie) . '"';
-            }
-            $cookies[] = "{$name}={$cookie}";
-        }
-
-        $request->setHeader('Cookie', implode('; ', $cookies));
     }
 
     private function visit_events(RequestInterface $request, $value)

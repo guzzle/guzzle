@@ -23,7 +23,10 @@ interface MessageFactoryInterface
      *        "auth": Array of HTTP authentication parameters to use with the request. The array must contain the
      *            username in index [0], the password in index [2], and can optionally contain the authentication type
      *            in index [3]. The authentication types are: "Basic", "Digest", "NTLM", "Any" (defaults to "Basic").
-     *        "cookies": Associative array of cookies
+     *        "cookies": Array, bool (true), or a cookie jar object. Pass an associative array continaing cookies to
+     *            send in the request and start a new cookie session, set to a
+     *            {@see Guzzle\Http\Subscriber\CookieJar\CookieJarInterface} object to us an exisitng cookie jar, or set
+     *            to `true` to use the shared cookie session of the client.
      *        "allow_redirects": Set to false to disable redirects. Set to "strict" to enable strict redirects that
      *            convert POST requests to GET requests on a redirect.
      *        "save_to": String, fopen resource, or EntityBody object used to store the body of the response

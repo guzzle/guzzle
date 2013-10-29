@@ -29,6 +29,15 @@ class ArrayCookieJarTest extends \PHPUnit_Framework_TestCase
         ];
     }
 
+    public function testCreatesFromArray()
+    {
+        $jar = ArrayCookieJar::fromArray([
+            'foo' => 'bar',
+            'baz' => 'bam'
+        ], 'example.com');
+        $this->assertCount(2, $jar);
+    }
+
     /**
      * Provides test data for cookie cookieJar retrieval
      */

@@ -6,6 +6,8 @@ use Guzzle\Http\Client;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\MessageFactory;
+use Guzzle\Http\Subscriber\Cookie;
+use Guzzle\Http\Subscriber\CookieJar\ArrayCookieJar;
 use Guzzle\Http\Subscriber\Redirect;
 use Guzzle\Http\Subscriber\Mock;
 use Guzzle\Stream\Stream;
@@ -131,16 +133,53 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(10, $request->getConfig()->get(Redirect::MAX_REDIRECTS));
     }
 
-    public function testCanAddCookies()
+    public function testCanAddCookiesFromHash()
     {
-        $request = (new MessageFactory)->createRequest('GET', '/', [], null, ['cookies' => ['Foo' => 'Bar']]);
-        $this->assertEquals('Foo=Bar', $request->getHeader('Cookie'));
+        $request = (new MessageFactory)->createRequest('GET', 'http://www.test.com/', [], null, ['cookies' => ['Foo' => 'Bar']]);
+        $cookies = null;
+        foreach ($request->getEventDispatcher()->getListeners(RequestEvents::BEFORE_SEND) as $l) {
+            if ($l[0] instanceof Cookie) {
+                $cookies = $l[0];
+                break;
+            }
+        }
+        if (!$cookies) {
+            $this->fail('Did not add cookie listener');
+        } else {
+            $this->assertCount(1, $cookies->getCookieJar());
+        }
     }
 
-    public function testCanAddCookiesWithQuoting()
+    public function testAddsCookieUsingTrue()
     {
-        $request = (new MessageFactory)->createRequest('GET', '/', [], null, ['cookies' => ['Foo' => 'Bar;bar']]);
-        $this->assertEquals('Foo="Bar;bar"', $request->getHeader('Cookie'));
+        $factory = new MessageFactory();
+        $request1 = $factory->createRequest('GET', '/', [], null, ['cookies' => true]);
+        $request2 = $factory->createRequest('GET', '/', [], null, ['cookies' => true]);
+        $listeners = function ($r) {
+            return array_filter($r->getEventDispatcher()->getListeners(RequestEvents::BEFORE_SEND), function ($l) {
+                return $l[0] instanceof Cookie;
+            });
+        };
+        $this->assertSame($listeners($request1), $listeners($request2));
+    }
+
+    public function testAddsCookieFromCookieJar()
+    {
+        $jar = new ArrayCookieJar();
+        $request = (new MessageFactory)->createRequest('GET', '/', [], null, ['cookies' => $jar]);
+        foreach ($request->getEventDispatcher()->getListeners(RequestEvents::BEFORE_SEND) as $l) {
+            if ($l[0] instanceof Cookie) {
+                $this->assertSame($jar, $l[0]->getCookieJar());
+            }
+        }
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testValidatesCookies()
+    {
+        (new MessageFactory)->createRequest('GET', '/', [], null, ['cookies' => 'baz']);
     }
 
     public function testCanAddQueryString()
@@ -286,7 +325,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     public function inputValidation()
     {
         return array_map(function ($option) { return array($option); }, array(
-            'headers', 'query', 'cookies', 'auth', 'events', 'plugins', 'params', 'config'
+            'headers', 'query', 'auth', 'events', 'plugins', 'params', 'config'
         ));
     }
 

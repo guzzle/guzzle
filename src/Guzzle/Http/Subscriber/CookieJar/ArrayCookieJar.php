@@ -25,6 +25,29 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
     }
 
     /**
+     * Create a new Cookie jar from an associative array and domain
+     *
+     * @param array  $cookies Cookies to create the jar from
+     * @param string $domain  Domain to set the cookies to
+     *
+     * @return self
+     */
+    public static function fromArray(array $cookies, $domain)
+    {
+        $cookieJar = new ArrayCookieJar();
+        foreach ($cookies as $name => $value) {
+            $cookieJar->add(new SetCookie([
+                'Domain'  => $domain,
+                'Name'    => $name,
+                'Value'   => $value,
+                'Discard' => true
+            ]));
+        }
+
+        return $cookieJar;
+    }
+
+    /**
      * Enable or disable strict mode on the cookie jar
      *
      * @param bool $strictMode Set to true to throw exceptions when invalid cookies are added. False to ignore them.
