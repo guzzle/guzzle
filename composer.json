@@ -27,16 +27,14 @@
     },
 
     "require-dev": {
-        "doctrine/cache": "*",
         "symfony/class-loader": "*",
-        "monolog/monolog": "1.*",
-        "psr/log": "1.0.*",
+        "psr/log": "~1",
         "phpunit/phpunit": "3.7.*"
     },
 
     "extra": {
         "branch-alias": {
-            "dev-master": "3.7-dev"
+            "dev-master": "4.0-dev"
         }
     }
 }

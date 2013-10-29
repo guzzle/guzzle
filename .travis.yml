@@ -1,31 +1,15 @@
 language: php
 
 php:
-  - 5.3
   - 5.4
   - 5.5
 
 before_script:
   - curl --version
   - pear config-set php_ini ~/.phpenv/versions/`php -r 'echo phpversion();'`/etc/php.ini
-  - echo 'Installing pecl_http'
-  - wget --quiet http://pecl.php.net/get/pecl_http-1.7.6.tgz
-  - tar -xzf pecl_http-1.7.6.tgz
-  - sh -c "cd pecl_http-1.7.6 && phpize && ./configure && make && sudo make install" > /dev/null
-  - echo "extension=http.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
   - pecl install uri_template-beta
-  - pear config-set auto_discover 1
-  - pear install pear.phing.info/phing
-  - pear install pear.phpunit.de/phploc
-  - pear install pear/PHP_CodeSniffer
-  - pear install pear.pdepend.org/PHP_Depend
-  - pear install bartlett.laurent-laville.org/PHP_CompatInfo
-  - pear install pear/PEAR_PackageFileManager2 pear/PEAR_PackageFileManager2_Plugins pear/XML_Serializer-beta
-  - pear install VersionControl_Git-alpha
-  - phpenv rehash
-  - composer install --dev
-  - cp phing/build.properties.travis phing/build.properties
-  - echo 'Ensuring the correct version of node is running'
+  - composer install
   - ~/.nvm/nvm.sh install v0.6.14
+  - ~/.nvm/nvm.sh run v0.6.14
 
-script: phing travisci
+script: vendor/bin/phpunit
