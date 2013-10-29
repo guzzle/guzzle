@@ -251,12 +251,11 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
      */
     public function rfc3986UrlProvider()
     {
-        return array(
+        $result = array(
             array('g', 'http://a/b/c/g'),
             array('./g', 'http://a/b/c/g'),
             array('g/', 'http://a/b/c/g/'),
             array('/g', 'http://a/g'),
-            array('//g', 'http://g'),
             array('?y', 'http://a/b/c/d;p?y'),
             array('g?y', 'http://a/b/c/g?y'),
             array('#s', 'http://a/b/c/d;p?q=#s'),
@@ -275,6 +274,13 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
             array('../../', 'http://a/'),
             array('../../g', 'http://a/g')
         );
+
+        // This support was added in PHP 5.4.7: https://bugs.php.net/bug.php?id=62844
+        if (version_compare(PHP_VERSION, '5.4.7', '>=')) {
+            $result[] = array('//g', 'http://g');
+        }
+
+        return $result;
     }
 
     /**
