@@ -408,6 +408,23 @@ class CommandTest extends AbstractCommandTest
         $command->prepare();
     }
 
+    public function testCanAccessValidationErrorsFromCommand()
+    {
+        $validationErrors = array('[Foo] Baz', '[Bar] Boo');
+        $command = new MockCommand();
+        $command->setClient(new \Guzzle\Service\Client());
+
+        $this->assertFalse($command->getValidationErrors());
+
+        $v = $this->getMockBuilder('Guzzle\Service\Description\SchemaValidator')
+            ->setMethods(array('validate', 'getErrors'))
+            ->getMock();
+        $v->expects($this->any())->method('getErrors')->will($this->returnValue($validationErrors));
+        $command->setValidator($v);
+
+        $this->assertEquals($validationErrors, $command->getValidationErrors());
+    }
+
     public function testCanChangeResponseBody()
     {
         $body = EntityBody::factory();
