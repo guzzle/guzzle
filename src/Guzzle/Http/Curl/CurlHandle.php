@@ -50,7 +50,10 @@ class CurlHandle
 
         // Prepare url
         $url = (string)$request->getUrl();
-        $url = preg_replace('/\#[^\#]*?$/','', $url); // strip fragment from url
+        if(($pos = strpos($url, '#')) !== false ){
+            // strip fragment from url
+            $url = substr($url, 0, $pos);
+        }
 
         // Array of default cURL options.
         $curlOptions = array(
