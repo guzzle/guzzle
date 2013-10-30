@@ -444,7 +444,23 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
                 'Content-Length'   => '4',
                 '!Expect'            => null,
                 '!Transfer-Encoding' => null
-            ))
+            )),
+
+            /**
+             * Send a request with empty path and a fragment - the fragment must be
+             * stripped out before sending it to curl
+             *
+             * @issue 453
+             * @link https://github.com/guzzle/guzzle/issues/453
+             */
+            array('GET', 'http://www.google.com#head', null, null, array(
+                CURLOPT_RETURNTRANSFER => 0,
+                CURLOPT_HEADER => 0,
+                CURLOPT_CONNECTTIMEOUT => 150,
+                CURLOPT_WRITEFUNCTION => 'callback',
+                CURLOPT_HEADERFUNCTION => 'callback',
+                CURLOPT_HTTPHEADER => array('Accept:', 'Host: www.google.com', 'User-Agent: ' . $userAgent),
+            )),
         );
 
 
