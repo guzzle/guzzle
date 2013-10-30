@@ -48,9 +48,13 @@ class CurlHandle
         $method = $request->getMethod();
         $bodyAsString = $requestCurlOptions->get(self::BODY_AS_STRING);
 
+        // Prepare url
+        $url = (string)$request->getUrl();
+        $url = preg_replace('/\#[^\#]*?$/','', $url); // strip fragment from url
+
         // Array of default cURL options.
         $curlOptions = array(
-            CURLOPT_URL            => $request->getUrl(),
+            CURLOPT_URL            => $url,
             CURLOPT_CONNECTTIMEOUT => 150,
             CURLOPT_RETURNTRANSFER => false,
             CURLOPT_HEADER         => false,
