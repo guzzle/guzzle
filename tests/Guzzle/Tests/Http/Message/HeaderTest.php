@@ -86,6 +86,7 @@ class HeaderTest extends \Guzzle\Tests\GuzzleTestCase
         $h = new Header('Foo', '');
         $this->assertEquals('', (string) $h);
         $this->assertEquals(1, count($h));
+        $this->assertEquals(1, count($h->normalize()->toArray()));
     }
 
     public function testCanRemoveValues()
@@ -142,6 +143,10 @@ class HeaderTest extends \Guzzle\Tests\GuzzleTestCase
                     array('<http://.../side.jpeg?test=1>' => '', 'rel' => 'side', 'type' => 'image/jpeg'),
                     array('<http://.../side.jpeg?test=2>' => '', 'rel' => 'side', 'type' => 'image/jpeg')
                 )
+            ),
+            array(
+                '',
+                array()
             )
         );
     }
