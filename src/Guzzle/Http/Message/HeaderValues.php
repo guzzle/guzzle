@@ -65,15 +65,18 @@ class HeaderValues implements \IteratorAggregate, HeaderValuesInterface
         foreach ($this->normalize() as $val) {
             $part = [];
             foreach (preg_split('/;(?=([^"]*"[^"]*")*[^"]*$)/', $val) as $kvp) {
-                preg_match_all('/<[^>]+>|[^=]+/', $kvp, $matches);
-                $pieces = $matches[0];
-                if (isset($pieces[1])) {
-                    $part[trim($pieces[0], $trimmed)] = trim($pieces[1], $trimmed);
-                } else {
-                    $part[] = trim($pieces[0], $trimmed);
+                if (preg_match_all('/<[^>]+>|[^=]+/', $kvp, $matches)) {
+                    $pieces = $matches[0];
+                    if (isset($pieces[1])) {
+                        $part[trim($pieces[0], $trimmed)] = trim($pieces[1], $trimmed);
+                    } else {
+                        $part[] = trim($pieces[0], $trimmed);
+                    }
                 }
             }
-            $params[] = $part;
+            if ($part) {
+                $params[] = $part;
+            }
         }
 
         return $params;

@@ -82,6 +82,10 @@ class HeaderValuesTest extends \PHPUnit_Framework_TestCase
                     array('<http://.../side.jpeg?test=1>', 'rel' => 'side', 'type' => 'image/jpeg'),
                     array('<http://.../side.jpeg?test=2>', 'rel' => 'side', 'type' => 'image/jpeg')
                 )
+            ),
+            array(
+                '',
+                array()
             )
         );
     }
