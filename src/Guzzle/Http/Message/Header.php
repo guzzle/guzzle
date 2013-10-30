@@ -132,17 +132,13 @@ class Header implements HeaderInterface
         foreach ($this->normalize()->toArray() as $val) {
             $part = array();
             foreach (preg_split('/;(?=([^"]*"[^"]*")*[^"]*$)/', $val) as $kvp) {
-                if(!preg_match_all('/<[^>]+>|[^=]+/', $kvp, $matches)){
+                if (!preg_match_all('/<[^>]+>|[^=]+/', $kvp, $matches)) {
                     continue;
                 }
-
                 $pieces = array_map($callback, $matches[0]);
-                if(!count($pieces)){
-                    continue;
-                }
                 $part[$pieces[0]] = isset($pieces[1]) ? $pieces[1] : '';
             }
-            if(!empty($part)){
+            if ($part) {
                 $params[] = $part;
             }
         }
