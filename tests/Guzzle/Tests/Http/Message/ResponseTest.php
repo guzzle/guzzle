@@ -85,12 +85,12 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \Guzzle\Common\Exception\RuntimeException
+     * @expectedException \RuntimeException
      */
     public function testPreventsComplexExternalEntities()
     {
         $xml = '<?xml version="1.0"?><!DOCTYPE scan[<!ENTITY test SYSTEM "php://filter/read=convert.base64-encode/resource=ResponseTest.php">]><scan>&test;</scan>';
-        $response = new Response(200, array(), $xml);
+        $response = new Response(200, array(), Stream::factory($xml));
 
         $oldCwd = getcwd();
         chdir(__DIR__);

@@ -211,7 +211,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $client = new Client(['base_url' => 'http://www.foo.com/baz?bam=bar']);
         $this->assertEquals(
-            'http://www.foo.com/baz/bar/bam',
+            'http://www.foo.com/bar/bam',
             $client->createRequest('GET', 'bar/bam')->getUrl()
         );
     }
@@ -220,7 +220,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $client = new Client(['base_url' => 'http://www.foo.com/baz?bam=bar']);
         $this->assertEquals(
-            'http://www.foo.com/baz/bar/123',
+            'http://www.foo.com/bar/123',
             $client->createRequest('GET', ['bar/{bam}', ['bam' => '123']])->getUrl()
         );
     }
