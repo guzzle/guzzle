@@ -8,10 +8,9 @@ primary_domain = 'php'
 
 # -- General configuration -----------------------------------------------------
 
-extensions = ['sphinx.ext.autodoc']
+extensions = []
 templates_path = ['_templates']
 source_suffix = '.rst'
-#source_encoding = 'utf-8-sig'
 master_doc = 'index'
 
 project = u'Guzzle'
@@ -19,8 +18,6 @@ copyright = u'2012, Michael Dowling'
 version = '3.0.0'
 release = '3.0.0'
 
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
 exclude_patterns = ['_build']
 
 # -- Options for HTML output ---------------------------------------------------
@@ -42,6 +39,24 @@ html_sidebars = {
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'Guzzledoc'
+
+# -- Guzzle Sphinx theme setup ------------------------------------------------
+
+import guzzle_sphinx_theme
+pygments_style = 'guzzle_sphinx_theme.GuzzleStyle'
+html_translator_class = 'guzzle_sphinx_theme.HTMLTranslator'
+html_theme_path = guzzle_sphinx_theme.html_theme_path()
+html_theme = 'guzzle_sphinx_theme'
+
+# Guzzle theme options (see theme.conf for more information)
+html_theme_options = {
+    "index_template": "index.html",
+    "project_nav_name": "Guzzle",
+    "github_user": "guzzle",
+    "github_repo": "guzzle",
+    "disqus_comments_shortname": "guzzle",
+    "google_analytics_account": "UA-22752917-1"
+}
 
 # -- Options for LaTeX output --------------------------------------------------
 
@@ -76,21 +91,3 @@ texinfo_documents = [
    u'Michael Dowling', 'Guzzle', 'One line description of project.',
    'Miscellaneous'),
 ]
-
-# -- Guzzle Sphinx theme setup ------------------------------------------------
-
-import guzzle_sphinx_theme
-pygments_style = 'guzzle_sphinx_theme.GuzzleStyle'
-html_translator_class = 'guzzle_sphinx_theme.HTMLTranslator'
-html_theme_path = guzzle_sphinx_theme.html_theme_path()
-html_theme = 'guzzle_sphinx_theme'
-
-# Guzzle theme options (see theme.conf for more information)
-html_theme_options = {
-    "index_template": "index.html",
-    "project_nav_name": "Guzzle",
-    "github_user": "guzzle",
-    "github_repo": "guzzle",
-    "disqus_comments_shortname": "guzzle",
-    "google_analytics_account": "UA-22752917-1"
-}

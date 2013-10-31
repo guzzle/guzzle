@@ -46,14 +46,14 @@ Pre-Built plugins
 Guzzle provides easy to use request plugins that add behavior to requests based on signal slot event notifications
 powered by the Symfony2 Event Dispatcher component.
 
-* :doc:`plugins/async-plugin`
-* :doc:`plugins/backoff-plugin`
-* :doc:`plugins/cache-plugin`
-* :doc:`plugins/cookie-plugin`
-* :doc:`plugins/curl-auth-plugin`
-* :doc:`plugins/history-plugin`
-* :doc:`plugins/log-plugin`
-* :doc:`plugins/md5-validator-plugin`
-* :doc:`plugins/mock-plugin`
-* :doc:`plugins/ouath-plugin`
+* :doc:`async-plugin`
+* :doc:`backoff-plugin`
+* :doc:`cache-plugin`
+* :doc:`cookie-plugin`
+* :doc:`curl-auth-plugin`
+* :doc:`history-plugin`
+* :doc:`log-plugin`
+* :doc:`md5-validator-plugin`
+* :doc:`mock-plugin`
+* :doc:`oauth-plugin`
 
