@@ -15,6 +15,7 @@ use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
 use Guzzle\Tests\Http\Server;
+use Guzzle\Url\Url;
 
 /**
  * @covers Guzzle\Http\Adapter\Curl\CurlAdapter
@@ -155,5 +156,15 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
             $this->assertContains('[curl] (#-10) ', $e->getMessage());
             $this->assertContains($request->getUrl(), $e->getMessage());
         }
+    }
+
+    public function testStripsFragmentFromHost()
+    {
+        self::$server->flush();
+        self::$server->enqueue("HTTP/1.1 200 OK\r\n\r\nContent-Length: 0\r\n\r\n");
+        // This will fail if the removal of the #fragment is not performed
+        $url = Url::fromString(self::$server->getUrl())->setPath(null)->setFragment('foo');
+        $client = new Client();
+        $client->get($url);
     }
 }

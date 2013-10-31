@@ -34,9 +34,16 @@ class CurlFactory
 
     protected function getDefaultOptions(RequestInterface $request, RequestMediator $mediator)
     {
+        $url = $request->getUrl();
+
+        // Strip fragment from URL. See: https://github.com/guzzle/guzzle/issues/453
+        if (($pos = strpos($url, '#')) !== false) {
+            $url = substr($url, 0, $pos);
+        }
+
         $config = $request->getConfig();
         $options = array(
-            CURLOPT_URL            => $request->getUrl(),
+            CURLOPT_URL            => $url,
             CURLOPT_CONNECTTIMEOUT => $config['connect_timeout'] ?: 150,
             CURLOPT_RETURNTRANSFER => false,
             CURLOPT_HEADER         => false,
