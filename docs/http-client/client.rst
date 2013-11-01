@@ -406,8 +406,7 @@ The `proxy` option is used to specify an HTTP proxy (e.g. `http://username:passw
 debug
 ~~~~~
 
-The `debug` option is used to output all data sent over the wire using the `LogPlugin` if it's available, or cURL
-verbose output otherwise.
+The `debug` option is used to show verbose cURL output for a transfer.
 
 stream
 ~~~~~~
