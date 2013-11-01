@@ -22,3 +22,6 @@ phing/build.properties
 
 # Ignore subsplit working directory
 .subsplit
+
+docs/_build
+docs/*.pyc
