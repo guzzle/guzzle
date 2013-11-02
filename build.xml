@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="guzzle" default="test">
     <!-- set local values, like git location -->
+    <property file="phing/build.properties.dist" override="true" />
     <property file="phing/build.properties" override="true" />
 
     <property name="dir.output" value="${project.basedir}/build/artifacts" />
