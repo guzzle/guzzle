@@ -48,7 +48,7 @@ class LogPlugin implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            'request.after_send' => ['onRequestAfterSend', 9999],
+            'request.after_send' => ['onRequestAfterSend', -9999],
             'request.error'      => ['onRequestError', 9999]
         ];
     }
@@ -59,7 +59,7 @@ class LogPlugin implements EventSubscriberInterface
     public function onRequestAfterSend(RequestAfterSendEvent $event)
     {
         $this->logger->log(
-            $event->getResponse()->isSuccessful() ? LogLevel::INFO : LogLevel::WARNING,
+            substr($event->getResponse()->getStatusCode(), 0, 1) == '2' ? LogLevel::INFO : LogLevel::WARNING,
             $this->formatter->format($event->getRequest(), $event->getResponse()),
             ['request' => $event->getRequest(), 'response' => $event->getResponse()]
         );
