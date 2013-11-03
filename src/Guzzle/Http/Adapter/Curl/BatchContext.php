@@ -12,9 +12,6 @@ class BatchContext
     /** @var resource */
     private $multi;
 
-    /** @var array Array of {@see TransactionInterface} */
-    private $transactions = [];
-
     /** @var \SplObjectStorage */
     private $handles;
 
