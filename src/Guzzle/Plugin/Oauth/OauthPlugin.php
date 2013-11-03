@@ -2,12 +2,12 @@
 
 namespace Guzzle\Plugin\Oauth;
 
-use Guzzle\Common\Event;
 use Guzzle\Common\Collection;
+use Guzzle\Http\Event\RequestBeforeSendEvent;
+use Guzzle\Http\Message\Post\PostBodyInterface;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\EntityEnclosingRequestInterface;
-use Guzzle\Http\QueryString;
-use Guzzle\Http\Url;
+use Guzzle\Url\QueryString;
+use Guzzle\Url\Url;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -65,17 +65,10 @@ class OauthPlugin implements EventSubscriberInterface
         );
     }
 
-    /**
-     * Request before-send event handler
-     *
-     * @param Event $event Event received
-     * @return array
-     * @throws \InvalidArgumentException
-     */
-    public function onRequestBeforeSend(Event $event)
+    public function onRequestBeforeSend(RequestBeforeSendEvent $event)
     {
-        $timestamp = $this->getTimestamp($event);
-        $request = $event['request'];
+        $timestamp = $this->getTimestamp();
+        $request = $event->getRequest();
         $nonce = $this->generateNonce($request);
         $authorizationParams = $this->getOauthParams($timestamp, $nonce);
         $authorizationParams['oauth_signature']  = $this->getSignature($request, $timestamp, $nonce);
@@ -112,6 +105,7 @@ class OauthPlugin implements EventSubscriberInterface
     private function buildAuthorizationHeader($authorizationParams)
     {
         $authorizationString = 'OAuth ';
+        ksort($authorizationParams);
         foreach ($authorizationParams as $key => $val) {
             if ($val) {
                 $authorizationString .= $key . '="' . urlencode($val) . '", ';
@@ -157,7 +151,7 @@ class OauthPlugin implements EventSubscriberInterface
         // Build signing string from combined params
         $parameterString = new QueryString($params);
 
-        $url = Url::factory($request->getUrl())->setQuery('')->setFragment(null);
+        $url = Url::fromString($request->getUrl())->setQuery('')->setFragment(null);
 
         return strtoupper($request->getMethod()) . '&'
              . rawurlencode($url) . '&'
@@ -173,21 +167,21 @@ class OauthPlugin implements EventSubscriberInterface
      */
     protected function getOauthParams($timestamp, $nonce)
     {
-        $params = new Collection(array(
+        $params = [
             'oauth_consumer_key'     => $this->config['consumer_key'],
             'oauth_nonce'            => $nonce,
             'oauth_signature_method' => $this->config['signature_method'],
             'oauth_timestamp'        => $timestamp,
-        ));
+        ];
 
         // Optional parameters should not be set if they have not been set in the config as
         // the parameter may be considered invalid by the Oauth service.
-        $optionalParams = array(
+        $optionalParams = [
             'callback'  => 'oauth_callback',
             'token'     => 'oauth_token',
             'verifier'  => 'oauth_verifier',
             'version'   => 'oauth_version'
-        );
+        ];
 
         foreach ($optionalParams as $optionName => $oauthName) {
             if (isset($this->config[$optionName]) == true) {
@@ -215,16 +209,13 @@ class OauthPlugin implements EventSubscriberInterface
         $params = $this->getOauthParams($timestamp, $nonce);
 
         // Add query string parameters
-        $params->merge($request->getQuery());
+        $params += $request->getQuery()->toArray();
 
         // Add POST fields to signing string if required
-        if ($this->shouldPostFieldsBeSigned($request))
-        {
-            $params->merge($request->getPostFields());
+        if ($fields = $this->getSignablePostFields($request)) {
+            $params += $fields;
         }
 
-        // Sort params
-        $params = $params->toArray();
         ksort($params);
 
         return $params;
@@ -236,19 +227,15 @@ class OauthPlugin implements EventSubscriberInterface
      * overwritten e.g. the Flickr API incorrectly adds the post fields when the Content-Type
      * is 'application/x-www-form-urlencoded'
      *
-     * @param $request
-     * @return bool Whether the post fields should be signed or not
+     * @param RequestInterface $request
+     *
+     * @return array Returns an array of the POST fields to sign
      */
-    public function shouldPostFieldsBeSigned($request)
+    public function getSignablePostFields(RequestInterface $request)
     {
-        if (!$this->config->get('disable_post_params') &&
-            $request instanceof EntityEnclosingRequestInterface &&
-            false !== strpos($request->getHeader('Content-Type'), 'application/x-www-form-urlencoded'))
-        {
-            return true;
-        }
-
-        return false;
+        return !$this->config['disable_post_params'] &&
+            $request->getBody() instanceof PostBodyInterface
+            ? $request->getBody()->getFields() : [];
     }
 
     /**
@@ -262,18 +249,6 @@ class OauthPlugin implements EventSubscriberInterface
     public function generateNonce(RequestInterface $request)
     {
         return sha1(uniqid('', true) . $request->getUrl());
-    }
-
-    /**
-     * Gets timestamp from event or create new timestamp
-     *
-     * @param Event $event Event containing contextual information
-     *
-     * @return int
-     */
-    public function getTimestamp(Event $event)
-    {
-       return $event['timestamp'] ?: time();
     }
 
     /**
@@ -301,5 +276,10 @@ class OauthPlugin implements EventSubscriberInterface
         }
 
         return $data;
+    }
+
+    private function getTimestamp()
+    {
+        return time();
     }
 }
