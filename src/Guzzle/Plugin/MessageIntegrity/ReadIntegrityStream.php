@@ -24,8 +24,11 @@ class ReadIntegrityStream implements StreamInterface, HasDispatcherInterface
     /** @var int Last position that the hash was updated at */
     private $lastHashPos = 0;
 
-    public function __construct(StreamInterface $stream, HashInterface $hash, callable $validationCallback)
-    {
+    public function __construct(
+        StreamInterface $stream,
+        HashInterface $hash,
+        callable $validationCallback
+    ) {
         $this->stream = $stream;
         $this->hash = $hash;
         $this->validationCallback = $validationCallback;

@@ -2,7 +2,7 @@
 
 namespace Guzzle\Plugin\MessageIntegrity;
 
-use Guzzle\Common\Event;
+use Guzzle\Http\Event\GotResponseHeadersEvent;
 use Guzzle\Http\Message\ResponseInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -25,30 +25,31 @@ class StreamingResponseIntegrityPlugin implements EventSubscriberInterface
         return ['request.got_headers' => ['onRequestGotHeaders', -1]];
     }
 
-    public function onRequestGotHeaders(Event $event)
+    public function onRequestGotHeaders(GotResponseHeadersEvent $event)
     {
-        if ($this->canValidate($event['response'])) {
-            $response = $event['response'];
-            $request = $event['request'];
-            $expected = (string) $response->getHeader($this->header);
-            $header = $this->header;
-            $response->setBody(new ReadIntegrityStream(
-                $response->getBody(),
-                $this->hash,
-                function ($result) use ($request, $response, $expected, $header) {
-                    if ($expected !== $result) {
-                        throw new MessageIntegrityException(
-                            sprintf(
-                                '%s message integrity check failure. Expected "%s" but got "%s"',
-                                $this->header, $expected, $result
-                            ),
-                            $request,
-                            $response
-                        );
-                    }
-                }
-            ));
+        $response = $event->getResponse();
+        if (!$this->canValidate($response)) {
+            return;
         }
+
+        $request = $event->getRequest();
+        $expected = (string) $response->getHeader($this->header);
+        $response->setBody(new ReadIntegrityStream(
+            $response->getBody(),
+            $this->hash,
+            function ($result) use ($request, $response, $expected) {
+                if ($expected !== $result) {
+                    throw new MessageIntegrityException(
+                        sprintf(
+                            '%s message integrity check failure. Expected "%s" but got "%s"',
+                            $this->header, $expected, $result
+                        ),
+                        $request,
+                        $response
+                    );
+                }
+            }
+        ));
     }
 
     private function canValidate(ResponseInterface $response)
