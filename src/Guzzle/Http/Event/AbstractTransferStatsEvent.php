@@ -3,6 +3,7 @@
 namespace Guzzle\Http\Event;
 
 use Guzzle\Http\Adapter\TransactionInterface;
+use Guzzle\Http\Message\ResponseInterface;
 
 /**
  * Event that contains transaction statistics (time over the wire, lookup time,
@@ -61,4 +62,18 @@ abstract class AbstractTransferStatsEvent extends AbstractRequestEvent
             ? $this->transferInfo[$name]
             : null;
     }
+
+    /**
+     * Get the response
+     *
+     * @return ResponseInterface|null
+     */
+    abstract public function getResponse();
+
+    /**
+     * Intercept the request and associate a response
+     *
+     * @param ResponseInterface $response Response to set
+     */
+    abstract public function intercept(ResponseInterface $response);
 }

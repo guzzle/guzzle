@@ -2,15 +2,12 @@
 
 namespace Guzzle\Plugin\Backoff;
 
-use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\Response;
-use Guzzle\Http\Exception\HttpException;
-use Guzzle\Http\Exception\CurlException;
+use Guzzle\Http\Event\AbstractTransferStatsEvent;
 
 /**
  * Strategy used to retry when certain cURL error codes are encountered.
  */
-class CurlBackoffStrategy extends AbstractErrorCodeBackoffStrategy
+class CurlResultFilter extends AbstractRetryFilter
 {
     /** @var array Default cURL errors to retry */
     protected static $defaultErrorCodes = array(
@@ -19,10 +16,8 @@ class CurlBackoffStrategy extends AbstractErrorCodeBackoffStrategy
         CURLE_SEND_ERROR, CURLE_RECV_ERROR
     );
 
-    protected function getDelay($retries, RequestInterface $request, Response $response = null, HttpException $e = null)
+    protected function should($retries, AbstractTransferStatsEvent $event)
     {
-        if ($e && $e instanceof CurlException) {
-            return isset($this->errorCodes[$e->getErrorNo()]) ? true : null;
-        }
+        return isset($this->errorCodes[(int) $event->getTransferInfo('curl_result')]);
     }
 }

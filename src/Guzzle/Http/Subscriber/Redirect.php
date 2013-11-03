@@ -25,6 +25,27 @@ class Redirect implements EventSubscriberInterface
     }
 
     /**
+     * Rewind the entity body of the request if needed
+     *
+     * @param RequestInterface $redirectRequest
+     * @throws CouldNotRewindStreamException
+     */
+    public static function rewindEntityBody(RequestInterface $redirectRequest)
+    {
+        // Rewind the entity body of the request if needed
+        if ($redirectRequest->getBody()) {
+            $body = $redirectRequest->getBody();
+            // Only rewind the body if some of it has been read already, and throw an exception if the rewind fails
+            if ($body->tell() && !$body->seek(0)) {
+                throw new CouldNotRewindStreamException(
+                    'Unable to rewind the non-seekable entity body of the request after redirecting',
+                    $redirectRequest
+                );
+            }
+        }
+    }
+
+    /**
      * Called when a request receives a redirect response
      *
      * @param RequestAfterSendEvent $event Event emitted
@@ -101,26 +122,5 @@ class Redirect implements EventSubscriberInterface
         }
 
         $redirectRequest->setUrl($location);
-    }
-
-    /**
-     * Rewind the entity body of the request if needed
-     *
-     * @param RequestInterface $redirectRequest
-     * @throws CouldNotRewindStreamException
-     */
-    private function rewindEntityBody(RequestInterface $redirectRequest)
-    {
-        // Rewind the entity body of the request if needed
-        if ($redirectRequest->getBody()) {
-            $body = $redirectRequest->getBody();
-            // Only rewind the body if some of it has been read already, and throw an exception if the rewind fails
-            if ($body->tell() && !$body->seek(0)) {
-                throw new CouldNotRewindStreamException(
-                    'Unable to rewind the non-seekable entity body of the request after redirecting',
-                    $redirectRequest
-                );
-            }
-        }
     }
 }

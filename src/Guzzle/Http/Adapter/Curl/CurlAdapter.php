@@ -135,6 +135,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
                 new RequestAfterSendEvent($transaction, $stats)
             );
         } catch (RequestException $e) {
+            $stats['curl_result'] = $curl['result'];
             $this->onError($transaction, $e, $context, $stats);
         }
     }
