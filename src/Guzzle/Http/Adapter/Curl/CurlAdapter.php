@@ -52,6 +52,20 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
         }
     }
 
+    /**
+     * Throw an exception for a cURL multi response if needed
+     *
+     * @param int $code Curl response code
+     * @throws AdapterException
+     */
+    public static function checkCurlMultiResult($code)
+    {
+        if ($code != CURLM_OK && $code != CURLM_CALL_MULTI_PERFORM) {
+            $buffer = function_exists('curl_multi_strerror') ? curl_multi_strerror($code) : self::ERROR_STR;
+            throw new AdapterException(sprintf('cURL error %s: %s', $code, $buffer));
+        }
+    }
+
     public function send(TransactionInterface $transaction)
     {
         $this->batch([$transaction]);
@@ -61,49 +75,40 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
 
     public function batch(array $transactions)
     {
-        $context = [
-            'transactions' => $transactions,
-            'handles'      => new \SplObjectStorage(),
-            'multi'        => $this->checkoutMultiHandle()
-        ];
+        $context = new BatchContext($this->checkoutMultiHandle());
 
         foreach ($transactions as $transaction) {
             try {
-                $this->prepare($transaction, $context);
+                $context->addTransaction(
+                    $transaction,
+                    $this->factory->createHandle($transaction, $this->messageFactory)
+                );
             } catch (RequestException $e) {
-                $stats = isset($context['handles'][$transaction]) && is_resource($context['handles'][$transaction])
-                    ? curl_getinfo($context['handles'][$transaction])
-                    : [];
-                $this->onError($transaction, $e, $context, $stats);
+                $this->onError($transaction, $e, $context, ['curl_context' => $context]);
             }
         }
 
         $this->perform($context);
-        $this->releaseMultiHandle($context['multi']);
-    }
-
-    private function prepare(TransactionInterface $transaction, array $context)
-    {
-        $handle = $this->factory->createHandle($transaction, $this->messageFactory);
-        $this->checkCurlResult(curl_multi_add_handle($context['multi'], $handle));
-        $context['handles'][$transaction] = $handle;
+        $this->releaseMultiHandle($context->getMultiHandle());
     }
 
     /**
      * Execute and select curl handles
      *
-     * @param array $context TransactionInterface context
+     * @param BatchContext $context
      */
-    private function perform(array $context)
+    private function perform(BatchContext $context)
     {
         // The first curl_multi_select often times out no matter what, but is usually required for fast transfers
         $selectTimeout = 0.001;
         $active = false;
+        $multi = $context->getMultiHandle();
+
         do {
-            while (($mrc = curl_multi_exec($context['multi'], $active)) == CURLM_CALL_MULTI_PERFORM);
-            $this->checkCurlResult($mrc);
+            while (($mrc = curl_multi_exec($multi, $active)) == CURLM_CALL_MULTI_PERFORM);
+            self::checkCurlMultiResult($mrc);
             $this->processMessages($context);
-            if ($active && curl_multi_select($context['multi'], $selectTimeout) === -1) {
+            if ($active && curl_multi_select($multi, $selectTimeout) === -1) {
                 // Perform a usleep if a select returns -1: https://bugs.php.net/bug.php?id=61141
                 usleep(150);
             }
@@ -113,19 +118,14 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
 
     /**
      * Check for errors and fix headers of a request based on a curl response
-     *
-     * @param TransactionInterface $transaction Transaction to process
-     * @param array                $curl        Curl data
-     * @param array                $context     Array of context information of the transfer
-     *
      * @throws RequestException on error
      */
-    private function processResponse(TransactionInterface $transaction, array $curl, array $context)
+    private function processResponse(TransactionInterface $transaction, array $curl, BatchContext $context)
     {
-        $stats = curl_getinfo($context['handles'][$transaction]);
-        curl_multi_remove_handle($context['multi'], $context['handles'][$transaction]);
-        curl_close($context['handles'][$transaction]);
-        unset($context['handles'][$transaction]);
+        $handle = $context->getHandle($transaction);
+        $stats = curl_getinfo($handle);
+        $stats['curl_context'] = $context;
+        $context->removeTransaction($transaction);
         $request = $transaction->getRequest();
 
         try {
@@ -137,21 +137,6 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
         } catch (RequestException $e) {
             $stats['curl_result'] = $curl['result'];
             $this->onError($transaction, $e, $context, $stats);
-        }
-    }
-
-    /**
-     * Process any received curl multi messages
-     */
-    private function processMessages(array $context)
-    {
-        while ($done = curl_multi_info_read($context['multi'])) {
-            foreach ($context['handles'] as $transaction) {
-                if ($context['handles'][$transaction] === $done['handle']) {
-                    $this->processResponse($transaction, $done, $context);
-                    continue 2;
-                }
-            }
         }
     }
 
@@ -181,16 +166,18 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
     }
 
     /**
-     * Throw an exception for a cURL multi response if needed
-     *
-     * @param int $code Curl response code
-     * @throws AdapterException
+     * Process any received curl multi messages
      */
-    private function checkCurlResult($code)
+    private function processMessages(BatchContext $context)
     {
-        if ($code != CURLM_OK && $code != CURLM_CALL_MULTI_PERFORM) {
-            $buffer = function_exists('curl_multi_strerror') ? curl_multi_strerror($code) : self::ERROR_STR;
-            throw new AdapterException(sprintf('cURL error %s: %s', $code, $buffer));
+        $multi = $context->getMultiHandle();
+        while ($done = curl_multi_info_read($multi)) {
+            foreach ($context->getTransactions() as $transaction) {
+                if ($context->getHandle($transaction) === $done['handle']) {
+                    $this->processResponse($transaction, $done, $context);
+                    continue 2;
+                }
+            }
         }
     }
 
@@ -234,18 +221,15 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
     /**
      * Handle an error
      */
-    private function onError(TransactionInterface $transaction, \Exception $e, array $context, array $stats)
+    private function onError(TransactionInterface $transaction, \Exception $e, BatchContext $context, array $stats)
     {
         if (!$transaction->getRequest()->getEventDispatcher()->dispatch(
             RequestEvents::ERROR,
             new RequestErrorEvent($transaction, $e, $stats)
         )->isPropagationStopped()) {
             // Clean up multi handles and context
-            foreach ($context['handles'] as $transaction) {
-                curl_multi_remove_handle($context['multi'], $context['handles'][$transaction]);
-                curl_close($context['handles'][$transaction]);
-            }
-            $this->releaseMultiHandle($context['multi']);
+            $context->removeTransaction($transaction);
+            $this->releaseMultiHandle($context->getMultiHandle());
             throw $e;
         }
     }

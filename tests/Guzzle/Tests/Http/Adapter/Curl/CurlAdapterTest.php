@@ -92,7 +92,7 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('Guzzle\Http\Event\RequestErrorEvent', $ev);
         $this->assertSame($r, $ev->getRequest());
         $this->assertInstanceOf('Guzzle\Http\Exception\RequestException', $ev->getException());
-        $this->assertEquals([], $ev->getTransferInfo());
+        $this->assertEquals(['curl_context'], array_keys($ev->getTransferInfo()));
     }
 
     public function testDispatchesAfterSendEvent()
@@ -102,12 +102,15 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
         $r = new Request('GET', self::$server->getUrl());
         $t = new Transaction(new Client(), $r);
         $a = new CurlAdapter(new MessageFactory());
-        $r->getEventDispatcher()->addListener(RequestEvents::AFTER_SEND, function (RequestAfterSendEvent $e) {
+        $ev = null;
+        $r->getEventDispatcher()->addListener(RequestEvents::AFTER_SEND, function (RequestAfterSendEvent $e) use (&$ev) {
+            $ev = $e;
             $e->intercept(new Response(200, ['Foo' => 'bar']));
         });
         $response = $a->send($t);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('bar', $response->getHeader('Foo'));
+        $this->assertArrayHasKey('curl_context', $ev->getTransferInfo());
     }
 
     public function testDispatchesErrorEventAndRecovers()
@@ -136,10 +139,7 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
      */
     public function testChecksCurlMultiResult()
     {
-        $a = new CurlAdapter(new MessageFactory());
-        $r = new \ReflectionMethod($a, 'checkCurlResult');
-        $r->setAccessible(true);
-        $r->invoke($a, -2);
+        CurlAdapter::checkCurlMultiResult(-2);
     }
 
     public function testChecksForCurlException()
