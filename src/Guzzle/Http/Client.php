@@ -273,17 +273,28 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 
     public function send($requests)
     {
+        $futureResponses = $this->sendAsync($requests);
+        return $this->receive($futureResponses);
+    }
+
+    public function sendAsync($requests)
+    {
         if (!($requests instanceof RequestInterface)) {
             return $this->sendMultiple($requests);
         }
 
         try {
             /** @var $requests RequestInterface  */
-            $this->getCurlMulti()->add($requests)->send();
+            $this->getCurlMulti()->add($requests)->send()->receive();
             return $requests->getResponse();
         } catch (ExceptionCollection $e) {
             throw $e->getFirst();
         }
+    }
+
+    public function receive($futureResponses)
+    {
+        return $futureResponses;
     }
 
     /**
@@ -391,7 +402,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
-     * Send multiple requests in parallel
+     * Send and wait for multiple requests in parallel
      *
      * @param array $requests Array of RequestInterface objects
      *
@@ -399,11 +410,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      */
     protected function sendMultiple(array $requests)
     {
-        $curlMulti = $this->getCurlMulti();
-        foreach ($requests as $request) {
-            $curlMulti->add($request);
-        }
-        $curlMulti->send();
+        $this->sendMultipleAsync($requests)->receive();
 
         /** @var $request RequestInterface */
         $result = array();
@@ -412,6 +419,24 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         }
 
         return $result;
+    }
+
+    /**
+     * Send multiple requests in parallel and do not wait for the results.
+     *
+     * @param array $requests Array of RequestInterface objects
+     *
+     * @return CurlMultiInterface The CurlMmultiInterface used to send requests
+     */
+    protected function sendMultipleAsync(array $requests)
+    {
+        $curlMulti = $this->getCurlMulti();
+        foreach ($requests as $request) {
+            $curlMulti->add($request);
+        }
+        $curlMulti->send();
+
+        return $curlMulti;
     }
 
     /**

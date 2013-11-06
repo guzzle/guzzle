@@ -163,13 +163,31 @@ interface ClientInterface extends HasDispatcherInterface
     public function options($uri = null, array $options = array());
 
     /**
-     * Sends a single request or an array of requests in parallel
+     * Sends a single request or an array of requests in parallel and waits for responses
      *
      * @param array|RequestInterface $requests One or more RequestInterface objects to send
      *
      * @return \Guzzle\Http\Message\Response|array Returns a single Response or an array of Response objects
      */
     public function send($requests);
+
+    /**
+     * Sends a single request or an array of requests in parallel
+     *
+     * @param array|RequestInterface $requests One or more RequestInterface objects to send
+     *
+     * @return \Guzzle\Http\Message\FutureResponse|array An array of FutureResponse objects
+     */
+    public function sendAsync($requests);
+
+    /**
+     * Waits for responses to a request or an array of requests sent with sendAsync()
+     *
+     * @param array|FutureResponseInterface $futureResponses One or more FutureResponse objects to wait for
+     *
+     * @return \Guzzle\Http\Message\Response|array Returns a single Response or an array of Response objects
+     */
+    public function receive($futureResponses);
 
     /**
      * Get the client's base URL as either an expanded or raw URI template

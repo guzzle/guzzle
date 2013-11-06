@@ -55,4 +55,11 @@ interface CurlMultiInterface extends \Countable, HasDispatcherInterface
      * @throws ExceptionCollection if any requests threw exceptions during the transfer.
      */
     public function send();
+
+    /**
+     * Waits for a pool of {@see RequestInterface} requests to return a result.
+     *
+     * @throws ExceptionCollection if any requests threw exceptions during the transfer.
+     */
+    public function receive();
 }

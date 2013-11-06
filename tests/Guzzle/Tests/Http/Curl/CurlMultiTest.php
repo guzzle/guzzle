@@ -136,7 +136,7 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
         $this->multi->add($request3);
 
         try {
-            $this->multi->send();
+            $this->multi->send()->receive();
             $this->fail('MultiTransferException not thrown when aggregating request exceptions');
         } catch (MultiTransferException $e) {
 
