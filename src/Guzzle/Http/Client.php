@@ -303,7 +303,11 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             return $responses;
         }
 
-        return $futureResponses->receive();
+        try {
+            return $futureResponses->receive();
+        } catch (ExceptionCollection $e) {
+            throw $e->getFirst();
+        }
     }
 
     /**
