@@ -61,5 +61,5 @@ interface CurlMultiInterface extends \Countable, HasDispatcherInterface
      *
      * @throws ExceptionCollection if any requests threw exceptions during the transfer.
      */
-    public function receive();
+    public function receive($request = null);
 }

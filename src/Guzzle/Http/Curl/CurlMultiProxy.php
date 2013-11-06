@@ -104,7 +104,7 @@ class CurlMultiProxy extends AbstractHasDispatcher implements CurlMultiInterface
         return $this;
     }
 
-    public function receive()
+    public function receive($request = null)
     {
     }
 

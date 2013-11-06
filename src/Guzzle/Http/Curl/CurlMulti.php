@@ -107,16 +107,46 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         return $this;
     }
 
-    public function receive()
+    public function receive($request = null)
     {
-        $this->performRead();
+        if ($request !== null && false === array_search($request, $this->requests)) {
+            return;
+        }
+
+        $this->performRead($request);
 
         $exceptions = $this->exceptions;
         $successful = $this->successful;
-        $this->reset();
 
-        if ($exceptions) {
-            $this->throwMultiException($exceptions, $successful);
+        if (null === $request) {
+            $this->reset();
+
+            if ($exceptions) {
+                $this->throwMultiException($exceptions, $successful);
+            }
+        } else {
+            $this->removeHandle($request);
+            $this->requests = array_filter($this->requests, function ($r) use ($request) {
+                return $r !== $request;
+            });
+
+            if (false !== ($index = array_search($request, $this->successful))) {
+                unset($this->successful[$index]);
+            }
+
+            $exceptions = array_filter($exceptions, function ($e) use ($request) {
+                return $e['request'] === $request;
+            });
+            $this->exceptions = array_diff($this->exceptions, $exceptions);
+
+
+            if (!count($this->requests)) {
+                $this->reset();
+            }
+
+            if ($exceptions) {
+                $this->throwMultiException($exceptions, array());
+            }
         }
     }
 
@@ -198,7 +228,7 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         $this->perform();
     }
 
-    protected function performRead()
+    protected function performRead($requests)
     {
     }
 

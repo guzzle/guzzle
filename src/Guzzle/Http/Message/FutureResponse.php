@@ -23,6 +23,7 @@ class FutureResponse
     public function receive()
     {
         // wait here
+        $this->request->getClient()->getCurlMulti()->receive($this->request);
         return $this->request->getResponse();
     }
 }

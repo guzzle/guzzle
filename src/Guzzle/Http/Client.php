@@ -10,6 +10,7 @@ use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Common\Version;
 use Guzzle\Parser\ParserRegistry;
 use Guzzle\Parser\UriTemplate\UriTemplateInterface;
+use Guzzle\Http\Message\FutureResponse;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\RequestFactory;
 use Guzzle\Http\Message\RequestFactoryInterface;
@@ -280,13 +281,13 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function sendAsync($requests)
     {
         if (!($requests instanceof RequestInterface)) {
-            return $this->sendMultiple($requests);
+            return $this->sendMultipleAsync($requests);
         }
 
         try {
             /** @var $requests RequestInterface  */
-            $this->getCurlMulti()->add($requests)->send()->receive();
-            return $requests->getResponse();
+            $this->getCurlMulti()->add($requests)->send();
+            return $requests->getFutureResponse();
         } catch (ExceptionCollection $e) {
             throw $e->getFirst();
         }
@@ -294,7 +295,15 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 
     public function receive($futureResponses)
     {
-        return $futureResponses;
+        if (!($futureResponses instanceof FutureResponse)) {
+            $responses = array();
+            foreach ($futureResponses as $futureResponse) {
+                $responses[] = $futureResponse->receive();
+            }
+            return $responses;
+        }
+
+        return $futureResponses->receive();
     }
 
     /**
@@ -402,41 +411,23 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
-     * Send and wait for multiple requests in parallel
-     *
-     * @param array $requests Array of RequestInterface objects
-     *
-     * @return array Returns an array of Response objects
-     */
-    protected function sendMultiple(array $requests)
-    {
-        $this->sendMultipleAsync($requests)->receive();
-
-        /** @var $request RequestInterface */
-        $result = array();
-        foreach ($requests as $request) {
-            $result[] = $request->getResponse();
-        }
-
-        return $result;
-    }
-
-    /**
      * Send multiple requests in parallel and do not wait for the results.
      *
      * @param array $requests Array of RequestInterface objects
      *
-     * @return CurlMultiInterface The CurlMmultiInterface used to send requests
+     * @return array An array of FutureResponse objects for the sent requests
      */
     protected function sendMultipleAsync(array $requests)
     {
         $curlMulti = $this->getCurlMulti();
+        $futureResponses = array();
         foreach ($requests as $request) {
             $curlMulti->add($request);
+            $futureResponses[] = $request->getFutureResponse();
         }
         $curlMulti->send();
 
-        return $curlMulti;
+        return $futureResponses;
     }
 
     /**

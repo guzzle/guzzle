@@ -36,6 +36,9 @@ class Request extends AbstractMessage implements RequestInterface
     /** @var ClientInterface */
     protected $client;
 
+    /** @var FutureResponse Representation of the response yet to be received */
+    protected $futureResponse;
+
     /** @var Response Response of the request */
     protected $response;
 
@@ -107,6 +110,7 @@ class Request extends AbstractMessage implements RequestInterface
         }
 
         $this->setState(self::STATE_NEW);
+        $this->futureResponse = new FutureResponse($this);
     }
 
     public function __clone()
@@ -122,6 +126,7 @@ class Request extends AbstractMessage implements RequestInterface
 
         $this->setState(RequestInterface::STATE_NEW);
         $this->dispatch('request.clone', array('request' => $this));
+        $this->futureResponse = new FutureResponse($this);
     }
 
     /**
@@ -196,6 +201,11 @@ class Request extends AbstractMessage implements RequestInterface
         }
 
         return $this->client->send($this);
+    }
+
+    public function getFutureResponse()
+    {
+        return $this->futureResponse;
     }
 
     public function getResponse()
