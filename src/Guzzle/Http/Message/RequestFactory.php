@@ -297,7 +297,7 @@ class RequestFactory implements RequestFactoryInterface
         if (defined('CURLOPT_TIMEOUT_MS')) {
             $request->getCurlOptions()->set(CURLOPT_TIMEOUT_MS, $value * 1000);
         } else {
-            $request->getCurlOptions()->set(CURLOPT_TIMEOUT_MS, $value);
+            $request->getCurlOptions()->set(CURLOPT_TIMEOUT, $value);
         }
     }
 
