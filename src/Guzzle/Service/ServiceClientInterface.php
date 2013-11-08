@@ -2,11 +2,21 @@
 
 namespace Guzzle\Service;
 
+use Guzzle\Common\HasDispatcherInterface;
+use Guzzle\Http\ClientInterface;
+
 /**
  * Web service client interface
  */
-interface ServiceClientInterface
+interface ServiceClientInterface extends HasDispatcherInterface
 {
+    /**
+     * Get the HTTP client used to send requests for the web service client
+     *
+     * @return ClientInterface
+     */
+    public function getHttpClient();
+
     /**
      * Get a command by name. First, the client will see if it has a service
      * description and if the service description defines a command by the

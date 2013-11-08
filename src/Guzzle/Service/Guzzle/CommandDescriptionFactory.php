@@ -8,7 +8,7 @@ use Guzzle\Service\DescriptionInterface;
 /**
  * Command factory used to create commands based on service descriptions
  */
-class DescriptionFactory implements CommandFactoryInterface
+class CommandDescriptionFactory implements CommandFactoryInterface
 {
     /** @var DescriptionInterface */
     private $description;

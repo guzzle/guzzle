@@ -2,11 +2,18 @@
 
 namespace Guzzle\Service;
 
+use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Http\ClientInterface;
+use Guzzle\Http\Event\RequestErrorEvent;
 use Guzzle\Http\Exception\RequestException;
 
+/**
+ * Default Guzzle service description based client
+ */
 class ServiceClient implements ServiceClientInterface
 {
+    use HasDispatcherTrait;
+
     private $client;
     private $description;
     private $config;
@@ -21,6 +28,11 @@ class ServiceClient implements ServiceClientInterface
         $this->config = $config;
     }
 
+    public function getHttpClient()
+    {
+        return $this->client;
+    }
+
     public function getCommand($name, array $args = [])
     {
         if (!$this->description->hasOperation($name)) {
@@ -30,16 +42,11 @@ class ServiceClient implements ServiceClientInterface
 
     public function execute(CommandInterface $command)
     {
-        $request = $command->getRequest();
-
         try {
-            $response = $this->client->send($request);
+            $response = $this->client->send($command->getRequest());
             return $command->processResponse($response);
         } catch (RequestException $e) {
-            if (!$e->hasResponse()) {
-                throw $e;
-            }
-            // $error = $command->processError($e);
+            return $command->processError($e);
             // throw new OperationErrorException($command, $error, $e);
         }
     }
