@@ -136,7 +136,7 @@ class SchemaValidator implements ValidatorInterface
                             $current = null;
                             $this->recursiveProcess($property, $current, $path, $depth + 1);
                             // Only set the value if it was populated with something
-                            if ($current) {
+                            if (null !== $current) {
                                 $value[$name] = $current;
                             }
                         }
