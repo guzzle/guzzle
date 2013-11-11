@@ -97,7 +97,7 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
         $request2 = new Request('GET', $this->getServer()->getUrl());
         $this->multi->add($request1);
         $this->multi->add($request2);
-        $this->multi->send();
+        $this->multi->send()->receive();
 
         $response1 = $request1->getResponse();
         $response2 = $request2->getResponse();
@@ -181,7 +181,7 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
             $request->getCurlOptions()->set(CURLOPT_FRESH_CONNECT, true);
             $request->getCurlOptions()->set(CURLOPT_FORBID_REUSE, true);
             $request->getCurlOptions()->set(CURLOPT_CONNECTTIMEOUT_MS, 5);
-            $request->send();
+            $request->send()->receive();
             $this->fail('CurlException not thrown');
         } catch (CurlException $e) {
             $m = $e->getMessage();
@@ -198,7 +198,7 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
         $request->setClient(new Client());
         $request->setResponse($r, true);
         $this->multi->add($request);
-        $this->multi->send();
+        $this->multi->send()->receive();
         $this->assertSame($r, $request->getResponse());
     }
 
@@ -287,15 +287,30 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
      * @expectedException \RuntimeException
      * @expectedExceptionMessage test
      */
-    public function testDoesNotCatchRandomExceptionsThrownDuringPerform()
+    public function testDoesNotCatchRandomExceptionsThrownDuringPerformWrite()
     {
         $client = new Client($this->getServer()->getUrl());
-        $multi = $this->getMock('Guzzle\\Http\\Curl\\CurlMulti', array('perform'));
+        $multi = $this->getMock('Guzzle\\Http\\Curl\\CurlMulti', array('performWrite'));
         $multi->expects($this->once())
-            ->method('perform')
+            ->method('performWrite')
             ->will($this->throwException(new \RuntimeException('test')));
         $multi->add($client->get());
         $multi->send();
+    }
+
+    /**
+     * @expectedException \RuntimeException
+     * @expectedExceptionMessage test
+     */
+    public function testDoesNotCatchRandomExceptionsThrownDuringPerformRead()
+    {
+        $client = new Client($this->getServer()->getUrl());
+        $multi = $this->getMock('Guzzle\\Http\\Curl\\CurlMulti', array('performRead'));
+        $multi->expects($this->once())
+            ->method('performRead')
+            ->will($this->throwException(new \RuntimeException('test')));
+        $multi->add($client->get());
+        $multi->send()->receive();
     }
 
     public function testDoesNotSendRequestsDecliningToBeSent()
@@ -330,7 +345,7 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
         });
 
         try {
-            $multi->send();
+            $multi->send()->receive();
             $this->fail('Did not throw an exception at all!?!');
         } catch (\Exception $e) {
             $this->assertEquals(1, $request->getParams()->get('retries'));
@@ -348,7 +363,7 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
 
         $multi = new CurlMulti();
         $multi->add($request);
-        $multi->send();
+        $multi->send()->receive();
         $this->assertEquals(0, count($this->getServer()->getReceivedRequests(false)));
     }
 
@@ -366,7 +381,7 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
 
         $multi = new CurlMulti();
         $multi->add($request);
-        $multi->send();
+        $multi->send()->receive();
 
         // Ensure that the exception was caught, and the response was set manually
         $this->assertEquals(200, $request->getResponse()->getStatusCode());
@@ -386,10 +401,10 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $client->get();
         $multi = new CurlMulti();
         $multi->add($request);
-        $multi->send();
+        $multi->send()->receive();
         $multi->reset(true);
         $multi->add($request);
-        $multi->send();
+        $multi->send()->receive();
 
         rewind($stream);
         $this->assertNotContains('Re-using existing connection', stream_get_contents($stream));
@@ -434,7 +449,7 @@ class CurlMultiTest extends \Guzzle\Tests\GuzzleTestCase
             $that->assertEquals(0, $event['request']->getHeader('Content-Length'));
         });
         $this->multi->add($request);
-        $this->multi->send();
+        $this->multi->send()->receive();
     }
 
     public function testRemovesConflictingTransferEncodingHeader()
