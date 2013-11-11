@@ -240,10 +240,9 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
                 }
             }
             if ($this->blocking == $this->total) {
-                // probably done writing, so return
-                return;
+                usleep(500);
             } else {
-                $this->executeHandles();
+                $this->startHandles();
             }
         }
     }
@@ -268,6 +267,14 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
                 $this->executeHandles();
             }
         }
+    }
+
+    private function startHandles()
+    {
+        $active = false;
+        while (($mrc = curl_multi_exec($this->multiHandle, $active)) == CURLM_CALL_MULTI_PERFORM);
+        $this->checkCurlResult($mrc);
+        $this->processMessages();
     }
 
     /**

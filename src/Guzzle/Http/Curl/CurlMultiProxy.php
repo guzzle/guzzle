@@ -88,9 +88,9 @@ class CurlMultiProxy extends AbstractHasDispatcher implements CurlMultiInterface
                 $group->add($request);
             }
             try {
-                $group->send()->receive();
-                array_pop($this->groups);
-                $this->cleanupHandles();
+                $group->send();
+                //array_pop($this->groups);
+                //$this->cleanupHandles();
             } catch (\Exception $e) {
                 // Remove the group and cleanup if an exception was encountered and no more requests in group
                 if (!$group->count()) {
@@ -106,6 +106,20 @@ class CurlMultiProxy extends AbstractHasDispatcher implements CurlMultiInterface
 
     public function receive($request = null)
     {
+        $group = end($this->groups);
+        if ($group) {
+            try {
+                $group->receive();
+                array_pop($this->groups);
+                $this->cleanupHandles();
+            } catch (\Exception $e) {
+                if (!$group->count()) {
+                    array_pop($this->groups);
+                    $this->cleanupHandles();
+                }
+                throw $e;
+            }
+        }
     }
 
     public function count()

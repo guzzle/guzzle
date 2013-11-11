@@ -203,6 +203,15 @@ class Request extends AbstractMessage implements RequestInterface
         return $this->client->send($this);
     }
 
+    public function sendAsync()
+    {
+        if (!$this->client) {
+            throw new RuntimeException('A client must be set on the request');
+        }
+
+        return $this->client->sendAsync($this);
+    }
+
     public function getFutureResponse()
     {
         return $this->futureResponse;
