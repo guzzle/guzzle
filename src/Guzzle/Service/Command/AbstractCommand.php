@@ -375,4 +375,17 @@ abstract class AbstractCommand extends Collection implements CommandInterface
 
         return $this->validator;
     }
+
+    /**
+     * Get array of any validation errors
+     * If no validator has been set then return false
+     */
+    public function getValidationErrors()
+    {
+        if (!$this->validator) {
+            return false;
+        }
+
+        return $this->validator->getErrors();
+    }
 }
