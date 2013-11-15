@@ -489,16 +489,18 @@ class Url
         }
 
         // Passing a URL with a scheme overrides everything
-        if ($buffer = $url->getScheme() && ($url->getScheme()=='http' || $url->getScheme()=='https')) {
-            $this->scheme = $buffer;
-            $this->host = $url->getHost();
-            $this->port = $url->getPort();
-            $this->username = $url->getUsername();
-            $this->password = $url->getPassword();
-            $this->path = $url->getPath();
-            $this->query = $url->getQuery();
-            $this->fragment = $url->getFragment();
-            return $this;
+        if ($buffer = $url->getScheme()) {
+            if ($buffer=='http' || $buffer=='https') {
+                $this->scheme = $buffer;
+                $this->host = $url->getHost();
+                $this->port = $url->getPort();
+                $this->username = $url->getUsername();
+                $this->password = $url->getPassword();
+                $this->path = $url->getPath();
+                $this->query = $url->getQuery();
+                $this->fragment = $url->getFragment();
+                return $this;
+            }
         }
 
         // Setting a host overrides the entire rest of the URL
