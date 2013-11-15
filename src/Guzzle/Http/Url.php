@@ -489,7 +489,7 @@ class Url
         }
 
         // Passing a URL with a scheme overrides everything
-        if ($buffer = $url->getScheme() && $url->getScheme()=='http' || $url->getScheme()=='https') {
+        if ($buffer = $url->getScheme() && ($url->getScheme()=='http' || $url->getScheme()=='https')) {
             $this->scheme = $buffer;
             $this->host = $url->getHost();
             $this->port = $url->getPort();
