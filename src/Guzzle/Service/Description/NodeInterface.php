@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Service;
+namespace Guzzle\Service\Description;
 
 use Guzzle\Common\ToArrayInterface;
 

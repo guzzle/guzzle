@@ -4,8 +4,9 @@ namespace Guzzle\Service;
 
 use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Http\ClientInterface;
-use Guzzle\Http\Event\RequestErrorEvent;
-use Guzzle\Http\Exception\RequestException;
+use Guzzle\Service\Command\CommandInterface;
+use Guzzle\Service\Description\DescriptionInterface;
+use Guzzle\Service\Guzzle\CommandDescriptionFactory;
 
 /**
  * Default Guzzle service description based client
@@ -17,6 +18,7 @@ class ServiceClient implements ServiceClientInterface
     private $client;
     private $description;
     private $config;
+    private $commandFactory;
 
     public function __construct(
         ClientInterface $client,
@@ -26,6 +28,9 @@ class ServiceClient implements ServiceClientInterface
         $this->client = $client;
         $this->description = $description;
         $this->config = $config;
+        $this->commandFactory = isset($config['command_factory'])
+            ? $config['command_factory']
+            : new CommandDescriptionFactory($this->description);
     }
 
     public function getHttpClient()
@@ -42,13 +47,9 @@ class ServiceClient implements ServiceClientInterface
 
     public function execute(CommandInterface $command)
     {
-        try {
-            $response = $this->client->send($command->getRequest());
-            return $command->processResponse($response);
-        } catch (RequestException $e) {
-            return $command->processError($e);
-            // throw new OperationErrorException($command, $error, $e);
-        }
+        $this->getHttpClient()->send($command->getRequest());
+
+        return $command->getResult();
     }
 
     public function getDescription()

@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Service;
+namespace Guzzle\Service\Command;
 
 /**
  * Interface for creating commands by name

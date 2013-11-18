@@ -3,18 +3,19 @@
 namespace Guzzle\Service\Guzzle;
 
 use Guzzle\Common\HasDataTrait;
-use Guzzle\Http\Exception\RequestException;
-use Guzzle\Http\Message\ResponseInterface;
-use Guzzle\Service\CommandInterface;
-use Guzzle\Service\OperationInterface;
+use Guzzle\Common\HasDispatcherTrait;
+use Guzzle\Service\Command\CommandInterface;
 
 class Command implements CommandInterface
 {
     use HasDataTrait;
+    use HasDispatcherTrait;
 
     protected $operation;
-    protected $request;
     protected $serializer;
+    protected $request;
+    protected $response;
+    protected $result;
 
     public function __construct(array $args)
     {
@@ -29,24 +30,30 @@ class Command implements CommandInterface
 
     public function getRequest()
     {
-        if (!isset($this['client'])) {
-            throw new \RuntimeException('A client must be specified on the command');
-        }
-
         if (!$this->request) {
+            if (!isset($this['client'])) {
+                throw new \RuntimeException('A client must be specified on the command');
+            }
             $this->request = $this['client']->createRequest('GET', 'https://raw.github.com/aws/aws-sdk-core-ruby/master/apis/CloudFront-2012-05-05.json');
         }
 
         return $this->request;
     }
 
-    public function processResponse(ResponseInterface $response)
+    public function getResponse()
     {
-        return $response->json();
+        return $this->response;
     }
 
-    public function processError(RequestException $e)
+    public function prepare()
     {
-        return $e->getResponse()->json();
+        $this->request = $this->response = null;
+
+        return $this->getRequest();
+    }
+
+    public function getResult()
+    {
+        return $this->result;
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Service;
+namespace Guzzle\Service\Description;
 
 /**
  * Interface defining data objects that hold the information of an API operation

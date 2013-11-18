@@ -2,7 +2,7 @@
 
 namespace Guzzle\Service\Guzzle;
 
-use Guzzle\Service\DescriptionInterface;
+use Guzzle\Service\Description\DescriptionInterface;
 
 class GuzzleDescription implements DescriptionInterface
 {

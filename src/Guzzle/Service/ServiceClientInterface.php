@@ -4,6 +4,8 @@ namespace Guzzle\Service;
 
 use Guzzle\Common\HasDispatcherInterface;
 use Guzzle\Http\ClientInterface;
+use Guzzle\Service\Command\CommandInterface;
+use Guzzle\Service\Description\DescriptionInterface;
 
 /**
  * Web service client interface
