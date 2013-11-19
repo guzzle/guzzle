@@ -376,7 +376,8 @@ The `exceptions` option can be used to disable throwing exceptions for unsuccess
 params
 ~~~~~~
 
-The `params` options can be used to specify an associative array of data parameters to add to a request.
+The `params` options can be used to specify an associative array of data parameters to add to a request.  Note that
+these are not query string parameters.
 
 timeout / connect_timeout
 ~~~~~~~~~~~~~~~~~~~~~~~~~
