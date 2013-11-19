@@ -486,16 +486,22 @@ Special command options
 -----------------------
 
 Guzzle exposes several options that help to control how commands are validated, serialized, and parsed.
+Command options can be specified when creating a command or in the ``command.params`` parameter in the
+``Guzzle\Service\Client``.
 
 =========================== ============================================================================================
-command.headers             Additional ``Collection`` of headers to add to the serialized request
-command.on_complete         Function to execute when the command has been executed and the response has been parsed
+command.request_options     Option used to add :ref:`Request options <request-options>` to the request created by a
+                            command
+command.hidden_params       An array of the names of parameters ignored by the ``additionalParameters`` parameter schema
 command.disable_validation  Set to true to disable JSON schema validation of the command's input parameters
 command.response_processing Determines how the default response parser will parse the command. One of "raw" no parsing,
                             "model" (the default method used to parse commands using response models defined in service
                             descriptions)
-command.response_body       Tells the command object which EntityBody object should be used to store the response body
-                            of a request that will be serialized by the command
+command.headers             (deprecated) Option used to specify custom headers.  Use ``command.request_options`` instead
+command.on_complete         (deprecated) Option used to add an onComplete method to a command.  Use
+                            ``command.after_send`` event instead
+command.response_body       (deprecated) Option used to change the entity body used to store a response.
+                            Use ``command.request_options`` instead
 =========================== ============================================================================================
 
 Advanced client configuration
