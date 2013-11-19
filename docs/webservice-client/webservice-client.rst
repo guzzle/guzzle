@@ -602,3 +602,53 @@ A ``Guzzle\Service\Client`` object emits the following events:
 | command.parse_response       | Called when ``responseType`` is ``class``  | * command: The command with a response   |
 |                              | and the response is about to be parsed.    |   about to be parsed.                    |
 +------------------------------+--------------------------------------------+------------------------------------------+
+
+.. code-block:: php
+
+    use Guzzle\Common\Event;
+    use Guzzle\Service\Client;
+
+    $client = new Client();
+
+    // create an event listener that operates on request objects
+    $client->getEventDispatcher()->addListener('command.after_prepare', function (Event $event) {
+        $request = $event->getRequest();
+        
+        // do something with request
+    });
+    
+.. code-block:: php
+    
+    use Guzzle\Common\Event;
+    use Guzzle\Common\Client;
+    use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+    
+    class EventSubscriber implements EventSubscriberInterface
+    {
+        public static function getSubscribedEvents()
+        {
+            return array(
+                'client.command.create' => 'onCommandCreate',
+                'command.parse_response' => 'onParseResponse'
+            );
+        }
+        
+        public function onCommandCreate(Event $event)
+        {
+            $client = $event['client'];
+            $command = $event['command'];
+            // operate on client and command
+        }
+        
+        public function onParseResponse(Event $event)
+        {
+            $command = $event['command'];
+            // operate on the command
+        }
+    }
+    
+    $client = new Client();
+    
+    $client->addSubscriber(new EventSubscriber());
+    
+    
