@@ -49,6 +49,16 @@ class Server
         $this->client = new Client($this->getUrl());
     }
 
+    public function __destruct()
+    {
+        try {
+            $this->stop();
+        } catch (\Exception $e) {
+            // Can't throw exceptions in destructor
+            echo "\n{$e}\n";
+        }
+    }
+
     /**
      * Flush the received requests from the server
      * @throws RuntimeException

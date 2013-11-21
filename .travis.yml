@@ -14,18 +14,9 @@ before_script:
   - sh -c "cd pecl_http-1.7.6 && phpize && ./configure && make && sudo make install" > /dev/null
   - echo "extension=http.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
   - pecl install uri_template-beta
-  - pear config-set auto_discover 1
-  - pear install pear.phing.info/phing
-  - pear install pear.phpunit.de/phploc
-  - pear install pear/PHP_CodeSniffer
-  - pear install pear.pdepend.org/PHP_Depend
-  - pear install bartlett.laurent-laville.org/PHP_CompatInfo
-  - pear install pear/PEAR_PackageFileManager2 pear/PEAR_PackageFileManager2_Plugins pear/XML_Serializer-beta
-  - pear install VersionControl_Git-alpha
   - phpenv rehash
   - composer install --dev
-  - cp phing/build.properties.travis phing/build.properties
   - echo 'Ensuring the correct version of node is running'
   - ~/.nvm/nvm.sh install v0.6.14
 
-script: phing travisci
+script: vendor/bin/phpunit
