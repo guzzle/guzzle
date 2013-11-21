@@ -43,7 +43,7 @@ class AsyncPlugin implements EventSubscriberInterface
     public function onCurlProgress(Event $event)
     {
         if ($event['handle'] &&
-            ($event['downloaded'] || ($event['uploaded'] && $event['upload_size'] === $event['uploaded']))
+            ($event['downloaded'] || (isset($event['uploaded']) && $event['upload_size'] === $event['uploaded']))
         ) {
             // Timeout after 1ms
             curl_setopt($event['handle'], CURLOPT_TIMEOUT_MS, 1);
