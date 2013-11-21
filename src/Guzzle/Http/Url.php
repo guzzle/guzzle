@@ -541,12 +541,8 @@ class Url
     {
         if ($strictRfc386) {
             $this->query = $new;
-
-            return;
-        }
-
-        foreach ($new as $k => $v) {
-            $this->query->add($k, $v);
+        } else {
+            $this->query->merge($new);
         }
     }
 }
