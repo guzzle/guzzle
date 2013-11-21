@@ -486,16 +486,22 @@ Special command options
 -----------------------
 
 Guzzle exposes several options that help to control how commands are validated, serialized, and parsed.
+Command options can be specified when creating a command or in the ``command.params`` parameter in the
+``Guzzle\Service\Client``.
 
 =========================== ============================================================================================
-command.headers             Additional ``Collection`` of headers to add to the serialized request
-command.on_complete         Function to execute when the command has been executed and the response has been parsed
+command.request_options     Option used to add :ref:`Request options <request-options>` to the request created by a
+                            command
+command.hidden_params       An array of the names of parameters ignored by the ``additionalParameters`` parameter schema
 command.disable_validation  Set to true to disable JSON schema validation of the command's input parameters
 command.response_processing Determines how the default response parser will parse the command. One of "raw" no parsing,
                             "model" (the default method used to parse commands using response models defined in service
                             descriptions)
-command.response_body       Tells the command object which EntityBody object should be used to store the response body
-                            of a request that will be serialized by the command
+command.headers             (deprecated) Option used to specify custom headers.  Use ``command.request_options`` instead
+command.on_complete         (deprecated) Option used to add an onComplete method to a command.  Use
+                            ``command.after_send`` event instead
+command.response_body       (deprecated) Option used to change the entity body used to store a response.
+                            Use ``command.request_options`` instead
 =========================== ============================================================================================
 
 Advanced client configuration
@@ -587,9 +593,11 @@ A ``Guzzle\Service\Client`` object emits the following events:
 | client.command.create        | The client created a command object        | * client: Client object                  |
 |                              |                                            | * command: Command object                |
 +------------------------------+--------------------------------------------+------------------------------------------+
-| command.before_prepare       | The client created a command object        | * command: Command being prepared        |
+| command.before_prepare       | Before a command is validated and built.   | * command: Command being prepared        |
+|                              | This is also before a request is created.  |                                          |
 +------------------------------+--------------------------------------------+------------------------------------------+
-| command.after_prepare        | The client created a command object        | * command: Command that was prepared     |
+| command.after_prepare        | After a command instantiates and           | * command: Command that was prepared     |
+|                              | configures its request object.             |                                          |
 +------------------------------+--------------------------------------------+------------------------------------------+
 | command.before_send          | The client is about to execute a prepared  | * command: Command to execute            |
 |                              | command                                    |                                          |
@@ -597,3 +605,56 @@ A ``Guzzle\Service\Client`` object emits the following events:
 | command.after_send           | The client successfully completed          | * command: The command that was executed |
 |                              | executing a command                        |                                          |
 +------------------------------+--------------------------------------------+------------------------------------------+
+| command.parse_response       | Called when ``responseType`` is ``class``  | * command: The command with a response   |
+|                              | and the response is about to be parsed.    |   about to be parsed.                    |
++------------------------------+--------------------------------------------+------------------------------------------+
+
+.. code-block:: php
+
+    use Guzzle\Common\Event;
+    use Guzzle\Service\Client;
+
+    $client = new Client();
+
+    // create an event listener that operates on request objects
+    $client->getEventDispatcher()->addListener('command.after_prepare', function (Event $event) {
+        $request = $event->getRequest();
+        
+        // do something with request
+    });
+    
+.. code-block:: php
+    
+    use Guzzle\Common\Event;
+    use Guzzle\Common\Client;
+    use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+    
+    class EventSubscriber implements EventSubscriberInterface
+    {
+        public static function getSubscribedEvents()
+        {
+            return array(
+                'client.command.create' => 'onCommandCreate',
+                'command.parse_response' => 'onParseResponse'
+            );
+        }
+        
+        public function onCommandCreate(Event $event)
+        {
+            $client = $event['client'];
+            $command = $event['command'];
+            // operate on client and command
+        }
+        
+        public function onParseResponse(Event $event)
+        {
+            $command = $event['command'];
+            // operate on the command
+        }
+    }
+    
+    $client = new Client();
+    
+    $client->addSubscriber(new EventSubscriber());
+    
+    
