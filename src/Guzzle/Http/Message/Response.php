@@ -877,15 +877,26 @@ class Response extends AbstractMessage implements \Serializable
      */
     public function xml()
     {
+        $errorMessage = null;
+        $internalErrors = libxml_use_internal_errors(true);
         $disableEntities = libxml_disable_entity_loader(true);
+        libxml_clear_errors();
 
         try {
-            // Allow XML to be retrieved even if there is no response body
             $xml = new \SimpleXMLElement((string) $this->body ?: '<root />');
-            libxml_disable_entity_loader($disableEntities);
+            if ($error = libxml_get_last_error()) {
+                $errorMessage = $error->message;
+            }
         } catch (\Exception $e) {
-            libxml_disable_entity_loader($disableEntities);
-            throw new RuntimeException('Unable to parse response body into XML: ' . $e->getMessage());
+            $errorMessage = $e->getMessage();
+        }
+
+        libxml_clear_errors();
+        libxml_use_internal_errors($internalErrors);
+        libxml_disable_entity_loader($disableEntities);
+
+        if ($errorMessage) {
+            throw new RuntimeException('Unable to parse response body into XML: ' . $errorMessage);
         }
 
         return $xml;
