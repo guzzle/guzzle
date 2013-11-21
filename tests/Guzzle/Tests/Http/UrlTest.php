@@ -154,7 +154,9 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
             array('http://u:a@www.example.com/path', 'test', 'http://u:a@www.example.com/path/test'),
             array('http://www.example.com/path', 'http://u:a@www.example.com/', 'http://u:a@www.example.com/'),
             array('/path?q=2', 'http://www.test.com/', 'http://www.test.com/path?q=2'),
-            array('http://api.flickr.com/services/', 'http://www.flickr.com/services/oauth/access_token', 'http://www.flickr.com/services/oauth/access_token')
+            array('http://api.flickr.com/services/', 'http://www.flickr.com/services/oauth/access_token', 'http://www.flickr.com/services/oauth/access_token'),
+            array('http://www.example.com/?foo=bar', 'some/path', 'http://www.example.com/some/path?foo=bar'),
+            array('http://www.example.com/?foo=bar', 'some/path?boo=moo', 'http://www.example.com/some/path?foo=bar&boo=moo'),
         );
     }
 
