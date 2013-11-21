@@ -273,9 +273,9 @@ class CookieParserProvider extends \Guzzle\Tests\GuzzleTestCase
         foreach ((array) $cookie as $c) {
             $p = $parser->parseCookie($c, $host, $path);
 
-            // Remove expires values from the assertion if they are relatively equal
+            // Remove expires values from the assertion if they are relatively equal by allowing a 5 minute difference
             if ($p['expires'] != $parsed['expires']) {
-                if (abs($p['expires'] - $parsed['expires']) < 20) {
+                if (abs($p['expires'] - $parsed['expires']) < 300) {
                     unset($p['expires']);
                     unset($parsed['expires']);
                 }
