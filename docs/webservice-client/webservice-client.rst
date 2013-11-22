@@ -618,7 +618,8 @@ A ``Guzzle\Service\Client`` object emits the following events:
 
     // create an event listener that operates on request objects
     $client->getEventDispatcher()->addListener('command.after_prepare', function (Event $event) {
-        $request = $event->getRequest();
+        $command = $event['command'];
+        $request = $command->getRequest();
         
         // do something with request
     });
