@@ -45,7 +45,7 @@ class Url
             $parts['query'] = QueryString::fromString($parts['query']);
         }
 
-        return new self($parts['scheme'], $parts['host'], $parts['user'],
+        return new static($parts['scheme'], $parts['host'], $parts['user'],
             $parts['pass'], $parts['port'], $parts['path'], $parts['query'],
             $parts['fragment']);
     }
