@@ -60,7 +60,7 @@ class DefaultRevalidation implements RevalidationInterface
             ($resCache && ($resCache->hasDirective('no-cache') || $resCache->hasDirective('must-revalidate')));
 
         // Use the strong ETag validator if available and the response contains no Cache-Control directive
-        if (!$revalidate && !$reqCache && $response->hasHeader('ETag')) {
+        if (!$revalidate && !$resCache && $response->hasHeader('ETag')) {
             $revalidate = true;
         }
 
