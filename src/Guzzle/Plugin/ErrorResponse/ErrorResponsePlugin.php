@@ -61,7 +61,7 @@ class ErrorResponsePlugin implements EventSubscriberInterface
                 $className = $error['class'];
                 $errorClassInterface = __NAMESPACE__ . '\\ErrorResponseExceptionInterface';
                 if (!class_exists($className)) {
-                    throw new ErrorResponseException("{$className} does not exist");;
+                    throw new ErrorResponseException("{$className} does not exist");
                 } elseif (!is_subclass_of($className, $errorClassInterface)) {
                     throw new ErrorResponseException("{$className} must implement {$errorClassInterface}");
                 }

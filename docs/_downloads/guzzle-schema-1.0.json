@@ -59,7 +59,7 @@
             },
             "deprecated": {
                 "type": "boolean",
-                "description": "Whether or not the operataion is deprecated"
+                "description": "Whether or not the operation is deprecated"
             },
             "errorResponses": {
                 "description": "Errors that could occur while executing the operation",
