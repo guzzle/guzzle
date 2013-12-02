@@ -399,6 +399,42 @@ verify
 Set to true to enable SSL certificate validation (the default), false to disable SSL certificate validation, or supply
 the path to a CA bundle to enable verification using a custom certificate.
 
+cert
+~~~~
+
+The `cert` option lets you specify a PEM formatted SSL client certificate to use with servers that require one. If the 
+certificate requires a password, provide an array with the password as the second item.
+
+This would typically be used in conjuction with the `ssl_key` option.
+
+.. code-block:: php
+
+    $request = $client->get('https://www.example.com', array(), array(
+        'cert' => '/etc/pki/client_certificate.pem'
+    )
+    
+    $request = $client->get('https://www.example.com', array(), array(
+        'cert' => array('/etc/pki/client_certificate.pem', 's3cr3tp455w0rd')
+    )
+    
+ssl_key
+~~~~~~~
+
+The `ssl_key` option lets you specify a file containing your PEM formatted private key, optionally protected by a password. 
+Note: your password is sensitive, keep the PHP script containing it safe.
+
+This would typically be used in conjuction with the `cert` option.
+
+.. code-block:: php
+
+    $request = $client->get('https://www.example.com', array(), array(
+        'ssl_key' => '/etc/pki/private_key.pem'
+    )
+    
+    $request = $client->get('https://www.example.com', array(), array(
+        'ssl_key' => array('/etc/pki/private_key.pem', 's3cr3tp455w0rd')
+    )    
+
 proxy
 ~~~~~
 
