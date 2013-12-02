@@ -55,7 +55,7 @@ class Model extends Collection
         if ($this->structure) {
             $output .= "\n\nModel structure\n---------------\n\n";
             $output .= "The following JSON document defines how the model was parsed from an HTTP response into the "
-                . "associative array strucure you see above.\n\n";
+                . "associative array structure you see above.\n\n";
             $output .= '  ' . json_encode($this->structure->toArray()) . "\n\n";
         }
 

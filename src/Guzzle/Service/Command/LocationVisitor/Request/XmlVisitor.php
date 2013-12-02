@@ -190,7 +190,7 @@ class XmlVisitor extends AbstractRequestVisitor
     }
 
     /**
-     * Create a new xml writier and start a document
+     * Create a new xml writer and start a document
      *
      * @param  string $encoding document encoding
      *
@@ -237,7 +237,7 @@ class XmlVisitor extends AbstractRequestVisitor
     protected function addXmlObject(\XMLWriter $xmlWriter, Parameter $param, &$value)
     {
         $noAttributes = array();
-        // add values which have attriutes
+        // add values which have attributes
         foreach ($value as $name => $v) {
             if ($property = $param->getProperty($name)) {
                 if ($property->getData('xmlAttribute')) {

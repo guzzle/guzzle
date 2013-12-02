@@ -68,7 +68,7 @@ class RedirectPlugin implements EventSubscriberInterface
         // Trace the original request based on parameter history
         $original = $this->getOriginalRequest($request);
 
-        // Terminating condition to set the effective repsonse on the original request
+        // Terminating condition to set the effective response on the original request
         if (!$response->isRedirect() || !$response->hasHeader('Location')) {
             if ($request !== $original) {
                 // This is a terminating redirect response, so set it on the original request
@@ -174,7 +174,7 @@ class RedirectPlugin implements EventSubscriberInterface
     /**
      * Prepare the request for redirection and enforce the maximum number of allowed redirects per client
      *
-     * @param RequestInterface $original  Origina request
+     * @param RequestInterface $original  Original request
      * @param RequestInterface $request   Request to prepare and validate
      * @param Response         $response  The current response
      *

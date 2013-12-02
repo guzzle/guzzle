@@ -140,7 +140,7 @@ some web services allow for completely arbitrary parameters to be supplied for a
 
 As an example, we can define a Twitter API operation quite easily using ``additionalParameters``. The
 GetMentions operation accepts a large number of query string parameters. Defining each of these parameters
-is ideal because it provide much more introspection for the client and opens the possiblity to use the description with
+is ideal because it provide much more introspection for the client and opens the possibility to use the description with
 other tools (e.g. a documentation generator). However, you can very quickly provide a "catch-all" serialization rule
 that will place any custom parameters supplied to an operation the generated request's query string parameters.
 

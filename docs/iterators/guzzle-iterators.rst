@@ -17,7 +17,7 @@ pulling out chunks of values from the inner iterator.
     use Guzzle\Iterator\ChunkedIterator;
 
     $inner = new ArrayIterator(range(0, 8));
-    $chunkedItertor = new ChunkedIterator($inner, 10);
+    $chunkedIterator = new ChunkedIterator($inner, 10);
 
     foreach ($chunkedIterator as $chunk) {
         echo implode(', ', $chunk) . "\n";
