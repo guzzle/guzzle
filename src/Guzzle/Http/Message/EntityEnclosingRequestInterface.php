@@ -106,11 +106,12 @@ interface EntityEnclosingRequestInterface extends RequestInterface
      *
      * @param string $field       POST field to use (e.g. file). Used to reference content from the server.
      * @param string $filename    Full path to the file. Do not include the @ symbol.
+     * @param string $postname    The name of the file, when posted. (e.g. rename the file)
      * @param string $contentType Optional Content-Type to add to the Content-Disposition.
      *                            Default behavior is to guess. Set to false to not specify.
      * @return self
      */
-    public function addPostFile($field, $filename = null, $contentType = null);
+    public function addPostFile($field, $filename = null, $contentType = null, $postname = null);
 
     /**
      * Add POST files to use in the upload
