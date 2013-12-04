@@ -47,16 +47,7 @@ class Server
     {
         $this->port = $port ?: self::DEFAULT_PORT;
         $this->client = new Client($this->getUrl());
-    }
-
-    public function __destruct()
-    {
-        try {
-            $this->stop();
-        } catch (\Exception $e) {
-            // Can't throw exceptions in destructor
-            echo "\n{$e}\n";
-        }
+        register_shutdown_function(array($this, 'stop'));
     }
 
     /**
