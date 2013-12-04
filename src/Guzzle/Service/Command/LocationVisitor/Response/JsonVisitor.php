@@ -79,6 +79,11 @@ class JsonVisitor extends AbstractResponseVisitor
                 // Remove any unknown and potentially unsafe properties
                 if ($param->getAdditionalProperties() === false) {
                     $value = array_intersect_key($value, $knownProperties);
+                } elseif (($additional = $param->getAdditionalProperties()) !== true) {
+                    // Validate and filter additional properties
+                    foreach ($value as &$v) {
+                        $this->recursiveProcess($additional, $v);
+                    }
                 }
             }
         }
