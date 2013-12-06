@@ -114,12 +114,8 @@
         </if>
     </target>
 
-    <target name="peartest">
-        <guzzlepear
-                version="${new.version}"
-                deploy="false"
-                makephar="false"
-                />
+    <target name="pear-channel">
+        <guzzlepear version="${new.version}" deploy="true" makephar="true" />
     </target>
 
     <target name="package-phar" description="Create a phar with an autoloader">

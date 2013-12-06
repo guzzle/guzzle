@@ -105,27 +105,28 @@ class GuzzlePearPharPackageTask extends Task
         $this->log('beginning PEAR/PHAR deployment');
 
         chdir($basedir . '/build/pearwork');
-        if (is_dir($basedir . '/build/pearwork/guzzle.github.com')) {
-            exec('rm -rf guzzle.github.com');
+        if (!is_dir('./channel')) {
+            mkdir('./channel');
         }
-        passthru('git clone git@github.com:guzzle/guzzle.github.com');
+
+        // Pull the PEAR channel down locally
+        passthru('aws s3 sync s3://pear.guzzlephp.org ./channel');
 
         // add PEAR packages
-        foreach (scandir($basedir . '/build/pearwork') as $file) {
+        foreach (scandir('./') as $file) {
             if (substr($file, -4) == '.tgz') {
-                passthru('pirum add guzzle.github.com/pear '.$file);
+                passthru('pirum add ./channel ' . $file);
             }
         }
 
         // if we have a new phar, add it
-        if ($this->getMakephar() && file_exists($basedir.'/build/artifacts/guzzle.phar')) {
-            rename($basedir.'/build/artifacts/guzzle.phar', $basedir.'/build/pearwork/guzzle.github.com/guzzle.phar');
+        if ($this->getMakephar() && file_exists($basedir . '/build/artifacts/guzzle.phar')) {
+            rename($basedir . '/build/artifacts/guzzle.phar', './channel/guzzle.phar');
         }
 
-        // add and commit
-        chdir($basedir . '/build/pearwork/guzzle.github.com');
-        passthru('git add --all .');
-        passthru('git commit -m "Pushing PEAR/PHAR release for '.$this->getVersion().'" && git push');
+        // Sync up with the S3 bucket
+        chdir($basedir . '/build/pearwork/channel');
+        passthru('aws s3 sync . s3://pear.guzzlephp.org');
     }
 
     public function buildSinglePackage()
