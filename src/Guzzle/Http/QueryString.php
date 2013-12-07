@@ -280,8 +280,9 @@ class QueryString extends Collection
      */
     public function merge($data)
     {
-        if (isset($data->aggregator))
+        if (isset($data->aggregator)) {
             $this->setAggregator($data->aggregator);
+        }
         return parent::merge($data);
     }
 
