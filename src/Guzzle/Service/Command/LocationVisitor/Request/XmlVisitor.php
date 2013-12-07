@@ -15,9 +15,6 @@ class XmlVisitor extends AbstractRequestVisitor
     /** @var \SplObjectStorage Data object for persisting XML data */
     protected $data;
 
-    /** @var \XMLWriter XML writer resource */
-    protected $writer;
-
     /** @var bool Content-Type header added when XML is found */
     protected $contentType = 'application/xml';
 
@@ -56,7 +53,7 @@ class XmlVisitor extends AbstractRequestVisitor
 
         // If data was found that needs to be serialized, then do so
         if (isset($this->data[$command])) {
-            $xml = $this->finishDocument($this->writer);
+            $xml = $this->finishDocument($this->data[$command]);
             unset($this->data[$command]);
         } else {
             // Check if XML should always be sent for the command
@@ -198,11 +195,11 @@ class XmlVisitor extends AbstractRequestVisitor
      */
     protected function startDocument($encoding)
     {
-        $this->writer = new \XMLWriter();
-        $this->writer->openMemory();
-        $this->writer->startDocument('1.0', $encoding);
+        $xmlWriter = new \XMLWriter();
+        $xmlWriter->openMemory();
+        $xmlWriter->startDocument('1.0', $encoding);
 
-        return $this->writer;
+        return $xmlWriter;
     }
 
     /**
