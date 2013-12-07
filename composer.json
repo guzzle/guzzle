@@ -51,8 +51,8 @@
 
     "autoload": {
         "psr-0": {
-            "Guzzle\\Tests": "tests/",
-            "Guzzle": "src/"
+            "Guzzle": "src/",
+            "Guzzle\\Tests": "tests/"
         }
     },
 
