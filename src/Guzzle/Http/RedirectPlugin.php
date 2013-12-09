@@ -123,9 +123,9 @@ class RedirectPlugin implements EventSubscriberInterface
         $redirectRequest = null;
         $strict = $original->getParams()->get(self::STRICT_REDIRECTS);
 
-        // Use a GET request if this is an entity enclosing request and we are not forcing RFC compliance, but rather
-        // emulating what all browsers would do
-        if ($request instanceof EntityEnclosingRequestInterface && !$strict && $statusCode <= 302) {
+        // Switch method to GET for 303 redirects.  301 and 302 redirects also switch to GET unless we are forcing RFC
+        // compliance to emulate what most browsers do.  NOTE: IE only switches methods on 301/302 when coming from a POST.
+        if ($request instanceof EntityEnclosingRequestInterface && ($statusCode == 303 || (!$strict && $statusCode <= 302))) {
             $redirectRequest = RequestFactory::getInstance()->cloneRequestWithMethod($request, 'GET');
         } else {
             $redirectRequest = clone $request;
