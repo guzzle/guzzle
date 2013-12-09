@@ -119,6 +119,41 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('POST', $requests[2]->getMethod());
     }
 
+    public function testRedirect303WithGet()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+             "HTTP/1.1 303 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
+             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+        ));
+
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->post('/foo');
+        $request->send();
+
+        $requests = $this->getServer()->getReceivedRequests(true);
+        $this->assertEquals('POST', $requests[0]->getMethod());
+        $this->assertEquals('GET', $requests[1]->getMethod());
+    }
+
+    public function testRedirect303WithGetWithStrictRfcCompliance()
+    {
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+             "HTTP/1.1 303 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
+             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+        ));
+
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->post('/foo');
+        $request->getParams()->set(RedirectPlugin::STRICT_REDIRECTS, true);
+        $request->send();
+
+        $requests = $this->getServer()->getReceivedRequests(true);
+        $this->assertEquals('POST', $requests[0]->getMethod());
+        $this->assertEquals('GET', $requests[1]->getMethod());
+    }
+
     public function testRewindsStreamWhenRedirectingIfNeeded()
     {
         $this->getServer()->flush();
