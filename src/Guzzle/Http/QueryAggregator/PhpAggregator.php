@@ -17,6 +17,8 @@ class PhpAggregator implements QueryAggregatorInterface
             $k = "{$key}[{$k}]";
             if (is_array($v)) {
                 $ret = array_merge($ret, self::aggregate($k, $v, $query));
+            } elseif (is_object($v)) {
+                $ret = array_merge($ret, self::aggregate($k, (array) $v, $query));
             } else {
                 $ret[$query->encodeValue($k)] = $query->encodeValue($v);
             }

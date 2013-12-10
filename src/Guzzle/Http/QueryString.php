@@ -266,6 +266,8 @@ class QueryString extends Collection
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 $temp = array_merge($temp, $this->aggregator->aggregate($key, $value, $this));
+            } elseif (is_object($value)) {
+                $temp = array_merge($temp, $this->aggregator->aggregate($key, (array) $value, $this));
             } else {
                 $temp[$this->encodeValue($key)] = $this->encodeValue($value);
             }
