@@ -51,4 +51,13 @@ interface HasDispatcherInterface
      * @return self
      */
     public function addSubscriber(EventSubscriberInterface $subscriber);
+
+    /**
+     * Remove an event subscriber from the dispatcher
+     *
+     * @param EventSubscriberInterface $subscriber Event subscriber
+     *
+     * @return self
+     */
+    public function removeSubscriber(EventSubscriberInterface $subscriber);
 }

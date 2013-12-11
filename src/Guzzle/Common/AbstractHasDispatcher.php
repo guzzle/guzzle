@@ -46,4 +46,11 @@ class AbstractHasDispatcher implements HasDispatcherInterface
 
         return $this;
     }
+
+    public function removeSubscriber(EventSubscriberInterface $subscriber)
+    {
+        $this->getEventDispatcher()->removeSubscriber($subscriber);
+
+        return $this;
+    }
 }
