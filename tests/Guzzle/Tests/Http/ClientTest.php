@@ -155,7 +155,7 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $options = $client->getConfig('curl.options');
         $this->assertArrayNotHasKey(CURLOPT_CAINFO, $options);
         $this->assertSame(false, $options[CURLOPT_SSL_VERIFYPEER]);
-        $this->assertSame(2, $options[CURLOPT_SSL_VERIFYHOST]);
+        $this->assertSame(0, $options[CURLOPT_SSL_VERIFYHOST]);
     }
 
     public function testClientAllowsUnsafeOperationIfRequested()
