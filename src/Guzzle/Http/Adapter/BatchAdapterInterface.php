@@ -10,7 +10,8 @@ interface BatchAdapterInterface extends AdapterInterface
     /**
      * Transfers multiple HTTP requests in parallel
      *
-     * @param array $transactions Array of TransactionInterface objects
+     * @param array|\Traversable $transactions Iterable of TransactionInterface objects
+     * @param int                $parallel     Maximum number of requests to send in parallel
      */
-    public function batch(array $transactions);
+    public function batch($transactions, $parallel = 50);
 }

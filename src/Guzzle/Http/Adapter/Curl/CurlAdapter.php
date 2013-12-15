@@ -21,7 +21,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
     const ERROR_STR = 'See http://curl.haxx.se/libcurl/c/libcurl-errors.html for an explanation of cURL errors';
 
     /** @var CurlFactory */
-    private $factory;
+    private $curlFactory;
     /** @var array Array of curl multi handles */
     private $multiHandles = array();
     /** @var array Array of curl multi handles */
@@ -37,7 +37,9 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
     public function __construct(MessageFactoryInterface $messageFactory, array $options = [])
     {
         $this->messageFactory = $messageFactory;
-        $this->factory = isset($options['handle_factory']) ? $options['handle_factory'] : new CurlFactory();
+        $this->curlFactory = isset($options['handle_factory'])
+            ? $options['handle_factory']
+            : new CurlFactory();
     }
 
     /**
@@ -73,19 +75,31 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
         return $transaction->getResponse();
     }
 
-    public function batch(array $transactions)
+    public function batch($transactions, $parallel = 50)
     {
-        $context = new BatchContext($this->checkoutMultiHandle());
+        if (is_array($transactions)) {
+            $transactions = new \ArrayIterator($transactions);
+        } elseif (!($transactions instanceof \Traversable)) {
+            throw new \InvalidArgumentException('Transactions must be an array or \Iterator');
+        }
 
-        foreach ($transactions as $transaction) {
+        $context = new CurlTransactionQueue(
+            $transactions,
+            $this->checkoutMultiHandle(),
+            $this->curlFactory,
+            $this->messageFactory
+        );
+
+        $total = 0;
+        while ($transactions->valid() && $total < $parallel) {
+            $current = $transactions->current();
             try {
-                $context->addTransaction(
-                    $transaction,
-                    $this->factory->createHandle($transaction, $this->messageFactory)
-                );
+                $context->addTransaction($current);
+                $total++;
             } catch (RequestException $e) {
-                $this->onError($transaction, $e, $context, ['curl_context' => $context]);
+                $this->onError($current, $e, $context, ['curl_context' => $context]);
             }
+            $transactions->next();
         }
 
         $this->perform($context);
@@ -94,10 +108,8 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
 
     /**
      * Execute and select curl handles
-     *
-     * @param BatchContext $context
      */
-    private function perform(BatchContext $context)
+    private function perform(CurlTransactionQueue $context)
     {
         // The first curl_multi_select often times out no matter what, but is usually required for fast transfers
         $selectTimeout = 0.001;
@@ -113,19 +125,25 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
                 usleep(150);
             }
             $selectTimeout = 1;
-        } while ($active);
+        } while ($active || $context->getActiveCount());
     }
 
     /**
      * Check for errors and fix headers of a request based on a curl response
      * @throws RequestException on error
      */
-    private function processResponse(TransactionInterface $transaction, array $curl, BatchContext $context)
+    private function processResponse(TransactionInterface $transaction, array $curl, CurlTransactionQueue $context)
     {
-        $handle = $context->getHandle($transaction);
+        $handle = $context->getTransactionResource($transaction);
         $stats = curl_getinfo($handle);
         $stats['curl_context'] = $context;
-        $context->removeTransaction($transaction);
+
+        try {
+            $context->removeTransaction($transaction);
+        } catch (RequestException $e) {
+            $this->onError($transaction, $e, $context, ['curl_context' => $context]);
+        }
+
         $request = $transaction->getRequest();
 
         try {
@@ -168,12 +186,12 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
     /**
      * Process any received curl multi messages
      */
-    private function processMessages(BatchContext $context)
+    private function processMessages(CurlTransactionQueue $context)
     {
         $multi = $context->getMultiHandle();
         while ($done = curl_multi_info_read($multi)) {
-            foreach ($context->getTransactions() as $transaction) {
-                if ($context->getHandle($transaction) === $done['handle']) {
+            foreach ($context->getActiveTransactions() as $transaction) {
+                if ($context->getTransactionResource($transaction) === $done['handle']) {
                     $this->processResponse($transaction, $done, $context);
                     continue 2;
                 }
@@ -221,8 +239,12 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
     /**
      * Handle an error
      */
-    private function onError(TransactionInterface $transaction, \Exception $e, BatchContext $context, array $stats)
-    {
+    private function onError(
+        TransactionInterface $transaction,
+        \Exception $e,
+        CurlTransactionQueue $context,
+        array $stats
+    ) {
         if (!$transaction->getRequest()->getEventDispatcher()->dispatch(
             RequestEvents::ERROR,
             new RequestErrorEvent($transaction, $e, $stats)
