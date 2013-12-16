@@ -4,21 +4,17 @@ namespace Guzzle\Http;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\HasDispatcherTrait;
-use Guzzle\Http\Adapter\TransactionInterface;
+use Guzzle\Http\Adapter\FakeBatchAdapter;
 use Guzzle\Http\Event\ClientCreateRequestEvent;
 use Guzzle\Http\Event\ClientEvents;
 use Guzzle\Http\Event\RequestEvents;
-use Guzzle\Http\Event\RequestErrorEvent;
-use Guzzle\Http\Exception\RequestException;
-use Guzzle\Http\Message\FutureResponseInterface;
 use Guzzle\Version;
+use Guzzle\Http\Adapter\BatchAdapterInterface;
 use Guzzle\Http\Adapter\AdapterInterface;
-use Guzzle\Http\Adapter\FutureProxyAdapter;
 use Guzzle\Http\Adapter\StreamAdapter;
 use Guzzle\Http\Adapter\StreamingProxyAdapter;
 use Guzzle\Http\Adapter\Curl\CurlAdapter;
 use Guzzle\Http\Adapter\Transaction;
-use Guzzle\Http\Event\RequestBeforeSendEvent;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\MessageFactoryInterface;
 use Guzzle\Http\Message\RequestInterface;
@@ -36,6 +32,9 @@ class Client implements ClientInterface
 
     /** @var AdapterInterface */
     private $adapter;
+
+    /** @var BatchAdapterInterface */
+    private $batchAdapter;
 
     /** @var string Base URL of the client */
     private $baseUrl;
@@ -67,6 +66,7 @@ class Client implements ClientInterface
      *                                  an array that contains a URI template followed by an associative array of
      *                                  expansion variables to inject into the URI template.
      *                      - adapter: Adapter used to transfer requests
+     *                      - batch_adapter: Adapter used to transfer requests in parallel
      *                      - message_factory: Factory used to create request and response object
      *                      - defaults: Default request options to apply to each request
      */
@@ -80,8 +80,16 @@ class Client implements ClientInterface
         }
 
         $this->messageFactory = isset($config['message_factory']) ? $config['message_factory'] : new MessageFactory();
-        $this->adapter = isset($config['adapter']) ? $config['adapter'] : $this->getDefaultAdapter();
         $this->baseUrl = isset($config['base_url']) ? $this->buildUrl($config['base_url']) : '';
+        $this->adapter = isset($config['adapter']) ? $config['adapter'] : $this->getDefaultAdapter();
+
+        // If no batch adapter was explicitly provided and one was not defaulted
+        // when creating the default adapter, then create one now
+        if (isset($config['batch_adapter'])) {
+            $this->batchAdapter = $config['batch_adapter'];
+        } elseif (!$this->batchAdapter) {
+            $this->batchAdapter = $this->getDefaultBatchAdapter();
+        }
 
         // Add the default user-agent header
         if (!isset($config['defaults']['headers'])) {
@@ -190,51 +198,40 @@ class Client implements ClientInterface
     public function send(RequestInterface $request)
     {
         $transaction = new Transaction($this, $request);
-        $response = null;
-
-        try {
-            if ($request->getEventDispatcher()->dispatch(
-                RequestEvents::BEFORE_SEND,
-                new RequestBeforeSendEvent($transaction)
-            )->isPropagationStopped()) {
-                $response = $transaction->getResponse();
-            }
-        } catch (\Exception $e) {
-            $response = $this->handleSendError($e, $request, $transaction);
-        }
-
-        if (!$response) {
-            $response = $this->adapter->send($transaction);
-        }
-
-        if (!$response) {
-            throw new \RuntimeException('No response was associated with the transaction');
-        } elseif (!($response instanceof FutureResponseInterface) && !$response->getEffectiveUrl()) {
+        if ($response = $this->adapter->send($transaction)) {
             $response->setEffectiveUrl($request->getUrl());
+            return $response;
         }
 
-        return $response;
+        throw new \RuntimeException('No response was associated with the transaction');
     }
 
-    /**
-     * Handle a client error
-     */
-    private function handleSendError(\Exception $e, RequestInterface $request, TransactionInterface $transaction)
+    public function sendAll($requests, array $options = [])
     {
-        // Convert non-request exception to a wrapped exception
-        if (!($e instanceof RequestException)) {
-            $e = new RequestException($e->getMessage(), $request, null, $e);
-        }
+        $requests = function() use ($requests, $options) {
+            foreach ($requests as $request) {
+                if (isset($options['complete'])) {
+                    $request->getEventDispatcher()->addListener(
+                        RequestEvents::AFTER_SEND,
+                        $options['complete'],
+                        -255
+                    );
+                }
+                if (isset($options['error'])) {
+                    $request->getEventDispatcher()->addListener(
+                        RequestEvents::ERROR,
+                        $options['error'],
+                        -255
+                    );
+                }
+                yield new Transaction($this, $request);
+            }
+        };
 
-        // Dispatch an event and allow interception
-        if (!$request->getEventDispatcher()->dispatch(
-            RequestEvents::ERROR,
-            new RequestErrorEvent($transaction, $e)
-        )->isPropagationStopped()) {
-            throw $e;
-        }
-
-        return $transaction->getResponse();
+        $this->batchAdapter->batch(
+            $requests(),
+            isset($options['parallel']) ? $options['parallel'] : 50
+        );
     }
 
     /**
@@ -277,6 +274,19 @@ class Client implements ClientInterface
     }
 
     /**
+     * Get a default batch adapter to use based on the environment
+     *
+     * @return BatchAdapterInterface|null
+     * @throws \RuntimeException
+     */
+    private function getDefaultBatchAdapter()
+    {
+        return extension_loaded('curl')
+            ? new CurlAdapter($this->messageFactory)
+            : new FakeBatchAdapter($this->adapter);
+    }
+
+    /**
      * Get a default adapter to use based on the environment
      *
      * @return AdapterInterface
@@ -286,15 +296,17 @@ class Client implements ClientInterface
     {
         if (extension_loaded('curl')) {
             if (!ini_get('allow_url_fopen')) {
-                return new FutureProxyAdapter(new CurlAdapter($this->messageFactory));
+                return $this->batchAdapter = $this->adapter = new CurlAdapter($this->messageFactory);
             } else {
+                // Assume that the batch adapter will also be this CurlAdapter
+                $this->batchAdapter = new CurlAdapter($this->messageFactory);
                 return new StreamingProxyAdapter(
-                    new FutureProxyAdapter(new CurlAdapter($this->messageFactory)),
-                    new FutureProxyAdapter(new StreamAdapter($this->messageFactory))
+                    $this->batchAdapter,
+                    new StreamAdapter($this->messageFactory)
                 );
             }
         } elseif (ini_get('allow_url_fopen')) {
-            return new FutureProxyAdapter(new StreamAdapter($this->messageFactory));
+            return new StreamAdapter($this->messageFactory);
         } else {
             throw new \RuntimeException('The curl extension must be installed or you must set allow_url_fopen to true');
         }

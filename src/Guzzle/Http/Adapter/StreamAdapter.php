@@ -3,8 +3,6 @@
 namespace Guzzle\Http\Adapter;
 
 use Guzzle\Http\Event\RequestEvents;
-use Guzzle\Http\Event\RequestAfterSendEvent;
-use Guzzle\Http\Event\RequestErrorEvent;
 use Guzzle\Http\Event\GotResponseHeadersEvent;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\MessageFactoryInterface;
@@ -29,19 +27,10 @@ class StreamAdapter implements AdapterInterface
 
     public function send(TransactionInterface $transaction)
     {
-        try {
+        RequestEvents::emitBeforeSendEvent($transaction);
+        if (!$transaction->getResponse()) {
             $this->createResponse($transaction);
-            $transaction->getRequest()->getEventDispatcher()->dispatch(
-                RequestEvents::AFTER_SEND,
-                new RequestAfterSendEvent($transaction)
-            );
-        } catch (RequestException $e) {
-            if (!$transaction->getRequest()->getEventDispatcher()->dispatch(
-                RequestEvents::ERROR,
-                new RequestErrorEvent($transaction, $e)
-            )->isPropagationStopped()) {
-                throw $e;
-            }
+            RequestEvents::emitAfterSendEvent($transaction);
         }
 
         return $transaction->getResponse();

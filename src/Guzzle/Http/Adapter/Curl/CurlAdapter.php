@@ -5,13 +5,11 @@ namespace Guzzle\Http\Adapter\Curl;
 use Guzzle\Http\Adapter\AdapterInterface;
 use Guzzle\Http\Adapter\BatchAdapterInterface;
 use Guzzle\Http\Adapter\TransactionInterface;
-use Guzzle\Http\Event\RequestAfterSendEvent;
-use Guzzle\Http\Event\RequestErrorEvent;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Exception\AdapterException;
+use Guzzle\Http\Exception\BatchException;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\MessageFactoryInterface;
-use Guzzle\Http\Message\RequestInterface;
 
 /**
  * HTTP adapter that uses cURL as a transport layer
@@ -22,12 +20,14 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
 
     /** @var CurlFactory */
     private $curlFactory;
-    /** @var array Array of curl multi handles */
-    private $multiHandles = array();
-    /** @var array Array of curl multi handles */
-    private $multiOwned = array();
     /** @var MessageFactoryInterface */
     private $messageFactory;
+    /** @var \Iterator */
+    private $transactions;
+    /** @var resource */
+    private $multi;
+    /** @var \SplObjectStorage */
+    private $handles;
 
     /**
      * @param MessageFactoryInterface $messageFactory
@@ -36,22 +36,175 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
      */
     public function __construct(MessageFactoryInterface $messageFactory, array $options = [])
     {
+        $this->multi = curl_multi_init();
+        $this->handles = new \SplObjectStorage();
         $this->messageFactory = $messageFactory;
         $this->curlFactory = isset($options['handle_factory'])
             ? $options['handle_factory']
             : new CurlFactory();
     }
 
-    /**
-     * Destroys each open multi handle
-     */
     public function __destruct()
     {
-        foreach ($this->multiHandles as $handle) {
-            if (is_resource($handle)) {
-                curl_multi_close($handle);
+        foreach ($this->handles as $transaction) {
+            $this->removeTransaction($transaction);
+        }
+
+        curl_multi_close($this->multi);
+    }
+
+    public function send(TransactionInterface $transaction)
+    {
+        $this->batch(new \ArrayIterator(array($transaction)), 1);
+
+        return $transaction->getResponse();
+    }
+
+    public function batch(\Iterator $transactions, $parallel)
+    {
+        // Add the new transactions to any existing transactions
+        if (!$this->transactions) {
+            $this->transactions = $transactions;
+        } elseif (!($this->transactions instanceof \AppendIterator)) {
+            $append = new \AppendIterator();
+            $append->append($this->transactions);
+        } else {
+            $this->transactions->append($transactions);
+        }
+
+        $total = 0;
+        while ($this->transactions->valid() && $total < $parallel) {
+            $current = $this->transactions->current();
+            $this->addHandle($current);
+            $total++;
+            $this->transactions->next();
+        }
+
+        $this->perform();
+    }
+
+    /**
+     * Execute and select curl handles
+     */
+    private function perform()
+    {
+        // The first curl_multi_select often times out no matter what, but is usually required for fast transfers
+        $selectTimeout = 0.001;
+        $active = false;
+
+        do {
+            while (($mrc = curl_multi_exec($this->multi, $active)) == CURLM_CALL_MULTI_PERFORM);
+            $this->checkCurlMultiResult($mrc);
+            $this->processMessages();
+            if ($active && curl_multi_select($this->multi, $selectTimeout) === -1) {
+                // Perform a usleep if a select returns -1: https://bugs.php.net/bug.php?id=61141
+                usleep(150);
+            }
+            $selectTimeout = 1;
+        } while ($active || $this->transactions->valid());
+    }
+
+    /**
+     * Process any received curl multi messages
+     */
+    private function processMessages()
+    {
+        while ($done = curl_multi_info_read($this->multi)) {
+            foreach ($this->handles as $transaction) {
+                if ($this->handles[$transaction] === $done['handle']) {
+                    $this->processResponse($transaction, $done);
+                    // Add the next transaction if there are more in the queue
+                    if ($this->transactions->valid()) {
+                        $this->addHandle($this->transactions->current());
+                        $this->transactions->next();
+                    }
+                    continue 2;
+                }
             }
         }
+    }
+
+    /**
+     * Check for errors and fix headers of a request based on a curl response
+     * @throws RequestException on error
+     */
+    private function processResponse(TransactionInterface $transaction, array $curl)
+    {
+        $handle = $this->handles[$transaction];
+        $this->removeTransaction($transaction);
+
+        try {
+            if (!$this->isCurlException($transaction, $curl)) {
+                RequestEvents::emitAfterSend($transaction, curl_getinfo($handle));
+            }
+        } catch (RequestException $e) {
+            $this->throwBatchException($e);
+        }
+    }
+
+    private function addHandle(TransactionInterface $transaction)
+    {
+        if (isset($this->handles[$transaction])) {
+            throw new \RuntimeException('Duplicate transaction');
+        }
+
+        try {
+            RequestEvents::emitBeforeSendEvent($transaction);
+        } catch (RequestException $e) {
+            $this->throwBatchException($e);
+        }
+
+        // Only transfer if the request was not intercepted
+        if (!$transaction->getResponse()) {
+            $handle = $this->curlFactory->createHandle(
+                $transaction,
+                $this->messageFactory
+            );
+            $this->checkCurlMultiResult(curl_multi_add_handle($this->multi, $handle));
+            $this->handles[$transaction] = $handle;
+        }
+    }
+
+    private function removeTransaction(TransactionInterface $transaction)
+    {
+        curl_multi_remove_handle($this->multi, $this->handles[$transaction]);
+        curl_close($this->handles[$transaction]);
+        unset($this->handles[$transaction]);
+    }
+
+    /**
+     * Check if a cURL transfer resulted in what should be an exception
+     *
+     * @param TransactionInterface $transaction Request to check
+     * @param array                $curl        Array returned from curl_multi_info_read
+     *
+     * @return bool
+     * @throws RequestException|bool
+     */
+    private function isCurlException(TransactionInterface $transaction, array $curl)
+    {
+        if (CURLM_OK == $curl['result'] || CURLM_CALL_MULTI_PERFORM == $curl['result']) {
+            return false;
+        }
+
+        $request = $transaction->getRequest();
+        try {
+            RequestEvents::emitErrorEvent($transaction, new RequestException(
+                sprintf(
+                    '[curl] (#%s) %s [url] %s',
+                    $curl['result'],
+                    function_exists('curl_strerror')
+                        ? curl_strerror($curl['result'])
+                        : self::ERROR_STR,
+                    $request->getUrl()
+                ),
+                $request
+            ));
+        } catch (RequestException $e) {
+            $this->throwBatchException($e);
+        }
+
+        return true;
     }
 
     /**
@@ -60,201 +213,48 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
      * @param int $code Curl response code
      * @throws AdapterException
      */
-    public static function checkCurlMultiResult($code)
+    private function checkCurlMultiResult($code)
     {
         if ($code != CURLM_OK && $code != CURLM_CALL_MULTI_PERFORM) {
-            $buffer = function_exists('curl_multi_strerror') ? curl_multi_strerror($code) : self::ERROR_STR;
+            $buffer = function_exists('curl_multi_strerror')
+                ? curl_multi_strerror($code)
+                : self::ERROR_STR;
             throw new AdapterException(sprintf('cURL error %s: %s', $code, $buffer));
         }
     }
 
-    public function send(TransactionInterface $transaction)
+    private function throwBatchException(RequestException $e)
     {
-        $this->batch([$transaction]);
+        // Remove any pending transactions to keep a consistent state
+        while (curl_multi_info_read($this->multi));
 
-        return $transaction->getResponse();
-    }
-
-    public function batch($transactions, $parallel = 50)
-    {
-        if (is_array($transactions)) {
-            $transactions = new \ArrayIterator($transactions);
-        } elseif (!($transactions instanceof \Traversable)) {
-            throw new \InvalidArgumentException('Transactions must be an array or \Iterator');
+        $remaining = [];
+        foreach ($this->handles as $transaction) {
+            $this->removeTransaction($transaction);
+            if ($transaction->getRequest() !== $e->getRequest()) {
+                $remaining[] = $transaction;
+            }
         }
 
-        $context = new CurlTransactionQueue(
-            $transactions,
-            $this->checkoutMultiHandle(),
-            $this->curlFactory,
-            $this->messageFactory
+        // Create an iterator that contains the incomplete transactions
+        $iterator = new \AppendIterator();
+
+        if ($remaining) {
+            $iterator->append(new \ArrayIterator($remaining));
+        }
+
+        if ($this->transactions->valid()) {
+            $iterator->append(new \NoRewindIterator($this->transactions));
+        }
+
+        $this->transactions = null;
+
+        throw new BatchException(
+            $e->getMessage(),
+            $e->getRequest(),
+            $e->getResponse(),
+            $e->getPrevious(),
+            $iterator
         );
-
-        $total = 0;
-        while ($transactions->valid() && $total < $parallel) {
-            $current = $transactions->current();
-            try {
-                $context->addTransaction($current);
-                $total++;
-            } catch (RequestException $e) {
-                $this->onError($current, $e, $context, ['curl_context' => $context]);
-            }
-            $transactions->next();
-        }
-
-        $this->perform($context);
-        $this->releaseMultiHandle($context->getMultiHandle());
-    }
-
-    /**
-     * Execute and select curl handles
-     */
-    private function perform(CurlTransactionQueue $context)
-    {
-        // The first curl_multi_select often times out no matter what, but is usually required for fast transfers
-        $selectTimeout = 0.001;
-        $active = false;
-        $multi = $context->getMultiHandle();
-
-        do {
-            while (($mrc = curl_multi_exec($multi, $active)) == CURLM_CALL_MULTI_PERFORM);
-            self::checkCurlMultiResult($mrc);
-            $this->processMessages($context);
-            if ($active && curl_multi_select($multi, $selectTimeout) === -1) {
-                // Perform a usleep if a select returns -1: https://bugs.php.net/bug.php?id=61141
-                usleep(150);
-            }
-            $selectTimeout = 1;
-        } while ($active || $context->getActiveCount());
-    }
-
-    /**
-     * Check for errors and fix headers of a request based on a curl response
-     * @throws RequestException on error
-     */
-    private function processResponse(TransactionInterface $transaction, array $curl, CurlTransactionQueue $context)
-    {
-        $handle = $context->getTransactionResource($transaction);
-        $stats = curl_getinfo($handle);
-        $stats['curl_context'] = $context;
-
-        try {
-            $context->removeTransaction($transaction);
-        } catch (RequestException $e) {
-            $this->onError($transaction, $e, $context, ['curl_context' => $context]);
-        }
-
-        $request = $transaction->getRequest();
-
-        try {
-            $this->isCurlException($request, $curl);
-            $request->getEventDispatcher()->dispatch(
-                RequestEvents::AFTER_SEND,
-                new RequestAfterSendEvent($transaction, $stats)
-            );
-        } catch (RequestException $e) {
-            $stats['curl_result'] = $curl['result'];
-            $this->onError($transaction, $e, $context, $stats);
-        }
-    }
-
-    /**
-     * Check if a cURL transfer resulted in what should be an exception
-     *
-     * @param RequestInterface $request Request to check
-     * @param array            $curl    Array returned from curl_multi_info_read
-     *
-     * @throws RequestException|bool
-     */
-    private function isCurlException(RequestInterface $request, array $curl)
-    {
-        if (CURLM_OK == $curl['result'] || CURLM_CALL_MULTI_PERFORM == $curl['result']) {
-            return;
-        }
-
-        throw new RequestException(
-            sprintf(
-                '[curl] (#%s) %s [url] %s',
-                $curl['result'],
-                function_exists('curl_strerror') ? curl_strerror($curl['result']) : self::ERROR_STR,
-                $request->getUrl()
-            ),
-            $request
-        );
-    }
-
-    /**
-     * Process any received curl multi messages
-     */
-    private function processMessages(CurlTransactionQueue $context)
-    {
-        $multi = $context->getMultiHandle();
-        while ($done = curl_multi_info_read($multi)) {
-            foreach ($context->getActiveTransactions() as $transaction) {
-                if ($context->getTransactionResource($transaction) === $done['handle']) {
-                    $this->processResponse($transaction, $done, $context);
-                    continue 2;
-                }
-            }
-        }
-    }
-
-    /**
-     * Returns a curl_multi handle from the cache or creates a new one
-     *
-     * @return resource
-     */
-    private function checkoutMultiHandle()
-    {
-        // Find an unused handle in the cache
-        if (false !== ($key = array_search(false, $this->multiOwned, true))) {
-            $this->multiOwned[$key] = true;
-            return $this->multiHandles[$key];
-        }
-
-        // Add a new handle
-        $handle = curl_multi_init();
-        $this->multiHandles[(int) $handle] = $handle;
-        $this->multiOwned[(int) $handle] = true;
-
-        return $handle;
-    }
-
-    /**
-     * Releases a curl_multi handle back into the cache and removes excess cache
-     *
-     * @param resource $handle Curl multi handle to remove
-     */
-    private function releaseMultiHandle($handle)
-    {
-        $this->multiOwned[(int) $handle] = false;
-        // Prune excessive handles
-        $over = count($this->multiHandles) - 3;
-        while (--$over > -1) {
-            curl_multi_close(array_pop($this->multiHandles));
-            array_pop($this->multiOwned);
-        }
-    }
-
-    /**
-     * Handle an error
-     */
-    private function onError(
-        TransactionInterface $transaction,
-        \Exception $e,
-        CurlTransactionQueue $context,
-        array $stats
-    ) {
-        if (!$transaction->getRequest()->getEventDispatcher()->dispatch(
-            RequestEvents::ERROR,
-            new RequestErrorEvent($transaction, $e, $stats)
-        )->isPropagationStopped()) {
-            // Clean up multi handles and context
-            foreach ($context->getTransactions() as $trans) {
-                $context->removeTransaction($trans);
-            }
-            $this->releaseMultiHandle($context->getMultiHandle());
-            throw $e;
-        }
     }
 }
