@@ -26,16 +26,9 @@ class FakeBatchAdapter implements BatchAdapterInterface
     {
         foreach ($transactions as $transaction) {
             try {
-                $this->send($transaction->getRequest());
+                $this->adapter->send($transaction);
             } catch (RequestException $e) {
-                $transactions->next();
-                throw new BatchException(
-                    $e->getMessage(),
-                    $e->getRequest(),
-                    $e->getResponse(),
-                    $e->getPrevious(),
-                    new \NoRewindIterator($transactions)
-                );
+                // no op for batch transaction
             }
         }
     }

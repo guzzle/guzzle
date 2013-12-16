@@ -32,7 +32,7 @@ class MockAdapter implements AdapterInterface
                     ? $this->response($transaction)
                     : $this->response
             );
-            RequestEvents::emitAfterSend($transaction);
+            RequestEvents::emitAfterSendEvent($transaction);
         }
 
         return $transaction->getResponse();

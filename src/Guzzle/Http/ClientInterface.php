@@ -112,6 +112,22 @@ interface ClientInterface extends HasDispatcherInterface
     public function send(RequestInterface $request);
 
     /**
+     * Sends multiple requests in parallel.
+     *
+     * Exceptions are not thrown for failed requests. Callers are expected to
+     * register an "error" option to handle request errors OR directly register
+     * an event handler for the "request.error" event of a request's
+     * EventDispatcher.
+     *
+     * @param array|\Iterator $requests Requests to send in parallel
+     * @param array           $options  Associative array of options
+     *                                  - parallel: (int) Max number of requests to send in parallel
+     *                                  - complete: Callable that receives a RequestAfterSendEvent
+     *                                  - error: Callable that receives a RequestErrorEvent
+     */
+    public function sendAll($requests, array $options = []);
+
+    /**
      * Get the client's base URL
      *
      * @return string|null

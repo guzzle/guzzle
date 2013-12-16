@@ -68,7 +68,7 @@ final class RequestEvents
      *
      * @throws RequestException
      */
-    public static function emitAfterSend(
+    public static function emitAfterSendEvent(
         TransactionInterface $transaction,
         array $stats = []
     ) {
