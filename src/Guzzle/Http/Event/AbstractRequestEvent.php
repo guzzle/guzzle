@@ -47,15 +47,4 @@ abstract class AbstractRequestEvent extends Event
     {
         return $this->transaction;
     }
-
-    /**
-     * Emit an after_send event
-     */
-    protected function emitAfterSend()
-    {
-        $this->transaction->getRequest()->getEventDispatcher()->dispatch(
-            RequestEvents::AFTER_SEND,
-            new RequestAfterSendEvent($this->transaction)
-        );
-    }
 }

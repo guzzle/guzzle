@@ -21,6 +21,6 @@ class RequestBeforeSendEvent extends AbstractRequestEvent
     {
         $this->getTransaction()->setResponse($response);
         $this->stopPropagation();
-        $this->emitAfterSend();
+        RequestEvents::emitAfterSendEvent($this->getTransaction());
     }
 }

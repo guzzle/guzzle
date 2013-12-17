@@ -197,7 +197,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
 
     private function throwException(RequestException $e, BatchContext $context)
     {
-        if ($context->throwExceptions()) {
+        if ($context->throwsExceptions()) {
             $this->releaseMultiHandle($context->getMultiHandle());
             throw $e;
         }

@@ -35,7 +35,7 @@ class RequestErrorEvent extends AbstractTransferStatsEvent
     {
         $this->stopPropagation();
         $this->getTransaction()->setResponse($response);
-        $this->emitAfterSend();
+        RequestEvents::emitAfterSendEvent($this->getTransaction());
     }
 
     /**
