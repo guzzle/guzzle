@@ -152,17 +152,20 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
     {
         try {
             RequestEvents::emitBeforeSendEvent($transaction);
+            // Only transfer if the request was not intercepted
+            if (!$transaction->getResponse()) {
+                try {
+                    $handle = $this->curlFactory->createHandle(
+                        $transaction,
+                        $this->messageFactory
+                    );
+                    $context->addTransaction($transaction, $handle);
+                } catch (RequestException $e) {
+                    RequestEvents::emitErrorEvent($transaction, $e);
+                }
+            }
         } catch (RequestException $e) {
             $this->throwException($e, $context);
-        }
-
-        // Only transfer if the request was not intercepted
-        if (!$transaction->getResponse()) {
-            $handle = $this->curlFactory->createHandle(
-                $transaction,
-                $this->messageFactory
-            );
-            $context->addTransaction($transaction, $handle);
         }
     }
 

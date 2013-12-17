@@ -199,7 +199,6 @@ class Client implements ClientInterface
     {
         $transaction = new Transaction($this, $request);
         if ($response = $this->adapter->send($transaction)) {
-            $response->setEffectiveUrl($request->getUrl());
             return $response;
         }
 

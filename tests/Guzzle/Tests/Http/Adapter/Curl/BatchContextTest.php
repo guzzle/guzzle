@@ -15,7 +15,7 @@ class BatchContextTest extends \PHPUnit_Framework_TestCase
     public function testValidatesTransactionsAreNotAddedTwice()
     {
         $m = curl_multi_init();
-        $b = new BatchContext($m);
+        $b = new BatchContext($m, true);
         $h = curl_init();
         $t = new Transaction(new Client(), new Request('GET', '/'));
         $b->addTransaction($t, $h);
@@ -31,13 +31,16 @@ class BatchContextTest extends \PHPUnit_Framework_TestCase
     public function testManagesHandles()
     {
         $m = curl_multi_init();
-        $b = new BatchContext($m);
+        $b = new BatchContext($m, true);
         $h = curl_init();
         $t = new Transaction(new Client(), new Request('GET', '/'));
         $b->addTransaction($t, $h);
-        $this->assertEquals([$t], $b->getTransactions());
+        $this->assertSame($t, $b->findTransaction($h));
         $b->removeTransaction($t);
-        $this->assertEquals([], $b->getTransactions());
+        try {
+            $this->assertEquals([], $b->findTransaction($h));
+            $this->fail('Did not throw');
+        } catch (\RuntimeException $e) {}
         curl_multi_close($m);
     }
 }

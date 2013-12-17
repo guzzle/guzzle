@@ -75,7 +75,7 @@ class BatchContext
      */
     public function nextPending()
     {
-        if ($this->pending->valid()) {
+        if ($this->pending && $this->pending->valid()) {
             $current = $this->pending->current();
             $this->pending->next();
             return $current;

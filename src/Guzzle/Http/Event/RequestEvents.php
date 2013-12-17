@@ -72,6 +72,7 @@ final class RequestEvents
         TransactionInterface $transaction,
         array $stats = []
     ) {
+        $transaction->getResponse()->setEffectiveUrl($transaction->getRequest()->getUrl());
         try {
             $transaction->getRequest()->getEventDispatcher()->dispatch(
                 RequestEvents::AFTER_SEND,

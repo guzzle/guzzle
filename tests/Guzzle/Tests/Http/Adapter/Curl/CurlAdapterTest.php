@@ -62,7 +62,7 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
             new Transaction($c, new Request('HEAD', self::$server->getUrl()))
         ];
         $a = new CurlAdapter(new MessageFactory());
-        $a->batch($transactions);
+        $a->batch(new \ArrayIterator($transactions), 20);
         foreach ($transactions as $t) {
             $this->assertContains($t->getResponse()->getStatusCode(), [200, 201, 202]);
         }
@@ -92,7 +92,6 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('Guzzle\Http\Event\RequestErrorEvent', $ev);
         $this->assertSame($r, $ev->getRequest());
         $this->assertInstanceOf('Guzzle\Http\Exception\RequestException', $ev->getException());
-        $this->assertEquals(['curl_context'], array_keys($ev->getTransferInfo()));
     }
 
     public function testDispatchesAfterSendEvent()
@@ -110,7 +109,6 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
         $response = $a->send($t);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('bar', $response->getHeader('Foo'));
-        $this->assertArrayHasKey('curl_context', $ev->getTransferInfo());
     }
 
     public function testDispatchesErrorEventAndRecovers()
@@ -145,11 +143,25 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
     public function testChecksForCurlException()
     {
         $request = new Request('GET', '/');
+        $transaction = $this->getMockBuilder('Guzzle\Http\Adapter\Transaction')
+            ->setMethods(['getRequest'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $transaction->expects($this->exactly(2))
+            ->method('getRequest')
+            ->will($this->returnValue($request));
+        $context = $this->getMockBuilder('Guzzle\Http\Adapter\Curl\BatchContext')
+            ->setMethods(['throwsExceptions'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $context->expects($this->once())
+            ->method('throwsExceptions')
+            ->will($this->returnValue(true));
         $a = new CurlAdapter(new MessageFactory());
         $r = new \ReflectionMethod($a, 'isCurlException');
         $r->setAccessible(true);
         try {
-            $r->invoke($a, $request, ['result' => -10]);
+            $r->invoke($a, $transaction, ['result' => -10], $context);
             $this->fail('Did not throw');
         } catch (RequestException $e) {
             $this->assertSame($request, $e->getRequest());

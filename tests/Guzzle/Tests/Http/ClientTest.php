@@ -60,11 +60,14 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testClientUsesDefaultAdapterWhenNoneIsSet()
     {
         $client = new Client();
-        $response = $client->get('', [], ['future' => true]);
-        $adapter = extension_loaded('curl')
-            ? 'Guzzle\Http\Adapter\Curl\CurlAdapter'
-            : 'Guzzle\Http\Adapter\StreamAdapter';
-        $this->assertInstanceOf($adapter, $response->getAdapter());
+        if (!extension_loaded('curl')) {
+            $adapter = 'Guzzle\Http\Adapter\StreamAdapter';
+        } elseif (ini_get('allow_url_fopen')) {
+            $adapter = 'Guzzle\Http\Adapter\StreamingProxyAdapter';
+        } else {
+            $adapter = 'Guzzle\Http\Adapter\Curl\CurlAdapter';
+        }
+        $this->assertInstanceOf($adapter, $this->readAttribute($client, 'adapter'));
     }
 
     /**
@@ -297,19 +300,6 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client();
         $client->getEventDispatcher()->addListener(RequestEvents::BEFORE_SEND, function ($e) {
             throw new RequestException('foo', $e->getRequest());
-        });
-        $client->get('/');
-    }
-
-    /**
-     * @expectedException \Guzzle\Http\Exception\RequestException
-     * @expectedExceptionMessage foo
-     */
-    public function testClientHandlesErrorsDuringBeforeSendAndThrowsIfUnhandledAndWrapsThem()
-    {
-        $client = new Client();
-        $client->getEventDispatcher()->addListener(RequestEvents::BEFORE_SEND, function ($e) {
-            throw new \Exception('foo');
         });
         $client->get('/');
     }
