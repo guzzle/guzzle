@@ -856,7 +856,7 @@ class Response extends AbstractMessage implements \Serializable
      * @return array|string|int|bool|float
      * @throws RuntimeException if the response body is not in JSON format
      */
-    public function json($asArray = false)
+    public function json($asArray = true)
     {
         $data = json_decode((string) $this->body, $asArray);
         if (JSON_ERROR_NONE !== json_last_error()) {

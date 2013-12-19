@@ -46,7 +46,7 @@ URL, the base URL of a client will be merged into the request's URL.
     // >>> 792
 
     $data = $response->json();
-    echo $data->type;
+    echo $data['type'];
     // >>> User
 
 Base URLs

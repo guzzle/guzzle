@@ -94,7 +94,7 @@ $request = $client->post('statuses/update.json', null, array(
 ));
 
 // Send the request and parse the JSON response into an array
-$data = $request->send()->json($asArray = true);
+$data = $request->send()->json();
 echo $data['text'];
 // >>> Tweeted with Guzzle, http://t.co/kngJMfRk
 </pre>
