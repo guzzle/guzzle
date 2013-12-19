@@ -615,7 +615,23 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
     public function testParsesJsonResponses()
     {
         $response = new Response(200, array(), '{"foo": "bar"}');
-        $this->assertEquals(array('foo' => 'bar'), $response->json());
+        $this->assertEquals(array('foo' => 'bar'), $response->json($asArray = true));
+
+        $response = new Response(200, array(), '{"foo": "bar"}');
+        $this->assertTrue($response->json() instanceof stdClass);
+
+        $response = new Response(200, array(), '["foo", "bar"]');
+        $data     = $response->json();
+        $this->assertTrue(is_array($data));
+        $this->assertEquals('foo', $data[0]);
+        $this->assertEquals('bar', $data[1]);
+
+        $response = new Response(200, array(), '["foo", "bar"]');
+        $data     = $response->json($asArray = true);
+        $this->assertTrue(is_array($data));
+        $this->assertEquals('foo', $data[0]);
+        $this->assertEquals('bar', $data[1]);
+
         // Return array when null is a service response
         $response = new Response(200);
         $this->assertEquals(array(), $response->json());

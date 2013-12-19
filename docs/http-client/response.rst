@@ -75,7 +75,8 @@ JSON Responses
 ~~~~~~~~~~~~~~
 
 You can easily parse and use a JSON response as an array using the ``json()`` method of a response. This method will
-always return an array if the response is valid JSON or if the response body is empty. You will get an exception if you
+always return the same structure as in the JSON response. JSON objects will be converted to stdObjects and arrays to
+arrays. You can pass TRUE as an argument to force conversion to associative arrays. You will get an exception if you
 call this method and the response is not valid JSON.
 
 .. code-block:: php
