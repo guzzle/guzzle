@@ -618,10 +618,10 @@ class ResponseTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals(array('foo' => 'bar'), $response->json());
 
         $response = new Response(200, array(), '{"foo": "bar"}');
-        $this->assertTrue($response->json($maintainStructure = true) instanceof stdClass);
+        $this->assertTrue($response->json($asArray = false) instanceof stdClass);
 
         $response = new Response(200, array(), '["foo", "bar"]');
-        $data     = $response->json($maintainStructure = true);
+        $data     = $response->json($asArray = false);
         $this->assertTrue(is_array($data));
         $this->assertEquals('foo', $data[0]);
         $this->assertEquals('bar', $data[1]);
