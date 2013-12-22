@@ -883,7 +883,7 @@ class Response extends AbstractMessage implements \Serializable
         libxml_clear_errors();
 
         try {
-            $xml = new \SimpleXMLElement((string) $this->body ?: '<root />');
+            $xml = new \SimpleXMLElement((string) $this->body ?: '<root />', LIBXML_NONET);
             if ($error = libxml_get_last_error()) {
                 $errorMessage = $error->message;
             }
