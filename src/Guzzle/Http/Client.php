@@ -141,7 +141,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         } elseif ($certificateAuthority === false) {
             unset($opts[CURLOPT_CAINFO]);
             $opts[CURLOPT_SSL_VERIFYPEER] = false;
-            $opts[CURLOPT_SSL_VERIFYHOST] = 2;
+            $opts[CURLOPT_SSL_VERIFYHOST] = 0;
         } elseif ($verifyPeer !== true && $verifyPeer !== false && $verifyPeer !== 1 && $verifyPeer !== 0) {
             throw new InvalidArgumentException('verifyPeer must be 1, 0 or boolean');
         } elseif ($verifyHost !== 0 && $verifyHost !== 1 && $verifyHost !== 2) {
