@@ -141,7 +141,7 @@ class RedirectPlugin implements EventSubscriberInterface
             $originalUrl = $redirectRequest->getUrl(true);
             // Remove query string parameters and just take what is present on the redirect Location header
             $originalUrl->getQuery()->clear();
-            $location = $originalUrl->combine((string) $location);
+            $location = $originalUrl->combine((string) $location, true);
         }
 
         $redirectRequest->setUrl($location);
