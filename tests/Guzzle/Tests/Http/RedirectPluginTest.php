@@ -219,6 +219,21 @@ class RedirectPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals($this->getServer()->getUrl() . '?foo=bar', $request->getUrl());
     }
 
+    public function testRedirectWithStrictRfc386Compliance()
+    {
+        // Flush the server and queue up a redirect followed by a successful response
+        $this->getServer()->flush();
+        $this->getServer()->enqueue(array(
+            "HTTP/1.1 301 Moved Permanently\r\nLocation: redirect\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
+        ));
+        $client = new Client($this->getServer()->getUrl());
+        $request = $client->get('/foo');
+        $request->send();
+        $requests = $this->getServer()->getReceivedRequests(true);
+        $this->assertEquals('/redirect', $requests[1]->getResource());
+    }
+
     public function testResetsHistoryEachSend()
     {
         // Flush the server and queue up a redirect followed by a successful response
