@@ -122,8 +122,9 @@ interface ClientInterface extends HasDispatcherInterface
      * @param array|\Iterator $requests Requests to send in parallel
      * @param array           $options  Associative array of options
      *                                  - parallel: (int) Max number of requests to send in parallel
-     *                                  - complete: Callable that receives a RequestAfterSendEvent
-     *                                  - error: Callable that receives a RequestErrorEvent
+     *                                  - before:   (callable) Receives a RequestBeforeSendEvent
+     *                                  - complete: (callable) Receives a RequestAfterSendEvent
+     *                                  - error:    (callable) Receives a RequestErrorEvent
      */
     public function sendAll($requests, array $options = []);
 

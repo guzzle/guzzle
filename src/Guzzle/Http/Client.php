@@ -209,28 +209,21 @@ class Client implements ClientInterface
     {
         $requests = function() use ($requests, $options) {
             foreach ($requests as $request) {
+                /** @var RequestInterface $request */
+                if (isset($options['before'])) {
+                    $request->getEventDispatcher()->addListener(RequestEvents::BEFORE_SEND, $options['before'], -255);
+                }
                 if (isset($options['complete'])) {
-                    $request->getEventDispatcher()->addListener(
-                        RequestEvents::AFTER_SEND,
-                        $options['complete'],
-                        -255
-                    );
+                    $request->getEventDispatcher()->addListener(RequestEvents::AFTER_SEND, $options['complete'], -255);
                 }
                 if (isset($options['error'])) {
-                    $request->getEventDispatcher()->addListener(
-                        RequestEvents::ERROR,
-                        $options['error'],
-                        -255
-                    );
+                    $request->getEventDispatcher()->addListener(RequestEvents::ERROR, $options['error'], -255);
                 }
                 yield new Transaction($this, $request);
             }
         };
 
-        $this->batchAdapter->batch(
-            $requests(),
-            isset($options['parallel']) ? $options['parallel'] : 50
-        );
+        $this->batchAdapter->batch($requests(), isset($options['parallel']) ? $options['parallel'] : 50);
     }
 
     /**
