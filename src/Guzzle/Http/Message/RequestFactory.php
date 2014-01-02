@@ -88,7 +88,7 @@ class RequestFactory implements RequestFactoryInterface
         if ($method == 'GET' || $method == 'HEAD' || $method == 'TRACE' || $method == 'OPTIONS') {
             // Handle non-entity-enclosing request methods
             $request = new $this->requestClass($method, $url, $headers);
-            if ($body) {
+            if (isset($body)) {
                 // The body is where the response body will be stored
                 $type = gettype($body);
                 if ($type == 'string' || $type == 'resource' || $type == 'object') {
