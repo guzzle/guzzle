@@ -61,8 +61,8 @@
         "symfony/class-loader": "*",
         "monolog/monolog": "1.*",
         "psr/log": "1.0.*",
-        "zendframework/zend-cache": "2.0.*",
-        "zendframework/zend-log": "2.0.*",
+        "zendframework/zend-cache": "<2.3",
+        "zendframework/zend-log": "<2.3",
         "phpunit/phpunit": "3.7.*"
     },
 
