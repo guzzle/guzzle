@@ -604,4 +604,10 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('/foo.pem', $request->getCurlOptions()->get(CURLOPT_SSLCERT));
         $this->assertEquals('bar', $request->getCurlOptions()->get(CURLOPT_SSLCERTPASSWD));
     }
+
+    public function testCreatesBodyWithoutZeroString()
+    {
+        $request = RequestFactory::getInstance()->create('PUT', 'http://test.com', array(), '0');
+        $this->assertSame('0', (string) $request->getBody());
+    }
 }
