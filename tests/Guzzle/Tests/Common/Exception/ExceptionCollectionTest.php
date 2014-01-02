@@ -20,7 +20,8 @@ class ExceptionCollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $exceptions = $this->getExceptions();
         $e->add($exceptions[0]);
         $e->add($exceptions[1]);
-        $this->assertEquals("(Exception) Test\n(Exception) Testing", $e->getMessage());
+        $this->assertContains("(Exception) ./tests/Guzzle/Tests/Common/Exception/ExceptionCollectionTest.php line ", $e->getMessage());
+        $this->assertContains("    Test\n\n    #0 ./", $e->getMessage());
         $this->assertSame($exceptions[0], $e->getFirst());
     }
 
@@ -53,11 +54,13 @@ class ExceptionCollectionTest extends \Guzzle\Tests\GuzzleTestCase
         $e2->add($e3);
         $e1->add($e2);
         $message = $e1->getMessage();
-        $this->assertEquals("(Exception) Test\n"
-            . "(Guzzle\\Common\\Exception\\ExceptionCollection)\n"
-            . "    Meta description!\n"
-            . "    (Exception) Test 2\n"
-            . "    (Guzzle\\Common\\Exception\\ExceptionCollection)\n"
-            . "        (Exception) Baz", $message);
+        $this->assertContains("(Exception) ./tests/Guzzle/Tests/Common/Exception/ExceptionCollectionTest.php line ", $message);
+        $this->assertContains("\n    Test\n\n    #0 ", $message);
+        $this->assertContains("\n\n(Guzzle\\Common\\Exception\\ExceptionCollection) ./tests/Guzzle/Tests/Common/Exception/ExceptionCollectionTest.php line ", $message);
+        $this->assertContains("\n\n    Meta description!\n\n", $message);
+        $this->assertContains("    (Exception) ./tests/Guzzle/Tests/Common/Exception/ExceptionCollectionTest.php line ", $message);
+        $this->assertContains("\n        Test 2\n\n        #0 ", $message);
+        $this->assertContains("        (Exception) ./tests/Guzzle/Tests/Common/Exception/ExceptionCollectionTest.php line ", $message);
+        $this->assertContains("            Baz\n\n            #0", $message);
     }
 }
