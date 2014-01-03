@@ -43,8 +43,10 @@ require 'vendor/autoload.php';
 
 ### Installing via phar
 
-[Download the phar](http://guzzlephp.org/guzzle.phar) and include it in your project
-([minimal phar](http://guzzlephp.org/guzzle-min.phar))
+As of the 3.7.4 release, each release of Guzzle includes a "guzzle.phar" file that includes all of the files needed to
+run Guzzle and all of Guzzle's dependencies. Simply download the phar and include it in your project.
+
+You can find a list of each release and the available downloads at https://github.com/guzzle/guzzle/releases.
 
 Features
 --------
