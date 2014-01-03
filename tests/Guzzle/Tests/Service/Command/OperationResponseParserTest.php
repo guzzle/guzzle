@@ -306,4 +306,30 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
         $result = $command->execute();
         $this->assertSame($result, $foo);
     }
+
+    /**
+     * @group issue-399
+     * @link https://github.com/guzzle/guzzle/issues/501
+     */
+    public function testAdditionalPropertiesWithRefAreResolved()
+    {
+        $parser = OperationResponseParser::getInstance();
+        $description = ServiceDescription::factory(array(
+            'operations' => array('test' => array('responseClass' => 'Foo')),
+            'models'     => array(
+                'Baz' => array('type' => 'string'),
+                'Foo' => array(
+                    'type' => 'object',
+                    'additionalProperties' => array('$ref' => 'Baz', 'location' => 'json')
+                )
+            )
+        ));
+        $operation = $description->getOperation('test');
+        $op = new OperationCommand(array(), $operation);
+        $op->setResponseParser($parser)->setClient(new Client());
+        $json = '{"a":"a","b":"b","c":"c"}';
+        $op->prepare()->setResponse(new Response(200, array('Content-Type' => 'application/json'), $json), true);
+        $result = $op->execute()->toArray();
+        $this->assertEquals(array('a' => 'a', 'b' => 'b', 'c' => 'c'), $result);
+    }
 }

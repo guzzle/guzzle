@@ -97,12 +97,7 @@ class Parameter
         if ($description) {
             if (isset($data['$ref'])) {
                 if ($model = $description->getModel($data['$ref'])) {
-                    // The name of the original parameter should override the ref name if one is available
-                    $name = empty($data['name']) ? null : $data['name'];
-                    $data = $model->toArray();
-                    if ($name) {
-                        $data['name'] = $name;
-                    }
+                    $data = $model->toArray() + $data;
                 }
             } elseif (isset($data['extends'])) {
                 // If this parameter extends from another parameter then start with the actual data
