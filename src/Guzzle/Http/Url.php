@@ -539,10 +539,10 @@ class Url
 
     private function addQuery(QueryString $new, $strictRfc386)
     {
-        if ($strictRfc386) {
-            $this->query = $new;
-        } else {
-            $this->query->merge($new);
+        if (!$strictRfc386) {
+            $new->merge($this->query);
         }
+
+        $this->query = $new;
     }
 }
