@@ -27,6 +27,8 @@ class WssePlugin implements EventSubscriberInterface
      */
     public function __construct($config)
     {
+        $plugin = $this;
+
         $this->config = Collection::fromConfig($config, array(
             'timestamp_callback' => function (Event $event) {
                 $date = new \DateTime();
@@ -36,8 +38,8 @@ class WssePlugin implements EventSubscriberInterface
 
                 return $date;
             },
-            'nonce_callback' => function (Event $event) {
-                return $this->generateNonce($event['request']);
+            'nonce_callback' => function (Event $event) use ($plugin) {
+                return $plugin->generateNonce($event['request']);
             }
         ), array(
             'username',
