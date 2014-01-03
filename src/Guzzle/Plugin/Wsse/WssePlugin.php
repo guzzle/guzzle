@@ -150,7 +150,7 @@ class WssePlugin implements EventSubscriberInterface
      * @param  RequestInterface $request
      * @return string
      */
-    protected function generateNonce(RequestInterface $request)
+    public function generateNonce(RequestInterface $request)
     {
         return sha1(uniqid('', true) . $request->getUrl());
     }

@@ -187,14 +187,10 @@ class WssePluginTest extends \Guzzle\Tests\GuzzleTestCase
     public function testGenerateNonce()
     {
         $p = $this->newPlugin();
-        $class = new \ReflectionClass($p);
-        $method = $class->getMethod('generateNonce');
-        $method->setAccessible(true);
-
         $nonces = array();
 
         for ($i = 0; $i < 1000; $i++) {
-            $nonces[] = $method->invoke($p, $this->getRequest());
+            $nonces[] = $p->generateNonce($this->getRequest());
         }
 
         $this->assertEquals(1000, count(array_unique($nonces)));
