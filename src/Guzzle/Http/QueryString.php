@@ -55,6 +55,9 @@ class QueryString extends Collection
         foreach (explode('&', $query) as $kvp) {
             $parts = explode('=', $kvp, 2);
             $key = rawurldecode($parts[0]);
+            if (!strlen($key)) {
+            	continue;
+            }
             if ($paramIsPhpStyleArray = substr($key, -2) == '[]') {
                 $foundPhpStyle = true;
                 $key = substr($key, 0, -2);
