@@ -273,4 +273,17 @@ class QueryString extends Collection
 
         return $temp;
     }
+
+    /**
+     * @param array|Collection|QueryString $data
+     * @return QueryString
+     */
+    public function merge($data)
+    {
+        if (isset($data->aggregator)) {
+            $this->setAggregator($data->aggregator);
+        }
+        return parent::merge($data);
+    }
+
 }

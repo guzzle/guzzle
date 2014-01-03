@@ -142,6 +142,7 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
     public function urlCombineDataProvider()
     {
         return array(
+            array('http://www.example.com/some/', 'path?foo=bar&foo=baz', 'http://www.example.com/some/path?foo=bar&foo=baz'),
             array('http://www.example.com/', 'http://www.example.com/', 'http://www.example.com/'),
             array('http://www.example.com/path', '/absolute', 'http://www.example.com/absolute'),
             array('http://www.example.com/path', '/absolute?q=2', 'http://www.example.com/absolute?q=2'),
