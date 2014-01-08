@@ -7,7 +7,6 @@ use Guzzle\Common\Exception\InvalidArgumentException;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Http\Url;
 use Guzzle\Parser\ParserRegistry;
-use Guzzle\Plugin\Log\LogPlugin;
 
 /**
  * Default HTTP request factory used to create the default {@see Request} and {@see EntityEnclosingRequest} objects.

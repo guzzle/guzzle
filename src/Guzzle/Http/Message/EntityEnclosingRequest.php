@@ -7,7 +7,6 @@ use Guzzle\Http\EntityBodyInterface;
 use Guzzle\Http\QueryString;
 use Guzzle\Http\RedirectPlugin;
 use Guzzle\Http\Exception\RequestException;
-use Guzzle\Http\Mimetypes;
 
 /**
  * HTTP request that sends an entity-body in the request message (POST, PUT, PATCH, DELETE)
