@@ -3,7 +3,6 @@
 namespace Guzzle\Http;
 
 use Guzzle\Common\Exception\InvalidArgumentException;
-use Guzzle\Parser\ParserRegistry;
 
 /**
  * Parses and generates URLs based on URL parts. In favor of performance, URL parts are not validated.
