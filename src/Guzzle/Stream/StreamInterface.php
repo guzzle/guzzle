@@ -18,14 +18,14 @@ interface StreamInterface
     public function __toString();
 
     /**
-     * Close the stream
+     * Closes the stream and any underlying resources.
      */
     public function close();
 
     /**
-     * Separate the underlying raw stream from the Stream.
+     * Separates any underlying resources from the stream.
      *
-     * After the raw stream has been detached, the buffer is in an unusable state.
+     * After the stream has been detached, the stream is in an unusable state.
      */
     public function detach();
 
@@ -61,7 +61,12 @@ interface StreamInterface
      * Seek to a position in the stream
      *
      * @param int $offset Stream offset
-     * @param int $whence Where the offset is applied
+     * @param int $whence Specifies how the cursor position will be calculated
+     *                    based on the seek offset. Valid values are identical
+     *                    to the built-in PHP $whence values for `fseek()`.
+     *                    SEEK_SET: Set position equal to offset bytes
+     *                    SEEK_CUR: Set position to current location plus offset
+     *                    SEEK_END: Set position to end-of-stream plus offset
      *
      * @return bool Returns TRUE on success or FALSE on failure
      * @link   http://www.php.net/manual/en/function.fseek.php
