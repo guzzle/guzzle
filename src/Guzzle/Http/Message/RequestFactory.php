@@ -138,7 +138,7 @@ class RequestFactory implements RequestFactoryInterface
     public function cloneRequestWithMethod(RequestInterface $request, $method)
     {
         // Create the request with the same client if possible
-        if ($client = $request->getClient()) {
+        if ($request->getClient()) {
             $cloned = $request->getClient()->createRequest($method, $request->getUrl(), $request->getHeaders());
         } else {
             $cloned = $this->create($method, $request->getUrl(), $request->getHeaders());

@@ -13,7 +13,6 @@ require_once 'PEAR/Packager.php';
 
 class GuzzlePearPharPackageTask extends Task
 {
-    private $dir;
     private $version;
     private $deploy = true;
     private $makephar = true;
@@ -143,7 +142,7 @@ class GuzzlePearPharPackageTask extends Task
             //'outputdirectory' => (string) $this->basedir . '/build/pearwork/'
         );
         $pfm = new PEAR_PackageFileManager2();
-        $e = $pfm->setOptions($opts);
+        $pfm->setOptions($opts);
         $pfm->addRole('md', 'doc');
         $pfm->addRole('pem', 'php');
         $pfm->setPackage('Guzzle');
@@ -204,7 +203,6 @@ class GuzzlePearPharPackageTask extends Task
 
     public function createSubPackages()
     {
-        $version = $this->getVersion();
         $this->findComponents();
 
         foreach ($this->subpackages as $package) {
@@ -228,7 +226,7 @@ class GuzzlePearPharPackageTask extends Task
             'packagefile' => 'package.xml'
         );
         $pfm = new PEAR_PackageFileManager2();
-        $e = $pfm->setOptions($opts);
+        $pfm->setOptions($opts);
         $pfm->setPackage($package);
         $pfm->setSummary($info['description']);
         $pfm->setDescription($info['description']);

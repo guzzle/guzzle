@@ -147,7 +147,7 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
      */
     protected function addSslOptions(RequestInterface $request)
     {
-        if ($verify = $request->getCurlOptions()->get(CURLOPT_SSL_VERIFYPEER)) {
+        if ($request->getCurlOptions()->get(CURLOPT_SSL_VERIFYPEER)) {
             $this->setContextValue('ssl', 'verify_peer', true, true);
             if ($cafile = $request->getCurlOptions()->get(CURLOPT_CAINFO)) {
                 $this->setContextValue('ssl', 'cafile', $cafile, true);
@@ -235,7 +235,7 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
     {
         // Set the size on the stream if it was returned in the response
         foreach ($this->lastResponseHeaders as $header) {
-            if (($pos = stripos($header, 'Content-Length:')) === 0) {
+            if ((stripos($header, 'Content-Length:')) === 0) {
                 $stream->setSize(trim(substr($header, 15)));
             }
         }
