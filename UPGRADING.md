@@ -223,7 +223,6 @@ The exception message for `Guzzle\Http\Exception\BadResponseException` no longer
 response information. You can, however, get access to the request and response object by calling `getRequest()` or
 `getResponse()` on the exception object.
 
-
 ### Query parameter aggregation
 
 Multi-valued query parameters are no longer aggregated using a callback function. `Guzzle\Http\Query` now has a
@@ -526,7 +525,6 @@ $backoffPlugin = BackoffPlugin::getExponentialBackoff($maxRetries, array_merge(
     ));
 $client->addSubscriber($backoffPlugin);
 ```
-
 
 ### Known Issues
 

@@ -463,7 +463,6 @@ class CurlHandleTest extends \Guzzle\Tests\GuzzleTestCase
             )),
         );
 
-
         $postTest = array('POST', 'http://localhost:8124/post.php', null, $postBody, array(
             CURLOPT_RETURNTRANSFER => 0,
             CURLOPT_HEADER => 0,

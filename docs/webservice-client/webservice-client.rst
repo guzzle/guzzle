@@ -620,16 +620,16 @@ A ``Guzzle\Service\Client`` object emits the following events:
     $client->getEventDispatcher()->addListener('command.after_prepare', function (Event $event) {
         $command = $event['command'];
         $request = $command->getRequest();
-        
+
         // do something with request
     });
-    
+
 .. code-block:: php
-    
+
     use Guzzle\Common\Event;
     use Guzzle\Common\Client;
     use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-    
+
     class EventSubscriber implements EventSubscriberInterface
     {
         public static function getSubscribedEvents()
@@ -639,23 +639,21 @@ A ``Guzzle\Service\Client`` object emits the following events:
                 'command.parse_response' => 'onParseResponse'
             );
         }
-        
+
         public function onCommandCreate(Event $event)
         {
             $client = $event['client'];
             $command = $event['command'];
             // operate on client and command
         }
-        
+
         public function onParseResponse(Event $event)
         {
             $command = $event['command'];
             // operate on the command
         }
     }
-    
+
     $client = new Client();
-    
+
     $client->addSubscriber(new EventSubscriber());
-    
-    
