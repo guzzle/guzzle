@@ -36,18 +36,18 @@ cache lifetime, and supports Vary, ETag, and Last-Modified based revalidation:
 
 The cache plugin intercepts GET and HEAD requests before they are actually transferred to the origin server. The cache
 plugin then generates a hash key based on the request method and URL, and checks to see if a response exists in the cache. If
-a response exists in the cache, the cache adapter then checks to make sure that the caching rules associated with the response 
-satisfy the request, and ensures that response still fresh. If the response is acceptable for the request any required 
+a response exists in the cache, the cache adapter then checks to make sure that the caching rules associated with the response
+satisfy the request, and ensures that response still fresh. If the response is acceptable for the request any required
 revalidation, then the cached response is served instead of contacting the origin server.
 
 Vary
 ----
 
-Cache keys are derived from a request method and a request URL. Multiple responses can map to the same cache key and 
+Cache keys are derived from a request method and a request URL. Multiple responses can map to the same cache key and
 stored in Guzzle's underlying cache storage object. You should use the ``Vary`` HTTP header to tell the cache storage
 object that the cache response must have been cached for a request that matches the headers specified in the Vary header
-of the request. This allows you to have specific cache entries for the same request URL but variations in a request's 
-headers determine which cache entry is served. Please see the http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.44 
+of the request. This allows you to have specific cache entries for the same request URL but variations in a request's
+headers determine which cache entry is served. Please see the http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.44
 for more information.
 
 Cache options
@@ -88,9 +88,9 @@ Normalizing requests for caching
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use the ``cache.key_filter`` parameter if you wish to strip certain query string parameters from your
-request before creating a unique hash for the request. This parameter can be useful if your requests have query 
+request before creating a unique hash for the request. This parameter can be useful if your requests have query
 string values that cause each request URL to be unique (thus preventing a cache hit). The ``cache.key_filter``
-format is simply a comma separated list of query string values to remove from the URL when creating a cache key. 
+format is simply a comma separated list of query string values to remove from the URL when creating a cache key.
 For example, here we are saying that the ``a`` and ``q`` query string variables should be ignored when generating a
 cache key for the request:
 

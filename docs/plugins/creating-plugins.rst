@@ -90,5 +90,4 @@ This simple plugin prints a string containing the request that is about to be se
     // Send a request and notice that the request is printed to the screen
     $client->get('/')->send();
 
-
 Running the above code will print a string containing the HTTP request that is about to be sent.
