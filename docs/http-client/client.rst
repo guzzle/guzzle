@@ -255,7 +255,7 @@ Headers can be specified on a client to add default headers to every request sen
 
     .. code-block:: php
 
-        $client->getConfig()->setPath('request.options/header/X-Foo', 'Bar');
+        $client->getConfig()->setPath('request.options/headers/X-Foo', 'Bar');
 
 query
 ~~~~~
