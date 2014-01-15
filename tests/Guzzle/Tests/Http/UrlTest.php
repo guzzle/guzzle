@@ -49,9 +49,9 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertSame('0', $url->getHost());
         $this->assertEquals(50, $url->getPort());
         $this->assertSame('/0', $url->getPath());
-        $this->assertEquals('0=', (string) $url->getQuery());
+        $this->assertEquals('0', (string) $url->getQuery());
         $this->assertSame('0', $url->getFragment());
-        $this->assertEquals('http://0:50/0?0=#0', (string) $url);
+        $this->assertEquals('http://0:50/0?0#0', (string) $url);
 
         $url = Url::factory('');
         $this->assertSame('', (string) $url);
@@ -261,12 +261,12 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
             array('/g', 'http://a/g'),
             array('?y', 'http://a/b/c/d;p?y'),
             array('g?y', 'http://a/b/c/g?y'),
-            array('#s', 'http://a/b/c/d;p?q=#s'),
+            array('#s', 'http://a/b/c/d;p?q#s'),
             array('g#s', 'http://a/b/c/g#s'),
-            array('g?y#s', 'http://a/b/c/g?y=#s'),
+            array('g?y#s', 'http://a/b/c/g?y#s'),
             array(';x', 'http://a/b/c/;x'),
             array('g;x', 'http://a/b/c/g;x'),
-            array('g;x?y#s', 'http://a/b/c/g;x?y=#s'),
+            array('g;x?y#s', 'http://a/b/c/g;x?y#s'),
             array('', 'http://a/b/c/d;p?q'),
             array('.', 'http://a/b/c'),
             array('./', 'http://a/b/c/'),

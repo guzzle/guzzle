@@ -147,7 +147,7 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
             // Ensure that query string values are percent decoded
             array('q%20a=a%20b', array('q a' => 'a b')),
             // Ensure null values can be added
-            array('q&a', array('q' => null, 'a' => null)),
+            array('q&a', array('q' => QueryString::BLANK, 'a' => QueryString::BLANK)),
         );
     }
 
@@ -170,7 +170,7 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     public function testAllowsBlankQueryStringValues()
     {
         $query = QueryString::fromString('foo');
-        $this->assertEquals('foo=', (string) $query);
+        $this->assertEquals('foo', (string) $query);
         $query->set('foo', QueryString::BLANK);
         $this->assertEquals('foo', (string) $query);
     }
@@ -178,7 +178,7 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
     public function testAllowsFalsyQueryStringValues()
     {
         $query = QueryString::fromString('0');
-        $this->assertEquals('0=', (string) $query);
+        $this->assertEquals('0', (string) $query);
         $query->set('0', QueryString::BLANK);
         $this->assertSame('0', (string) $query);
     }

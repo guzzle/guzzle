@@ -70,7 +70,7 @@ class QueryString extends Collection
                     $q[$key] = $value;
                 }
             } else {
-                $q->add($key, null);
+                $q->add($key, self::BLANK);
             }
         }
 
