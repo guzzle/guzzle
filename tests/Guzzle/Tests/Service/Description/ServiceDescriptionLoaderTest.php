@@ -174,4 +174,100 @@ class ServiceDescriptionLoaderTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($foo4->hasParam('bar3'));
         $this->assertEquals('bar', $foo4->getClass());
     }
+
+    public function testMergedExtends()
+    {
+        $description = ServiceDescription::factory(array(
+            'operations'  => array(
+                'base' => array(
+                    'parameters' => array(
+                        'paramA' => array(
+                            'type' => 'string',
+                            'default' => 'base',
+                            'description' => 'Foo'
+                        ),
+                        'paramB' => array(
+                            'type' => 'string',
+                            'default' => 'base',
+                            'description' => 'Bar'
+                        ),
+                    )
+                ),
+                'op1' => array(
+                    'extends' => 'base',
+                    'parameters' => array(
+                        'paramA' => array('required' => true),
+                        'paramC' => array('type' => 'string'),
+                    )
+                ),
+                'op2' => array(
+                    'extends' => 'base',
+                    'parameters' => array(
+                        'paramB' => array(
+                            'required' => true,
+                            'description' => 'New Bar'
+                        ),
+                        'paramC' => array('type' => 'string'),
+                    )
+                ),
+                'op3' => array(
+                    'extends' => 'op1',
+                    'parameters' => array(
+                        'paramA' => array(
+                            'required' => false,
+                            'description' => 'New Foo'
+                        ),
+                        'paramD' => array('type' => 'string'),
+                    )
+                ),
+                'op4' => array(
+                    'extends' => array('op1', 'op2', 'op3'),
+                    'parameters' => array(
+                        'paramB' => array('description' => 'Newer Bar'),
+                        'paramE' => array('type' => 'string'),
+                    )
+                ),
+            )
+        ));
+
+         $base = $description->getOperation('base');
+         $this->assertContains('paramA', $base->getParamNames());
+         $this->assertFalse($base->getParam('paramA')->getRequired());
+         $this->assertNotContains('paramC', $base->getParamNames());
+
+         $op1 = $description->getOperation('op1');
+         $this->assertContains('paramA', $op1->getParamNames());
+         $this->assertTrue($op1->getParam('paramA')->getRequired());
+         $this->assertEquals('base', $op1->getParam('paramA')->getDefault());
+         $this->assertContains('paramC', $op1->getParamNames());
+
+         $op2 = $description->getOperation('op2');
+         $this->assertContains('paramA', $op2->getParamNames());
+         $this->assertFalse($op2->getParam('paramA')->getRequired());
+         $this->assertTrue($op2->getParam('paramB')->getRequired());
+         $this->assertEquals('base', $op2->getParam('paramB')->getDefault());
+         $this->assertEquals('New Bar', $op2->getParam('paramB')->getDescription());
+         $this->assertContains('paramC', $op2->getParamNames());
+
+         $op3 = $description->getOperation('op3');
+         $this->assertContains('paramA', $op3->getParamNames());
+         $this->assertFalse($op3->getParam('paramA')->getRequired());
+         $this->assertEquals('base', $op3->getParam('paramA')->getDefault());
+         $this->assertEquals('New Foo', $op3->getParam('paramA')->getDescription());
+         $this->assertContains('paramC', $op3->getParamNames());
+         $this->assertContains('paramD', $op3->getParamNames());
+
+         $op4 = $description->getOperation('op4');
+         $this->assertContains('paramA', $op4->getParamNames());
+         $this->assertContains('paramB', $op4->getParamNames());
+         $this->assertContains('paramC', $op4->getParamNames());
+         $this->assertContains('paramD', $op4->getParamNames());
+         $this->assertContains('paramE', $op4->getParamNames());
+         $this->assertFalse($op4->getParam('paramA')->getRequired());
+         $this->assertEquals('base', $op4->getParam('paramA')->getDefault());
+         $this->assertEquals('New Foo', $op4->getParam('paramA')->getDescription());
+         $this->assertTrue($op4->getParam('paramB')->getRequired());
+         $this->assertEquals('base', $op4->getParam('paramB')->getDefault());
+         $this->assertEquals('Newer Bar', $op4->getParam('paramB')->getDescription());
+    }
 }

@@ -52,13 +52,13 @@ class ServiceDescriptionLoader extends AbstractConfigLoader
             $toArray = $operations[$extendedCommand];
             $resolved = empty($resolved)
                 ? $toArray['parameters']
-                : array_merge($resolved, $toArray['parameters']);
+                : array_replace_recursive($resolved, $toArray['parameters']);
 
             $op = $op + $toArray;
             if (!$hasClass && isset($toArray['class'])) {
                 $op['class'] = $toArray['class'];
             }
         }
-        $op['parameters'] = $original ? array_merge($resolved, $original) : $resolved;
+        $op['parameters'] = $original ? array_replace_recursive($resolved, $original) : $resolved;
     }
 }
