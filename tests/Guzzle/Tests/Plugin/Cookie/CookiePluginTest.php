@@ -125,4 +125,10 @@ class CookiePluginTest extends \Guzzle\Tests\GuzzleTestCase
         $plugin = new CookiePlugin($jar);
         $this->assertSame($jar, $plugin->getCookieJar());
     }
+
+    public function testEscapesCookieDomains()
+    {
+        $cookie = new Cookie(array('domain' => '/foo/^$[A-Z]+/'));
+        $this->assertFalse($cookie->matchesDomain('foo'));
+    }
 }

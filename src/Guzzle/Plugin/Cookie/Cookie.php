@@ -437,7 +437,7 @@ class Cookie implements ToArrayInterface
             return false;
         }
 
-        return (bool) preg_match('/\.' . preg_quote($cookieDomain) . '$/i', $domain);
+        return (bool) preg_match('/\.' . preg_quote($cookieDomain, '/') . '$/i', $domain);
     }
 
     /**
