@@ -423,7 +423,7 @@ Any request that has set POST fields or files will use cURL's POST message funct
     // Set an overwrite any previously specified value
     $request->setPostField('foo', 'bar');
     // Append a value to any existing values
-    $request->addPostField('foo', 'baz');
+    $request->getPostFields()->add('foo', 'baz');
     // Remove a POST field by name
     $request->removePostField('fizz');
 
