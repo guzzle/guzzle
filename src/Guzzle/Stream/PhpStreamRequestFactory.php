@@ -114,7 +114,14 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
     protected function addDefaultContextOptions(RequestInterface $request)
     {
         $this->setContextValue('http', 'method', $request->getMethod());
-        $this->setContextValue('http', 'header', $request->getHeaderLines());
+        $headers = $request->getHeaderLines();
+
+        // "Connection: close" is required to get streams to work in HTTP 1.1
+        if (!$request->hasHeader('Connection')) {
+            $headers[] = 'Connection: close';
+        }
+
+        $this->setContextValue('http', 'header', $headers);
         $this->setContextValue('http', 'protocol_version', $request->getProtocolVersion());
         $this->setContextValue('http', 'ignore_errors', true);
     }

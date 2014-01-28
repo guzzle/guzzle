@@ -54,7 +54,7 @@ class PhpStreamRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
         $options = stream_context_get_options($this->readAttribute($this->factory, 'context'));
         $this->assertEquals('HEAD', $options['http']['method']);
         $this->assertFalse($options['http']['ignore_errors']);
-        $this->assertEquals('1.0', $options['http']['protocol_version']);
+        $this->assertEquals('1.1', $options['http']['protocol_version']);
     }
 
     public function testAppliesProxySettings()
@@ -87,7 +87,7 @@ class PhpStreamRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 
         $received = $this->getServer()->getReceivedRequests();
         $this->assertEquals(1, count($received));
-        $this->assertContains('POST / HTTP/1.0', $received[0]);
+        $this->assertContains('POST / HTTP/1.1', $received[0]);
         $this->assertContains('host: ', $received[0]);
         $this->assertContains('user-agent: Guzzle/', $received[0]);
         $this->assertContains('foo: Bar', $received[0]);
@@ -110,7 +110,7 @@ class PhpStreamRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 
         $received = $this->getServer()->getReceivedRequests();
         $this->assertEquals(1, count($received));
-        $this->assertContains('PUT / HTTP/1.0', $received[0]);
+        $this->assertContains('PUT / HTTP/1.1', $received[0]);
         $this->assertContains('host: ', $received[0]);
         $this->assertContains('user-agent: Guzzle/', $received[0]);
         $this->assertContains('foo: Bar', $received[0]);
