@@ -5,8 +5,9 @@
     <property name="git.currentbranch" value=""/>
     <target name="check-git-branch-status">
         <exec command="git status -s -b" outputProperty="git.currentbranch" />
+        <echo msg="${git.currentbranch}"/>
         <if>
-            <equals arg1="${git.currentbranch}" arg2="## ${head}" trim="true"/>
+            <contains string="${git.currentbranch}" substring="${head}"/>
             <then>
                 <echo>On branch ${head}</echo>
             </then>
