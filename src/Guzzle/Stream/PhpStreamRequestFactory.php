@@ -115,8 +115,7 @@ class PhpStreamRequestFactory implements StreamRequestFactoryInterface
     {
         $this->setContextValue('http', 'method', $request->getMethod());
         $this->setContextValue('http', 'header', $request->getHeaderLines());
-        // Force 1.0 for now until PHP fully support chunked transfer-encoding decoding
-        $this->setContextValue('http', 'protocol_version', '1.0');
+        $this->setContextValue('http', 'protocol_version', $request->getProtocolVersion());
         $this->setContextValue('http', 'ignore_errors', true);
     }
 
