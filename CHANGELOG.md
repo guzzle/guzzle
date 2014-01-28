@@ -1,6 +1,25 @@
 CHANGELOG
 =========
 
+3.8.1 (2013-01-28)
+------------------
+
+* Bug: Always using GET requests when redirecting from a 303 response
+* Bug: CURLOPT_SSL_VERIFYHOST is now correctly set to false when setting `$certificateAuthority` to false in
+  `Guzzle\Http\ClientInterface::setSslVerification()`
+* Bug: RedirectPlugin now uses strict RFC 3986 compliance when combining a base URL with a relative URL
+* Bug: The body of a request can now be set to `"0"`
+* Sending PHP stream requests no longer forces `HTTP/1.0`
+* Adding more information to ExceptionCollection exceptions so that users have more context, including a stack trace of
+  each sub-exception
+* Updated the `$ref` attribute in service descriptions to merge over any existing parameters of a schema (rather than
+  clobbering everything).
+* Merging URLs will now use the query string object from the relative URL (thus allowing custom query aggregators)
+* Query strings are now parsed in a way that they do no convert empty keys with no value to have a dangling `=`.
+  For example `foo&bar=baz` is now correctly parsed and recognized as `foo&bar=baz` rather than `foo=&bar=baz`.
+* Now properly escaping the regular expression delimiter when matching Cookie domains.
+* Network access is now disabled when loading XML documents
+
 3.8.0 (2013-12-05)
 ------------------
 
