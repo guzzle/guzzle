@@ -314,13 +314,13 @@ class Url
     /**
      * Add a relative path to the currently set path
      *
-     * @param string $relativePath Relative path to add
+     * @param string|int $relativePath Relative path to add
      *
      * @return Url
      */
     public function addPath($relativePath)
     {
-        if (!$relativePath || $relativePath == '/') {
+        if ((!is_string($relativePath) && !is_int($relativePath)) || strlen($relativePath) === 0 || $relativePath === '/') {
             return $this;
         }
 
