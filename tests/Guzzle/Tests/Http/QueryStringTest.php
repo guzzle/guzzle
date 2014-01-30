@@ -92,13 +92,13 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
             'test4'  => null,
         );
         $this->q->replace($params);
-        $this->assertEquals('test=value&test%202=this%20is%20a%20test%3F&test3%5B0%5D=v1&test3%5B1%5D=v2&test3%5B2%5D=v3&test4=', $this->q->__toString());
+        $this->assertEquals('test=value&test%202=this%20is%20a%20test%3F&test3%5B0%5D=v1&test3%5B1%5D=v2&test3%5B2%5D=v3&test4', $this->q->__toString());
         $this->q->useUrlEncoding(false);
-        $this->assertEquals('test=value&test 2=this is a test?&test3[0]=v1&test3[1]=v2&test3[2]=v3&test4=', $this->q->__toString());
+        $this->assertEquals('test=value&test 2=this is a test?&test3[0]=v1&test3[1]=v2&test3[2]=v3&test4', $this->q->__toString());
 
         // Use an alternative aggregator
         $this->q->setAggregator(new CommaAggregator());
-        $this->assertEquals('test=value&test 2=this is a test?&test3=v1,v2,v3&test4=', $this->q->__toString());
+        $this->assertEquals('test=value&test 2=this is a test?&test3=v1,v2,v3&test4', $this->q->__toString());
     }
 
     public function testAllowsMultipleValuesPerKey()
@@ -147,7 +147,7 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
             // Ensure that query string values are percent decoded
             array('q%20a=a%20b', array('q a' => 'a b')),
             // Ensure null values can be added
-            array('q&a', array('q' => QueryString::BLANK, 'a' => QueryString::BLANK)),
+            array('q&a', array('q' => false, 'a' => false)),
         );
     }
 
@@ -207,9 +207,10 @@ class QueryStringTest extends \Guzzle\Tests\GuzzleTestCase
             'foo' => 0,
             'baz' => '0',
             'bar' => null,
-            'boo' => false
+            'boo' => false,
+            'bam' => ''
         ));
-        $this->assertEquals('foo=0&baz=0&bar=&boo=', (string) $query);
+        $this->assertEquals('foo=0&baz=0&bar&boo&bam=', (string) $query);
     }
 
     public function testFromStringDoesntStripTrailingEquals()
