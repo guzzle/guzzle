@@ -320,9 +320,7 @@ class Url
      */
     public function addPath($relativePath)
     {
-        if ((!is_string($relativePath) && !is_int($relativePath))
-            || strlen($relativePath) === 0 || $relativePath === '/'
-        ) {
+        if (!is_string($relativePath) || strlen($relativePath) === 0 || $relativePath === '/') {
             return $this;
         }
 

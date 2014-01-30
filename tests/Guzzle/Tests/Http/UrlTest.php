@@ -136,7 +136,7 @@ class UrlTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertEquals('http://e.com/base/relative?a=1', (string) Url::factory('http://e.com/base?a=1')->addPath('relative'));
         $this->assertEquals('http://e.com/base/relative?a=1', (string) Url::factory('http://e.com/base?a=1')->addPath('/relative'));
 
-        $this->assertEquals('http://e.com/base/0', (string) Url::factory('http://e.com/base')->addPath(0));
+        $this->assertEquals('http://e.com/base/0', (string) Url::factory('http://e.com/base')->addPath('0'));
         $this->assertEquals('http://e.com/base/0/1', (string) Url::factory('http://e.com/base')->addPath('0')->addPath('1'));
     }
 
