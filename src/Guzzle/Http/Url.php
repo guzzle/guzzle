@@ -314,7 +314,7 @@ class Url
     /**
      * Add a relative path to the currently set path
      *
-     * @param string|int $relativePath Relative path to add
+     * @param string $relativePath Relative path to add
      *
      * @return Url
      */
