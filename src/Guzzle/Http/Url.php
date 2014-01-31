@@ -312,7 +312,7 @@ class Url
     }
 
     /**
-     * Add a relative path to the currently set path
+     * Add a relative path to the currently set path.
      *
      * @param string $relativePath Relative path to add
      *
