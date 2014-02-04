@@ -312,7 +312,7 @@ class Url
     }
 
     /**
-     * Add a relative path to the currently set path
+     * Add a relative path to the currently set path.
      *
      * @param string $relativePath Relative path to add
      *
@@ -320,7 +320,7 @@ class Url
      */
     public function addPath($relativePath)
     {
-        if (!$relativePath || $relativePath == '/') {
+        if (!is_string($relativePath) || strlen($relativePath) === 0 || $relativePath === '/') {
             return $this;
         }
 
