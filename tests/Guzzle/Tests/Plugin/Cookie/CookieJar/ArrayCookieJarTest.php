@@ -350,4 +350,16 @@ class ArrayCookieJarTest extends \Guzzle\Tests\GuzzleTestCase
             'domain' => 'bar'
         )));
     }
+
+    public function testRemoveExistingCookieIfEmpty()
+    {
+        // first set a valid cookie
+        $validCookie = new Cookie(array('name' => 'foo',  'value' => 'bar', 'domain' => 'foo.com', 'path' => '/', 'discard' => false));
+        $this->assertTrue($this->jar->add($validCookie));
+        // then try to re-set the same cookie with no value: assert that cookie is not added
+        $emptyCookie = new Cookie(array('name' => 'foo',  'value' => NULL, 'domain' => 'foo.com', 'path' => '/', 'discard' => false));
+        $this->assertFalse($this->jar->add($emptyCookie));
+        // assert that original cookie has been deleted
+        $this->assertEquals(0, count($this->jar));
+    }
 }
