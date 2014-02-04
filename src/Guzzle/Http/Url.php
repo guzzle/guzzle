@@ -320,16 +320,15 @@ class Url
      */
     public function addPath($relativePath)
     {
-        if (!is_string($relativePath) || strlen($relativePath) === 0 || $relativePath === '/') {
-            return $this;
+        if ($relativePath != '/' && is_string($relativePath) && strlen($relativePath) > 0) {
+            // Add a leading slash if needed
+            if ($relativePath[0] != '/') {
+                $relativePath = '/' . $relativePath;
+            }
+            $this->setPath(str_replace('//', '/', $this->path . $relativePath));
         }
 
-        // Add a leading slash if needed
-        if ($relativePath[0] != '/') {
-            $relativePath = '/' . $relativePath;
-        }
-
-        return $this->setPath(str_replace('//', '/', $this->getPath() . $relativePath));
+        return $this;
     }
 
     /**
