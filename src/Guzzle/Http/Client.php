@@ -5,8 +5,6 @@ namespace Guzzle\Http;
 use Guzzle\Common\Collection;
 use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Http\Adapter\FakeBatchAdapter;
-use Guzzle\Http\Event\ClientCreateRequestEvent;
-use Guzzle\Http\Event\ClientEvents;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Version;
 use Guzzle\Http\Adapter\BatchAdapterInterface;
@@ -145,11 +143,6 @@ class Client implements ClientInterface
             $headers,
             $body,
             $options
-        );
-
-        $this->getEventDispatcher()->dispatch(
-            ClientEvents::CREATE_REQUEST,
-            new ClientCreateRequestEvent($this, $request, $options)
         );
 
         return $request;

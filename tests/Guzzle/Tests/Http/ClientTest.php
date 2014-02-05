@@ -4,9 +4,9 @@ namespace Guzzle\Tests\Http;
 
 use Guzzle\Http\Adapter\MockAdapter;
 use Guzzle\Http\Client;
-use Guzzle\Http\Event\ClientEvents;
 use Guzzle\Http\Event\RequestBeforeSendEvent;
 use Guzzle\Http\Event\RequestEvents;
+use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Exception\RequestException;
 
@@ -167,7 +167,23 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testClientMergesDefaultOptionsWithRequestOptions()
     {
+        $f = $this->getMockBuilder('Guzzle\Http\Message\MessageFactoryInterface')
+            ->setMethods(array('createRequest'))
+            ->getMockForAbstractClass();
+
+        $o = null;
+        // Intercept the creation
+        $f->expects($this->once())
+            ->method('createRequest')
+            ->will($this->returnCallback(
+                function ($method, $url, array $headers = [], $body = null, array $options = array()) use (&$o) {
+                    $o = $options;
+                    return (new MessageFactory())->createRequest($method, $url, $headers, $body, $options);
+                }
+            ));
+
         $client = new Client([
+            'message_factory' => $f,
             'defaults' => [
                 'headers' => ['Foo' => 'Bar'],
                 'query' => ['baz' => 'bam'],
@@ -175,30 +191,18 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             ]
         ]);
 
-        $e = null;
-        $client->getEventDispatcher()->addListener(ClientEvents::CREATE_REQUEST, function ($ev) use (&$e) {
-            $e = $ev;
-        });
-
         $request = $client->createRequest('GET', 'http://foo.com?a=b', ['Hi' => 'there'], null, [
             'allow_redirects' => false,
             'query' => ['t' => 1],
             'headers' => ['1' => 'one']
         ]);
 
-        $this->assertNotNull($e);
-        $o = $e->getRequestOptions();
         $this->assertFalse($o['allow_redirects']);
         $this->assertFalse($o['exceptions']);
         $this->assertEquals('Bar', $request->getHeader('Foo'));
         $this->assertEquals('there', $request->getHeader('Hi'));
         $this->assertEquals('one', $request->getHeader('1'));
         $this->assertEquals('a=b&baz=bam&t=1', $request->getQuery());
-
-        // Ensure the request uses a clone of the client event dispatcher
-        $this->assertNotEmpty(
-            $request->getEventDispatcher()->getListeners(ClientEvents::CREATE_REQUEST)
-        );
     }
 
     public function testUsesBaseUrlWhenNoUrlIsSet()
