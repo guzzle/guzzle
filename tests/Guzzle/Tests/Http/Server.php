@@ -103,7 +103,7 @@ class Server
         }
 
         try {
-            $this->client->get('guzzle-server/perf', [], ['timeout' => 5]);
+            $this->client->get('guzzle-server/perf', [], ['timeout' => 1]);
             return $this->running = true;
         } catch (\Exception $e) {
             return false;

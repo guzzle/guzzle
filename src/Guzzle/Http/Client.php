@@ -2,7 +2,6 @@
 
 namespace Guzzle\Http;
 
-use Guzzle\Common\Collection;
 use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Http\Adapter\FakeBatchAdapter;
 use Guzzle\Http\Event\RequestEvents;
@@ -37,7 +36,7 @@ class Client implements ClientInterface
     /** @var string Base URL of the client */
     private $baseUrl;
 
-    /** @var Collection Parameter object holding configuration data */
+    /** @var array Configuration data */
     private $config;
 
     /**
@@ -70,34 +69,11 @@ class Client implements ClientInterface
      */
     public function __construct(array $config = [])
     {
-        // Add default request options
-        if (!isset($config['defaults'])) {
-            $config['defaults'] = $this->getDefaultOptions();
-        } else {
-            $config['defaults'] = array_replace($this->getDefaultOptions(), $config['defaults']);
-        }
-
+        $this->configureBaseUrl($config);
+        $this->configureDefaults($config);
         $this->messageFactory = isset($config['message_factory']) ? $config['message_factory'] : new MessageFactory();
-        $this->baseUrl = isset($config['base_url']) ? $this->buildUrl($config['base_url']) : '';
-        $this->adapter = isset($config['adapter']) ? $config['adapter'] : $this->getDefaultAdapter();
-
-        // If no batch adapter was explicitly provided and one was not defaulted
-        // when creating the default adapter, then create one now
-        if (isset($config['batch_adapter'])) {
-            $this->batchAdapter = $config['batch_adapter'];
-        } elseif (!$this->batchAdapter) {
-            $this->batchAdapter = $this->getDefaultBatchAdapter();
-        }
-
-        // Add the default user-agent header
-        if (!isset($config['defaults']['headers'])) {
-            $config['defaults']['headers'] = ['User-Agent' => static::getDefaultUserAgent()];
-        } elseif (!isset(array_change_key_case($config['defaults']['headers'])['user-agent'])) {
-            // Add the User-Agent header if one was not already set
-            $config['defaults']['headers']['User-Agent'] = static::getDefaultUserAgent();
-        }
-
-        $this->config = new Collection($config);
+        $this->configureAdapter($config);
+        $this->config = $config;
     }
 
     /**
@@ -110,47 +86,38 @@ class Client implements ClientInterface
         return 'Guzzle/' . Version::VERSION . ' curl/' . curl_version()['version'] . ' PHP/' . PHP_VERSION;
     }
 
-    public function getConfig($key)
+    public function getBaseUrl()
     {
-        return $this->config->getPath($key);
+        return isset($this->config['base_url']) ? (string) $this->baseUrl : null;
     }
 
     /**
-     * Retrieve a default request option from the client
+     * Returns default client configuration values
      *
-     * @param string $keyOrPath request.options key (e.g. allow_redirects) or path to a nested key (e.g. headers/foo)
-     *
-     * @return mixed|null
+     * @return array
      */
-    public function getDefaultOption($keyOrPath)
+    public function getDefaults()
     {
-        return $this->config->getPath("defaults/{$keyOrPath}");
+        return $this->config['defaults'];
     }
 
     public function createRequest($method, $url = null, array $headers = [], $body = null, array $options = [])
     {
         // Merge in default options
-        if ($default = $this->config->get('defaults')) {
-            $options = array_replace_recursive($default, $options);
-        }
+        $options = array_replace_recursive($this->config['defaults'], $options);
 
         // Use a clone of the client's event dispatcher
         $options['constructor_options'] = ['event_dispatcher' => clone $this->getEventDispatcher()];
 
         $request = $this->messageFactory->createRequest(
             $method,
-            $url ? (string) $this->buildUrl($url) : (string) $this->getBaseUrl(),
+            $url ? (string) $this->buildUrl($url) : (string) $this->baseUrl,
             $headers,
             $body,
             $options
         );
 
         return $request;
-    }
-
-    public function getBaseUrl()
-    {
-        return $this->baseUrl;
     }
 
     public function get($url = null, array $headers = [], $options = [])
@@ -242,11 +209,12 @@ class Client implements ClientInterface
      */
     private function buildUrl($url)
     {
+        $baseUrl = clone $this->baseUrl;
         if (!is_array($url)) {
             // Use absolute URLs as is
             return substr($url, 0, 4) === 'http'
                 ? (string) $url
-                : (string) Url::fromString($this->getBaseUrl())->combine($url);
+                : (string) $baseUrl->combine($url);
         }
 
         list($url, $templateVars) = $url;
@@ -254,8 +222,9 @@ class Client implements ClientInterface
             return \Guzzle\uriTemplate($url, $templateVars);
         }
 
-        return (string) Url::fromString($this->getBaseUrl())
-            ->combine(\Guzzle\uriTemplate($url, $templateVars));
+        return (string) $baseUrl->combine(
+            \Guzzle\uriTemplate($url, $templateVars)
+        );
     }
 
     /**
@@ -294,6 +263,46 @@ class Client implements ClientInterface
             return new StreamAdapter($this->messageFactory);
         } else {
             throw new \RuntimeException('The curl extension must be installed or you must set allow_url_fopen to true');
+        }
+    }
+
+    private function configureBaseUrl($config)
+    {
+        if (!isset($config['base_url'])) {
+            $this->baseUrl = new Url('', '');
+        } elseif (is_array($config['base_url'])) {
+            $this->baseUrl = \Guzzle\uriTemplate($config['base_url'][0], $config['base_url'][1]);
+        } else {
+            $this->baseUrl = Url::fromString($config['base_url']);
+        }
+    }
+
+    private function configureDefaults(&$config)
+    {
+        if (isset($config['defaults'])) {
+            $config['defaults'] = array_replace($this->getDefaultOptions(), $config['defaults']);
+        } else {
+            $config['defaults'] = $this->getDefaultOptions();
+        }
+
+        // Add the default user-agent header
+        if (!isset($config['defaults']['headers'])) {
+            $config['defaults']['headers'] = ['User-Agent' => static::getDefaultUserAgent()];
+        } elseif (!isset(array_change_key_case($config['defaults']['headers'])['user-agent'])) {
+            // Add the User-Agent header if one was not already set
+            $config['defaults']['headers']['User-Agent'] = static::getDefaultUserAgent();
+        }
+    }
+
+    private function configureAdapter(&$config)
+    {
+        $this->adapter = isset($config['adapter']) ? $config['adapter'] : $this->getDefaultAdapter();
+        // If no batch adapter was explicitly provided and one was not defaulted
+        // when creating the default adapter, then create one now
+        if (isset($config['batch_adapter'])) {
+            $this->batchAdapter = $config['batch_adapter'];
+        } elseif (!$this->batchAdapter) {
+            $this->batchAdapter = $this->getDefaultBatchAdapter();
         }
     }
 }

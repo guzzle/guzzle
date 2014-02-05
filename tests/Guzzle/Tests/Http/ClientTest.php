@@ -23,9 +23,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testUsesDefaultDefaultOptions()
     {
         $client = new Client();
-        $this->assertTrue($client->getDefaultOption('allow_redirects'));
-        $this->assertTrue($client->getDefaultOption('exceptions'));
-        $this->assertContains('cacert.pem', $client->getDefaultOption('verify'));
+        $this->assertTrue($client->getDefaults()['allow_redirects']);
+        $this->assertTrue($client->getDefaults()['exceptions']);
+        $this->assertContains('cacert.pem', $client->getDefaults()['verify']);
     }
 
     public function testUsesProvidedDefaultOptions()
@@ -36,10 +36,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
                 'query' => ['foo' => 'bar']
             ]
         ]);
-        $this->assertFalse($client->getDefaultOption('allow_redirects'));
-        $this->assertTrue($client->getDefaultOption('exceptions'));
-        $this->assertContains('cacert.pem', $client->getDefaultOption('verify'));
-        $this->assertEquals(['foo' => 'bar'], $client->getDefaultOption('query'));
+        $this->assertFalse($client->getDefaults()['allow_redirects']);
+        $this->assertTrue($client->getDefaults()['exceptions']);
+        $this->assertContains('cacert.pem', $client->getDefaults()['verify']);
+        $this->assertEquals(['foo' => 'bar'], $client->getDefaults()['query']);
     }
 
     public function testCanSpecifyBaseUrl()
@@ -105,20 +105,14 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testAddsDefaultUserAgentHeaderWithDefaultOptions()
     {
         $client = new Client(['defaults' => ['allow_redirects' => false]]);
-        $this->assertFalse($client->getDefaultOption('allow_redirects'));
-        $this->assertEquals(['User-Agent' => Client::getDefaultUserAgent()], $client->getDefaultOption('headers'));
+        $this->assertFalse($client->getDefaults()['allow_redirects']);
+        $this->assertEquals(['User-Agent' => Client::getDefaultUserAgent()], $client->getDefaults()['headers']);
     }
 
     public function testAddsDefaultUserAgentHeaderWithoutDefaultOptions()
     {
         $client = new Client();
-        $this->assertEquals(['User-Agent' => Client::getDefaultUserAgent()], $client->getDefaultOption('headers'));
-    }
-
-    public function testProvidesConfigPathValues()
-    {
-        $client = new Client(['foo' => ['baz' => 'bar']]);
-        $this->assertEquals('bar', $client->getConfig('foo/baz'));
+        $this->assertEquals(['User-Agent' => Client::getDefaultUserAgent()], $client->getDefaults()['headers']);
     }
 
     private function getRequestClient()
