@@ -590,7 +590,7 @@ Connection problems and cURL specific errors can also occur when transferring re
 encounters cURL specific errors while transferring a single request, a ``Guzzle\Http\Exception\CurlException`` is
 thrown with an informative error message and access to the cURL error message.
 
-A ``Guzzle\Common\Exception\MultiTransferException`` exception is thrown when a cURL specific error occurs while
+A ``Guzzle\Http\Exception\MultiTransferException`` exception is thrown when a cURL specific error occurs while
 transferring multiple requests in parallel. You can then iterate over all of the exceptions encountered during the
 transfer.
 
