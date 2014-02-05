@@ -2,7 +2,6 @@
 
 namespace Guzzle\Http\Subscriber;
 
-use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Event\RequestBeforeSendEvent;
 use Guzzle\Http\Event\RequestEvents;
@@ -17,8 +16,6 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class Mock implements EventSubscriberInterface, \Countable
 {
-    use HasDispatcherTrait;
-
     /** @var array Array of mock responses / exceptions */
     private $queue = [];
 

@@ -5,15 +5,14 @@ namespace Guzzle\Plugin\MessageIntegrity;
 use Guzzle\Stream\StreamDecoratorTrait;
 use Guzzle\Stream\StreamInterface;
 use Guzzle\Common\HasDispatcherTrait;
-use Guzzle\Common\HasDispatcherInterface;
 
 /**
  * Stream decorator that validates a rolling hash of the entity body as it is read
  * @todo Allow the file pointer to skip around and read bytes randomly
  */
-class ReadIntegrityStream implements StreamInterface, HasDispatcherInterface
+class ReadIntegrityStream implements StreamInterface
 {
-    use StreamDecoratorTrait, HasDispatcherTrait;
+    use StreamDecoratorTrait;
 
     /** @var HashInterface */
     private $hash;
