@@ -85,28 +85,6 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
         }));
     }
 
-    /**
-     * If a cookie already exists and the server asks to set it again with a null value, the
-     * cookie must be deleted.
-     *
-     * @param \Guzzle\Plugin\Cookie\Cookie $cookie
-     */
-    public function removeCookieIfEmpty(Cookie $cookie)
-    {
-        $cookieValue = $cookie->getValue();
-        if (!empty($cookieValue)) {
-            return;
-        }
-
-        $foundCookie = array_filter($this->cookies, function (Cookie $savedCookie) use ($cookie) {
-            return $savedCookie->getName() === $cookie->getName();
-        });
-        if ($foundCookie) {
-            $index = array_search($foundCookie, $this->cookies);
-            unset($this->cookies[$index]);
-        }
-    }
-
     public function add(Cookie $cookie)
     {
         // Only allow cookies with set and valid domain, name, value
@@ -241,5 +219,19 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
         };
 
         return $cookies;
+    }
+
+    /**
+     * If a cookie already exists and the server asks to set it again with a null value, the
+     * cookie must be deleted.
+     *
+     * @param \Guzzle\Plugin\Cookie\Cookie $cookie
+     */
+    private function removeCookieIfEmpty(Cookie $cookie)
+    {
+        $cookieValue = $cookie->getValue();
+        if ($cookieValue === null || $cookieValue === '') {
+            $this->remove($cookie->getDomain(), $cookie->getPath(), $cookie->getName());
+        }
     }
 }
