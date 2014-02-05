@@ -31,7 +31,7 @@ interface MessageFactoryInterface
      *            convert POST requests to GET requests on a redirect.
      *        "save_to": String, fopen resource, or EntityBody object used to store the body of the response
      *        "events": Associative array mapping event names to a closure or array of (priority, closure)
-     *        "plugins": Array of plugins to add to the request
+     *        "subscribers": Array of event subscribers to add to the request
      *        "exceptions": Set to false to disable throwing exceptions on an HTTP level error (e.g. 404, 500, etc)
      *        "timeout": Float describing the timeout of the request in seconds
      *        "connect_timeout": Float describing the number of seconds to wait while trying to connect. Use 0 to wait

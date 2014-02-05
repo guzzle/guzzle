@@ -264,15 +264,15 @@ class MessageFactory implements MessageFactoryInterface
         }
     }
 
-    private function visit_plugins(RequestInterface $request, $value)
+    private function visit_subscribers(RequestInterface $request, $value)
     {
         if (!is_array($value)) {
-            throw new \InvalidArgumentException('plugins value must be an array');
+            throw new \InvalidArgumentException('subscribers value must be an array');
         }
 
         $dispatcher = $request->getEventDispatcher();
-        foreach ($value as $plugin) {
-            $dispatcher->addSubscriber($plugin);
+        foreach ($value as $subscribers) {
+            $dispatcher->addSubscriber($subscribers);
         }
     }
 }
