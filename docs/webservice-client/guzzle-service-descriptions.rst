@@ -216,7 +216,7 @@ Here's a very simple example of implementing a custom responseClass object.
         public static function fromCommand(OperationCommand $command)
         {
             $response = $command->getResponse();
-            $xml = $command->xml();
+            $xml = $response->xml();
 
             return new self((string) $xml->name);
         }
