@@ -63,7 +63,7 @@ This iterator modifies the values of the inner iterator before yielding.
 
     use Guzzle\Iterator\MapIterator;
 
-    $innner = new ArrayIterator(range(0, 3));
+    $inner = new ArrayIterator(range(0, 3));
 
     $mapIterator = new MapIterator($inner, function ($value) {
         return $value * 10;

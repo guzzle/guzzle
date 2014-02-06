@@ -405,7 +405,7 @@ cert
 The `cert` option lets you specify a PEM formatted SSL client certificate to use with servers that require one. If the
 certificate requires a password, provide an array with the password as the second item.
 
-This would typically be used in conjuction with the `ssl_key` option.
+This would typically be used in conjunction with the `ssl_key` option.
 
 .. code-block:: php
 
@@ -423,7 +423,7 @@ ssl_key
 The `ssl_key` option lets you specify a file containing your PEM formatted private key, optionally protected by a password.
 Note: your password is sensitive, keep the PHP script containing it safe.
 
-This would typically be used in conjuction with the `cert` option.
+This would typically be used in conjunction with the `cert` option.
 
 .. code-block:: php
 
