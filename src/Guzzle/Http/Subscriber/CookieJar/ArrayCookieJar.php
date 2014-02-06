@@ -113,6 +113,7 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
             if ($this->strictMode) {
                 throw new \RuntimeException('Invalid cookie: ' . $result);
             } else {
+                $this->removeCookieIfEmpty($cookie);
                 return false;
             }
         }
@@ -228,5 +229,19 @@ class ArrayCookieJar implements CookieJarInterface, \Serializable
         };
 
         return $cookies;
+    }
+
+    /**
+     * If a cookie already exists and the server asks to set it again with a null value, the
+     * cookie must be deleted.
+     *
+     * @param SetCookie $cookie
+     */
+    private function removeCookieIfEmpty(SetCookie $cookie)
+    {
+        $cookieValue = $cookie->getValue();
+        if ($cookieValue === null || $cookieValue === '') {
+            $this->remove($cookie->getDomain(), $cookie->getPath(), $cookie->getName());
+        }
     }
 }
