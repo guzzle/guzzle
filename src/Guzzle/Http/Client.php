@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http;
 
+use Guzzle\Common\Collection;
 use Guzzle\Common\HasDispatcherTrait;
 use Guzzle\Http\Adapter\FakeBatchAdapter;
 use Guzzle\Http\Event\RequestEvents;
@@ -33,10 +34,10 @@ class Client implements ClientInterface
     /** @var BatchAdapterInterface */
     private $batchAdapter;
 
-    /** @var string Base URL of the client */
+    /** @var Url Base URL of the client */
     private $baseUrl;
 
-    /** @var array Configuration data */
+    /** @var Collection Configuration data */
     private $config;
 
     /**
@@ -71,9 +72,8 @@ class Client implements ClientInterface
     {
         $this->configureBaseUrl($config);
         $this->configureDefaults($config);
-        $this->messageFactory = isset($config['message_factory']) ? $config['message_factory'] : new MessageFactory();
         $this->configureAdapter($config);
-        $this->config = $config;
+        $this->config = new Collection($config);
     }
 
     /**
@@ -86,19 +86,19 @@ class Client implements ClientInterface
         return 'Guzzle/' . Version::VERSION . ' curl/' . curl_version()['version'] . ' PHP/' . PHP_VERSION;
     }
 
-    public function getBaseUrl()
+    public function getConfig($keyOrPath = null)
     {
-        return isset($this->config['base_url']) ? (string) $this->baseUrl : null;
+        return $keyOrPath === null ? $this->config->toArray() : $this->config->getPath($keyOrPath);
     }
 
-    /**
-     * Returns default client configuration values
-     *
-     * @return array
-     */
-    public function getDefaults()
+    public function setConfig($keyOrPath, $value)
     {
-        return $this->config['defaults'];
+        // Ensure that "defaults" is always an array
+        if ($keyOrPath == 'defaults' && !is_array($value)) {
+            throw new \InvalidArgumentException('The value for "defaults" must be an array');
+        }
+
+        $this->config->setPath($keyOrPath, $value);
     }
 
     public function createRequest($method, $url = null, array $headers = [], $body = null, array $options = [])
@@ -196,7 +196,7 @@ class Client implements ClientInterface
         return [
             'allow_redirects' => true,
             'exceptions'      => true,
-            'verify'          => __DIR__ . '/Resources/cacert.pem'
+            'verify'          => __DIR__ . '/cacert.pem'
         ];
     }
 
@@ -266,12 +266,13 @@ class Client implements ClientInterface
         }
     }
 
-    private function configureBaseUrl($config)
+    private function configureBaseUrl(&$config)
     {
         if (!isset($config['base_url'])) {
             $this->baseUrl = new Url('', '');
         } elseif (is_array($config['base_url'])) {
-            $this->baseUrl = \Guzzle\uriTemplate($config['base_url'][0], $config['base_url'][1]);
+            $this->baseUrl = Url::fromString(\Guzzle\uriTemplate($config['base_url'][0], $config['base_url'][1]));
+            $config['base_url'] = (string) $this->baseUrl;
         } else {
             $this->baseUrl = Url::fromString($config['base_url']);
         }
@@ -296,11 +297,23 @@ class Client implements ClientInterface
 
     private function configureAdapter(&$config)
     {
-        $this->adapter = isset($config['adapter']) ? $config['adapter'] : $this->getDefaultAdapter();
+        if (isset($config['message_factory'])) {
+            $this->messageFactory = $config['message_factory'];
+            unset($config['message_factory']);
+        } else {
+            $this->messageFactory = new MessageFactory();
+        }
+        if (isset($config['adapter'])) {
+            $this->adapter = $config['adapter'];
+            unset($config['adapter']);
+        } else {
+            $this->adapter = $this->getDefaultAdapter();
+        }
         // If no batch adapter was explicitly provided and one was not defaulted
         // when creating the default adapter, then create one now
         if (isset($config['batch_adapter'])) {
             $this->batchAdapter = $config['batch_adapter'];
+            unset($config['batch_adapter']);
         } elseif (!$this->batchAdapter) {
             $this->batchAdapter = $this->getDefaultBatchAdapter();
         }

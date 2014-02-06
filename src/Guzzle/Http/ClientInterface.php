@@ -129,9 +129,24 @@ interface ClientInterface extends HasDispatcherInterface
     public function sendAll($requests, array $options = []);
 
     /**
-     * Get the client's base URL (if any is specified)
+     * Get a client configuration value.
      *
-     * @return string|null
+     * @param string|int|null $keyOrPath The Path to a particular configuration value. The syntax uses a path notation
+     *                                   that allows you to retrieve nested array values without throwing warnings.
+     *                                   For example, ``$client->getConfig('defaults/headers/content-type')``.
+     * @return mixed
      */
-    public function getBaseUrl();
+    public function getConfig($keyOrPath = null);
+
+    /**
+     * Set a client configuration value at the specified configuration path.
+     *
+     * Any value can be set for any path, but the common values are ``base_url`` and ``defaults``.
+     *
+     * @param string|int $keyOrPath Path at which to change a configuration value. This path syntax follows the same
+     *                              path syntax specified in {@see getConfig}.
+     * @param mixed $value Value to set
+     * @return mixed
+     */
+    public function setConfig($keyOrPath, $value);
 }

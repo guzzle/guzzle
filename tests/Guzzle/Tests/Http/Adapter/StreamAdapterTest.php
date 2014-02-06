@@ -247,7 +247,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testVerifyCanBeSetToPath()
     {
-        $path = __DIR__ . '/../../../../../src/Guzzle/Http/Resources/cacert.pem';
+        $path = __DIR__ . '/../../../../../src/Guzzle/Http/cacert.pem';
         $this->assertFileExists($path);
         $body = $this->getSendResult(['stream' => true, 'verify' => $path])->getBody();
         $opts = stream_context_get_options($this->getStreamFromBody($body));
@@ -271,7 +271,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testCanSetPasswordWhenSettingCert()
     {
-        $path = __DIR__ . '/../../../../../src/Guzzle/Http/Resources/cacert.pem';
+        $path = __DIR__ . '/../../../../../src/Guzzle/Http/cacert.pem';
         $body = $this->getSendResult(['stream' => true, 'cert' => [$path, 'foo']])->getBody();
         $opts = stream_context_get_options($this->getStreamFromBody($body));
         $this->assertEquals($path, $opts['http']['local_cert']);
