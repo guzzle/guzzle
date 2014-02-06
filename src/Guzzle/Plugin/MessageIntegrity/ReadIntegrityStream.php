@@ -4,7 +4,6 @@ namespace Guzzle\Plugin\MessageIntegrity;
 
 use Guzzle\Stream\StreamDecoratorTrait;
 use Guzzle\Stream\StreamInterface;
-use Guzzle\Common\HasDispatcherTrait;
 
 /**
  * Stream decorator that validates a rolling hash of the entity body as it is read
