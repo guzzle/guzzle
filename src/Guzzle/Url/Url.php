@@ -42,7 +42,7 @@ class Url
             $parts['query'] = QueryString::fromString($parts['query']);
         }
 
-        return new self($parts['scheme'], $parts['host'], $parts['user'],
+        return new static($parts['scheme'], $parts['host'], $parts['user'],
             $parts['pass'], $parts['port'], $parts['path'], $parts['query'],
             $parts['fragment']);
     }
@@ -156,7 +156,7 @@ class Url
      */
     public function __toString()
     {
-        return self::buildUrl($this->getParts());
+        return static::buildUrl($this->getParts());
     }
 
     /**
@@ -325,16 +325,15 @@ class Url
      */
     public function addPath($relativePath)
     {
-        if (!$relativePath || $relativePath == '/') {
-            return $this;
+        if ($relativePath != '/' && is_string($relativePath) && strlen($relativePath) > 0) {
+            // Add a leading slash if needed
+            if ($relativePath[0] != '/') {
+                $relativePath = '/' . $relativePath;
+            }
+            $this->setPath(str_replace('//', '/', $this->path . $relativePath));
         }
 
-        // Add a leading slash if needed
-        if ($relativePath[0] != '/') {
-            $relativePath = '/' . $relativePath;
-        }
-
-        return $this->setPath(str_replace('//', '/', $this->getPath() . $relativePath));
+        return $this;
     }
 
     /**
@@ -482,7 +481,7 @@ class Url
      */
     public function combine($url)
     {
-        $url = self::fromString($url);
+        $url = static::fromString($url);
 
         // Use the more absolute URL as the base URL
         if (!$this->isAbsolute() && $url->isAbsolute()) {

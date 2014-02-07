@@ -51,7 +51,7 @@ class MessageFactory implements MessageFactoryInterface
 
         unset($options['constructor_options']);
 
-        if ($body) {
+        if ($body !== null) {
             if (is_array($body)) {
                 $this->addPostData($request, $body);
             } else {

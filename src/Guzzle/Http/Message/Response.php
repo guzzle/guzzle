@@ -154,7 +154,7 @@ class Response implements ResponseInterface
 
         try {
             // Allow XML to be retrieved even if there is no response body
-            $xml = new \SimpleXMLElement((string) $this->body ?: '<root />');
+            $xml = new \SimpleXMLElement((string) $this->body ?: '<root />', LIBXML_NONET);
             libxml_disable_entity_loader($disableEntities);
         } catch (\Exception $e) {
             libxml_disable_entity_loader($disableEntities);

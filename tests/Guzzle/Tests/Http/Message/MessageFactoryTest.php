@@ -361,4 +361,10 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $request = (new MessageFactory())->createRequest('GET', '/', [], null, ['cert' => ['/foo.pem', 'bar']]);
         $this->assertEquals(['/foo.pem', 'bar'], $request->getConfig()->get('cert'));
     }
+
+    public function testCreatesBodyWithoutZeroString()
+    {
+        $request = (new MessageFactory())->createRequest('PUT', 'http://test.com', array(), '0');
+        $this->assertSame('0', (string) $request->getBody());
+    }
 }

@@ -129,6 +129,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('http://e.com/base?a=1', (string) Url::fromString('http://e.com/base?a=1')->addPath(false));
         $this->assertEquals('http://e.com/base?a=1', (string) Url::fromString('http://e.com/base?a=1')->addPath(''));
         $this->assertEquals('http://e.com/base?a=1', (string) Url::fromString('http://e.com/base?a=1')->addPath('/'));
+        $this->assertEquals('http://e.com/base/0', (string) Url::fromString('http://e.com/base')->addPath('0'));
 
         $this->assertEquals('http://e.com/base/relative?a=1', (string) Url::fromString('http://e.com/base?a=1')->addPath('relative'));
         $this->assertEquals('http://e.com/base/relative?a=1', (string) Url::fromString('http://e.com/base?a=1')->addPath('/relative'));
