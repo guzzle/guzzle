@@ -253,6 +253,16 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
     /**
      * Set a value into a nested array key. Keys will be created as needed to set the value.
      *
+     * This function does not support keys that contain "/" or "[]" characters because these are special tokens used
+     * when traversing the data structure. A value may be prepended to an existing array by using "[]" as the final
+     * key of a path.
+     *
+     *     $collection->getPath('foo/baz'); // null
+     *     $collection->setPath('foo/baz/[]', 'a');
+     *     $collection->setPath('foo/baz/[]', 'b');
+     *     $collection->getPath('foo/baz');
+     *     // Returns ['a', 'b']
+     *
      * @param string $path  Path to set
      * @param mixed  $value Value to set at the key
      *
@@ -267,7 +277,11 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
             if (!is_array($current)) {
                 throw new \RuntimeException("Trying to setPath {$path}, but {$key} is set and is not an array");
             } elseif (!$queue) {
-                $current[$key] = $value;
+                if ($key == '[]') {
+                    $current[] = $value;
+                } else {
+                    $current[$key] = $value;
+                }
             } elseif (isset($current[$key])) {
                 $current =& $current[$key];
             } else {
@@ -280,8 +294,15 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
     }
 
     /**
-     * Gets a value from the collection using an array path
-     * (e.g. foo/baz/bar would retrieve bar from two nested arrays)
+     * Gets a value from the collection using an array path.
+     *
+     * This method does not allow for keys that contain "/". You must traverse the array manually or using something
+     * more advanced like JMESPath to work with keys that contain "/".
+     *
+     *     // Get the bar key of a set of nested arrays.
+     *     // This is equivalent to $collection['foo']['baz']['bar'] but won't
+     *     // throw warnings for missing keys.
+     *     $collection->getPath('foo/baz/bar');
      *
      * @param string $path Path to traverse and retrieve a value from
      *

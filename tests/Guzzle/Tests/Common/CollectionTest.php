@@ -412,4 +412,12 @@ class CollectionTest extends \PHPUnit_Framework_TestCase
         $c = new Collection(array('foo' => 'bar'));
         $c->setPath('foo/bar/baz', 'test');
     }
+
+    public function testCanAppendToNestedPathValues()
+    {
+        $c = new Collection();
+        $c->setPath('foo/bar/[]', 'a');
+        $c->setPath('foo/bar/[]', 'b');
+        $this->assertEquals(['a', 'b'], $c['foo']['bar']);
+    }
 }
