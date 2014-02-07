@@ -99,7 +99,7 @@ abstract class GuzzleTestCase extends \PHPUnit_Framework_TestCase
     /**
      * Get a wildcard observer for an event dispatcher
      *
-     * @param HasDispatcherInterface $hasEvent
+     * @param HasDispatcherInterface $hasDispatcher
      *
      * @return MockObserver
      */
