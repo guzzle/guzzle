@@ -412,7 +412,32 @@ class Cookie implements ToArrayInterface
      */
     public function matchesPath($path)
     {
-        return !$this->getPath() || 0 === stripos($path, $this->getPath());
+        // RFC6265 http://tools.ietf.org/search/rfc6265#section-5.1.4
+        // A request-path path-matches a given cookie-path if at least one of
+        // the following conditions holds:
+
+        // o  The cookie-path and the request-path are identical.
+        if ($path == $this->getPath()) {
+            return true;
+        }
+
+        $pos = stripos($path, $this->getPath());
+        if ($pos === 0) {
+            // o  The cookie-path is a prefix of the request-path, and the last
+            // character of the cookie-path is %x2F ("/").
+            if (substr($this->getPath(), -1, 1) === "/") {
+                return true;
+            }
+
+            // o  The cookie-path is a prefix of the request-path, and the first
+            // character of the request-path that is not included in the cookie-
+            // path is a %x2F ("/") character.
+            if (substr($path, strlen($this->getPath()), 1) === "/") {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

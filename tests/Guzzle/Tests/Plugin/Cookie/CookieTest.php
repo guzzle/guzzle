@@ -164,9 +164,24 @@ class CookieTest extends \Guzzle\Tests\GuzzleTestCase
         $this->assertTrue($cookie->matchesPath('/foo'));
 
         $cookie->setPath('/foo');
+
+        // o  The cookie-path and the request-path are identical.
         $this->assertTrue($cookie->matchesPath('/foo'));
-        $this->assertTrue($cookie->matchesPath('/foo/bar'));
         $this->assertFalse($cookie->matchesPath('/bar'));
+
+        // o  The cookie-path is a prefix of the request-path, and the first
+        // character of the request-path that is not included in the cookie-
+        // path is a %x2F ("/") character.
+        $this->assertTrue($cookie->matchesPath('/foo/bar'));
+        $this->assertFalse($cookie->matchesPath('/fooBar'));
+
+        // o  The cookie-path is a prefix of the request-path, and the last
+        // character of the cookie-path is %x2F ("/").
+        $cookie->setPath('/foo/');
+        $this->assertTrue($cookie->matchesPath('/foo/bar'));
+        $this->assertFalse($cookie->matchesPath('/fooBaz'));
+        $this->assertFalse($cookie->matchesPath('/foo'));
+
     }
 
     public function cookieValidateProvider()
