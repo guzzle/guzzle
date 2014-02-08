@@ -50,10 +50,10 @@ class TransactionIterator implements \Iterator
             );
         }
 
-        if (isset($this->options['complete'])) {
+        if (isset($this->options['after'])) {
             $request->getEmitter()->on(
                 RequestEvents::AFTER_SEND,
-                $this->options['complete'],
+                $this->options['after'],
                 -255
             );
         }
@@ -84,8 +84,5 @@ class TransactionIterator implements \Iterator
         return $this->source->valid();
     }
 
-    public function rewind()
-    {
-        throw new \RuntimeException('This iterator cannot be rewound');
-    }
+    public function rewind() {}
 }

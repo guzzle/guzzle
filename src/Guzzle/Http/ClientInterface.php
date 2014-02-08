@@ -121,10 +121,10 @@ interface ClientInterface extends HasEmitterInterface
      *
      * @param array|\Iterator $requests Requests to send in parallel
      * @param array           $options  Associative array of options
-     *                                  - parallel: (int) Max number of requests to send in parallel
-     *                                  - before:   (callable) Receives a RequestBeforeSendEvent
-     *                                  - complete: (callable) Receives a RequestAfterSendEvent
-     *                                  - error:    (callable) Receives a RequestErrorEvent
+     *     - parallel: (int) Max number of requests to send in parallel
+     *     - before: (callable) Receives a RequestBeforeSendEvent
+     *     - error: (callable) Receives a RequestAfterSendEvent
+     *     - error: (callable) Receives a RequestErrorEvent
      */
     public function sendAll($requests, array $options = []);
 
