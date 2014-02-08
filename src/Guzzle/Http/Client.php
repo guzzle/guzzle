@@ -86,7 +86,7 @@ class Client implements ClientInterface
 
     public function getConfig($keyOrPath = null)
     {
-        return $keyOrPath === null ? $this->config->toArray() : $this->config->getPath($keyOrPath);
+        return $keyOrPath === null ? $this->config : $this->config->getPath($keyOrPath);
     }
 
     public function setConfig($keyOrPath, $value)
