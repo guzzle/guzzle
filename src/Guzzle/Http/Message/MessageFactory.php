@@ -256,12 +256,23 @@ class MessageFactory implements MessageFactoryInterface
 
         $emitter = $request->getEmitter();
         foreach ($value as $name => $method) {
-            if (!is_array($method)) {
+            if (is_callable($method)) {
                 $emitter->on($name, $method);
-            } elseif (isset($method[2]) && $method[2] === true) {
-                $emitter->once($name, $method[0], isset($method[1]) ? $method[1] : 0);
+            } elseif (!is_array($method) || !isset($method['fn'])) {
+                throw new \InvalidArgumentException('Each event must be a '
+                    . 'callable or associative array containing a "fn" key');
+            } elseif (isset($method['once']) && $method['once'] === true) {
+                $emitter->once(
+                    $name,
+                    $method['fn'],
+                    isset($method['priority']) ? $method['priority'] : 0
+                );
             } else {
-                $emitter->on($name, $method[0], isset($method[1]) ? $method[1] : 0);
+                $emitter->on(
+                    $name,
+                    $method['fn'],
+                    isset($method['priority']) ? $method['priority'] : 0
+                );
             }
         }
     }
