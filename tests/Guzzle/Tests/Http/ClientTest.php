@@ -9,6 +9,8 @@ use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Exception\RequestException;
+use Guzzle\Http\Subscriber\History;
+use Guzzle\Http\Subscriber\Mock;
 
 /**
  * @covers Guzzle\Http\Client
@@ -308,5 +310,38 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client->setConfig('defaults/headers/foo', 'bar');
         $this->assertEquals('baz', $client->getConfig('foo'));
         $this->assertEquals('bar', $client->getConfig('defaults/headers/foo'));
+    }
+
+    public function testSendsAllInParallel()
+    {
+        $client = new Client();
+        $client->getEmitter()->addSubscriber(new Mock([
+            new Response(200),
+            new Response(201),
+            new Response(202),
+        ]));
+        $history = new History();
+        $client->getEmitter()->addSubscriber($history);
+
+        $requests = [
+            $client->createRequest('GET', '/'),
+            $client->createRequest('POST', '/'),
+            $client->createRequest('PUT', '/')
+        ];
+
+        $client->sendAll($requests);
+        $requests = array_map(function($r) { return $r->getMethod(); }, $history->getRequests());
+        $this->assertContains('GET', $requests);
+        $this->assertContains('POST', $requests);
+        $this->assertContains('PUT', $requests);
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testEnsuresDefaultsIsAnArray()
+    {
+        $client = new Client();
+        $client->setConfig('defaults', 'foo');
     }
 }
