@@ -6,6 +6,8 @@ use Guzzle\Http\Client;
 use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Url\UriTemplate;
 
+const VERSION = '4.0-dev';
+
 /**
  * Send a custom request
  *

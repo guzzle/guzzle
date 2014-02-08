@@ -2,7 +2,7 @@
 
 namespace Guzzle\Service\Command;
 
-use Guzzle\Common\HasDispatcherInterface;
+use Guzzle\Common\HasEmitterInterface;
 use Guzzle\Common\ToArrayInterface;
 use Guzzle\Service\Description\OperationInterface;
 use Guzzle\Service\Description\ModelInterface;
@@ -18,7 +18,7 @@ use Guzzle\Http\Message\ResponseInterface;
  * - command.process: Emitted when a command is processing a response
  * - command.error: Emitted after an error occurs for a command
  */
-interface CommandInterface extends \ArrayAccess, ToArrayInterface, HasDispatcherInterface
+interface CommandInterface extends \ArrayAccess, ToArrayInterface, HasEmitterInterface
 {
     /**
      * Get the API operation information about the command

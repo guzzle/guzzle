@@ -7,7 +7,6 @@ use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Event\GotResponseHeadersEvent;
 use Guzzle\Http\Message\HasHeadersTrait;
 use Guzzle\Http\Message\MessageFactoryInterface;
-use Guzzle\Http\Message\Response;
 use Guzzle\Stream\Stream;
 use Guzzle\Stream\StreamInterface;
 
@@ -83,7 +82,7 @@ class RequestMediator
             $this->transaction->setResponse($response);
             $request = $this->transaction->getRequest();
             // Allows events to react before downloading any of the body
-            $request->getEventDispatcher()->dispatch(
+            $request->getEmitter()->emit(
                 RequestEvents::RESPONSE_HEADERS,
                 new GotResponseHeadersEvent($this->transaction)
             );

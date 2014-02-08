@@ -2,9 +2,9 @@
 
 namespace Guzzle\Plugin\MessageIntegrity;
 
+use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\RequestBeforeSendEvent;
 use Guzzle\Http\Event\RequestEvents;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Verifies the message integrity of a response after all of the data has been received
@@ -37,15 +37,15 @@ class MessageIntegrityPlugin implements EventSubscriberInterface
 
     public static function getSubscribedEvents()
     {
-        return [RequestEvents::BEFORE_SEND => 'onRequestBeforeSend'];
+        return [RequestEvents::BEFORE_SEND => ['onRequestBeforeSend']];
     }
 
     public function onRequestBeforeSend(RequestBeforeSendEvent $event)
     {
         if ($event->getRequest()->getConfig()->get('streaming')) {
-            $event->getRequest()->getEventDispatcher()->addSubscriber($this->streaming);
+            $event->getRequest()->getEmitter()->addSubscriber($this->streaming);
         } else {
-            $event->getRequest()->getEventDispatcher()->addSubscriber($this->full);
+            $event->getRequest()->getEmitter()->addSubscriber($this->full);
         }
     }
 }

@@ -251,7 +251,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $adapter = new MockAdapter();
         $adapter->setResponse($response);
         $client = new Client(['adapter' => $adapter]);
-        $client->getEventDispatcher()->addListener(
+        $client->getEmitter()->on(
             RequestEvents::BEFORE_SEND,
             function (RequestBeforeSendEvent $e) use ($response2) {
                 $e->intercept($response2);
@@ -279,10 +279,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testClientHandlesErrorsDuringBeforeSend()
     {
         $client = new Client();
-        $client->getEventDispatcher()->addListener(RequestEvents::BEFORE_SEND, function ($e) {
+        $client->getEmitter()->on(RequestEvents::BEFORE_SEND, function ($e) {
             throw new RequestException('foo', $e->getRequest());
         });
-        $client->getEventDispatcher()->addListener(RequestEvents::ERROR, function ($e) {
+        $client->getEmitter()->on(RequestEvents::ERROR, function ($e) {
             $e->intercept(new Response(200));
         });
         $this->assertEquals(200, $client->get('/')->getStatusCode());
@@ -295,7 +295,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testClientHandlesErrorsDuringBeforeSendAndThrowsIfUnhandled()
     {
         $client = new Client();
-        $client->getEventDispatcher()->addListener(RequestEvents::BEFORE_SEND, function ($e) {
+        $client->getEmitter()->on(RequestEvents::BEFORE_SEND, function ($e) {
             throw new RequestException('foo', $e->getRequest());
         });
         $client->get('/');

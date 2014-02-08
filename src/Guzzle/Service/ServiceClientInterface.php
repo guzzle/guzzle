@@ -2,7 +2,7 @@
 
 namespace Guzzle\Service;
 
-use Guzzle\Common\HasDispatcherInterface;
+use Guzzle\Common\HasEmitterInterface;
 use Guzzle\Http\ClientInterface;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Description\DescriptionInterface;
@@ -10,7 +10,7 @@ use Guzzle\Service\Description\DescriptionInterface;
 /**
  * Web service client interface
  */
-interface ServiceClientInterface extends HasDispatcherInterface
+interface ServiceClientInterface extends HasEmitterInterface
 {
     /**
      * Get the HTTP client used to send requests for the web service client

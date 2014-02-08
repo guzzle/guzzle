@@ -2,11 +2,11 @@
 
 namespace Guzzle\Http\Subscriber;
 
+use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Event\RequestBeforeSendEvent;
 use Guzzle\Http\Message\Post\PostBodyInterface;
 use Guzzle\Stream\StreamInterface;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Prepares requests with a body before sending

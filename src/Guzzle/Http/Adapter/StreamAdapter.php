@@ -95,7 +95,7 @@ class StreamAdapter implements AdapterInterface
         $response = $this->messageFactory->createResponse($parts[1], $responseHeaders, $stream, $options);
         $transaction->setResponse($response);
 
-        $transaction->getRequest()->getEventDispatcher()->dispatch(
+        $transaction->getRequest()->getEmitter()->emit(
             RequestEvents::RESPONSE_HEADERS,
             new GotResponseHeadersEvent($transaction)
         );

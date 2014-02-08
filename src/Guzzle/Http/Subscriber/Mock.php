@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http\Subscriber;
 
+use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Event\RequestBeforeSendEvent;
 use Guzzle\Http\Event\RequestEvents;
@@ -9,7 +10,6 @@ use Guzzle\Http\Event\GotResponseHeadersEvent;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\ResponseInterface;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Queues mock responses or exceptions and delivers mock responses or exceptions in a fifo order.
@@ -55,7 +55,7 @@ class Mock implements EventSubscriberInterface, \Countable
         // Emulate the receiving of the response headers
         $request = $event->getRequest();
         $transaction = new Transaction($event->getClient(), $request);
-        $request->getEventDispatcher()->dispatch(
+        $request->getEmitter()->emit(
             RequestEvents::RESPONSE_HEADERS,
             new GotResponseHeadersEvent($transaction)
         );

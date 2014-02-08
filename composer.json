@@ -15,8 +15,7 @@
     ],
 
     "require": {
-        "php": ">=5.4.0",
-        "symfony/event-dispatcher": ">=2.1"
+        "php": ">=5.4.0"
     },
 
     "autoload": {
@@ -27,7 +26,7 @@
     },
 
     "require-dev": {
-        "symfony/class-loader": "*",
+        "ext-curl": "*",
         "psr/log": "~1",
         "phpunit/phpunit": "3.7.*"
     },

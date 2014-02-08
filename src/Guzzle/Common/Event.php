@@ -2,8 +2,20 @@
 
 namespace Guzzle\Common;
 
-use Symfony\Component\EventDispatcher\Event as SymfonyEvent;
-
-class Event extends SymfonyEvent
+/**
+ * Basic event class that can be extended.
+ */
+class Event implements EventInterface
 {
+    private $propagationStopped = false;
+
+    public function isPropagationStopped()
+    {
+        return $this->propagationStopped;
+    }
+
+    public function stopPropagation()
+    {
+        $this->propagationStopped = true;
+    }
 }

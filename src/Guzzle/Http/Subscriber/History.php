@@ -2,11 +2,11 @@
 
 namespace Guzzle\Http\Subscriber;
 
+use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\RequestAfterSendEvent;
 use Guzzle\Http\Event\RequestErrorEvent;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Maintains a list of requests and responses sent using a request or client

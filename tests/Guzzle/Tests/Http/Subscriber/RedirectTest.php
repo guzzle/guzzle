@@ -22,8 +22,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         ]);
 
         $client = new Client(['base_url' => 'http://test.com']);
-        $client->getEventDispatcher()->addSubscriber($history);
-        $client->getEventDispatcher()->addSubscriber($mock);
+        $client->getEmitter()->addSubscriber($history);
+        $client->getEmitter()->addSubscriber($mock);
 
         $response = $client->get('/foo');
         $this->assertEquals(200, $response->getStatusCode());
@@ -55,7 +55,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect6\r\nContent-Length: 0\r\n\r\n"
         ]);
         $client = new Client();
-        $client->getEventDispatcher()->addSubscriber($mock);
+        $client->getEmitter()->addSubscriber($mock);
         $client->get('http://www.example.com/foo');
     }
 
@@ -68,8 +68,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]);
         $client = new Client();
-        $client->getEventDispatcher()->addSubscriber($mock);
-        $client->getEventDispatcher()->addSubscriber($h);
+        $client->getEmitter()->addSubscriber($mock);
+        $client->getEmitter()->addSubscriber($h);
         $client->post('http://test.com/foo', ['X-Baz' => 'bar'], 'testing');
 
         $requests = $h->getRequests();
@@ -88,8 +88,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]);
         $client = new Client();
-        $client->getEventDispatcher()->addSubscriber($mock);
-        $client->getEventDispatcher()->addSubscriber($h);
+        $client->getEmitter()->addSubscriber($mock);
+        $client->getEmitter()->addSubscriber($h);
         $client->post('/foo', ['X-Baz' => 'bar'], 'testing', ['allow_redirects' => 'strict']);
 
         $requests = $h->getRequests();
@@ -107,8 +107,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]);
         $client = new Client();
-        $client->getEventDispatcher()->addSubscriber($mock);
-        $client->getEventDispatcher()->addSubscriber($h);
+        $client->getEmitter()->addSubscriber($mock);
+        $client->getEmitter()->addSubscriber($h);
 
         $body = $this->getMockBuilder('Guzzle\Stream\StreamInterface')
             ->setMethods(['seek', 'read', 'eof', 'tell'])
@@ -132,8 +132,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]);
         $client = new Client();
-        $client->getEventDispatcher()->addSubscriber($mock);
-        $client->getEventDispatcher()->addSubscriber($h);
+        $client->getEmitter()->addSubscriber($mock);
+        $client->getEmitter()->addSubscriber($h);
 
         $body = $this->getMockBuilder('Guzzle\Stream\StreamInterface')
             ->setMethods(['seek', 'read', 'eof', 'tell'])
@@ -148,7 +148,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
     public function testRedirectsCanBeDisabledPerRequest()
     {
         $client = new Client();
-        $client->getEventDispatcher()->addSubscriber(new Mock([
+        $client->getEmitter()->addSubscriber(new Mock([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]));
@@ -160,11 +160,11 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
     {
         $h = new History();
         $client = new Client(['base_url' => 'http://www.foo.com']);
-        $client->getEventDispatcher()->addSubscriber(new Mock([
+        $client->getEmitter()->addSubscriber(new Mock([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: redirect?foo=bar\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]));
-        $client->getEventDispatcher()->addSubscriber($h);
+        $client->getEmitter()->addSubscriber($h);
         $client->get('?foo=bar');
         $requests = $h->getRequests();
         $this->assertEquals('http://www.foo.com?foo=bar', $requests[0]->getUrl());
@@ -174,12 +174,12 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
     public function testHandlesRedirectsWithSpacesProperly()
     {
         $client = new Client(['base_url' => 'http://www.foo.com']);
-        $client->getEventDispatcher()->addSubscriber(new Mock([
+        $client->getEmitter()->addSubscriber(new Mock([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect 1\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
         ]));
         $h = new History();
-        $client->getEventDispatcher()->addSubscriber($h);
+        $client->getEmitter()->addSubscriber($h);
         $client->get('/foo');
         $reqs = $h->getRequests();
         $this->assertEquals('/redirect%201', $reqs[1]->getResource());

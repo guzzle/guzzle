@@ -22,7 +22,7 @@ class RequestMediatorTest extends \PHPUnit_Framework_TestCase
         $body = Stream::factory();
         $request = new Request('GET', '/');
         $ee = null;
-        $request->getEventDispatcher()->addListener(
+        $request->getEmitter()->on(
             RequestEvents::RESPONSE_HEADERS,
             function (GotResponseHeadersEvent $e) use (&$ee) {
                 $ee = $e;

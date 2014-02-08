@@ -2,9 +2,9 @@
 
 namespace Guzzle\Plugin\Backoff;
 
+use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\AbstractTransferStatsEvent;
 use Guzzle\Http\Event\RequestEvents;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Plugin to automatically retry failed HTTP requests using a backoff strategy
@@ -63,8 +63,8 @@ class BackoffPlugin implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            RequestEvents::AFTER_SEND => 'onRequestSent',
-            RequestEvents::ERROR      => 'onRequestSent'
+            RequestEvents::AFTER_SEND => ['onRequestSent'],
+            RequestEvents::ERROR      => ['onRequestSent']
         ];
     }
 

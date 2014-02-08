@@ -3,11 +3,10 @@
 namespace Guzzle\Plugin\Cache;
 
 use Guzzle\Common\Event;
-use Guzzle\Common\Version;
+use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\ResponseInterface;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Plugin to enable the caching of GET and HEAD requests.  Caching can be done on all requests passing through this
@@ -96,7 +95,7 @@ class CachePlugin implements EventSubscriberInterface
     public function onRequestBeforeSend(Event $event)
     {
         $request = $event['request'];
-        $request->addHeader('Via', sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION));
+        $request->addHeader('Via', sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), \Guzzle\VERSION));
 
         if (!$this->canCache->canCacheRequest($request)) {
             switch ($request->getMethod()) {
@@ -307,7 +306,7 @@ class CachePlugin implements EventSubscriberInterface
     protected function addResponseHeaders(RequestInterface $request, ResponseInterface $response)
     {
         $params = $request->getParams();
-        $response->setHeader('Via', sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), Version::VERSION));
+        $response->setHeader('Via', sprintf('%s GuzzleCache/%s', $request->getProtocolVersion(), \Guzzle\VERSION));
 
         $lookup = ($params['cache.lookup'] === true ? 'HIT' : 'MISS') . ' from GuzzleCache';
         if ($header = $response->getHeader('X-Cache-Lookup')) {
@@ -337,9 +336,9 @@ class CachePlugin implements EventSubscriberInterface
         }
 
         if ($response->isFresh() === false) {
-            $response->addHeader('Warning', sprintf('110 GuzzleCache/%s "Response is stale"', Version::VERSION));
+            $response->addHeader('Warning', sprintf('110 GuzzleCache/%s "Response is stale"', \Guzzle\VERSION));
             if ($params['cache.hit'] === 'error') {
-                $response->addHeader('Warning', sprintf('111 GuzzleCache/%s "Revalidation failed"', Version::VERSION));
+                $response->addHeader('Warning', sprintf('111 GuzzleCache/%s "Revalidation failed"', \Guzzle\VERSION));
             }
         }
     }

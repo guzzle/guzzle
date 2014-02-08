@@ -2,11 +2,11 @@
 
 namespace Guzzle\Http\Subscriber;
 
+use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\RequestAfterSendEvent;
 use Guzzle\Http\Event\RequestBeforeSendEvent;
 use Guzzle\Http\Subscriber\CookieJar\ArrayCookieJar;
 use Guzzle\Http\Subscriber\CookieJar\CookieJarInterface;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Adds, extracts, and persists cookies between HTTP requests

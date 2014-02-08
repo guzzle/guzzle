@@ -2,7 +2,7 @@
 
 namespace Guzzle\Service;
 
-use Guzzle\Common\HasDispatcherTrait;
+use Guzzle\Common\HasEmitterTrait;
 use Guzzle\Http\ClientInterface;
 use Guzzle\Service\Command\CommandInterface;
 use Guzzle\Service\Description\DescriptionInterface;
@@ -13,7 +13,7 @@ use Guzzle\Service\Guzzle\CommandDescriptionFactory;
  */
 class ServiceClient implements ServiceClientInterface
 {
-    use HasDispatcherTrait;
+    use HasEmitterTrait;
 
     private $client;
     private $description;

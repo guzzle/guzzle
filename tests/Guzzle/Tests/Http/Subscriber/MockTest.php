@@ -81,7 +81,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
     {
         $m = new Mock([new Response(200)]);
         $client = new Client();
-        $client->getEventDispatcher()->addSubscriber($m);
+        $client->getEmitter()->addSubscriber($m);
         $body = Stream::factory('foo');
         $client->put('/', [], $body);
         $this->assertEquals(3, $body->tell());
@@ -94,7 +94,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
         $ex = new RequestException('foo', $request);
         $mock = new Mock([$ex]);
         $this->assertCount(1, $mock);
-        $request->getEventDispatcher()->addSubscriber($mock);
+        $request->getEmitter()->addSubscriber($mock);
 
         try {
             $client->send($request);

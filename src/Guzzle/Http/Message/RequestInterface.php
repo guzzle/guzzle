@@ -2,14 +2,14 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Common\HasDispatcherInterface;
+use Guzzle\Common\HasEmitterInterface;
 use Guzzle\Url\Url;
 use Guzzle\Url\QueryString;
 
 /**
  * Generic HTTP request interface
  */
-interface RequestInterface extends MessageInterface, HasDispatcherInterface
+interface RequestInterface extends MessageInterface, HasEmitterInterface
 {
     const GET = 'GET';
     const PUT = 'PUT';

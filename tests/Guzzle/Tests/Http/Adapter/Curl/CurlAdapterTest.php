@@ -82,7 +82,7 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
         $t = new Transaction(new Client(), $r);
         $a = new CurlAdapter(new MessageFactory(), ['handle_factory' => $f]);
         $ev = null;
-        $r->getEventDispatcher()->addListener(RequestEvents::ERROR, function (RequestErrorEvent $e) use (&$ev) {
+        $r->getEmitter()->on(RequestEvents::ERROR, function (RequestErrorEvent $e) use (&$ev) {
             $ev = $e;
         });
         try {
@@ -102,7 +102,7 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
         $t = new Transaction(new Client(), $r);
         $a = new CurlAdapter(new MessageFactory());
         $ev = null;
-        $r->getEventDispatcher()->addListener(RequestEvents::AFTER_SEND, function (RequestAfterSendEvent $e) use (&$ev) {
+        $r->getEmitter()->on(RequestEvents::AFTER_SEND, function (RequestAfterSendEvent $e) use (&$ev) {
             $ev = $e;
             $e->intercept(new Response(200, ['Foo' => 'bar']));
         });
@@ -118,12 +118,10 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
         $r = new Request('GET', self::$server->getUrl());
         $t = new Transaction(new Client(), $r);
         $a = new CurlAdapter(new MessageFactory());
-        $listener = function (RequestAfterSendEvent $e) use (&$listener) {
-            $e->getDispatcher()->removeListener(RequestEvents::AFTER_SEND, $listener);
+        $r->getEmitter()->once(RequestEvents::AFTER_SEND, function (RequestAfterSendEvent $e) {
             throw new RequestException('Foo', $e->getRequest());
-        };
-        $r->getEventDispatcher()->addListener(RequestEvents::AFTER_SEND, $listener);
-        $r->getEventDispatcher()->addListener(RequestEvents::ERROR, function (RequestErrorEvent $e) {
+        });
+        $r->getEmitter()->on(RequestEvents::ERROR, function (RequestErrorEvent $e) {
             $e->intercept(new Response(200, ['Foo' => 'bar']));
         });
         $response = $a->send($t);

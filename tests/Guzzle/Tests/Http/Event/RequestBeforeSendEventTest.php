@@ -19,7 +19,7 @@ class RequestBeforeSendEventTest extends \PHPUnit_Framework_TestCase
         $response = new Response(200);
         $res = null;
         $t = new Transaction(new Client(), new Request('GET', '/'));
-        $t->getRequest()->getEventDispatcher()->addListener(RequestEvents::AFTER_SEND, function ($e) use (&$res) {
+        $t->getRequest()->getEmitter()->on(RequestEvents::AFTER_SEND, function ($e) use (&$res) {
             $res = $e;
         });
         $e = new RequestBeforeSendEvent($t);

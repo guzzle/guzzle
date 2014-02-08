@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http\Subscriber;
 
+use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\RequestAfterSendEvent;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Exception\TooManyRedirectsException;
@@ -9,7 +10,6 @@ use Guzzle\Http\Exception\CouldNotRewindStreamException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Url\Url;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Plugin to implement HTTP redirects. Can redirect like a web browser or using strict RFC 2616 compliance
@@ -90,7 +90,7 @@ class Redirect implements EventSubscriberInterface
         // Use a GET request if this is an entity enclosing request and we are not forcing RFC compliance, but rather
         // emulating what all browsers would do. Be sure to disable redirects on the clone.
         $redirectRequest = clone $request;
-        $redirectRequest->getEventDispatcher()->removeSubscriber($this);
+        $redirectRequest->getEmitter()->removeSubscriber($this);
         if ($request->getBody() && !$strict && $response->getStatusCode() <= 302) {
             $redirectRequest->setMethod('GET');
             $redirectRequest->setBody(null);

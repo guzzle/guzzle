@@ -104,11 +104,11 @@ class DefaultRevalidation implements RevalidationInterface
         }
 
         // Remove any cache plugins that might be on the request to prevent infinite recursive revalidations
-        $dispatcher = $revalidate->getEventDispatcher();
-        foreach ($dispatcher->getListeners() as $eventName => $listeners) {
+        $emitter = $revalidate->getEmitter();
+        foreach ($emitter->getListeners() as $eventName => $listeners) {
             foreach ($listeners as $listener) {
                 if (is_array($listener) && $listener[0] instanceof CachePlugin) {
-                    $dispatcher->removeListener($eventName, $listener);
+                    $emitter->removeListener($eventName, $listener);
                 }
             }
         }

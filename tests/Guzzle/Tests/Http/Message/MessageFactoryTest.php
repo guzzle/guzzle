@@ -118,7 +118,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     public function testCanDisableRedirects()
     {
         $request = (new MessageFactory)->createRequest('GET', '/', [], null, ['allow_redirects' => false]);
-        $this->assertEmpty($request->getEventDispatcher()->getListeners(RequestEvents::AFTER_SEND));
+        $this->assertEmpty($request->getEmitter()->getListeners(RequestEvents::AFTER_SEND));
     }
 
     public function testCanEnableStrictRedirects()
@@ -137,7 +137,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     {
         $request = (new MessageFactory)->createRequest('GET', 'http://www.test.com/', [], null, ['cookies' => ['Foo' => 'Bar']]);
         $cookies = null;
-        foreach ($request->getEventDispatcher()->getListeners(RequestEvents::BEFORE_SEND) as $l) {
+        foreach ($request->getEmitter()->getListeners(RequestEvents::BEFORE_SEND) as $l) {
             if ($l[0] instanceof Cookie) {
                 $cookies = $l[0];
                 break;
@@ -156,7 +156,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $request1 = $factory->createRequest('GET', '/', [], null, ['cookies' => true]);
         $request2 = $factory->createRequest('GET', '/', [], null, ['cookies' => true]);
         $listeners = function ($r) {
-            return array_filter($r->getEventDispatcher()->getListeners(RequestEvents::BEFORE_SEND), function ($l) {
+            return array_filter($r->getEmitter()->getListeners(RequestEvents::BEFORE_SEND), function ($l) {
                 return $l[0] instanceof Cookie;
             });
         };
@@ -167,7 +167,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     {
         $jar = new ArrayCookieJar();
         $request = (new MessageFactory)->createRequest('GET', '/', [], null, ['cookies' => $jar]);
-        foreach ($request->getEventDispatcher()->getListeners(RequestEvents::BEFORE_SEND) as $l) {
+        foreach ($request->getEmitter()->getListeners(RequestEvents::BEFORE_SEND) as $l) {
             if ($l[0] instanceof Cookie) {
                 $this->assertSame($jar, $l[0]->getCookieJar());
             }
@@ -219,7 +219,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     {
         $foo = null;
         $client = new Client();
-        $client->getEventDispatcher()->addSubscriber(new Mock([new Response(200)]));
+        $client->getEmitter()->addSubscriber(new Mock([new Response(200)]));
         $request = $client->get('/', [], [
             'events' => [
                 RequestEvents::BEFORE_SEND => function () use (&$foo) { $foo = true; }
@@ -232,7 +232,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     {
         $foo = null;
         $client = new Client();
-        $client->getEventDispatcher()->addSubscriber(new Mock(array(new Response(200))));
+        $client->getEmitter()->addSubscriber(new Mock(array(new Response(200))));
         $request = $client->get('/', [], [
             'events' => [
                 RequestEvents::BEFORE_SEND => array(function () use (&$foo) { $foo = true; }, 100)
@@ -245,7 +245,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     {
         $mock = new Mock([new Response(200)]);
         $client = new Client();
-        $client->getEventDispatcher()->addSubscriber($mock);
+        $client->getEmitter()->addSubscriber($mock);
         $request = $client->get('/', [], ['subscribers' => [$mock]]);
     }
 

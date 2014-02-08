@@ -3,13 +3,13 @@
 namespace Guzzle\Service\Guzzle;
 
 use Guzzle\Common\HasDataTrait;
-use Guzzle\Common\HasDispatcherTrait;
+use Guzzle\Common\HasEmitterTrait;
 use Guzzle\Service\Command\CommandInterface;
 
 class Command implements CommandInterface
 {
     use HasDataTrait;
-    use HasDispatcherTrait;
+    use HasEmitterTrait;
 
     protected $operation;
     protected $serializer;

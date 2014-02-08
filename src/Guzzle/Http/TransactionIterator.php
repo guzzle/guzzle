@@ -43,7 +43,7 @@ class TransactionIterator implements \Iterator
         }
 
         if (isset($this->options['before'])) {
-            $request->getEventDispatcher()->addListener(
+            $request->getEmitter()->on(
                 RequestEvents::BEFORE_SEND,
                 $this->options['before'],
                 -255
@@ -51,7 +51,7 @@ class TransactionIterator implements \Iterator
         }
 
         if (isset($this->options['complete'])) {
-            $request->getEventDispatcher()->addListener(
+            $request->getEmitter()->on(
                 RequestEvents::AFTER_SEND,
                 $this->options['complete'],
                 -255
@@ -59,7 +59,7 @@ class TransactionIterator implements \Iterator
         }
 
         if (isset($this->options['error'])) {
-            $request->getEventDispatcher()->addListener(
+            $request->getEmitter()->on(
                 RequestEvents::ERROR,
                 $this->options['error'],
                 -255

@@ -56,7 +56,7 @@ class CookieTest extends \PHPUnit_Framework_TestCase
 
         $plugin = new Cookie($mock);
         $client = new Client();
-        $client->getEventDispatcher()->addSubscriber($plugin);
+        $client->getEmitter()->addSubscriber($plugin);
         $request = $client->createRequest('GET', 'http://www.example.com');
         $t = new Transaction(new Client(), $request);
         $plugin->onRequestBeforeSend(new RequestBeforeSendEvent($t));
@@ -78,9 +78,9 @@ class CookieTest extends \PHPUnit_Framework_TestCase
             "Content-Length: 0\r\n\r\n"
         ]);
         $client = new Client(['base_url' => 'http://www.foo.com']);
-        $client->getEventDispatcher()->addSubscriber($cookie);
-        $client->getEventDispatcher()->addSubscriber($mock);
-        $client->getEventDispatcher()->addSubscriber($history);
+        $client->getEmitter()->addSubscriber($cookie);
+        $client->getEmitter()->addSubscriber($mock);
+        $client->getEmitter()->addSubscriber($history);
 
         $client->get();
         $request = $client->createRequest('GET', '/');

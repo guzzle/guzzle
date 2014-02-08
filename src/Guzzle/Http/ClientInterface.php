@@ -2,7 +2,7 @@
 
 namespace Guzzle\Http;
 
-use Guzzle\Common\HasDispatcherInterface;
+use Guzzle\Common\HasEmitterInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Http\Exception\TransferException;
@@ -12,7 +12,7 @@ use Guzzle\Url\Url;
 /**
  * Client interface for sending HTTP requests
  */
-interface ClientInterface extends HasDispatcherInterface
+interface ClientInterface extends HasEmitterInterface
 {
     /**
      * Create and return a new {@see RequestInterface} object.
@@ -117,7 +117,7 @@ interface ClientInterface extends HasDispatcherInterface
      * Exceptions are not thrown for failed requests. Callers are expected to
      * register an "error" option to handle request errors OR directly register
      * an event handler for the "request.error" event of a request's
-     * EventDispatcher.
+     * event emitter.
      *
      * @param array|\Iterator $requests Requests to send in parallel
      * @param array           $options  Associative array of options

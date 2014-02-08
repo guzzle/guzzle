@@ -29,7 +29,7 @@ class RequestErrorEventTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($request, $event->getRequest());
 
         $res = null;
-        $request->getEventDispatcher()->addListener(RequestEvents::AFTER_SEND, function ($e) use (&$res) {
+        $request->getEmitter()->on(RequestEvents::AFTER_SEND, function ($e) use (&$res) {
             $res = $e;
         });
 

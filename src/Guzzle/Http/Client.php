@@ -3,9 +3,8 @@
 namespace Guzzle\Http;
 
 use Guzzle\Common\Collection;
-use Guzzle\Common\HasDispatcherTrait;
+use Guzzle\Common\HasEmitterTrait;
 use Guzzle\Http\Adapter\FakeBatchAdapter;
-use Guzzle\Version;
 use Guzzle\Http\Adapter\BatchAdapterInterface;
 use Guzzle\Http\Adapter\AdapterInterface;
 use Guzzle\Http\Adapter\StreamAdapter;
@@ -22,7 +21,7 @@ use Guzzle\Url\Url;
  */
 class Client implements ClientInterface
 {
-    use HasDispatcherTrait;
+    use HasEmitterTrait;
 
     /** @var MessageFactoryInterface Request factory used by the client */
     private $messageFactory;
@@ -82,7 +81,7 @@ class Client implements ClientInterface
      */
     public static function getDefaultUserAgent()
     {
-        return 'Guzzle/' . Version::VERSION . ' curl/' . curl_version()['version'] . ' PHP/' . PHP_VERSION;
+        return 'Guzzle/' . \Guzzle\VERSION . ' curl/' . curl_version()['version'] . ' PHP/' . PHP_VERSION;
     }
 
     public function getConfig($keyOrPath = null)
@@ -105,8 +104,8 @@ class Client implements ClientInterface
         // Merge in default options
         $options = array_replace_recursive($this->config['defaults'], $options);
 
-        // Use a clone of the client's event dispatcher
-        $options['constructor_options'] = ['event_dispatcher' => clone $this->getEventDispatcher()];
+        // Use a clone of the client's emitter
+        $options['constructor_options'] = ['emitter' => clone $this->getEmitter()];
 
         $request = $this->messageFactory->createRequest(
             $method,

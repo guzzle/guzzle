@@ -175,14 +175,14 @@ class MessageFactory implements MessageFactoryInterface
             } elseif (is_int($value)) {
                 $request->getConfig()[Redirect::MAX_REDIRECTS] = $value;
             }
-            $request->getEventDispatcher()->addSubscriber($this->redirectPlugin);
+            $request->getEmitter()->addSubscriber($this->redirectPlugin);
         }
     }
 
     private function visit_exceptions(RequestInterface $request, $value)
     {
         if ($value === true) {
-            $request->getEventDispatcher()->addSubscriber($this->errorPlugin);
+            $request->getEmitter()->addSubscriber($this->errorPlugin);
         }
     }
 
@@ -236,13 +236,13 @@ class MessageFactory implements MessageFactoryInterface
     {
         if ($value === true) {
             static $cookie = null;
-            $request->getEventDispatcher()->addSubscriber($cookie = $cookie ?: new Cookie());
+            $request->getEmitter()->addSubscriber($cookie = $cookie ?: new Cookie());
         } elseif (is_array($value)) {
-            $request->getEventDispatcher()->addSubscriber(
+            $request->getEmitter()->addSubscriber(
                 new Cookie(ArrayCookieJar::fromArray($value, $request->getHost()))
             );
         } elseif ($value instanceof CookieJarInterface) {
-            $request->getEventDispatcher()->addSubscriber(new Cookie($value));
+            $request->getEmitter()->addSubscriber(new Cookie($value));
         } elseif ($value !== false) {
             throw new \InvalidArgumentException('cookies must be an array, true, or a CookieJarInterface object');
         }
@@ -254,12 +254,14 @@ class MessageFactory implements MessageFactoryInterface
             throw new \InvalidArgumentException('events value must be an array');
         }
 
-        $dispatcher = $request->getEventDispatcher();
+        $emitter = $request->getEmitter();
         foreach ($value as $name => $method) {
-            if (is_array($method)) {
-                $dispatcher->addListener($name, $method[0], $method[1]);
+            if (!is_array($method)) {
+                $emitter->on($name, $method);
+            } elseif (isset($method[2]) && $method[2] === true) {
+                $emitter->once($name, $method[0], isset($method[1]) ? $method[1] : 0);
             } else {
-                $dispatcher->addListener($name, $method);
+                $emitter->on($name, $method[0], isset($method[1]) ? $method[1] : 0);
             }
         }
     }
@@ -270,9 +272,9 @@ class MessageFactory implements MessageFactoryInterface
             throw new \InvalidArgumentException('subscribers value must be an array');
         }
 
-        $dispatcher = $request->getEventDispatcher();
+        $emitter = $request->getEmitter();
         foreach ($value as $subscribers) {
-            $dispatcher->addSubscriber($subscribers);
+            $emitter->addSubscriber($subscribers);
         }
     }
 }

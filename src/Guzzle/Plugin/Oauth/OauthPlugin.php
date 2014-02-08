@@ -3,12 +3,12 @@
 namespace Guzzle\Plugin\Oauth;
 
 use Guzzle\Common\Collection;
+use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\RequestBeforeSendEvent;
 use Guzzle\Http\Message\Post\PostBodyInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Url\QueryString;
 use Guzzle\Url\Url;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * OAuth signing plugin
@@ -60,9 +60,7 @@ class OauthPlugin implements EventSubscriberInterface
 
     public static function getSubscribedEvents()
     {
-        return array(
-            'request.before_send' => array('onRequestBeforeSend', -1000)
-        );
+        return ['request.before_send' => ['onRequestBeforeSend', -1000]];
     }
 
     public function onRequestBeforeSend(RequestBeforeSendEvent $event)

@@ -2,9 +2,9 @@
 
 namespace Guzzle\Plugin\Log;
 
+use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\RequestAfterSendEvent;
 use Guzzle\Http\Event\RequestErrorEvent;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 

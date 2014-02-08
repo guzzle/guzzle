@@ -31,13 +31,11 @@ class MockAdapterTest extends \PHPUnit_Framework_TestCase
         $m->setResponse(new Response(404));
         $request = new Request('GET', '/');
         $c = false;
-        $l = function (RequestAfterSendEvent $e) use (&$c, &$l) {
+        $request->getEmitter()->once(RequestEvents::AFTER_SEND, function (RequestAfterSendEvent $e) use (&$c) {
             $c = true;
-            $e->getDispatcher()->removeListener(RequestEvents::AFTER_SEND, $l);
             throw new RequestException('foo', $e->getRequest());
-        };
-        $request->getEventDispatcher()->addListener(RequestEvents::AFTER_SEND, $l);
-        $request->getEventDispatcher()->addListener(RequestEvents::ERROR, function (RequestErrorEvent $e) {
+        });
+        $request->getEmitter()->on(RequestEvents::ERROR, function (RequestErrorEvent $e) {
             $e->intercept(new Response(201));
         });
         $r = $m->send(new Transaction(new Client(), $request));
@@ -53,11 +51,9 @@ class MockAdapterTest extends \PHPUnit_Framework_TestCase
         $m = new MockAdapter();
         $m->setResponse(new Response(404));
         $request = new Request('GET', '/');
-        $l = function (RequestAfterSendEvent $e) use (&$l) {
-            $e->getDispatcher()->removeListener(RequestEvents::AFTER_SEND, $l);
+        $request->getEmitter()->once(RequestEvents::AFTER_SEND, function (RequestAfterSendEvent $e) {
             throw new RequestException('foo', $e->getRequest());
-        };
-        $request->getEventDispatcher()->addListener(RequestEvents::AFTER_SEND, $l);
+        });
         $m->send(new Transaction(new Client(), $request));
     }
 }

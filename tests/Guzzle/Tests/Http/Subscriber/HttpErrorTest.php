@@ -53,7 +53,7 @@ class HttpErrorTest extends \PHPUnit_Framework_TestCase
     public function testFullTransaction()
     {
         $client = new Client();
-        $client->getEventDispatcher()->addSubscriber(new Mock([
+        $client->getEmitter()->addSubscriber(new Mock([
             new Response(403)
         ]));
         $client->get('/');

@@ -2,7 +2,7 @@
 
 namespace Guzzle\Http\Message;
 
-use Guzzle\Common\HasDispatcherTrait;
+use Guzzle\Common\HasEmitterTrait;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Subscriber\PrepareRequestBody;
 use Guzzle\Stream\StreamInterface;
@@ -13,7 +13,7 @@ use Guzzle\Url\Url;
  */
 class Request implements RequestInterface
 {
-    use HasDispatcherTrait, MessageTrait {
+    use HasEmitterTrait, MessageTrait {
         MessageTrait::setBody as applyBody;
     }
 
@@ -34,7 +34,7 @@ class Request implements RequestInterface
      * @param mixed            $body    Body to send with the request
      * @param array            $options Array of options to use with the request
      *                                  - header_factory: Header factory to use with the message
-     *                                  - event_dispatcher: Event dispatcher to use with the request
+     *                                  - emitter: Event emitter to use with the request
      */
     public function __construct($method, $url, $headers = [], $body = null, array $options = [])
     {
@@ -43,8 +43,8 @@ class Request implements RequestInterface
         $this->transferOptions = new Collection();
         $this->setUrl($url);
 
-        if (isset($options['event_dispatcher'])) {
-            $this->eventDispatcher = $options['event_dispatcher'];
+        if (isset($options['emitter'])) {
+            $this->emitter = $options['emitter'];
         }
 
         $this->addPrepareEvent();
@@ -60,8 +60,8 @@ class Request implements RequestInterface
 
     public function __clone()
     {
-        if ($this->eventDispatcher) {
-            $this->eventDispatcher = clone $this->eventDispatcher;
+        if ($this->emitter) {
+            $this->emitter = clone $this->emitter;
         }
         $this->transferOptions = clone $this->transferOptions;
         $this->url = clone $this->url;
@@ -191,7 +191,7 @@ class Request implements RequestInterface
             $subscriber = new PrepareRequestBody();
         }
 
-        $this->getEventDispatcher()->addSubscriber($subscriber);
+        $this->getEmitter()->addSubscriber($subscriber);
     }
 
     private function updateHostHeaderFromUrl()

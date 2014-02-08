@@ -10,7 +10,7 @@ use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
 
 /**
- * @covers Guzzle\Http\Event\RequestEventsTest
+ * @covers Guzzle\Http\Event\RequestEvents
  */
 class RequestEventsTest extends \PHPUnit_Framework_TestCase
 {
@@ -19,7 +19,7 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
         $res = null;
         $t = new Transaction(new Client(), new Request('GET', '/'));
         $t->setResponse(new Response(200));
-        $t->getRequest()->getEventDispatcher()->addListener(RequestEvents::AFTER_SEND, function ($e) use (&$res) {
+        $t->getRequest()->getEmitter()->on(RequestEvents::AFTER_SEND, function ($e) use (&$res) {
             $res = $e;
         });
         RequestEvents::emitAfterSendEvent($t);
@@ -35,11 +35,11 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
         $t = new Transaction(new Client(), $request);
         $t->setResponse(new Response(200));
         $ex = new RequestException('foo', $request);
-        $t->getRequest()->getEventDispatcher()->addListener(RequestEvents::AFTER_SEND, function ($e) use ($ex) {
+        $t->getRequest()->getEmitter()->on(RequestEvents::AFTER_SEND, function ($e) use ($ex) {
             $ex->e = $e;
             throw $ex;
         });
-        $t->getRequest()->getEventDispatcher()->addListener(RequestEvents::ERROR, function ($e) use (&$ex2) {
+        $t->getRequest()->getEmitter()->on(RequestEvents::ERROR, function ($e) use (&$ex2) {
             $ex2 = $e->getException();
             $e->stopPropagation();
         });

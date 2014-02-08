@@ -2,9 +2,9 @@
 
 namespace Guzzle\Tests\Http\Message;
 
+use Guzzle\Common\Emitter;
 use Guzzle\Http\Message\Request;
 use Guzzle\Stream\Stream;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * @covers Guzzle\Http\Message\Request
@@ -26,11 +26,11 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(10, $r->getProtocolVersion());
     }
 
-    public function testConstructorInitializesMessageWithEventDispatcher()
+    public function testConstructorInitializesMessageWithEmitter()
     {
-        $e = new EventDispatcher();
-        $r = new Request('GET', '', [], null, ['event_dispatcher' => $e]);
-        $this->assertSame($r->getEventDispatcher(), $e);
+        $e = new Emitter();
+        $r = new Request('GET', '', [], null, ['emitter' => $e]);
+        $this->assertSame($r->getEmitter(), $e);
     }
 
     public function testCloneIsDeep()
@@ -38,7 +38,7 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $r = new Request('GET', '/test', ['foo' => 'baz'], Stream::factory('foo'));
         $r2 = clone $r;
 
-        $this->assertNotSame($r->getEventDispatcher(), $r2->getEventDispatcher());
+        $this->assertNotSame($r->getEmitter(), $r2->getEmitter());
         $this->assertNotSame($r->getHeader('foo'), $r2->getHeader('foo'));
         $this->assertEquals('foo', $r2->getBody());
 

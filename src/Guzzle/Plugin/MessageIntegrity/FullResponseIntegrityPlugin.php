@@ -2,10 +2,10 @@
 
 namespace Guzzle\Plugin\MessageIntegrity;
 
+use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\RequestAfterSendEvent;
 use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Stream\StreamInterface;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Verifies the message integrity of a response after all of the data has been received

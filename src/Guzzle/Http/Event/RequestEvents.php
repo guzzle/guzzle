@@ -50,7 +50,7 @@ final class RequestEvents
     public static function emitBeforeSendEvent(TransactionInterface $transaction) {
         $request = $transaction->getRequest();
         try {
-            $request->getEventDispatcher()->dispatch(
+            $request->getEmitter()->emit(
                 RequestEvents::BEFORE_SEND,
                 new RequestBeforeSendEvent($transaction)
             );
@@ -74,7 +74,7 @@ final class RequestEvents
     ) {
         $transaction->getResponse()->setEffectiveUrl($transaction->getRequest()->getUrl());
         try {
-            $transaction->getRequest()->getEventDispatcher()->dispatch(
+            $transaction->getRequest()->getEmitter()->emit(
                 RequestEvents::AFTER_SEND,
                 new RequestAfterSendEvent($transaction, $stats)
             );
@@ -107,7 +107,7 @@ final class RequestEvents
         }
 
         // Dispatch an event and allow interception
-        if (!$request->getEventDispatcher()->dispatch(
+        if (!$request->getEmitter()->emit(
             RequestEvents::ERROR,
             new RequestErrorEvent($transaction, $e, $stats)
         )->isPropagationStopped()) {

@@ -66,7 +66,7 @@ class HistoryTest extends \PHPUnit_Framework_TestCase
     {
         $client = new Client(['base_url' => 'http://localhost/']);
         $h = new History();
-        $client->getEventDispatcher()->addSubscriber($h);
+        $client->getEmitter()->addSubscriber($h);
 
         $mock = new Mock(array(
             new Response(301, array('Location' => '/redirect1', 'Content-Length' => 0)),
@@ -74,7 +74,7 @@ class HistoryTest extends \PHPUnit_Framework_TestCase
             new Response(200, array('Content-Length' => '2'), Stream::factory('HI'))
         ));
 
-        $client->getEventDispatcher()->addSubscriber($mock);
+        $client->getEmitter()->addSubscriber($mock);
         $request = $client->createRequest('GET', '/');
         $client->send($request);
         $this->assertEquals(3, count($h));

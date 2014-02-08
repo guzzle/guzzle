@@ -2,9 +2,9 @@
 
 namespace Guzzle\Plugin\MessageIntegrity;
 
+use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\GotResponseHeadersEvent;
 use Guzzle\Http\Message\ResponseInterface;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Verifies the message integrity of a response only after the entire response body has been read

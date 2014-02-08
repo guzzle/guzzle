@@ -75,7 +75,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         $client = new Client(['adapter' => new StreamAdapter(new MessageFactory())]);
         $request = $client->createRequest('GET', self::$server->getUrl());
         $mockResponse = new Response(200);
-        $request->getEventDispatcher()->addListener(
+        $request->getEmitter()->on(
             RequestEvents::ERROR,
             function (RequestErrorEvent $e) use ($mockResponse) {
                 $e->intercept($mockResponse);
@@ -91,7 +91,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
         $client = new Client(['adapter' => new StreamAdapter(new MessageFactory())]);
         $request = $client->createRequest('GET', self::$server->getUrl());
-        $request->getEventDispatcher()->addListener(RequestEvents::AFTER_SEND, function ($e) use (&$ee) {
+        $request->getEmitter()->on(RequestEvents::AFTER_SEND, function ($e) use (&$ee) {
             $ee = $e;
         });
         $client->send($request);
