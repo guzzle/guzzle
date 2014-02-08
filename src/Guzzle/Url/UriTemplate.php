@@ -9,16 +9,11 @@ namespace Guzzle\Url;
  */
 class UriTemplate
 {
-    const DEFAULT_PATTERN = '/\{([^\}]+)\}/';
-
     /** @var string URI template */
     private $template;
 
     /** @var array Variables to use in the template expansion */
     private $variables;
-
-    /** @var string Regex used to parse expressions */
-    private $regex = self::DEFAULT_PATTERN;
 
     /** @var array Hash for quick operator lookups */
     private static $operatorHash = array(
@@ -38,24 +33,14 @@ class UriTemplate
 
     public function expand($template, array $variables)
     {
-        if ($this->regex == self::DEFAULT_PATTERN && false === strpos($template, '{')) {
+        if (false === strpos($template, '{')) {
             return $template;
         }
 
         $this->template = $template;
         $this->variables = $variables;
 
-        return preg_replace_callback($this->regex, array($this, 'expandMatch'), $this->template);
-    }
-
-    /**
-     * Set the regex patten used to expand URI templates
-     *
-     * @param string $regexPattern
-     */
-    public function setRegex($regexPattern)
-    {
-        $this->regex = $regexPattern;
+        return preg_replace_callback('/\{([^\}]+)\}/', [$this, 'expandMatch'], $this->template);
     }
 
     /**
@@ -229,7 +214,12 @@ class UriTemplate
     }
 
     /**
-     * Determines if an array is associative
+     * Determines if an array is associative.
+     *
+     * This makes the assumption that input arrays are sequences or hashes.
+     * This assumption is a tradeoff for accuracy in favor of speed, but it
+     * should work in almost every case where input is supplied for a URI
+     * template.
      *
      * @param array $array Array to check
      *
@@ -237,7 +227,7 @@ class UriTemplate
      */
     private function isAssoc(array $array)
     {
-        return (bool) count(array_filter(array_keys($array), 'is_string'));
+        return $array && array_keys($array)[0] !== 0;
     }
 
     /**
