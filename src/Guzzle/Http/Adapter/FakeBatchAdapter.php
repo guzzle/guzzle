@@ -3,7 +3,6 @@
 namespace Guzzle\Http\Adapter;
 
 use Guzzle\Http\Exception\RequestException;
-use Guzzle\Http\Exception\BatchException;
 
 /**
  * Decorates a regular adapter and creates a batch adapter that sends multiple

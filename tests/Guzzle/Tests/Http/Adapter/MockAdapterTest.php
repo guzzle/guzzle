@@ -4,6 +4,7 @@ namespace Guzzle\Tests\Http\Adapter;
 
 use Guzzle\Http\Adapter\MockAdapter;
 use Guzzle\Http\Adapter\Transaction;
+use Guzzle\Http\Adapter\TransactionInterface;
 use Guzzle\Http\Client;
 use Guzzle\Http\Event\RequestAfterSendEvent;
 use Guzzle\Http\Event\RequestErrorEvent;
@@ -23,6 +24,26 @@ class MockAdapterTest extends \PHPUnit_Framework_TestCase
         $m = new MockAdapter();
         $m->setResponse($response);
         $this->assertSame($response, $m->send(new Transaction(new Client(), new Request('GET', '/'))));
+    }
+
+    public function testMocksWithCallable()
+    {
+        $response = new Response(200);
+        $r = function (TransactionInterface $trans) use ($response) {
+            return $response;
+        };
+        $m = new MockAdapter($r);
+        $this->assertSame($response, $m->send(new Transaction(new Client(), new Request('GET', '/'))));
+    }
+
+    /**
+     * @expectedException \RuntimeException
+     */
+    public function testValidatesResponses()
+    {
+        $m = new MockAdapter();
+        $m->setResponse('foo');
+        $m->send(new Transaction(new Client(), new Request('GET', '/')));
     }
 
     public function testHandlesErrors()
