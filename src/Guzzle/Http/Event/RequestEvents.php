@@ -54,7 +54,7 @@ final class RequestEvents
                 RequestEvents::BEFORE_SEND,
                 new RequestBeforeSendEvent($transaction)
             );
-        } catch (RequestException $e) {
+        } catch (\Exception $e) {
             self::emitErrorEvent($transaction, $e);
         }
     }

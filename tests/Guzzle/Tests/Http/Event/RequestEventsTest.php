@@ -4,6 +4,8 @@ namespace Guzzle\Tests\Http\Event;
 
 use Guzzle\Http\Client;
 use Guzzle\Http\Adapter\Transaction;
+use Guzzle\Http\Event\RequestBeforeSendEvent;
+use Guzzle\Http\Event\RequestErrorEvent;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\Request;
@@ -45,5 +47,64 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
         });
         RequestEvents::emitAfterSendEvent($t);
         $this->assertSame($ex, $ex2);
+    }
+
+    public function testBeforeSendEmitsErrorEvent()
+    {
+        $ex = new \Exception('Foo');
+        $client = new Client();
+        $request = new Request('GET', '/');
+        $response = new Response(200);
+        $t = new Transaction($client, $request);
+        $beforeCalled = $errCalled = 0;
+
+        $request->getEmitter()->on(
+            RequestEvents::BEFORE_SEND,
+            function (RequestBeforeSendEvent $e) use ($request, $client, &$beforeCalled, $ex) {
+                $this->assertSame($request, $e->getRequest());
+                $this->assertSame($client, $e->getClient());
+                $beforeCalled++;
+                throw $ex;
+            }
+        );
+
+        $request->getEmitter()->on(
+            RequestEvents::ERROR,
+            function (RequestErrorEvent $e) use (&$errCalled, $response, $ex) {
+                $errCalled++;
+                $this->assertInstanceOf('Guzzle\Http\Exception\RequestException', $e->getException());
+                $this->assertSame($ex, $e->getException()->getPrevious());
+                $e->intercept($response);
+            }
+        );
+
+        RequestEvents::emitBeforeSendEvent($t);
+        $this->assertEquals(1, $beforeCalled);
+        $this->assertEquals(1, $errCalled);
+        $this->assertSame($response, $t->getResponse());
+    }
+
+    public function testThrowsUnInterceptedErrors()
+    {
+        $ex = new \Exception('Foo');
+        $client = new Client();
+        $request = new Request('GET', '/');
+        $t = new Transaction($client, $request);
+        $errCalled = 0;
+
+        $request->getEmitter()->on(RequestEvents::BEFORE_SEND, function (RequestBeforeSendEvent $e) use ($ex) {
+            throw $ex;
+        });
+
+        $request->getEmitter()->on(RequestEvents::ERROR, function (RequestErrorEvent $e) use (&$errCalled) {
+            $errCalled++;
+        });
+
+        try {
+            RequestEvents::emitBeforeSendEvent($t);
+            $this->fail('Did not throw');
+        } catch (RequestException $e) {
+            $this->assertEquals(1, $errCalled);
+        }
     }
 }
