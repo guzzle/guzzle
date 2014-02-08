@@ -118,7 +118,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     public function testCanDisableRedirects()
     {
         $request = (new MessageFactory)->createRequest('GET', '/', [], null, ['allow_redirects' => false]);
-        $this->assertEmpty($request->getEmitter()->getListeners(RequestEvents::AFTER_SEND));
+        $this->assertEmpty($request->getEmitter()->listeners(RequestEvents::AFTER_SEND));
     }
 
     public function testCanEnableStrictRedirects()
@@ -137,7 +137,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     {
         $request = (new MessageFactory)->createRequest('GET', 'http://www.test.com/', [], null, ['cookies' => ['Foo' => 'Bar']]);
         $cookies = null;
-        foreach ($request->getEmitter()->getListeners(RequestEvents::BEFORE_SEND) as $l) {
+        foreach ($request->getEmitter()->listeners(RequestEvents::BEFORE_SEND) as $l) {
             if ($l[0] instanceof Cookie) {
                 $cookies = $l[0];
                 break;
@@ -156,7 +156,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $request1 = $factory->createRequest('GET', '/', [], null, ['cookies' => true]);
         $request2 = $factory->createRequest('GET', '/', [], null, ['cookies' => true]);
         $listeners = function ($r) {
-            return array_filter($r->getEmitter()->getListeners(RequestEvents::BEFORE_SEND), function ($l) {
+            return array_filter($r->getEmitter()->listeners(RequestEvents::BEFORE_SEND), function ($l) {
                 return $l[0] instanceof Cookie;
             });
         };
@@ -167,7 +167,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     {
         $jar = new ArrayCookieJar();
         $request = (new MessageFactory)->createRequest('GET', '/', [], null, ['cookies' => $jar]);
-        foreach ($request->getEmitter()->getListeners(RequestEvents::BEFORE_SEND) as $l) {
+        foreach ($request->getEmitter()->listeners(RequestEvents::BEFORE_SEND) as $l) {
             if ($l[0] instanceof Cookie) {
                 $this->assertSame($jar, $l[0]->getCookieJar());
             }

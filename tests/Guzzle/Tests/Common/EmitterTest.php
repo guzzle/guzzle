@@ -35,16 +35,16 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
 
     public function testInitialState()
     {
-        $this->assertEquals(array(), $this->emitter->getListeners());
+        $this->assertEquals(array(), $this->emitter->listeners());
     }
 
     public function testAddListener()
     {
         $this->emitter->on('pre.foo', array($this->listener, 'preFoo'));
         $this->emitter->on('post.foo', array($this->listener, 'postFoo'));
-        $this->assertCount(1, $this->emitter->getListeners(self::preFoo));
-        $this->assertCount(1, $this->emitter->getListeners(self::postFoo));
-        $this->assertCount(2, $this->emitter->getListeners());
+        $this->assertCount(1, $this->emitter->listeners(self::preFoo));
+        $this->assertCount(1, $this->emitter->listeners(self::postFoo));
+        $this->assertCount(2, $this->emitter->listeners());
     }
 
     public function testGetListenersSortsByPriority()
@@ -66,7 +66,7 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
             array($listener1, 'preFoo'),
         );
 
-        $this->assertSame($expected, $this->emitter->getListeners('pre.foo'));
+        $this->assertSame($expected, $this->emitter->listeners('pre.foo'));
     }
 
     public function testGetAllListenersSortsByPriority()
@@ -90,7 +90,7 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
             'post.foo' => [[$listener6, 'preFoo'], [$listener5, 'preFoo'], [$listener4, 'preFoo']],
         ];
 
-        $this->assertSame($expected, $this->emitter->getListeners());
+        $this->assertSame($expected, $this->emitter->listeners());
     }
 
     public function testDispatch()
@@ -154,9 +154,9 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
     public function testRemoveListener()
     {
         $this->emitter->on('pre.bar', [$this->listener, 'preFoo']);
-        $this->assertNotEmpty($this->emitter->getListeners(self::preBar));
+        $this->assertNotEmpty($this->emitter->listeners(self::preBar));
         $this->emitter->removeListener('pre.bar', [$this->listener, 'preFoo']);
-        $this->assertEmpty($this->emitter->getListeners(self::preBar));
+        $this->assertEmpty($this->emitter->listeners(self::preBar));
         $this->emitter->removeListener('notExists', [$this->listener, 'preFoo']);
     }
 
@@ -164,8 +164,8 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
     {
         $eventSubscriber = new TestEventSubscriber();
         $this->emitter->addSubscriber($eventSubscriber);
-        $this->assertNotEmpty($this->emitter->getListeners(self::preFoo));
-        $this->assertNotEmpty($this->emitter->getListeners(self::postFoo));
+        $this->assertNotEmpty($this->emitter->listeners(self::preFoo));
+        $this->assertNotEmpty($this->emitter->listeners(self::postFoo));
     }
 
     public function testAddSubscriberWithPriorities()
@@ -176,8 +176,8 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
         $eventSubscriber = new TestEventSubscriberWithPriorities();
         $this->emitter->addSubscriber($eventSubscriber);
 
-        $listeners = $this->emitter->getListeners('pre.foo');
-        $this->assertNotEmpty($this->emitter->getListeners(self::preFoo));
+        $listeners = $this->emitter->listeners('pre.foo');
+        $this->assertNotEmpty($this->emitter->listeners(self::preFoo));
         $this->assertCount(2, $listeners);
         $this->assertInstanceOf('Guzzle\Tests\Common\TestEventSubscriberWithPriorities', $listeners[0][0]);
     }
@@ -186,22 +186,22 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
     {
         $eventSubscriber = new TestEventSubscriber();
         $this->emitter->addSubscriber($eventSubscriber);
-        $this->assertNotEmpty($this->emitter->getListeners(self::preFoo));
-        $this->assertNotEmpty($this->emitter->getListeners(self::postFoo));
+        $this->assertNotEmpty($this->emitter->listeners(self::preFoo));
+        $this->assertNotEmpty($this->emitter->listeners(self::postFoo));
         $this->emitter->removeSubscriber($eventSubscriber);
-        $this->assertEmpty($this->emitter->getListeners(self::preFoo));
-        $this->assertEmpty($this->emitter->getListeners(self::postFoo));
+        $this->assertEmpty($this->emitter->listeners(self::preFoo));
+        $this->assertEmpty($this->emitter->listeners(self::postFoo));
     }
 
     public function testRemoveSubscriberWithPriorities()
     {
         $eventSubscriber = new TestEventSubscriberWithPriorities();
         $this->emitter->addSubscriber($eventSubscriber);
-        $this->assertNotEmpty($this->emitter->getListeners(self::preFoo));
-        $this->assertNotEmpty($this->emitter->getListeners(self::postFoo));
+        $this->assertNotEmpty($this->emitter->listeners(self::preFoo));
+        $this->assertNotEmpty($this->emitter->listeners(self::postFoo));
         $this->emitter->removeSubscriber($eventSubscriber);
-        $this->assertEmpty($this->emitter->getListeners(self::preFoo));
-        $this->assertEmpty($this->emitter->getListeners(self::postFoo));
+        $this->assertEmpty($this->emitter->listeners(self::preFoo));
+        $this->assertEmpty($this->emitter->listeners(self::postFoo));
     }
 
     public function testEventReceivesEventNameAsArgument()
@@ -226,22 +226,22 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
         $dispatcher = new Emitter();
         $dispatcher->on('bug.62976', new CallableClass());
         $dispatcher->removeListener('bug.62976', function () {});
-        $this->assertNotEmpty($dispatcher->getListeners('bug.62976'));
+        $this->assertNotEmpty($dispatcher->listeners('bug.62976'));
     }
 
     public function testRegistersEventsOnce()
     {
         $this->emitter->once('pre.foo', array($this->listener, 'preFoo'));
         $this->emitter->on('pre.foo', array($this->listener, 'preFoo'));
-        $this->assertCount(2, $this->emitter->getListeners(self::preFoo));
+        $this->assertCount(2, $this->emitter->listeners(self::preFoo));
         $this->emitter->emit(self::preFoo, new Event());
         $this->assertTrue($this->listener->preFooInvoked);
-        $this->assertCount(1, $this->emitter->getListeners(self::preFoo));
+        $this->assertCount(1, $this->emitter->listeners(self::preFoo));
     }
 
     public function testReturnsEmptyArrayForNonExistentEvent()
     {
-        $this->assertEquals([], $this->emitter->getListeners('doesnotexist'));
+        $this->assertEquals([], $this->emitter->listeners('doesnotexist'));
     }
 }
 

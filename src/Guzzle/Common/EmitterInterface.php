@@ -42,7 +42,7 @@ interface EmitterInterface
      *   The format of the array when retrieving a specific event list is an array of callables.
      *   The format of the array when retrieving all listeners is an associative array of arrays of callables.
      */
-    public function getListeners($eventName = null);
+    public function listeners($eventName = null);
 
     /**
      * Emits an event to all registered listeners.

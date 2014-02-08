@@ -53,13 +53,13 @@ class Emitter implements EmitterInterface
         }
     }
 
-    public function getListeners($eventName = null)
+    public function listeners($eventName = null)
     {
         // Return all events in a sorted priority order
         if ($eventName === null) {
             foreach (array_keys($this->listeners) as $eventName) {
                 if (!isset($this->sorted[$eventName])) {
-                    $this->getListeners($eventName);
+                    $this->listeners($eventName);
                 }
             }
             return $this->sorted;
@@ -84,7 +84,7 @@ class Emitter implements EmitterInterface
     public function emit($eventName, EventInterface $event)
     {
         if (isset($this->listeners[$eventName])) {
-            foreach ($this->getListeners($eventName) as $listener) {
+            foreach ($this->listeners($eventName) as $listener) {
                 call_user_func($listener, $event, $eventName);
                 if ($event->isPropagationStopped()) {
                     break;
