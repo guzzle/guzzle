@@ -58,13 +58,13 @@ class Client implements ClientInterface
      *     ]);
      *
      * @param array $config Client configuration settings
-     *                      - base_url: Base URL of the client that is merged into relative URLs. Can be a string or
-     *                                  an array that contains a URI template followed by an associative array of
-     *                                  expansion variables to inject into the URI template.
-     *                      - adapter: Adapter used to transfer requests
-     *                      - batch_adapter: Adapter used to transfer requests in parallel
-     *                      - message_factory: Factory used to create request and response object
-     *                      - defaults: Default request options to apply to each request
+     *     - base_url: Base URL of the client that is merged into relative URLs. Can be a string or
+     *       an array that contains a URI template followed by an associative array of
+     *       expansion variables to inject into the URI template.
+     *     - adapter: Adapter used to transfer requests
+     *     - batch_adapter: Adapter used to transfer requests in parallel
+     *     - message_factory: Factory used to create request and response object
+     *     - defaults: Default request options to apply to each request
      */
     public function __construct(array $config = [])
     {
