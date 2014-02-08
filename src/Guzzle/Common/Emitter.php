@@ -34,7 +34,7 @@ class Emitter implements EmitterInterface
     {
         $onceListener = function (Event $event, $eventName) use (&$onceListener, $eventName, $listener, $priority) {
             $this->removeListener($eventName, $onceListener);
-            call_user_func($listener, $event, $eventName);
+            $listener($event, $eventName);
         };
 
         $this->on($eventName, $onceListener, $priority);
@@ -85,7 +85,7 @@ class Emitter implements EmitterInterface
     {
         if (isset($this->listeners[$eventName])) {
             foreach ($this->listeners($eventName) as $listener) {
-                call_user_func($listener, $event, $eventName);
+                $listener($event, $eventName);
                 if ($event->isPropagationStopped()) {
                     break;
                 }

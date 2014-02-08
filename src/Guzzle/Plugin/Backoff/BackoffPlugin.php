@@ -152,7 +152,7 @@ class BackoffPlugin implements EventSubscriberInterface
     {
         return function ($retries, AbstractTransferStatsEvent $event) use ($filters) {
             foreach ($filters as $filter) {
-                if (call_user_func($filter, $retries, $event)) {
+                if ($filter($retries, $event)) {
                     return true;
                 }
             }
