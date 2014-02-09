@@ -13,12 +13,12 @@ class MemoryCacheAdapter implements CacheAdapterInterface
             return false;
         }
         
-        // fount end expiration not reached
+        // cache found and expiration not reached
         if(!$this->_cache[$id]['expire'] || time() < $this->_cache[$id]['expire']) {
             return $this->_cache[$id]['value'];
         }
         
-        // expiration reached - return not found
+        // expiration reached - return false
         unset($this->_cache[$id]);
         return false;
     }

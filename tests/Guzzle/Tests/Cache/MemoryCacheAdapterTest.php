@@ -4,6 +4,9 @@ namespace Guzzle\Tests\Cache;
 
 use Guzzle\Cache\MemoryCacheAdapter;
 
+/**
+ * @covers Guzzle\Cache\MemoryCacheAdapter
+ */
 class MemoryCacheAdapterTest extends \Guzzle\Tests\GuzzleTestCase
 {
     private $_cache = array();
