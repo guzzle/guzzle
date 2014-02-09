@@ -123,7 +123,7 @@ interface ClientInterface extends HasEmitterInterface
      * @param array           $options  Associative array of options
      *     - parallel: (int) Max number of requests to send in parallel
      *     - before: (callable) Receives a RequestBeforeSendEvent
-     *     - error: (callable) Receives a RequestAfterSendEvent
+     *     - after: (callable) Receives a RequestAfterSendEvent
      *     - error: (callable) Receives a RequestErrorEvent
      */
     public function sendAll($requests, array $options = []);
