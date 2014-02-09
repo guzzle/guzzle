@@ -34,7 +34,7 @@ use Guzzle\Http\Message\ResponseInterface;
 class MessageFormatter
 {
     const DEFAULT_FORMAT = "{hostname} {req_header_User-Agent} - [{ts}] \"{method} {resource} {protocol}/{version}\" {code} {res_header_Content-Length}";
-    const DEBUG_FORMAT = ">>>>>>>>\n{request}\n<<<<<<<<\n{response}\n--------\n{curl_stderr}";
+    const DEBUG_FORMAT = ">>>>>>>>\n{request}\n<<<<<<<<\n{response}\n--------\n{error}";
     const SHORT_FORMAT = '[{ts}] "{method} {resource} {protocol}/{version}" {code}';
 
     /** @var string Template used to format log messages */

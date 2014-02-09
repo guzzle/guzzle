@@ -180,17 +180,26 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
 
         $request = $transaction->getRequest();
         try {
-            RequestEvents::emitErrorEvent($transaction, new RequestException(
-                sprintf(
-                    '[curl] (#%s) %s [url] %s',
-                    $curl['result'],
-                    function_exists('curl_strerror')
-                        ? curl_strerror($curl['result'])
-                        : self::ERROR_STR,
-                    $request->getUrl()
+            // Send curl stats along if they are available
+            $stats = ['curl_result' => $curl['result']];
+            if (isset($curl['handle'])) {
+                $stats = curl_getinfo($curl['handle']) + $stats;
+            }
+            RequestEvents::emitErrorEvent(
+                $transaction,
+                new RequestException(
+                    sprintf(
+                        '[curl] (#%s) %s [url] %s',
+                        $curl['result'],
+                        function_exists('curl_strerror')
+                            ? curl_strerror($curl['result'])
+                            : self::ERROR_STR,
+                        $request->getUrl()
+                    ),
+                    $request
                 ),
-                $request
-            ));
+                $stats
+            );
         } catch (RequestException $e) {
             $this->throwException($e, $context);
         }
