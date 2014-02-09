@@ -276,7 +276,6 @@ class PostBody implements PostBodyInterface
      */
     private function mutate()
     {
-        $this->size = null;
         $this->body = null;
     }
 }
