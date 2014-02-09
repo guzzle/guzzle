@@ -146,7 +146,6 @@ interface ClientInterface extends HasEmitterInterface
      * @param string|int $keyOrPath Path at which to change a configuration value. This path syntax follows the same
      *                              path syntax specified in {@see getConfig}.
      * @param mixed $value Value to set
-     * @return mixed
      */
     public function setConfig($keyOrPath, $value);
 }
