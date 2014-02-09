@@ -27,6 +27,16 @@ class StreamAdapter implements AdapterInterface
 
     public function send(TransactionInterface $transaction)
     {
+        // HTTP/1.1 streams using the PHP stream wrapper require a
+        // Connection: close header. Setting here so that it is added before
+        // emitting the request.before_send event.
+        $request = $transaction->getRequest();
+        if ($request->getProtocolVersion() == '1.1' &&
+            !$request->hasHeader('Connection')
+        ) {
+            $transaction->getRequest()->setHeader('Connection', 'close');
+        }
+
         RequestEvents::emitBeforeSendEvent($transaction);
         if (!$transaction->getResponse()) {
             $this->createResponse($transaction);
@@ -159,7 +169,7 @@ class StreamAdapter implements AdapterInterface
         $options = ['http' => [
             'method' => $request->getMethod(),
             'header' => trim($headers),
-            'protocol_version' => '1.0',
+            'protocol_version' => $request->getProtocolVersion(),
             'ignore_errors' => true,
             'follow_location' => 0,
             'content' => (string) $request->getBody()
