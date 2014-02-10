@@ -1,6 +1,186 @@
 Guzzle Upgrade Guide
 ====================
 
+3.x to 4.0
+----------
+
+## Overarching changes:
+
+- Now required PHP 5.4 or greater.
+- No longer requires cURL to send requests.
+- Guzzle no longer wraps every exception it throws. Only exceptions that are recoverable are now wrapped by Guzzle.
+- Various namespaces have been removed or renamed.
+- No longer requiring the Symfony EventDispatcher. A custom event dispatcher based on the Symfony EventDispatcher is
+  now utilized in `Guzzle\Common\EmitterInterface` (resulting in significant speed and functionality improvements).
+- No longer breaking out the `Common`, `Http`, or `Stream` namespaces into subcomponents. These are now essentially
+  "Guzzle", and everything else will be considered an extension.
+
+Changes per Guzzle 3.x namespace are described below.
+
+## Batch
+
+The `Guzzle\Batch` namespace has been removed. This is best left to third-parties to implement on top of Guzzle's
+core HTTP library.
+
+## Cache
+
+The `Guzzle\Cache` namespace has been removed. (Todo: No suitable replacement has been implemented yet, but hoping to
+utilize a PSR cache interface).
+
+## Common
+
+- Removed all of the wrapped exceptions. It's better to use the standard PHP library for unrecoverable exceptions.
+- `FromConfigInterface` has been removed.
+- `Guzzle\Common\Version` has been removed. Be sure to require the `functions.php` file and then you can use the
+  `Guzzle\VERSION` constant.
+
+### Collection
+
+- `getAll` has been removed. Use `toArray` to convert a collection to an array.
+- `inject` has been removed.
+- `keySearch` has been removed.
+- `getPath` no longer supports wildcard expressions. Use something better like JMESPath for this.
+- `setPath` now supports appending to an existing array via the `[]` notation.
+
+### Events
+
+Guzzle no longer requires Symfony's EventDispatcher component. Guzzle now uses `Guzzle\Common\Emitter`.
+
+- `Symfony\Component\EventDispatcher\EventDispatcherInterface` is replaced by `Guzzle\Common\EmitterInterface`.
+- `Symfony\Component\EventDispatcher\EventDispatcher` is replaced by `Guzzle\Common\Emitter`.
+- `Symfony\Component\EventDispatcher\Event` is replaced by `Guzzle\Common\Event`, and Guzzle now has an EventInterface
+  in `Guzzle\Common\EventInterface`.
+- `AbstractHasDispatcher` has moved to a trait, `HasEmitterTrait`, and `HasDispatcherInterface` has moved to
+  `HasEmitterInterface`. Retrieving the event emitter of a request, client, etc now uses the `getEmitter` method
+  rather than the `getDispatcher` method.
+
+#### Emitter
+
+- Use the `once()` method to add a listener that automatically removes itself the first time it is invoked.
+- Use the `listeners` method to retrieve a list of event listeners rather than the `getListeners` method.
+- Use `emit` instead of `dispatch` to emit an event from an emitter.
+
+```php
+// 3.x
+$request->getEventDispatcher()->addSubscriber(new Mock());
+// 4.x
+$request->getEmitter()->addSubscriber(new Mock());
+```
+
+Use the `on()` method to add a listener rather than the `addListener` method.
+
+```php
+// 3.x
+$request->getEventDispatcher()->addListener('foo', function (Event $event) { /* ... */ } );
+// 4.x
+$request->getEmitter()->on('foo', function (Event $event, $name) { /* ... */ } );
+```
+
+## Http
+
+TODO
+
+## Inflection
+
+The `Guzzle\Inflection` namespace has been removed. This is not a core concern of Guzzle.
+
+## Iterator
+
+The `Guzzle\Iterator` namespace has been removed.
+
+- `Guzzle\Iterator\AppendIterator`, `Guzzle\Iterator\ChunkedIterator`, and `Guzzle\Iterator\MethodProxyIterator` are
+  nice, but not a core requirement of Guzzle itself..
+- `Guzzle\Iterator\FilterIterator` is no longer needed because an equivalent class is shipped with PHP 5.4.
+- `Guzzle\Iterator\MapIterator` is not really needed when using PHP 5.5 because it's easier to just wrap an iterator
+  in a generator that maps values.
+
+## Log
+
+The `Guzzle\Log` namespace has been removed. Guzzle now relies on `Psr\Log\LoggerInterface` for all logging.
+The MessageFormatter class has been moved to `Guzzle\Plugin\Log\MessageFormatter`.
+
+## Parser
+
+The `Guzzle\Parser` namespace has been removed. This was previously used to parse cookies, messages, URI templates,
+and URLs.
+
+- Cookie: Cookie parsing logic has been moved to `Guzzle\Http\Subscriber\CookieJar\SetCookie::fromString`. Extending
+  cookie parsing is no longer possible (and was never really needed).
+- Message: Message parsing logic for both requests and responses has been moved to
+  `Guzzle\Http\Message\MessageFactory::fromMessage`. Message parsing is only used in debugging or deserializing
+  messages, so it doesn't make sense for Guzzle as a library to add this level of complexity to parsing messages.
+- UriTemplate: URI template parsing has been moved to `Guzzle\Url\UriTemplate`. The Guzzle library will automatically
+  use the PECL URI template library if it is installed.
+- Url: URL parsing is now performed in `Guzzle\Http\Url\Url::fromString`. If custom URL parsing is necessary, then
+  developers are free to subclass `Guzzle\Url\Url`.
+
+## Plugin
+
+The `Guzzle\Plugin` namespace has been renamed to `Guzzle\Http\Subscriber`. Several plugins are shipping with the core
+Guzzle library under `Guzzle\Http\Subscriber`:
+
+- `Guzzle\Http\Subscriber\Cookie`: Replaces the old CookiePlugin. Cookie jar code has moved to
+  `Guzzle\Http\Subscriber\Cookie\CookieJar`.
+- `Guzzle\Http\Subscriber\History`: Replaces the old HistoryPlugin.
+- `Guzzle\Http\Subscriber\HttpError`: Throws errors when a bad HTTP response is received.
+- `Guzzle\Http\Subscriber\Mock`: Replaces the old MockPlugin.
+- `Guzzle\Http\Subscriber\PrepareRequestBody`: Prepares the body of a request just before sending.
+- `Guzzle\Http\Subscriber\Redirect`: Replaces the RedirectPlugin.
+
+The following plugins have been removed (third-parties are free to re-implement these if needed):
+
+- `Guzzle\Plugin\Async` has been removed.
+- `Guzzle\Plugin\CurlAuth` has been removed.
+- `Guzzle\Plugin\ErrorResponse\ErrorResponsePlugin` has been removed.
+
+The following plugins are not part of the core Guzzle package, but are provided in separate repositories:
+
+- `Guzzle\Plugin\BackoffPlugin` has been renamed to `Guzzle\Subscriber\Retry`. This plugin has been rewritten to be
+  much simpler to build custom retry policies using simple functions rather than various chained classes.
+- `Guzzle\Plugin\Cache\CachePlugin` has moved to `Guzzle\Http\Subscriber\Cache\CacheSubscriber`.
+- `Guzzle\Plugin\Log\LogPlugin` has moved to `Guzzle\Http\Subscriber\Log\LogSubscriber`.
+- `Guzzle\Plugin\Md5\Md5Plugin` has moved to `Guzzle\Http\Subscriber\MessageIntegrity\MessageIntegritySubscriber`.
+- `Guzzle\Plugin\Mock\MockPlugin` has moved to `Guzzle\Http\Subscriber\Mock\MockSubscriber`.
+- `Guzzle\Plugin\Oauth\OauthPlugin` has moved to `Guzzle\Http\Subscriber\Oauth\OauthSubscriber`.
+
+## Service
+
+TODO
+
+## Stream
+
+`Guzzle\Stream\StreamInterface` has been given a large update to cleanly take on the responsibilities of
+`Guzzle\Http\EntityBody` and `Guzzle\Http\EntityBodyInterface` now that they have been removed. The number of methods
+implemented by the `StreamInterface` has been drastically reduced to allow developers to more easily extend and
+decorate stream behavior.
+
+## Removed methods from StreamInterface
+
+- `getStream` and `setStream` have been removed to better encapsulate streams.
+- `getMetadata` and `setMetadata` have been removed in favor of `Guzzle\Stream\MetadataStreamInterface`.
+- `getWrapper`, `getWrapperData`, `getStreamType`, and `getUri` have all been removed. This data is accessible when
+   using streams that implement `Guzzle\Stream\MetadataStreamInterface`.
+- `rewind` has been removed. Use `seek(0)` for a similar behavior.
+
+## Renamed methods
+
+- `detachStream` has been renamed to `detach`.
+- `feof` has been renamed to `eof`.
+- `ftell` has been renamed to `tell`.
+- `readLine` has moved from an instance method to a static class method of `Guzzle\Stream\Stream`.
+
+## Metadata streams
+
+`Guzzle\Stream\MetadataStreamInterface` has been added to denote streams that contain additonal metadata accessible
+via `getMetadata()`. `Guzzle\Stream\StreamInterface::getMetadata` and `Guzzle\Stream\StreamInterface::setMetadata`
+have been removed.
+
+## SteamRequestFactory
+
+The entire concept of the StreamRequestFactory has been removed. The way this was used in Guzzle 3 broke the actual
+interface of sending streaming requests (instead of getting back a Response, you got a StreamInterface). Streeaming
+PHP requests are now implemented throught the `Guzzle\Http\Adapter\StreamAdapter`.
+
 3.6 to 3.7
 ----------
 
@@ -145,7 +325,7 @@ HeaderInterface (e.g. toArray(), getAll(), etc).
   directly via interfaces
 * Removed the injecting of a request object onto a response object. The methods to get and set a request still exist
   but are a no-op until removed.
-* Most classes that used to require a ``Guzzle\Service\Command\CommandInterface` typehint now request a
+* Most classes that used to require a `Guzzle\Service\Command\CommandInterface` typehint now request a
   `Guzzle\Service\Command\ArrayCommandInterface`.
 * Added `Guzzle\Http\Message\RequestInterface::startResponse()` to the RequestInterface to handle injecting a response
   on a request while the request is still being transferred
