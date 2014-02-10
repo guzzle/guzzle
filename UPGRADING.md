@@ -213,7 +213,7 @@ $data = $response->getBody()->read(1024);
 
 The `configureRedirects()` method has been removed in favor of a `allow_redirects` request option.
 
-``php
+```php
 // Standard redirects with a default of a max of 5 redirects
 $request = $client->createRequest('GET', '/', [], null, ['allow_redirects' => true]);
 
