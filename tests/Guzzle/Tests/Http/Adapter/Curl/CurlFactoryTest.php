@@ -262,6 +262,14 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         curl_close($f->createHandle(new Transaction(new Client(), $request), new MessageFactory()));
         $this->assertEquals('foo', $f->last[CURLOPT_USERAGENT]);
     }
+
+    public function testStripsFragment()
+    {
+        $request = new Request('GET', self::$server->getUrl() . '#foo');
+        $f = new IntroFactory();
+        curl_close($f->createHandle(new Transaction(new Client(), $request), new MessageFactory()));
+        $this->assertEquals(self::$server->getUrl(), $f->last[CURLOPT_URL]);
+    }
 }
 
 class IntroFactory extends CurlFactory
