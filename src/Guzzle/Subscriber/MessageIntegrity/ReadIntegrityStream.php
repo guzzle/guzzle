@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Plugin\MessageIntegrity;
+namespace Guzzle\Subscriber\MessageIntegrity;
 
 use Guzzle\Stream\StreamDecoratorTrait;
 use Guzzle\Stream\StreamInterface;

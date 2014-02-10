@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Plugin\MessageIntegrity;
+namespace Guzzle\Subscriber\MessageIntegrity;
 
 use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\RequestBeforeSendEvent;
@@ -9,7 +9,7 @@ use Guzzle\Http\Event\RequestEvents;
 /**
  * Verifies the message integrity of a response after all of the data has been received
  */
-class MessageIntegrityPlugin implements EventSubscriberInterface
+class MessageIntegritySubscriber implements EventSubscriberInterface
 {
     private $full;
     private $streaming;
@@ -17,7 +17,7 @@ class MessageIntegrityPlugin implements EventSubscriberInterface
     /**
      * Creates a new plugin that validates the Content-MD5 of responses
      *
-     * @return MessageIntegrityPlugin
+     * @return MessageIntegritySubscriber
      */
     public static function createForContentMd5()
     {
@@ -31,8 +31,8 @@ class MessageIntegrityPlugin implements EventSubscriberInterface
      */
     public function __construct($header, HashInterface $hash, $sizeCutoff = null)
     {
-        $this->full = new FullResponseIntegrityPlugin($header, $hash, $sizeCutoff);
-        $this->streaming = new StreamingResponseIntegrityPlugin($header, $hash);
+        $this->full = new FullResponseIntegritySubscriber($header, $hash, $sizeCutoff);
+        $this->streaming = new StreamingResponseIntegritySubscriber($header, $hash);
     }
 
     public static function getSubscribedEvents()

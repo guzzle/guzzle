@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Plugin\Cache;
+namespace Guzzle\Subscriber\Cache;
 
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;

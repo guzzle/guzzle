@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Plugin\Oauth;
+namespace Guzzle\Subscriber\Oauth;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\EventSubscriberInterface;
@@ -14,7 +14,7 @@ use Guzzle\Url\Url;
  * OAuth signing plugin
  * @link http://oauth.net/core/1.0/#rfc.section.9.1.1
  */
-class OauthPlugin implements EventSubscriberInterface
+class OauthSubscriber implements EventSubscriberInterface
 {
     /**
      * Consumer request method constants. See http://oauth.net/core/1.0/#consumer_req_param

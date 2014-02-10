@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Plugin\MessageIntegrity;
+namespace Guzzle\Subscriber\MessageIntegrity;
 
 use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\GotResponseHeadersEvent;
@@ -9,7 +9,7 @@ use Guzzle\Http\Message\ResponseInterface;
 /**
  * Verifies the message integrity of a response only after the entire response body has been read
  */
-class StreamingResponseIntegrityPlugin implements EventSubscriberInterface
+class StreamingResponseIntegritySubscriber implements EventSubscriberInterface
 {
     private $hash;
     private $header;

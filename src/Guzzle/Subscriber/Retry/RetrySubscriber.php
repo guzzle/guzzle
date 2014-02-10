@@ -1,20 +1,20 @@
 <?php
 
-namespace Guzzle\Plugin\Retry;
+namespace Guzzle\Subscriber\Retry;
 
 use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\AbstractTransferStatsEvent;
 use Guzzle\Http\Event\RequestErrorEvent;
 use Guzzle\Http\Event\RequestEvents;
-use Guzzle\Plugin\Log\MessageFormatter;
-use Guzzle\Plugin\Log\SimpleLogger;
+use Guzzle\Subscriber\Log\MessageFormatter;
+use Guzzle\Subscriber\Log\SimpleLogger;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
 /**
  * Plugin to automatically retry failed HTTP requests using filters a delay strategy.
  */
-class RetryPlugin implements EventSubscriberInterface
+class RetrySubscriber implements EventSubscriberInterface
 {
     const RETRY_FORMAT = '[{ts}] {method} {url} - {code} {phrase} - Retries: {retries}, Delay: {delay}, Time: {connect_time}, {total_time}, Error: {error}';
 

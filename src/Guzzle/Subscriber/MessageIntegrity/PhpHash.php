@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Plugin\MessageIntegrity;
+namespace Guzzle\Subscriber\MessageIntegrity;
 
 /**
  * Incremental hashing using PHP's hash functions

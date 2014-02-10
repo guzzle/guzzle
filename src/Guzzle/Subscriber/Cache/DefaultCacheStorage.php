@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Plugin\Cache;
+namespace Guzzle\Subscriber\Cache;
 
 /**
  * Default cache storage implementation

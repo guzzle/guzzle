@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Plugin\Log;
+namespace Guzzle\Subscriber\Log;
 
 use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\RequestAfterSendEvent;
@@ -15,7 +15,7 @@ use Psr\Log\LogLevel;
  *
  * @see MessageLogger for a list of available log template variable substitutions
  */
-class LogPlugin implements EventSubscriberInterface
+class LogSubscriber implements EventSubscriberInterface
 {
     /** @var LoggerInterface */
     private $logger;

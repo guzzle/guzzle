@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Plugin\Cache;
+namespace Guzzle\Subscriber\Cache;
 
 use Guzzle\Common\Event;
 use Guzzle\Common\EventSubscriberInterface;
@@ -18,7 +18,7 @@ use Guzzle\Http\Message\ResponseInterface;
  * It also implements RFC 5861's `stale-if-error` Cache-Control extension, allowing stale cache responses to be used
  * when an error is encountered (such as a `500 Internal Server Error` or DNS failure).
  */
-class CachePlugin implements EventSubscriberInterface
+class CacheSubscriber implements EventSubscriberInterface
 {
     /** @var RevalidationInterface Cache revalidation strategy */
     protected $revalidation;

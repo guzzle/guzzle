@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Plugin\Log;
+namespace Guzzle\Subscriber\Log;
 
 use Psr\Log\LoggerTrait;
 use Psr\Log\LoggerInterface;

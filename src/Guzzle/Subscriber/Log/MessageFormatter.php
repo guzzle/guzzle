@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Plugin\Log;
+namespace Guzzle\Subscriber\Log;
 
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
