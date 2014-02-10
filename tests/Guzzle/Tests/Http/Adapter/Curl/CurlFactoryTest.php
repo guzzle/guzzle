@@ -270,6 +270,16 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         curl_close($f->createHandle(new Transaction(new Client(), $request), new MessageFactory()));
         $this->assertEquals(self::$server->getUrl(), $f->last[CURLOPT_URL]);
     }
+
+    public function testDoesNotSendSizeTwice()
+    {
+        $request = new Request('PUT', self::$server->getUrl(), [], Stream::factory(str_repeat('a', 32769)));
+        $f = new IntroFactory();
+        curl_close($f->createHandle(new Transaction(new Client(), $request), new MessageFactory()));
+        $this->assertEquals(32769, $f->last[CURLOPT_INFILESIZE]);
+        $this->assertNotContains('Content-Length', implode(' ', $f->last[CURLOPT_HTTPHEADER]));
+
+    }
 }
 
 class IntroFactory extends CurlFactory

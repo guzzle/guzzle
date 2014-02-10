@@ -101,9 +101,11 @@ class CurlFactory
             $size = null;
         }
 
+        $request->getBody()->seek(0);
+
         // You can send the body as a string using curl's CURLOPT_POSTFIELDS
         if (($size !== null && $size < 32768) || isset($request->getConfig()['curl']['body_as_string'])) {
-            $options[CURLOPT_POSTFIELDS] = (string) $request->getBody();
+            $options[CURLOPT_POSTFIELDS] = $request->getBody()->getContents();
             // Don't duplicate the Content-Length header
             $this->removeHeader('Content-Length', $options);
             $this->removeHeader('Transfer-Encoding', $options);
@@ -114,7 +116,6 @@ class CurlFactory
                 $options[CURLOPT_INFILESIZE] = $size;
                 $this->removeHeader('Content-Length', $options);
             }
-            $request->getBody()->seek(0);
         }
 
         // If the Expect header is not present, prevent curl from adding it
