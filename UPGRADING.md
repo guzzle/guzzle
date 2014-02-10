@@ -78,7 +78,188 @@ $request->getEmitter()->on('foo', function (Event $event, $name) { /* ... */ } )
 
 ## Http
 
-TODO
+### General changes
+
+- The cacert.pem certificate has been moved to `src/Guzzle/Http/cacert.pem`.
+- Added the concept of adapters that are used to transfer requests over the wire.
+- Simplified the event system.
+- Sending requests in parallel is still possible, but batching is no longer a concept of the HTTP layer. Instead,
+  you must use the `request.after_send` and `request.error` events to manage parallel request transfers.
+- `Guzzle\Http\Url` has moved to `Guzzle\Url\Url`.
+- `Guzzle\Http\QueryString` has moved to `Guzzle\Url\QueryString`.
+- QueryAggregator classes have moved to `Guzzle\Url`.
+- QueryAggregators now accept only an array with any amount of nesting and returns a flattened array.
+- `Guzzle\Http\StaticClient` has been removed. Use the functions provided in `functions.php` for an easy to use static
+  client instance.
+- Exceptions in `Guzzle\Http\Exception` have been updated to all extend from `Guzzle\Http\Exception\TransferException`.
+
+### Client
+
+Calling methods like `get()`, `post()`, `head()`, etc. no longer create and return a request, but rather create a
+request, send the request, and returns the response.
+
+```php
+// 3.0
+$request = $client->get('/');
+$response = $request->send();
+
+// 4.0
+$response = $client->get('/');
+
+// or, to mirror the previous behavior
+$request = $client->createRequest('GET', '/');
+$response = $client->send($request);
+```
+
+`Guzzle\Http\ClientInterface` has changed.
+
+- `getConfig()` will never return a Collection object. Use `getConfig()` and a JSON pointer type syntax to retrieve
+  nested values from the client configuration data. Note: JSON pointer escaping is not supported.
+- `setConfig()` can no longer change the `Guzzle\Common\Collection` instance used by the client, but will only
+  change the actual values stored in the client's `Collection` instance.
+- The `send` method no longer accepts more than one request. Use `sendAll` to send multiple requests in parallel.
+- `getBaseUrl()` has been removed. Use `$client->getConfig('base_url')` instead.
+- `setUserAgent()` has been removed. Use a default request option instead. You could, for example, do something
+  like: `$client->setConfig('defaults/headers/User-Agent', 'Foo/Bar ' . $client::getDefaultUserAgent())`.
+- `setSslVerification()` has been removed. Use default request options instead, like
+  `$client->setConfig('defaults/verify', true)`.
+
+`Guzzle\Http\Client` has changed.
+
+- The constructor now accepts only an associative array. You can include a `base_url` string or array to use a
+  URI template as the base URL of a client. You can also specify a `defaults` key that is an associative array of
+  default request options. You can pass an `adapter` to use a custom adapter, `batch_adapter` to use a custom
+  adapter for sending requests in parallel, or a `message_factory` to change the factory used to create HTTP
+  requests and responses.
+- The client no longer emits a `client.create_request` event.
+- Creating requests with a client no longer automatically utilize a URI template. You must pass an array into a
+  creational method (e.g., `createRequest`, `get`, `put`, etc...) in order to expand a URI template.
+
+### Messages
+
+Messages no longer have references to their counterparts (i.e., a request no longer has a reference to it's response,
+and a response no longer has a reference to its request). This association is now managed thorugh a
+`Guzzle\Http\Adapter\TransactionInterface` object. You can get references to these transaction objects using request
+events that are emitted over the lifecycle of a request.
+
+#### Requests with a body
+
+- `Guzzle\Http\Message\EntityEnclosingRequest` and `Guzzle\Http\Message\EntityEnclosingRequestInterface` have been
+  removed. The separation between requests that contain a body and requests that do not contain a body has been removed,
+  and now `Guzzle\Http\Message\RequestInterface` handles both use cases.
+- Any method that previously accepts a `Guzzle\Http\Response` object now accept a
+  `Guzzle\Http\Message\ResponseInterface`.
+- `Guzzle\Http\Message\RequestFactoryInterface` has been renamed to `Guzzle\Http\Message\MessageFactoryInterface`. This
+  interface is used to create both requests and responses and is implemented in `Guzzle\Http\Message\MessageFactory`.
+- POST field and file methods have been removed from the request object. You must now use the methods made available to
+  `Guzzle\Http\Message\Post\PostBodyInterface` to control the format of a POST body. Requests that are created using
+  a standard `Guzzle\Http\Message\MessageFactoryInterface` will automatically use a `Guzzle\Http\Message\Post\PostBody`
+  body if the body was passed as an array.
+
+```php
+// Notice that the body is set to an array
+$request = $client->createRequest('POST', '/', [], []);
+$request->getBody()->setField('foo', 'bar');
+$request->getBody()->addFile(new PostFile('file_key', fopen('/path/to/content', 'r')));
+```
+
+#### Headers
+
+- `Guzzle\Http\Message\Header` has been moved to `Guzzle\Http\Message\HeaderValues`, and the interface has changed to
+  now use `\ArrayAccess` methods like `offsetGet` and `offsetSet`.
+- `Guzzle\Http\Message\PostFile` and `Guzzle\Http\Message\PostFileInterface` have been moved to
+  `Guzzle\Http\Message\Post`. This interface has been simplified and now allows the addition of arbitrary headers via
+   the `Guzzle\Http\Message\HasHeadersInterface` interface.
+- Custom headers like `Guzzle\Http\Message\Header\Link` have been removed. Most of the custom headers are now handled
+  separately in specific subscribers/plugins, and `Guzzle\Http\Message\HeaderValues::parseParams()` has been updated to
+  properly handle headers that contain parameters (like the `Link` header).
+
+#### Responses
+
+- `Guzzle\Http\Message\Response::getInfo()` and `Guzzle\Http\Message\Response::setInfo()` have been removed. Use the
+  event system to retrieve this type of information.
+- `Guzzle\Http\Message\Response::getRawHeaders()` has been removed.
+- `Guzzle\Http\Message\Response::getMessage()` has been removed.
+- `Guzzle\Http\Message\Response::calculateAge()` and other cache specific methods have moved to the CacheSubscriber.
+- Allow of the header specific helper functions like `getContentMd5()` have been removed. Just use
+  `getHeader('Content-MD5')` instead.
+- `Guzzle\Http\Message\Response::setRequest()` and `Guzzle\Http\Message\Response::getRequest()` have been removed.
+  Use the associated `Guzzle\Http\Adapter\TransactionInterface` object to get the association between a request and
+  response.
+- `Guzzle\Http\Message\Response::getRedirectCount()` has been removed. Use the Redirect subscriber instead.
+- `Guzzle\Http\Message\Response::isSuccessful()` and other related methods have been removed. Use `getStatusCode()`
+  instead.
+
+#### Streaming responses
+
+Streaming requests can now be created by a client directly, returning a `Guzzle\Http\Message\ResponseInterface` object
+that contains a body stream referencing an open PHP HTTP stream.
+
+```php
+// 3.0
+use Guzzle\Stream\PhpStreamRequestFactory;
+$request = $client->get('/');
+$factory = new PhpStreamRequestFactory();
+$stream = $factory->fromRequest($request);
+$data = $stream->read(1024);
+
+// 4.0
+$response = $client->get('/', [], ['stream' => true]);
+// Read some data off of the stream in the response body
+$data = $response->getBody()->read(1024);
+```
+
+#### Redirects
+
+The `configureRedirects()` method has been removed in favor of a `allow_redirects` request option.
+
+``php
+// Standard redirects with a default of a max of 5 redirects
+$request = $client->createRequest('GET', '/', [], null, ['allow_redirects' => true]);
+
+// Strict redirects with a custom number of redirects
+$request = $client->createRequest('GET', '/', [], null, [
+    'allow_redirects' => ['max' => 5, 'strict' => true]
+]);
+```
+
+#### EntityBody
+
+EntityBody interfaces and classes have been removed or moved to `Guzzle\Stream`. All classes and interfaces that once
+required `Guzzle\Http\EntityBodyInterface` now require `Guzzle\Stream\StreamInterface`. Creating a new body for a
+request no longer uses `Guzzle\Http\EntityBody::factory` but now uses `Guzzle\Stream\Stream::factory`.
+
+- `Guzzle\Http\EntityBodyInterface` is now `Guzzle\Stream\StreamInterface`
+- `Guzzle\Http\EntityBody` is now `Guzzle\Stream\Stream`
+- `Guzzle\Http\CachingEntityBody` is now `Guzzle\Stream\CachingStream`
+- `Guzzle\Http\ReadLimitEntityBody` is now `Guzzle\Stream\LimitStream`
+- `Guzzle\Http\IoEmittyinEntityBody` has been removed.
+
+#### Request lifecycle events
+
+Requests previously submitted a large number of requests. The number of events emitted over the lifecycle of a request
+has been significantly reduced to make it easier to understand how to extend the behavior of a request. All events
+emitted during the lifecycle of a request now emit a custom `Guzzle\Common\EventInterface` object that contains
+context providing methods and a way in which to modify the transaction at that specific point in time (e.g., intercept
+the request and set a response on the transaction).
+
+- `request.before_send` is still an event, but now emits a `Guzzle\Http\Event\RequestBeforeSendEvent`
+- `request.complete` has been renamed to `request.after_send` and now emits a `Guzzle\Http\Event\RequestAfterSendEvent`.
+- `request.sent` has been removed.
+- `request.success` has been removed.
+- `request.error` is still an event and now emits a `Guzzle\Http\Event\RequestErrorEvent`.
+- `request.exception` has been removed.
+- `request.receive.status_line` has been removed.
+- `curl.callback.progress` has been removed. Use a custom `StreamInterface` to maintain a status update.
+- `curl.callback.write` has been removed. Use a custom `StreamInterface` to intercept writes.
+- `curl.callback.read` has been removed. Use a custom `StreamInterface` to intercept reads.
+
+`request.response_headers` is a new event that is emitted after the response headers of a request have been received
+before the body of the response is downloaded. This event emits a `Guzzle\Http\Event\GotResponseHeadersEvent`.
+
+You can intercept a request and inject a response using the `intercept()` event of a
+`Guzzle\Http\Event\RequestBeforeSendEvent`, `Guzzle\Http\Event\RequestAfterSendEvent`, and
+`Guzzle\Http\Event\RequestErrorEvent` event.
 
 ## Inflection
 
