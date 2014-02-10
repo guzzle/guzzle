@@ -8,7 +8,7 @@ use Guzzle\Http\Message\RequestInterface;
 
 /**
  * Converts a sequence of request objects into a transaction.
- * @private This class would not exist if PHP 5.5 was prevalent enough and I could use generators.
+ * @internal This class would not exist if PHP 5.5 was prevalent enough and I could use generators.
  */
 class TransactionIterator implements \Iterator
 {

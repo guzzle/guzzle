@@ -21,11 +21,12 @@ class CurlFactory
         $this->applyTransferOptions($request, $mediator, $options);
         $this->applyHeaders($request, $options);
         unset($options['_headers']);
+
         // Add adapter options from the request's configuration options
         if ($config = $request->getConfig()['curl']) {
-            unset($config['body_as_string']);
-            $options = $config + $options;
+            $options = $this->applyCustomCurlOptions($config, $options);
         }
+
         $handle = curl_init();
         curl_setopt_array($handle, $options);
 
@@ -240,6 +241,35 @@ class CurlFactory
     {
         $saveTo = is_string($value) ? Stream::factory(fopen($value, 'w')) : Stream::factory($value);
         $mediator->setResponseBody($saveTo);
+    }
+
+    /**
+     * Takes an array of curl options specified in the 'curl' option of a
+     * request's configuration array and maps them to CURLOPT_* options.
+     *
+     * This method is only called when a  request has a 'curl' config setting.
+     * Array key strings that start with CURL that have a matching constant
+     * value will be automatically converted to the matching constant.
+     *
+     * @param array $config  Configuration array of custom curl option
+     * @param array $options Array of existing curl options
+     *
+     * @return array Returns a new array of curl options
+     */
+    protected function applyCustomCurlOptions(array $config, array $options)
+    {
+        unset($config['body_as_string']);
+        $curlOptions = [];
+
+        // Map curl constant strings to defined values
+        foreach ($config as $key => $value) {
+            if (defined($key) && substr($key, 0, 4) === 'CURL') {
+                $key = constant($key);
+            }
+            $curlOptions[$key] = $value;
+        }
+
+        return $curlOptions + $options;
     }
 
     /**

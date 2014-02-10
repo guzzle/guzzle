@@ -33,20 +33,14 @@ class Request implements RequestInterface
      * @param array|Collection $headers HTTP headers
      * @param mixed            $body    Body to send with the request
      * @param array            $options Array of options to use with the request
-     *                                  - header_factory: Header factory to use with the message
-     *                                  - emitter: Event emitter to use with the request
+     *     - emitter: Event emitter to use with the request
      */
     public function __construct($method, $url, $headers = [], $body = null, array $options = [])
     {
-        $this->initializeMessage($options);
-        $this->method = strtoupper($method);
-        $this->transferOptions = new Collection();
         $this->setUrl($url);
-
-        if (isset($options['emitter'])) {
-            $this->emitter = $options['emitter'];
-        }
-
+        $this->method = strtoupper($method);
+        $this->handleOptions($options);
+        $this->transferOptions = new Collection($options);
         $this->addPrepareEvent();
 
         if ($body) {
@@ -179,6 +173,30 @@ class Request implements RequestInterface
     public function getConfig()
     {
         return $this->transferOptions;
+    }
+
+    /**
+     * Accepts and modifies the options provided to the request in the
+     * constructor.
+     *
+     * Can be overridden in subclasses as necessary. Options that are not
+     * removed from the passed array are set in the $transferOptions property
+     * of the request.
+     *
+     * @param array $options Options array passed by reference.
+     */
+    protected function handleOptions(array &$options = [])
+    {
+        if (isset($options['protocol_version'])) {
+            $this->protocolVersion = $options['protocol_version'];
+        }
+
+        // Use a custom emitter if one is specified, and remove it from
+        // options that are exposed through getConfig()
+        if (isset($options['emitter'])) {
+            $this->emitter = $options['emitter'];
+            unset($options['emitter']);
+        }
     }
 
     /**

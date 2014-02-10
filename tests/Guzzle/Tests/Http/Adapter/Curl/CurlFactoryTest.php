@@ -253,6 +253,15 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('a:b', $f->last[CURLOPT_USERPWD]);
         $this->assertEquals(CURLAUTH_DIGEST, $f->last[CURLOPT_HTTPAUTH]);
     }
+
+    public function testConvertsConstantNameKeysToValues()
+    {
+        $request = new Request('GET', self::$server->getUrl());
+        $request->getConfig()->set('curl', ['CURLOPT_USERAGENT' => 'foo']);
+        $f = new IntroFactory();
+        curl_close($f->createHandle(new Transaction(new Client(), $request), new MessageFactory()));
+        $this->assertEquals('foo', $f->last[CURLOPT_USERAGENT]);
+    }
 }
 
 class IntroFactory extends CurlFactory
@@ -263,5 +272,10 @@ class IntroFactory extends CurlFactory
     {
         parent::applyHeaders($request, $options);
         $this->last = $options;
+    }
+
+    protected function applyCustomCurlOptions(array $config, array $options)
+    {
+        return $this->last = parent::applyCustomCurlOptions($config, $options);
     }
 }

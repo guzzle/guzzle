@@ -3,6 +3,7 @@
 namespace Guzzle\Tests\Http\Message;
 
 use Guzzle\Http\Message\MessageTrait;
+use Guzzle\Http\Message\Request;
 use Guzzle\Stream\Stream;
 
 class Message {
@@ -30,10 +31,9 @@ class MessageTraitTest extends \PHPUnit_Framework_TestCase
 
     public function testInitializesMessageWithProtocolVersionOption()
     {
-        $m = new Message();
-        $r = new \ReflectionMethod($m, 'initializeMessage');
-        $r->setAccessible(true);
-        $r->invoke($m, ['protocol_version' => 10]);
+        $m = new Request('GET', '/', [], null, [
+            'protocol_version' => '10'
+        ]);
         $this->assertEquals(10, $m->getProtocolVersion());
     }
 

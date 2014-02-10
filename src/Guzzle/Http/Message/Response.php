@@ -87,18 +87,16 @@ class Response implements ResponseInterface
      * @param array           $headers    The response headers
      * @param StreamInterface $body       The body of the response
      * @param array           $options    Response message options
-     *                                    - header_factory: Factory used to create headers
-     *                                    - reason_phrase: Set a custom reason phrease
-     *                                    - protocol_version: Set a custom protocol version
+     *     - reason_phrase: Set a custom reason phrase
+     *     - protocol_version: Set a custom protocol version
      */
     public function __construct($statusCode, array $headers = [], StreamInterface $body = null, array $options = [])
     {
-        $this->initializeMessage($options);
         $this->statusCode = (string) $statusCode;
+        $this->handleOptions($options);
 
-        if (isset($options['reason_phrase'])) {
-            $this->reasonPhrase = $options['reason_phrase'];
-        } elseif (isset(self::$statusTexts[$this->statusCode])) {
+        // Assume a reason phrase if one was not applied as an option
+        if (!$this->reasonPhrase && isset(self::$statusTexts[$this->statusCode])) {
             $this->reasonPhrase = self::$statusTexts[$this->statusCode];
         }
 
@@ -174,5 +172,22 @@ class Response implements ResponseInterface
         $this->effectiveUrl = $url;
 
         return $this;
+    }
+
+    /**
+     * Accepts and modifies the options provided to the response in the
+     * constructor.
+     *
+     * @param array $options Options array passed by reference.
+     */
+    protected function handleOptions(array &$options = [])
+    {
+        if (isset($options['protocol_version'])) {
+            $this->protocolVersion = $options['protocol_version'];
+        }
+
+        if (isset($options['reason_phrase'])) {
+            $this->reasonPhrase = $options['reason_phrase'];
+        }
     }
 }

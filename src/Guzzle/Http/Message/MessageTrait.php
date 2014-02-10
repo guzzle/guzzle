@@ -8,6 +8,7 @@ use Guzzle\Stream\StreamInterface;
 
 /**
  * HTTP request/response message trait
+ * @internal This should not be relied upon directly but rather in Request or Response objects
  */
 trait MessageTrait
 {
@@ -57,12 +58,5 @@ trait MessageTrait
         }
 
         return $this;
-    }
-
-    protected function initializeMessage(array $options = [])
-    {
-        if (isset($options['protocol_version'])) {
-            $this->protocolVersion = $options['protocol_version'];
-        }
     }
 }

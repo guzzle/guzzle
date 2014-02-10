@@ -46,10 +46,10 @@ class MessageFactory implements MessageFactoryInterface
             $url,
             $headers,
             null,
-            isset($options['constructor_options']) ? $options['constructor_options'] : []
+            isset($options['options']) ? $options['options'] : []
         );
 
-        unset($options['constructor_options']);
+        unset($options['options']);
 
         if ($body !== null) {
             if (is_array($body)) {
@@ -103,7 +103,7 @@ class MessageFactory implements MessageFactoryInterface
             $data['headers'],
             $data['body'] === '' ? null : $data['body'],
             [
-                'constructor_options' => [
+                'options' => [
                     'protocol_version' => $data['protocol_version']
                 ]
             ]
@@ -135,23 +135,22 @@ class MessageFactory implements MessageFactoryInterface
 
     protected function applyOptions(RequestInterface $request, array $options = array())
     {
+        static $map = ['connect_timeout' => 1, 'timeout' => 1, 'verify' => 1,
+            'ssl_key' => 1, 'cert' => 1, 'proxy' => 1, 'debug' => 1,
+            'save_to' => 1, 'stream' => 1, 'expect' => 1];
         static $methods;
-        static $map = [
-            'connect_timeout' => 1, 'timeout' => 1, 'verify' => 1, 'future' => 1, 'ssl_key' => 1, 'cert' => 1,
-            'proxy' => 1, 'debug' => 1, 'save_to' => 1, 'stream' => 1, 'expect' => 1
-        ];
-
         if (!$methods) {
             $methods = array_flip(get_class_methods(__CLASS__));
         }
 
-        // Iterate over each key value pair and attempt to apply a config using function visitors
+        // Iterate over each key value pair and attempt to apply a config using function visitor
+        $config = $request->getConfig();
         foreach ($options as $key => $value) {
             $method = "visit_{$key}";
             if (isset($methods[$method])) {
                 $this->{$method}($request, $value);
             } elseif (isset($map[$key])) {
-                $request->getConfig()->set($key, $value);
+                $config[$key] = $value;
             } else {
                 throw new \InvalidArgumentException("No method is configured to handle the {$key} config key");
             }
