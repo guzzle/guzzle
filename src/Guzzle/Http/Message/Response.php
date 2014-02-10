@@ -7,10 +7,8 @@ use Guzzle\Stream\StreamInterface;
 /**
  * Guzzle HTTP response object
  */
-class Response implements ResponseInterface
+class Response extends AbstractMessage implements ResponseInterface
 {
-    use MessageTrait;
-
     /** @var array Array of reason phrases and their corresponding status codes */
     private static $statusTexts = array(
         100 => 'Continue',
@@ -109,23 +107,6 @@ class Response implements ResponseInterface
         }
     }
 
-    public function __toString()
-    {
-        $result = sprintf('HTTP/%s %d %s', $this->getProtocolVersion(), $this->statusCode, $this->reasonPhrase);
-        foreach ($this->getHeaders() as $name => $value) {
-            $result .= "\r\n{$name}: {$value}";
-        }
-
-        $result .= "\r\n\r\n";
-
-        if ($this->body) {
-            $this->body->seek(0);
-            $result .= $this->body;
-        }
-
-        return  $result;
-    }
-
     public function getStatusCode()
     {
         return $this->statusCode;
@@ -138,7 +119,7 @@ class Response implements ResponseInterface
 
     public function json()
     {
-        $data = json_decode((string) $this->body, true);
+        $data = json_decode((string) $this->getBody(), true);
         if (JSON_ERROR_NONE !== json_last_error()) {
             throw new \RuntimeException('Unable to parse response body into JSON: ' . json_last_error());
         }
@@ -152,7 +133,7 @@ class Response implements ResponseInterface
 
         try {
             // Allow XML to be retrieved even if there is no response body
-            $xml = new \SimpleXMLElement((string) $this->body ?: '<root />', LIBXML_NONET);
+            $xml = new \SimpleXMLElement((string) $this->getBody() ?: '<root />', LIBXML_NONET);
             libxml_disable_entity_loader($disableEntities);
         } catch (\Exception $e) {
             libxml_disable_entity_loader($disableEntities);
@@ -182,12 +163,15 @@ class Response implements ResponseInterface
      */
     protected function handleOptions(array &$options = [])
     {
-        if (isset($options['protocol_version'])) {
-            $this->protocolVersion = $options['protocol_version'];
-        }
-
+        parent::handleOptions($options);
         if (isset($options['reason_phrase'])) {
             $this->reasonPhrase = $options['reason_phrase'];
         }
+    }
+
+    protected function getStartLine()
+    {
+        return 'HTTP/' . $this->getProtocolVersion()
+            . " {$this->statusCode} {$this->reasonPhrase}";
     }
 }

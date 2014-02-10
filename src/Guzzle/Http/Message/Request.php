@@ -11,11 +11,9 @@ use Guzzle\Url\Url;
 /**
  * HTTP request class to send requests
  */
-class Request implements RequestInterface
+class Request extends AbstractMessage implements RequestInterface
 {
-    use HasEmitterTrait, MessageTrait {
-        MessageTrait::setBody as applyBody;
-    }
+    use HasEmitterTrait;
 
     /** @var Url HTTP Url */
     private $url;
@@ -59,31 +57,12 @@ class Request implements RequestInterface
         }
         $this->transferOptions = clone $this->transferOptions;
         $this->url = clone $this->url;
-        $this->headers = array_map(function ($header) {
-            return clone $header;
-        }, $this->headers);
-    }
-
-    public function __toString()
-    {
-        $result = trim($this->method . ' ' . $this->getResource()) . ' HTTP/' . $this->getProtocolVersion();
-        foreach ($this->getHeaders() as $name => $value) {
-            $result .= "\r\n{$name}: {$value}";
-        }
-
-        $result .= "\r\n\r\n";
-
-        if ($this->body) {
-            $this->body->seek(0);
-            $result .= $this->body;
-        }
-
-        return  $result;
+        parent::__clone();
     }
 
     public function setBody(StreamInterface $body = null)
     {
-        $this->applyBody($body);
+        parent::setBody($body);
 
         // Use chunked Transfer-Encoding if there is no content-length header
         if ($body !== null && !$this->hasHeader('Content-Length') && '1.1' == $this->getProtocolVersion()) {
@@ -175,28 +154,20 @@ class Request implements RequestInterface
         return $this->transferOptions;
     }
 
-    /**
-     * Accepts and modifies the options provided to the request in the
-     * constructor.
-     *
-     * Can be overridden in subclasses as necessary. Options that are not
-     * removed from the passed array are set in the $transferOptions property
-     * of the request.
-     *
-     * @param array $options Options array passed by reference.
-     */
-    protected function handleOptions(array &$options = [])
+    protected function handleOptions(array &$options)
     {
-        if (isset($options['protocol_version'])) {
-            $this->protocolVersion = $options['protocol_version'];
-        }
-
+        parent::handleOptions($options);
         // Use a custom emitter if one is specified, and remove it from
         // options that are exposed through getConfig()
         if (isset($options['emitter'])) {
             $this->emitter = $options['emitter'];
             unset($options['emitter']);
         }
+    }
+
+    protected function getStartLine()
+    {
+        return trim($this->method . ' ' . $this->getResource()) . ' HTTP/' . $this->getProtocolVersion();
     }
 
     /**

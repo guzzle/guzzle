@@ -6,11 +6,7 @@ use Guzzle\Http\Mimetypes;
 use Guzzle\Stream\MetadataStreamInterface;
 use Guzzle\Stream\StreamInterface;
 
-/**
- * HTTP request/response message trait
- * @internal This should not be relied upon directly but rather in Request or Response objects
- */
-trait MessageTrait
+abstract class AbstractMessage implements MessageInterface
 {
     use HasHeadersTrait;
 
@@ -19,6 +15,26 @@ trait MessageTrait
 
     /** @var string HTTP protocol version of the message */
     private $protocolVersion = '1.1';
+
+    /**
+     * Clones the message, ensuring that headers are cloned
+     */
+    public function __clone()
+    {
+        $this->headers = array_map(function ($header) {
+            return clone $header;
+        }, $this->headers);
+    }
+
+    public function __toString()
+    {
+        $result = $this->getStartLine();
+        foreach ($this->getHeaders() as $name => $value) {
+            $result .= "\r\n{$name}: {$value}";
+        }
+
+        return $result . "\r\n\r\n" . $this->body;
+    }
 
     public function getProtocolVersion()
     {
@@ -58,5 +74,27 @@ trait MessageTrait
         }
 
         return $this;
+    }
+
+    /**
+     * Returns the start line of a message.
+     *
+     * @return string
+     */
+    abstract protected function getStartLine();
+
+    /**
+     * Accepts and modifies the options provided to the message in the
+     * constructor.
+     *
+     * Can be overridden in subclasses as necessary.
+     *
+     * @param array $options Options array passed by reference.
+     */
+    protected function handleOptions(array &$options)
+    {
+        if (isset($options['protocol_version'])) {
+            $this->protocolVersion = $options['protocol_version'];
+        }
     }
 }
