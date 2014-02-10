@@ -168,14 +168,21 @@ class MessageFactory implements MessageFactoryInterface
 
     private function visit_allow_redirects(RequestInterface $request, $value)
     {
-        if ($value !== false) {
-            if ($value === 'strict') {
-                $request->getConfig()[Redirect::STRICT_REDIRECTS] = true;
-            } elseif (is_int($value)) {
-                $request->getConfig()[Redirect::MAX_REDIRECTS] = $value;
-            }
-            $request->getEmitter()->addSubscriber($this->redirectPlugin);
+        if ($value === false) {
+            return;
         }
+
+        if (isset($value['max'])) {
+            $request->getConfig()['max_redirects'] = $value['max'];
+            if (isset($value['strict']) and $value['strict']) {
+                $request->getConfig()['strict_redirects'] = true;
+            }
+        } elseif ($value !== true) {
+            throw new \InvalidArgumentException('allow_redirects must be'
+                . 'true, false, or an array that contains the \'max\' key');
+        }
+
+        $request->getEmitter()->addSubscriber($this->redirectPlugin);
     }
 
     private function visit_exceptions(RequestInterface $request, $value)

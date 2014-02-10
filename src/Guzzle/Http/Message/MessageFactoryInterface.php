@@ -27,8 +27,10 @@ interface MessageFactoryInterface
      *       send in the request and start a new cookie session, set to a
      *       {@see Guzzle\Http\Subscriber\CookieJar\CookieJarInterface} object to us an exisitng cookie jar, or set
      *       to `true` to use the shared cookie session of the client.
-     *     - "allow_redirects": Set to false to disable redirects. Set to "strict" to enable strict redirects that
-     *       convert POST requests to GET requests on a redirect.
+     *     - "allow_redirects": Set to false to disable redirects. Set to true to enable normal redirects with a maximum
+     *       number of 5 redirects. Pass an associative array containing the 'max' key to specify the maximum number of
+     *       redirects and optionally provide a 'strict' value to specify whether or not to use strict RFC compliant
+     *       redirects (meaning redirect POST requests with POST requests vs. what most browsers do).
      *     - "save_to": String, fopen resource, or EntityBody object used to store the body of the response
      *     - "events": Associative array mapping event names to a closure or array of (priority, closure)
      *     - "subscribers": Array of event subscribers to add to the request

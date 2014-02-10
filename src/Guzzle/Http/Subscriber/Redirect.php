@@ -12,13 +12,18 @@ use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Url\Url;
 
 /**
- * Plugin to implement HTTP redirects. Can redirect like a web browser or using strict RFC 2616 compliance
+ * Plugin to implement HTTP redirects. Can redirect like a web browser or using strict RFC 2616 compliance.
+ *
+ * **Request options**
+ *
+ * - max_redirects: You can customize the maximum number of redirects allowed per-request using the 'max_redirects'
+ *   option on a request's config object.
+ * - strict_redirects: You can use strict redirects by setting 'strict_redirects' to true. Strict redirects adhere to
+ *   strict RFC compliant redirection (e.g. redirect POST with POST) vs doing what most clients do (e.g. redirect
+ *   POST request with a GET request).
  */
 class Redirect implements EventSubscriberInterface
 {
-    const STRICT_REDIRECTS = 'strict_redirects';
-    const MAX_REDIRECTS = 'max_redirects';
-
     public static function getSubscribedEvents()
     {
         return [RequestEvents::AFTER_SEND => ['onRequestSent', -10]];
@@ -56,7 +61,7 @@ class Redirect implements EventSubscriberInterface
         $request = $event->getRequest();
         $redirectCount = 0;
         $redirectResponse = $response = $event->getResponse();
-        $max = $request->getConfig()->get(self::MAX_REDIRECTS) ?: 5;
+        $max = $request->getConfig()->get('max_redirects') ?: 5;
 
         while (substr($redirectResponse->getStatusCode(), 0, 1) == '3' && $redirectResponse->hasHeader('Location')) {
             if (++$redirectCount > $max) {
@@ -85,7 +90,7 @@ class Redirect implements EventSubscriberInterface
      */
     private function createRedirectRequest(RequestInterface $request, ResponseInterface $response)
     {
-        $strict = $request->getConfig()[self::STRICT_REDIRECTS];
+        $strict = $request->getConfig()['strict_redirects'];
 
         // Use a GET request if this is an entity enclosing request and we are not forcing RFC compliance, but rather
         // emulating what all browsers would do. Be sure to disable redirects on the clone.

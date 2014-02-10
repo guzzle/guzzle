@@ -90,7 +90,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         $client = new Client();
         $client->getEmitter()->addSubscriber($mock);
         $client->getEmitter()->addSubscriber($h);
-        $client->post('/foo', ['X-Baz' => 'bar'], 'testing', ['allow_redirects' => 'strict']);
+        $client->post('/foo', ['X-Baz' => 'bar'], 'testing', ['allow_redirects' => ['max' => 10, 'strict' => true]]);
 
         $requests = $h->getRequests();
         $this->assertEquals('POST', $requests[0]->getMethod());
@@ -117,7 +117,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         $body->expects($this->once())->method('seek')->will($this->returnValue(true));
         $body->expects($this->any())->method('eof')->will($this->returnValue(true));
         $body->expects($this->any())->method('read')->will($this->returnValue('foo'));
-        $client->post('/foo', [], $body, ['allow_redirects' => 'strict']);
+        $client->post('/foo', [], $body, ['allow_redirects' => ['max' => 5, 'strict' => true]]);
     }
 
     /**
@@ -142,7 +142,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         $body->expects($this->once())->method('seek')->will($this->returnValue(false));
         $body->expects($this->any())->method('eof')->will($this->returnValue(true));
         $body->expects($this->any())->method('read')->will($this->returnValue('foo'));
-        $client->post('/foo', [], $body, ['allow_redirects' => 'strict']);
+        $client->post('/foo', [], $body, ['allow_redirects' => ['max' => 10, 'strict' => true]]);
     }
 
     public function testRedirectsCanBeDisabledPerRequest()
