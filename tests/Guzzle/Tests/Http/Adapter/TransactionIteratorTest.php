@@ -3,7 +3,7 @@
 namespace Guzzle\Tests\Http;
 
 use Guzzle\Http\Client;
-use Guzzle\Http\TransactionIterator;
+use Guzzle\Http\Adapter\TransactionIterator;
 
 class TransactionIteratorTest extends \PHPUnit_Framework_TestCase
 {

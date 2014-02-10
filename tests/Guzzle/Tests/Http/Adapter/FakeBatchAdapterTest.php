@@ -6,7 +6,7 @@ use Guzzle\Http\Adapter\FakeBatchAdapter;
 use Guzzle\Http\Adapter\MockAdapter;
 use Guzzle\Http\Client;
 use Guzzle\Http\Message\Response;
-use Guzzle\Http\TransactionIterator;
+use Guzzle\Http\Adapter\TransactionIterator;
 
 /**
  * @covers Guzzle\Http\Adapter\FakeBatchAdapter

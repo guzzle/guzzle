@@ -1,8 +1,8 @@
 <?php
 
-namespace Guzzle\Http;
+namespace Guzzle\Http\Adapter;
 
-use Guzzle\Http\Adapter\Transaction;
+use Guzzle\Http\ClientInterface;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Message\RequestInterface;
 
