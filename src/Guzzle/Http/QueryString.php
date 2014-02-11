@@ -3,6 +3,7 @@
 namespace Guzzle\Http;
 
 use Guzzle\Common\Collection;
+use Guzzle\Common\Exception\RuntimeException;
 use Guzzle\Http\QueryAggregator\DuplicateAggregator;
 use Guzzle\Http\QueryAggregator\QueryAggregatorInterface;
 use Guzzle\Http\QueryAggregator\PhpAggregator;
@@ -70,7 +71,8 @@ class QueryString extends Collection
                     $q[$key] = $value;
                 }
             } else {
-                $q->add($key, self::BLANK);
+                // Uses false by default to represent keys with no trailing "=" sign.
+                $q->add($key, false);
             }
         }
 
@@ -86,6 +88,7 @@ class QueryString extends Collection
      * Convert the query string parameters to a query string string
      *
      * @return string
+     * @throws RuntimeException
      */
     public function __toString()
     {
@@ -93,21 +96,12 @@ class QueryString extends Collection
             return '';
         }
 
-        $queryString = '';
-
+        $queryList = array();
         foreach ($this->prepareData($this->data) as $name => $value) {
-            foreach ((array) $value as $v) {
-                if ($queryString) {
-                    $queryString .= $this->fieldSeparator;
-                }
-                $queryString .= $name;
-                if ($v !== self::BLANK) {
-                    $queryString .= $this->valueSeparator . $v;
-                }
-            }
+            $queryList[] = $this->convertKvp($name, $value);
         }
 
-        return $queryString;
+        return implode($this->fieldSeparator, $queryList);
     }
 
     /**
@@ -264,7 +258,10 @@ class QueryString extends Collection
 
         $temp = array();
         foreach ($data as $key => $value) {
-            if (is_array($value)) {
+            if ($value === false || $value === null) {
+                // False and null will not include the "=". Use an empty string to include the "=".
+                $temp[$this->encodeValue($key)] = $value;
+            } elseif (is_array($value)) {
                 $temp = array_merge($temp, $this->aggregator->aggregate($key, $value, $this));
             } else {
                 $temp[$this->encodeValue($key)] = $this->encodeValue($value);
@@ -272,5 +269,29 @@ class QueryString extends Collection
         }
 
         return $temp;
+    }
+
+    /**
+     * Converts a key value pair that can contain strings, nulls, false, or arrays
+     * into a single string.
+     *
+     * @param string $name  Name of the field
+     * @param mixed  $value Value of the field
+     * @return string
+     */
+    private function convertKvp($name, $value)
+    {
+        if ($value === self::BLANK || $value === null || $value === false) {
+            return $name;
+        } elseif (!is_array($value)) {
+            return $name . $this->valueSeparator . $value;
+        }
+
+        $results = array();
+        foreach ($value as $v) {
+            $results[] = $this->convertKvp($name, $v);
+        }
+
+        return implode($results, $this->fieldSeparator);
     }
 }
