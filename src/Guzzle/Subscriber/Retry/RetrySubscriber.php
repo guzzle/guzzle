@@ -27,6 +27,9 @@ class RetrySubscriber implements EventSubscriberInterface
     /** @var int */
     private $maxRetries;
 
+    /** @var callable */
+    private $sleepFn;
+
     public static function getSubscribedEvents()
     {
         return [
@@ -36,45 +39,48 @@ class RetrySubscriber implements EventSubscriberInterface
     }
 
     /**
-     * @param callable $filter    Filter used to determine whether or not to retry a request. The filter must be a
-     *                            callable that accepts the current number of retries and an AbstractTransferStatsEvent
-     *                            object. The filter must return true or false to denote if the request must be retried.
-     * @param callable $delayFunc Callable that accepts the number of retries and an AbstractTransferStatsEvent and
-     *                            returns the amount of of time in seconds to delay.
-     * @param int                 $maxRetries Maximum number of retries
+     * @param callable $filter     Filter used to determine whether or not to retry a request. The filter must be a
+     *                             callable that accepts the current number of retries and an AbstractTransferStatsEvent
+     *                             object. The filter must return true or false to denote if the request must be retried
+     * @param callable $delayFunc  Callable that accepts the number of retries and an AbstractTransferStatsEvent and
+     *                             returns the amount of of time in seconds to delay.
+     * @param int      $maxRetries Maximum number of retries
+     * @param callable $sleepFn    Function invoked when the subscriber needs to sleep. Accepts a float containing the
+     *                             amount of time in seconds to sleep and an AbstractTransferStatsEvent.
      */
     public function __construct(
         callable $filter,
         callable $delayFunc,
-        $maxRetries = 3
+        $maxRetries = 5,
+        callable $sleepFn = null
     ) {
         $this->filter = $filter;
         $this->delayFunc = $delayFunc;
         $this->maxRetries = $maxRetries;
+        $this->sleepFn = $sleepFn ?: function($time) { usleep($time * 1000); };
     }
 
     /**
      * Retrieve a basic truncated exponential backoff plugin that will retry HTTP errors and cURL errors
      *
-     * @param int                     $maxRetries Maximum number of retries
-     * @param array                   $httpCodes  HTTP response codes to retry
-     * @param array                   $curlCodes  cURL error codes to retry
-     * @param LoggerInterface|bool    $logger     Pass a logger instance to log each retry or pass true for STDOUT
-     * @param string|MessageFormatter $formatter  Pass a message formatter if logging to customize log messages
+     * @param array $config Exponential backoff configuration
+     *     - max_retries: Maximum number of retries (overiddes the default of 5)
+     *     - http_codes: HTTP response codes to retry (overrides the default)
+     *     - curl_codes: cURL error codes to retry (overrides the default)
+     *     - logger: Pass a logger instance to log each retry or pass true for STDOUT
+     *     - formatter: Pass a message formatter if logging to customize log messages
+     *     - sleep_fn: Pass a callable to override how to sleep.
      *
      * @return self
      * @throws \InvalidArgumentException if logger is not a boolean or LoggerInterface
      */
-    public static function getExponentialBackoff(
-        $maxRetries = 3,
-        array $httpCodes = null,
-        array $curlCodes = null,
-        $logger = null,
-        $formatter = null
-    ) {
+    public static function getExponentialBackoff(array $config = [])
+    {
+        $httpCodes = isset($config['http_codes']) ? $config['http_codes'] : null;
         if (!extension_loaded('curl')) {
             $filter = self::createStatusFilter($httpCodes);
         } else {
+            $curlCodes = isset($config['curl_codes']) ? $config['curl_codes'] : null;
             $filter = self::createChainFilter([
                 self::createStatusFilter($httpCodes),
                 self::createCurlFilter($curlCodes)
@@ -83,16 +89,18 @@ class RetrySubscriber implements EventSubscriberInterface
 
         $delay = [__CLASS__, 'exponentialDelay'];
 
-        if ($logger) {
-            if ($logger === true) {
-                $logger = new SimpleLogger(STDOUT);
-            } elseif (!($logger instanceof LoggerInterface)) {
+        if (isset($config['logger'])) {
+            $logger = $config['logger'];
+            if (!($logger instanceof LoggerInterface)) {
                 throw new \InvalidArgumentException('$logger must be true, false, or a LoggerInterface');
             }
+            $formatter = isset($config['formatter']) ? $config['formatter'] : null;
             $delay = self::createLoggingDelay($delay, $logger, $formatter);
         }
 
-        return new self($filter, $delay, $maxRetries);
+        $maxRetries = isset($config['max_retries']) ? $config['max_retries'] : 5;
+
+        return new self($filter, $delay, $maxRetries, isset($config['sleep_fn']) ? $config['sleep_fn'] : null);
     }
 
     public function onRequestSent(AbstractTransferStatsEvent $event)
@@ -104,7 +112,8 @@ class RetrySubscriber implements EventSubscriberInterface
             $filterFn = $this->filter;
             if ($filterFn($retries, $event)) {
                 $delayFn = $this->delayFunc;
-                sleep($delayFn($retries, $event));
+                $sleepFn = $this->sleepFn;
+                $sleepFn($delayFn($retries, $event), $event);
                 $request->getConfig()->set('retries', ++$retries);
                 $event->intercept($event->getClient()->send($request));
             }
