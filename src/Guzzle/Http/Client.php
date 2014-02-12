@@ -192,10 +192,13 @@ class Client implements ClientInterface
      */
     protected function getDefaultOptions()
     {
+        // Use the bundled cacert if it is a regular file, or set to true if
+        // using a phar file (because curL and the stream wrapper can't read
+        // cacerts from the phar stream wrapper).
         return [
             'allow_redirects' => true,
             'exceptions'      => true,
-            'verify'          => __DIR__ . '/cacert.pem'
+            'verify'          => substr(__FILE__, 0, 7) == 'phar://' ? true : (__DIR__ . '/cacert.pem')
         ];
     }
 
