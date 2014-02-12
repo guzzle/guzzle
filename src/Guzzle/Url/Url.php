@@ -28,11 +28,12 @@ class Url
      */
     public static function fromString($url)
     {
-        static $defaults = array('scheme' => null, 'host' => null, 'path' => null, 'port' => null, 'query' => null,
+        static $defaults = array('scheme' => null, 'host' => null,
+            'path' => null, 'port' => null, 'query' => null,
             'user' => null, 'pass' => null, 'fragment' => null);
 
         if (false === ($parts = parse_url($url))) {
-            throw new \InvalidArgumentException('Was unable to parse malformed url: ' . $url);
+            throw new \InvalidArgumentException('Unable to parse malformed url: ' . $url);
         }
 
         $parts += $defaults;
@@ -76,17 +77,18 @@ class Url
             $url .= $parts['host'];
 
             // Only include the port if it is not the default port of the scheme
-            if (isset($parts['port'])
-                && !(($scheme == 'http' && $parts['port'] == 80) || ($scheme == 'https' && $parts['port'] == 443))
+            if (isset($parts['port']) &&
+                !(($scheme == 'http' && $parts['port'] == 80) ||
+                ($scheme == 'https' && $parts['port'] == 443))
             ) {
                 $url .= ':' . $parts['port'];
             }
         }
 
         // Add the path component if present
-        if (isset($parts['path']) && 0 !== strlen($parts['path'])) {
+        if (isset($parts['path']) && strlen($parts['path'])) {
             // Always ensure that the path begins with '/' if set and something is before the path
-            if ($url && $parts['path'][0] != '/' && substr($url, -1)  != '/') {
+            if ($url && $parts['path'][0] != '/' && substr($url, -1) != '/') {
                 $url .= '/';
             }
             $url .= $parts['path'];
@@ -247,7 +249,10 @@ class Url
     }
 
     /**
-     * Get the port part of the URl. Will return the default port for a given scheme if no port has been set.
+     * Get the port part of the URl.
+     *
+     * If no port was set, this method will return the default port for the
+     * scheme of the URI.
      *
      * @return int|null
      */
@@ -267,17 +272,13 @@ class Url
     /**
      * Set the path part of the URL
      *
-     * @param array|string $path Path string or array of path segments
+     * @param string $path Path string to set
      *
      * @return Url
      */
     public function setPath($path)
     {
         static $pathReplace = array(' ' => '%20', '?' => '%3F');
-        if (is_array($path)) {
-            $path = '/' . implode('/', $path);
-        }
-
         $this->path = strtr($path, $pathReplace);
 
         return $this;
@@ -417,20 +418,23 @@ class Url
     /**
      * Set the query part of the URL
      *
-     * @param QueryString|string|array $query Query to set
+     * @param QueryString|string|array $query Query string value to set. Can
+     *     be a string that will be parsed into a QueryString object, an array
+     *     of key value pairs, or a QueryString object.
      *
      * @return Url
+     * @throws \InvalidArgumentException
      */
     public function setQuery($query)
     {
-        if (is_string($query)) {
-            $output = null;
-            parse_str($query, $output);
-            $this->query = new QueryString($output);
+        if ($query instanceof QueryString) {
+            $this->query = $query;
+        } elseif (is_string($query)) {
+            $this->query = QueryString::fromString($query);
         } elseif (is_array($query)) {
             $this->query = new QueryString($query);
-        } elseif ($query instanceof QueryString) {
-            $this->query = $query;
+        } else {
+            throw new \InvalidArgumentException('Query must be a QueryStringInterface, array, or string');
         }
 
         return $this;

@@ -170,7 +170,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $url = Url::fromString('http://www.test.com/');
         $this->assertEquals('example.com', $url->setHost('example.com')->getHost());
         $this->assertEquals('8080', $url->setPort(8080)->getPort());
-        $this->assertEquals('/foo/bar', $url->setPath(array('foo', 'bar'))->getPath());
+        $this->assertEquals('/foo/bar', $url->setPath('/foo/bar')->getPath());
         $this->assertEquals('a', $url->setPassword('a')->getPassword());
         $this->assertEquals('b', $url->setUsername('b')->getUsername());
         $this->assertEquals('abc', $url->setFragment('abc')->getFragment());
@@ -188,6 +188,15 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $url = Url::fromString('http://www.test.com');
         $url->setQuery(array('a' => 'b'));
         $this->assertEquals('http://www.test.com?a=b', (string) $url);
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testQueryMustBeValid()
+    {
+        $url = Url::fromString('http://www.test.com');
+        $url->setQuery(false);
     }
 
     public function urlProvider()
