@@ -2,6 +2,7 @@
 
 namespace Guzzle\Tests\Http;
 
+use Guzzle\Http\Adapter\FakeParallelAdapter;
 use Guzzle\Http\Adapter\MockAdapter;
 use Guzzle\Http\Client;
 use Guzzle\Http\Event\RequestBeforeSendEvent;
@@ -343,5 +344,17 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $client = new Client();
         $client->setConfig('defaults', 'foo');
+    }
+
+    public function testCanSetCustomParallelAdapter()
+    {
+        $called = false;
+        $pa = new FakeParallelAdapter(new MockAdapter(function () use (&$called) {
+            $called = true;
+            return new Response(203);
+        }));
+        $client = new Client(['parallel_adapter' => $pa]);
+        $client->sendAll([$client->createRequest('GET', 'http://www.foo.com')]);
+        $this->assertTrue($called);
     }
 }
