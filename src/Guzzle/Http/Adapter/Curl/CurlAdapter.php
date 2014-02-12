@@ -3,7 +3,7 @@
 namespace Guzzle\Http\Adapter\Curl;
 
 use Guzzle\Http\Adapter\AdapterInterface;
-use Guzzle\Http\Adapter\BatchAdapterInterface;
+use Guzzle\Http\Adapter\ParallelAdapterInterface;
 use Guzzle\Http\Adapter\TransactionInterface;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Exception\AdapterException;
@@ -17,7 +17,7 @@ use Guzzle\Http\Message\MessageFactoryInterface;
  * associative array of curl option constants mapping to values in the
  * **curl** key of a request's configuration options.
  */
-class CurlAdapter implements AdapterInterface, BatchAdapterInterface
+class CurlAdapter implements AdapterInterface, ParallelAdapterInterface
 {
     const ERROR_STR = 'See http://curl.haxx.se/libcurl/c/libcurl-errors.html for an explanation of cURL errors';
 
@@ -81,7 +81,7 @@ class CurlAdapter implements AdapterInterface, BatchAdapterInterface
         return $transaction->getResponse();
     }
 
-    public function batch(\Iterator $transactions, $parallel)
+    public function sendAll(\Iterator $transactions, $parallel)
     {
         $context = new BatchContext(
             $this->checkoutMultiHandle(),

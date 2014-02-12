@@ -4,8 +4,8 @@ namespace Guzzle\Http;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\HasEmitterTrait;
-use Guzzle\Http\Adapter\FakeBatchAdapter;
-use Guzzle\Http\Adapter\BatchAdapterInterface;
+use Guzzle\Http\Adapter\FakeParallelAdapter;
+use Guzzle\Http\Adapter\ParallelAdapterInterface;
 use Guzzle\Http\Adapter\AdapterInterface;
 use Guzzle\Http\Adapter\StreamAdapter;
 use Guzzle\Http\Adapter\StreamingProxyAdapter;
@@ -30,8 +30,8 @@ class Client implements ClientInterface
     /** @var AdapterInterface */
     private $adapter;
 
-    /** @var BatchAdapterInterface */
-    private $batchAdapter;
+    /** @var ParallelAdapterInterface */
+    private $parallelAdapter;
 
     /** @var Url Base URL of the client */
     private $baseUrl;
@@ -63,7 +63,7 @@ class Client implements ClientInterface
      *       an array that contains a URI template followed by an associative array of
      *       expansion variables to inject into the URI template.
      *     - adapter: Adapter used to transfer requests
-     *     - batch_adapter: Adapter used to transfer requests in parallel
+     *     - parallel_adapter: Adapter used to transfer requests in parallel
      *     - message_factory: Factory used to create request and response object
      *     - defaults: Default request options to apply to each request
      */
@@ -179,7 +179,7 @@ class Client implements ClientInterface
             $requests = new TransactionIterator($requests, $this, $options);
         }
 
-        $this->batchAdapter->batch(
+        $this->parallelAdapter->sendAll(
             $requests,
             isset($options['parallel']) ? $options['parallel'] : 50
         );
@@ -228,16 +228,16 @@ class Client implements ClientInterface
     }
 
     /**
-     * Get a default batch adapter to use based on the environment
+     * Get a default parallel adapter to use based on the environment
      *
-     * @return BatchAdapterInterface|null
+     * @return ParallelAdapterInterface|null
      * @throws \RuntimeException
      */
-    private function getDefaultBatchAdapter()
+    private function getDefaultParallelAdapter()
     {
         return extension_loaded('curl')
             ? new CurlAdapter($this->messageFactory)
-            : new FakeBatchAdapter($this->adapter);
+            : new FakeParallelAdapter($this->adapter);
     }
 
     /**
@@ -250,12 +250,12 @@ class Client implements ClientInterface
     {
         if (extension_loaded('curl')) {
             if (!ini_get('allow_url_fopen')) {
-                return $this->batchAdapter = $this->adapter = new CurlAdapter($this->messageFactory);
+                return $this->parallelAdapter = $this->adapter = new CurlAdapter($this->messageFactory);
             } else {
-                // Assume that the batch adapter will also be this CurlAdapter
-                $this->batchAdapter = new CurlAdapter($this->messageFactory);
+                // Assume that the parallel adapter will also be this CurlAdapter
+                $this->parallelAdapter = new CurlAdapter($this->messageFactory);
                 return new StreamingProxyAdapter(
-                    $this->batchAdapter,
+                    $this->parallelAdapter,
                     new StreamAdapter($this->messageFactory)
                 );
             }
@@ -309,13 +309,13 @@ class Client implements ClientInterface
         } else {
             $this->adapter = $this->getDefaultAdapter();
         }
-        // If no batch adapter was explicitly provided and one was not defaulted
-        // when creating the default adapter, then create one now
-        if (isset($config['batch_adapter'])) {
-            $this->batchAdapter = $config['batch_adapter'];
-            unset($config['batch_adapter']);
-        } elseif (!$this->batchAdapter) {
-            $this->batchAdapter = $this->getDefaultBatchAdapter();
+        // If no parallel adapter was explicitly provided and one was not
+        // defaulted when creating the default adapter, then create one now.
+        if (isset($config['parallel_adapter'])) {
+            $this->parallelAdapter = $config['parallel_adapter'];
+            unset($config['parallel_adapter']);
+        } elseif (!$this->parallelAdapter) {
+            $this->parallelAdapter = $this->getDefaultParallelAdapter();
         }
     }
 }

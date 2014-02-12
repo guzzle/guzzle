@@ -5,10 +5,10 @@ namespace Guzzle\Http\Adapter;
 use Guzzle\Http\Exception\RequestException;
 
 /**
- * Decorates a regular adapter and creates a batch adapter that sends multiple
- * requests serially
+ * Decorates a regular AdapterInterface object and creates a
+ * ParallelAdapterInterface object that sends multiple HTTP requests serially.
  */
-class FakeBatchAdapter implements BatchAdapterInterface
+class FakeParallelAdapter implements ParallelAdapterInterface
 {
     /** @var AdapterInterface */
     private $adapter;
@@ -21,7 +21,7 @@ class FakeBatchAdapter implements BatchAdapterInterface
         $this->adapter = $adapter;
     }
 
-    public function batch(\Iterator $transactions, $parallel)
+    public function sendAll(\Iterator $transactions, $parallel)
     {
         foreach ($transactions as $transaction) {
             try {

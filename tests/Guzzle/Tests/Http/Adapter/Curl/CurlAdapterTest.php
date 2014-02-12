@@ -47,7 +47,7 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('bar', $response->getHeader('Foo'));
     }
 
-    public function testSendsBatchRequests()
+    public function testSendsParallelRequests()
     {
         $c = new Client();
         self::$server->flush();
@@ -62,7 +62,7 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
             new Transaction($c, new Request('HEAD', self::$server->getUrl()))
         ];
         $a = new CurlAdapter(new MessageFactory());
-        $a->batch(new \ArrayIterator($transactions), 20);
+        $a->sendAll(new \ArrayIterator($transactions), 20);
         foreach ($transactions as $t) {
             $this->assertContains($t->getResponse()->getStatusCode(), [200, 201, 202]);
         }
