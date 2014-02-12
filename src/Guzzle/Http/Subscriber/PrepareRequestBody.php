@@ -10,6 +10,15 @@ use Guzzle\Stream\StreamInterface;
 
 /**
  * Prepares requests with a body before sending
+ *
+ * **Request Options**
+ *
+ * - expect: Set to true to enable the "Expect: 100-Continue" header for a
+ *   request that send a body. Set to false to disable "Expect: 100-Continue".
+ *   Set to a number so that the size of the payload must be greater than the
+ *   number in order to send the Expect header. Setting to a number will send
+ *   the Expect header for all requests in which the size of the payload cannot
+ *   be determined or where the body is not rewindable.
  */
 class PrepareRequestBody implements EventSubscriberInterface
 {

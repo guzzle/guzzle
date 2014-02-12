@@ -135,7 +135,8 @@ class MessageFactory implements MessageFactoryInterface
 
     protected function applyOptions(RequestInterface $request, array $options = array())
     {
-        static $map = ['connect_timeout' => 1, 'timeout' => 1, 'verify' => 1,
+        // Values specified in the config map are passed to request options
+        static $configMap = ['connect_timeout' => 1, 'timeout' => 1, 'verify' => 1,
             'ssl_key' => 1, 'cert' => 1, 'proxy' => 1, 'debug' => 1,
             'save_to' => 1, 'stream' => 1, 'expect' => 1];
         static $methods;
@@ -149,7 +150,7 @@ class MessageFactory implements MessageFactoryInterface
             $method = "visit_{$key}";
             if (isset($methods[$method])) {
                 $this->{$method}($request, $value);
-            } elseif (isset($map[$key])) {
+            } elseif (isset($configMap[$key])) {
                 $config[$key] = $value;
             } else {
                 throw new \InvalidArgumentException("No method is configured to handle the {$key} config key");

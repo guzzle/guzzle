@@ -27,6 +27,24 @@ use Guzzle\Http\Message\ResponseInterface;
  *    If the propagation of the event was not stopped, then the adapter MUST
  *    throw the exception. If the propagation was stopped, then the adapter
  *    MUST NOT throw the exception.
+ *
+ * Adapter must also handle request options that are used to modify how a
+ * request is sent over the wire. The following request options MUST be handled
+ * by an adapter:
+ *
+ * - cert
+ * - connect_timeout
+ * - debug
+ * - expect
+ * - proxy
+ * - save_to
+ * - ssl_key
+ * - stream
+ * - timeout
+ * - verify
+ *
+ * {@see Guzzle\Http\MessageFactoryInterface} for a full description of the
+ * format and expected behavior of each option.
  */
 interface AdapterInterface
 {
