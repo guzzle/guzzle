@@ -86,14 +86,6 @@ class AbstractMessageTest extends \PHPUnit_Framework_TestCase
         $m->setBody(Stream::factory('baz'));
         $this->assertEquals("Foo!\r\nfoo: bar\r\nContent-Length: 3\r\n\r\nbaz", (string) $m);
     }
-
-    public function testClonesHeaders()
-    {
-        $m = new Message();
-        $m->setHeader('foo', 'bar');
-        $m2 = clone $m;
-        $this->assertNotSame($m->getHeader('foo'), $m2->getHeader('foo'));
-    }
 }
 
 class Message extends AbstractMessage

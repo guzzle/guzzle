@@ -116,6 +116,7 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         self::$server->flush();
         self::$server->enqueue(["HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"]);
         $request = new Request('PUT', self::$server->getUrl(), [], $stream);
+        $this->assertNull($request->getBody()->getSize());
         $t = new Transaction(new Client(), $request);
         $h = (new CurlFactory())->createHandle($t, new MessageFactory());
         curl_exec($h);
@@ -137,7 +138,7 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         curl_close($h);
         $this->assertEquals('foo', $t->getResponse()->getBody());
         $sent = self::$server->getReceivedRequests(true)[0];
-        $this->assertContains('gzip', (string) $sent->getHeader('Accept-Encoding'));
+        $this->assertContains('gzip', $sent->getHeader('Accept-Encoding'));
     }
 
     public function testAddsDebugInfoToBuffer()

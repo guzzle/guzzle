@@ -8,6 +8,63 @@ namespace Guzzle\Http\Message;
 class MessageParser
 {
     /**
+     * Parse an array of header values containing ";" separated data into an
+     * array of associative arrays representing the header key value pair
+     * data of the header. When a parameter does not contain a value, but just
+     * contains a key, this function will inject a key with a '' string value.
+     *
+     * @param array $values Header values to parse into a parameter array.
+     *
+     * @return array
+     */
+    public static function parseHeader(array $values)
+    {
+        static $trimmed = "\"'  \n\t\r";
+        $params = $matches = [];
+
+        foreach (self::normalizeHeader($values) as $val) {
+            $part = [];
+            foreach (preg_split('/;(?=([^"]*"[^"]*")*[^"]*$)/', $val) as $kvp) {
+                if (preg_match_all('/<[^>]+>|[^=]+/', $kvp, $matches)) {
+                    $pieces = $matches[0];
+                    if (isset($pieces[1])) {
+                        $part[trim($pieces[0], $trimmed)] = trim($pieces[1], $trimmed);
+                    } else {
+                        $part[] = trim($pieces[0], $trimmed);
+                    }
+                }
+            }
+            if ($part) {
+                $params[] = $part;
+            }
+        }
+
+        return $params;
+    }
+
+    /**
+     * Converts an array of header values that may contain comma separated
+     * headers into an array of headers with no comma separated values.
+     *
+     * @param array $values Header values to parse
+     *
+     * @return array
+     */
+    public static function normalizeHeader($values)
+    {
+        for ($i = 0, $total = count($values); $i < $total; $i++) {
+            if (strpos($values[$i], ',') !== false) {
+                foreach (preg_split('/,(?=([^"]*"[^"]*")*[^"]*$)/', $values[$i]) as $v) {
+                    $values[] = trim($v);
+                }
+                unset($values[$i]);
+            }
+        }
+
+        return $values;
+    }
+
+    /**
      * Parse an HTTP request message into an associative array of parts.
      *
      * @param string $message HTTP request to parse

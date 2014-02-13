@@ -2,6 +2,7 @@
 
 namespace Guzzle\Http\Message;
 
+use Guzzle\Http\Exception\ParseException;
 use Guzzle\Stream\StreamInterface;
 
 /**
@@ -121,7 +122,10 @@ class Response extends AbstractMessage implements ResponseInterface
     {
         $data = json_decode((string) $this->getBody(), true);
         if (JSON_ERROR_NONE !== json_last_error()) {
-            throw new \RuntimeException('Unable to parse response body into JSON: ' . json_last_error());
+            throw new ParseException(
+                'Unable to parse response body into JSON: ' . json_last_error(),
+                $this
+            );
         }
 
         return $data === null ? array() : $data;
@@ -137,7 +141,10 @@ class Response extends AbstractMessage implements ResponseInterface
             libxml_disable_entity_loader($disableEntities);
         } catch (\Exception $e) {
             libxml_disable_entity_loader($disableEntities);
-            throw new \RuntimeException('Unable to parse response body into XML: ' . $e->getMessage());
+            throw new ParseException(
+                'Unable to parse response body into XML: ' . $e->getMessage(),
+                $this
+            );
         }
 
         return $xml;

@@ -44,7 +44,7 @@ class PrepareRequestBody implements EventSubscriberInterface
         $this->addExpectHeader($request, $body);
 
         // Never send a Transfer-Encoding: chunked and Content-Length header in the same request
-        if ((string) $request->getHeader('Transfer-Encoding') == 'chunked') {
+        if ($request->getHeader('Transfer-Encoding') == 'chunked') {
             $request->removeHeader('Content-Length');
         }
     }

@@ -39,7 +39,6 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $r2 = clone $r;
 
         $this->assertNotSame($r->getEmitter(), $r2->getEmitter());
-        $this->assertNotSame($r->getHeader('foo'), $r2->getHeader('foo'));
         $this->assertEquals('foo', $r2->getBody());
 
         $r->getConfig()->set('test', 123);

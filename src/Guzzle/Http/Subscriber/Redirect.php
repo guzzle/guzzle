@@ -123,7 +123,7 @@ class Redirect implements EventSubscriberInterface
             $originalUrl = Url::fromString($redirectRequest->getUrl());
             // Remove query string parameters and just take what is present on the redirect Location header
             $originalUrl->getQuery()->clear();
-            $location = $originalUrl->combine((string) $location);
+            $location = $originalUrl->combine($location);
         }
 
         $redirectRequest->setUrl($location);

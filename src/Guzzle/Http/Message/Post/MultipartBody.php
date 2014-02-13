@@ -267,8 +267,8 @@ class MultipartBody implements StreamInterface
     private function getFileHeaders(PostFileInterface $file)
     {
         $headers = '';
-        foreach ($file->getHeaders() as $key => $value) {
-            $headers .= $key . ': ' . $value . "\r\n";
+        foreach ($file->getHeaders() as $key => $values) {
+            $headers .= $key . ': ' . implode(', ', $values) . "\r\n";
         }
 
         return "--{$this->boundary}\r\n" . trim($headers) . "\r\n\r\n";

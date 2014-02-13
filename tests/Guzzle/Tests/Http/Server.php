@@ -83,7 +83,7 @@ class Server
             $data[] = [
                 'statusCode'   => $response->getStatusCode(),
                 'reasonPhrase' => $response->getReasonPhrase(),
-                'headers'      => array_map(function ($h) { return (string) $h; }, $response->getHeaders()),
+                'headers'      => array_map(function ($h) { return implode(' ,', $h); }, $response->getHeaders()),
                 'body'         => (string) $response->getBody()
             ];
         }

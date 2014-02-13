@@ -17,30 +17,39 @@ trait HasHeadersTrait
     {
         $header = trim($header);
         $name = strtolower($header);
+        $this->headerNames[$name] = $header;
 
-        if (!isset($this->headers[$name])) {
-            $this->headerNames[$name] = $header;
-            $this->headers[$name] = new HeaderValues();
-        }
-
-        if (is_string($value) || is_int($value)) {
-            $this->headers[$name][] = (string) $value;
-        } elseif (is_array($value) || $value instanceof HeaderValues) {
-            foreach ($value as $v) {
-                $this->headers[$name][] = $v;
-            }
-        } else {
-            throw new \InvalidArgumentException('Invalid header value provided');
+        switch (gettype($value)) {
+            case 'string':
+                $this->headers[$name][] = trim($value);
+                break;
+            case 'integer':
+            case 'double':
+                $this->headers[$name][] = (string) $value;
+                break;
+            case 'array':
+                foreach ($value as $v) {
+                    $this->headers[$name][] = $v;
+                }
+                break;
+            default:
+                throw new \InvalidArgumentException('Invalid header value provided: ' . var_export($value, true));
         }
 
         return $this;
     }
 
-    public function getHeader($header)
+    public function getHeader($header, $asArray = false)
     {
         $name = strtolower($header);
 
-        return isset($this->headers[$name]) ? $this->headers[$name] : null;
+        if (!isset($this->headers[$name])) {
+            return $asArray ? [] : '';
+        }
+
+        return $asArray
+            ? $this->headers[$name]
+            : implode(', ', $this->headers[$name]);
     }
 
     public function getHeaders()
@@ -59,14 +68,19 @@ trait HasHeadersTrait
         $name = strtolower($header);
         $this->headerNames[$name] = $header;
 
-        if (is_string($value) || is_int($value)) {
-            $this->headers[$name] = new HeaderValues([(string) $value]);
-        } elseif (is_array($value)) {
-            $this->headers[$name] = new HeaderValues($value);
-        } elseif ($value instanceof HeaderValuesInterface) {
-            $this->headers[$name] = $value;
-        } else {
-            throw new \InvalidArgumentException('Invalid header value provided: ' . var_export($value, true));
+        switch (gettype($value)) {
+            case 'string':
+                $this->headers[$name] = [trim($value)];
+                break;
+            case 'integer':
+            case 'double':
+                $this->headers[$name] = [(string) $value];
+                break;
+            case 'array':
+                $this->headers[$name] = $value;
+                break;
+            default:
+                throw new \InvalidArgumentException('Invalid header value provided: ' . var_export($value, true));
         }
 
         return $this;

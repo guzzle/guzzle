@@ -16,21 +16,11 @@ abstract class AbstractMessage implements MessageInterface
     /** @var string HTTP protocol version of the message */
     private $protocolVersion = '1.1';
 
-    /**
-     * Clones the message, ensuring that headers are cloned
-     */
-    public function __clone()
-    {
-        $this->headers = array_map(function ($header) {
-            return clone $header;
-        }, $this->headers);
-    }
-
     public function __toString()
     {
         $result = $this->getStartLine();
-        foreach ($this->getHeaders() as $name => $value) {
-            $result .= "\r\n{$name}: {$value}";
+        foreach ($this->getHeaders() as $name => $values) {
+            $result .= "\r\n{$name}: " . implode(', ', $values);
         }
 
         return $result . "\r\n\r\n" . $this->body;

@@ -4,7 +4,6 @@ namespace Guzzle\Tests\Http\Message;
 
 use Guzzle\Http\Message\HasHeadersInterface;
 use Guzzle\Http\Message\HasHeadersTrait;
-use Guzzle\Http\Message\HeaderValues;
 
 class HasThem implements HasHeadersInterface {
     use HasHeadersTrait;
@@ -16,7 +15,7 @@ class HasHeadersTraitTest extends \PHPUnit_Framework_TestCase
     {
         $h = new HasThem();
         $h->addHeader('foo', 'bar');
-        $this->assertInstanceOf('Guzzle\Http\Message\HeaderValuesInterface', $h->getHeader('foo'));
+        $this->assertInternalType('string', $h->getHeader('foo'));
         $this->assertEquals('bar', $h->getHeader('foo'));
     }
 
@@ -24,8 +23,8 @@ class HasHeadersTraitTest extends \PHPUnit_Framework_TestCase
     {
         $h = new HasThem();
         $h->addHeader('foo', 'bar')->addHeader('foo', 'baz');
-        $this->assertEquals(['bar', 'baz'], $h->getHeader('foo')->getIterator()->getArrayCopy());
         $this->assertEquals('bar, baz', $h->getHeader('foo'));
+        $this->assertEquals(['bar', 'baz'], $h->getHeader('foo', true));
     }
 
     public function testAddsHeadersWhenPresentDifferentCase()
@@ -39,13 +38,6 @@ class HasHeadersTraitTest extends \PHPUnit_Framework_TestCase
     {
         $h = new HasThem();
         $h->addHeader('Foo', ['bar', 'baz']);
-        $this->assertEquals('bar, baz', $h->getHeader('foo'));
-    }
-
-    public function testAddsHeadersWithHeaderValues()
-    {
-        $h = new HasThem();
-        $h->addHeader('Foo', new HeaderValues(['bar', 'baz']));
         $this->assertEquals('bar, baz', $h->getHeader('foo'));
     }
 
@@ -65,10 +57,11 @@ class HasHeadersTraitTest extends \PHPUnit_Framework_TestCase
         $h->addHeader('boO', 'test');
         $result = $h->getHeaders();
         $this->assertInternalType('array', $result);
-        $this->assertArrayHasKey('foo', $result);
+        $this->assertArrayHasKey('Foo', $result);
+        $this->assertArrayNotHasKey('foo', $result);
         $this->assertArrayHasKey('boO', $result);
-        $this->assertEquals('bar, baz', (string) $result['foo']);
-        $this->assertEquals('test', (string) $result['boO']);
+        $this->assertEquals(['bar', 'baz'], $result['Foo']);
+        $this->assertEquals(['test'], $result['boO']);
     }
 
     public function testSetHeaderOverwritesExistingValues()
@@ -81,10 +74,10 @@ class HasHeadersTraitTest extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('Foo', $h->getHeaders());
     }
 
-    public function testSetHeaderOverwritesExistingValuesUsingHeaderValuesObject()
+    public function testSetHeaderOverwritesExistingValuesUsingHeaderArray()
     {
         $h = new HasThem();
-        $h->setHeader('foo', new HeaderValues(['bar']));
+        $h->setHeader('foo', ['bar']);
         $this->assertEquals('bar', $h->getHeader('foo'));
     }
 
@@ -108,7 +101,7 @@ class HasHeadersTraitTest extends \PHPUnit_Framework_TestCase
         $h = new HasThem();
         $h->setHeader('foo', 'bar');
         $h->setHeaders(['foo' => 'a', 'boo' => 'b']);
-        $this->assertEquals(['foo' => 'a', 'boo' => 'b'], $h->getHeaders());
+        $this->assertEquals(['foo' => ['a'], 'boo' => ['b']], $h->getHeaders());
     }
 
     public function testChecksIfCaseInsensitiveHeaderIsPresent()

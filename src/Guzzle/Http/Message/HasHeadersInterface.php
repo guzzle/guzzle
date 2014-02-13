@@ -8,29 +8,36 @@ namespace Guzzle\Http\Message;
 interface HasHeadersInterface
 {
     /**
-     * Gets all headers.
+     * Gets all message headers.
      *
      * The keys represent the header name as it will be sent over the wire, and
-     * each value is a HeaderValuesInterface object that can be used like an
-     * array or cast to a string.
+     * each value is an array of strings associated with the header.
      *
      *     // Represent the headers as a string
      *     foreach ($message->getHeaders() as $name => $values) {
-     *         echo "{$name}: {$values}\r\n";
+     *         echo $name . ": " . implode(", ", $values);
      *     }
      *
-     * @return array Returns an associative array of the message's headers
+     * @return array Returns an associative array of the message's headers.
      */
     public function getHeaders();
 
     /**
-     * Retrieve a header by name.
+     * Retrieve a header by the given case-insensitive name.
      *
-     * @param string $header Header name.
+     * By default, this method returns all of the header values of the given
+     * case-insensitive header name as a string concatenated together using
+     * a comma. Because some header should not be concatenated together using a
+     * comma, this method provides a Boolean argument that can be used to
+     * retrieve the associated header values as an array of strings.
      *
-     * @return HeaderValuesInterface|null Header values, or null if not set.
+     * @param string $header  Case-insensitive header name.
+     * @param bool   $asArray Set to true to retrieve the header value as an
+     *                        array of strings.
+     *
+     * @return array|string
      */
-    public function getHeader($header);
+    public function getHeader($header, $asArray = false);
 
     /**
      * Checks if a header exists by the given case-insensitive name.
@@ -38,15 +45,15 @@ interface HasHeadersInterface
      * @param string $header Case-insensitive header name.
      *
      * @return bool Returns true if any header names match the given header
-     *              name using a case-insensitive string comparison. Returns
-     *              false if no matching header name is found in the message.
+     *     name using a case-insensitive string comparison. Returns false if
+     *     no matching header name is found in the message.
      */
     public function hasHeader($header);
 
     /**
      * Remove a specific header by case-insensitive name.
      *
-     * @param string $header HTTP header to remove
+     * @param string $header Case-insensitive header name.
      *
      * @return self
      */
@@ -67,11 +74,10 @@ interface HasHeadersInterface
      * Sets a header, replacing any existing values of any headers with the
      * same case-insensitive name.
      *
-     * The header values MUST be a string, an array of strings, or a
-     * HeaderValuesInterface object.
+     * The header values MUST be a string or an array of strings.
      *
-     * @param string                             $header Header name
-     * @param string|array|HeaderValuesInterface $value  Header value(s)
+     * @param string       $header Header name
+     * @param string|array $value  Header value(s)
      *
      * @return self Returns the message.
      */
@@ -82,7 +88,7 @@ interface HasHeadersInterface
      * message.
      *
      * The array keys MUST be a string. The array values must be either a
-     * string, array of strings, or a HeaderValuesInterface object.
+     * string or an array of strings.
      *
      * @param array $headers Headers to set.
      *

@@ -161,8 +161,8 @@ class StreamAdapter implements AdapterInterface
         }
 
         $headers = '';
-        foreach ($request->getHeaders() as $name => $header) {
-            $headers .= "{$name}: {$header}\r\n";
+        foreach ($request->getHeaders() as $name => $values) {
+            $headers .= $name . ': ' . implode(', ', $values) . "\r\n";
         }
 
         $params = [];

@@ -34,7 +34,7 @@ html_static_path = ['_static']
 
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {
-    '**':       ['localtoc.html', 'leftbar.html', 'searchbox.html']
+    '**':       ['localtoc.html', 'searchbox.html']
 }
 
 # Output file base name for HTML help builder.

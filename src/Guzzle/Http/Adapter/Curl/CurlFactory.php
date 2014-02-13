@@ -64,8 +64,8 @@ class CurlFactory
         }
 
         // Add CURLOPT_ENCODING if Accept-Encoding header is provided
-        if ($acceptEncodingHeader = $request->getHeader('Accept-Encoding')) {
-            $options[CURLOPT_ENCODING] = (string) $acceptEncodingHeader;
+        if ($request->hasHeader('Accept-Encoding')) {
+            $options[CURLOPT_ENCODING] = $request->getHeader('Accept-Encoding');
             // Let cURL set the Accept-Encoding header, prevents duplicate values
             $this->removeHeader('Accept-Encoding', $options);
         }
@@ -95,8 +95,8 @@ class CurlFactory
 
     protected function applyBody(RequestInterface $request, array &$options)
     {
-        if (null !== ($len = $request->getHeader('Content-Length'))) {
-            $size = (int) (string) $len;
+        if ($request->hasHeader('Content-Length')) {
+            $size = (int) $request->getHeader('Content-Length');
         } else {
             $size = null;
         }
@@ -127,7 +127,7 @@ class CurlFactory
     protected function applyHeaders(RequestInterface $request, array &$options)
     {
         foreach ($options['_headers'] as $name => $values) {
-            $options[CURLOPT_HTTPHEADER][] = "{$name}: {$values}";
+            $options[CURLOPT_HTTPHEADER][] = $name . ': ' . implode(', ', $values);
         }
 
         // Remove the Expect header if one was not set

@@ -57,7 +57,6 @@ class Request extends AbstractMessage implements RequestInterface
         }
         $this->transferOptions = clone $this->transferOptions;
         $this->url = clone $this->url;
-        parent::__clone();
     }
 
     public function setBody(StreamInterface $body = null)
