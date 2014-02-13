@@ -30,6 +30,12 @@ Requirements
 #. To use the cURL adapter, you must have a recent version of cURL >= 7.16.2
    compiled with OpenSSL and zlib.
 
+.. note::
+
+    Guzzle no longer requires cURL in order to send HTTP requests. Guzzle will
+    use the PHP stream wrapper to send HTTP requests if cURL is not installed.
+    Alternatively, you can provide your own HTTP adapter used to send requests.
+
 .. _installation:
 
 Installation
