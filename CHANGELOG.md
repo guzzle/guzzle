@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-3.8.1 (2013-01-28)
+3.8.1 (2014-01-28)
 ------------------
 
 * Bug: Always using GET requests when redirecting from a 303 response
