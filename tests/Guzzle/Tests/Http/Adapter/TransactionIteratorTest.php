@@ -74,15 +74,15 @@ class TransactionIteratorTest extends \PHPUnit_Framework_TestCase
         $client = new Client();
         $requests = [$client->createRequest('GET', '/')];
         $trans = new TransactionIterator(new \ArrayIterator($requests), $client, [
-            'before' => $fn,
-            'after' => $fn,
-            'error' => $fn,
+            'before'   => $fn,
+            'complete' => $fn,
+            'error'    => $fn,
         ]);
 
         foreach ($trans as $t) {
-            $this->assertSame($fn, $t->getRequest()->getEmitter()->listeners('request.before_send')[1]);
-            $this->assertSame($fn, $t->getRequest()->getEmitter()->listeners('request.error')[0]);
-            $this->assertSame($fn, $t->getRequest()->getEmitter()->listeners('request.after_send')[2]);
+            $this->assertSame($fn, $t->getRequest()->getEmitter()->listeners('before')[1]);
+            $this->assertSame($fn, $t->getRequest()->getEmitter()->listeners('error')[0]);
+            $this->assertSame($fn, $t->getRequest()->getEmitter()->listeners('complete')[2]);
         }
     }
 }

@@ -4,8 +4,8 @@ namespace Guzzle\Tests\Http\Subscriber;
 
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Client;
-use Guzzle\Http\Event\RequestAfterSendEvent;
-use Guzzle\Http\Event\RequestErrorEvent;
+use Guzzle\Http\Event\CompleteEvent;
+use Guzzle\Http\Event\ErrorEvent;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
@@ -25,7 +25,7 @@ class HistoryTest extends \PHPUnit_Framework_TestCase
         $t = new Transaction(new Client(), $request);
         $t->setResponse($response);
         $e = new RequestException('foo', $request, $response);
-        $ev = new RequestErrorEvent($t, $e);
+        $ev = new ErrorEvent($t, $e);
         $h = new History(2);
         $h->onRequestError($ev);
         $this->assertEquals([$request], $h->getRequests());
@@ -37,7 +37,7 @@ class HistoryTest extends \PHPUnit_Framework_TestCase
         $response = new Response(200);
         $t = new Transaction(new Client(), $request);
         $t->setResponse($response);
-        $ev = new RequestAfterSendEvent($t);
+        $ev = new CompleteEvent($t);
         $h = new History(2);
         $h->onRequestSent($ev);
         $h->onRequestSent($ev);

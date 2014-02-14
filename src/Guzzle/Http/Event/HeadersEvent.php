@@ -10,7 +10,7 @@ use Guzzle\Http\Adapter\TransactionInterface;
  *
  * You may intercept the exception and inject a response into the event to rescue the request.
  */
-class GotResponseHeadersEvent extends AbstractRequestEvent
+class HeadersEvent extends AbstractRequestEvent
 {
     /**
      * @param TransactionInterface $transaction Transaction that contains the request and response

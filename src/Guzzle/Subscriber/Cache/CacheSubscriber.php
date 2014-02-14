@@ -82,7 +82,7 @@ class CacheSubscriber implements EventSubscriberInterface
         return [
             'request.before_send' => ['onRequestBeforeSend', -255],
             'request.sent'        => ['onRequestSent', 255],
-            'request.error'       => ['onRequestError', 0],
+            'error'       => ['onRequestError', 0],
             'request.exception'   => ['onRequestException', 0],
         ];
     }

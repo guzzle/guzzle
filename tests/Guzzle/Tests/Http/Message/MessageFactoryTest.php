@@ -9,7 +9,6 @@ use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Subscriber\Cookie;
 use Guzzle\Http\Subscriber\CookieJar\ArrayCookieJar;
-use Guzzle\Http\Subscriber\Redirect;
 use Guzzle\Http\Subscriber\Mock;
 use Guzzle\Stream\Stream;
 
@@ -51,7 +50,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
 
     public function testCreatesRequestWithPostBody()
     {
-        $req = (new MessageFactory())->createRequest('GET', 'http://www.foo.com', [], ['abc' => '123']);
+        $req = (new MessageFactory())->createRequest('GET', 'http://www.foo.com', ['body' => ['abc' => '123']]);
         $this->assertEquals('abc=123', $req->getBody());
     }
 
@@ -59,10 +58,12 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     {
         $pf = fopen(__FILE__, 'r');
         $pfi = new PostFile('ghi', 'abc', __FILE__);
-        $req = (new MessageFactory())->createRequest('GET', 'http://www.foo.com', [], [
-            'abc' => '123',
-            'def' => $pf,
-            'ghi' => $pfi
+        $req = (new MessageFactory())->createRequest('GET', 'http://www.foo.com', [
+            'body' => [
+                'abc' => '123',
+                'def' => $pf,
+                'ghi' => $pfi
+            ]
         ]);
         $this->assertInstanceOf('Guzzle\Http\Message\Post\PostBody', $req->getBody());
         $s = (string) $req;
@@ -108,26 +109,26 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatesOptionsAreImplemented()
     {
-        (new MessageFactory)->createRequest('GET', 'http://test.com', [], null, ['foo' => 'bar']);
+        (new MessageFactory)->createRequest('GET', 'http://test.com', ['foo' => 'bar']);
     }
 
     public function testOptionsAddsRequestOptions()
     {
         $request = (new MessageFactory)->createRequest(
-            'GET', 'http://test.com', [], null, ['config' => ['baz' => 'bar']]
+            'GET', 'http://test.com', ['options' => ['baz' => 'bar']]
         );
         $this->assertEquals('bar', $request->getConfig()->get('baz'));
     }
 
     public function testCanDisableRedirects()
     {
-        $request = (new MessageFactory)->createRequest('GET', '/', [], null, ['allow_redirects' => false]);
-        $this->assertEmpty($request->getEmitter()->listeners(RequestEvents::AFTER_SEND));
+        $request = (new MessageFactory)->createRequest('GET', '/', ['allow_redirects' => false]);
+        $this->assertEmpty($request->getEmitter()->listeners(RequestEvents::COMPLETE));
     }
 
     public function testCanEnableStrictRedirectsAndSpecifyMax()
     {
-        $request = (new MessageFactory)->createRequest('GET', '/', [], null, [
+        $request = (new MessageFactory)->createRequest('GET', '/', [
             'allow_redirects' => ['max' => 10, 'strict' => true]
         ]);
         $this->assertTrue($request->getConfig()->get('strict_redirects'));
@@ -136,9 +137,11 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
 
     public function testCanAddCookiesFromHash()
     {
-        $request = (new MessageFactory)->createRequest('GET', 'http://www.test.com/', [], null, ['cookies' => ['Foo' => 'Bar']]);
+        $request = (new MessageFactory)->createRequest('GET', 'http://www.test.com/', [
+            'cookies' => ['Foo' => 'Bar']
+        ]);
         $cookies = null;
-        foreach ($request->getEmitter()->listeners(RequestEvents::BEFORE_SEND) as $l) {
+        foreach ($request->getEmitter()->listeners(RequestEvents::BEFORE) as $l) {
             if ($l[0] instanceof Cookie) {
                 $cookies = $l[0];
                 break;
@@ -154,10 +157,10 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     public function testAddsCookieUsingTrue()
     {
         $factory = new MessageFactory();
-        $request1 = $factory->createRequest('GET', '/', [], null, ['cookies' => true]);
-        $request2 = $factory->createRequest('GET', '/', [], null, ['cookies' => true]);
+        $request1 = $factory->createRequest('GET', '/', ['cookies' => true]);
+        $request2 = $factory->createRequest('GET', '/', ['cookies' => true]);
         $listeners = function ($r) {
-            return array_filter($r->getEmitter()->listeners(RequestEvents::BEFORE_SEND), function ($l) {
+            return array_filter($r->getEmitter()->listeners(RequestEvents::BEFORE), function ($l) {
                 return $l[0] instanceof Cookie;
             });
         };
@@ -167,8 +170,8 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     public function testAddsCookieFromCookieJar()
     {
         $jar = new ArrayCookieJar();
-        $request = (new MessageFactory)->createRequest('GET', '/', [], null, ['cookies' => $jar]);
-        foreach ($request->getEmitter()->listeners(RequestEvents::BEFORE_SEND) as $l) {
+        $request = (new MessageFactory)->createRequest('GET', '/', ['cookies' => $jar]);
+        foreach ($request->getEmitter()->listeners(RequestEvents::BEFORE) as $l) {
             if ($l[0] instanceof Cookie) {
                 $this->assertSame($jar, $l[0]->getCookieJar());
             }
@@ -180,12 +183,12 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatesCookies()
     {
-        (new MessageFactory)->createRequest('GET', '/', [], null, ['cookies' => 'baz']);
+        (new MessageFactory)->createRequest('GET', '/', ['cookies' => 'baz']);
     }
 
     public function testCanAddQueryString()
     {
-        $request = (new MessageFactory)->createRequest('GET', 'http://foo.com', [], null, [
+        $request = (new MessageFactory)->createRequest('GET', 'http://foo.com', [
             'query' => ['Foo' => 'Bar']
         ]);
         $this->assertEquals('Bar', $request->getQuery()->get('Foo'));
@@ -193,7 +196,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
 
     public function testCanSetDefaultQueryString()
     {
-        $request = (new MessageFactory)->createRequest('GET', 'http://foo.com?test=abc', [], null, [
+        $request = (new MessageFactory)->createRequest('GET', 'http://foo.com?test=abc', [
             'query' => ['Foo' => 'Bar', 'test' => 'def']
         ]);
         $this->assertEquals('Bar', $request->getQuery()->get('Foo'));
@@ -202,7 +205,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
 
     public function testCanAddBasicAuth()
     {
-        $request = (new MessageFactory)->createRequest('GET', 'http://foo.com', [], null, [
+        $request = (new MessageFactory)->createRequest('GET', 'http://foo.com', [
             'auth' => ['michael', 'test']
         ]);
         $this->assertTrue($request->hasHeader('Authorization'));
@@ -210,7 +213,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
 
     public function testCanAddDigestAuth()
     {
-        $request = (new MessageFactory)->createRequest('GET', 'http://foo.com', [], null, [
+        $request = (new MessageFactory)->createRequest('GET', 'http://foo.com', [
             'auth' => ['michael', 'test', 'digest']
         ]);
         $this->assertEquals(['michael', 'test', 'digest'], $request->getConfig()->get('auth'));
@@ -221,9 +224,9 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $foo = null;
         $client = new Client();
         $client->getEmitter()->addSubscriber(new Mock([new Response(200)]));
-        $client->get('/', [], [
+        $client->get('/', [
             'events' => [
-                RequestEvents::BEFORE_SEND => function () use (&$foo) { $foo = true; }
+                RequestEvents::BEFORE => function () use (&$foo) { $foo = true; }
             ]
         ]);
         $this->assertTrue($foo);
@@ -234,9 +237,9 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $foo = null;
         $client = new Client();
         $client->getEmitter()->addSubscriber(new Mock(array(new Response(200))));
-        $request = $client->createRequest('GET', '/', [], null, [
+        $request = $client->createRequest('GET', '/', [
             'events' => [
-                RequestEvents::BEFORE_SEND => [
+                RequestEvents::BEFORE => [
                     'fn' => function () use (&$foo) { $foo = true; },
                     'priority' => 123
                 ]
@@ -245,7 +248,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $client->send($request);
         $this->assertTrue($foo);
         $l = $this->readAttribute($request->getEmitter(), 'listeners');
-        $this->assertArrayHasKey(123, $l[RequestEvents::BEFORE_SEND]);
+        $this->assertArrayHasKey(123, $l[RequestEvents::BEFORE]);
     }
 
     public function testCanAddEventsOnce()
@@ -257,8 +260,8 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
             new Response(200),
         ]));
         $fn = function () use (&$foo) { ++$foo; };
-        $request = $client->createRequest('GET', '/', [], null, [
-            'events' => [RequestEvents::BEFORE_SEND => ['fn' => $fn, 'once' => true]]
+        $request = $client->createRequest('GET', '/', [
+            'events' => [RequestEvents::BEFORE => ['fn' => $fn, 'once' => true]]
         ]);
         $client->send($request);
         $this->assertEquals(1, $foo);
@@ -272,7 +275,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     public function testValidatesEventContainsFn()
     {
         $client = new Client();
-        $client->createRequest('GET', '/', [], null, ['events' => [RequestEvents::BEFORE_SEND => ['foo' => 'bar']]]);
+        $client->createRequest('GET', '/', ['events' => [RequestEvents::BEFORE => ['foo' => 'bar']]]);
     }
 
     /**
@@ -281,7 +284,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     public function testValidatesEventIsArray()
     {
         $client = new Client();
-        $client->createRequest('GET', '/', [], null, ['events' => [RequestEvents::BEFORE_SEND => '123']]);
+        $client->createRequest('GET', '/', ['events' => [RequestEvents::BEFORE => '123']]);
     }
 
     public function testCanAddSubscribers()
@@ -289,13 +292,13 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $mock = new Mock([new Response(200)]);
         $client = new Client();
         $client->getEmitter()->addSubscriber($mock);
-        $request = $client->get('/', [], ['subscribers' => [$mock]]);
+        $request = $client->get('/', ['subscribers' => [$mock]]);
     }
 
     public function testCanDisableExceptions()
     {
         $client = new Client();
-        $this->assertEquals(500, $client->get('/', [], [
+        $this->assertEquals(500, $client->get('/', [
             'subscribers' => [new Mock([new Response(500)])],
             'exceptions' => false
         ])->getStatusCode());
@@ -304,64 +307,64 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     public function testCanChangeSaveToLocation()
     {
         $saveTo = Stream::factory();
-        $request = (new MessageFactory)->createRequest('GET', '/', [], null, ['save_to' => $saveTo]);
+        $request = (new MessageFactory)->createRequest('GET', '/', ['save_to' => $saveTo]);
         $this->assertSame($saveTo, $request->getConfig()->get('save_to'));
     }
 
     public function testCanSetProxy()
     {
-        $request = (new MessageFactory)->createRequest('GET', '/', [], null, ['proxy' => '192.168.16.121']);
+        $request = (new MessageFactory)->createRequest('GET', '/', ['proxy' => '192.168.16.121']);
         $this->assertEquals('192.168.16.121', $request->getConfig()->get('proxy'));
     }
 
     public function testCanSetHeadersOption()
     {
-        $request = (new MessageFactory)->createRequest('GET', '/', [], null, ['headers' => ['Foo' => 'Bar']]);
+        $request = (new MessageFactory)->createRequest('GET', '/', ['headers' => ['Foo' => 'Bar']]);
         $this->assertEquals('Bar', (string) $request->getHeader('Foo'));
     }
 
-    public function testCanSetDefaultHeadersOptions()
+    public function testCanSetHeaders()
     {
         $request = (new MessageFactory())->createRequest('GET', '/', [
-            'Foo' => 'baz'
-        ], null, ['headers' => ['Foo' => 'Bar', 'Test' => '123']]);
-        $this->assertEquals('baz', $request->getHeader('Foo'));
+            'headers' => ['Foo' => ['Baz', 'Bar'], 'Test' => '123']
+        ]);
+        $this->assertEquals('Baz, Bar', $request->getHeader('Foo'));
         $this->assertEquals('123', $request->getHeader('Test'));
     }
 
     public function testCanSetTimeoutOption()
     {
-        $request = (new MessageFactory())->createRequest('GET', '/', [], null, ['timeout' => 1.5]);
+        $request = (new MessageFactory())->createRequest('GET', '/', ['timeout' => 1.5]);
         $this->assertEquals(1.5, $request->getConfig()->get('timeout'));
     }
 
     public function testCanSetConnectTimeoutOption()
     {
-        $request = (new MessageFactory())->createRequest('GET', '/', [], null, ['connect_timeout' => 1.5]);
+        $request = (new MessageFactory())->createRequest('GET', '/', ['connect_timeout' => 1.5]);
         $this->assertEquals(1.5, $request->getConfig()->get('connect_timeout'));
     }
 
     public function testCanSetDebug()
     {
-        $request = (new MessageFactory())->createRequest('GET', '/', [], null, ['debug' => true]);
+        $request = (new MessageFactory())->createRequest('GET', '/', ['debug' => true]);
         $this->assertTrue($request->getConfig()->get('debug'));
     }
 
     public function testCanSetVerifyToOff()
     {
-        $request = (new MessageFactory())->createRequest('GET', '/', [], null, ['verify' => false]);
+        $request = (new MessageFactory())->createRequest('GET', '/', ['verify' => false]);
         $this->assertFalse($request->getConfig()->get('verify'));
     }
 
     public function testCanSetVerifyToOn()
     {
-        $request = (new MessageFactory())->createRequest('GET', '/', [], null, ['verify' => true]);
+        $request = (new MessageFactory())->createRequest('GET', '/', ['verify' => true]);
         $this->assertTrue($request->getConfig()->get('verify'));
     }
 
     public function testCanSetVerifyToPath()
     {
-        $request = (new MessageFactory())->createRequest('GET', '/', [], null, ['verify' => '/foo.pem']);
+        $request = (new MessageFactory())->createRequest('GET', '/', ['verify' => '/foo.pem']);
         $this->assertEquals('/foo.pem', $request->getConfig()->get('verify'));
     }
 
@@ -378,36 +381,36 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatesInput($option)
     {
-        (new MessageFactory())->createRequest('GET', '/', [], null, [$option => 'foo']);
+        (new MessageFactory())->createRequest('GET', '/', [$option => 'foo']);
     }
 
     public function testCanAddSslKey()
     {
-        $request = (new MessageFactory())->createRequest('GET', '/', [], null, ['ssl_key' => '/foo.pem']);
+        $request = (new MessageFactory())->createRequest('GET', '/', ['ssl_key' => '/foo.pem']);
         $this->assertEquals('/foo.pem', $request->getConfig()->get('ssl_key'));
     }
 
     public function testCanAddSslKeyPassword()
     {
-        $request = (new MessageFactory())->createRequest('GET', '/', [], null, ['ssl_key' => ['/foo.pem', 'bar']]);
+        $request = (new MessageFactory())->createRequest('GET', '/', ['ssl_key' => ['/foo.pem', 'bar']]);
         $this->assertEquals(['/foo.pem', 'bar'], $request->getConfig()->get('ssl_key'));
     }
 
     public function testCanAddSslCert()
     {
-        $request = (new MessageFactory())->createRequest('GET', '/', [], null, ['cert' => '/foo.pem']);
+        $request = (new MessageFactory())->createRequest('GET', '/', ['cert' => '/foo.pem']);
         $this->assertEquals('/foo.pem', $request->getConfig()->get('cert'));
     }
 
     public function testCanAddSslCertPassword()
     {
-        $request = (new MessageFactory())->createRequest('GET', '/', [], null, ['cert' => ['/foo.pem', 'bar']]);
+        $request = (new MessageFactory())->createRequest('GET', '/', ['cert' => ['/foo.pem', 'bar']]);
         $this->assertEquals(['/foo.pem', 'bar'], $request->getConfig()->get('cert'));
     }
 
     public function testCreatesBodyWithoutZeroString()
     {
-        $request = (new MessageFactory())->createRequest('PUT', 'http://test.com', array(), '0');
+        $request = (new MessageFactory())->createRequest('PUT', 'http://test.com', ['body' => '0']);
         $this->assertSame('0', (string) $request->getBody());
     }
 }

@@ -4,7 +4,7 @@ namespace Guzzle\Subscriber\Oauth;
 
 use Guzzle\Common\Collection;
 use Guzzle\Common\EventSubscriberInterface;
-use Guzzle\Http\Event\RequestBeforeSendEvent;
+use Guzzle\Http\Event\BeforeEvent;
 use Guzzle\Http\Message\Post\PostBodyInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Url\QueryString;
@@ -60,10 +60,10 @@ class OauthSubscriber implements EventSubscriberInterface
 
     public static function getSubscribedEvents()
     {
-        return ['request.before_send' => ['onRequestBeforeSend', -1000]];
+        return ['before' => ['onRequestBeforeSend', -1000]];
     }
 
-    public function onRequestBeforeSend(RequestBeforeSendEvent $event)
+    public function onRequestBeforeSend(BeforeEvent $event)
     {
         $timestamp = $this->getTimestamp();
         $request = $event->getRequest();

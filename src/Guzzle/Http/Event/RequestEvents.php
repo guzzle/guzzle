@@ -14,30 +14,30 @@ final class RequestEvents
     /**
      * Event emitted before a request is sent
      *
-     * The event emitted is a {@see \Guzzle\Http\Event\RequestBeforeSendEvent} object
+     * The event emitted is a {@see \Guzzle\Http\Event\BeforeEvent} object
      */
-    const BEFORE_SEND = 'request.before_send';
+    const BEFORE = 'before';
 
     /**
      * Event emitted when a request has finished sending
      *
-     * The event emitted is a {@see \Guzzle\Http\Event\RequestAfterSendEvent} object
+     * The event emitted is a {@see \Guzzle\Http\Event\CompleteEvent} object
      */
-    const AFTER_SEND = 'request.after_send';
+    const COMPLETE = 'complete';
 
     /**
      * Event emitted when an error occurs for a given request
      *
-     * The event emitted is a {@see \Guzzle\Http\Event\RequestErrorEvent} object
+     * The event emitted is a {@see \Guzzle\Http\Event\ErrorEvent} object
      */
-    const ERROR = 'request.error';
+    const ERROR = 'error';
 
     /**
      * Event emitted after receiving all of the headers of a non-information response.
      *
-     * The event emitted is a {@see \Guzzle\Http\Event\GotResponseHeadersEvent} object
+     * The event emitted is a {@see \Guzzle\Http\Event\HeadersEvent} object
      */
-    const RESPONSE_HEADERS = 'request.response_headers';
+    const HEADERS = 'headers';
 
     /**
      * Emits the before send event for a request and emits an error
@@ -47,20 +47,20 @@ final class RequestEvents
      *
      * @throws RequestException
      */
-    public static function emitBeforeSendEvent(TransactionInterface $transaction) {
+    public static function emitBefore(TransactionInterface $transaction) {
         $request = $transaction->getRequest();
         try {
             $request->getEmitter()->emit(
-                RequestEvents::BEFORE_SEND,
-                new RequestBeforeSendEvent($transaction)
+                RequestEvents::BEFORE,
+                new BeforeEvent($transaction)
             );
         } catch (\Exception $e) {
-            self::emitErrorEvent($transaction, $e);
+            self::emitError($transaction, $e);
         }
     }
 
     /**
-     * Emits the after send event for a request and emits an error
+     * Emits the complete event for a request and emits an error
      * event if an error is encountered during the after send.
      *
      * @param TransactionInterface $transaction Transaction to emit for
@@ -68,18 +68,18 @@ final class RequestEvents
      *
      * @throws RequestException
      */
-    public static function emitAfterSendEvent(
+    public static function emitComplete(
         TransactionInterface $transaction,
         array $stats = []
     ) {
         $transaction->getResponse()->setEffectiveUrl($transaction->getRequest()->getUrl());
         try {
             $transaction->getRequest()->getEmitter()->emit(
-                RequestEvents::AFTER_SEND,
-                new RequestAfterSendEvent($transaction, $stats)
+                RequestEvents::COMPLETE,
+                new CompleteEvent($transaction, $stats)
             );
         } catch (RequestException $e) {
-            self::emitErrorEvent($transaction, $e, $stats);
+            self::emitError($transaction, $e, $stats);
         }
     }
 
@@ -94,7 +94,7 @@ final class RequestEvents
      *
      * @throws \Guzzle\Http\Exception\RequestException
      */
-    public static function emitErrorEvent(
+    public static function emitError(
         TransactionInterface $transaction,
         \Exception $e,
         array $stats = []
@@ -109,7 +109,7 @@ final class RequestEvents
         // Dispatch an event and allow interception
         if (!$request->getEmitter()->emit(
             RequestEvents::ERROR,
-            new RequestErrorEvent($transaction, $e, $stats)
+            new ErrorEvent($transaction, $e, $stats)
         )->isPropagationStopped()) {
             throw $e;
         }

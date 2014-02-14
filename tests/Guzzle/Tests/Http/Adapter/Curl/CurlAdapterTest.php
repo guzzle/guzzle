@@ -7,8 +7,8 @@ require_once __DIR__ . '/../../Server.php';
 use Guzzle\Http\Adapter\Curl\CurlAdapter;
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Client;
-use Guzzle\Http\Event\RequestAfterSendEvent;
-use Guzzle\Http\Event\RequestErrorEvent;
+use Guzzle\Http\Event\CompleteEvent;
+use Guzzle\Http\Event\ErrorEvent;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\MessageFactory;
@@ -82,14 +82,14 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
         $t = new Transaction(new Client(), $r);
         $a = new CurlAdapter(new MessageFactory(), ['handle_factory' => $f]);
         $ev = null;
-        $r->getEmitter()->on(RequestEvents::ERROR, function (RequestErrorEvent $e) use (&$ev) {
+        $r->getEmitter()->on(RequestEvents::ERROR, function (ErrorEvent $e) use (&$ev) {
             $ev = $e;
         });
         try {
             $a->send($t);
             $this->fail('Did not throw');
         } catch (RequestException $e) {}
-        $this->assertInstanceOf('Guzzle\Http\Event\RequestErrorEvent', $ev);
+        $this->assertInstanceOf('Guzzle\Http\Event\ErrorEvent', $ev);
         $this->assertSame($r, $ev->getRequest());
         $this->assertInstanceOf('Guzzle\Http\Exception\RequestException', $ev->getException());
     }
@@ -102,7 +102,7 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
         $t = new Transaction(new Client(), $r);
         $a = new CurlAdapter(new MessageFactory());
         $ev = null;
-        $r->getEmitter()->on(RequestEvents::AFTER_SEND, function (RequestAfterSendEvent $e) use (&$ev) {
+        $r->getEmitter()->on(RequestEvents::COMPLETE, function (CompleteEvent $e) use (&$ev) {
             $ev = $e;
             $e->intercept(new Response(200, ['Foo' => 'bar']));
         });
@@ -118,10 +118,10 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
         $r = new Request('GET', self::$server->getUrl());
         $t = new Transaction(new Client(), $r);
         $a = new CurlAdapter(new MessageFactory());
-        $r->getEmitter()->once(RequestEvents::AFTER_SEND, function (RequestAfterSendEvent $e) {
+        $r->getEmitter()->once(RequestEvents::COMPLETE, function (CompleteEvent $e) {
             throw new RequestException('Foo', $e->getRequest());
         });
-        $r->getEmitter()->on(RequestEvents::ERROR, function (RequestErrorEvent $e) {
+        $r->getEmitter()->on(RequestEvents::ERROR, function (ErrorEvent $e) {
             $e->intercept(new Response(200, ['Foo' => 'bar']));
         });
         $response = $a->send($t);

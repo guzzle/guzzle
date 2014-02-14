@@ -3,7 +3,7 @@
 namespace Guzzle\Subscriber\MessageIntegrity;
 
 use Guzzle\Common\EventSubscriberInterface;
-use Guzzle\Http\Event\RequestAfterSendEvent;
+use Guzzle\Http\Event\CompleteEvent;
 use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Stream\StreamInterface;
 
@@ -28,7 +28,7 @@ class FullResponseIntegritySubscriber implements EventSubscriberInterface
         return ['request.after_send' => ['onRequestAfterSend', -1]];
     }
 
-    public function onRequestAfterSend(RequestAfterSendEvent $event)
+    public function onRequestAfterSend(CompleteEvent $event)
     {
         if ($this->canValidate($event->getResponse())) {
             $response = $event->getResponse();
@@ -58,7 +58,7 @@ class FullResponseIntegritySubscriber implements EventSubscriberInterface
         return true;
     }
 
-    private function matchesHash(RequestAfterSendEvent $event, $hash, StreamInterface $body)
+    private function matchesHash(CompleteEvent $event, $hash, StreamInterface $body)
     {
         $body->seek(0);
         while (!$body->eof()) {

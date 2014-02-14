@@ -6,7 +6,6 @@ use Guzzle\Common\HasEmitterInterface;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
 use Guzzle\Http\Exception\TransferException;
-use Guzzle\Stream\StreamInterface;
 use Guzzle\Url\Url;
 
 /**
@@ -22,83 +21,73 @@ interface ClientInterface extends HasEmitterInterface
      * contain the query string as well. Use an array to provide a URL
      * template and additional variables to use in the URL template expansion.
      *
-     * @param string                          $method  HTTP method
-     * @param string|array                    $url     Resource URL
-     * @param array                           $headers Request headers
-     * @param string|StreamInterface|resource $body    Body to send
-     * @param array                           $options Array of options to apply to the request
+     * @param string           $method  HTTP method
+     * @param string|array|Url $url     URL or URI template
+     * @param array            $options Array of request options to apply. {@see Guzzle\Http\Message\MessageFactoryInterface}
      *
      * @return RequestInterface
      */
-    public function createRequest($method, $url = null, array $headers = [], $body = null, array $options = []);
+    public function createRequest($method, $url = null, array $options = []);
 
     /**
      * Send a GET request
      *
-     * @param string|array|Url $url     Resource URL
-     * @param array            $headers Request headers
-     * @param array            $options Options to apply to the request
+     * @param string|array|Url $url     URL or URI template
+     * @param array            $options Array of request options to apply. {@see Guzzle\Http\Message\MessageFactoryInterface}
      *
      * @return ResponseInterface
      */
-    public function get($url = null, array $headers = [], $options = []);
+    public function get($url = null, $options = []);
 
     /**
      * Send a HEAD request
      *
-     * @param string|array|Url $url     Absolute or relative URL
-     * @param array            $headers Request headers
-     * @param array            $options Options to apply to the request
+     * @param string|array|Url $url     URL or URI template
+     * @param array            $options Array of request options to apply. {@see Guzzle\Http\Message\MessageFactoryInterface}
      *
      * @return ResponseInterface
      */
-    public function head($url = null, array $headers = [], array $options = []);
+    public function head($url = null, array $options = []);
 
     /**
      * Send a DELETE request
      *
-     * @param string|array|Url $url     Resource URL
-     * @param array            $headers Request headers
-     * @param array            $options Options to apply to the request
+     * @param string|array|Url $url     URL or URI template
+     * @param array            $options Array of request options to apply. {@see Guzzle\Http\Message\MessageFactoryInterface}
      *
      * @return ResponseInterface
      */
-    public function delete($url = null, array $headers = [], array $options = []);
+    public function delete($url = null, array $options = []);
 
     /**
      * Send a PUT request
      *
-     * @param string|array|Url                $url     Resource URL
-     * @param array                           $headers Request headers
-     * @param string|StreamInterface|resource $body    Body to send
-     * @param array                           $options Options to apply to the request
+     * @param string|array|Url $url     URL or URI template
+     * @param array            $options Array of request options to apply. {@see Guzzle\Http\Message\MessageFactoryInterface}
      *
      * @return ResponseInterface
      */
-    public function put($url = null, array $headers = [], $body = null, array $options = []);
+    public function put($url = null, array $options = []);
 
     /**
      * Send a PATCH request
      *
-     * @param string|array|Url                $url     Resource URL
-     * @param array                           $headers Request headers
-     * @param string|StreamInterface|resource $body    Body to send
-     * @param array                           $options Options to apply to the request
+     * @param string|array|Url $url     URL or URI template
+     * @param array            $options Array of request options to apply. {@see Guzzle\Http\Message\MessageFactoryInterface}
      *
      * @return ResponseInterface
      */
-    public function patch($url = null, array $headers = [], $body = null, array $options = []);
+    public function patch($url = null, array $options = []);
 
     /**
      * Send an OPTIONS request
      *
-     * @param string|array|Url $url     Resource URL
-     * @param array            $headers Request headers
-     * @param array            $options Options to apply to the request
+     * @param string|array|Url $url     URL or URI template
+     * @param array            $options Array of request options to apply. {@see Guzzle\Http\Message\MessageFactoryInterface}
      *
      * @return ResponseInterface
      */
-    public function options($url = null, array $headers = [], array $options = []);
+    public function options($url = null, array $options = []);
 
     /**
      * Sends a single request
@@ -116,15 +105,15 @@ interface ClientInterface extends HasEmitterInterface
      *
      * Exceptions are not thrown for failed requests. Callers are expected to
      * register an "error" option to handle request errors OR directly register
-     * an event handler for the "request.error" event of a request's
+     * an event handler for the "error" event of a request's
      * event emitter.
      *
      * @param array|\Iterator $requests Requests to send in parallel
      * @param array           $options  Associative array of options
      *     - parallel: (int) Max number of requests to send in parallel
-     *     - before: (callable) Receives a RequestBeforeSendEvent
-     *     - after: (callable) Receives a RequestAfterSendEvent
-     *     - error: (callable) Receives a RequestErrorEvent
+     *     - before: (callable) Receives a BeforeEvent
+     *     - after: (callable) Receives a CompleteEvent
+     *     - error: (callable) Receives a ErrorEvent
      */
     public function sendAll($requests, array $options = []);
 

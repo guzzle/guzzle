@@ -3,7 +3,7 @@
 namespace Guzzle\Http\Subscriber;
 
 use Guzzle\Common\EventSubscriberInterface;
-use Guzzle\Http\Event\RequestAfterSendEvent;
+use Guzzle\Http\Event\CompleteEvent;
 use Guzzle\Http\Exception\RequestException;
 
 /**
@@ -13,16 +13,16 @@ class HttpError implements EventSubscriberInterface
 {
     public static function getSubscribedEvents()
     {
-        return ['request.after_send' => ['onRequestAfterSend']];
+        return ['complete' => ['onRequestAfterSend']];
     }
 
     /**
      * Throw a RequestException on an HTTP protocol error
      *
-     * @param RequestAfterSendEvent $event Emitted event
+     * @param CompleteEvent $event Emitted event
      * @throws RequestException
      */
-    public function onRequestAfterSend(RequestAfterSendEvent $event)
+    public function onRequestAfterSend(CompleteEvent $event)
     {
         $code = (string) $event->getResponse()->getStatusCode();
         // Throw an exception for an unsuccessful response

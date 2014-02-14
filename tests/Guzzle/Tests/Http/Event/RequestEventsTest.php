@@ -4,8 +4,8 @@ namespace Guzzle\Tests\Http\Event;
 
 use Guzzle\Http\Client;
 use Guzzle\Http\Adapter\Transaction;
-use Guzzle\Http\Event\RequestBeforeSendEvent;
-use Guzzle\Http\Event\RequestErrorEvent;
+use Guzzle\Http\Event\BeforeEvent;
+use Guzzle\Http\Event\ErrorEvent;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\Request;
@@ -21,10 +21,10 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
         $res = null;
         $t = new Transaction(new Client(), new Request('GET', '/'));
         $t->setResponse(new Response(200));
-        $t->getRequest()->getEmitter()->on(RequestEvents::AFTER_SEND, function ($e) use (&$res) {
+        $t->getRequest()->getEmitter()->on(RequestEvents::COMPLETE, function ($e) use (&$res) {
             $res = $e;
         });
-        RequestEvents::emitAfterSendEvent($t);
+        RequestEvents::emitComplete($t);
         $this->assertSame($res->getClient(), $t->getClient());
         $this->assertSame($res->getRequest(), $t->getRequest());
         $this->assertEquals('/', $t->getResponse()->getEffectiveUrl());
@@ -37,7 +37,7 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
         $t = new Transaction(new Client(), $request);
         $t->setResponse(new Response(200));
         $ex = new RequestException('foo', $request);
-        $t->getRequest()->getEmitter()->on(RequestEvents::AFTER_SEND, function ($e) use ($ex) {
+        $t->getRequest()->getEmitter()->on(RequestEvents::COMPLETE, function ($e) use ($ex) {
             $ex->e = $e;
             throw $ex;
         });
@@ -45,7 +45,7 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
             $ex2 = $e->getException();
             $e->stopPropagation();
         });
-        RequestEvents::emitAfterSendEvent($t);
+        RequestEvents::emitComplete($t);
         $this->assertSame($ex, $ex2);
     }
 
@@ -59,8 +59,8 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
         $beforeCalled = $errCalled = 0;
 
         $request->getEmitter()->on(
-            RequestEvents::BEFORE_SEND,
-            function (RequestBeforeSendEvent $e) use ($request, $client, &$beforeCalled, $ex) {
+            RequestEvents::BEFORE,
+            function (BeforeEvent $e) use ($request, $client, &$beforeCalled, $ex) {
                 $this->assertSame($request, $e->getRequest());
                 $this->assertSame($client, $e->getClient());
                 $beforeCalled++;
@@ -70,7 +70,7 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
 
         $request->getEmitter()->on(
             RequestEvents::ERROR,
-            function (RequestErrorEvent $e) use (&$errCalled, $response, $ex) {
+            function (ErrorEvent $e) use (&$errCalled, $response, $ex) {
                 $errCalled++;
                 $this->assertInstanceOf('Guzzle\Http\Exception\RequestException', $e->getException());
                 $this->assertSame($ex, $e->getException()->getPrevious());
@@ -78,7 +78,7 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
             }
         );
 
-        RequestEvents::emitBeforeSendEvent($t);
+        RequestEvents::emitBefore($t);
         $this->assertEquals(1, $beforeCalled);
         $this->assertEquals(1, $errCalled);
         $this->assertSame($response, $t->getResponse());
@@ -92,16 +92,16 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
         $t = new Transaction($client, $request);
         $errCalled = 0;
 
-        $request->getEmitter()->on(RequestEvents::BEFORE_SEND, function (RequestBeforeSendEvent $e) use ($ex) {
+        $request->getEmitter()->on(RequestEvents::BEFORE, function (BeforeEvent $e) use ($ex) {
             throw $ex;
         });
 
-        $request->getEmitter()->on(RequestEvents::ERROR, function (RequestErrorEvent $e) use (&$errCalled) {
+        $request->getEmitter()->on(RequestEvents::ERROR, function (ErrorEvent $e) use (&$errCalled) {
             $errCalled++;
         });
 
         try {
-            RequestEvents::emitBeforeSendEvent($t);
+            RequestEvents::emitBefore($t);
             $this->fail('Did not throw');
         } catch (RequestException $e) {
             $this->assertEquals(1, $errCalled);

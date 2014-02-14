@@ -3,7 +3,6 @@
 namespace Guzzle\Http\Message;
 
 use Guzzle\Url\Url;
-use Guzzle\Stream\StreamInterface;
 
 /**
  * Request and response factory
@@ -15,10 +14,9 @@ interface MessageFactoryInterface
      *
      * @param string                                $method  HTTP method (GET, POST, PUT, PATCH, HEAD, DELETE, ...)
      * @param string|Url                            $url     HTTP URL to connect to
-     * @param array                                 $headers HTTP request headers
-     * @param string|resource|array|StreamInterface $body    Body to send in the request
      * @param array                                 $options Array of options to apply to the request
      *     - "headers": Associative array of headers to add to the request.
+     *     - "body": string|resource|array|StreamInterface that represents the body to send over the wire.
      *     - "query": Associative array of query string values to add to the request.
      *     - "auth": Array of HTTP authentication parameters to use with the request. The array must contain the
      *       username in index [0], the password in index [2], and can optionally contain the authentication type
@@ -70,7 +68,7 @@ interface MessageFactoryInterface
      *
      * @return RequestInterface
      */
-    public function createRequest($method, $url, array $headers = [], $body = null, array $options = array());
+    public function createRequest($method, $url, array $options = []);
 
     /**
      * Creates a response

@@ -41,12 +41,14 @@ class Request extends AbstractMessage implements RequestInterface
         $this->transferOptions = new Collection($options);
         $this->addPrepareEvent();
 
-        if ($body) {
+        if ($body !== null) {
             $this->setBody($body);
         }
 
-        foreach ($headers as $key => $value) {
-            $this->setHeader($key, $value);
+        if ($headers) {
+            foreach ($headers as $key => $value) {
+                $this->setHeader($key, $value);
+            }
         }
     }
 

@@ -5,7 +5,7 @@ namespace Guzzle\Tests\Http;
 use Guzzle\Http\Adapter\FakeParallelAdapter;
 use Guzzle\Http\Adapter\MockAdapter;
 use Guzzle\Http\Client;
-use Guzzle\Http\Event\RequestBeforeSendEvent;
+use Guzzle\Http\Event\BeforeEvent;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\Response;
@@ -149,9 +149,16 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $client = $this->getRequestClient();
         if ($body) {
-            $request = $client->{$method}('http://foo.com', ['X-Baz' => 'Bar'], $body, ['query' => ['a' => 'b']]);
+            $request = $client->{$method}('http://foo.com', [
+                'headers' => ['X-Baz' => 'Bar'],
+                'body' => $body,
+                'query' => ['a' => 'b']
+            ]);
         } else {
-            $request = $client->{$method}('http://foo.com', ['X-Baz' => 'Bar'], ['query' => ['a' => 'b']]);
+            $request = $client->{$method}('http://foo.com', [
+                'headers' => ['X-Baz' => 'Bar'],
+                'query' => ['a' => 'b']
+            ]);
         }
         $this->assertEquals($method, $request->getMethod());
         $this->assertEquals('Bar', $request->getHeader('X-Baz'));
@@ -172,9 +179,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $f->expects($this->once())
             ->method('createRequest')
             ->will($this->returnCallback(
-                function ($method, $url, array $headers = [], $body = null, array $options = array()) use (&$o) {
+                function ($method, $url, array $options = []) use (&$o) {
                     $o = $options;
-                    return (new MessageFactory())->createRequest($method, $url, $headers, $body, $options);
+                    return (new MessageFactory())->createRequest($method, $url, $options);
                 }
             ));
 
@@ -187,10 +194,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             ]
         ]);
 
-        $request = $client->createRequest('GET', 'http://foo.com?a=b', ['Hi' => 'there'], null, [
+        $request = $client->createRequest('GET', 'http://foo.com?a=b', [
+            'headers' => ['Hi' => 'there', '1' => 'one'],
             'allow_redirects' => false,
-            'query' => ['t' => 1],
-            'headers' => ['1' => 'one']
+            'query' => ['t' => 1]
         ]);
 
         $this->assertFalse($o['allow_redirects']);
@@ -255,8 +262,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $adapter->setResponse($response);
         $client = new Client(['adapter' => $adapter]);
         $client->getEmitter()->on(
-            RequestEvents::BEFORE_SEND,
-            function (RequestBeforeSendEvent $e) use ($response2) {
+            RequestEvents::BEFORE,
+            function (BeforeEvent $e) use ($response2) {
                 $e->intercept($response2);
             }
         );
@@ -282,7 +289,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testClientHandlesErrorsDuringBeforeSend()
     {
         $client = new Client();
-        $client->getEmitter()->on(RequestEvents::BEFORE_SEND, function ($e) {
+        $client->getEmitter()->on(RequestEvents::BEFORE, function ($e) {
             throw new RequestException('foo', $e->getRequest());
         });
         $client->getEmitter()->on(RequestEvents::ERROR, function ($e) {
@@ -298,7 +305,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testClientHandlesErrorsDuringBeforeSendAndThrowsIfUnhandled()
     {
         $client = new Client();
-        $client->getEmitter()->on(RequestEvents::BEFORE_SEND, function ($e) {
+        $client->getEmitter()->on(RequestEvents::BEFORE, function ($e) {
             throw new RequestException('foo', $e->getRequest());
         });
         $client->get('/');

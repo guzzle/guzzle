@@ -145,7 +145,7 @@ class CurlAdapter implements AdapterInterface, ParallelAdapterInterface
 
         try {
             if (!$this->isCurlException($transaction, $curl, $context)) {
-                RequestEvents::emitAfterSendEvent($transaction, curl_getinfo($handle));
+                RequestEvents::emitComplete($transaction, curl_getinfo($handle));
             }
         } catch (RequestException $e) {
             $this->throwException($e, $context);
@@ -155,7 +155,7 @@ class CurlAdapter implements AdapterInterface, ParallelAdapterInterface
     private function addHandle(TransactionInterface $transaction, BatchContext $context)
     {
         try {
-            RequestEvents::emitBeforeSendEvent($transaction);
+            RequestEvents::emitBefore($transaction);
             // Only transfer if the request was not intercepted
             if (!$transaction->getResponse()) {
                 try {
@@ -165,7 +165,7 @@ class CurlAdapter implements AdapterInterface, ParallelAdapterInterface
                     );
                     $context->addTransaction($transaction, $handle);
                 } catch (RequestException $e) {
-                    RequestEvents::emitErrorEvent($transaction, $e);
+                    RequestEvents::emitError($transaction, $e);
                 }
             }
         } catch (RequestException $e) {
@@ -189,7 +189,7 @@ class CurlAdapter implements AdapterInterface, ParallelAdapterInterface
             if (isset($curl['handle'])) {
                 $stats = curl_getinfo($curl['handle']) + $stats;
             }
-            RequestEvents::emitErrorEvent(
+            RequestEvents::emitError(
                 $transaction,
                 new RequestException(
                     sprintf(

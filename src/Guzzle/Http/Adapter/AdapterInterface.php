@@ -11,17 +11,17 @@ use Guzzle\Http\Message\ResponseInterface;
  *
  * 1. The adapter MUST return a ResponseInterface object in a successful
  *    condition.
- * 2. The adapter MUST emit a request.before_send event before sending a
- *    request. If a response is associated with a transaction after preparing,
- *    then the adapter MUST not re-send the request.
+ * 2. The adapter MUST emit a ``before`` event before sending a request. If a
+ *    response is associated with a transaction after preparing, then the
+ *    adapter MUST not re-send the
  * 3. When all of the headers of a response have been received for a request,
- *    the adapter MUST emit a request.response_headers event.
- * 4. The adapter MUST emit a request.after_send event when a request has
- *    completed sending.
- * 5. The adapter MUST emit a request.error event when an error occurs at any
+ *    the adapter MUST emit a ``headers`` event.
+ * 4. The adapter MUST emit a ``complete`` event when a request has completed
+ *    sending.
+ * 5. The adapter MUST emit an ``error`` event when an error occurs at any
  *    point-- whether it is preparing a request for transfer or processing the
- *    response of a request.
- * 5. After emitting the request.error event, the adapter MUST check if the
+ *    response of a
+ * 5. After emitting the error event, the adapter MUST check if the
  *    transaction associated with the error was intercepted, meaning a response
  *    was associated with the event and the event's propagation was stopped.
  *    If the propagation of the event was not stopped, then the adapter MUST

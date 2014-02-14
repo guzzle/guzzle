@@ -41,7 +41,10 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
     {
         self::$server->flush();
         self::$server->enqueue([new Response(200)]);
-        call_user_func("Guzzle\\{$method}", self::$server->getUrl(), ['foo' => 'bar'], ['query' => ['a' => '1']]);
+        call_user_func("Guzzle\\{$method}", self::$server->getUrl(), [
+            'headers' => ['foo' => 'bar'],
+            'query' => ['a' => '1']
+        ]);
         $sent = self::$server->getReceivedRequests(true)[0];
         $this->assertEquals(strtoupper($method), $sent->getMethod());
         $this->assertEquals('/?a=1', $sent->getResource());
@@ -52,7 +55,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
     {
         self::$server->flush();
         self::$server->enqueue([new Response(200)]);
-        \Guzzle\options(self::$server->getUrl(), ['foo' => 'bar']);
+        \Guzzle\options(self::$server->getUrl(), ['headers' => ['foo' => 'bar']]);
         $sent = self::$server->getReceivedRequests(true)[0];
         $this->assertEquals('OPTIONS', $sent->getMethod());
         $this->assertEquals('/', $sent->getResource());
@@ -71,7 +74,11 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
     {
         self::$server->flush();
         self::$server->enqueue([new Response(200)]);
-        call_user_func("Guzzle\\{$method}", self::$server->getUrl(), ['foo' => 'bar'], 'test', ['query' => ['a' => '1']]);
+        call_user_func("Guzzle\\{$method}", self::$server->getUrl(), [
+            'headers' => ['foo' => 'bar'],
+            'body'    => 'test',
+            'query'   => ['a' => '1']
+        ]);
         $sent = self::$server->getReceivedRequests(true)[0];
         $this->assertEquals(strtoupper($method), $sent->getMethod());
         $this->assertEquals('/?a=1', $sent->getResource());

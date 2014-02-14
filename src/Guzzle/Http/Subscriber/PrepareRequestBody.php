@@ -4,7 +4,7 @@ namespace Guzzle\Http\Subscriber;
 
 use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Event\RequestBeforeSendEvent;
+use Guzzle\Http\Event\BeforeEvent;
 use Guzzle\Http\Message\Post\PostBodyInterface;
 use Guzzle\Stream\StreamInterface;
 
@@ -24,10 +24,10 @@ class PrepareRequestBody implements EventSubscriberInterface
 {
     public static function getSubscribedEvents()
     {
-        return ['request.before_send' => ['onRequestBeforeSend', -1]];
+        return ['before' => ['onRequestBeforeSend', -1]];
     }
 
-    public function onRequestBeforeSend(RequestBeforeSendEvent $event)
+    public function onRequestBeforeSend(BeforeEvent $event)
     {
         $request = $event->getRequest();
 

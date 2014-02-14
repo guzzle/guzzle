@@ -6,7 +6,7 @@ require_once __DIR__ . '/../Server.php';
 
 use Guzzle\Http\Adapter\StreamAdapter;
 use Guzzle\Http\Client;
-use Guzzle\Http\Event\RequestErrorEvent;
+use Guzzle\Http\Event\ErrorEvent;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\Response;
@@ -40,7 +40,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
             'base_url' => self::$server->getUrl(),
             'adapter' => new StreamAdapter(new MessageFactory())
         ]);
-        $response = $client->get('/', ['Foo' => 'Bar']);
+        $response = $client->get('/', ['headers' => ['Foo' => 'Bar']]);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('OK', $response->getReasonPhrase());
         $this->assertEquals('Bar', $response->getHeader('Foo'));
@@ -66,7 +66,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
                 'proxy' => self::$server->getUrl()
             ]
         ]);
-        $client->get('/', ['Foo' => 'Bar']);
+        $client->get('/', ['headers' => ['Foo' => 'Bar']]);
     }
 
     public function testCanHandleExceptionsUsingEvents()
@@ -77,7 +77,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         $mockResponse = new Response(200);
         $request->getEmitter()->on(
             RequestEvents::ERROR,
-            function (RequestErrorEvent $e) use ($mockResponse) {
+            function (ErrorEvent $e) use ($mockResponse) {
                 $e->intercept($mockResponse);
             }
         );
@@ -91,11 +91,11 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
         $client = new Client(['adapter' => new StreamAdapter(new MessageFactory())]);
         $request = $client->createRequest('GET', self::$server->getUrl());
-        $request->getEmitter()->on(RequestEvents::AFTER_SEND, function ($e) use (&$ee) {
+        $request->getEmitter()->on(RequestEvents::COMPLETE, function ($e) use (&$ee) {
             $ee = $e;
         });
         $client->send($request);
-        $this->assertInstanceOf('Guzzle\Http\Event\RequestAfterSendEvent', $ee);
+        $this->assertInstanceOf('Guzzle\Http\Event\CompleteEvent', $ee);
         $this->assertSame($request, $ee->getRequest());
         $this->assertEquals(200, $ee->getResponse()->getStatusCode());
     }
@@ -108,7 +108,11 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
             'base_url' => self::$server->getUrl(),
             'adapter' => new StreamAdapter(new MessageFactory())
         ]);
-        $response = $client->put('/foo', ['Foo' => 'Bar'], 'test', ['stream' => true]);
+        $response = $client->put('/foo', [
+            'headers' => ['Foo' => 'Bar'],
+            'body' => 'test',
+            'stream' => true
+        ]);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('OK', $response->getReasonPhrase());
         $this->assertEquals('8', $response->getHeader('Content-Length'));
@@ -152,7 +156,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
             'base_url' => self::$server->getUrl(),
             'adapter' => new StreamAdapter(new MessageFactory())
         ]);
-        $response = $client->get('/', [], ['save_to' => $r]);
+        $response = $client->get('/', ['save_to' => $r]);
         $body = $response->getBody();
         $this->assertEquals('PHP', $body->getMetadata()['wrapper_type']);
         $this->assertEquals('php://temp', $body->getMetadata()['uri']);
@@ -170,7 +174,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
             'base_url' => self::$server->getUrl(),
             'adapter' => new StreamAdapter(new MessageFactory())
         ]);
-        $response = $client->get('/', [], ['save_to' => $tmpfname]);
+        $response = $client->get('/', ['save_to' => $tmpfname]);
         $body = $response->getBody();
         $this->assertEquals('plainfile', $body->getMetadata()['wrapper_type']);
         $this->assertEquals($tmpfname, $body->getMetadata()['uri']);
@@ -187,7 +191,10 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
             'base_url' => self::$server->getUrl(),
             'adapter' => new StreamAdapter(new MessageFactory())
         ]);
-        $response = $client->get('/', ['Accept-Encoding' => 'gzip'], ['stream' => true]);
+        $response = $client->get('/', [
+            'headers' => ['Accept-Encoding' => 'gzip'],
+            'stream' => true
+        ]);
         $body = $response->getBody();
         $this->assertEquals('compress.zlib://http://127.0.0.1:8124/', $body->getMetadata()['uri']);
     }
@@ -205,7 +212,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
         $client = new Client(['adapter' => new StreamAdapter(new MessageFactory())]);
 
-        return $client->get(self::$server->getUrl(), [], $opts);
+        return $client->get(self::$server->getUrl(), $opts);
     }
 
     public function testAddsProxy()
@@ -287,7 +294,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
             'adapter' => new StreamAdapter(new MessageFactory())
         ]);
         ob_start();
-        $client->get('/', [], ['debug' => true]);
+        $client->get('/', ['debug' => true]);
         $contents = ob_get_clean();
         $this->assertContains('<http://127.0.0.1:8124/>: Connected', $contents);
         $this->assertContains('<http://127.0.0.1:8124/>: Got the filesize: 8', $contents);
@@ -303,7 +310,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
             'base_url' => self::$server->getUrl(),
             'adapter' => new StreamAdapter(new MessageFactory())
         ]);
-        $client->get('/', [], ['debug' => $buffer]);
+        $client->get('/', ['debug' => $buffer]);
         fseek($buffer, 0);
         $contents = stream_get_contents($buffer);
         $this->assertContains('<http://127.0.0.1:8124/>: Connected', $contents);

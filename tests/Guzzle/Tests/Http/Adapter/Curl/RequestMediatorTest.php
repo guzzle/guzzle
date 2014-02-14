@@ -5,7 +5,7 @@ namespace Guzzle\Tests\Http\Adapter\Curl;
 use Guzzle\Http\Adapter\Curl\RequestMediator;
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Client;
-use Guzzle\Http\Event\GotResponseHeadersEvent;
+use Guzzle\Http\Event\HeadersEvent;
 use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\Request;
@@ -23,8 +23,8 @@ class RequestMediatorTest extends \PHPUnit_Framework_TestCase
         $request = new Request('GET', '/');
         $ee = null;
         $request->getEmitter()->on(
-            RequestEvents::RESPONSE_HEADERS,
-            function (GotResponseHeadersEvent $e) use (&$ee) {
+            RequestEvents::HEADERS,
+            function (HeadersEvent $e) use (&$ee) {
                 $ee = $e;
             }
         );

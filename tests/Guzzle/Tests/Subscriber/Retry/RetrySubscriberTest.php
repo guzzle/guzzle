@@ -4,7 +4,7 @@ namespace Guzzle\Tests\Subscriber\RetrySubscriber;
 
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Client;
-use Guzzle\Http\Event\RequestAfterSendEvent;
+use Guzzle\Http\Event\CompleteEvent;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;

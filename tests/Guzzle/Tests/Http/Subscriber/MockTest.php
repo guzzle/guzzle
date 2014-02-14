@@ -3,7 +3,7 @@
 namespace Guzzle\Tests\Http\Subscriber;
 
 use Guzzle\Http\Adapter\Transaction;
-use Guzzle\Http\Event\RequestBeforeSendEvent;
+use Guzzle\Http\Event\BeforeEvent;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Subscriber\Mock;
 use Guzzle\Http\Client;
@@ -62,7 +62,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
         $response = new Response(200);
         $t = new Transaction(new Client(), new Request('GET', '/'));
         $m = new Mock([$response]);
-        $ev = new RequestBeforeSendEvent($t);
+        $ev = new BeforeEvent($t);
         $m->onRequestBeforeSend($ev);
         $this->assertSame($response, $t->getResponse());
     }
@@ -73,7 +73,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
     public function testUpdateThrowsExceptionWhenEmpty()
     {
         $p = new Mock();
-        $ev = new RequestBeforeSendEvent(new Transaction(new Client(), new Request('GET', '/')));
+        $ev = new BeforeEvent(new Transaction(new Client(), new Request('GET', '/')));
         $p->onRequestBeforeSend($ev);
     }
 
@@ -83,7 +83,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
         $client = new Client();
         $client->getEmitter()->addSubscriber($m);
         $body = Stream::factory('foo');
-        $client->put('/', [], $body);
+        $client->put('/', ['body' => $body]);
         $this->assertEquals(3, $body->tell());
     }
 

@@ -109,7 +109,7 @@ class Client implements ClientInterface
         $this->config->setPath($keyOrPath, $value);
     }
 
-    public function createRequest($method, $url = null, array $headers = [], $body = null, array $options = [])
+    public function createRequest($method, $url = null, array $options = [])
     {
         // Merge in default options
         $options = array_replace_recursive($this->config['defaults'], $options);
@@ -120,47 +120,45 @@ class Client implements ClientInterface
         $request = $this->messageFactory->createRequest(
             $method,
             $url ? (string) $this->buildUrl($url) : (string) $this->baseUrl,
-            $headers,
-            $body,
             $options
         );
 
         return $request;
     }
 
-    public function get($url = null, array $headers = [], $options = [])
+    public function get($url = null, $options = [])
     {
-        return $this->send($this->createRequest('GET', $url, $headers, null, $options));
+        return $this->send($this->createRequest('GET', $url, $options));
     }
 
-    public function head($url = null, array $headers = [], array $options = [])
+    public function head($url = null, array $options = [])
     {
-        return $this->send($this->createRequest('HEAD', $url, $headers, null, $options));
+        return $this->send($this->createRequest('HEAD', $url, $options));
     }
 
-    public function delete($url = null, array $headers = [], array $options = [])
+    public function delete($url = null, array $options = [])
     {
-        return $this->send($this->createRequest('DELETE', $url, $headers, null, $options));
+        return $this->send($this->createRequest('DELETE', $url, $options));
     }
 
-    public function put($url = null, array $headers = [], $body = null, array $options = [])
+    public function put($url = null, array $options = [])
     {
-        return $this->send($this->createRequest('PUT', $url, $headers, $body, $options));
+        return $this->send($this->createRequest('PUT', $url, $options));
     }
 
-    public function patch($url = null, array $headers = [], $body = null, array $options = [])
+    public function patch($url = null, array $options = [])
     {
-        return $this->send($this->createRequest('PATCH', $url, $headers, $body, $options));
+        return $this->send($this->createRequest('PATCH', $url, $options));
     }
 
-    public function post($url = null, array $headers = [], $body = null, array $options = [])
+    public function post($url = null, array $options = [])
     {
-        return $this->send($this->createRequest('POST', $url, $headers, $body, $options));
+        return $this->send($this->createRequest('POST', $url, $options));
     }
 
-    public function options($url = null, array $headers = [], array $options = [])
+    public function options($url = null, array $options = [])
     {
-        return $this->send($this->createRequest('OPTIONS', $url, $headers, null, $options));
+        return $this->send($this->createRequest('OPTIONS', $url, $options));
     }
 
     public function send(RequestInterface $request)

@@ -3,7 +3,7 @@
 namespace Guzzle\Subscriber\MessageIntegrity;
 
 use Guzzle\Common\EventSubscriberInterface;
-use Guzzle\Http\Event\RequestBeforeSendEvent;
+use Guzzle\Http\Event\BeforeEvent;
 use Guzzle\Http\Event\RequestEvents;
 
 /**
@@ -37,10 +37,10 @@ class MessageIntegritySubscriber implements EventSubscriberInterface
 
     public static function getSubscribedEvents()
     {
-        return [RequestEvents::BEFORE_SEND => ['onRequestBeforeSend']];
+        return [RequestEvents::BEFORE => ['onRequestBeforeSend']];
     }
 
-    public function onRequestBeforeSend(RequestBeforeSendEvent $event)
+    public function onRequestBeforeSend(BeforeEvent $event)
     {
         if ($event->getRequest()->getConfig()->get('streaming')) {
             $event->getRequest()->getEmitter()->addSubscriber($this->streaming);

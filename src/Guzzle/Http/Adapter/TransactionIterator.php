@@ -44,16 +44,16 @@ class TransactionIterator implements \Iterator
 
         if (isset($this->options['before'])) {
             $request->getEmitter()->on(
-                RequestEvents::BEFORE_SEND,
+                RequestEvents::BEFORE,
                 $this->options['before'],
                 -255
             );
         }
 
-        if (isset($this->options['after'])) {
+        if (isset($this->options['complete'])) {
             $request->getEmitter()->on(
-                RequestEvents::AFTER_SEND,
-                $this->options['after'],
+                RequestEvents::COMPLETE,
+                $this->options['complete'],
                 -255
             );
         }

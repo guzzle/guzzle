@@ -2,7 +2,7 @@
 
 namespace Guzzle\Tests\Http\Message;
 
-use Guzzle\Http\Event\RequestAfterSendEvent;
+use Guzzle\Http\Event\CompleteEvent;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Subscriber\HttpError;
 use Guzzle\Http\Adapter\Transaction;
@@ -44,7 +44,7 @@ class HttpErrorTest extends \PHPUnit_Framework_TestCase
 
     private function getEvent()
     {
-        return new RequestAfterSendEvent(new Transaction(new Client(), new Request('PUT', '/')));
+        return new CompleteEvent(new Transaction(new Client(), new Request('PUT', '/')));
     }
 
     /**

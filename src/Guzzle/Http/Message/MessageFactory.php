@@ -39,24 +39,16 @@ class MessageFactory implements MessageFactoryInterface
         return new Response($statusCode, $headers, $body, $options);
     }
 
-    public function createRequest($method, $url, array $headers = [], $body = null, array $options = [])
+    public function createRequest($method, $url, array $options = [])
     {
-        $request = new Request(
-            $method,
-            $url,
-            $headers,
-            null,
-            isset($options['options']) ? $options['options'] : []
-        );
+        $request = new Request($method, $url, [], null,
+            isset($options['options']) ? $options['options'] : []);
 
         unset($options['options']);
 
-        if ($body !== null) {
-            if (is_array($body)) {
-                $this->addPostData($request, $body);
-            } else {
-                $request->setBody(Stream::factory($body));
-            }
+        // Use a POST body by default
+        if ($method == 'POST' && !isset($options['body'])) {
+            $options['body'] = [];
         }
 
         if ($options) {
@@ -100,9 +92,9 @@ class MessageFactory implements MessageFactoryInterface
         return $this->createRequest(
             $data['method'],
             Url::buildUrl($data['request_url']),
-            $data['headers'],
-            $data['body'] === '' ? null : $data['body'],
             [
+                'headers' => $data['headers'],
+                'body' => $data['body'] === '' ? null : $data['body'],
                 'options' => [
                     'protocol_version' => $data['protocol_version']
                 ]
@@ -154,6 +146,17 @@ class MessageFactory implements MessageFactoryInterface
                 $config[$key] = $value;
             } else {
                 throw new \InvalidArgumentException("No method is configured to handle the {$key} config key");
+            }
+        }
+    }
+
+    private function visit_body(RequestInterface $request, $value)
+    {
+        if ($value !== null) {
+            if (is_array($value)) {
+                $this->addPostData($request, $value);
+            } else {
+                $request->setBody(Stream::factory($value));
             }
         }
     }

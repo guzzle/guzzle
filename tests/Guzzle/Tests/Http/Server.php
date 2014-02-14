@@ -88,7 +88,7 @@ class Server
             ];
         }
 
-        $this->client->put('guzzle-server/responses', [], json_encode($data));
+        $this->client->put('guzzle-server/responses', ['body' => json_encode($data)]);
     }
 
     /**
@@ -103,7 +103,7 @@ class Server
         }
 
         try {
-            $this->client->get('guzzle-server/perf', [], ['timeout' => 1]);
+            $this->client->get('guzzle-server/perf', ['timeout' => 1]);
             return $this->running = true;
         } catch (\Exception $e) {
             return false;

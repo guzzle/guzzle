@@ -3,8 +3,8 @@
 namespace Guzzle\Subscriber\Log;
 
 use Guzzle\Common\EventSubscriberInterface;
-use Guzzle\Http\Event\RequestAfterSendEvent;
-use Guzzle\Http\Event\RequestErrorEvent;
+use Guzzle\Http\Event\CompleteEvent;
+use Guzzle\Http\Event\ErrorEvent;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
@@ -49,14 +49,14 @@ class LogSubscriber implements EventSubscriberInterface
     {
         return [
             'request.after_send' => ['onRequestAfterSend', -9999],
-            'request.error'      => ['onRequestError', 9999]
+            'error'      => ['onRequestError', 9999]
         ];
     }
 
     /**
-     * @param RequestAfterSendEvent $event
+     * @param CompleteEvent $event
      */
-    public function onRequestAfterSend(RequestAfterSendEvent $event)
+    public function onRequestAfterSend(CompleteEvent $event)
     {
         $this->logger->log(
             substr($event->getResponse()->getStatusCode(), 0, 1) == '2' ? LogLevel::INFO : LogLevel::WARNING,
@@ -66,9 +66,9 @@ class LogSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * @param RequestErrorEvent $event
+     * @param ErrorEvent $event
      */
-    public function onRequestError(RequestErrorEvent $event)
+    public function onRequestError(ErrorEvent $event)
     {
         $ex = $event->getException();
         $this->logger->log(

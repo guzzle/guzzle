@@ -4,8 +4,8 @@ namespace Guzzle\Tests\Http\Subscriber;
 
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Client;
-use Guzzle\Http\Event\RequestAfterSendEvent;
-use Guzzle\Http\Event\RequestBeforeSendEvent;
+use Guzzle\Http\Event\CompleteEvent;
+use Guzzle\Http\Event\BeforeEvent;
 use Guzzle\Http\Subscriber\Cookie;
 use Guzzle\Http\Subscriber\CookieJar\SetCookie;
 use Guzzle\Http\Message\Response;
@@ -34,7 +34,7 @@ class CookieTest extends \PHPUnit_Framework_TestCase
         $plugin = new Cookie($mock);
         $t = new Transaction(new Client(), $request);
         $t->setResponse($response);
-        $plugin->onRequestSent(new RequestAfterSendEvent($t));
+        $plugin->onRequestSent(new CompleteEvent($t));
     }
 
     public function testProvidesCookieJar()
@@ -59,7 +59,7 @@ class CookieTest extends \PHPUnit_Framework_TestCase
         $client->getEmitter()->addSubscriber($plugin);
         $request = $client->createRequest('GET', 'http://www.example.com');
         $t = new Transaction(new Client(), $request);
-        $plugin->onRequestBeforeSend(new RequestBeforeSendEvent($t));
+        $plugin->onRequestBeforeSend(new BeforeEvent($t));
         $this->assertEquals('foo="bar;bam"', $request->getHeader('Cookie'));
     }
 

@@ -3,7 +3,7 @@
 namespace Guzzle\Subscriber\MessageIntegrity;
 
 use Guzzle\Common\EventSubscriberInterface;
-use Guzzle\Http\Event\GotResponseHeadersEvent;
+use Guzzle\Http\Event\HeadersEvent;
 use Guzzle\Http\Message\ResponseInterface;
 
 /**
@@ -25,7 +25,7 @@ class StreamingResponseIntegritySubscriber implements EventSubscriberInterface
         return ['request.got_headers' => ['onRequestGotHeaders', -1]];
     }
 
-    public function onRequestGotHeaders(GotResponseHeadersEvent $event)
+    public function onRequestGotHeaders(HeadersEvent $event)
     {
         $response = $event->getResponse();
         if (!$this->canValidate($response)) {

@@ -4,9 +4,9 @@ namespace Guzzle\Http\Subscriber;
 
 use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Adapter\Transaction;
-use Guzzle\Http\Event\RequestBeforeSendEvent;
+use Guzzle\Http\Event\BeforeEvent;
 use Guzzle\Http\Event\RequestEvents;
-use Guzzle\Http\Event\GotResponseHeadersEvent;
+use Guzzle\Http\Event\HeadersEvent;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\ResponseInterface;
@@ -38,13 +38,13 @@ class Mock implements EventSubscriberInterface, \Countable
 
     public static function getSubscribedEvents()
     {
-        return [RequestEvents::BEFORE_SEND => ['onRequestBeforeSend', -999]];
+        return ['before' => ['onRequestBeforeSend', -999]];
     }
 
     /**
      * @throws \OutOfBoundsException|\Exception
      */
-    public function onRequestBeforeSend(RequestBeforeSendEvent $event)
+    public function onRequestBeforeSend(BeforeEvent $event)
     {
         if (!$item = array_shift($this->queue)) {
             throw new \OutOfBoundsException('Mock queue is empty');
@@ -56,8 +56,8 @@ class Mock implements EventSubscriberInterface, \Countable
         $request = $event->getRequest();
         $transaction = new Transaction($event->getClient(), $request);
         $request->getEmitter()->emit(
-            RequestEvents::RESPONSE_HEADERS,
-            new GotResponseHeadersEvent($transaction)
+            RequestEvents::HEADERS,
+            new HeadersEvent($transaction)
         );
 
         // Emulate reading a response body

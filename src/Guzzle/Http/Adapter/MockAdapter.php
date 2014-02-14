@@ -33,7 +33,7 @@ class MockAdapter implements AdapterInterface
 
     public function send(TransactionInterface $transaction)
     {
-        RequestEvents::emitBeforeSendEvent($transaction);
+        RequestEvents::emitBefore($transaction);
         if (!$transaction->getResponse()) {
             $response = is_callable($this->response)
                 ? call_user_func($this->response, $transaction)
@@ -42,7 +42,7 @@ class MockAdapter implements AdapterInterface
                 throw new \RuntimeException('Invalid mocked response');
             }
             $transaction->setResponse($response);
-            RequestEvents::emitAfterSendEvent($transaction);
+            RequestEvents::emitComplete($transaction);
         }
 
         return $transaction->getResponse();

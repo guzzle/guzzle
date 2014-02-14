@@ -4,7 +4,7 @@ namespace Guzzle\Tests\Http\Message;
 
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Client;
-use Guzzle\Http\Event\RequestBeforeSendEvent;
+use Guzzle\Http\Event\BeforeEvent;
 use Guzzle\Http\Subscriber\PrepareRequestBody;
 use Guzzle\Http\Message\Request;
 use Guzzle\Stream\NoSeekStream;
@@ -19,7 +19,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
     {
         $s = new PrepareRequestBody();
         $t = $this->getTrans();
-        $s->onRequestBeforeSend(new RequestBeforeSendEvent($t));
+        $s->onRequestBeforeSend(new BeforeEvent($t));
         $this->assertFalse($t->getRequest()->hasHeader('Expect'));
     }
 
@@ -33,7 +33,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $p->expects($this->once())
             ->method('applyRequestHeaders');
         $t->getRequest()->setBody($p);
-        $s->onRequestBeforeSend(new RequestBeforeSendEvent($t));
+        $s->onRequestBeforeSend(new BeforeEvent($t));
     }
 
     public function testAddsExpectHeaderWithTrue()
@@ -42,7 +42,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $t = $this->getTrans();
         $t->getRequest()->getConfig()->set('expect', true);
         $t->getRequest()->setBody(Stream::factory('foo'));
-        $s->onRequestBeforeSend(new RequestBeforeSendEvent($t));
+        $s->onRequestBeforeSend(new BeforeEvent($t));
         $this->assertEquals('100-Continue', $t->getRequest()->getHeader('Expect'));
     }
 
@@ -52,7 +52,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $t = $this->getTrans();
         $t->getRequest()->getConfig()->set('expect', 2);
         $t->getRequest()->setBody(Stream::factory('foo'));
-        $s->onRequestBeforeSend(new RequestBeforeSendEvent($t));
+        $s->onRequestBeforeSend(new BeforeEvent($t));
         $this->assertTrue($t->getRequest()->hasHeader('Expect'));
     }
 
@@ -62,7 +62,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $t = $this->getTrans();
         $t->getRequest()->getConfig()->set('expect', 10);
         $t->getRequest()->setBody(Stream::factory('foo'));
-        $s->onRequestBeforeSend(new RequestBeforeSendEvent($t));
+        $s->onRequestBeforeSend(new BeforeEvent($t));
         $this->assertFalse($t->getRequest()->hasHeader('Expect'));
     }
 
@@ -71,7 +71,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $s = new PrepareRequestBody();
         $t = $this->getTrans();
         $t->getRequest()->setBody(new NoSeekStream(Stream::factory('foo')));
-        $s->onRequestBeforeSend(new RequestBeforeSendEvent($t));
+        $s->onRequestBeforeSend(new BeforeEvent($t));
         $this->assertTrue($t->getRequest()->hasHeader('Expect'));
     }
 
@@ -81,7 +81,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $t = $this->getTrans();
         $t->getRequest()->setBody(Stream::factory('foo'));
         $t->getRequest()->setHeader('Transfer-Encoding', 'chunked');
-        $s->onRequestBeforeSend(new RequestBeforeSendEvent($t));
+        $s->onRequestBeforeSend(new BeforeEvent($t));
         $this->assertFalse($t->getRequest()->hasHeader('Content-Length'));
     }
 

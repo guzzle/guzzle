@@ -29,8 +29,8 @@ User guide
     quickstart
     clients
     requests
+    events
     streams
-    subscribers
     faq
 
 Libraries

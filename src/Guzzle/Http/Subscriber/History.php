@@ -3,8 +3,8 @@
 namespace Guzzle\Http\Subscriber;
 
 use Guzzle\Common\EventSubscriberInterface;
-use Guzzle\Http\Event\RequestAfterSendEvent;
-use Guzzle\Http\Event\RequestErrorEvent;
+use Guzzle\Http\Event\CompleteEvent;
+use Guzzle\Http\Event\ErrorEvent;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;
 
@@ -22,8 +22,8 @@ class History implements EventSubscriberInterface, \IteratorAggregate, \Countabl
     public static function getSubscribedEvents()
     {
         return [
-            'request.after_send' => ['onRequestSent', 9999],
-            'request.error' => ['onRequestError', 9999],
+            'complete' => ['onRequestSent', 9999],
+            'error' => ['onRequestError', 9999],
         ];
     }
 
@@ -48,12 +48,12 @@ class History implements EventSubscriberInterface, \IteratorAggregate, \Countabl
         return implode("\n", $lines);
     }
 
-    public function onRequestSent(RequestAfterSendEvent $event)
+    public function onRequestSent(CompleteEvent $event)
     {
         $this->add($event->getRequest(), $event->getResponse());
     }
 
-    public function onRequestError(RequestErrorEvent $event)
+    public function onRequestError(ErrorEvent $event)
     {
         $this->add($event->getRequest(), $event->getResponse());
     }
