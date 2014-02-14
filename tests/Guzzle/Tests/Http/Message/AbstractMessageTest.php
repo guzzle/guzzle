@@ -86,6 +86,61 @@ class AbstractMessageTest extends \PHPUnit_Framework_TestCase
         $m->setBody(Stream::factory('baz'));
         $this->assertEquals("Foo!\r\nfoo: bar\r\nContent-Length: 3\r\n\r\nbaz", (string) $m);
     }
+
+    public function parseParamsProvider()
+    {
+        $res1 = array(
+            array(
+                '<http:/.../front.jpeg>',
+                'rel' => 'front',
+                'type' => 'image/jpeg',
+            ),
+            array(
+                '<http://.../back.jpeg>',
+                'rel' => 'back',
+                'type' => 'image/jpeg',
+            ),
+        );
+
+        return array(
+            array(
+                '<http:/.../front.jpeg>; rel="front"; type="image/jpeg", <http://.../back.jpeg>; rel=back; type="image/jpeg"',
+                $res1
+            ),
+            array(
+                '<http:/.../front.jpeg>; rel="front"; type="image/jpeg",<http://.../back.jpeg>; rel=back; type="image/jpeg"',
+                $res1
+            ),
+            array(
+                'foo="baz"; bar=123, boo, test="123", foobar="foo;bar"',
+                array(
+                    array('foo' => 'baz', 'bar' => '123'),
+                    array('boo'),
+                    array('test' => '123'),
+                    array('foobar' => 'foo;bar')
+                )
+            ),
+            array(
+                '<http://.../side.jpeg?test=1>; rel="side"; type="image/jpeg",<http://.../side.jpeg?test=2>; rel=side; type="image/jpeg"',
+                array(
+                    array('<http://.../side.jpeg?test=1>', 'rel' => 'side', 'type' => 'image/jpeg'),
+                    array('<http://.../side.jpeg?test=2>', 'rel' => 'side', 'type' => 'image/jpeg')
+                )
+            ),
+            array(
+                '',
+                array()
+            )
+        );
+    }
+
+    /**
+     * @dataProvider parseParamsProvider
+     */
+    public function testParseParams($header, $result)
+    {
+        $this->assertEquals($result, Message::parseHeader([$header]));
+    }
 }
 
 class Message extends AbstractMessage
