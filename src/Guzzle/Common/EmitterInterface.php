@@ -47,6 +47,9 @@ interface EmitterInterface
     /**
      * Emits an event to all registered listeners.
      *
+     * Each event that is bound to the emitted eventName receives a
+     * EventInterface, the name of the event, and the event emitter.
+     *
      * @param string         $eventName The name of the event to dispatch.
      * @param EventInterface $event     The event to pass to the event handlers/listeners.
      *

@@ -119,7 +119,9 @@ errors as well: ``GuzzleHttp\Exception\ClientErrorResponseException`` for
         $client->get('http://httpbin.org');
     } catch (RequestException $e) {
         echo $e->getRequest() . "\n";
-        echo $e->getResponse() . "\n";
+        if ($e->hasResponse()) {
+            echo $e->getResponse() . "\n";
+        }
     }
 
 A ``GuzzleHttp\Exception\RequestException`` always contains a
