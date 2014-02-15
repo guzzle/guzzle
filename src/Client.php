@@ -258,7 +258,7 @@ class Client implements ClientInterface
                 // Assume that the parallel adapter will also be this CurlAdapter
                 $this->parallelAdapter = new CurlAdapter($this->messageFactory);
                 return new StreamingProxyAdapter(
-                    $this->parallelAdapter,
+                    new CurlAdapter($this->messageFactory),
                     new StreamAdapter($this->messageFactory)
                 );
             }

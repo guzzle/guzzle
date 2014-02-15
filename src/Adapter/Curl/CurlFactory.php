@@ -12,8 +12,11 @@ use GuzzleHttp\Stream\Stream;
  */
 class CurlFactory
 {
-    public function createHandle(TransactionInterface $transaction, MessageFactoryInterface $messageFactory)
-    {
+    public function createHandle(
+        TransactionInterface $transaction,
+        MessageFactoryInterface $messageFactory,
+        $handle = null
+    ) {
         $request = $transaction->getRequest();
         $mediator = new RequestMediator($transaction, $messageFactory);
         $options = $this->getDefaultOptions($request, $mediator);
@@ -27,7 +30,12 @@ class CurlFactory
             $options = $this->applyCustomCurlOptions($config, $options);
         }
 
-        $handle = curl_init();
+        if ($handle) {
+            curl_reset($handle);
+        } else {
+            $handle = curl_init();
+        }
+
         curl_setopt_array($handle, $options);
 
         return $handle;
