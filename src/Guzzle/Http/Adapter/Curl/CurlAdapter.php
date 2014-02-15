@@ -33,10 +33,14 @@ class CurlAdapter implements AdapterInterface, ParallelAdapterInterface
     /** @var array Array of curl multi handles */
     private $multiOwned = [];
 
+    /** @var double */
+    private $selectTimeout;
+
     /**
      * @param MessageFactoryInterface $messageFactory
      * @param array                   $options Array of options to use with the adapter
-     *                                         - handle_factory: Optional factory used to create cURL handles
+     *     - handle_factory: Optional factory used to create cURL handles
+     *     - select_timeout: Specify a float in seconds to use for a curl_multi_select timeout.
      */
     public function __construct(MessageFactoryInterface $messageFactory, array $options = [])
     {
@@ -45,6 +49,9 @@ class CurlAdapter implements AdapterInterface, ParallelAdapterInterface
         $this->curlFactory = isset($options['handle_factory'])
             ? $options['handle_factory']
             : new CurlFactory();
+        $this->selectTimeout = isset($options['select_timeout'])
+            ? $options['select_timeout']
+            : 1;
     }
 
     public function __destruct()
@@ -57,19 +64,18 @@ class CurlAdapter implements AdapterInterface, ParallelAdapterInterface
     }
 
     /**
-     * Throw an exception for a cURL multi response if needed
+     * Throw an exception for a cURL multi response
      *
      * @param int $code Curl response code
      * @throws AdapterException
      */
-    public static function checkCurlMultiResult($code)
+    public static function throwMultiError($code)
     {
-        if ($code != CURLM_OK && $code != CURLM_CALL_MULTI_PERFORM) {
-            $buffer = function_exists('curl_multi_strerror')
-                ? curl_multi_strerror($code)
-                : self::ERROR_STR;
-            throw new AdapterException(sprintf('cURL error %s: %s', $code, $buffer));
-        }
+        $buffer = function_exists('curl_multi_strerror')
+            ? curl_multi_strerror($code)
+            : self::ERROR_STR;
+
+        throw new AdapterException(sprintf('cURL error %s: %s', $code, $buffer));
     }
 
     public function send(TransactionInterface $transaction)
@@ -103,19 +109,19 @@ class CurlAdapter implements AdapterInterface, ParallelAdapterInterface
     private function perform(BatchContext $context)
     {
         // The first curl_multi_select often times out no matter what, but is usually required for fast transfers
-        $selectTimeout = 0.001;
         $active = false;
         $multi = $context->getMultiHandle();
 
         do {
             while (($mrc = curl_multi_exec($multi, $active)) == CURLM_CALL_MULTI_PERFORM);
-            $this->checkCurlMultiResult($mrc);
-            $this->processMessages($context);
-            if ($active && curl_multi_select($multi, $selectTimeout) === -1) {
-                // Perform a usleep if a select returns -1: https://bugs.php.net/bug.php?id=61141
-                usleep(150);
+            if ($mrc != CURLM_OK && $mrc != CURLM_CALL_MULTI_PERFORM) {
+                self::throwMultiError($mrc);
             }
-            $selectTimeout = 1;
+            $this->processMessages($context);
+            if ($active && curl_multi_select($multi, $this->selectTimeout) === -1) {
+                // Perform a usleep if a select returns -1: https://bugs.php.net/bug.php?id=61141
+                usleep(250);
+            }
         } while ($active || $context->hasPending());
 
         $this->releaseMultiHandle($context->getMultiHandle());

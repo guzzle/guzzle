@@ -135,7 +135,7 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
      */
     public function testChecksCurlMultiResult()
     {
-        CurlAdapter::checkCurlMultiResult(-2);
+        CurlAdapter::throwMultiError(-2);
     }
 
     public function testChecksForCurlException()

@@ -118,7 +118,11 @@ class BatchContext
             throw new \RuntimeException('Transaction already registered');
         }
 
-        CurlAdapter::checkCurlMultiResult(curl_multi_add_handle($this->multi, $handle));
+        $code = curl_multi_add_handle($this->multi, $handle);
+        if ($code != CURLM_OK) {
+            CurlAdapter::throwMultiError($code);
+        }
+
         $this->handles[$transaction] = $handle;
     }
 
@@ -137,7 +141,12 @@ class BatchContext
         }
 
         $handle = $this->handles[$transaction];
-        CurlAdapter::checkCurlMultiResult(curl_multi_remove_handle($this->multi, $handle));
+
+        $code = curl_multi_remove_handle($this->multi, $handle);
+        if ($code != CURLM_OK) {
+            CurlAdapter::throwMultiError($code);
+        }
+
         curl_close($handle);
         unset($this->handles[$transaction]);
 
