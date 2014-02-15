@@ -12,6 +12,8 @@ use Guzzle\Http\Adapter\StreamingProxyAdapter;
 use Guzzle\Http\Adapter\Curl\CurlAdapter;
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Adapter\TransactionIterator;
+use Guzzle\Http\Exception\RequestException;
+use Guzzle\Http\Exception\TransferException;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\MessageFactoryInterface;
 use Guzzle\Http\Message\RequestInterface;
@@ -164,11 +166,17 @@ class Client implements ClientInterface
     public function send(RequestInterface $request)
     {
         $transaction = new Transaction($this, $request);
-        if ($response = $this->adapter->send($transaction)) {
-            return $response;
+        try {
+            if ($response = $this->adapter->send($transaction)) {
+                return $response;
+            }
+            throw new \LogicException('No response was associated with the transaction');
+        } catch (RequestException $e) {
+            throw $e;
+        } catch (TransferException $e) {
+            // Wrap exceptions in a RequestException to adhere to the interface
+            throw new RequestException($e->getMessage(), $request, null, $e);
         }
-
-        throw new \RuntimeException('No response was associated with the transaction');
     }
 
     public function sendAll($requests, array $options = [])

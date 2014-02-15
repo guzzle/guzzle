@@ -45,12 +45,13 @@ class RequestException extends TransferException
             return new self('Error completing request', $request, null, $previous);
         }
 
-        if ($response->getStatusCode()[0] == '4') {
+        $level = $response->getStatusCode()[0];
+        if ($level == '4') {
             $label = 'Client error response';
-            $className = __NAMESPACE__ . '\\ClientErrorResponseException';
-        } elseif ($response->getStatusCode()[0] == '5') {
+            $className = __NAMESPACE__ . '\\ClientException';
+        } elseif ($level == '5') {
             $label = 'Server error response';
-            $className = __NAMESPACE__ . '\\ServerErrorResponseException';
+            $className = __NAMESPACE__ . '\\ServerException';
         } else {
             $label = 'Unsuccessful response';
             $className = __CLASS__;

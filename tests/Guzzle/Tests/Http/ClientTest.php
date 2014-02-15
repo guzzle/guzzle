@@ -272,7 +272,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \RuntimeException
+     * @expectedException \LogicException
      * @expectedExceptionMessage No response
      */
     public function testEnsuresResponseIsPresentAfterSending()

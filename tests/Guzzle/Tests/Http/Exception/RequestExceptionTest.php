@@ -36,7 +36,7 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
             'Client error response [url] / [status code] 400 [reason phrase] Bad Request',
             $e->getMessage()
         );
-        $this->assertInstanceOf('Guzzle\Http\Exception\ClientErrorResponseException', $e);
+        $this->assertInstanceOf('Guzzle\Http\Exception\ClientException', $e);
     }
 
     public function testCreatesServerErrorResponseException()
@@ -46,7 +46,7 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
             'Server error response [url] / [status code] 500 [reason phrase] Internal Server Error',
             $e->getMessage()
         );
-        $this->assertInstanceOf('Guzzle\Http\Exception\ServerErrorResponseException', $e);
+        $this->assertInstanceOf('Guzzle\Http\Exception\ServerException', $e);
     }
 
     public function testCreatesGenericErrorResponseException()
