@@ -412,7 +412,9 @@ Custom Authentication Schemes
 You can also provide a string representing a custom authentication type name.
 When using a custom authentication type string, you will need to implement
 the authentication method in an event listener that checks the ``auth`` request
-option of a request before it is sent.
+option of a request before it is sent. Authentication listeners that require
+a request is not modified after they are signed should have a very low priority
+to ensure that they are fired last or near last in the event chain.
 
 .. code-block:: php
 
