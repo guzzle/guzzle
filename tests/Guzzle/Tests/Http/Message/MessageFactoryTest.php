@@ -216,7 +216,8 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $request = (new MessageFactory)->createRequest('GET', 'http://foo.com', [
             'auth' => ['michael', 'test', 'digest']
         ]);
-        $this->assertEquals(['michael', 'test', 'digest'], $request->getConfig()->get('auth'));
+        $this->assertEquals('michael:test', $request->getConfig()->getPath('curl/' . CURLOPT_USERPWD));
+        $this->assertEquals(CURLAUTH_DIGEST, $request->getConfig()->getPath('curl/' . CURLOPT_HTTPAUTH));
     }
 
     public function testCanAddEvents()
@@ -371,7 +372,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     public function inputValidation()
     {
         return array_map(function ($option) { return array($option); }, array(
-            'headers', 'query', 'auth', 'events', 'subscribers', 'params', 'config'
+            'headers', 'query', 'events', 'subscribers', 'params', 'config'
         ));
     }
 

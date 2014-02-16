@@ -222,29 +222,6 @@ class CurlFactory
         $options[CURLOPT_SSLKEY] = $value;
     }
 
-    protected function visit_auth(RequestInterface $request, RequestMediator $mediator, &$options, $value)
-    {
-        static $authMap = array(
-            'basic'  => CURLAUTH_BASIC,
-            'digest' => CURLAUTH_DIGEST,
-            'ntlm'   => CURLAUTH_NTLM,
-            'any'    => CURLAUTH_ANY
-        );
-
-        if (!is_array($value) || !isset($value[0]) || !isset($value[1])) {
-            throw new \InvalidArgumentException('auth must be an array that contains a username and password');
-        }
-
-        $scheme = isset($value[2]) ? strtolower($value[2]) : 'basic';
-        if (!isset($authMap[$scheme])) {
-            throw new \InvalidArgumentException('Invalid authentication scheme: ' . $scheme);
-        }
-
-        $scheme = $authMap[$scheme];
-        $options[CURLOPT_HTTPAUTH] = $scheme;
-        $options[CURLOPT_USERPWD] = $value[0] . ':' . $value[1];
-    }
-
     protected function visit_save_to(RequestInterface $request, RequestMediator $mediator, &$options, $value)
     {
         $saveTo = is_string($value) ? Stream::factory(fopen($value, 'w')) : Stream::factory($value);

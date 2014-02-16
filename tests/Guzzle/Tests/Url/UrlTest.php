@@ -20,8 +20,9 @@ class UrlTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertEquals(80, Url::fromString('http://www.test.com/')->getPort());
         $this->assertEquals(443, Url::fromString('https://www.test.com/')->getPort());
-        $this->assertEquals(null, Url::fromString('ftp://www.test.com/')->getPort());
+        $this->assertEquals(21, Url::fromString('ftp://www.test.com/')->getPort());
         $this->assertEquals(8192, Url::fromString('http://www.test.com:8192/')->getPort());
+        $this->assertEquals(null, Url::fromString('foo://www.test.com/')->getPort());
     }
 
     public function testCloneCreatesNewInternalObjects()

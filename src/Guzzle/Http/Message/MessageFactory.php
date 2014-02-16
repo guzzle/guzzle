@@ -198,31 +198,17 @@ class MessageFactory implements MessageFactoryInterface
 
     private function visit_auth(RequestInterface $request, $value)
     {
-        static $allowable = ['Basic' => true, 'Digest' => true, 'NTLM' => true];
+        $authType = !isset($value[2]) ? 'basic' : strtolower($value[2]);
+        $request->getConfig()->set('auth', $value);
 
-        if (!is_array($value) || count($value) < 2) {
-            throw new \InvalidArgumentException(
-                'auth value must be an array that contains a username, password, and optional authentication scheme'
-            );
-        }
-
-        if (!isset($value[2])) {
-            $authType = 'Basic';
-        } else {
-            $authType = ucfirst($value[2]);
-            if (!isset($allowable[$authType])) {
-                throw new \InvalidArgumentException(
-                    'Authentication type not supported: ' . $authType
-                );
-            }
-        }
-
-        if ($authType == 'Basic') {
+        if ($authType == 'basic') {
             // We can easily handle simple basic Auth in the factory
             $request->setHeader('Authorization', 'Basic ' . base64_encode("$value[0]:$value[1]"));
-        } else {
-            // Rely on an adapter to implement the authorization protocol (e.g. cURL)
-            $request->getConfig()->set('auth', $value);
+        } elseif ($authType == 'digest') {
+            // Currently only implemented by the cURL adapter.
+            // @todo: Need an event listener solution that does not rely on cURL
+            $request->getConfig()->setPath('curl/' . CURLOPT_HTTPAUTH, CURLAUTH_DIGEST);
+            $request->getConfig()->setPath('curl/' . CURLOPT_USERPWD, "$value[0]:$value[1]");
         }
     }
 

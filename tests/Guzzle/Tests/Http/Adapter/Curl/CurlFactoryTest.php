@@ -223,38 +223,6 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertFileExists($f->last[CURLOPT_CAINFO]);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Invalid authentication scheme: foo
-     */
-    public function testValidatesAuthType()
-    {
-        $request = new Request('GET', self::$server->getUrl());
-        $request->getConfig()->set('auth', ['a', 'b', 'foo']);
-        (new IntroFactory())->createHandle(new Transaction(new Client(), $request), new MessageFactory());
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage auth must be an array that contains a username and password
-     */
-    public function testValidatesAuthArray()
-    {
-        $request = new Request('GET', self::$server->getUrl());
-        $request->getConfig()->set('auth', 'foo');
-        (new IntroFactory())->createHandle(new Transaction(new Client(), $request), new MessageFactory());
-    }
-
-    public function testAddsAuth()
-    {
-        $request = new Request('GET', self::$server->getUrl());
-        $request->getConfig()->set('auth', ['a', 'b', 'digest']);
-        $f = new IntroFactory();
-        curl_close($f->createHandle(new Transaction(new Client(), $request), new MessageFactory()));
-        $this->assertEquals('a:b', $f->last[CURLOPT_USERPWD]);
-        $this->assertEquals(CURLAUTH_DIGEST, $f->last[CURLOPT_HTTPAUTH]);
-    }
-
     public function testConvertsConstantNameKeysToValues()
     {
         $request = new Request('GET', self::$server->getUrl());

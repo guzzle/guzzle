@@ -273,9 +273,11 @@ All of the following examples use the following client:
 headers
 -------
 
-Associative array of headers to add to the request. Each key is the name of a
-header, and each value is a string or array of strings representing the header
-field values.
+:Summary: Associative array of headers to add to the request. Each key is the
+    name of a header, and each value is a string or array of strings
+    representing the header field values.
+:Types: array
+:Defaults: None
 
 .. code-block:: php
 
@@ -291,8 +293,16 @@ field values.
 body
 ----
 
-The ``body`` option is used to control the body of an entity enclosing request
-(e.g., PUT, POST, PATCH). This setting can be set to any of the following types:
+:Summary: The ``body`` option is used to control the body of an entity
+    enclosing request (e.g., PUT, POST, PATCH).
+:Types:
+    - string
+    - ``fopen()`` resource
+    - ``GuzzleHttp\Stream\StreamInterface``
+    - ``GuzzleHttp\Message\Post\PostBodyInterface``
+:Default: None
+
+This setting can be set to any of the following types:
 
 - string
 
@@ -336,7 +346,11 @@ The ``body`` option is used to control the body of an entity enclosing request
 query
 -----
 
-Associative array of query string values to add to the request.
+:Summary: Associative array of query string values to add to the request.
+:Types:
+    - array
+    - ``GuzzleHttp\Url\QueryString``
+:Default: None
 
 .. code-block:: php
 
@@ -354,13 +368,18 @@ string values that are parsed from the URL.
 auth
 ----
 
-Array of HTTP authentication parameters to use with the request. The array must
-contain the username in index [0], the password in index [1], and can optionally
-contain the authentication type in index [2].
+:Summary: Pass an array of HTTP authentication parameters to use with the
+    request. The array must contain the username in index [0], the password in
+    index [1], and you can optionally provide a built-in authentication type in
+    index [2].
+:Types:
+    - array
+    - string
+:Default: None
 
-The authentication types are as follows:
+The built-in authentication types are as follows:
 
-Basic
+basic
     Use `basic HTTP authentication <http://www.ietf.org/rfc/rfc2069.txt>`_ in
     the ``Authorization`` header (the default setting used if none is
     specified).
@@ -369,24 +388,84 @@ Basic
 
         $client->get('/get', ['auth' => ['username', 'password']]);
 
-Digest
+digest
     Use `digest authentication <http://www.ietf.org/rfc/rfc2069.txt>`_ (must be
     supported by the HTTP adapter).
 
     .. code-block:: php
 
-        $client->get('/get', ['auth' => ['username', 'password', 'Digest']]);
+        $client->get('/get', ['auth' => ['username', 'password', 'digest']]);
 
-NTLM
-    Uses `NTLM authentication <http://msdn.microsoft.com/en-us/library/windows/desktop/aa378749(v=vs.85).aspx>`_.
-    (must be supported by the HTTP adapter).
+    *This is currently only supported when using the cURL adapter, but creating
+    a replacement that can be used with any HTTP adapter is planned.*
 
-    .. code-block:: php
+.. important::
 
-        $client->get('/get', ['auth' => ['username', 'password', 'NTLM']]);
+    The authentication type (whether it's provided as a string or as the third
+    option in an array) is always converted to a lowercase string. Take this
+    into account when implementing custom authentication types and when
+    implementing custom message factories.
+
+Custom Authentication Schemes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can also provide a string representing a custom authentication type name.
+When using a custom authentication type string, you will need to implement
+the authentication method in an event listener that checks the ``auth`` request
+option of a request before it is sent.
+
+.. code-block:: php
+
+    use GuzzleHttp\Event\BeforeEvent;
+
+    /**
+     * Custom authentication listener that handles the "foo" auth type.
+     *
+     * Listens to the "before" event of a request and only modifies the request
+     * when the "auth" config setting of the request is "foo".
+     */
+    class FooAuth implements GuzzleHttp\Common\SubscriberInterface
+    {
+        private $password;
+
+        public static function getSubscribedEvents()
+        {
+            return ['before' => ['sign', -999]];
+        }
+
+        public function __construct($password)
+        {
+            $this->password = $password;
+        }
+
+        public function sign(BeforeEvent $e)
+        {
+            if ($e->getRequest()->getConfig()['auth'] == 'foo') {
+                $e->getRequest()->setHeader('X-Foo', 'Foo ' . $this->password);
+            }
+        }
+    }
+
+    $client->getEmitter->addSubscriber(new FooAuth('password'));
+    $client->get('/', ['auth' => 'foo']);
+
+Adapter Specific Authentication Schemes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you need to use authentication methods provided by cURL (e.g., NTLM, GSS,
+etc...), then you need to specify a curl adapter option in the ``options``
+request option array. See :ref:`custom-options` for more information.
 
 cookies
 -------
+
+:Summary: Specifies whether or not cookies are used in a request or what cookie
+    jar to use or what cookies to send.
+:Types:
+    - bool
+    - array
+    - ``GuzzleHttp\CookieJar\CookieJarInterface``
+:Default: None
 
 Set to ``true`` to use a shared cookie session associated with the client.
 
@@ -413,6 +492,12 @@ cookie jar.
 
 allow_redirects
 ---------------
+
+:Summary: Describes the redirect behavior of a request
+:Types:
+    - bool
+    - array
+:Default: ``['max' => 5]``
 
 Set to ``false`` to disable redirects.
 
@@ -451,16 +536,21 @@ POST requests with GET requests).
 save_to
 -------
 
-Specify where the body of a response will be saved.
+:Summary: Specify where the body of a response will be saved.
+:Types:
+    - string
+    - ``fopen()`` resource
+    - ``GuzzleHttp\Stream\StreamInterface``
+:Default: PHP temp stream
 
 Pass a string to specify the path to a file that will store the contents of the
-response body.
+response body:
 
 .. code-block:: php
 
     $client->get('/stream/20', ['save_to' => '/path/to/file']);
 
-Pass a resource returned from ``fopen()`` to write the response to a PHP stream.
+Pass a resource returned from ``fopen()`` to write the response to a PHP stream:
 
 .. code-block:: php
 
@@ -468,7 +558,7 @@ Pass a resource returned from ``fopen()`` to write the response to a PHP stream.
     $client->get('/stream/20', ['save_to' => $resource]);
 
 Pass a ``GuzzleHttp\Stream\StreamInterface`` object to stream the response body
-to an open Guzzle stream.
+to an open Guzzle stream:
 
 .. code-block:: php
 
@@ -479,10 +569,13 @@ to an open Guzzle stream.
 events
 ------
 
-Associative array mapping event names to a callable. or an associative array
-containing the 'fn' key that maps to a callable, an optional 'priority' key
-used to specify the event priority, and an optional 'once' key used to specify
-if the event should remove itself the first time it is triggered.
+:Summary: Associative array mapping event names to a callable. or an
+    associative array containing the 'fn' key that maps to a callable, an
+    optional 'priority' key used to specify the event priority, and an optional
+    'once' key used to specify if the event should remove itself the first time
+    it is triggered.
+:Types: array
+:Default: None
 
 .. code-block:: php
 
@@ -518,8 +611,10 @@ priority and whether or not an event should be triggered more than once.
 subscribers
 -----------
 
-Array of event subscribers to add to the request. Each value in the array must
-be an instance of ``Guzzle\Common\EventSubscriberInterface``.
+:Summary: Array of event subscribers to add to the request. Each value in the
+    array must be an instance of ``Guzzle\Common\EventSubscriberInterface``.
+:Types: array
+:Default: None
 
 .. code-block:: php
 
@@ -537,9 +632,11 @@ be an instance of ``Guzzle\Common\EventSubscriberInterface``.
 exceptions
 ----------
 
-Set to ``false`` to disable throwing exceptions on an HTTP protocol errors
-(i.e., 4xx and 5xx responses). Exceptions are thrown by default when HTTP
-protocol errors are encountered.
+:Summary: Set to ``false`` to disable throwing exceptions on an HTTP protocol
+    errors (i.e., 4xx and 5xx responses). Exceptions are thrown by default when
+    HTTP protocol errors are encountered.
+:Types: bool
+:Default: ``true``
 
 .. code-block:: php
 
@@ -553,8 +650,10 @@ protocol errors are encountered.
 timeout
 -------
 
-Float describing the timeout of the request in seconds. Use ``0`` to wait
-indefinitely (the default behavior).
+:Summary: Float describing the timeout of the request in seconds. Use ``0``
+    to wait indefinitely (the default behavior).
+:Types: float
+:Default: ``0``
 
 .. code-block:: php
 
@@ -565,8 +664,10 @@ indefinitely (the default behavior).
 connect_timeout
 ---------------
 
-Float describing the number of seconds to wait while trying to connect to a
-server. Use ``0`` to wait indefinitely (the default behavior).
+:Summary: Float describing the number of seconds to wait while trying to connect
+    to a server. Use ``0`` to wait indefinitely (the default behavior).
+:Types: float
+:Default: ``0``
 
 .. code-block:: php
 
@@ -582,10 +683,15 @@ server. Use ``0`` to wait indefinitely (the default behavior).
 verify
 ------
 
-Set to ``true`` to enable SSL certificate verification (the default). Set to
-``false`` to disable certificate verification (this is insecure!). Set to a
-string to provide the path to a CA bundle to enable verification using a custom
-certificate.
+:Summary: Describes the SSL certificate verification behavior of a request.
+    Set to ``true`` to enable SSL certificate verification (the default). Set
+    to ``false`` to disable certificate verification (this is insecure!). Set
+    to a string to provide the path to a CA bundle to enable verification using
+    a custom certificate.
+:Types:
+    - bool
+    - string
+:Default: ``true``
 
 .. code-block:: php
 
@@ -598,10 +704,15 @@ certificate.
 cert
 ----
 
-Set to a string to specify the path to a file containing a PEM formatted
-client side certificate. If a password is required, then set to an array
-containing the path to the PEM file in the first array element followed by the
-password required for the certificate in the second array element.
+:Summary: Set to a string to specify the path to a file containing a PEM
+    formatted client side certificate. If a password is required, then set to
+    an array containing the path to the PEM file in the first array element
+    followed by the password required for the certificate in the second array
+    element.
+:Types:
+    - string
+    - array
+:Default: None
 
 .. code-block:: php
 
@@ -610,10 +721,14 @@ password required for the certificate in the second array element.
 ssl_key
 -------
 
-Specify the path to a file containing a private SSL key in PEM format. If a
-password is required, then set to an array containing the path to the SSL key in
-the first array element followed by the password required for the certificate
-in the second element.
+:Summary: Specify the path to a file containing a private SSL key in PEM
+    format. If a password is required, then set to an array containing the path
+    to the SSL key in the first array element followed by the password required
+    for the certificate in the second element.
+:Types:
+    - string
+    - array
+:Default: None
 
 .. note::
 
@@ -624,7 +739,14 @@ in the second element.
 proxy
 -----
 
-Pass a string to specify an HTTP proxy.
+:Summary: Pass a string to specify an HTTP proxy, or an array to specify
+    different proxies for different protocols.
+:Types:
+    - string
+    - array
+:Default: None
+
+Pass a string to specify a proxy for all protocols.
 
 .. code-block:: php
 
@@ -650,12 +772,16 @@ Pass an associative array to specify HTTP proxies for specific URI schemes
 debug
 -----
 
-Set to ``true`` or set to a PHP stream returned by ``fopen()`` to enable debug
-output with the adapter used to send a request. For example, when using cURL to
-transfer requests, cURL's verbose of ``CURLOPT_VERBOSE`` will be emitted. When
-using the PHP stream wrapper, stream wrapper notifications will be emitted. If
-set to true, the output is written to PHP's STDOUT. If a PHP stream is
-provided, output is written to the stream.
+:Summary: Set to ``true`` or set to a PHP stream returned by ``fopen()`` to
+    enable debug output with the adapter used to send a request. For example,
+    when using cURL to transfer requests, cURL's verbose of ``CURLOPT_VERBOSE``
+    will be emitted. When using the PHP stream wrapper, stream wrapper
+    notifications will be emitted. If set to true, the output is written to
+    PHP's STDOUT. If a PHP stream is provided, output is written to the stream.
+:Types:
+    - bool
+    - ``fopen()`` resource
+:Default: None
 
 .. code-block:: php
 
@@ -684,7 +810,10 @@ Running the above example would output something like the following:
 stream
 ------
 
-Set to ``true`` to stream a response rather than download it all up-front.
+:Summary: Set to ``true`` to stream a response rather than download it all
+    up-front.
+:Types: bool
+:Default: ``false``
 
 .. code-block:: php
 
@@ -705,6 +834,12 @@ Set to ``true`` to stream a response rather than download it all up-front.
 expect
 ------
 
+:Summary: Controls the behavior of the "Expect: 100-Continue" header.
+:Types:
+    - bool
+    - integer
+:Default: ``1048576``
+
 Set to ``true`` to enable the "Expect: 100-Continue" header for all requests
 that sends a body. Set to ``false`` to disable the "Expect: 100-Continue"
 header for all requests. Set to a number so that the size of the payload must
@@ -720,12 +855,16 @@ the body of a request is greater than 1 MB.
     This option is only supported when using HTTP/1.1 and must be implemented
     by the HTTP adapter used by a client.
 
+.. _custom-options:
+
 options
 -------
 
-Associative array of options that are forwarded to a request's configuration
-collection. These values are used as configuration options that can be consumed
-by plugins and adapters.
+:Summary: Associative array of options that are forwarded to a request's
+    configuration collection. These values are used as configuration options
+    that can be consumed by plugins and adapters.
+:Types: array
+:Default: None
 
 .. code-block:: php
 
@@ -739,12 +878,13 @@ array in the ``options`` request option under the ``curl`` key.
 
 .. code-block:: php
 
-    // Use custom cURL options with the request
+    // Use custom cURL options with the request. This example uses NTLM auth
+    // to authenticate with a server.
     $client->get('/', [
         'options' => [
             'curl' => [
-                CURLOPT_FORBID_REUSE  => true,
-                CURLOPT_FRESH_CONNECT => true,
+                CURLOPT_HTTPAUTH => CURLAUTH_NTLM,
+                CURLOPT_USERPWD  => 'username:password'
             ]
         ]
     ]);
