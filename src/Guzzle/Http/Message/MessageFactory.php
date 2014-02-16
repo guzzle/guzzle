@@ -199,7 +199,14 @@ class MessageFactory implements MessageFactoryInterface
 
     private function visit_auth(RequestInterface $request, $value)
     {
-        $authType = !isset($value[2]) ? 'basic' : strtolower($value[2]);
+        if (!$value) {
+            return;
+        } elseif (is_array($value)) {
+            $authType = isset($value[2]) ? strtolower($value[2]) : 'basic';
+        } else {
+            $authType = strtolower($value);
+        }
+
         $request->getConfig()->set('auth', $value);
 
         if ($authType == 'basic') {

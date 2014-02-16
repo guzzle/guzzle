@@ -363,4 +363,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client->sendAll([$client->createRequest('GET', 'http://www.foo.com')]);
         $this->assertTrue($called);
     }
+
+    public function testCanDisableAuthPerRequest()
+    {
+        $client = new Client(['defaults' => ['auth' => 'foo']]);
+        $request = $client->createRequest('GET', '/');
+        $this->assertEquals('foo', $request->getConfig()['auth']);
+        $request = $client->createRequest('GET', '/', ['auth' => null]);
+        $this->assertFalse($request->getConfig()->hasKey('auth'));
+    }
 }

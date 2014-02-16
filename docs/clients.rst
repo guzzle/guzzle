@@ -371,10 +371,11 @@ auth
 :Summary: Pass an array of HTTP authentication parameters to use with the
     request. The array must contain the username in index [0], the password in
     index [1], and you can optionally provide a built-in authentication type in
-    index [2].
+    index [2]. Pass ``null`` to disable authentication for a request.
 :Types:
     - array
     - string
+    - null
 :Default: None
 
 The built-in authentication types are as follows:
