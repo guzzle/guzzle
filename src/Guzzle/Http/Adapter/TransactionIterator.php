@@ -3,7 +3,6 @@
 namespace Guzzle\Http\Adapter;
 
 use Guzzle\Http\ClientInterface;
-use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Message\RequestInterface;
 
 /**
@@ -43,27 +42,15 @@ class TransactionIterator implements \Iterator
         }
 
         if (isset($this->options['before'])) {
-            $request->getEmitter()->on(
-                RequestEvents::BEFORE,
-                $this->options['before'],
-                -255
-            );
+            $request->getEmitter()->on('before', $this->options['before'], -255);
         }
 
         if (isset($this->options['complete'])) {
-            $request->getEmitter()->on(
-                RequestEvents::COMPLETE,
-                $this->options['complete'],
-                -255
-            );
+            $request->getEmitter()->on('complete', $this->options['complete'], -255);
         }
 
         if (isset($this->options['error'])) {
-            $request->getEmitter()->on(
-                RequestEvents::ERROR,
-                $this->options['error'],
-                -255
-            );
+            $request->getEmitter()->on('error', $this->options['error'], -255);
         }
 
         return new Transaction($this->client, $request);

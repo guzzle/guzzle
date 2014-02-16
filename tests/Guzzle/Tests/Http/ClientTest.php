@@ -6,7 +6,6 @@ use Guzzle\Http\Adapter\FakeParallelAdapter;
 use Guzzle\Http\Adapter\MockAdapter;
 use Guzzle\Http\Client;
 use Guzzle\Http\Event\BeforeEvent;
-use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Exception\RequestException;
@@ -262,7 +261,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $adapter->setResponse($response);
         $client = new Client(['adapter' => $adapter]);
         $client->getEmitter()->on(
-            RequestEvents::BEFORE,
+            'before',
             function (BeforeEvent $e) use ($response2) {
                 $e->intercept($response2);
             }
@@ -289,10 +288,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testClientHandlesErrorsDuringBeforeSend()
     {
         $client = new Client();
-        $client->getEmitter()->on(RequestEvents::BEFORE, function ($e) {
+        $client->getEmitter()->on('before', function ($e) {
             throw new RequestException('foo', $e->getRequest());
         });
-        $client->getEmitter()->on(RequestEvents::ERROR, function ($e) {
+        $client->getEmitter()->on('error', function ($e) {
             $e->intercept(new Response(200));
         });
         $this->assertEquals(200, $client->get('/')->getStatusCode());
@@ -305,7 +304,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testClientHandlesErrorsDuringBeforeSendAndThrowsIfUnhandled()
     {
         $client = new Client();
-        $client->getEmitter()->on(RequestEvents::BEFORE, function ($e) {
+        $client->getEmitter()->on('before', function ($e) {
             throw new RequestException('foo', $e->getRequest());
         });
         $client->get('/');

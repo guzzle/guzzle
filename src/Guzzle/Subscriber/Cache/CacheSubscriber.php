@@ -80,10 +80,9 @@ class CacheSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            'request.before_send' => ['onRequestBeforeSend', -255],
-            'request.sent'        => ['onRequestSent', 255],
-            'error'       => ['onRequestError', 0],
-            'request.exception'   => ['onRequestException', 0],
+            'before'   => ['onRequestBeforeSend', -255],
+            'complete' => ['onRequestSent', 255],
+            'error'    => ['onRequestError', 0]
         ];
     }
 

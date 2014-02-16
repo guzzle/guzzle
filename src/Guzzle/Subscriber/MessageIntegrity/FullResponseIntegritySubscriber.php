@@ -25,7 +25,7 @@ class FullResponseIntegritySubscriber implements EventSubscriberInterface
 
     public static function getSubscribedEvents()
     {
-        return ['request.after_send' => ['onRequestAfterSend', -1]];
+        return ['complete' => ['onRequestAfterSend', -1]];
     }
 
     public function onRequestAfterSend(CompleteEvent $event)

@@ -8,7 +8,6 @@ use Guzzle\Http\Adapter\TransactionInterface;
 use Guzzle\Http\Client;
 use Guzzle\Http\Event\CompleteEvent;
 use Guzzle\Http\Event\ErrorEvent;
-use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
@@ -52,11 +51,11 @@ class MockAdapterTest extends \PHPUnit_Framework_TestCase
         $m->setResponse(new Response(404));
         $request = new Request('GET', '/');
         $c = false;
-        $request->getEmitter()->once(RequestEvents::COMPLETE, function (CompleteEvent $e) use (&$c) {
+        $request->getEmitter()->once('complete', function (CompleteEvent $e) use (&$c) {
             $c = true;
             throw new RequestException('foo', $e->getRequest());
         });
-        $request->getEmitter()->on(RequestEvents::ERROR, function (ErrorEvent $e) {
+        $request->getEmitter()->on('error', function (ErrorEvent $e) {
             $e->intercept(new Response(201));
         });
         $r = $m->send(new Transaction(new Client(), $request));
@@ -72,7 +71,7 @@ class MockAdapterTest extends \PHPUnit_Framework_TestCase
         $m = new MockAdapter();
         $m->setResponse(new Response(404));
         $request = new Request('GET', '/');
-        $request->getEmitter()->once(RequestEvents::COMPLETE, function (CompleteEvent $e) {
+        $request->getEmitter()->once('complete', function (CompleteEvent $e) {
             throw new RequestException('foo', $e->getRequest());
         });
         $m->send(new Transaction(new Client(), $request));

@@ -22,7 +22,7 @@ class StreamingResponseIntegritySubscriber implements EventSubscriberInterface
 
     public static function getSubscribedEvents()
     {
-        return ['request.got_headers' => ['onRequestGotHeaders', -1]];
+        return ['headers' => ['onRequestGotHeaders', -1]];
     }
 
     public function onRequestGotHeaders(HeadersEvent $event)

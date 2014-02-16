@@ -3,7 +3,6 @@
 namespace Guzzle\Http\Adapter\Curl;
 
 use Guzzle\Http\Adapter\TransactionInterface;
-use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Event\HeadersEvent;
 use Guzzle\Http\Message\HasHeadersTrait;
 use Guzzle\Http\Message\MessageFactoryInterface;
@@ -83,7 +82,7 @@ class RequestMediator
             $request = $this->transaction->getRequest();
             // Allows events to react before downloading any of the body
             $request->getEmitter()->emit(
-                RequestEvents::HEADERS,
+                'headers',
                 new HeadersEvent($this->transaction)
             );
         }

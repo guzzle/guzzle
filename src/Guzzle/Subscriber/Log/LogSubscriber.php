@@ -48,8 +48,8 @@ class LogSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            'request.after_send' => ['onRequestAfterSend', -9999],
-            'error'      => ['onRequestError', 9999]
+            'complete' => ['onRequestAfterSend', -9999],
+            'error'    => ['onRequestError', 9999]
         ];
     }
 

@@ -7,7 +7,6 @@ require_once __DIR__ . '/../Server.php';
 use Guzzle\Http\Adapter\StreamAdapter;
 use Guzzle\Http\Client;
 use Guzzle\Http\Event\ErrorEvent;
-use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\Response;
 use Guzzle\Stream\Stream;
@@ -76,7 +75,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         $request = $client->createRequest('GET', self::$server->getUrl());
         $mockResponse = new Response(200);
         $request->getEmitter()->on(
-            RequestEvents::ERROR,
+            'error',
             function (ErrorEvent $e) use ($mockResponse) {
                 $e->intercept($mockResponse);
             }
@@ -91,7 +90,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
         $client = new Client(['adapter' => new StreamAdapter(new MessageFactory())]);
         $request = $client->createRequest('GET', self::$server->getUrl());
-        $request->getEmitter()->on(RequestEvents::COMPLETE, function ($e) use (&$ee) {
+        $request->getEmitter()->on('complete', function ($e) use (&$ee) {
             $ee = $e;
         });
         $client->send($request);

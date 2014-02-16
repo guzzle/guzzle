@@ -5,7 +5,6 @@ namespace Guzzle\Subscriber\Retry;
 use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\AbstractTransferStatsEvent;
 use Guzzle\Http\Event\ErrorEvent;
-use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Subscriber\Log\MessageFormatter;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
@@ -32,8 +31,8 @@ class RetrySubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            RequestEvents::COMPLETE => ['onRequestSent'],
-            RequestEvents::ERROR      => ['onRequestSent']
+            'complete' => ['onRequestSent'],
+            'error'    => ['onRequestSent']
         ];
     }
 

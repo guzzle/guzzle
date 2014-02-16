@@ -4,7 +4,6 @@ namespace Guzzle\Http\Subscriber;
 
 use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\CompleteEvent;
-use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Exception\TooManyRedirectsException;
 use Guzzle\Http\Exception\CouldNotRewindStreamException;
 use Guzzle\Http\Message\RequestInterface;

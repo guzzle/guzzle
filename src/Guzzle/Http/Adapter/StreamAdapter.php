@@ -106,7 +106,7 @@ class StreamAdapter implements AdapterInterface
         $transaction->setResponse($response);
 
         $transaction->getRequest()->getEmitter()->emit(
-            RequestEvents::HEADERS,
+            'headers',
             new HeadersEvent($transaction)
         );
 

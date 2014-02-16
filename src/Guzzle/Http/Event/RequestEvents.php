@@ -12,34 +12,6 @@ use Guzzle\Http\Exception\RequestException;
 final class RequestEvents
 {
     /**
-     * Event emitted before a request is sent
-     *
-     * The event emitted is a {@see \Guzzle\Http\Event\BeforeEvent} object
-     */
-    const BEFORE = 'before';
-
-    /**
-     * Event emitted when a request has finished sending
-     *
-     * The event emitted is a {@see \Guzzle\Http\Event\CompleteEvent} object
-     */
-    const COMPLETE = 'complete';
-
-    /**
-     * Event emitted when an error occurs for a given request
-     *
-     * The event emitted is a {@see \Guzzle\Http\Event\ErrorEvent} object
-     */
-    const ERROR = 'error';
-
-    /**
-     * Event emitted after receiving all of the headers of a non-information response.
-     *
-     * The event emitted is a {@see \Guzzle\Http\Event\HeadersEvent} object
-     */
-    const HEADERS = 'headers';
-
-    /**
      * Emits the before send event for a request and emits an error
      * event if an error is encountered during the before send.
      *
@@ -51,7 +23,7 @@ final class RequestEvents
         $request = $transaction->getRequest();
         try {
             $request->getEmitter()->emit(
-                RequestEvents::BEFORE,
+                'before',
                 new BeforeEvent($transaction)
             );
         } catch (\Exception $e) {
@@ -75,7 +47,7 @@ final class RequestEvents
         $transaction->getResponse()->setEffectiveUrl($transaction->getRequest()->getUrl());
         try {
             $transaction->getRequest()->getEmitter()->emit(
-                RequestEvents::COMPLETE,
+                'complete',
                 new CompleteEvent($transaction, $stats)
             );
         } catch (RequestException $e) {
@@ -108,7 +80,7 @@ final class RequestEvents
 
         // Dispatch an event and allow interception
         if (!$request->getEmitter()->emit(
-            RequestEvents::ERROR,
+            'error',
             new ErrorEvent($transaction, $e, $stats)
         )->isPropagationStopped()) {
             throw $e;

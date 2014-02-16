@@ -2,7 +2,6 @@
 
 namespace Guzzle\Tests\Message;
 
-use Guzzle\Common\Collection;
 use Guzzle\Http\Message\Response;
 use Guzzle\Stream\Stream;
 

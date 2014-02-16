@@ -5,7 +5,6 @@ namespace Guzzle\Http\Subscriber;
 use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Event\BeforeEvent;
-use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Event\HeadersEvent;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\MessageFactory;
@@ -56,7 +55,7 @@ class Mock implements EventSubscriberInterface, \Countable
         $request = $event->getRequest();
         $transaction = new Transaction($event->getClient(), $request);
         $request->getEmitter()->emit(
-            RequestEvents::HEADERS,
+            'headers',
             new HeadersEvent($transaction)
         );
 

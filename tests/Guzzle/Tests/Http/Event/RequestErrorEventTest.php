@@ -8,7 +8,6 @@ use Guzzle\Http\Event\ErrorEvent;
 use Guzzle\Http\Exception\RequestException;
 use Guzzle\Http\Message\Request;
 use Guzzle\Http\Message\Response;
-use Guzzle\Http\Event\RequestEvents;
 
 /**
  * @covers Guzzle\Http\Event\ErrorEvent
@@ -29,7 +28,7 @@ class ErrorEventTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($request, $event->getRequest());
 
         $res = null;
-        $request->getEmitter()->on(RequestEvents::COMPLETE, function ($e) use (&$res) {
+        $request->getEmitter()->on('complete', function ($e) use (&$res) {
             $res = $e;
         });
 

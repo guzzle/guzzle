@@ -4,7 +4,6 @@ namespace Guzzle\Subscriber\MessageIntegrity;
 
 use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\BeforeEvent;
-use Guzzle\Http\Event\RequestEvents;
 
 /**
  * Verifies the message integrity of a response after all of the data has been received
@@ -37,7 +36,7 @@ class MessageIntegritySubscriber implements EventSubscriberInterface
 
     public static function getSubscribedEvents()
     {
-        return [RequestEvents::BEFORE => ['onRequestBeforeSend']];
+        return ['before' => ['onRequestBeforeSend']];
     }
 
     public function onRequestBeforeSend(BeforeEvent $event)

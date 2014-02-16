@@ -6,7 +6,6 @@ use Guzzle\Http\Adapter\Curl\RequestMediator;
 use Guzzle\Http\Adapter\Transaction;
 use Guzzle\Http\Client;
 use Guzzle\Http\Event\HeadersEvent;
-use Guzzle\Http\Event\RequestEvents;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Message\Request;
 use Guzzle\Stream\Stream;
@@ -23,7 +22,7 @@ class RequestMediatorTest extends \PHPUnit_Framework_TestCase
         $request = new Request('GET', '/');
         $ee = null;
         $request->getEmitter()->on(
-            RequestEvents::HEADERS,
+            'headers',
             function (HeadersEvent $e) use (&$ee) {
                 $ee = $e;
             }
