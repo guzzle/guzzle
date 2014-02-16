@@ -6,6 +6,7 @@ use Guzzle\Common\HasEmitterTrait;
 use Guzzle\Common\Collection;
 use Guzzle\Http\Subscriber\PrepareRequestBody;
 use Guzzle\Stream\StreamInterface;
+use Guzzle\Url\QueryString;
 use Guzzle\Url\Url;
 
 /**
@@ -84,6 +85,13 @@ class Request extends AbstractMessage implements RequestInterface
     public function getUrl()
     {
         return (string) $this->url;
+    }
+
+    public function setQuery($query)
+    {
+        $this->url->setQuery($query);
+
+        return $this;
     }
 
     public function getQuery()

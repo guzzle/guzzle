@@ -146,7 +146,7 @@ of the event.
     $emitter = $client->getEmitter();
     // Note: assume that the $errorEvent was created
     if ($emitter->emit('error', $errorEvent)->isPropagationStopped()) {
-        echo 'It was stopped!;
+        echo 'It was stopped!';
     }
 
 .. hint::

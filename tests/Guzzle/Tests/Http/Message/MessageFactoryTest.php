@@ -10,6 +10,7 @@ use Guzzle\Http\Subscriber\Cookie;
 use Guzzle\Http\CookieJar\ArrayCookieJar;
 use Guzzle\Http\Subscriber\Mock;
 use Guzzle\Stream\Stream;
+use Guzzle\Url\QueryString;
 
 /**
  * @covers Guzzle\Http\Message\MessageFactory
@@ -202,6 +203,15 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('abc', $request->getQuery()->get('test'));
     }
 
+    public function testCanSetDefaultQueryStringWithObject()
+    {
+        $request = (new MessageFactory)->createRequest('GET', 'http://foo.com?test=abc', [
+            'query' => new QueryString(['Foo' => 'Bar', 'test' => 'def'])
+        ]);
+        $this->assertEquals('Bar', $request->getQuery()->get('Foo'));
+        $this->assertEquals('abc', $request->getQuery()->get('test'));
+    }
+
     public function testCanAddBasicAuth()
     {
         $request = (new MessageFactory)->createRequest('GET', 'http://foo.com', [
@@ -371,7 +381,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     public function inputValidation()
     {
         return array_map(function ($option) { return array($option); }, array(
-            'headers', 'query', 'events', 'subscribers', 'params', 'config'
+            'headers', 'events', 'subscribers', 'params', 'config'
         ));
     }
 

@@ -61,6 +61,15 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
     public function getQuery();
 
     /**
+     * Set the query string used by the request
+     *
+     * @param array|QueryString $query Query to set
+     *
+     * @return self
+     */
+    public function setQuery($query);
+
+    /**
      * Get the HTTP method of the request
      *
      * @return string
