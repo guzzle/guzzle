@@ -304,4 +304,17 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
             }
         }
     }
+
+    public function testGetCommandAfterTwoSetDescriptions()
+    {
+        $service1 = ServiceDescription::factory(__DIR__ . '/../TestData/test_service.json');
+        $service2 = ServiceDescription::factory(__DIR__ . '/../TestData/test_service_3.json');
+
+        $client = new Mock\MockClient();
+
+        $client->setDescription($service1);
+        $client->getCommand('foo_bar');
+        $client->setDescription($service2);
+        $client->getCommand('baz_qux');
+    }
 }
