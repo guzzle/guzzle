@@ -720,6 +720,11 @@ Requests emit lifecycle events when they are transferred. A client object has a
 ``GuzzleHttp\Common\EventEmitter`` object that can be used to add event
 *listeners* and event *subscribers* to all requests created by the client.
 
+.. important::
+
+    **Every** event listener or subscriber added to a client will be added to
+    every request created by the client.
+
 .. code-block:: php
 
     use GuzzleHttp\Client;
