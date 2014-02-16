@@ -19,11 +19,11 @@ interface MessageFactoryInterface
      *     - "body": string|resource|array|StreamInterface that represents the body to send over the wire.
      *     - "query": Associative array of query string values to add to the request.
      *     - "auth": Array of HTTP authentication parameters to use with the request. The array must contain the
-     *       username in index [0], the password in index [2], and can optionally contain the authentication type
-     *       in index [3]. The authentication types are: "Basic", "Digest", "NTLM", "Any" (defaults to "Basic").
+     *       username in index [0], the password in index [1], and can optionally contain the authentication type
+     *       in index [2]. The authentication types are: "Basic", "Digest", "NTLM", (defaults to "Basic").
      *       The selected authentication type must be supported by the adapter used by a client.
      *     - "cookies": Pass an associative array containing cookies to send in the request and start a new cookie
-     *       session, set to a {@see Guzzle\Http\Subscriber\CookieJar\CookieJarInterface} object to us an existing
+     *       session, set to a {@see Guzzle\Http\CookieJar\CookieJarInterface} object to us an existing
      *       cookie jar, or set to ``true`` to use a shared cookie session associated with the client.
      *     - "allow_redirects": Set to false to disable redirects. Set to true to enable normal redirects with a maximum
      *       number of 5 redirects. Pass an associative array containing the 'max' key to specify the maximum number of

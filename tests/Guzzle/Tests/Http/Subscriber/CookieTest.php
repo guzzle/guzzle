@@ -7,10 +7,10 @@ use Guzzle\Http\Client;
 use Guzzle\Http\Event\CompleteEvent;
 use Guzzle\Http\Event\BeforeEvent;
 use Guzzle\Http\Subscriber\Cookie;
-use Guzzle\Http\Subscriber\CookieJar\SetCookie;
+use Guzzle\Http\CookieJar\SetCookie;
+use Guzzle\Http\CookieJar\ArrayCookieJar;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\Request;
-use Guzzle\Http\Subscriber\CookieJar\ArrayCookieJar;
 use Guzzle\Http\Subscriber\History;
 use Guzzle\Http\Subscriber\Mock;
 
@@ -23,7 +23,7 @@ class CookieTest extends \PHPUnit_Framework_TestCase
     {
         $request = new Request('GET', '/');
         $response = new Response(200);
-        $mock = $this->getMockBuilder('Guzzle\Http\Subscriber\CookieJar\ArrayCookieJar')
+        $mock = $this->getMockBuilder('Guzzle\Http\CookieJar\ArrayCookieJar')
             ->setMethods(array('addCookiesFromResponse'))
             ->getMock();
 
@@ -47,7 +47,7 @@ class CookieTest extends \PHPUnit_Framework_TestCase
     public function testAddsCookiesToRequests()
     {
         $cookie = new SetCookie(['Name' => 'foo', 'Value' => 'bar;bam']);
-        $mock = $this->getMockBuilder('Guzzle\Http\Subscriber\CookieJar\ArrayCookieJar')
+        $mock = $this->getMockBuilder('Guzzle\Http\CookieJar\ArrayCookieJar')
             ->setMethods(array('getMatchingCookies'))
             ->getMock();
         $mock->expects($this->once())

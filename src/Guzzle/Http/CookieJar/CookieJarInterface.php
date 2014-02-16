@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Http\Subscriber\CookieJar;
+namespace Guzzle\Http\CookieJar;
 
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\ResponseInterface;

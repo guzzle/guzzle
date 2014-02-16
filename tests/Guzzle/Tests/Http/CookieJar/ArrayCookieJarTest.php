@@ -1,14 +1,14 @@
 <?php
 
-namespace Guzzle\Tests\Http\Subscirber\CookieJar;
+namespace Guzzle\Tests\Http\CookieJar;
 
-use Guzzle\Http\Subscriber\CookieJar\ArrayCookieJar;
-use Guzzle\Http\Subscriber\CookieJar\SetCookie;
+use Guzzle\Http\CookieJar\ArrayCookieJar;
+use Guzzle\Http\CookieJar\SetCookie;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\Request;
 
 /**
- * @covers Guzzle\Http\Subscriber\CookieJar\ArrayCookieJar
+ * @covers Guzzle\Http\CookieJar\ArrayCookieJar
  */
 class ArrayCookieJarTest extends \PHPUnit_Framework_TestCase
 {

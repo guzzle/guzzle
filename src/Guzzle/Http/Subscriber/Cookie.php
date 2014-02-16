@@ -5,8 +5,8 @@ namespace Guzzle\Http\Subscriber;
 use Guzzle\Common\EventSubscriberInterface;
 use Guzzle\Http\Event\CompleteEvent;
 use Guzzle\Http\Event\BeforeEvent;
-use Guzzle\Http\Subscriber\CookieJar\ArrayCookieJar;
-use Guzzle\Http\Subscriber\CookieJar\CookieJarInterface;
+use Guzzle\Http\CookieJar\ArrayCookieJar;
+use Guzzle\Http\CookieJar\CookieJarInterface;
 
 /**
  * Adds, extracts, and persists cookies between HTTP requests

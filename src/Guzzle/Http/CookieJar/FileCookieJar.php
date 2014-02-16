@@ -1,6 +1,6 @@
 <?php
 
-namespace Guzzle\Http\Subscriber\CookieJar;
+namespace Guzzle\Http\CookieJar;
 
 /**
  * Persists non-session cookies using a JSON formatted file

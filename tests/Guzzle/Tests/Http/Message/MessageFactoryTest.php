@@ -8,7 +8,7 @@ use Guzzle\Http\Message\Post\PostFile;
 use Guzzle\Http\Message\Response;
 use Guzzle\Http\Message\MessageFactory;
 use Guzzle\Http\Subscriber\Cookie;
-use Guzzle\Http\Subscriber\CookieJar\ArrayCookieJar;
+use Guzzle\Http\CookieJar\ArrayCookieJar;
 use Guzzle\Http\Subscriber\Mock;
 use Guzzle\Stream\Stream;
 

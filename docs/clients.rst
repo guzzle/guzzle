@@ -14,41 +14,46 @@ Creating a client
 The constructor of a client accepts an associative array of configuration
 options.
 
-- **base_url**: Configures a base URL for the client so that requests created
-  using a relative URL are combined with the ``base_url`` of the client
-  according to section `5.2 of RFC 3986 <http://tools.ietf.org/html/rfc3986#section-5.2>`_.
+base_url
+    Configures a base URL for the client so that requests created
+    using a relative URL are combined with the ``base_url`` of the client
+    according to section `5.2 of RFC 3986 <http://tools.ietf.org/html/rfc3986#section-5.2>`_.
 
-  .. code-block:: php
+    .. code-block:: php
 
-      // Create a client with a base URL
-      $client = new GuzzleHttp\Client(['base_url' => 'https://github.com']);
-      // Send a request to https://github.com/notifications
-      $response = $client->get('/notifications');
+        // Create a client with a base URL
+        $client = new GuzzleHttp\Client(['base_url' => 'https://github.com']);
+        // Send a request to https://github.com/notifications
+        $response = $client->get('/notifications');
 
-  `Absolute URLs <http://tools.ietf.org/html/rfc3986#section-4.3>`_ sent
-  through a client will not use the base URL of the client.
+    `Absolute URLs <http://tools.ietf.org/html/rfc3986#section-4.3>`_ sent
+    through a client will not use the base URL of the client.
 
-- **adapter**: Configures the HTTP adapter
-  (``GuzzleHttp\Adapter\AdapterInterface``) used to transfer the HTTP requests
-  of a client. Guzzle will, by default, utilize a stacked adapter that chooses
-  the best adapter to use based on the provided request options and based on
-  the extensions available in the environment. If cURL is installed, it will be
-  used as the default adapter. However, if a request has the ``stream`` request
-  option, the PHP stream wrapper adapter will be used (assuming
-  ``allow_url_fopen`` is enabled in your PHP environment).
+adapter
+    Configures the HTTP adapter (``GuzzleHttp\Adapter\AdapterInterface``) used
+    to transfer the HTTP requests of a client. Guzzle will, by default, utilize
+    a stacked adapter that chooses the best adapter to use based on the provided
+    request options and based on the extensions available in the environment. If
+    cURL is installed, it will be used as the default adapter. However, if a
+    request has the ``stream`` request option, the PHP stream wrapper adapter
+    will be used (assuming ``allow_url_fopen`` is enabled in your PHP
+    environment).
 
-- **parallel_adapter**: Just like the ``adapter`` option, you can choose to
-  specify an adapter that is used to send requests in parallel
-  (``GuzzleHttp\Adapter\ParallelAdapterInterface``). Guzzle will by default
-  use cURL to send requests in parallel, but if cURL is not available it will
-  use the PHP stream wrapper and simply send requests serially.
+parallel_adapter
+    Just like the ``adapter`` option, you can choose to specify an adapter
+    that is used to send requests in parallel
+    (``GuzzleHttp\Adapter\ParallelAdapterInterface``). Guzzle will by default
+    use cURL to send requests in parallel, but if cURL is not available it will
+    use the PHP stream wrapper and simply send requests serially.
 
-- **message_factory**: Specifies the factory used to create HTTP requests and
-  responses (``GuzzleHttp\Message\MessageFactoryInterface``).
+message_factory
+    Specifies the factory used to create HTTP requests and responses
+    (``GuzzleHttp\Message\MessageFactoryInterface``).
 
-- **defaults**: Specified an associative array of request options that are
-  applied to every request created by the client. This allows you to, for
-  example, specifies an array of headers that are sent with every request.
+defaults
+    Specified an associative array of request options that are applied to every
+    request created by the client. This allows you to, for example, specifies
+    an array of headers that are sent with every request.
 
 Here's an example of creating a client with various options, including using
 a mock adapter that just returns the result of a callable function and a
@@ -254,65 +259,261 @@ You can throw exceptions immediately as they are encountered.
 Request Options
 ===============
 
+You can customize requests created by a client using **request options**.
+Request options control various aspects of a request including, headers,
+query string parameters, timeout settings, the body of a request, and much
+more.
+
+All of the following examples use the following client:
+
+.. code-block:: php
+
+    $client = new GuzzleHttp\Client(['base_url' => 'http://httpbin.org']);
+
 headers
 -------
 
-Associative array of headers to add to the request.
+Associative array of headers to add to the request. Each key is the name of a
+header, and each value is a string or array of strings representing the header
+field values.
+
+.. code-block:: php
+
+    // Set various headers on a request
+    $client->get('/get', [
+        'headers' => [
+            'User-Agent' => 'testing/1.0',
+            'Accept'     => 'application/json',
+            'X-Foo'      => ['Bar', 'Baz']
+        ]
+    ]);
 
 body
 ----
 
-string/resource/array/StreamInterface that represents the body to send over the
-wire.
+The ``body`` option is used to control the body of an entity enclosing request
+(e.g., PUT, POST, PATCH). This setting can be set to any of the following types:
+
+- string
+
+  .. code-block:: php
+
+      // You can send requests that use a string as the message body.
+      $client->put('/put', ['body' => 'foo']);
+
+- resource returned from ``fopen()``
+
+  .. code-block:: php
+
+      // You can send requests that use a stream resource as the body.
+      $resource = fopen('http://httpbin.org', 'r');
+      $client->put('/put', ['body' => $resource]);
+
+- Array
+
+  Use an array to send POST style requests that use a
+  ``GuzzleHttp\Message\Post\PostBodyInterface`` object as the body.
+
+  .. code-block:: php
+
+      // You can send requests that use a POST body containing fields & files.
+      $client->post('/post', [
+          'body' => [
+              'field' => 'abc',
+              'other_field' => '123',
+              'file_name' => fopen('/path/to/file', 'r')
+          ]
+      ]);
+
+- ``GuzzleHttp\Stream\StreamInterface``
+
+  .. code-block:: php
+
+      // You can send requests that use a Guzzle stream object as the body
+      $stream = GuzzleHttp\Stream\Stream::factory('contents...');
+      $client->post('/post', ['body' => $stream]);
 
 query
 -----
 
 Associative array of query string values to add to the request.
 
+.. code-block:: php
+
+    // Send a GET request to /get?foo=bar
+    $client->get('/get', ['query' => ['foo' => 'bar']);
+
+Query strings specified in the ``query`` option are combined with any query
+string values that are parsed from the URL.
+
+.. code-block:: php
+
+    // Send a GET request to /get?abc=123&foo=bar
+    $client->get('/get?abc=123', ['query' => ['foo' => 'bar']);
+
 auth
 ----
 
 Array of HTTP authentication parameters to use with the request. The array must
-contain the username in index [0], the password in index [2], and can optionally
-contain the authentication type in index [3]. The authentication types are:
-"Basic", "Digest", "NTLM", "Any" (defaults to "Basic"). The selected
-authentication type must be supported by the adapter used by a client.
+contain the username in index [0], the password in index [1], and can optionally
+contain the authentication type in index [2].
+
+The authentication types are as follows:
+
+Basic
+    Use `basic HTTP authentication <http://www.ietf.org/rfc/rfc2069.txt>`_ in
+    the ``Authorization`` header (the default setting used if none is
+    specified).
+
+    .. code-block:: php
+
+        $client->get('/get', ['auth' => ['username', 'password']]);
+
+Digest
+    Use `digest authentication <http://www.ietf.org/rfc/rfc2069.txt>`_ (must be
+    supported by the HTTP adapter).
+
+    .. code-block:: php
+
+        $client->get('/get', ['auth' => ['username', 'password', 'Digest']]);
+
+NTLM
+    Uses `NTLM authentication <http://msdn.microsoft.com/en-us/library/windows/desktop/aa378749(v=vs.85).aspx>`_.
+    (must be supported by the HTTP adapter).
+
+    .. code-block:: php
+
+        $client->get('/get', ['auth' => ['username', 'password', 'NTLM']]);
 
 cookies
 -------
 
+Set to ``true`` to use a shared cookie session associated with the client.
+
+.. code-block:: php
+
+    // Enable cookies using the shared cookie jar of the client.
+    $client->get('/get', ['cookies' => true]);
+
 Pass an associative array containing cookies to send in the request and start a
-new cookie session, set to a ``Guzzle\Http\Subscriber\CookieJar\CookieJarInterface``
-object to us an existing cookie jar, or set to ``true`` to use a shared cookie
-session associated with the client.
+new cookie session.
+
+.. code-block:: php
+
+    // Enable cookies and send specific cookies
+    $client->get('/get', ['cookies' => ['foo' => 'bar']]);
+
+Set to a ``GuzzleHttp\CookieJar\CookieJarInterface`` object to use an existing
+cookie jar.
+
+.. code-block:: php
+
+    $jar = new GuzzleHttp\CookieJar\ArrayCookieJar();
+    $client->get('/get', ['cookies' => $jar]);
 
 allow_redirects
 ---------------
 
-Set to false to disable redirects. Set to true to enable normal redirects with
-a maximum number of 5 redirects. Pass an associative array containing the 'max'
-key to specify the maximum number of redirects and optionally provide a 'strict'
-key value to specify whether or not to use strict RFC compliant redirects
-(meaning redirect POST requests with POST requests vs. doing what most browsers
-do which is redirect POST requests with GET requests).
+Set to ``false`` to disable redirects.
+
+.. code-block:: php
+
+    $res = $client->get('/redirect/3', ['allow_redirects' => false]);
+    echo $res->getStatusCode();
+    // 302
+
+Set to ``true`` (the default setting) to enable normal redirects with a maximum
+number of 5 redirects.
+
+.. code-block:: php
+
+    $res = $client->get('/redirect/3');
+    echo $res->getStatusCode();
+    // 200
+
+Pass an associative array containing the 'max' key to specify the maximum
+number of redirects and optionally provide a 'strict' key value to specify
+whether or not to use strict RFC compliant redirects (meaning redirect POST
+requests with POST requests vs. doing what most browsers do which is redirect
+POST requests with GET requests).
+
+.. code-block:: php
+
+    $res = $client->get('/redirect/3', [
+        'allow_redirects' => [
+            'max'    => 10,
+            'strict' => true
+        ]
+    ]);
+    echo $res->getStatusCode();
+    // 200
 
 save_to
 -------
 
-Specify where the body of a response will be saved. Pass a string to specify
-the path to a file that will store the contents of the response body. Pass a
-resource returned from fopen to write the response to a PHP stream. Pass a
-``Guzzle\Stream\StreamInterface`` object to stream the response body to an open
-Guzzle stream.
+Specify where the body of a response will be saved.
+
+Pass a string to specify the path to a file that will store the contents of the
+response body.
+
+.. code-block:: php
+
+    $client->get('/stream/20', ['save_to' => '/path/to/file']);
+
+Pass a resource returned from ``fopen()`` to write the response to a PHP stream.
+
+.. code-block:: php
+
+    $resource = fopen('/path/to/file', 'w');
+    $client->get('/stream/20', ['save_to' => $resource]);
+
+Pass a ``GuzzleHttp\Stream\StreamInterface`` object to stream the response body
+to an open Guzzle stream.
+
+.. code-block:: php
+
+    $resource = fopen('/path/to/file', 'w');
+    $stream = GuzzleHttp\Stream\Stream::factory($resource);
+    $client->get('/stream/20', ['save_to' => $stream]);
 
 events
 ------
 
-Associative array mapping event names to a callable or an associative array
+Associative array mapping event names to a callable. or an associative array
 containing the 'fn' key that maps to a callable, an optional 'priority' key
 used to specify the event priority, and an optional 'once' key used to specify
 if the event should remove itself the first time it is triggered.
+
+.. code-block:: php
+
+    use GuzzleHttp\Event\BeforeEvent;
+    use GuzzleHttp\Event\HeadersEvent;
+    use GuzzleHttp\Event\CompleteEvent;
+    use GuzzleHttp\Event\ErrorEvent;
+
+    $client->get('/', [
+        'events' => [
+            'before' => function (BeforeEvent $e) { echo 'Before'; },
+            'headers' => function (HeadersEvent $e) { echo 'Headers'; },
+            'complete' => function (CompleteEvent $e) { echo 'Complete'; },
+            'error' => function (ErrorEvent $e) { echo 'Error'; },
+        ]
+    ]);
+
+Here's an example of using the associative array format for control over the
+priority and whether or not an event should be triggered more than once.
+
+.. code-block:: php
+
+    $client->get('/', [
+        'events' => [
+            'before' => [
+                'fn'       => function (BeforeEvent $e) { echo 'Before'; },
+                'priority' => 100,
+                'once'     => true
+            ]
+        ]
+    ]);
 
 subscribers
 -----------
@@ -320,76 +521,184 @@ subscribers
 Array of event subscribers to add to the request. Each value in the array must
 be an instance of ``Guzzle\Common\EventSubscriberInterface``.
 
+.. code-block:: php
+
+    use GuzzleHttp\Subscriber\History;
+    use GuzzleHttp\Subscriber\Mock;
+    use GuzzleHttp\Message\Response;
+
+    $history = new History();
+    $mock = new Mock([new Response(200)]);
+    $client->get('/', ['subscribers' => [$history, $mock]]);
+
+    echo $history;
+    // Outputs the request and response history
+
 exceptions
 ----------
 
-Set to false to disable throwing exceptions on an HTTP protocol error (e.g.
-404, 500, etc). Exceptions are thrown by default when HTTP protocol errors are
-encountered.
+Set to ``false`` to disable throwing exceptions on an HTTP protocol errors
+(i.e., 4xx and 5xx responses). Exceptions are thrown by default when HTTP
+protocol errors are encountered.
+
+.. code-block:: php
+
+    $client->get('/status/500');
+    // Throws a GuzzleHttp\Exception\ServerException
+
+    $res = $client->get('/status/500', ['exceptions' => false]);
+    echo $res->getStatusCode();
+    // 500
 
 timeout
 -------
 
-Float describing the timeout of the request in seconds. Use 0 to wait
-indefinitely.
+Float describing the timeout of the request in seconds. Use ``0`` to wait
+indefinitely (the default behavior).
+
+.. code-block:: php
+
+    // Timeout if a server does not return a response in 3.14 seconds.
+    $client->get('/delay/5', ['timeout' => 3.14]);
+    // PHP Fatal error:  Uncaught exception 'Guzzle\Http\Exception\RequestException'
 
 connect_timeout
 ---------------
 
-Float describing the number of seconds to wait while trying to connect. Use 0 to wait
-indefinitely. This setting must be supported by the adapter used to send a request.
+Float describing the number of seconds to wait while trying to connect to a
+server. Use ``0`` to wait indefinitely (the default behavior).
+
+.. code-block:: php
+
+    // Timeout if the client fails to connect to the server in 3.14 seconds.
+    $client->get('/delay/5', ['connect_timeout' => 3.14]);
+
+.. note::
+
+    This setting must be supported by the HTTP adapter used to send a request.
+    ``connect_timeout`` is currently only supported by the built-in cURL
+    adapter.
 
 verify
 ------
 
-Set to true to enable SSL cert validation (the default), false to disable
-validation, or supply the path to a CA bundle to enable verification using a
-custom certificate.
+Set to ``true`` to enable SSL certificate verification (the default). Set to
+``false`` to disable certificate verification (this is insecure!). Set to a
+string to provide the path to a CA bundle to enable verification using a custom
+certificate.
+
+.. code-block:: php
+
+    // Use a custom SSL certificate
+    $client->get('/', ['verify' => '/path/to/cert.pem']);
+
+    // Disable validation
+    $client->get('/', ['verify' => false]);
 
 cert
 ----
 
 Set to a string to specify the path to a file containing a PEM formatted
-certificate. If a password is required, then set an array containing the path
-to the PEM file followed by the the password required for the certificate.
+client side certificate. If a password is required, then set to an array
+containing the path to the PEM file in the first array element followed by the
+password required for the certificate in the second array element.
+
+.. code-block:: php
+
+    $client->get('/', ['cert' => ['/path/server.pem', 'password']]);
 
 ssl_key
 -------
 
 Specify the path to a file containing a private SSL key in PEM format. If a
-password is required, then set an array containing the path to the SSL key
-followed by the password required for the certificate.
+password is required, then set to an array containing the path to the SSL key in
+the first array element followed by the password required for the certificate
+in the second element.
+
+.. note::
+
+    ``ssl_key`` is implemented by HTTP adapters. This is currently only
+    supported by the cURL adapter, but might be supported by other third-part
+    adapters.
 
 proxy
 -----
 
-Specify an HTTP proxy (e.g. ``"http://username:password@192.168.16.1:10"``)
+Specify an HTTP proxy (e.g. ``"http://username:password@192.168.16.1:10"``).
+Notice that you can specify basic auth credentials with your proxy URL.
 
 debug
 -----
 
-Set to true or a PHP fopen stream resource to enable debug output with the
-adapter used to send a request. For example, when using cURL to transfer
-requests, cURL's verbose output will be emitted. When using the PHP stream
-wrapper, stream wrapper notifications will be emitted. If set to true, the
-output is written to PHP's STDOUT.
+Set to ``true`` or set to a PHP stream returned by ``fopen()`` to enable debug
+output with the adapter used to send a request. For example, when using cURL to
+transfer requests, cURL's verbose of ``CURLOPT_VERBOSE`` will be emitted. When
+using the PHP stream wrapper, stream wrapper notifications will be emitted. If
+set to true, the output is written to PHP's STDOUT. If a PHP stream is
+provided, output is written to the stream.
+
+.. code-block:: php
+
+    $client->get('/get', ['debug' => true]);
+
+Running the above example would output something like the following:
+
+::
+
+    * About to connect() to httpbin.org port 80 (#0)
+    *   Trying 107.21.213.98... * Connected to httpbin.org (107.21.213.98) port 80 (#0)
+    > GET /get HTTP/1.1
+    Host: httpbin.org
+    User-Agent: Guzzle/4.0 curl/7.21.4 PHP/5.5.7
+
+    < HTTP/1.1 200 OK
+    < Access-Control-Allow-Origin: *
+    < Content-Type: application/json
+    < Date: Sun, 16 Feb 2014 06:50:09 GMT
+    < Server: gunicorn/0.17.4
+    < Content-Length: 335
+    < Connection: keep-alive
+    <
+    * Connection #0 to host httpbin.org left intact
 
 stream
 ------
 
-Set to true to stream a response rather than download it all up-front. (Note:
-This option might not be supported by every HTTP adapter, but the interface of
-the response object remains the same.)
+Set to ``true`` to stream a response rather than download it all up-front.
+
+.. code-block:: php
+
+    $response = $client->get('/stream/20', ['stream' => true]);
+    // Read bytes off of the stream until the end of the stream is reached
+    $body = $response->getBody();
+    while (!$body->eof()) {
+        echo $body->read(1024);
+    }
+
+.. note::
+
+    Streaming response support must be implemented by the HTTP adapter used by
+    a client. This option might not be supported by every HTTP adapter, but the
+    interface of the response object remains the same regardless of whether or
+    not it is supported by the adapter.
 
 expect
 ------
 
-Set to true to enable the "Expect: 100-Continue" header for a request that send
-a body. Set to false to disable "Expect: 100-Continue". Set to a number so that
-the size of the payload must be greater than the number in order to send the
-Expect header. Setting to a number will send the Expect header for all requests
-in which the size of the payload cannot be determined or where the body is not
-rewindable.
+Set to ``true`` to enable the "Expect: 100-Continue" header for all requests
+that sends a body. Set to ``false`` to disable the "Expect: 100-Continue"
+header for all requests. Set to a number so that the size of the payload must
+be greater than the number in order to send the Expect header. Setting to a
+number will send the Expect header for all requests in which the size of the
+payload cannot be determined or where the body is not rewindable.
+
+By default, Guzzle will add the "Expect: 100-Continue" header when the size of
+the body of a request is greater than 1 MB.
+
+.. note::
+
+    This option is only supported when using HTTP/1.1 and must be implemented
+    by the HTTP adapter used by a client.
 
 options
 -------
@@ -397,6 +706,12 @@ options
 Associative array of options that are forwarded to a request's configuration
 collection. These values are used as configuration options that can be consumed
 by plugins and adapters.
+
+.. code-block:: php
+
+    $request = $client->createRequest('GET', '/get', ['options' => ['foo' => 'bar']]);
+    echo $request->getConfig('foo');
+    // 'bar'
 
 Event Subscribers
 =================

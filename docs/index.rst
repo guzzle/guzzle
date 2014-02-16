@@ -4,15 +4,18 @@
 Guzzle
 ======
 
-Guzzle is a PHP HTTP client that is easy to customize.
+Guzzle is a PHP HTTP client that makes it easy to work with HTTP/1.1 and takes
+the pain out of consuming web services.
 
-- Pluggable HTTP adapters for sending requests serially or in parallel
-- Does not require cURL, but ships with a built-in cURL adapter that provides
-  parallel requests and persistent connections.
-- Streams request and response bodies.
-- Event driven customization hooks.
-- Small core library.
-- Plugins for caching, logging, OAuth, mocks, and more.
+- Pluggable HTTP adapters that can send requests serially or in parallel
+- Doesn't require cURL, but uses cURL by default
+- Streams data for both uploads and downloads
+- Provides event hooks & plugins for cookies, caching, logging, OAuth, mocks, etc...
+- Keep-Alive & connection pooling
+- SSL Verification
+- Automatic decompression of response bodies
+- Streaming multipart file uploads
+- Connection timeouts
 
 .. code-block:: php
 
@@ -65,3 +68,4 @@ API Documentation
     :maxdepth: 2
 
     api
+    migrating-to-4

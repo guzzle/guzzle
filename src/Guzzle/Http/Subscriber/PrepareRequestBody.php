@@ -53,15 +53,32 @@ class PrepareRequestBody implements EventSubscriberInterface
     {
         // Determine if the Expect header should be used
         if (!$request->hasHeader('Expect')) {
-            $addExpect = false;
-            if (null !== ($expect = $request->getConfig()['expect'])) {
-                $size = $body->getSize();
-                $addExpect = $size === null ? true : $size >= (int) $expect;
-            } elseif (!$body->isSeekable()) {
-                // Always add the Expect 100-Continue header if the body cannot be rewound
-                $addExpect = true;
+
+            $expect = $request->getConfig()['expect'];
+
+            // The expect header is explicitly disabled
+            if ($expect === false) {
+                return;
             }
-            if ($addExpect) {
+
+            // The expect header is explicitly enabled
+            if ($expect === true) {
+                $request->setHeader('Expect', '100-Continue');
+                return;
+            }
+
+            // By default, send the expect header when the payload is > 1mb
+            if ($expect === null) {
+                $expect = 1048576;
+            }
+
+            // Always add if the body cannot be rewound, the size cannot be
+            // determined, or the size is greater than the cutoff threshold
+            $size = $body->getSize();
+            if ($size === null ||
+                $size >= (int) $expect ||
+                !$body->isSeekable()
+            ) {
                 $request->setHeader('Expect', '100-Continue');
             }
         }
