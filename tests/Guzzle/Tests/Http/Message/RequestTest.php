@@ -99,6 +99,13 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('PUT', $r->getMethod());
     }
 
+    public function testCanChangeSchemeWithPort()
+    {
+        $r = new Request('GET', 'http://www.foo.com:80');
+        $r->setScheme('https');
+        $this->assertEquals('https://www.foo.com', $r->getUrl());
+    }
+
     public function testCanChangeScheme()
     {
         $r = new Request('GET', 'http://www.foo.com');

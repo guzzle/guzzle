@@ -14,6 +14,7 @@ class Url
     private $password;
     private $path = '';
     private $fragment;
+    private static $defaultPorts = ['http' => 80, 'https' => 443, 'ftp' => 21];
 
     /** @var QueryString Query part of the URL */
     private $query;
@@ -78,8 +79,8 @@ class Url
 
             // Only include the port if it is not the default port of the scheme
             if (isset($parts['port']) &&
-                !(($scheme == 'http' && $parts['port'] == 80) ||
-                ($scheme == 'https' && $parts['port'] == 443))
+                (!isset(self::$defaultPorts[$scheme]) ||
+                 $parts['port'] != self::$defaultPorts[$scheme])
             ) {
                 $url .= ':' . $parts['port'];
             }
@@ -219,6 +220,13 @@ class Url
      */
     public function setScheme($scheme)
     {
+        // Remove the default port if one is specified
+        if ($this->port && isset(self::$defaultPorts[$this->scheme]) &&
+            self::$defaultPorts[$this->scheme] == $this->port
+        ) {
+            $this->port = null;
+        }
+
         $this->scheme = $scheme;
 
         return $this;
@@ -260,10 +268,8 @@ class Url
     {
         if ($this->port) {
             return $this->port;
-        } elseif ($this->scheme == 'http') {
-            return 80;
-        } elseif ($this->scheme == 'https') {
-            return 443;
+        } elseif (isset(self::$defaultPorts[$this->scheme])) {
+            return self::$defaultPorts[$this->scheme];
         }
 
         return null;
