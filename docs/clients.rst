@@ -624,8 +624,28 @@ in the second element.
 proxy
 -----
 
-Specify an HTTP proxy (e.g. ``"http://username:password@192.168.16.1:10"``).
-Notice that you can specify basic auth credentials with your proxy URL.
+Pass a string to specify an HTTP proxy.
+
+.. code-block:: php
+
+    $client->get('/', ['proxy' => 'tcp://localhost:8124']);
+
+Pass an associative array to specify HTTP proxies for specific URI schemes
+(i.e., "http", "https").
+
+.. code-block:: php
+
+    $client->get('/', [
+        'proxy' => [
+            'http'  => 'tcp://localhost:8124', // Use this proxy with "http"
+            'https' => 'tcp://localhost:9124'  // Use this proxy with "https"
+        ]
+    ]);
+
+.. note::
+
+    You can provide proxy URLs that contain a scheme, username, and password.
+    For example, ``"http://username:password@192.168.16.1:10"``.
 
 debug
 -----
@@ -712,6 +732,22 @@ by plugins and adapters.
     $request = $client->createRequest('GET', '/get', ['options' => ['foo' => 'bar']]);
     echo $request->getConfig('foo');
     // 'bar'
+
+Some HTTP adapters allow you to specify custom adapter-specific settings. For
+example, you can pass custom cURL options to requests by passing an associative
+array in the ``options`` request option under the ``curl`` key.
+
+.. code-block:: php
+
+    // Use custom cURL options with the request
+    $client->get('/', [
+        'options' => [
+            'curl' => [
+                CURLOPT_FORBID_REUSE  => true,
+                CURLOPT_FRESH_CONNECT => true,
+            ]
+        ]
+    ]);
 
 Event Subscribers
 =================

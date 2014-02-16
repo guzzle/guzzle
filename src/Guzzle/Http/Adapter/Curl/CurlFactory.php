@@ -161,7 +161,14 @@ class CurlFactory
 
     protected function visit_proxy(RequestInterface $request, RequestMediator $mediator, &$options, $value)
     {
-        $options[CURLOPT_PROXY] = $value;
+        if (!is_array($value)) {
+            $options[CURLOPT_PROXY] = $value;
+        } else {
+            $scheme = $request->getScheme();
+            if (isset($value[$scheme])) {
+                $options[CURLOPT_PROXY] = $value[$scheme];
+            }
+        }
     }
 
     protected function visit_timeout(RequestInterface $request, RequestMediator $mediator, &$options, $value)

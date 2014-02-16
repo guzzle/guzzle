@@ -203,7 +203,14 @@ class StreamAdapter implements AdapterInterface
 
     private function visit_proxy(RequestInterface $request, &$options, $value, &$params)
     {
-        $options['http']['proxy'] = $value;
+        if (!is_array($value)) {
+            $options['http']['proxy'] = $value;
+        } else {
+            $scheme = $request->getScheme();
+            if (isset($value[$scheme])) {
+                $options['http']['proxy'] = $value[$scheme];
+            }
+        }
     }
 
     private function visit_timeout(RequestInterface $request, &$options, $value, &$params)
