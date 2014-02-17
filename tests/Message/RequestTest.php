@@ -5,7 +5,7 @@ namespace GuzzleHttp\Tests\Message;
 use GuzzleHttp\Event\Emitter;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Url\QueryString;
+use GuzzleHttp\Query;
 
 /**
  * @covers GuzzleHttp\Message\Request
@@ -88,7 +88,7 @@ class RequestTest extends \PHPUnit_Framework_TestCase
     {
         $r = new Request('GET', 'http://www.foo.com?baz=bar');
         $this->assertEquals('baz=bar', $r->getQuery());
-        $this->assertInstanceOf('GuzzleHttp\Url\QueryString', $r->getQuery());
+        $this->assertInstanceOf('GuzzleHttp\Query', $r->getQuery());
         $r->getQuery()->set('hi', 'there');
         $this->assertEquals('/?baz=bar&hi=there', $r->getResource());
     }
@@ -96,7 +96,7 @@ class RequestTest extends \PHPUnit_Framework_TestCase
     public function testQueryCanChange()
     {
         $r = new Request('GET', 'http://www.foo.com?baz=bar');
-        $r->setQuery(new QueryString(['foo' => 'bar']));
+        $r->setQuery(new Query(['foo' => 'bar']));
         $this->assertEquals('foo=bar', $r->getQuery());
     }
 

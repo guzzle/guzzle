@@ -6,7 +6,7 @@ use GuzzleHttp\Event\HasEmitterTrait;
 use GuzzleHttp\Collection;
 use GuzzleHttp\Subscriber\PrepareRequestBody;
 use GuzzleHttp\Stream\StreamInterface;
-use GuzzleHttp\Url\Url;
+use GuzzleHttp\Url;
 
 /**
  * HTTP request class to send requests

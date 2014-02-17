@@ -1,36 +1,36 @@
 <?php
 
-namespace GuzzleHttp\Tests\Url;
+namespace GuzzleHttp\Tests;
 
-use GuzzleHttp\Url\QueryString;
-use GuzzleHttp\Url\DuplicateAggregator;
+use GuzzleHttp\Query;
+use GuzzleHttp\QueryAggregator\DuplicateAggregator;
 
-class QueryStringTest extends \PHPUnit_Framework_TestCase
+class QueryTest extends \PHPUnit_Framework_TestCase
 {
     public function testCanCastToString()
     {
-        $q = new QueryString(['foo' => 'baz', 'bar' => 'bam boozle']);
+        $q = new Query(['foo' => 'baz', 'bar' => 'bam boozle']);
         $this->assertEquals('foo=baz&bar=bam%20boozle', (string) $q);
     }
 
     public function testCanDisableUrlEncoding()
     {
-        $q = new QueryString(['bar' => 'bam boozle']);
+        $q = new Query(['bar' => 'bam boozle']);
         $q->setEncodingType(false);
         $this->assertEquals('bar=bam boozle', (string) $q);
     }
 
     public function testCanSpecifyRfc1783UrlEncodingType()
     {
-        $q = new QueryString(['bar abc' => 'bam boozle']);
-        $q->setEncodingType(QueryString::RFC1738);
+        $q = new Query(['bar abc' => 'bam boozle']);
+        $q->setEncodingType(Query::RFC1738);
         $this->assertEquals('bar+abc=bam+boozle', (string) $q);
     }
 
     public function testCanSpecifyRfc3986UrlEncodingType()
     {
-        $q = new QueryString(['bar abc' => 'bam boozle', 'ሴ' => 'hi']);
-        $q->setEncodingType(QueryString::RFC3986);
+        $q = new Query(['bar abc' => 'bam boozle', 'ሴ' => 'hi']);
+        $q->setEncodingType(Query::RFC3986);
         $this->assertEquals('bar%20abc=bam%20boozle&%E1%88%B4=hi', (string) $q);
     }
 
@@ -39,22 +39,22 @@ class QueryStringTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatesEncodingType()
     {
-        (new QueryString(['bar' => 'bam boozle']))->setEncodingType('foo');
+        (new Query(['bar' => 'bam boozle']))->setEncodingType('foo');
     }
 
     public function testAggregatesMultipleValues()
     {
-        $q = new QueryString(['foo' => ['bar', 'baz']]);
+        $q = new Query(['foo' => ['bar', 'baz']]);
         $this->assertEquals('foo%5B0%5D=bar&foo%5B1%5D=baz', (string) $q);
     }
 
     public function testCanSetAggregator()
     {
-        $agg = $this->getMockBuilder('GuzzleHttp\Url\QueryAggregatorInterface')
+        $agg = $this->getMockBuilder('GuzzleHttp\QueryAggregator\QueryAggregatorInterface')
             ->setMethods('aggregate')
             ->getMockForAbstractClass();
 
-        $q = new QueryString(['foo' => ['bar', 'baz']]);
+        $q = new Query(['foo' => ['bar', 'baz']]);
         $q->setAggregator($agg);
 
         $agg->expects($this->once())
@@ -66,7 +66,7 @@ class QueryStringTest extends \PHPUnit_Framework_TestCase
 
     public function testAllowsMultipleValuesPerKey()
     {
-        $q = new QueryString();
+        $q = new Query();
         $q->add('facet', 'size');
         $q->add('facet', 'width');
         $q->add('facet.field', 'foo');
@@ -99,30 +99,30 @@ class QueryStringTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider parseQueryProvider
      */
-    public function testParsesQueryStrings($query, $data)
+    public function testParsesQuerys($query, $data)
     {
-        $query = QueryString::fromString($query);
+        $query = Query::fromString($query);
         $this->assertEquals($data, $query->toArray());
     }
 
-    public function testProperlyDealsWithDuplicateQueryStringValues()
+    public function testProperlyDealsWithDuplicateQueryValues()
     {
-        $query = QueryString::fromString('foo=a&foo=b&?µ=c');
+        $query = Query::fromString('foo=a&foo=b&?µ=c');
         $this->assertEquals(array('a', 'b'), $query->get('foo'));
         $this->assertEquals('c', $query->get('?µ'));
     }
 
-    public function testAllowsNullQueryStringValues()
+    public function testAllowsNullQueryValues()
     {
-        $query = QueryString::fromString('foo');
+        $query = Query::fromString('foo');
         $this->assertEquals('foo', (string) $query);
         $query->set('foo', null);
         $this->assertEquals('foo', (string) $query);
     }
 
-    public function testAllowsFalsyQueryStringValues()
+    public function testAllowsFalsyQueryValues()
     {
-        $query = QueryString::fromString('0');
+        $query = Query::fromString('0');
         $this->assertEquals('0', (string) $query);
         $query->set('0', '');
         $this->assertSame('0=', (string) $query);
@@ -130,19 +130,19 @@ class QueryStringTest extends \PHPUnit_Framework_TestCase
 
     public function testConvertsPlusSymbolsToSpaces()
     {
-        $query = QueryString::fromString('var=foo+bar');
+        $query = Query::fromString('var=foo+bar');
         $this->assertEquals('foo bar', $query->get('var'));
     }
 
     public function testFromStringDoesntMangleZeroes()
     {
-        $query = QueryString::fromString('var=0');
+        $query = Query::fromString('var=0');
         $this->assertSame('0', $query->get('var'));
     }
 
     public function testAllowsZeroValues()
     {
-        $query = new QueryString(array(
+        $query = new Query(array(
             'foo' => 0,
             'baz' => '0',
             'bar' => null,
@@ -153,24 +153,24 @@ class QueryStringTest extends \PHPUnit_Framework_TestCase
 
     public function testFromStringDoesntStripTrailingEquals()
     {
-        $query = QueryString::fromString('data=mF0b3IiLCJUZWFtIERldiJdfX0=');
+        $query = Query::fromString('data=mF0b3IiLCJUZWFtIERldiJdfX0=');
         $this->assertEquals('mF0b3IiLCJUZWFtIERldiJdfX0=', $query->get('data'));
     }
 
     public function testGuessesIfDuplicateAggregatorShouldBeUsed()
     {
-        $query = QueryString::fromString('test=a&test=b');
+        $query = Query::fromString('test=a&test=b');
         $this->assertEquals('test=a&test=b', (string) $query);
     }
 
     public function testGuessesIfDuplicateAggregatorShouldBeUsedAndChecksForPhpStyle()
     {
-        $query = QueryString::fromString('test[]=a&test[]=b');
+        $query = Query::fromString('test[]=a&test[]=b');
         $this->assertEquals('test%5B0%5D=a&test%5B1%5D=b', (string) $query);
     }
 
     public function testCastingToAndCreatingFromStringWithEmptyValuesIsFast()
     {
-        $this->assertEquals('', (string) QueryString::fromString(''));
+        $this->assertEquals('', (string) Query::fromString(''));
     }
 }

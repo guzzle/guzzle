@@ -8,7 +8,7 @@ use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Exception\CouldNotRewindStreamException;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\ResponseInterface;
-use GuzzleHttp\Url\Url;
+use GuzzleHttp\Url;
 
 /**
  * Plugin to implement HTTP redirects. Can redirect like a web browser or using strict RFC 2616 compliance.

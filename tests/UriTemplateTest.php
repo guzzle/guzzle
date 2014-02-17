@@ -1,8 +1,8 @@
 <?php
 
-namespace GuzzleHttp\Tests\Parsers\UriTemplate;
+namespace GuzzleHttp\Tests;
 
-use GuzzleHttp\Url\UriTemplate;
+use GuzzleHttp\UriTemplate;
 
 /**
  * @covers GuzzleHttp\Url\UriTemplate

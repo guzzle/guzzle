@@ -1,6 +1,6 @@
 <?php
 
-namespace GuzzleHttp\Tests\Common;
+namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Collection;
 

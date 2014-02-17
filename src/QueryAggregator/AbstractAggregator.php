@@ -1,6 +1,6 @@
 <?php
 
-namespace GuzzleHttp\Url;
+namespace GuzzleHttp\QueryAggregator;
 
 abstract class AbstractAggregator implements QueryAggregatorInterface
 {

@@ -3,7 +3,7 @@
 namespace GuzzleHttp\Message;
 
 use GuzzleHttp\Event\HasEmitterInterface;
-use GuzzleHttp\Url\QueryString;
+use GuzzleHttp\Query;
 
 /**
  * Generic HTTP request interface
@@ -55,14 +55,14 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
     /**
      * Get the collection of key value pairs that will be used as the query string in the request
      *
-     * @return QueryString
+     * @return Query
      */
     public function getQuery();
 
     /**
      * Set the query string used by the request
      *
-     * @param array|QueryString $query Query to set
+     * @param array|Query $query Query to set
      *
      * @return self
      */

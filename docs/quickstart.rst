@@ -162,7 +162,7 @@ option.
 
 And finally, you can build up the query string of a request as needed by
 calling the ``getQuery()`` method of a request and modifying the request's
-``GuzzleHttp\Url\QueryString`` object as needed.
+``GuzzleHttp\Query`` object as needed.
 
 .. code-block:: php
 

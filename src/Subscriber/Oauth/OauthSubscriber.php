@@ -7,8 +7,8 @@ use GuzzleHttp\Event\SubscriberInterface;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Message\Post\PostBodyInterface;
 use GuzzleHttp\Message\RequestInterface;
-use GuzzleHttp\Url\QueryString;
-use GuzzleHttp\Url\Url;
+use GuzzleHttp\Query;
+use GuzzleHttp\Url;
 
 /**
  * OAuth signing plugin
@@ -147,7 +147,7 @@ class OauthSubscriber implements SubscriberInterface
         $params = $this->prepareParameters($params);
 
         // Build signing string from combined params
-        $parameterString = new QueryString($params);
+        $parameterString = new Query($params);
 
         $url = Url::fromString($request->getUrl())->setQuery('')->setFragment(null);
 

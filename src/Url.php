@@ -1,6 +1,6 @@
 <?php
 
-namespace GuzzleHttp\Url;
+namespace GuzzleHttp;
 
 /**
  * Parses and generates URLs based on URL parts
@@ -16,7 +16,7 @@ class Url
     private $fragment;
     private static $defaultPorts = ['http' => 80, 'https' => 443, 'ftp' => 21];
 
-    /** @var QueryString Query part of the URL */
+    /** @var Query Query part of the URL */
     private $query;
 
     /**
@@ -39,9 +39,9 @@ class Url
 
         $parts += $defaults;
 
-        // Convert the query string into a QueryString object
+        // Convert the query string into a Query object
         if ($parts['query'] || 0 !== strlen($parts['query'])) {
-            $parts['query'] = QueryString::fromString($parts['query']);
+            $parts['query'] = Query::fromString($parts['query']);
         }
 
         return new static($parts['scheme'], $parts['host'], $parts['user'],
@@ -117,7 +117,7 @@ class Url
      * @param string                   $password Password of the URL
      * @param int                      $port     Port of the URL
      * @param string                   $path     Path of the URL
-     * @param QueryString|array|string $query    Query string of the URL
+     * @param Query|array|string $query    Query string of the URL
      * @param string                   $fragment Fragment of the URL
      */
     public function __construct(
@@ -127,7 +127,7 @@ class Url
         $password = null,
         $port = null,
         $path = null,
-        QueryString $query = null,
+        Query $query = null,
         $fragment = null
     ) {
         $this->scheme = $scheme;
@@ -137,7 +137,7 @@ class Url
         $this->password = $password;
         $this->fragment = $fragment;
         if (!$query) {
-            $this->query = new QueryString();
+            $this->query = new Query();
         } else {
             $this->setQuery($query);
         }
@@ -412,9 +412,9 @@ class Url
     }
 
     /**
-     * Get the query part of the URL as a QueryString object
+     * Get the query part of the URL as a Query object
      *
-     * @return QueryString
+     * @return Query
      */
     public function getQuery()
     {
@@ -424,23 +424,23 @@ class Url
     /**
      * Set the query part of the URL
      *
-     * @param QueryString|string|array $query Query string value to set. Can
-     *     be a string that will be parsed into a QueryString object, an array
-     *     of key value pairs, or a QueryString object.
+     * @param Query|string|array $query Query string value to set. Can
+     *     be a string that will be parsed into a Query object, an array
+     *     of key value pairs, or a Query object.
      *
      * @return Url
      * @throws \InvalidArgumentException
      */
     public function setQuery($query)
     {
-        if ($query instanceof QueryString) {
+        if ($query instanceof Query) {
             $this->query = $query;
         } elseif (is_string($query)) {
-            $this->query = QueryString::fromString($query);
+            $this->query = Query::fromString($query);
         } elseif (is_array($query)) {
-            $this->query = new QueryString($query);
+            $this->query = new Query($query);
         } else {
-            throw new \InvalidArgumentException('Query must be a QueryStringInterface, array, or string');
+            throw new \InvalidArgumentException('Query must be a QueryInterface, array, or string');
         }
 
         return $this;

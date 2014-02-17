@@ -5,7 +5,7 @@ namespace GuzzleHttp\Tests\Message\Post;
 use GuzzleHttp\Message\Post\PostBody;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Message\Post\PostFile;
-use GuzzleHttp\Url\DuplicateAggregator;
+use GuzzleHttp\QueryAggregator\DuplicateAggregator;
 
 /**
  * @covers GuzzleHttp\Message\Post\PostBody
@@ -90,7 +90,7 @@ class PostBodyTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($b->hasField('abc'));
     }
 
-    public function testConvertsFieldsToQueryStringStyleBody()
+    public function testConvertsFieldsToQueryStyleBody()
     {
         $b = new PostBody();
         $b->setField('foo', 'bar');

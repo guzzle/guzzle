@@ -83,8 +83,8 @@ $request->getEmitter()->on('foo', function (Event $event, $name) { /* ... */ } )
 - Simplified the event system.
 - Sending requests in parallel is still possible, but batching is no longer a concept of the HTTP layer. Instead,
   you must use the `request.after_send` and `error` events to manage parallel request transfers.
-- `Guzzle\Url` has moved to `GuzzleHttp\Url\Url`.
-- `Guzzle\QueryString` has moved to `GuzzleHttp\Url\QueryString`.
+- `Guzzle\Http\Url` has moved to `GuzzleHttp\Url`.
+- `Guzzle\Http\QueryString` has moved to `GuzzleHttp\Query`.
 - QueryAggregator classes have moved to `GuzzleHttp\Url`.
 - QueryAggregators now accept only an array with any amount of nesting and returns a flattened array.
 - `GuzzleHttp\StaticClient` has been removed. Use the functions provided in `functions.php` for an easy to use static
@@ -289,8 +289,8 @@ and URLs.
   messages, so it doesn't make sense for Guzzle as a library to add this level of complexity to parsing messages.
 - UriTemplate: URI template parsing has been moved to `GuzzleHttp\Url\UriTemplate`. The Guzzle library will automatically
   use the PECL URI template library if it is installed.
-- Url: URL parsing is now performed in `GuzzleHttp\Url\Url::fromString`. If custom URL parsing is necessary, then
-  developers are free to subclass `GuzzleHttp\Url\Url`.
+- Url: URL parsing is now performed in `GuzzleHttp\Url::fromString`. If custom URL parsing is necessary, then
+  developers are free to subclass `GuzzleHttp\Url`.
 
 ## Plugin
 

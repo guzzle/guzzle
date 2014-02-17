@@ -10,14 +10,14 @@ use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Tests\Http\Server;
+use GuzzleHttp\Tests\Server;
 
 /**
  * @covers GuzzleHttp\Adapter\StreamAdapter
  */
 class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 {
-    /** @var \GuzzleHttp\Tests\Http\Server */
+    /** @var \GuzzleHttp\Tests\Server */
     static $server;
 
     public static function setUpBeforeClass()

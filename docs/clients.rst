@@ -349,7 +349,7 @@ query
 :Summary: Associative array of query string values to add to the request.
 :Types:
     - array
-    - ``GuzzleHttp\Url\QueryString``
+    - ``GuzzleHttp\Query``
 :Default: None
 
 .. code-block:: php

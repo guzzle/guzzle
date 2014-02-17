@@ -1,14 +1,14 @@
 <?php
 
-namespace GuzzleHttp\Tests\Url;
+namespace GuzzleHttp\Tests\QueryAggregator;
 
-use GuzzleHttp\Url\PhpAggregator;
+use GuzzleHttp\QueryAggregator\DuplicateAggregator;
 
 /**
- * @covers \GuzzleHttp\Url\PhpAggregator
- * @covers \GuzzleHttp\Url\AbstractAggregator
+ * @covers \GuzzleHttp\QueryAggregator\DuplicateAggregator
+ * @covers \GuzzleHttp\QueryAggregator\AbstractAggregator
  */
-class PhpAggregatorTest extends \PHPUnit_Framework_TestCase
+class DuplicateAggregatorTest extends \PHPUnit_Framework_TestCase
 {
     private $encodeData = [
         't' => [
@@ -20,11 +20,10 @@ class PhpAggregatorTest extends \PHPUnit_Framework_TestCase
 
     public function testEncodes()
     {
-        $agg = new PhpAggregator();
+        $agg = new DuplicateAggregator();
         $result = $agg->aggregate($this->encodeData);
         $this->assertEquals(array(
-            't[v1][0]' => ['a'],
-            't[v1][1]' => ['1'],
+            't[v1]' => ['a', '1'],
             't[v2]' => ['b'],
             't[v3][v4]' => ['c'],
             't[v3][v5]' => ['d'],
@@ -33,10 +32,10 @@ class PhpAggregatorTest extends \PHPUnit_Framework_TestCase
 
     public function testEncodesNoNumericIndices()
     {
-        $agg = new PhpAggregator(false);
+        $agg = new DuplicateAggregator(false);
         $result = $agg->aggregate($this->encodeData);
         $this->assertEquals(array(
-            't[v1][]' => ['a', '1'],
+            't[v1]' => ['a', '1'],
             't[v2]' => ['b'],
             't[v3][v4]' => ['c'],
             't[v3][v5]' => ['d'],

@@ -1,12 +1,12 @@
 <?php
 
-namespace GuzzleHttp\Tests\Http;
+namespace GuzzleHttp\Tests;
 
-use GuzzleHttp\Url\QueryString;
-use GuzzleHttp\Url\Url;
+use GuzzleHttp\Query;
+use GuzzleHttp\Url;
 
 /**
- * @covers GuzzleHttp\Url\Url
+ * @covers GuzzleHttp\Url
  */
 class UrlTest extends \PHPUnit_Framework_TestCase
 {
@@ -117,7 +117,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('http://www.test.com/test', Url::buildUrl($parts));
     }
 
-    public function testAddsQueryStringIfPresent()
+    public function testAddsQueryIfPresent()
     {
         $this->assertEquals('?foo=bar', Url::buildUrl(array(
             'query' => 'foo=bar'
@@ -178,7 +178,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('https', $url->setScheme('https')->getScheme());
         $this->assertEquals('a=123', (string) $url->setQuery('a=123')->getQuery());
         $this->assertEquals('https://b:a@example.com:8080/foo/bar?a=123#abc', (string) $url);
-        $this->assertEquals('b=boo', (string) $url->setQuery(new QueryString(array(
+        $this->assertEquals('b=boo', (string) $url->setQuery(new Query(array(
             'b' => 'boo'
         )))->getQuery());
         $this->assertEquals('https://b:a@example.com:8080/foo/bar?b=boo#abc', (string) $url);

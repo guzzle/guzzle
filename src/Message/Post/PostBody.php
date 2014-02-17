@@ -5,9 +5,9 @@ namespace GuzzleHttp\Message\Post;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Stream\StreamInterface;
-use GuzzleHttp\Url\PhpAggregator;
-use GuzzleHttp\Url\QueryAggregatorInterface;
-use GuzzleHttp\Url\QueryString;
+use GuzzleHttp\QueryAggregator\PhpAggregator;
+use GuzzleHttp\QueryAggregator\QueryAggregatorInterface;
+use GuzzleHttp\Query;
 
 /**
  * Holds POST fields and files and creates a streaming body when read methods are called on the object.
@@ -243,7 +243,7 @@ class PostBody implements PostBodyInterface
     private function createMultipart()
     {
         $fields = $this->fields;
-        $query = (new QueryString())
+        $query = (new Query())
             ->setEncodingType(false)
             ->setAggregator($this->getAggregator());
 
@@ -264,9 +264,9 @@ class PostBody implements PostBodyInterface
      */
     private function createUrlEncoded()
     {
-        $query = (new QueryString($this->fields))
+        $query = (new Query($this->fields))
             ->setAggregator($this->getAggregator())
-            ->setEncodingType(QueryString::RFC1738);
+            ->setEncodingType(Query::RFC1738);
 
         return Stream::factory($query);
     }

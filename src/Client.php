@@ -16,7 +16,7 @@ use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
-use GuzzleHttp\Url\Url;
+use GuzzleHttp\Url;
 
 /**
  * HTTP client

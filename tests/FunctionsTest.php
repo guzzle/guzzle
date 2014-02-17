@@ -5,11 +5,11 @@ namespace GuzzleHttp\Tests;
 require_once __DIR__ . '/Server.php';
 
 use GuzzleHttp\Message\Response;
-use GuzzleHttp\Tests\Http\Server;
+use GuzzleHttp\Tests\Server;
 
 class FunctionsTest extends \PHPUnit_Framework_TestCase
 {
-    /** @var \GuzzleHttp\Tests\Http\Server */
+    /** @var \GuzzleHttp\Tests\Server */
     public static $server;
 
     public static function setupBeforeClass()

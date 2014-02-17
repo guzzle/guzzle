@@ -11,8 +11,8 @@ use GuzzleHttp\Message\Post\PostBody;
 use GuzzleHttp\Message\Post\PostFile;
 use GuzzleHttp\Subscriber\Redirect;
 use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Url\QueryString;
-use GuzzleHttp\Url\Url;
+use GuzzleHttp\Query;
+use GuzzleHttp\Url;
 
 /**
  * Default HTTP request factory used to create {@see Request} and {@see Response} objects
@@ -222,7 +222,7 @@ class MessageFactory implements MessageFactoryInterface
 
     private function visit_query(RequestInterface $request, $value)
     {
-        if ($value instanceof QueryString) {
+        if ($value instanceof Query) {
             $original = $request->getQuery();
             // Do not overwrite existing query string variables by overwriting
             // the object with the query string data passed in the URL

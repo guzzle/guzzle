@@ -1,6 +1,6 @@
 <?php
 
-namespace GuzzleHttp\Tests\Http;
+namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Message\MessageFactory;

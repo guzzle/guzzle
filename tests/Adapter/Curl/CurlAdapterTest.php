@@ -13,15 +13,15 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Message\Response;
-use GuzzleHttp\Tests\Http\Server;
-use GuzzleHttp\Url\Url;
+use GuzzleHttp\Tests\Server;
+use GuzzleHttp\Url;
 
 /**
  * @covers GuzzleHttp\Adapter\Curl\CurlAdapter
  */
 class CurlAdapterTest extends \PHPUnit_Framework_TestCase
 {
-    /** @var \GuzzleHttp\Tests\Http\Server */
+    /** @var \GuzzleHttp\Tests\Server */
     static $server;
 
     public static function setUpBeforeClass()

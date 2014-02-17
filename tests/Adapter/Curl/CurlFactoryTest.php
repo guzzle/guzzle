@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../Server.php';
 
 use GuzzleHttp\Adapter\Curl\CurlAdapter;
 use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Tests\Http\Server;
+use GuzzleHttp\Tests\Server;
 use GuzzleHttp\Adapter\Curl\CurlFactory;
 use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Client;
@@ -19,7 +19,7 @@ use GuzzleHttp\Message\RequestInterface;
  */
 class CurlFactoryTest extends \PHPUnit_Framework_TestCase
 {
-    /** @var \GuzzleHttp\Tests\Http\Server */
+    /** @var \GuzzleHttp\Tests\Server */
     static $server;
 
     public static function setUpBeforeClass()

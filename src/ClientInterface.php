@@ -7,7 +7,7 @@ use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\ResponseInterface;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\AdapterException;
-use GuzzleHttp\Url\Url;
+use GuzzleHttp\Url;
 
 /**
  * Client interface for sending HTTP requests

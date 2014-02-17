@@ -2,7 +2,7 @@
 
 namespace GuzzleHttp\Message;
 
-use GuzzleHttp\Url\Url;
+use GuzzleHttp\Url;
 
 /**
  * Request and response factory

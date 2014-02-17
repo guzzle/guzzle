@@ -10,7 +10,7 @@ use GuzzleHttp\Subscriber\Cookie;
 use GuzzleHttp\CookieJar\ArrayCookieJar;
 use GuzzleHttp\Subscriber\Mock;
 use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Url\QueryString;
+use GuzzleHttp\Query;
 
 /**
  * @covers GuzzleHttp\Message\MessageFactory
@@ -186,7 +186,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         (new MessageFactory)->createRequest('GET', '/', ['cookies' => 'baz']);
     }
 
-    public function testCanAddQueryString()
+    public function testCanAddQuery()
     {
         $request = (new MessageFactory)->createRequest('GET', 'http://foo.com', [
             'query' => ['Foo' => 'Bar']
@@ -194,7 +194,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Bar', $request->getQuery()->get('Foo'));
     }
 
-    public function testCanSetDefaultQueryString()
+    public function testCanSetDefaultQuery()
     {
         $request = (new MessageFactory)->createRequest('GET', 'http://foo.com?test=abc', [
             'query' => ['Foo' => 'Bar', 'test' => 'def']
@@ -203,10 +203,10 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('abc', $request->getQuery()->get('test'));
     }
 
-    public function testCanSetDefaultQueryStringWithObject()
+    public function testCanSetDefaultQueryWithObject()
     {
         $request = (new MessageFactory)->createRequest('GET', 'http://foo.com?test=abc', [
-            'query' => new QueryString(['Foo' => 'Bar', 'test' => 'def'])
+            'query' => new Query(['Foo' => 'Bar', 'test' => 'def'])
         ]);
         $this->assertEquals('Bar', $request->getQuery()->get('Foo'));
         $this->assertEquals('abc', $request->getQuery()->get('test'));

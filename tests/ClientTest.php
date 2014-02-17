@@ -1,6 +1,6 @@
 <?php
 
-namespace GuzzleHttp\Tests\Http;
+namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Adapter\FakeParallelAdapter;
 use GuzzleHttp\Adapter\MockAdapter;

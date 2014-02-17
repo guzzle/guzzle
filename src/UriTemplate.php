@@ -1,6 +1,6 @@
 <?php
 
-namespace GuzzleHttp\Url;
+namespace GuzzleHttp;
 
 /**
  * Expands URI templates. Userland implementation of PECL uri_template.
@@ -104,16 +104,16 @@ class UriTemplate
 
         $prefix = $parsed['operator'];
         $joiner = $parsed['operator'];
-        $useQueryString = false;
+        $useQuery = false;
         if ($parsed['operator'] == '?') {
             $joiner = '&';
-            $useQueryString = true;
+            $useQuery = true;
         } elseif ($parsed['operator'] == '&') {
-            $useQueryString = true;
+            $useQuery = true;
         } elseif ($parsed['operator'] == '#') {
             $joiner = ',';
         } elseif ($parsed['operator'] == ';') {
-            $useQueryString = true;
+            $useQuery = true;
         } elseif ($parsed['operator'] == '' || $parsed['operator'] == '+') {
             $joiner = ',';
             $prefix = '';
@@ -126,7 +126,7 @@ class UriTemplate
             }
 
             $variable = $this->variables[$value['value']];
-            $actuallyUseQueryString = $useQueryString;
+            $actuallyUseQuery = $useQuery;
             $expanded = '';
 
             if (is_array($variable)) {
@@ -157,7 +157,7 @@ class UriTemplate
                             } else {
                                 $var = $key . '=' . $var;
                             }
-                        } elseif ($key > 0 && $actuallyUseQueryString) {
+                        } elseif ($key > 0 && $actuallyUseQuery) {
                             $var = $value['value'] . '=' . $var;
                         }
                     }
@@ -166,12 +166,12 @@ class UriTemplate
                 }
 
                 if (empty($variable)) {
-                    $actuallyUseQueryString = false;
+                    $actuallyUseQuery = false;
                 } elseif ($value['modifier'] == '*') {
                     $expanded = implode($joiner, $kvp);
                     if ($isAssoc) {
                         // Don't prepend the value name when using the explode modifier with an associative array
-                        $actuallyUseQueryString = false;
+                        $actuallyUseQuery = false;
                     }
                 } else {
                     if ($isAssoc) {
@@ -194,7 +194,7 @@ class UriTemplate
                 }
             }
 
-            if ($actuallyUseQueryString) {
+            if ($actuallyUseQuery) {
                 if (!$expanded && $joiner != '&') {
                     $expanded = $value['value'];
                 } else {
