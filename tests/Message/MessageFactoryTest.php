@@ -423,4 +423,10 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $request = (new MessageFactory())->createRequest('PUT', 'http://test.com', ['body' => '0']);
         $this->assertSame('0', (string) $request->getBody());
     }
+
+    public function testCanSetProtocolVersion()
+    {
+        $request = (new MessageFactory())->createRequest('GET', 'http://test.com', ['version' => 1.0]);
+        $this->assertEquals(1.0, $request->getProtocolVersion());
+    }
 }

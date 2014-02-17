@@ -66,6 +66,7 @@ class Request extends AbstractMessage implements RequestInterface
         parent::setBody($body);
 
         // Use chunked Transfer-Encoding if there is no content-length header
+        // and we're using HTTP/1.1
         if ($body !== null && !$this->hasHeader('Content-Length') && '1.1' == $this->getProtocolVersion()) {
             $this->setHeader('Transfer-Encoding', 'chunked');
         }

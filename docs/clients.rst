@@ -851,14 +851,30 @@ number will send the Expect header for all requests in which the size of the
 payload cannot be determined or where the body is not rewindable.
 
 By default, Guzzle will add the "Expect: 100-Continue" header when the size of
-the body of a request is greater than 1 MB.
+the body of a request is greater than 1 MB and a request is using HTTP/1.1.
 
 .. note::
 
-    This option is only supported when using HTTP/1.1 and must be implemented
-    by the HTTP adapter used by a client.
+    This option only takes effect when using HTTP/1.1. The HTTP/1.0 and
+    HTTP/2.0 protocols do not support the "Expect: 100-Continue" header.
+    Support for handling the "Expect: 100-Continue" workflow must be
+    implemented by Guzzle HTTP adapters used by a client.
 
 .. _custom-options:
+
+version
+-------
+
+:Summary: Protocol version to use with the request.
+:Types: string, float
+:Default: ``1.1``
+
+.. code-block:: php
+
+    // Force HTTP/1.0
+    $request = $client->createRequest('GET', '/get', ['version' => 1.0]);
+    echo $request->getProtocolVersion();
+    // 1.0
 
 options
 -------

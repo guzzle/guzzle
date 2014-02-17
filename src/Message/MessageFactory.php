@@ -42,6 +42,13 @@ class MessageFactory implements MessageFactoryInterface
 
     public function createRequest($method, $url, array $options = [])
     {
+        // Handle the request protocol version option that needs to be
+        // specified in the request constructor.
+        if (isset($options['version'])) {
+            $options['config']['protocol_version'] = $options['version'];
+            unset($options['version']);
+        }
+
         $request = new Request($method, $url, [], null,
             isset($options['config']) ? $options['config'] : []);
 

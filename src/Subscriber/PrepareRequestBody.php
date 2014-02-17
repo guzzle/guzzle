@@ -56,8 +56,8 @@ class PrepareRequestBody implements SubscriberInterface
 
             $expect = $request->getConfig()['expect'];
 
-            // The expect header is explicitly disabled
-            if ($expect === false) {
+            // The expect header is explicitly disabled or using HTTP/2
+            if ($expect === false || $request->getProtocolVersion() >= 2) {
                 return;
             }
 

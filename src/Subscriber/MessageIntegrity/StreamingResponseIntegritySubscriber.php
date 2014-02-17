@@ -58,7 +58,9 @@ class StreamingResponseIntegritySubscriber implements SubscriberInterface
             return false;
         } elseif (!$response->hasHeader($this->header)) {
             return false;
-        } elseif ($response->hasHeader('Transfer-Encoding')) {
+        } elseif ($response->hasHeader('Transfer-Encoding') ||
+            $response->hasHeader('Content-Encoding')
+        ) {
             // Currently does not support un-gzipping or inflating responses
             return false;
         }

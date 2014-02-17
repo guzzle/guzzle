@@ -22,6 +22,7 @@ interface MessageFactoryInterface
      *       username in index [0], the password in index [1], and can optionally contain the authentication type
      *       in index [2]. The authentication types are: "Basic", "Digest", "NTLM", (defaults to "Basic").
      *       The selected authentication type must be supported by the adapter used by a client.
+     *     - "version": The HTTP protocol version to use with the request. Defaults to 1.1.
      *     - "cookies": Pass an associative array containing cookies to send in the request and start a new cookie
      *       session, set to a {@see GuzzleHttp\CookieJar\CookieJarInterface} object to us an existing
      *       cookie jar, or set to ``true`` to use a shared cookie session associated with the client.
