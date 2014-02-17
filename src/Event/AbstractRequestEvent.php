@@ -6,7 +6,7 @@ use GuzzleHttp\Adapter\TransactionInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Message\RequestInterface;
 
-abstract class AbstractRequestEvent extends Event
+abstract class AbstractRequestEvent extends AbstractEvent
 {
     /** @var TransactionInterface */
     private $transaction;

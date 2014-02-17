@@ -3,8 +3,8 @@
 namespace GuzzleHttp\Tests\Event;
 
 use GuzzleHttp\Event\Emitter;
+use GuzzleHttp\Event\EventInterface;
 use GuzzleHttp\Event\SubscriberInterface;
-use GuzzleHttp\Event\Event;
 
 /**
  * @link https://github.com/symfony/symfony/blob/master/src/Symfony/Component/EventDispatcher/Tests/EventDispatcherTest.php Based on this test.
@@ -97,11 +97,11 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
     {
         $this->emitter->on('pre.foo', array($this->listener, 'preFoo'));
         $this->emitter->on('post.foo', array($this->listener, 'postFoo'));
-        $this->emitter->emit(self::preFoo, new Event());
+        $this->emitter->emit(self::preFoo, $this->getEvent());
         $this->assertTrue($this->listener->preFooInvoked);
         $this->assertFalse($this->listener->postFooInvoked);
-        $this->assertInstanceOf('GuzzleHttp\Event\EventInterface', $this->emitter->emit(self::preFoo, new Event()));
-        $event = new Event();
+        $this->assertInstanceOf('GuzzleHttp\Event\EventInterface', $this->emitter->emit(self::preFoo, $this->getEvent()));
+        $event = $this->getEvent();
         $return = $this->emitter->emit(self::preFoo, $event);
         $this->assertSame($event, $return);
     }
@@ -114,7 +114,7 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
         };
         $this->emitter->on('pre.foo', $listener);
         $this->emitter->on('post.foo', $listener);
-        $this->emitter->emit(self::preFoo, new Event());
+        $this->emitter->emit(self::preFoo, $this->getEvent());
         $this->assertEquals(1, $invoked);
     }
 
@@ -127,7 +127,7 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
         // Manually set priority to enforce $this->listener to be called first
         $this->emitter->on('post.foo', array($this->listener, 'postFoo'), 10);
         $this->emitter->on('post.foo', array($otherListener, 'preFoo'));
-        $this->emitter->emit(self::postFoo, new Event());
+        $this->emitter->emit(self::postFoo, $this->getEvent());
         $this->assertTrue($this->listener->postFooInvoked);
         $this->assertFalse($otherListener->postFooInvoked);
     }
@@ -147,7 +147,7 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
         $this->emitter->on('pre.foo', $listener1, -10);
         $this->emitter->on('pre.foo', $listener2);
         $this->emitter->on('pre.foo', $listener3, 10);
-        $this->emitter->emit(self::preFoo, new Event());
+        $this->emitter->emit(self::preFoo, $this->getEvent());
         $this->assertEquals(array('3', '2', '1'), $invoked);
     }
 
@@ -209,7 +209,7 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
         $listener = new TestWithDispatcher();
         $this->emitter->on('test', array($listener, 'foo'));
         $this->assertNull($listener->name);
-        $this->emitter->emit('test', new Event());
+        $this->emitter->emit('test', $this->getEvent());
         $this->assertEquals('test', $listener->name);
     }
 
@@ -234,7 +234,7 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
         $this->emitter->once('pre.foo', array($this->listener, 'preFoo'));
         $this->emitter->on('pre.foo', array($this->listener, 'preFoo'));
         $this->assertCount(2, $this->emitter->listeners(self::preFoo));
-        $this->emitter->emit(self::preFoo, new Event());
+        $this->emitter->emit(self::preFoo, $this->getEvent());
         $this->assertTrue($this->listener->preFooInvoked);
         $this->assertCount(1, $this->emitter->listeners(self::preFoo));
     }
@@ -242,6 +242,12 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
     public function testReturnsEmptyArrayForNonExistentEvent()
     {
         $this->assertEquals([], $this->emitter->listeners('doesnotexist'));
+    }
+
+    private function getEvent()
+    {
+        return $this->getMockBuilder('GuzzleHttp\Event\AbstractEvent')
+            ->getMockForAbstractClass();
     }
 }
 
@@ -259,12 +265,12 @@ class TestEventListener
 
     /* Listener methods */
 
-    public function preFoo(Event $e)
+    public function preFoo(EventInterface $e)
     {
         $this->preFooInvoked = true;
     }
 
-    public function postFoo(Event $e)
+    public function postFoo(EventInterface $e)
     {
         $this->postFooInvoked = true;
 
@@ -276,7 +282,7 @@ class TestWithDispatcher
 {
     public $name;
 
-    public function foo(Event $e, $name)
+    public function foo(EventInterface $e, $name)
     {
         $this->name = $name;
     }
