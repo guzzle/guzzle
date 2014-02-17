@@ -5,7 +5,7 @@ namespace GuzzleHttp\Tests;
 use GuzzleHttp\UriTemplate;
 
 /**
- * @covers GuzzleHttp\Url\UriTemplate
+ * @covers GuzzleHttp\UriTemplate
  */
 class UriTemplateTest extends \PHPUnit_Framework_TestCase
 {
