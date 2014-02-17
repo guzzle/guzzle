@@ -78,7 +78,7 @@ Using Responses
 ===============
 
 In the previos examples, we retrieved a ``$response`` variable. This value is
-actually a ``Guzzle\Http\Message\ResponseInterface`` object and contains lots
+actually a ``GuzzleHttp\Message\ResponseInterface`` object and contains lots
 of helpful information.
 
 You can get the status code and reason phrase of the response.

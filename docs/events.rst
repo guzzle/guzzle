@@ -175,12 +175,12 @@ priority of the listener (as shown in the ``before`` listener in the example).
 
 .. code-block:: php
 
-    use Guzzle\Common\EventEmitterInterface;
-    use Guzzle\Common\EventSubscriberInterface;
-    use Guzzle\Http\Event\BeforeEvent;
-    use Guzzle\Http\Event\CompleteEvent;
+    use GuzzleHttp\Event\EventEmitterInterface;
+    use GuzzleHttp\Event\SubscriberInterface;
+    use GuzzleHttp\Event\BeforeEvent;
+    use GuzzleHttp\Event\CompleteEvent;
 
-    class SimpleSubscriber implements EventSubscriberInterface
+    class SimpleSubscriber implements SubscriberInterface
     {
         public static function getSubscribedEvents()
         {
@@ -353,8 +353,8 @@ a username and password.
 
 .. code-block:: php
 
-    use Guzzle\Http\Client;
-    use Guzzle\Http\Event\ErrorEvent;
+    use GuzzleHttp\Client;
+    use GuzzleHttp\Event\ErrorEvent;
 
     $client = new Client(['base_url' => 'http://httpbin.org']);
     $request = $client->createRequest('GET', '/basic-auth/foo/bar');

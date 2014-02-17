@@ -1,5 +1,5 @@
 {
-    "name": "guzzle/guzzle",
+    "name": "guzzlehttp/guzzle",
     "type": "library",
     "description": "Guzzle is a PHP HTTP client library and framework for building RESTful web service clients",
     "keywords": ["framework", "http", "rest", "web service", "curl", "client", "HTTP client"],
@@ -19,10 +19,10 @@
     },
 
     "autoload": {
-        "psr-0": {
-            "Guzzle": "src/"
+        "psr-4": {
+            "GuzzleHttp\\": "src/"
         },
-        "files": ["src/Guzzle/functions.php"]
+        "files": ["src/functions.php"]
     },
 
     "require-dev": {

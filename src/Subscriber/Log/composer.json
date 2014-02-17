@@ -1,0 +1,28 @@
+{
+    "name": "guzzle/plugin-log",
+    "description": "Guzzle log plugin for over the wire logging",
+    "homepage": "http://guzzlephp.org/",
+    "keywords": ["plugin", "log", "guzzle"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Michael Dowling",
+            "email": "mtdowling@gmail.com",
+            "homepage": "https://github.com/mtdowling"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "guzzle/http": "self.version",
+        "psr/log": "~1.0"
+    },
+    "autoload": {
+        "psr-0": { "GuzzleHttp\\Plugin\\Log": "" }
+    },
+    "target-dir": "Guzzle/Plugin/Log",
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.7-dev"
+        }
+    }
+}

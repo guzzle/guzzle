@@ -615,7 +615,7 @@ subscribers
 -----------
 
 :Summary: Array of event subscribers to add to the request. Each value in the
-    array must be an instance of ``Guzzle\Common\EventSubscriberInterface``.
+    array must be an instance of ``GuzzleHttp\Event\SubscriberInterface``.
 :Types: array
 :Default: None
 
@@ -662,7 +662,7 @@ timeout
 
     // Timeout if a server does not return a response in 3.14 seconds.
     $client->get('/delay/5', ['timeout' => 3.14]);
-    // PHP Fatal error:  Uncaught exception 'Guzzle\Http\Exception\RequestException'
+    // PHP Fatal error:  Uncaught exception 'GuzzleHttp\Exception\RequestException'
 
 connect_timeout
 ---------------

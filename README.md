@@ -14,11 +14,11 @@ Get answers with: [Documentation](http://www.guzzlephp.org/), [Forums](https://g
 
 ```php
 // Really simple using a static facade
-Guzzle\Http\StaticClient::mount();
+GuzzleHttp\StaticClient::mount();
 $response = Guzzle::get('http://guzzlephp.org');
 
 // More control using a client class
-$client = new \Guzzle\Http\Client('http://guzzlephp.org');
+$client = new \GuzzleHttp\Client('http://guzzlephp.org');
 $request = $client->get('/');
 $response = $request->send();
 ```
@@ -82,7 +82,7 @@ HTTP basics
 ```php
 <?php
 
-use Guzzle\Http\Client;
+use GuzzleHttp\Client;
 
 $client = new Client('http://www.example.com/api/v1/key/{key}', [
     'key' => '***'
@@ -148,10 +148,10 @@ You can use Guzzle through a static client to make it even easier to send simple
 <?php
 
 // Use the static client directly:
-$response = Guzzle\Http\StaticClient::get('http://www.google.com');
+$response = GuzzleHttp\StaticClient::get('http://www.google.com');
 
 // Or, mount the client to \Guzzle to make it easier to use
-Guzzle\Http\StaticClient::mount();
+GuzzleHttp\StaticClient::mount();
 
 $response = Guzzle::get('http://guzzlephp.org');
 
@@ -192,7 +192,7 @@ $response = Guzzle::post('http://guzzlephp.org', [
 These options can also be used when creating requests using a standard client:
 
 ```php
-$client = new Guzzle\Http\Client();
+$client = new GuzzleHttp\Client();
 // Create a request with a timeout of 10 seconds
 $request = $client->get('http://guzzlephp.org', [], ['timeout' => 10]);
 $response = $request->send();

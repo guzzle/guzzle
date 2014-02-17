@@ -22,7 +22,7 @@ You can check to see if a request or response has a body using the
 
 .. code-block:: php
 
-    $response = Guzzle\get('http://httpbin.org/get');
+    $response = GuzzleHttp\get('http://httpbin.org/get');
     if ($response->getBody()) {
         echo $response->getBody();
         // JSON string: { ... }
@@ -324,7 +324,7 @@ status code, and reason phrase.
 
 .. code-block:: php
 
-    $response = Guzzle\get('http://httpbin.org/get');
+    $response = GuzzleHttp\get('http://httpbin.org/get');
     echo $response->getStatusCode();
     // 200
     echo $response->getReasonPhrase();
