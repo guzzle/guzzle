@@ -3,7 +3,6 @@
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Query;
-use GuzzleHttp\QueryAggregator\DuplicateAggregator;
 
 class QueryTest extends \PHPUnit_Framework_TestCase
 {
@@ -50,17 +49,10 @@ class QueryTest extends \PHPUnit_Framework_TestCase
 
     public function testCanSetAggregator()
     {
-        $agg = $this->getMockBuilder('GuzzleHttp\QueryAggregator\QueryAggregatorInterface')
-            ->setMethods('aggregate')
-            ->getMockForAbstractClass();
-
         $q = new Query(['foo' => ['bar', 'baz']]);
-        $q->setAggregator($agg);
-
-        $agg->expects($this->once())
-            ->method('aggregate')
-            ->will($this->returnValue(['foo' => ['barANDbaz']]));
-
+        $q->setAggregator(function (array $data) {
+            return ['foo' => ['barANDbaz']];
+        });
         $this->assertEquals('foo=barANDbaz', (string) $q);
     }
 
@@ -71,7 +63,7 @@ class QueryTest extends \PHPUnit_Framework_TestCase
         $q->add('facet', 'width');
         $q->add('facet.field', 'foo');
         // Use the duplicate aggregator
-        $q->setAggregator(new DuplicateAggregator());
+        $q->setAggregator($q::duplicateAggregator());
         $this->assertEquals('facet=size&facet=width&facet.field=foo', (string) $q);
     }
 
@@ -172,5 +164,62 @@ class QueryTest extends \PHPUnit_Framework_TestCase
     public function testCastingToAndCreatingFromStringWithEmptyValuesIsFast()
     {
         $this->assertEquals('', (string) Query::fromString(''));
+    }
+
+    private $encodeData = [
+        't' => [
+            'v1' => ['a', '1'],
+            'v2' => 'b',
+            'v3' => ['v4' => 'c', 'v5' => 'd']
+        ]
+    ];
+
+    public function testEncodesDuplicateAggregator()
+    {
+        $agg = Query::duplicateAggregator();
+        $result = $agg($this->encodeData);
+        $this->assertEquals(array(
+            't[v1]' => ['a', '1'],
+            't[v2]' => ['b'],
+            't[v3][v4]' => ['c'],
+            't[v3][v5]' => ['d'],
+        ), $result);
+    }
+
+    public function testDuplicateEncodesNoNumericIndices()
+    {
+        $agg = Query::duplicateAggregator();
+        $result = $agg($this->encodeData);
+        $this->assertEquals(array(
+            't[v1]' => ['a', '1'],
+            't[v2]' => ['b'],
+            't[v3][v4]' => ['c'],
+            't[v3][v5]' => ['d'],
+        ), $result);
+    }
+
+    public function testEncodesPhpAggregator()
+    {
+        $agg = Query::phpAggregator();
+        $result = $agg($this->encodeData);
+        $this->assertEquals(array(
+            't[v1][0]' => ['a'],
+            't[v1][1]' => ['1'],
+            't[v2]' => ['b'],
+            't[v3][v4]' => ['c'],
+            't[v3][v5]' => ['d'],
+        ), $result);
+    }
+
+    public function testPhpEncodesNoNumericIndices()
+    {
+        $agg = Query::phpAggregator(false);
+        $result = $agg($this->encodeData);
+        $this->assertEquals(array(
+            't[v1][]' => ['a', '1'],
+            't[v2]' => ['b'],
+            't[v3][v4]' => ['c'],
+            't[v3][v5]' => ['d'],
+        ), $result);
     }
 }

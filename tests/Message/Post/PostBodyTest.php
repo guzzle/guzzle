@@ -5,7 +5,7 @@ namespace GuzzleHttp\Tests\Message\Post;
 use GuzzleHttp\Message\Post\PostBody;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Message\Post\PostFile;
-use GuzzleHttp\QueryAggregator\DuplicateAggregator;
+use GuzzleHttp\Query;
 
 /**
  * @covers GuzzleHttp\Message\Post\PostBody
@@ -112,7 +112,7 @@ class PostBodyTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('foo%5B0%5D=baz&foo%5B1%5D=bar', (string) $b);
         $b = new PostBody();
         $b->setField('foo', ['baz', 'bar']);
-        $agg = new DuplicateAggregator();
+        $agg = Query::duplicateAggregator();
         $b->setAggregator($agg);
         $this->assertEquals('foo=baz&foo=bar', (string) $b);
     }

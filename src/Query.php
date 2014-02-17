@@ -2,10 +2,6 @@
 
 namespace GuzzleHttp;
 
-use GuzzleHttp\QueryAggregator\QueryAggregatorInterface;
-use GuzzleHttp\QueryAggregator\DuplicateAggregator;
-use GuzzleHttp\QueryAggregator\PhpAggregator;
-
 /**
  * Manages query string variables and can aggregate them into a string
  */
@@ -17,7 +13,7 @@ class Query extends Collection
     /** @var bool URL encode fields and values */
     private $encoding = self::RFC3986;
 
-    /** @var QueryAggregatorInterface */
+    /** @var callable */
     private $aggregator;
 
     /**
@@ -60,7 +56,7 @@ class Query extends Collection
 
         // Use the duplicate aggregator if duplicates were found and not using PHP style arrays
         if ($foundDuplicates && !$foundPhpStyle) {
-            $q->setAggregator(new DuplicateAggregator());
+            $q->setAggregator(self::duplicateAggregator());
         }
 
         return $q;
@@ -77,12 +73,20 @@ class Query extends Collection
             return '';
         }
 
+        // The default aggregator is statically cached
+        static $defaultAggregator;
+
         if (!$this->aggregator) {
-            $this->aggregator = new PhpAggregator();
+            if (!$defaultAggregator) {
+                $defaultAggregator = self::phpAggregator();
+            }
+            $this->aggregator = $defaultAggregator;
         }
 
         $result = '';
-        foreach ($this->aggregator->aggregate($this->data) as $key => $values) {
+        $aggregator = $this->aggregator;
+
+        foreach ($aggregator($this->data) as $key => $values) {
             foreach ($values as $value) {
                 if ($result) {
                     $result .= '&';
@@ -110,13 +114,20 @@ class Query extends Collection
     }
 
     /**
-     * Controls how multi-valued query string parameters are aggregated into a string
+     * Controls how multi-valued query string parameters are aggregated into a
+     * string.
      *
-     * @param QueryAggregatorInterface $aggregator Converts an array of query string variables into a string
+     *     $query->setAggregator($query::duplicateAggregator());
+     *
+     * @param callable $aggregator Callable used to converts a deeply nested
+     *     array of query string variables into a flattened array of key value
+     *     pairs. The callable accepts an array of query data and returns a
+     *     flattened array of key value pairs where each value is an array of
+     *     strings.
      *
      * @return self
      */
-    public function setAggregator(QueryAggregatorInterface $aggregator)
+    public function setAggregator(callable $aggregator)
     {
         $this->aggregator = $aggregator;
 
@@ -140,5 +151,75 @@ class Query extends Collection
         }
 
         return $this;
+    }
+
+    /**
+     * Query string aggregator that does not aggregate nested query string
+     * values and allows duplicates in the resulting array.
+     *
+     * Example: http://test.com?q=1&q=2
+     *
+     * @return callable
+     */
+    public static function duplicateAggregator()
+    {
+        return function (array $data) {
+            return self::walkQuery($data, '', function ($key, $prefix) {
+                return is_int($key) ? $prefix : "{$prefix}[{$key}]";
+            });
+        };
+    }
+
+    /**
+     * Aggregates nested query string variables using the same techinque as
+     * ``http_build_query()``.
+     *
+     * @param bool $numericIndices Pass false to not include numeric indices
+     *     when multi-values query string parameters are present.
+     *
+     * @return callable
+     */
+    public static function phpAggregator($numericIndices = true)
+    {
+        return function (array $data) use ($numericIndices) {
+            return self::walkQuery(
+                $data,
+                '',
+                function ($key, $prefix) use ($numericIndices) {
+                    return !$numericIndices && is_int($key)
+                        ? "{$prefix}[]"
+                        : "{$prefix}[{$key}]";
+                }
+            );
+        };
+    }
+
+    /**
+     * Easily create query aggregation functions by providing a key prefix
+     * function to this query string array walker.
+     *
+     * @param array    $query     Query string to walk
+     * @param string   $keyPrefix Key prefix (start with '')
+     * @param callable $prefixer  Function used to create a key prefix
+     *
+     * @return array
+     */
+    public static function walkQuery(array $query, $keyPrefix, callable $prefixer)
+    {
+        $result = [];
+        foreach ($query as $key => $value) {
+            if ($keyPrefix) {
+                $key = $prefixer($key, $keyPrefix);
+            }
+            if (is_array($value)) {
+                $result += self::walkQuery($value, $key, $prefixer);
+            } elseif (isset($result[$key])) {
+                $result[$key][] = $value;
+            } else {
+                $result[$key] = array($value);
+            }
+        }
+
+        return $result;
     }
 }

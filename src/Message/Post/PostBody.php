@@ -5,8 +5,6 @@ namespace GuzzleHttp\Message\Post;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Stream\StreamInterface;
-use GuzzleHttp\QueryAggregator\PhpAggregator;
-use GuzzleHttp\QueryAggregator\QueryAggregatorInterface;
 use GuzzleHttp\Query;
 
 /**
@@ -17,7 +15,7 @@ class PostBody implements PostBodyInterface
     /** @var StreamInterface */
     private $body;
 
-    /** @var QueryAggregatorInterface */
+    /** @var callable */
     private $aggregator;
 
     private $fields = [];
@@ -57,11 +55,15 @@ class PostBody implements PostBodyInterface
     }
 
     /**
-     * Set the aggregation strategy that will be used to turn multi-valued fields into a string
+     * Set the aggregation strategy that will be used to turn multi-valued
+     * fields into a string.
      *
-     * @param QueryAggregatorInterface $aggregator
+     * The aggregation function accepts a deeply nested array of query string
+     * values and returns a flattened associative array of key value pairs.
+     *
+     * @param callable $aggregator
      */
-    final public function setAggregator(QueryAggregatorInterface $aggregator)
+    final public function setAggregator(callable $aggregator)
     {
         $this->aggregator = $aggregator;
     }
@@ -224,12 +226,12 @@ class PostBody implements PostBodyInterface
     /**
      * Get the aggregator used to join multi-valued field parameters
      *
-     * @return QueryAggregatorInterface
+     * @return callable
      */
     final protected function getAggregator()
     {
         if (!$this->aggregator) {
-            $this->aggregator = new PhpAggregator();
+            $this->aggregator = Query::phpAggregator();
         }
 
         return $this->aggregator;
