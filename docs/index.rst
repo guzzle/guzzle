@@ -40,7 +40,7 @@ User guide
     overview
     quickstart
     clients
-    requests
+    http-messages
     events
     streams
     faq

@@ -43,9 +43,9 @@ class MessageFactory implements MessageFactoryInterface
     public function createRequest($method, $url, array $options = [])
     {
         $request = new Request($method, $url, [], null,
-            isset($options['options']) ? $options['options'] : []);
+            isset($options['config']) ? $options['config'] : []);
 
-        unset($options['options']);
+        unset($options['config']);
 
         // Use a POST body by default
         if ($method == 'POST' && !isset($options['body'])) {
@@ -96,7 +96,7 @@ class MessageFactory implements MessageFactoryInterface
             [
                 'headers' => $data['headers'],
                 'body' => $data['body'] === '' ? null : $data['body'],
-                'options' => [
+                'config' => [
                     'protocol_version' => $data['protocol_version']
                 ]
             ]

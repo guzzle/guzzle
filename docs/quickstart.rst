@@ -187,6 +187,8 @@ calling the ``getQuery()`` method of a request and modifying the request's
     echo $query;
     // foo=bar&baz=bam&empty=
 
+.. _headers:
+
 Request and Response Headers
 ----------------------------
 

@@ -115,7 +115,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     public function testOptionsAddsRequestOptions()
     {
         $request = (new MessageFactory)->createRequest(
-            'GET', 'http://test.com', ['options' => ['baz' => 'bar']]
+            'GET', 'http://test.com', ['config' => ['baz' => 'bar']]
         );
         $this->assertEquals('bar', $request->getConfig()->get('baz'));
     }
@@ -381,7 +381,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
     public function inputValidation()
     {
         return array_map(function ($option) { return array($option); }, array(
-            'headers', 'events', 'subscribers', 'params', 'config'
+            'headers', 'events', 'subscribers', 'params'
         ));
     }
 

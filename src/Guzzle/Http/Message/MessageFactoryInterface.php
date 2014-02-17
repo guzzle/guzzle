@@ -63,7 +63,7 @@ interface MessageFactoryInterface
      *       false to disable "Expect: 100-Continue". Set to a number so that the size of the payload must be greater
      *       than the number in order to send the Expect header. Setting to a number will send the Expect header for
      *       all requests in which the size of the payload cannot be determined or where the body is not rewindable.
-     *     - "options": Associative array of options that are forwarded to a request's configuration collection.
+     *     - "config": Associative array of config options that are forwarded to a request's configuration collection.
      *       These values are used as configuration options that can be consumed by plugins and adapters.
      *
      * @return RequestInterface

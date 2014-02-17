@@ -117,7 +117,7 @@ class Client implements ClientInterface
         $options = array_replace_recursive($this->config['defaults'], $options);
 
         // Use a clone of the client's emitter
-        $options['options']['emitter'] = clone $this->getEmitter();
+        $options['config']['emitter'] = clone $this->getEmitter();
 
         $request = $this->messageFactory->createRequest(
             $method,
