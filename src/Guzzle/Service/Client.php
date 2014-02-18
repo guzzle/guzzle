@@ -147,6 +147,10 @@ class Client extends HttpClient implements ClientInterface
     {
         $this->serviceDescription = $service;
 
+        if ($this->getCommandFactory() && $this->getCommandFactory() instanceof CompositeFactory) {
+            $this->commandFactory->add(new Command\Factory\ServiceDescriptionFactory($service));
+        }
+
         // If a baseUrl was set on the description, then update the client
         if ($baseUrl = $service->getBaseUrl()) {
             $this->setBaseUrl($baseUrl);
