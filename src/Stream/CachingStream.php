@@ -3,13 +3,14 @@
 namespace GuzzleHttp\Stream;
 
 /**
- * Stream decorator that can cache previously read bytes from a sequentially read stream
+ * Stream decorator that can cache previously read bytes from a sequentially
+ * read stream.
  */
 class CachingStream implements StreamInterface, MetadataStreamInterface
 {
     use StreamDecoratorTrait;
 
-    /** @var StreamInterface Remote stream used to actually pull data onto the buffer */
+    /** @var StreamInterface Stream being wrapped */
     private $remoteStream;
 
     /** @var int The number of bytes to skip reading due to a write on the temporary buffer */
@@ -21,8 +22,10 @@ class CachingStream implements StreamInterface, MetadataStreamInterface
      * @param StreamInterface $stream Stream to cache
      * @param StreamInterface $target Optionally specify where data is cached
      */
-    public function __construct(StreamInterface $stream, StreamInterface $target = null)
-    {
+    public function __construct(
+        StreamInterface $stream,
+        StreamInterface $target = null
+    ) {
         $this->remoteStream = $stream;
         $this->stream = $target ?: new Stream(fopen('php://temp', 'r+'));
     }
@@ -34,7 +37,8 @@ class CachingStream implements StreamInterface, MetadataStreamInterface
 
     /**
      * {@inheritdoc}
-     * @throws \RuntimeException When seeking with SEEK_END or when seeking past the total size of the buffer stream
+     * @throws \RuntimeException When seeking with SEEK_END or when seeking
+     *     past the total size of the buffer stream
      */
     public function seek($offset, $whence = SEEK_SET)
     {
@@ -64,9 +68,10 @@ class CachingStream implements StreamInterface, MetadataStreamInterface
 
         // More data was requested so read from the remote stream
         if ($remaining) {
-            // If data was written to the buffer in a position that would have been filled from the remote stream,
-            // then we must skip bytes on the remote stream to emulate overwriting bytes from that position. This
-            // mimics the behavior of other PHP stream wrappers.
+            // If data was written to the buffer in a position that would have
+            // been filled from the remote stream, then we must skip bytes on
+            // the remote stream to emulate overwriting bytes from that
+            // position. This mimics the behavior of other PHP stream wrappers.
             $remoteData = $this->remoteStream->read($remaining + $this->skipReadBytes);
 
             if ($this->skipReadBytes) {
@@ -84,8 +89,10 @@ class CachingStream implements StreamInterface, MetadataStreamInterface
 
     public function write($string)
     {
-        // When appending to the end of the currently read stream, you'll want to skip bytes from being read from
-        // the remote stream to emulate other stream wrappers. Basically replacing bytes of data of a fixed length.
+        // When appending to the end of the currently read stream, you'll want
+        // to skip bytes from being read from the remote stream to emulate
+        // other stream wrappers. Basically replacing bytes of data of a fixed
+        // length.
         $overflow = (strlen($string) + $this->tell()) - $this->remoteStream->tell();
         if ($overflow > 0) {
             $this->skipReadBytes += $overflow;

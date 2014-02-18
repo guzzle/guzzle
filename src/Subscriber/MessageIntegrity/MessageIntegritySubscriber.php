@@ -6,7 +6,8 @@ use GuzzleHttp\Event\SubscriberInterface;
 use GuzzleHttp\Event\BeforeEvent;
 
 /**
- * Verifies the message integrity of a response after all of the data has been received
+ * Verifies the message integrity of a response after all of the data has been
+ * received.
  */
 class MessageIntegritySubscriber implements SubscriberInterface
 {

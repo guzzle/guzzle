@@ -11,14 +11,15 @@ use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\ResponseInterface;
 
 /**
- * Queues mock responses or exceptions and delivers mock responses or exceptions in a fifo order.
+ * Queues mock responses or exceptions and delivers mock responses or
+ * exceptions in a fifo order.
  */
 class Mock implements SubscriberInterface, \Countable
 {
     /** @var array Array of mock responses / exceptions */
     private $queue = [];
 
-    /** @var bool Whether or not to consume an entity body when a mock response is served */
+    /** @var bool Whether or not to consume an entity body when mocking */
     private $readBodies;
 
     /** @var MessageFactory */
@@ -77,7 +78,7 @@ class Mock implements SubscriberInterface, \Countable
     /**
      * Add a response to the end of the queue
      *
-     * @param string|ResponseInterface $response Response object or path to response file
+     * @param string|ResponseInterface $response Response or path to response file
      *
      * @return self
      * @throws \InvalidArgumentException if a string or Response is not passed

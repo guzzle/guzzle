@@ -10,7 +10,8 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
 /**
- * Plugin to automatically retry failed HTTP requests using filters a delay strategy.
+ * Plugin to automatically retry failed HTTP requests using filters a delay
+ * strategy.
  */
 class RetrySubscriber implements SubscriberInterface
 {
@@ -59,10 +60,11 @@ class RetrySubscriber implements SubscriberInterface
     }
 
     /**
-     * Retrieve a basic truncated exponential backoff plugin that will retry HTTP errors and cURL errors
+     * Retrieve a basic truncated exponential backoff plugin that will retry
+     * HTTP errors and cURL errors
      *
      * @param array $config Exponential backoff configuration
-     *     - max_retries: Maximum number of retries (overiddes the default of 5)
+     *     - max_retries: Maximum number of retries (overriddes the default of 5)
      *     - http_codes: HTTP response codes to retry (overrides the default)
      *     - curl_codes: cURL error codes to retry (overrides the default)
      *     - logger: Pass a logger instance to log each retry or pass true for STDOUT
@@ -78,7 +80,9 @@ class RetrySubscriber implements SubscriberInterface
         if (!extension_loaded('curl')) {
             $filter = self::createStatusFilter($httpCodes);
         } else {
-            $curlCodes = isset($config['curl_codes']) ? $config['curl_codes'] : null;
+            $curlCodes = isset($config['curl_codes'])
+                ? $config['curl_codes']
+                : null;
             $filter = self::createChainFilter([
                 self::createStatusFilter($httpCodes),
                 self::createCurlFilter($curlCodes)
@@ -98,7 +102,12 @@ class RetrySubscriber implements SubscriberInterface
 
         $maxRetries = isset($config['max_retries']) ? $config['max_retries'] : 5;
 
-        return new self($filter, $delay, $maxRetries, isset($config['sleep_fn']) ? $config['sleep_fn'] : null);
+        return new self(
+            $filter,
+            $delay,
+            $maxRetries,
+            isset($config['sleep_fn']) ? $config['sleep_fn'] : null
+        );
     }
 
     public function onRequestSent(AbstractTransferStatsEvent $event)
@@ -126,17 +135,20 @@ class RetrySubscriber implements SubscriberInterface
      *
      * @return int
      */
-    public static function exponentialDelay($retries, AbstractTransferStatsEvent $event)
-    {
+    public static function exponentialDelay(
+        $retries,
+        AbstractTransferStatsEvent $event
+    ) {
         return (int) pow(2, $retries - 1);
     }
 
     /**
-     * Creates a delay function that logs each retry before proxying to a wrapped delay function.
+     * Creates a delay function that logs each retry before proxying to a
+     * wrapped delay function.
      *
      * @param callable                $delayFn   Delay function to proxy to
      * @param LoggerInterface         $logger    Logger used to log messages
-     * @param string|MessageFormatter $formatter Format string or Message formatter used to format messages
+     * @param string|MessageFormatter $formatter Formatter to format messages
      *
      * @return callable
      */
@@ -166,7 +178,8 @@ class RetrySubscriber implements SubscriberInterface
     /**
      * Creates a retry filter based on HTTP status codes
      *
-     * @param array $failureStatuses Pass an array of status codes to override the default of [500, 503]
+     * @param array $failureStatuses Pass an array of status codes to override
+     *     the default of [500, 503]
      *
      * @return callable
      */
@@ -186,7 +199,8 @@ class RetrySubscriber implements SubscriberInterface
     /**
      * Creates a retry filter based on cURL error codes.
      *
-     * @param array $errorCodes Pass an array of curl error codes to override the default list of error codes.
+     * @param array $errorCodes Pass an array of curl error codes to override
+     *     the default list of error codes.
      *
      * @return callable
      */
@@ -206,12 +220,15 @@ class RetrySubscriber implements SubscriberInterface
     }
 
     /**
-     * Creates a chain of callables that triggers one after the other until a callable returns true.
+     * Creates a chain of callables that triggers one after the other until a
+     * callable returns true.
      *
-     * @param array $filters Array of callables that accept the number of retries and an after send event and return
-     *                       true to retry the transaction or false to not retry.
+     * @param array $filters Array of callables that accept the number of
+     *   retries and an after send event and return true to retry the
+     *   transaction or false to not retry.
      *
-     * @return callable Returns a filter that can be used to determine if a transaction should be retried
+     * @return callable Returns a filter that can be used to determine if a
+     *   transaction should be retried
      */
     public static function createChainFilter(array $filters)
     {

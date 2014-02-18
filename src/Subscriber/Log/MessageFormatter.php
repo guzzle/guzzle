@@ -6,7 +6,8 @@ use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\ResponseInterface;
 
 /**
- * Formats messages using variable substitutions for requests, responses, and other transactional data.
+ * Formats messages using variable substitutions for requests, responses, and
+ * other transactional data.
  *
  * The following variable substitutions are supported:
  *

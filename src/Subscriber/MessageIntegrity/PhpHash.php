@@ -14,7 +14,7 @@ class PhpHash implements HashInterface
     /**
      * @param string $algo    Hashing algorithm. One of PHP's hash_algos() return values (e.g. md5)
      * @param array  $options Associative array of hashing options:
-     *                        - hmac_key: Shared secret key used with HMAC algorithms
+     *     - hmac_key: Shared secret key used with HMAC algorithms
      */
     public function __construct($algo, array $options = [])
     {

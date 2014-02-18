@@ -109,7 +109,8 @@ class LimitStream implements StreamInterface, MetadataStreamInterface
     }
 
     /**
-     * Set the limit of bytes that the decorator allows to be read from the stream
+     * Set the limit of bytes that the decorator allows to be read from the
+     * stream.
      *
      * @param int $limit Number of bytes to allow to be read from the stream. Use -1 for no limit.
      *
@@ -128,10 +129,12 @@ class LimitStream implements StreamInterface, MetadataStreamInterface
             return $this->stream->read($length);
         }
 
-        // Check if the current position is less than the total allowed bytes + original offset
+        // Check if the current position is less than the total allowed
+        // bytes + original offset
         $remaining = ($this->offset + $this->limit) - $this->stream->tell();
         if ($remaining > 0) {
-            // Only return the amount of requested data, ensuring that the byte limit is not exceeded
+            // Only return the amount of requested data, ensuring that the byte
+            // limit is not exceeded
             return $this->stream->read(min($remaining, $length));
         } else {
             return false;

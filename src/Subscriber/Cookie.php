@@ -17,7 +17,7 @@ class Cookie implements SubscriberInterface
     protected $cookieJar;
 
     /**
-     * @param CookieJarInterface $cookieJar Cookie jar used to hold cookies. Creates an ArrayCookieJar by default.
+     * @param CookieJarInterface $cookieJar Cookie jar used to hold cookies
      */
     public function __construct(CookieJarInterface $cookieJar = null)
     {
@@ -58,13 +58,20 @@ class Cookie implements SubscriberInterface
 
     public function onRequestSent(CompleteEvent $event)
     {
-        $this->cookieJar->addCookiesFromResponse($event->getRequest(), $event->getResponse());
+        $this->cookieJar->addCookiesFromResponse(
+            $event->getRequest(),
+            $event->getResponse()
+        );
     }
 
     private function getCookieValue($value)
     {
-        // Quote the value if it is not already and contains problematic characters
-        if (substr($value, 0, 1) !== '"' && substr($value, -1, 1) !== '"' && strpbrk($value, ';,')) {
+        // Quote the cookie value if it is not already quoted and it contains
+        // problematic characters.
+        if (substr($value, 0, 1) !== '"' &&
+            substr($value, -1, 1) !== '"' &&
+            strpbrk($value, ';,')
+        ) {
             $value = '"' . $value . '"';
         }
 

@@ -8,7 +8,8 @@ use GuzzleHttp\Message\ResponseInterface;
 use GuzzleHttp\Stream\StreamInterface;
 
 /**
- * Verifies the message integrity of a response after all of the data has been received
+ * Verifies the message integrity of a response after all of the data has been
+ * received.
  */
 class FullResponseIntegritySubscriber implements SubscriberInterface
 {

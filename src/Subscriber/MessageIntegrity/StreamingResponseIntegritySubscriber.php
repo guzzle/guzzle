@@ -7,7 +7,8 @@ use GuzzleHttp\Event\HeadersEvent;
 use GuzzleHttp\Message\ResponseInterface;
 
 /**
- * Verifies the message integrity of a response only after the entire response body has been read
+ * Verifies the message integrity of a response only after the entire response
+ * body has been read.
  */
 class StreamingResponseIntegritySubscriber implements SubscriberInterface
 {

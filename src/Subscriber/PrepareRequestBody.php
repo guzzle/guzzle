@@ -31,7 +31,8 @@ class PrepareRequestBody implements SubscriberInterface
     {
         $request = $event->getRequest();
 
-        // Set the appropriate Content-Type for a request if one is not set and there are form fields
+        // Set the appropriate Content-Type for a request if one is not set and
+        // there are form fields
         if (!($body = $request->getBody())) {
             return;
         }
@@ -43,7 +44,8 @@ class PrepareRequestBody implements SubscriberInterface
 
         $this->addExpectHeader($request, $body);
 
-        // Never send a Transfer-Encoding: chunked and Content-Length header in the same request
+        // Never send a Transfer-Encoding: chunked and Content-Length header in
+        // the same request
         if ($request->getHeader('Transfer-Encoding') == 'chunked') {
             $request->removeHeader('Content-Length');
         }
