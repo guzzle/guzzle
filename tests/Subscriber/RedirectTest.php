@@ -132,7 +132,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \GuzzleHttp\Exception\CouldNotRewindStreamException
-     * @expectedExceptionMessage Unable to rewind the non-seekable entity body of the request after redirecting
+     * @expectedExceptionMessage Unable to rewind the non-seekable request body after redirecting
      */
     public function testThrowsExceptionWhenStreamCannotBeRewound()
     {

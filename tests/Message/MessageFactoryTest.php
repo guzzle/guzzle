@@ -131,8 +131,8 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $request = (new MessageFactory)->createRequest('GET', '/', [
             'allow_redirects' => ['max' => 10, 'strict' => true]
         ]);
-        $this->assertTrue($request->getConfig()->get('strict_redirects'));
-        $this->assertEquals(10, $request->getConfig()->get('max_redirects'));
+        $this->assertTrue($request->getConfig()['redirect']['strict']);
+        $this->assertEquals(10, $request->getConfig()['redirect']['max']);
     }
 
     public function testCanAddCookiesFromHash()

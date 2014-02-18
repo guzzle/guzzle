@@ -180,20 +180,27 @@ class MessageFactory implements MessageFactoryInterface
 
     private function visit_allow_redirects(RequestInterface $request, $value)
     {
+        static $defaultRedirect = [
+            'max'     => 5,
+            'strict'  => false,
+            'referer' => false
+        ];
+
         if ($value === false) {
             return;
         }
 
-        if (isset($value['max'])) {
-            $request->getConfig()['max_redirects'] = $value['max'];
-            if (isset($value['strict']) and $value['strict']) {
-                $request->getConfig()['strict_redirects'] = true;
-            }
-        } elseif ($value !== true) {
+        if ($value === true) {
+            $value = $defaultRedirect;
+        } elseif (!isset($value['max'])) {
             throw new \InvalidArgumentException('allow_redirects must be'
                 . 'true, false, or an array that contains the \'max\' key');
+        } else {
+            // Merge the default settings with the provided settings
+            $value += $defaultRedirect;
         }
 
+        $request->getConfig()['redirect'] = $value;
         $request->getEmitter()->addSubscriber($this->redirectPlugin);
     }
 
