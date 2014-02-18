@@ -1,6 +1,6 @@
 <?php
 
-namespace GuzzleHttp\Message\Post;
+namespace GuzzleHttp\Post;
 
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Stream\StreamInterface;

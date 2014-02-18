@@ -1,12 +1,12 @@
 <?php
 
-namespace GuzzleHttp\Tests\Message\Post;
+namespace GuzzleHttp\Tests\Post;
 
-use GuzzleHttp\Message\Post\MultipartBody;
-use GuzzleHttp\Message\Post\PostFile;
+use GuzzleHttp\Post\MultipartBody;
+use GuzzleHttp\Post\PostFile;
 
 /**
- * @covers GuzzleHttp\Message\Post\MultipartBody
+ * @covers GuzzleHttp\Post\MultipartBody
  */
 class MultipartBodyTest extends \PHPUnit_Framework_TestCase
 {

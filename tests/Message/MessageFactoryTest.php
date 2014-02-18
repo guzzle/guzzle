@@ -3,7 +3,7 @@
 namespace GuzzleHttp\Tests\Message;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Message\Post\PostFile;
+use GuzzleHttp\Post\PostFile;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Subscriber\Cookie;
@@ -65,7 +65,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
                 'ghi' => $pfi
             ]
         ]);
-        $this->assertInstanceOf('GuzzleHttp\Message\Post\PostBody', $req->getBody());
+        $this->assertInstanceOf('GuzzleHttp\Post\PostBody', $req->getBody());
         $s = (string) $req;
         $this->assertContains('testCreatesRequestWithPostBodyAndPostFiles', $s);
         $this->assertContains('multipart/form-data', $s);

@@ -5,7 +5,7 @@ namespace GuzzleHttp\Subscriber\Oauth;
 use GuzzleHttp\Collection;
 use GuzzleHttp\Event\SubscriberInterface;
 use GuzzleHttp\Event\BeforeEvent;
-use GuzzleHttp\Message\Post\PostBodyInterface;
+use GuzzleHttp\Post\PostBodyInterface;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Query;
 use GuzzleHttp\Url;

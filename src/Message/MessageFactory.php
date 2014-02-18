@@ -2,13 +2,13 @@
 
 namespace GuzzleHttp\Message;
 
-use GuzzleHttp\Message\Post\PostFileInterface;
+use GuzzleHttp\Post\PostFileInterface;
 use GuzzleHttp\Subscriber\Cookie;
 use GuzzleHttp\CookieJar\ArrayCookieJar;
 use GuzzleHttp\CookieJar\CookieJarInterface;
 use GuzzleHttp\Subscriber\HttpError;
-use GuzzleHttp\Message\Post\PostBody;
-use GuzzleHttp\Message\Post\PostFile;
+use GuzzleHttp\Post\PostBody;
+use GuzzleHttp\Post\PostFile;
 use GuzzleHttp\Subscriber\Redirect;
 use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Query;

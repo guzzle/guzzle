@@ -5,7 +5,7 @@ namespace GuzzleHttp\Subscriber;
 use GuzzleHttp\Event\SubscriberInterface;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Event\BeforeEvent;
-use GuzzleHttp\Message\Post\PostBodyInterface;
+use GuzzleHttp\Post\PostBodyInterface;
 use GuzzleHttp\Stream\StreamInterface;
 
 /**

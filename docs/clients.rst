@@ -304,7 +304,7 @@ body
     - string
     - ``fopen()`` resource
     - ``GuzzleHttp\Stream\StreamInterface``
-    - ``GuzzleHttp\Message\Post\PostBodyInterface``
+    - ``GuzzleHttp\Post\PostBodyInterface``
 :Default: None
 
 This setting can be set to any of the following types:
@@ -327,7 +327,7 @@ This setting can be set to any of the following types:
 - Array
 
   Use an array to send POST style requests that use a
-  ``GuzzleHttp\Message\Post\PostBodyInterface`` object as the body.
+  ``GuzzleHttp\Post\PostBodyInterface`` object as the body.
 
   .. code-block:: php
 

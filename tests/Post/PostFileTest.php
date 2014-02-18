@@ -1,19 +1,19 @@
 <?php
 
-namespace GuzzleHttp\Tests\Message\Post;
+namespace GuzzleHttp\Tests\Post;
 
-use GuzzleHttp\Message\Post\PostFile;
+use GuzzleHttp\Post\PostFile;
 use GuzzleHttp\Stream\Stream;
 
 /**
- * @covers GuzzleHttp\Message\Post\PostFile
+ * @covers GuzzleHttp\Post\PostFile
  */
 class PostFileTest extends \PHPUnit_Framework_TestCase
 {
     public function testCreatesFromString()
     {
         $p = new PostFile('foo', 'hi', '/path/to/test.php');
-        $this->assertInstanceOf('GuzzleHttp\Message\Post\PostFileInterface', $p);
+        $this->assertInstanceOf('GuzzleHttp\Post\PostFileInterface', $p);
         $this->assertEquals('hi', $p->getContent());
         $this->assertEquals('foo', $p->getName());
         $this->assertEquals('/path/to/test.php', $p->getFilename());
@@ -34,7 +34,7 @@ class PostFileTest extends \PHPUnit_Framework_TestCase
 
     public function testCreatesFromMultipartFormData()
     {
-        $mp = $this->getMockBuilder('GuzzleHttp\Message\Post\MultipartBody')
+        $mp = $this->getMockBuilder('GuzzleHttp\Post\MultipartBody')
             ->setMethods(['getBoundary'])
             ->disableOriginalConstructor()
             ->getMock();

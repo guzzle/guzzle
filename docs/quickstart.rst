@@ -309,7 +309,7 @@ You can also build up POST requests before sending them.
     $request = $client->createRequest('POST', 'http://httpbin.org/post');
     $postBody = $request->getBody();
 
-    // $postBody is an instance of GuzzleHttp\Message\Post\PostBodyInterface
+    // $postBody is an instance of GuzzleHttp\Post\PostBodyInterface
     $postBody->setField('foo', 'bar');
     echo $postBody->getField('foo');
     // 'bar'
@@ -327,11 +327,11 @@ Sending ``multipart/form-data`` POST requests (POST requests that contain
 files) is the same as sending ``application/x-www-form-urlencoded``, except
 some of the array values of the POST fields map to PHP ``fopen`` resources, or
 ``GuzzleHttp\Stream\StreamInterface``, or
-``GuzzleHttp\Message\Post\PostFileInterface`` objects.
+``GuzzleHttp\Post\PostFileInterface`` objects.
 
 .. code-block:: php
 
-    use GuzzleHttp\Message\Post\PostFile;
+    use GuzzleHttp\Post\PostFile;
 
     $response = $client->post('http://httpbin.org/post', [
         'body' => [
@@ -346,7 +346,7 @@ files before sending them.
 
 .. code-block:: php
 
-    use GuzzleHttp\Message\Post\PostFile;
+    use GuzzleHttp\Post\PostFile;
 
     $request = $client->createRequest('POST', 'http://httpbin.org/post');
     $postBody = $request->getBody();

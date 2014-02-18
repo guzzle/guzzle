@@ -27,7 +27,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
     {
         $s = new PrepareRequestBody();
         $t = $this->getTrans();
-        $p = $this->getMockBuilder('GuzzleHttp\Message\Post\PostBody')
+        $p = $this->getMockBuilder('GuzzleHttp\Post\PostBody')
             ->setMethods(['applyRequestHeaders'])
             ->getMockForAbstractClass();
         $p->expects($this->once())

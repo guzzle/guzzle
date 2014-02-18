@@ -150,8 +150,8 @@ events that are emitted over the lifecycle of a request.
 - `GuzzleHttp\Message\RequestFactoryInterface` has been renamed to `GuzzleHttp\Message\MessageFactoryInterface`. This
   interface is used to create both requests and responses and is implemented in `GuzzleHttp\Message\MessageFactory`.
 - POST field and file methods have been removed from the request object. You must now use the methods made available to
-  `GuzzleHttp\Message\Post\PostBodyInterface` to control the format of a POST body. Requests that are created using
-  a standard `GuzzleHttp\Message\MessageFactoryInterface` will automatically use a `GuzzleHttp\Message\Post\PostBody`
+  `GuzzleHttp\Post\PostBodyInterface` to control the format of a POST body. Requests that are created using
+  a standard `GuzzleHttp\Message\MessageFactoryInterface` will automatically use a `GuzzleHttp\Post\PostBody`
   body if the body was passed as an array or if the method is POST and no body is provided.
 
 ```php
@@ -164,8 +164,8 @@ $request->getBody()->addFile(new PostFile('file_key', fopen('/path/to/content', 
 
 - `GuzzleHttp\Message\Header` has been moved to `GuzzleHttp\Message\HeaderValues`, and the interface has changed to
   now use `\ArrayAccess` methods like `offsetGet` and `offsetSet`.
-- `GuzzleHttp\Message\PostFile` and `GuzzleHttp\Message\PostFileInterface` have been moved to
-  `GuzzleHttp\Message\Post`. This interface has been simplified and now allows the addition of arbitrary headers via
+- `GuzzleHttp\PostFile` and `GuzzleHttp\PostFileInterface` have been moved to
+  `GuzzleHttp\Post`. This interface has been simplified and now allows the addition of arbitrary headers via
    the `GuzzleHttp\Message\HasHeadersInterface` interface.
 - Custom headers like `GuzzleHttp\Message\Header\Link` have been removed. Most of the custom headers are now handled
   separately in specific subscribers/plugins, and `GuzzleHttp\Message\HeaderValues::parseParams()` has been updated to

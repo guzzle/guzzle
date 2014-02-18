@@ -1,14 +1,14 @@
 <?php
 
-namespace GuzzleHttp\Tests\Message\Post;
+namespace GuzzleHttp\Tests\Post;
 
-use GuzzleHttp\Message\Post\PostBody;
+use GuzzleHttp\Post\PostBody;
 use GuzzleHttp\Message\Request;
-use GuzzleHttp\Message\Post\PostFile;
+use GuzzleHttp\Post\PostFile;
 use GuzzleHttp\Query;
 
 /**
- * @covers GuzzleHttp\Message\Post\PostBody
+ * @covers GuzzleHttp\Post\PostBody
  */
 class PostBodyTest extends \PHPUnit_Framework_TestCase
 {
