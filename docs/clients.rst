@@ -51,9 +51,10 @@ message_factory
     (``GuzzleHttp\Message\MessageFactoryInterface``).
 
 defaults
-    Specified an associative array of request options that are applied to every
-    request created by the client. This allows you to, for example, specifies
-    an array of headers that are sent with every request.
+    Associative array of :ref:`request-options` that are applied to every
+    request created by the client. This allows you to specify things like
+    default headers (e.g., User-Agent), default query string parameters, SSL
+    configurations, and any other supported request options.
 
 Here's an example of creating a client with various options, including using
 a mock adapter that just returns the result of a callable function and a
@@ -104,14 +105,8 @@ associative array of :ref:`request-options` as the second argument.
 Error Handling
 --------------
 
-Errors can be encountered during a transfer. When a recoverable error is
-encountered while calling the ``send()`` method of a client, a
-``GuzzleHttp\Exception\RequestException`` is thrown. If the ``exceptions``
-request option is not disabled, then exceptions are thrown for HTTP protocol
-errors as well: ``GuzzleHttp\Exception\ClientErrorResponseException`` for
-400 level HTTP responses and ``GuzzleHttp\Exception\ServerException`` for
-500 level responses, both of which extend from
-``GuzzleHttp\Exception\BadResponseException``.
+When a recoverable error is encountered while calling the ``send()`` method of
+a client, a ``GuzzleHttp\Exception\RequestException`` is thrown.
 
 .. code-block:: php
 
@@ -129,13 +124,25 @@ errors as well: ``GuzzleHttp\Exception\ClientErrorResponseException`` for
         }
     }
 
-A ``GuzzleHttp\Exception\RequestException`` always contains a
+``GuzzleHttp\Exception\RequestException`` always contains a
 ``GuzzleHttp\Message\RequestInterface`` object that can be accessed using the
-exception's ``getRequest()`` method. In the event of a networking error, no
-response will be received. You can check if a ``RequestException`` has a
-response using the ``hasResponse()`` method. If the exception has a response,
-then you can access the ``GuzzleHttp\Message\ResponseInterface`` using the
-``getResponse()`` method of the exception.
+exception's ``getRequest()`` method.
+
+A response might be present in the exception. In the event of a networking
+error, no response will be received. You can check if a ``RequestException``
+has a response using the ``hasResponse()`` method. If the exception has a
+response, then you can access the associated
+``GuzzleHttp\Message\ResponseInterface`` using the ``getResponse()`` method of
+the exception.
+
+HTTP Errors
+~~~~~~~~~~~
+
+If the ``exceptions`` request option is not set to ``false``, then exceptions
+are thrown for HTTP protocol errors as well:
+``GuzzleHttp\Exception\ClientErrorResponseException`` for 4xx level HTTP
+responses and ``GuzzleHttp\Exception\ServerException`` for 5xx level responses,
+both of which extend from ``GuzzleHttp\Exception\BadResponseException``.
 
 Creating Requests
 -----------------
@@ -229,8 +236,6 @@ errors later.
     $errors = [];
     $client->sendAll($requests, [
         'error' => function (ErrorEvent $event) use (&$errors) {
-            echo 'Request failed: ' . $event->getRequest()->getUrl() . "\n";
-            echo $event->getException();
             $errors[] = $event;
         }
     ]);
@@ -500,7 +505,7 @@ allow_redirects
 :Types:
     - bool
     - array
-:Default: ``['max' => 5]``
+:Default: ``['max' => 5, 'strict' => false, 'referer' => true]``
 
 Set to ``false`` to disable redirects.
 
@@ -520,17 +525,19 @@ number of 5 redirects.
     // 200
 
 Pass an associative array containing the 'max' key to specify the maximum
-number of redirects and optionally provide a 'strict' key value to specify
+number of redirects, optionally provide a 'strict' key value to specify
 whether or not to use strict RFC compliant redirects (meaning redirect POST
 requests with POST requests vs. doing what most browsers do which is redirect
-POST requests with GET requests).
+POST requests with GET requests), and optionally provide a 'referer' key to
+specify whether or not the "Referer" header should be added when redirecting.
 
 .. code-block:: php
 
     $res = $client->get('/redirect/3', [
         'allow_redirects' => [
-            'max'    => 10,
-            'strict' => true
+            'max'     => 10,
+            'strict'  => true,
+            'referer' => true
         ]
     ]);
     echo $res->getStatusCode();
@@ -860,8 +867,6 @@ the body of a request is greater than 1 MB and a request is using HTTP/1.1.
     Support for handling the "Expect: 100-Continue" workflow must be
     implemented by Guzzle HTTP adapters used by a client.
 
-.. _custom-options:
-
 version
 -------
 
@@ -876,10 +881,12 @@ version
     echo $request->getProtocolVersion();
     // 1.0
 
-options
--------
+.. _custom-options:
 
-:Summary: Associative array of options that are forwarded to a request's
+config
+------
+
+:Summary: Associative array of config options that are forwarded to a request's
     configuration collection. These values are used as configuration options
     that can be consumed by plugins and adapters.
 :Types: array
@@ -887,20 +894,20 @@ options
 
 .. code-block:: php
 
-    $request = $client->createRequest('GET', '/get', ['options' => ['foo' => 'bar']]);
+    $request = $client->createRequest('GET', '/get', ['config' => ['foo' => 'bar']]);
     echo $request->getConfig('foo');
     // 'bar'
 
 Some HTTP adapters allow you to specify custom adapter-specific settings. For
 example, you can pass custom cURL options to requests by passing an associative
-array in the ``options`` request option under the ``curl`` key.
+array in the ``config`` request option under the ``curl`` key.
 
 .. code-block:: php
 
     // Use custom cURL options with the request. This example uses NTLM auth
     // to authenticate with a server.
     $client->get('/', [
-        'options' => [
+        'config' => [
             'curl' => [
                 CURLOPT_HTTPAUTH => CURLAUTH_NTLM,
                 CURLOPT_USERPWD  => 'username:password'

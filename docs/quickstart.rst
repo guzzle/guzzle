@@ -41,9 +41,9 @@ the function that maps to the HTTP method name.
 Creating a Client
 -----------------
 
-It's pretty simple, but it's not very testable. This procedural API is best
-left for quick prototyping. If you want to use Guzzle in a more flexible and
-testable way, then you'll need to use a ``GuzzleHttp\ClientInterface`` object.
+The procedural API is simple but not very testable; it's best left for quick
+prototyping. If you want to use Guzzle in a more flexible and testable way,
+then you'll need to use a ``GuzzleHttp\ClientInterface`` object.
 
 .. code-block:: php
 
@@ -77,7 +77,7 @@ documentation.
 Using Responses
 ===============
 
-In the previos examples, we retrieved a ``$response`` variable. This value is
+In the previous examples, we retrieved a ``$response`` variable. This value is
 actually a ``GuzzleHttp\Message\ResponseInterface`` object and contains lots
 of helpful information.
 
@@ -115,7 +115,8 @@ You can also read read bytes from body of a response like a stream.
 JSON Responses
 ~~~~~~~~~~~~~~
 
-There's a built-in JSON parser that can be used when working with JSON data.
+You can more easily work with JSON responses using the ``json()`` method of a
+response.
 
 .. code-block:: php
 
@@ -123,13 +124,15 @@ There's a built-in JSON parser that can be used when working with JSON data.
     $json = $response->json();
     var_dump($json[0]['repository']);
 
-If Guzzle is unable to parse the JSON response body, then a
+Guzzle internally uses PHP's ``json_decode()`` function to parse responses. If
+Guzzle is unable to parse the JSON response body, then a
 ``GuzzleHttp\Exception\ParseException`` is thrown.
 
 XML Responses
 ~~~~~~~~~~~~~
 
-There's a built-in XML parser that can be used when working with XML data.
+You can use a response's ``xml()`` method to more easily work with responses
+that contain XML data.
 
 .. code-block:: php
 
@@ -138,7 +141,8 @@ There's a built-in XML parser that can be used when working with XML data.
     echo $xml->id;
     // tag:github.com,2008:/mtdowling
 
-If Guzzle is unable to parse the XML response body, then a
+Guzzle internally uses a ``SimpleXMLElement`` object to parse responses. If
+Guzzle is unable to parse the XML response body, then a
 ``GuzzleHttp\Exception\ParseException`` is thrown.
 
 Query String Parameters

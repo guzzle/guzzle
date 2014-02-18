@@ -93,7 +93,7 @@ that might not be part of RFC 2616 (like "MOVE").
 
 .. code-block:: php
 
-    // Create a request using a complete custom HTTP method
+    // Create a request using a completely custom HTTP method
     $request = $client->createRequest('MOVE', 'http://httpbin.org/move', ['exceptions' => false]);
 
     echo $request->getMethod();
@@ -106,13 +106,13 @@ that might not be part of RFC 2616 (like "MOVE").
 You can create and send a request using methods on a client that map to the
 HTTP method you wish to use.
 
-- GET => ``get()``
-- POST => ``post()``
-- HEAD => ``head()``
-- PUT => ``put()``
-- DELETE => ``delete()``
-- OPTIONS => ``options()``
-- PATCH => ``patch()``
+:GET: ``$client->get('http://httpbin.org/get', [/** options **/])``
+:POST: ``$client->post('http://httpbin.org/post', [/** options **/])``
+:HEAD: ``$client->head('http://httpbin.org/get', [/** options **/])``
+:PUT: ``$client->put('http://httpbin.org/put', [/** options **/])``
+:DELETE: ``$client->delete('http://httpbin.org/delete', [/** options **/])``
+:OPTIONS: ``$client->options('http://httpbin.org/get', [/** options **/])``
+:PATCH: ``$client->get('http://httpbin.org/put', [/** options **/])``
 
 .. code-block:: php
 
