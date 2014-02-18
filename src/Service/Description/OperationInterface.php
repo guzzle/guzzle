@@ -3,21 +3,21 @@
 namespace GuzzleHttp\Service\Description;
 
 /**
- * Interface defining data objects that hold the information of an API operation
+ * Interface defining API operations.
  */
 interface OperationInterface extends NodeInterface
 {
     /**
      * Get the input data of the operation
      *
-     * @return array
+     * @return NodeInterface
      */
     public function getInput();
 
     /**
      * Get the output data of the operation
      *
-     * @return array
+     * @return NodeInterface
      */
     public function getOutput();
 
@@ -29,39 +29,13 @@ interface OperationInterface extends NodeInterface
     public function getErrors();
 
     /**
-     * Get the HTTP method of the operation
+     * Get the HTTP trait of the operation.
      *
-     * @return string|null
+     * @return array Returns an associative array containing the following keys
+     *     - "method": The HTTP method to send
+     *     - "requestUri": The URI of the request to send
      */
-    public function getHttpMethod();
-
-    /**
-     * Get the URI that will be merged into the generated request
-     *
-     * @return string
-     */
-    public function getUri();
-
-    /**
-     * Get a short summary of what the operation does
-     *
-     * @return string|null
-     */
-    public function getSummary();
-
-    /**
-     * Get the documentation URL of the operation
-     *
-     * @return string|null
-     */
-    public function getDocumentationUrl();
-
-    /**
-     * Get notes about the response of the operation
-     *
-     * @return string|null
-     */
-    public function getResponseNotes();
+    public function getHttp();
 
     /**
      * Get whether or not the operation is deprecated

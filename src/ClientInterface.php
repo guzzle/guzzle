@@ -128,9 +128,11 @@ interface ClientInterface extends HasEmitterInterface
     /**
      * Get a client configuration value.
      *
-     * @param string|int|null $keyOrPath The Path to a particular configuration value. The syntax uses a path notation
-     *                                   that allows you to retrieve nested array values without throwing warnings.
-     *                                   For example, ``$client->getConfig('defaults/headers/content-type')``.
+     * @param string|int|null $keyOrPath The Path to a particular configuration
+     *     value. The syntax uses a path notation that allows you to retrieve
+     *     nested array values without throwing warnings. For example,
+     *     ``$client->getConfig('defaults/headers/content-type')``.
+     *
      * @return mixed
      */
     public function getConfig($keyOrPath = null);
@@ -138,10 +140,13 @@ interface ClientInterface extends HasEmitterInterface
     /**
      * Set a client configuration value at the specified configuration path.
      *
-     * Any value can be set for any path, but the common values are ``base_url`` and ``defaults``.
+     * Any value can be set for any path, but the common values are
+     * ``base_url`` and ``defaults``.
      *
-     * @param string|int $keyOrPath Path at which to change a configuration value. This path syntax follows the same
-     *                              path syntax specified in {@see getConfig}.
+     * @param string|int $keyOrPath Path at which to change a configuration
+     *     value. This path syntax follows the same path syntax specified in
+     *     {@see getConfig}.
+     *
      * @param mixed $value Value to set
      */
     public function setConfig($keyOrPath, $value);

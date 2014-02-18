@@ -17,11 +17,11 @@ interface NodeInterface extends ToArrayInterface
     public function getName();
 
     /**
-     * Get a description of the node
+     * Get the documentation of the node
      *
      * @return string|null
      */
-    public function getDescription();
+    public function getDocumentation();
 
     /**
      * Get extra data from the node
@@ -31,11 +31,4 @@ interface NodeInterface extends ToArrayInterface
      * @return array|mixed|null
      */
     public function getMetadata($name = null);
-
-    /**
-     * Get all of the members of the node
-     *
-     * @return array
-     */
-    public function getMembers();
 }

@@ -3,33 +3,18 @@
 namespace GuzzleHttp\Service\Description;
 
 /**
- * A ServiceDescription stores service information based on a service document
+ * A ServiceDescription stores information about a web service.
  */
-interface DescriptionInterface extends NodeInterface
+interface DescriptionInterface
 {
     /**
-     * Get the basePath/baseUrl of the description
+     * Get metadata from the description.
      *
-     * @return string
+     * @param string $key Data to retrieve
+     *
+     * @return null|mixed Returns the value or null if the value does not exist
      */
-    public function getBaseUrl();
-
-    /**
-     * Get the API version of the service
-     *
-     * @return string
-     */
-    public function getApiVersion();
-
-    /**
-     * Set arbitrary data on the service description
-     *
-     * @param string $key   Data key to set
-     * @param mixed  $value Value to set
-     *
-     * @return self
-     */
-    public function setMetadata($key, $value);
+    public function getMetadata($key);
 
     /**
      * Get the API operations of the service
@@ -56,4 +41,20 @@ interface DescriptionInterface extends NodeInterface
      * @throws \InvalidArgumentException if the operation is not found
      */
     public function getOperation($name);
+
+    /**
+     * Get a shared definition structure.
+     *
+     * @return NodeInterface
+     */
+    public function getDefinition();
+
+    /**
+     * Check if the service description has a definition by name.
+     *
+     * @param string $name Name of the definition to check
+     *
+     * @return bool
+     */
+    public function hasDefinition($name);
 }
