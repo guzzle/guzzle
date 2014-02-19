@@ -44,10 +44,10 @@ interface ServiceClientInterface extends HasEmitterInterface
      * @param array|\Iterator $commands Array or iterator that contains
      *     CommandInterface objects to execute.
      * @param array $options Associative array of options
-     *     - parallel: (int) Max number of commands to send in parallel
-     *     - before: (callable) Receives a CommandBeforeEvent
-     *     - after: (callable) Receives a CommandCompleteEvent
+     *     - prepare: (callable) Receives a CommandPrepareEvent
+     *     - process: (callable) Receives a CommandProcessEvent
      *     - error: (callable) Receives a CommandErrorEvent
+     *     - parallel: (int) Max number of commands to send in parallel
      */
     public function executeAll($commands, array $options = []);
 
