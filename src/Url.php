@@ -88,16 +88,23 @@ class Url
 
         // Add the path component if present
         if (isset($parts['path']) && strlen($parts['path'])) {
-            // Always ensure that the path begins with '/' if set and something is before the path
-            if ($url && $parts['path'][0] != '/' && substr($url, -1) != '/') {
+            // Always ensure that the path begins with '/' if set and something
+            // is before the path
+            if (isset($parts['host']) &&
+                $parts['path'][0] != '/' &&
+                substr($url, -1) != '/'
+            ) {
                 $url .= '/';
             }
             $url .= $parts['path'];
         }
 
         // Add the query string if present
-        if (isset($parts['query']) && strlen($parts['query'])) {
-            $url .= '?' . $parts['query'];
+        if (isset($parts['query'])) {
+            $queryStr = (string) $parts['query'];
+            if ($queryStr || $queryStr === '0') {
+                $url .= '?' . $queryStr;
+            }
         }
 
         // Ensure that # is only added to the url if fragment contains anything.
@@ -170,13 +177,13 @@ class Url
     public function getParts()
     {
         return array(
-            'scheme' => $this->scheme,
-            'user' => $this->username,
-            'pass' => $this->password,
-            'host' => $this->host,
-            'port' => $this->port,
-            'path' => $this->getPath(),
-            'query' => (string) $this->query,
+            'scheme'   => $this->scheme,
+            'user'     => $this->username,
+            'pass'     => $this->password,
+            'host'     => $this->host,
+            'port'     => $this->port,
+            'path'     => $this->path,
+            'query'    => $this->query,
             'fragment' => $this->fragment,
         );
     }
@@ -298,7 +305,10 @@ class Url
      */
     public function removeDotSegments()
     {
-        if (!$this->path || $this->path == '/' || $this->path == '*') {
+        static $noopPaths = ['' => true, '/' => true, '*' => true];
+        static $ignoreSegments = ['' => true, '.' => true, '..' => true];
+
+        if (isset($noopPaths[$this->path])) {
             return $this;
         }
 
@@ -307,16 +317,20 @@ class Url
         foreach ($segments as $segment) {
             if ($segment == '..') {
                 array_pop($results);
-            } elseif ($segment != '.' && $segment != '') {
+            } elseif (!isset($ignoreSegments[$segment])) {
                 $results[] = $segment;
             }
         }
 
         // Combine the normalized parts and add the leading slash if needed
-        $this->path = ($this->path[0] == '/' ? '/' : '') . implode('/', $results);
+        if ($this->path[0] == '/') {
+            $this->path = '/' . implode('/', $results);
+        } else {
+            $this->path = implode('/', $results);
+        }
 
         // Add the trailing slash if necessary
-        if ($this->path != '/' && end($segments) == '') {
+        if ($this->path != '/' && isset($ignoreSegments[end($segments)])) {
             $this->path .= '/';
         }
 
@@ -481,7 +495,9 @@ class Url
     }
 
     /**
-     * Combine the URL with another URL. Follows the rules specific in RFC 3986 section 5.4.
+     * Combine the URL with another URL and return a new URL instance.
+     *
+     * Follows the rules specific in RFC 3986 section 5.4.
      *
      * @param string $url Relative URL to combine with
      *
@@ -498,50 +514,68 @@ class Url
             $url = $url->combine($this);
         }
 
+        $parts = $url->getParts();
+
         // Passing a URL with a scheme overrides everything
-        if ($buffer = $url->getScheme()) {
-            $this->scheme = $buffer;
-            $this->host = $url->getHost();
-            $this->port = $url->getPort();
-            $this->username = $url->getUsername();
-            $this->password = $url->getPassword();
-            $this->path = $url->getPath();
-            $this->query = $url->getQuery();
-            $this->fragment = $url->getFragment();
-            return $this;
+        if ($parts['scheme']) {
+            return new static(
+                $parts['scheme'],
+                $parts['host'],
+                $parts['user'],
+                $parts['pass'],
+                $parts['port'],
+                $parts['path'],
+                clone $parts['query'],
+                $parts['fragment']
+            );
         }
 
         // Setting a host overrides the entire rest of the URL
-        if ($buffer = $url->getHost()) {
-            $this->host = $buffer;
-            $this->port = $url->getPort();
-            $this->username = $url->getUsername();
-            $this->password = $url->getPassword();
-            $this->path = $url->getPath();
-            $this->query = $url->getQuery();
-            $this->fragment = $url->getFragment();
-            return $this;
+        if ($parts['host']) {
+            return new static(
+                $this->scheme,
+                $parts['host'],
+                $parts['user'],
+                $parts['pass'],
+                $parts['port'],
+                $parts['path'],
+                clone $parts['query'],
+                $parts['fragment']
+            );
         }
 
-        $path = $url->getPath();
-        $query = $url->getQuery();
-
-        if (!$path) {
-            if (count($query)) {
-                $this->query = $query;
-            }
+        if (!$parts['path']) {
+            // The relative URL has no path, so check if it is just a query
+            $path = $this->path ?: '';
+            $query = count($parts['query']) ? $parts['query'] : $this->query;
         } else {
-            if ($path[0] == '/') {
-                $this->path = $path;
+            $query = $parts['query'];
+            if ($parts['path'][0] == '/' || !$this->path) {
+                // Overwrite the existing path if the rel path starts with "/"
+                $path = $parts['path'];
             } else {
-                $this->path .= '/../' . $path;
+                // If the relative URL does not have a path or the base URL
+                // path does not end in a "/" then overwrite the existing path
+                // up to the last "/"
+                $path = substr($this->path, 0, strrpos($this->path, '/') + 1) . $parts['path'];
             }
-            $this->removeDotSegments();
-            $this->query = $query;
         }
 
-        $this->fragment = $url->getFragment();
+        $result = new self(
+            $this->scheme,
+            $this->host,
+            $this->username,
+            $this->password,
+            $this->port,
+            $path,
+            clone $query,
+            $parts['fragment']
+        );
 
-        return $this;
+        if ($path) {
+            $result->removeDotSegments();
+        }
+
+        return $result;
     }
 }

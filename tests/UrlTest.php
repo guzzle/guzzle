@@ -10,6 +10,8 @@ use GuzzleHttp\Url;
  */
 class UrlTest extends \PHPUnit_Framework_TestCase
 {
+    const RFC3986_BASE = "http://a/b/c/d;p?q";
+
     public function testEmptyUrl()
     {
         $url = Url::fromString('');
@@ -143,19 +145,59 @@ class UrlTest extends \PHPUnit_Framework_TestCase
      */
     public function urlCombineDataProvider()
     {
-        return array(
-            array('http://www.example.com/', 'http://www.example.com/', 'http://www.example.com/'),
-            array('http://www.example.com/path', '/absolute', 'http://www.example.com/absolute'),
-            array('http://www.example.com/path', '/absolute?q=2', 'http://www.example.com/absolute?q=2'),
-            array('http://www.example.com/', '?q=1', 'http://www.example.com/?q=1'),
-            array('http://www.example.com/path', 'http://test.com', 'http://test.com'),
-            array('http://www.example.com:8080/path', 'http://test.com', 'http://test.com'),
-            array('http://www.example.com:8080/path', '?q=2#abc', 'http://www.example.com:8080/path?q=2#abc'),
-            array('http://www.example.com/path', 'http://u:a@www.example.com/', 'http://u:a@www.example.com/'),
-            array('/path?q=2', 'http://www.test.com/', 'http://www.test.com/path?q=2'),
-            array('http://api.flickr.com/services/', 'http://www.flickr.com/services/oauth/access_token', 'http://www.flickr.com/services/oauth/access_token'),
-            array('https://www.example.com/path', '//foo.com/abc', 'https://foo.com/abc'),
-        );
+        return [
+            // Specific test cases
+            ['http://www.example.com/',           'http://www.example.com/', 'http://www.example.com/'],
+            ['http://www.example.com/path',       '/absolute', 'http://www.example.com/absolute'],
+            ['http://www.example.com/path',       '/absolute?q=2', 'http://www.example.com/absolute?q=2'],
+            ['http://www.example.com/',           '?q=1', 'http://www.example.com/?q=1'],
+            ['http://www.example.com/path',       'http://test.com', 'http://test.com'],
+            ['http://www.example.com:8080/path',  'http://test.com', 'http://test.com'],
+            ['http://www.example.com:8080/path',  '?q=2#abc', 'http://www.example.com:8080/path?q=2#abc'],
+            ['http://www.example.com/path',       'http://u:a@www.example.com/', 'http://u:a@www.example.com/'],
+            ['/path?q=2', 'http://www.test.com/', 'http://www.test.com/path?q=2'],
+            ['http://api.flickr.com/services/',   'http://www.flickr.com/services/oauth/access_token', 'http://www.flickr.com/services/oauth/access_token'],
+            ['https://www.example.com/path',       '//foo.com/abc', 'https://foo.com/abc'],
+            // RFC 3986 test cases
+            [self::RFC3986_BASE, 'g:h',           'g:h'],
+            [self::RFC3986_BASE, 'g',             'http://a/b/c/g'],
+            [self::RFC3986_BASE, './g',           'http://a/b/c/g'],
+            [self::RFC3986_BASE, 'g/',            'http://a/b/c/g/'],
+            [self::RFC3986_BASE, '/g',            'http://a/g'],
+            [self::RFC3986_BASE, '//g',           'http://g'],
+            [self::RFC3986_BASE, '?y',            'http://a/b/c/d;p?y'],
+            [self::RFC3986_BASE, 'g?y',           'http://a/b/c/g?y'],
+            [self::RFC3986_BASE, '#s',            'http://a/b/c/d;p?q#s'],
+            [self::RFC3986_BASE, 'g#s',           'http://a/b/c/g#s'],
+            [self::RFC3986_BASE, 'g?y#s',         'http://a/b/c/g?y#s'],
+            [self::RFC3986_BASE, ';x',            'http://a/b/c/;x'],
+            [self::RFC3986_BASE, 'g;x',           'http://a/b/c/g;x'],
+            [self::RFC3986_BASE, 'g;x?y#s',       'http://a/b/c/g;x?y#s'],
+            [self::RFC3986_BASE, '',              self::RFC3986_BASE],
+            [self::RFC3986_BASE, '.',             'http://a/b/c/'],
+            [self::RFC3986_BASE, './',            'http://a/b/c/'],
+            [self::RFC3986_BASE, '..',            'http://a/b/'],
+            [self::RFC3986_BASE, '../',           'http://a/b/'],
+            [self::RFC3986_BASE, '../g',          'http://a/b/g'],
+            [self::RFC3986_BASE, '../..',         'http://a/'],
+            [self::RFC3986_BASE, '../../',        'http://a/'],
+            [self::RFC3986_BASE, '../../g',       'http://a/g'],
+            [self::RFC3986_BASE, '../../../g',    'http://a/g'],
+            [self::RFC3986_BASE, '../../../../g', 'http://a/g'],
+            [self::RFC3986_BASE, '/./g',          'http://a/g'],
+            [self::RFC3986_BASE, '/../g',         'http://a/g'],
+            [self::RFC3986_BASE, 'g.',            'http://a/b/c/g.'],
+            [self::RFC3986_BASE, '.g',            'http://a/b/c/.g'],
+            [self::RFC3986_BASE, 'g..',           'http://a/b/c/g..'],
+            [self::RFC3986_BASE, '..g',           'http://a/b/c/..g'],
+            [self::RFC3986_BASE, './../g',        'http://a/b/g'],
+            [self::RFC3986_BASE, './g/.',         'http://a/b/c/g/'],
+            [self::RFC3986_BASE, 'g/./h',         'http://a/b/c/g/h'],
+            [self::RFC3986_BASE, 'g/../h',        'http://a/b/c/h'],
+            [self::RFC3986_BASE, 'g;x=1/./y',     'http://a/b/c/g;x=1/y'],
+            [self::RFC3986_BASE, 'g;x=1/../y',    'http://a/b/c/y'],
+            [self::RFC3986_BASE, 'http:g',        'http:g'],
+        ];
     }
 
     /**
@@ -210,7 +252,6 @@ class UrlTest extends \PHPUnit_Framework_TestCase
             array('/./foo/..', '/'),
             array('/./foo', '/foo'),
             array('/./foo/', '/foo/'),
-            array('/./foo/bar/baz/pho/../..', '/foo/bar'),
             array('*', '*'),
             array('/foo', '/foo'),
             array('/abc/123/../foo/', '/abc/foo/'),

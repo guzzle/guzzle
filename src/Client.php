@@ -220,14 +220,12 @@ class Client implements ClientInterface
             if (substr($url, 0, 4) === 'http') {
                 return (string) $url;
             }
-            $baseUrl = clone $this->baseUrl;
-            return (string) $baseUrl->combine($url);
+            return (string) $this->baseUrl->combine($url);
         } elseif (substr($url[0], 0, 4) == 'http') {
             return \GuzzleHttp\uriTemplate($url[0], $url[1]);
         }
 
-        $baseUrl = clone $this->baseUrl;
-        return (string) $baseUrl->combine(
+        return (string) $this->baseUrl->combine(
             \GuzzleHttp\uriTemplate($url[0], $url[1])
         );
     }
