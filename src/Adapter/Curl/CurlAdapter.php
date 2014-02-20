@@ -3,11 +3,7 @@
 namespace GuzzleHttp\Adapter\Curl;
 
 use GuzzleHttp\Adapter\AdapterInterface;
-use GuzzleHttp\Adapter\ParallelAdapterInterface;
 use GuzzleHttp\Adapter\TransactionInterface;
-use GuzzleHttp\Event\RequestEvents;
-use GuzzleHttp\Exception\AdapterException;
-use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\MessageFactoryInterface;
 
 /**

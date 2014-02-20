@@ -2,6 +2,7 @@
 
 namespace GuzzleHttp;
 
+use GuzzleHttp\Adapter\Curl\MultiAdapter;
 use GuzzleHttp\Event\HasEmitterTrait;
 use GuzzleHttp\Adapter\FakeParallelAdapter;
 use GuzzleHttp\Adapter\ParallelAdapterInterface;
@@ -16,7 +17,6 @@ use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
-use GuzzleHttp\Url;
 
 /**
  * HTTP client
@@ -253,10 +253,11 @@ class Client implements ClientInterface
     {
         if (extension_loaded('curl')) {
             if (!ini_get('allow_url_fopen')) {
-                return $this->parallelAdapter = $this->adapter = new CurlAdapter($this->messageFactory);
+                $this->parallelAdapter = new MultiAdapter($this->messageFactory);
+                return $this->adapter = new CurlAdapter($this->messageFactory);
             } else {
                 // Assume that the parallel adapter will also be this CurlAdapter
-                $this->parallelAdapter = new CurlAdapter($this->messageFactory);
+                $this->parallelAdapter = new MultiAdapter($this->messageFactory);
                 return new StreamingProxyAdapter(
                     new CurlAdapter($this->messageFactory),
                     new StreamAdapter($this->messageFactory)

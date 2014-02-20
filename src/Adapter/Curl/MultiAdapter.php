@@ -1,14 +1,14 @@
 <?php
 
-namespace Guzzle\Http\Adapter\Curl;
+namespace GuzzleHttp\Adapter\Curl;
 
-use Guzzle\Http\Adapter\AdapterInterface;
-use Guzzle\Http\Adapter\ParallelAdapterInterface;
-use Guzzle\Http\Adapter\TransactionInterface;
-use Guzzle\Http\Event\RequestEvents;
-use Guzzle\Http\Exception\AdapterException;
-use Guzzle\Http\Exception\RequestException;
-use Guzzle\Http\Message\MessageFactoryInterface;
+use GuzzleHttp\Adapter\AdapterInterface;
+use GuzzleHttp\Adapter\ParallelAdapterInterface;
+use GuzzleHttp\Adapter\TransactionInterface;
+use GuzzleHttp\Event\RequestEvents;
+use GuzzleHttp\Exception\AdapterException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Message\MessageFactoryInterface;
 
 /**
  * HTTP adapter that uses cURL multi as a transport layer
