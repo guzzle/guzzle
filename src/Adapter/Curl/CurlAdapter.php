@@ -124,8 +124,7 @@ class CurlAdapter implements AdapterInterface
         $id = (int) $handle;
         if (count($this->ownedHandles) > $this->maxHandles) {
             curl_close($this->handles[$id]);
-            unset($this->handles[$id]);
-            unset($this->ownedHandles[$id]);
+            unset($this->handles[$id], $this->ownedHandles[$id]);
         } else {
             $this->ownedHandles[$id] = false;
         }

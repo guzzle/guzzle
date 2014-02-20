@@ -249,12 +249,13 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
      */
     private function releaseMultiHandle($handle)
     {
-        $this->multiOwned[(int) $handle] = false;
+        $id = (int) $handle;
+        $this->multiOwned[$id] = false;
+
         // Prune excessive handles
-        $over = count($this->multiHandles) - 3;
-        while (--$over > -1) {
-            curl_multi_close(array_pop($this->multiHandles));
-            array_pop($this->multiOwned);
+        if (count($this->multiHandles) > 3) {
+            curl_multi_close($this->multiHandles[$id]);
+            unset($this->multiHandles[$id], $this->multiOwned[$id]);
         }
     }
 }
