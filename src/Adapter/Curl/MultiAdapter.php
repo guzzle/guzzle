@@ -164,15 +164,11 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
             RequestEvents::emitBefore($transaction);
             // Only transfer if the request was not intercepted
             if (!$transaction->getResponse()) {
-                try {
-                    $handle = $this->curlFactory->createHandle(
-                        $transaction,
-                        $this->messageFactory
-                    );
-                    $context->addTransaction($transaction, $handle);
-                } catch (RequestException $e) {
-                    RequestEvents::emitError($transaction, $e);
-                }
+                $handle = $this->curlFactory->createHandle(
+                    $transaction,
+                    $this->messageFactory
+                );
+                $context->addTransaction($transaction, $handle);
             }
         } catch (RequestException $e) {
             $this->throwException($e, $context);
