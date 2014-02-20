@@ -104,8 +104,7 @@ trait HasHeadersTrait
     public function removeHeader($header)
     {
         $name = strtolower($header);
-        unset($this->headers[$name]);
-        unset($this->headerNames[$name]);
+        unset($this->headers[$name], $this->headerNames[$name]);
 
         return $this;
     }

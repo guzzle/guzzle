@@ -89,8 +89,7 @@ class CurlFactory
             unset($options[CURLOPT_READFUNCTION]);
         } elseif ($method == 'HEAD') {
             $options[CURLOPT_NOBODY] = true;
-            unset($options[CURLOPT_WRITEFUNCTION]);
-            unset($options[CURLOPT_READFUNCTION]);
+            unset($options[CURLOPT_WRITEFUNCTION], $options[CURLOPT_READFUNCTION]);
         } else {
             $options[CURLOPT_CUSTOMREQUEST] = $method;
             if (!$request->getBody()) {
