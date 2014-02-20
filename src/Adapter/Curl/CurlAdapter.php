@@ -4,6 +4,8 @@ namespace GuzzleHttp\Adapter\Curl;
 
 use GuzzleHttp\Adapter\AdapterInterface;
 use GuzzleHttp\Adapter\TransactionInterface;
+use GuzzleHttp\Event\RequestEvents;
+use GuzzleHttp\Exception\AdapterException;
 use GuzzleHttp\Message\MessageFactoryInterface;
 
 /**
@@ -29,17 +31,25 @@ class CurlAdapter implements AdapterInterface
     /** @var array Array of owned curl easy handles */
     private $ownedHandles = [];
 
+    /** @var int Total number of idle handles to keep in cache */
+    private $maxHandles;
+
     /**
      * @param MessageFactoryInterface $messageFactory
      * @param array                   $options Array of options to use with the adapter
      *     - handle_factory: Optional factory used to create cURL handles
+     *     - max_handles: Maximum number of idle handles (defaults to 5)
      */
     public function __construct(MessageFactoryInterface $messageFactory, array $options = [])
     {
-        $this->handles = [];
-        $this->ownedHandles = [];
+        $this->handles = $this->ownedHandles = [];
         $this->messageFactory = $messageFactory;
-        $this->curlFactory = isset($options['handle_factory']) ? $options['handle_factory'] : new CurlFactory();
+        $this->curlFactory = isset($options['handle_factory'])
+            ? $options['handle_factory']
+            : new CurlFactory();
+        $this->maxHandles = isset($options['max_handles'])
+            ? $options['max_handles']
+            : 5;
     }
 
     public function __destruct()
@@ -53,19 +63,42 @@ class CurlAdapter implements AdapterInterface
 
     public function send(TransactionInterface $transaction)
     {
-        $handle = $this->beforeSend($transaction);
+        RequestEvents::emitBefore($transaction);
+        if ($response = $transaction->getResponse()) {
+            return $response;
+        }
+
+        $handle = $this->curlFactory->createHandle(
+            $transaction,
+            $this->messageFactory,
+            $this->checkoutEasyHandle()
+        );
+
         curl_exec($handle);
-        $this->releaseEasyHandle($handle);
+        $info = curl_getinfo($handle);
+        $info['curl_result'] = curl_errno($handle);
+
+        if ($info['curl_result']) {
+            $this->handleError($transaction, $info, $handle);
+        } else {
+            $this->releaseEasyHandle($handle);
+            RequestEvents::emitComplete($transaction, $info);
+        }
 
         return $transaction->getResponse();
     }
 
-    private function beforeSend(TransactionInterface $transaction)
-    {
-        return $this->curlFactory->createHandle(
+    private function handleError(
+        TransactionInterface $transaction,
+        $info,
+        $handle
+    ) {
+        $error = curl_error($handle);
+        $this->releaseEasyHandle($handle);
+        RequestEvents::emitError(
             $transaction,
-            $this->messageFactory,
-            $this->checkoutEasyHandle()
+            new AdapterException("cURL error {$info['curl_result']}: {$error}"),
+            $info
         );
     }
 
@@ -89,13 +122,12 @@ class CurlAdapter implements AdapterInterface
     private function releaseEasyHandle($handle)
     {
         $id = (int) $handle;
-        $this->ownedHandles[$id] = false;
-
-        // Prune excessive handles
-        if (count($this->ownedHandles) > 5) {
+        if (count($this->ownedHandles) > $this->maxHandles) {
             curl_close($this->handles[$id]);
             unset($this->handles[$id]);
             unset($this->ownedHandles[$id]);
+        } else {
+            $this->ownedHandles[$id] = false;
         }
     }
 }

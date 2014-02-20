@@ -4,7 +4,7 @@ namespace GuzzleHttp\Tests\Adapter\Curl;
 
 require_once __DIR__ . '/../../Server.php';
 
-use GuzzleHttp\Adapter\Curl\CurlAdapter;
+use GuzzleHttp\Adapter\Curl\MultiAdapter;
 use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\CompleteEvent;
@@ -17,9 +17,9 @@ use GuzzleHttp\Tests\Server;
 use GuzzleHttp\Url;
 
 /**
- * @covers GuzzleHttp\Adapter\Curl\CurlAdapter
+ * @covers GuzzleHttp\Adapter\Curl\MultiAdapter
  */
-class CurlAdapterTest extends \PHPUnit_Framework_TestCase
+class MultiAdapterTest extends \PHPUnit_Framework_TestCase
 {
     /** @var \GuzzleHttp\Tests\Server */
     static $server;
@@ -40,7 +40,7 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
         self::$server->flush();
         self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: bar\r\nContent-Length: 0\r\n\r\n");
         $t = new Transaction(new Client(), new Request('GET', self::$server->getUrl()));
-        $a = new CurlAdapter(new MessageFactory());
+        $a = new MultiAdapter(new MessageFactory());
         $response = $a->send($t);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('bar', $response->getHeader('Foo'));
@@ -60,7 +60,7 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
             new Transaction($c, new Request('PUT', self::$server->getUrl())),
             new Transaction($c, new Request('HEAD', self::$server->getUrl()))
         ];
-        $a = new CurlAdapter(new MessageFactory());
+        $a = new MultiAdapter(new MessageFactory());
         $a->sendAll(new \ArrayIterator($transactions), 20);
         foreach ($transactions as $t) {
             $this->assertContains($t->getResponse()->getStatusCode(), [200, 201, 202]);
@@ -79,7 +79,7 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
             ->will($this->throwException(new RequestException('foo', $r)));
 
         $t = new Transaction(new Client(), $r);
-        $a = new CurlAdapter(new MessageFactory(), ['handle_factory' => $f]);
+        $a = new MultiAdapter(new MessageFactory(), ['handle_factory' => $f]);
         $ev = null;
         $r->getEmitter()->on('error', function (ErrorEvent $e) use (&$ev) {
             $ev = $e;
@@ -99,7 +99,7 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
         self::$server->enqueue("HTTP/1.1 201 OK\r\nContent-Length: 0\r\n\r\n");
         $r = new Request('GET', self::$server->getUrl());
         $t = new Transaction(new Client(), $r);
-        $a = new CurlAdapter(new MessageFactory());
+        $a = new MultiAdapter(new MessageFactory());
         $ev = null;
         $r->getEmitter()->on('complete', function (CompleteEvent $e) use (&$ev) {
             $ev = $e;
@@ -116,7 +116,7 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
         self::$server->enqueue("HTTP/1.1 201 OK\r\nContent-Length: 0\r\n\r\n");
         $r = new Request('GET', self::$server->getUrl());
         $t = new Transaction(new Client(), $r);
-        $a = new CurlAdapter(new MessageFactory());
+        $a = new MultiAdapter(new MessageFactory());
         $r->getEmitter()->once('complete', function (CompleteEvent $e) {
             throw new RequestException('Foo', $e->getRequest());
         });
@@ -134,7 +134,7 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
      */
     public function testChecksCurlMultiResult()
     {
-        CurlAdapter::throwMultiError(-2);
+        MultiAdapter::throwMultiError(-2);
     }
 
     public function testChecksForCurlException()
@@ -154,7 +154,7 @@ class CurlAdapterTest extends \PHPUnit_Framework_TestCase
         $context->expects($this->once())
             ->method('throwsExceptions')
             ->will($this->returnValue(true));
-        $a = new CurlAdapter(new MessageFactory());
+        $a = new MultiAdapter(new MessageFactory());
         $r = new \ReflectionMethod($a, 'isCurlException');
         $r->setAccessible(true);
         try {

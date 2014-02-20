@@ -244,29 +244,27 @@ class Client implements ClientInterface
     }
 
     /**
-     * Get a default adapter to use based on the environment
-     *
-     * @return AdapterInterface
+     * Create a default adapter to use based on the environment
      * @throws \RuntimeException
      */
     private function getDefaultAdapter()
     {
         if (extension_loaded('curl')) {
-            if (!ini_get('allow_url_fopen')) {
-                $this->parallelAdapter = new MultiAdapter($this->messageFactory);
-                return $this->adapter = new CurlAdapter($this->messageFactory);
-            } else {
-                // Assume that the parallel adapter will also be this CurlAdapter
-                $this->parallelAdapter = new MultiAdapter($this->messageFactory);
-                return new StreamingProxyAdapter(
-                    new CurlAdapter($this->messageFactory),
+            $this->parallelAdapter = new MultiAdapter($this->messageFactory);
+            $this->adapter = function_exists('curl_reset')
+                ? new CurlAdapter($this->messageFactory)
+                : $this->parallelAdapter;
+            if (ini_get('allow_url_fopen')) {
+                $this->adapter = new StreamingProxyAdapter(
+                    $this->adapter,
                     new StreamAdapter($this->messageFactory)
                 );
             }
         } elseif (ini_get('allow_url_fopen')) {
-            return new StreamAdapter($this->messageFactory);
+            $this->adapter = new StreamAdapter($this->messageFactory);
         } else {
-            throw new \RuntimeException('The curl extension must be installed or you must set allow_url_fopen to true');
+            throw new \RuntimeException('Guzzle require\'s cURL, the '
+                . 'allow_url_fopen ini setting, or a custom HTTP adapter.');
         }
     }
 
@@ -311,7 +309,7 @@ class Client implements ClientInterface
             $this->adapter = $config['adapter'];
             unset($config['adapter']);
         } else {
-            $this->adapter = $this->getDefaultAdapter();
+            $this->getDefaultAdapter();
         }
         // If no parallel adapter was explicitly provided and one was not
         // defaulted when creating the default adapter, then create one now.
