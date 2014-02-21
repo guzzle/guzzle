@@ -6,21 +6,6 @@ use GuzzleHttp\Service\Description\DescriptionInterface;
 
 class GuzzleDescription implements DescriptionInterface
 {
-    public function getBaseUrl()
-    {
-
-    }
-
-    public function getApiVersion()
-    {
-
-    }
-
-    public function setMetadata($key, $value)
-    {
-
-    }
-
     public function getOperations()
     {
 
@@ -36,27 +21,17 @@ class GuzzleDescription implements DescriptionInterface
 
     }
 
-    public function getName()
-    {
-
-    }
-
-    public function getMembers()
-    {
-
-    }
-
     public function getMetadata($name = null)
     {
 
     }
 
-    public function getDescription()
+    public function hasDefinition($name)
     {
 
     }
 
-    public function toArray()
+    public function getDefinition($name)
     {
 
     }

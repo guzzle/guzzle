@@ -45,9 +45,11 @@ interface DescriptionInterface
     /**
      * Get a shared definition structure.
      *
+     * @param string $name Name of the definition to retrieve
+     *
      * @return NodeInterface
      */
-    public function getDefinition();
+    public function getDefinition($name);
 
     /**
      * Check if the service description has a definition by name.

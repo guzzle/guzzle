@@ -5,7 +5,6 @@ namespace GuzzleHttp\Service;
 use GuzzleHttp\Event\HasEmitterInterface;
 use GuzzleHttp\ToArrayInterface;
 use GuzzleHttp\Service\Description\OperationInterface;
-use GuzzleHttp\Message\RequestInterface;
 
 /**
  * A command object manages input and output of an operation using an
@@ -24,13 +23,4 @@ interface CommandInterface extends \ArrayAccess, ToArrayInterface, HasEmitterInt
      * @return OperationInterface
      */
     public function getOperation();
-
-    /**
-     * Prepares the command for sending
-     *
-     * If the command has not been prepared, it is prepared when called.
-     *
-     * @return RequestInterface Returns the request that will be sent
-     */
-    public function prepare();
 }
