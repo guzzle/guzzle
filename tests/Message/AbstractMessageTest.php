@@ -139,7 +139,8 @@ class AbstractMessageTest extends \PHPUnit_Framework_TestCase
      */
     public function testParseParams($header, $result)
     {
-        $this->assertEquals($result, Message::parseHeader([$header]));
+        $request = new Request('GET', '/', ['foo' => $header]);
+        $this->assertEquals($result, Message::parseHeader($request, 'foo'));
     }
 }
 

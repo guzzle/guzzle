@@ -72,16 +72,17 @@ abstract class AbstractMessage implements MessageInterface
      * data of the header. When a parameter does not contain a value, but just
      * contains a key, this function will inject a key with a '' string value.
      *
-     * @param array $values Header values to parse into a parameter array.
+     * @param HasHeadersInterface $message That contains the header
+     * @param string              $header  Header to retrieve from the message
      *
-     * @return array
+     * @return array Returns the parsed header values.
      */
-    public static function parseHeader(array $values)
+    public static function parseHeader(HasHeadersInterface $message, $header)
     {
         static $trimmed = "\"'  \n\t\r";
         $params = $matches = [];
 
-        foreach (self::normalizeHeader($values) as $val) {
+        foreach (self::normalizeHeader($message, $header) as $val) {
             $part = [];
             foreach (preg_split('/;(?=([^"]*"[^"]*")*[^"]*$)/', $val) as $kvp) {
                 if (preg_match_all('/<[^>]+>|[^=]+/', $kvp, $matches)) {
@@ -105,12 +106,14 @@ abstract class AbstractMessage implements MessageInterface
      * Converts an array of header values that may contain comma separated
      * headers into an array of headers with no comma separated values.
      *
-     * @param array $values Header values to parse
+     * @param HasHeadersInterface $message That contains the header
+     * @param string              $header  Header to retrieve from the message
      *
-     * @return array
+     * @return array Returns the normalized header field values.
      */
-    public static function normalizeHeader($values)
+    public static function normalizeHeader(HasHeadersInterface $message, $header)
     {
+        $values = $message->getHeader($header, true);
         for ($i = 0, $total = count($values); $i < $total; $i++) {
             if (strpos($values[$i], ',') !== false) {
                 foreach (preg_split('/,(?=([^"]*"[^"]*")*[^"]*$)/', $values[$i]) as $v) {

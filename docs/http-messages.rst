@@ -8,9 +8,48 @@ responses. Both requests and responses are referred to as messages.
 Headers
 =======
 
-Both request and response messages contain HTTP headers. See :ref:`headers`
-for information on how the headers of a request and response can be accessed
-and modified.
+Both request and response messages contain HTTP headers.
+
+Complex Headers
+---------------
+
+Some headers contain additional key value pair information. For example, Link
+headers contain a link and several key value pairs:
+
+::
+
+    <http://foo.com>; rel="thing"; type="image/jpeg"
+
+Guzzle provides a convenience feature that can be used to parse these types of
+headers:
+
+.. code-block:: php
+
+    use GuzzleHttp\Message\Request;
+
+    $request = new Request('GET', '/', [
+        'Link' => '<http:/.../front.jpeg>; rel="front"; type="image/jpeg"'
+    ]);
+
+    $parsed = Request::parseHeader($request, 'Link');
+    echo json_encode($parsed, JSON_PRETTY_PRINT);
+
+::
+
+    [
+        {
+            "0": "<http:\/...\/front.jpeg>",
+            "rel": "front",
+            "type": "image\/jpeg"
+        }
+    ]
+
+The result contains a hash of key value pairs. Header values that have no key
+(i.e., the link) are indexed numerically while headers parts that form a key
+value pair are added as a key value pair.
+
+See :ref:`headers` for information on how the headers of a request and response
+can be accessed and modified.
 
 Body
 ====
