@@ -217,11 +217,11 @@ class Client implements ClientInterface
     private function buildUrl($url)
     {
         if (!is_array($url)) {
-            if (substr($url, 0, 4) === 'http') {
+            if (strpos($url, '://')) {
                 return (string) $url;
             }
             return (string) $this->baseUrl->combine($url);
-        } elseif (substr($url[0], 0, 4) == 'http') {
+        } elseif (strpos($url[0], '://')) {
             return \GuzzleHttp\uriTemplate($url[0], $url[1]);
         }
 

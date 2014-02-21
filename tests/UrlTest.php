@@ -110,7 +110,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('test', $url->getPath());
 
         $url->setPath('/test/123/abc');
-        $this->assertEquals(array('test', '123', 'abc'), $url->getPathSegments());
+        $this->assertEquals(array('', 'test', '123', 'abc'), $url->getPathSegments());
 
         $parts = parse_url('http://www.test.com/test');
         $parts['path'] = '';
@@ -260,6 +260,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
             array('/b/c/./../../g', '/g'),
             array('/c/./../../g', '/g'),
             array('/./../../g', '/g'),
+            array('foo', 'foo'),
         );
     }
 

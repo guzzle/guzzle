@@ -3,7 +3,7 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Message\ResponseInterface;
-use GuzzleHttp\Url\UriTemplate;
+use GuzzleHttp\UriTemplate;
 
 const VERSION = '4.0-dev';
 
@@ -122,6 +122,8 @@ function options($url, array $options = [])
  *
  * @param string $template  URI template
  * @param array  $variables Template variables
+ *
+ * @return string
  */
 function uriTemplate($template, array $variables)
 {

@@ -374,7 +374,7 @@ class Url
      */
     public function getPathSegments()
     {
-        return array_slice(explode('/', $this->getPath()), 1);
+        return explode('/', $this->path);
     }
 
     /**
