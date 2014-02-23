@@ -44,6 +44,10 @@ class GuzzleClient implements GuzzleClientInterface
      *     - process: Specify if HTTP responses are parsed (defaults to true).
      *       Changing this setting after the client has been created will have
      *       no effect.
+     *     - request_locations: Associative array of location types mapping to
+     *       RequestLocationInterface objects.
+     *     - response_locations: Associative array of location types mapping to
+     *       ResponseLocationInterface objects.
      */
     public function __construct(
         ClientInterface $client,
@@ -56,21 +60,7 @@ class GuzzleClient implements GuzzleClientInterface
             $config['defaults'] = [];
         }
         $this->config = new Collection($config);
-
-        // Use the passed in command factory or a custom factory if provided
-        $this->commandFactory = isset($config['command_factory'])
-            ? $config['command_factory']
-            : self::defaultCommandFactory($description);
-
-        // Add event listeners based on the configuration option
-        $emitter = $this->getEmitter();
-        if (!isset($config['validate']) || $config['validate'] === true) {
-            $emitter->addSubscriber(new ValidateInput());
-        }
-        $emitter->addSubscriber(new PrepareRequest());
-        if (!isset($config['process']) || $config['process'] === true) {
-            $emitter->addSubscriber(new ProcessResponse());
-        }
+        $this->processConfig();
     }
 
     public function __call($name, array $arguments)
@@ -171,5 +161,35 @@ class GuzzleClient implements GuzzleClientInterface
 
             return new Command($operation, $args, clone $client->getEmitter());
         };
+    }
+
+    /**
+     * Prepares the client based on the configuration settings of the client.
+     */
+    protected function processConfig()
+    {
+        // Use the passed in command factory or a custom factory if provided
+        $this->commandFactory = isset($config['command_factory'])
+            ? $config['command_factory']
+            : self::defaultCommandFactory($this->description);
+
+        // Add event listeners based on the configuration option
+        $emitter = $this->getEmitter();
+
+        if (!isset($this->config['validate']) ||
+            $this->config['validate'] === true
+        ) {
+            $emitter->addSubscriber(new ValidateInput());
+        }
+
+        $emitter->addSubscriber(new PrepareRequest(
+            $this->config['request_locations'] ?: []
+        ));
+
+        if (!isset($config['process']) || $config['process'] === true) {
+            $emitter->addSubscriber(new ProcessResponse(
+                $this->config['response_locations'] ?: []
+            ));
+        }
     }
 }
