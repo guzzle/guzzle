@@ -83,7 +83,7 @@ class MultiAdapterTest extends AbstractCurl
         $r = new \ReflectionMethod($a, 'isCurlException');
         $r->setAccessible(true);
         try {
-            $r->invoke($a, $transaction, ['result' => -10], $context);
+            $r->invoke($a, $transaction, ['result' => -10], $context, []);
             $this->fail('Did not throw');
         } catch (RequestException $e) {
             $this->assertSame($request, $e->getRequest());

@@ -147,11 +147,11 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
         array $curl,
         BatchContext $context
     ) {
-        $handle = $context->removeTransaction($transaction);
+        $info = $context->removeTransaction($transaction);
 
         try {
-            if (!$this->isCurlException($transaction, $curl, $context)) {
-                RequestEvents::emitComplete($transaction, curl_getinfo($handle));
+            if (!$this->isCurlException($transaction, $curl, $context, $info)) {
+                RequestEvents::emitComplete($transaction, $info);
             }
         } catch (RequestException $e) {
             $this->throwException($e, $context);
@@ -178,7 +178,8 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
     private function isCurlException(
         TransactionInterface $transaction,
         array $curl,
-        BatchContext $context
+        BatchContext $context,
+        array $info
     ) {
         if (CURLM_OK == $curl['result'] || CURLM_CALL_MULTI_PERFORM == $curl['result']) {
             return false;
@@ -187,10 +188,7 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
         $request = $transaction->getRequest();
         try {
             // Send curl stats along if they are available
-            $stats = ['curl_result' => $curl['result']];
-            if (isset($curl['handle']) && is_resource($curl['handle'])) {
-                $stats = curl_getinfo($curl['handle']) + $stats;
-            }
+            $stats = ['curl_result' => $curl['result']] + $info;
             RequestEvents::emitError(
                 $transaction,
                 new RequestException(

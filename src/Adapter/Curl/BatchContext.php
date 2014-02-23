@@ -131,7 +131,7 @@ class BatchContext
      *
      * @param TransactionInterface $transaction Transaction to remove
      *
-     * @return resource Returns the curl handle
+     * @return array Returns the curl_getinfo array
      * @throws \RuntimeException if the transaction is not found
      */
     public function removeTransaction(TransactionInterface $transaction)
@@ -147,9 +147,10 @@ class BatchContext
             CurlAdapter::throwMultiError($code);
         }
 
+        $info = curl_getinfo($handle);
         curl_close($handle);
         unset($this->handles[$transaction]);
 
-        return $handle;
+        return $info;
     }
 }
