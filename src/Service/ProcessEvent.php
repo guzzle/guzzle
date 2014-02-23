@@ -1,10 +1,9 @@
 <?php
 
-namespace GuzzleHttp\Service\Event;
+namespace GuzzleHttp\Service;
 
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\ResponseInterface;
-use GuzzleHttp\Service\CommandInterface;
 
 /**
  * Event emitted when the HTTP response of a command is being processed.
@@ -18,24 +17,30 @@ class ProcessEvent extends AbstractCommandEvent
     private $response;
 
     /**
-     * @param CommandInterface  $command  Command
-     * @param RequestInterface  $request  Request that was sent
-     * @param ResponseInterface $response Response that was received
+     * @param CommandInterface       $command  Command
+     * @param ServiceClientInterface $client   Client used to send the command
+     * @param RequestInterface       $request  Request that was sent
+     * @param ResponseInterface      $response Response that was received
+     * @param mixed                  $result   Can specify the result up-front
      */
     public function __construct(
         CommandInterface $command,
+        ServiceClientInterface $client,
         RequestInterface $request,
-        ResponseInterface $response
+        ResponseInterface $response = null,
+        $result = null
     ) {
         $this->command = $command;
+        $this->client = $client;
         $this->request = $request;
         $this->response = $response;
+        $this->result = $result;
     }
 
     /**
-     * Get the response that was received for the request.
+     * Get the response that was received for the request (if one is present).
      *
-     * @return ResponseInterface
+     * @return ResponseInterface|null
      */
     public function getResponse()
     {

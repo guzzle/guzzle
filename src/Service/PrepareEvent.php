@@ -1,9 +1,8 @@
 <?php
 
-namespace GuzzleHttp\Service\Event;
+namespace GuzzleHttp\Service;
 
 use GuzzleHttp\Message\RequestInterface;
-use GuzzleHttp\Service\CommandInterface;
 
 /**
  * Event emitted when a command is being prepared.
@@ -14,11 +13,15 @@ use GuzzleHttp\Service\CommandInterface;
 class PrepareEvent extends AbstractCommandEvent
 {
     /**
-     * @param CommandInterface $command Command to prepare
+     * @param CommandInterface       $command Command to prepare
+     * @param ServiceClientInterface $client  Client used to send the command
      */
-    public function __construct(CommandInterface $command)
-    {
+    public function __construct(
+        CommandInterface $command,
+        ServiceClientInterface $client
+    ) {
         $this->command = $command;
+        $this->client = $client;
     }
 
     /**

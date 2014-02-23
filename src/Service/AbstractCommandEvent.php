@@ -1,10 +1,9 @@
 <?php
 
-namespace GuzzleHttp\Service\Event;
+namespace GuzzleHttp\Service;
 
 use GuzzleHttp\Event\AbstractEvent;
 use GuzzleHttp\Message\RequestInterface;
-use GuzzleHttp\Service\CommandInterface;
 
 class AbstractCommandEvent extends AbstractEvent
 {
@@ -16,6 +15,9 @@ class AbstractCommandEvent extends AbstractEvent
 
     /** @var mixed|null */
     protected $result;
+
+    /** @var ServiceClientInterface */
+    protected $client;
 
     /**
      * Get the command associated with the event
@@ -45,5 +47,15 @@ class AbstractCommandEvent extends AbstractEvent
     public function getResult()
     {
         return $this->result;
+    }
+
+    /**
+     * Get the client associated with the command transfer.
+     *
+     * @return ServiceClientInterface
+     */
+    public function getClient()
+    {
+        return $this->client;
     }
 }

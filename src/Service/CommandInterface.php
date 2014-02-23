@@ -4,11 +4,13 @@ namespace GuzzleHttp\Service;
 
 use GuzzleHttp\Event\HasEmitterInterface;
 use GuzzleHttp\ToArrayInterface;
-use GuzzleHttp\Service\Description\OperationInterface;
 
 /**
- * A command object manages input and output of an operation using an
- * {@see OperationInterface} object.
+ * A command object encapsulates the input parameters used to control the
+ * creation of a HTTP request and processing of a HTTP response.
+ *
+ * Using the toArray() method will return the input parameters of the command
+ * as an associative array.
  *
  * A command emits the following events:
  * - prepare: Emitted when the command is converting a command into a request
@@ -18,9 +20,25 @@ use GuzzleHttp\Service\Description\OperationInterface;
 interface CommandInterface extends \ArrayAccess, ToArrayInterface, HasEmitterInterface
 {
     /**
-     * Get the API operation information about the command
+     * Get the name of the command
      *
-     * @return OperationInterface
+     * @return string
      */
-    public function getOperation();
+    public function getName();
+
+    /**
+     * Get transport and plugin specific configuration settings of the command.
+     *
+     * @returns \GuzzleHttp\Collection
+     */
+    public function getConfig();
+
+    /**
+     * Check if the command has a parameter by name.
+     *
+     * @param string $name Name of the paramter to check
+     *
+     * @return bool
+     */
+    public function hasParam($name);
 }

@@ -1,9 +1,8 @@
 <?php
 
-namespace GuzzleHttp\Service\Event;
+namespace GuzzleHttp\Service;
 
 use GuzzleHttp\Event\ErrorEvent;
-use GuzzleHttp\Service\CommandInterface;
 
 /**
  * Event emitted when an error occurs while transferring a request for a
@@ -18,12 +17,17 @@ class CommandErrorEvent extends AbstractCommandEvent
     private $event;
 
     /**
-     * @param CommandInterface $command Command of the event
-     * @param ErrorEvent       $e       Error event that was encountered
+     * @param CommandInterface       $command Command of the event
+     * @param ServiceClientInterface $client  Client that sent the command
+     * @param ErrorEvent             $e       Error event that was encountered
      */
-    public function __construct(CommandInterface $command, ErrorEvent $e)
-    {
+    public function __construct(
+        CommandInterface $command,
+        ServiceClientInterface $client,
+        ErrorEvent $e
+    ) {
         $this->command = $command;
+        $this->client = $client;
         $this->error = $e;
     }
 

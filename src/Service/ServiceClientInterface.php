@@ -4,22 +4,29 @@ namespace GuzzleHttp\Service;
 
 use GuzzleHttp\Event\HasEmitterInterface;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Service\Description\DescriptionInterface;
 
 /**
- * Web service client interface
+ * Web service client interface.
+ *
+ * Any event listener or subscriber added to the client is added to each
+ * command created by the client when the command is created.
  */
 interface ServiceClientInterface extends HasEmitterInterface
 {
     /**
-     * Get the service description of the client
+     * Invokes a command by name.
      *
-     * @return DescriptionInterface
+     * Implementations may choose to implement other missing method calls as
+     * well as executing commands by name.
+     *
+     * @param string $name      Name of the command
+     * @param array  $arguments Arguments to pass to the command.
+     * @throws CommandException
      */
-    public function getDescription();
+    public function __call($name, array $arguments);
 
     /**
-     * Create a command for an operation.
+     * Create a command for an operation name.
      *
      * @param string $name Name of the operation to use in the command
      * @param array  $args Arguments to pass to the command
@@ -35,6 +42,7 @@ interface ServiceClientInterface extends HasEmitterInterface
      * @param CommandInterface $command Command to execute
      *
      * @return mixed Returns the result of the executed command
+     * @throws CommandException
      */
     public function execute(CommandInterface $command);
 
@@ -43,11 +51,14 @@ interface ServiceClientInterface extends HasEmitterInterface
      *
      * @param array|\Iterator $commands Array or iterator that contains
      *     CommandInterface objects to execute.
-     * @param array $options Associative array of options
-     *     - prepare: (callable) Receives a CommandPrepareEvent
-     *     - process: (callable) Receives a CommandProcessEvent
-     *     - error: (callable) Receives a CommandErrorEvent
+     * @param array $options Associative array of options.
      *     - parallel: (int) Max number of commands to send in parallel
+     *     - prepare: (callable) Receives a CommandPrepareEvent Concrete
+     *       implementations MAY choose to implement this setting.
+     *     - process: (callable) Receives a CommandProcessEvent. Concrete
+     *       implementations MAY choose to implement this setting.
+     *     - error: (callable) Receives a CommandErrorEvent. Concrete
+     *       implementations MAY choose to implement this setting.
      */
     public function executeAll($commands, array $options = []);
 
