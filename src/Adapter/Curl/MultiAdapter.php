@@ -188,7 +188,7 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
         try {
             // Send curl stats along if they are available
             $stats = ['curl_result' => $curl['result']];
-            if (isset($curl['handle'])) {
+            if (isset($curl['handle']) && is_resource($curl['handle'])) {
                 $stats = curl_getinfo($curl['handle']) + $stats;
             }
             RequestEvents::emitError(
