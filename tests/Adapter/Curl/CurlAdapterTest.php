@@ -12,6 +12,13 @@ use GuzzleHttp\Message\MessageFactory;
  */
 class CurlAdapterTest extends AbstractCurl
 {
+    protected function setUp()
+    {
+        if (!function_exists('curl_reset')) {
+            $this->markTestSkipped('curl_reset() is not available');
+        }
+    }
+
     protected function getAdapter($factory = null, $options = [])
     {
         return new CurlAdapter($factory ?: new MessageFactory(), $options);
