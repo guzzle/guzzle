@@ -310,6 +310,16 @@ class Parameter
     }
 
     /**
+     * Set the name of the parameter
+     *
+     * @param string $name Name to set
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+    }
+
+    /**
      * Get the key of the parameter, where sentAs will supersede name if it is
      * set.
      *

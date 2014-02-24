@@ -158,11 +158,21 @@ class Operation
     /**
      * Get the params of the operation
      *
-     * @return array
+     * @return Parameter[]
      */
     public function getParams()
     {
         return $this->parameters;
+    }
+
+    /**
+     * Get additionalParameters of the operation
+     *
+     * @return Parameter|null
+     */
+    public function getAdditionalParameters()
+    {
+        return $this->additionalParameters;
     }
 
     /**

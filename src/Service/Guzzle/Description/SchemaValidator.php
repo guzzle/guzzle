@@ -69,22 +69,26 @@ class SchemaValidator
         $value = $param->getValue($value);
 
         $required = $param->getRequired();
-        // if the value is null and the parameter is not required or is static, then skip any further recursion
+        // if the value is null and the parameter is not required or is static,
+        // then skip any further recursion
         if ((null === $value && !$required) || $param->getStatic()) {
             return true;
         }
 
         $type = $param->getType();
-        // Attempt to limit the number of times is_array is called by tracking if the value is an array
+        // Attempt to limit the number of times is_array is called by tracking
+        // if the value is an array
         $valueIsArray = is_array($value);
-        // If a name is set then update the path so that validation messages are more helpful
+        // If a name is set then update the path so that validation messages
+        // are more helpful
         if ($name = $param->getName()) {
             $path .= "[{$name}]";
         }
 
         if ($type == 'object') {
 
-            // Objects are either associative arrays, ToArrayInterface, or some other object
+            // Objects are either associative arrays, ToArrayInterface, or some
+            // other object
             if ($param->getInstanceOf()) {
                 $instance = $param->getInstanceOf();
                 if (!($value instanceof $instance)) {
@@ -93,7 +97,8 @@ class SchemaValidator
                 }
             }
 
-            // Determine whether or not this "value" has properties and should be traversed
+            // Determine whether or not this "value" has properties and should
+            // be traversed
             $traverse = $temporaryValue = false;
 
             // Convert the value to an array
@@ -109,7 +114,8 @@ class SchemaValidator
                 }
                 $traverse = true;
             } elseif ($value === null) {
-                // Attempt to let the contents be built up by default values if possible
+                // Attempt to let the contents be built up by default values if
+                // possible
                 $value = array();
                 $temporaryValue = $valueIsArray = $traverse = true;
             }
@@ -117,7 +123,7 @@ class SchemaValidator
             if ($traverse) {
 
                 if ($properties = $param->getProperties()) {
-                    // if properties were found, the validate each property of the value
+                    // if properties were found, validate each property
                     foreach ($properties as $property) {
                         $name = $property->getName();
                         if (isset($value[$name])) {
@@ -125,7 +131,7 @@ class SchemaValidator
                         } else {
                             $current = null;
                             $this->recursiveProcess($property, $current, $path, $depth + 1);
-                            // Only set the value if it was populated with something
+                            // Only set the value if it was populated
                             if (null !== $current) {
                                 $value[$name] = $current;
                             }
@@ -135,9 +141,11 @@ class SchemaValidator
 
                 $additional = $param->getAdditionalProperties();
                 if ($additional !== true) {
-                    // If additional properties were found, then validate each against the additionalProperties attr.
+                    // If additional properties were found, then validate each
+                    // against the additionalProperties attr.
                     $keys = array_keys($value);
-                    // Determine the keys that were specified that were not listed in the properties of the schema
+                    // Determine the keys that were specified that were not
+                    // listed in the properties of the schema
                     $diff = array_diff($keys, array_keys($properties));
                     if (!empty($diff)) {
                         // Determine which keys are not in the properties
@@ -146,7 +154,8 @@ class SchemaValidator
                                 $this->recursiveProcess($additional, $value[$key], "{$path}[{$key}]", $depth);
                             }
                         } else {
-                            // if additionalProperties is set to false and there are additionalProperties in the values, then fail
+                            // if additionalProperties is set to false and there
+                            // are additionalProperties in the values, then fail
                             foreach ($diff as $prop) {
                                 $this->errors[] = sprintf('%s[%s] is not an allowed property', $path, $prop);
                             }
@@ -154,9 +163,11 @@ class SchemaValidator
                     }
                 }
 
-                // A temporary value will be used to traverse elements that have no corresponding input value.
-                // This allows nested required parameters with default values to bubble up into the input.
-                // Here we check if we used a temp value and nothing bubbled up, then we need to remote the value.
+                // A temporary value will be used to traverse elements that
+                // have no corresponding input value. This allows nested
+                // required parameters with default values to bubble up into the
+                // input. Here we check if we used a temp value and nothing
+                // bubbled up, then we need to remote the value.
                 if ($temporaryValue && empty($value)) {
                     $value = null;
                     $valueIsArray = false;
@@ -170,7 +181,8 @@ class SchemaValidator
             }
         }
 
-        // If the value is required and the type is not null, then there is an error if the value is not set
+        // If the value is required and the type is not null, then there is an
+        // error if the value is not set
         if ($required && $value === null && $type != 'null') {
             $message = "{$path} is " . ($param->getType() ? ('a required ' . implode(' or ', (array) $param->getType())) : 'required');
             if ($param->getDescription()) {
@@ -180,8 +192,9 @@ class SchemaValidator
             return false;
         }
 
-        // Validate that the type is correct. If the type is string but an integer was passed, the class can be
-        // instructed to cast the integer to a string to pass validation. This is the default behavior.
+        // Validate that the type is correct. If the type is string but an
+        // integer was passed, the class can be instructed to cast the integer
+        // to a string to pass validation. This is the default behavior.
         if ($type && (!$type = $this->determineType($type, $value))) {
             if ($this->castIntegerToStringType && $param->getType() == 'string' && is_integer($value)) {
                 $value = (string) $value;
