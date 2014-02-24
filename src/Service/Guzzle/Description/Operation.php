@@ -9,11 +9,10 @@ class Operation
 {
     /** @var array Hashmap of properties that can be specified */
     private static $properties = ['name' => true, 'httpMethod' => true,
-        'uri' => true, 'class' => true, 'responseClass' => true,
-        'responseType' => true, 'responseNotes' => true, 'notes' => true,
-        'summary' => true, 'documentationUrl' => true, 'deprecated' => true,
-        'data' => true, 'parameters' => true, 'additionalParameters' => true,
-        'errorResponses' => true];
+        'uri' => true, 'class' => true, 'responseModel' => true,
+        'notes' => true, 'summary' => true, 'documentationUrl' => true,
+        'deprecated' => true, 'data' => true, 'parameters' => true,
+        'additionalParameters' => true, 'errorResponses' => true];
 
     /** @var array Parameters */
     private $parameters = [];
@@ -39,14 +38,8 @@ class Operation
     /** @var string HTTP URI of the command */
     private $uri;
 
-    /** @var string This is what is returned from the method */
-    private $responseClass;
-
-    /** @var string Type information about the response */
-    private $responseType;
-
-    /** @var string Information about the response returned by the operation */
-    private $responseNotes;
+    /** @var string The model name used for processing the response */
+    private $responseModel;
 
     /** @var bool Whether or not the command is deprecated */
     private $deprecated;
@@ -73,14 +66,7 @@ class Operation
      * - notes: (string) A longer description of the operation.
      * - documentationUrl: (string) Reference URL providing more information
      *   about the operation.
-     * - responseClass: (string) This is what is returned from the method. Can
-     *   be a primitive, autoloadable class name, or model.
-     * - responseNotes: (string) Information about the response returned by the
-     *   operation.
-     * - responseType: (string) One of 'primitive', 'class', or 'model'. If not
-     *   specified, this value will be automatically inferred based on whether
-     *   or not there is a model matching the name, if a matching class name is
-     *   found, or set to 'primitive' by default.
+     * - responseModel: (string) The model name used for processing response.
      * - deprecated: (bool) Set to true if this is a deprecated command
      * - errorResponses: (array) Errors that could occur when executing the
      *   command. Array of hashes, each with a 'code' (the HTTP response code),
@@ -96,7 +82,7 @@ class Operation
      * @param GuzzleDescription $description Service description used to resolve models if $ref tags are found
      * @throws \InvalidArgumentException
      */
-    public function __construct(array $config = array(), GuzzleDescription $description)
+    public function __construct(array $config = [], GuzzleDescription $description)
     {
         $this->description = $description;
 
@@ -106,20 +92,8 @@ class Operation
         }
 
         $this->deprecated = (bool) $this->deprecated;
-        $this->errorResponses = $this->errorResponses ?: array();
-        $this->data = $this->data ?: array();
-
-        if (!$this->responseClass) {
-            $this->responseClass = 'array';
-            $this->responseType = 'primitive';
-        } elseif ($this->responseType) {
-            // Set the response type to perform validation
-            $this->setResponseType($this->responseType);
-        } else {
-            // A response class was set and no response type was set, so guess
-            // what the type is based on context.
-            $this->inferResponseType();
-        }
+        $this->errorResponses = $this->errorResponses ?: [];
+        $this->data = $this->data ?: [];
 
         // Parameters need special handling when adding
         if ($this->parameters) {
@@ -250,38 +224,13 @@ class Operation
     }
 
     /**
-     * Get what is returned from the method. Can be a primitive, class name, or
-     * model. For example, the responseClass could be 'array', which would
-     * inherently use a responseType of 'primitive'. Using a class name would
-     * set a responseType of 'class'. Specifying a model by ID will use a
-     * responseType of 'model'.
-     *
-     * @return string|null
-     */
-    public function getResponseClass()
-    {
-        return $this->responseClass;
-    }
-
-    /**
-     * Get information about how the response is unmarshalled: One of
-     * 'primitive', 'class', or 'model'.
+     * Get the name of the model used for processing the response.
      *
      * @return string
      */
-    public function getResponseType()
+    public function getResponseModel()
     {
-        return $this->responseType;
-    }
-
-    /**
-     * Get notes about the response of the operation
-     *
-     * @return string|null
-     */
-    public function getResponseNotes()
-    {
-        return $this->responseNotes;
+        return $this->responseModel;
     }
 
     /**
@@ -331,38 +280,5 @@ class Operation
         } else {
             return null;
         }
-    }
-
-    /**
-     * Infer the response type from the responseClass value
-     */
-    private function inferResponseType()
-    {
-        static $primitives = ['array' => 1, 'boolean' => 1, 'string' => 1,
-            'integer' => 1, '' => 1];
-
-        if (isset($primitives[$this->responseClass])) {
-            $this->responseType = 'primitive';
-        } elseif ($this->description->hasModel($this->responseClass)) {
-            $this->responseType = 'model';
-        } else {
-            $this->responseType = 'class';
-        }
-    }
-
-    /**
-     * Set the responseType of the operation.
-     *
-     * @param string $responseType Response type information
-     * @throws \InvalidArgumentException
-     */
-    private function setResponseType($responseType)
-    {
-        static $types = ['primitive' => true, 'class' => true, 'model' => true];
-        if (!isset($types[$responseType])) {
-            throw new \InvalidArgumentException('responseType must be one of '
-                . implode(', ', array_keys($types)));
-        }
-        $this->responseType = $responseType;
     }
 }

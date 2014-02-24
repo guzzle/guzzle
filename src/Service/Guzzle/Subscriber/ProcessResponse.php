@@ -67,27 +67,16 @@ class ProcessResponse implements SubscriberInterface
         }
 
         $operation = $command->getOperation();
-        $type = $operation->getResponseType();
-
-        if ($type == 'class') {
-            $event->setResult($this->createClass($event));
-        } elseif ($type == 'primitive') {
+        if (!($modelName = $operation->getResponseModel())) {
             return;
         }
 
-        $model = $operation->getServiceDescription()->getModel($operation->getResponseClass());
-
+        $model = $operation->getServiceDescription()->getModel($modelName);
         if (!$model) {
-            throw new \RuntimeException('No model found matching: '
-                . $operation->getResponseClass());
+            throw new \RuntimeException("Unknown model: {$modelName}");
         }
 
         $event->setResult(new Model($this->visit($model, $event)));
-    }
-
-    protected function createClass(ProcessEvent $event)
-    {
-        return null;
     }
 
     protected function visit(Parameter $model, ProcessEvent $event)
