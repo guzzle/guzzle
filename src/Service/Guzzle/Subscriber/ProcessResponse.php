@@ -47,12 +47,12 @@ class ProcessResponse implements SubscriberInterface
         static $defaultResponseLocations;
         if (!$defaultResponseLocations) {
             $defaultResponseLocations = [
-                'body'         => new BodyLocation(),
-                'header'       => new HeaderLocation(),
-                'reasonPhrase' => new ReasonPhraseLocation(),
-                'statusCode'   => new StatusCodeLocation(),
-                'xml'          => new XmlLocation(),
-                'json'         => new JsonLocation()
+                'body'         => new BodyLocation('body'),
+                'header'       => new HeaderLocation('header'),
+                'reasonPhrase' => new ReasonPhraseLocation('reasonPhrase'),
+                'statusCode'   => new StatusCodeLocation('statusCode'),
+                'xml'          => new XmlLocation('xml'),
+                'json'         => new JsonLocation('json')
             ];
         }
 

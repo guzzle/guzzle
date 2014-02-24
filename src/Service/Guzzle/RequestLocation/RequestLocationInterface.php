@@ -2,7 +2,9 @@
 
 namespace GuzzleHttp\Service\Guzzle\RequestLocation;
 
+use GuzzleHttp\Service\Guzzle\Description\Operation;
 use GuzzleHttp\Service\Guzzle\Description\Parameter;
+use GuzzleHttp\Service\Guzzle\GuzzleCommandInterface;
 use GuzzleHttp\Message\RequestInterface;
 
 /**
@@ -29,12 +31,16 @@ interface RequestLocationInterface
     /**
      * Called when all of the parameters of a command have been visited.
      *
-     * @param RequestInterface $request Request being modified
-     * @param array            $context Associative array containing a client
-     *                                  and command key.
+     * @param GuzzleCommandInterface $command   Command being prepared
+     * @param RequestInterface       $request   Request being modified
+     * @param array                  $context   Associative array containing a
+     *                                          client and command key.
+     * @param Operation              $operation Operation being serialized
      */
     public function after(
+        GuzzleCommandInterface $command,
         RequestInterface $request,
+        Operation $operation,
         array $context
     );
 }

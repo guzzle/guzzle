@@ -34,7 +34,7 @@ class JsonLocation extends AbstractLocation
         // Handle additional, undefined properties
         $additional = $model->getAdditionalProperties();
         if ($additional instanceof Parameter &&
-            $additional->getLocation() == 'json'
+            $additional->getLocation() == $this->locationName
         ) {
             foreach ($this->json as $prop => $val) {
                 if (!isset($result[$prop])) {

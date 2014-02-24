@@ -13,9 +13,6 @@ use GuzzleHttp\Stream\Stream;
  */
 class XmlLocation extends AbstractLocation
 {
-    /** @var \SplObjectStorage Data object for persisting XML data */
-    protected $data;
-
     /** @var \XMLWriter XML writer resource */
     protected $writer;
 
@@ -39,34 +36,38 @@ class XmlLocation extends AbstractLocation
         $value,
         array $context
     ) {
-        /* @var GuzzleCommandInterface $command */
-        $command = $context['command'];
-        $xml = isset($this->data[$command])
-            ? $this->data[$command]
-            : $this->createRootElement($command->getOperation());
-        $this->addXml($xml, $param, $value);
-        $this->data[$command] = $xml;
+        if (!$this->writer) {
+            /* @var GuzzleCommandInterface $command */
+            $command = $context['command'];
+            $this->createRootElement($command->getOperation());
+        }
+
+        $this->addXml($this->writer, $param, $value);
     }
 
     public function after(
+        GuzzleCommandInterface $command,
         RequestInterface $request,
+        Operation $operation,
         array $context
     ) {
-        $xml = null;
-        /* @var GuzzleCommandInterface $command */
-        $command = $context['command'];
+        $additional = $operation->getAdditionalParameters();
+        if ($additional && $additional->getLocation() == $this->locationName) {
+            foreach ($command->toArray() as $key => $value) {
+                if (!$operation->hasParam($key)) {
+                    $this->visit($request, $additional, $value, ['command' => $command]);
+                }
+            }
+        }
 
         // If data was found that needs to be serialized, then do so
-        if (isset($this->data[$command])) {
+        $xml = null;
+        if ($this->writer) {
             $xml = $this->finishDocument($this->writer);
-            unset($this->data[$command]);
-        } else {
+        } elseif ($operation->getData('xmlAllowEmpty')) {
             // Check if XML should always be sent for the command
-            $operation = $command->getOperation();
-            if ($operation->getData('xmlAllowEmpty')) {
-                $writer = $this->createRootElement($operation);
-                $xml = $this->finishDocument($writer);
-            }
+            $writer = $this->createRootElement($operation);
+            $xml = $this->finishDocument($writer);
         }
 
         if ($xml) {
@@ -76,6 +77,8 @@ class XmlLocation extends AbstractLocation
                 $request->setHeader('Content-Type', $this->contentType);
             }
         }
+
+        $this->writer = null;
     }
 
     /**

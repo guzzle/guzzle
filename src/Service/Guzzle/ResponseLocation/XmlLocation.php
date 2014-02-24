@@ -34,7 +34,7 @@ class XmlLocation extends AbstractLocation
         // Handle additional, undefined properties
         $additional = $model->getAdditionalProperties();
         if ($additional instanceof Parameter &&
-            $additional->getLocation() == 'xml'
+            $additional->getLocation() == $this->locationName
         ) {
             if ($additional->getType()) {
                 $this->recursiveProcess($additional, $this->xml);

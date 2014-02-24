@@ -32,15 +32,14 @@ class HeaderLocation extends AbstractLocation
         &$result,
         array $context = []
     ) {
-        // Handle additionalProperties
         $additional = $model->getAdditionalProperties();
-        if (!($additional instanceof Parameter)) {
-            return;
-        }
-
-        foreach ($response->getHeaders() as $key => $header) {
-            if (!isset($result[$key])) {
-                $result[$key] = $additional->filter(implode($header, ', '));
+        if ($additional instanceof Parameter &&
+            $additional->getLocation() == $this->locationName
+        ) {
+            foreach ($response->getHeaders() as $key => $header) {
+                if (!isset($result[$key])) {
+                    $result[$key] = $additional->filter(implode($header, ', '));
+                }
             }
         }
     }

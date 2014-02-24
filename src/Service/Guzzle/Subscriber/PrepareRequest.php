@@ -39,13 +39,13 @@ class PrepareRequest implements SubscriberInterface
         static $defaultRequestLocations;
         if (!$defaultRequestLocations) {
             $defaultRequestLocations = [
-                'body'      => new BodyLocation(),
-                'query'     => new QueryLocation(),
-                'header'    => new HeaderLocation(),
-                'json'      => new JsonLocation(),
-                'xml'       => new XmlLocation(),
-                'postField' => new PostFieldLocation(),
-                'postFile'  => new PostFileLocation()
+                'body'      => new BodyLocation('body'),
+                'query'     => new QueryLocation('query'),
+                'header'    => new HeaderLocation('header'),
+                'json'      => new JsonLocation('json'),
+                'xml'       => new XmlLocation('xml'),
+                'postField' => new PostFieldLocation('postField'),
+                'postFile'  => new PostFileLocation('postFile')
             ];
         }
 
@@ -78,7 +78,10 @@ class PrepareRequest implements SubscriberInterface
     ) {
         $visitedLocations = [];
         $context = ['client' => $client, 'command' => $command];
-        foreach ($command->getOperation()->getParams() as $name => $param) {
+        $operation = $command->getOperation();
+
+        // Visit each actual parameter
+        foreach ($operation->getParams() as $name => $param) {
             /* @var Parameter $param */
             $location = $param->getLocation();
             // Skip parameters that have not been set or are URI location
@@ -97,8 +100,19 @@ class PrepareRequest implements SubscriberInterface
             );
         }
 
+        // Ensure that the after() method is invoked for additionalParameters
+        if ($additional = $operation->getAdditionalParameters()) {
+            $visitedLocations[$additional->getLocation()] = true;
+        }
+
+        // Call the after() method for each visited location
         foreach (array_keys($visitedLocations) as $location) {
-            $this->requestLocations[$location]->after($request, $context);
+            $this->requestLocations[$location]->after(
+                $command,
+                $request,
+                $operation,
+                $context
+            );
         }
     }
 

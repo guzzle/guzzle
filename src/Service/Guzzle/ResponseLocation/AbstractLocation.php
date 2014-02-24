@@ -8,6 +8,19 @@ use GuzzleHttp\Service\Guzzle\GuzzleCommandInterface;
 
 abstract class AbstractLocation implements ResponseLocationInterface
 {
+    /** @var string */
+    protected $locationName;
+
+    /**
+     * Set the name of the location
+     *
+     * @param $locationName
+     */
+    public function __construct($locationName)
+    {
+        $this->locationName = $locationName;
+    }
+
     public function before(
         GuzzleCommandInterface $command,
         ResponseInterface $response,

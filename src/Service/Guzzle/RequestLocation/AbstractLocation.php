@@ -2,11 +2,26 @@
 
 namespace GuzzleHttp\Service\Guzzle\RequestLocation;
 
+use GuzzleHttp\Service\Guzzle\Description\Operation;
 use GuzzleHttp\Service\Guzzle\Description\Parameter;
 use GuzzleHttp\Message\RequestInterface;
+use GuzzleHttp\Service\Guzzle\GuzzleCommandInterface;
 
 abstract class AbstractLocation implements RequestLocationInterface
 {
+    /** @var string */
+    protected $locationName;
+
+    /**
+     * Set the name of the location
+     *
+     * @param $locationName
+     */
+    public function __construct($locationName)
+    {
+        $this->locationName = $locationName;
+    }
+
     public function visit(
         RequestInterface $request,
         Parameter $param,
@@ -15,7 +30,9 @@ abstract class AbstractLocation implements RequestLocationInterface
     ) {}
 
     public function after(
+        GuzzleCommandInterface $command,
         RequestInterface $request,
+        Operation $operation,
         array $context
     ) {}
 
