@@ -7,7 +7,7 @@ namespace GuzzleHttp;
  */
 class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArrayInterface
 {
-    use HasDataTrait;
+    use GetPathTrait;
 
     /**
      * @param array $data Associative array of data to set
@@ -18,7 +18,8 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
     }
 
     /**
-     * Create a new collection from an array, validate the keys, and add default values where missing
+     * Create a new collection from an array, validate the keys, and add default
+     * values where missing
      *
      * @param array $config   Configuration values to apply.
      * @param array $defaults Default parameters
@@ -27,12 +28,17 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
      * @return self
      * @throws \InvalidArgumentException if a parameter is missing
      */
-    public static function fromConfig(array $config = [], array $defaults = [], array $required = [])
-    {
+    public static function fromConfig(
+        array $config = [],
+        array $defaults = [],
+        array $required = []
+    ) {
         $data = $config + $defaults;
 
         if ($missing = array_diff($required, array_keys($data))) {
-            throw new \InvalidArgumentException('Config is missing the following keys: ' . implode(', ', $missing));
+            throw new \InvalidArgumentException(
+                'Config is missing the following keys: ' .
+                implode(', ', $missing));
         }
 
         return new self($data);
@@ -78,8 +84,9 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
     }
 
     /**
-     * Add a value to a key.  If a key of the same name has already been added, the key value will be converted into an
-     * array and the new value will be pushed to the end of the array.
+     * Add a value to a key.  If a key of the same name has already been added,
+     * the key value will be converted into an array and the new value will be
+     * pushed to the end of the array.
      *
      * @param string $key   Key to add
      * @param mixed  $value Value to add to the key
@@ -178,7 +185,8 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
     }
 
     /**
-     * Over write key value pairs in this collection with all of the data from an array or collection.
+     * Over write key value pairs in this collection with all of the data from
+     * an array or collection.
      *
      * @param array|\Traversable $data Values to override over this config
      *
@@ -251,10 +259,12 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
     }
 
     /**
-     * Set a value into a nested array key. Keys will be created as needed to set the value.
+     * Set a value into a nested array key. Keys will be created as needed to
+     * set the value.
      *
-     * This function does not support keys that contain "/" or "[]" characters because these are special tokens used
-     * when traversing the data structure. A value may be prepended to an existing array by using "[]" as the final
+     * This function does not support keys that contain "/" or "[]" characters
+     * because these are special tokens used when traversing the data structure.
+     * A value may be prepended to an existing array by using "[]" as the final
      * key of a path.
      *
      *     $collection->getPath('foo/baz'); // null
@@ -267,7 +277,8 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
      * @param mixed  $value Value to set at the key
      *
      * @return self
-     * @throws \RuntimeException when trying to setPath using a nested path that travels through a scalar value
+     * @throws \RuntimeException when trying to setPath using a nested path
+     *     that travels through a scalar value
      */
     public function setPath($path, $value)
     {
@@ -291,35 +302,5 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
         }
 
         return $this;
-    }
-
-    /**
-     * Gets a value from the collection using an array path.
-     *
-     * This method does not allow for keys that contain "/". You must traverse the array manually or using something
-     * more advanced like JMESPath to work with keys that contain "/".
-     *
-     *     // Get the bar key of a set of nested arrays.
-     *     // This is equivalent to $collection['foo']['baz']['bar'] but won't
-     *     // throw warnings for missing keys.
-     *     $collection->getPath('foo/baz/bar');
-     *
-     * @param string $path Path to traverse and retrieve a value from
-     *
-     * @return mixed|null
-     */
-    public function getPath($path)
-    {
-        $data =& $this->data;
-        $path = explode('/', $path);
-
-        while (null !== ($part = array_shift($path))) {
-            if (!is_array($data) || !isset($data[$part])) {
-                return null;
-            }
-            $data =& $data[$part];
-        }
-
-        return $data;
     }
 }
