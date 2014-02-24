@@ -486,7 +486,7 @@ class Parameter
     /**
      * Get the properties of the parameter
      *
-     * @return array
+     * @return Parameter[]
      */
     public function getProperties()
     {
@@ -517,7 +517,7 @@ class Parameter
             $this->properties[$name]['name'] = $name;
             $this->properties[$name] = new static(
                 $this->properties[$name],
-                $this->serviceDescription
+                ['description' => $this->serviceDescription]
             );
         }
 
@@ -534,7 +534,7 @@ class Parameter
         if (is_array($this->additionalProperties)) {
             $this->additionalProperties = new static(
                 $this->additionalProperties,
-                $this->serviceDescription
+                ['description' => $this->serviceDescription]
             );
         }
 
@@ -549,7 +549,10 @@ class Parameter
     public function getItems()
     {
         if (is_array($this->items)) {
-            $this->items = new static($this->items, $this->serviceDescription);
+            $this->items = new static(
+                $this->items,
+                ['description' => $this->serviceDescription]
+            );
         }
 
         return $this->items;

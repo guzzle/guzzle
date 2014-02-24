@@ -36,7 +36,7 @@ interface CommandInterface extends \ArrayAccess, ToArrayInterface, HasEmitterInt
     /**
      * Check if the command has a parameter by name.
      *
-     * @param string $name Name of the paramter to check
+     * @param string $name Name of the parameter to check
      *
      * @return bool
      */
