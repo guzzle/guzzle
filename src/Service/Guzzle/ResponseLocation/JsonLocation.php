@@ -33,8 +33,9 @@ class JsonLocation extends AbstractLocation
     ) {
         // Handle additional, undefined properties
         $additional = $model->getAdditionalProperties();
-        if ($additional instanceof Parameter) {
-            // Process all child elements according to the given schema
+        if ($additional instanceof Parameter &&
+            $additional->getLocation() == 'json'
+        ) {
             foreach ($this->json as $prop => $val) {
                 if (!isset($result[$prop])) {
                     $result[$prop] = $this->recursiveProcess($additional, $val);
