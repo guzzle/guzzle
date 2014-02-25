@@ -9,7 +9,6 @@ class Parameter
 {
     private $name;
     private $description;
-    private $serviceDescription;
     private $type;
     private $required;
     private $enum;
@@ -34,8 +33,8 @@ class Parameter
     private $format;
     private $propertiesCache = null;
 
-    /** @var SchemaFormatter */
-    private $formatter;
+    /** @var GuzzleDescription */
+    private $serviceDescription;
 
     /**
      * Create a new Parameter using an associative array of data.
@@ -130,8 +129,7 @@ class Parameter
      *
      * @param array $data    Array of data as seen in service descriptions
      * @param array $options Options used when creating the parameter. You can
-     *     specify a Guzzle service description in the 'description' key. You
-     *     can specify a custom schema formatter to use in the 'formatter' key.
+     *     specify a Guzzle service description in the 'description' key.
      *
      * @throws \InvalidArgumentException
      */
@@ -170,17 +168,6 @@ class Parameter
 
         if ($this->type == 'object' && $this->additionalProperties === null) {
             $this->additionalProperties = true;
-        }
-
-        // Configure the schema formatter
-        if (isset($options['formatter'])) {
-            $this->formatter = $options['formatter'];
-        } else {
-            static $defaultFormatter;
-            if (!$defaultFormatter) {
-                $defaultFormatter = new SchemaFormatter();
-            }
-            $this->formatter = $defaultFormatter;
         }
     }
 
@@ -261,12 +248,18 @@ class Parameter
      * @param mixed $value Value to filter
      *
      * @return mixed Returns the filtered value
+     * @throws \RuntimeException when trying to format when no service
+     *     description is available.
      */
     public function filter($value)
     {
         // Formats are applied exclusively and supersed filters
         if ($this->format) {
-            return $this->formatter->format($this->format, $value);
+            if (!$this->serviceDescription) {
+                throw new \RuntimeException('No service description was set so '
+                    . 'the value cannot be formatted.');
+            }
+            return $this->serviceDescription->format($this->format, $value);
         }
 
         // Convert Boolean values

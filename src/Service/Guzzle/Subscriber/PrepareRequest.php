@@ -93,9 +93,9 @@ class PrepareRequest implements SubscriberInterface
             }
             $visitedLocations[$location] = true;
             $this->requestLocations[$location]->visit(
+                $command,
                 $request,
                 $param,
-                $command[$name],
                 $context
             );
         }

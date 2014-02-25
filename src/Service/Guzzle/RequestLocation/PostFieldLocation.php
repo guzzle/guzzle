@@ -14,9 +14,9 @@ use GuzzleHttp\Service\Guzzle\Description\Operation;
 class PostFieldLocation extends AbstractLocation
 {
     public function visit(
+        GuzzleCommandInterface $command,
         RequestInterface $request,
         Parameter $param,
-        $value,
         array $context
     ) {
         $body = $request->getBody();
@@ -26,7 +26,7 @@ class PostFieldLocation extends AbstractLocation
 
         $body->setField(
             $param->getWireName(),
-            $this->prepareValue($value, $param)
+            $this->prepareValue($command[$param->getName()], $param)
         );
     }
 

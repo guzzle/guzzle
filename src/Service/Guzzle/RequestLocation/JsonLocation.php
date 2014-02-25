@@ -29,16 +29,15 @@ class JsonLocation extends AbstractLocation
     }
 
     public function visit(
+        GuzzleCommandInterface $command,
         RequestInterface $request,
         Parameter $param,
-        $value,
         array $context
     ) {
-        if (null === $this->jsonData) {
-            $this->jsonData = [];
-        }
-
-        $this->jsonData[$param->getWireName()] = $this->prepareValue($value, $param);
+        $this->jsonData[$param->getWireName()] = $this->prepareValue(
+            $command[$param->getName()],
+            $param
+        );
     }
 
     public function after(

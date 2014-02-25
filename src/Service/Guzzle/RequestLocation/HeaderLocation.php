@@ -13,11 +13,12 @@ use GuzzleHttp\Service\Guzzle\GuzzleCommandInterface;
 class HeaderLocation extends AbstractLocation
 {
     public function visit(
+        GuzzleCommandInterface $command,
         RequestInterface $request,
         Parameter $param,
-        $value,
         array $context
     ) {
+        $value = $command[$param->getName()];
         $request->setHeader($param->getWireName(), $param->filter($value));
     }
 

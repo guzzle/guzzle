@@ -23,9 +23,9 @@ abstract class AbstractLocation implements RequestLocationInterface
     }
 
     public function visit(
+        GuzzleCommandInterface $command,
         RequestInterface $request,
         Parameter $param,
-        $value,
         array $context
     ) {}
 

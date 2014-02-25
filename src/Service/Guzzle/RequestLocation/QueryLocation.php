@@ -13,14 +13,14 @@ use GuzzleHttp\Service\Guzzle\GuzzleCommandInterface;
 class QueryLocation extends AbstractLocation
 {
     public function visit(
+        GuzzleCommandInterface $command,
         RequestInterface $request,
         Parameter $param,
-        $value,
         array $context
     ) {
         $request->setHeader(
             $param->getWireName(),
-            $this->prepareValue($value, $param)
+            $this->prepareValue($command[$param->getName()], $param)
         );
     }
 

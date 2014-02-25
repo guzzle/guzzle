@@ -30,11 +30,17 @@ class GuzzleDescription
     /** @var string baseUrl/basePath */
     private $baseUrl;
 
+    /** @var SchemaFormatter */
+    private $formatter;
+
     /**
-     * @param array $config Service description data
+     * @param array $config  Service description data
+     * @param array $options Custom options to apply to the description
+     *     - formatter: Can provide a custom SchemaFormatter class
+     *
      * @throws \InvalidArgumentException
      */
-    public function __construct(array $config)
+    public function __construct(array $config, array $options = [])
     {
         // Keep a list of default keys used in service descriptions that is
         // later used to determine extra data keys.
@@ -72,6 +78,17 @@ class GuzzleDescription
         // store them in a data array
         foreach (array_diff(array_keys($config), $defaultKeys) as $key) {
             $this->extraData[$key] = $config[$key];
+        }
+
+        // Configure the schema formatter
+        if (isset($options['formatter'])) {
+            $this->formatter = $options['formatter'];
+        } else {
+            static $defaultFormatter;
+            if (!$defaultFormatter) {
+                $defaultFormatter = new SchemaFormatter();
+            }
+            $this->formatter = $defaultFormatter;
         }
     }
 
@@ -194,6 +211,19 @@ class GuzzleDescription
     public function getDescription()
     {
         return $this->description;
+    }
+
+    /**
+     * Format a parameter using named formats.
+     *
+     * @param string $format Format to convert it to
+     * @param mixed  $input  Input string
+     *
+     * @return mixed
+     */
+    public function format($format, $input)
+    {
+        return $this->formatter->format($format, $input);
     }
 
     /**

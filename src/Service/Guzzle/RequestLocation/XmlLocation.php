@@ -31,18 +31,12 @@ class XmlLocation extends AbstractLocation
     }
 
     public function visit(
+        GuzzleCommandInterface $command,
         RequestInterface $request,
         Parameter $param,
-        $value,
         array $context
     ) {
-        if (!$this->writer) {
-            /* @var GuzzleCommandInterface $command */
-            $command = $context['command'];
-            $this->createRootElement($command->getOperation());
-        }
-
-        $this->addXml($this->writer, $param, $value);
+        $this->visitWithValue($command[$param->getName()], $param, $command);
     }
 
     public function after(
@@ -55,7 +49,7 @@ class XmlLocation extends AbstractLocation
         if ($additional && $additional->getLocation() == $this->locationName) {
             foreach ($command->toArray() as $key => $value) {
                 if (!$operation->hasParam($key)) {
-                    $this->visit($request, $additional, $value, ['command' => $command]);
+                    $this->visitWithValue($value, $additional, $command);
                 }
             }
         }
@@ -246,5 +240,17 @@ class XmlLocation extends AbstractLocation
                 $this->addXml($writer, $property, $v);
             }
         }
+    }
+
+    private function visitWithValue(
+        $value,
+        Parameter $param,
+        GuzzleCommandInterface $command
+    ) {
+        if (!$this->writer) {
+            $this->createRootElement($command->getOperation());
+        }
+
+        $this->addXml($this->writer, $param, $value);
     }
 }

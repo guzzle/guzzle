@@ -15,16 +15,16 @@ interface RequestLocationInterface
     /**
      * Visits a location for each top-level parameter
      *
-     * @param RequestInterface $request Request being modified
-     * @param Parameter        $param   Parameter being visited
-     * @param mixed            $value   Associated value
-     * @param array            $context Associative array containing a client
-     *                                  and command key.
+     * @param GuzzleCommandInterface $command Command being prepared
+     * @param RequestInterface       $request Request being modified
+     * @param Parameter              $param   Parameter being visited
+     * @param array                  $context Associative array containing a
+     *     'client' key referencing the client that created the command.
      */
     public function visit(
+        GuzzleCommandInterface $command,
         RequestInterface $request,
         Parameter $param,
-        $value,
         array $context
     );
 
@@ -33,9 +33,9 @@ interface RequestLocationInterface
      *
      * @param GuzzleCommandInterface $command   Command being prepared
      * @param RequestInterface       $request   Request being modified
-     * @param array                  $context   Associative array containing a
-     *                                          client and command key.
      * @param Operation              $operation Operation being serialized
+     * @param array                  $context   Associative array containing a
+     *     'client' key referencing the client that created the command.
      */
     public function after(
         GuzzleCommandInterface $command,
