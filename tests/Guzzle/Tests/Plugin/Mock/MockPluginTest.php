@@ -119,8 +119,9 @@ class MockPluginTest extends \Guzzle\Tests\GuzzleTestCase
 
     /**
      * @depends testAddsResponseFilesToQueue
+     * @expectedException \OutOfBoundsException
      */
-    public function testUpdateIgnoresWhenEmpty()
+    public function testUpdateThrowsExceptionWhenEmpty()
     {
         $p = new MockPlugin();
         $p->onRequestBeforeSend(new Event());
