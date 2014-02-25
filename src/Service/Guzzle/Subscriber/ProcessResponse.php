@@ -7,7 +7,7 @@ use GuzzleHttp\Message\ResponseInterface;
 use GuzzleHttp\Service\Guzzle\Description\Parameter;
 use GuzzleHttp\Service\Guzzle\GuzzleCommandInterface;
 use GuzzleHttp\Service\Guzzle\ResponseLocation\JsonLocation;
-use GuzzleHttp\Service\ProcessEvent;
+use GuzzleHttp\Service\Event\ProcessEvent;
 use GuzzleHttp\Service\Guzzle\ResponseLocation\ResponseLocationInterface;
 use GuzzleHttp\Service\Guzzle\ResponseLocation\BodyLocation;
 use GuzzleHttp\Service\Guzzle\ResponseLocation\StatusCodeLocation;

@@ -13,7 +13,7 @@ use GuzzleHttp\Service\Guzzle\RequestLocation\PostFieldLocation;
 use GuzzleHttp\Service\Guzzle\RequestLocation\PostFileLocation;
 use GuzzleHttp\Service\Guzzle\RequestLocation\QueryLocation;
 use GuzzleHttp\Service\Guzzle\RequestLocation\XmlLocation;
-use GuzzleHttp\Service\PrepareEvent;
+use GuzzleHttp\Service\Event\PrepareEvent;
 use GuzzleHttp\Service\Guzzle\Description\Parameter;
 use GuzzleHttp\Service\Guzzle\RequestLocation\RequestLocationInterface;
 

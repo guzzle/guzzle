@@ -8,7 +8,10 @@ use GuzzleHttp\ToArrayInterface;
  * Represents a response model that is returned when executing a web service
  * operation.
  */
-interface ModelInterface extends \ArrayAccess, \IteratorAggregate, ToArrayInterface
+interface ModelInterface extends
+    \ArrayAccess,
+    \IteratorAggregate,
+    ToArrayInterface
 {
     /**
      * Get an element from the model using path notation.

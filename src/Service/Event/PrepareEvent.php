@@ -1,8 +1,10 @@
 <?php
 
-namespace GuzzleHttp\Service;
+namespace GuzzleHttp\Service\Event;
 
 use GuzzleHttp\Message\RequestInterface;
+use GuzzleHttp\Service\CommandInterface;
+use GuzzleHttp\Service\ServiceClientInterface;
 
 /**
  * Event emitted when a command is being prepared.

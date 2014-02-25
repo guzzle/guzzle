@@ -1,8 +1,10 @@
 <?php
 
-namespace GuzzleHttp\Service;
+namespace GuzzleHttp\Service\Event;
 
 use GuzzleHttp\Event\ErrorEvent;
+use GuzzleHttp\Service\CommandInterface;
+use GuzzleHttp\Service\ServiceClientInterface;
 
 /**
  * Event emitted when an error occurs while transferring a request for a

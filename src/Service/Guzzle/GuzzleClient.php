@@ -7,7 +7,7 @@ use GuzzleHttp\Collection;
 use GuzzleHttp\Event\HasEmitterTrait;
 use GuzzleHttp\Service\CommandException;
 use GuzzleHttp\Service\CommandInterface;
-use GuzzleHttp\Service\EventWrapper;
+use GuzzleHttp\Service\Event\EventWrapper;
 use GuzzleHttp\Service\Guzzle\Description\GuzzleDescription;
 use GuzzleHttp\Service\Guzzle\Subscriber\PrepareRequest;
 use GuzzleHttp\Service\Guzzle\Subscriber\ProcessResponse;

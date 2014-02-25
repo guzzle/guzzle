@@ -6,7 +6,7 @@ use GuzzleHttp\Event\SubscriberInterface;
 use GuzzleHttp\Service\CommandException;
 use GuzzleHttp\Service\Guzzle\Description\SchemaValidator;
 use GuzzleHttp\Service\Guzzle\GuzzleCommandInterface;
-use GuzzleHttp\Service\PrepareEvent;
+use GuzzleHttp\Service\Event\PrepareEvent;
 
 /**
  * Subscriber used to validate command input against a service description.

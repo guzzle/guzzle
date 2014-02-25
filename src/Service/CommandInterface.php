@@ -17,7 +17,10 @@ use GuzzleHttp\ToArrayInterface;
  * - process: Emitted when the command is processing a response
  * - error:   Emitted after an error occurs for a command.
  */
-interface CommandInterface extends \ArrayAccess, ToArrayInterface, HasEmitterInterface
+interface CommandInterface extends
+    \ArrayAccess,
+    ToArrayInterface,
+    HasEmitterInterface
 {
     /**
      * Get the name of the command

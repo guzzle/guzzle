@@ -1,11 +1,14 @@
 <?php
 
-namespace GuzzleHttp\Service;
+namespace GuzzleHttp\Service\Event;
 
 use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Event\HasEmitterTrait;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\ResponseInterface;
+use GuzzleHttp\Service\CommandInterface;
+use GuzzleHttp\Service\ServiceClientInterface;
+use GuzzleHttp\Service\CommandException;
 
 /**
  * Utility class used to wrap HTTP events with client events.
