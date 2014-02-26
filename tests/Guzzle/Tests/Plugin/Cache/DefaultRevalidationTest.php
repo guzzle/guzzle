@@ -176,6 +176,7 @@ class DefaultRevalidationTest extends \Guzzle\Tests\GuzzleTestCase
                 'Last-Modified'  => $lm,
                 'Content-Length' => 2
             ), 'hi'),
+            new CurlException('Bleh'),
             new CurlException('Bleh')
         ));
         $client->addSubscriber(new CachePlugin());
@@ -184,7 +185,7 @@ class DefaultRevalidationTest extends \Guzzle\Tests\GuzzleTestCase
         $response = $client->get()->send();
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('hi', $response->getBody(true));
-        $this->assertEquals(2, count($mock->getReceivedRequests()));
+        $this->assertEquals(3, count($mock->getReceivedRequests()));
         $this->assertEquals(0, count($mock->getQueue()));
     }
 
@@ -198,6 +199,7 @@ class DefaultRevalidationTest extends \Guzzle\Tests\GuzzleTestCase
                 'Last-Modified' => $lm,
                 'Content-Length' => 2
             ), 'hi'),
+            new CurlException('Oh no!'),
             new CurlException('Oh no!')
         ));
         $cache = new CachePlugin();

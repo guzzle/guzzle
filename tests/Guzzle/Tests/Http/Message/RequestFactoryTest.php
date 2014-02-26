@@ -421,7 +421,10 @@ class HttpRequestFactoryTest extends \Guzzle\Tests\GuzzleTestCase
 
     public function testCanAddPlugins()
     {
-        $mock = new MockPlugin(array(new Response(200)));
+        $mock = new MockPlugin(array(
+            new Response(200),
+            new Response(200)
+        ));
         $client = new Client();
         $client->addSubscriber($mock);
         $request = $client->get('/', array(), array(
