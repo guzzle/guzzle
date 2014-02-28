@@ -45,6 +45,8 @@ class PostBodyTest extends \PHPUnit_Framework_TestCase
         $p = new PostFile('foo', fopen(__FILE__, 'r'));
         $b->addFile($p);
         $this->assertEquals([$p], $b->getFiles());
+        $this->assertNull($b->getFile('missing'));
+        $this->assertSame($p, $b->getFile('foo'));
         $m = new Request('POST', '/');
         $b->applyRequestHeaders($m);
         $this->assertContains('multipart/form-data', (string) $m->getHeader('Content-Type'));

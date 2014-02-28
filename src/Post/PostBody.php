@@ -19,6 +19,8 @@ class PostBody implements PostBodyInterface
     private $aggregator;
 
     private $fields = [];
+
+    /** @var PostFileInterface[] */
     private $files = [];
     private $forceMultipart = false;
 
@@ -105,6 +107,17 @@ class PostBody implements PostBodyInterface
     public function hasField($name)
     {
         return isset($this->fields[$name]);
+    }
+
+    public function getFile($name)
+    {
+        foreach ($this->files as $file) {
+            if ($file->getName() == $name) {
+                return $file;
+            }
+        }
+
+        return null;
     }
 
     public function getFiles()

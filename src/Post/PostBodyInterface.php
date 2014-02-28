@@ -78,6 +78,15 @@ interface PostBodyInterface extends StreamInterface, \Countable
     public function getFiles();
 
     /**
+     * Get a POST file by name.
+     *
+     * @param string $name Name of the POST file to retrieve
+     *
+     * @return PostFileInterface|null
+     */
+    public function getFile($name);
+
+    /**
      * Add a file to the POST
      *
      * @param PostFileInterface $file File to add
