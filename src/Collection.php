@@ -7,7 +7,7 @@ namespace GuzzleHttp;
  */
 class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArrayInterface
 {
-    use GetPathTrait;
+    use PathTrait;
 
     /**
      * @param array $data Associative array of data to set
@@ -256,51 +256,5 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
         }
 
         return $collection;
-    }
-
-    /**
-     * Set a value into a nested array key. Keys will be created as needed to
-     * set the value.
-     *
-     * This function does not support keys that contain "/" or "[]" characters
-     * because these are special tokens used when traversing the data structure.
-     * A value may be prepended to an existing array by using "[]" as the final
-     * key of a path.
-     *
-     *     $collection->getPath('foo/baz'); // null
-     *     $collection->setPath('foo/baz/[]', 'a');
-     *     $collection->setPath('foo/baz/[]', 'b');
-     *     $collection->getPath('foo/baz');
-     *     // Returns ['a', 'b']
-     *
-     * @param string $path  Path to set
-     * @param mixed  $value Value to set at the key
-     *
-     * @return self
-     * @throws \RuntimeException when trying to setPath using a nested path
-     *     that travels through a scalar value
-     */
-    public function setPath($path, $value)
-    {
-        $current =& $this->data;
-        $queue = explode('/', $path);
-        while (null !== ($key = array_shift($queue))) {
-            if (!is_array($current)) {
-                throw new \RuntimeException("Trying to setPath {$path}, but {$key} is set and is not an array");
-            } elseif (!$queue) {
-                if ($key == '[]') {
-                    $current[] = $value;
-                } else {
-                    $current[$key] = $value;
-                }
-            } elseif (isset($current[$key])) {
-                $current =& $current[$key];
-            } else {
-                $current[$key] = [];
-                $current =& $current[$key];
-            }
-        }
-
-        return $this;
     }
 }
