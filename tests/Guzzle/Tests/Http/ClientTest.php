@@ -589,4 +589,13 @@ class ClientTest extends \Guzzle\Tests\GuzzleTestCase
         $head = $client->head('http://www.foo.com', array(), array('query' => array('foo' => 'bar')));
         $this->assertEquals('bar', $head->getQuery()->get('foo'));
     }
+
+    public function testCanSetRelativeUrlStartingWithHttp()
+    {
+        $client = new Client('http://www.foo.com');
+        $this->assertEquals(
+            'http://www.foo.com/httpfoo',
+            $client->createRequest('GET', 'httpfoo')->getUrl()
+        );
+    }
 }

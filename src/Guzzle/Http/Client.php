@@ -177,7 +177,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
             } else {
                 list($uri, $templateVars) = $uri;
             }
-            if (substr($uri, 0, 4) === 'http') {
+            if (strpos($uri, '://')) {
                 // Use absolute URLs as-is
                 $url = $this->expandTemplate($uri, $templateVars);
             } else {
