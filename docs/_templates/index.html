@@ -55,7 +55,7 @@
     Guzzle is now part of Drupal 8 core and powers the official <a href="https://github.com/aws/aws-sdk-php">AWS SDK for PHP</a>
   </div>
 
-  <h2>Quick Twitter example</h2>
+  <h2>GitHub Example</h2>
 
   <pre class="prettyprint">&lt;?php
 require_once 'vendor/autoload.php';
@@ -71,7 +71,10 @@ echo $response->getBody();
 // >>> {"type":"User", ...
 echo $response->getHeader('Content-Length');
 // >>> 792
+</pre>
 
+    <h2>Twitter Example</h2>
+    <pre class="prettyprint">&lt;?php
 // Create a client to work with the Twitter API
 $client = new Client('https://api.twitter.com/{version}', array(
     'version' => '1.1'
