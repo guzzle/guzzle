@@ -275,7 +275,7 @@ class Request extends AbstractMessage implements RequestInterface
 
         // Include the port in the Host header if it is not the default port for the scheme of the URL
         $scheme = $this->url->getScheme();
-        if (($scheme == 'http' && $port != 80) || ($scheme == 'https' && $port != 443)) {
+        if ($port && (($scheme == 'http' && $port != 80) || ($scheme == 'https' && $port != 443))) {
             $this->headers['host'] = $this->headerFactory->createHeader('Host', $this->url->getHost() . ':' . $port);
         } else {
             $this->headers['host'] = $this->headerFactory->createHeader('Host', $this->url->getHost());

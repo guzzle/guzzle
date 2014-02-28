@@ -213,6 +213,12 @@ class Url
      */
     public function setScheme($scheme)
     {
+        if ($this->scheme == 'http' && $this->port == 80) {
+            $this->port = null;
+        } elseif ($this->scheme == 'https' && $this->port == 443) {
+            $this->port = null;
+        }
+
         $this->scheme = $scheme;
 
         return $this;
