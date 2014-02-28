@@ -851,12 +851,14 @@ class Response extends AbstractMessage implements \Serializable
     /**
      * Parse the JSON response body and return an array
      *
+     * @param boolean $objectsAsArrays True to convert JSON objects to PHP Arrays, false to leave them
+     *  as arrays. Defaults to True.
      * @return array|string|int|bool|float
      * @throws RuntimeException if the response body is not in JSON format
      */
-    public function json()
+    public function json($objectsAsArrays = true)
     {
-        $data = json_decode((string) $this->body, true);
+        $data = json_decode((string) $this->body, $objectsAsArrays);
         if (JSON_ERROR_NONE !== json_last_error()) {
             throw new RuntimeException('Unable to parse response body into JSON: ' . json_last_error());
         }
