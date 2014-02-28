@@ -39,11 +39,13 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
 
     public function testParsesJsonResponses()
     {
-        $response = new Response(200, [], Stream::factory('{"foo": "bar"}'));
-        $this->assertEquals(array('foo' => 'bar'), $response->json());
-        // Return array when null is a service response
+        $json = '{"foo": "bar"}';
+        $response = new Response(200, [], Stream::factory($json));
+        $this->assertEquals(['foo' => 'bar'], $response->json());
+        $this->assertEquals(json_decode($json), $response->json(['object' => true]));
+
         $response = new Response(200);
-        $this->assertEquals([], $response->json());
+        $this->assertEquals(null, $response->json());
     }
 
     /**

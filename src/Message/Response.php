@@ -118,9 +118,15 @@ class Response extends AbstractMessage implements ResponseInterface
         return $this->reasonPhrase;
     }
 
-    public function json()
+    public function json(array $config = [])
     {
-        $data = json_decode((string) $this->getBody(), true);
+        $data = json_decode(
+            (string) $this->getBody(),
+            isset($config['object']) ? !$config['object'] : true,
+            512,
+            isset($config['big_int_strings']) ? JSON_BIGINT_AS_STRING : 0
+        );
+
         if (JSON_ERROR_NONE !== json_last_error()) {
             throw new ParseException(
                 'Unable to parse response body into JSON: ' . json_last_error(),
@@ -128,16 +134,21 @@ class Response extends AbstractMessage implements ResponseInterface
             );
         }
 
-        return $data === null ? array() : $data;
+        return $data;
     }
 
-    public function xml()
+    public function xml(array $config = [])
     {
         $disableEntities = libxml_disable_entity_loader(true);
 
         try {
             // Allow XML to be retrieved even if there is no response body
-            $xml = new \SimpleXMLElement((string) $this->getBody() ?: '<root />', LIBXML_NONET);
+            $xml = new \SimpleXMLElement(
+                (string) $this->getBody() ?: '<root />',
+                LIBXML_NONET,
+                isset($config['ns']) ? $config['ns'] : '',
+                isset($config['ns_is_prefix']) ? $config['ns_is_prefix'] : false
+            );
             libxml_disable_entity_loader($disableEntities);
         } catch (\Exception $e) {
             libxml_disable_entity_loader($disableEntities);
