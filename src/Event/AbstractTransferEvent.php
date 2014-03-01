@@ -29,7 +29,7 @@ use GuzzleHttp\Message\ResponseInterface;
  * - speed_download: Average download speed
  * - speed_upload: Average upload speed
  */
-abstract class AbstractTransferStatsEvent extends AbstractRequestEvent
+abstract class AbstractTransferEvent extends AbstractRequestEvent
 {
     private $transferInfo;
 

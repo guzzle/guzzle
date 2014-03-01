@@ -11,7 +11,7 @@ use GuzzleHttp\Adapter\TransactionInterface;
  *
  * You may intercept the exception and inject a response into the event to rescue the request.
  */
-class ErrorEvent extends AbstractTransferStatsEvent
+class ErrorEvent extends AbstractTransferEvent
 {
     private $exception;
 

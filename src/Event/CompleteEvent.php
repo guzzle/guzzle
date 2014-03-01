@@ -10,7 +10,7 @@ use GuzzleHttp\Message\ResponseInterface;
  * You may change the Response associated with the request using the
  * intercept() method of the event.
  */
-class CompleteEvent extends AbstractTransferStatsEvent
+class CompleteEvent extends AbstractTransferEvent
 {
     /**
      * Intercept the request and associate a response
