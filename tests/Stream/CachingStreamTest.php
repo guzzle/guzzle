@@ -22,6 +22,12 @@ class CachingStreamTest extends \PHPUnit_Framework_TestCase
         $this->body = new CachingStream($this->decorated);
     }
 
+    public function tearDown()
+    {
+        $this->decorated->close();
+        $this->body->close();
+    }
+
     public function testUsesRemoteSizeIfPossible()
     {
         $body = Stream::factory('test');
