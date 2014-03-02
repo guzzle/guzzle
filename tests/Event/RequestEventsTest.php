@@ -10,6 +10,7 @@ use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Message\Response;
+use GuzzleHttp\Subscriber\Mock;
 
 /**
  * @covers GuzzleHttp\Event\RequestEvents
@@ -105,6 +106,51 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
             $this->fail('Did not throw');
         } catch (RequestException $e) {
             $this->assertEquals(1, $errCalled);
+        }
+    }
+
+    public function testDoesNotEmitErrorEventTwice()
+    {
+        $client = new Client();
+        $mock = new Mock([new Response(500)]);
+        $client->getEmitter()->addSubscriber($mock);
+
+        $r = [];
+        $client->getEmitter()->on('error', function (ErrorEvent $event) use (&$r) {
+            $r[] = $event->getRequest();
+        });
+
+        try {
+            $client->get('http://foo.com');
+            $this->fail('Did not throw');
+        } catch (RequestException $e) {
+            $this->assertCount(1, $r);
+        }
+    }
+
+    /**
+     * Note: Longest test name ever.
+     */
+    public function testEmitsErrorEventForRequestExceptionsThrownDuringBeforeThatHaveNotEmittedAnErrorEvent()
+    {
+        $request = new Request('GET', '/');
+        $ex = new RequestException('foo', $request);
+
+        $client = new Client();
+        $client->getEmitter()->on('before', function (BeforeEvent $event) use ($ex) {
+            throw $ex;
+        });
+        $called = false;
+        $client->getEmitter()->on('error', function (ErrorEvent $event) use ($ex, &$called) {
+            $called = true;
+            $this->assertSame($ex, $event->getException());
+        });
+
+        try {
+            $client->get('http://foo.com');
+            $this->fail('Did not throw');
+        } catch (RequestException $e) {
+            $this->assertTrue($called);
         }
     }
 }

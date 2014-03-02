@@ -27,11 +27,16 @@ final class RequestEvents
                 new BeforeEvent($transaction)
             );
         } catch (RequestException $e) {
-            // Allow request exceptions to pass through unmodified. This can
-            // occur for unhandled request exceptions that occurred in their
-            // own event loop. This guard prevents the error event from being
-            // triggered twice.
-            throw $e;
+            // When a RequestException has been emitted through emitError, the
+            // exception is marked as "emitted". This means that the exception
+            // had a chance to be rescued but was not. In this case, this method
+            // must not emit the error again, but rather throw the exception.
+            // This prevents RequestExceptions encountered during the before
+            // event from being emitted to listeners twice.
+            if ($e->emittedError()) {
+                throw $e;
+            }
+            self::emitError($transaction, $e);
         } catch (\Exception $e) {
             self::emitError($transaction, $e);
         }
@@ -83,6 +88,11 @@ final class RequestEvents
         if (!($e instanceof RequestException)) {
             $e = new RequestException($e->getMessage(), $request, null, $e);
         }
+
+        // Mark the exception as having been emitted for an error event. This
+        // works in tandem with the emitBefore method to prevent the error
+        // event from being triggered twice for the same exception.
+        $e->emittedError(true);
 
         // Dispatch an event and allow interception
         if (!$request->getEmitter()->emit(

@@ -58,4 +58,12 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
         );
         $this->assertInstanceOf('GuzzleHttp\Exception\RequestException', $e);
     }
+
+    public function testCanSetAndRetrieveErrorEmitted()
+    {
+        $e = RequestException::create(new Request('GET', '/'), new Response(600));
+        $this->assertFalse($e->emittedError());
+        $e->emittedError(true);
+        $this->assertTrue($e->emittedError());
+    }
 }
