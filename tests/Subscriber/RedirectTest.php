@@ -90,7 +90,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]);
-        $client = new Client();
+        $client = new Client(['base_url' => 'http://test.com']);
         $client->getEmitter()->addSubscriber($mock);
         $client->getEmitter()->addSubscriber($h);
         $client->post('/foo', [
@@ -113,7 +113,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]);
-        $client = new Client();
+        $client = new Client(['base_url' => 'http://test.com']);
         $client->getEmitter()->addSubscriber($mock);
         $client->getEmitter()->addSubscriber($h);
 
@@ -160,7 +160,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
 
     public function testRedirectsCanBeDisabledPerRequest()
     {
-        $client = new Client();
+        $client = new Client(['base_url' => 'http://test.com']);
         $client->getEmitter()->addSubscriber(new Mock([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",

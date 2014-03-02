@@ -303,7 +303,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client->getEmitter()->on('error', function ($e) {
             $e->intercept(new Response(200));
         });
-        $this->assertEquals(200, $client->get('/')->getStatusCode());
+        $this->assertEquals(200, $client->get('http://test.com')->getStatusCode());
     }
 
     /**
@@ -340,9 +340,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client->getEmitter()->addSubscriber($history);
 
         $requests = [
-            $client->createRequest('GET', '/'),
-            $client->createRequest('POST', '/'),
-            $client->createRequest('PUT', '/')
+            $client->createRequest('GET', 'http://test.com'),
+            $client->createRequest('POST', 'http://test.com'),
+            $client->createRequest('PUT', 'http://test.com')
         ];
 
         $client->sendAll($requests);
@@ -376,9 +376,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testCanDisableAuthPerRequest()
     {
         $client = new Client(['defaults' => ['auth' => 'foo']]);
-        $request = $client->createRequest('GET', '/');
+        $request = $client->createRequest('GET', 'http://test.com');
         $this->assertEquals('foo', $request->getConfig()['auth']);
-        $request = $client->createRequest('GET', '/', ['auth' => null]);
+        $request = $client->createRequest('GET', 'http://test.com', ['auth' => null]);
         $this->assertFalse($request->getConfig()->hasKey('auth'));
     }
 }

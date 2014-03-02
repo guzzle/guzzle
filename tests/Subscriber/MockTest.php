@@ -80,7 +80,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
     public function testReadsBodiesFromMockedRequests()
     {
         $m = new Mock([new Response(200)]);
-        $client = new Client();
+        $client = new Client(['base_url' => 'http://test.com']);
         $client->getEmitter()->addSubscriber($m);
         $body = Stream::factory('foo');
         $client->put('/', ['body' => $body]);
@@ -89,7 +89,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
 
     public function testCanMockBadRequestExceptions()
     {
-        $client = new Client();
+        $client = new Client(['base_url' => 'http://test.com']);
         $request = $client->createRequest('GET', '/');
         $ex = new RequestException('foo', $request);
         $mock = new Mock([$ex]);
