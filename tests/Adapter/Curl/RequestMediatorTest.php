@@ -19,7 +19,7 @@ class RequestMediatorTest extends \PHPUnit_Framework_TestCase
     public function testSetsResponseBodyForDownload()
     {
         $body = Stream::factory();
-        $request = new Request('GET', '/');
+        $request = new Request('GET', 'http://httbin.org');
         $ee = null;
         $request->getEmitter()->on(
             'headers',
@@ -48,7 +48,7 @@ class RequestMediatorTest extends \PHPUnit_Framework_TestCase
     public function testSendsToNewBodyWhenNot2xxResponse()
     {
         $body = Stream::factory();
-        $request = new Request('GET', '/');
+        $request = new Request('GET', 'http://httbin.org');
         $t = new Transaction(new Client(), $request);
         $m = new RequestMediator($t, new MessageFactory());
         $m->setResponseBody($body);
@@ -62,7 +62,7 @@ class RequestMediatorTest extends \PHPUnit_Framework_TestCase
 
     public function testUsesDefaultBodyIfNoneSet()
     {
-        $t = new Transaction(new Client(), new Request('GET', '/'));
+        $t = new Transaction(new Client(), new Request('GET', 'http://httbin.org'));
         $t->setResponse(new Response(200));
         $m = new RequestMediator($t, new MessageFactory());
         $this->assertEquals(3, $m->writeResponseBody(null, 'foo'));
@@ -72,7 +72,7 @@ class RequestMediatorTest extends \PHPUnit_Framework_TestCase
     public function testCanUseResponseBody()
     {
         $body = Stream::factory();
-        $t = new Transaction(new Client(), new Request('GET', '/'));
+        $t = new Transaction(new Client(), new Request('GET', 'http://httbin.org'));
         $t->setResponse(new Response(200, [], $body));
         $m = new RequestMediator($t, new MessageFactory());
         $this->assertEquals(3, $m->writeResponseBody(null, 'foo'));
@@ -81,7 +81,7 @@ class RequestMediatorTest extends \PHPUnit_Framework_TestCase
 
     public function testHandlesTransactionWithNoResponseWhenWritingBody()
     {
-        $t = new Transaction(new Client(), new Request('GET', '/'));
+        $t = new Transaction(new Client(), new Request('GET', 'http://httbin.org'));
         $m = new RequestMediator($t, new MessageFactory());
         $this->assertEquals(0, $m->writeResponseBody(null, 'test'));
     }
@@ -89,7 +89,7 @@ class RequestMediatorTest extends \PHPUnit_Framework_TestCase
     public function testReadsFromRequestBody()
     {
         $body = Stream::factory('foo');
-        $t = new Transaction(new Client(), new Request('PUT', '/', [], $body));
+        $t = new Transaction(new Client(), new Request('PUT', 'http://httbin.org', [], $body));
         $m = new RequestMediator($t, new MessageFactory());
         $this->assertEquals('foo', $m->readRequestBody(null, null, 3));
     }

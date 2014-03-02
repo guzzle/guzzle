@@ -17,8 +17,8 @@ class FakeParallelAdapterTest extends \PHPUnit_Framework_TestCase
     {
         $client = new Client();
         $requests = [
-            $client->createRequest('GET', '/'),
-            $client->createRequest('HEAD', '/'),
+            $client->createRequest('GET', 'http://httbin.org'),
+            $client->createRequest('HEAD', 'http://httbin.org'),
         ];
 
         $sent = [];

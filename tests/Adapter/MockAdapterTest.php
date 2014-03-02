@@ -22,7 +22,7 @@ class MockAdapterTest extends \PHPUnit_Framework_TestCase
         $response = new Response(200);
         $m = new MockAdapter();
         $m->setResponse($response);
-        $this->assertSame($response, $m->send(new Transaction(new Client(), new Request('GET', '/'))));
+        $this->assertSame($response, $m->send(new Transaction(new Client(), new Request('GET', 'http://httbin.org'))));
     }
 
     public function testMocksWithCallable()
@@ -32,7 +32,7 @@ class MockAdapterTest extends \PHPUnit_Framework_TestCase
             return $response;
         };
         $m = new MockAdapter($r);
-        $this->assertSame($response, $m->send(new Transaction(new Client(), new Request('GET', '/'))));
+        $this->assertSame($response, $m->send(new Transaction(new Client(), new Request('GET', 'http://httbin.org'))));
     }
 
     /**
@@ -42,14 +42,14 @@ class MockAdapterTest extends \PHPUnit_Framework_TestCase
     {
         $m = new MockAdapter();
         $m->setResponse('foo');
-        $m->send(new Transaction(new Client(), new Request('GET', '/')));
+        $m->send(new Transaction(new Client(), new Request('GET', 'http://httbin.org')));
     }
 
     public function testHandlesErrors()
     {
         $m = new MockAdapter();
         $m->setResponse(new Response(404));
-        $request = new Request('GET', '/');
+        $request = new Request('GET', 'http://httbin.org');
         $c = false;
         $request->getEmitter()->once('complete', function (CompleteEvent $e) use (&$c) {
             $c = true;
@@ -70,7 +70,7 @@ class MockAdapterTest extends \PHPUnit_Framework_TestCase
     {
         $m = new MockAdapter();
         $m->setResponse(new Response(404));
-        $request = new Request('GET', '/');
+        $request = new Request('GET', 'http://httbin.org');
         $request->getEmitter()->once('complete', function (CompleteEvent $e) {
             throw new RequestException('foo', $e->getRequest());
         });

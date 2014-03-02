@@ -17,7 +17,7 @@ class BatchContextTest extends \PHPUnit_Framework_TestCase
         $m = curl_multi_init();
         $b = new BatchContext($m, true);
         $h = curl_init();
-        $t = new Transaction(new Client(), new Request('GET', '/'));
+        $t = new Transaction(new Client(), new Request('GET', 'http://httbin.org'));
         $b->addTransaction($t, $h);
         try {
             $b->addTransaction($t, $h);
@@ -33,7 +33,7 @@ class BatchContextTest extends \PHPUnit_Framework_TestCase
         $m = curl_multi_init();
         $b = new BatchContext($m, true);
         $h = curl_init();
-        $t = new Transaction(new Client(), new Request('GET', '/'));
+        $t = new Transaction(new Client(), new Request('GET', 'http://httbin.org'));
         $b->addTransaction($t, $h);
         $this->assertSame($t, $b->findTransaction($h));
         $b->removeTransaction($t);
