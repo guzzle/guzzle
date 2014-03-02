@@ -44,7 +44,10 @@ trait StreamDecoratorTrait
                 }
                 $read = min(1048576, $maxLength - $len);
             }
-            $buffer .= $this->read($read);
+            if ('' === ($line = $this->read($read))) {
+                break;
+            }
+            $buffer .= $line;
         }
 
         return $buffer;
