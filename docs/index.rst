@@ -45,21 +45,48 @@ User guide
     streams
     faq
 
-Libraries
----------
+HTTP Components
+---------------
 
-There are a number of libraries that can be used on top of or alongside
-Guzzle. Here is a list of components that makeup Guzzle itself, official
-libraries provided by the Guzzle organization, and commonly used libraries
-provided by third party developers.
+There are a number of optional libraries you can use along with Guzzle's HTTP
+layer to add capabilities to the client.
 
-.. toctree::
-    :maxdepth: 2
+`Log Subscriber <https://github.com/guzzle/log-subscriber>`_
+    Logs HTTP requests and responses sent of ver the wire using customizable
+    log message templates.
 
-    libraries/components
-    libraries/guzzle
-    libraries/guzzle-service
-    libraries/third-party
+`OAuth Subscriber <https://github.com/guzzle/oauth-subscriber>`_
+    Signs requests using OAuth 1.0.
+
+`Cache Subscriber <https://github.com/guzzle/cache-subscriber>`_
+    Implements a private transparent proxy cache that caches HTTP responses.
+
+`Retry Subscriber <https://github.com/guzzle/retry-subscriber>`_
+    Retries failed requests using customizable retry strategies (e.g., retry
+    based on response status code, cURL error codes, etc...)
+
+`Message Integrity Subscriber <https://github.com/guzzle/message-integrity-subscriber>`_
+    Verifies the message integrity of HTTP responses using customizable
+    validators. This plugin can be used, for example, to verify the Content-MD5
+    headers of responses.
+
+Service Description Commands
+----------------------------
+
+You can use the **Guzzle Command** library to encapsulate interaction with a
+web service using command objects. Building on top of Guzzle's command
+abstraction allows you to easily implement things like service description that
+can be used to serialize requests and parse responses using a meta-description
+of a web service.
+
+`Guzzle Command <https://github.com/guzzle/command>`_
+    Provides the foundational elements used to build high-level, command based,
+    web service clients with Guzzle.
+
+`Guzzle Services <https://github.com/guzzle/guzzle-services>`_
+    Provides an implementation of the *Guzzle Command* library that uses
+    Guzzle service descriptions to describe web services, serialize requests,
+    and parse responses into easy to use model structures.
 
 API Documentation
 -----------------
