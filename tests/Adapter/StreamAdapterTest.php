@@ -140,7 +140,6 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         ]);
         $response = $client->get('/');
         $body = $response->getBody();
-        $this->assertEquals('PHP', $body->getMetadata()['wrapper_type']);
         $this->assertEquals('php://temp', $body->getMetadata()['uri']);
         $this->assertEquals('hi', $body->read(2));
         $body->close();
@@ -157,7 +156,6 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         ]);
         $response = $client->get('/', ['save_to' => $r]);
         $body = $response->getBody();
-        $this->assertEquals('PHP', $body->getMetadata()['wrapper_type']);
         $this->assertEquals('php://temp', $body->getMetadata()['uri']);
         $this->assertEquals('hi', $body->read(2));
         $this->assertEquals(' there', stream_get_contents($r));
@@ -175,7 +173,6 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         ]);
         $response = $client->get('/', ['save_to' => $tmpfname]);
         $body = $response->getBody();
-        $this->assertEquals('plainfile', $body->getMetadata()['wrapper_type']);
         $this->assertEquals($tmpfname, $body->getMetadata()['uri']);
         $this->assertEquals('hi', $body->read(2));
         $body->close();
@@ -286,6 +283,8 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testDebugAttributeWritesStreamInfoToTempBufferByDefault()
     {
+
+
         self::$server->flush();
         self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
         $client = new Client([

@@ -7,6 +7,7 @@ use GuzzleHttp\Collection;
 /**
  * @covers GuzzleHttp\Collection
  * @covers GuzzleHttp\HasDataTrait
+ * @covers GuzzleHttp\PathTrait
  */
 class CollectionTest extends \PHPUnit_Framework_TestCase
 {
@@ -183,7 +184,7 @@ class CollectionTest extends \PHPUnit_Framework_TestCase
             return $value == 'ten';
         });
 
-        $this->assertNotEquals($filtered, $this->coll);
+        $this->assertNotSame($filtered, $this->coll);
 
         $this->assertEquals(array(
             'number' => 'ten',
@@ -203,7 +204,7 @@ class CollectionTest extends \PHPUnit_Framework_TestCase
             return $value * $value;
         });
 
-        $this->assertNotEquals($mapped, $this->coll);
+        $this->assertNotSame($mapped, $this->coll);
 
         $this->assertEquals(array(
             'number_1' => 1,

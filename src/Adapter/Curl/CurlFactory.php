@@ -161,8 +161,8 @@ class CurlFactory
     protected function visit_debug(RequestInterface $request, RequestMediator $mediator, &$options, $value)
     {
         if ($value) {
+            $options[CURLOPT_STDERR] = is_resource($value) ? $value : STDOUT;
             $options[CURLOPT_VERBOSE] = true;
-            $options[CURLOPT_STDERR] = is_resource($value) ? $value : fopen('php://output', 'w');
         }
     }
 

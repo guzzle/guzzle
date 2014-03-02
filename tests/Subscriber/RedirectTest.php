@@ -152,7 +152,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         $body->expects($this->once())->method('seek')->will($this->returnValue(false));
         $body->expects($this->any())->method('eof')->will($this->returnValue(true));
         $body->expects($this->any())->method('read')->will($this->returnValue('foo'));
-        $client->post('/foo', [
+        $client->post('http://example.com/foo', [
             'body' => $body,
             'allow_redirects' => ['max' => 10, 'strict' => true]
         ]);

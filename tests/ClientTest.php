@@ -84,7 +84,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             ->method('send')
             ->will($this->throwException(new \Exception('Foo')));
         $client = new Client(['adapter' => $adapter]);
-        $client->get();
+        $client->get('http://httpbin.org');
     }
 
     /**
@@ -291,7 +291,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $adapter->expects($this->once())
             ->method('send');
         $client = new Client(['adapter' => $adapter]);
-        $client->get('/');
+        $client->get('http://httpbin.org');
     }
 
     public function testClientHandlesErrorsDuringBeforeSend()
@@ -316,7 +316,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client->getEmitter()->on('before', function ($e) {
             throw new RequestException('foo', $e->getRequest());
         });
-        $client->get('/');
+        $client->get('http://httpbin.org');
     }
 
     public function testCanSetConfigValues()
