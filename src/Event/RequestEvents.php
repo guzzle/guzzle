@@ -26,6 +26,12 @@ final class RequestEvents
                 'before',
                 new BeforeEvent($transaction)
             );
+        } catch (RequestException $e) {
+            // Allow request exceptions to pass through unmodified. This can
+            // occur for unhandled request exceptions that occurred in their
+            // own event loop. This guard prevents the error event from being
+            // triggered twice.
+            throw $e;
         } catch (\Exception $e) {
             self::emitError($transaction, $e);
         }

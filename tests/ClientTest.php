@@ -298,7 +298,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $client = new Client();
         $client->getEmitter()->on('before', function ($e) {
-            throw new RequestException('foo', $e->getRequest());
+            throw new \Exception('foo');
         });
         $client->getEmitter()->on('error', function ($e) {
             $e->intercept(new Response(200));
