@@ -42,13 +42,6 @@ class PostBody implements PostBodyInterface
         }
     }
 
-    /**
-     * Set to true to force a multipart upload even if there are no files
-     *
-     * @param bool $force Set to true to force multipart uploads or false to remove this flag
-     *
-     * @return self
-     */
     public function forceMultipartUpload($force)
     {
         $this->forceMultipart = $force;
@@ -56,16 +49,7 @@ class PostBody implements PostBodyInterface
         return $this;
     }
 
-    /**
-     * Set the aggregation strategy that will be used to turn multi-valued
-     * fields into a string.
-     *
-     * The aggregation function accepts a deeply nested array of query string
-     * values and returns a flattened associative array of key value pairs.
-     *
-     * @param callable $aggregator
-     */
-    final public function setAggregator(callable $aggregator)
+    public function setAggregator(callable $aggregator)
     {
         $this->aggregator = $aggregator;
     }
@@ -99,9 +83,15 @@ class PostBody implements PostBodyInterface
         return $this;
     }
 
-    public function getFields()
+    public function getFields($asString = false)
     {
-        return $this->fields;
+        if (!$asString) {
+            return $this->fields;
+        }
+
+        return (string) (new Query($this->fields))
+            ->setEncodingType(Query::RFC1738)
+            ->setAggregator($this->getAggregator());
     }
 
     public function hasField($name)
@@ -279,11 +269,7 @@ class PostBody implements PostBodyInterface
      */
     private function createUrlEncoded()
     {
-        $query = (new Query($this->fields))
-            ->setAggregator($this->getAggregator())
-            ->setEncodingType(Query::RFC1738);
-
-        return Stream::factory($query);
+        return Stream::factory($this->getFields(true));
     }
 
     /**

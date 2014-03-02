@@ -28,6 +28,27 @@ interface PostBodyInterface extends StreamInterface, \Countable
     public function setField($name, $value);
 
     /**
+     * Set the aggregation strategy that will be used to turn multi-valued
+     * fields into a string.
+     *
+     * The aggregation function accepts a deeply nested array of query string
+     * values and returns a flattened associative array of key value pairs.
+     *
+     * @param callable $aggregator
+     */
+    public function setAggregator(callable $aggregator);
+
+    /**
+     * Set to true to force a multipart upload even if there are no files.
+     *
+     * @param bool $force Set to true to force multipart uploads or false to
+     *     remove this flag.
+     *
+     * @return self
+     */
+    public function forceMultipartUpload($force);
+
+    /**
      * Replace all existing form fields with an array of fields
      *
      * @param array $fields Associative array of fields to set
@@ -55,11 +76,14 @@ interface PostBodyInterface extends StreamInterface, \Countable
     public function removeField($name);
 
     /**
-     * Returns an associative array of names to values
+     * Returns an associative array of names to values or a query string.
      *
-     * @return array
+     * @param bool $asString Set to true to retrieve the fields as a query
+     *     string.
+     *
+     * @return array|string
      */
-    public function getFields();
+    public function getFields($asString = false);
 
     /**
      * Returns true if a field is set
