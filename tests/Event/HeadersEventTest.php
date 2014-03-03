@@ -25,4 +25,15 @@ class HeadersEventTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($r, $e->getRequest());
         $this->assertSame($response, $e->getResponse());
     }
+
+    /**
+     * @expectedException \RuntimeException
+     */
+    public function testEnsuresResponseIsSet()
+    {
+        $c = new Client();
+        $r = new Request('GET', '/');
+        $t = new Transaction($c, $r);
+        new HeadersEvent($t);
+    }
 }

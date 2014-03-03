@@ -55,6 +55,7 @@ class Mock implements SubscriberInterface, \Countable
         // Emulate the receiving of the response headers
         $request = $event->getRequest();
         $transaction = new Transaction($event->getClient(), $request);
+        $transaction->setResponse($item);
         $request->getEmitter()->emit(
             'headers',
             new HeadersEvent($transaction)
