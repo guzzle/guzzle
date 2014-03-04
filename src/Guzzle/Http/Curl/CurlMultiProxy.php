@@ -18,10 +18,10 @@ class CurlMultiProxy extends AbstractHasDispatcher implements CurlMultiInterface
     protected $selectTimeout;
 
     /**
-     * @param float $selectTimeout timeout for curl_multi_select
      * @param int   $maxHandles The maximum number of idle CurlMulti handles to allow to remain open
+     * @param float $selectTimeout timeout for curl_multi_select
      */
-    public function __construct($selectTimeout, $maxHandles = 3)
+    public function __construct($maxHandles = 3, $selectTimeout = 1.0)
     {
         $this->maxHandles = $maxHandles;
         $this->selectTimeout = $selectTimeout;

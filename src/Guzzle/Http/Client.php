@@ -33,6 +33,8 @@ class Client extends AbstractHasDispatcher implements ClientInterface
 
     const DEFAULT_SELECT_TIMEOUT = 1.0;
 
+    const MAX_HANDLES = 3;
+
     /** @var Collection Default HTTP headers to set on each request */
     protected $defaultHeaders;
 
@@ -308,11 +310,8 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function getCurlMulti()
     {
         if (!$this->curlMulti) {
-            $options = $this->getConfig(self::REQUEST_OPTIONS);
-            $selectTimeout = isset($options['select_timeout'])
-                ? $options['select_timeout'] : self::DEFAULT_SELECT_TIMEOUT;
-
-            $this->curlMulti = new CurlMultiProxy($selectTimeout);
+            $selectTimeout = $this->getConfig('select_timeout') ?: self::DEFAULT_SELECT_TIMEOUT ;
+            $this->curlMulti = new CurlMultiProxy(self::MAX_HANDLES, $selectTimeout);
         }
 
         return $this->curlMulti;

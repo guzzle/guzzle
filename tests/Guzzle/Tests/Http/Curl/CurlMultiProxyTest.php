@@ -22,7 +22,7 @@ class CurlMultiProxyTest extends \Guzzle\Tests\GuzzleTestCase
     protected function setUp()
     {
         parent::setUp();
-        $this->multi = new CurlMultiProxy(self::SELECT_TIMEOUT);
+        $this->multi = new CurlMultiProxy(self::MAX_HANDLES, self::SELECT_TIMEOUT);
     }
 
     public function tearDown()
@@ -32,13 +32,13 @@ class CurlMultiProxyTest extends \Guzzle\Tests\GuzzleTestCase
 
     public function testConstructorSetsMaxHandles()
     {
-        $m = new CurlMultiProxy(self::SELECT_TIMEOUT, self::MAX_HANDLES);
+        $m = new CurlMultiProxy(self::MAX_HANDLES, self::SELECT_TIMEOUT);
         $this->assertEquals(self::MAX_HANDLES, $this->readAttribute($m, 'maxHandles'));
     }
 
     public function testConstructorSetsSelectTimeout()
     {
-        $m = new CurlMultiProxy(self::SELECT_TIMEOUT, self::MAX_HANDLES);
+        $m = new CurlMultiProxy(self::MAX_HANDLES, self::SELECT_TIMEOUT);
         $this->assertEquals(self::SELECT_TIMEOUT, $this->readAttribute($m, 'selectTimeout'));
     }
 
@@ -100,7 +100,7 @@ class CurlMultiProxyTest extends \Guzzle\Tests\GuzzleTestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
         ));
         $client = new Client($this->getServer()->getUrl());
-        $client->setCurlMulti(new CurlMultiProxy(self::SELECT_TIMEOUT, self::MAX_HANDLES));
+        $client->setCurlMulti(new CurlMultiProxy(self::MAX_HANDLES, self::SELECT_TIMEOUT));
         $request = $client->get();
         $request->send();
         $this->assertEquals(200, $request->getResponse()->getStatusCode());
