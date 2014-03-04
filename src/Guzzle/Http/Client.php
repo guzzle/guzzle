@@ -31,6 +31,8 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     const SSL_CERT_AUTHORITY = 'ssl.certificate_authority';
     const DISABLE_REDIRECTS = RedirectPlugin::DISABLE;
 
+    const DEFAULT_SELECT_TIMEOUT = 1.0;
+
     /** @var Collection Default HTTP headers to set on each request */
     protected $defaultHeaders;
 
@@ -306,7 +308,11 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     public function getCurlMulti()
     {
         if (!$this->curlMulti) {
-            $this->curlMulti = new CurlMultiProxy();
+            $options = $this->getConfig(self::REQUEST_OPTIONS);
+            $selectTimeout = isset($options['select_timeout'])
+                ? $options['select_timeout'] : self::DEFAULT_SELECT_TIMEOUT;
+
+            $this->curlMulti = new CurlMultiProxy($selectTimeout);
         }
 
         return $this->curlMulti;
