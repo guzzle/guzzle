@@ -51,8 +51,10 @@ class PrepareRequestBody implements SubscriberInterface
         }
     }
 
-    protected function addExpectHeader(RequestInterface $request, StreamInterface $body)
-    {
+    private function addExpectHeader(
+        RequestInterface $request,
+        StreamInterface $body
+    ) {
         // Determine if the Expect header should be used
         if (!$request->hasHeader('Expect')) {
 

@@ -14,7 +14,7 @@ use GuzzleHttp\CookieJar\CookieJarInterface;
 class Cookie implements SubscriberInterface
 {
     /** @var CookieJarInterface Cookie cookieJar used to hold cookies */
-    protected $cookieJar;
+    private $cookieJar;
 
     /**
      * @param CookieJarInterface $cookieJar Cookie jar used to hold cookies
@@ -27,8 +27,8 @@ class Cookie implements SubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            'before' => ['onRequestBeforeSend', 125],
-            'complete'  => ['onRequestSent', 125]
+            'before'   => ['onRequestBeforeSend', 125],
+            'complete' => ['onRequestSent', 125]
         ];
     }
 
@@ -50,7 +50,8 @@ class Cookie implements SubscriberInterface
         if ($matching = $this->cookieJar->getMatchingCookies($event->getRequest())) {
             $cookies = [];
             foreach ($matching as $cookie) {
-                $cookies[] = $cookie->getName() . '=' . $this->getCookieValue($cookie->getValue());
+                $cookies[] = $cookie->getName()
+                    . '=' . $this->getCookieValue($cookie->getValue());
             }
             $event->getRequest()->setHeader('Cookie', implode(';', $cookies));
         }
