@@ -30,9 +30,7 @@ class CurlFactory
             $options = $this->applyCustomCurlOptions($config, $options);
         }
 
-        if ($handle) {
-            curl_reset($handle);
-        } else {
+        if (!$handle) {
             $handle = curl_init();
         }
 

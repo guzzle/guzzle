@@ -107,6 +107,7 @@ class CurlAdapter implements AdapterInterface
         // Find an unused handle in the cache
         if (false !== ($key = array_search(false, $this->ownedHandles, true))) {
             $this->ownedHandles[$key] = true;
+            curl_reset($this->handles[$key]);
             return $this->handles[$key];
         }
 
