@@ -38,12 +38,15 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
 
     /**
      * @param MessageFactoryInterface $messageFactory
-     * @param array                   $options Array of options to use with the adapter
+     * @param array $options Array of options to use with the adapter:
      *     - handle_factory: Optional factory used to create cURL handles
-     *     - select_timeout: Specify a float in seconds to use for a curl_multi_select timeout.
+     *     - select_timeout: Specify a float in seconds to use for a
+     *       curl_multi_select timeout.
      */
-    public function __construct(MessageFactoryInterface $messageFactory, array $options = [])
-    {
+    public function __construct(
+        MessageFactoryInterface $messageFactory,
+        array $options = []
+    ) {
         $this->handles = new \SplObjectStorage();
         $this->messageFactory = $messageFactory;
         $this->curlFactory = isset($options['handle_factory'])
@@ -108,7 +111,8 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
 
     private function perform(BatchContext $context)
     {
-        // The first curl_multi_select often times out no matter what, but is usually required for fast transfers
+        // The first curl_multi_select often times out no matter what, but is
+        // usually required for fast transfers.
         $active = false;
         $multi = $context->getMultiHandle();
 
@@ -119,7 +123,8 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
             }
             $this->processMessages($context);
             if ($active && curl_multi_select($multi, $this->selectTimeout) === -1) {
-                // Perform a usleep if a select returns -1: https://bugs.php.net/bug.php?id=61141
+                // Perform a usleep if a select returns -1.
+                // See: https://bugs.php.net/bug.php?id=61141
                 usleep(250);
             }
         } while ($active || $context->hasPending());
@@ -158,8 +163,10 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
         }
     }
 
-    private function addHandle(TransactionInterface $transaction, BatchContext $context)
-    {
+    private function addHandle(
+        TransactionInterface $transaction,
+        BatchContext $context
+    ) {
         try {
             RequestEvents::emitBefore($transaction);
             // Only transfer if the request was not intercepted
@@ -181,7 +188,9 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
         BatchContext $context,
         array $info
     ) {
-        if (CURLM_OK == $curl['result'] || CURLM_CALL_MULTI_PERFORM == $curl['result']) {
+        if (CURLM_OK == $curl['result'] ||
+            CURLM_CALL_MULTI_PERFORM == $curl['result']
+        ) {
             return false;
         }
 

@@ -36,12 +36,14 @@ class CurlAdapter implements AdapterInterface
 
     /**
      * @param MessageFactoryInterface $messageFactory
-     * @param array                   $options Array of options to use with the adapter
+     * @param array $options Array of options to use with the adapter:
      *     - handle_factory: Optional factory used to create cURL handles
      *     - max_handles: Maximum number of idle handles (defaults to 5)
      */
-    public function __construct(MessageFactoryInterface $messageFactory, array $options = [])
-    {
+    public function __construct(
+        MessageFactoryInterface $messageFactory,
+        array $options = []
+    ) {
         $this->handles = $this->ownedHandles = [];
         $this->messageFactory = $messageFactory;
         $this->curlFactory = isset($options['handle_factory'])

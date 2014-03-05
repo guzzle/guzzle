@@ -39,11 +39,14 @@ class CurlFactory
         return $handle;
     }
 
-    protected function getDefaultOptions(RequestInterface $request, RequestMediator $mediator)
-    {
+    protected function getDefaultOptions(
+        RequestInterface $request,
+        RequestMediator $mediator
+    ) {
         $url = $request->getUrl();
 
-        // Strip fragment from URL. See: https://github.com/guzzle/guzzle/issues/453
+        // Strip fragment from URL. See:
+        // https://github.com/guzzle/guzzle/issues/453
         if (($pos = strpos($url, '#')) !== false) {
             $url = substr($url, 0, $pos);
         }
@@ -72,14 +75,15 @@ class CurlFactory
         // Add CURLOPT_ENCODING if Accept-Encoding header is provided
         if ($request->hasHeader('Accept-Encoding')) {
             $options[CURLOPT_ENCODING] = $request->getHeader('Accept-Encoding');
-            // Let cURL set the Accept-Encoding header, prevents duplicate values
+            // Let cURL set the Accept-Encoding header. Without this change
+            // curl could add a duplicate value.
             $this->removeHeader('Accept-Encoding', $options);
         }
 
         return $options;
     }
 
-    protected function applyMethod(RequestInterface $request, array &$options)
+    private function applyMethod(RequestInterface $request, array &$options)
     {
         $method = $request->getMethod();
         if ($method == 'GET') {
@@ -98,7 +102,7 @@ class CurlFactory
         }
     }
 
-    protected function applyBody(RequestInterface $request, array &$options)
+    private function applyBody(RequestInterface $request, array &$options)
     {
         if ($request->hasHeader('Content-Length')) {
             $size = (int) $request->getHeader('Content-Length');
@@ -109,7 +113,9 @@ class CurlFactory
         $request->getBody()->seek(0);
 
         // You can send the body as a string using curl's CURLOPT_POSTFIELDS
-        if (($size !== null && $size < 32768) || isset($request->getConfig()['curl']['body_as_string'])) {
+        if (($size !== null && $size < 32768) ||
+            isset($request->getConfig()['curl']['body_as_string'])
+        ) {
             $options[CURLOPT_POSTFIELDS] = $request->getBody()->getContents();
             // Don't duplicate the Content-Length header
             $this->removeHeader('Content-Length', $options);
@@ -129,7 +135,7 @@ class CurlFactory
         }
     }
 
-    protected function applyHeaders(RequestInterface $request, array &$options)
+    private function applyHeaders(RequestInterface $request, array &$options)
     {
         foreach ($options['_headers'] as $name => $values) {
             $options[CURLOPT_HTTPHEADER][] = $name . ': ' . implode(', ', $values);
@@ -141,8 +147,11 @@ class CurlFactory
         }
     }
 
-    protected function applyTransferOptions(RequestInterface $request, RequestMediator $mediator, array &$options)
-    {
+    private function applyTransferOptions(
+        RequestInterface $request,
+        RequestMediator $mediator,
+        array &$options
+    ) {
         static $methods;
         if (!$methods) {
             $methods = array_flip(get_class_methods(__CLASS__));
@@ -156,16 +165,24 @@ class CurlFactory
         }
     }
 
-    protected function visit_debug(RequestInterface $request, RequestMediator $mediator, &$options, $value)
-    {
+    private function visit_debug(
+        RequestInterface $request,
+        RequestMediator $mediator,
+        &$options,
+        $value
+    ) {
         if ($value) {
             $options[CURLOPT_STDERR] = is_resource($value) ? $value : STDOUT;
             $options[CURLOPT_VERBOSE] = true;
         }
     }
 
-    protected function visit_proxy(RequestInterface $request, RequestMediator $mediator, &$options, $value)
-    {
+    private function visit_proxy(
+        RequestInterface $request,
+        RequestMediator $mediator,
+        &$options,
+        $value
+    ) {
         if (!is_array($value)) {
             $options[CURLOPT_PROXY] = $value;
         } else {
@@ -176,18 +193,30 @@ class CurlFactory
         }
     }
 
-    protected function visit_timeout(RequestInterface $request, RequestMediator $mediator, &$options, $value)
-    {
+    private function visit_timeout(
+        RequestInterface $request,
+        RequestMediator $mediator,
+        &$options,
+        $value
+    ) {
         $options[CURLOPT_TIMEOUT_MS] = $value * 1000;
     }
 
-    protected function visit_connect_timeout(RequestInterface $request, RequestMediator $mediator, &$options, $value)
-    {
+    private function visit_connect_timeout(
+        RequestInterface $request,
+        RequestMediator $mediator,
+        &$options,
+        $value
+    ) {
         $options[CURLOPT_CONNECTTIMEOUT_MS] = $value * 1000;
     }
 
-    protected function visit_verify(RequestInterface $request, RequestMediator $mediator, &$options, $value)
-    {
+    private function visit_verify(
+        RequestInterface $request,
+        RequestMediator $mediator,
+        &$options,
+        $value
+    ) {
         if ($value === false) {
             unset($options[CURLOPT_CAINFO]);
             $options[CURLOPT_SSL_VERIFYHOST] = 0;
@@ -197,15 +226,20 @@ class CurlFactory
             $options[CURLOPT_SSL_VERIFYPEER] = true;
             if ($value !== true) {
                 if (!file_exists($value)) {
-                    throw new \RuntimeException("SSL certificate authority file not found: {$value}");
+                    throw new \RuntimeException('SSL certificate authority file'
+                        . " not found: {$value}");
                 }
                 $options[CURLOPT_CAINFO] = $value;
             }
         }
     }
 
-    protected function visit_cert(RequestInterface $request, RequestMediator $mediator, &$options, $value)
-    {
+    private function visit_cert(
+        RequestInterface $request,
+        RequestMediator $mediator,
+        &$options,
+        $value
+    ) {
         if (!file_exists($value)) {
             throw new \RuntimeException("SSL certificate not found: {$value}");
         }
@@ -213,8 +247,12 @@ class CurlFactory
         $options[CURLOPT_SSLCERT] = $value;
     }
 
-    protected function visit_ssl_key(RequestInterface $request, RequestMediator $mediator, &$options, $value)
-    {
+    private function visit_ssl_key(
+        RequestInterface $request,
+        RequestMediator $mediator,
+        &$options,
+        $value
+    ) {
         if (is_array($value)) {
             $options[CURLOPT_SSLKEYPASSWD] = $value[1];
             $value = $value[0];
@@ -227,10 +265,15 @@ class CurlFactory
         $options[CURLOPT_SSLKEY] = $value;
     }
 
-    protected function visit_save_to(RequestInterface $request, RequestMediator $mediator, &$options, $value)
-    {
-        $saveTo = is_string($value) ? Stream::factory(fopen($value, 'w')) : Stream::factory($value);
-        $mediator->setResponseBody($saveTo);
+    private function visit_save_to(
+        RequestInterface $request,
+        RequestMediator $mediator,
+        &$options,
+        $value
+    ) {
+        $mediator->setResponseBody(is_string($value)
+            ? Stream::factory(fopen($value, 'w'))
+            : Stream::factory($value));
     }
 
     /**
@@ -246,7 +289,7 @@ class CurlFactory
      *
      * @return array Returns a new array of curl options
      */
-    protected function applyCustomCurlOptions(array $config, array $options)
+    private function applyCustomCurlOptions(array $config, array $options)
     {
         unset($config['body_as_string']);
         $curlOptions = [];

@@ -29,8 +29,10 @@ class RequestMediator
      * @param TransactionInterface    $transaction    Transaction to populate
      * @param MessageFactoryInterface $messageFactory Message factory used to create responses
      */
-    public function __construct(TransactionInterface $transaction, MessageFactoryInterface $messageFactory)
-    {
+    public function __construct(
+        TransactionInterface $transaction,
+        MessageFactoryInterface $messageFactory
+    ) {
         $this->transaction = $transaction;
         $this->messageFactory = $messageFactory;
     }
@@ -61,7 +63,8 @@ class RequestMediator
 
         if (substr($header, 0, 5) == 'HTTP/') {
             $startLine = explode(' ', $header, 3);
-            // Only download the body to a target body when a successful response is received
+            // Only download the body to a target body when a successful
+            // response is received.
             if ($startLine[1][0] != '2') {
                 $this->body = null;
             }
