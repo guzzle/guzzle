@@ -8,7 +8,8 @@ use GuzzleHttp\Stream\StreamInterface;
 use GuzzleHttp\Query;
 
 /**
- * Holds POST fields and files and creates a streaming body when read methods are called on the object.
+ * Holds POST fields and files and creates a streaming body when read methods
+ * are called on the object.
  */
 class PostBody implements PostBodyInterface
 {
@@ -32,7 +33,10 @@ class PostBody implements PostBodyInterface
     public function applyRequestHeaders(RequestInterface $request)
     {
         if ($this->files || $this->forceMultipart) {
-            $request->setHeader('Content-Type', 'multipart/form-data; boundary=' . $this->getBody()->getBoundary());
+            $request->setHeader(
+                'Content-Type',
+                'multipart/form-data; boundary=' . $this->getBody()->getBoundary()
+            );
         } elseif ($this->fields) {
             $request->setHeader('Content-Type', 'application/x-www-form-urlencoded');
         }
@@ -210,10 +214,12 @@ class PostBody implements PostBodyInterface
     }
 
     /**
-     * Return a stream object that is built from the POST fields and files. If one has already been
-     * created, the previously created stream will be returned.
+     * Return a stream object that is built from the POST fields and files.
+     *
+     * If one has already been created, the previously created stream will be
+     * returned.
      */
-    protected function getBody()
+    private function getBody()
     {
         if ($this->body) {
             return $this->body;
