@@ -22,7 +22,7 @@ class Stream implements MetadataStreamInterface
     private $meta = [];
 
     /** @var array Hash table of readable and writeable stream types for fast lookups */
-    protected static $readWriteHash = array(
+    private static $readWriteHash = array(
         'read' => array(
             'r' => true, 'w+' => true, 'r+' => true, 'x+' => true, 'c+' => true,
             'rb' => true, 'w+b' => true, 'r+b' => true, 'x+b' => true, 'c+b' => true,
