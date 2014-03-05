@@ -5,8 +5,8 @@ namespace GuzzleHttp\Subscriber;
 use GuzzleHttp\Event\SubscriberInterface;
 use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\BeforeEvent;
-use GuzzleHttp\CookieJar\ArrayCookieJar;
-use GuzzleHttp\CookieJar\CookieJarInterface;
+use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Cookie\CookieJarInterface;
 
 /**
  * Adds, extracts, and persists cookies between HTTP requests
@@ -21,14 +21,14 @@ class Cookie implements SubscriberInterface
      */
     public function __construct(CookieJarInterface $cookieJar = null)
     {
-        $this->cookieJar = $cookieJar ?: new ArrayCookieJar();
+        $this->cookieJar = $cookieJar ?: new CookieJar();
     }
 
     public static function getSubscribedEvents()
     {
         return [
-            'before'   => ['onRequestBeforeSend', 125],
-            'complete' => ['onRequestSent', 125]
+            'before'   => ['onBefore', 125],
+            'complete' => ['onComplete', 125]
         ];
     }
 
@@ -42,40 +42,16 @@ class Cookie implements SubscriberInterface
         return $this->cookieJar;
     }
 
-    public function onRequestBeforeSend(BeforeEvent $event)
+    public function onBefore(BeforeEvent $event)
     {
-        $event->getRequest()->removeHeader('Cookie');
-
-        // Find cookies that match this request
-        if ($matching = $this->cookieJar->getMatchingCookies($event->getRequest())) {
-            $cookies = [];
-            foreach ($matching as $cookie) {
-                $cookies[] = $cookie->getName()
-                    . '=' . $this->getCookieValue($cookie->getValue());
-            }
-            $event->getRequest()->setHeader('Cookie', implode(';', $cookies));
-        }
+        $this->cookieJar->addCookieHeader($event->getRequest());
     }
 
-    public function onRequestSent(CompleteEvent $event)
+    public function onComplete(CompleteEvent $event)
     {
-        $this->cookieJar->addCookiesFromResponse(
+        $this->cookieJar->extractCookies(
             $event->getRequest(),
             $event->getResponse()
         );
-    }
-
-    private function getCookieValue($value)
-    {
-        // Quote the cookie value if it is not already quoted and it contains
-        // problematic characters.
-        if (substr($value, 0, 1) !== '"' &&
-            substr($value, -1, 1) !== '"' &&
-            strpbrk($value, ';,')
-        ) {
-            $value = '"' . $value . '"';
-        }
-
-        return $value;
     }
 }

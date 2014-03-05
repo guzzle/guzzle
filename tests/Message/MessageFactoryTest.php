@@ -7,7 +7,7 @@ use GuzzleHttp\Post\PostFile;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Subscriber\Cookie;
-use GuzzleHttp\CookieJar\ArrayCookieJar;
+use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Subscriber\Mock;
 use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Query;
@@ -169,7 +169,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
 
     public function testAddsCookieFromCookieJar()
     {
-        $jar = new ArrayCookieJar();
+        $jar = new CookieJar();
         $request = (new MessageFactory)->createRequest('GET', '/', ['cookies' => $jar]);
         foreach ($request->getEmitter()->listeners('before') as $l) {
             if ($l[0] instanceof Cookie) {

@@ -24,7 +24,7 @@ interface MessageFactoryInterface
      *       The selected authentication type must be supported by the adapter used by a client.
      *     - "version": The HTTP protocol version to use with the request. Defaults to 1.1.
      *     - "cookies": Pass an associative array containing cookies to send in the request and start a new cookie
-     *       session, set to a {@see GuzzleHttp\CookieJar\CookieJarInterface} object to us an existing
+     *       session, set to a {@see GuzzleHttp\Cookie\CookieJarInterface} object to us an existing
      *       cookie jar, or set to ``true`` to use a shared cookie session associated with the client.
      *     - "allow_redirects": Set to false to disable redirects. Set to true to enable normal redirects with a maximum
      *       number of 5 redirects. Pass an associative array containing the 'max' key to specify the maximum number of

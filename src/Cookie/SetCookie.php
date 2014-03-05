@@ -1,6 +1,6 @@
 <?php
 
-namespace GuzzleHttp\CookieJar;
+namespace GuzzleHttp\Cookie;
 
 use GuzzleHttp\ToArrayInterface;
 

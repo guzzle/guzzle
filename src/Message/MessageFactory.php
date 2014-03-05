@@ -4,8 +4,8 @@ namespace GuzzleHttp\Message;
 
 use GuzzleHttp\Post\PostFileInterface;
 use GuzzleHttp\Subscriber\Cookie;
-use GuzzleHttp\CookieJar\ArrayCookieJar;
-use GuzzleHttp\CookieJar\CookieJarInterface;
+use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Subscriber\HttpError;
 use GuzzleHttp\Post\PostBody;
 use GuzzleHttp\Post\PostFile;
@@ -275,7 +275,7 @@ class MessageFactory implements MessageFactoryInterface
             $request->getEmitter()->addSubscriber($cookie = $cookie ?: new Cookie());
         } elseif (is_array($value)) {
             $request->getEmitter()->addSubscriber(
-                new Cookie(ArrayCookieJar::fromArray($value, $request->getHost()))
+                new Cookie(CookieJar::fromArray($value, $request->getHost()))
             );
         } elseif ($value instanceof CookieJarInterface) {
             $request->getEmitter()->addSubscriber(new Cookie($value));

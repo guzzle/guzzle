@@ -2,10 +2,10 @@
 
 namespace GuzzleHttp\Tests\CookieJar;
 
-use GuzzleHttp\CookieJar\SetCookie;
+use GuzzleHttp\Cookie\SetCookie;
 
 /**
- * @covers GuzzleHttp\CookieJar\SetCookie
+ * @covers GuzzleHttp\Cookie\SetCookie
  */
 class SetCookieTest extends \PHPUnit_Framework_TestCase
 {

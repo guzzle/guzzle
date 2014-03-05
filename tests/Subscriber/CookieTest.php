@@ -7,8 +7,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Subscriber\Cookie;
-use GuzzleHttp\CookieJar\SetCookie;
-use GuzzleHttp\CookieJar\ArrayCookieJar;
+use GuzzleHttp\Cookie\SetCookie;
+use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Subscriber\History;
@@ -23,49 +23,30 @@ class CookieTest extends \PHPUnit_Framework_TestCase
     {
         $request = new Request('GET', '/');
         $response = new Response(200);
-        $mock = $this->getMockBuilder('GuzzleHttp\CookieJar\ArrayCookieJar')
-            ->setMethods(array('addCookiesFromResponse'))
+        $mock = $this->getMockBuilder('GuzzleHttp\Cookie\CookieJar')
+            ->setMethods(array('extractCookies'))
             ->getMock();
 
         $mock->expects($this->exactly(1))
-            ->method('addCookiesFromResponse')
+            ->method('extractCookies')
             ->with($request, $response);
 
         $plugin = new Cookie($mock);
         $t = new Transaction(new Client(), $request);
         $t->setResponse($response);
-        $plugin->onRequestSent(new CompleteEvent($t));
+        $plugin->onComplete(new CompleteEvent($t));
     }
 
     public function testProvidesCookieJar()
     {
-        $jar = new ArrayCookieJar();
+        $jar = new CookieJar();
         $plugin = new Cookie($jar);
         $this->assertSame($jar, $plugin->getCookieJar());
     }
 
-    public function testAddsCookiesToRequests()
-    {
-        $cookie = new SetCookie(['Name' => 'foo', 'Value' => 'bar;bam']);
-        $mock = $this->getMockBuilder('GuzzleHttp\CookieJar\ArrayCookieJar')
-            ->setMethods(array('getMatchingCookies'))
-            ->getMock();
-        $mock->expects($this->once())
-            ->method('getMatchingCookies')
-            ->will($this->returnValue([$cookie]));
-
-        $plugin = new Cookie($mock);
-        $client = new Client();
-        $client->getEmitter()->addSubscriber($plugin);
-        $request = $client->createRequest('GET', 'http://www.example.com');
-        $t = new Transaction(new Client(), $request);
-        $plugin->onRequestBeforeSend(new BeforeEvent($t));
-        $this->assertEquals('foo="bar;bam"', $request->getHeader('Cookie'));
-    }
-
     public function testCookiesAreExtractedFromRedirectResponses()
     {
-        $jar = new ArrayCookieJar();
+        $jar = new CookieJar();
         $cookie = new Cookie($jar);
         $history = new History();
         $mock = new Mock([

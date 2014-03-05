@@ -472,7 +472,7 @@ cookies
 :Types:
     - bool
     - array
-    - ``GuzzleHttp\CookieJar\CookieJarInterface``
+    - ``GuzzleHttp\Cookie\CookieJarInterface``
 :Default: None
 
 Set to ``true`` to use a shared cookie session associated with the client.
@@ -490,12 +490,12 @@ new cookie session.
     // Enable cookies and send specific cookies
     $client->get('/get', ['cookies' => ['foo' => 'bar']]);
 
-Set to a ``GuzzleHttp\CookieJar\CookieJarInterface`` object to use an existing
+Set to a ``GuzzleHttp\Cookie\CookieJarInterface`` object to use an existing
 cookie jar.
 
 .. code-block:: php
 
-    $jar = new GuzzleHttp\CookieJar\ArrayCookieJar();
+    $jar = new GuzzleHttp\Cookie\CookieJar();
     $client->get('/get', ['cookies' => $jar]);
 
 allow_redirects
