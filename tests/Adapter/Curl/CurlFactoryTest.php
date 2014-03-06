@@ -14,7 +14,11 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
 
     require_once __DIR__ . '/../../Server.php';
 
+    use GuzzleHttp\Adapter\Curl\CurlAdapter;
     use GuzzleHttp\Adapter\Curl\MultiAdapter;
+    use GuzzleHttp\Event\BeforeEvent;
+    use GuzzleHttp\Message\RequestInterface;
+    use GuzzleHttp\Message\Response;
     use GuzzleHttp\Stream\Stream;
     use GuzzleHttp\Tests\Server;
     use GuzzleHttp\Adapter\Curl\CurlFactory;
@@ -52,6 +56,7 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
             $stream = Stream::factory();
             $request->getConfig()->set('save_to', $stream);
             $request->getConfig()->set('verify', true);
+            $this->emit($request);
 
             $t = new Transaction(new Client(), $request);
             $f = new CurlFactory();
@@ -83,6 +88,7 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
             self::$server->flush();
             self::$server->enqueue(["HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n"]);
             $request = new Request('HEAD', self::$server->getUrl());
+            $this->emit($request);
 
             $t = new Transaction(new Client(), $request);
             $f = new CurlFactory();
@@ -103,6 +109,7 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
             self::$server->flush();
             self::$server->enqueue(["HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"]);
             $request = new Request('POST', self::$server->getUrl());
+            $this->emit($request);
             $t = new Transaction(new Client(), $request);
             $h = (new CurlFactory())->createHandle($t, new MessageFactory());
             curl_exec($h);
@@ -127,6 +134,7 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
             self::$server->flush();
             self::$server->enqueue(["HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"]);
             $request = new Request('PUT', self::$server->getUrl(), [], $stream);
+            $this->emit($request);
             $this->assertNull($request->getBody()->getSize());
             $t = new Transaction(new Client(), $request);
             $h = (new CurlFactory())->createHandle($t, new MessageFactory());
@@ -143,6 +151,7 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
             self::$server->flush();
             self::$server->enqueue(["HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\nfoo"]);
             $request = new Request('GET', self::$server->getUrl(), ['Accept-Encoding' => '']);
+            $this->emit($request);
             $t = new Transaction(new Client(), $request);
             $h = (new CurlFactory())->createHandle($t, new MessageFactory());
             curl_exec($h);
@@ -159,6 +168,7 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
             self::$server->enqueue(["HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\nfoo"]);
             $request = new Request('GET', self::$server->getUrl());
             $request->getConfig()->set('debug', $r);
+            $this->emit($request);
             $t = new Transaction(new Client(), $request);
             $h = (new CurlFactory())->createHandle($t, new MessageFactory());
             curl_exec($h);
@@ -170,6 +180,7 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
         public function testAddsProxyOptions()
         {
             $request = new Request('GET', self::$server->getUrl());
+            $this->emit($request);
             $request->getConfig()->set('proxy', '123');
             $request->getConfig()->set('connect_timeout', 1);
             $request->getConfig()->set('timeout', 2);
@@ -195,6 +206,7 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
         public function testEnsuresCertExists()
         {
             $request = new Request('GET', self::$server->getUrl());
+            $this->emit($request);
             $request->getConfig()->set('cert', __FILE__ . 'ewfwef');
             (new CurlFactory())->createHandle(new Transaction(new Client(), $request), new MessageFactory());
         }
@@ -205,6 +217,7 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
         public function testEnsuresKeyExists()
         {
             $request = new Request('GET', self::$server->getUrl());
+            $this->emit($request);
             $request->getConfig()->set('ssl_key', __FILE__ . 'ewfwef');
             (new CurlFactory())->createHandle(new Transaction(new Client(), $request), new MessageFactory());
         }
@@ -215,6 +228,7 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
         public function testEnsuresCacertExists()
         {
             $request = new Request('GET', self::$server->getUrl());
+            $this->emit($request);
             $request->getConfig()->set('verify', __FILE__ . 'ewfwef');
             (new CurlFactory())->createHandle(new Transaction(new Client(), $request), new MessageFactory());
         }
@@ -238,6 +252,7 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
         {
             $request = new Request('GET', self::$server->getUrl());
             $request->getConfig()->set('curl', ['CURLOPT_USERAGENT' => 'foo']);
+            $this->emit($request);
             $f = new CurlFactory();
             curl_close($f->createHandle(new Transaction(new Client(), $request), new MessageFactory()));
             $this->assertEquals('foo', $_SERVER['last_curl'][CURLOPT_USERAGENT]);
@@ -246,6 +261,7 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
         public function testStripsFragment()
         {
             $request = new Request('GET', self::$server->getUrl() . '#foo');
+            $this->emit($request);
             $f = new CurlFactory();
             curl_close($f->createHandle(new Transaction(new Client(), $request), new MessageFactory()));
             $this->assertEquals(self::$server->getUrl(), $_SERVER['last_curl'][CURLOPT_URL]);
@@ -254,10 +270,17 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
         public function testDoesNotSendSizeTwice()
         {
             $request = new Request('PUT', self::$server->getUrl(), [], Stream::factory(str_repeat('a', 32769)));
+            $this->emit($request);
             $f = new CurlFactory();
             curl_close($f->createHandle(new Transaction(new Client(), $request), new MessageFactory()));
             $this->assertEquals(32769, $_SERVER['last_curl'][CURLOPT_INFILESIZE]);
             $this->assertNotContains('Content-Length', implode(' ', $_SERVER['last_curl'][CURLOPT_HTTPHEADER]));
+        }
+
+        private function emit(RequestInterface $request)
+        {
+            $event = new BeforeEvent(new Transaction(new Client(), $request));
+            $request->getEmitter()->emit('before', $event);
         }
     }
 }

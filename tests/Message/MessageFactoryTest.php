@@ -24,10 +24,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
             'protocol_version' => 1.0
         ]);
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals([
-            'Content-Length' => ['4'],
-            'foo' => ['bar']
-        ], $response->getHeaders());
+        $this->assertEquals(['foo' => ['bar']], $response->getHeaders());
         $this->assertEquals('test', $response->getBody());
         $this->assertEquals(1.0, $response->getProtocolVersion());
     }
@@ -77,11 +74,6 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $response = (new MessageFactory)->fromMessage("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ntest");
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals('4', $response->getHeader('Content-Length'));
-        $this->assertEquals('test', $response->getBody(true));
-
-        // Make sure that automatic Content-Length works
-        $response = (new MessageFactory)->fromMessage("HTTP/1.1 200 OK\r\n\r\ntest");
         $this->assertEquals('4', $response->getHeader('Content-Length'));
         $this->assertEquals('test', $response->getBody(true));
     }

@@ -40,32 +40,7 @@ class AbstractMessageTest extends \PHPUnit_Framework_TestCase
         $s = Stream::factory('test');
         $m->setBody($s);
         $this->assertSame($s, $m->getBody());
-        $this->assertEquals('4', $m->getHeader('Content-Length'));
-    }
-
-    public function testSetsContentTypeIfPossibleFromStream()
-    {
-        $s = $this->getMockBuilder('GuzzleHttp\Stream\MetadataStreamInterface')
-            ->setMethods(['getMetadata', 'getSize'])
-            ->getMockForAbstractClass();
-        $s->expects($this->exactly(1))
-            ->method('getMetadata')
-            ->with('uri')
-            ->will($this->returnValue('/foo/baz/bar.jpg'));
-        $s->expects($this->exactly(2))
-            ->method('getSize')
-            ->will($this->returnValue(4));
-
-        $m = new Message();
-        $m->setBody($s);
-        $this->assertSame($s, $m->getBody());
-        $this->assertEquals('4', $m->getHeader('Content-Length'));
-        $this->assertEquals('image/jpeg', $m->getHeader('Content-Type'));
-
-        $m = new Message();
-        $m->setHeader('Content-Type', 'foo/baz');
-        $m->setBody($s);
-        $this->assertEquals('foo/baz', $m->getHeader('Content-Type'));
+        $this->assertFalse($m->hasHeader('Content-Length'));
     }
 
     public function testCanRemoveBodyBySettingToNullAndRemovesCommonBodyHeaders()
@@ -84,7 +59,7 @@ class AbstractMessageTest extends \PHPUnit_Framework_TestCase
         $m = new Message();
         $m->setHeader('foo', 'bar');
         $m->setBody(Stream::factory('baz'));
-        $this->assertEquals("Foo!\r\nfoo: bar\r\nContent-Length: 3\r\n\r\nbaz", (string) $m);
+        $this->assertEquals("Foo!\r\nfoo: bar\r\n\r\nbaz", (string) $m);
     }
 
     public function parseParamsProvider()

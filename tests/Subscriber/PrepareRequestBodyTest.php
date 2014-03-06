@@ -85,8 +85,82 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($t->getRequest()->hasHeader('Content-Length'));
     }
 
-    private function getTrans()
+    public function testSetsContentTypeIfPossibleFromStream()
     {
-        return new Transaction(new Client(), new Request('PUT', '/'));
+        $body = $this->getMockBody();
+        $sub = new PrepareRequestBody();
+        $t = $this->getTrans();
+        $t->getRequest()->setBody($body);
+        $sub->onRequestBeforeSend(new BeforeEvent($t));
+        $this->assertEquals(
+            'image/jpeg',
+            $t->getRequest()->getHeader('Content-Type')
+        );
+        $this->assertEquals(4, $t->getRequest()->getHeader('Content-Length'));
+    }
+
+    public function testDoesNotOverwriteExistingContentType()
+    {
+        $s = new PrepareRequestBody();
+        $t = $this->getTrans();
+        $t->getRequest()->setBody($this->getMockBody());
+        $t->getRequest()->setHeader('Content-Type', 'foo/baz');
+        $s->onRequestBeforeSend(new BeforeEvent($t));
+        $this->assertEquals(
+            'foo/baz',
+            $t->getRequest()->getHeader('Content-Type')
+        );
+    }
+
+    public function testSetsContentLengthIfPossible()
+    {
+        $s = new PrepareRequestBody();
+        $t = $this->getTrans();
+        $t->getRequest()->setBody($this->getMockBody());
+        $s->onRequestBeforeSend(new BeforeEvent($t));
+        $this->assertEquals(4, $t->getRequest()->getHeader('Content-Length'));
+    }
+
+    public function testSetsTransferEncodingChunkedIfNeeded()
+    {
+        $r = new Request('PUT', '/');
+        $s = $this->getMockBuilder('GuzzleHttp\Stream\StreamInterface')
+            ->setMethods(['getSize'])
+            ->getMockForAbstractClass();
+        $s->expects($this->exactly(2))
+            ->method('getSize')
+            ->will($this->returnValue(null));
+        $r->setBody($s);
+        $t = $this->getTrans($r);
+        $s = new PrepareRequestBody();
+        $s->onRequestBeforeSend(new BeforeEvent($t));
+        $this->assertEquals('chunked', $r->getHeader('Transfer-Encoding'));
+    }
+
+    private function getTrans($request = null)
+    {
+        return new Transaction(
+            new Client(),
+            $request ?: new Request('PUT', '/')
+        );
+    }
+
+    /**
+     * @return \GuzzleHttp\Stream\StreamInterface
+     */
+    private function getMockBody()
+    {
+        $s = $this->getMockBuilder('GuzzleHttp\Stream\MetadataStreamInterface')
+            ->setMethods(['getMetadata', 'getSize'])
+            ->getMockForAbstractClass();
+        $s->expects($this->any())
+            ->method('getMetadata')
+            ->with('uri')
+            ->will($this->returnValue('/foo/baz/bar.jpg'));
+        $s->expects($this->exactly(2))
+            ->method('getSize')
+            ->will($this->returnValue(4));
+
+        return $s;
     }
 }

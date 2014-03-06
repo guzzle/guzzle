@@ -34,7 +34,7 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
         $s = Stream::factory('foo');
         $s->read(1);
         $response->setBody($s);
-        $this->assertEquals("HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\nfoo", (string) $response);
+        $this->assertEquals("HTTP/1.1 200 OK\r\n\r\nfoo", (string) $response);
     }
 
     public function testParsesJsonResponses()

@@ -55,23 +55,9 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $s = explode("\r\n", (string) $r);
         $this->assertEquals("GET /test HTTP/1.1", $s[0]);
         $this->assertContains('Host: test.com', $s);
-        $this->assertContains('Content-Length: 4', $s);
         $this->assertContains('foo: baz', $s);
         $this->assertContains('', $s);
         $this->assertContains('body', $s);
-    }
-
-    public function testSettingBodyWithNoDeterminableContentLengthAppliesTransferEncodingChunked()
-    {
-        $r = new Request('GET', '/');
-        $s = $this->getMockBuilder('GuzzleHttp\Stream\StreamInterface')
-            ->setMethods(['getSize'])
-            ->getMockForAbstractClass();
-        $s->expects($this->once())
-            ->method('getSize')
-            ->will($this->returnValue(null));
-        $r->setBody($s);
-        $this->assertEquals('chunked', $r->getHeader('Transfer-Encoding'));
     }
 
     public function testSettingUrlOverridesHostHeaders()

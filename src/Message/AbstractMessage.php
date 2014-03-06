@@ -2,8 +2,6 @@
 
 namespace GuzzleHttp\Message;
 
-use GuzzleHttp\Mimetypes;
-use GuzzleHttp\Stream\MetadataStreamInterface;
 use GuzzleHttp\Stream\StreamInterface;
 
 abstract class AbstractMessage implements MessageInterface
@@ -40,28 +38,11 @@ abstract class AbstractMessage implements MessageInterface
     {
         if ($body === null) {
             // Setting a null body will remove the body of the request
-            $this->body = null;
-            $this->removeHeader('Content-Length');
-            $this->removeHeader('Transfer-Encoding');
-        } else {
-
-            $this->body = $body;
-
-            // Set the Content-Length header if it can be determined
-            $size = $this->body->getSize();
-            if ($size !== null && !$this->hasHeader('Content-Length')) {
-                $this->setHeader('Content-Length', $size);
-            }
-
-            // Add the content-type if possible based on the stream URI
-            if ($body instanceof MetadataStreamInterface && !$this->hasHeader('Content-Type')) {
-                if ($uri = $body->getMetadata('uri')) {
-                    if ($contentType = Mimetypes::getInstance()->fromFilename($uri)) {
-                        $this->setHeader('Content-Type', $contentType);
-                    }
-                }
-            }
+            $this->removeHeader('Content-Length')
+                ->removeHeader('Transfer-Encoding');
         }
+
+        $this->body = $body;
 
         return $this;
     }
