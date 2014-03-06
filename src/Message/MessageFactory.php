@@ -15,7 +15,7 @@ use GuzzleHttp\Query;
 use GuzzleHttp\Url;
 
 /**
- * Default HTTP request factory used to create Request and Response} objects.
+ * Default HTTP request factory used to create Request and Response objects.
  */
 class MessageFactory implements MessageFactoryInterface
 {
