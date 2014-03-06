@@ -24,7 +24,7 @@ interface ClientInterface extends HasEmitterInterface
      *
      * @param string           $method  HTTP method
      * @param string|array|Url $url     URL or URI template
-     * @param array            $options Array of request options to apply. {@see GuzzleHttp\Message\MessageFactoryInterface}
+     * @param array            $options Array of request options to apply.
      *
      * @return RequestInterface
      */
@@ -34,10 +34,10 @@ interface ClientInterface extends HasEmitterInterface
      * Send a GET request
      *
      * @param string|array|Url $url     URL or URI template
-     * @param array            $options Array of request options to apply. {@see GuzzleHttp\Message\MessageFactoryInterface}
+     * @param array            $options Array of request options to apply.
      *
      * @return ResponseInterface
-     * @throws RequestException When an error is encountered (network or HTTP errors)
+     * @throws RequestException When an error is encountered
      */
     public function get($url = null, $options = []);
 
@@ -45,10 +45,10 @@ interface ClientInterface extends HasEmitterInterface
      * Send a HEAD request
      *
      * @param string|array|Url $url     URL or URI template
-     * @param array            $options Array of request options to apply. {@see GuzzleHttp\Message\MessageFactoryInterface}
+     * @param array            $options Array of request options to apply.
      *
      * @return ResponseInterface
-     * @throws RequestException When an error is encountered (network or HTTP errors)
+     * @throws RequestException When an error is encountered
      */
     public function head($url = null, array $options = []);
 
@@ -56,10 +56,10 @@ interface ClientInterface extends HasEmitterInterface
      * Send a DELETE request
      *
      * @param string|array|Url $url     URL or URI template
-     * @param array            $options Array of request options to apply. {@see GuzzleHttp\Message\MessageFactoryInterface}
+     * @param array            $options Array of request options to apply.
      *
      * @return ResponseInterface
-     * @throws RequestException When an error is encountered (network or HTTP errors)
+     * @throws RequestException When an error is encountered
      */
     public function delete($url = null, array $options = []);
 
@@ -67,10 +67,10 @@ interface ClientInterface extends HasEmitterInterface
      * Send a PUT request
      *
      * @param string|array|Url $url     URL or URI template
-     * @param array            $options Array of request options to apply. {@see GuzzleHttp\Message\MessageFactoryInterface}
+     * @param array            $options Array of request options to apply.
      *
      * @return ResponseInterface
-     * @throws RequestException When an error is encountered (network or HTTP errors)
+     * @throws RequestException When an error is encountered
      */
     public function put($url = null, array $options = []);
 
@@ -78,10 +78,10 @@ interface ClientInterface extends HasEmitterInterface
      * Send a PATCH request
      *
      * @param string|array|Url $url     URL or URI template
-     * @param array            $options Array of request options to apply. {@see GuzzleHttp\Message\MessageFactoryInterface}
+     * @param array            $options Array of request options to apply.
      *
      * @return ResponseInterface
-     * @throws RequestException When an error is encountered (network or HTTP errors)
+     * @throws RequestException When an error is encountered
      */
     public function patch($url = null, array $options = []);
 
@@ -89,10 +89,10 @@ interface ClientInterface extends HasEmitterInterface
      * Send an OPTIONS request
      *
      * @param string|array|Url $url     URL or URI template
-     * @param array            $options Array of request options to apply. {@see GuzzleHttp\Message\MessageFactoryInterface}
+     * @param array            $options Array of request options to apply.
      *
      * @return ResponseInterface
-     * @throws RequestException When an error is encountered (network or HTTP errors)
+     * @throws RequestException When an error is encountered
      */
     public function options($url = null, array $options = []);
 
@@ -103,7 +103,7 @@ interface ClientInterface extends HasEmitterInterface
      *
      * @return \GuzzleHttp\Message\ResponseInterface
      * @throws \LogicException When the adapter does not populate a response
-     * @throws RequestException When an error is encountered (network or HTTP errors)
+     * @throws RequestException When an error is encountered
      */
     public function send(RequestInterface $request);
 

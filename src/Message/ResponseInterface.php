@@ -23,14 +23,16 @@ interface ResponseInterface extends MessageInterface
     public function getReasonPhrase();
 
     /**
-     * Get the effective URL that resulted in this response (e.g. the last redirect URL)
+     * Get the effective URL that resulted in this response (e.g. the last
+     * redirect URL).
      *
      * @return string
      */
     public function getEffectiveUrl();
 
     /**
-     * Set the effective URL that resulted in this response (e.g. the last redirect URL)
+     * Set the effective URL that resulted in this response (e.g. the last
+     * redirect URL).
      *
      * @param string $url Effective URL
      *

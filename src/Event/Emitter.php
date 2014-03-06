@@ -5,7 +5,8 @@ namespace GuzzleHttp\Event;
 /**
  * Guzzle event emitter.
  *
- * Some of this class is based on the Symfony EventDispatcher component, which ships with the following license:
+ * Some of this class is based on the Symfony EventDispatcher component, which
+ * ships with the following license:
  *
  *     This file is part of the Symfony package.
  *
@@ -32,7 +33,10 @@ class Emitter implements EmitterInterface
 
     public function once($eventName, callable $listener, $priority = 0)
     {
-        $onceListener = function (EventInterface $event, $eventName) use (&$onceListener, $eventName, $listener, $priority) {
+        $onceListener = function (
+            EventInterface $event,
+            $eventName
+        ) use (&$onceListener, $eventName, $listener, $priority) {
             $this->removeListener($eventName, $onceListener);
             $listener($event, $eventName, $this);
         };
@@ -48,7 +52,10 @@ class Emitter implements EmitterInterface
 
         foreach ($this->listeners[$eventName] as $priority => $listeners) {
             if (false !== ($key = array_search($listener, $listeners, true))) {
-                unset($this->listeners[$eventName][$priority][$key], $this->sorted[$eventName]);
+                unset(
+                    $this->listeners[$eventName][$priority][$key],
+                    $this->sorted[$eventName]
+                );
             }
         }
     }

@@ -945,7 +945,9 @@ class Mimetypes
     {
         $extension = strtolower($extension);
 
-        return isset($this->mimetypes[$extension]) ? $this->mimetypes[$extension] : null;
+        return isset($this->mimetypes[$extension])
+            ? $this->mimetypes[$extension]
+            : null;
     }
 
     /**

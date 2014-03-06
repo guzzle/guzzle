@@ -34,7 +34,8 @@ class Url
             'user' => null, 'pass' => null, 'fragment' => null);
 
         if (false === ($parts = parse_url($url))) {
-            throw new \InvalidArgumentException('Unable to parse malformed url: ' . $url);
+            throw new \InvalidArgumentException('Unable to parse malformed '
+                . 'url: ' . $url);
         }
 
         $parts += $defaults;
@@ -50,7 +51,8 @@ class Url
     }
 
     /**
-     * Build a URL from parse_url parts. The generated URL will be a relative URL if a scheme or host are not provided.
+     * Build a URL from parse_url parts. The generated URL will be a relative
+     * URL if a scheme or host are not provided.
      *
      * @param array $parts Array of parse_url parts
      *
@@ -346,7 +348,10 @@ class Url
      */
     public function addPath($relativePath)
     {
-        if ($relativePath != '/' && is_string($relativePath) && strlen($relativePath) > 0) {
+        if ($relativePath != '/' &&
+            is_string($relativePath) &&
+            strlen($relativePath) > 0
+        ) {
             // Add a leading slash if needed
             if ($relativePath[0] != '/') {
                 $relativePath = '/' . $relativePath;
@@ -454,7 +459,8 @@ class Url
         } elseif (is_array($query)) {
             $this->query = new Query($query);
         } else {
-            throw new \InvalidArgumentException('Query must be a QueryInterface, array, or string');
+            throw new \InvalidArgumentException('Query must be a '
+                . 'QueryInterface, array, or string');
         }
 
         return $this;

@@ -5,7 +5,11 @@ namespace GuzzleHttp;
 /**
  * Key value pair collection object
  */
-class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArrayInterface
+class Collection implements
+    \ArrayAccess,
+    \IteratorAggregate,
+    \Countable,
+    ToArrayInterface
 {
     use PathTrait;
 
@@ -147,7 +151,8 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable, ToArra
      *
      * @param string $value Value to search for
      *
-     * @return mixed Returns the key if the value was found FALSE if the value was not found.
+     * @return mixed Returns the key if the value was found FALSE if the value
+     *     was not found.
      */
     public function hasValue($value)
     {

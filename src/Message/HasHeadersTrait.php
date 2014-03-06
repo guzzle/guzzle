@@ -33,7 +33,8 @@ trait HasHeadersTrait
                 }
                 break;
             default:
-                throw new \InvalidArgumentException('Invalid header value provided: ' . var_export($value, true));
+                throw new \InvalidArgumentException('Invalid header value '
+                    . 'provided: ' . var_export($value, true));
         }
 
         return $this;
@@ -80,7 +81,8 @@ trait HasHeadersTrait
                 $this->headers[$name] = $value;
                 break;
             default:
-                throw new \InvalidArgumentException('Invalid header value provided: ' . var_export($value, true));
+                throw new \InvalidArgumentException('Invalid header value '
+                    . 'provided: ' . var_export($value, true));
         }
 
         return $this;

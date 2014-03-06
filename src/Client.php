@@ -13,7 +13,6 @@ use GuzzleHttp\Adapter\Curl\CurlAdapter;
 use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Adapter\TransactionIterator;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
@@ -60,9 +59,10 @@ class Client implements ClientInterface
      *     ]);
      *
      * @param array $config Client configuration settings
-     *     - base_url: Base URL of the client that is merged into relative URLs. Can be a string or
-     *       an array that contains a URI template followed by an associative array of
-     *       expansion variables to inject into the URI template.
+     *     - base_url: Base URL of the client that is merged into relative URLs.
+     *       Can be a string or an array that contains a URI template followed
+     *       by an associative array of expansion variables to inject into the
+     *       URI template.
      *     - adapter: Adapter used to transfer requests
      *     - parallel_adapter: Adapter used to transfer requests in parallel
      *     - message_factory: Factory used to create request and response object
@@ -97,14 +97,16 @@ class Client implements ClientInterface
 
     public function getConfig($keyOrPath = null)
     {
-        return $keyOrPath === null ? $this->config->toArray() : $this->config->getPath($keyOrPath);
+        return $keyOrPath === null
+            ? $this->config->toArray()
+            : $this->config->getPath($keyOrPath);
     }
 
     public function setConfig($keyOrPath, $value)
     {
         // Ensure that "defaults" is always an array
         if ($keyOrPath == 'defaults' && !is_array($value)) {
-            throw new \InvalidArgumentException('The value for "defaults" must be an array');
+            throw new \InvalidArgumentException('"defaults" must be an array');
         }
 
         $this->config->setPath($keyOrPath, $value);
@@ -203,7 +205,7 @@ class Client implements ClientInterface
         return [
             'allow_redirects' => true,
             'exceptions'      => true,
-            'verify'          => substr(__FILE__, 0, 7) == 'phar://' ? true : (__DIR__ . '/cacert.pem')
+            'verify'          => substr(__FILE__, 0, 7) == 'phar://' ? true : __DIR__ . '/cacert.pem'
         ];
     }
 
@@ -273,7 +275,12 @@ class Client implements ClientInterface
         if (!isset($config['base_url'])) {
             $this->baseUrl = new Url('', '');
         } elseif (is_array($config['base_url'])) {
-            $this->baseUrl = Url::fromString(\GuzzleHttp\uriTemplate($config['base_url'][0], $config['base_url'][1]));
+            $this->baseUrl = Url::fromString(
+                \GuzzleHttp\uriTemplate(
+                    $config['base_url'][0],
+                    $config['base_url'][1]
+                )
+            );
             $config['base_url'] = (string) $this->baseUrl;
         } else {
             $this->baseUrl = Url::fromString($config['base_url']);
@@ -283,14 +290,19 @@ class Client implements ClientInterface
     private function configureDefaults(&$config)
     {
         if (isset($config['defaults'])) {
-            $config['defaults'] = array_replace($this->getDefaultOptions(), $config['defaults']);
+            $config['defaults'] = array_replace(
+                $this->getDefaultOptions(),
+                $config['defaults']
+            );
         } else {
             $config['defaults'] = $this->getDefaultOptions();
         }
 
         // Add the default user-agent header
         if (!isset($config['defaults']['headers'])) {
-            $config['defaults']['headers'] = ['User-Agent' => static::getDefaultUserAgent()];
+            $config['defaults']['headers'] = [
+                'User-Agent' => static::getDefaultUserAgent()
+            ];
         } elseif (!isset(array_change_key_case($config['defaults']['headers'])['user-agent'])) {
             // Add the User-Agent header if one was not already set
             $config['defaults']['headers']['User-Agent'] = static::getDefaultUserAgent();

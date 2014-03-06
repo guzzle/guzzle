@@ -54,9 +54,10 @@ final class RequestEvents
         TransactionInterface $transaction,
         array $stats = []
     ) {
-        $transaction->getResponse()->setEffectiveUrl($transaction->getRequest()->getUrl());
+        $request = $transaction->getRequest();
+        $transaction->getResponse()->setEffectiveUrl($request->getUrl());
         try {
-            $transaction->getRequest()->getEmitter()->emit(
+            $request->getEmitter()->emit(
                 'complete',
                 new CompleteEvent($transaction, $stats)
             );

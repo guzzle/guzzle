@@ -12,16 +12,19 @@ interface EmitterInterface
      *
      * @param string   $eventName Name of the event to bind to.
      * @param callable $listener  Listener to invoke when triggered.
-     * @param int      $priority  The higher this value, the earlier an event listener will be triggered in the chain (defaults to 0)
+     * @param int      $priority  The higher this value, the earlier an event
+     *     listener will be triggered in the chain (defaults to 0)
      */
     public function on($eventName, callable $listener, $priority = 0);
 
     /**
-     * Binds a listener to a specific event. After the listener is triggered once, it is removed as a listener.
+     * Binds a listener to a specific event. After the listener is triggered
+     * once, it is removed as a listener.
      *
      * @param string   $eventName Name of the event to bind to.
      * @param callable $listener  Listener to invoke when triggered.
-     * @param int      $priority  The higher this value, the earlier an event listener will be triggered in the chain (defaults to 0)
+     * @param int      $priority  The higher this value, the earlier an event
+     *     listener will be triggered in the chain (defaults to 0)
      */
     public function once($eventName, callable $listener, $priority = 0);
 
@@ -34,13 +37,17 @@ interface EmitterInterface
     public function removeListener($eventName, callable $listener);
 
     /**
-     * Gets the listeners of a specific event or all listeners if no event is specified.
+     * Gets the listeners of a specific event or all listeners if no event is
+     * specified.
      *
-     * @param string $eventName The name of the event. Pass null (the default) to retrieve all listeners.
+     * @param string $eventName The name of the event. Pass null (the default)
+     *     to retrieve all listeners.
      *
-     * @return array The event listeners for the specified event, or all event listeners by event name.
-     *   The format of the array when retrieving a specific event list is an array of callables.
-     *   The format of the array when retrieving all listeners is an associative array of arrays of callables.
+     * @return array The event listeners for the specified event, or all event
+     *   listeners by event name. The format of the array when retrieving a
+     *   specific event list is an array of callables. The format of the array
+     *   when retrieving all listeners is an associative array of arrays of
+     *   callables.
      */
     public function listeners($eventName = null);
 

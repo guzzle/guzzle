@@ -17,7 +17,7 @@ class Request extends AbstractMessage implements RequestInterface
     /** @var Url HTTP Url */
     private $url;
 
-    /** @var string HTTP method (GET, PUT, POST, DELETE, HEAD, OPTIONS, TRACE) */
+    /** @var string HTTP method */
     private $method;
 
     /** @var Collection Transfer options */
@@ -25,15 +25,21 @@ class Request extends AbstractMessage implements RequestInterface
 
     /**
      * @param string           $method  HTTP method
-     * @param string|Url       $url     HTTP URL to connect to. The URI scheme, host header, and URI are parsed from the
-     *                                  full URL. If query string parameters are present they will be parsed as well.
+     * @param string|Url       $url     HTTP URL to connect to. The URI scheme,
+     *   host header, and URI are parsed from the full URL. If query string
+     *   parameters are present they will be parsed as well.
      * @param array|Collection $headers HTTP headers
      * @param mixed            $body    Body to send with the request
      * @param array            $options Array of options to use with the request
      *     - emitter: Event emitter to use with the request
      */
-    public function __construct($method, $url, $headers = [], $body = null, array $options = [])
-    {
+    public function __construct(
+        $method,
+        $url,
+        $headers = [],
+        $body = null,
+        array $options = []
+    ) {
         $this->setUrl($url);
         $this->method = strtoupper($method);
         $this->handleOptions($options);
@@ -162,11 +168,13 @@ class Request extends AbstractMessage implements RequestInterface
 
     protected function getStartLine()
     {
-        return trim($this->method . ' ' . $this->getResource()) . ' HTTP/' . $this->getProtocolVersion();
+        return trim($this->method . ' ' . $this->getResource())
+            . ' HTTP/' . $this->getProtocolVersion();
     }
 
     /**
-     * Adds a subscriber that ensures a request's body is prepared before sending
+     * Adds a subscriber that ensures a request's body is prepared before
+     * sending.
      */
     private function addPrepareEvent()
     {
@@ -183,7 +191,9 @@ class Request extends AbstractMessage implements RequestInterface
         $port = $this->url->getPort();
         $scheme = $this->url->getScheme();
         if ($host = $this->url->getHost()) {
-            if (($port == 80 && $scheme == 'http') || ($port == 443 && $scheme == 'https')) {
+            if (($port == 80 && $scheme == 'http') ||
+                ($port == 443 && $scheme == 'https')
+            ) {
                 $this->setHeader('Host', $this->url->getHost());
             }  else {
                 $this->setHeader('Host', $this->url->getHost() . ':' . $port);

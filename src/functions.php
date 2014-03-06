@@ -10,9 +10,9 @@ const VERSION = '4.0-dev';
 /**
  * Send a custom request
  *
- * @param string $method  HTTP request method (GET, POST, HEAD, DELETE, PUT, etc)
+ * @param string $method  HTTP request method
  * @param string $url     URL of the request
- * @param array  $options Options to use with the request. See: GuzzleHttp\Message\RequestFactory::applyOptions()
+ * @param array  $options Options to use with the request.
  *
  * @return ResponseInterface
  */

@@ -68,7 +68,8 @@ trait PathTrait
         $queue = explode('/', $path);
         while (null !== ($key = array_shift($queue))) {
             if (!is_array($current)) {
-                throw new \RuntimeException("Trying to setPath {$path}, but {$key} is set and is not an array");
+                throw new \RuntimeException("Trying to setPath {$path}, but "
+                    . "{$key} is set and is not an array");
             } elseif (!$queue) {
                 if ($key == '[]') {
                     $current[] = $value;

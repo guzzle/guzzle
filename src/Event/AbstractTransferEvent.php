@@ -24,8 +24,10 @@ use GuzzleHttp\Message\ResponseInterface;
  * - total_time: Total transaction time in seconds for last transfer
  * - namelookup_time: Time in seconds until name resolving was complete
  * - connect_time: Time in seconds it took to establish the connection
- * - pretransfer_time: Time in seconds from start until just before file transfer begins
- * - starttransfer_time: Time in seconds until the first byte is about to be transferred
+ * - pretransfer_time: Time in seconds from start until just before file
+ *   transfer begins.
+ * - starttransfer_time: Time in seconds until the first byte is about to be
+ *   transferred.
  * - speed_download: Average download speed
  * - speed_upload: Average upload speed
  */
@@ -34,11 +36,13 @@ abstract class AbstractTransferEvent extends AbstractRequestEvent
     private $transferInfo;
 
     /**
-     * @param TransactionInterface $transaction  Transaction that contains the request
+     * @param TransactionInterface $transaction  Transaction
      * @param array                $transferInfo Transfer statistics
      */
-    public function __construct(TransactionInterface $transaction, $transferInfo = [])
-    {
+    public function __construct(
+        TransactionInterface $transaction,
+        $transferInfo = []
+    ) {
         parent::__construct($transaction);
         $this->transferInfo = $transferInfo;
     }

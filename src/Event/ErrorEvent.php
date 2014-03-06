@@ -7,9 +7,11 @@ use GuzzleHttp\Message\ResponseInterface;
 use GuzzleHttp\Adapter\TransactionInterface;
 
 /**
- * Event object emitted after a request has been sent and an error was encountered
+ * Event object emitted after a request has been sent and an error was
+ * encountered.
  *
- * You may intercept the exception and inject a response into the event to rescue the request.
+ * You may intercept the exception and inject a response into the event to
+ * rescue the request.
  */
 class ErrorEvent extends AbstractTransferEvent
 {
@@ -20,8 +22,11 @@ class ErrorEvent extends AbstractTransferEvent
      * @param RequestException     $e             Exception encountered
      * @param array                $transferStats Array of transfer statistics
      */
-    public function __construct(TransactionInterface $transaction, RequestException $e, $transferStats = [])
-    {
+    public function __construct(
+        TransactionInterface $transaction,
+        RequestException $e,
+        $transferStats = []
+    ) {
         parent::__construct($transaction, $transferStats);
         $this->exception = $e;
     }

@@ -46,14 +46,16 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
     public function getUrl();
 
     /**
-     * Get the resource part of the the request, including the path, query string, and fragment
+     * Get the resource part of the the request, including the path, query
+     * string, and fragment.
      *
      * @return string
      */
     public function getResource();
 
     /**
-     * Get the collection of key value pairs that will be used as the query string in the request
+     * Get the collection of key value pairs that will be used as the query
+     * string in the request.
      *
      * @return Query
      */
@@ -108,7 +110,8 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
     public function getHost();
 
     /**
-     * Set the host of the request. Including a port in the host will modify the port of the request.
+     * Set the host of the request. Including a port in the host will modify
+     * the port of the request.
      *
      * @param string $host Host to set (e.g. www.yahoo.com, www.yahoo.com:80)
      *

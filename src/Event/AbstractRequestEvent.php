@@ -12,7 +12,7 @@ abstract class AbstractRequestEvent extends AbstractEvent
     private $transaction;
 
     /**
-     * @param TransactionInterface $transaction Transaction that contains the request
+     * @param TransactionInterface $transaction
      */
     public function __construct(TransactionInterface $transaction)
     {

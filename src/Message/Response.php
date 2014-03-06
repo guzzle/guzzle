@@ -10,7 +10,7 @@ use GuzzleHttp\Stream\StreamInterface;
  */
 class Response extends AbstractMessage implements ResponseInterface
 {
-    /** @var array Array of reason phrases and their corresponding status codes */
+    /** @var array Mapping of status codes to reason phrases */
     private static $statusTexts = array(
         100 => 'Continue',
         101 => 'Switching Protocols',
@@ -82,15 +82,19 @@ class Response extends AbstractMessage implements ResponseInterface
     private $effectiveUrl;
 
     /**
-     * @param string          $statusCode The response status code (e.g. 200, 404, etc)
+     * @param string          $statusCode The response status code (e.g. 200)
      * @param array           $headers    The response headers
      * @param StreamInterface $body       The body of the response
      * @param array           $options    Response message options
      *     - reason_phrase: Set a custom reason phrase
      *     - protocol_version: Set a custom protocol version
      */
-    public function __construct($statusCode, array $headers = [], StreamInterface $body = null, array $options = [])
-    {
+    public function __construct(
+        $statusCode,
+        array $headers = [],
+        StreamInterface $body = null,
+        array $options = []
+    ) {
         $this->statusCode = (string) $statusCode;
         $this->handleOptions($options);
 

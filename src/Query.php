@@ -54,7 +54,8 @@ class Query extends Collection
             }
         }
 
-        // Use the duplicate aggregator if duplicates were found and not using PHP style arrays
+        // Use the duplicate aggregator if duplicates were found and not using
+        // PHP style arrays.
         if ($foundDuplicates && !$foundPhpStyle) {
             $q->setAggregator(self::duplicateAggregator());
         }
