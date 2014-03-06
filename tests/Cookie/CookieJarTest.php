@@ -29,6 +29,12 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
         ];
     }
 
+    public function testQuotesBadCookieValues()
+    {
+        $this->assertEquals('foo', CookieJar::getCookieValue('foo'));
+        $this->assertEquals('"foo,bar"', CookieJar::getCookieValue('foo,bar'));
+    }
+
     public function testCreatesFromArray()
     {
         $jar = CookieJar::fromArray([
@@ -292,5 +298,28 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
     {
         $a = new CookieJar(true);
         $a->setCookie(new SetCookie(['Name' => "abc\n", 'Value' => 'foo', 'Domain' => 'bar']));
+    }
+
+    public function testDeletesCookiesByName()
+    {
+        $cookies = $this->getTestCookies();
+        $cookies[] = new SetCookie([
+            'Name' => 'other',
+            'Value' => '123',
+            'Domain' => 'bar.com',
+            'Path' => '/boo',
+            'Expires' => time() + 1000
+        ]);
+        $jar = new CookieJar();
+        foreach ($cookies as $cookie) {
+            $jar->setCookie($cookie);
+        }
+        $this->assertCount(4, $jar);
+        $jar->clear('bar.com', '/boo', 'other');
+        $this->assertCount(3, $jar);
+        $names = array_map(function (SetCookie $c) {
+            return $c->getName();
+        }, $jar->getIterator()->getArrayCopy());
+        $this->assertEquals(['foo', 'test', 'you'], $names);
     }
 }
