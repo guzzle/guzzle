@@ -91,7 +91,7 @@ class QueryTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider parseQueryProvider
      */
-    public function testParsesQuerys($query, $data)
+    public function testParsesQueries($query, $data)
     {
         $query = Query::fromString($query);
         $this->assertEquals($data, $query->toArray());

@@ -31,7 +31,7 @@ class MessageFactory implements MessageFactoryInterface
         $this->redirectPlugin = new Redirect();
     }
 
-    public function createResponse($statusCode , array $headers = [], $body = null, array $options = [])
+    public function createResponse($statusCode, array $headers = [], $body = null, array $options = [])
     {
         if (null !== $body) {
             $body = Stream::factory($body);
