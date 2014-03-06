@@ -124,4 +124,22 @@ class HasHeadersTraitTest extends \PHPUnit_Framework_TestCase
         $h->removeHeader('FOO');
         $this->assertFalse($h->hasHeader('foo'));
     }
+
+    public function testReturnsCorrectTypeWhenMissing()
+    {
+        $h = new HasThem();
+        $this->assertInternalType('string', $h->getHeader('foo'));
+        $this->assertInternalType('array', $h->getHeader('foo', true));
+    }
+
+    public function testSetsIntegersAndFloatsAsHeaders()
+    {
+        $h = new HasThem();
+        $h->setHeader('foo', 10);
+        $h->setHeader('bar', 10.5);
+        $h->addHeader('foo', 10);
+        $h->addHeader('bar', 10.5);
+        $this->assertSame('10, 10', $h->getHeader('foo'));
+        $this->assertSame('10.5, 10.5', $h->getHeader('bar'));
+    }
 }
