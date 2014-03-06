@@ -19,7 +19,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
     {
         $s = new PrepareRequestBody();
         $t = $this->getTrans();
-        $s->onRequestBeforeSend(new BeforeEvent($t));
+        $s->onBefore(new BeforeEvent($t));
         $this->assertFalse($t->getRequest()->hasHeader('Expect'));
     }
 
@@ -33,7 +33,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $p->expects($this->once())
             ->method('applyRequestHeaders');
         $t->getRequest()->setBody($p);
-        $s->onRequestBeforeSend(new BeforeEvent($t));
+        $s->onBefore(new BeforeEvent($t));
     }
 
     public function testAddsExpectHeaderWithTrue()
@@ -42,7 +42,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $t = $this->getTrans();
         $t->getRequest()->getConfig()->set('expect', true);
         $t->getRequest()->setBody(Stream::factory('foo'));
-        $s->onRequestBeforeSend(new BeforeEvent($t));
+        $s->onBefore(new BeforeEvent($t));
         $this->assertEquals('100-Continue', $t->getRequest()->getHeader('Expect'));
     }
 
@@ -52,7 +52,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $t = $this->getTrans();
         $t->getRequest()->getConfig()->set('expect', 2);
         $t->getRequest()->setBody(Stream::factory('foo'));
-        $s->onRequestBeforeSend(new BeforeEvent($t));
+        $s->onBefore(new BeforeEvent($t));
         $this->assertTrue($t->getRequest()->hasHeader('Expect'));
     }
 
@@ -62,7 +62,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $t = $this->getTrans();
         $t->getRequest()->getConfig()->set('expect', 10);
         $t->getRequest()->setBody(Stream::factory('foo'));
-        $s->onRequestBeforeSend(new BeforeEvent($t));
+        $s->onBefore(new BeforeEvent($t));
         $this->assertFalse($t->getRequest()->hasHeader('Expect'));
     }
 
@@ -71,7 +71,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $s = new PrepareRequestBody();
         $t = $this->getTrans();
         $t->getRequest()->setBody(new NoSeekStream(Stream::factory('foo')));
-        $s->onRequestBeforeSend(new BeforeEvent($t));
+        $s->onBefore(new BeforeEvent($t));
         $this->assertTrue($t->getRequest()->hasHeader('Expect'));
     }
 
@@ -81,7 +81,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $t = $this->getTrans();
         $t->getRequest()->setBody(Stream::factory('foo'));
         $t->getRequest()->setHeader('Transfer-Encoding', 'chunked');
-        $s->onRequestBeforeSend(new BeforeEvent($t));
+        $s->onBefore(new BeforeEvent($t));
         $this->assertFalse($t->getRequest()->hasHeader('Content-Length'));
     }
 
@@ -91,7 +91,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $sub = new PrepareRequestBody();
         $t = $this->getTrans();
         $t->getRequest()->setBody($body);
-        $sub->onRequestBeforeSend(new BeforeEvent($t));
+        $sub->onBefore(new BeforeEvent($t));
         $this->assertEquals(
             'image/jpeg',
             $t->getRequest()->getHeader('Content-Type')
@@ -105,7 +105,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $t = $this->getTrans();
         $t->getRequest()->setBody($this->getMockBody());
         $t->getRequest()->setHeader('Content-Type', 'foo/baz');
-        $s->onRequestBeforeSend(new BeforeEvent($t));
+        $s->onBefore(new BeforeEvent($t));
         $this->assertEquals(
             'foo/baz',
             $t->getRequest()->getHeader('Content-Type')
@@ -117,7 +117,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $s = new PrepareRequestBody();
         $t = $this->getTrans();
         $t->getRequest()->setBody($this->getMockBody());
-        $s->onRequestBeforeSend(new BeforeEvent($t));
+        $s->onBefore(new BeforeEvent($t));
         $this->assertEquals(4, $t->getRequest()->getHeader('Content-Length'));
     }
 
@@ -133,7 +133,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $r->setBody($s);
         $t = $this->getTrans($r);
         $s = new PrepareRequestBody();
-        $s->onRequestBeforeSend(new BeforeEvent($t));
+        $s->onBefore(new BeforeEvent($t));
         $this->assertEquals('chunked', $r->getHeader('Transfer-Encoding'));
     }
 

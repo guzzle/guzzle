@@ -26,10 +26,10 @@ class PrepareRequestBody implements SubscriberInterface
 {
     public static function getSubscribedEvents()
     {
-        return ['before' => ['onRequestBeforeSend', -1]];
+        return ['before' => ['onBefore', -1]];
     }
 
-    public function onRequestBeforeSend(BeforeEvent $event)
+    public function onBefore(BeforeEvent $event)
     {
         $request = $event->getRequest();
 
