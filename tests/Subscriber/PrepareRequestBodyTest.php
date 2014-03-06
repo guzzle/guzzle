@@ -56,6 +56,26 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($t->getRequest()->hasHeader('Expect'));
     }
 
+    public function testDoesNotModifyExpectHeaderIfPresent()
+    {
+        $s = new PrepareRequestBody();
+        $t = $this->getTrans();
+        $t->getRequest()->setHeader('Expect', 'foo');
+        $t->getRequest()->setBody(Stream::factory('foo'));
+        $s->onBefore(new BeforeEvent($t));
+        $this->assertEquals('foo', $t->getRequest()->getHeader('Expect'));
+    }
+
+    public function testDoesAddExpectHeaderWhenSetToFalse()
+    {
+        $s = new PrepareRequestBody();
+        $t = $this->getTrans();
+        $t->getRequest()->getConfig()->set('expect', false);
+        $t->getRequest()->setBody(Stream::factory('foo'));
+        $s->onBefore(new BeforeEvent($t));
+        $this->assertFalse($t->getRequest()->hasHeader('Expect'));
+    }
+
     public function testDoesNotAddExpectHeaderBySize()
     {
         $s = new PrepareRequestBody();
@@ -83,6 +103,18 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
         $t->getRequest()->setHeader('Transfer-Encoding', 'chunked');
         $s->onBefore(new BeforeEvent($t));
         $this->assertFalse($t->getRequest()->hasHeader('Content-Length'));
+    }
+
+    public function testUsesProvidedContentLengthAndRemovesXferEncoding()
+    {
+        $s = new PrepareRequestBody();
+        $t = $this->getTrans();
+        $t->getRequest()->setBody(Stream::factory('foo'));
+        $t->getRequest()->setHeader('Content-Length', '3');
+        $t->getRequest()->setHeader('Transfer-Encoding', 'chunked');
+        $s->onBefore(new BeforeEvent($t));
+        $this->assertEquals(3, $t->getRequest()->getHeader('Content-Length'));
+        $this->assertFalse($t->getRequest()->hasHeader('Transfer-Encoding'));
     }
 
     public function testSetsContentTypeIfPossibleFromStream()
