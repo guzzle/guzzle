@@ -171,7 +171,7 @@ class Query extends Collection
     }
 
     /**
-     * Aggregates nested query string variables using the same techinque as
+     * Aggregates nested query string variables using the same technique as
      * ``http_build_query()``.
      *
      * @param bool $numericIndices Pass false to not include numeric indices

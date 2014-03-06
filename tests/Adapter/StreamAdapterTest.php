@@ -55,7 +55,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMesssage Invalid URL
+     * @expectedExceptionMessage Invalid URL
      */
     public function testThrowsExceptionsCaughtDuringTransfer()
     {

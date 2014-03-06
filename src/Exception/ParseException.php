@@ -21,7 +21,7 @@ class ParseException extends TransferException
         $this->response = $response;
     }
     /**
-     * Get the associated repsonse
+     * Get the associated response
      *
      * @return ResponseInterface|null
      */
