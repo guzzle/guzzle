@@ -193,7 +193,7 @@ class MessageFactory implements MessageFactoryInterface
         if ($value === true) {
             $value = $defaultRedirect;
         } elseif (!isset($value['max'])) {
-            throw new \InvalidArgumentException('allow_redirects must be'
+            throw new \InvalidArgumentException('allow_redirects must be '
                 . 'true, false, or an array that contains the \'max\' key');
         } else {
             // Merge the default settings with the provided settings

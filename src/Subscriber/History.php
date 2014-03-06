@@ -72,7 +72,7 @@ class History implements SubscriberInterface, \IteratorAggregate, \Countable
     /**
      * Get all of the requests sent through the plugin
      *
-     * @return array
+     * @return RequestInterface[]
      */
     public function getRequests()
     {
