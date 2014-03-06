@@ -13,7 +13,7 @@ use GuzzleHttp\Cookie\CookieJarInterface;
  */
 class Cookie implements SubscriberInterface
 {
-    /** @var CookieJarInterface Cookie cookieJar used to hold cookies */
+    /** @var CookieJarInterface */
     private $cookieJar;
 
     /**

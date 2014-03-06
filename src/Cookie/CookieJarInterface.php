@@ -48,7 +48,7 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
     public function setCookie(SetCookie $cookie);
 
     /**
-     * Remove cookies currently held in the Cookie cookieJar.
+     * Remove cookies currently held in the cookie jar.
      *
      * Invoking this method without arguments will empty the whole cookie jar.
      * If given a $domain argument only cookies belonging to that domain will
@@ -66,7 +66,7 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
     public function clear($domain = null, $path = null, $name = null);
 
     /**
-     * Discard all sessions cookies that have the "discard" attribute.
+     * Discard all sessions cookies.
      *
      * Removes cookies that don't have an expire field or a have a discard
      * field set to true. To be called when the user agent shuts down according

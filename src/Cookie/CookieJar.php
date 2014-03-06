@@ -6,7 +6,7 @@ use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\ResponseInterface;
 
 /**
- * Cookie cookieJar that stores cookies an an array
+ * Cookie jar that stores cookies an an array
  */
 class CookieJar implements CookieJarInterface
 {
