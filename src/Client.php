@@ -172,7 +172,7 @@ class Client implements ClientInterface
             throw new \LogicException('No response was associated with the transaction');
         } catch (RequestException $e) {
             throw $e;
-        } catch (TransferException $e) {
+        } catch (\Exception $e) {
             // Wrap exceptions in a RequestException to adhere to the interface
             throw new RequestException($e->getMessage(), $request, null, $e);
         }
