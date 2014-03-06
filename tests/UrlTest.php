@@ -27,6 +27,14 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(null, Url::fromString('foo://www.test.com/')->getPort());
     }
 
+    public function testRemovesDefaultPortWhenSettingScheme()
+    {
+        $url = Url::fromString('http://www.test.com/');
+        $url->setPort(80);
+        $url->setScheme('https');
+        $this->assertEquals(443, $url->getPort());
+    }
+
     public function testCloneCreatesNewInternalObjects()
     {
         $u1 = Url::fromString('http://www.test.com/');
