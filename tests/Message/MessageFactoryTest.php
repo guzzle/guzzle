@@ -118,6 +118,14 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEmpty($request->getEmitter()->listeners('complete'));
     }
 
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testValidatesRedirects()
+    {
+        (new MessageFactory)->createRequest('GET', '/', ['allow_redirects' => []]);
+    }
+
     public function testCanEnableStrictRedirectsAndSpecifyMax()
     {
         $request = (new MessageFactory)->createRequest('GET', '/', [
@@ -186,6 +194,16 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Bar', $request->getQuery()->get('Foo'));
     }
 
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testValidatesQuery()
+    {
+        (new MessageFactory)->createRequest('GET', 'http://foo.com', [
+            'query' => 'foo'
+        ]);
+    }
+
     public function testCanSetDefaultQuery()
     {
         $request = (new MessageFactory)->createRequest('GET', 'http://foo.com?test=abc', [
@@ -219,6 +237,22 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         ]);
         $this->assertEquals('michael:test', $request->getConfig()->getPath('curl/' . CURLOPT_USERPWD));
         $this->assertEquals(CURLAUTH_DIGEST, $request->getConfig()->getPath('curl/' . CURLOPT_HTTPAUTH));
+    }
+
+    public function testCanDisableAuth()
+    {
+        $request = (new MessageFactory)->createRequest('GET', 'http://foo.com', [
+            'auth' => false
+        ]);
+        $this->assertFalse($request->hasHeader('Authorization'));
+    }
+
+    public function testCanSetCustomAuth()
+    {
+        $request = (new MessageFactory)->createRequest('GET', 'http://foo.com', [
+            'auth' => 'foo'
+        ]);
+        $this->assertEquals('foo', $request->getConfig()['auth']);
     }
 
     public function testCanAddEvents()

@@ -15,7 +15,7 @@ use GuzzleHttp\Query;
 use GuzzleHttp\Url;
 
 /**
- * Default HTTP request factory used to create {@see Request} and {@see Response} objects
+ * Default HTTP request factory used to create Request and Response} objects.
  */
 class MessageFactory implements MessageFactoryInterface
 {
@@ -31,8 +31,12 @@ class MessageFactory implements MessageFactoryInterface
         $this->redirectPlugin = new Redirect();
     }
 
-    public function createResponse($statusCode , array $headers = [], $body = null, array $options = [])
-    {
+    public function createResponse(
+        $statusCode,
+        array $headers = [],
+        $body = null,
+        array $options = []
+    ) {
         if (null !== $body) {
             $body = Stream::factory($body);
         }
@@ -94,7 +98,7 @@ class MessageFactory implements MessageFactoryInterface
 
         // Parse a request
         if (!($data = ($parser->parseRequest($message)))) {
-            throw new \InvalidArgumentException('Unable to parse request message');
+            throw new \InvalidArgumentException('Unable to parse request');
         }
 
         return $this->createRequest(
@@ -111,7 +115,8 @@ class MessageFactory implements MessageFactoryInterface
     }
 
     /**
-     * Apply POST fields and files to a request to attempt to give an accurate representation
+     * Apply POST fields and files to a request to attempt to give an accurate
+     * representation.
      *
      * @param RequestInterface $request Request to update
      * @param array            $body    Body to apply
@@ -133,18 +138,21 @@ class MessageFactory implements MessageFactoryInterface
         $post->applyRequestHeaders($request);
     }
 
-    protected function applyOptions(RequestInterface $request, array $options = array())
-    {
+    protected function applyOptions(
+        RequestInterface $request,
+        array $options = []
+    ) {
         // Values specified in the config map are passed to request options
-        static $configMap = ['connect_timeout' => 1, 'timeout' => 1, 'verify' => 1,
-            'ssl_key' => 1, 'cert' => 1, 'proxy' => 1, 'debug' => 1,
-            'save_to' => 1, 'stream' => 1, 'expect' => 1];
+        static $configMap = ['connect_timeout' => 1, 'timeout' => 1,
+            'verify' => 1, 'ssl_key' => 1, 'cert' => 1, 'proxy' => 1,
+            'debug' => 1, 'save_to' => 1, 'stream' => 1, 'expect' => 1];
         static $methods;
         if (!$methods) {
             $methods = array_flip(get_class_methods(__CLASS__));
         }
 
-        // Iterate over each key value pair and attempt to apply a config using function visitor
+        // Iterate over each key value pair and attempt to apply a config using
+        // double dispatch.
         $config = $request->getConfig();
         foreach ($options as $key => $value) {
             $method = "visit_{$key}";
@@ -153,7 +161,8 @@ class MessageFactory implements MessageFactoryInterface
             } elseif (isset($configMap[$key])) {
                 $config[$key] = $value;
             } else {
-                throw new \InvalidArgumentException("No method is configured to handle the {$key} config key");
+                throw new \InvalidArgumentException("No method is configured "
+                    . "to handle the {$key} config key");
             }
         }
     }
@@ -167,15 +176,6 @@ class MessageFactory implements MessageFactoryInterface
                 $request->setBody(Stream::factory($value));
             }
         }
-    }
-
-    private function visit_config(RequestInterface $request, $value)
-    {
-        if (!is_array($value)) {
-            throw new \InvalidArgumentException('config value must be an associative array');
-        }
-
-        $request->getConfig()->overwriteWith($value);
     }
 
     private function visit_allow_redirects(RequestInterface $request, $value)
@@ -224,13 +224,16 @@ class MessageFactory implements MessageFactoryInterface
         $request->getConfig()->set('auth', $value);
 
         if ($authType == 'basic') {
-            // We can easily handle simple basic Auth in the factory
-            $request->setHeader('Authorization', 'Basic ' . base64_encode("$value[0]:$value[1]"));
+            $request->setHeader(
+                'Authorization',
+                'Basic ' . base64_encode("$value[0]:$value[1]")
+            );
         } elseif ($authType == 'digest') {
             // Currently only implemented by the cURL adapter.
             // @todo: Need an event listener solution that does not rely on cURL
-            $request->getConfig()->setPath('curl/' . CURLOPT_HTTPAUTH, CURLAUTH_DIGEST);
-            $request->getConfig()->setPath('curl/' . CURLOPT_USERPWD, "$value[0]:$value[1]");
+            $config = $request->getConfig();
+            $config->setPath('curl/' . CURLOPT_HTTPAUTH, CURLAUTH_DIGEST);
+            $config->setPath('curl/' . CURLOPT_USERPWD, "$value[0]:$value[1]");
         }
     }
 
@@ -250,7 +253,8 @@ class MessageFactory implements MessageFactoryInterface
                 }
             }
         } else {
-            throw new \InvalidArgumentException('query value must be an array');
+            throw new \InvalidArgumentException('query value must be an array '
+                . 'or Query object');
         }
     }
 
@@ -272,7 +276,10 @@ class MessageFactory implements MessageFactoryInterface
     {
         if ($value === true) {
             static $cookie = null;
-            $request->getEmitter()->addSubscriber($cookie = $cookie ?: new Cookie());
+            if (!$cookie) {
+                $cookie = new Cookie();
+            }
+            $request->getEmitter()->addSubscriber($cookie);
         } elseif (is_array($value)) {
             $request->getEmitter()->addSubscriber(
                 new Cookie(CookieJar::fromArray($value, $request->getHost()))
@@ -280,7 +287,8 @@ class MessageFactory implements MessageFactoryInterface
         } elseif ($value instanceof CookieJarInterface) {
             $request->getEmitter()->addSubscriber(new Cookie($value));
         } elseif ($value !== false) {
-            throw new \InvalidArgumentException('cookies must be an array, true, or a CookieJarInterface object');
+            throw new \InvalidArgumentException('cookies must be an array, '
+                . 'true, or a CookieJarInterface object');
         }
     }
 
@@ -316,7 +324,7 @@ class MessageFactory implements MessageFactoryInterface
     private function visit_subscribers(RequestInterface $request, $value)
     {
         if (!is_array($value)) {
-            throw new \InvalidArgumentException('subscribers value must be an array');
+            throw new \InvalidArgumentException('subscribers must be an array');
         }
 
         $emitter = $request->getEmitter();
