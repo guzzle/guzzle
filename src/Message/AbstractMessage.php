@@ -67,11 +67,11 @@ abstract class AbstractMessage implements MessageInterface
             $part = [];
             foreach (preg_split('/;(?=([^"]*"[^"]*")*[^"]*$)/', $val) as $kvp) {
                 if (preg_match_all('/<[^>]+>|[^=]+/', $kvp, $matches)) {
-                    $pieces = $matches[0];
-                    if (isset($pieces[1])) {
-                        $part[trim($pieces[0], $trimmed)] = trim($pieces[1], $trimmed);
+                    $m = $matches[0];
+                    if (isset($m[1])) {
+                        $part[trim($m[0], $trimmed)] = trim($m[1], $trimmed);
                     } else {
-                        $part[] = trim($pieces[0], $trimmed);
+                        $part[] = trim($m[0], $trimmed);
                     }
                 }
             }
@@ -94,17 +94,18 @@ abstract class AbstractMessage implements MessageInterface
      */
     public static function normalizeHeader(HasHeadersInterface $message, $header)
     {
-        $values = $message->getHeader($header, true);
-        for ($i = 0, $total = count($values); $i < $total; $i++) {
-            if (strpos($values[$i], ',') !== false) {
-                foreach (preg_split('/,(?=([^"]*"[^"]*")*[^"]*$)/', $values[$i]) as $v) {
-                    $values[] = trim($v);
-                }
-                unset($values[$i]);
+        $h = $message->getHeader($header, true);
+        for ($i = 0, $total = count($h); $i < $total; $i++) {
+            if (strpos($h[$i], ',') === false) {
+                continue;
             }
+            foreach (preg_split('/,(?=([^"]*"[^"]*")*[^"]*$)/', $h[$i]) as $v) {
+                $h[] = trim($v);
+            }
+            unset($h[$i]);
         }
 
-        return $values;
+        return $h;
     }
 
     /**
