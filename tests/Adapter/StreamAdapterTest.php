@@ -55,17 +55,18 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage Invalid URL
+     * @expectedExceptionMessage Error creating resource. [url] http://localhost:123 [proxy] tcp://localhost:1234
      */
     public function testThrowsExceptionsCaughtDuringTransfer()
     {
+        self::$server->flush();
         $client = new Client([
             'adapter' => new StreamAdapter(new MessageFactory()),
-            'defaults' => [
-                'proxy' => self::$server->getUrl()
-            ]
         ]);
-        $client->get('http://httbin.org', ['headers' => ['Foo' => 'Bar']]);
+        $client->get('http://localhost:123', [
+            'timeout' => 0.01,
+            'proxy'   => 'tcp://localhost:1234'
+        ]);
     }
 
     public function testCanHandleExceptionsUsingEvents()
