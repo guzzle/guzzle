@@ -28,7 +28,7 @@
     "require-dev": {
         "ext-curl": "*",
         "psr/log": "~1",
-        "phpunit/phpunit": "3.7.*"
+        "phpunit/phpunit": "4.*"
     },
 
     "extra": {
