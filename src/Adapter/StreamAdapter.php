@@ -194,7 +194,7 @@ class StreamAdapter implements AdapterInterface
 
         return $this->createResource(function () use ($url, &$http_response_header, $context) {
             if (false === strpos($url, 'http')) {
-                trigger_error('URL is invalid', E_USER_WARNING);
+                trigger_error("URL is invalid: {$url}", E_USER_WARNING);
                 return null;
             }
             return fopen($url, 'r', null, $context);
