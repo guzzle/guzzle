@@ -155,7 +155,7 @@ class MessageFactory implements MessageFactoryInterface
         // double dispatch.
         $config = $request->getConfig();
         foreach ($options as $key => $value) {
-            $method = "visit_{$key}";
+            $method = "add_{$key}";
             if (isset($methods[$method])) {
                 $this->{$method}($request, $value);
             } elseif (isset($configMap[$key])) {
@@ -167,7 +167,7 @@ class MessageFactory implements MessageFactoryInterface
         }
     }
 
-    private function visit_body(RequestInterface $request, $value)
+    private function add_body(RequestInterface $request, $value)
     {
         if ($value !== null) {
             if (is_array($value)) {
@@ -178,7 +178,7 @@ class MessageFactory implements MessageFactoryInterface
         }
     }
 
-    private function visit_allow_redirects(RequestInterface $request, $value)
+    private function add_allow_redirects(RequestInterface $request, $value)
     {
         static $defaultRedirect = [
             'max'     => 5,
@@ -204,14 +204,14 @@ class MessageFactory implements MessageFactoryInterface
         $request->getEmitter()->attach($this->redirectPlugin);
     }
 
-    private function visit_exceptions(RequestInterface $request, $value)
+    private function add_exceptions(RequestInterface $request, $value)
     {
         if ($value === true) {
             $request->getEmitter()->attach($this->errorPlugin);
         }
     }
 
-    private function visit_auth(RequestInterface $request, $value)
+    private function add_auth(RequestInterface $request, $value)
     {
         if (!$value) {
             return;
@@ -237,7 +237,7 @@ class MessageFactory implements MessageFactoryInterface
         }
     }
 
-    private function visit_query(RequestInterface $request, $value)
+    private function add_query(RequestInterface $request, $value)
     {
         if ($value instanceof Query) {
             $original = $request->getQuery();
@@ -258,7 +258,7 @@ class MessageFactory implements MessageFactoryInterface
         }
     }
 
-    private function visit_headers(RequestInterface $request, $value)
+    private function add_headers(RequestInterface $request, $value)
     {
         if (!is_array($value)) {
             throw new \InvalidArgumentException('header value must be an array');
@@ -272,7 +272,7 @@ class MessageFactory implements MessageFactoryInterface
         }
     }
 
-    private function visit_cookies(RequestInterface $request, $value)
+    private function add_cookies(RequestInterface $request, $value)
     {
         if ($value === true) {
             static $cookie = null;
@@ -292,7 +292,7 @@ class MessageFactory implements MessageFactoryInterface
         }
     }
 
-    private function visit_events(RequestInterface $request, $value)
+    private function add_events(RequestInterface $request, $value)
     {
         if (!is_array($value)) {
             throw new \InvalidArgumentException('events value must be an array');
@@ -321,7 +321,7 @@ class MessageFactory implements MessageFactoryInterface
         }
     }
 
-    private function visit_subscribers(RequestInterface $request, $value)
+    private function add_subscribers(RequestInterface $request, $value)
     {
         if (!is_array($value)) {
             throw new \InvalidArgumentException('subscribers must be an array');

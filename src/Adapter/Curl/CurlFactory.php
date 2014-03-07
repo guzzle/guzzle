@@ -158,14 +158,14 @@ class CurlFactory
         }
 
         foreach ($request->getConfig()->toArray() as $key => $value) {
-            $method = "visit_{$key}";
+            $method = "add_{$key}";
             if (isset($methods[$method])) {
                 $this->{$method}($request, $mediator, $options, $value);
             }
         }
     }
 
-    private function visit_debug(
+    private function add_debug(
         RequestInterface $request,
         RequestMediator $mediator,
         &$options,
@@ -177,7 +177,7 @@ class CurlFactory
         }
     }
 
-    private function visit_proxy(
+    private function add_proxy(
         RequestInterface $request,
         RequestMediator $mediator,
         &$options,
@@ -193,7 +193,7 @@ class CurlFactory
         }
     }
 
-    private function visit_timeout(
+    private function add_timeout(
         RequestInterface $request,
         RequestMediator $mediator,
         &$options,
@@ -202,7 +202,7 @@ class CurlFactory
         $options[CURLOPT_TIMEOUT_MS] = $value * 1000;
     }
 
-    private function visit_connect_timeout(
+    private function add_connect_timeout(
         RequestInterface $request,
         RequestMediator $mediator,
         &$options,
@@ -211,7 +211,7 @@ class CurlFactory
         $options[CURLOPT_CONNECTTIMEOUT_MS] = $value * 1000;
     }
 
-    private function visit_verify(
+    private function add_verify(
         RequestInterface $request,
         RequestMediator $mediator,
         &$options,
@@ -234,7 +234,7 @@ class CurlFactory
         }
     }
 
-    private function visit_cert(
+    private function add_cert(
         RequestInterface $request,
         RequestMediator $mediator,
         &$options,
@@ -247,7 +247,7 @@ class CurlFactory
         $options[CURLOPT_SSLCERT] = $value;
     }
 
-    private function visit_ssl_key(
+    private function add_ssl_key(
         RequestInterface $request,
         RequestMediator $mediator,
         &$options,
@@ -265,7 +265,7 @@ class CurlFactory
         $options[CURLOPT_SSLKEY] = $value;
     }
 
-    private function visit_save_to(
+    private function add_save_to(
         RequestInterface $request,
         RequestMediator $mediator,
         &$options,

@@ -46,9 +46,6 @@ class StreamAdapter implements AdapterInterface
         return $transaction->getResponse();
     }
 
-    /**
-     * @throws \LogicException if you attempt to stream and specify a write_to option
-     */
     private function createResponse(TransactionInterface $transaction)
     {
         $request = $transaction->getRequest();
@@ -87,8 +84,11 @@ class StreamAdapter implements AdapterInterface
         return $saveTo;
     }
 
-    private function createResponseObject(array $headers, TransactionInterface $transaction, $stream)
-    {
+    private function createResponseObject(
+        array $headers,
+        TransactionInterface $transaction,
+        $stream
+    ) {
         $parts = explode(' ', array_shift($headers), 3);
         $options = ['protocol_version' => substr($parts[0], -3)];
         if (isset($parts[2])) {
@@ -99,12 +99,19 @@ class StreamAdapter implements AdapterInterface
         $responseHeaders = [];
         foreach ($headers as $header) {
             $headerParts = explode(':', $header, 2);
-            $responseHeaders[$headerParts[0]] = isset($headerParts[1]) ? $headerParts[1] : '';
+            $responseHeaders[$headerParts[0]] = isset($headerParts[1])
+                ? $headerParts[1]
+                : '';
         }
 
-        $response = $this->messageFactory->createResponse($parts[1], $responseHeaders, $stream, $options);
-        $transaction->setResponse($response);
+        $response = $this->messageFactory->createResponse(
+            $parts[1],
+            $responseHeaders,
+            $stream,
+            $options
+        );
 
+        $transaction->setResponse($response);
         $transaction->getRequest()->getEmitter()->emit(
             'headers',
             new HeadersEvent($transaction)
@@ -116,7 +123,7 @@ class StreamAdapter implements AdapterInterface
     /**
      * Create a resource and check to ensure it was created successfully
      *
-     * @param callable         $callback Callable to invoke that must return a valid resource
+     * @param callable         $callback Callable that returns stream resource
      * @param RequestInterface $request  Request used when throwing exceptions
      * @param array            $options  Options used when throwing exceptions
      *
@@ -130,7 +137,8 @@ class StreamAdapter implements AdapterInterface
         $resource = call_user_func($callback);
         error_reporting($level);
 
-        // If the resource could not be created, then grab the last error and throw an exception
+        // If the resource could not be created, then grab the last error and
+        // throw an exception.
         if (!is_resource($resource)) {
             $message = 'Error creating resource. [url] ' . $request->getUrl() . ' ';
             if (isset($options['http']['proxy'])) {
@@ -149,7 +157,7 @@ class StreamAdapter implements AdapterInterface
      * Create the stream for the request with the context options.
      *
      * @param RequestInterface $request              Request being sent
-     * @param mixed            $http_response_header Value is populated by stream wrapper
+     * @param mixed            $http_response_header Populated by stream wrapper
      *
      * @return resource
      */
@@ -176,7 +184,7 @@ class StreamAdapter implements AdapterInterface
         ]];
 
         foreach ($request->getConfig()->toArray() as $key => $value) {
-            $method = "visit_{$key}";
+            $method = "add_{$key}";
             if (isset($methods[$method])) {
                 $this->{$method}($request, $options, $value, $params);
             }
@@ -201,7 +209,7 @@ class StreamAdapter implements AdapterInterface
         }, $request, $options);
     }
 
-    private function visit_proxy(RequestInterface $request, &$options, $value, &$params)
+    private function add_proxy(RequestInterface $request, &$options, $value, &$params)
     {
         if (!is_array($value)) {
             $options['http']['proxy'] = $value;
@@ -213,12 +221,12 @@ class StreamAdapter implements AdapterInterface
         }
     }
 
-    private function visit_timeout(RequestInterface $request, &$options, $value, &$params)
+    private function add_timeout(RequestInterface $request, &$options, $value, &$params)
     {
         $options['http']['timeout'] = $value;
     }
 
-    private function visit_verify(RequestInterface $request, &$options, $value, &$params)
+    private function add_verify(RequestInterface $request, &$options, $value, &$params)
     {
         if ($value === true || is_string($value)) {
             $options['http']['verify_peer'] = true;
@@ -234,7 +242,7 @@ class StreamAdapter implements AdapterInterface
         }
     }
 
-    private function visit_cert(RequestInterface $request, &$options, $value, &$params)
+    private function add_cert(RequestInterface $request, &$options, $value, &$params)
     {
         if (is_array($value)) {
             $options['http']['passphrase'] = $value[1];
@@ -248,7 +256,7 @@ class StreamAdapter implements AdapterInterface
         $options['http']['local_cert'] = $value;
     }
 
-    private function visit_debug(RequestInterface $request, &$options, $value, &$params)
+    private function add_debug(RequestInterface $request, &$options, $value, &$params)
     {
         static $map = [
             STREAM_NOTIFY_CONNECT       => 'CONNECT',
