@@ -329,4 +329,12 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('<http://127.0.0.1:8124/> [PROGRESS] bytes_max: "8"', $contents);
         $this->assertContains('<http://127.0.0.1:8124/> [MIME_TYPE_IS] message: "text/plain"', $contents);
     }
+
+    public function testAddsProxyByProtocol()
+    {
+        $url = str_replace('http', 'tcp', self::$server->getUrl());
+        $body = $this->getSendResult(['stream' => true, 'proxy' => ['http' => $url]])->getBody();
+        $opts = stream_context_get_options($this->getStreamFromBody($body));
+        $this->assertEquals($url, $opts['http']['proxy']);
+    }
 }
