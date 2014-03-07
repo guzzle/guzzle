@@ -63,7 +63,7 @@
         "psr/log": "1.0.*",
         "zendframework/zend-cache": "<2.3",
         "zendframework/zend-log": "<2.3",
-        "phpunit/phpunit": "3.7.*"
+        "phpunit/phpunit": "4.0.*"
     },
 
     "extra": {
