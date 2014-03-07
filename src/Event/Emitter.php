@@ -102,9 +102,9 @@ class Emitter implements EmitterInterface
         return $event;
     }
 
-    public function addSubscriber(SubscriberInterface $subscriber)
+    public function attach(SubscriberInterface $subscriber)
     {
-        foreach ($subscriber->getSubscribedEvents() as $eventName => $listener) {
+        foreach ($subscriber->getEvents() as $eventName => $listener) {
             $this->on(
                 $eventName,
                 array($subscriber, $listener[0]),
@@ -113,9 +113,9 @@ class Emitter implements EmitterInterface
         }
     }
 
-    public function removeSubscriber(SubscriberInterface $subscriber)
+    public function detach(SubscriberInterface $subscriber)
     {
-        foreach ($subscriber->getSubscribedEvents() as $eventName => $listener) {
+        foreach ($subscriber->getEvents() as $eventName => $listener) {
             $this->removeListener($eventName, array($subscriber, $listener[0]));
         }
     }

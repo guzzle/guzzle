@@ -162,14 +162,14 @@ Event subscribers are classes that implement the
 ``GuzzleHttp\Common\EventSubsriberInterface`` object. They are used to register
 one or more event listeners to methods of the class. Event subscribers tell
 event emitters exactly which events to listen to and what method to invoke on
-the class when the event is triggered using the static method,
-``getSubscribedEvents()``.
+the class when the event is triggered by called the ``getEvents()`` method of
+a subscriber.
 
 The following example registers event listeners to the ``before`` and
 ``complete`` event of a request. When the ``before`` event is emitted, the
 ``onBefore`` instance method of the subscriber is invoked. When the
 ``complete`` event is emitted, the ``onComplete`` event of the subscriber is
-invoked. Each array value in the ``getSubscribedEvents()`` return value MUST
+invoked. Each array value in the ``getEvents()`` return value MUST
 contain the name of the method to invoke and can optionally contain the
 priority of the listener (as shown in the ``before`` listener in the example).
 
@@ -182,7 +182,7 @@ priority of the listener (as shown in the ``before`` listener in the example).
 
     class SimpleSubscriber implements SubscriberInterface
     {
-        public static function getSubscribedEvents()
+        public function getEvents()
         {
             return [
                 'before'   => ['onBefore', 100], // Provide name and optional priority

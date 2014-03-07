@@ -183,7 +183,7 @@ class Request extends AbstractMessage implements RequestInterface
             $subscriber = new PrepareRequestBody();
         }
 
-        $this->getEmitter()->addSubscriber($subscriber);
+        $this->getEmitter()->attach($subscriber);
     }
 
     private function updateHostHeaderFromUrl()

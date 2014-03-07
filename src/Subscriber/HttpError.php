@@ -11,7 +11,7 @@ use GuzzleHttp\Exception\RequestException;
  */
 class HttpError implements SubscriberInterface
 {
-    public static function getSubscribedEvents()
+    public function getEvents()
     {
         return ['complete' => ['onRequestAfterSend']];
     }

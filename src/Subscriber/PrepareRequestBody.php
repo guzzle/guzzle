@@ -24,7 +24,7 @@ use GuzzleHttp\Mimetypes;
  */
 class PrepareRequestBody implements SubscriberInterface
 {
-    public static function getSubscribedEvents()
+    public function getEvents()
     {
         return ['before' => ['onBefore', -1]];
     }

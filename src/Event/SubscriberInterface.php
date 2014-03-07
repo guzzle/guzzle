@@ -8,14 +8,6 @@ namespace GuzzleHttp\Event;
  * listeners specified by the EventSubscriber.
  *
  * This interface is based on the SubscriberInterface of the Symfony.
- *
- *     This file is part of the Symfony package.
- *
- *     (c) Fabien Potencier <fabien@symfony.com>
- *
- *     For the full copyright and license information, please view the LICENSE
- *     file that was distributed with this source code.
- *
  * @link https://github.com/symfony/symfony/tree/master/src/Symfony/Component/EventDispatcher
  */
 interface SubscriberInterface
@@ -35,5 +27,5 @@ interface SubscriberInterface
      *
      * @return array
      */
-    public static function getSubscribedEvents();
+    public function getEvents();
 }

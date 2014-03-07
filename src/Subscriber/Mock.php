@@ -36,7 +36,7 @@ class Mock implements SubscriberInterface, \Countable
         $this->addMultiple($items);
     }
 
-    public static function getSubscribedEvents()
+    public function getEvents()
     {
         return ['before' => ['onRequestBeforeSend', -999]];
     }

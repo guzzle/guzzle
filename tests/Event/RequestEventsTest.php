@@ -113,7 +113,7 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
     {
         $client = new Client();
         $mock = new Mock([new Response(500)]);
-        $client->getEmitter()->addSubscriber($mock);
+        $client->getEmitter()->attach($mock);
 
         $r = [];
         $client->getEmitter()->on('error', function (ErrorEvent $event) use (&$r) {

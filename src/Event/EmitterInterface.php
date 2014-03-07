@@ -65,19 +65,19 @@ interface EmitterInterface
     public function emit($eventName, EventInterface $event);
 
     /**
-     * Adds an event subscriber.
+     * Attaches an event subscriber.
      *
-     * The subscriber is asked for all the events he is
-     * interested in and added as a listener for these events.
+     * The subscriber is asked for all the events it is interested in and added
+     * as an event listener for each event.
      *
-     * @param SubscriberInterface $subscriber The subscriber.
+     * @param SubscriberInterface $subscriber Subscriber to attach.
      */
-    public function addSubscriber(SubscriberInterface $subscriber);
+    public function attach(SubscriberInterface $subscriber);
 
     /**
-     * Removes an event subscriber.
+     * Detaches an event subscriber.
      *
-     * @param SubscriberInterface $subscriber Subscriber to remove.
+     * @param SubscriberInterface $subscriber Subscriber to detach.
      */
-    public function removeSubscriber(SubscriberInterface $subscriber);
+    public function detach(SubscriberInterface $subscriber);
 }

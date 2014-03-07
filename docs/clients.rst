@@ -436,14 +436,14 @@ to ensure that they are fired last or near last in the event chain.
     {
         private $password;
 
-        public static function getSubscribedEvents()
-        {
-            return ['before' => ['sign', -999]];
-        }
-
         public function __construct($password)
         {
             $this->password = $password;
+        }
+
+        public function getEvents()
+        {
+            return ['before' => ['sign', -999]];
         }
 
         public function sign(BeforeEvent $e)
@@ -454,7 +454,7 @@ to ensure that they are fired last or near last in the event chain.
         }
     }
 
-    $client->getEmitter->addSubscriber(new FooAuth('password'));
+    $client->getEmitter->attach(new FooAuth('password'));
     $client->get('/', ['auth' => 'foo']);
 
 Adapter Specific Authentication Schemes

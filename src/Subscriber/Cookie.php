@@ -24,7 +24,7 @@ class Cookie implements SubscriberInterface
         $this->cookieJar = $cookieJar ?: new CookieJar();
     }
 
-    public static function getSubscribedEvents()
+    public function getEvents()
     {
         return [
             'before'   => ['onBefore', 125],

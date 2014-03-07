@@ -201,13 +201,13 @@ class MessageFactory implements MessageFactoryInterface
         }
 
         $request->getConfig()['redirect'] = $value;
-        $request->getEmitter()->addSubscriber($this->redirectPlugin);
+        $request->getEmitter()->attach($this->redirectPlugin);
     }
 
     private function visit_exceptions(RequestInterface $request, $value)
     {
         if ($value === true) {
-            $request->getEmitter()->addSubscriber($this->errorPlugin);
+            $request->getEmitter()->attach($this->errorPlugin);
         }
     }
 
@@ -279,13 +279,13 @@ class MessageFactory implements MessageFactoryInterface
             if (!$cookie) {
                 $cookie = new Cookie();
             }
-            $request->getEmitter()->addSubscriber($cookie);
+            $request->getEmitter()->attach($cookie);
         } elseif (is_array($value)) {
-            $request->getEmitter()->addSubscriber(
+            $request->getEmitter()->attach(
                 new Cookie(CookieJar::fromArray($value, $request->getHost()))
             );
         } elseif ($value instanceof CookieJarInterface) {
-            $request->getEmitter()->addSubscriber(new Cookie($value));
+            $request->getEmitter()->attach(new Cookie($value));
         } elseif ($value !== false) {
             throw new \InvalidArgumentException('cookies must be an array, '
                 . 'true, or a CookieJarInterface object');
@@ -329,7 +329,7 @@ class MessageFactory implements MessageFactoryInterface
 
         $emitter = $request->getEmitter();
         foreach ($value as $subscribers) {
-            $emitter->addSubscriber($subscribers);
+            $emitter->attach($subscribers);
         }
     }
 }

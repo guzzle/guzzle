@@ -344,13 +344,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testSendsAllInParallel()
     {
         $client = new Client();
-        $client->getEmitter()->addSubscriber(new Mock([
+        $client->getEmitter()->attach(new Mock([
             new Response(200),
             new Response(201),
             new Response(202),
         ]));
         $history = new History();
-        $client->getEmitter()->addSubscriber($history);
+        $client->getEmitter()->attach($history);
 
         $requests = [
             $client->createRequest('GET', 'http://test.com'),

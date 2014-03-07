@@ -163,7 +163,7 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
     public function testAddSubscriber()
     {
         $eventSubscriber = new TestEventSubscriber();
-        $this->emitter->addSubscriber($eventSubscriber);
+        $this->emitter->attach($eventSubscriber);
         $this->assertNotEmpty($this->emitter->listeners(self::preFoo));
         $this->assertNotEmpty($this->emitter->listeners(self::postFoo));
     }
@@ -171,10 +171,10 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
     public function testAddSubscriberWithPriorities()
     {
         $eventSubscriber = new TestEventSubscriber();
-        $this->emitter->addSubscriber($eventSubscriber);
+        $this->emitter->attach($eventSubscriber);
 
         $eventSubscriber = new TestEventSubscriberWithPriorities();
-        $this->emitter->addSubscriber($eventSubscriber);
+        $this->emitter->attach($eventSubscriber);
 
         $listeners = $this->emitter->listeners('pre.foo');
         $this->assertNotEmpty($this->emitter->listeners(self::preFoo));
@@ -182,24 +182,24 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('GuzzleHttp\Tests\Event\TestEventSubscriberWithPriorities', $listeners[0][0]);
     }
 
-    public function testRemoveSubscriber()
+    public function testdetach()
     {
         $eventSubscriber = new TestEventSubscriber();
-        $this->emitter->addSubscriber($eventSubscriber);
+        $this->emitter->attach($eventSubscriber);
         $this->assertNotEmpty($this->emitter->listeners(self::preFoo));
         $this->assertNotEmpty($this->emitter->listeners(self::postFoo));
-        $this->emitter->removeSubscriber($eventSubscriber);
+        $this->emitter->detach($eventSubscriber);
         $this->assertEmpty($this->emitter->listeners(self::preFoo));
         $this->assertEmpty($this->emitter->listeners(self::postFoo));
     }
 
-    public function testRemoveSubscriberWithPriorities()
+    public function testdetachWithPriorities()
     {
         $eventSubscriber = new TestEventSubscriberWithPriorities();
-        $this->emitter->addSubscriber($eventSubscriber);
+        $this->emitter->attach($eventSubscriber);
         $this->assertNotEmpty($this->emitter->listeners(self::preFoo));
         $this->assertNotEmpty($this->emitter->listeners(self::postFoo));
-        $this->emitter->removeSubscriber($eventSubscriber);
+        $this->emitter->detach($eventSubscriber);
         $this->assertEmpty($this->emitter->listeners(self::preFoo));
         $this->assertEmpty($this->emitter->listeners(self::postFoo));
     }
@@ -290,7 +290,7 @@ class TestWithDispatcher
 
 class TestEventSubscriber extends TestEventListener implements SubscriberInterface
 {
-    public static function getSubscribedEvents()
+    public function getEvents()
     {
         return [
             'pre.foo' => ['preFoo'],
@@ -301,7 +301,7 @@ class TestEventSubscriber extends TestEventListener implements SubscriberInterfa
 
 class TestEventSubscriberWithPriorities extends TestEventListener implements SubscriberInterface
 {
-    public static function getSubscribedEvents()
+    public function getEvents()
     {
         return [
             'pre.foo' => ['preFoo', 10],

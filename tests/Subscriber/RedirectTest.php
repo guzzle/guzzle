@@ -22,8 +22,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         ]);
 
         $client = new Client(['base_url' => 'http://test.com']);
-        $client->getEmitter()->addSubscriber($history);
-        $client->getEmitter()->addSubscriber($mock);
+        $client->getEmitter()->attach($history);
+        $client->getEmitter()->attach($mock);
 
         $response = $client->get('/foo');
         $this->assertEquals(200, $response->getStatusCode());
@@ -55,7 +55,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect6\r\nContent-Length: 0\r\n\r\n"
         ]);
         $client = new Client();
-        $client->getEmitter()->addSubscriber($mock);
+        $client->getEmitter()->attach($mock);
         $client->get('http://www.example.com/foo');
     }
 
@@ -68,8 +68,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]);
         $client = new Client();
-        $client->getEmitter()->addSubscriber($mock);
-        $client->getEmitter()->addSubscriber($h);
+        $client->getEmitter()->attach($mock);
+        $client->getEmitter()->attach($h);
         $client->post('http://test.com/foo', [
             'headers' => ['X-Baz' => 'bar'],
             'body' => 'testing'
@@ -91,8 +91,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]);
         $client = new Client(['base_url' => 'http://test.com']);
-        $client->getEmitter()->addSubscriber($mock);
-        $client->getEmitter()->addSubscriber($h);
+        $client->getEmitter()->attach($mock);
+        $client->getEmitter()->attach($h);
         $client->post('/foo', [
             'headers' => ['X-Baz' => 'bar'],
             'body' => 'testing',
@@ -114,8 +114,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]);
         $client = new Client(['base_url' => 'http://test.com']);
-        $client->getEmitter()->addSubscriber($mock);
-        $client->getEmitter()->addSubscriber($h);
+        $client->getEmitter()->attach($mock);
+        $client->getEmitter()->attach($h);
 
         $body = $this->getMockBuilder('GuzzleHttp\Stream\StreamInterface')
             ->setMethods(['seek', 'read', 'eof', 'tell'])
@@ -142,8 +142,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]);
         $client = new Client();
-        $client->getEmitter()->addSubscriber($mock);
-        $client->getEmitter()->addSubscriber($h);
+        $client->getEmitter()->attach($mock);
+        $client->getEmitter()->attach($h);
 
         $body = $this->getMockBuilder('GuzzleHttp\Stream\StreamInterface')
             ->setMethods(['seek', 'read', 'eof', 'tell'])
@@ -161,7 +161,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
     public function testRedirectsCanBeDisabledPerRequest()
     {
         $client = new Client(['base_url' => 'http://test.com']);
-        $client->getEmitter()->addSubscriber(new Mock([
+        $client->getEmitter()->attach(new Mock([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]));
@@ -173,11 +173,11 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
     {
         $h = new History();
         $client = new Client(['base_url' => 'http://www.foo.com']);
-        $client->getEmitter()->addSubscriber(new Mock([
+        $client->getEmitter()->attach(new Mock([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect?foo=bar\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]));
-        $client->getEmitter()->addSubscriber($h);
+        $client->getEmitter()->attach($h);
         $client->get('?foo=bar');
         $requests = $h->getRequests();
         $this->assertEquals('http://www.foo.com?foo=bar', $requests[0]->getUrl());
@@ -187,12 +187,12 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
     public function testHandlesRedirectsWithSpacesProperly()
     {
         $client = new Client(['base_url' => 'http://www.foo.com']);
-        $client->getEmitter()->addSubscriber(new Mock([
+        $client->getEmitter()->attach(new Mock([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect 1\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
         ]));
         $h = new History();
-        $client->getEmitter()->addSubscriber($h);
+        $client->getEmitter()->attach($h);
         $client->get('/foo');
         $reqs = $h->getRequests();
         $this->assertEquals('/redirect%201', $reqs[1]->getResource());
@@ -201,12 +201,12 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
     public function testAddsRefererWhenPossible()
     {
         $client = new Client(['base_url' => 'http://www.foo.com']);
-        $client->getEmitter()->addSubscriber(new Mock([
+        $client->getEmitter()->attach(new Mock([
             "HTTP/1.1 301 Moved Permanently\r\nLocation: /bar\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
         ]));
         $h = new History();
-        $client->getEmitter()->addSubscriber($h);
+        $client->getEmitter()->attach($h);
         $client->get('/foo', ['allow_redirects' => ['max' => 5, 'referer' => true]]);
         $reqs = $h->getRequests();
         $this->assertEquals('http://www.foo.com/foo', $reqs[1]->getHeader('Referer'));
@@ -215,14 +215,14 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
     public function testDoesNotAddRefererWhenChangingProtocols()
     {
         $client = new Client(['base_url' => 'https://www.foo.com']);
-        $client->getEmitter()->addSubscriber(new Mock([
+        $client->getEmitter()->attach(new Mock([
             "HTTP/1.1 301 Moved Permanently\r\n"
             . "Location: http://www.foo.com/foo\r\n"
             . "Content-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
         ]));
         $h = new History();
-        $client->getEmitter()->addSubscriber($h);
+        $client->getEmitter()->attach($h);
         $client->get('/foo', ['allow_redirects' => ['max' => 5, 'referer' => true]]);
         $reqs = $h->getRequests();
         $this->assertFalse($reqs[1]->hasHeader('Referer'));

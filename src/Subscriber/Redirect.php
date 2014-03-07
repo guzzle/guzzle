@@ -28,7 +28,7 @@ use GuzzleHttp\Url;
  */
 class Redirect implements SubscriberInterface
 {
-    public static function getSubscribedEvents()
+    public function getEvents()
     {
         return ['complete' => ['onComplete', -10]];
     }
@@ -116,7 +116,7 @@ class Redirect implements SubscriberInterface
         // not forcing RFC compliance, but rather emulating what all browsers
         // would do. Be sure to disable redirects on the clone.
         $redirectRequest = clone $request;
-        $redirectRequest->getEmitter()->removeSubscriber($this);
+        $redirectRequest->getEmitter()->detach($this);
 
         if ($request->getBody() &&
             !$config->getPath('redirect/strict') &&

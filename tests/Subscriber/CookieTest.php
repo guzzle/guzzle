@@ -57,9 +57,9 @@ class CookieTest extends \PHPUnit_Framework_TestCase
             "Content-Length: 0\r\n\r\n"
         ]);
         $client = new Client(['base_url' => 'http://www.foo.com']);
-        $client->getEmitter()->addSubscriber($cookie);
-        $client->getEmitter()->addSubscriber($mock);
-        $client->getEmitter()->addSubscriber($history);
+        $client->getEmitter()->attach($cookie);
+        $client->getEmitter()->attach($mock);
+        $client->getEmitter()->attach($history);
 
         $client->get();
         $request = $client->createRequest('GET', '/');

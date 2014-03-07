@@ -19,17 +19,17 @@ class History implements SubscriberInterface, \IteratorAggregate, \Countable
     /** @var array Requests and responses that have passed through the plugin */
     private $transactions = [];
 
-    public static function getSubscribedEvents()
+    public function __construct($limit = 10)
+    {
+        $this->limit = $limit;
+    }
+
+    public function getEvents()
     {
         return [
             'complete' => ['onRequestSent', 9999],
             'error' => ['onRequestError', 9999],
         ];
-    }
-
-    public function __construct($limit = 10)
-    {
-        $this->limit = $limit;
     }
 
     /**

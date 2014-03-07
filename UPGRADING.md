@@ -57,12 +57,16 @@ Guzzle no longer requires Symfony's EventDispatcher component. Guzzle now uses `
 - Use the `once()` method to add a listener that automatically removes itself the first time it is invoked.
 - Use the `listeners` method to retrieve a list of event listeners rather than the `getListeners` method.
 - Use `emit` instead of `dispatch` to emit an event from an emitter.
+- Use `attach` instead of `addSubscriber` and `detach` instead of `removeSubscriber`.
 
 ```php
+$mock = new Mock();
 // 3.x
-$request->getEventDispatcher()->addSubscriber(new Mock());
+$request->getEventDispatcher()->addSubscriber($mock);
+$request->getEventDispatcher()->removeSubscriber($mock);
 // 4.x
-$request->getEmitter()->addSubscriber(new Mock());
+$request->getEmitter()->attach($mock);
+$request->getEmitter()->detach($mock);
 ```
 
 Use the `on()` method to add a listener rather than the `addListener` method.
