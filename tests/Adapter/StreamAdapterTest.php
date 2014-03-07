@@ -284,7 +284,6 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
     public function testDebugAttributeWritesStreamInfoToTempBufferByDefault()
     {
 
-
         self::$server->flush();
         self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
         $client = new Client([
