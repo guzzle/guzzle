@@ -307,9 +307,9 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         ob_start();
         $client->get('/', ['debug' => true]);
         $contents = ob_get_clean();
-        $this->assertContains('<http://127.0.0.1:8124/>: Connected', $contents);
-        $this->assertContains('<http://127.0.0.1:8124/>: Got the filesize: 8', $contents);
-        $this->assertContains('<http://127.0.0.1:8124/>: Downloaded 0 bytes', $contents);
+        $this->assertContains('<http://127.0.0.1:8124/> [CONNECT]', $contents);
+        $this->assertContains('<http://127.0.0.1:8124/> [FILE_SIZE_IS]', $contents);
+        $this->assertContains('<http://127.0.0.1:8124/> [PROGRESS]', $contents);
     }
 
     public function testDebugAttributeWritesStreamInfoToBuffer()
@@ -324,9 +324,9 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         $client->get('/', ['debug' => $buffer]);
         fseek($buffer, 0);
         $contents = stream_get_contents($buffer);
-        $this->assertContains('<http://127.0.0.1:8124/>: Connected', $contents);
-        $this->assertContains('<http://127.0.0.1:8124/>: Got the filesize: 8', $contents);
-        $this->assertContains('<http://127.0.0.1:8124/>: Downloaded 0 bytes', $contents);
-        $this->assertContains('<http://127.0.0.1:8124/>: Found the mime-type: text/plain', $contents);
+        $this->assertContains('<http://127.0.0.1:8124/> [CONNECT]', $contents);
+        $this->assertContains('<http://127.0.0.1:8124/> [FILE_SIZE_IS] message: "Content-Length: 8"', $contents);
+        $this->assertContains('<http://127.0.0.1:8124/> [PROGRESS] bytes_max: "8"', $contents);
+        $this->assertContains('<http://127.0.0.1:8124/> [MIME_TYPE_IS] message: "text/plain"', $contents);
     }
 }

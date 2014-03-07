@@ -250,44 +250,34 @@ class StreamAdapter implements AdapterInterface
 
     private function visit_debug(RequestInterface $request, &$options, $value, &$params)
     {
+        static $map = [
+            STREAM_NOTIFY_CONNECT       => 'CONNECT',
+            STREAM_NOTIFY_AUTH_REQUIRED => 'AUTH_REQUIRED',
+            STREAM_NOTIFY_AUTH_RESULT   => 'AUTH_RESULT',
+            STREAM_NOTIFY_MIME_TYPE_IS  => 'MIME_TYPE_IS',
+            STREAM_NOTIFY_FILE_SIZE_IS  => 'FILE_SIZE_IS',
+            STREAM_NOTIFY_REDIRECTED    => 'REDIRECTED',
+            STREAM_NOTIFY_PROGRESS      => 'PROGRESS',
+            STREAM_NOTIFY_FAILURE       => 'FAILURE',
+            STREAM_NOTIFY_COMPLETED     => 'COMPLETED',
+            STREAM_NOTIFY_RESOLVE       => 'RESOLVE'
+        ];
+
+        static $args = ['severity', 'message', 'message_code',
+            'bytes_transferred', 'bytes_max'];
+
         if (!is_resource($value)) {
             $value = fopen('php://output', 'w');
         }
 
-        $params['notification'] = function (
-            $code,
-            $severity,
-            $message,
-            $message_code,
-            $bytes_transferred,
-            $bytes_max
-        ) use ($request, $value) {
-            fwrite($value, '<' . $request->getUrl() . '>: ');
-            switch ($code) {
-                case STREAM_NOTIFY_COMPLETED:
-                    fwrite($value, 'Completed request to ' . $request->getUrl() . "\n");
-                    break;
-                case STREAM_NOTIFY_FAILURE:
-                    fwrite($value, "Failure: {$message_code} {$message} \n");
-                    break;
-                case STREAM_NOTIFY_RESOLVE:
-                case STREAM_NOTIFY_AUTH_REQUIRED:
-                case STREAM_NOTIFY_AUTH_RESULT:
-                    var_dump($code, $severity, $message, $message_code, $bytes_transferred, $bytes_max);
-                    break;
-                case STREAM_NOTIFY_CONNECT:
-                    fputs($value, "Connected...\n");
-                    break;
-                case STREAM_NOTIFY_FILE_SIZE_IS:
-                    fputs($value, "Got the filesize: {$bytes_max}\n");
-                    break;
-                case STREAM_NOTIFY_MIME_TYPE_IS:
-                    fputs($value, "Found the mime-type: {$message}\n");
-                    break;
-                case STREAM_NOTIFY_PROGRESS:
-                    fputs($value, "Downloaded {$bytes_transferred} bytes\n");
-                    break;
+        $params['notification'] = function () use ($request, $value, $map, $args) {
+            $passed = func_get_args();
+            $code = array_shift($passed);
+            fprintf($value, '<%s> [%s] ', $request->getUrl(), $map[$code]);
+            foreach (array_filter($passed) as $i => $v) {
+                fwrite($value, $args[$i] . ': "' . $v . '" ');
             }
+            fwrite($value, "\n");
         };
     }
 }
