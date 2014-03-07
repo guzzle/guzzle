@@ -78,7 +78,7 @@ class RequestException extends TransferException
     }
 
     /**
-     * Get the associated repsonse
+     * Get the associated response
      *
      * @return ResponseInterface|null
      */
@@ -88,7 +88,7 @@ class RequestException extends TransferException
     }
 
     /**
-     * Check if a response was recieved
+     * Check if a response was received
      *
      * @return bool
      */

@@ -76,7 +76,7 @@ class Emitter implements EmitterInterface
         if (!isset($this->sorted[$eventName])) {
             if (!isset($this->listeners[$eventName])) {
                 return [];
-            } else{
+            } else {
                 krsort($this->listeners[$eventName]);
                 $this->sorted[$eventName] = call_user_func_array(
                     'array_merge',

@@ -12,7 +12,7 @@ use GuzzleHttp\Query;
  */
 class PostBodyTest extends \PHPUnit_Framework_TestCase
 {
-    public function testWrapsBasicStreamFunctionaliy()
+    public function testWrapsBasicStreamFunctionality()
     {
         $b = new PostBody();
         $this->assertTrue($b->isSeekable());

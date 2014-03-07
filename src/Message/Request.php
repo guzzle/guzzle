@@ -195,7 +195,7 @@ class Request extends AbstractMessage implements RequestInterface
                 ($port == 443 && $scheme == 'https')
             ) {
                 $this->setHeader('Host', $this->url->getHost());
-            }  else {
+            } else {
                 $this->setHeader('Host', $this->url->getHost() . ':' . $port);
             }
         }
