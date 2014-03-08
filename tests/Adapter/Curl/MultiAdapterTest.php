@@ -7,6 +7,7 @@ require_once __DIR__ . '/AbstractCurl.php';
 use GuzzleHttp\Adapter\Curl\MultiAdapter;
 use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Client;
+use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Request;
@@ -30,27 +31,6 @@ class MultiAdapterTest extends AbstractCurl
         $response = $a->send($t);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('bar', $response->getHeader('Foo'));
-    }
-
-    public function testSendsParallelRequests()
-    {
-        $c = new Client();
-        self::$server->flush();
-        self::$server->enqueue([
-            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
-            "HTTP/1.1 201 OK\r\nContent-Length: 0\r\n\r\n",
-            "HTTP/1.1 202 OK\r\nContent-Length: 0\r\n\r\n"
-        ]);
-        $transactions = [
-            new Transaction($c, new Request('GET', self::$server->getUrl())),
-            new Transaction($c, new Request('PUT', self::$server->getUrl())),
-            new Transaction($c, new Request('HEAD', self::$server->getUrl()))
-        ];
-        $a = new MultiAdapter(new MessageFactory());
-        $a->sendAll(new \ArrayIterator($transactions), 20);
-        foreach ($transactions as $t) {
-            $this->assertContains($t->getResponse()->getStatusCode(), [200, 201, 202]);
-        }
     }
 
     /**
@@ -90,5 +70,68 @@ class MultiAdapterTest extends AbstractCurl
             $this->assertContains('[curl] (#-10) ', $e->getMessage());
             $this->assertContains($request->getUrl(), $e->getMessage());
         }
+    }
+
+    public function testCreatesAndReleasesHandlesWhenNeeded()
+    {
+        $c = new Client();
+        self::$server->flush();
+        self::$server->enqueue([
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 201 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 202 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 203 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 204 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 205 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 206 OK\r\nContent-Length: 0\r\n\r\n",
+        ]);
+
+        $a = new MultiAdapter(new MessageFactory());
+
+        $request1 = new Request('GET', self::$server->getUrl());
+        $request1->getEmitter()->on('headers', function () use ($a, $c) {
+            $request2 = new Request('GET', self::$server->getUrl());
+            $request2->getEmitter()->on('headers', function () use ($a, $c) {
+                $request3 = new Request('GET', self::$server->getUrl());
+                $request3->getEmitter()->on('headers', function () use ($a, $c) {
+                    $a->send(new Transaction($c, new Request('GET', self::$server->getUrl())));
+                });
+                $a->send(new Transaction($c, $request3));
+                // Now, reuse an existing handle
+                $a->send(new Transaction($c, new Request('GET', self::$server->getUrl())));
+            });
+            $a->send(new Transaction($c, $request2));
+        });
+
+        $transactions = [
+            new Transaction($c, $request1),
+            new Transaction($c, new Request('PUT', self::$server->getUrl())),
+            new Transaction($c, new Request('HEAD', self::$server->getUrl()))
+        ];
+        $a->sendAll(new \ArrayIterator($transactions), 2);
+        $check = range(200, 206);
+        foreach ($transactions as $t) {
+            $this->assertContains($t->getResponse()->getStatusCode(), $check);
+        }
+    }
+
+    public function testThrowsAndReleasesWhenErrorDuringCompleteEvent()
+    {
+        self::$server->flush();
+        self::$server->enqueue("HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\n\r\n");
+        $request = new Request('GET', self::$server->getUrl());
+        $request->getEmitter()->on('complete', function (CompleteEvent $e) {
+            throw new RequestException('foo', $e->getRequest());
+        });
+        $t = new Transaction(new Client(), $request);
+        $a = new MultiAdapter(new MessageFactory());
+        try {
+            $a->send($t);
+            $this->fail('Did not throw');
+        } catch (RequestException $e) {
+            $this->assertSame($request, $e->getRequest());
+        }
+        //$this->assertEquals(200, $response->getStatusCode());
+        //$this->assertEquals('bar', $response->getHeader('Foo'));
     }
 }
