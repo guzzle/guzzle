@@ -65,23 +65,24 @@ class BatchContext
      */
     public function hasPending()
     {
-        return $this->pending ? $this->pending->valid() : false;
+        return $this->pending && $this->pending->valid();
     }
 
     /**
      * Pop the next transaction from the transaction queue
      *
-     * @return null|TransactionInterface
+     * @return TransactionInterface|null
      */
     public function nextPending()
     {
-        if ($this->pending && $this->pending->valid()) {
-            $current = $this->pending->current();
-            $this->pending->next();
-            return $current;
+        if (!$this->hasPending()) {
+            return null;
         }
 
-        return null;
+        $current = $this->pending->current();
+        $this->pending->next();
+
+        return $current;
     }
 
     /**

@@ -12,12 +12,25 @@ use GuzzleHttp\Message\Request;
  */
 class BatchContextTest extends \PHPUnit_Framework_TestCase
 {
+    public function testProvidesGetters()
+    {
+        $m = curl_multi_init();
+        $b = new BatchContext($m, true);
+        $this->assertTrue($b->throwsExceptions());
+        $this->assertSame($m, $b->getMultiHandle());
+        $this->assertFalse($b->hasPending());
+        curl_multi_close($m);
+    }
+
     public function testValidatesTransactionsAreNotAddedTwice()
     {
         $m = curl_multi_init();
         $b = new BatchContext($m, true);
         $h = curl_init();
-        $t = new Transaction(new Client(), new Request('GET', 'http://httbin.org'));
+        $t = new Transaction(
+            new Client(),
+            new Request('GET', 'http://httbin.org')
+        );
         $b->addTransaction($t, $h);
         try {
             $b->addTransaction($t, $h);
@@ -33,7 +46,10 @@ class BatchContextTest extends \PHPUnit_Framework_TestCase
         $m = curl_multi_init();
         $b = new BatchContext($m, true);
         $h = curl_init();
-        $t = new Transaction(new Client(), new Request('GET', 'http://httbin.org'));
+        $t = new Transaction(
+            new Client(),
+            new Request('GET', 'http://httbin.org')
+        );
         $b->addTransaction($t, $h);
         $this->assertSame($t, $b->findTransaction($h));
         $b->removeTransaction($t);
@@ -42,5 +58,36 @@ class BatchContextTest extends \PHPUnit_Framework_TestCase
             $this->fail('Did not throw');
         } catch (\RuntimeException $e) {}
         curl_multi_close($m);
+    }
+
+    /**
+     * @expectedException \RuntimeException
+     * @expectedExceptionMessage Transaction not registered
+     */
+    public function testThrowsWhenRemovingNonExistentTransaction()
+    {
+        $b = new BatchContext('foo', false);
+        $t = new Transaction(
+            new Client(),
+            new Request('GET', 'http://httbin.org')
+        );
+        $b->removeTransaction($t);
+    }
+
+    public function testReturnsPendingAsIteratorTypeObject()
+    {
+        $t1 = new Transaction(new Client(), new Request('GET', 'http://t.com'));
+        $t2 = new Transaction(new Client(), new Request('GET', 'http://t.com'));
+        $t3 = new Transaction(new Client(), new Request('GET', 'http://t.com'));
+        $iter = new \ArrayIterator([$t1, $t2, $t3]);
+        $b = new BatchContext('foo', false, $iter);
+        $this->assertTrue($b->hasPending());
+        $this->assertSame($t1, $b->nextPending());
+        $this->assertTrue($b->hasPending());
+        $this->assertSame($t2, $b->nextPending());
+        $this->assertTrue($b->hasPending());
+        $this->assertSame($t3, $b->nextPending());
+        $this->assertFalse($b->hasPending());
+        $this->assertNull($b->nextPending());
     }
 }
