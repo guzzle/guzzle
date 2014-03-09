@@ -98,12 +98,8 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
             $transactions
         );
 
-        $total = 0;
-        while ($transactions->valid() && $total < $parallel) {
-            $current = $transactions->current();
-            $this->addHandle($current, $context);
-            $total++;
-            $transactions->next();
+        foreach (new \LimitIterator($transactions, 0, $parallel) as $trans) {
+            $this->addHandle($trans, $context);
         }
 
         $this->perform($context);
@@ -236,7 +232,8 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
     private function checkoutMultiHandle()
     {
         // Find an unused handle in the cache
-        if (false !== ($key = array_search(false, $this->multiOwned, true))) {
+        $key = array_search(false, $this->multiOwned, true);
+        if (false !== $key) {
             $this->multiOwned[$key] = true;
             return $this->multiHandles[$key];
         }
@@ -257,10 +254,11 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
     private function releaseMultiHandle($handle)
     {
         $id = (int) $handle;
-        $this->multiOwned[$id] = false;
 
-        // Prune excessive handles
-        if (count($this->multiHandles) > 3) {
+        if (count($this->multiHandles) <= 3) {
+            $this->multiOwned[$id] = false;
+        } else {
+            // Prune excessive handles
             curl_multi_close($this->multiHandles[$id]);
             unset($this->multiHandles[$id], $this->multiOwned[$id]);
         }

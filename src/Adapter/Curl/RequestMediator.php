@@ -57,7 +57,7 @@ class RequestMediator
      */
     public function receiveResponseHeader($curl, $header)
     {
-        static $normalize = array("\r", "\n");
+        static $normalize = ["\r", "\n"];
         $length = strlen($header);
         $header = str_replace($normalize, '', $header);
 
@@ -78,13 +78,15 @@ class RequestMediator
                 $this->statusCode,
                 $this->getHeaders(),
                 $this->body,
-                ['protocol_version' => $this->protocolVersion, 'reason_phrase' => $this->reasonPhrase]
+                [
+                    'protocol_version' => $this->protocolVersion,
+                    'reason_phrase'    => $this->reasonPhrase
+                ]
             );
             $this->headers = $this->body = null;
             $this->transaction->setResponse($response);
-            $request = $this->transaction->getRequest();
             // Allows events to react before downloading any of the body
-            $request->getEmitter()->emit(
+            $this->transaction->getRequest()->getEmitter()->emit(
                 'headers',
                 new HeadersEvent($this->transaction)
             );

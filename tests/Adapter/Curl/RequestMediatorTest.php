@@ -2,6 +2,9 @@
 
 namespace GuzzleHttp\Tests\Adapter\Curl;
 
+require_once __DIR__ . '/../../Server.php';
+
+use GuzzleHttp\Adapter\Curl\MultiAdapter;
 use GuzzleHttp\Adapter\Curl\RequestMediator;
 use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Client;
@@ -10,12 +13,27 @@ use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Message\Response;
+use GuzzleHttp\Tests\Server;
 
 /**
  * @covers GuzzleHttp\Adapter\Curl\RequestMediator
  */
 class RequestMediatorTest extends \PHPUnit_Framework_TestCase
 {
+    /** @var \GuzzleHttp\Tests\Server */
+    static $server;
+
+    public static function setUpBeforeClass()
+    {
+        self::$server = new Server();
+        self::$server->start();
+    }
+
+    public static function tearDownAfterClass()
+    {
+        self::$server->stop();
+    }
+
     public function testSetsResponseBodyForDownload()
     {
         $body = Stream::factory();
@@ -92,5 +110,20 @@ class RequestMediatorTest extends \PHPUnit_Framework_TestCase
         $t = new Transaction(new Client(), new Request('PUT', 'http://httbin.org', [], $body));
         $m = new RequestMediator($t, new MessageFactory());
         $this->assertEquals('foo', $m->readRequestBody(null, null, 3));
+    }
+
+    public function testEmitsHeadersEventForHeadRequest()
+    {
+        self::$server->enqueue(["HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nOK"]);
+        $ee = null;
+        $client = new Client(['adapter' => new MultiAdapter(new MessageFactory())]);
+        $client->head(self::$server->getUrl(), [
+            'events' => [
+                'headers' => function (HeadersEvent $e) use (&$ee) {
+                    $ee = $e;
+                }
+            ]
+        ]);
+        $this->assertInstanceOf('GuzzleHttp\\Event\\HeadersEvent', $ee);
     }
 }

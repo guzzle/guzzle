@@ -8,6 +8,8 @@ use GuzzleHttp\Adapter\Curl\MultiAdapter;
 use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\CompleteEvent;
+use GuzzleHttp\Event\ErrorEvent;
+use GuzzleHttp\Event\HeadersEvent;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Request;
@@ -74,49 +76,63 @@ class MultiAdapterTest extends AbstractCurl
 
     public function testCreatesAndReleasesHandlesWhenNeeded()
     {
-        $c = new Client();
+        $a = new MultiAdapter(new MessageFactory());
+        $c = new Client([
+            'adapter'  => $a,
+            'base_url' => self::$server->getUrl()
+        ]);
+
         self::$server->flush();
         self::$server->enqueue([
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
-            "HTTP/1.1 201 OK\r\nContent-Length: 0\r\n\r\n",
-            "HTTP/1.1 202 OK\r\nContent-Length: 0\r\n\r\n",
-            "HTTP/1.1 203 OK\r\nContent-Length: 0\r\n\r\n",
-            "HTTP/1.1 204 OK\r\nContent-Length: 0\r\n\r\n",
-            "HTTP/1.1 205 OK\r\nContent-Length: 0\r\n\r\n",
-            "HTTP/1.1 206 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
         ]);
 
-        $a = new MultiAdapter(new MessageFactory());
+        $ef = function (ErrorEvent $e) { throw $e->getException(); };
 
-        $request1 = new Request('GET', self::$server->getUrl());
-        $request1->getEmitter()->on('headers', function () use ($a, $c) {
-            $request2 = new Request('GET', self::$server->getUrl());
-            $request2->getEmitter()->on('headers', function () use ($a, $c) {
-                $request3 = new Request('GET', self::$server->getUrl());
-                $request3->getEmitter()->on('headers', function () use ($a, $c) {
-                    $a->send(new Transaction($c, new Request('GET', self::$server->getUrl())));
-                });
-                $a->send(new Transaction($c, $request3));
-                // Now, reuse an existing handle
-                $a->send(new Transaction($c, new Request('GET', self::$server->getUrl())));
-            });
-            $a->send(new Transaction($c, $request2));
+        $request1 = $c->createRequest('GET', '/');
+        $request1->getEmitter()->on('headers', function () use ($a, $c, $ef) {
+            $a->send(new Transaction($c, $c->createRequest('GET', '/', [
+                'events' => [
+                    'headers' => function () use ($a, $c, $ef) {
+                        $r = $c->createRequest('GET', '/', [
+                            'events' => ['error' => $ef]
+                        ]);
+                        $r->getEmitter()->once('headers', function () use ($a, $c, $r) {
+                            $a->send(new Transaction($c, $r));
+                        });
+                        $a->send(new Transaction($c, $r));
+                        // Now, reuse an existing handle
+                        $a->send(new Transaction($c, $r));
+                    },
+                    'error' => $ef
+                ]
+            ])));
         });
+
+        $request1->getEmitter()->on('error', $ef);
 
         $transactions = [
             new Transaction($c, $request1),
-            new Transaction($c, new Request('PUT', self::$server->getUrl())),
-            new Transaction($c, new Request('HEAD', self::$server->getUrl()))
+            new Transaction($c, $c->createRequest('PUT')),
+            new Transaction($c, $c->createRequest('HEAD'))
         ];
+
         $a->sendAll(new \ArrayIterator($transactions), 2);
-        $check = range(200, 206);
-        foreach ($transactions as $t) {
+
+        foreach ($transactions as $index => $t) {
             $response = $t->getResponse();
             $this->assertInstanceOf(
                 'GuzzleHttp\\Message\\ResponseInterface',
-                $response
+                $response,
+                'Transaction at index ' . $index . ' did not populate response'
             );
-            $this->assertContains($response->getStatusCode(), $check);
+            $this->assertEquals(200, $response->getStatusCode());
         }
     }
 
@@ -136,7 +152,5 @@ class MultiAdapterTest extends AbstractCurl
         } catch (RequestException $e) {
             $this->assertSame($request, $e->getRequest());
         }
-        //$this->assertEquals(200, $response->getStatusCode());
-        //$this->assertEquals('bar', $response->getHeader('Foo'));
     }
 }
