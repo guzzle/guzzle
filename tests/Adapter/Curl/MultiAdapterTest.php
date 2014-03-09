@@ -74,6 +74,31 @@ class MultiAdapterTest extends AbstractCurl
         }
     }
 
+    public function testSendsParallelRequestsFromQueue()
+    {
+        $c = new Client();
+        self::$server->flush();
+        self::$server->enqueue([
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
+        ]);
+        $transactions = [
+            new Transaction($c, new Request('GET', self::$server->getUrl())),
+            new Transaction($c, new Request('PUT', self::$server->getUrl())),
+            new Transaction($c, new Request('HEAD', self::$server->getUrl())),
+            new Transaction($c, new Request('GET', self::$server->getUrl()))
+        ];
+        $a = new MultiAdapter(new MessageFactory());
+        $a->sendAll(new \ArrayIterator($transactions), 2);
+        foreach ($transactions as $t) {
+            $response = $t->getResponse();
+            $this->assertNotNull($response);
+            $this->assertEquals(200, $response->getStatusCode());
+        }
+    }
+
     public function testCreatesAndReleasesHandlesWhenNeeded()
     {
         $a = new MultiAdapter(new MessageFactory());
@@ -101,7 +126,7 @@ class MultiAdapterTest extends AbstractCurl
                 'events' => [
                     'headers' => function () use ($a, $c, $ef) {
                         $r = $c->createRequest('GET', '/', [
-                            'events' => ['error' => $ef]
+                            'events' => ['error' => ['fn' => $ef, 'priority' => 9999]]
                         ]);
                         $r->getEmitter()->once('headers', function () use ($a, $c, $r) {
                             $a->send(new Transaction($c, $r));
@@ -109,8 +134,8 @@ class MultiAdapterTest extends AbstractCurl
                         $a->send(new Transaction($c, $r));
                         // Now, reuse an existing handle
                         $a->send(new Transaction($c, $r));
-                    },
-                    'error' => $ef
+                        },
+                    'error' => ['fn' => $ef, 'priority' => 9999]
                 ]
             ])));
         });

@@ -117,15 +117,18 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
             if ($mrc != CURLM_OK && $mrc != CURLM_CALL_MULTI_PERFORM) {
                 self::throwMultiError($mrc);
             }
+            // Need to check if there are pending transactions before processing
+            // them so that we don't bail from the loop too early.
+            $pending = $context->hasPending();
             $this->processMessages($context);
             if ($active && curl_multi_select($multi, $this->selectTimeout) === -1) {
                 // Perform a usleep if a select returns -1.
                 // See: https://bugs.php.net/bug.php?id=61141
                 usleep(250);
             }
-        } while ($active || $context->hasPending());
+        } while ($active || $pending);
 
-        $this->releaseMultiHandle($context->getMultiHandle());
+        $this->releaseMultiHandle($multi);
     }
 
     private function processMessages(BatchContext $context)
@@ -133,12 +136,11 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
         $multi = $context->getMultiHandle();
 
         while ($done = curl_multi_info_read($multi)) {
-            if ($transaction = $context->findTransaction($done['handle'])) {
-                $this->processResponse($transaction, $done, $context);
-                // Add the next transaction if there are more in the queue
-                if ($next = $context->nextPending()) {
-                    $this->addHandle($next, $context);
-                }
+            $transaction = $context->findTransaction($done['handle']);
+            $this->processResponse($transaction, $done, $context);
+            // Add the next transaction if there are more in the queue
+            if ($next = $context->nextPending()) {
+                $this->addHandle($next, $context);
             }
         }
     }
@@ -240,8 +242,9 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
 
         // Add a new handle
         $handle = curl_multi_init();
-        $this->multiHandles[(int) $handle] = $handle;
-        $this->multiOwned[(int) $handle] = true;
+        $id = (int) $handle;
+        $this->multiHandles[$id] = $handle;
+        $this->multiOwned[$id] = true;
 
         return $handle;
     }
