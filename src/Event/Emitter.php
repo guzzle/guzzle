@@ -27,6 +27,16 @@ class Emitter implements EmitterInterface
 
     public function on($eventName, callable $listener, $priority = 0)
     {
+        if ($priority === 'first') {
+            $priority = isset($this->listeners[$eventName])
+                ? max(array_keys($this->listeners[$eventName])) + 1
+                : 1;
+        } elseif ($priority === 'last') {
+            $priority = isset($this->listeners[$eventName])
+                ? min(array_keys($this->listeners[$eventName])) - 1
+                : -1;
+        }
+
         $this->listeners[$eventName][$priority][] = $listener;
         unset($this->sorted[$eventName]);
     }

@@ -40,6 +40,15 @@ priority
     be invoked (a higher priority means the listener is more important). If
     no priority is provided, the priority is assumed to be ``0``.
 
+    When specifying an event priority, you can pass ``"first"`` or ``"last"`` to
+    dynamically specify the priority based on the current event priorities
+    associated with the given event name in the emitter. Use ``"first"`` to set
+    the priority to the current highest priority plus one. Use ``"last"`` to
+    set the priority to the current lowest event priority minus one. It is
+    important to remember that these dynamic priorities are calculated only at
+    the point of insertion into the emitter and they are not rearranged after
+    subsequent listeners are added to an emitter.
+
 propagation
     Describes whether or not other event listeners are triggered. Event
     emitters will trigger every event listener registered to a specific event
@@ -159,7 +168,7 @@ Event Subscribers
 -----------------
 
 Event subscribers are classes that implement the
-``GuzzleHttp\Common\EventSubsriberInterface`` object. They are used to register
+``GuzzleHttp\Common\EventSubscriberInterface`` object. They are used to register
 one or more event listeners to methods of the class. Event subscribers tell
 event emitters exactly which events to listen to and what method to invoke on
 the class when the event is triggered by called the ``getEvents()`` method of
@@ -200,6 +209,11 @@ priority of the listener (as shown in the ``before`` listener in the example).
             echo 'Complete!';
         }
     }
+
+.. note::
+
+    You can specify event priorities using integers or ``"first"`` and
+    ``"last"`` to dynamically determine the priority.
 
 Working With Request Events
 ===========================

@@ -10,10 +10,15 @@ interface EmitterInterface
     /**
      * Binds a listener to a specific event.
      *
-     * @param string   $eventName Name of the event to bind to.
-     * @param callable $listener  Listener to invoke when triggered.
-     * @param int      $priority  The higher this value, the earlier an event
-     *     listener will be triggered in the chain (defaults to 0)
+     * @param string     $eventName Name of the event to bind to.
+     * @param callable   $listener  Listener to invoke when triggered.
+     * @param int|string $priority  The higher this value, the earlier an event
+     *     listener will be triggered in the chain (defaults to 0). You can
+     *     pass "first" or "last" to dynamically specify the event priority
+     *     based on the current event priorities associated with the given
+     *     event name in the emitter. Use "first" to set the priority to the
+     *     current highest priority plus one. Use "last" to set the priority to
+     *     the current lowest event priority minus one.
      */
     public function on($eventName, callable $listener, $priority = 0);
 
