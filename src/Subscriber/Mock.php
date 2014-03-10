@@ -41,7 +41,7 @@ class Mock implements SubscriberInterface, \Countable
     public function getEvents()
     {
         // Fire the event last, after signing
-        return ['before' => ['onBefore', RequestEvents::SIGN - 10]];
+        return ['before' => ['onBefore', RequestEvents::SIGN_REQUEST - 10]];
     }
 
     /**

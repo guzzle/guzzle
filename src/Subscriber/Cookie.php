@@ -30,7 +30,7 @@ class Cookie implements SubscriberInterface
         // Fire the cookie plugin complete event before redirecting
         return [
             'before'   => ['onBefore'],
-            'complete' => ['onComplete', RequestEvents::REDIRECT + 10]
+            'complete' => ['onComplete', RequestEvents::REDIRECT_RESPONSE + 10]
         ];
     }
 

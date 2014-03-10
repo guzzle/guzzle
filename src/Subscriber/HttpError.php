@@ -2,6 +2,7 @@
 
 namespace GuzzleHttp\Subscriber;
 
+use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Event\SubscriberInterface;
 use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Exception\RequestException;
@@ -13,7 +14,7 @@ class HttpError implements SubscriberInterface
 {
     public function getEvents()
     {
-        return ['complete' => ['onComplete']];
+        return ['complete' => ['onComplete', RequestEvents::VERIFY_RESPONSE]];
     }
 
     /**

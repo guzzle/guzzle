@@ -27,7 +27,7 @@ class Prepare implements SubscriberInterface
 {
     public function getEvents()
     {
-        return ['before' => ['onBefore', RequestEvents::PREPARE]];
+        return ['before' => ['onBefore', RequestEvents::PREPARE_REQUEST]];
     }
 
     public function onBefore(BeforeEvent $event)

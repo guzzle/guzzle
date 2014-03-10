@@ -31,7 +31,7 @@ class Redirect implements SubscriberInterface
 {
     public function getEvents()
     {
-        return ['complete' => ['onComplete', RequestEvents::REDIRECT]];
+        return ['complete' => ['onComplete', RequestEvents::REDIRECT_RESPONSE]];
     }
 
     /**
