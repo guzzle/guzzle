@@ -2,6 +2,7 @@
 
 namespace GuzzleHttp\Subscriber;
 
+use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Event\SubscriberInterface;
 use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Event\BeforeEvent;
@@ -27,7 +28,8 @@ class Mock implements SubscriberInterface, \Countable
 
     /**
      * @param array $items      Array of responses or exceptions to queue
-     * @param bool  $readBodies Set to false to not consume the entity body of a request when a mock is served
+     * @param bool  $readBodies Set to false to not consume the entity body of
+     *                          a request when a mock is served.
      */
     public function __construct(array $items = [], $readBodies = true)
     {
@@ -38,13 +40,14 @@ class Mock implements SubscriberInterface, \Countable
 
     public function getEvents()
     {
-        return ['before' => ['onRequestBeforeSend', -999]];
+        // Fire the event last, after signing
+        return ['before' => ['onBefore', RequestEvents::SIGN - 10]];
     }
 
     /**
      * @throws \OutOfBoundsException|\Exception
      */
-    public function onRequestBeforeSend(BeforeEvent $event)
+    public function onBefore(BeforeEvent $event)
     {
         if (!$item = array_shift($this->queue)) {
             throw new \OutOfBoundsException('Mock queue is empty');
@@ -91,7 +94,8 @@ class Mock implements SubscriberInterface, \Countable
                 ? $this->factory->fromMessage(file_get_contents($response))
                 : $this->factory->fromMessage($response);
         } elseif (!($response instanceof ResponseInterface)) {
-            throw new \InvalidArgumentException('Response must a message string, response object, or path to a file');
+            throw new \InvalidArgumentException('Response must a message '
+                . 'string, response object, or path to a file');
         }
 
         $this->queue[] = $response;

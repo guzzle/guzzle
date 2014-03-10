@@ -5,19 +5,19 @@ namespace GuzzleHttp\Tests\Message;
 use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\BeforeEvent;
-use GuzzleHttp\Subscriber\PrepareRequestBody;
+use GuzzleHttp\Subscriber\Prepare;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Stream\NoSeekStream;
 use GuzzleHttp\Stream\Stream;
 
 /**
- * @covers GuzzleHttp\Subscriber\PrepareRequestBody
+ * @covers GuzzleHttp\Subscriber\Prepare
  */
-class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
+class PrepareTest extends \PHPUnit_Framework_TestCase
 {
     public function testIgnoresRequestsWithNoBody()
     {
-        $s = new PrepareRequestBody();
+        $s = new Prepare();
         $t = $this->getTrans();
         $s->onBefore(new BeforeEvent($t));
         $this->assertFalse($t->getRequest()->hasHeader('Expect'));
@@ -25,7 +25,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
 
     public function testAppliesPostBody()
     {
-        $s = new PrepareRequestBody();
+        $s = new Prepare();
         $t = $this->getTrans();
         $p = $this->getMockBuilder('GuzzleHttp\Post\PostBody')
             ->setMethods(['applyRequestHeaders'])
@@ -38,7 +38,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
 
     public function testAddsExpectHeaderWithTrue()
     {
-        $s = new PrepareRequestBody();
+        $s = new Prepare();
         $t = $this->getTrans();
         $t->getRequest()->getConfig()->set('expect', true);
         $t->getRequest()->setBody(Stream::factory('foo'));
@@ -48,7 +48,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
 
     public function testAddsExpectHeaderBySize()
     {
-        $s = new PrepareRequestBody();
+        $s = new Prepare();
         $t = $this->getTrans();
         $t->getRequest()->getConfig()->set('expect', 2);
         $t->getRequest()->setBody(Stream::factory('foo'));
@@ -58,7 +58,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
 
     public function testDoesNotModifyExpectHeaderIfPresent()
     {
-        $s = new PrepareRequestBody();
+        $s = new Prepare();
         $t = $this->getTrans();
         $t->getRequest()->setHeader('Expect', 'foo');
         $t->getRequest()->setBody(Stream::factory('foo'));
@@ -68,7 +68,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
 
     public function testDoesAddExpectHeaderWhenSetToFalse()
     {
-        $s = new PrepareRequestBody();
+        $s = new Prepare();
         $t = $this->getTrans();
         $t->getRequest()->getConfig()->set('expect', false);
         $t->getRequest()->setBody(Stream::factory('foo'));
@@ -78,7 +78,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
 
     public function testDoesNotAddExpectHeaderBySize()
     {
-        $s = new PrepareRequestBody();
+        $s = new Prepare();
         $t = $this->getTrans();
         $t->getRequest()->getConfig()->set('expect', 10);
         $t->getRequest()->setBody(Stream::factory('foo'));
@@ -88,7 +88,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
 
     public function testAddsExpectHeaderForNonSeekable()
     {
-        $s = new PrepareRequestBody();
+        $s = new Prepare();
         $t = $this->getTrans();
         $t->getRequest()->setBody(new NoSeekStream(Stream::factory('foo')));
         $s->onBefore(new BeforeEvent($t));
@@ -97,7 +97,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
 
     public function testRemovesContentLengthWhenSendingWithChunked()
     {
-        $s = new PrepareRequestBody();
+        $s = new Prepare();
         $t = $this->getTrans();
         $t->getRequest()->setBody(Stream::factory('foo'));
         $t->getRequest()->setHeader('Transfer-Encoding', 'chunked');
@@ -107,7 +107,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
 
     public function testUsesProvidedContentLengthAndRemovesXferEncoding()
     {
-        $s = new PrepareRequestBody();
+        $s = new Prepare();
         $t = $this->getTrans();
         $t->getRequest()->setBody(Stream::factory('foo'));
         $t->getRequest()->setHeader('Content-Length', '3');
@@ -120,7 +120,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
     public function testSetsContentTypeIfPossibleFromStream()
     {
         $body = $this->getMockBody();
-        $sub = new PrepareRequestBody();
+        $sub = new Prepare();
         $t = $this->getTrans();
         $t->getRequest()->setBody($body);
         $sub->onBefore(new BeforeEvent($t));
@@ -133,7 +133,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
 
     public function testDoesNotOverwriteExistingContentType()
     {
-        $s = new PrepareRequestBody();
+        $s = new Prepare();
         $t = $this->getTrans();
         $t->getRequest()->setBody($this->getMockBody());
         $t->getRequest()->setHeader('Content-Type', 'foo/baz');
@@ -146,7 +146,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
 
     public function testSetsContentLengthIfPossible()
     {
-        $s = new PrepareRequestBody();
+        $s = new Prepare();
         $t = $this->getTrans();
         $t->getRequest()->setBody($this->getMockBody());
         $s->onBefore(new BeforeEvent($t));
@@ -164,7 +164,7 @@ class PrepareRequestBodyTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue(null));
         $r->setBody($s);
         $t = $this->getTrans($r);
-        $s = new PrepareRequestBody();
+        $s = new Prepare();
         $s->onBefore(new BeforeEvent($t));
         $this->assertEquals('chunked', $r->getHeader('Transfer-Encoding'));
     }

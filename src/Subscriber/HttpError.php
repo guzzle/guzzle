@@ -13,7 +13,7 @@ class HttpError implements SubscriberInterface
 {
     public function getEvents()
     {
-        return ['complete' => ['onRequestAfterSend']];
+        return ['complete' => ['onComplete']];
     }
 
     /**
@@ -22,7 +22,7 @@ class HttpError implements SubscriberInterface
      * @param CompleteEvent $event Emitted event
      * @throws RequestException
      */
-    public function onRequestAfterSend(CompleteEvent $event)
+    public function onComplete(CompleteEvent $event)
     {
         $code = (string) $event->getResponse()->getStatusCode();
         // Throw an exception for an unsuccessful response

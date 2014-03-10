@@ -2,6 +2,7 @@
 
 namespace GuzzleHttp\Subscriber;
 
+use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Event\SubscriberInterface;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Event\BeforeEvent;
@@ -22,11 +23,11 @@ use GuzzleHttp\Mimetypes;
  *   the Expect header for all requests in which the size of the payload cannot
  *   be determined or where the body is not rewindable.
  */
-class PrepareRequestBody implements SubscriberInterface
+class Prepare implements SubscriberInterface
 {
     public function getEvents()
     {
-        return ['before' => ['onBefore', -1]];
+        return ['before' => ['onBefore', RequestEvents::PREPARE]];
     }
 
     public function onBefore(BeforeEvent $event)

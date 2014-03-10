@@ -64,7 +64,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
         $t = new Transaction(new Client(), new Request('GET', '/'));
         $m = new Mock([$response]);
         $ev = new BeforeEvent($t);
-        $m->onRequestBeforeSend($ev);
+        $m->onBefore($ev);
         $this->assertSame($response, $t->getResponse());
     }
 
@@ -75,7 +75,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
     {
         $p = new Mock();
         $ev = new BeforeEvent(new Transaction(new Client(), new Request('GET', '/')));
-        $p->onRequestBeforeSend($ev);
+        $p->onBefore($ev);
     }
 
     public function testReadsBodiesFromMockedRequests()

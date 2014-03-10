@@ -10,6 +10,13 @@ use GuzzleHttp\Exception\RequestException;
  */
 final class RequestEvents
 {
+    // "before" priorities
+    const PREPARE = -10;
+    const SIGN = -10000;
+    // "complete" and "error" response priorities
+    const EARLY = 10000;
+    const REDIRECT = 100;
+
     /**
      * Emits the before send event for a request and emits an error
      * event if an error is encountered during the before send.

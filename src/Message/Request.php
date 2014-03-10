@@ -4,7 +4,7 @@ namespace GuzzleHttp\Message;
 
 use GuzzleHttp\Event\HasEmitterTrait;
 use GuzzleHttp\Collection;
-use GuzzleHttp\Subscriber\PrepareRequestBody;
+use GuzzleHttp\Subscriber\Prepare;
 use GuzzleHttp\Url;
 
 /**
@@ -180,7 +180,7 @@ class Request extends AbstractMessage implements RequestInterface
     {
         static $subscriber;
         if (!$subscriber) {
-            $subscriber = new PrepareRequestBody();
+            $subscriber = new Prepare();
         }
 
         $this->getEmitter()->attach($subscriber);

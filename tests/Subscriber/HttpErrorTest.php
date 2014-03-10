@@ -19,7 +19,7 @@ class HttpErrorTest extends \PHPUnit_Framework_TestCase
     {
         $event = $this->getEvent();
         $event->intercept(new Response(200));
-        (new HttpError())->onRequestAfterSend($event);
+        (new HttpError())->onComplete($event);
     }
 
     /**
@@ -29,7 +29,7 @@ class HttpErrorTest extends \PHPUnit_Framework_TestCase
     {
         $event = $this->getEvent();
         $event->intercept(new Response(403));
-        (new HttpError())->onRequestAfterSend($event);
+        (new HttpError())->onComplete($event);
     }
 
     /**
@@ -39,7 +39,7 @@ class HttpErrorTest extends \PHPUnit_Framework_TestCase
     {
         $event = $this->getEvent();
         $event->intercept(new Response(500));
-        (new HttpError())->onRequestAfterSend($event);
+        (new HttpError())->onComplete($event);
     }
 
     private function getEvent()

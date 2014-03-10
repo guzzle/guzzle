@@ -2,6 +2,7 @@
 
 namespace GuzzleHttp\Subscriber;
 
+use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Event\SubscriberInterface;
 use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\BeforeEvent;
@@ -26,9 +27,10 @@ class Cookie implements SubscriberInterface
 
     public function getEvents()
     {
+        // Fire the cookie plugin complete event before redirecting
         return [
-            'before'   => ['onBefore', 125],
-            'complete' => ['onComplete', 125]
+            'before'   => ['onBefore'],
+            'complete' => ['onComplete', RequestEvents::REDIRECT + 10]
         ];
     }
 

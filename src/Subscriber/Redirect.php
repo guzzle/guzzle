@@ -2,6 +2,7 @@
 
 namespace GuzzleHttp\Subscriber;
 
+use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Event\SubscriberInterface;
 use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Exception\TooManyRedirectsException;
@@ -30,7 +31,7 @@ class Redirect implements SubscriberInterface
 {
     public function getEvents()
     {
-        return ['complete' => ['onComplete', -10]];
+        return ['complete' => ['onComplete', RequestEvents::REDIRECT]];
     }
 
     /**

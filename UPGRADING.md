@@ -306,7 +306,7 @@ Guzzle library under this namespace.
 - `GuzzleHttp\Subscriber\History`: Replaces the old HistoryPlugin.
 - `GuzzleHttp\Subscriber\HttpError`: Throws errors when a bad HTTP response is received.
 - `GuzzleHttp\Subscriber\Mock`: Replaces the old MockPlugin.
-- `GuzzleHttp\Subscriber\PrepareRequestBody`: Prepares the body of a request just before sending.
+- `GuzzleHttp\Subscriber\Prepare`: Prepares the body of a request just before sending.
 - `GuzzleHttp\Subscriber\Redirect`: Replaces the RedirectPlugin.
 
 The following plugins have been removed (third-parties are free to re-implement these if needed):

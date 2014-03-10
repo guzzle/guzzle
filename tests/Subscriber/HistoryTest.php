@@ -27,7 +27,7 @@ class HistoryTest extends \PHPUnit_Framework_TestCase
         $e = new RequestException('foo', $request, $response);
         $ev = new ErrorEvent($t, $e);
         $h = new History(2);
-        $h->onRequestError($ev);
+        $h->onError($ev);
         $this->assertEquals([$request], $h->getRequests());
     }
 
@@ -39,9 +39,9 @@ class HistoryTest extends \PHPUnit_Framework_TestCase
         $t->setResponse($response);
         $ev = new CompleteEvent($t);
         $h = new History(2);
-        $h->onRequestSent($ev);
-        $h->onRequestSent($ev);
-        $h->onRequestSent($ev);
+        $h->onComplete($ev);
+        $h->onComplete($ev);
+        $h->onComplete($ev);
         $this->assertEquals(2, count($h));
         $this->assertSame($request, $h->getLastRequest());
         $this->assertSame($response, $h->getLastResponse());
