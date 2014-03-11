@@ -29,8 +29,7 @@ utilize a PSR cache interface).
 
 - Removed all of the wrapped exceptions. It's better to use the standard PHP library for unrecoverable exceptions.
 - `FromConfigInterface` has been removed.
-- `Guzzle\Common\Version` has been removed. Be sure to require the `functions.php` file and then you can use the
-  `GuzzleHttp\VERSION` constant.
+- `Guzzle\Common\Version` has been removed. The VERSION constant can be found at `GuzzleHttp\ClientInterface::VERSION`.
 
 ### Collection
 

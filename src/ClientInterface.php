@@ -13,6 +13,8 @@ use GuzzleHttp\Exception\AdapterException;
  */
 interface ClientInterface extends HasEmitterInterface
 {
+    const VERSION = '4.0-dev';
+
     /**
      * Create and return a new {@see RequestInterface} object.
      *

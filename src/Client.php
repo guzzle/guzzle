@@ -85,7 +85,7 @@ class Client implements ClientInterface
     {
         static $defaultAgent = '';
         if (!$defaultAgent) {
-            $defaultAgent = 'Guzzle/' . \GuzzleHttp\VERSION;
+            $defaultAgent = 'Guzzle/' . self::VERSION;
             if (extension_loaded('curl')) {
                 $defaultAgent .= ' curl/' . curl_version()['version'];
             }

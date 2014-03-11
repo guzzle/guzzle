@@ -5,8 +5,6 @@ namespace GuzzleHttp;
 use GuzzleHttp\Message\ResponseInterface;
 use GuzzleHttp\UriTemplate;
 
-const VERSION = '4.0-dev';
-
 /**
  * Send a custom request
  *
