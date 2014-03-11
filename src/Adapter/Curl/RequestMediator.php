@@ -4,7 +4,6 @@ namespace GuzzleHttp\Adapter\Curl;
 
 use GuzzleHttp\Adapter\TransactionInterface;
 use GuzzleHttp\Event\HeadersEvent;
-use GuzzleHttp\Message\HasHeadersTrait;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Stream\StreamInterface;
@@ -14,8 +13,6 @@ use GuzzleHttp\Stream\StreamInterface;
  */
 class RequestMediator
 {
-    use HasHeadersTrait;
-
     /** @var TransactionInterface */
     private $transaction;
     /** @var MessageFactoryInterface */
@@ -24,6 +21,7 @@ class RequestMediator
     private $reasonPhrase;
     private $body;
     private $protocolVersion;
+    private $headers;
 
     /**
      * @param TransactionInterface    $transaction    Transaction to populate
@@ -71,12 +69,13 @@ class RequestMediator
             $this->statusCode = $startLine[1];
             $this->reasonPhrase = isset($startLine[2]) ? $startLine[2] : null;
             $this->protocolVersion = substr($startLine[0], -3);
+            $this->headers = [];
         } elseif ($pos = strpos($header, ':')) {
-            $this->addHeader(substr($header, 0, $pos), substr($header, $pos + 1));
+            $this->headers[substr($header, 0, $pos)][] = substr($header, $pos + 1);
         } elseif ($header == '' && $this->statusCode >= 200) {
             $response = $this->messageFactory->createResponse(
                 $this->statusCode,
-                $this->getHeaders(),
+                $this->headers,
                 $this->body,
                 [
                     'protocol_version' => $this->protocolVersion,
