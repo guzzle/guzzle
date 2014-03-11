@@ -17,11 +17,16 @@ class LimitStream implements StreamInterface, MetadataStreamInterface
 
     /**
      * @param StreamInterface $stream Stream to wrap
-     * @param int             $limit  Total number of bytes to allow to be read from the stream. Pass -1 for no limit.
-     * @param int|null        $offset Position to seek to before reading (only works on seekable streams)
+     * @param int             $limit  Total number of bytes to allow to be read
+     *                                from the stream. Pass -1 for no limit.
+     * @param int|null        $offset Position to seek to before reading (only
+     *                                works on seekable streams).
      */
-    public function __construct(StreamInterface $stream, $limit = -1, $offset = 0)
-    {
+    public function __construct(
+        StreamInterface $stream,
+        $limit = -1,
+        $offset = 0
+    ) {
         $this->stream = $stream;
         $this->setLimit($limit);
         $this->setOffset($offset);
@@ -31,10 +36,11 @@ class LimitStream implements StreamInterface, MetadataStreamInterface
     {
         if ($this->limit == -1) {
             return $this->stream->eof();
-        } else {
-            $tell = $this->stream->tell();
-            return $tell === false || (($this->offset + $this->limit) - $tell) <= 0;
         }
+
+        $tell = $this->stream->tell();
+
+        return $tell === false || (($this->offset + $this->limit) - $tell) <= 0;
     }
 
     /**
@@ -112,8 +118,8 @@ class LimitStream implements StreamInterface, MetadataStreamInterface
      * Set the limit of bytes that the decorator allows to be read from the
      * stream.
      *
-     * @param int $limit Number of bytes to allow to be read from the stream. Use -1 for no limit.
-     *
+     * @param int $limit Number of bytes to allow to be read from the stream.
+     *                   Use -1 for no limit.
      * @return self
      */
     public function setLimit($limit)

@@ -21,19 +21,21 @@ class Stream implements MetadataStreamInterface
     /** @var array Stream metadata */
     private $meta = [];
 
-    /** @var array Hash table of readable and writeable stream types for fast lookups */
-    private static $readWriteHash = array(
-        'read' => array(
+    /** @var array Hash of readable and writable stream types */
+    private static $readWriteHash = [
+        'read' => [
             'r' => true, 'w+' => true, 'r+' => true, 'x+' => true, 'c+' => true,
-            'rb' => true, 'w+b' => true, 'r+b' => true, 'x+b' => true, 'c+b' => true,
-            'rt' => true, 'w+t' => true, 'r+t' => true, 'x+t' => true, 'c+t' => true, 'a+' => true
-        ),
-        'write' => array(
-            'w' => true, 'w+' => true, 'rw' => true, 'r+' => true, 'x+' => true, 'c+' => true,
-            'wb' => true, 'w+b' => true, 'r+b' => true, 'x+b' => true, 'c+b' => true,
-            'w+t' => true, 'r+t' => true, 'x+t' => true, 'c+t' => true, 'a' => true, 'a+' => true
-        )
-    );
+            'rb' => true, 'w+b' => true, 'r+b' => true, 'x+b' => true,
+            'c+b' => true, 'rt' => true, 'w+t' => true, 'r+t' => true,
+            'x+t' => true, 'c+t' => true, 'a+' => true
+        ],
+        'write' => [
+            'w' => true, 'w+' => true, 'rw' => true, 'r+' => true, 'x+' => true,
+            'c+' => true, 'wb' => true, 'w+b' => true, 'r+b' => true,
+            'x+b' => true, 'c+b' => true, 'w+t' => true, 'r+t' => true,
+            'x+t' => true, 'c+t' => true, 'a' => true, 'a+' => true
+        ]
+    ];
 
     /**
      * Create a new stream based on the input type
@@ -42,7 +44,7 @@ class Stream implements MetadataStreamInterface
      * @param int                             $size     Size of the data contained in the resource
      *
      * @return StreamInterface
-     * @throws \InvalidArgumentException if the $resource arg is not a resource or string
+     * @throws \InvalidArgumentException if the $resource arg is not valid.
      */
     public static function factory($resource = '', $size = null)
     {
@@ -86,7 +88,8 @@ class Stream implements MetadataStreamInterface
 
     /**
      * @param resource $stream Stream resource to wrap
-     * @param int      $size   Size of the stream in bytes. Only pass if the size cannot be obtained from the stream.
+     * @param int      $size   Size of the stream in bytes. Only pass if the
+     *                         size cannot be obtained from the stream.
      *
      * @throws \InvalidArgumentException if the stream is not a stream resource
      */
@@ -189,7 +192,9 @@ class Stream implements MetadataStreamInterface
 
     public function seek($offset, $whence = SEEK_SET)
     {
-        return $this->seekable ? fseek($this->stream, $offset, $whence) === 0 : false;
+        return $this->seekable
+            ? fseek($this->stream, $offset, $whence) === 0
+            : false;
     }
 
     public function read($length)
@@ -221,7 +226,9 @@ class Stream implements MetadataStreamInterface
      */
     public function getMetadata($key = null)
     {
-        return !$key ? $this->meta : (isset($this->meta[$key]) ? $this->meta[$key] : null);
+        return !$key
+            ? $this->meta
+            : (isset($this->meta[$key]) ? $this->meta[$key] : null);
     }
 
     /**

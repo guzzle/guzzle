@@ -13,7 +13,7 @@ class CachingStream implements StreamInterface, MetadataStreamInterface
     /** @var StreamInterface Stream being wrapped */
     private $remoteStream;
 
-    /** @var int The number of bytes to skip reading due to a write on the temporary buffer */
+    /** @var int Number of bytes to skip reading due to a write on the buffer */
     private $skipReadBytes = 0;
 
     /**
@@ -47,14 +47,15 @@ class CachingStream implements StreamInterface, MetadataStreamInterface
         } elseif ($whence == SEEK_CUR) {
             $byte = $offset + $this->tell();
         } else {
-            throw new \RuntimeException(__CLASS__ . ' supports only SEEK_SET and SEEK_CUR seek operations');
+            throw new \RuntimeException(__CLASS__ . ' supports only SEEK_SET '
+                    .' and SEEK_CUR seek operations');
         }
 
         // You cannot skip ahead past where you've read from the remote stream
         if ($byte > $this->stream->getSize()) {
-            throw new \RuntimeException(
-                "Cannot seek to byte {$byte} when the buffered stream only contains {$this->stream->getSize()} bytes"
-            );
+            throw new \RuntimeException(sprintf('Cannot seek to byte %d when '
+                . ' the buffered stream only contains %d bytes',
+                $byte, $this->stream->getSize()));
         }
 
         return $this->stream->seek($byte);
@@ -72,7 +73,9 @@ class CachingStream implements StreamInterface, MetadataStreamInterface
             // been filled from the remote stream, then we must skip bytes on
             // the remote stream to emulate overwriting bytes from that
             // position. This mimics the behavior of other PHP stream wrappers.
-            $remoteData = $this->remoteStream->read($remaining + $this->skipReadBytes);
+            $remoteData = $this->remoteStream->read(
+                $remaining + $this->skipReadBytes
+            );
 
             if ($this->skipReadBytes) {
                 $len = strlen($remoteData);
