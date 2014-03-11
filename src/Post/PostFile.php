@@ -132,7 +132,7 @@ class PostFile implements PostFileInterface
      *
      * @return bool
      */
-    public function hasHeader($name)
+    private function hasHeader($name)
     {
         return isset(array_change_key_case($this->headers)[strtolower($name)]);
     }
