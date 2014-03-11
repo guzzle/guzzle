@@ -17,7 +17,10 @@ class PostFileTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('hi', $p->getContent());
         $this->assertEquals('foo', $p->getName());
         $this->assertEquals('/path/to/test.php', $p->getFilename());
-        $this->assertEquals('form-data; filename="test.php"; name="foo"', $p->getHeader('content-disposition'));
+        $this->assertEquals(
+            'form-data; filename="test.php"; name="foo"',
+            $p->getHeaders()['Content-Disposition']
+        );
     }
 
     public function testGetsFilenameFromMetadata()
@@ -43,8 +46,14 @@ class PostFileTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue('baz'));
 
         $p = new PostFile('foo', $mp);
-        $this->assertEquals('form-data; name="foo"', $p->getHeader('Content-Disposition'));
-        $this->assertEquals('multipart/form-data; boundary=baz', $p->getHeader('Content-Type'));
+        $this->assertEquals(
+            'form-data; name="foo"',
+            $p->getHeaders()['Content-Disposition']
+        );
+        $this->assertEquals(
+            'multipart/form-data; boundary=baz',
+            $p->getHeaders()['Content-Type']
+        );
     }
 
     public function testCanAddHeaders()
@@ -53,7 +62,7 @@ class PostFileTest extends \PHPUnit_Framework_TestCase
             'X-Foo' => '123',
             'Content-Disposition' => 'bar'
         ]);
-        $this->assertEquals('bar', $p->getHeader('Content-Disposition'));
-        $this->assertEquals('123', $p->getHeader('X-Foo'));
+        $this->assertEquals('bar', $p->getHeaders()['Content-Disposition']);
+        $this->assertEquals('123', $p->getHeaders()['X-Foo']);
     }
 }

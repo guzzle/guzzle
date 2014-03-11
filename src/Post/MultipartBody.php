@@ -23,13 +23,17 @@ class MultipartBody implements StreamInterface
     private $boundary;
 
     /**
-     * @param array  $fields   Associative array of field names to values where each value is a string
+     * @param array  $fields   Associative array of field names to values where
+     *                         each value is a string.
      * @param array  $files    Associative array of PostFileInterface objects
      * @param string $boundary You can optionally provide a specific boundary
      * @throws \InvalidArgumentException
      */
-    public function __construct(array $fields = [], array $files = [], $boundary = null)
-    {
+    public function __construct(
+        array $fields = [],
+        array $files = [],
+        $boundary = null
+    ) {
         $this->boundary = $boundary ?: uniqid();
         $this->fields = $fields;
         $this->files = $files;
@@ -38,7 +42,8 @@ class MultipartBody implements StreamInterface
         // Ensure each file is a PostFileInterface
         foreach ($this->files as $file) {
             if (!$file instanceof PostFileInterface) {
-                throw new \InvalidArgumentException('All POST fields must implement PostFieldInterface');
+                throw new \InvalidArgumentException('All POST fields must '
+                    . 'implement PostFieldInterface');
             }
         }
     }
@@ -91,12 +96,14 @@ class MultipartBody implements StreamInterface
     }
 
     /**
-     * The stream has reached an EOF when all of the fields and files have been read
+     * The stream has reached an EOF when all of the fields and files have been
+     * read.
      * {@inheritdoc}
      */
     public function eof()
     {
-        return $this->currentField == count($this->fields) && $this->currentFile == count($this->files);
+        return $this->currentField == count($this->fields) &&
+            $this->currentFile == count($this->files);
     }
 
     public function tell()
@@ -115,7 +122,8 @@ class MultipartBody implements StreamInterface
     }
 
     /**
-     * The steam is seekable by default, but all attached files must be seekable too
+     * The steam is seekable by default, but all attached files must be
+     * seekable too.
      * {@inheritdoc}
      */
     public function isSeekable()
@@ -174,7 +182,8 @@ class MultipartBody implements StreamInterface
 
         foreach ($this->files as $file) {
             if (!$file->getContent()->seek(0)) {
-                throw new \RuntimeException('Rewind on multipart file failed even though it shouldn\'t have');
+                throw new \RuntimeException('Rewind on multipart file failed '
+                    . 'even though it shouldn\'t have');
             }
         }
 
@@ -191,7 +200,8 @@ class MultipartBody implements StreamInterface
     }
 
     /**
-     * No data is in the read buffer, so more needs to be pulled in from fields and files
+     * No data is in the read buffer, so more needs to be pulled in from fields
+     * and files.
      *
      * @param int $length Amount of data to read
      *
@@ -238,12 +248,16 @@ class MultipartBody implements StreamInterface
     {
         $current = $this->files[$this->currentFile];
 
-        // Got to the next file and recursively return the read value, or bail if no more data can be read
+        // Got to the next file and recursively return the read value, or bail
+        // if no more data can be read.
         if ($current->getContent()->eof()) {
-            return ++$this->currentFile == count($this->files) ? '' : $this->readFile($length);
+            return ++$this->currentFile == count($this->files)
+                ? ''
+                : $this->readFile($length);
         }
 
-        // If this is the start of a file, then send the headers to the read buffer
+        // If this is the start of a file, then send the headers to the read
+        // buffer.
         if (!isset($this->bufferedHeaders[$this->currentFile])) {
             $this->buffer = Stream::fromString($this->getFileHeaders($current));
             $this->bufferedHeaders[$this->currentFile] = true;
@@ -260,15 +274,19 @@ class MultipartBody implements StreamInterface
 
     private function getFieldString($key)
     {
-        return sprintf("--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n",
-            $this->boundary, $key, $this->fields[$key]);
+        return sprintf(
+            "--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n",
+            $this->boundary,
+            $key,
+            $this->fields[$key]
+        );
     }
 
     private function getFileHeaders(PostFileInterface $file)
     {
         $headers = '';
-        foreach ($file->getHeaders() as $key => $values) {
-            $headers .= $key . ': ' . implode(', ', $values) . "\r\n";
+        foreach ($file->getHeaders() as $key => $value) {
+            $headers .= "{$key}: {$value}\r\n";
         }
 
         return "--{$this->boundary}\r\n" . trim($headers) . "\r\n\r\n";
