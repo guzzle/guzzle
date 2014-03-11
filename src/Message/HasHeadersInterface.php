@@ -71,6 +71,21 @@ interface HasHeadersInterface
     public function addHeader($header, $value);
 
     /**
+     * Merges in an associative array of headers.
+     *
+     * Each array key MUST be a string representing the case-insensitive name
+     * of a header. Each value MUST be either a string or an array of strings.
+     * For each value, the value is appended to any existing header of the same
+     * name, or, if a header does not already exist by the given name, then the
+     * header is added.
+     *
+     * @param array $headers Associative array of headers to add to the message
+     *
+     * @return self
+     */
+    public function addHeaders(array $headers);
+
+    /**
      * Sets a header, replacing any existing values of any headers with the
      * same case-insensitive name.
      *

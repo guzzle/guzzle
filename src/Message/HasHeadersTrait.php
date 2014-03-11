@@ -15,29 +15,29 @@ trait HasHeadersTrait
 
     public function addHeader($header, $value)
     {
-        $header = trim($header);
-        $name = strtolower($header);
-        $this->headerNames[$name] = $header;
+        static $valid = ['string' => true, 'integer' => true,
+            'double' => true, 'array' => true];
 
-        switch (gettype($value)) {
-            case 'string':
-                $this->headers[$name][] = trim($value);
-                break;
-            case 'integer':
-            case 'double':
-                $this->headers[$name][] = (string) $value;
-                break;
-            case 'array':
-                foreach ($value as $v) {
-                    $this->headers[$name][] = $v;
-                }
-                break;
-            default:
-                throw new \InvalidArgumentException('Invalid header value '
-                    . 'provided: ' . var_export($value, true));
+        $type = gettype($value);
+        if (!isset($valid[$type])) {
+            throw new \InvalidArgumentException('Invalid header value');
         }
 
-        return $this;
+        if ($type == 'array') {
+            $current = array_merge($this->getHeader($header, true), $value);
+        } else {
+            $current = $this->getHeader($header, true);
+            $current[] = $value;
+        }
+
+        return $this->setHeader($header, $current);
+    }
+
+    public function addHeaders(array $headers)
+    {
+        foreach ($headers as $name => $header) {
+            $this->addHeader($name, $header);
+        }
     }
 
     public function getHeader($header, $asArray = false)
@@ -78,7 +78,7 @@ trait HasHeadersTrait
                 $this->headers[$name] = [(string) $value];
                 break;
             case 'array':
-                $this->headers[$name] = $value;
+                $this->headers[$name] = array_map('trim', $value);
                 break;
             default:
                 throw new \InvalidArgumentException('Invalid header value '

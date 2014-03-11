@@ -27,6 +27,19 @@ class HasHeadersTraitTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(['bar', 'baz'], $h->getHeader('foo', true));
     }
 
+    public function testAddsMultipleHeaders()
+    {
+        $h = new HasThem();
+        $h->addHeaders([
+            'foo' => ' bar',
+            'baz' => [' bam ', 'boo']
+        ]);
+        $this->assertEquals([
+            'foo' => ['bar'],
+            'baz' => ['bam', 'boo']
+        ], $h->getHeaders());
+    }
+
     public function testAddsHeadersWhenPresentDifferentCase()
     {
         $h = new HasThem();
