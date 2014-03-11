@@ -5,12 +5,27 @@ FAQ
 Is it possible to use Guzzle 3 and 4 in the same project?
 =========================================================
 
-Yes. (it will be, WIP)
+Yes, because Guzzle 3 and 4 use different Packagist packages and different
+namespaced. You simply need to add ``guzzle/guzzle`` (Guzzle 3) and
+``guzzlehttp/guzzle`` (Guzzle 4+) to your project's composer.json file.
+
+.. code-block:: javascript
+
+    {
+        "require": {
+            "guzzle/guzzle": 3.*,
+            "guzzlehttp/guzzle": 4.*
+        }
+    }
+
+You might need to use Guzzle 3 and Guzzle 4 in the same project due to a
+requirement of a legacy application or a dependency that has not yet migrated
+to Guzzle 4.0.
 
 How do I migrate from Guzzle 3 to 4?
 ====================================
 
-TODO
+See https://github.com/guzzle/guzzle/blob/master/UPGRADING.md#3x-to-40.
 
 What is this Maximum function nesting error?
 ============================================
