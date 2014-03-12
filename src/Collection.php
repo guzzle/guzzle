@@ -11,7 +11,7 @@ class Collection implements
     \Countable,
     ToArrayInterface
 {
-    use PathTrait;
+    use HasDataTrait;
 
     /**
      * @param array $data Associative array of data to set
