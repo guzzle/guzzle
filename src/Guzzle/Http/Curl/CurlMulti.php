@@ -106,13 +106,51 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
 
     public function send()
     {
-        $this->perform();
+        $this->performWrite();
+
+        return $this;
+    }
+
+    public function receive($request = null)
+    {
+        if ($request !== null && false === array_search($request, $this->requests)) {
+            return;
+        }
+
+        $this->performRead($request);
+
         $exceptions = $this->exceptions;
         $successful = $this->successful;
-        $this->reset();
 
-        if ($exceptions) {
-            $this->throwMultiException($exceptions, $successful);
+        if (null === $request) {
+            $this->reset();
+
+            if ($exceptions) {
+                $this->throwMultiException($exceptions, $successful);
+            }
+        } else {
+            $this->removeHandle($request);
+            $this->requests = array_filter($this->requests, function ($r) use ($request) {
+                return $r !== $request;
+            });
+
+            if (false !== ($index = array_search($request, $this->successful))) {
+                unset($this->successful[$index]);
+            }
+
+            $exceptions = array_filter($exceptions, function ($e) use ($request) {
+                return $e['request'] === $request;
+            });
+            $this->exceptions = array_diff($this->exceptions, $exceptions);
+
+
+            if (!count($this->requests)) {
+                $this->reset();
+            }
+
+            if ($exceptions) {
+                $this->throwMultiException($exceptions, array());
+            }
         }
     }
 
@@ -189,32 +227,58 @@ class CurlMulti extends AbstractHasDispatcher implements CurlMultiInterface
         return $wrapper;
     }
 
-    /**
-     * Get the data from the multi handle
-     */
-    protected function perform()
+    protected function performWrite()
     {
-        $event = new Event(array('curl_multi' => $this));
+        $this->event = new Event(array('curl_multi' => $this));
 
-        while ($this->requests) {
+        if ($this->requests) {
             // Notify each request as polling
-            $blocking = $total = 0;
+            $this->blocking = $this->total = 0;
             foreach ($this->requests as $request) {
-                ++$total;
-                $event['request'] = $request;
-                $request->getEventDispatcher()->dispatch(self::POLLING_REQUEST, $event);
+                ++$this->total;
+                $this->event['request'] = $request;
+                $request->getEventDispatcher()->dispatch(self::POLLING_REQUEST, $this->event);
                 // The blocking variable just has to be non-falsey to block the loop
                 if ($request->getParams()->hasKey(self::BLOCKING)) {
-                    ++$blocking;
+                    ++$this->blocking;
                 }
             }
-            if ($blocking == $total) {
+            if ($this->blocking == $this->total) {
+                usleep(500);
+            } else {
+                $this->startHandles();
+            }
+        }
+    }
+
+    protected function performRead($requests)
+    {
+        while ($this->requests) {
+            // Notify each request as polling
+            foreach ($this->requests as $request) {
+                ++$this->total;
+                $this->event['request'] = $request;
+                $request->getEventDispatcher()->dispatch(self::POLLING_REQUEST, $this->event);
+                // The blocking variable just has to be non-falsey to block the loop
+                if ($request->getParams()->hasKey(self::BLOCKING)) {
+                    ++$this->blocking;
+                }
+            }
+            if ($this->blocking == $this->total) {
                 // Sleep to prevent eating CPU because no requests are actually pending a select call
                 usleep(500);
             } else {
                 $this->executeHandles();
             }
         }
+    }
+
+    private function startHandles()
+    {
+        $active = false;
+        while (($mrc = curl_multi_exec($this->multiHandle, $active)) == CURLM_CALL_MULTI_PERFORM);
+        $this->checkCurlResult($mrc);
+        $this->processMessages();
     }
 
     /**
