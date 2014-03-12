@@ -339,31 +339,6 @@ class Client extends AbstractHasDispatcher implements ClientInterface
     }
 
     /**
-     * Copy the cacert.pem file from the phar if it is not in the temp folder and validate the MD5 checksum
-     *
-     * @param bool $md5Check Set to false to not perform the MD5 validation
-     *
-     * @return string Returns the path to the extracted cacert
-     * @throws RuntimeException if the file cannot be copied or there is a MD5 mismatch
-     */
-    public function preparePharCacert($md5Check = true)
-    {
-        $from = __DIR__ . '/Resources/cacert.pem';
-        $certFile = sys_get_temp_dir() . '/guzzle-cacert.pem';
-        if (!file_exists($certFile) && !copy($from, $certFile)) {
-            throw new RuntimeException("Could not copy {$from} to {$certFile}: " . var_export(error_get_last(), true));
-        } elseif ($md5Check) {
-            $actualMd5 = md5_file($certFile);
-            $expectedMd5 = trim(file_get_contents("{$from}.md5"));
-            if ($actualMd5 != $expectedMd5) {
-                throw new RuntimeException("{$certFile} MD5 mismatch: expected {$expectedMd5} but got {$actualMd5}");
-            }
-        }
-
-        return $certFile;
-    }
-
-    /**
      * Expand a URI template while merging client config settings into the template variables
      *
      * @param string $template  Template to expand
@@ -462,7 +437,9 @@ class Client extends AbstractHasDispatcher implements ClientInterface
      */
     protected function initSsl()
     {
-        if ('system' == ($authority = $this->config[self::SSL_CERT_AUTHORITY])) {
+        $authority = $this->config[self::SSL_CERT_AUTHORITY];
+
+        if ($authority === 'system') {
             return;
         }
 
@@ -471,13 +448,7 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         }
 
         if ($authority === true && substr(__FILE__, 0, 7) == 'phar://') {
-            $authority = $this->preparePharCacert();
-            $that = $this;
-            $this->getEventDispatcher()->addListener('request.before_send', function ($event) use ($authority, $that) {
-                if ($authority == $event['request']->getCurlOptions()->get(CURLOPT_CAINFO)) {
-                    $that->preparePharCacert(false);
-                }
-            });
+            $authority = sys_get_temp_dir() . '/guzzle-cacert.pem';
         }
 
         $this->setSslVerification($authority);
@@ -507,5 +478,13 @@ class Client extends AbstractHasDispatcher implements ClientInterface
         }
 
         return $this;
+    }
+
+    /**
+     * @deprecated
+     */
+    public function preparePharCacert($md5Check = true)
+    {
+        return sys_get_temp_dir() . '/guzzle-cacert.pem';
     }
 }
