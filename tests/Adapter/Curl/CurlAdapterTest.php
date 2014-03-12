@@ -57,7 +57,7 @@ class CurlAdapterTest extends AbstractCurl
 
     /**
      * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage cURL error 7:
+     * @expectedExceptionMessage cURL error
      */
     public function testThrowsCurlErrors()
     {
