@@ -136,3 +136,21 @@ function uriTemplate($template, array $variables)
 
     return $uriTemplate->expand($template, $variables);
 }
+
+function deprecationProxy($object, $name, $arguments, $map)
+{
+    if (!isset($map[$name])) {
+        throw new \BadMethodCallException('Unknown method, ' . $name);
+    }
+
+    $message = sprintf('%s is deprecated and will be removed in a future '
+        . 'version. Update your code to use the equivalent %s method '
+        . 'instead to avoid breaking changes when this shim is removed.',
+        get_class($object) . '::' . $name . '()',
+        get_class($object) . '::' . $map[$name] . '()'
+    );
+
+    trigger_error($message, E_USER_DEPRECATED);
+
+    return call_user_func_array([$object, $map[$name]], $arguments);
+}

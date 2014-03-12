@@ -292,6 +292,24 @@ class TestEventListener
 
         $e->stopPropagation();
     }
+
+    /**
+     * @expectedException \PHPUnit_Framework_Error_Deprecated
+     */
+    public function testHasDeprecatedAddListener()
+    {
+        $emitter = new Emitter();
+        $emitter->addListener('foo', function () {});
+    }
+
+    /**
+     * @expectedException \PHPUnit_Framework_Error_Deprecated
+     */
+    public function testHasDeprecatedAddSubscriber()
+    {
+        $emitter = new Emitter();
+        $emitter->addSubscriber('foo', new TestEventSubscriber());
+    }
 }
 
 class TestWithDispatcher

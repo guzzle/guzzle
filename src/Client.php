@@ -95,6 +95,16 @@ class Client implements ClientInterface
         return $defaultAgent;
     }
 
+    public function __call($name, $arguments)
+    {
+        return \GuzzleHttp\deprecationProxy(
+            $this,
+            $name,
+            $arguments,
+            ['getEventDispatcher' => 'getEmitter']
+        );
+    }
+
     public function getConfig($keyOrPath = null)
     {
         return $keyOrPath === null

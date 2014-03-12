@@ -85,4 +85,37 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('bar', $sent->getHeader('foo'));
         $this->assertEquals('test', $sent->getBody());
     }
+
+    /**
+     * @expectedException \PHPUnit_Framework_Error_Deprecated
+     * @expectedExceptionMessage GuzzleHttp\Tests\HasDeprecations::baz() is deprecated and will be removed in a future version. Update your code to use the equivalent GuzzleHttp\Tests\HasDeprecations::foo() method instead to avoid breaking changes when this shim is removed.
+     */
+    public function testManagesDeprecatedMethods()
+    {
+        $d = new HasDeprecations();
+        $d->baz();
+    }
+
+    /**
+     * @expectedException \BadMethodCallException
+     */
+    public function testManagesDeprecatedMethodsAndHandlesMissingMethods()
+    {
+        $d = new HasDeprecations();
+        $d->doesNotExist();
+    }
+}
+
+class HasDeprecations
+{
+    function foo()
+    {
+        return 'abc';
+    }
+    function __call($name, $arguments)
+    {
+        return \GuzzleHttp\deprecationProxy($this, $name, $arguments, [
+            'baz' => 'foo'
+        ]);
+    }
 }

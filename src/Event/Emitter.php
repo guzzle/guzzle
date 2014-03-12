@@ -129,4 +129,19 @@ class Emitter implements EmitterInterface
             $this->removeListener($eventName, array($subscriber, $listener[0]));
         }
     }
+
+    public function __call($name, $arguments)
+    {
+        return \GuzzleHttp\deprecationProxy(
+            $this,
+            $name,
+            $arguments,
+            [
+                'addSubscriber'    => 'attach',
+                'removeSubscriber' => 'detach',
+                'addListener'      => 'on',
+                'dispatch'         => 'emit'
+            ]
+        );
+    }
 }
