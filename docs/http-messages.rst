@@ -151,7 +151,7 @@ HTTP method you wish to use.
 :PUT: ``$client->put('http://httpbin.org/put', [/** options **/])``
 :DELETE: ``$client->delete('http://httpbin.org/delete', [/** options **/])``
 :OPTIONS: ``$client->options('http://httpbin.org/get', [/** options **/])``
-:PATCH: ``$client->get('http://httpbin.org/put', [/** options **/])``
+:PATCH: ``$client->patch('http://httpbin.org/put', [/** options **/])``
 
 .. code-block:: php
 
@@ -204,6 +204,7 @@ You can change the scheme of the request using the ``setScheme()`` method:
 
 .. code-block:: php
 
+    $request = $client->createRequest('GET', 'http://httbin.org');
     $request->setScheme('https');
     echo $request->getScheme();
     // https
@@ -220,6 +221,7 @@ the specified scheme from the default setting, then you must use the
 
 .. code-block:: php
 
+    $request = $client->createRequest('GET', 'http://httbin.org');
     $request->setPort(8080);
     echo $request->getPort();
     // 8080
@@ -234,19 +236,67 @@ the specified scheme from the default setting, then you must use the
 Query string
 ~~~~~~~~~~~~
 
-You can get the query string of the request using the ``getQuery()`` method:
+You can get the query string of the request using the ``getQuery()`` method.
+This method returns a ``GuzzleHttp\Query`` object. A Query object can be
+accessed like a PHP array, iterated in a foreach statement like a PHP array,
+and cast to a string.
 
 .. code-block:: php
 
+    $request = $client->createRequest('GET', 'http://httbin.org');
     $query = $request->getQuery();
     $query['foo'] = 'bar';
     $query['baz'] = 'bam';
+    $query['bam'] = ['test' => 'abc'];
 
     echo $request->getQuery();
-    // ?foo=bar&baz=bam
+    // foo=bar&baz=bam&bam%5Btest%5D=abc
+
+    echo $request->getQuery()['foo'];
+    // bar
+    echo $request->getQuery()->get('foo');
+    // bar
+    echo $request->getQuery()->get('foo');
+    // bar
+
+    var_export($request->getQuery()['bam']);
+    // array('test' => 'abc')
+
+    foreach ($query as $key => $value) {
+        var_export($value);
+    }
 
     echo $request->getUrl();
-    // https://httpbin.com/get?foo=bar&baz=bam
+    // https://httpbin.com/get?foo=bar&baz=bam&bam%5Btest%5D=abc
+
+Query Aggregators
+^^^^^^^^^^^^^^^^^
+
+Query objects can store scalar values or arrays of values. When an array of
+values is added to a query object, the query object uses a query aggregator to
+convert the complex structure into a string. Query objects will use
+`PHP style query strings <http://www.php.net/http_build_query>`_ when complex
+query string parameters are converted to a string. You can customize how
+complex query string parameters are aggregated using the ``setAggregator()``
+method of a query string object.
+
+.. code-block:: php
+
+    $query->setAggregator($query::duplicateAggregator());
+
+In the above example, we've changed the query object to use the
+"duplicateAggregator". This aggregator will allow duplicate entries to appear
+in a query string rather than appending "[n]" to each value. So if you had a
+query string with ``['a' => ['b', 'c']]``, the duplicate aggregator would
+convert this to "a=b&a=c" while the default aggregator would convert this to
+"a[0]=b&a[1]=c" (with urlencoded brackets).
+
+The ``setAggregator()`` method accepts a ``callable`` which is used to convert
+a deeply nested array of query string variables into a flattened array of key
+value pairs. The callable accepts an array of query data and returns a
+flattened array of key value pairs where each value is an array of strings.
+You can use the ``GuzzleHttp\Query::walkQuery()`` static function to easily
+create custom query aggregators.
 
 Host
 ~~~~

@@ -120,7 +120,7 @@ class Query extends Collection
      *
      *     $query->setAggregator($query::duplicateAggregator());
      *
-     * @param callable $aggregator Callable used to converts a deeply nested
+     * @param callable $aggregator Callable used to convert a deeply nested
      *     array of query string variables into a flattened array of key value
      *     pairs. The callable accepts an array of query data and returns a
      *     flattened array of key value pairs where each value is an array of
