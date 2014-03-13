@@ -215,6 +215,72 @@ priority of the listener (as shown in the ``before`` listener in the example).
     You can specify event priorities using integers or ``"first"`` and
     ``"last"`` to dynamically determine the priority.
 
+Event Priorities
+================
+
+When adding event listeners or subscribers, you can provide an optional event
+priority. This priority is used to determine how early or late a listener is
+triggered. Specifying the correct priority is an important aspect of ensuring
+a listener behaves as expected. For example, if you wanted to ensure that
+cookies associated with a redirect were added to a cookie jar, you'd need to
+make sure that the listener that collects the cookies is triggered before the
+listener that performs the redirect.
+
+In order to help make the process of determining the correct event priority of
+a listener easier, Guzzle provides several pre-determined named event
+priorities. These priorities are exposed as constants on the
+``GuzzleHttp\Event\RequestEvents`` object.
+
+last
+    Use "last" as an event priority to set the priority to the current lowest
+    event priority minus one.
+
+first
+    Use "first" as an event priority to set the priority to the current highest
+    priority plus one.
+
+``GuzzleHttp\Event\RequestEvents::EARLY``
+    Used when you want a listener to be triggered as early as possible in the
+    event chain.
+
+``GuzzleHttp\Event\RequestEvents::LATE``
+    Used when you want a listener to be to be triggered as late as possible in
+    the event chain.
+
+``GuzzleHttp\Event\RequestEvents::PREPARE_REQUEST``
+    Used when you want a listener to be trigger while a request is being
+    prepared during the ``before`` event. This event priority is used by the
+    ``GuzzleHttp\Subscriber\Prepare`` event subscriber which is responsible for
+    guessing a Content-Type, Content-Length, and Expect header of a request.
+    You should subscribe after this event is triggered if you want to ensure
+    that this subscriber has already been triggered.
+
+``GuzzleHttp\Event\RequestEvents::SIGN_REQUEST``
+    Used when you want a listener to be triggered when a request is about to be
+    signed. Any listener triggered at this point should expect that the request
+    object will no longer be mutated. If you are implementing a custom
+    signature subscriber, then you should use this event priority to sign
+    requests.
+
+``GuzzleHttp\Event\RequestEvents::VERIFY_RESPONSE``
+    Used when you want a listener to be triggered when a response is being
+    validated during the ``complete`` event. The
+    ``GuzzleHttp\Subscriber\HttpError`` event subscriber uses this event
+    priority to check if an exception should be thrown due to a 4xx or 5xx
+    level response status code. If you are doing any kind of verification of a
+    response during the complete event, it should happen at this priority.
+
+``GuzzleHttp\Event\RequestEvents::REDIRECT_RESPONSE``
+    Used when you want a listener to be triggered when a response is being
+    redirected during the ``complete`` event. The
+    ``GuzzleHttp\Subscriber\Redirect`` event subscriber uses this event
+    priority when performing redirects.
+
+You can use the above event priorities as a guideline for determining the
+priority of you event listeners. You can use these constants and add to or
+subtract from them to ensure that a listener happens before or after the named
+priority.
+
 Working With Request Events
 ===========================
 
