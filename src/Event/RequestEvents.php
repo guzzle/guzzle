@@ -79,6 +79,19 @@ final class RequestEvents
     }
 
     /**
+     * Emits the headers event for a request.
+     *
+     * @param TransactionInterface $transaction Transaction to emit for
+     */
+    public static function emitHeaders(TransactionInterface $transaction)
+    {
+        $transaction->getRequest()->getEmitter()->emit(
+            'headers',
+            new HeadersEvent($transaction)
+        );
+    }
+
+    /**
      * Emits an error event for a request and accounts for the propagation
      * of an error event being stopped to prevent the exception from being
      * thrown.

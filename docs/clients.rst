@@ -462,7 +462,9 @@ Adapter Specific Authentication Schemes
 
 If you need to use authentication methods provided by cURL (e.g., NTLM, GSS,
 etc...), then you need to specify a curl adapter option in the ``options``
-request option array. See :ref:`custom-options` for more information.
+request option array. See :ref:`config-option` for more information.
+
+.. _cookies-option:
 
 cookies
 -------
@@ -497,6 +499,8 @@ cookie jar.
 
     $jar = new GuzzleHttp\Cookie\CookieJar();
     $client->get('/get', ['cookies' => $jar]);
+
+.. _allow_redirects-option:
 
 allow_redirects
 ---------------
@@ -543,6 +547,8 @@ specify whether or not the "Referer" header should be added when redirecting.
     echo $res->getStatusCode();
     // 200
 
+.. _save_to-option:
+
 save_to
 -------
 
@@ -575,6 +581,8 @@ to an open Guzzle stream:
     $resource = fopen('/path/to/file', 'w');
     $stream = GuzzleHttp\Stream\Stream::factory($resource);
     $client->get('/stream/20', ['save_to' => $stream]);
+
+.. _events-option:
 
 events
 ------
@@ -618,6 +626,8 @@ priority and whether or not an event should be triggered more than once.
         ]
     ]);
 
+.. _subscribers-option:
+
 subscribers
 -----------
 
@@ -639,6 +649,8 @@ subscribers
     echo $history;
     // Outputs the request and response history
 
+.. _exceptions-option:
+
 exceptions
 ----------
 
@@ -657,6 +669,8 @@ exceptions
     echo $res->getStatusCode();
     // 500
 
+.. _timeout-option:
+
 timeout
 -------
 
@@ -670,6 +684,8 @@ timeout
     // Timeout if a server does not return a response in 3.14 seconds.
     $client->get('/delay/5', ['timeout' => 3.14]);
     // PHP Fatal error:  Uncaught exception 'GuzzleHttp\Exception\RequestException'
+
+.. _connect_timeout-option:
 
 connect_timeout
 ---------------
@@ -689,6 +705,8 @@ connect_timeout
     This setting must be supported by the HTTP adapter used to send a request.
     ``connect_timeout`` is currently only supported by the built-in cURL
     adapter.
+
+.. _verify-option:
 
 verify
 ------
@@ -711,6 +729,8 @@ verify
     // Disable validation
     $client->get('/', ['verify' => false]);
 
+.. _cert-option:
+
 cert
 ----
 
@@ -727,6 +747,8 @@ cert
 .. code-block:: php
 
     $client->get('/', ['cert' => ['/path/server.pem', 'password']]);
+
+.. _ssl_key-option:
 
 ssl_key
 -------
@@ -745,6 +767,8 @@ ssl_key
     ``ssl_key`` is implemented by HTTP adapters. This is currently only
     supported by the cURL adapter, but might be supported by other third-part
     adapters.
+
+.. _proxy-option:
 
 proxy
 -----
@@ -778,6 +802,8 @@ Pass an associative array to specify HTTP proxies for specific URI schemes
 
     You can provide proxy URLs that contain a scheme, username, and password.
     For example, ``"http://username:password@192.168.16.1:10"``.
+
+.. _debug-option:
 
 debug
 -----
@@ -817,6 +843,8 @@ Running the above example would output something like the following:
     <
     * Connection #0 to host httpbin.org left intact
 
+.. _stream-option:
+
 stream
 ------
 
@@ -840,6 +868,8 @@ stream
     a client. This option might not be supported by every HTTP adapter, but the
     interface of the response object remains the same regardless of whether or
     not it is supported by the adapter.
+
+.. _expect-option:
 
 expect
 ------
@@ -867,6 +897,8 @@ the body of a request is greater than 1 MB and a request is using HTTP/1.1.
     Support for handling the "Expect: 100-Continue" workflow must be
     implemented by Guzzle HTTP adapters used by a client.
 
+.. _version-option:
+
 version
 -------
 
@@ -881,7 +913,7 @@ version
     echo $request->getProtocolVersion();
     // 1.0
 
-.. _custom-options:
+.. _config-option:
 
 config
 ------

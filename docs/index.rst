@@ -43,6 +43,7 @@ User guide
     http-messages
     events
     streams
+    adapters
     faq
 
 HTTP Components

@@ -4,6 +4,10 @@ namespace GuzzleHttp\Adapter;
 
 /**
  * Adapter interface used to transfer multiple HTTP requests in parallel.
+ *
+ * Parallel adapters follow the same rules as AdapterInterface except that
+ * RequestExceptions are never thrown in a parallel transfer and parallel
+ * adapters do not return responses.
  */
 interface ParallelAdapterInterface
 {

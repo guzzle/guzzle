@@ -3,7 +3,6 @@
 namespace GuzzleHttp\Adapter;
 
 use GuzzleHttp\Event\RequestEvents;
-use GuzzleHttp\Event\HeadersEvent;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
@@ -112,10 +111,7 @@ class StreamAdapter implements AdapterInterface
         );
 
         $transaction->setResponse($response);
-        $transaction->getRequest()->getEmitter()->emit(
-            'headers',
-            new HeadersEvent($transaction)
-        );
+        RequestEvents::emitHeaders($transaction);
 
         return $response;
     }
