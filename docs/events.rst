@@ -232,12 +232,12 @@ priorities. These priorities are exposed as constants on the
 ``GuzzleHttp\Event\RequestEvents`` object.
 
 last
-    Use "last" as an event priority to set the priority to the current lowest
-    event priority minus one.
+    Use ``"last"`` as an event priority to set the priority to the current
+    lowest event priority minus one.
 
 first
-    Use "first" as an event priority to set the priority to the current highest
-    priority plus one.
+    Use ``"first"`` as an event priority to set the priority to the current
+    highest priority plus one.
 
 ``GuzzleHttp\Event\RequestEvents::EARLY``
     Used when you want a listener to be triggered as early as possible in the
@@ -280,6 +280,13 @@ You can use the above event priorities as a guideline for determining the
 priority of you event listeners. You can use these constants and add to or
 subtract from them to ensure that a listener happens before or after the named
 priority.
+
+.. note::
+
+    "first" and "last" priorities are not adjusted after they added to an
+    emitter. For example, if you add a listener with a priority of "first",
+    you can still add subsequent listeners with a higher priority which would
+    be triggered before the listener added with a priority of "first".
 
 Working With Request Events
 ===========================
