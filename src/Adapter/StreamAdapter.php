@@ -157,8 +157,10 @@ class StreamAdapter implements AdapterInterface
      *
      * @return resource
      */
-    private function createStream(RequestInterface $request, &$http_response_header)
-    {
+    private function createStream(
+        RequestInterface $request,
+        &$http_response_header
+    ) {
         static $methods;
         if (!$methods) {
             $methods = array_flip(get_class_methods(__CLASS__));

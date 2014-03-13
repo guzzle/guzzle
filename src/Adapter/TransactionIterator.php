@@ -7,7 +7,7 @@ use GuzzleHttp\Message\RequestInterface;
 
 /**
  * Converts a sequence of request objects into a transaction.
- * @internal This class would not exist if PHP 5.5 was prevalent enough and I could use generators.
+ * @internal
  */
 class TransactionIterator implements \Iterator
 {
@@ -20,8 +20,10 @@ class TransactionIterator implements \Iterator
     /** @var ClientInterface */
     private $client;
 
-    public function __construct($source, ClientInterface $client, array $options)
-    {
+    public function __construct(
+        $source, ClientInterface $client,
+        array $options
+    ) {
         $this->client = $client;
         $this->options = $options;
         if ($source instanceof \Iterator) {

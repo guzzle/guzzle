@@ -16,8 +16,8 @@ interface ParallelAdapterInterface
      *
      * RequestExceptions MUST not be thrown from a parallel transfer.
      *
-     * @param \Iterator $transactions Iterable of TransactionInterface objects
-     * @param int       $parallel     Maximum number of requests to send in parallel
+     * @param \Iterator $transactions Iterator that yields TransactionInterface
+     * @param int       $parallel     Max number of requests to send in parallel
      */
     public function sendAll(\Iterator $transactions, $parallel);
 }

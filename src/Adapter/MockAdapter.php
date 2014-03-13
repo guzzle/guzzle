@@ -14,7 +14,8 @@ class MockAdapter implements AdapterInterface
     private $response;
 
     /**
-     * @param ResponseInterface|callable $response Response to serve or function to invoke that handles a transaction
+     * @param ResponseInterface|callable $response Response to serve or function
+     *     to invoke that handles a transaction
      */
     public function __construct($response = null)
     {
@@ -24,7 +25,8 @@ class MockAdapter implements AdapterInterface
     /**
      * Set the response that will be served by the adapter
      *
-     * @param ResponseInterface|callable $response Response to serve or function to invoke that handles a transaction
+     * @param ResponseInterface|callable $response Response to serve or
+     *     function to invoke that handles a transaction
      */
     public function setResponse($response)
     {

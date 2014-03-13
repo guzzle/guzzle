@@ -48,7 +48,9 @@ class SetCookie implements ToArrayInterface
 
             $cookieParts = explode('=', $part, 2);
             $key = trim($cookieParts[0]);
-            $value = isset($cookieParts[1]) ? trim($cookieParts[1], " \n\r\t\0\x0B\"") : true;
+            $value = isset($cookieParts[1])
+                ? trim($cookieParts[1], " \n\r\t\0\x0B\"")
+                : true;
 
             // Only check for non-cookies when cookies have been found
             if (empty($data['Name'])) {
@@ -243,7 +245,9 @@ class SetCookie implements ToArrayInterface
      */
     public function setExpires($timestamp)
     {
-        $this->data['Expires'] = is_numeric($timestamp) ? (int) $timestamp : strtotime($timestamp);
+        $this->data['Expires'] = is_numeric($timestamp)
+            ? (int) $timestamp
+            : strtotime($timestamp);
 
         return $this;
     }
@@ -341,7 +345,8 @@ class SetCookie implements ToArrayInterface
      */
     public function matchesDomain($domain)
     {
-        // Remove the leading '.' as per spec in RFC 6265: http://tools.ietf.org/html/rfc6265#section-5.2.3
+        // Remove the leading '.' as per spec in RFC 6265.
+        // http://tools.ietf.org/html/rfc6265#section-5.2.3
         $cookieDomain = ltrim($this->getDomain(), '.');
 
         // Domain not set or exact match.
@@ -349,7 +354,8 @@ class SetCookie implements ToArrayInterface
             return true;
         }
 
-        // Matching the subdomain according to RFC 6265: http://tools.ietf.org/html/rfc6265#section-5.1.3
+        // Matching the subdomain according to RFC 6265.
+        // http://tools.ietf.org/html/rfc6265#section-5.1.3
         if (filter_var($domain, FILTER_VALIDATE_IP)) {
             return false;
         }
@@ -392,7 +398,8 @@ class SetCookie implements ToArrayInterface
         }
 
         // Domains must not be empty, but can be 0
-        // A "0" is not a valid internet domain, but may be used as server name in a private network
+        // A "0" is not a valid internet domain, but may be used as server name
+        // in a private network.
         $domain = $this->getDomain();
         if (empty($domain) && !is_numeric($domain)) {
             return 'The cookie domain must not be empty';

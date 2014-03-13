@@ -126,9 +126,11 @@ class History implements SubscriberInterface, \IteratorAggregate, \Countable
      * @param RequestInterface  $request  Request to add
      * @param ResponseInterface $response Response of the request
      */
-    private function add(RequestInterface $request, ResponseInterface $response = null)
-    {
-        $this->transactions[] = array('request' => $request, 'response' => $response);
+    private function add(
+        RequestInterface $request,
+        ResponseInterface $response = null
+    ) {
+        $this->transactions[] = ['request' => $request, 'response' => $response];
         if (count($this->transactions) > $this->limit) {
             array_shift($this->transactions);
         }

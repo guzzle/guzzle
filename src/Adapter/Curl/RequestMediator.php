@@ -25,7 +25,7 @@ class RequestMediator
 
     /**
      * @param TransactionInterface    $transaction    Transaction to populate
-     * @param MessageFactoryInterface $messageFactory Message factory used to create responses
+     * @param MessageFactoryInterface $messageFactory Creates responses
      */
     public function __construct(
         TransactionInterface $transaction,

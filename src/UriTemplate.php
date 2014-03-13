@@ -144,7 +144,10 @@ class UriTemplate
                             if ($isNestedArray) {
                                 // Nested arrays must allow for deeply nested
                                 // structures.
-                                $var = strtr(http_build_query(array($key => $var)), $rfc1738to3986);
+                                $var = strtr(
+                                    http_build_query([$key => $var]),
+                                    $rfc1738to3986
+                                );
                             } else {
                                 $var = $key . '=' . $var;
                             }

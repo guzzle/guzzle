@@ -19,8 +19,10 @@ class Transaction implements TransactionInterface
      * @param ClientInterface  $client  Client that is used to send the requests
      * @param RequestInterface $request
      */
-    public function __construct(ClientInterface $client, RequestInterface $request)
-    {
+    public function __construct(
+        ClientInterface $client,
+        RequestInterface $request
+    ) {
         $this->client = $client;
         $this->request = $request;
     }

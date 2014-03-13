@@ -99,7 +99,9 @@ class Response extends AbstractMessage implements ResponseInterface
         $this->handleOptions($options);
 
         // Assume a reason phrase if one was not applied as an option
-        if (!$this->reasonPhrase && isset(self::$statusTexts[$this->statusCode])) {
+        if (!$this->reasonPhrase &&
+            isset(self::$statusTexts[$this->statusCode])
+        ) {
             $this->reasonPhrase = self::$statusTexts[$this->statusCode];
         }
 

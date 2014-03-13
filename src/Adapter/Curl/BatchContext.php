@@ -109,7 +109,7 @@ class BatchContext
      * Add a transaction to the multi handle
      *
      * @param TransactionInterface $transaction Transaction to add
-     * @param resource             $handle      Resource to associated with the handle
+     * @param resource             $handle      Resource to use with the handle
      *
      * @throws \RuntimeException If the handle is already registered
      */
