@@ -13,14 +13,14 @@ use GuzzleHttp\Message\ResponseInterface;
  *    condition.
  * 2. The adapter MUST emit a ``before`` event before sending a request. If a
  *    response is associated with a transaction after preparing, then the
- *    adapter MUST not re-send the
+ *    adapter MUST not re-send the request.
  * 3. When all of the headers of a response have been received for a request,
  *    the adapter MUST emit a ``headers`` event.
  * 4. The adapter MUST emit a ``complete`` event when a request has completed
  *    sending.
  * 5. The adapter MUST emit an ``error`` event when an error occurs at any
  *    point-- whether it is preparing a request for transfer or processing the
- *    response of a
+ *    response of a request.
  * 5. After emitting the error event, the adapter MUST check if the
  *    transaction associated with the error was intercepted, meaning a response
  *    was associated with the event and the event's propagation was stopped.
