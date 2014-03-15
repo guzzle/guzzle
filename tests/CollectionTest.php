@@ -7,7 +7,6 @@ use GuzzleHttp\Collection;
 /**
  * @covers GuzzleHttp\Collection
  * @covers GuzzleHttp\HasDataTrait
- * @covers GuzzleHttp\PathTrait
  */
 class CollectionTest extends \PHPUnit_Framework_TestCase
 {
