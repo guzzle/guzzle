@@ -16,7 +16,7 @@
 
     "require": {
         "php": ">=5.4.0",
-        "guzzlehttp/streams": "dev-master"
+        "guzzlehttp/streams": "1.0.0-rc.1"
     },
 
     "autoload": {
