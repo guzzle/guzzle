@@ -126,6 +126,16 @@ class OperationResponseParser extends DefaultResponseParser
         $foundVisitors = $result = $knownProps = array();
         $props = $model->getProperties();
 
+        // Handle top-level location definition
+        if ($location = $model->getLocation()) {
+            // Trigger the before method on the first found visitor of this type
+            if (!isset($foundVisitors[$location])) {
+                $foundVisitors[$location] = $this->factory->getResponseVisitor($location);
+                $foundVisitors[$location]->before($command, $result);
+            }
+        }
+
+        // Scan for additional locations in respective properties
         foreach ($props as $schema) {
             if ($location = $schema->getLocation()) {
                 // Trigger the before method on the first found visitor of this type

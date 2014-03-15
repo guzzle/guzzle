@@ -31,7 +31,14 @@ class JsonVisitor extends AbstractResponseVisitor
     ) {
         $name = $param->getName();
         $key = $param->getWireName();
-        if (isset($value[$key])) {
+        if ($param->getData('jsonFlattened')) {
+            if (is_array($value)) {
+                $this->recursiveProcess($param, $value);
+                $value = array(
+                    $name => $value
+                );
+            }
+        } elseif (isset($value[$key])) {
             $this->recursiveProcess($param, $value[$key]);
             if ($key != $name) {
                 $value[$name] = $value[$key];

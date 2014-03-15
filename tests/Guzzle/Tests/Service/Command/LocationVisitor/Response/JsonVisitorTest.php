@@ -41,6 +41,66 @@ class JsonVisitorTest extends AbstractResponseVisitorTest
         $this->assertEquals(array('A', 'B', 'C'), $this->value['foo']);
     }
 
+    /**
+     * @group issue-317
+     * @link  https://github.com/guzzle/guzzle/issues/317
+     */
+    public function testTopLevelFlattenedArray()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'name'  => 'foo',
+            'type'  => 'array',
+            'data'  => array(
+                'jsonFlattened' => true
+            ),
+            'items' => array(
+                'filters' => 'strtoupper',
+                'type'    => 'string'
+            )
+        ));
+        $this->value = array('a', 'b', 'c');
+        $visitor->visit($this->command, $this->response, $param, $this->value);
+//        $this->assertEquals(array('a', 'b', 'c'), $this->value);
+        $this->assertEquals(array('foo' => array('A', 'B', 'C')), $this->value);
+    }
+
+    /**
+     * @group issue-317
+     * @link  https://github.com/guzzle/guzzle/issues/317
+     */
+    public function testTopLevelFlattenedArrayOfObjects()
+    {
+        $visitor = new Visitor();
+        $param = new Parameter(array(
+            'name'  => 'foo',
+            'type'  => 'array',
+            'data'  => array(
+                'jsonFlattened' => true
+            ),
+            'items' => array(
+                'type'       => 'object',
+                'properties' => array(
+                    'name' => array(
+                        'filters' => 'strtoupper',
+                        'type'    => 'integer'
+                    )
+                )
+            )
+        ));
+        $this->value = array(
+            array('name' => 'foo'),
+            array('name' => 'bar')
+        );
+        $visitor->visit($this->command, $this->response, $param, $this->value);
+        $this->assertEquals(array(
+            'foo' => array(
+                array('name' => 'FOO'),
+                array('name' => 'BAR')
+            )
+        ), $this->value);
+    }
+
     public function testRenamesTopLevelValues()
     {
         $visitor = new Visitor();

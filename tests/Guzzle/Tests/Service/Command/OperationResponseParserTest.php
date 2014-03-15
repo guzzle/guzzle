@@ -71,6 +71,96 @@ class OperationResponseParserTest extends \Guzzle\Tests\GuzzleTestCase
         ), $result->toArray());
     }
 
+    /**
+     * @group issue-317
+     * @link  https://github.com/guzzle/guzzle/issues/317
+     */
+    public function testExplicitTopLevelLocation()
+    {
+        $parser = OperationResponseParser::getInstance();
+        $description = ServiceDescription::factory(array(
+            'operations' => array('test' => array('responseClass' => 'Foo')),
+            'models'     => array(
+                'Foo' => array(
+                    'type'     => 'array',
+                    'location' => 'json',
+                    'items'    => array(
+                        'type' => 'object'
+                    )
+                )
+            )
+        ));
+        $operation = $description->getOperation('test');
+        $op = new OperationCommand(array(), $operation);
+        $op->setResponseParser($parser)->setClient(new Client());
+        $op->prepare()->setResponse(new Response(200, array(
+            'Content-Type' => 'text/plain'
+        ), '[{"baz":"bar","enigma":"123"},{"baz":"foo","enigma":"321"}]'), true);
+        $result = $op->execute();
+        $this->assertEquals(array(
+            array(
+                'baz'    => 'bar',
+                'enigma' => '123',
+            ),
+            array(
+                'baz'    => 'foo',
+                'enigma' => '321',
+            )
+        ), $result->toArray());
+    }
+
+    /**
+     * @group issue-317
+     * @link  https://github.com/guzzle/guzzle/issues/317
+     */
+    public function testJsonResponseWithArrayAndTopLevelFlattening()
+    {
+        $parser = OperationResponseParser::getInstance();
+        $description = ServiceDescription::factory(array(
+            'operations' => array('test' => array('responseClass' => 'Foo')),
+            'models'     => array(
+                'Foo' => array(
+                    'type'       => 'object',
+                    'properties' => array(
+                        'body'   => array(
+                            'type'     => 'array',
+                            'location' => 'json',
+                            'data'     => array(
+                                'jsonFlattened' => true
+                            ),
+                            'items'    => array(
+                                'type' => 'object'
+                            )
+                        ),
+                        'code'   => array('location' => 'statusCode'),
+                        'phrase' => array('location' => 'reasonPhrase'),
+                    )
+                )
+            )
+        ));
+        $operation = $description->getOperation('test');
+        $op = new OperationCommand(array(), $operation);
+        $op->setResponseParser($parser)->setClient(new Client());
+        $op->prepare()->setResponse(new Response(200, array(
+            'Content-Type' => 'application/json'
+        ), '[{"baz":"bar","enigma":"123"},{"baz":"foo","enigma":"321"}]'), true);
+        $result = $op->execute();
+        $this->assertEquals(array(
+            'body'   => array(
+                array(
+                    'baz'    => 'bar',
+                    'enigma' => '123',
+                ),
+                array(
+                    'baz'    => 'foo',
+                    'enigma' => '321',
+                )
+            ),
+            'code'   => 200,
+            'phrase' => 'OK'
+        ), $result->toArray());
+    }
+
     public function testSkipsUnkownModels()
     {
         $parser = OperationResponseParser::getInstance();
