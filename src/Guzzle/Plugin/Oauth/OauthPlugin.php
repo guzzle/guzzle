@@ -12,6 +12,15 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * OAuth signing plugin
+ *
+ * Most of code comes from HWIOAuthBundle
+ * @link https://github.com/hwi/HWIOAuthBundle
+ *
+ * Authors of original code:
+ * @author Alexander <iam.asm89@gmail.com>
+ * @author Joseph Bielawski <stloyd@gmail.com>
+ * @author Francisco Facioni <fran6co@gmail.com>
+ *
  * @link http://oauth.net/core/1.0/#rfc.section.9.1.1
  */
 class OauthPlugin implements EventSubscriberInterface
@@ -22,6 +31,10 @@ class OauthPlugin implements EventSubscriberInterface
     const REQUEST_METHOD_HEADER = 'header';
     const REQUEST_METHOD_QUERY  = 'query';
 
+    const SIGNATURE_METHOD_HMAC      = 'HMAC-SHA1';
+    const SIGNATURE_METHOD_RSA       = 'RSA-SHA1';
+    const SIGNATURE_METHOD_PLAINTEXT = 'PLAINTEXT';
+
     /** @var Collection Configuration settings */
     protected $config;
 
@@ -30,34 +43,31 @@ class OauthPlugin implements EventSubscriberInterface
      *
      * @param array $config Configuration array containing these parameters:
      *     - string 'request_method'       Consumer request method. Use the class constants.
-     *     - string 'callback'             OAuth callback
      *     - string 'consumer_key'         Consumer key
      *     - string 'consumer_secret'      Consumer secret
      *     - string 'token'                Token
      *     - string 'token_secret'         Token secret
      *     - string 'verifier'             OAuth verifier.
-     *     - string 'version'              OAuth version.  Defaults to 1.0
+     *     - string 'version'              OAuth version. Defaults to 1.0
+     *     - string 'realm'                OAuth realm.
      *     - string 'signature_method'     Custom signature method
-     *     - bool   'disable_post_params'  Set to true to prevent POST parameters from being signed
-     *     - array|Closure 'signature_callback' Custom signature callback that accepts a string to sign and a signing key
      */
     public function __construct($config)
     {
         $this->config = Collection::fromConfig($config, array(
-            'version' => '1.0',
-            'request_method' => self::REQUEST_METHOD_HEADER,
-            'consumer_key' => 'anonymous',
-            'consumer_secret' => 'anonymous',
-            'signature_method' => 'HMAC-SHA1',
-            'signature_callback' => function($stringToSign, $key) {
-                return hash_hmac('sha1', $stringToSign, $key, true);
-            }
+            'version'          => '1.0',
+            'request_method'   => self::REQUEST_METHOD_HEADER,
+            'consumer_key'     => 'anonymous',
+            'consumer_secret'  => 'anonymous',
+            'signature_method' => self::SIGNATURE_METHOD_HMAC,
         ), array(
-            'signature_method', 'signature_callback', 'version',
-            'consumer_key', 'consumer_secret'
+            'signature_method', 'version', 'consumer_key', 'consumer_secret'
         ));
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public static function getSubscribedEvents()
     {
         return array(
@@ -69,23 +79,26 @@ class OauthPlugin implements EventSubscriberInterface
      * Request before-send event handler
      *
      * @param Event $event Event received
+     *
      * @return array
+     *
      * @throws \InvalidArgumentException
      */
     public function onRequestBeforeSend(Event $event)
     {
-        $timestamp = $this->getTimestamp($event);
+        /* @var $request RequestInterface */
         $request = $event['request'];
-        $nonce = $this->generateNonce($request);
+
+        $timestamp = $this->getTimestamp($event);
+        $nonce     = $this->generateNonce($request);
         $authorizationParams = $this->getOauthParams($timestamp, $nonce);
-        $authorizationParams['oauth_signature']  = $this->getSignature($request, $timestamp, $nonce);
+        $authorizationParams['oauth_signature'] = $this->getSignature($request, $timestamp, $nonce);
 
         switch ($this->config['request_method']) {
             case self::REQUEST_METHOD_HEADER:
-                $request->setHeader(
-                    'Authorization',
-                    $this->buildAuthorizationHeader($authorizationParams)
-                );
+                list($header, $value) = $this->buildAuthorizationHeader($authorizationParams);
+
+                $request->setHeader($header, $value);
                 break;
             case self::REQUEST_METHOD_QUERY:
                 foreach ($authorizationParams as $key => $value) {
@@ -103,25 +116,6 @@ class OauthPlugin implements EventSubscriberInterface
     }
 
     /**
-     * Builds the Authorization header for a request
-     *
-     * @param array $authorizationParams Associative array of authorization parameters
-     *
-     * @return string
-     */
-    private function buildAuthorizationHeader($authorizationParams)
-    {
-        $authorizationString = 'OAuth ';
-        foreach ($authorizationParams as $key => $val) {
-            if ($val) {
-                $authorizationString .= $key . '="' . urlencode($val) . '", ';
-            }
-        }
-
-        return substr($authorizationString, 0, -2);
-    }
-
-    /**
      * Calculate signature for request
      *
      * @param RequestInterface $request   Request to generate a signature for
@@ -129,46 +123,86 @@ class OauthPlugin implements EventSubscriberInterface
      * @param string           $nonce
      *
      * @return string
+     *
+     * @throws \RuntimeException
      */
     public function getSignature(RequestInterface $request, $timestamp, $nonce)
     {
-        $string = $this->getStringToSign($request, $timestamp, $nonce);
-        $key = urlencode($this->config['consumer_secret']) . '&' . urlencode($this->config['token_secret']);
+        $parameters = $this->getOauthParams($timestamp, $nonce);
 
-        return base64_encode(call_user_func($this->config['signature_callback'], $string, $key));
-    }
+        // Remove oauth_signature if present
+        // Ref: Spec: 9.1.1 ("The oauth_signature parameter MUST be excluded.")
+        if ($parameters->hasKey('oauth_signature')) {
+            $parameters->remove('oauth_signature');
+        }
 
-    /**
-     * Calculate string to sign
-     *
-     * @param RequestInterface $request   Request to generate a signature for
-     * @param int              $timestamp Timestamp to use for nonce
-     * @param string           $nonce
-     *
-     * @return string
-     */
-    public function getStringToSign(RequestInterface $request, $timestamp, $nonce)
-    {
-        $params = $this->getParamsToSign($request, $timestamp, $nonce);
+        $parameters = $parameters->toArray();
 
-        // Convert booleans to strings.
-        $params = $this->prepareParameters($params);
+        // Parse & add query params as base string parameters if they exists
+        $urlQuery = Url::factory($request->getUrl())->getQuery();
+        if (null !== $urlQuery) {
+            parse_str($urlQuery, $queryParams);
+            $parameters += $queryParams;
+        }
 
-        // Build signing string from combined params
-        $parameterString = new QueryString($params);
-
+        // Remove query params from URL
+        // Ref: Spec: 9.1.2
         $url = Url::factory($request->getUrl())->setQuery('')->setFragment(null);
 
-        return strtoupper($request->getMethod()) . '&'
-             . rawurlencode($url) . '&'
-             . rawurlencode((string) $parameterString);
+        // Parameters are sorted by name, using lexicographical byte value ordering.
+        // Ref: Spec: 9.1.1 (1)
+        $parameters = $this->prepareParameters($parameters);
+
+        // http_build_query should use RFC3986
+        $parts = array(
+            // HTTP method name must be uppercase
+            // Ref: Spec: 9.1.3 (1)
+            $request->getMethod(),
+            rawurlencode($url),
+            rawurlencode(str_replace(array('%7E', '+'), array('~', '%20'), http_build_query($parameters, '', '&'))),
+        );
+
+        $baseString = implode('&', $parts);
+
+        switch ($this->config['signature_method']) {
+            case self::SIGNATURE_METHOD_HMAC:
+                $keyParts = array(
+                    rawurlencode($this->config['consumer_key']),
+                    rawurlencode($this->config['consumer_secret']),
+                );
+
+                $signature = hash_hmac('sha1', $baseString, implode('&', $keyParts), true);
+                break;
+
+            case self::SIGNATURE_METHOD_RSA:
+                if (!function_exists('openssl_pkey_get_private')) {
+                    throw new \RuntimeException('RSA-SHA1 signature method requires the OpenSSL extension.');
+                }
+
+                $privateKey = openssl_pkey_get_private(file_get_contents($this->config['consumer_secret']), $this->config['consumer_secret']);
+                $signature  = false;
+
+                openssl_sign($baseString, $signature, $privateKey);
+                openssl_free_key($privateKey);
+                break;
+
+            case self::SIGNATURE_METHOD_PLAINTEXT:
+                $signature = $baseString;
+                break;
+
+            default:
+                throw new \RuntimeException(sprintf('Unknown signature method selected %s.', $this->config['signature_method']));
+        }
+
+        return base64_encode($signature);
     }
 
     /**
      * Get the oauth parameters as named by the oauth spec
      *
-     * @param $timestamp
-     * @param $nonce
+     * @param string $timestamp Timestamp to use for nonce
+     * @param string $nonce
+     *
      * @return Collection
      */
     protected function getOauthParams($timestamp, $nonce)
@@ -183,72 +217,18 @@ class OauthPlugin implements EventSubscriberInterface
         // Optional parameters should not be set if they have not been set in the config as
         // the parameter may be considered invalid by the Oauth service.
         $optionalParams = array(
-            'callback'  => 'oauth_callback',
             'token'     => 'oauth_token',
             'verifier'  => 'oauth_verifier',
             'version'   => 'oauth_version'
         );
 
         foreach ($optionalParams as $optionName => $oauthName) {
-            if (isset($this->config[$optionName]) == true) {
+            if (isset($this->config[$optionName])) {
                 $params[$oauthName] = $this->config[$optionName];
             }
         }
 
         return $params;
-    }
-
-    /**
-     * Get all of the parameters required to sign a request including:
-     * * The oauth params
-     * * The request GET params
-     * * The params passed in the POST body (with a content-type of application/x-www-form-urlencoded)
-     *
-     * @param RequestInterface $request   Request to generate a signature for
-     * @param integer          $timestamp Timestamp to use for nonce
-     * @param string           $nonce
-     *
-     * @return array
-     */
-    public function getParamsToSign(RequestInterface $request, $timestamp, $nonce)
-    {
-        $params = $this->getOauthParams($timestamp, $nonce);
-
-        // Add query string parameters
-        $params->merge($request->getQuery());
-
-        // Add POST fields to signing string if required
-        if ($this->shouldPostFieldsBeSigned($request))
-        {
-            $params->merge($request->getPostFields());
-        }
-
-        // Sort params
-        $params = $params->toArray();
-        ksort($params);
-
-        return $params;
-    }
-
-    /**
-     * Decide whether the post fields should be added to the base string that Oauth signs.
-     * This implementation is correct. Non-conformant APIs may require that this method be
-     * overwritten e.g. the Flickr API incorrectly adds the post fields when the Content-Type
-     * is 'application/x-www-form-urlencoded'
-     *
-     * @param $request
-     * @return bool Whether the post fields should be signed or not
-     */
-    public function shouldPostFieldsBeSigned($request)
-    {
-        if (!$this->config->get('disable_post_params') &&
-            $request instanceof EntityEnclosingRequestInterface &&
-            false !== strpos($request->getHeader('Content-Type'), 'application/x-www-form-urlencoded'))
-        {
-            return true;
-        }
-
-        return false;
     }
 
     /**
@@ -261,7 +241,7 @@ class OauthPlugin implements EventSubscriberInterface
      */
     public function generateNonce(RequestInterface $request)
     {
-        return sha1(uniqid('', true) . $request->getUrl());
+        return sha1(uniqid('', true).$request->getUrl());
     }
 
     /**
@@ -269,7 +249,7 @@ class OauthPlugin implements EventSubscriberInterface
      *
      * @param Event $event Event containing contextual information
      *
-     * @return int
+     * @return integer
      */
     public function getTimestamp(Event $event)
     {
@@ -285,7 +265,10 @@ class OauthPlugin implements EventSubscriberInterface
      */
     protected function prepareParameters($data)
     {
-        ksort($data);
+        // Parameters are sorted by name, using lexicographical byte value ordering.
+        // Ref: Spec: 9.1.1 (1)
+        uksort($data, 'strcmp');
+
         foreach ($data as $key => &$value) {
             switch (gettype($value)) {
                 case 'NULL':
@@ -301,5 +284,25 @@ class OauthPlugin implements EventSubscriberInterface
         }
 
         return $data;
+    }
+
+    /**
+     * Builds the Authorization header for a request
+     *
+     * @param Collection $authorizationParams Associative array of authorization parameters
+     *
+     * @return array
+     */
+    private function buildAuthorizationHeader(Collection $authorizationParams)
+    {
+        foreach ($authorizationParams as $key => $value) {
+            $authorizationParams[$key] = sprintf('%s="%s"', $key, rawurlencode($value));
+        }
+
+        if (!$this->config['realm']) {
+            array_unshift($parameters, sprintf('realm="%s"', rawurlencode($this->config['realm'])));
+        }
+
+        return array('Authorization', 'OAuth ' . implode(', ', $authorizationParams->toArray()));
     }
 }
