@@ -45,19 +45,30 @@ class Prepare implements SubscriberInterface
         if ($body instanceof PostBodyInterface) {
             // Synchronize the POST body with the request's headers
             $body->applyRequestHeaders($request);
-        } elseif ($body instanceof MetadataStreamInterface &&
-            !$request->hasHeader('Content-Type')
-        ) {
-            // Guess the content-type based on the stream's "uri" metadata
-            // value. The extension of the URI is matched against a hash.
-            if ($contentType = Mimetypes::getInstance()->fromFilename(
-                $body->getMetadata('uri'))
-            ) {
-                $request->setHeader('Content-Type', $contentType);
-            }
+        } elseif (!$request->hasHeader('Content-Type')) {
+            $this->addContentType($request, $body);
         }
 
         $this->addExpectHeader($request, $body);
+    }
+
+    private function addContentType(
+        RequestInterface $request,
+        StreamInterface $body
+    ) {
+        if (!($body instanceof MetadataStreamInterface)) {
+            return;
+        }
+
+        if (!($uri = $body->getMetadata('uri'))) {
+            return;
+        }
+
+        // Guess the content-type based on the stream's "uri" metadata value.
+        // The file extension is used to determine the appropriate mime-type.
+        if ($contentType = Mimetypes::getInstance()->fromFilename($uri)) {
+            $request->setHeader('Content-Type', $contentType);
+        }
     }
 
     private function addContentLength(
@@ -99,12 +110,12 @@ class Prepare implements SubscriberInterface
 
         $expect = $request->getConfig()['expect'];
 
-        // The expect header is explicitly disabled or using HTTP/2
-        if ($expect === false || $request->getProtocolVersion() >= 2) {
+        // Return if disabled or if you're not using HTTP/1.1
+        if ($expect === false || $request->getProtocolVersion() !== '1.1') {
             return;
         }
 
-        // The expect header is explicitly enabled
+        // The expect header is unconditionally enabled
         if ($expect === true) {
             $request->setHeader('Expect', '100-Continue');
             return;
