@@ -24,6 +24,8 @@ class Client implements ClientInterface
 {
     use HasEmitterTrait;
 
+    const DEFAULT_CONCURRENCY = 25;
+
     /** @var MessageFactoryInterface Request factory used by the client */
     private $messageFactory;
 
@@ -198,7 +200,9 @@ class Client implements ClientInterface
 
         $this->parallelAdapter->sendAll(
             $requests,
-            isset($options['parallel']) ? $options['parallel'] : 50
+            isset($options['parallel'])
+                ? $options['parallel']
+                : self::DEFAULT_CONCURRENCY
         );
     }
 
