@@ -49,6 +49,22 @@ class XmlVisitorTest extends AbstractVisitorTestCase
                 array('Foo' => 'test', 'Baz' => 'bar'),
                 '<test Foo="test"/>'
             ),
+            // Test adding root node attributes after nodes
+            array(
+                array(
+                    'data' => array(
+                        'xmlRoot' => array(
+                            'name' => 'test'
+                        )
+                    ),
+                    'parameters' => array(
+                        'Foo' => array('location' => 'xml', 'type' => 'string'),
+                        'Baz' => array('location' => 'xml', 'type' => 'string', 'data' => array('xmlAttribute' => true))
+                    )
+                ),
+                array('Foo' => 'test', 'Baz' => 'bar'),
+                '<test Baz="bar"><Foo>test</Foo></test>'
+            ),
             // Test adding with an array
             array(
                 array(
