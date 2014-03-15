@@ -6,7 +6,7 @@ Guzzle Upgrade Guide
 
 ## Overarching changes:
 
-- Now required PHP 5.4 or greater.
+- Now requires PHP 5.4 or greater.
 - No longer requires cURL to send requests.
 - Guzzle no longer wraps every exception it throws. Only exceptions that are recoverable are now wrapped by Guzzle.
 - Various namespaces have been removed or renamed.
