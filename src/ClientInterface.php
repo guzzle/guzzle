@@ -87,6 +87,17 @@ interface ClientInterface extends HasEmitterInterface
     public function patch($url = null, array $options = []);
 
     /**
+     * Send a POST request
+     *
+     * @param string|array|Url $url     URL or URI template
+     * @param array            $options Array of request options to apply.
+     *
+     * @return ResponseInterface
+     * @throws RequestException When an error is encountered
+     */
+    public function post($url = null, array $options = []);
+
+    /**
      * Send an OPTIONS request
      *
      * @param string|array|Url $url     URL or URI template
