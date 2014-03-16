@@ -3,6 +3,7 @@
 namespace GuzzleHttp\Adapter\Curl;
 
 use GuzzleHttp\Adapter\TransactionInterface;
+use GuzzleHttp\Exception\AdapterException;
 
 /**
  * Provides context for a Curl transaction, including active handles,
@@ -45,7 +46,7 @@ class BatchContext
      * @param resource $handle Curl handle
      *
      * @return TransactionInterface
-     * @throws \RuntimeException if a transaction is not found
+     * @throws AdapterException if a transaction is not found
      */
     public function findTransaction($handle)
     {
@@ -55,7 +56,7 @@ class BatchContext
             }
         }
 
-        throw new \RuntimeException('No curl handle was found');
+        throw new AdapterException('No curl handle was found');
     }
 
     /**
@@ -111,12 +112,12 @@ class BatchContext
      * @param TransactionInterface $transaction Transaction to add
      * @param resource             $handle      Resource to use with the handle
      *
-     * @throws \RuntimeException If the handle is already registered
+     * @throws AdapterException If the handle is already registered
      */
     public function addTransaction(TransactionInterface $transaction, $handle)
     {
         if (isset($this->handles[$transaction])) {
-            throw new \RuntimeException('Transaction already registered');
+            throw new AdapterException('Transaction already registered');
         }
 
         $code = curl_multi_add_handle($this->multi, $handle);
@@ -133,12 +134,12 @@ class BatchContext
      * @param TransactionInterface $transaction Transaction to remove
      *
      * @return array Returns the curl_getinfo array
-     * @throws \RuntimeException if the transaction is not found
+     * @throws AdapterException if the transaction is not found
      */
     public function removeTransaction(TransactionInterface $transaction)
     {
         if (!isset($this->handles[$transaction])) {
-            throw new \RuntimeException('Transaction not registered');
+            throw new AdapterException('Transaction not registered');
         }
 
         $handle = $this->handles[$transaction];

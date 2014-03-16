@@ -6,12 +6,23 @@ use GuzzleHttp\Adapter\TransactionInterface;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Exception\AdapterException;
 
 /**
  * Creates curl resources from a request and response object
  */
 class CurlFactory
 {
+    /**
+     * Creates a cURL handle based on a transaction.
+     *
+     * @param TransactionInterface $transaction Holds a request and response
+     * @param MessageFactoryInterface $messageFactory Used to create responses
+     * @param null|resource $handle Optionally provide a curl handle to modify
+     *
+     * @return resource Returns a prepared cURL handle
+     * @throws AdapterException when an option cannot be applied
+     */
     public function createHandle(
         TransactionInterface $transaction,
         MessageFactoryInterface $messageFactory,
@@ -226,7 +237,7 @@ class CurlFactory
             $options[CURLOPT_SSL_VERIFYPEER] = true;
             if ($value !== true) {
                 if (!file_exists($value)) {
-                    throw new \RuntimeException('SSL certificate authority file'
+                    throw new AdapterException('SSL certificate authority file'
                         . " not found: {$value}");
                 }
                 $options[CURLOPT_CAINFO] = $value;
@@ -241,7 +252,7 @@ class CurlFactory
         $value
     ) {
         if (!file_exists($value)) {
-            throw new \RuntimeException("SSL certificate not found: {$value}");
+            throw new AdapterException("SSL certificate not found: {$value}");
         }
 
         $options[CURLOPT_SSLCERT] = $value;
@@ -259,7 +270,7 @@ class CurlFactory
         }
 
         if (!file_exists($value)) {
-            throw new \RuntimeException("SSL private key not found: {$value}");
+            throw new AdapterException("SSL private key not found: {$value}");
         }
 
         $options[CURLOPT_SSLKEY] = $value;
