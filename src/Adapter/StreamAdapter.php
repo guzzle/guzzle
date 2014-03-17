@@ -6,7 +6,7 @@ use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
-use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Stream;
 
 /**
  * HTTP adapter that uses PHP's HTTP stream wrapper
@@ -66,11 +66,11 @@ class StreamAdapter implements AdapterInterface
         if ($saveTo = $request->getConfig()['save_to']) {
             // Stream the response into the destination stream
             $saveTo = is_string($saveTo)
-                ? Stream::factory(fopen($saveTo, 'r+'))
-                : Stream::factory($saveTo);
+                ? Stream\create(fopen($saveTo, 'r+'))
+                : Stream\create($saveTo);
         } else {
             // Stream into the default temp stream
-            $saveTo = Stream::factory();
+            $saveTo = Stream\create();
         }
 
         while (!feof($stream)) {

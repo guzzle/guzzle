@@ -10,7 +10,7 @@ use GuzzleHttp\Subscriber\HttpError;
 use GuzzleHttp\Post\PostBody;
 use GuzzleHttp\Post\PostFile;
 use GuzzleHttp\Subscriber\Redirect;
-use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Stream;
 use GuzzleHttp\Query;
 use GuzzleHttp\Url;
 
@@ -38,7 +38,7 @@ class MessageFactory implements MessageFactoryInterface
         array $options = []
     ) {
         if (null !== $body) {
-            $body = Stream::factory($body);
+            $body = Stream\create($body);
         }
 
         return new Response($statusCode, $headers, $body, $options);
@@ -173,7 +173,7 @@ class MessageFactory implements MessageFactoryInterface
             if (is_array($value)) {
                 $this->addPostData($request, $value);
             } else {
-                $request->setBody(Stream::factory($value));
+                $request->setBody(Stream\create($value));
             }
         }
     }

@@ -2,15 +2,14 @@
 
 namespace GuzzleHttp\Post;
 
-use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Stream\StreamInterface;
+use GuzzleHttp\Stream;
 
 /**
  * Stream that when read returns bytes for a streaming multipart/form-data body
  */
-class MultipartBody implements StreamInterface
+class MultipartBody implements Stream\StreamInterface
 {
-    /** @var StreamInterface */
+    /** @var Stream\StreamInterface */
     private $files;
     private $fields;
     private $size;
@@ -232,7 +231,7 @@ class MultipartBody implements StreamInterface
     private function readField($length)
     {
         $name = array_keys($this->fields)[++$this->currentField - 1];
-        $this->buffer = Stream::fromString($this->getFieldString($name));
+        $this->buffer = Stream\create($this->getFieldString($name));
 
         return $this->buffer->read($length);
     }
@@ -259,7 +258,7 @@ class MultipartBody implements StreamInterface
         // If this is the start of a file, then send the headers to the read
         // buffer.
         if (!isset($this->bufferedHeaders[$this->currentFile])) {
-            $this->buffer = Stream::fromString($this->getFileHeaders($current));
+            $this->buffer = Stream\create($this->getFileHeaders($current));
             $this->bufferedHeaders[$this->currentFile] = true;
         }
 
