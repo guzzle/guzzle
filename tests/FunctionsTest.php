@@ -26,7 +26,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
 
     public function testExpandsTemplate()
     {
-        $this->assertEquals('foo/123', \GuzzleHttp\uriTemplate('foo/{bar}', ['bar' => '123']));
+        $this->assertEquals('foo/123', \GuzzleHttp\uri_template('foo/{bar}', ['bar' => '123']));
     }
 
     public function noBodyProvider()
@@ -114,7 +114,7 @@ class HasDeprecations
     }
     function __call($name, $arguments)
     {
-        return \GuzzleHttp\deprecationProxy($this, $name, $arguments, [
+        return \GuzzleHttp\deprecation_proxy($this, $name, $arguments, [
             'baz' => 'foo'
         ]);
     }

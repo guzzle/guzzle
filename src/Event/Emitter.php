@@ -132,7 +132,7 @@ class Emitter implements EmitterInterface
 
     public function __call($name, $arguments)
     {
-        return \GuzzleHttp\deprecationProxy(
+        return \GuzzleHttp\deprecation_proxy(
             $this,
             $name,
             $arguments,

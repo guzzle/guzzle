@@ -123,10 +123,10 @@ function options($url, array $options = [])
  *
  * @return string
  */
-function uriTemplate($template, array $variables)
+function uri_template($template, array $variables)
 {
-    if (function_exists('uri_template')) {
-        return uri_template($template, $variables);
+    if (function_exists('\\uri_template')) {
+        return \uri_template($template, $variables);
     }
 
     static $uriTemplate;
@@ -137,7 +137,7 @@ function uriTemplate($template, array $variables)
     return $uriTemplate->expand($template, $variables);
 }
 
-function deprecationProxy($object, $name, $arguments, $map)
+function deprecation_proxy($object, $name, $arguments, $map)
 {
     if (!isset($map[$name])) {
         throw new \BadMethodCallException('Unknown method, ' . $name);

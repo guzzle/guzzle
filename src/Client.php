@@ -99,7 +99,7 @@ class Client implements ClientInterface
 
     public function __call($name, $arguments)
     {
-        return \GuzzleHttp\deprecationProxy(
+        return \GuzzleHttp\deprecation_proxy(
             $this,
             $name,
             $arguments,
@@ -245,11 +245,11 @@ class Client implements ClientInterface
             }
             return (string) $this->baseUrl->combine($url);
         } elseif (strpos($url[0], '://')) {
-            return \GuzzleHttp\uriTemplate($url[0], $url[1]);
+            return \GuzzleHttp\uri_template($url[0], $url[1]);
         }
 
         return (string) $this->baseUrl->combine(
-            \GuzzleHttp\uriTemplate($url[0], $url[1])
+            \GuzzleHttp\uri_template($url[0], $url[1])
         );
     }
 
@@ -297,7 +297,7 @@ class Client implements ClientInterface
             $this->baseUrl = new Url('', '');
         } elseif (is_array($config['base_url'])) {
             $this->baseUrl = Url::fromString(
-                \GuzzleHttp\uriTemplate(
+                \GuzzleHttp\uri_template(
                     $config['base_url'][0],
                     $config['base_url'][1]
                 )
