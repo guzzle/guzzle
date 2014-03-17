@@ -53,7 +53,7 @@ There are a number of optional libraries you can use along with Guzzle's HTTP
 layer to add capabilities to the client.
 
 `Log Subscriber <https://github.com/guzzle/log-subscriber>`_
-    Logs HTTP requests and responses sent of ver the wire using customizable
+    Logs HTTP requests and responses sent over the wire using customizable
     log message templates.
 
 `OAuth Subscriber <https://github.com/guzzle/oauth-subscriber>`_
