@@ -179,6 +179,21 @@ class QueryString extends Collection
     }
 
     /**
+     * Retrieves the query aggregator for this query string
+     *
+     * @return QueryAggregatorInterface
+     */
+    public function getAggregator()
+    {
+        // If no aggregator is present then set the default
+        if (!$this->aggregator) {
+            $this->setAggregator(null);
+        }
+
+        return $this->aggregator;
+    }
+
+    /**
      * Set whether or not field names and values should be rawurlencoded
      *
      * @param bool|string $encode Set to TRUE to use RFC 3986 encoding (rawurlencode), false to disable encoding, or
@@ -257,15 +272,10 @@ class QueryString extends Collection
      */
     protected function prepareData(array $data)
     {
-        // If no aggregator is present then set the default
-        if (!$this->aggregator) {
-            $this->setAggregator(null);
-        }
-
         $temp = array();
         foreach ($data as $key => $value) {
             if (is_array($value)) {
-                $temp = array_merge($temp, $this->aggregator->aggregate($key, $value, $this));
+                $temp = array_merge($temp, $this->getAggregator()->aggregate($key, $value, $this));
             } else {
                 $temp[$this->encodeValue($key)] = $this->encodeValue($value);
             }
