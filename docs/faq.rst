@@ -97,6 +97,7 @@ used with a client and allow self-signed certificates.
 .. code-block:: php
 
     $client->get('/', [
+        'stream' => true,
         'config' => [
             'stream_context' => [
                 'ssl' => [
