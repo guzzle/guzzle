@@ -10,7 +10,7 @@ the pain out of consuming web services.
 $client = new GuzzleHttp\Client();
 $response = $client->get('http://guzzlephp.org');
 $res = $client->get('https://api.github.com/user', ['auth' =>  ['user', 'pass']]);
-echo $res->statusCode();
+echo $res->getStatusCode();
 // 200
 echo $res->getHeader('content-type');
 // 'application/json; charset=utf8'
