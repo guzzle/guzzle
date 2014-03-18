@@ -156,6 +156,7 @@ class OauthPlugin implements EventSubscriberInterface
 
         // Build signing string from combined params
         $parameterString = new QueryString($params);
+        $parameterString->setAggregator($request->getQuery()->getAggregator());
 
         $url = Url::factory($request->getUrl())->setQuery('')->setFragment(null);
 

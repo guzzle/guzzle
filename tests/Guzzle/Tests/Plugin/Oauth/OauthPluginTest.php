@@ -3,6 +3,7 @@
 namespace Guzzle\Tests\Plugin\Oauth;
 
 use Guzzle\Http\Message\RequestFactory;
+use Guzzle\Http\QueryAggregator\CommaAggregator;
 use Guzzle\Plugin\Oauth\OauthPlugin;
 use Guzzle\Common\Event;
 
@@ -147,6 +148,22 @@ class OauthPluginTest extends \Guzzle\Tests\GuzzleTestCase
         $request = $this->getRequest();
         $request->getQuery()->set('a', array('b' => array('e' => 'f', 'c' => 'd')));
         $this->assertContains('a%255Bb%255D%255Bc%255D%3Dd%26a%255Bb%255D%255Be%255D%3Df%26c%3Dd%26e%3Df%26', $p->getStringToSign($request, self::TIMESTAMP, self::NONCE));
+    }
+
+    /**
+     * @depends testMultiDimensionalArray
+     */
+    public function testMultiDimensionalArrayWithNonDefaultQueryAggregator()
+    {
+        $p = new OauthPlugin($this->config);
+        $request = $this->getRequest();
+        $aggregator = new CommaAggregator();
+        $query = $request->getQuery()->setAggregator($aggregator)
+            ->set('g', array('h', 'i', 'j'))
+            ->set('k', array('l'))
+            ->set('m', array('n', 'o'));
+        // print_r($request->getQuery()); die;
+        $this->assertContains('a%3Db%26c%3Dd%26e%3Df%26g%3Dh%2Ci%2Cj%26k%3Dl%26m%3Dn%2Co', $p->getStringToSign($request, self::TIMESTAMP, self::NONCE));
     }
 
     /**
