@@ -337,4 +337,43 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         $opts = stream_context_get_options($this->getStreamFromBody($body));
         $this->assertEquals($url, $opts['http']['proxy']);
     }
+
+    public function testPerformsShallowMergeOfCustomContextOptions()
+    {
+        $body = $this->getSendResult([
+            'stream' => true,
+            'config' => [
+                'stream_context' => [
+                    'http' => [
+                        'request_fulluri' => true,
+                        'method' => 'HEAD'
+                    ],
+                    'socket' => [
+                        'bindto' => '127.0.0.1:0'
+                    ],
+                    'ssl' => [
+                        'verify_peer' => false
+                    ]
+                ]
+            ]
+        ])->getBody();
+
+        $opts = stream_context_get_options($this->getStreamFromBody($body));
+        $this->assertEquals('HEAD', $opts['http']['method']);
+        $this->assertTrue($opts['http']['request_fulluri']);
+        $this->assertFalse($opts['ssl']['verify_peer']);
+        $this->assertEquals('127.0.0.1:0', $opts['socket']['bindto']);
+    }
+
+    /**
+     * @expectedException \GuzzleHttp\Exception\RequestException
+     * @expectedExceptionMessage stream_context must be an array
+     */
+    public function testEnsuresThatStreamContextIsAnArray()
+    {
+        $this->getSendResult([
+            'stream' => true,
+            'config' => ['stream_context' => 'foo']
+        ]);
+    }
 }

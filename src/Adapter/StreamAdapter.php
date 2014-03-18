@@ -3,13 +3,19 @@
 namespace GuzzleHttp\Adapter;
 
 use GuzzleHttp\Event\RequestEvents;
+use GuzzleHttp\Exception\AdapterException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Stream;
 
 /**
- * HTTP adapter that uses PHP's HTTP stream wrapper
+ * HTTP adapter that uses PHP's HTTP stream wrapper.
+ *
+ * When using the StreamAdapter, custom stream context options can be specified
+ * using the **stream_context** option in a request's **config** option. The
+ * structure of the "stream_context" option is an associative array where each
+ * key is a transport name and each option is an associative array of options.
  */
 class StreamAdapter implements AdapterInterface
 {
@@ -285,5 +291,18 @@ class StreamAdapter implements AdapterInterface
             }
             fwrite($value, "\n");
         };
+    }
+
+    private function add_stream_context(
+        RequestInterface $request,
+        &$options,
+        $value,
+        &$params
+    ) {
+        if (!is_array($value)) {
+            throw new AdapterException('stream_context must be an array');
+        }
+
+        $options = array_replace_recursive($options, $value);
     }
 }
