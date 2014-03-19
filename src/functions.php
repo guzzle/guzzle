@@ -137,6 +137,9 @@ function uri_template($template, array $variables)
     return $uriTemplate->expand($template, $variables);
 }
 
+/**
+ * @internal
+ */
 function deprecation_proxy($object, $name, $arguments, $map)
 {
     if (!isset($map[$name])) {
