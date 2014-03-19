@@ -172,21 +172,8 @@ class StreamAdapter implements AdapterInterface
             $methods = array_flip(get_class_methods(__CLASS__));
         }
 
-        $headers = '';
-        foreach ($request->getHeaders() as $name => $values) {
-            $headers .= $name . ': ' . implode(', ', $values) . "\r\n";
-        }
-
         $params = [];
-        $options = ['http' => [
-            'method' => $request->getMethod(),
-            'header' => trim($headers),
-            'protocol_version' => $request->getProtocolVersion(),
-            'ignore_errors' => true,
-            'follow_location' => 0,
-            'content' => (string) $request->getBody()
-        ]];
-
+        $options = $this->getDefaultOptions($request);
         foreach ($request->getConfig()->toArray() as $key => $value) {
             $method = "add_{$key}";
             if (isset($methods[$method])) {
@@ -194,23 +181,34 @@ class StreamAdapter implements AdapterInterface
             }
         }
 
-        $context = $this->createResource(function () use ($request, $options, $params) {
-            return stream_context_create($options, $params);
-        }, $request, $options);
+        $this->applyCustomOptions($request, $options);
+        $context = $this->createStreamContext($request, $options, $params);
 
-        $url = $request->getUrl();
-        // Add automatic gzip decompression
-        if (strpos($request->getHeader('Accept-Encoding'), 'gzip') !== false) {
-            $url = 'compress.zlib://' . $url;
+        return $this->createStreamResource(
+            $request,
+            $options,
+            $context,
+            $http_response_header
+        );
+    }
+
+    private function getDefaultOptions(RequestInterface $request)
+    {
+        $headers = '';
+        foreach ($request->getHeaders() as $name => $values) {
+            $headers .= $name . ': ' . implode(', ', $values) . "\r\n";
         }
 
-        return $this->createResource(function () use ($url, &$http_response_header, $context) {
-            if (false === strpos($url, 'http')) {
-                trigger_error("URL is invalid: {$url}", E_USER_WARNING);
-                return null;
-            }
-            return fopen($url, 'r', null, $context);
-        }, $request, $options);
+        return [
+            'http' => [
+                'method'           => $request->getMethod(),
+                'header'           => trim($headers),
+                'protocol_version' => $request->getProtocolVersion(),
+                'ignore_errors'    => true,
+                'follow_location'  => 0,
+                'content'          => (string) $request->getBody()
+            ]
+        ];
     }
 
     private function add_proxy(RequestInterface $request, &$options, $value, &$params)
@@ -293,16 +291,55 @@ class StreamAdapter implements AdapterInterface
         };
     }
 
-    private function add_stream_context(
+    private function applyCustomOptions(
         RequestInterface $request,
-        &$options,
-        $value,
-        &$params
+        array &$options
     ) {
-        if (!is_array($value)) {
-            throw new AdapterException('stream_context must be an array');
+        // Overwrite any generated options with custom options
+        if ($custom = $request->getConfig()['stream_context']) {
+            if (!is_array($custom)) {
+                throw new AdapterException('stream_context must be an array');
+            }
+            $options = array_replace_recursive($options, $custom);
+        }
+    }
+
+    private function createStreamContext(
+        RequestInterface $request,
+        array $options,
+        array $params
+    ) {
+        return $this->createResource(function () use (
+            $request,
+            $options,
+            $params
+        ) {
+            return stream_context_create($options, $params);
+        }, $request, $options);
+    }
+
+    private function createStreamResource(
+        RequestInterface $request,
+        array $options,
+        $context,
+        &$http_response_header
+    ) {
+        $url = $request->getUrl();
+        // Add automatic gzip decompression
+        if (strpos($request->getHeader('Accept-Encoding'), 'gzip') !== false) {
+            $url = 'compress.zlib://' . $url;
         }
 
-        $options = array_replace_recursive($options, $value);
+        return $this->createResource(function () use (
+            $url,
+            &$http_response_header,
+            $context
+        ) {
+            if (false === strpos($url, 'http')) {
+                trigger_error("URL is invalid: {$url}", E_USER_WARNING);
+                return null;
+            }
+            return fopen($url, 'r', null, $context);
+        }, $request, $options);
     }
 }
