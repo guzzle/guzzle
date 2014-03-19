@@ -23,7 +23,7 @@ class CurlFactory
      * @return resource Returns a prepared cURL handle
      * @throws AdapterException when an option cannot be applied
      */
-    public function createHandle(
+    public function __invoke(
         TransactionInterface $transaction,
         MessageFactoryInterface $messageFactory,
         $handle = null

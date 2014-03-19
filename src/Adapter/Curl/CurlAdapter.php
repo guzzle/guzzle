@@ -35,10 +35,16 @@ class CurlAdapter implements AdapterInterface
     private $maxHandles;
 
     /**
+     * Accepts an associative array of options:
+     *
+     * - handle_factory: Optional callable factory used to create cURL handles.
+     *   The callable is invoked with the following arguments:
+     *   TransactionInterface, MessageFactoryInterface, and an optional cURL
+     *   handle to modify. The factory method must then return a cURL resource.
+     * - max_handles: Maximum number of idle handles (defaults to 5).
+     *
      * @param MessageFactoryInterface $messageFactory
-     * @param array $options Array of options to use with the adapter:
-     *     - handle_factory: Optional factory used to create cURL handles
-     *     - max_handles: Maximum number of idle handles (defaults to 5)
+     * @param array $options Array of options to use with the adapter
      */
     public function __construct(
         MessageFactoryInterface $messageFactory,
@@ -70,7 +76,8 @@ class CurlAdapter implements AdapterInterface
             return $response;
         }
 
-        $handle = $this->curlFactory->createHandle(
+        $factory = $this->curlFactory;
+        $handle = $factory(
             $transaction,
             $this->messageFactory,
             $this->checkoutEasyHandle()

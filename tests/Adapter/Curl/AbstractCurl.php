@@ -50,10 +50,10 @@ abstract class AbstractCurl extends \PHPUnit_Framework_TestCase
     {
         $r = new Request('GET', self::$server->getUrl());
         $f = $this->getMockBuilder('GuzzleHttp\Adapter\Curl\CurlFactory')
-            ->setMethods(['createHandle'])
+            ->setMethods(['__invoke'])
             ->getMock();
         $f->expects($this->once())
-            ->method('createHandle')
+            ->method('__invoke')
             ->will($this->throwException(new RequestException('foo', $r)));
 
         $t = new Transaction(new Client(), $r);

@@ -37,11 +37,17 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
     private $selectTimeout;
 
     /**
+     * Accepts an associative array of options:
+     *
+     * - handle_factory: Optional callable factory used to create cURL handles.
+     *   The callable is invoked with the following arguments:
+     *   TransactionInterface, MessageFactoryInterface, and an optional cURL
+     *   handle to modify. The factory method must then return a cURL resource.
+     * - select_timeout: Specify a float in seconds to use for a
+     *   curl_multi_select timeout.
+     *
      * @param MessageFactoryInterface $messageFactory
      * @param array $options Array of options to use with the adapter:
-     *     - handle_factory: Optional factory used to create cURL handles
-     *     - select_timeout: Specify a float in seconds to use for a
-     *       curl_multi_select timeout.
      */
     public function __construct(
         MessageFactoryInterface $messageFactory,
@@ -169,11 +175,11 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
             RequestEvents::emitBefore($transaction);
             // Only transfer if the request was not intercepted
             if (!$transaction->getResponse()) {
-                $handle = $this->curlFactory->createHandle(
+                $factory = $this->curlFactory;
+                $context->addTransaction(
                     $transaction,
-                    $this->messageFactory
+                    $factory($transaction, $this->messageFactory)
                 );
-                $context->addTransaction($transaction, $handle);
             }
         } catch (RequestException $e) {
             $this->throwException($e, $context);
