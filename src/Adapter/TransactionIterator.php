@@ -14,18 +14,18 @@ class TransactionIterator implements \Iterator
     /** @var \Iterator */
     private $source;
 
-    /** @var array */
-    private $options;
-
     /** @var ClientInterface */
     private $client;
+
+    /** @var array */
+    private $eventListeners;
 
     public function __construct(
         $source, ClientInterface $client,
         array $options
     ) {
         $this->client = $client;
-        $this->options = $options;
+        $this->configureEvents($options);
         if ($source instanceof \Iterator) {
             $this->source = $source;
         } elseif (is_array($source)) {
@@ -43,16 +43,11 @@ class TransactionIterator implements \Iterator
             throw new \RuntimeException('All must implement RequestInterface');
         }
 
-        if (isset($this->options['before'])) {
-            $request->getEmitter()->on('before', $this->options['before'], -255);
-        }
-
-        if (isset($this->options['complete'])) {
-            $request->getEmitter()->on('complete', $this->options['complete'], -255);
-        }
-
-        if (isset($this->options['error'])) {
-            $request->getEmitter()->on('error', $this->options['error'], -255);
+        if ($this->eventListeners) {
+            $emitter = $request->getEmitter();
+            foreach ($this->eventListeners as $eventName => $listener) {
+                $emitter->on($eventName, $listener[0], $listener[1]);
+            }
         }
 
         return new Transaction($this->client, $request);
@@ -74,4 +69,23 @@ class TransactionIterator implements \Iterator
     }
 
     public function rewind() {}
+
+    private function configureEvents(array $options)
+    {
+        static $namedEvents = ['before', 'complete', 'error'];
+
+        foreach ($namedEvents as $event) {
+            if (isset($options[$event])) {
+                if (is_callable($options[$event])) {
+                    $this->eventListeners[$event] = [$options[$event], 0];
+                } elseif (is_array($options[$event])) {
+                    $this->eventListeners[$event] = $options[$event];
+                } else {
+                    throw new \InvalidArgumentException('Each event listener '
+                        . ' must be a callable or an array containing a '
+                        . ' callable and a priority.');
+                }
+            }
+        }
+    }
 }

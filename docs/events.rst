@@ -301,6 +301,8 @@ Requests emit lifecycle events when they are transferred.
     can also remove an event listener from an emitter by using the emitter the
     is provided to the listener.
 
+.. _before_event:
+
 before
 ------
 
@@ -355,6 +357,8 @@ the request from being sent over the wire and stops the propagation of the
     Any exception encountered while executing the ``before`` event will trigger
     the ``error`` event of a request.
 
+.. _headers_event:
+
 headers
 -------
 
@@ -387,6 +391,8 @@ This event cannot be intercepted.
             $e->getResponse()->setBody($customBody);
         }
     });
+
+.. _complete_event:
 
 complete
 --------
@@ -426,6 +432,8 @@ for changing the response for caching.
 
     Any ``GuzzleHttp\Exception\RequestException`` encountered while executing
     the ``complete`` event will trigger the ``error`` event of a request.
+
+.. _error_event:
 
 error
 -----

@@ -184,6 +184,21 @@ will affect the transfer.
 
     $client->sendAll($requests);
 
+The ``sendAll()`` method accepts the following associative array of options:
+
+- **parallel**: Integer representing the maximum number of requests that are
+  allowed to be sent in parallel.
+- **before**: Callable or array representing an event listener to add to each
+  request's :ref:`before_event` event. You can provide a callable (invoked at
+  priority 0), or an array containing a callable in the first index and an
+  event priority in the second index.
+- **complete**: Callable or array representing an event listener to add to each
+  request's :ref:`complete_event` event. This option has the same structure as
+  the *before* option.
+- **error**: Callable or array representing an event listener to add to each
+  request's :ref:`error_event` event. This option has the same structure as
+  the *before* option.
+
 You can work with the responses for each request as the are received using the
 events emitted from a request. Here we are using the ``complete`` event and
 printing out each request URL and response body.

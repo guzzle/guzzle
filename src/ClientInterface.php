@@ -127,12 +127,16 @@ interface ClientInterface extends HasEmitterInterface
      * an event handler for the "error" event of a request's
      * event emitter.
      *
+     * The values for before, after, and error can be a callable or an array
+     * that contains a callable in the first key and an event priority in the
+     * second key.
+     *
      * @param array|\Iterator $requests Requests to send in parallel
      * @param array           $options  Associative array of options
      *     - parallel: (int) Max number of requests to send in parallel
-     *     - before: (callable) Receives a BeforeEvent
-     *     - after: (callable) Receives a CompleteEvent
-     *     - error: (callable) Receives a ErrorEvent
+     *     - before: (callable|array) Receives a BeforeEvent
+     *     - after: (callable|array) Receives a CompleteEvent
+     *     - error: (callable|array) Receives a ErrorEvent
      * @throws AdapterException When an error occurs in the HTTP adapter.
      */
     public function sendAll($requests, array $options = []);

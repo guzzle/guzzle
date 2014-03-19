@@ -79,10 +79,38 @@ class TransactionIteratorTest extends \PHPUnit_Framework_TestCase
             'error'    => $fn,
         ]);
 
-        foreach ($trans as $t) {
-            $this->assertSame($fn, $t->getRequest()->getEmitter()->listeners('before')[1]);
-            $this->assertSame($fn, $t->getRequest()->getEmitter()->listeners('error')[0]);
-            $this->assertSame($fn, $t->getRequest()->getEmitter()->listeners('complete')[2]);
-        }
+        $t = iterator_to_array($trans)[0];
+        $this->assertSame($fn, $t->getRequest()->getEmitter()->listeners('before')[0]);
+        $this->assertSame($fn, $t->getRequest()->getEmitter()->listeners('complete')[2]);
+        $this->assertSame($fn, $t->getRequest()->getEmitter()->listeners('error')[0]);
+    }
+
+    public function testRegistersEventsWithPriorities()
+    {
+        $fn = function() {};
+        $client = new Client();
+        $requests = [$client->createRequest('GET', 'http://test.com')];
+        $trans = new TransactionIterator(new \ArrayIterator($requests), $client, [
+            'before'   => [$fn, 99],
+            'complete' => [$fn, 99],
+            'error'    => [$fn, 99]
+        ]);
+
+        $t = iterator_to_array($trans)[0];
+        $this->assertSame($fn, $t->getRequest()->getEmitter()->listeners('before')[0]);
+        $this->assertSame($fn, $t->getRequest()->getEmitter()->listeners('complete')[2]);
+        $this->assertSame($fn, $t->getRequest()->getEmitter()->listeners('error')[0]);
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testValidatesEvents()
+    {
+        $client = new Client();
+        $requests = [$client->createRequest('GET', 'http://test.com')];
+        new TransactionIterator(new \ArrayIterator($requests), $client, [
+            'before' => 'foo'
+        ]);
     }
 }
