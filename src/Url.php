@@ -92,10 +92,7 @@ class Url
         if (isset($parts['path']) && strlen($parts['path'])) {
             // Always ensure that the path begins with '/' if set and something
             // is before the path
-            if (isset($parts['host']) &&
-                $parts['path'][0] != '/' &&
-                substr($url, -1) != '/'
-            ) {
+            if (isset($parts['host']) && $parts['path'][0] != '/') {
                 $url .= '/';
             }
             $url .= $parts['path'];
@@ -295,8 +292,9 @@ class Url
      */
     public function setPath($path)
     {
-        static $pathReplace = array(' ' => '%20', '?' => '%3F');
-        $this->path = strtr($path, $pathReplace);
+        static $search  = [' ',   '?'];
+        static $replace = ['%20', '%3F'];
+        $this->path = str_replace($search, $replace, $path);
 
         return $this;
     }

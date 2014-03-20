@@ -116,7 +116,10 @@ abstract class AbstractMessage implements MessageInterface
                 $this->headers[$name] = [(string) $value];
                 break;
             case 'array':
-                $this->headers[$name] = array_map('trim', $value);
+                foreach ($value as &$v) {
+                    $v = trim($v);
+                }
+                $this->headers[$name] = $value;
                 break;
             default:
                 throw new \InvalidArgumentException('Invalid header value '

@@ -59,7 +59,7 @@ class RequestMediator
         $length = strlen($header);
         $header = str_replace($normalize, '', $header);
 
-        if (substr($header, 0, 5) == 'HTTP/') {
+        if (strpos($header, 'HTTP/') === 0) {
             $startLine = explode(' ', $header, 3);
             // Only download the body to a target body when a successful
             // response is received.
