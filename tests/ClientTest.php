@@ -78,7 +78,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testCanSpecifyAdapter()
     {
         $adapter = $this->getMockBuilder('GuzzleHttp\Adapter\AdapterInterface')
-            ->setMethods('send')
+            ->setMethods(['send'])
             ->getMockForAbstractClass();
         $adapter->expects($this->once())
             ->method('send')
@@ -94,7 +94,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testCanSpecifyMessageFactory()
     {
         $factory = $this->getMockBuilder('GuzzleHttp\Message\MessageFactoryInterface')
-            ->setMethods('createRequest')
+            ->setMethods(['createRequest'])
             ->getMockForAbstractClass();
         $factory->expects($this->once())
             ->method('createRequest')
