@@ -146,6 +146,7 @@ class Response extends AbstractMessage implements ResponseInterface
     public function xml(array $config = [])
     {
         $disableEntities = libxml_disable_entity_loader(true);
+        $internalErrors = libxml_use_internal_errors(true);
 
         try {
             // Allow XML to be retrieved even if there is no response body
@@ -156,8 +157,10 @@ class Response extends AbstractMessage implements ResponseInterface
                 isset($config['ns_is_prefix']) ? $config['ns_is_prefix'] : false
             );
             libxml_disable_entity_loader($disableEntities);
+            libxml_use_internal_errors($internalErrors);
         } catch (\Exception $e) {
             libxml_disable_entity_loader($disableEntities);
+            libxml_use_internal_errors($internalErrors);
             throw new ParseException(
                 'Unable to parse response body into XML: ' . $e->getMessage(),
                 $this

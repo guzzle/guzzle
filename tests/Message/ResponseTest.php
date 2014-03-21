@@ -68,7 +68,7 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \RuntimeException
+     * @expectedException \GuzzleHttp\Exception\ParseException
      * @expectedExceptionMessage Unable to parse response body into XML: String could not be parsed as XML
      */
     public function testThrowsExceptionWhenFailsToParseXmlResponse()
