@@ -62,12 +62,12 @@ class Url
     {
         $url = $scheme = '';
 
-        if (isset($parts['scheme'])) {
+        if (!empty($parts['scheme'])) {
             $scheme = $parts['scheme'];
             $url .= $scheme . ':';
         }
 
-        if (isset($parts['host'])) {
+        if (!empty($parts['host'])) {
             $url .= '//';
             if (isset($parts['user'])) {
                 $url .= $parts['user'];
@@ -175,8 +175,6 @@ class Url
      */
     public function getParts()
     {
-        $query = (string) $this->query;
-
         return array(
             'scheme'   => $this->scheme,
             'user'     => $this->username,
@@ -583,14 +581,5 @@ class Url
         }
 
         return $result;
-    }
-
-    private function addQuery(QueryString $new, $strictRfc386)
-    {
-        if (!$strictRfc386) {
-            $new->merge($this->query);
-        }
-
-        $this->query = $new;
     }
 }
