@@ -4,10 +4,6 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Collection;
 
-/**
- * @covers GuzzleHttp\Collection
- * @covers GuzzleHttp\HasDataTrait
- */
 class CollectionTest extends \PHPUnit_Framework_TestCase
 {
     /** @var Collection */

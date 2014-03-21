@@ -38,8 +38,8 @@ class Client implements ClientInterface
     /** @var Url Base URL of the client */
     private $baseUrl;
 
-    /** @var Collection Configuration data */
-    private $config;
+    /** @var array Default request options */
+    private $defaults;
 
     /**
      * Clients accept an array of constructor parameters.
@@ -75,7 +75,6 @@ class Client implements ClientInterface
         $this->configureBaseUrl($config);
         $this->configureDefaults($config);
         $this->configureAdapter($config);
-        $this->config = new Collection($config);
     }
 
     /**
@@ -107,27 +106,27 @@ class Client implements ClientInterface
         );
     }
 
-    public function getConfig($keyOrPath = null)
+    public function getDefaultValue($keyOrPath = null)
     {
         return $keyOrPath === null
-            ? $this->config->toArray()
-            : $this->config->getPath($keyOrPath);
+            ? $this->defaults
+            : \GuzzleHttp\get_path($this->defaults, $keyOrPath);
     }
 
-    public function setConfig($keyOrPath, $value)
+    public function setDefaultValue($keyOrPath, $value)
     {
-        // Ensure that "defaults" is always an array
-        if ($keyOrPath == 'defaults' && !is_array($value)) {
-            throw new \InvalidArgumentException('"defaults" must be an array');
-        }
+        \GuzzleHttp\set_path($this->defaults, $keyOrPath, $value);
+    }
 
-        $this->config->setPath($keyOrPath, $value);
+    public function getBaseUrl()
+    {
+        return (string) $this->baseUrl;
     }
 
     public function createRequest($method, $url = null, array $options = [])
     {
         // Merge in default options
-        $options = array_replace_recursive($this->config['defaults'], $options);
+        $options = array_replace_recursive($this->defaults, $options);
 
         // Use a clone of the client's emitter
         $options['config']['emitter'] = clone $this->getEmitter();
@@ -308,25 +307,25 @@ class Client implements ClientInterface
         }
     }
 
-    private function configureDefaults(&$config)
+    private function configureDefaults($config)
     {
-        if (isset($config['defaults'])) {
-            $config['defaults'] = array_replace(
+        if (!isset($config['defaults'])) {
+            $this->defaults = $this->getDefaultOptions();
+        } else {
+            $this->defaults = array_replace(
                 $this->getDefaultOptions(),
                 $config['defaults']
             );
-        } else {
-            $config['defaults'] = $this->getDefaultOptions();
         }
 
         // Add the default user-agent header
-        if (!isset($config['defaults']['headers'])) {
-            $config['defaults']['headers'] = [
+        if (!isset($this->defaults['headers'])) {
+            $this->defaults['headers'] = [
                 'User-Agent' => static::getDefaultUserAgent()
             ];
-        } elseif (!isset(array_change_key_case($config['defaults']['headers'])['user-agent'])) {
+        } elseif (!isset(array_change_key_case($this->defaults['headers'])['user-agent'])) {
             // Add the User-Agent header if one was not already set
-            $config['defaults']['headers']['User-Agent'] = static::getDefaultUserAgent();
+            $this->defaults['headers']['User-Agent'] = static::getDefaultUserAgent();
         }
     }
 
@@ -334,13 +333,11 @@ class Client implements ClientInterface
     {
         if (isset($config['message_factory'])) {
             $this->messageFactory = $config['message_factory'];
-            unset($config['message_factory']);
         } else {
             $this->messageFactory = new MessageFactory();
         }
         if (isset($config['adapter'])) {
             $this->adapter = $config['adapter'];
-            unset($config['adapter']);
         } else {
             $this->getDefaultAdapter();
         }
@@ -348,7 +345,6 @@ class Client implements ClientInterface
         // defaulted when creating the default adapter, then create one now.
         if (isset($config['parallel_adapter'])) {
             $this->parallelAdapter = $config['parallel_adapter'];
-            unset($config['parallel_adapter']);
         } elseif (!$this->parallelAdapter) {
             $this->parallelAdapter = $this->getDefaultParallelAdapter();
         }

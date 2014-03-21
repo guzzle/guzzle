@@ -142,28 +142,33 @@ interface ClientInterface extends HasEmitterInterface
     public function sendAll($requests, array $options = []);
 
     /**
-     * Get a client configuration value.
+     * Get default request options of the client.
      *
-     * @param string|int|null $keyOrPath The Path to a particular configuration
-     *     value. The syntax uses a path notation that allows you to retrieve
-     *     nested array values without throwing warnings. For example,
-     *     ``$client->getConfig('defaults/headers/content-type')``.
+     * @param string|null $keyOrPath The Path to a particular default request
+     *     option to retrieve or pass null to retrieve all default request
+     *     options. The syntax uses "/" to denote a path through nested PHP
+     *     arrays. For example, "headers/content-type".
      *
      * @return mixed
      */
-    public function getConfig($keyOrPath = null);
+    public function getDefaultValue($keyOrPath = null);
 
     /**
-     * Set a client configuration value at the specified configuration path.
+     * Set a default request option on the client so that any request created
+     * by the client will use the provided default value unless overridden
+     * explicitly when creating a request.
      *
-     * Any value can be set for any path, but the common values are
-     * ``base_url`` and ``defaults``.
-     *
-     * @param string|int $keyOrPath Path at which to change a configuration
-     *     value. This path syntax follows the same path syntax specified in
-     *     {@see getConfig}.
-     *
-     * @param mixed $value Value to set
+     * @param string|null $keyOrPath The Path to a particular configuration
+     *     value to set. The syntax uses a path notation that allows you to
+     *     specify nested configuration values (e.g., 'headers/content-type').
+     * @param mixed $value Default request option value to set
      */
-    public function setConfig($keyOrPath, $value);
+    public function setDefaultValue($keyOrPath, $value);
+
+    /**
+     * Get the base URL of the client.
+     *
+     * @return string Returns the base URL if present
+     */
+    public function getBaseUrl();
 }

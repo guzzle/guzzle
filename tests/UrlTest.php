@@ -56,13 +56,13 @@ class UrlTest extends \PHPUnit_Framework_TestCase
 
     public function testAllowsFalsyUrlParts()
     {
-        $url = Url::fromString('http://0:50/0?0#0');
-        $this->assertSame('0', $url->getHost());
+        $url = Url::fromString('http://a:50/0?0#0');
+        $this->assertSame('a', $url->getHost());
         $this->assertEquals(50, $url->getPort());
         $this->assertSame('/0', $url->getPath());
         $this->assertEquals('0', (string) $url->getQuery());
         $this->assertSame('0', $url->getFragment());
-        $this->assertEquals('http://0:50/0?0#0', (string) $url);
+        $this->assertEquals('http://a:50/0?0#0', (string) $url);
 
         $url = Url::fromString('');
         $this->assertSame('', (string) $url);
@@ -73,16 +73,10 @@ class UrlTest extends \PHPUnit_Framework_TestCase
 
     public function testBuildsRelativeUrlsWithFalsyParts()
     {
-        $url = Url::buildUrl(array(
-            'host' => '0',
-            'path' => '0',
-        ));
+        $url = Url::buildUrl(['path' => '/0']);
+        $this->assertSame('/0', $url);
 
-        $this->assertSame('//0/0', $url);
-
-        $url = Url::buildUrl(array(
-            'path' => '0',
-        ));
+        $url = Url::buildUrl(['path' => '0']);
         $this->assertSame('0', $url);
     }
 

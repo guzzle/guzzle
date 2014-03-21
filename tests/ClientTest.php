@@ -25,9 +25,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testUsesDefaultDefaultOptions()
     {
         $client = new Client();
-        $this->assertTrue($client->getConfig('defaults/allow_redirects'));
-        $this->assertTrue($client->getConfig('defaults/exceptions'));
-        $this->assertContains('cacert.pem', $client->getConfig('defaults/verify'));
+        $this->assertTrue($client->getDefaultValue('allow_redirects'));
+        $this->assertTrue($client->getDefaultValue('exceptions'));
+        $this->assertContains('cacert.pem', $client->getDefaultValue('verify'));
     }
 
     public function testUsesProvidedDefaultOptions()
@@ -38,24 +38,24 @@ class ClientTest extends \PHPUnit_Framework_TestCase
                 'query' => ['foo' => 'bar']
             ]
         ]);
-        $this->assertFalse($client->getConfig('defaults/allow_redirects'));
-        $this->assertTrue($client->getConfig('defaults/exceptions'));
-        $this->assertContains('cacert.pem', $client->getConfig('defaults/verify'));
-        $this->assertEquals(['foo' => 'bar'], $client->getConfig('defaults/query'));
+        $this->assertFalse($client->getDefaultValue('allow_redirects'));
+        $this->assertTrue($client->getDefaultValue('exceptions'));
+        $this->assertContains('cacert.pem', $client->getDefaultValue('verify'));
+        $this->assertEquals(['foo' => 'bar'], $client->getDefaultValue('query'));
     }
 
     public function testCanSpecifyBaseUrl()
     {
-        $this->assertEquals(null, (new Client())->getConfig('base_url'));
+        $this->assertSame('', (new Client())->getBaseUrl());
         $this->assertEquals('http://foo', (new Client([
             'base_url' => 'http://foo'
-        ]))->getConfig('base_url'));
+        ]))->getBaseUrl());
     }
 
     public function testCanSpecifyBaseUrlUriTemplate()
     {
         $client = new Client(['base_url' => ['http://foo.com/{var}/', ['var' => 'baz']]]);
-        $this->assertEquals('http://foo.com/baz/', $client->getConfig('base_url'));
+        $this->assertEquals('http://foo.com/baz/', $client->getBaseUrl());
     }
 
     public function testClientUsesDefaultAdapterWhenNoneIsSet()
@@ -106,14 +106,20 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testAddsDefaultUserAgentHeaderWithDefaultOptions()
     {
         $client = new Client(['defaults' => ['allow_redirects' => false]]);
-        $this->assertFalse($client->getConfig('defaults/allow_redirects'));
-        $this->assertEquals(['User-Agent' => Client::getDefaultUserAgent()], $client->getConfig('defaults/headers'));
+        $this->assertFalse($client->getDefaultValue('allow_redirects'));
+        $this->assertEquals(
+            ['User-Agent' => Client::getDefaultUserAgent()],
+            $client->getDefaultValue('headers')
+        );
     }
 
     public function testAddsDefaultUserAgentHeaderWithoutDefaultOptions()
     {
         $client = new Client();
-        $this->assertEquals(['User-Agent' => Client::getDefaultUserAgent()], $client->getConfig('defaults/headers'));
+        $this->assertEquals(
+            ['User-Agent' => Client::getDefaultUserAgent()],
+            $client->getDefaultValue('headers')
+        );
     }
 
     private function getRequestClient()
@@ -344,13 +350,12 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client->get('http://httpbin.org');
     }
 
-    public function testCanSetConfigValues()
+    public function testCanSetDefaultValues()
     {
         $client = new Client(['foo' => 'bar']);
-        $client->setConfig('foo', 'baz');
-        $client->setConfig('defaults/headers/foo', 'bar');
-        $this->assertEquals('baz', $client->getConfig('foo'));
-        $this->assertEquals('bar', $client->getConfig('defaults/headers/foo'));
+        $client->setDefaultValue('headers/foo', 'bar');
+        $this->assertNull($client->getDefaultValue('foo'));
+        $this->assertEquals('bar', $client->getDefaultValue('headers/foo'));
     }
 
     public function testSendsAllInParallel()
@@ -375,15 +380,6 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('GET', $requests);
         $this->assertContains('POST', $requests);
         $this->assertContains('PUT', $requests);
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testEnsuresDefaultsIsAnArray()
-    {
-        $client = new Client();
-        $client->setConfig('defaults', 'foo');
     }
 
     public function testCanSetCustomParallelAdapter()
