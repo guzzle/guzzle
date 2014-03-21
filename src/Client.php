@@ -106,7 +106,7 @@ class Client implements ClientInterface
         );
     }
 
-    public function getDefaults($keyOrPath = null)
+    public function getDefaultValue($keyOrPath = null)
     {
         return $keyOrPath === null
             ? $this->defaults

@@ -151,7 +151,7 @@ interface ClientInterface extends HasEmitterInterface
      *
      * @return mixed
      */
-    public function getDefaults($keyOrPath = null);
+    public function getDefaultValue($keyOrPath = null);
 
     /**
      * Set a default request option on the client so that any request created

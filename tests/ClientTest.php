@@ -25,9 +25,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testUsesDefaultDefaultOptions()
     {
         $client = new Client();
-        $this->assertTrue($client->getDefaults('allow_redirects'));
-        $this->assertTrue($client->getDefaults('exceptions'));
-        $this->assertContains('cacert.pem', $client->getDefaults('verify'));
+        $this->assertTrue($client->getDefaultValue('allow_redirects'));
+        $this->assertTrue($client->getDefaultValue('exceptions'));
+        $this->assertContains('cacert.pem', $client->getDefaultValue('verify'));
     }
 
     public function testUsesProvidedDefaultOptions()
@@ -38,10 +38,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
                 'query' => ['foo' => 'bar']
             ]
         ]);
-        $this->assertFalse($client->getDefaults('allow_redirects'));
-        $this->assertTrue($client->getDefaults('exceptions'));
-        $this->assertContains('cacert.pem', $client->getDefaults('verify'));
-        $this->assertEquals(['foo' => 'bar'], $client->getDefaults('query'));
+        $this->assertFalse($client->getDefaultValue('allow_redirects'));
+        $this->assertTrue($client->getDefaultValue('exceptions'));
+        $this->assertContains('cacert.pem', $client->getDefaultValue('verify'));
+        $this->assertEquals(['foo' => 'bar'], $client->getDefaultValue('query'));
     }
 
     public function testCanSpecifyBaseUrl()
@@ -106,10 +106,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testAddsDefaultUserAgentHeaderWithDefaultOptions()
     {
         $client = new Client(['defaults' => ['allow_redirects' => false]]);
-        $this->assertFalse($client->getDefaults('allow_redirects'));
+        $this->assertFalse($client->getDefaultValue('allow_redirects'));
         $this->assertEquals(
             ['User-Agent' => Client::getDefaultUserAgent()],
-            $client->getDefaults('headers')
+            $client->getDefaultValue('headers')
         );
     }
 
@@ -118,7 +118,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client();
         $this->assertEquals(
             ['User-Agent' => Client::getDefaultUserAgent()],
-            $client->getDefaults('headers')
+            $client->getDefaultValue('headers')
         );
     }
 
@@ -354,8 +354,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $client = new Client(['foo' => 'bar']);
         $client->setDefaultValue('headers/foo', 'bar');
-        $this->assertNull($client->getDefaults('foo'));
-        $this->assertEquals('bar', $client->getDefaults('headers/foo'));
+        $this->assertNull($client->getDefaultValue('foo'));
+        $this->assertEquals('bar', $client->getDefaultValue('headers/foo'));
     }
 
     public function testSendsAllInParallel()
