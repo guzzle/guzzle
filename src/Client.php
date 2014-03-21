@@ -307,7 +307,7 @@ class Client implements ClientInterface
         }
     }
 
-    private function configureDefaults(&$config)
+    private function configureDefaults($config)
     {
         if (!isset($config['defaults'])) {
             $this->defaults = $this->getDefaultOptions();

@@ -145,7 +145,7 @@ interface ClientInterface extends HasEmitterInterface
      * Get default request options of the client.
      *
      * @param string|null $keyOrPath The Path to a particular default request
-     *     option to retrieve or pass null to retrive all default request
+     *     option to retrieve or pass null to retrieve all default request
      *     options. The syntax uses "/" to denote a path through nested PHP
      *     arrays. For example, "headers/content-type".
      *
@@ -158,7 +158,7 @@ interface ClientInterface extends HasEmitterInterface
      * by the client will use the provided default value unless overridden
      * explicitly when creating a request.
      *
-     * @param string|int|null $keyOrPath The Path to a particular configuration
+     * @param string|null $keyOrPath The Path to a particular configuration
      *     value to set. The syntax uses a path notation that allows you to
      *     specify nested configuration values (e.g., 'headers/content-type').
      * @param mixed $value Default request option value to set
