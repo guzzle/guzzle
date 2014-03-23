@@ -34,4 +34,8 @@ docs: .FORCE
 view-docs:
 	open docs/_build/html/index.html
 
+perf: start-server
+	php tests/perf.php
+	$(MAKE) stop-server
+
 .FORCE:

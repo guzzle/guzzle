@@ -125,6 +125,18 @@ class Server
         self::$started = false;
     }
 
+    public static function wait($maxTries = 3)
+    {
+        $tries = 0;
+        while (!self::isListening() && ++$tries < $maxTries) {
+            usleep(100000);
+        }
+
+        if (!self::isListening()) {
+            throw new \RuntimeException('Unable to contact node.js server');
+        }
+    }
+
     private static function start()
     {
         if (self::$started){
@@ -134,13 +146,7 @@ class Server
         if (!self::isListening()) {
             exec('node ' . __DIR__ . \DIRECTORY_SEPARATOR . 'server.js '
                 . self::$port . ' >> /tmp/server.log 2>&1 &');
-            $tries = 0;
-            while (!self::isListening() && ++$tries < 3) {
-                usleep(100000);
-            }
-            if (!self::isListening()) {
-                throw new \RuntimeException('Unable to contact node.js server');
-            }
+            self::wait();
         }
 
         self::$started = true;
