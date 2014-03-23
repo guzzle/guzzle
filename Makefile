@@ -1,4 +1,3 @@
-
 all: clean coverage docs
 
 list:
