@@ -1,13 +1,11 @@
-.idea
-.DS_STORE
-coverage
-guzzle.phar
 phpunit.xml
 composer.phar
 composer.lock
 composer-test.lock
 vendor/
 build/
+artifacts/
 docs/_build
 docs/*.pyc
-.subsplit
+.idea
+.DS_STORE
