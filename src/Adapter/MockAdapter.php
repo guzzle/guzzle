@@ -37,13 +37,21 @@ class MockAdapter implements AdapterInterface
     {
         RequestEvents::emitBefore($transaction);
         if (!$transaction->getResponse()) {
+
+            // Read the request body if it is present
+            if ($transaction->getRequest()->getBody()) {
+                $transaction->getRequest()->getBody()->__toString();
+            }
+
             $response = is_callable($this->response)
                 ? call_user_func($this->response, $transaction)
                 : $this->response;
             if (!$response instanceof ResponseInterface) {
                 throw new \RuntimeException('Invalid mocked response');
             }
+
             $transaction->setResponse($response);
+            RequestEvents::emitHeaders($transaction);
             RequestEvents::emitComplete($transaction);
         }
 
