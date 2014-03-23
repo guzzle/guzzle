@@ -59,6 +59,9 @@ layer to add capabilities to the client.
 `OAuth Subscriber <https://github.com/guzzle/oauth-subscriber>`_
     Signs requests using OAuth 1.0.
 
+`Progress Subscriber <https://github.com/guzzle/progress-subscriber>`_
+    Emits progress events when uploading and downloading data.
+
 `Cache Subscriber <https://github.com/guzzle/cache-subscriber>`_
     Implements a private transparent proxy cache that caches HTTP responses.
 
