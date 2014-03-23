@@ -2,8 +2,6 @@
 
 namespace GuzzleHttp\Tests\Adapter;
 
-require_once __DIR__ . '/../Server.php';
-
 use GuzzleHttp\Adapter\StreamAdapter;
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\ErrorEvent;
@@ -17,26 +15,14 @@ use GuzzleHttp\Tests\Server;
  */
 class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 {
-    /** @var \GuzzleHttp\Tests\Server */
-    static $server;
-
-    public static function setUpBeforeClass()
-    {
-        self::$server = new Server();
-        self::$server->start();
-    }
-
-    public static function tearDownAfterClass()
-    {
-        self::$server->stop();
-    }
-
     public function testReturnsResponseForSuccessfulRequest()
     {
-        self::$server->flush();
-        self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 2\r\n\r\nhi");
+        Server::flush();
+        Server::enqueue(
+            "HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 2\r\n\r\nhi"
+        );
         $client = new Client([
-            'base_url' => self::$server->getUrl(),
+            'base_url' => Server::$url,
             'adapter' => new StreamAdapter(new MessageFactory())
         ]);
         $response = $client->get('/', ['headers' => ['Foo' => 'Bar']]);
@@ -45,7 +31,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Bar', $response->getHeader('Foo'));
         $this->assertEquals('2', $response->getHeader('Content-Length'));
         $this->assertEquals('hi', $response->getBody());
-        $sent = self::$server->getReceivedRequests(true)[0];
+        $sent = Server::received(true)[0];
         $this->assertEquals('GET', $sent->getMethod());
         $this->assertEquals('/', $sent->getResource());
         $this->assertEquals('127.0.0.1:8124', $sent->getHeader('host'));
@@ -59,7 +45,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
      */
     public function testThrowsExceptionsCaughtDuringTransfer()
     {
-        self::$server->flush();
+        Server::flush();
         $client = new Client([
             'adapter' => new StreamAdapter(new MessageFactory()),
         ]);
@@ -75,7 +61,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
      */
     public function testEnsuresTheHttpProtocol()
     {
-        self::$server->flush();
+        Server::flush();
         $client = new Client([
             'adapter' => new StreamAdapter(new MessageFactory()),
         ]);
@@ -84,9 +70,11 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testCanHandleExceptionsUsingEvents()
     {
-        self::$server->flush();
-        $client = new Client(['adapter' => new StreamAdapter(new MessageFactory())]);
-        $request = $client->createRequest('GET', self::$server->getUrl());
+        Server::flush();
+        $client = new Client([
+            'adapter' => new StreamAdapter(new MessageFactory())
+        ]);
+        $request = $client->createRequest('GET', Server::$url);
         $mockResponse = new Response(200);
         $request->getEmitter()->on(
             'error',
@@ -100,10 +88,12 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
     public function testEmitsAfterSendEvent()
     {
         $ee = null;
-        self::$server->flush();
-        self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
+        Server::flush();
+        Server::enqueue(
+            "HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there"
+        );
         $client = new Client(['adapter' => new StreamAdapter(new MessageFactory())]);
-        $request = $client->createRequest('GET', self::$server->getUrl());
+        $request = $client->createRequest('GET', Server::$url);
         $request->getEmitter()->on('complete', function ($e) use (&$ee) {
             $ee = $e;
         });
@@ -115,10 +105,12 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testStreamAttributeKeepsStreamOpen()
     {
-        self::$server->flush();
-        self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
+        Server::flush();
+        Server::enqueue(
+            "HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there"
+        );
         $client = new Client([
-            'base_url' => self::$server->getUrl(),
+            'base_url' => Server::$url,
             'adapter' => new StreamAdapter(new MessageFactory())
         ]);
         $response = $client->put('/foo', [
@@ -132,11 +124,11 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         $body = $response->getBody();
         $this->assertEquals('http', $body->getMetadata()['wrapper_type']);
         $this->assertEquals(8, $body->getMetadata()['unread_bytes']);
-        $this->assertEquals(self::$server->getUrl() . 'foo', $body->getMetadata()['uri']);
+        $this->assertEquals(Server::$url . 'foo', $body->getMetadata()['uri']);
         $this->assertEquals('hi', $body->read(2));
         $body->close();
 
-        $sent = self::$server->getReceivedRequests(true)[0];
+        $sent = Server::received(true)[0];
         $this->assertEquals('PUT', $sent->getMethod());
         $this->assertEquals('/foo', $sent->getResource());
         $this->assertEquals('127.0.0.1:8124', $sent->getHeader('host'));
@@ -146,10 +138,10 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testDrainsResponseIntoTempStream()
     {
-        self::$server->flush();
-        self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
+        Server::flush();
+        Server::enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
         $client = new Client([
-            'base_url' => self::$server->getUrl(),
+            'base_url' => Server::$url,
             'adapter' => new StreamAdapter(new MessageFactory())
         ]);
         $response = $client->get('/');
@@ -162,10 +154,10 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
     public function testDrainsResponseIntoSaveToBody()
     {
         $r = fopen('php://temp', 'r+');
-        self::$server->flush();
-        self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
+        Server::flush();
+        Server::enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
         $client = new Client([
-            'base_url' => self::$server->getUrl(),
+            'base_url' => Server::$url,
             'adapter' => new StreamAdapter(new MessageFactory())
         ]);
         $response = $client->get('/', ['save_to' => $r]);
@@ -179,10 +171,10 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
     public function testDrainsResponseIntoSaveToBodyAtPath()
     {
         $tmpfname = tempnam('/tmp', 'save_to_path');
-        self::$server->flush();
-        self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
+        Server::flush();
+        Server::enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
         $client = new Client([
-            'base_url' => self::$server->getUrl(),
+            'base_url' => Server::$url,
             'adapter' => new StreamAdapter(new MessageFactory())
         ]);
         $response = $client->get('/', ['save_to' => $tmpfname]);
@@ -195,10 +187,10 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testAddsGzipFilterIfAcceptHeaderIsPresent()
     {
-        self::$server->flush();
-        self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
+        Server::flush();
+        Server::enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
         $client = new Client([
-            'base_url' => self::$server->getUrl(),
+            'base_url' => Server::$url,
             'adapter' => new StreamAdapter(new MessageFactory())
         ]);
         $response = $client->get('/', [
@@ -219,10 +211,10 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 
     protected function getSendResult(array $opts)
     {
-        self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
+        Server::enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
         $client = new Client(['adapter' => new StreamAdapter(new MessageFactory())]);
 
-        return $client->get(self::$server->getUrl(), $opts);
+        return $client->get(Server::$url, $opts);
     }
 
     public function testAddsProxy()
@@ -247,17 +239,17 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
     {
         (new Client([
             'adapter' => new StreamAdapter(new MessageFactory()),
-            'base_url' => self::$server->getUrl(),
+            'base_url' => Server::$url,
             'defaults' => ['verify' => '/does/not/exist']
         ]))->get('/');
     }
 
     public function testVerifyCanBeDisabled()
     {
-        self::$server->enqueue("HTTP/1.1 200\r\nContent-Length: 0\r\n\r\n");
+        Server::enqueue("HTTP/1.1 200\r\nContent-Length: 0\r\n\r\n");
         (new Client([
             'adapter' => new StreamAdapter(new MessageFactory()),
-            'base_url' => self::$server->getUrl(),
+            'base_url' => Server::$url,
             'defaults' => ['verify' => false]
         ]))->get('/');
     }
@@ -281,7 +273,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
     {
         (new Client([
             'adapter' => new StreamAdapter(new MessageFactory()),
-            'base_url' => self::$server->getUrl(),
+            'base_url' => Server::$url,
             'defaults' => ['cert' => '/does/not/exist']
         ]))->get('/');
     }
@@ -298,10 +290,10 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
     public function testDebugAttributeWritesStreamInfoToTempBufferByDefault()
     {
 
-        self::$server->flush();
-        self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
+        Server::flush();
+        Server::enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
         $client = new Client([
-            'base_url' => self::$server->getUrl(),
+            'base_url' => Server::$url,
             'adapter' => new StreamAdapter(new MessageFactory())
         ]);
         ob_start();
@@ -315,10 +307,10 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
     public function testDebugAttributeWritesStreamInfoToBuffer()
     {
         $buffer = fopen('php://temp', 'r+');
-        self::$server->flush();
-        self::$server->enqueue("HTTP/1.1 200 OK\r\nContent-Length: 8\r\nContent-Type: text/plain\r\n\r\nhi there");
+        Server::flush();
+        Server::enqueue("HTTP/1.1 200 OK\r\nContent-Length: 8\r\nContent-Type: text/plain\r\n\r\nhi there");
         $client = new Client([
-            'base_url' => self::$server->getUrl(),
+            'base_url' => Server::$url,
             'adapter' => new StreamAdapter(new MessageFactory())
         ]);
         $client->get('/', ['debug' => $buffer]);
@@ -332,7 +324,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testAddsProxyByProtocol()
     {
-        $url = str_replace('http', 'tcp', self::$server->getUrl());
+        $url = str_replace('http', 'tcp', Server::$url);
         $body = $this->getSendResult(['stream' => true, 'proxy' => ['http' => $url]])->getBody();
         $opts = stream_context_get_options($this->getStreamFromBody($body));
         $this->assertEquals($url, $opts['http']['proxy']);

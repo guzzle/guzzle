@@ -9,10 +9,10 @@ use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\ErrorEvent;
-use GuzzleHttp\Event\HeadersEvent;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Request;
+use GuzzleHttp\Tests\Server;
 
 /**
  * @covers GuzzleHttp\Adapter\Curl\MultiAdapter
@@ -26,9 +26,9 @@ class MultiAdapterTest extends AbstractCurl
 
     public function testSendsSingleRequest()
     {
-        self::$server->flush();
-        self::$server->enqueue("HTTP/1.1 200 OK\r\nFoo: bar\r\nContent-Length: 0\r\n\r\n");
-        $t = new Transaction(new Client(), new Request('GET', self::$server->getUrl()));
+        Server::flush();
+        Server::enqueue("HTTP/1.1 200 OK\r\nFoo: bar\r\nContent-Length: 0\r\n\r\n");
+        $t = new Transaction(new Client(), new Request('GET', Server::$url));
         $a = new MultiAdapter(new MessageFactory());
         $response = $a->send($t);
         $this->assertEquals(200, $response->getStatusCode());
@@ -77,18 +77,18 @@ class MultiAdapterTest extends AbstractCurl
     public function testSendsParallelRequestsFromQueue()
     {
         $c = new Client();
-        self::$server->flush();
-        self::$server->enqueue([
+        Server::flush();
+        Server::enqueue([
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
         ]);
         $transactions = [
-            new Transaction($c, new Request('GET', self::$server->getUrl())),
-            new Transaction($c, new Request('PUT', self::$server->getUrl())),
-            new Transaction($c, new Request('HEAD', self::$server->getUrl())),
-            new Transaction($c, new Request('GET', self::$server->getUrl()))
+            new Transaction($c, new Request('GET', Server::$url)),
+            new Transaction($c, new Request('PUT', Server::$url)),
+            new Transaction($c, new Request('HEAD', Server::$url)),
+            new Transaction($c, new Request('GET', Server::$url))
         ];
         $a = new MultiAdapter(new MessageFactory());
         $a->sendAll(new \ArrayIterator($transactions), 2);
@@ -104,11 +104,11 @@ class MultiAdapterTest extends AbstractCurl
         $a = new MultiAdapter(new MessageFactory());
         $c = new Client([
             'adapter'  => $a,
-            'base_url' => self::$server->getUrl()
+            'base_url' => Server::$url
         ]);
 
-        self::$server->flush();
-        self::$server->enqueue([
+        Server::flush();
+        Server::enqueue([
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
@@ -163,9 +163,9 @@ class MultiAdapterTest extends AbstractCurl
 
     public function testThrowsAndReleasesWhenErrorDuringCompleteEvent()
     {
-        self::$server->flush();
-        self::$server->enqueue("HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\n\r\n");
-        $request = new Request('GET', self::$server->getUrl());
+        Server::flush();
+        Server::enqueue("HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\n\r\n");
+        $request = new Request('GET', Server::$url);
         $request->getEmitter()->on('complete', function (CompleteEvent $e) {
             throw new RequestException('foo', $e->getRequest());
         });

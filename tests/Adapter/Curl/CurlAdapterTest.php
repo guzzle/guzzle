@@ -13,6 +13,7 @@ use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Message\Response;
+use GuzzleHttp\Tests\Server;
 
 /**
  * @covers GuzzleHttp\Adapter\Curl\CurlAdapter
@@ -90,16 +91,15 @@ class CurlAdapterTest extends AbstractCurl
 
     public function testReleasesAdditionalEasyHandles()
     {
-        $server = self::$server;
-        $server->flush();
-        $server->enqueue([
+        Server::flush();
+        Server::enqueue([
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
         ]);
         $a = new CurlAdapter(new MessageFactory(), ['max_handles' => 2]);
-        $client = new Client(['base_url' => $server->getUrl(), 'adapter' => $a]);
+        $client = new Client(['base_url' => Server::$url, 'adapter' => $a]);
         $request = $client->createRequest('GET', '/', [
             'events' => [
                 'headers' => function (HeadersEvent $e) use ($client) {

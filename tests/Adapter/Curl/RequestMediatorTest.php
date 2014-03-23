@@ -2,8 +2,6 @@
 
 namespace GuzzleHttp\Tests\Adapter\Curl;
 
-require_once __DIR__ . '/../../Server.php';
-
 use GuzzleHttp\Adapter\Curl\MultiAdapter;
 use GuzzleHttp\Adapter\Curl\RequestMediator;
 use GuzzleHttp\Adapter\Transaction;
@@ -20,20 +18,6 @@ use GuzzleHttp\Tests\Server;
  */
 class RequestMediatorTest extends \PHPUnit_Framework_TestCase
 {
-    /** @var \GuzzleHttp\Tests\Server */
-    static $server;
-
-    public static function setUpBeforeClass()
-    {
-        self::$server = new Server();
-        self::$server->start();
-    }
-
-    public static function tearDownAfterClass()
-    {
-        self::$server->stop();
-    }
-
     public function testSetsResponseBodyForDownload()
     {
         $body = Stream::factory();
@@ -114,10 +98,10 @@ class RequestMediatorTest extends \PHPUnit_Framework_TestCase
 
     public function testEmitsHeadersEventForHeadRequest()
     {
-        self::$server->enqueue(["HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nOK"]);
+        Server::enqueue(["HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nOK"]);
         $ee = null;
         $client = new Client(['adapter' => new MultiAdapter(new MessageFactory())]);
-        $client->head(self::$server->getUrl(), [
+        $client->head(Server::$url, [
             'events' => [
                 'headers' => function (HeadersEvent $e) use (&$ee) {
                     $ee = $e;

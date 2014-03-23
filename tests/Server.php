@@ -2,7 +2,6 @@
 
 namespace GuzzleHttp\Tests;
 
-use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Client;
@@ -13,7 +12,7 @@ use GuzzleHttp\Client;
  *
  * Queued responses will be served to requests using a FIFO order.  All requests
  * received by the server are stored on the node.js server and can be retrieved
- * by calling {@see Server::getReceivedRequests()}.
+ * by calling {@see Server::received()}.
  *
  * Mock responses that don't require data to be transmitted over HTTP a great
  * for testing.  Mock response, however, cannot test the actual sending of an
@@ -23,40 +22,22 @@ use GuzzleHttp\Client;
  */
 class Server
 {
-    const DEFAULT_PORT = 8124;
     const REQUEST_DELIMITER = "\n----[request]\n";
 
-    /** @var int Port that the server will listen on */
-    private $port;
-
-    /** @var bool Is the server running */
-    private $running = false;
-
     /** @var Client */
-    private $client;
+    private static $client;
 
-    /** @var MessageFactory */
-    private $factory;
-
-    /**
-     * Create a new scripted server
-     *
-     * @param int $port Port to listen on (defaults to 8124)
-     */
-    public function __construct($port = null)
-    {
-        $this->port = $port ?: self::DEFAULT_PORT;
-        $this->client = new Client(['base_url' => $this->getUrl()]);
-        $this->factory = new MessageFactory();
-    }
+    public static $started;
+    public static $url = 'http://127.0.0.1:8124/';
+    public static $port = 8124;
 
     /**
      * Flush the received requests from the server
      * @throws \RuntimeException
      */
-    public function flush()
+    public static function flush()
     {
-        $this->client->delete('guzzle-server/requests');
+        self::$started && self::$client->delete('guzzle-server/requests');
     }
 
     /**
@@ -66,68 +47,42 @@ class Server
      * on the server will return queued responses in FIFO order.
      *
      * @param array|Response $responses A single or array of Responses to queue
-     * @throws BadResponseException
+     * @throws \Exception
      */
-    public function enqueue($responses)
+    public static function enqueue($responses)
     {
+        static $factory;
+        if (!$factory) {
+            $factory = new MessageFactory();
+        }
+
+        self::start();
+
         $data = [];
         foreach ((array) $responses as $response) {
 
             // Create the response object from a string
             if (is_string($response)) {
-                $response = $this->factory->fromMessage($response);
+                $response = $factory->fromMessage($response);
             } elseif (!($response instanceof Response)) {
-                throw new BadResponseException('Responses must be strings or implement Response');
+                throw new \Exception('Responses must be strings or Responses');
             }
+
+            $headers = array_map(function ($h) {
+                return implode(' ,', $h);
+            }, $response->getHeaders());
 
             $data[] = [
                 'statusCode'   => $response->getStatusCode(),
                 'reasonPhrase' => $response->getReasonPhrase(),
-                'headers'      => array_map(function ($h) { return implode(' ,', $h); }, $response->getHeaders()),
+                'headers'      => $headers,
                 'body'         => (string) $response->getBody()
             ];
         }
 
-        $this->client->put('guzzle-server/responses', ['body' => json_encode($data)]);
-    }
-
-    /**
-     * Check if the server is running
-     *
-     * @return bool
-     */
-    public function isRunning()
-    {
-        if ($this->running) {
-            return true;
-        }
-
-        try {
-            $this->client->get('guzzle-server/perf', ['timeout' => 1]);
-            return $this->running = true;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
-
-    /**
-     * Get the URL to the server
-     *
-     * @return string
-     */
-    public function getUrl()
-    {
-        return 'http://127.0.0.1:' . $this->getPort() . '/';
-    }
-
-    /**
-     * Get the port that the server is listening on
-     *
-     * @return int
-     */
-    public function getPort()
-    {
-        return $this->port;
+        self::getClient()->put('guzzle-server/responses', [
+            'body' => json_encode($data)
+        ]);
     }
 
     /**
@@ -140,12 +95,16 @@ class Server
      * @return array
      * @throws \RuntimeException
      */
-    public function getReceivedRequests($hydrate = false)
+    public static function received($hydrate = false)
     {
-        $response = $this->client->get('guzzle-server/requests');
+        if (!self::$started) {
+            return [];
+        }
+
+        $response = self::getClient()->get('guzzle-server/requests');
         $data = array_filter(explode(self::REQUEST_DELIMITER, (string) $response->getBody()));
         if ($hydrate) {
-            $factory = $this->factory;
+            $factory = new MessageFactory();
             $data = array_map(function($message) use ($factory) {
                 return $factory->fromMessage($message);
             }, $data);
@@ -155,35 +114,57 @@ class Server
     }
 
     /**
-     * Start running the node.js server in the background
+     * Stop running the node.js server
      */
-    public function start()
+    public static function stop()
     {
-        if (!$this->isRunning()) {
-            exec('node ' . __DIR__ . \DIRECTORY_SEPARATOR . 'server.js ' . $this->port . ' >> /tmp/server.log 2>&1 &');
-            // Wait at most 5 seconds for the server the setup before proceeding
-            $start = time();
-            while (!$this->isRunning() && time() - $start < 5) {
+        if (self::$started) {
+            self::getClient()->delete('guzzle-server');
+        }
+
+        self::$started = false;
+    }
+
+    private static function start()
+    {
+        if (self::$started){
+            return;
+        }
+
+        if (!self::isListening()) {
+            exec('node ' . __DIR__ . \DIRECTORY_SEPARATOR . 'server.js '
+                . self::$port . ' >> /tmp/server.log 2>&1 &');
+            $tries = 0;
+            while (!self::isListening() && ++$tries < 3) {
                 usleep(100000);
             }
-            if (!$this->running) {
-                throw new \RuntimeException(
-                    'Unable to contact server.js. Have you installed node.js v0.5.0+? node must be in your path.'
-                );
+            if (!self::isListening()) {
+                throw new \RuntimeException('Unable to contact node.js server');
             }
+        }
+
+        self::$started = true;
+    }
+
+    private static function isListening()
+    {
+        try {
+            self::getClient()->get('guzzle-server/perf', [
+                'connect_timeout' => 5,
+                'timeout'         => 5
+            ]);
+            return true;
+        } catch (\Exception $e) {
+            return false;
         }
     }
 
-    /**
-     * Stop running the node.js server
-     */
-    public function stop()
+    private static function getClient()
     {
-        if (!$this->isRunning()) {
-            return false;
+        if (!self::$client) {
+            self::$client = new Client(['base_url' => self::$url]);
         }
 
-        $this->running = false;
-        $this->client->delete('guzzle-server');
+        return self::$client;
     }
 }
