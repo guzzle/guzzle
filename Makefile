@@ -1,7 +1,7 @@
 all: clean coverage docs
 
 list:
-	@sh -c "$(MAKE) -p .FORCE | awk -F':' '/^[a-zA-Z0-9][^\$$#\/\\t=]*:([^=]|$$)/ {split(\$$1,A,/ /);for(i in A)print A[i]}' | grep -v '__\$$' | sort"
+	@sh -c "$(MAKE) -p .dummy | awk -F':' '/^[a-zA-Z0-9][^\$$#\/\\t=]*:([^=]|$$)/ {split(\$$1,A,/ /);for(i in A)print A[i]}' | grep -v '__\$$' | sort"
 
 start-server:
 	@ps aux | grep 'node tests/server.js' | grep -v grep > /dev/null \
@@ -27,7 +27,7 @@ view-coverage:
 clean:
 	rm -rf artifacts/*
 
-docs: .FORCE
+docs:
 	cd docs && make html && cd ..
 
 view-docs:
@@ -37,4 +37,5 @@ perf: start-server
 	php tests/perf.php
 	$(MAKE) stop-server
 
-.FORCE:
+.PHONY: docs
+.dummy:
