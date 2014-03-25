@@ -392,6 +392,14 @@ This event cannot be intercepted.
         }
     });
 
+.. note::
+
+    A response may or may not yet have a body associated with it. If a request
+    used a ``save_to`` request option, then the response will have a body.
+    Otherwise, the response will have no body but you are free to associate one
+    with the response. As an example, this is done in the
+    `progress subscriber <https://github.com/guzzle/progress-subscriber/blob/master/src/Progress.php>`_.
+
 .. _complete_event:
 
 complete
