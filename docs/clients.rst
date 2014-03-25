@@ -991,3 +991,16 @@ Requests emit lifecycle events when they are transferred. A client object has a
     // Outputs the request as a string because of the event
 
 See :doc:`events` for more information on the event system used in Guzzle.
+
+Environment Variables
+=====================
+
+Guzzle exposes a few environment variables that can be used to customize the
+behavior of the library.
+
+``GUZZLE_CURL_SELECT_TIMEOUT``
+    Controls the duration in seconds that ``GuzzleHttp\Adapter\Curl\MultiAdapter``
+    will use when selecting handles using ``curl_multi_select()``. Some systems
+    have issues with PHP's implementation of ``curl_multi_select()`` where
+    calling this function always results in waiting for the maximum duration of
+    the timeout.

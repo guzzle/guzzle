@@ -35,6 +35,21 @@ class MultiAdapterTest extends AbstractCurl
         $this->assertEquals('bar', $response->getHeader('Foo'));
     }
 
+    public function testCanSetSelectTimeout()
+    {
+        $current = isset($_SERVER[MultiAdapter::ENV_SELECT_TIMEOUT])
+            ? $_SERVER[MultiAdapter::ENV_SELECT_TIMEOUT]: null;
+        unset($_SERVER[MultiAdapter::ENV_SELECT_TIMEOUT]);
+        $a = new MultiAdapter(new MessageFactory());
+        $this->assertEquals(1, $this->readAttribute($a, 'selectTimeout'));
+        $a = new MultiAdapter(new MessageFactory(), ['select_timeout' => 10]);
+        $this->assertEquals(10, $this->readAttribute($a, 'selectTimeout'));
+        $_SERVER[MultiAdapter::ENV_SELECT_TIMEOUT] = 2;
+        $a = new MultiAdapter(new MessageFactory());
+        $this->assertEquals(2, $this->readAttribute($a, 'selectTimeout'));
+        $_SERVER[MultiAdapter::ENV_SELECT_TIMEOUT] = $current;
+    }
+
     /**
      * @expectedException \GuzzleHttp\Exception\AdapterException
      * @expectedExceptionMessage cURL error -2:

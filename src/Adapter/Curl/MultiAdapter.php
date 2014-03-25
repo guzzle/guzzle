@@ -16,10 +16,15 @@ use GuzzleHttp\Message\MessageFactoryInterface;
  * When using the CurlAdapter, custom curl options can be specified as an
  * associative array of curl option constants mapping to values in the
  * **curl** key of a request's configuration options.
+ *
+ * In addition to being able to supply configuration options via the curl
+ * request config, you can also specify the select_timeout variable using the
+ * `GUZZLE_CURL_SELECT_TIMEOUT` environment variable.
  */
 class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
 {
     const ERROR_STR = 'See http://curl.haxx.se/libcurl/c/libcurl-errors.html for an explanation of cURL errors';
+    const ENV_SELECT_TIMEOUT = 'GUZZLE_CURL_SELECT_TIMEOUT';
 
     /** @var CurlFactory */
     private $curlFactory;
@@ -58,9 +63,14 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
         $this->curlFactory = isset($options['handle_factory'])
             ? $options['handle_factory']
             : new CurlFactory();
-        $this->selectTimeout = isset($options['select_timeout'])
-            ? $options['select_timeout']
-            : 1;
+
+        if (isset($options['select_timeout'])) {
+            $this->selectTimeout = $options['select_timeout'];
+        } elseif (isset($_SERVER[self::ENV_SELECT_TIMEOUT])) {
+            $this->selectTimeout = $_SERVER[self::ENV_SELECT_TIMEOUT];
+        } else {
+            $this->selectTimeout = 1;
+        }
     }
 
     public function __destruct()
