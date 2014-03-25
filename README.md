@@ -51,7 +51,7 @@ Next, update your project's composer.json file to include Guzzle:
 ```javascript
 {
     "require": {
-        "guzzlehttp/guzzle": "4.0.0-rc.1"
+        "guzzlehttp/guzzle": "4.0.*@RC"
     }
 }
 ```
