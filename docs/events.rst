@@ -196,7 +196,7 @@ priority of the listener (as shown in the ``before`` listener in the example).
             return [
                 'before'   => ['onBefore', 100], // Provide name and optional priority
                 'complete' => ['onComplete']
-            ]
+            ];
         }
 
         public function onBefore(BeforeEvent $event, $name, EmitterInterface $emitter)
