@@ -44,6 +44,7 @@ User guide
     events
     streams
     adapters
+    testing
     faq
 
 HTTP Components
