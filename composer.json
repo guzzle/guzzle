@@ -16,7 +16,7 @@
 
     "require": {
         "php": ">=5.4.0",
-        "guzzlehttp/streams": "1.0.*@RC"
+        "guzzlehttp/streams": "1.*"
     },
 
     "autoload": {
@@ -34,7 +34,7 @@
 
     "extra": {
         "branch-alias": {
-            "dev-master": "4.0-dev"
+            "dev-master": "4.x-dev"
         }
     }
 }
