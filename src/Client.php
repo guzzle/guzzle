@@ -106,14 +106,14 @@ class Client implements ClientInterface
         );
     }
 
-    public function getDefaultValue($keyOrPath = null)
+    public function getDefaultOption($keyOrPath = null)
     {
         return $keyOrPath === null
             ? $this->defaults
             : \GuzzleHttp\get_path($this->defaults, $keyOrPath);
     }
 
-    public function setDefaultValue($keyOrPath, $value)
+    public function setDefaultOption($keyOrPath, $value)
     {
         \GuzzleHttp\set_path($this->defaults, $keyOrPath, $value);
     }

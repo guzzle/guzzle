@@ -25,9 +25,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testUsesDefaultDefaultOptions()
     {
         $client = new Client();
-        $this->assertTrue($client->getDefaultValue('allow_redirects'));
-        $this->assertTrue($client->getDefaultValue('exceptions'));
-        $this->assertContains('cacert.pem', $client->getDefaultValue('verify'));
+        $this->assertTrue($client->getDefaultOption('allow_redirects'));
+        $this->assertTrue($client->getDefaultOption('exceptions'));
+        $this->assertContains('cacert.pem', $client->getDefaultOption('verify'));
     }
 
     public function testUsesProvidedDefaultOptions()
@@ -38,10 +38,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
                 'query' => ['foo' => 'bar']
             ]
         ]);
-        $this->assertFalse($client->getDefaultValue('allow_redirects'));
-        $this->assertTrue($client->getDefaultValue('exceptions'));
-        $this->assertContains('cacert.pem', $client->getDefaultValue('verify'));
-        $this->assertEquals(['foo' => 'bar'], $client->getDefaultValue('query'));
+        $this->assertFalse($client->getDefaultOption('allow_redirects'));
+        $this->assertTrue($client->getDefaultOption('exceptions'));
+        $this->assertContains('cacert.pem', $client->getDefaultOption('verify'));
+        $this->assertEquals(['foo' => 'bar'], $client->getDefaultOption('query'));
     }
 
     public function testCanSpecifyBaseUrl()
@@ -106,10 +106,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testAddsDefaultUserAgentHeaderWithDefaultOptions()
     {
         $client = new Client(['defaults' => ['allow_redirects' => false]]);
-        $this->assertFalse($client->getDefaultValue('allow_redirects'));
+        $this->assertFalse($client->getDefaultOption('allow_redirects'));
         $this->assertEquals(
             ['User-Agent' => Client::getDefaultUserAgent()],
-            $client->getDefaultValue('headers')
+            $client->getDefaultOption('headers')
         );
     }
 
@@ -118,7 +118,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client();
         $this->assertEquals(
             ['User-Agent' => Client::getDefaultUserAgent()],
-            $client->getDefaultValue('headers')
+            $client->getDefaultOption('headers')
         );
     }
 
@@ -353,9 +353,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testCanSetDefaultValues()
     {
         $client = new Client(['foo' => 'bar']);
-        $client->setDefaultValue('headers/foo', 'bar');
-        $this->assertNull($client->getDefaultValue('foo'));
-        $this->assertEquals('bar', $client->getDefaultValue('headers/foo'));
+        $client->setDefaultOption('headers/foo', 'bar');
+        $this->assertNull($client->getDefaultOption('foo'));
+        $this->assertEquals('bar', $client->getDefaultOption('headers/foo'));
     }
 
     public function testSendsAllInParallel()
@@ -420,20 +420,20 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         unset($_SERVER['HTTPS_PROXY']);
 
         $client = new Client();
-        $this->assertNull($client->getDefaultValue('proxy'));
+        $this->assertNull($client->getDefaultOption('proxy'));
 
         $_SERVER['HTTP_PROXY'] = '127.0.0.1';
         $client = new Client();
         $this->assertEquals(
             ['http' => '127.0.0.1'],
-            $client->getDefaultValue('proxy')
+            $client->getDefaultOption('proxy')
         );
 
         $_SERVER['HTTPS_PROXY'] = '127.0.0.2';
         $client = new Client();
         $this->assertEquals(
             ['http' => '127.0.0.1', 'https' => '127.0.0.2'],
-            $client->getDefaultValue('proxy')
+            $client->getDefaultOption('proxy')
         );
 
         $_SERVER['HTTP_PROXY'] = $http;

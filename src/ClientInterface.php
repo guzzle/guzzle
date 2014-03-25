@@ -151,7 +151,7 @@ interface ClientInterface extends HasEmitterInterface
      *
      * @return mixed
      */
-    public function getDefaultValue($keyOrPath = null);
+    public function getDefaultOption($keyOrPath = null);
 
     /**
      * Set a default request option on the client so that any request created
@@ -163,7 +163,7 @@ interface ClientInterface extends HasEmitterInterface
      *     specify nested configuration values (e.g., 'headers/content-type').
      * @param mixed $value Default request option value to set
      */
-    public function setDefaultValue($keyOrPath, $value);
+    public function setDefaultOption($keyOrPath, $value);
 
     /**
      * Get the base URL of the client.
