@@ -1004,3 +1004,16 @@ behavior of the library.
     have issues with PHP's implementation of ``curl_multi_select()`` where
     calling this function always results in waiting for the maximum duration of
     the timeout.
+``HTTP_PROXY``
+    Defines the proxy to use when sending requests using the "http" protocol.
+``HTTP_PROXY``
+    Defines the proxy to use when sending requests using the "https": protocol.
+
+Relevant ini Settings
+---------------------
+
+Guzzle can utilize PHP ini settings when configuring clients.
+
+``openssl.cafile``
+    Specifies the path on disk to a CA file in PEM format to use when sending
+    requests over "https". See: https://wiki.php.net/rfc/tls-peer-verification#phpini_defaults

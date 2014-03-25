@@ -212,21 +212,30 @@ class Client implements ClientInterface
      */
     protected function getDefaultOptions()
     {
-        $verify =  __DIR__ . '/cacert.pem';
+        $settings = [
+            'allow_redirects' => true,
+            'exceptions'      => true,
+            'verify'          => __DIR__ . '/cacert.pem'
+        ];
 
         // Use the bundled cacert if it is a regular file, or set to true if
         // using a phar file (because curL and the stream wrapper can't read
         // cacerts from the phar stream wrapper). Favor the ini setting over
         // the system's cacert.
         if (substr(__FILE__, 0, 7) == 'phar://') {
-            $verify = ini_get('openssl.cafile') ?: true;
+            $settings['verify'] = ini_get('openssl.cafile') ?: true;
         }
 
-        return [
-            'allow_redirects' => true,
-            'exceptions'      => true,
-            'verify'          => $verify
-        ];
+        // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set
+        if (isset($_SERVER['HTTP_PROXY'])) {
+            $settings['proxy']['http'] = $_SERVER['HTTP_PROXY'];
+        }
+
+        if (isset($_SERVER['HTTPS_PROXY'])) {
+            $settings['proxy']['https'] = $_SERVER['HTTPS_PROXY'];
+        }
+
+        return $settings;
     }
 
     /**

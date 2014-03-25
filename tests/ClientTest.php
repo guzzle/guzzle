@@ -411,4 +411,32 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client();
         $client->getEventDispatcher();
     }
+
+    public function testUsesProxyEnvironmentVariables()
+    {
+        $http = isset($_SERVER['HTTP_PROXY']) ? $_SERVER['HTTP_PROXY'] : null;
+        $https = isset($_SERVER['HTTPS_PROXY']) ? $_SERVER['HTTPS_PROXY'] : null;
+        unset($_SERVER['HTTP_PROXY']);
+        unset($_SERVER['HTTPS_PROXY']);
+
+        $client = new Client();
+        $this->assertNull($client->getDefaultValue('proxy'));
+
+        $_SERVER['HTTP_PROXY'] = '127.0.0.1';
+        $client = new Client();
+        $this->assertEquals(
+            ['http' => '127.0.0.1'],
+            $client->getDefaultValue('proxy')
+        );
+
+        $_SERVER['HTTPS_PROXY'] = '127.0.0.2';
+        $client = new Client();
+        $this->assertEquals(
+            ['http' => '127.0.0.1', 'https' => '127.0.0.2'],
+            $client->getDefaultValue('proxy')
+        );
+
+        $_SERVER['HTTP_PROXY'] = $http;
+        $_SERVER['HTTPS_PROXY'] = $https;
+    }
 }
