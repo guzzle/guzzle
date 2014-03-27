@@ -10,6 +10,11 @@ trait HasEmitterTrait
     /** @var EmitterInterface */
     private $emitter;
 
+    public function addSubscriber(SubscriberInterface $subscriber)
+    {
+        $this->getEmitter()->attach($subscriber);
+    }
+
     public function getEmitter()
     {
         if (!$this->emitter) {
