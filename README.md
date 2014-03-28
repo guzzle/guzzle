@@ -7,7 +7,7 @@ Guzzle is a PHP HTTP client that makes it easy to work with HTTP/1.1 and takes
 the pain out of consuming web services.
 
 ```php
-$client = new GuzzleHttp\Client();
+$client = new Guzzle\Http\Client();
 $response = $client->get('http://guzzlephp.org');
 $res = $client->get('https://api.github.com/user', ['auth' =>  ['user', 'pass']]);
 echo $res->getStatusCode();
