@@ -2,6 +2,9 @@
 
 namespace GuzzleHttp;
 
+use GuzzleHttp\Event\CompleteEvent;
+use GuzzleHttp\Event\ErrorEvent;
+use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Message\ResponseInterface;
 use GuzzleHttp\UriTemplate;
 
@@ -113,6 +116,65 @@ function patch($url, array $options = [])
 function options($url, array $options = [])
 {
     return request('OPTIONS', $url, $options);
+}
+
+/**
+ * Convenience method for sending multiple requests in parallel and retrieving
+ * a hash map of requests to response objects or RequestException objects.
+ *
+ * Note: This method keeps every request and response in memory, and as such is
+ * NOT recommended when sending a large number or an indeterminable number of
+ * requests in parallel.
+ *
+ * @param ClientInterface $client   Client used to send the requests
+ * @param array|\Iterator $requests Requests to send in parallel
+ * @param array           $options  Passes through the options available in
+ *                                  {@see GuzzleHttp\ClientInterface::sendAll()}
+ * @return \SplObjectStorage Requests are the key and each value is a
+ *     {@see GuzzleHttp\Message\ResponseInterface} if the request succeeded or
+ *     a {@see GuzzleHttp\Exception\RequestException} if it failed.
+ * @throws \InvalidArgumentException if the event format is incorrect.
+ */
+function batch(ClientInterface $client, $requests, array $options = [])
+{
+    $hash = new \SplObjectStorage();
+    foreach ($requests as $request) {
+        $hash->attach($request);
+    }
+
+    $handler = [
+        'priority' => RequestEvents::EARLY,
+        'once' => true,
+        'fn' => function ($e) use ($hash) { $hash[$e->getRequest()] = $e; }
+    ];
+
+    // Merge the necessary complete and error events to the event listeners so
+    // that as each request succeeds or fails, it is added to the result hash.
+    foreach (['complete', 'error'] as $name) {
+        if (!isset($options[$name])) {
+            $options[$name] = $handler;
+        } elseif (is_callable($options[$name])) {
+            $options[$name] = [['fn' => $options[$name]], $handler];
+        } elseif (is_array($options[$name])) {
+            $options[$name][] = $handler;
+        } else {
+            throw new \InvalidArgumentException('Invalid event format');
+        }
+    }
+
+    // Send the requests in parallel and aggregate the results.
+    $client->sendAll($requests, $options);
+
+    // Update the received value for any of the intercepted requests.
+    foreach ($hash as $request) {
+        if ($hash[$request] instanceof CompleteEvent) {
+            $hash[$request] = $hash[$request]->getResponse();
+        } elseif ($hash[$request] instanceof ErrorEvent) {
+            $hash[$request] = $hash[$request]->getException();
+        }
+    }
+
+    return $hash;
 }
 
 /**

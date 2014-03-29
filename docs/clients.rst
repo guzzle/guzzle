@@ -188,25 +188,25 @@ The ``sendAll()`` method accepts the following associative array of options:
 
 - **parallel**: Integer representing the maximum number of requests that are
   allowed to be sent in parallel.
-- **before**: Callable or array representing an event listener to add to each
-  request's :ref:`before_event` event. You can provide a callable (invoked at
-  priority 0), or an array containing a callable in the first index and an
-  event priority in the second index.
-- **complete**: Callable or array representing an event listener to add to each
-  request's :ref:`complete_event` event. This option has the same structure as
-  the *before* option.
-- **error**: Callable or array representing an event listener to add to each
-  request's :ref:`error_event` event. This option has the same structure as
-  the *before* option.
+- **before**: Callable or array representing the event listeners to add to
+  each request's :ref:`before_event` event.
+- **complete**: Callable or array representing the event listeners to add to
+  each request's :ref:`complete_event` event.
+- **error**: Callable or array representing the event listeners to add to
+  each request's :ref:`error_event` event.
 
-You can work with the responses for each request as the are received using the
-events emitted from a request. Here we are using the ``complete`` event and
-printing out each request URL and response body.
+The "before", "complete", and "error" event options accept a callable or an
+array of associative arrays where each associative array contains a "fn" key
+with a callable value, an optional "priority" key representing the event
+priority (with a default value is 0), and an optional "once" key that can be
+set to true so that the event listener will be removed from the request after
+it is first triggered.
 
 .. code-block:: php
 
     use GuzzleHttp\Event\CompleteEvent;
 
+    // Add a single event listener using a callable.
     $client->sendAll($requests, [
         'complete' => function (CompleteEvent $event) {
             echo 'Completed request to ' . $event->getRequest()->getUrl() . "\n";
@@ -214,20 +214,40 @@ printing out each request URL and response body.
         }
     ]);
 
-Asynchronous Error Handling
----------------------------
+    // The above is equivalent to the following, but the following structure
+    // allows you to add multiple event listeners to the same event name.
+    $client->sendAll($requests, [
+        'complete' => [
+            [
+                'fn'       => function (CompleteEvent $event) { /* ... */ },
+                'priority' => 0,    // Optional
+                'once'     => false // Optional
+            ]
+        ]
+    ]);
 
-You can handle errors when transferring requests in parallel using the event
-system.
+Asynchronous Response Handling
+------------------------------
+
+When sending requests in parallel, the request/response/error lifecycle must be
+handled asynchronously. This means that you give the ``sendAll()`` method
+multiple requests and handle the response or errors that is associated with the
+request using event callbacks.
 
 .. code-block:: php
 
     use GuzzleHttp\Event\ErrorEvent;
 
     $client->sendAll($requests, [
+        'complete' => function (CompleteEvent $event) {
+            echo 'Completed request to ' . $event->getRequest()->getUrl() . "\n";
+            echo 'Response: ' . $event->getResponse()->getBody() . "\n\n";
+            // Do something with the completion of the request...
+        },
         'error' => function (ErrorEvent $event) {
             echo 'Request failed: ' . $event->getRequest()->getUrl() . "\n"
             echo $event->getException();
+            // Do something to handle the error...
         }
     ]);
 
@@ -241,8 +261,9 @@ for more information.
 Handling Errors After Transferring
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here we are adding each failed request to an array that we can use to process
-errors later.
+It sometimes might be easier to handle all of the errors that occurred during a
+transfer after all of the requests have been sent. Here we are adding each
+failed request to an array that we can use to process errors later.
 
 .. code-block:: php
 
@@ -256,13 +277,15 @@ errors later.
     ]);
 
     foreach ($errors as $error) {
-        // ...
+        // Handle the error...
     }
 
 Throwing Errors Immediately
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can throw exceptions immediately as they are encountered.
+It sometimes is useful to throw exceptions immediately when the occur. The
+following exmaple shows how to use an event listener to throw exceptions
+immeditaley and prevent subsequent requests from being sent.
 
 .. code-block:: php
 
@@ -275,6 +298,45 @@ You can throw exceptions immediately as they are encountered.
     ]);
 
 .. _request-options:
+
+Batching Requests
+-----------------
+
+Sometimes you just want to send a few requests in parallel and then process
+the results all at once after they've sent. Guzzle provides a convenience
+function ``GuzzleHttp\batch()`` that makes this very simple:
+
+.. code-block:: php
+
+    $client = new GuzzleHttp\Client();
+
+    $requests = [
+        $client->createRequest('GET', 'http://httpbin.org/get'),
+        $client->createRequest('HEAD', 'http://httpbin.org/get'),
+        $client->createRequest('PUT', 'http://httpbin.org/put'),
+    ];
+
+    $results = GuzzleHttp\batch($client, $requests);
+
+    // Results is an SplObjectStorage object where each request is a key
+    foreach ($results as $request) {
+        echo $request->getUrl() . "\n";
+        // Get the result (either a ResponseInterface or RequestException)
+        $result = $results[$request];
+        if ($result instanceof ResponseInterface) {
+            // Interact with the response directly
+            echo $result->getStatusCode();
+        } else {
+            // Get the exception message
+            echo $result->getMessage();
+        }
+    }
+
+``GuzzleHttp\batch()`` accepts an optional associative array of options in the
+third argument that allows you to specify the 'before', 'complete' and 'error'
+events as well as specify the maximum number of request to send in parallel
+using the 'parallel' option key. This options array is the exact same format as
+the options array exposed in ``GuzzleHttp\ClientInterface::sendAll()``.
 
 Request Options
 ===============
@@ -1006,7 +1068,7 @@ behavior of the library.
     the timeout.
 ``HTTP_PROXY``
     Defines the proxy to use when sending requests using the "http" protocol.
-``HTTP_PROXY``
+``HTTPS_PROXY``
     Defines the proxy to use when sending requests using the "https": protocol.
 
 Relevant ini Settings

@@ -17,7 +17,7 @@ class TransactionIterator implements \Iterator
     /** @var ClientInterface */
     private $client;
 
-    /** @var array */
+    /** @var array of hashes containing 'name', 'fn', 'priority', and 'once' */
     private $eventListeners;
 
     public function __construct(
@@ -45,8 +45,12 @@ class TransactionIterator implements \Iterator
 
         if ($this->eventListeners) {
             $emitter = $request->getEmitter();
-            foreach ($this->eventListeners as $eventName => $listener) {
-                $emitter->on($eventName, $listener[0], $listener[1]);
+            foreach ($this->eventListeners as $ev) {
+                if ($ev['once']) {
+                    $emitter->once($ev['name'], $ev['fn'], $ev['priority']);
+                } else {
+                    $emitter->on($ev['name'], $ev['fn'], $ev['priority']);
+                }
             }
         }
 
@@ -77,14 +81,35 @@ class TransactionIterator implements \Iterator
         foreach ($namedEvents as $event) {
             if (isset($options[$event])) {
                 if (is_callable($options[$event])) {
-                    $this->eventListeners[$event] = [$options[$event], 0];
-                } elseif (is_array($options[$event])) {
-                    $this->eventListeners[$event] = $options[$event];
+                    $this->eventListeners[] = [
+                        'name'     => $event,
+                        'fn'       => $options[$event],
+                        'priority' => 0,
+                        'once'     => false
+                    ];
                 } else {
-                    throw new \InvalidArgumentException('Each event listener '
-                        . ' must be a callable or an array containing a '
-                        . ' callable and a priority.');
+                    $this->addEvent($event, $options[$event]);
                 }
+            }
+        }
+    }
+
+    private function addEvent($eventName, $event)
+    {
+        static $default = ['priority' => 0, 'once' => false];
+
+        if (!is_array($event)) {
+            throw new \InvalidArgumentException('Each event listener must be a'
+                . ' callable or an array of associative arrays where each'
+                . ' associative array contains a "fn" key.');
+        }
+
+        if (isset($event['fn'])) {
+            $event['name'] = $eventName;
+            $this->eventListeners[] = $event + $default;
+        } else {
+            foreach ($event as $e) {
+                $this->addEvent($eventName, $e);
             }
         }
     }
