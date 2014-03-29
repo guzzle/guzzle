@@ -92,12 +92,3 @@ of a web service.
     Provides an implementation of the *Guzzle Command* library that uses
     Guzzle service descriptions to describe web services, serialize requests,
     and parse responses into easy to use model structures.
-
-API Documentation
------------------
-
-.. toctree::
-    :maxdepth: 2
-
-    api
-    migrating-to-4

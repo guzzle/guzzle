@@ -43,7 +43,6 @@ existing composer.json file:
 .. code-block:: js
 
     {
-      "minimum-stability": "RC",
       "require": {
          "guzzlehttp/guzzle": "4.*"
       }
@@ -55,14 +54,14 @@ After installing, you need to require Composer's autoloader:
 
     require 'vendor/autoload.php';
 
-You can find out more on how to install Composer, configure autoloading, and other best-practices for defining
-dependencies at `getcomposer.org <http://getcomposer.org>`_.
+You can find out more on how to install Composer, configure autoloading, and
+other best-practices for defining dependencies at `getcomposer.org <http://getcomposer.org>`_.
 
 Bleeding edge
 -------------
 
-During your development, you can keep up with the latest changes on the master branch by setting the version
-requirement for Guzzle to ``dev-master``.
+During your development, you can keep up with the latest changes on the master
+branch by setting the version requirement for Guzzle to ``dev-master``.
 
 .. code-block:: js
 
