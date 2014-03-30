@@ -2,6 +2,86 @@
 FAQ
 ===
 
+Why should I use Guzzle?
+========================
+
+Guzzle makes it easy to send HTTP requests and super simple to integrate with
+web services. Guzzle manages things like persistent connections, represents
+query strings as collections, makes it simple to send streaming POST requests
+with fields and files, and abstracts away the underlying HTTP transport layer
+(cURL, ``fopen()``, etc). By providing an object oriented interface for HTTP
+clients, requests, responses, headers, and message bodies, Guzzle makes it so
+that you no longer need to fool around with cURL options or stream contexts.
+
+To get a feel for how easy it is to use Guzzle, take a look at the
+:doc:`quick start guide <quickstart>`.
+
+Swappable HTTP Adapters
+-----------------------
+
+Guzzle will use the most appropriate HTTP adapter to send requests based on the
+capabilities of your environment and the options applied to a request. When
+cURL is available on your system, Guzzle will automatically use cURL. When a
+request is sent with the ``stream=true`` request option, Guzzle will
+automatically use the PHP stream wrapper HTTP adapter so that bytes are only
+read from the HTTP stream as needed.
+
+.. note::
+
+    Guzzle has historically only utilized cURL to send HTTP requests. cURL is
+    an amazing HTTP client (arguably the best), and Guzzle will continue to use
+    it by default when it is available. It is rare, but some developers don't
+    have cURL installed on their systems or run into version specific issues.
+    By allowing swappable HTTP adapters, Guzzle is now much more customizable
+    and able to adapt to fit the needs of more developers.
+
+HTTP Streams
+------------
+
+Request and response message bodies use :doc:`Guzzle Streams <streams>`,
+allowing you to stream data without needing to load it all into memory.
+Guzzle's stream layer provides a large suite of functionality:
+
+- You can modify streams at runtime using custom or a number of
+  pre-made decorators.
+- You can emit progress events as data is read from a stream.
+- You can validate the integrity of a stream using a rolling hash as data is
+  read from a stream.
+
+Event System
+------------
+
+Guzzle's flexible event system allows you to completely modify the behavior
+of a client or request at runtime to cater them for any API. You can send a
+request with a client, and the client can do things like automatically retry
+your request if it fails, automatically redirect, log HTTP messages that are
+sent over the wire, emit progress events as data is uploaded and downloaded,
+sign requests using OAuth 1.0, verify the integrity of messages before and
+after they are sent over the wire, and anything else you might need.
+
+Easy to Test
+------------
+
+Another important aspect of Guzzle is that it's really
+:doc:`easy to test clients <testing>`. You can mock HTTP responses and when
+testing an adapter implementation, Guzzle provides a mock web server that
+makes it easy.
+
+Large Ecosystem
+---------------
+
+Guzzle has a large `ecosystem of plugins <http://guzzle.readthedocs.org/en/latest/index.html#http-components>`_,
+including `service descriptions <https://github.com/guzzle/guzzle-services>`_
+which allows you to abstract web services using service descriptions. These
+service descriptions define how to serialize an HTTP request and how to parse
+an HTTP response into a more meaningful model object.
+
+- `Guzzle Command <https://github.com/guzzle/command>`_: Provides the building
+  blocks for service description abstraction.
+- `Guzzle Services <https://github.com/guzzle/guzzle-services>`_: Provides an
+  implementation of "Guzzle Command" that utlizes Guzzle's service description
+  format.
+
 Is it possible to use Guzzle 3 and 4 in the same project?
 =========================================================
 
