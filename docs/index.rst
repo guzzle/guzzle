@@ -20,16 +20,13 @@ the pain out of consuming web services.
 .. code-block:: php
 
     $client = new GuzzleHttp\Client();
-    $response = $client->get('http://guzzlephp.org');
-    $res = $client->get('https://api.github.com/user', ['auth' =>  ['user', 'pass']]);
-    echo $res->statusCode();
-    // 200
-    echo $res->getHeader('content-type');
-    // 'application/json; charset=utf8'
-    echo $res->getBody();
-    // {"type":"User"...'
-    var_export($res->json());
-    // Outputs the JSON decoded data
+    $res = $client->get('https://api.github.com/user', [
+        'auth' =>  ['user', 'pass']
+    ]);
+    echo $res->getStatusCode();           // 200
+    echo $res->getHeader('content-type'); // 'application/json; charset=utf8'
+    echo $res->getBody();                 // {"type":"User"...'
+    var_export($res->json());             // Outputs the JSON decoded data
 
 User guide
 ----------
