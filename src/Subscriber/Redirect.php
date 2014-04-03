@@ -118,10 +118,11 @@ class Redirect implements SubscriberInterface
         // would do. Be sure to disable redirects on the clone.
         $redirectRequest = clone $request;
         $redirectRequest->getEmitter()->detach($this);
+        $statusCode = $response->getStatusCode();
 
-        if ($request->getBody() &&
-            !$config->getPath('redirect/strict') &&
-            $response->getStatusCode() <= 302
+        if ($statusCode == 303 ||
+            ($statusCode <= 302 && $request->getBody() &&
+                !$config->getPath('redirect/strict'))
         ) {
             $redirectRequest->setMethod('GET');
             $redirectRequest->setBody(null);
