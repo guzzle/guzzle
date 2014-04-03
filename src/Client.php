@@ -264,13 +264,12 @@ class Client implements ClientInterface
     /**
      * Get a default parallel adapter to use based on the environment
      *
-     * @return ParallelAdapterInterface|null
-     * @throws \RuntimeException
+     * @return ParallelAdapterInterface
      */
     private function getDefaultParallelAdapter()
     {
         return extension_loaded('curl')
-            ? new CurlAdapter($this->messageFactory)
+            ? new MultiAdapter($this->messageFactory)
             : new FakeParallelAdapter($this->adapter);
     }
 
