@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+4.0.1 (2014-04-04)
+------------------
+
+* The HTTP status code of a response is now set as the exception code of
+  RequestException objects.
+* 303 redirects will now correctly switch from POST to GET requests.
+* The default parallel adapter of a client now correctly uses the MultiAdapter.
+* HasDataTrait now initializes the internal data array as an empty array so
+  that the toArray() method always returns an array.
+
 4.0.0 (2014-03-29)
 ------------------
 
