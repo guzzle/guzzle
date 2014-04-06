@@ -86,7 +86,7 @@ Is it possible to use Guzzle 3 and 4 in the same project?
 =========================================================
 
 Yes, because Guzzle 3 and 4 use different Packagist packages and different
-namespaced. You simply need to add ``guzzle/guzzle`` (Guzzle 3) and
+namespaces. You simply need to add ``guzzle/guzzle`` (Guzzle 3) and
 ``guzzlehttp/guzzle`` (Guzzle 4+) to your project's composer.json file.
 
 .. code-block:: javascript
