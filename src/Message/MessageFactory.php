@@ -125,7 +125,7 @@ class MessageFactory implements MessageFactoryInterface
     {
         $post = new PostBody();
         foreach ($body as $key => $value) {
-            if (is_string($value) || is_array($value)) {
+            if (is_scalar($value) || is_array($value)) {
                 $post->setField($key, $value);
             } elseif ($value instanceof PostFileInterface) {
                 $post->addFile($value);

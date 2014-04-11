@@ -92,6 +92,9 @@ class Query extends Collection
                 if ($result) {
                     $result .= '&';
                 }
+                if (is_bool($value) && !$value) {
+                    $value = 0;
+                }
                 if ($this->encoding == self::RFC1738) {
                     $result .= urlencode($key);
                     if ($value !== null) {
