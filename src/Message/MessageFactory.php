@@ -123,9 +123,12 @@ class MessageFactory implements MessageFactoryInterface
      */
     protected function addPostData(RequestInterface $request, array $body)
     {
+        static $fields = ['string' => true, 'array' => true, 'NULL' => true,
+            'boolean' => true, 'double' => true, 'integer' => true];
+
         $post = new PostBody();
         foreach ($body as $key => $value) {
-            if (is_string($value) || is_array($value)) {
+            if (isset($fields[gettype($value)])) {
                 $post->setField($key, $value);
             } elseif ($value instanceof PostFileInterface) {
                 $post->addFile($value);
