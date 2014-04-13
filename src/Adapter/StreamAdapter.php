@@ -215,10 +215,12 @@ class StreamAdapter implements AdapterInterface
     {
         if (!is_array($value)) {
             $options['http']['proxy'] = $value;
+            $options['http']['request_fulluri'] = true;
         } else {
             $scheme = $request->getScheme();
             if (isset($value[$scheme])) {
                 $options['http']['proxy'] = $value[$scheme];
+                $options['http']['request_fulluri'] = true;
             }
         }
     }
