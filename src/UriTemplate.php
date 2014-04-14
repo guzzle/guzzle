@@ -7,7 +7,7 @@ namespace GuzzleHttp;
  *
  * @link http://tools.ietf.org/html/rfc6570
  */
-class UriTemplate
+class UriTemplate implements UriTemplateInterface
 {
     /** @var string URI template */
     private $template;
