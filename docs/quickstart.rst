@@ -424,7 +424,7 @@ Guzzle throws exceptions for errors that occur during a transfer.
       }
 
 - A ``GuzzleHttp\Exception\ClientErrorResponseException`` is thrown for 400
-  level errors if the ``exceptions`` request option is not set to true. This
+  level errors if the ``exceptions`` request option is set to true. This
   exception extends from ``GuzzleHttp\Exception\BadResponseException`` and
   ``GuzzleHttp\Exception\BadResponseException`` extends from
   ``GuzzleHttp\Exception\RequestException``.
@@ -441,7 +441,7 @@ Guzzle throws exceptions for errors that occur during a transfer.
       }
 
 - A ``GuzzleHttp\Exception\ServerErrorResponse`` is thrown for 500 level
-  errors if the ``exceptions`` request option is not set to true. This
+  errors if the ``exceptions`` request option is set to true. This
   exception extends from ``GuzzleHttp\Exception\BadResponseException``.
 - A ``GuzzleHttp\Exception\TooManyRedirectsException`` is thrown when too
   many redirects are followed. This exception extends from extends from
