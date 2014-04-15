@@ -17,7 +17,7 @@ use GuzzleHttp\UriTemplate;
  *
  * @return ResponseInterface
  */
-function request($method, $url, array $options = [])
+function request($method, $url, array $options = array())
 {
     static $client;
     if (!$client) {
@@ -35,7 +35,7 @@ function request($method, $url, array $options = [])
  *
  * @return ResponseInterface
  */
-function get($url, array $options = [])
+function get($url, array $options = array())
 {
     return request('GET', $url, $options);
 }
@@ -48,7 +48,7 @@ function get($url, array $options = [])
  *
  * @return ResponseInterface
  */
-function head($url, array $options = [])
+function head($url, array $options = array())
 {
     return request('HEAD', $url, $options);
 }
@@ -61,7 +61,7 @@ function head($url, array $options = [])
  *
  * @return ResponseInterface
  */
-function delete($url, array $options = [])
+function delete($url, array $options = array())
 {
     return request('DELETE', $url, $options);
 }
@@ -74,7 +74,7 @@ function delete($url, array $options = [])
  *
  * @return ResponseInterface
  */
-function post($url, array $options = [])
+function post($url, array $options = array())
 {
     return request('POST', $url, $options);
 }
@@ -87,7 +87,7 @@ function post($url, array $options = [])
  *
  * @return ResponseInterface
  */
-function put($url, array $options = [])
+function put($url, array $options = array())
 {
     return request('PUT', $url, $options);
 }
@@ -100,7 +100,7 @@ function put($url, array $options = [])
  *
  * @return ResponseInterface
  */
-function patch($url, array $options = [])
+function patch($url, array $options = array())
 {
     return request('PATCH', $url, $options);
 }
@@ -113,7 +113,7 @@ function patch($url, array $options = [])
  *
  * @return ResponseInterface
  */
-function options($url, array $options = [])
+function options($url, array $options = array())
 {
     return request('OPTIONS', $url, $options);
 }
@@ -135,7 +135,7 @@ function options($url, array $options = [])
  *     a {@see GuzzleHttp\Exception\RequestException} if it failed.
  * @throws \InvalidArgumentException if the event format is incorrect.
  */
-function batch(ClientInterface $client, $requests, array $options = [])
+function batch(ClientInterface $client, $requests, array $options = array())
 {
     $hash = new \SplObjectStorage();
     foreach ($requests as $request) {
@@ -246,7 +246,7 @@ function set_path(&$data, $path, $value)
         } elseif (isset($current[$key])) {
             $current =& $current[$key];
         } else {
-            $current[$key] = [];
+            $current[$key] = array();
             $current =& $current[$key];
         }
     }
