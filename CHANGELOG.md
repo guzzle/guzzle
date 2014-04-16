@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+4.0.2 (2014-04-16)
+------------------
+
+* Proxy requests using the StreamAdapter now properly use request_fulluri (#632)
+* Added the ability to set scalars as POST fields (#628)
+
 4.0.1 (2014-04-04)
 ------------------
 
