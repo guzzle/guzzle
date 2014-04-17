@@ -37,7 +37,9 @@ class Server
      */
     public static function flush()
     {
-        self::$started && self::$client->delete('guzzle-server/requests');
+        self::start();
+
+        return self::$client->delete('guzzle-server/requests');
     }
 
     /**
