@@ -160,7 +160,7 @@ option.
 
 .. code-block:: php
 
-    $client->get('http://httpbin.org', [
+    $client->get('http://httpbin.org', null, [
         'query' => ['foo' => 'bar']
     ]);
 
