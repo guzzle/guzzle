@@ -17,17 +17,7 @@ class SessionCookieJarTest extends \PHPUnit_Framework_TestCase
         $this->sessionVar = 'sessionKey';
 
         if (!isset($_SESSION)) {
-            // If we are run from the command line interface then we do not care
-            // about headers sent using the session_start.
-            if (PHP_SAPI === 'cli') {
-                $_SESSION = array();
-            } elseif (!headers_sent()) {
-                if (!session_start()) {
-                    throw new \Exception(__METHOD__ . 'session_start failed.');
-                }
-            } else {
-                throw new Exception(__METHOD__ . 'Session started after headers sent.');
-            }
+            $_SESSION = array();
         }
     }
 

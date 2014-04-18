@@ -2,14 +2,13 @@
 
 namespace GuzzleHttp\Cookie;
 
-
 /**
  * Persists cookies in the client session
  */
 class SessionCookieJar extends CookieJar
 {
     /** @var string session key */
-    protected $sessionKey;
+    private $sessionKey;
 
     /**
      * Create a new SessionCookieJar object
@@ -27,13 +26,13 @@ class SessionCookieJar extends CookieJar
      */
     public function __destruct()
     {
-        $this->persist();
+        $this->save();
     }
 
     /**
      * Save cookies to the client session
      */
-    protected function persist()
+    public function save()
     {
         $json = [];
         foreach ($this as $cookie) {
@@ -61,5 +60,4 @@ class SessionCookieJar extends CookieJar
             throw new \RuntimeException("Invalid cookie data");
         }
     }
-
 }
