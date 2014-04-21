@@ -76,4 +76,9 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
         $e->emittedError(true);
         $e->emittedError(false);
     }
+    
+    public function testHasStatusCodeAsExceptionCode() {
+        $e = RequestException::create(new Request('GET', '/'), new Response(442));
+        $this->assertEquals(442, $e->getCode());
+    }
 }

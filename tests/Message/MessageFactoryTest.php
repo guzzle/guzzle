@@ -51,6 +51,26 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('abc=123', $req->getBody());
     }
 
+    public function testCreatesRequestWithPostBodyScalars()
+    {
+        $req = (new MessageFactory())->createRequest(
+            'GET',
+            'http://www.foo.com',
+            ['body' => [
+                'abc' => true,
+                '123' => false,
+                'foo' => null,
+                'baz' => 10,
+                'bam' => 1.5,
+                'boo' => [1]]
+            ]
+        );
+        $this->assertEquals(
+            'abc=1&123=&foo&baz=10&bam=1.5&boo%5B0%5D=1',
+            (string) $req->getBody()
+        );
+    }
+
     public function testCreatesRequestWithPostBodyAndPostFiles()
     {
         $pf = fopen(__FILE__, 'r');

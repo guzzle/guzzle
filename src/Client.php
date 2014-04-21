@@ -69,12 +69,16 @@ class Client implements ClientInterface
      *     - parallel_adapter: Adapter used to transfer requests in parallel
      *     - message_factory: Factory used to create request and response object
      *     - defaults: Default request options to apply to each request
+     *     - emitter: Event emitter used for request events
      */
     public function __construct(array $config = [])
     {
         $this->configureBaseUrl($config);
         $this->configureDefaults($config);
         $this->configureAdapter($config);
+        if (isset($config['emitter'])) {
+            $this->emitter = $config['emitter'];
+        }
     }
 
     /**
@@ -264,13 +268,12 @@ class Client implements ClientInterface
     /**
      * Get a default parallel adapter to use based on the environment
      *
-     * @return ParallelAdapterInterface|null
-     * @throws \RuntimeException
+     * @return ParallelAdapterInterface
      */
     private function getDefaultParallelAdapter()
     {
         return extension_loaded('curl')
-            ? new CurlAdapter($this->messageFactory)
+            ? new MultiAdapter($this->messageFactory)
             : new FakeParallelAdapter($this->adapter);
     }
 

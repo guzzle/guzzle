@@ -1,8 +1,5 @@
 all: clean coverage docs
 
-list:
-	@sh -c "$(MAKE) -p .dummy | awk -F':' '/^[a-zA-Z0-9][^\$$#\/\\t=]*:([^=]|$$)/ {split(\$$1,A,/ /);for(i in A)print A[i]}' | grep -v '__\$$' | sort"
-
 start-server:
 	@ps aux | grep 'node tests/server.js' | grep -v grep > /dev/null \
 	|| node tests/server.js &> /dev/null &
@@ -38,4 +35,3 @@ perf: start-server
 	$(MAKE) stop-server
 
 .PHONY: docs
-.dummy:

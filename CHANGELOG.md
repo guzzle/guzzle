@@ -1,6 +1,65 @@
 CHANGELOG
 =========
 
+4.0.2 (2014-04-16)
+------------------
+
+* Proxy requests using the StreamAdapter now properly use request_fulluri (#632)
+* Added the ability to set scalars as POST fields (#628)
+
+4.0.1 (2014-04-04)
+------------------
+
+* The HTTP status code of a response is now set as the exception code of
+  RequestException objects.
+* 303 redirects will now correctly switch from POST to GET requests.
+* The default parallel adapter of a client now correctly uses the MultiAdapter.
+* HasDataTrait now initializes the internal data array as an empty array so
+  that the toArray() method always returns an array.
+
+4.0.0 (2014-03-29)
+------------------
+
+* For more information on the 4.0 transition, see:
+  http://mtdowling.com/blog/2014/03/15/guzzle-4-rc/
+* For information on changes and upgrading, see:
+  https://github.com/guzzle/guzzle/blob/master/UPGRADING.md#3x-to-40
+* Added `GuzzleHttp\batch()` as a convenience function for sending requests in
+  parallel without needing to write asynchronous code.
+* Restructured how events are added to `GuzzleHttp\ClientInterface::sendAll()`.
+  You can now pass a callable or an array of associative arrays where each
+  associative array contains the "fn", "priority", and "once" keys.
+
+4.0.0.rc-2 (2014-03-25)
+-----------------------
+
+* Removed `getConfig()` and `setConfig()` from clients to avoid confusion
+  around whether things like base_url, message_factory, etc should be able to
+  be retrieved or modified.
+* Added `getDefaultOption()` and `setDefaultOption()` to ClientInterface
+* functions.php functions were renamed using snake_case to match PHP idioms
+* Added support for `HTTP_PROXY`, `HTTPS_PROXY`, and
+  `GUZZLE_CURL_SELECT_TIMEOUT` environment variables
+* Added the ability to specify custom `sendAll()` event priorities
+* Added the ability to specify custom stream context options to the stream
+  adapter.
+* Added a functions.php function for `get_path()` and `set_path()`
+* CurlAdapter and MultiAdapter now use a callable to generate curl resources
+* MockAdapter now properly reads a body and emits a `headers` event
+* Updated Url class to check if a scheme and host are set before adding ":"
+  and "//". This allows empty Url (e.g., "") to be serialized as "".
+* Parsing invalid XML no longer emits warnings
+* Curl classes now properly throw AdapterExceptions
+* Various performance optimizations
+* Streams are created with the faster `Stream\create()` function
+* Marked deprecation_proxy() as internal
+* Test server is now a collection of static methods on a class
+
+4.0.0-rc.1 (2014-03-15)
+-----------------------
+
+* See https://github.com/guzzle/guzzle/blob/master/UPGRADING.md#3x-to-40
+
 3.8.1 (2014-01-28)
 ------------------
 

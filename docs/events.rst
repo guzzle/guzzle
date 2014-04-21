@@ -196,7 +196,7 @@ priority of the listener (as shown in the ``before`` listener in the example).
             return [
                 'before'   => ['onBefore', 100], // Provide name and optional priority
                 'complete' => ['onComplete']
-            ]
+            ];
         }
 
         public function onBefore(BeforeEvent $event, $name, EmitterInterface $emitter)
@@ -391,6 +391,14 @@ This event cannot be intercepted.
             $e->getResponse()->setBody($customBody);
         }
     });
+
+.. note::
+
+    A response may or may not yet have a body associated with it. If a request
+    used a ``save_to`` request option, then the response will have a body.
+    Otherwise, the response will have no body but you are free to associate one
+    with the response. As an example, this is done in the
+    `progress subscriber <https://github.com/guzzle/progress-subscriber/blob/master/src/Progress.php>`_.
 
 .. _complete_event:
 

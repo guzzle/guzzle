@@ -227,4 +227,20 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         $reqs = $h->getRequests();
         $this->assertFalse($reqs[1]->hasHeader('Referer'));
     }
+
+    public function testRedirectsWithGetOn303()
+    {
+        $h = new History();
+        $mock = new Mock([
+            "HTTP/1.1 303 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n",
+        ]);
+        $client = new Client();
+        $client->getEmitter()->attach($mock);
+        $client->getEmitter()->attach($h);
+        $client->post('http://test.com/foo', ['body' => 'testing']);
+        $requests = $h->getRequests();
+        $this->assertEquals('POST', $requests[0]->getMethod());
+        $this->assertEquals('GET', $requests[1]->getMethod());
+    }
 }

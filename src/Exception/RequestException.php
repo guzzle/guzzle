@@ -25,7 +25,8 @@ class RequestException extends TransferException
         ResponseInterface $response = null,
         \Exception $previous = null
     ) {
-        parent::__construct($message, 0, $previous);
+        $code = $response ? $response->getStatusCode() : 0;
+        parent::__construct($message, $code, $previous);
         $this->request = $request;
         $this->response = $response;
     }

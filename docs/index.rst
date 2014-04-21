@@ -20,16 +20,13 @@ the pain out of consuming web services.
 .. code-block:: php
 
     $client = new GuzzleHttp\Client();
-    $response = $client->get('http://guzzlephp.org');
-    $res = $client->get('https://api.github.com/user', ['auth' =>  ['user', 'pass']]);
-    echo $res->statusCode();
-    // 200
-    echo $res->getHeader('content-type');
-    // 'application/json; charset=utf8'
-    echo $res->getBody();
-    // {"type":"User"...'
-    var_export($res->json());
-    // Outputs the JSON decoded data
+    $res = $client->get('https://api.github.com/user', [
+        'auth' =>  ['user', 'pass']
+    ]);
+    echo $res->getStatusCode();           // 200
+    echo $res->getHeader('content-type'); // 'application/json; charset=utf8'
+    echo $res->getBody();                 // {"type":"User"...'
+    var_export($res->json());             // Outputs the JSON decoded data
 
 User guide
 ----------
@@ -92,12 +89,3 @@ of a web service.
     Provides an implementation of the *Guzzle Command* library that uses
     Guzzle service descriptions to describe web services, serialize requests,
     and parse responses into easy to use model structures.
-
-API Documentation
------------------
-
-.. toctree::
-    :maxdepth: 2
-
-    api
-    migrating-to-4
