@@ -442,7 +442,7 @@ query
 .. code-block:: php
 
     // Send a GET request to /get?foo=bar
-    $client->get('/get', ['query' => ['foo' => 'bar']);
+    $client->get('/get', ['query' => ['foo' => 'bar']]);
 
 Query strings specified in the ``query`` option are combined with any query
 string values that are parsed from the URL.
@@ -450,7 +450,7 @@ string values that are parsed from the URL.
 .. code-block:: php
 
     // Send a GET request to /get?abc=123&foo=bar
-    $client->get('/get?abc=123', ['query' => ['foo' => 'bar']);
+    $client->get('/get?abc=123', ['query' => ['foo' => 'bar']]);
 
 auth
 ----
