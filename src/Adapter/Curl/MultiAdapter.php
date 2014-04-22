@@ -58,7 +58,6 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
         MessageFactoryInterface $messageFactory,
         array $options = []
     ) {
-        $this->handles = new \SplObjectStorage();
         $this->messageFactory = $messageFactory;
         $this->curlFactory = isset($options['handle_factory'])
             ? $options['handle_factory']

@@ -122,7 +122,7 @@ class BatchContext
 
         $code = curl_multi_add_handle($this->multi, $handle);
         if ($code != CURLM_OK) {
-            CurlAdapter::throwMultiError($code);
+            MultiAdapter::throwMultiError($code);
         }
 
         $this->handles[$transaction] = $handle;
@@ -146,7 +146,7 @@ class BatchContext
 
         $code = curl_multi_remove_handle($this->multi, $handle);
         if ($code != CURLM_OK) {
-            CurlAdapter::throwMultiError($code);
+            MultiAdapter::throwMultiError($code);
         }
 
         $info = curl_getinfo($handle);

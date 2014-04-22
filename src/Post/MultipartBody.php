@@ -36,7 +36,6 @@ class MultipartBody implements Stream\StreamInterface
         $this->boundary = $boundary ?: uniqid();
         $this->fields = $fields;
         $this->files = $files;
-        $this->meta['mode'] = 'r';
 
         // Ensure each file is a PostFileInterface
         foreach ($this->files as $file) {
