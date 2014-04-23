@@ -444,8 +444,7 @@ Guzzle throws exceptions for errors that occur during a transfer.
   errors if the ``exceptions`` request option is set to true. This
   exception extends from ``GuzzleHttp\Exception\BadResponseException``.
 - A ``GuzzleHttp\Exception\TooManyRedirectsException`` is thrown when too
-  many redirects are followed. This exception extends from extends from
-  ``GuzzleHttp\Exception\RequestException``.
+  many redirects are followed. This exception extends from ``GuzzleHttp\Exception\RequestException``.
 - A ``GuzzleHttp\Exception\AdapterException`` is thrown when an error occurs
   in an HTTP adapter during a parallel request. This exception is only thrown
   when using the ``sendAll()`` method of a client.
