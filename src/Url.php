@@ -33,6 +33,17 @@ class Url
             'path' => null, 'port' => null, 'query' => null,
             'user' => null, 'pass' => null, 'fragment' => null);
 
+        if ($url instanceof Url) {
+            //shortcut
+            return $url;
+        }
+
+        if (!is_string($url)) {
+            throw new \InvalidArgumentException(sprintf('\\GuzzleHttp\Url::fromString() can only parse strings (%s)',
+                print_r($url, true)
+            ));
+        }
+
         if (false === ($parts = parse_url($url))) {
             throw new \InvalidArgumentException('Unable to parse malformed '
                 . 'url: ' . $url);
