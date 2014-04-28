@@ -284,12 +284,30 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(8983, $url->getPort());
     }
 
+    public function invalidUrlDataProvider()
+    {
+        return array(
+
+            array('foo:////'),
+            array(array('foo')),
+            array(new \stdClass()),
+            array(true),
+            array(false),
+            array(1.2e3),
+            array(function () {}),
+            array(33),
+            array(tmpfile()),
+            array(null)
+        );
+    }
+
     /**
      * @expectedException \InvalidArgumentException
+     * @dataProvider invalidUrlDataProvider
      */
-    public function testValidatesUrlCanBeParsed()
+    public function testValidatesUrlCanBeParsed($invalidUrl)
     {
-        Url::fromString('foo:////');
+        Url::fromString($invalidUrl);
     }
 
     public function testConvertsSpecialCharsInPathWhenCastingToString()
