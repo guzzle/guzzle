@@ -3,6 +3,7 @@
 namespace GuzzleHttp\Adapter;
 
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Event\ListenerAttacherTrait;
 use GuzzleHttp\Message\RequestInterface;
 
 /**
@@ -11,21 +12,27 @@ use GuzzleHttp\Message\RequestInterface;
  */
 class TransactionIterator implements \Iterator
 {
+    use ListenerAttacherTrait;
+
     /** @var \Iterator */
     private $source;
 
     /** @var ClientInterface */
     private $client;
 
-    /** @var array of hashes containing 'name', 'fn', 'priority', and 'once' */
-    private $eventListeners;
+    /** @var array Listeners to attach to each request */
+    private $eventListeners = [];
 
     public function __construct(
-        $source, ClientInterface $client,
+        $source,
+        ClientInterface $client,
         array $options
     ) {
         $this->client = $client;
-        $this->configureEvents($options);
+        $this->eventListeners = $this->prepareListeners(
+            $options,
+            ['before', 'complete', 'error']
+        );
         if ($source instanceof \Iterator) {
             $this->source = $source;
         } elseif (is_array($source)) {
@@ -38,21 +45,11 @@ class TransactionIterator implements \Iterator
     public function current()
     {
         $request = $this->source->current();
-
         if (!$request instanceof RequestInterface) {
             throw new \RuntimeException('All must implement RequestInterface');
         }
 
-        if ($this->eventListeners) {
-            $emitter = $request->getEmitter();
-            foreach ($this->eventListeners as $ev) {
-                if ($ev['once']) {
-                    $emitter->once($ev['name'], $ev['fn'], $ev['priority']);
-                } else {
-                    $emitter->on($ev['name'], $ev['fn'], $ev['priority']);
-                }
-            }
-        }
+        $this->attachListeners($request, $this->eventListeners);
 
         return new Transaction($this->client, $request);
     }
@@ -73,44 +70,4 @@ class TransactionIterator implements \Iterator
     }
 
     public function rewind() {}
-
-    private function configureEvents(array $options)
-    {
-        static $namedEvents = ['before', 'complete', 'error'];
-
-        foreach ($namedEvents as $event) {
-            if (isset($options[$event])) {
-                if (is_callable($options[$event])) {
-                    $this->eventListeners[] = [
-                        'name'     => $event,
-                        'fn'       => $options[$event],
-                        'priority' => 0,
-                        'once'     => false
-                    ];
-                } else {
-                    $this->addEvent($event, $options[$event]);
-                }
-            }
-        }
-    }
-
-    private function addEvent($eventName, $event)
-    {
-        static $default = ['priority' => 0, 'once' => false];
-
-        if (!is_array($event)) {
-            throw new \InvalidArgumentException('Each event listener must be a'
-                . ' callable or an array of associative arrays where each'
-                . ' associative array contains a "fn" key.');
-        }
-
-        if (isset($event['fn'])) {
-            $event['name'] = $eventName;
-            $this->eventListeners[] = $event + $default;
-        } else {
-            foreach ($event as $e) {
-                $this->addEvent($eventName, $e);
-            }
-        }
-    }
 }
