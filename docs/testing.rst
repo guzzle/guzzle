@@ -32,16 +32,16 @@ remote API.
     // Create a mock subscriber and queue two responses.
     $mock = new Mock([
         new Response(200, ['X-Foo' => 'Bar']),         // Use response object
-        "HTTP/1.1 202 OKr\nContent-Length: 0\r\n\r\n"  // Use a response string
+        "HTTP/1.1 202 OK\r\nContent-Length: 0\r\n\r\n"  // Use a response string
     ]);
 
     // Add the mock subscriber to the client.
     $client->getEmitter()->attach($mock);
     // The first request is intercepted with the first response.
-    echo $client->get('/')->getStatus();
+    echo $client->get('/')->getStatusCode();
     //> 200
     // The second request is intercepted with the second response.
-    echo $client->get('/')->getStatus();
+    echo $client->get('/')->getStatusCode();
     //> 202
 
 When no more responses are in the queue and a request is sent, an
