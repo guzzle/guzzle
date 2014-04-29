@@ -302,7 +302,7 @@ immeditaley and prevent subsequent requests from being sent.
         }
     ]);
 
-.. _request-options:
+.. _batch-requests:
 
 Batching Requests
 -----------------
@@ -342,6 +342,8 @@ third argument that allows you to specify the 'before', 'complete' and 'error'
 events as well as specify the maximum number of request to send in parallel
 using the 'parallel' option key. This options array is the exact same format as
 the options array exposed in ``GuzzleHttp\ClientInterface::sendAll()``.
+
+.. _request-options:
 
 Request Options
 ===============
