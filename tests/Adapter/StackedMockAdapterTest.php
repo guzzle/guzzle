@@ -2,7 +2,6 @@
 
 namespace GuzzleHttp\Tests\Adapter;
 
-use GuzzleHttp\Adapter\MockAdapter;
 use GuzzleHttp\Adapter\StackedMockAdapter;
 use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Adapter\TransactionInterface;
@@ -15,7 +14,7 @@ use GuzzleHttp\Message\Response;
 use GuzzleHttp\Stream;
 
 /**
- * @covers GuzzleHttp\Adapter\MockAdapter
+ * @covers GuzzleHttp\Adapter\StackedMockAdapter
  */
 class StackedMockAdapterTest extends \PHPUnit_Framework_TestCase
 {
@@ -116,7 +115,7 @@ class StackedMockAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testHandlesErrors()
     {
-        $m = new MockAdapter();
+        $m = new StackedMockAdapter();
         $m->setResponse(new Response(404));
         $request = new Request('GET', 'http://httbin.org');
         $c = false;
@@ -137,7 +136,7 @@ class StackedMockAdapterTest extends \PHPUnit_Framework_TestCase
      */
     public function testThrowsUnhandledErrors()
     {
-        $m = new MockAdapter();
+        $m = new StackedMockAdapter();
         $m->setResponse(new Response(404));
         $request = new Request('GET', 'http://httbin.org');
         $request->getEmitter()->once('complete', function (CompleteEvent $e) {
@@ -149,7 +148,7 @@ class StackedMockAdapterTest extends \PHPUnit_Framework_TestCase
     public function testReadsRequestBody()
     {
         $response = new Response(200);
-        $m = new MockAdapter($response);
+        $m = new StackedMockAdapter($response);
         $m->setResponse($response);
         $body = Stream\create('foo');
         $request = new Request('PUT', 'http://httpbin.org/put', [], $body);
@@ -159,7 +158,7 @@ class StackedMockAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testEmitsHeadersEvent()
     {
-        $m = new MockAdapter(new Response(404));
+        $m = new StackedMockAdapter(new Response(404));
         $request = new Request('GET', 'http://httbin.org');
         $called = false;
         $request->getEmitter()->once('headers', function () use (&$called) {
