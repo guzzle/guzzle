@@ -20,10 +20,10 @@ use GuzzleHttp\Url;
 class MessageFactory implements MessageFactoryInterface
 {
     /** @var HttpError */
-    private $errorPlugin;
+    protected $errorPlugin;
 
     /** @var Redirect */
-    private $redirectPlugin;
+    protected $redirectPlugin;
 
     public function __construct()
     {
