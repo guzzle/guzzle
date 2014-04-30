@@ -2,6 +2,7 @@
 
 namespace GuzzleHttp\Message;
 
+use GuzzleHttp\Event\ListenerAttacherTrait;
 use GuzzleHttp\Post\PostFileInterface;
 use GuzzleHttp\Subscriber\Cookie;
 use GuzzleHttp\Cookie\CookieJar;
@@ -19,6 +20,8 @@ use GuzzleHttp\Url;
  */
 class MessageFactory implements MessageFactoryInterface
 {
+    use ListenerAttacherTrait;
+
     /** @var HttpError */
     private $errorPlugin;
 
@@ -301,27 +304,9 @@ class MessageFactory implements MessageFactoryInterface
             throw new \InvalidArgumentException('events value must be an array');
         }
 
-        $emitter = $request->getEmitter();
-        foreach ($value as $name => $method) {
-            if (is_callable($method)) {
-                $emitter->on($name, $method);
-            } elseif (!is_array($method) || !isset($method['fn'])) {
-                throw new \InvalidArgumentException('Each event must be a '
-                    . 'callable or associative array containing a "fn" key');
-            } elseif (isset($method['once']) && $method['once'] === true) {
-                $emitter->once(
-                    $name,
-                    $method['fn'],
-                    isset($method['priority']) ? $method['priority'] : 0
-                );
-            } else {
-                $emitter->on(
-                    $name,
-                    $method['fn'],
-                    isset($method['priority']) ? $method['priority'] : 0
-                );
-            }
-        }
+        $this->attachListeners($request, $this->prepareListeners($value,
+            ['before', 'complete', 'error', 'headers']
+        ));
     }
 
     private function add_subscribers(RequestInterface $request, $value)
