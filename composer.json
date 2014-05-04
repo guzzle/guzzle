@@ -16,7 +16,12 @@
 
     "require": {
         "php": ">=5.4.0",
+        "ext-json": "*",
         "guzzlehttp/streams": "~1.0"
+    },
+
+    "suggest": {
+        "ext-curl": "Guzzle will use specific adapters if cURL is present"
     },
 
     "autoload": {
