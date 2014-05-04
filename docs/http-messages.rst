@@ -70,7 +70,7 @@ You can check to see if a request or response has a body using the
 The body used in request and response objects is a
 ``GuzzleHttp\Stream\StreamInterface``. This stream is used for both uploading
 data and downloading data. Guzzle will, by default, store the body of a message
-in a stream that uses PHP temp streams. When the size of a the body exceeds
+in a stream that uses PHP temp streams. When the size of the body exceeds
 2 MB, the stream will automatically switch to storing data on disk rather than
 in memory (protecting your application from memory exhaustion).
 
@@ -127,7 +127,7 @@ Request Methods
 ---------------
 
 When creating a request, you are expected to provide the HTTP method you wish
-to perform. You can specfiy any method you'd like, including a custom method
+to perform. You can specify any method you'd like, including a custom method
 that might not be part of RFC 2616 (like "MOVE").
 
 .. code-block:: php

@@ -9,7 +9,7 @@ Guzzle makes it easy to send HTTP requests and super simple to integrate with
 web services. Guzzle manages things like persistent connections, represents
 query strings as collections, makes it simple to send streaming POST requests
 with fields and files, and abstracts away the underlying HTTP transport layer
-(cURL, ``fopen()``, etc). By providing an object oriented interface for HTTP
+(cURL, ``fopen()``, etc.). By providing an object oriented interface for HTTP
 clients, requests, responses, headers, and message bodies, Guzzle makes it so
 that you no longer need to fool around with cURL options or stream contexts.
 

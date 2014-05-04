@@ -218,7 +218,7 @@ class Url
     }
 
     /**
-     * Set the scheme part of the URL (http, https, ftp, etc)
+     * Set the scheme part of the URL (http, https, ftp, etc.)
      *
      * @param string $scheme Scheme to set
      *

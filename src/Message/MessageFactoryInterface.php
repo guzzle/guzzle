@@ -59,7 +59,7 @@ interface MessageFactoryInterface
      * - expect: true/false/integer Controls the "Expect: 100-Continue" header
      * - config: Associative array of request config collection options
      *
-     * @param string     $method  HTTP method (GET, POST, PUT, etc ...)
+     * @param string     $method  HTTP method (GET, POST, PUT, etc.)
      * @param string|Url $url     HTTP URL to connect to
      * @param array      $options Array of options to apply to the request
      *

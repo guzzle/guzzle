@@ -5,7 +5,7 @@ Clients
 Clients are used to create requests, create transactions, send requests
 through an HTTP adapter, and return a response. You can add default request
 options to a client that are applied to every request (e.g., default headers,
-default query string parameters, etc), and you can add event listeners and
+default query string parameters, etc.), and you can add event listeners and
 subscribers to every request created by a client.
 
 Creating a client
@@ -546,7 +546,7 @@ Adapter Specific Authentication Schemes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you need to use authentication methods provided by cURL (e.g., NTLM, GSS,
-etc...), then you need to specify a curl adapter option in the ``options``
+etc.), then you need to specify a curl adapter option in the ``options``
 request option array. See :ref:`config-option` for more information.
 
 .. _cookies-option:

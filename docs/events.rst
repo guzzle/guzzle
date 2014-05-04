@@ -83,7 +83,7 @@ Adding Event Listeners
 After you have the emitter, you can register event listeners that listen to
 specific events using the ``on()`` method. When registering an event listener,
 you must tell the emitter what event to listen to (e.g., "before", "after",
-"headers", "complete", "error", etc...), what callable to invoke when the
+"headers", "complete", "error", etc.), what callable to invoke when the
 event is triggered, and optionally provide a priority.
 
 .. code-block:: php
@@ -323,7 +323,7 @@ a ``GuzzleHttp\Event\BeforeEvent``.
             echo $name . "\n";
             // "before"
             echo $e->getRequest()->getMethod() . "\n";
-            // "GET" / "POST" / "PUT" / etc...
+            // "GET" / "POST" / "PUT" / etc.
             echo get_class($e->getClient());
             // "GuzzleHttp\Client"
         }
