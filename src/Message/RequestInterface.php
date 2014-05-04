@@ -87,14 +87,14 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
     public function setMethod($method);
 
     /**
-     * Get the URI scheme of the request (http, https, etc)
+     * Get the URI scheme of the request (http, https, etc.)
      *
      * @return string
      */
     public function getScheme();
 
     /**
-     * Set the URI scheme of the request (http, https, etc)
+     * Set the URI scheme of the request (http, https, etc.)
      *
      * @param string $scheme Scheme to set
      *

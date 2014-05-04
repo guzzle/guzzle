@@ -24,7 +24,7 @@ var_export($res->json());
 - Doesn't require cURL, but uses cURL by default
 - Streams data for both uploads and downloads
 - Provides event hooks & plugins for cookies, caching, logging, OAuth, mocks,
-  etc...
+  etc.
 - Keep-Alive & connection pooling
 - SSL Verification
 - Automatic decompression of response bodies

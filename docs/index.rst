@@ -10,7 +10,7 @@ the pain out of consuming web services.
 - Pluggable HTTP adapters that can send requests serially or in parallel
 - Doesn't require cURL, but uses cURL by default
 - Streams data for both uploads and downloads
-- Provides event hooks & plugins for cookies, caching, logging, OAuth, mocks, etc...
+- Provides event hooks & plugins for cookies, caching, logging, OAuth, mocks, etc.
 - Keep-Alive & connection pooling
 - SSL Verification
 - Automatic decompression of response bodies
@@ -65,7 +65,7 @@ layer to add capabilities to the client.
 
 `Retry Subscriber <https://github.com/guzzle/retry-subscriber>`_
     Retries failed requests using customizable retry strategies (e.g., retry
-    based on response status code, cURL error codes, etc...)
+    based on response status code, cURL error codes, etc.)
 
 `Message Integrity Subscriber <https://github.com/guzzle/message-integrity-subscriber>`_
     Verifies the message integrity of HTTP responses using customizable

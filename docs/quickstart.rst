@@ -404,7 +404,7 @@ Exceptions
 
 Guzzle throws exceptions for errors that occur during a transfer.
 
-- In the event of a networking error (connection timeout, DNS errors, etc),
+- In the event of a networking error (connection timeout, DNS errors, etc.),
   a ``GuzzleHttp\Exception\RequestException`` is thrown. This exception
   extends from ``GuzzleHttp\Exception\TransferException``. Catching this
   exception will catch any exception that can be thrown while transferring

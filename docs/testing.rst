@@ -175,7 +175,7 @@ enqueue responses and inspect the requests that it has received.
 
 In order to use the web server, you'll need to manually require
 ``tests/Server.php``. Any operation on the ``Server`` object will ensure that
-the server is running and wait until it is able to receive requets before
+the server is running and wait until it is able to receive requests before
 returning.
 
 .. code-block:: php

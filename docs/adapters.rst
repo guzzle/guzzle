@@ -18,7 +18,7 @@ If cURL is present, Guzzle will use the following adapters by default:
   ``GuzzleHttp\Adapter\StreamingProxyAdapter`` is added so that streaming
   requests are sent using the PHP stream wrapper. If this setting is disabled,
   then streaming requests are sent through a cURL adapter.
-- If using PHP 5.5 or greater, then a a ``GuzzleHttp\Adapter\Curl\CurlAdapter``
+- If using PHP 5.5 or greater, then a ``GuzzleHttp\Adapter\Curl\CurlAdapter``
   is used to send serial requests. Otherwise, the
   ``GuzzleHttp\Adapter\Curl\MultiAdapter`` is used for serial and parallel
   requests.
