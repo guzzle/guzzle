@@ -250,7 +250,7 @@ request using event callbacks.
             // Do something with the completion of the request...
         },
         'error' => function (ErrorEvent $event) {
-            echo 'Request failed: ' . $event->getRequest()->getUrl() . "\n"
+            echo 'Request failed: ' . $event->getRequest()->getUrl() . "\n";
             echo $event->getException();
             // Do something to handle the error...
         }
