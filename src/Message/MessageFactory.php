@@ -154,7 +154,7 @@ class MessageFactory implements MessageFactoryInterface
             'debug' => 1, 'save_to' => 1, 'stream' => 1, 'expect' => 1];
         static $methods;
         if (!$methods) {
-            $methods = array_flip(get_class_methods(__CLASS__));
+            $methods = array_flip(get_class_methods($this));
         }
 
         // Iterate over each key value pair and attempt to apply a config using
