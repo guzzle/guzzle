@@ -110,6 +110,9 @@ class Client implements ClientInterface
         );
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getDefaultOption($keyOrPath = null)
     {
         return $keyOrPath === null
@@ -117,16 +120,25 @@ class Client implements ClientInterface
             : \GuzzleHttp\get_path($this->defaults, $keyOrPath);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function setDefaultOption($keyOrPath, $value)
     {
         \GuzzleHttp\set_path($this->defaults, $keyOrPath, $value);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getBaseUrl()
     {
         return (string) $this->baseUrl;
     }
 
+    /**
+     * @inheritdoc
+     */
     public function createRequest($method, $url = null, array $options = [])
     {
         // Merge in default options
@@ -144,41 +156,65 @@ class Client implements ClientInterface
         return $request;
     }
 
+    /**
+     * @inheritdoc
+     */
     public function get($url = null, $options = [])
     {
         return $this->send($this->createRequest('GET', $url, $options));
     }
 
+    /**
+     * @inheritdoc
+     */
     public function head($url = null, array $options = [])
     {
         return $this->send($this->createRequest('HEAD', $url, $options));
     }
 
+    /**
+     * @inheritdoc
+     */
     public function delete($url = null, array $options = [])
     {
         return $this->send($this->createRequest('DELETE', $url, $options));
     }
 
+    /**
+     * @inheritdoc
+     */
     public function put($url = null, array $options = [])
     {
         return $this->send($this->createRequest('PUT', $url, $options));
     }
 
+    /**
+     * @inheritdoc
+     */
     public function patch($url = null, array $options = [])
     {
         return $this->send($this->createRequest('PATCH', $url, $options));
     }
 
+    /**
+     * @inheritdoc
+     */
     public function post($url = null, array $options = [])
     {
         return $this->send($this->createRequest('POST', $url, $options));
     }
 
+    /**
+     * @inheritdoc
+     */
     public function options($url = null, array $options = [])
     {
         return $this->send($this->createRequest('OPTIONS', $url, $options));
     }
 
+    /**
+     * @inheritdoc
+     */
     public function send(RequestInterface $request)
     {
         $transaction = new Transaction($this, $request);
@@ -195,6 +231,9 @@ class Client implements ClientInterface
         }
     }
 
+    /**
+     * @inheritdoc
+     */
     public function sendAll($requests, array $options = [])
     {
         if (!($requests instanceof TransactionIterator)) {
