@@ -39,6 +39,7 @@ interface MessageFactoryInterface
      *
      * - headers: Associative array of headers to add to the request
      * - body: string|resource|array|StreamInterface request body to send
+     * - json: mixed Uploads JSON encoded data using an application/json Content-Type header.
      * - query: Associative array of query string values to add to the request
      * - auth: array|string HTTP auth settings (user, pass[, type="basic"])
      * - version: The HTTP protocol version to use with the request

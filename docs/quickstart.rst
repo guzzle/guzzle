@@ -276,19 +276,33 @@ or response object.
     echo $request->getHeader('X-Foo');
     // Echoes an empty string: ''
 
-POST Requests
-=============
+Uploading Data
+==============
 
-You can send POST requests that contain a raw POST body by passing a
-string, resource returned from ``fopen``, or a
-``GuzzleHttp\Stream\StreamInterface`` object to the ``body`` request option.
+Guzzle provides several methods of uploading data.
+
+You can send requests that contain a stream of data by passing a string,
+resource returned from ``fopen``, or a ``GuzzleHttp\Stream\StreamInterface``
+object to the ``body`` request option.
 
 .. code-block:: php
 
     $r = $client->post('http://httpbin.org/post', ['body' => 'raw data']);
 
+You can easily upload JSON data using the ``json`` request option.
+
+.. code-block:: php
+
+    $r = $client->put('http://httpbin.org/put', ['json' => ['foo' => 'bar']]);
+
+POST Requests
+-------------
+
+In addition to specifying the raw data of a request using the ``body`` request
+option, Guzzle provides helpful abstractions over sending POST data.
+
 Sending POST Fields
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 Sending ``application/x-www-form-urlencoded`` POST requests requires that you
 specify the body of a POST request as an array.
@@ -321,7 +335,7 @@ You can also build up POST requests before sending them.
     $response = $client->send($request);
 
 Sending POST Files
-------------------
+~~~~~~~~~~~~~~~~~~
 
 Sending ``multipart/form-data`` POST requests (POST requests that contain
 files) is the same as sending ``application/x-www-form-urlencoded``, except
