@@ -320,4 +320,13 @@ class MessageFactory implements MessageFactoryInterface
             $emitter->attach($subscribers);
         }
     }
+
+    private function add_json(RequestInterface $request, $value)
+    {
+        if (!$request->hasHeader('Content-Type')) {
+            $request->setHeader('Content-Type', 'application/json');
+        }
+
+        $request->setBody(Stream\create(json_encode($value)));
+    }
 }

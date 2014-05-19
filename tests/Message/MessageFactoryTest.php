@@ -472,7 +472,29 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
 
     public function testCanSetProtocolVersion()
     {
-        $request = (new MessageFactory())->createRequest('GET', 'http://test.com', ['version' => 1.0]);
+        $request = (new MessageFactory())->createRequest('GET', 'http://t.com', ['version' => 1.0]);
         $this->assertEquals(1.0, $request->getProtocolVersion());
+    }
+
+    public function testCanAddJsonData()
+    {
+        $request = (new MessageFactory)->createRequest('PUT', 'http://f.com', [
+            'json' => ['foo' => 'bar']
+        ]);
+        $this->assertEquals(
+            'application/json',
+            $request->getHeader('Content-Type')
+        );
+        $this->assertEquals('{"foo":"bar"}', (string) $request->getBody());
+    }
+
+    public function testCanAddJsonDataAndNotOverwriteContentType()
+    {
+        $request = (new MessageFactory)->createRequest('PUT', 'http://f.com', [
+            'headers' => ['Content-Type' => 'foo'],
+            'json' => null
+        ]);
+        $this->assertEquals('foo', $request->getHeader('Content-Type'));
+        $this->assertEquals('null', (string) $request->getBody());
     }
 }
