@@ -544,7 +544,7 @@ to ensure that they are fired last or near last in the event chain.
      * Listens to the "before" event of a request and only modifies the request
      * when the "auth" config setting of the request is "foo".
      */
-    class FooAuth implements GuzzleHttp\Common\SubscriberInterface
+    class FooAuth implements GuzzleHttp\Event\SubscriberInterface
     {
         private $password;
 
@@ -566,7 +566,7 @@ to ensure that they are fired last or near last in the event chain.
         }
     }
 
-    $client->getEmitter->attach(new FooAuth('password'));
+    $client->getEmitter()->attach(new FooAuth('password'));
     $client->get('/', ['auth' => 'foo']);
 
 Adapter Specific Authentication Schemes
