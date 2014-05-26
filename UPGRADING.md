@@ -444,7 +444,7 @@ that contain additonal metadata accessible via `getMetadata()`.
 `GuzzleHttp\Stream\StreamInterface::getMetadata` and
 `GuzzleHttp\Stream\StreamInterface::setMetadata` have been removed.
 
-## SteamRequestFactory
+## StreamRequestFactory
 
 The entire concept of the StreamRequestFactory has been removed. The way this
 was used in Guzzle 3 broke the actual interface of sending streaming requests
@@ -619,7 +619,7 @@ The `Guzzle\Http\Utils` class was removed. This class was only used for testing.
 
 ### Stream wrapper and type
 
-`Guzzle\Stream\Stream::getWrapper()` and `Guzzle\Stream\Stream::getSteamType()` are no longer converted to lowercase.
+`Guzzle\Stream\Stream::getWrapper()` and `Guzzle\Stream\Stream::getStreamType()` are no longer converted to lowercase.
 
 ### curl.emit_io became emit_io
 
