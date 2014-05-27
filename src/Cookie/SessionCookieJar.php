@@ -51,7 +51,7 @@ class SessionCookieJar extends CookieJar
     {
         $cookieJar = isset($_SESSION[$this->sessionKey]) ? $_SESSION[$this->sessionKey] : null;
 
-        $data = json_decode($cookieJar, true);
+        $data = \GuzzleHttp\json_decode($cookieJar, true);
         if (is_array($data)) {
             foreach ($data as $cookie) {
                 $this->setCookie(new SetCookie($cookie));

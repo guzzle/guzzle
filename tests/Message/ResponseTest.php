@@ -49,8 +49,8 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage Unable to parse response body into JSON: 4
+     * @expectedException \GuzzleHttp\Exception\ParseException
+     * @expectedExceptionMessage Unable to parse JSON data: JSON_ERROR_SYNTAX - Syntax error, malformed JSON
      */
     public function testThrowsExceptionWhenFailsToParseJsonResponse()
     {

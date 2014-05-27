@@ -126,21 +126,19 @@ class Response extends AbstractMessage implements ResponseInterface
 
     public function json(array $config = [])
     {
-        $data = json_decode(
-            (string) $this->getBody(),
-            isset($config['object']) ? !$config['object'] : true,
-            512,
-            isset($config['big_int_strings']) ? JSON_BIGINT_AS_STRING : 0
-        );
-
-        if (JSON_ERROR_NONE !== json_last_error()) {
+        try {
+            return \GuzzleHttp\json_decode(
+                (string) $this->getBody(),
+                isset($config['object']) ? !$config['object'] : true,
+                512,
+                isset($config['big_int_strings']) ? JSON_BIGINT_AS_STRING : 0
+            );
+        } catch (\InvalidArgumentException $e) {
             throw new ParseException(
-                'Unable to parse response body into JSON: ' . json_last_error(),
+                $e->getMessage(),
                 $this
             );
         }
-
-        return $data;
     }
 
     public function xml(array $config = [])

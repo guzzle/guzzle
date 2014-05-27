@@ -142,6 +142,21 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $requests = [$client->createRequest('GET', 'http://foo.com/baz')];
         \GuzzleHttp\batch($client, $requests, ['complete' => 'foo']);
     }
+
+    public function testJsonDecodes()
+    {
+        $data = \GuzzleHttp\json_decode('true');
+        $this->assertTrue($data);
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage Unable to parse JSON data: JSON_ERROR_SYNTAX - Syntax error, malformed JSON
+     */
+    public function testJsonDecodesWithErrorMessages()
+    {
+        \GuzzleHttp\json_decode('!narf!');
+    }
 }
 
 class HasDeprecations
