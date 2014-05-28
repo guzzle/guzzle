@@ -10,21 +10,6 @@ use GuzzleHttp\Query;
  */
 interface RequestInterface extends MessageInterface, HasEmitterInterface
 {
-    const GET = 'GET';
-    const PUT = 'PUT';
-    const POST = 'POST';
-    const DELETE = 'DELETE';
-    const HEAD = 'HEAD';
-    const CONNECT = 'CONNECT';
-    const OPTIONS = 'OPTIONS';
-    const TRACE = 'TRACE';
-    const PATCH = 'PATCH';
-
-    /**
-     * @return string
-     */
-    public function __toString();
-
     /**
      * Sets the request URL.
      *
@@ -39,7 +24,7 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
     public function setUrl($url);
 
     /**
-     * Gets the request URL.
+     * Gets the request URL as a string.
      *
      * @return string Returns the URL as a string.
      */
@@ -71,14 +56,14 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
     public function setQuery($query);
 
     /**
-     * Get the HTTP method of the request
+     * Get the HTTP method of the request.
      *
      * @return string
      */
     public function getMethod();
 
     /**
-     * Set the HTTP method of the request
+     * Set the HTTP method of the request.
      *
      * @param string $method HTTP method
      *
@@ -87,14 +72,14 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
     public function setMethod($method);
 
     /**
-     * Get the URI scheme of the request (http, https, etc.)
+     * Get the URI scheme of the request (http, https, etc.).
      *
      * @return string
      */
     public function getScheme();
 
     /**
-     * Set the URI scheme of the request (http, https, etc.)
+     * Set the URI scheme of the request (http, https, etc.).
      *
      * @param string $scheme Scheme to set
      *
@@ -103,15 +88,36 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
     public function setScheme($scheme);
 
     /**
-     * Get the host of the request
+     * Get the port scheme of the request (e.g., 80, 443, etc.).
+     *
+     * @return int
+     */
+    public function getPort();
+
+    /**
+     * Set the port of the request.
+     *
+     * Setting a port modifies the Host header of a request as necessary.
+     *
+     * @param int $port Port to set
+     *
+     * @return self
+     */
+    public function setPort($port);
+
+    /**
+     * Get the host of the request.
      *
      * @return string
      */
     public function getHost();
 
     /**
-     * Set the host of the request. Including a port in the host will modify
-     * the port of the request.
+     * Set the host of the request including an optional port.
+     *
+     * Including a port in the host argument will explicitly change the port of
+     * the request. If no port is found, the default port of the current
+     * request scheme will be utilized.
      *
      * @param string $host Host to set (e.g. www.yahoo.com, www.yahoo.com:80)
      *
@@ -120,14 +126,14 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
     public function setHost($host);
 
     /**
-     * Get the path of the request (e.g. '/', '/index.html')
+     * Get the path of the request (e.g. '/', '/index.html').
      *
      * @return string
      */
     public function getPath();
 
     /**
-     * Set the path of the request (e.g. '/', '/index.html')
+     * Set the path of the request (e.g. '/', '/index.html').
      *
      * @param string|array $path Path to set or array of segments to implode
      *
@@ -136,7 +142,7 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
     public function setPath($path);
 
     /**
-     * Get the request's configuration options
+     * Get the request's configuration options.
      *
      * @return \GuzzleHttp\Collection
      */

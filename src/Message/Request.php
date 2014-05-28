@@ -115,6 +115,19 @@ class Request extends AbstractMessage implements RequestInterface
         return $this;
     }
 
+    public function getPort()
+    {
+        return $this->url->getPort();
+    }
+
+    public function setPort($port)
+    {
+        $this->url->setPort($port);
+        $this->updateHostHeaderFromUrl();
+
+        return $this;
+    }
+
     public function getHost()
     {
         return $this->url->getHost();
