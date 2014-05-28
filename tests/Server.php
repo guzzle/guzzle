@@ -128,7 +128,7 @@ class Server
         self::$started = false;
     }
 
-    public static function wait($maxTries = 3)
+    public static function wait($maxTries = 5)
     {
         $tries = 0;
         while (!self::isListening() && ++$tries < $maxTries) {

@@ -122,6 +122,9 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('OK', $response->getReasonPhrase());
         $this->assertEquals('8', $response->getHeader('Content-Length'));
         $body = $response->getBody();
+        if (defined('HHVM_VERSION')) {
+            $this->markTestIncomplete('HHVM has not implemented this?');
+        }
         $this->assertEquals('http', $body->getMetadata()['wrapper_type']);
         $this->assertEquals(8, $body->getMetadata()['unread_bytes']);
         $this->assertEquals(Server::$url . 'foo', $body->getMetadata()['uri']);
@@ -290,6 +293,10 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testDebugAttributeWritesStreamInfoToTempBufferByDefault()
     {
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('HHVM has not implemented this?');
+            return;
+        }
 
         Server::flush();
         Server::enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
@@ -307,6 +314,11 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testDebugAttributeWritesStreamInfoToBuffer()
     {
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('HHVM has not implemented this?');
+            return;
+        }
+
         $buffer = fopen('php://temp', 'r+');
         Server::flush();
         Server::enqueue("HTTP/1.1 200 OK\r\nContent-Length: 8\r\nContent-Type: text/plain\r\n\r\nhi there");
