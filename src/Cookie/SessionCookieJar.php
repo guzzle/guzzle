@@ -13,7 +13,7 @@ class SessionCookieJar extends CookieJar
     /**
      * Create a new SessionCookieJar object
      *
-     * @param  string  $sessionKey  Session key name to store the cookie data in session
+     * @param string $sessionKey Session key name to store the cookie data in session
      */
     public function __construct($sessionKey)
     {
@@ -49,7 +49,9 @@ class SessionCookieJar extends CookieJar
      */
     protected function load()
     {
-        $cookieJar = isset($_SESSION[$this->sessionKey]) ? $_SESSION[$this->sessionKey] : null;
+        $cookieJar = isset($_SESSION[$this->sessionKey])
+            ? $_SESSION[$this->sessionKey]
+            : null;
 
         $data = \GuzzleHttp\json_decode($cookieJar, true);
         if (is_array($data)) {

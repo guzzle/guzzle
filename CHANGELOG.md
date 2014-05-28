@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+4.1.0 (2014-05-27)
+------------------
+
+* Added a `json` request option to easily serialize JSON payloads.
+* Added a `GuzzleHttp\json_decode()` wrapper to safely parse JSON.
+* Added `setPort()` and `getPort()` to `GuzzleHttp\Message\RequestInterface`.
+* Added the ability to provide an emitter to a client in the client constructor.
+* Added the ability to persist a cookie session using $_SESSION.
+* Added a trait that can be used to add event listeners to an iterator.
+* Removed request method constants from RequestInterface.
+* Fixed warning when invalid request start-lines are received.
+* Updated MessageFactory to work with custom request option methods.
+* Updated cacert bundle to latest build.
+
 4.0.2 (2014-04-16)
 ------------------
 
