@@ -18,7 +18,7 @@ easily test the client.
 Procedural API
 --------------
 
-Here's an example of sending a ``GET`` request using the procedural API.
+Here's an example of sending a ``POST`` request using the procedural API.
 
 .. code-block:: php
 
