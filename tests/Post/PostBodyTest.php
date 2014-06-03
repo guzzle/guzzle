@@ -64,6 +64,21 @@ class PostBodyTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($m->hasHeader('Content-Length'));
     }
 
+    public function testMultipartWithNestedFields()
+    {
+      $b = new PostBody();
+      $b->setField('foo', ['bar' => 'baz']);
+      $b->forceMultipartUpload(true);
+      $this->assertEquals(['foo' => ['bar' => 'baz']], $b->getFields());
+      $m = new Request('POST', '/');
+      $b->applyRequestHeaders($m);
+      $this->assertContains('multipart/form-data', (string) $m->getHeader('Content-Type'));
+      $this->assertTrue($m->hasHeader('Content-Length'));
+      $contents = $b->getContents();
+      $this->assertContains('name="foo[bar]"', $contents);
+      $this->assertNotContains('name="foo"', $contents);
+    }
+
     public function testCountProvidesFieldsAndFiles()
     {
         $b = new PostBody();
