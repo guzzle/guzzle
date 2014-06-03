@@ -497,4 +497,26 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('foo', $request->getHeader('Content-Type'));
         $this->assertEquals('null', (string) $request->getBody());
     }
+
+    public function testCanUseCustomSubclassesWithMethods()
+    {
+        (new ExtendedFactory)->createRequest('PUT', 'http://f.com', [
+            'headers' => ['Content-Type' => 'foo'],
+            'foo' => 'bar'
+        ]);
+        try {
+            $f = new MessageFactory;
+            $f->createRequest('PUT', 'http://f.com', [
+                'headers' => ['Content-Type' => 'foo'],
+                'foo' => 'bar'
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            $this->assertContains('foo config', $e->getMessage());
+        }
+    }
+}
+
+class ExtendedFactory extends MessageFactory
+{
+    protected function add_foo() {}
 }
