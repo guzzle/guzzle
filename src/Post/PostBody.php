@@ -246,24 +246,38 @@ class PostBody implements PostBodyInterface
     }
 
     /**
+     * Flatten nested fields array into name => value pairs.
+     *
+     * @param array  $fields    Fields to flatten.
+     * @param string $keyPrefix Key prefix (start with '')
+     *
+     * @return array
+     */
+    private static function flattenFields(array $fields, $keyPrefix = '')
+    {
+        $result = [];
+        foreach ($fields as $key => $value) {
+            if ($keyPrefix) {
+                $key = "{$keyPrefix}[{$key}]";
+            }
+            if (is_array($value)) {
+                $result += self::flattenFields($value, $key);
+            } else {
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * Creates a multipart/form-data body stream
      *
      * @return MultipartBody
      */
     private function createMultipart()
     {
-        $fields = $this->fields;
-        $query = (new Query())
-            ->setEncodingType(false)
-            ->setAggregator($this->getAggregator());
-
-        // Account for fields with an array value
-        foreach ($fields as $name => &$field) {
-            if (is_array($field)) {
-                $field = (string) $query->replace([$name => $field]);
-            }
-        }
-
+        $fields = self::flattenFields($this->fields);
         return new MultipartBody($fields, $this->files);
     }
 
