@@ -65,7 +65,10 @@ class MessageFactory implements MessageFactoryInterface
         unset($options['config']);
 
         // Use a POST body by default
-        if ($method == 'POST' && !isset($options['body'])) {
+        if ($method == 'POST' &&
+            !isset($options['body']) &&
+            !isset($options['json'])
+        ) {
             $options['body'] = [];
         }
 
