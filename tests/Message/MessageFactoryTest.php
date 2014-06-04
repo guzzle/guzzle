@@ -488,6 +488,21 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('{"foo":"bar"}', (string) $request->getBody());
     }
 
+    /**
+     * @group failing_test
+     */
+    public function testCanAddJsonDataToAPostRequest()
+    {
+        $request = (new MessageFactory)->createRequest('POST', 'http://f.com', [
+            'json' => ['foo' => 'bar']
+        ]);
+        $this->assertEquals(
+            'application/json',
+            $request->getHeader('Content-Type')
+        );
+        $this->assertEquals('{"foo":"bar"}', (string) $request->getBody());
+    }
+
     public function testCanAddJsonDataAndNotOverwriteContentType()
     {
         $request = (new MessageFactory)->createRequest('PUT', 'http://f.com', [
