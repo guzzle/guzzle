@@ -437,7 +437,7 @@ Guzzle throws exceptions for errors that occur during a transfer.
           }
       }
 
-- A ``GuzzleHttp\Exception\ClientErrorResponseException`` is thrown for 400
+- A ``GuzzleHttp\Exception\ClientException`` is thrown for 400
   level errors if the ``exceptions`` request option is set to true. This
   exception extends from ``GuzzleHttp\Exception\BadResponseException`` and
   ``GuzzleHttp\Exception\BadResponseException`` extends from
@@ -445,16 +445,16 @@ Guzzle throws exceptions for errors that occur during a transfer.
 
   .. code-block:: php
 
-      use GuzzleHttp\Exception\ClientErrorResponseException;
+      use GuzzleHttp\Exception\ClientException;
 
       try {
           $client->get('https://github.com/_abc_123_404');
-      } catch (ClientErrorResponseException $e) {
+      } catch (ClientException $e) {
           echo $e->getRequest();
           echo $e->getResponse();
       }
 
-- A ``GuzzleHttp\Exception\ServerErrorResponse`` is thrown for 500 level
+- A ``GuzzleHttp\Exception\ServerException`` is thrown for 500 level
   errors if the ``exceptions`` request option is set to true. This
   exception extends from ``GuzzleHttp\Exception\BadResponseException``.
 - A ``GuzzleHttp\Exception\TooManyRedirectsException`` is thrown when too
