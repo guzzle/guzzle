@@ -322,4 +322,18 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
         }, $jar->getIterator()->getArrayCopy());
         $this->assertEquals(['foo', 'test', 'you'], $names);
     }
+
+    public function testCanConvertToAndLoadFromArray()
+    {
+        $jar = new CookieJar(true);
+        foreach ($this->getTestCookies() as $cookie) {
+            $jar->setCookie($cookie);
+        }
+        $this->assertCount(3, $jar);
+        $arr = $jar->toArray();
+        $this->assertCount(3, $arr);
+        $newCookieJar = new CookieJar(false, $arr);
+        $this->assertCount(3, $newCookieJar);
+        $this->assertSame($jar->toArray(), $newCookieJar->toArray());
+    }
 }
