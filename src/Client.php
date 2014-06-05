@@ -54,7 +54,6 @@ class Client implements ClientInterface
      *              ['version' => '123']
      *          ],
      *         'defaults' => [
-     *             'timeout'         => 10,
      *             'allow_redirects' => false,
      *             'proxy'           => '192.168.16.1:10'
      *         ]
