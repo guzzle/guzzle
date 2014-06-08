@@ -1,6 +1,14 @@
 CHANGELOG
 =========
 
+4.1.1 (2014-06-08)
+------------------
+
+* Fixed an issue related to using custom message factory options in subclasses
+* Fixed an issue with nested form fields in a multi-part POST
+* Fixed an issue with using the `json` request option for POST requests
+* Added `ToArrayInterface` to `GuzzleHttp\Cookie\CookieJar`
+
 4.1.0 (2014-05-27)
 ------------------
 
