@@ -4,11 +4,12 @@ namespace GuzzleHttp\Cookie;
 
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\ResponseInterface;
+use GuzzleHttp\ToArrayInterface;
 
 /**
  * Cookie jar that stores cookies an an array
  */
-class CookieJar implements CookieJarInterface
+class CookieJar implements CookieJarInterface, ToArrayInterface
 {
     /** @var SetCookie[] Loaded cookie data */
     private $cookies = [];
@@ -17,12 +18,21 @@ class CookieJar implements CookieJarInterface
     private $strictMode;
 
     /**
-     * @param bool $strictMode Set to true to throw exceptions when invalid
-     *     cookies are added to the cookie jar.
+     * @param bool $strictMode   Set to true to throw exceptions when invalid
+     *                           cookies are added to the cookie jar.
+     * @param array $cookieArray Array of SetCookie objects or a hash of arrays
+     *                           that can be used with the SetCookie constructor
      */
-    public function __construct($strictMode = false)
+    public function __construct($strictMode = false, $cookieArray = [])
     {
         $this->strictMode = $strictMode;
+
+        foreach ($cookieArray as $cookie) {
+            if (!($cookieArray instanceof SetCookie)) {
+                $cookie = new SetCookie($cookie);
+            }
+            $this->setCookie($cookie);
+        }
     }
 
     /**
@@ -66,6 +76,13 @@ class CookieJar implements CookieJarInterface
         }
 
         return $value;
+    }
+
+    public function toArray()
+    {
+        return array_map(function (SetCookie $cookie) {
+            return $cookie->toArray();
+        }, $this->getIterator()->getArrayCopy());
     }
 
     public function clear($domain = null, $path = null, $name = null)
