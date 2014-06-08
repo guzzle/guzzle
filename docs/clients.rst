@@ -203,7 +203,7 @@ The ``sendAll()`` method accepts the following associative array of options:
 The "before", "complete", and "error" event options accept a callable or an
 array of associative arrays where each associative array contains a "fn" key
 with a callable value, an optional "priority" key representing the event
-priority (with a default value is 0), and an optional "once" key that can be
+priority (with a default value of 0), and an optional "once" key that can be
 set to true so that the event listener will be removed from the request after
 it is first triggered.
 
