@@ -699,7 +699,7 @@ to an open Guzzle stream:
 events
 ------
 
-:Summary: Associative array mapping event names to a callable. or an
+:Summary: An associative array mapping event names to a callable. Or an
     associative array containing the 'fn' key that maps to a callable, an
     optional 'priority' key used to specify the event priority, and an optional
     'once' key used to specify if the event should remove itself the first time
