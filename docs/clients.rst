@@ -289,7 +289,7 @@ Throwing Errors Immediately
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It sometimes is useful to throw exceptions immediately when the occur. The
-following exmaple shows how to use an event listener to throw exceptions
+following example shows how to use an event listener to throw exceptions
 immeditaley and prevent subsequent requests from being sent.
 
 .. code-block:: php
