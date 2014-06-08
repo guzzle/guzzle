@@ -308,7 +308,7 @@ Batching Requests
 -----------------
 
 Sometimes you just want to send a few requests in parallel and then process
-the results all at once after they've sent. Guzzle provides a convenience
+the results all at once after they've been sent. Guzzle provides a convenience
 function ``GuzzleHttp\batch()`` that makes this very simple:
 
 .. code-block:: php
