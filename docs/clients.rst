@@ -339,7 +339,7 @@ function ``GuzzleHttp\batch()`` that makes this very simple:
 
 ``GuzzleHttp\batch()`` accepts an optional associative array of options in the
 third argument that allows you to specify the 'before', 'complete' and 'error'
-events as well as specify the maximum number of request to send in parallel
+events as well as specify the maximum number of requests to send in parallel
 using the 'parallel' option key. This options array is the exact same format as
 the options array exposed in ``GuzzleHttp\ClientInterface::sendAll()``.
 
