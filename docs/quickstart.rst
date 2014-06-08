@@ -377,7 +377,7 @@ Guzzle can maintain a cookie session for you if instructed using the
 - Set to ``true`` to use a shared cookie session associated with the client.
 - Pass an associative array containing cookies to send in the request and start
   a new cookie session.
-- Set to a ``GuzzleHttp\Subscriber\CookieJar\CookieJarInterface`` object to uss
+- Set to a ``GuzzleHttp\Subscriber\CookieJar\CookieJarInterface`` object to use
   an existing cookie jar.
 
 Redirects
