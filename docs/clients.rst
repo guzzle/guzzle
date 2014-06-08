@@ -1103,7 +1103,7 @@ behavior of the library.
 ``HTTP_PROXY``
     Defines the proxy to use when sending requests using the "http" protocol.
 ``HTTPS_PROXY``
-    Defines the proxy to use when sending requests using the "https": protocol.
+    Defines the proxy to use when sending requests using the "https" protocol.
 
 Relevant ini Settings
 ---------------------
