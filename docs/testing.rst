@@ -173,15 +173,11 @@ Guzzle ships with a node.js test server that receives requests and returns
 responses from a queue. The test server exposes a simple API that is used to
 enqueue responses and inspect the requests that it has received.
 
-In order to use the web server, you'll need to manually require
-``tests/Server.php``. Any operation on the ``Server`` object will ensure that
+Any operation on the ``Server`` object will ensure that
 the server is running and wait until it is able to receive requests before
 returning.
 
 .. code-block:: php
-
-    // Require the test server (using something like this).
-    require __DIR__ . '/../vendor/guzzlehttp/guzzle/tests/Server.php';
 
     use GuzzleHttp\Client;
     use GuzzleHttp\Tests\Server;
