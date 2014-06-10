@@ -26,15 +26,11 @@
 
     "autoload": {
         "psr-4": {
-            "GuzzleHttp\\": "src/"
+            "GuzzleHttp\\": "src/",
+            "GuzzleHttp\\Tests\\": "tests/"
         },
         "files": ["src/functions.php"]
     },
-    "autoload-dev": {
-        "psr-4": {
-            "GuzzleHttp\\Tests\\": "tests/"
-        }
-    },	
     "require-dev": {
         "ext-curl": "*",
         "psr/log": "~1.0",
