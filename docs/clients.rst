@@ -896,7 +896,7 @@ Pass a string to specify a proxy for all protocols.
 
 .. code-block:: php
 
-    $client->get('/', ['proxy' => 'tcp://localhost:8124']);
+    $client->get('/', ['proxy' => 'tcp://localhost:8125']);
 
 Pass an associative array to specify HTTP proxies for specific URI schemes
 (i.e., "http", "https").
@@ -905,7 +905,7 @@ Pass an associative array to specify HTTP proxies for specific URI schemes
 
     $client->get('/', [
         'proxy' => [
-            'http'  => 'tcp://localhost:8124', // Use this proxy with "http"
+            'http'  => 'tcp://localhost:8125', // Use this proxy with "http"
             'https' => 'tcp://localhost:9124'  // Use this proxy with "https"
         ]
     ]);

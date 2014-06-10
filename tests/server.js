@@ -5,21 +5,21 @@
  *
  * - Delete all requests that have been received:
  *      DELETE /guzzle-server/requests
- *      Host: 127.0.0.1:8124
+ *      Host: 127.0.0.1:8125
  *
  *  - Enqueue responses
  *      PUT /guzzle-server/responses
- *      Host: 127.0.0.1:8124
+ *      Host: 127.0.0.1:8125
  *
  *      [{ "statusCode": 200, "reasonPhrase": "OK", "headers": {}, "body": "" }]
  *
  *  - Get the received requests
  *      GET /guzzle-server/requests
- *      Host: 127.0.0.1:8124
+ *      Host: 127.0.0.1:8125
  *
  *  - Shutdown the server
  *      DELETE /guzzle-server
- *      Host: 127.0.0.1:8124
+ *      Host: 127.0.0.1:8125
  *
  * @package Guzzle PHP <http://www.guzzlephp.org>
  * @license See the LICENSE file that was distributed with this source code.
@@ -132,13 +132,13 @@ var GuzzleServer = function(port, log) {
         that.server.listen(port, "127.0.0.1");
 
         if (this.log) {
-            console.log("Server running at http://127.0.0.1:8124/");
+            console.log("Server running at http://127.0.0.1:8125/");
         }
     };
 };
 
 // Get the port from the arguments
-port = process.argv.length >= 3 ? process.argv[2] : 8124;
+port = process.argv.length >= 3 ? process.argv[2] : 8125;
 log = process.argv.length >= 4 ? process.argv[3] : false;
 
 // Start the server
