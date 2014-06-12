@@ -282,6 +282,27 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
             $this->assertNotContains('Content-Length', implode(' ', $_SERVER['last_curl'][CURLOPT_HTTPHEADER]));
         }
 
+        public function testCanSendPayloadWithGet()
+        {
+            Server::flush();
+            Server::enqueue(["HTTP/1.1 200 OK\r\n\r\n"]);
+            $request = new Request(
+                'GET',
+                Server::$url,
+                [],
+                Stream::factory('foo')
+            );
+            $this->emit($request);
+            $t = new Transaction(new Client(), $request);
+            $f = new CurlFactory();
+            $h = $f($t, new MessageFactory());
+            curl_exec($h);
+            curl_close($h);
+            $sent = Server::received(true)[0];
+            $this->assertEquals('foo', (string) $sent->getBody());
+            $this->assertEquals(3, (string) $sent->getHeader('Content-Length'));
+        }
+
         private function emit(RequestInterface $request)
         {
             $event = new BeforeEvent(new Transaction(new Client(), $request));

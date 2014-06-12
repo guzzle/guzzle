@@ -97,7 +97,7 @@ class CurlFactory
     private function applyMethod(RequestInterface $request, array &$options)
     {
         $method = $request->getMethod();
-        if ($method == 'GET') {
+        if ($method == 'GET' && !$request->getBody()) {
             $options[CURLOPT_HTTPGET] = true;
             unset($options[CURLOPT_READFUNCTION]);
         } elseif ($method == 'HEAD') {
