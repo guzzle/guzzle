@@ -142,25 +142,17 @@ function batch(ClientInterface $client, $requests, array $options = [])
         $hash->attach($request);
     }
 
-    $handler = [
-        'priority' => RequestEvents::EARLY,
-        'once' => true,
-        'fn' => function ($e) use ($hash) { $hash[$e->getRequest()] = $e; }
-    ];
-
     // Merge the necessary complete and error events to the event listeners so
     // that as each request succeeds or fails, it is added to the result hash.
-    foreach (['complete', 'error'] as $name) {
-        if (!isset($options[$name])) {
-            $options[$name] = $handler;
-        } elseif (is_callable($options[$name])) {
-            $options[$name] = [['fn' => $options[$name]], $handler];
-        } elseif (is_array($options[$name])) {
-            $options[$name][] = $handler;
-        } else {
-            throw new \InvalidArgumentException('Invalid event format');
-        }
-    }
+    $options = RequestEvents::convertEventArray(
+        $options,
+        ['complete', 'error'],
+        [
+            'priority' => RequestEvents::EARLY,
+            'once' => true,
+            'fn' => function ($e) use ($hash) { $hash[$e->getRequest()] = $e; }
+        ]
+    );
 
     // Send the requests in parallel and aggregate the results.
     $client->sendAll($requests, $options);
