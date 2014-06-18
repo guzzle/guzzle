@@ -138,6 +138,7 @@ final class RequestEvents
      *
      * @return array
      * @throws \InvalidArgumentException if the event config is invalid
+     * @internal
      */
     public static function convertEventArray(
         array $options,

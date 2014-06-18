@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+4.1.2 (2014-06-18)
+------------------
+
+* Added support for sending payloads with GET requests
+
 4.1.1 (2014-06-08)
 ------------------
 
