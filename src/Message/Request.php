@@ -213,4 +213,8 @@ class Request extends AbstractMessage implements RequestInterface
             }
         }
     }
+    public function setAuth($username, $password){
+        $this->url->setUsername($username)->setPassword($password);
+        return $this;
+    }
 }
