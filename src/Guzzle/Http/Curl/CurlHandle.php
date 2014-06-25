@@ -218,6 +218,27 @@ class CurlHandle
             $curlOptions[CURLOPT_NOPROGRESS] = false;
         }
 
+        // If this is an old cURL version, run patch
+        $curlVersion = curl_version();
+        $curlVersionString = $curlVersion['version'];
+        list($curlVersionMajor, $curlVersionMinor, $curlVersionPatch) = explode('.', $curlVersionString);
+        if (
+            ($curlVersionMajor <= 7) &&
+            ($curlVersionMinor <= 12) &&
+            ($curlVersionPatch <= 1)
+        ) {
+
+            // This is an ancient cURL, remove Content-Type header from options if it's multipart/form-data
+            $curlHTTPHeaderOptions = $curlOptions[CURLOPT_HTTPHEADER];
+            $curlOptions[CURLOPT_HTTPHEADER] = array();
+            foreach($curlHTTPHeaderOptions as $option) {
+                if ('content-type: multipart/form-data' !== strtolower($option)) {
+                    $curlOptions[CURLOPT_HTTPHEADER][] = $option;
+                }
+            }
+
+        }
+
         curl_setopt_array($handle, $curlOptions);
 
         return new static($handle, $curlOptions);
