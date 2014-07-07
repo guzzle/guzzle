@@ -78,6 +78,9 @@ class UrlTest extends \PHPUnit_Framework_TestCase
 
         $url = Url::buildUrl(['path' => '0']);
         $this->assertSame('0', $url);
+
+        $url = Url::buildUrl(['host' => '', 'path' => '0']);
+        $this->assertSame('0', $url);
     }
 
     public function testUrlStoresParts()
