@@ -92,7 +92,7 @@ class Url
         if (isset($parts['path']) && strlen($parts['path'])) {
             // Always ensure that the path begins with '/' if set and something
             // is before the path
-            if (isset($parts['host']) && $parts['path'][0] != '/') {
+            if (!empty($parts['host']) && $parts['path'][0] != '/') {
                 $url .= '/';
             }
             $url .= $parts['path'];
