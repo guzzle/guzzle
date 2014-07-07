@@ -147,4 +147,14 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
      * @return \GuzzleHttp\Collection
      */
     public function getConfig();
+
+    /**
+     * Sets auth data for current url.
+     * 
+     * @param String $username
+     * @param String $password
+     *
+     * @return self
+     */
+    public function setAuth($username,$password);
 }
