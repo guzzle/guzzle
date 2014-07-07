@@ -306,7 +306,7 @@ class Url
     public function removeDotSegments()
     {
         static $noopPaths = ['' => true, '/' => true, '*' => true];
-        static $ignoreSegments = ['' => true, '.' => true, '..' => true];
+        static $ignoreSegments = ['.' => true, '..' => true];
 
         if (isset($noopPaths[$this->path])) {
             return $this;
@@ -322,17 +322,21 @@ class Url
             }
         }
 
-        // Combine the normalized parts and add the leading slash if needed
-        if ($this->path[0] == '/') {
-            $this->path = '/' . implode('/', $results);
-        } else {
-            $this->path = implode('/', $results);
+        $newPath = implode('/', $results);
+
+        // Add the leading slash if necessary
+        if (substr($this->path, 0, 1) === '/' &&
+            substr($newPath, 0, 1) !== '/'
+        ) {
+            $newPath = '/' . $newPath;
         }
 
         // Add the trailing slash if necessary
-        if ($this->path != '/' && isset($ignoreSegments[end($segments)])) {
-            $this->path .= '/';
+        if ($newPath != '/' && isset($ignoreSegments[end($segments)])) {
+            $newPath .= '/';
         }
+
+        $this->path = $newPath;
 
         return $this;
     }
@@ -351,10 +355,13 @@ class Url
             strlen($relativePath) > 0
         ) {
             // Add a leading slash if needed
-            if ($relativePath[0] != '/') {
+            if ($relativePath[0] !== '/' &&
+                substr($this->path, -1, 1) !== '/'
+            ) {
                 $relativePath = '/' . $relativePath;
             }
-            $this->setPath(str_replace('//', '/', $this->path . $relativePath));
+
+            $this->setPath($this->path . $relativePath);
         }
 
         return $this;
