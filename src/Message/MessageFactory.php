@@ -147,7 +147,6 @@ class MessageFactory implements MessageFactoryInterface
         }
 
         $request->setBody($post);
-        $post->applyRequestHeaders($request);
     }
 
     protected function applyOptions(

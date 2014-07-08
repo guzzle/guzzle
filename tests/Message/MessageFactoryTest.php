@@ -526,6 +526,21 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
             $this->assertContains('foo config', $e->getMessage());
         }
     }
+
+    /**
+     * @ticket https://github.com/guzzle/guzzle/issues/706
+     */
+    public function testDoesNotApplyPostBodyRightAway()
+    {
+        $request = (new MessageFactory)->createRequest('POST', 'http://f.cn', [
+            'body' => ['foo' => ['bar', 'baz']]
+        ]);
+        $this->assertEquals('', $request->getHeader('Content-Type'));
+        $this->assertEquals('', $request->getHeader('Content-Length'));
+        $request->getBody()->setAggregator(Query::duplicateAggregator());
+        $request->getBody()->applyRequestHeaders($request);
+        $this->assertEquals('foo=bar&foo=baz', $request->getBody());
+    }
 }
 
 class ExtendedFactory extends MessageFactory
