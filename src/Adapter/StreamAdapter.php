@@ -100,18 +100,9 @@ class StreamAdapter implements AdapterInterface
             $options['reason_phrase'] = $parts[2];
         }
 
-        // Set the size on the stream if it was returned in the response
-        $responseHeaders = [];
-        foreach ($headers as $header) {
-            $headerParts = explode(':', $header, 2);
-            $responseHeaders[$headerParts[0]] = isset($headerParts[1])
-                ? $headerParts[1]
-                : '';
-        }
-
         $response = $this->messageFactory->createResponse(
             $parts[1],
-            $responseHeaders,
+            $this->headersFromLines($headers),
             $stream,
             $options
         );
@@ -120,6 +111,20 @@ class StreamAdapter implements AdapterInterface
         RequestEvents::emitHeaders($transaction);
 
         return $response;
+    }
+
+    private function headersFromLines(array $lines)
+    {
+        $responseHeaders = [];
+
+        foreach ($lines as $line) {
+            $headerParts = explode(':', $line, 2);
+            $responseHeaders[$headerParts[0]][] = isset($headerParts[1])
+                ? trim($headerParts[1])
+                : '';
+        }
+
+        return $responseHeaders;
     }
 
     /**

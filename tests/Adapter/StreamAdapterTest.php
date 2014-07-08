@@ -381,4 +381,22 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
             'config' => ['stream_context' => 'foo']
         ]);
     }
+
+    /**
+     * @ticket https://github.com/guzzle/guzzle/issues/725
+     */
+    public function testHandlesMultipleHeadersOfSameName()
+    {
+        $a = new StreamAdapter(new MessageFactory());
+        $ref = new \ReflectionMethod($a, 'headersFromLines');
+        $ref->setAccessible(true);
+        $this->assertEquals([
+            'foo' => ['bar', 'bam'],
+            'abc' => ['123']
+        ], $ref->invoke($a, [
+            'foo: bar',
+            'foo: bam',
+            'abc: 123'
+        ]));
+    }
 }
