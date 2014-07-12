@@ -67,71 +67,6 @@ class QueryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('facet=size&facet=width&facet.field=foo', (string) $q);
     }
 
-    public function parseQueryProvider()
-    {
-        return array(
-            // Ensure that multiple query string values are allowed per value
-            array('q=a&q=b', array('q' => array('a', 'b'))),
-            // Ensure that PHP array style query string values are parsed
-            array('q[]=a&q[]=b', array('q' => array('a', 'b'))),
-            // Ensure that a single PHP array style query string value is parsed into an array
-            array('q[]=a', array('q' => array('a'))),
-            // Ensure that decimals are allowed in query strings
-            array('q.a=a&q.b=b', array(
-                'q.a' => 'a',
-                'q.b' => 'b'
-            )),
-            // Ensure that query string values are percent decoded
-            array('q%20a=a%20b', array('q a' => 'a b')),
-            // Ensure null values can be added
-            array('q&a', array('q' => null, 'a' => null)),
-        );
-    }
-
-    /**
-     * @dataProvider parseQueryProvider
-     */
-    public function testParsesQueries($query, $data)
-    {
-        $query = Query::fromString($query);
-        $this->assertEquals($data, $query->toArray());
-    }
-
-    public function testProperlyDealsWithDuplicateQueryValues()
-    {
-        $query = Query::fromString('foo=a&foo=b&?µ=c');
-        $this->assertEquals(array('a', 'b'), $query->get('foo'));
-        $this->assertEquals('c', $query->get('?µ'));
-    }
-
-    public function testAllowsNullQueryValues()
-    {
-        $query = Query::fromString('foo');
-        $this->assertEquals('foo', (string) $query);
-        $query->set('foo', null);
-        $this->assertEquals('foo', (string) $query);
-    }
-
-    public function testAllowsFalsyQueryValues()
-    {
-        $query = Query::fromString('0');
-        $this->assertEquals('0', (string) $query);
-        $query->set('0', '');
-        $this->assertSame('0=', (string) $query);
-    }
-
-    public function testConvertsPlusSymbolsToSpaces()
-    {
-        $query = Query::fromString('var=foo+bar');
-        $this->assertEquals('foo bar', $query->get('var'));
-    }
-
-    public function testFromStringDoesntMangleZeroes()
-    {
-        $query = Query::fromString('var=0');
-        $this->assertSame('0', $query->get('var'));
-    }
-
     public function testAllowsZeroValues()
     {
         $query = new Query(array(
@@ -141,29 +76,6 @@ class QueryTest extends \PHPUnit_Framework_TestCase
             'boo' => false
         ));
         $this->assertEquals('foo=0&baz=0&bar&boo=', (string) $query);
-    }
-
-    public function testFromStringDoesntStripTrailingEquals()
-    {
-        $query = Query::fromString('data=mF0b3IiLCJUZWFtIERldiJdfX0=');
-        $this->assertEquals('mF0b3IiLCJUZWFtIERldiJdfX0=', $query->get('data'));
-    }
-
-    public function testGuessesIfDuplicateAggregatorShouldBeUsed()
-    {
-        $query = Query::fromString('test=a&test=b');
-        $this->assertEquals('test=a&test=b', (string) $query);
-    }
-
-    public function testGuessesIfDuplicateAggregatorShouldBeUsedAndChecksForPhpStyle()
-    {
-        $query = Query::fromString('test[]=a&test[]=b');
-        $this->assertEquals('test%5B0%5D=a&test%5B1%5D=b', (string) $query);
-    }
-
-    public function testCastingToAndCreatingFromStringWithEmptyValuesIsFast()
-    {
-        $this->assertEquals('', (string) Query::fromString(''));
     }
 
     private $encodeData = [
@@ -221,5 +133,26 @@ class QueryTest extends \PHPUnit_Framework_TestCase
             't[v3][v4]' => ['c'],
             't[v3][v5]' => ['d'],
         ), $result);
+    }
+
+    public function testCanDisableUrlEncodingDecoding()
+    {
+        $q = Query::fromString('foo=bar+baz boo%20', false);
+        $this->assertEquals('bar+baz boo%20', $q['foo']);
+        $this->assertEquals('foo=bar+baz boo%20', (string) $q);
+    }
+
+    public function testCanChangeUrlEncodingDecodingToRfc1738()
+    {
+        $q = Query::fromString('foo=bar+baz', Query::RFC1738);
+        $this->assertEquals('bar baz', $q['foo']);
+        $this->assertEquals('foo=bar+baz', (string) $q);
+    }
+
+    public function testCanChangeUrlEncodingDecodingToRfc3986()
+    {
+        $q = Query::fromString('foo=bar%20baz', Query::RFC3986);
+        $this->assertEquals('bar baz', $q['foo']);
+        $this->assertEquals('foo=bar%20baz', (string) $q);
     }
 }

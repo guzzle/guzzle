@@ -27,6 +27,17 @@ class MultipartBodyTest extends \PHPUnit_Framework_TestCase
             . "Content-Type: text/plain\r\n\r\nabc\r\n--abcdef--", $c);
     }
 
+    public function testDoesNotModifyFieldFormat()
+    {
+        $m = new MultipartBody(['foo+baz' => 'bar+bam %20 boo'], [
+            new PostFile('foo+bar', 'abc %20 123', 'foo.txt')
+        ], 'abcdef');
+        $this->assertContains('name="foo+baz"', (string) $m);
+        $this->assertContains('name="foo+bar"', (string) $m);
+        $this->assertContains('bar+bam %20 boo', (string) $m);
+        $this->assertContains('abc %20 123', (string) $m);
+    }
+
     /**
      * @expectedException \InvalidArgumentException
      */
