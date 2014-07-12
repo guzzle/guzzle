@@ -19,17 +19,20 @@ class Query extends Collection
     /**
      * Parse a query string into a Query object
      *
+     * $urlEncoding is used to control how the query string is parsed and how
+     * it is ultimately serialized. The value can be set to one of the
+     * following:
+     *
+     * - true: (default) Parse query strings using RFC 3986 while still
+     *   converting "+" to " ".
+     * - false: Disables URL decoding of the input string and URL encoding when
+     *   the query string is serialized.
+     * - 'RFC3986': Use RFC 3986 URL encoding/decoding
+     * - 'RFC1738': Use RFC 1738 URL encoding/decoding
+     *
      * @param string      $query       Query string to parse
      * @param bool|string $urlEncoding Controls how the input string is decoded
-     *                                 and encoded. Set to false to disable URL
-     *                                 decoding of the input string and URL
-     *                                 encoding of the query string when
-     *                                 serialized to a string. Set to 'RFC3986'
-     *                                 to use RFC 3986 URL encoding/decoding,
-     *                                 or set to 'RFC1738' to use RFC 1738 URL
-     *                                 encoding/decoding. Set to true to parse
-     *                                 query strings using RFC 3986 while still
-     *                                 converting "+" to " " characters.
+     *                                 and encoded.
      * @return self
      */
     public static function fromString($query, $urlEncoding = true)

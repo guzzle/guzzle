@@ -66,6 +66,13 @@ class QueryParser
         }
     }
 
+    /**
+     * Returns a callable that is used to URL decode query keys and values.
+     *
+     * @param string|bool $type One of true, false, RFC3986, and RFC1738
+     *
+     * @return callable|string
+     */
     private static function getDecoder($type)
     {
         if ($type === true) {
@@ -81,7 +88,14 @@ class QueryParser
         }
     }
 
-    private function parsePhpValue($key, $value, &$result)
+    /**
+     * Parses a PHP style key value pair.
+     *
+     * @param string      $key    Key to parse (e.g., "foo[a][b]")
+     * @param string|null $value  Value to set
+     * @param array       $result Result to modify by reference
+     */
+    private function parsePhpValue($key, $value, array &$result)
     {
         $node =& $result;
         $keyBuffer = '';
@@ -90,14 +104,14 @@ class QueryParser
             switch ($key[$i]) {
                 case '[':
                     if ($keyBuffer) {
-                        $this->descend($node, $keyBuffer);
+                        $this->prepareNode($node, $keyBuffer);
                         $node =& $node[$keyBuffer];
                         $keyBuffer = '';
                     }
                     break;
                 case ']':
                     $k = $this->cleanKey($node, $keyBuffer);
-                    $this->descend($node, $k);
+                    $this->prepareNode($node, $k);
                     $node =& $node[$k];
                     $keyBuffer = '';
                     break;
@@ -115,7 +129,15 @@ class QueryParser
         }
     }
 
-    private function descend(&$node, $key)
+    /**
+     * Prepares a value in the array at the given key.
+     *
+     * If the key already exists, the key value is converted into an array.
+     *
+     * @param array  $node Result node to modify
+     * @param string $key  Key to add or modify in the node
+     */
+    private function prepareNode(&$node, $key)
     {
         if (!isset($node[$key])) {
             $node[$key] = null;
@@ -124,10 +146,13 @@ class QueryParser
         }
     }
 
+    /**
+     * Returns the appropriate key based on the node and key.
+     */
     private function cleanKey($node, $key)
     {
         if ($key === '') {
-            $key = $node ? count($node) : 0;
+            $key = $node ? (string) count($node) : 0;
             // Found a [] key, so track this to ensure that we disable numeric
             // indexing of keys in the resolved query aggregator.
             $this->numericIndices = false;
