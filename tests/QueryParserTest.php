@@ -44,6 +44,9 @@ class QueryParserTest extends \PHPUnit_Framework_TestCase
             ]],
             // Can parse PHP style arrays
             ['a[b]=c&a[d]=e', ['a' => ['b' => 'c', 'd' => 'e']]],
+            // Ensure it doesn't leave things behind with repeated values
+            // Can parse mult-values items
+            ['q=a&q=b&q=c', ['q' => ['a', 'b', 'c']]],
         ];
     }
 

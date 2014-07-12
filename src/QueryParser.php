@@ -51,8 +51,9 @@ class QueryParser
             } else {
                 $this->duplicates = true;
                 if (!is_array($result[$key])) {
-                    $result[$key] = [$result[$key], $value];
+                    $result[$key] = [$result[$key]];
                 }
+                $result[$key][] = $value;
             }
         }
 
