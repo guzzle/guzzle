@@ -147,11 +147,15 @@ final class RequestEvents
     ) {
         foreach ($events as $name) {
             if (!isset($options[$name])) {
-                $options[$name] = $handler;
+                $options[$name] = [$handler];
             } elseif (is_callable($options[$name])) {
-                $options[$name] = [['fn' => $options[$name]], $handler];
+                $options[$name] = [$options[$name], $handler];
             } elseif (is_array($options[$name])) {
-                $options[$name][] = $handler;
+                if (isset($options[$name]['fn'])) {
+                    $options[$name] = [$options[$name], $handler];
+                } else {
+                    $options[$name][] = $handler;
+                }
             } else {
                 throw new \InvalidArgumentException('Invalid event format');
             }
