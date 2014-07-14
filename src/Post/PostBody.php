@@ -256,8 +256,13 @@ class PostBody implements PostBodyInterface
         $query = (string) (new Query($this->fields))
             ->setEncodingType(false)
             ->setAggregator($this->getAggregator());
+
         // Convert the flattened query string back into an array
-        $fields = Query::fromString($query)->toArray();
+        $fields = [];
+        foreach (explode('&', $query, 2) as $kvp) {
+            $parts = explode('=', $kvp);
+            $fields[$parts[0]] = isset($parts[1]) ? $parts[1] : null;
+        }
 
         return new MultipartBody($fields, $this->files);
     }
