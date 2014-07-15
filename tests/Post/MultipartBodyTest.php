@@ -70,42 +70,21 @@ class MultipartBodyTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('', (string) $b);
     }
 
-    public function testCanOnlySeekTo0()
-    {
-        $b = new MultipartBody();
-        $this->assertFalse($b->seek(10));
-    }
-
     public function testIsSeekableReturnsTrueIfAllAreSeekable()
     {
         $s = $this->getMockBuilder('GuzzleHttp\Stream\StreamInterface')
-            ->setMethods(['isSeekable'])
+            ->setMethods(['isSeekable', 'isReadable'])
             ->getMockForAbstractClass();
         $s->expects($this->once())
             ->method('isSeekable')
             ->will($this->returnValue(false));
+        $s->expects($this->once())
+            ->method('isReadable')
+            ->will($this->returnValue(true));
         $p = new PostFile('foo', $s, 'foo.php');
         $b = new MultipartBody([], [$p]);
         $this->assertFalse($b->isSeekable());
         $this->assertFalse($b->seek(10));
-    }
-
-    /**
-     * @expectedException \RuntimeException
-     */
-    public function testThrowsExceptionWhenStreamFailsToRewind()
-    {
-        $s = $this->getMockBuilder('GuzzleHttp\Stream\StreamInterface')
-            ->setMethods(['seek', 'isSeekable'])
-            ->getMockForAbstractClass();
-        $s->expects($this->once())
-            ->method('isSeekable')
-            ->will($this->returnValue(true));
-        $s->expects($this->once())
-            ->method('seek')
-            ->will($this->returnValue(false));
-        $b = new MultipartBody([], [new PostFile('foo', $s, 'foo.php')]);
-        $b->seek(0);
     }
 
     public function testGetContentsCanCap()
@@ -136,11 +115,14 @@ class MultipartBodyTest extends \PHPUnit_Framework_TestCase
     public function testCalculatesSizeAndReturnsNullForUnknown()
     {
         $s = $this->getMockBuilder('GuzzleHttp\Stream\StreamInterface')
-            ->setMethods(['getSize'])
+            ->setMethods(['getSize', 'isReadable'])
             ->getMockForAbstractClass();
         $s->expects($this->once())
             ->method('getSize')
             ->will($this->returnValue(null));
+        $s->expects($this->once())
+            ->method('isReadable')
+            ->will($this->returnValue(true));
         $b = new MultipartBody([], [new PostFile('foo', $s, 'foo.php')]);
         $this->assertNull($b->getSize());
     }
