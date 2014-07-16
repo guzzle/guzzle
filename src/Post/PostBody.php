@@ -263,7 +263,7 @@ class PostBody implements PostBodyInterface
             // Convert the flattened query string back into an array
             $fields = [];
             foreach (explode('&', $query, 2) as $kvp) {
-                $parts = explode('=', $kvp);
+                $parts = explode('=', $kvp, 2);
                 $fields[$parts[0]] = isset($parts[1]) ? $parts[1] : null;
             }
         }
