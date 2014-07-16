@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+4.1.3 (2014-07-15)
+------------------
+
+* Various fixes to multipart/form-data POST uploads
+* Wrapping function.php in an if-statement to ensure Guzzle can be used
+  globally and in a Composer install
+* Fixed an issue with generating and merging in events to an event array
+* POST headers are only applied before sending a request to allow you to change
+  the query aggregator used before uploading
+* Added much more robust query string parsing
+* Fixed various parsing and normalization issues with URLs
+* Fixing an issue where multi-valued headers were not being utilized correctly
+  in the StreamAdapter
+
 4.1.2 (2014-06-18)
 ------------------
 
