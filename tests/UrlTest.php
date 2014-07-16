@@ -162,7 +162,9 @@ class UrlTest extends \PHPUnit_Framework_TestCase
             ['http://www.example.com/path',       'http://u:a@www.example.com/', 'http://u:a@www.example.com/'],
             ['/path?q=2', 'http://www.test.com/', 'http://www.test.com/path?q=2'],
             ['http://api.flickr.com/services/',   'http://www.flickr.com/services/oauth/access_token', 'http://www.flickr.com/services/oauth/access_token'],
-            ['https://www.example.com/path',       '//foo.com/abc', 'https://foo.com/abc'],
+            ['https://www.example.com/path',      '//foo.com/abc', 'https://foo.com/abc'],
+            ['https://www.example.com/0/',        'relative/foo', 'https://www.example.com/0/relative/foo'],
+            ['',                                  '0', '0'],
             // RFC 3986 test cases
             [self::RFC3986_BASE, 'g:h',           'g:h'],
             [self::RFC3986_BASE, 'g',             'http://a/b/c/g'],
