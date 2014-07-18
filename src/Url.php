@@ -555,7 +555,7 @@ class Url
             );
         }
 
-        if (!$parts['path']) {
+        if (!$parts['path'] && $parts['path'] !== '0') {
             // The relative URL has no path, so check if it is just a query
             $path = $this->path ?: '';
             $query = count($parts['query']) ? $parts['query'] : $this->query;
