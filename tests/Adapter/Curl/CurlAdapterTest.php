@@ -9,6 +9,7 @@ use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Event\HeadersEvent;
+use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Event\BeforeEvent;
@@ -116,5 +117,23 @@ class CurlAdapterTest extends AbstractCurl
         $transaction = new Transaction($client, $request);
         $a->send($transaction);
         $this->assertCount(2, $this->readAttribute($a, 'handles'));
+    }
+
+    public function testDoesNotSaveToWhenFailed()
+    {
+        Server::flush();
+        Server::enqueue([
+            "HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\n\r\n"
+        ]);
+
+        $tmp = tempnam('/tmp', 'test_save_to');
+        unlink($tmp);
+        $a = new CurlAdapter(new MessageFactory());
+        $client = new Client(['base_url' => Server::$url, 'adapter' => $a]);
+        try {
+            $client->get('/', ['save_to' => $tmp]);
+        } catch (ServerException $e) {
+            $this->assertFileNotExists($tmp);
+        }
     }
 }

@@ -280,7 +280,7 @@ class CurlFactory
         $value
     ) {
         $mediator->setResponseBody(is_string($value)
-            ? Stream\create(fopen($value, 'w'))
+            ? new Stream\LazyOpenStream($value, 'w')
             : Stream\create($value));
     }
 
