@@ -9,8 +9,8 @@ use GuzzleHttp\Stream;
  */
 class MultipartBody implements Stream\StreamInterface
 {
-    /** @var Stream\StreamInterface */
-    private $stream;
+    use Stream\StreamDecoratorTrait;
+
     private $boundary;
 
     /**
@@ -26,17 +26,7 @@ class MultipartBody implements Stream\StreamInterface
         $boundary = null
     ) {
         $this->boundary = $boundary ?: uniqid();
-        $this->createStream($fields, $files);
-    }
-
-    public function __toString()
-    {
-        return (string) $this->stream;
-    }
-
-    public function getContents($maxLength = -1)
-    {
-        return $this->stream->getContents($maxLength);
+        $this->stream = $this->createStream($fields, $files);
     }
 
     /**
@@ -49,59 +39,7 @@ class MultipartBody implements Stream\StreamInterface
         return $this->boundary;
     }
 
-    public function close()
-    {
-        $this->stream->close();
-        $this->detach();
-    }
-
-    public function detach()
-    {
-        $this->stream->detach();
-        $this->size = 0;
-    }
-
-    public function eof()
-    {
-        return $this->stream->eof();
-    }
-
-    public function tell()
-    {
-        return $this->stream->tell();
-    }
-
-    public function isReadable()
-    {
-        return true;
-    }
-
     public function isWritable()
-    {
-        return false;
-    }
-
-    public function isSeekable()
-    {
-        return $this->stream->isSeekable();
-    }
-
-    public function getSize()
-    {
-        return $this->stream->getSize();
-    }
-
-    public function read($length)
-    {
-        return $this->stream->read($length);
-    }
-
-    public function seek($offset, $whence = SEEK_SET)
-    {
-        return $this->stream->seek($offset, $whence);
-    }
-
-    public function write($string)
     {
         return false;
     }
@@ -137,10 +75,10 @@ class MultipartBody implements Stream\StreamInterface
      */
     private function createStream(array $fields, array $files)
     {
-        $this->stream = new Stream\AppendStream();
+        $stream = new Stream\AppendStream();
 
         foreach ($fields as $name => $field) {
-            $this->stream->addStream(
+            $stream->addStream(
                 Stream\create($this->getFieldString($name, $field))
             );
         }
@@ -152,14 +90,16 @@ class MultipartBody implements Stream\StreamInterface
                     . 'implement PostFieldInterface');
             }
 
-            $this->stream->addStream(
+            $stream->addStream(
                 Stream\create($this->getFileHeaders($file))
             );
-            $this->stream->addStream($file->getContent());
-            $this->stream->addStream(Stream\create("\r\n"));
+            $stream->addStream($file->getContent());
+            $stream->addStream(Stream\create("\r\n"));
         }
 
         // Add the trailing boundary
-        $this->stream->addStream(Stream\create("--{$this->boundary}--"));
+        $stream->addStream(Stream\create("--{$this->boundary}--"));
+
+        return $stream;
     }
 }
