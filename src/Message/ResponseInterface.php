@@ -77,6 +77,9 @@ interface ResponseInterface extends MessageInterface
      *     - ns: Set to a string to represent the namespace prefix or URI
      *     - ns_is_prefix: Set to true to specify that the NS is a prefix rather
      *       than a URI (defaults to false).
+     *     - libxml_options: Bitwise OR of the libxml option constants
+     *       listed at http://php.net/manual/en/libxml.constants.php
+     *       (defaults to LIBXML_NONET)
      *
      * @return \SimpleXMLElement
      * @throws \RuntimeException if the response body is not in XML format
