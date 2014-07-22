@@ -151,6 +151,7 @@ class Response extends AbstractMessage implements ResponseInterface
             $xml = new \SimpleXMLElement(
                 (string) $this->getBody() ?: '<root />',
                 isset($config['libxml_options']) ? $config['libxml_options'] : LIBXML_NONET,
+                false,
                 isset($config['ns']) ? $config['ns'] : '',
                 isset($config['ns_is_prefix']) ? $config['ns_is_prefix'] : false
             );
