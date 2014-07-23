@@ -1,6 +1,17 @@
 CHANGELOG
 =========
 
+4.1.4 (2014-07-22)
+------------------
+
+* Fixed a bug that caused multi-part POST requests with more than one field to
+  serialize incorrectly.
+* Paths can now be set to "0"
+* `ResponseInterface::xml` now accepts a `libxml_options` option and added a
+  missing default argument that was required when parsing XML response bodies.
+* A `save_to` stream is now created lazily, which means that files are not
+  created on disk unless a request succeeds.
+
 4.1.3 (2014-07-15)
 ------------------
 
