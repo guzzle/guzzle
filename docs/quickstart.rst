@@ -50,7 +50,7 @@ then you'll need to use a ``GuzzleHttp\ClientInterface`` object.
     use GuzzleHttp\Client;
 
     $client = new Client();
-    $response = $client->get('https://github.com/timeline.json');
+    $response = $client->get('http://httpbin.org/get');
 
     // You can use the same methods you saw in the procedural API
     $response = $client->delete('http://httpbin.org/delete');
@@ -120,9 +120,9 @@ response.
 
 .. code-block:: php
 
-    $response = $client->get('https://github.com/timeline.json');
+    $response = $client->get('http://httpbin.org/get');
     $json = $response->json();
-    var_dump($json[0]['repository']);
+    var_dump($json[0]['origin']);
 
 Guzzle internally uses PHP's ``json_decode()`` function to parse responses. If
 Guzzle is unable to parse the JSON response body, then a
