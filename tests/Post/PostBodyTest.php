@@ -147,10 +147,20 @@ class PostBodyTest extends \PHPUnit_Framework_TestCase
     {
         $b = new PostBody();
         $b->setField('testing', ['baz', 'bar']);
+        $b->setField('other', 'hi');
+        $b->setField('third', 'there');
         $b->addFile(new PostFile('foo', fopen(__FILE__, 'r')));
         $s = (string) $b;
         $this->assertContains(file_get_contents(__FILE__), $s);
         $this->assertContains('testing=bar', $s);
+        $this->assertContains(
+            'Content-Disposition: form-data; name="third"',
+            $s
+        );
+        $this->assertContains(
+            'Content-Disposition: form-data; name="other"',
+            $s
+        );
     }
 
     public function testMultipartWithBase64Fields()
