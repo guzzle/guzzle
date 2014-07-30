@@ -151,7 +151,7 @@ class StreamAdapter implements AdapterInterface
             if (isset($options['http']['proxy'])) {
                 $message .= "[proxy] {$options['http']['proxy']} ";
             }
-            foreach (error_get_last() as $key => $value) {
+            foreach ((array) error_get_last() as $key => $value) {
                 $message .= "[{$key}] {$value} ";
             }
             throw new RequestException(trim($message), $request);
@@ -316,13 +316,13 @@ class StreamAdapter implements AdapterInterface
         array $options,
         array $params
     ) {
-        return $this->createResource(function () use (
+        return $this->createResource(
+            function () use ($request, $options, $params) {
+                return stream_context_create($options, $params);
+            },
             $request,
-            $options,
-            $params
-        ) {
-            return stream_context_create($options, $params);
-        }, $request, $options);
+            $options
+        );
     }
 
     private function createStreamResource(
@@ -337,16 +337,16 @@ class StreamAdapter implements AdapterInterface
             $url = 'compress.zlib://' . $url;
         }
 
-        return $this->createResource(function () use (
-            $url,
-            &$http_response_header,
-            $context
-        ) {
-            if (false === strpos($url, 'http')) {
-                trigger_error("URL is invalid: {$url}", E_USER_WARNING);
-                return null;
-            }
-            return fopen($url, 'r', null, $context);
-        }, $request, $options);
+        return $this->createResource(
+            function () use ($url, &$http_response_header, $context) {
+                if (false === strpos($url, 'http')) {
+                    trigger_error("URL is invalid: {$url}", E_USER_WARNING);
+                    return null;
+                }
+                return fopen($url, 'r', null, $context);
+            },
+            $request,
+            $options
+        );
     }
 }
