@@ -128,18 +128,22 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
         $multi = $context->getMultiHandle();
 
         do {
-            while (($mrc = curl_multi_exec($multi, $active)) == CURLM_CALL_MULTI_PERFORM);
-            if ($mrc != CURLM_OK && $mrc != CURLM_CALL_MULTI_PERFORM) {
+            do {
+                $mrc = curl_multi_exec($multi, $active);
+            } while ($mrc === CURLM_CALL_MULTI_PERFORM);
+
+            if ($mrc != CURLM_OK) {
                 self::throwMultiError($mrc);
             }
-            // Need to check if there are pending transactions before processing
-            // them so that we don't bail from the loop too early.
+
             $this->processMessages($context);
-            if ($active && curl_multi_select($multi, $this->selectTimeout) === -1) {
+
+            if (curl_multi_select($multi, $this->selectTimeout) === -1) {
                 // Perform a usleep if a select returns -1.
                 // See: https://bugs.php.net/bug.php?id=61141
                 usleep(250);
             }
+
         } while ($context->isActive() || $active);
 
         $this->releaseMultiHandle($multi);
@@ -167,8 +171,8 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
         $info = $context->removeTransaction($transaction);
 
         try {
-            if ($this->validateResponseWasSet($transaction, $context) &&
-                !$this->isCurlException($transaction, $curl, $context, $info)
+            if (!$this->isCurlException($transaction, $curl, $context, $info) &&
+                $this->validateResponseWasSet($transaction, $context)
             ) {
                 RequestEvents::emitComplete($transaction, $info);
             }

@@ -153,15 +153,14 @@ class BatchContext
         }
 
         $handle = $this->handles[$transaction];
-        unset($this->handles[$transaction]);
-
+        $this->handles->detach($transaction);
+        $info = curl_getinfo($handle);
         $code = curl_multi_remove_handle($this->multi, $handle);
-        if ($code != CURLM_OK) {
+        curl_close($handle);
+
+        if ($code !== CURLM_OK) {
             MultiAdapter::throwMultiError($code);
         }
-
-        $info = curl_getinfo($handle);
-        curl_close($handle);
 
         return $info;
     }
