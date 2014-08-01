@@ -60,6 +60,16 @@ class BatchContext
     }
 
     /**
+     * Returns true if there are any active requests.
+     *
+     * @return bool
+     */
+    public function isActive()
+    {
+        return count($this->handles) > 0;
+    }
+
+    /**
      * Returns true if there are any remaining pending transactions
      *
      * @return bool
@@ -143,6 +153,7 @@ class BatchContext
         }
 
         $handle = $this->handles[$transaction];
+        unset($this->handles[$transaction]);
 
         $code = curl_multi_remove_handle($this->multi, $handle);
         if ($code != CURLM_OK) {
@@ -151,7 +162,6 @@ class BatchContext
 
         $info = curl_getinfo($handle);
         curl_close($handle);
-        unset($this->handles[$transaction]);
 
         return $info;
     }

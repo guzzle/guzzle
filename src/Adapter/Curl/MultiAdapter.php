@@ -134,14 +134,13 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
             }
             // Need to check if there are pending transactions before processing
             // them so that we don't bail from the loop too early.
-            $pending = $context->hasPending();
             $this->processMessages($context);
             if ($active && curl_multi_select($multi, $this->selectTimeout) === -1) {
                 // Perform a usleep if a select returns -1.
                 // See: https://bugs.php.net/bug.php?id=61141
                 usleep(250);
             }
-        } while ($active || $pending);
+        } while ($context->isActive() || $active);
 
         $this->releaseMultiHandle($multi);
     }
@@ -168,7 +167,9 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
         $info = $context->removeTransaction($transaction);
 
         try {
-            if (!$this->isCurlException($transaction, $curl, $context, $info)) {
+            if ($this->validateResponseWasSet($transaction, $context) &&
+                !$this->isCurlException($transaction, $curl, $context, $info)
+            ) {
                 RequestEvents::emitComplete($transaction, $info);
             }
         } catch (RequestException $e) {
@@ -280,5 +281,76 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
             curl_multi_close($this->multiHandles[$id]);
             unset($this->multiHandles[$id], $this->multiOwned[$id]);
         }
+    }
+
+    /**
+     * This function ensures that a response was set on a transaction. If one
+     * was not set, then the request is retried if possible. This error
+     * typically means you are sending a payload, curl encountered a
+     * "Connection died, retrying a fresh connect" error, tried to rewind the
+     * stream, and then encountered a "necessary data rewind wasn't possible"
+     * error, causing the request to be sent through curl_multi_info_read()
+     * without an error status.
+     *
+     * @param TransactionInterface $transaction
+     * @param BatchContext         $context
+     *
+     * @return bool Returns true if it's OK, and false if it failed.
+     * @throws \GuzzleHttp\Exception\RequestException If it failed and cannot
+     *                                                recover.
+     */
+    private function validateResponseWasSet(
+        TransactionInterface $transaction,
+        BatchContext $context
+    ) {
+        if ($transaction->getResponse()) {
+            return true;
+        }
+
+        $body = $transaction->getRequest()->getBody();
+
+        if (!$body) {
+            // This is weird and should probably never happen.
+            RequestEvents::emitError(
+                $transaction,
+                new RequestException(
+                    'No response was received for a request with no body. This'
+                    . ' could mean that you are saturating your network.',
+                    $transaction->getRequest()
+                )
+            );
+        } elseif (!$body->isSeekable() || !$body->seek(0)) {
+            // Nothing we can do with this. Sorry!
+            RequestEvents::emitError(
+                $transaction,
+                new RequestException(
+                    'The connection was unexpectedly closed. The request would'
+                    . ' have been retried, but attempting to rewind the'
+                    . ' request body failed. Consider wrapping your request'
+                    . ' body in a CachingStream decorator to work around this'
+                    . ' issue if necessary.',
+                    $transaction->getRequest()
+                )
+            );
+        } else {
+            $this->retryFailedConnection($transaction, $context);
+        }
+
+        return false;
+    }
+
+    private function retryFailedConnection(
+        TransactionInterface $transaction,
+        BatchContext $context
+    ) {
+        // Add the request back to the batch to retry automatically.
+        $context->addTransaction(
+            $transaction,
+            call_user_func(
+                $this->curlFactory,
+                $transaction,
+                $this->messageFactory
+            )
+        );
     }
 }
