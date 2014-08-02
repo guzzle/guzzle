@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+4.1.5 (2014-08-02)
+------------------
+
+* Automatically retrying cURL "Connection died, retrying a fresh connect"
+  errors when possible.
+* cURL implementation cleanup
+* Allowing multiple event subscriber listeners to be registered per event by
+  passing an array of arrays of listener configuration.
+
 4.1.4 (2014-07-22)
 ------------------
 
