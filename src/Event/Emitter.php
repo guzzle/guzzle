@@ -114,12 +114,22 @@ class Emitter implements EmitterInterface
 
     public function attach(SubscriberInterface $subscriber)
     {
-        foreach ($subscriber->getEvents() as $eventName => $listener) {
-            $this->on(
-                $eventName,
-                array($subscriber, $listener[0]),
-                isset($listener[1]) ? $listener[1] : 0
-            );
+        foreach ($subscriber->getEvents() as $eventName => $listeners) {
+            if (is_array($listeners[0])) {
+                foreach ($listeners as $listener) {
+                    $this->on(
+                        $eventName,
+                        [$subscriber, $listener[0]],
+                        isset($listener[1]) ? $listener[1] : 0
+                    );
+                }
+            } else {
+                $this->on(
+                    $eventName,
+                    [$subscriber, $listeners[0]],
+                    isset($listeners[1]) ? $listeners[1] : 0
+                );
+            }
         }
     }
 

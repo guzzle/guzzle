@@ -168,6 +168,15 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
         $this->assertNotEmpty($this->emitter->listeners(self::postFoo));
     }
 
+    public function testAddSubscriberWithMultiple()
+    {
+        $eventSubscriber = new TestEventSubscriberWithMultiple();
+        $this->emitter->attach($eventSubscriber);
+        $listeners = $this->emitter->listeners('pre.foo');
+        $this->assertNotEmpty($this->emitter->listeners(self::preFoo));
+        $this->assertCount(2, $listeners);
+    }
+
     public function testAddSubscriberWithPriorities()
     {
         $eventSubscriber = new TestEventSubscriber();
@@ -341,5 +350,13 @@ class TestEventSubscriberWithPriorities extends TestEventListener implements Sub
             'pre.foo' => ['preFoo', 10],
             'post.foo' => ['postFoo']
         ];
+    }
+}
+
+class TestEventSubscriberWithMultiple extends TestEventListener implements SubscriberInterface
+{
+    public function getEvents()
+    {
+        return ['pre.foo' => [['preFoo', 10],['preFoo', 20]]];
     }
 }

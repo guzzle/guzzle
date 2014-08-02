@@ -17,13 +17,17 @@ interface SubscriberInterface
      *
      * The returned array keys MUST map to an event name. Each array value
      * MUST be an array in which the first element is the name of a function
-     * on the EventSubscriber. The second element in the array is optional, and
-     * if specified, designates the event priority.
+     * on the EventSubscriber OR an array of arrays in the aforementioned
+     * format. The second element in the array is optional, and if specified,
+     * designates the event priority.
      *
-     * For example:
+     * For example, the following are all valid:
      *
      *  - ['eventName' => ['methodName']]
      *  - ['eventName' => ['methodName', $priority]]
+     *  - ['eventName' => [['methodName'], ['otherMethod']]
+     *  - ['eventName' => [['methodName'], ['otherMethod', $priority]]
+     *  - ['eventName' => [['methodName', $priority], ['otherMethod', $priority]]
      *
      * @return array
      */
