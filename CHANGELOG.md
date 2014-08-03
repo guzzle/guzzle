@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+4.1.6 (2014-08-03)
+------------------
+
+* Added helper methods to make it easier to represent messages as strings,
+  including getting the start line and getting headers as a string.
+
 4.1.5 (2014-08-02)
 ------------------
 
