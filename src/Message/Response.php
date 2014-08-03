@@ -194,10 +194,4 @@ class Response extends AbstractMessage implements ResponseInterface
             $this->reasonPhrase = $options['reason_phrase'];
         }
     }
-
-    protected function getStartLine()
-    {
-        return 'HTTP/' . $this->getProtocolVersion()
-            . " {$this->statusCode} {$this->reasonPhrase}";
-    }
 }

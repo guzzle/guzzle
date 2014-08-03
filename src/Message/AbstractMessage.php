@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Message;
 
 use GuzzleHttp\Stream\StreamInterface;
@@ -20,12 +19,8 @@ abstract class AbstractMessage implements MessageInterface
 
     public function __toString()
     {
-        $result = $this->getStartLine();
-        foreach ($this->getHeaders() as $name => $values) {
-            $result .= "\r\n{$name}: " . implode(', ', $values);
-        }
-
-        return $result . "\r\n\r\n" . $this->body;
+        return static::getStartLineAndHeaders($this)
+            . "\r\n\r\n" . $this->getBody();
     }
 
     public function getProtocolVersion()
@@ -214,11 +209,57 @@ abstract class AbstractMessage implements MessageInterface
     }
 
     /**
-     * Returns the start line of a message.
+     * Gets the start-line and headers of a message as a string
+     *
+     * @param MessageInterface $message
      *
      * @return string
      */
-    abstract protected function getStartLine();
+    public static function getStartLineAndHeaders(MessageInterface $message)
+    {
+        return static::getStartLine($message)
+            . self::getHeadersAsString($message);
+    }
+
+    /**
+     * Gets the headers of a message as a string
+     *
+     * @param MessageInterface $message
+     *
+     * @return string
+     */
+    public static function getHeadersAsString(MessageInterface $message)
+    {
+        $result  = '';
+        foreach ($message->getHeaders() as $name => $values) {
+            $result .= "\r\n{$name}: " . implode(', ', $values);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Gets the start line of a message
+     *
+     * @param MessageInterface $message
+     *
+     * @return string
+     * @throws \InvalidArgumentException
+     */
+    public static function getStartLine(MessageInterface $message)
+    {
+        if ($message instanceof RequestInterface) {
+            return trim($message->getMethod() . ' '
+                . $message->getResource())
+                . ' HTTP/' . $message->getProtocolVersion();
+        } elseif ($message instanceof ResponseInterface) {
+            return 'HTTP/' . $message->getProtocolVersion() . ' '
+                . $message->getStatusCode() . ' '
+                . $message->getReasonPhrase();
+        } else {
+            throw new \InvalidArgumentException('Unknown message type');
+        }
+    }
 
     /**
      * Accepts and modifies the options provided to the message in the
