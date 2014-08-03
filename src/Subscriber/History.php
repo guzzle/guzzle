@@ -56,7 +56,11 @@ class History implements SubscriberInterface, \IteratorAggregate, \Countable
 
     public function onError(ErrorEvent $event)
     {
-        $this->add($event->getRequest(), $event->getResponse());
+        // Only track when no response is present, meaning this didn't ever
+        // emit a complete event
+        if (!$event->getResponse()) {
+            $this->add($event->getRequest());
+        }
     }
 
     /**

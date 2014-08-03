@@ -28,6 +28,18 @@ class HistoryTest extends \PHPUnit_Framework_TestCase
         $ev = new ErrorEvent($t, $e);
         $h = new History(2);
         $h->onError($ev);
+        // Only tracks when no response is present
+        $this->assertEquals([], $h->getRequests());
+    }
+
+    public function testLogsConnectionErrors()
+    {
+        $request = new Request('GET', '/');
+        $t = new Transaction(new Client(), $request);
+        $e = new RequestException('foo', $request);
+        $ev = new ErrorEvent($t, $e);
+        $h = new History();
+        $h->onError($ev);
         $this->assertEquals([$request], $h->getRequests());
     }
 

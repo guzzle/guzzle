@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+Next Version
+------------
+
+* Fixed an error in the HistoryPlugin that caused the same request and response
+  to be logged multiple times when an HTTP protocol error occurs.
+
 4.1.6 (2014-08-03)
 ------------------
 
