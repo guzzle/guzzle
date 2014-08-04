@@ -91,6 +91,11 @@ class CurlFactory
             $this->removeHeader('Accept-Encoding', $options);
         }
 
+        // cURL sometimes adds a content-type by default. Prevent this.
+        if (!$request->hasHeader('Content-Type')) {
+            $options[CURLOPT_HTTPHEADER][] = 'Content-Type:';
+        }
+
         return $options;
     }
 

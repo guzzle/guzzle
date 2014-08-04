@@ -14,6 +14,7 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
 
     use GuzzleHttp\Adapter\Curl\MultiAdapter;
     use GuzzleHttp\Event\BeforeEvent;
+    use GuzzleHttp\Exception\ServerException;
     use GuzzleHttp\Message\RequestInterface;
     use GuzzleHttp\Stream\Stream;
     use GuzzleHttp\Adapter\Curl\CurlFactory;
@@ -307,6 +308,16 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
         {
             $event = new BeforeEvent(new Transaction(new Client(), $request));
             $request->getEmitter()->emit('before', $event);
+        }
+
+        public function testDoesNotAlwaysAddContentType()
+        {
+            Server::flush();
+            Server::enqueue(["HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"]);
+            $client = new Client();
+            $client->put(Server::$url . '/foo', ['body' => 'foo']);
+            $request = Server::received(true)[0];
+            $this->assertEquals('', $request->getHeader('Content-Type'));
         }
     }
 }
