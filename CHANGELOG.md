@@ -6,6 +6,10 @@ Next Version
 
 * Fixed an error in the HistoryPlugin that caused the same request and response
   to be logged multiple times when an HTTP protocol error occurs.
+* Ensuring that cURL does not add a default Content-Type when no Content-Type
+  has been supplied by the user. This prevents the adapter layer from modifying
+  the request that is sent over the wire after any listeners may have already
+  put the request in a desired state (e.g., signed the request).
 
 4.1.6 (2014-08-03)
 ------------------
