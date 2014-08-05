@@ -278,6 +278,18 @@ class CurlFactory
         $options[CURLOPT_SSLKEY] = $value;
     }
 
+    private function add_stream()
+    {
+        throw new AdapterException('cURL adapters do not support the "stream"'
+            . ' request option. This error is typically encountered when trying'
+            . ' to send requests with the "stream" option set to true in '
+            . ' parallel. You will either need to send these one at a time or'
+            . ' implement a custom ParallelAdapterInterface that supports'
+            . ' sending these types of requests in parallel. This error can'
+            . ' also occur if the StreamAdapter is not available on your'
+            . ' system (e.g., allow_url_fopen is disabled in your php.ini).');
+    }
+
     private function add_save_to(
         RequestInterface $request,
         RequestMediator $mediator,

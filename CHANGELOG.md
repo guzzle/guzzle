@@ -10,6 +10,8 @@ Next Version
   has been supplied by the user. This prevents the adapter layer from modifying
   the request that is sent over the wire after any listeners may have already
   put the request in a desired state (e.g., signed the request).
+* Throwing an exception when you attempt to send requests that have the
+  "stream" set to true in parallel using the MultiAdapter.
 
 4.1.6 (2014-08-03)
 ------------------
