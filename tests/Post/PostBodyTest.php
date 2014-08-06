@@ -177,4 +177,19 @@ class PostBodyTest extends \PHPUnit_Framework_TestCase
       $this->assertContains('name="foo64"', $contents);
       $this->assertContains('/xA2JhWEqPcgyLRDdir9WSRi/khpb2Lh3ooqv+5VYoc=', $contents);
     }
+
+    public function testMultipartWithAmpersandInValue()
+    {
+        $b = new PostBody();
+        $b->setField('a', 'b&c=d');
+        $b->forceMultipartUpload(true);
+        $this->assertEquals(['a' => 'b&c=d'], $b->getFields());
+        $m = new Request('POST', '/');
+        $b->applyRequestHeaders($m);
+        $this->assertContains('multipart/form-data', (string) $m->getHeader('Content-Type'));
+        $this->assertTrue($m->hasHeader('Content-Length'));
+        $contents = $b->getContents();
+        $this->assertContains('name="a"', $contents);
+        $this->assertContains('b&c=d', $contents);
+    }
 }
