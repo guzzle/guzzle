@@ -15,7 +15,7 @@ class MultipartBody implements Stream\StreamInterface
 
     /**
      * @param array  $fields   Associative array of field names to values where
-     *                         each value is a string.
+     *                         each value is a string or array of strings.
      * @param array  $files    Associative array of PostFileInterface objects
      * @param string $boundary You can optionally provide a specific boundary
      * @throws \InvalidArgumentException
@@ -77,10 +77,12 @@ class MultipartBody implements Stream\StreamInterface
     {
         $stream = new Stream\AppendStream();
 
-        foreach ($fields as $name => $field) {
-            $stream->addStream(
-                Stream\create($this->getFieldString($name, $field))
-            );
+        foreach ($fields as $name => $fieldValues) {
+            foreach ((array) $fieldValues as $value) {
+                $stream->addStream(
+                    Stream\create($this->getFieldString($name, $value))
+                );
+            }
         }
 
         foreach ($files as $file) {
