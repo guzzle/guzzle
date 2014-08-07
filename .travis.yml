@@ -10,7 +10,8 @@ before_script:
   - curl --version
   - pear config-set php_ini ~/.phpenv/versions/`php -r 'echo phpversion();'`/etc/php.ini || echo 'Error modifying PEAR'
   - pecl install uri_template || echo 'Error installing uri_template'
-  - composer install
+  - composer self-update
+  - composer install --no-interaction --prefer-source --dev
   - ~/.nvm/nvm.sh install v0.6.14
   - ~/.nvm/nvm.sh run v0.6.14
 
