@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-Next Version
-------------
+4.1.7 (2014-08-07)
+------------------
 
 * Fixed an error in the HistoryPlugin that caused the same request and response
   to be logged multiple times when an HTTP protocol error occurs.
@@ -12,6 +12,11 @@ Next Version
   put the request in a desired state (e.g., signed the request).
 * Throwing an exception when you attempt to send requests that have the
   "stream" set to true in parallel using the MultiAdapter.
+* Only calling curl_multi_select when there are active cURL handles. This was
+  previously changed and caused performance problems on some systems due to PHP
+  always selecting until the maximum select timeout.
+* Fixed a bug where multipart/form-data POST fields were not correctly
+  aggregated (e.g., values with "&").
 
 4.1.6 (2014-08-03)
 ------------------
