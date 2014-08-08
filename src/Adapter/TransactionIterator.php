@@ -69,5 +69,10 @@ class TransactionIterator implements \Iterator
         return $this->source->valid();
     }
 
-    public function rewind() {}
+    public function rewind()
+    {
+        if (!($this->source instanceof \Generator)) {
+            $this->source->rewind();
+        }
+    }
 }
