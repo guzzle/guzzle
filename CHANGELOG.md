@@ -1,6 +1,18 @@
 CHANGELOG
 =========
 
+4.1.8 (2014-08-14)
+------------------
+
+* Fixed an issue in the CurlFactory that caused setting the `stream=false`
+  request option to throw an exception.
+  See: https://github.com/guzzle/guzzle/issues/769
+* TransactionIterator now calls rewind on the inner iterator.
+  See: https://github.com/guzzle/guzzle/pull/765
+* You can now set the `Content-Type` header to `multipart/form-data`
+  when creating POST requests to force multipart bodies.
+  See https://github.com/guzzle/guzzle/issues/768
+
 4.1.7 (2014-08-07)
 ------------------
 
