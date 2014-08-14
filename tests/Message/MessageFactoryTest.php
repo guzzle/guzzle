@@ -11,6 +11,7 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Subscriber\Mock;
 use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Query;
+use GuzzleHttp\Subscriber\History;
 
 /**
  * @covers GuzzleHttp\Message\MessageFactory
@@ -540,6 +541,26 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $request->getBody()->setAggregator(Query::duplicateAggregator());
         $request->getBody()->applyRequestHeaders($request);
         $this->assertEquals('foo=bar&foo=baz', $request->getBody());
+    }
+
+    public function testCanForceMultipartUploadWithContentType()
+    {
+        $client = new Client();
+        $client->getEmitter()->attach(new Mock([new Response(200)]));
+        $history = new History();
+        $client->getEmitter()->attach($history);
+        $client->post('http://foo.com', [
+            'headers' => ['Content-Type' => 'multipart/form-data'],
+            'body' => ['foo' => 'bar']
+        ]);
+        $this->assertContains(
+            'multipart/form-data; boundary=',
+            $history->getLastRequest()->getHeader('Content-Type')
+        );
+        $this->assertContains(
+            "Content-Disposition: form-data; name=\"foo\"\r\n\r\nbar",
+            (string) $history->getLastRequest()->getBody()
+        );
     }
 }
 

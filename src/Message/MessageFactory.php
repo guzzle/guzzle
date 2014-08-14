@@ -146,6 +146,10 @@ class MessageFactory implements MessageFactoryInterface
             }
         }
 
+        if ($request->getHeader('Content-Type') == 'multipart/form-data') {
+            $post->forceMultipartUpload(true);
+        }
+
         $request->setBody($post);
     }
 
