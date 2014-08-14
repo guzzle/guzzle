@@ -278,8 +278,16 @@ class CurlFactory
         $options[CURLOPT_SSLKEY] = $value;
     }
 
-    private function add_stream()
-    {
+    private function add_stream(
+        RequestInterface $request,
+        RequestMediator $mediator,
+        &$options,
+        $value
+    ) {
+        if ($value === false) {
+            return;
+        }
+
         throw new AdapterException('cURL adapters do not support the "stream"'
             . ' request option. This error is typically encountered when trying'
             . ' to send requests with the "stream" option set to true in '
