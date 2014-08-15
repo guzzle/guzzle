@@ -129,9 +129,7 @@ class Client implements ClientInterface
 
     public function createRequest($method, $url = null, array $options = [])
     {
-        // Merge in default options
-        $options = array_replace_recursive($this->defaults, $options);
-
+        $headers = $this->mergeDefaults($options);
         // Use a clone of the client's emitter
         $options['config']['emitter'] = clone $this->getEmitter();
 
@@ -140,6 +138,15 @@ class Client implements ClientInterface
             $url ? (string) $this->buildUrl($url) : (string) $this->baseUrl,
             $options
         );
+
+        // Merge in default headers
+        if ($headers) {
+            foreach ($headers as $key => $value) {
+                if (!$request->hasHeader($key)) {
+                    $request->setHeader($key, $value);
+                }
+            }
+        }
 
         return $request;
     }
@@ -360,5 +367,30 @@ class Client implements ClientInterface
         } elseif (!$this->parallelAdapter) {
             $this->parallelAdapter = $this->getDefaultParallelAdapter();
         }
+    }
+
+    /**
+     * Merges default options into the array passed by reference and returns
+     * an array of headers that need to be merged in after the request is
+     * created.
+     *
+     * @param array $options Options to modify by reference
+     *
+     * @return array|null
+     */
+    private function mergeDefaults(&$options)
+    {
+        // Merging optimization for when no headers are present
+        if (!isset($options['headers'])
+            || !isset($this->defaults['headers'])) {
+            $options = array_replace_recursive($this->defaults, $options);
+            return null;
+        }
+
+        $defaults = $this->defaults;
+        unset($defaults['headers']);
+        $options = array_replace_recursive($defaults, $options);
+
+        return $this->defaults['headers'];
     }
 }

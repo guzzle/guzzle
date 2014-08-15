@@ -226,6 +226,16 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('a=b&baz=bam&t=1', $request->getQuery());
     }
 
+    public function testClientMergesDefaultHeadersCaseInsensitively()
+    {
+        $client = new Client(['defaults' => ['headers' => ['Foo' => 'Bar']]]);
+        $request = $client->createRequest('GET', 'http://foo.com?a=b', [
+            'headers' => ['foo' => 'custom', 'user-agent' => 'test']
+        ]);
+        $this->assertEquals('test', $request->getHeader('User-Agent'));
+        $this->assertEquals('custom', $request->getHeader('Foo'));
+    }
+
     public function testUsesBaseUrlWhenNoUrlIsSet()
     {
         $client = new Client(['base_url' => 'http://www.foo.com/baz?bam=bar']);

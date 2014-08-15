@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+Next Release
+------------
+
+* Now merging in default options using a case-insensitive comparison.
+
 4.1.8 (2014-08-14)
 ------------------
 
