@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Adapter;
 
 use GuzzleHttp\Exception\RequestException;
@@ -27,7 +26,9 @@ class FakeParallelAdapter implements ParallelAdapterInterface
             try {
                 $this->adapter->send($transaction);
             } catch (RequestException $e) {
-                // no op for batch transaction
+                if ($e->getThrowImmediately()) {
+                    throw $e;
+                }
             }
         }
     }

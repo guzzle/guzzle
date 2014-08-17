@@ -5,9 +5,7 @@ CHANGELOG
 ------------------
 
 * Now merging in default options using a case-insensitive comparison.
-* Updating guzzlehttp/streams dependency to ~2.1
-* No longer utilizing the now deprecated namespaced methods from the stream
-  package.
+  Closes https://github.com/guzzle/guzzle/issues/767
 * Added the ability to automatically decode `Content-Encoding` response bodies
   using the `decode_content` request option. This is set to `true` by default
   to decode the response body if it comes over the wire with a
@@ -16,6 +14,12 @@ CHANGELOG
   header and turn on automatic response decoding. This feature now allows you
   to pass an `Accept-Encoding` header in the headers of a request but still
   disable automatic response decoding.
+  Closes https://github.com/guzzle/guzzle/issues/764
+* Added the ability to throw an exception immediately when transferring
+  requests in parallel. Closes https://github.com/guzzle/guzzle/issues/760
+* Updating guzzlehttp/streams dependency to ~2.1
+* No longer utilizing the now deprecated namespaced methods from the stream
+  package.
 
 4.1.8 (2014-08-14)
 ------------------

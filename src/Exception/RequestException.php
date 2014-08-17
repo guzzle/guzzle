@@ -19,6 +19,9 @@ class RequestException extends TransferException
     /** @var ResponseInterface */
     private $response;
 
+    /** @var bool */
+    private $throwImmediately = false;
+
     public function __construct(
         $message = '',
         RequestInterface $request,
@@ -115,10 +118,33 @@ class RequestException extends TransferException
         if ($value === null) {
             return $this->emittedErrorEvent;
         } elseif ($value === true) {
-            return $this->emittedErrorEvent = true;
+            $this->emittedErrorEvent = true;
         } else {
             throw new \InvalidArgumentException('You cannot set the emitted '
                 . 'error value to false.');
         }
+    }
+
+    /**
+     * Sets whether or not parallel adapters SHOULD throw the exception
+     * immediately rather than handling errors through asynchronous error
+     * handling.
+     *
+     * @param bool $throwImmediately
+     *
+     */
+    public function setThrowImmediately($throwImmediately)
+    {
+        $this->throwImmediately = $throwImmediately;
+    }
+
+    /**
+     * Gets the setting specified by setThrowImmediately().
+     *
+     * @return bool
+     */
+    public function getThrowImmediately()
+    {
+        return $this->throwImmediately;
     }
 }

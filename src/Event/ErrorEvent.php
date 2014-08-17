@@ -40,6 +40,7 @@ class ErrorEvent extends AbstractTransferEvent
     {
         $this->stopPropagation();
         $this->getTransaction()->setResponse($response);
+        $this->exception->setThrowImmediately(false);
         RequestEvents::emitComplete($this->getTransaction());
     }
 
@@ -61,5 +62,19 @@ class ErrorEvent extends AbstractTransferEvent
     public function getResponse()
     {
         return $this->getException()->getResponse();
+    }
+
+    /**
+     * Request that a ParallelAdapterInterface throw the associated exception
+     * if the exception is unhandled.
+     *
+     * If the error event was not emitted from a ParallelAdapterInterface, then
+     * the effect of this method is nil.
+     *
+     * @param bool $throwImmediately Whether or not to throw immediately
+     */
+    public function throwImmediately($throwImmediately)
+    {
+        $this->exception->setThrowImmediately($throwImmediately);
     }
 }

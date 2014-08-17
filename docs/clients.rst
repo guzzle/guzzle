@@ -285,6 +285,37 @@ failed request to an array that we can use to process errors later.
         // Handle the error...
     }
 
+Throwing Errors Immediately
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It sometimes is useful to throw exceptions immediately when the occur. The
+following example shows how to use an event listener to throw exceptions
+immediately and prevent subsequent requests from being sent.
+
+.. code-block:: php
+
+    use GuzzleHttp\Event\ErrorEvent;
+
+    $client->sendAll($requests, [
+        'error' => function (ErrorEvent $event) {
+            $event->throwImmediately(true);
+        }
+    ]);
+
+Calling the ``ErrorEvent::throwImmediately()`` instructs the
+``ParallelAdapterInterface`` sending the request to stop sending subsequent
+requests, clean up any opened resources, and throw the exception associated
+with the event as soon as possible. If the error event was not sent by a
+``ParallelAdapterInterface``, then calling  ``throwImmediately()`` has no
+effect.
+
+.. note::
+
+    Subsequent listeners of the "error" event can inspect and undo the
+    ``throwImmediately()`` call of a previous listener if they know how to
+    handle the associated exception or if the error is intercepted with a
+    response.
+
 .. _batch-requests:
 
 Batching Requests
