@@ -698,7 +698,7 @@ bytes pass through the adapter unchanged.
         'decode_content' => false
     ]);
 
-When set to a string, the bytes of a responses are decoded and the string value
+When set to a string, the bytes of a response are decoded and the string value
 provided to the ``decode_content`` option is passed as the ``Accept-Encoding``
 header of the request.
 
