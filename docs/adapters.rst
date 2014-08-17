@@ -115,9 +115,13 @@ transactions to execute in parallel.
 Parallel adapters are similar to adapters (described earlier), except for the
 following:
 
-1. RequestExceptions are never thrown from a parallel adapter. Error handling
-   for parallel transfers is handled through event listeners that use ``error``
-   events.
+1. RequestExceptions are only thrown from a parallel adapter when the
+   ``GuzzleHttp\Exception\RequestException::getThrowImmediately()`` method of
+   an encountered exception returns ``true``. If this method does not return
+   ``true`` or the exception is not an instance of RequestException, then the
+   parallel adapter MUST NOT throw the exception. Error handling for parallel
+   transfers should normally be handled through event listeners that use
+   ``error`` events.
 
 2. Parallel adapters are not expected to return responses. Because parallel
    adapters can, in theory, send an infinite number of requests, developers
