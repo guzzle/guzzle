@@ -1,13 +1,21 @@
 CHANGELOG
 =========
 
-Next Release
-------------
+4.2.0 (2014-08-17)
+------------------
 
 * Now merging in default options using a case-insensitive comparison.
-* Updating guzzlehttp/streams dependency to ~2.0
+* Updating guzzlehttp/streams dependency to ~2.1
 * No longer utilizing the now deprecated namespaced methods from the stream
   package.
+* Added the ability to automatically decode `Content-Encoding` response bodies
+  using the `decode_content` request option. This is set to `true` by default
+  to decode the response body if it comes over the wire with a
+  `Content-Encoding`. Set this value to `false` to disable decoding the
+  response content, and pass a string to provide a request `Accept-Encoding`
+  header and turn on automatic response decoding. This feature now allows you
+  to pass an `Accept-Encoding` header in the headers of a request but still
+  disable automatic response decoding.
 
 4.1.8 (2014-08-14)
 ------------------

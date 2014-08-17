@@ -642,6 +642,40 @@ specify whether or not the "Referer" header should be added when redirecting.
     echo $res->getStatusCode();
     // 200
 
+decode_content
+--------------
+
+:Summary: Specify whether or not ``Content-Encoding`` responses (gzip,
+    deflate, etc.) are automatically decoded.
+:Types:
+    - string
+    - bool
+:Default: ``true``
+
+This option can be used to control how content-encoded response bodies are
+handled. By default, ``decode_content`` is set to true, meaning any gzipped
+or deflated response will be decoded by Guzzle.
+
+When set to ``false``, the body of a response is never decoded, meaning the
+bytes pass through the adapter unchanged.
+
+.. code-block:: php
+
+    // Request gzipped data, but do not decode it while downloading
+    $client->get('/foo.js', [
+        'headers'        => ['Accept-Encoding' => 'gzip'],
+        'decode_content' => false
+    ]);
+
+When set to a string, the bytes of a responses are decoded and the string value
+provided to the ``decode_content`` option is passed as the ``Accept-Encoding``
+header of the request.
+
+.. code-block:: php
+
+    // Pass "gzip" as the Accept-Encoding header.
+    $client->get('/foo.js', ['decode_content' => 'gzip']);
+
 .. _save_to-option:
 
 save_to

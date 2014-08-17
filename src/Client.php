@@ -226,6 +226,7 @@ class Client implements ClientInterface
         $settings = [
             'allow_redirects' => true,
             'exceptions'      => true,
+            'decode_content'  => true,
             'verify'          => __DIR__ . '/cacert.pem'
         ];
 

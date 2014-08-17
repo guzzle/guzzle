@@ -17,7 +17,7 @@
     "require": {
         "php": ">=5.4.0",
         "ext-json": "*",
-        "guzzlehttp/streams": "~2.0"
+        "guzzlehttp/streams": "~2.1"
     },
 
     "suggest": {
@@ -43,7 +43,7 @@
 
     "extra": {
         "branch-alias": {
-            "dev-master": "4.1-dev"
+            "dev-master": "4.2-dev"
         }
     }
 }

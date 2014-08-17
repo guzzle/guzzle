@@ -66,6 +66,8 @@ is to set a response on the provided transaction object.
    - :ref:`stream-option`
    - :ref:`timeout-option`
    - :ref:`verify-option`
+   - :ref:`decode_content` - When set to ``true``, the adapter must attempt to
+     decode the body of a ``Content-Encoding`` response (e.g., gzip).
 
 3. Adapters SHOULD not follow redirects. In the normal case, redirects are
    followed by ``GuzzleHttp\Subscriber\Redirect``. Redirects SHOULD be
