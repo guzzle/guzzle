@@ -2,14 +2,17 @@
 
 namespace GuzzleHttp\Post;
 
-use GuzzleHttp\Stream;
+use GuzzleHttp\Stream\AppendStream;
+use GuzzleHttp\Stream\StreamInterface;
+use GuzzleHttp\Stream\StreamDecoratorTrait;
+use GuzzleHttp\Stream\Stream;
 
 /**
  * Stream that when read returns bytes for a streaming multipart/form-data body
  */
-class MultipartBody implements Stream\StreamInterface
+class MultipartBody implements StreamInterface
 {
-    use Stream\StreamDecoratorTrait;
+    use StreamDecoratorTrait;
 
     private $boundary;
 
@@ -75,12 +78,12 @@ class MultipartBody implements Stream\StreamInterface
      */
     private function createStream(array $fields, array $files)
     {
-        $stream = new Stream\AppendStream();
+        $stream = new AppendStream();
 
         foreach ($fields as $name => $fieldValues) {
             foreach ((array) $fieldValues as $value) {
                 $stream->addStream(
-                    Stream\create($this->getFieldString($name, $value))
+                    Stream::factory($this->getFieldString($name, $value))
                 );
             }
         }
@@ -93,14 +96,14 @@ class MultipartBody implements Stream\StreamInterface
             }
 
             $stream->addStream(
-                Stream\create($this->getFileHeaders($file))
+                Stream::factory($this->getFileHeaders($file))
             );
             $stream->addStream($file->getContent());
-            $stream->addStream(Stream\create("\r\n"));
+            $stream->addStream(Stream::factory("\r\n"));
         }
 
         // Add the trailing boundary
-        $stream->addStream(Stream\create("--{$this->boundary}--"));
+        $stream->addStream(Stream::factory("--{$this->boundary}--"));
 
         return $stream;
     }

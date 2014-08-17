@@ -5,7 +5,8 @@ namespace GuzzleHttp\Adapter\Curl;
 use GuzzleHttp\Adapter\TransactionInterface;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
-use GuzzleHttp\Stream;
+use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Stream\LazyOpenStream;
 use GuzzleHttp\Exception\AdapterException;
 
 /**
@@ -305,8 +306,8 @@ class CurlFactory
         $value
     ) {
         $mediator->setResponseBody(is_string($value)
-            ? new Stream\LazyOpenStream($value, 'w')
-            : Stream\create($value));
+            ? new LazyOpenStream($value, 'w')
+            : Stream::factory($value));
     }
 
     /**

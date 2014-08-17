@@ -5,6 +5,7 @@ namespace GuzzleHttp\Post;
 use GuzzleHttp\Mimetypes;
 use GuzzleHttp\Stream\MetadataStreamInterface;
 use GuzzleHttp\Stream\StreamInterface;
+use GuzzleHttp\Stream\Stream;
 
 /**
  * Post file upload
@@ -67,7 +68,7 @@ class PostFile implements PostFileInterface
         $this->content = $content;
 
         if (!($this->content instanceof StreamInterface)) {
-            $this->content = \GuzzleHttp\Stream\create($this->content);
+            $this->content = Stream::factory($this->content);
         } elseif ($this->content instanceof MultipartBody) {
             if (!$this->hasHeader('Content-Disposition')) {
                 $disposition = 'form-data; name="' . $this->name .'"';

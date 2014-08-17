@@ -11,7 +11,7 @@ use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Message\Response;
-use GuzzleHttp\Stream;
+use GuzzleHttp\Stream\Stream;
 
 /**
  * @covers GuzzleHttp\Adapter\MockAdapter
@@ -83,7 +83,7 @@ class MockAdapterTest extends \PHPUnit_Framework_TestCase
         $response = new Response(200);
         $m = new MockAdapter($response);
         $m->setResponse($response);
-        $body = Stream\create('foo');
+        $body = Stream::factory('foo');
         $request = new Request('PUT', 'http://httpbin.org/put', [], $body);
         $this->assertSame($response, $m->send(new Transaction(new Client(), $request)));
         $this->assertEquals(3, $body->tell());
