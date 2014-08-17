@@ -17,7 +17,7 @@
     "require": {
         "php": ">=5.4.0",
         "ext-json": "*",
-        "guzzlehttp/streams": "~1.4"
+        "guzzlehttp/streams": "~2.0"
     },
 
     "suggest": {

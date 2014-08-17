@@ -5,6 +5,9 @@ Next Release
 ------------
 
 * Now merging in default options using a case-insensitive comparison.
+* Updating guzzlehttp/streams dependency to ~2.0
+* No longer utilizing the now deprecated namespaced methods from the stream
+  package.
 
 4.1.8 (2014-08-14)
 ------------------

@@ -212,6 +212,11 @@ class PostBody implements PostBodyInterface
         return false;
     }
 
+    public function flush()
+    {
+        return false;
+    }
+
     /**
      * Return a stream object that is built from the POST fields and files.
      *
