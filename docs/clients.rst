@@ -311,10 +311,9 @@ effect.
 
 .. note::
 
-    Subsequent listeners of the "error" event can inspect and undo the
-    ``throwImmediately()`` call of a previous listener if they know how to
-    handle the associated exception or if the error is intercepted with a
-    response.
+    Subsequent listeners of the "error" event can still intercept the error
+    event with a response if needed, which will, as per the standard behavior,
+    prevent the exception from being thrown.
 
 .. _batch-requests:
 
