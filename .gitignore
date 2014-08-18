@@ -3,7 +3,7 @@ composer.phar
 composer.lock
 composer-test.lock
 vendor/
-build/
+build/artifacts/
 artifacts/
 docs/_build
 docs/*.pyc
