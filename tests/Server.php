@@ -79,7 +79,7 @@ class Server
                 'statusCode'   => $response->getStatusCode(),
                 'reasonPhrase' => $response->getReasonPhrase(),
                 'headers'      => $headers,
-                'body'         => (string) $response->getBody()
+                'body'         => base64_encode((string) $response->getBody())
             ];
         }
 

@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Message;
 
 use GuzzleHttp\Event\ListenerAttacherTrait;
@@ -344,5 +343,18 @@ class MessageFactory implements MessageFactoryInterface
         }
 
         $request->setBody(Stream::factory(json_encode($value)));
+    }
+
+    private function add_decode_content(RequestInterface $request, $value)
+    {
+        if ($value === false) {
+            return;
+        }
+
+        if ($value !== true) {
+            $request->setHeader('Accept-Encoding', $value);
+        }
+
+        $request->getConfig()['decode_content'] = true;
     }
 }

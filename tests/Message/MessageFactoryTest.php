@@ -562,6 +562,33 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
             (string) $history->getLastRequest()->getBody()
         );
     }
+
+    public function testDecodeDoesNotForceAcceptHeader()
+    {
+        $request = (new MessageFactory)->createRequest('POST', 'http://f.cn', [
+            'decode_content' => true
+        ]);
+        $this->assertEquals('', $request->getHeader('Accept-Encoding'));
+        $this->assertTrue($request->getConfig()->get('decode_content'));
+    }
+
+    public function testDecodeCanAddAcceptHeader()
+    {
+        $request = (new MessageFactory)->createRequest('POST', 'http://f.cn', [
+            'decode_content' => 'gzip'
+        ]);
+        $this->assertEquals('gzip', $request->getHeader('Accept-Encoding'));
+        $this->assertTrue($request->getConfig()->get('decode_content'));
+    }
+
+    public function testCanDisableDecoding()
+    {
+        $request = (new MessageFactory)->createRequest('POST', 'http://f.cn', [
+            'decode_content' => false
+        ]);
+        $this->assertEquals('', $request->getHeader('Accept-Encoding'));
+        $this->assertNull($request->getConfig()->get('decode_content'));
+    }
 }
 
 class ExtendedFactory extends MessageFactory

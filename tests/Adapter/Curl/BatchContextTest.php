@@ -92,4 +92,20 @@ class BatchContextTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($b->hasPending());
         $this->assertNull($b->nextPending());
     }
+
+    public function testCanCloseAll()
+    {
+        $m = curl_multi_init();
+        $b = new BatchContext($m, true);
+        $h = curl_init();
+        $t = new Transaction(
+            new Client(),
+            new Request('GET', 'http://httbin.org')
+        );
+        $b->addTransaction($t, $h);
+        $b->removeAll();
+        $this->assertFalse($b->isActive());
+        $this->assertEquals(0, count($this->readAttribute($b, 'handles')));
+        curl_multi_close($m);
+    }
 }

@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Adapter\Curl;
 
 use GuzzleHttp\Adapter\TransactionInterface;
@@ -38,6 +37,19 @@ class BatchContext
         $this->handles = new \SplObjectStorage();
         $this->throwsExceptions = $throwsExceptions;
         $this->pending = $pending;
+    }
+
+    /**
+     * Closes all of the requests associated with the underlying multi handle.
+     */
+    public function removeAll()
+    {
+        foreach ($this->handles as $transaction) {
+            $ch = $this->handles[$transaction];
+            curl_multi_remove_handle($this->multi, $ch);
+            curl_close($ch);
+            unset($this->handles[$transaction]);
+        }
     }
 
     /**

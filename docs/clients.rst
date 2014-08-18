@@ -285,6 +285,36 @@ failed request to an array that we can use to process errors later.
         // Handle the error...
     }
 
+Throwing Errors Immediately
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It sometimes is useful to throw exceptions immediately when the occur. The
+following example shows how to use an event listener to throw exceptions
+immediately and prevent subsequent requests from being sent.
+
+.. code-block:: php
+
+    use GuzzleHttp\Event\ErrorEvent;
+
+    $client->sendAll($requests, [
+        'error' => function (ErrorEvent $event) {
+            $event->throwImmediately(true);
+        }
+    ]);
+
+Calling the ``ErrorEvent::throwImmediately()`` instructs the
+``ParallelAdapterInterface`` sending the request to stop sending subsequent
+requests, clean up any opened resources, and throw the exception associated
+with the event as soon as possible. If the error event was not sent by a
+``ParallelAdapterInterface``, then calling  ``throwImmediately()`` has no
+effect.
+
+.. note::
+
+    Subsequent listeners of the "error" event can still intercept the error
+    event with a response if needed, which will, as per the standard behavior,
+    prevent the exception from being thrown.
+
 .. _batch-requests:
 
 Batching Requests
@@ -641,6 +671,40 @@ specify whether or not the "Referer" header should be added when redirecting.
     ]);
     echo $res->getStatusCode();
     // 200
+
+decode_content
+--------------
+
+:Summary: Specify whether or not ``Content-Encoding`` responses (gzip,
+    deflate, etc.) are automatically decoded.
+:Types:
+    - string
+    - bool
+:Default: ``true``
+
+This option can be used to control how content-encoded response bodies are
+handled. By default, ``decode_content`` is set to true, meaning any gzipped
+or deflated response will be decoded by Guzzle.
+
+When set to ``false``, the body of a response is never decoded, meaning the
+bytes pass through the adapter unchanged.
+
+.. code-block:: php
+
+    // Request gzipped data, but do not decode it while downloading
+    $client->get('/foo.js', [
+        'headers'        => ['Accept-Encoding' => 'gzip'],
+        'decode_content' => false
+    ]);
+
+When set to a string, the bytes of a response are decoded and the string value
+provided to the ``decode_content`` option is passed as the ``Accept-Encoding``
+header of the request.
+
+.. code-block:: php
+
+    // Pass "gzip" as the Accept-Encoding header.
+    $client->get('/foo.js', ['decode_content' => 'gzip']);
 
 .. _save_to-option:
 

@@ -59,6 +59,7 @@ interface MessageFactoryInterface
      * - stream: Set to true to stream a response body rather than download it all up front
      * - expect: true/false/integer Controls the "Expect: 100-Continue" header
      * - config: Associative array of request config collection options
+     * - decode_content: true/false/string to control decoding content-encoding responses
      *
      * @param string     $method  HTTP method (GET, POST, PUT, etc.)
      * @param string|Url $url     HTTP URL to connect to

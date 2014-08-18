@@ -126,7 +126,6 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
             $this->markTestIncomplete('HHVM has not implemented this?');
         }
         $this->assertEquals('http', $body->getMetadata()['wrapper_type']);
-        $this->assertEquals(8, $body->getMetadata()['unread_bytes']);
         $this->assertEquals(Server::$url . 'foo', $body->getMetadata()['uri']);
         $this->assertEquals('hi', $body->read(2));
         $body->close();
@@ -188,20 +187,46 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         unlink($tmpfname);
     }
 
-    public function testAddsGzipFilterIfAcceptHeaderIsPresent()
+    public function testAutomaticallyDecompressGzip()
     {
         Server::flush();
-        Server::enqueue("HTTP/1.1 200 OK\r\nFoo: Bar\r\nContent-Length: 8\r\n\r\nhi there");
+        $content = gzencode('test');
+        $message = "HTTP/1.1 200 OK\r\n"
+            . "Foo: Bar\r\n"
+            . "Content-Encoding: gzip\r\n"
+            . "Content-Length: " . strlen($content) . "\r\n\r\n"
+            . $content;
+        Server::enqueue($message);
+        $client = new Client([
+            'base_url' => Server::$url,
+            'adapter' => new StreamAdapter(new MessageFactory())
+        ]);
+        $response = $client->get('/', ['stream' => true]);
+        $body = $response->getBody();
+        $this->assertEquals('guzzle://stream', $body->getMetadata()['uri']);
+        $this->assertEquals('test', (string) $body);
+    }
+
+    public function testDoesNotForceDecode()
+    {
+        Server::flush();
+        $content = gzencode('test');
+        $message = "HTTP/1.1 200 OK\r\n"
+            . "Foo: Bar\r\n"
+            . "Content-Encoding: gzip\r\n"
+            . "Content-Length: " . strlen($content) . "\r\n\r\n"
+            . $content;
+        Server::enqueue($message);
         $client = new Client([
             'base_url' => Server::$url,
             'adapter' => new StreamAdapter(new MessageFactory())
         ]);
         $response = $client->get('/', [
-            'headers' => ['Accept-Encoding' => 'gzip'],
-            'stream' => true
+            'decode_content' => false,
+            'stream'         => true
         ]);
         $body = $response->getBody();
-        $this->assertEquals('compress.zlib://http://127.0.0.1:8125/', $body->getMetadata()['uri']);
+        $this->assertSame($content, (string) $body);
     }
 
     protected function getStreamFromBody(Stream $body)

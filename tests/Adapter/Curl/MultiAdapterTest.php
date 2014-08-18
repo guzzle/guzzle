@@ -64,6 +64,7 @@ class MultiAdapterTest extends AbstractCurl
 
     public function testChecksForCurlException()
     {
+        $mh = curl_multi_init();
         $request = new Request('GET', 'http://httbin.org');
         $transaction = $this->getMockBuilder('GuzzleHttp\Adapter\Transaction')
             ->setMethods(['getRequest'])
@@ -74,7 +75,7 @@ class MultiAdapterTest extends AbstractCurl
             ->will($this->returnValue($request));
         $context = $this->getMockBuilder('GuzzleHttp\Adapter\Curl\BatchContext')
             ->setMethods(['throwsExceptions'])
-            ->disableOriginalConstructor()
+            ->setConstructorArgs([$mh, true])
             ->getMock();
         $context->expects($this->once())
             ->method('throwsExceptions')
@@ -84,8 +85,10 @@ class MultiAdapterTest extends AbstractCurl
         $r->setAccessible(true);
         try {
             $r->invoke($a, $transaction, ['result' => -10], $context, []);
+            curl_multi_close($mh);
             $this->fail('Did not throw');
         } catch (RequestException $e) {
+            curl_multi_close($mh);
             $this->assertSame($request, $e->getRequest());
             $this->assertContains('[curl] (#-10) ', $e->getMessage());
             $this->assertContains($request->getUrl(), $e->getMessage());
@@ -318,5 +321,24 @@ class MultiAdapterTest extends AbstractCurl
             false,
             201
         );
+    }
+
+    public function testThrowsImmediatelyWhenInstructed()
+    {
+        Server::flush();
+        Server::enqueue(["HTTP/1.1 501\r\nContent-Length: 0\r\n\r\n"]);
+        $c = new Client(['base_url' => Server::$url]);
+        $request = $c->createRequest('GET', '/');
+        $request->getEmitter()->on('error', function (ErrorEvent $e) {
+            $e->throwImmediately(true);
+        });
+        $transactions = [new Transaction($c, $request)];
+        $a = new MultiAdapter(new MessageFactory());
+        try {
+            $a->sendAll(new \ArrayIterator($transactions), 1);
+            $this->fail('Did not throw');
+        } catch (RequestException $e) {
+            $this->assertSame($request, $e->getRequest());
+        }
     }
 }

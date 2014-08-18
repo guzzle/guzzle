@@ -66,6 +66,8 @@ is to set a response on the provided transaction object.
    - :ref:`stream-option`
    - :ref:`timeout-option`
    - :ref:`verify-option`
+   - :ref:`decode_content` - When set to ``true``, the adapter must attempt to
+     decode the body of a ``Content-Encoding`` response (e.g., gzip).
 
 3. Adapters SHOULD not follow redirects. In the normal case, redirects are
    followed by ``GuzzleHttp\Subscriber\Redirect``. Redirects SHOULD be
@@ -113,9 +115,13 @@ transactions to execute in parallel.
 Parallel adapters are similar to adapters (described earlier), except for the
 following:
 
-1. RequestExceptions are never thrown from a parallel adapter. Error handling
-   for parallel transfers is handled through event listeners that use ``error``
-   events.
+1. RequestExceptions are only thrown from a parallel adapter when the
+   ``GuzzleHttp\Exception\RequestException::getThrowImmediately()`` method of
+   an encountered exception returns ``true``. If this method does not return
+   ``true`` or the exception is not an instance of RequestException, then the
+   parallel adapter MUST NOT throw the exception. Error handling for parallel
+   transfers should normally be handled through event listeners that use
+   ``error`` events.
 
 2. Parallel adapters are not expected to return responses. Because parallel
    adapters can, in theory, send an infinite number of requests, developers
