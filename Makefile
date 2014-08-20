@@ -30,6 +30,16 @@ docs:
 view-docs:
 	open docs/_build/html/index.html
 
+tag:
+	$(if $(TAG),,$(error TAG is not defined. Pass via "make tag TAG=4.2.1"))
+	@echo Tagging $(TAG)
+	chag update -m '$(TAG) ()'
+	sed -i '' -e "s/VERSION = '.*'/VERSION = '$(TAG)'/" src/ClientInterface.php
+	php -l src/ClientInterface.php
+	git add -A
+	git commit -m '$(TAG) release'
+	chag tag
+
 perf: start-server
 	php tests/perf.php
 	$(MAKE) stop-server

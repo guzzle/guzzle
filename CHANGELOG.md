@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+4.2.1 (2014-08-19)
+------------------
+
+* Ensuring that the StreamAdapter does not always add a Content-Type header
+* Adding automated github releases with a phar and zip
+
 4.2.0 (2014-08-17)
 ------------------
 
