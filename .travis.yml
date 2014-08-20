@@ -21,3 +21,19 @@ matrix:
   allow_failures:
     - php: hhvm
   fast_finish: true
+
+before_deploy:
+  - make package
+
+deploy:
+  provider: releases
+  api_key:
+    secure: UpypqlYgsU68QT/x40YzhHXvzWjFwCNo9d+G8KAdm7U9+blFfcWhV1aMdzugvPMl6woXgvJj7qHq5tAL4v6oswCORhpSBfLgOQVFaica5LiHsvWlAedOhxGmnJqMTwuepjBCxXhs3+I8Kof1n4oUL9gKytXjOVCX/f7XU1HiinU=
+  file:
+    - build/artifacts/guzzle.phar
+    - build/artifacts/guzzle.zip
+  on:
+    repo: guzzle/guzzle
+    tags: true
+    all_branches: true
+    php: 5.4

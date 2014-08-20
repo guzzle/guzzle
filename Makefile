@@ -34,4 +34,11 @@ perf: start-server
 	php tests/perf.php
 	$(MAKE) stop-server
 
-.PHONY: docs
+package: burgomaster
+	php build/packager.php
+
+burgomaster:
+	mkdir -p build/artifacts
+	curl -s https://raw.githubusercontent.com/mtdowling/Burgomaster/0.0.1/src/Burgomaster.php > build/artifacts/Burgomaster.php
+
+.PHONY: doc burgomaster
