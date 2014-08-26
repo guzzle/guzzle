@@ -198,7 +198,7 @@ priority of the listener (as shown in the ``before`` listener in the example).
                 'before'   => ['onBefore', 100],
                 'complete' => ['onComplete'],
                 // You can pass a list of listeners with different priorities
-                'error'    => [['beforeError', 'first'], ['afterError', 'last]]
+                'error'    => [['beforeError', 'first'], ['afterError', 'last']]
             ];
         }
 
