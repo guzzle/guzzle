@@ -243,4 +243,16 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('POST', $requests[0]->getMethod());
         $this->assertEquals('GET', $requests[1]->getMethod());
     }
+
+    public function testRelativeLinkBasedLatestRequest()
+    {
+        $client = new Client(['base_url' => 'http://www.foo.com']);
+        $client->getEmitter()->attach(new Mock([
+            "HTTP/1.1 301 Moved Permanently\r\nLocation: http://www.bar.com\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 301 Moved Permanently\r\nLocation: /redirect\r\nContent-Length: 0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
+        ]));
+        $response = $client->get('/');
+        $this->assertEquals('http://www.bar.com/redirect', $response->getEffectiveUrl());
+    }
 }
