@@ -249,7 +249,6 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
         $body = $this->getSendResult(['stream' => true, 'proxy' => '127.0.0.1:8125'])->getBody();
         $opts = stream_context_get_options($this->getStreamFromBody($body));
         $this->assertEquals('127.0.0.1:8125', $opts['http']['proxy']);
-        $this->assertTrue($opts['http']['request_fulluri']);
     }
 
     public function testAddsTimeout()
