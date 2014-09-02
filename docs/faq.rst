@@ -189,3 +189,9 @@ used with a client and allow self-signed certificates.
             ]
         ]
     ]);
+
+Why am I getting an SSL verification error?
+===========================================
+
+You need to specify the path on disk to the CA bundle used by Guzzle for
+verifying the peer certificate. See :ref:`verify-option`.
