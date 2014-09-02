@@ -308,7 +308,7 @@ namespace GuzzleHttp\Tests\Adapter\Curl {
             $client->get();
             $this->assertEquals(2, $_SERVER['last_curl'][CURLOPT_SSL_VERIFYHOST]);
             $this->assertEquals(true, $_SERVER['last_curl'][CURLOPT_SSL_VERIFYPEER]);
-            $this->assertFileExists($_SERVER['last_curl'][CURLOPT_CAINFO]);
+            $this->assertFalse(isset($_SERVER['last_curl'][CURLOPT_CAINFO]));
         }
 
         public function testConvertsConstantNameKeysToValues()
