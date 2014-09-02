@@ -905,7 +905,7 @@ following order:
 2. Check if ``curl.cainfo`` is set in your php.ini file.
 3. Check if ``/etc/pki/tls/certs/ca-bundle.crt`` exists (Red Hat, CentOS,
    Fedora; provided by the ca-certificates package)
-4. Check if ``/etc/ssl/certs/ca-certificates.crt`` exits (Ubuntu, Debian;
+4. Check if ``/etc/ssl/certs/ca-certificates.crt`` exists (Ubuntu, Debian;
    provided by the ca-certificates package)
 5. Check if ``/usr/local/share/certs/ca-root-nss.crt`` exists (FreeBSD;
    provided by the ca_root_nss package)
