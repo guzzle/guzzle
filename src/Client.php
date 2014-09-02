@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp;
 
 use GuzzleHttp\Adapter\Curl\MultiAdapter;
@@ -98,6 +97,55 @@ class Client implements ClientInterface
         }
 
         return $defaultAgent;
+    }
+
+    /**
+     * Returns the path to the bundled cacert file.
+     *
+     * If running Guzzle in a phar, the cacert is copied to one of the
+     * following directories, and the copied path is returned:
+     *
+     * 1. The directory specified in the 'GUZZLE_CA_EXTRACT_DIR' environment
+     *    variable if present.
+     * 2. The user's home directory specified in $_SERVER['HOME'] if present.
+     * 3. The system's temp directory (i.e., sys_get_temp_dir()).
+     *
+     * @return string
+     * @throws \RuntimeException if copying the phar fails.
+     */
+    public static function getDefaultBundle()
+    {
+        $source = __DIR__ . '/cacert.pem';
+
+        // Use the pem directly when not running via a phar file.
+        if (strpos($source, 'phar://') === -1) {
+            return $source;
+        }
+
+        static $dest;
+
+        if (!$dest) {
+            // Copy from the phar to disk when running via phar.
+            if (isset($_SERVER['GUZZLE_CA_EXTRACT_DIR'])) {
+                // Copy to the defined destination directory
+                $dest = $_SERVER['GUZZLE_CA_EXTRACT_DIR'] . '/guzzle-cacert.pem';
+            } elseif (isset($_SERVER['HOME'])) {
+                // Copy to the user's home directory if available
+                $dest = $_SERVER['HOME'] . '/guzzle-cacert.pem';
+            } else {
+                // Last effort: Copy to the system's temp directory
+                $dest = sys_get_temp_dir() . '/guzzle-cacert.pem';
+            }
+        }
+
+        if (!file_exists($dest)) {
+            if (!file_put_contents($dest, file_get_contents($source))) {
+                throw new \RuntimeException("Unable to copy CA bundle from "
+                    . "$source to $dest: " . error_get_last()['message']);
+            }
+        }
+
+        return $dest;
     }
 
     public function __call($name, $arguments)
@@ -227,16 +275,8 @@ class Client implements ClientInterface
             'allow_redirects' => true,
             'exceptions'      => true,
             'decode_content'  => true,
-            'verify'          => __DIR__ . '/cacert.pem'
+            'verify'          => ini_get('openssl.cafile') ?: true
         ];
-
-        // Use the bundled cacert if it is a regular file, or set to true if
-        // using a phar file (because curL and the stream wrapper can't read
-        // cacerts from the phar stream wrapper). Favor the ini setting over
-        // the system's cacert.
-        if (substr(__FILE__, 0, 7) == 'phar://') {
-            $settings['verify'] = ini_get('openssl.cafile') ?: true;
-        }
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set
         if (isset($_SERVER['HTTP_PROXY'])) {
