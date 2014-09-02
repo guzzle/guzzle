@@ -27,7 +27,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client();
         $this->assertTrue($client->getDefaultOption('allow_redirects'));
         $this->assertTrue($client->getDefaultOption('exceptions'));
-        $this->assertContains('cacert.pem', $client->getDefaultOption('verify'));
+        $this->assertTrue($client->getDefaultOption('verify'));
     }
 
     public function testUsesProvidedDefaultOptions()
@@ -40,7 +40,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         ]);
         $this->assertFalse($client->getDefaultOption('allow_redirects'));
         $this->assertTrue($client->getDefaultOption('exceptions'));
-        $this->assertContains('cacert.pem', $client->getDefaultOption('verify'));
+        $this->assertTrue($client->getDefaultOption('verify'));
         $this->assertEquals(['foo' => 'bar'], $client->getDefaultOption('query'));
     }
 

@@ -589,6 +589,18 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('', $request->getHeader('Accept-Encoding'));
         $this->assertNull($request->getConfig()->get('decode_content'));
     }
+
+    public function testProvidesPathToBundledCert()
+    {
+        $request = (new MessageFactory)->createRequest('GET', 'http://f.cn', [
+            'verify' => 'bundled'
+        ]);
+
+        $this->assertContains(
+            'cacert.pem',
+            $request->getConfig()->get('verify')
+        );
+    }
 }
 
 class ExtendedFactory extends MessageFactory

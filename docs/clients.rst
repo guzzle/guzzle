@@ -871,22 +871,44 @@ verify
 ------
 
 :Summary: Describes the SSL certificate verification behavior of a request.
-    Set to ``true`` to enable SSL certificate verification (the default). Set
-    to ``false`` to disable certificate verification (this is insecure!). Set
-    to a string to provide the path to a CA bundle to enable verification using
-    a custom certificate.
+
+    - Set to ``true`` to enable SSL certificate verification and use the default
+      CA bundle provided by operating system.
+    - Set to ``false`` to disable certificate verification (this is insecure!).
+    - Set to ``"bundled"`` to use the CA bundle shipped with Guzzle. This
+      bundle comes from Mozilla and is packaged by `cURL <https://github.com/bagder/ca-bundle>`_.
+    - Set to a string to provide the path to a CA bundle to enable verification
+      using a custom certificate.
 :Types:
     - bool
+    - string
     - string
 :Default: ``true``
 
 .. code-block:: php
 
+    // Use the system's CA bundle
+    $client->get('/', ['verify' => true]);
+
+    // Use the bundled CA bundle (even works when using a phar)
+    $client->get('/', ['verify' => 'bundled']);
+
     // Use a custom SSL certificate
     $client->get('/', ['verify' => '/path/to/cert.pem']);
 
-    // Disable validation
+    // Disable validation (don't do this!)
     $client->get('/', ['verify' => false]);
+
+.. note::
+
+    Using the ``"bundled"`` setting uses the CA bundle packaged with Guzzle.
+    When running Guzzle through a phar, the ``"bundled"`` setting will copy
+    the CA bundle from the phar to somewhere on disk. If the
+    ``GUZZLE_CA_EXTRACT_DIR`` environment variable is set, the phar will be
+    copied to a file called ``guzzle-cacert.pem`` in that directory. If it is
+    not specified and the ``HOME`` environment variable is present, the
+    cacert will be copied to the user's home directory. Otherwise, the cacert
+    will be copied to the path returned by ``sys_get_temp_dir()``.
 
 .. _cert-option:
 
@@ -1147,6 +1169,10 @@ behavior of the library.
     have issues with PHP's implementation of ``curl_multi_select()`` where
     calling this function always results in waiting for the maximum duration of
     the timeout.
+``GUZZLE_CA_EXTRACT_DIR``
+    Controls which directory the bundled CA bundle is extracted to when
+    running Guzzle via a phar file and using the ``"bundled"``
+    :ref:`verify <verify-option>` request option setting.
 ``HTTP_PROXY``
     Defines the proxy to use when sending requests using the "http" protocol.
 ``HTTPS_PROXY``
