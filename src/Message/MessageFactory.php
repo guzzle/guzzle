@@ -159,8 +159,8 @@ class MessageFactory implements MessageFactoryInterface
     ) {
         // Values specified in the config map are passed to request options
         static $configMap = ['connect_timeout' => 1, 'timeout' => 1,
-            'ssl_key' => 1, 'cert' => 1, 'proxy' => 1, 'debug' => 1,
-            'save_to' => 1, 'stream' => 1, 'expect' => 1];
+            'verify' => 1, 'ssl_key' => 1, 'cert' => 1, 'proxy' => 1,
+            'debug' => 1, 'save_to' => 1, 'stream' => 1, 'expect' => 1];
 
         // Take the class of the instance, not the parent
         $selfClass = get_class($this);
@@ -357,12 +357,5 @@ class MessageFactory implements MessageFactoryInterface
         }
 
         $request->getConfig()['decode_content'] = true;
-    }
-
-    private function add_verify(RequestInterface $request, $value)
-    {
-        $request->getConfig()['verify'] = $value === 'bundled'
-            ? Client::getDefaultBundle()
-            : $value;
     }
 }
