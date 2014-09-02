@@ -100,52 +100,71 @@ class Client implements ClientInterface
     }
 
     /**
-     * Returns the path to the bundled cacert file.
+     * Returns the default cacert bundle for the current system.
      *
-     * If running Guzzle in a phar, the cacert is copied to one of the
-     * following directories, and the copied path is returned:
+     * First, the openssl.cafile and curl.cainfo php.ini settings are checked.
+     * If those settings are not configured, then the common locations for
+     * bundles found on Red Hat, CentOS, Fedora, Ubuntu, Debian, FreeBSD, OS X
+     * and Windows are checked. If any of these file locations are found on
+     * disk, they will be utilized.
      *
-     * 1. The directory specified in the 'GUZZLE_CA_EXTRACT_DIR' environment
-     *    variable if present.
-     * 2. The user's home directory specified in $_SERVER['HOME'] if present.
-     * 3. The system's temp directory (i.e., sys_get_temp_dir()).
+     * Note: the result of this function is cached for subsequent calls.
      *
      * @return string
-     * @throws \RuntimeException if copying the phar fails.
+     * @throws \RuntimeException if no bundle can be found.
      */
-    public static function getDefaultBundle()
+    public static function getDefaultCaBundle()
     {
-        $source = __DIR__ . '/cacert.pem';
+        static $cached, $cafiles = [
+            // Red Hat, CentOS, Fedora (provided by the ca-certificates package)
+            '/etc/pki/tls/certs/ca-bundle.crt',
+            // Ubuntu, Debian (provided by the ca-certificates package)
+            '/etc/ssl/certs/ca-certificates.crt',
+            // FreeBSD (provided by the ca_root_nss package)
+            '/usr/local/share/certs/ca-root-nss.crt',
+            // OS X provided by homebrew (using the default path)
+            '/usr/local/etc/openssl/cert.pem',
+            // Windows?
+            'C:\\windows\\system32\\curl-ca-bundle.crt',
+            'C:\\windows\\curl-ca-bundle.crt'
+        ];
 
-        // Use the pem directly when not running via a phar file.
-        if (strpos($source, 'phar://') === -1) {
-            return $source;
+        if ($cached) {
+            return $cached;
         }
 
-        static $dest;
+        if ($ca = ini_get('openssl.cafile')) {
+            return $cached = $ca;
+        }
 
-        if (!$dest) {
-            // Copy from the phar to disk when running via phar.
-            if (isset($_SERVER['GUZZLE_CA_EXTRACT_DIR'])) {
-                // Copy to the defined destination directory
-                $dest = $_SERVER['GUZZLE_CA_EXTRACT_DIR'] . '/guzzle-cacert.pem';
-            } elseif (isset($_SERVER['HOME'])) {
-                // Copy to the user's home directory if available
-                $dest = $_SERVER['HOME'] . '/guzzle-cacert.pem';
-            } else {
-                // Last effort: Copy to the system's temp directory
-                $dest = sys_get_temp_dir() . '/guzzle-cacert.pem';
+        if ($ca = ini_get('curl.cainfo')) {
+            return $cached = $ca;
+        }
+
+        foreach ($cafiles as $filename) {
+            if (file_exists($filename)) {
+                return $cached = $filename;
             }
         }
 
-        if (!file_exists($dest)) {
-            if (!file_put_contents($dest, file_get_contents($source))) {
-                throw new \RuntimeException("Unable to copy CA bundle from "
-                    . "$source to $dest: " . error_get_last()['message']);
-            }
-        }
-
-        return $dest;
+        throw new \RuntimeException(sprintf(
+            'No system CA bundle could be found in any of the the following '
+            . 'common locations: %s. PHP versions earlier than 5.6 are not '
+            . 'properly configured to use the system\'s CA bundle by default. '
+            . 'In order to verify peer certificates, you will need to supply '
+            . 'the path on disk to a certificate bundle to the "verify" '
+            . 'request option: %s. If you do not need a specific certificate '
+            . 'bundle, then Mozilla provides a commonly used CA bundle which '
+            . 'can be downloaded here (provided by the maintainer of cURL): '
+            . '%s. Once you have a CA bundle available on disk, you can set '
+            . 'the "openssl.cafile" PHP ini setting to point to the path to '
+            . 'the file, allowing you to omit the "verify" request option. '
+            . 'See %s for more information.',
+            implode(', ', $cafiles),
+            'http://docs.guzzlephp.org/en/latest/clients.html#verify',
+            'https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt',
+            'http://curl.haxx.se/docs/sslcerts.html'
+        ));
     }
 
     public function __call($name, $arguments)
@@ -275,7 +294,7 @@ class Client implements ClientInterface
             'allow_redirects' => true,
             'exceptions'      => true,
             'decode_content'  => true,
-            'verify'          => ini_get('openssl.cafile') ?: true
+            'verify'          => true
         ];
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set

@@ -875,40 +875,58 @@ verify
     - Set to ``true`` to enable SSL certificate verification and use the default
       CA bundle provided by operating system.
     - Set to ``false`` to disable certificate verification (this is insecure!).
-    - Set to ``"bundled"`` to use the CA bundle shipped with Guzzle. This
-      bundle comes from Mozilla and is packaged by `cURL <https://github.com/bagder/ca-bundle>`_.
     - Set to a string to provide the path to a CA bundle to enable verification
       using a custom certificate.
 :Types:
     - bool
     - string
-    - string
 :Default: ``true``
 
 .. code-block:: php
 
-    // Use the system's CA bundle
+    // Use the system's CA bundle (this is the default setting)
     $client->get('/', ['verify' => true]);
 
-    // Use the bundled CA bundle (even works when using a phar)
-    $client->get('/', ['verify' => 'bundled']);
-
-    // Use a custom SSL certificate
+    // Use a custom SSL certificate on disk.
     $client->get('/', ['verify' => '/path/to/cert.pem']);
 
-    // Disable validation (don't do this!)
+    // Disable validation entirely (don't do this!).
     $client->get('/', ['verify' => false]);
 
-.. note::
+Not all system's have a known CA bundle on disk. For example, Windows and
+OS X do not have a single common location for CA bundles. When setting
+"verify" to ``true``, Guzzle will do its best to find the most appropriate
+CA bundle on your system. When using cURL or the PHP stream wrapper on PHP
+versions >= 5.6, this happens by default. When using the PHP stream
+wrapper on versions < 5.6, Guzzle tries to find your CA bundle in the
+following order:
 
-    Using the ``"bundled"`` setting uses the CA bundle packaged with Guzzle.
-    When running Guzzle through a phar, the ``"bundled"`` setting will copy
-    the CA bundle from the phar to somewhere on disk. If the
-    ``GUZZLE_CA_EXTRACT_DIR`` environment variable is set, the phar will be
-    copied to a file called ``guzzle-cacert.pem`` in that directory. If it is
-    not specified and the ``HOME`` environment variable is present, the
-    cacert will be copied to the user's home directory. Otherwise, the cacert
-    will be copied to the path returned by ``sys_get_temp_dir()``.
+1. Check if ``openssl.cafile`` is set in your php.ini file.
+2. Check if ``curl.cainfo`` is set in your php.ini file.
+3. Check if ``/etc/pki/tls/certs/ca-bundle.crt`` exists (Red Hat, CentOS,
+   Fedora; provided by the ca-certificates package)
+4. Check if ``/etc/ssl/certs/ca-certificates.crt`` exits (Ubuntu, Debian;
+   provided by the ca-certificates package)
+5. Check if ``/usr/local/share/certs/ca-root-nss.crt`` exists (FreeBSD;
+   provided by the ca_root_nss package)
+6. Check if ``/usr/local/etc/openssl/cert.pem`` (OS X; provided by homebrew)
+7. Check if ``C:\windows\system32\curl-ca-bundle.crt`` exists (Windows)
+8. Check if ``C:\windows\curl-ca-bundle.crt`` exists (Windows)
+
+The result of this lookup is cached in memory so that subsequent calls
+in the same process will return very quickly. However, when sending only
+a single request per-process in something like Apache, you should consider
+setting the ``openssl.cafile`` environment variable to the path on disk
+to the file so that this entire process is skipped.
+
+If you do not need a specific certificate bundle, then Mozilla provides a
+commonly used CA bundle which can be downloaded
+`here <https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt>`_
+(provided by the maintainer of cURL). Once you have a CA bundle available on
+disk, you can set the "openssl.cafile" PHP ini setting to point to the path to
+the file, allowing you to omit the "verify" request option. Much more detail on
+SSL certificates can be found on the
+`cURL website <http://curl.haxx.se/docs/sslcerts.html>`_.
 
 .. _cert-option:
 
@@ -1169,10 +1187,6 @@ behavior of the library.
     have issues with PHP's implementation of ``curl_multi_select()`` where
     calling this function always results in waiting for the maximum duration of
     the timeout.
-``GUZZLE_CA_EXTRACT_DIR``
-    Controls which directory the bundled CA bundle is extracted to when
-    running Guzzle via a phar file and using the ``"bundled"``
-    :ref:`verify <verify-option>` request option setting.
 ``HTTP_PROXY``
     Defines the proxy to use when sending requests using the "http" protocol.
 ``HTTPS_PROXY``
