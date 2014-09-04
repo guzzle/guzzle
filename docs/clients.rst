@@ -764,7 +764,6 @@ events
     $client->get('/', [
         'events' => [
             'before' => function (BeforeEvent $e) { echo 'Before'; },
-            'headers' => function (HeadersEvent $e) { echo 'Headers'; },
             'complete' => function (CompleteEvent $e) { echo 'Complete'; },
             'error' => function (ErrorEvent $e) { echo 'Error'; },
         ]
@@ -1145,6 +1144,36 @@ array in the ``config`` request option under the ``curl`` key.
             ]
         ]
     ]);
+
+future
+------
+
+:Summary: Specifies whether or not a response SHOULD be an instance of a
+    ``GuzzleHttp\Message\FutureResponse`` object.
+:Types:
+        - bool
+:Default: ``false``
+
+By default, Guzzle requests should be synchronous. You can create asynchronous
+future responses by passing the ``future`` request option as ``true``. The
+response will only be executed when it is used like a normal response, the
+``wait()`` method of the response is called, or the corresponding adapter that
+created the response is destructing and there are futures that have not been
+resolved.
+
+This option only has an effect if your adapter can create and return future
+responses. By default, Guzzle relies on cURL's multi interface to implement
+future responses. When cURL is not installed and you haven't configured a
+custom adapter, your responses will be blocking and will return regular
+response objects with no ``wait()`` method.
+
+.. code-block:: php
+
+    $response = $client->get('/foo', ['future' => true]);
+    // Do some other stuff including sending more future responses...
+    // Get the status of the response, which implicitly blocks until the
+    // response is complete.
+    echo $response->getStatus();
 
 Event Subscribers
 =================

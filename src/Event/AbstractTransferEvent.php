@@ -1,8 +1,7 @@
 <?php
-
 namespace GuzzleHttp\Event;
 
-use GuzzleHttp\Adapter\TransactionInterface;
+use GuzzleHttp\Transaction;
 use GuzzleHttp\Message\ResponseInterface;
 
 /**
@@ -36,11 +35,11 @@ abstract class AbstractTransferEvent extends AbstractRequestEvent
     private $transferInfo;
 
     /**
-     * @param TransactionInterface $transaction  Transaction
+     * @param Transaction $transaction  Transaction
      * @param array                $transferInfo Transfer statistics
      */
     public function __construct(
-        TransactionInterface $transaction,
+        Transaction $transaction,
         $transferInfo = []
     ) {
         parent::__construct($transaction);

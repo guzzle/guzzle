@@ -1,8 +1,6 @@
 <?php
+namespace GuzzleHttp;
 
-namespace GuzzleHttp\Adapter;
-
-use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Event\ListenerAttacherTrait;
 use GuzzleHttp\Message\RequestInterface;
 
@@ -31,7 +29,7 @@ class TransactionIterator implements \Iterator
         $this->client = $client;
         $this->eventListeners = $this->prepareListeners(
             $options,
-            ['before', 'complete', 'error']
+            ['before', 'complete', 'error', 'prepare']
         );
         if ($source instanceof \Iterator) {
             $this->source = $source;

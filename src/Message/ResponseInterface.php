@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Message;
 
 /**
@@ -35,8 +34,6 @@ interface ResponseInterface extends MessageInterface
      * redirect URL).
      *
      * @param string $url Effective URL
-     *
-     * @return self
      */
     public function setEffectiveUrl($url);
 

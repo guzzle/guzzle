@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Event;
 
 use GuzzleHttp\Message\ResponseInterface;

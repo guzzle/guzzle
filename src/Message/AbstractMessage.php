@@ -37,33 +37,23 @@ abstract class AbstractMessage implements MessageInterface
     {
         if ($body === null) {
             // Setting a null body will remove the body of the request
-            $this->removeHeader('Content-Length')
-                ->removeHeader('Transfer-Encoding');
+            $this->removeHeader('Content-Length');
+            $this->removeHeader('Transfer-Encoding');
         }
 
         $this->body = $body;
-
-        return $this;
     }
 
     public function addHeader($header, $value)
     {
-        static $valid = ['string' => true, 'integer' => true,
-            'double' => true, 'array' => true];
-
-        $type = gettype($value);
-        if (!isset($valid[$type])) {
-            throw new \InvalidArgumentException('Invalid header value');
-        }
-
-        if ($type == 'array') {
+        if (is_array($value)) {
             $current = array_merge($this->getHeader($header, true), $value);
         } else {
             $current = $this->getHeader($header, true);
-            $current[] = $value;
+            $current[] = (string) $value;
         }
 
-        return $this->setHeader($header, $current);
+        $this->setHeader($header, $current);
     }
 
     public function addHeaders(array $headers)
@@ -73,17 +63,16 @@ abstract class AbstractMessage implements MessageInterface
         }
     }
 
-    public function getHeader($header, $asArray = false)
+    public function getHeader($header)
     {
         $name = strtolower($header);
+        return isset($this->headers[$name]) ? $this->headers[$name] : '';
+    }
 
-        if (!isset($this->headers[$name])) {
-            return $asArray ? [] : '';
-        }
-
-        return $asArray
-            ? $this->headers[$name]
-            : implode(', ', $this->headers[$name]);
+    public function getHeaderLines($header)
+    {
+        $name = strtolower($header);
+        return isset($this->headers[$name]) ? $this->headers[$name] : [];
     }
 
     public function getHeaders()
@@ -102,26 +91,14 @@ abstract class AbstractMessage implements MessageInterface
         $name = strtolower($header);
         $this->headerNames[$name] = $header;
 
-        switch (gettype($value)) {
-            case 'string':
-                $this->headers[$name] = [trim($value)];
-                break;
-            case 'integer':
-            case 'double':
-                $this->headers[$name] = [(string) $value];
-                break;
-            case 'array':
-                foreach ($value as &$v) {
-                    $v = trim($v);
-                }
-                $this->headers[$name] = $value;
-                break;
-            default:
-                throw new \InvalidArgumentException('Invalid header value '
-                    . 'provided: ' . var_export($value, true));
+        if (is_array($value)) {
+            foreach ($value as &$v) {
+                $v = trim($v);
+            }
+            $this->headers[$name] = $value;
+        } else {
+            $this->headers[$name] = [trim($value)];
         }
-
-        return $this;
     }
 
     public function setHeaders(array $headers)
@@ -130,8 +107,6 @@ abstract class AbstractMessage implements MessageInterface
         foreach ($headers as $key => $value) {
             $this->setHeader($key, $value);
         }
-
-        return $this;
     }
 
     public function hasHeader($header)
@@ -143,8 +118,6 @@ abstract class AbstractMessage implements MessageInterface
     {
         $name = strtolower($header);
         unset($this->headers[$name], $this->headerNames[$name]);
-
-        return $this;
     }
 
     /**

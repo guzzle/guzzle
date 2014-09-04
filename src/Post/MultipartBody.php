@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Post;
 
 use GuzzleHttp\Stream\AppendStream;
@@ -76,7 +75,7 @@ class MultipartBody implements StreamInterface
     /**
      * Create the aggregate stream that will be used to upload the POST data
      */
-    private function createStream(array $fields, array $files)
+    protected function createStream(array $fields, array $files)
     {
         $stream = new AppendStream();
 

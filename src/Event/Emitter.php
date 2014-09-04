@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Event;
 
 /**
@@ -98,6 +97,11 @@ class Emitter implements EmitterInterface
         return $this->sorted[$eventName];
     }
 
+    public function hasListeners($eventName)
+    {
+        return !empty($this->listeners[$eventName]);
+    }
+
     public function emit($eventName, EventInterface $event)
     {
         if (isset($this->listeners[$eventName])) {
@@ -138,20 +142,5 @@ class Emitter implements EmitterInterface
         foreach ($subscriber->getEvents() as $eventName => $listener) {
             $this->removeListener($eventName, array($subscriber, $listener[0]));
         }
-    }
-
-    public function __call($name, $arguments)
-    {
-        return \GuzzleHttp\deprecation_proxy(
-            $this,
-            $name,
-            $arguments,
-            [
-                'addSubscriber'    => 'attach',
-                'removeSubscriber' => 'detach',
-                'addListener'      => 'on',
-                'dispatch'         => 'emit'
-            ]
-        );
     }
 }

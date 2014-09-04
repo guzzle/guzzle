@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Cookie;
 
 use GuzzleHttp\Message\RequestInterface;

@@ -5,7 +5,6 @@
     "keywords": ["framework", "http", "rest", "web service", "curl", "client", "HTTP client"],
     "homepage": "http://guzzlephp.org/",
     "license": "MIT",
-
     "authors": [
         {
             "name": "Michael Dowling",
@@ -13,22 +12,18 @@
             "homepage": "https://github.com/mtdowling"
         }
     ],
-
     "require": {
         "php": ">=5.4.0",
-        "ext-json": "*",
-        "guzzlehttp/streams": "~2.1"
+        "guzzlehttp/streams": "~2.1",
+        "guzzlehttp/ring": "~0.1@dev"
     },
-
     "suggest": {
         "ext-curl": "Guzzle will use specific adapters if cURL is present"
     },
-
     "autoload": {
         "psr-4": {
             "GuzzleHttp\\": "src/"
-        },
-        "files": ["src/functions.php"]
+        }
     },
     "autoload-dev": {
         "psr-4": {
@@ -40,10 +35,9 @@
         "psr/log": "~1.0",
         "phpunit/phpunit": "~4.0"
     },
-
     "extra": {
         "branch-alias": {
-            "dev-master": "4.2-dev"
+            "dev-ring": "5.0-dev"
         }
     }
 }

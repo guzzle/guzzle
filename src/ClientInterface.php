@@ -1,19 +1,17 @@
 <?php
-
 namespace GuzzleHttp;
 
 use GuzzleHttp\Event\HasEmitterInterface;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\ResponseInterface;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\AdapterException;
 
 /**
  * Client interface for sending HTTP requests
  */
 interface ClientInterface extends HasEmitterInterface
 {
-    const VERSION = '4.2.2';
+    const VERSION = '5.0.0';
 
     /**
      * Create and return a new {@see RequestInterface} object.
@@ -141,8 +139,6 @@ interface ClientInterface extends HasEmitterInterface
      *     - before: (callable|array) Receives a BeforeEvent
      *     - after: (callable|array) Receives a CompleteEvent
      *     - error: (callable|array) Receives a ErrorEvent
-     *
-     * @throws AdapterException When an error occurs in the HTTP adapter.
      */
     public function sendAll($requests, array $options = []);
 

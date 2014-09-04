@@ -92,9 +92,11 @@ class PostBody implements PostBodyInterface
             return $this->fields;
         }
 
-        return (string) (new Query($this->fields))
-            ->setEncodingType(Query::RFC1738)
-            ->setAggregator($this->getAggregator());
+        $query = new Query($this->fields);
+        $query->setEncodingType(Query::RFC1738);
+        $query->setAggregator($this->getAggregator());
+
+        return (string) $query;
     }
 
     public function hasField($name)
@@ -163,8 +165,6 @@ class PostBody implements PostBodyInterface
     {
         $this->body = null;
         $this->fields = $this->files = [];
-
-        return $this;
     }
 
     public function eof()
