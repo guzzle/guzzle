@@ -288,7 +288,7 @@ failed request to an array that we can use to process errors later.
 Throwing Errors Immediately
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-It sometimes is useful to throw exceptions immediately when the occur. The
+It sometimes is useful to throw exceptions immediately when they occur. The
 following example shows how to use an event listener to throw exceptions
 immediately and prevent subsequent requests from being sent.
 

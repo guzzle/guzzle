@@ -120,7 +120,7 @@ You create requests with a client using the ``createRequest()`` method.
 
 .. code-block:: php
 
-    // Create a request but don't sent it immediately
+    // Create a request but don't send it immediately
     $request = $client->createRequest('GET', 'http://httpbin.org/get');
 
 Request Methods
@@ -466,7 +466,7 @@ Effective URL
 
 The URL that was ultimately accessed that returned a response can be accessed
 using the ``getEffectiveUrl()`` method of a response. This method will return
-the URL of a reqeust or the URL of the last redirected URL if any redirects
+the URL of a request or the URL of the last redirected URL if any redirects
 occurred while transferring a request.
 
 .. code-block:: php

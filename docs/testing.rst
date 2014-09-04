@@ -175,7 +175,7 @@ Using the test server
     develop HTTP adapters. There is no promise of backwards compatibility
     when it comes to the node.js test server or the ``GuzzleHttp\Tests\Server``
     class. If you are using the test server or ``Server`` class outside of
-    guzzlehttp/guzzle, then you will need to configuring autoloading and
+    guzzlehttp/guzzle, then you will need to configure autoloading and
     ensure the web server is started manually.
 
 .. hint::
