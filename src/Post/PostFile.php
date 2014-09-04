@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Post;
 
 use GuzzleHttp\Mimetypes;
@@ -112,7 +111,7 @@ class PostFile implements PostFileInterface
         // Set a default content-disposition header if one was no provided
         if (!$this->hasHeader('Content-Disposition')) {
             $this->headers['Content-Disposition'] = sprintf(
-                'form-data; filename="%s"; name="%s"',
+                'form-data; name="%s"; filename="%s"',
                 basename($this->filename),
                 $this->name
             );

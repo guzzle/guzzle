@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Subscriber;
 
 use GuzzleHttp\Event\RequestEvents;
@@ -66,47 +65,38 @@ class Redirect implements SubscriberInterface
     {
         $response = $event->getResponse();
 
-        if (substr($response->getStatusCode(), 0, 1) != '3' ||
-            !$response->hasHeader('Location')
+        if (substr($response->getStatusCode(), 0, 1) != '3'
+            || !$response->hasHeader('Location')
         ) {
             return;
         }
 
-        $redirectCount = 0;
-        $redirectRequest = $event->getRequest();
-        $redirectResponse = $response;
-        $max = $redirectRequest->getConfig()->getPath('redirect/max') ?: 5;
-
-        do {
-            if (++$redirectCount > $max) {
-                throw new TooManyRedirectsException(
-                    "Will not follow more than {$redirectCount} redirects",
-                    $redirectRequest
-                );
-            }
-            $redirectRequest = $this->createRedirectRequest($redirectRequest, $redirectResponse);
-            $redirectResponse = $event->getClient()->send($redirectRequest);
-        } while (substr($redirectResponse->getStatusCode(), 0, 1) == '3' &&
-            $redirectResponse->hasHeader('Location')
-        );
-
-        if ($redirectResponse !== $response) {
-            $event->intercept($redirectResponse);
+        $request = $event->getRequest();
+        if ($parentEvent = $request->getConfig()->get('redirect_event')) {
+            $parentRequest = $parentEvent->getRequest();
+            $config = $parentRequest->getConfig();
+        } else {
+            $parentRequest = $request;
+            $config = $parentRequest->getConfig();
+            $config['redirect_event'] = $event;
         }
+
+        $redirectCount = $config['redirect_count'] + 1;
+        $config['redirect_count'] = $redirectCount;
+        $max = $config->getPath('redirect/max') ?: 5;
+
+        if ($redirectCount > $max) {
+            throw new TooManyRedirectsException(
+                "Will not follow more than {$redirectCount} redirects",
+                $parentRequest
+            );
+        }
+
+        $event->intercept($event->getClient()->send(
+            $this->createRedirectRequest($parentRequest, $response)
+        ));
     }
 
-    /**
-     * Create a redirect request for a specific request object
-     *
-     * Takes into account strict RFC compliant redirection (e.g. redirect POST
-     * with POST) vs doing what most clients do (e.g. redirect POST with GET).
-     *
-     * @param RequestInterface  $request
-     * @param ResponseInterface $response
-     *
-     * @return RequestInterface Returns a new redirect request
-     * @throws CouldNotRewindStreamException If the body cannot be rewound.
-     */
     private function createRedirectRequest(
         RequestInterface $request,
         ResponseInterface $response
@@ -117,12 +107,11 @@ class Redirect implements SubscriberInterface
         // not forcing RFC compliance, but rather emulating what all browsers
         // would do. Be sure to disable redirects on the clone.
         $redirectRequest = clone $request;
-        $redirectRequest->getEmitter()->detach($this);
-        $statusCode = $response->getStatusCode();
 
+        $statusCode = $response->getStatusCode();
         if ($statusCode == 303 ||
-            ($statusCode <= 302 && $request->getBody() &&
-                !$config->getPath('redirect/strict'))
+            ($statusCode <= 302 && $request->getBody()
+                && !$config->getPath('redirect/strict'))
         ) {
             $redirectRequest->setMethod('GET');
             $redirectRequest->setBody(null);
@@ -133,10 +122,10 @@ class Redirect implements SubscriberInterface
 
         // Add the Referer header if it is told to do so and only
         // add the header if we are not redirecting from https to http.
-        if ($config->getPath('redirect/referer') && (
-            $redirectRequest->getScheme() == 'https' ||
-            $redirectRequest->getScheme() == $request->getScheme()
-        )) {
+        if ($config->getPath('redirect/referer')
+            && ($redirectRequest->getScheme() == 'https'
+                || $redirectRequest->getScheme() == $request->getScheme())
+        ) {
             $url = Url::fromString($request->getUrl());
             $url->setUsername(null)->setPassword(null);
             $redirectRequest->setHeader('Referer', (string) $url);

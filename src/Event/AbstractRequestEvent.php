@@ -1,20 +1,19 @@
 <?php
-
 namespace GuzzleHttp\Event;
 
-use GuzzleHttp\Adapter\TransactionInterface;
+use GuzzleHttp\Transaction;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Message\RequestInterface;
 
 abstract class AbstractRequestEvent extends AbstractEvent
 {
-    /** @var TransactionInterface */
+    /** @var Transaction */
     private $transaction;
 
     /**
-     * @param TransactionInterface $transaction
+     * @param Transaction $transaction
      */
-    public function __construct(TransactionInterface $transaction)
+    public function __construct(Transaction $transaction)
     {
         $this->transaction = $transaction;
     }
@@ -26,7 +25,7 @@ abstract class AbstractRequestEvent extends AbstractEvent
      */
     public function getClient()
     {
-        return $this->transaction->getClient();
+        return $this->transaction->client;
     }
 
     /**
@@ -36,11 +35,11 @@ abstract class AbstractRequestEvent extends AbstractEvent
      */
     public function getRequest()
     {
-        return $this->transaction->getRequest();
+        return $this->transaction->request;
     }
 
     /**
-     * @return TransactionInterface
+     * @return Transaction
      */
     protected function getTransaction()
     {

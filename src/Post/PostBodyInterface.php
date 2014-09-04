@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Post;
 
 use GuzzleHttp\Message\RequestInterface;
@@ -23,8 +22,6 @@ interface PostBodyInterface extends StreamInterface, \Countable
      *
      * @param string       $name  Name of the field to set
      * @param string|array $value Value to set
-     *
-     * @return $this
      */
     public function setField($name, $value);
 
@@ -44,8 +41,6 @@ interface PostBodyInterface extends StreamInterface, \Countable
      *
      * @param bool $force Set to true to force multipart uploads or false to
      *     remove this flag.
-     *
-     * @return self
      */
     public function forceMultipartUpload($force);
 
@@ -53,8 +48,6 @@ interface PostBodyInterface extends StreamInterface, \Countable
      * Replace all existing form fields with an array of fields
      *
      * @param array $fields Associative array of fields to set
-     *
-     * @return $this
      */
     public function replaceFields(array $fields);
 
@@ -71,8 +64,6 @@ interface PostBodyInterface extends StreamInterface, \Countable
      * Remove a field by name
      *
      * @param string $name Name of the field to remove
-     *
-     * @return $this
      */
     public function removeField($name);
 
@@ -115,15 +106,11 @@ interface PostBodyInterface extends StreamInterface, \Countable
      * Add a file to the POST
      *
      * @param PostFileInterface $file File to add
-     *
-     * @return $this
      */
     public function addFile(PostFileInterface $file);
 
     /**
      * Remove all files from the collection
-     *
-     * @return $this
      */
     public function clearFiles();
 }

@@ -19,7 +19,7 @@ Server::wait();
 
 // Get custom make variables
 $total = isset($_SERVER['REQUESTS']) ? $_SERVER['REQUESTS'] : 1000;
-$parallel = isset($_SERVER['PARALLEL']) ? $_SERVER['PARALLEL'] : 25;
+$parallel = isset($_SERVER['PARALLEL']) ? $_SERVER['PARALLEL'] : 100;
 
 $client = new Client(['base_url' => Server::$url]);
 

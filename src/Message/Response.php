@@ -1,9 +1,9 @@
 <?php
-
 namespace GuzzleHttp\Message;
 
 use GuzzleHttp\Exception\ParseException;
 use GuzzleHttp\Stream\StreamInterface;
+use GuzzleHttp\Utils;
 
 /**
  * Guzzle HTTP response object
@@ -127,7 +127,7 @@ class Response extends AbstractMessage implements ResponseInterface
     public function json(array $config = [])
     {
         try {
-            return \GuzzleHttp\json_decode(
+            return Utils::jsonDecode(
                 (string) $this->getBody(),
                 isset($config['object']) ? !$config['object'] : true,
                 512,
@@ -177,8 +177,6 @@ class Response extends AbstractMessage implements ResponseInterface
     public function setEffectiveUrl($url)
     {
         $this->effectiveUrl = $url;
-
-        return $this;
     }
 
     /**

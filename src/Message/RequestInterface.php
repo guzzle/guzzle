@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Message;
 
 use GuzzleHttp\Event\HasEmitterInterface;
@@ -18,7 +17,6 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
      *
      * @param string $url Request URL.
      *
-     * @return self Reference to the request.
      * @throws \InvalidArgumentException If the URL is invalid.
      */
     public function setUrl($url);
@@ -50,8 +48,6 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
      * Set the query string used by the request
      *
      * @param array|Query $query Query to set
-     *
-     * @return self
      */
     public function setQuery($query);
 
@@ -66,8 +62,6 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
      * Set the HTTP method of the request.
      *
      * @param string $method HTTP method
-     *
-     * @return self
      */
     public function setMethod($method);
 
@@ -82,8 +76,6 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
      * Set the URI scheme of the request (http, https, etc.).
      *
      * @param string $scheme Scheme to set
-     *
-     * @return self
      */
     public function setScheme($scheme);
 
@@ -100,8 +92,6 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
      * Setting a port modifies the Host header of a request as necessary.
      *
      * @param int $port Port to set
-     *
-     * @return self
      */
     public function setPort($port);
 
@@ -120,8 +110,6 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
      * request scheme will be utilized.
      *
      * @param string $host Host to set (e.g. www.yahoo.com, www.yahoo.com:80)
-     *
-     * @return self
      */
     public function setHost($host);
 
@@ -136,8 +124,6 @@ interface RequestInterface extends MessageInterface, HasEmitterInterface
      * Set the path of the request (e.g. '/', '/index.html').
      *
      * @param string|array $path Path to set or array of segments to implode
-     *
-     * @return self
      */
     public function setPath($path);
 

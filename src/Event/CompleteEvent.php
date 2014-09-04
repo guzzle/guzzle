@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Event;
 
 use GuzzleHttp\Message\ResponseInterface;
@@ -20,7 +19,7 @@ class CompleteEvent extends AbstractTransferEvent
     public function intercept(ResponseInterface $response)
     {
         $this->stopPropagation();
-        $this->getTransaction()->setResponse($response);
+        $this->getTransaction()->response = $response;
     }
 
     /**
@@ -30,6 +29,6 @@ class CompleteEvent extends AbstractTransferEvent
      */
     public function getResponse()
     {
-        return $this->getTransaction()->getResponse();
+        return $this->getTransaction()->response;
     }
 }

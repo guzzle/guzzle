@@ -1,8 +1,8 @@
 <?php
-
 namespace GuzzleHttp\Event;
 
-use GuzzleHttp\Adapter\TransactionInterface;
+use GuzzleHttp\Message\MessageFactoryInterface;
+use GuzzleHttp\Transaction;
 use GuzzleHttp\Exception\RequestException;
 
 /**
@@ -26,12 +26,12 @@ final class RequestEvents
      * Emits the before send event for a request and emits an error
      * event if an error is encountered during the before send.
      *
-     * @param TransactionInterface $transaction
+     * @param Transaction $transaction
      *
      * @throws RequestException
      */
-    public static function emitBefore(TransactionInterface $transaction) {
-        $request = $transaction->getRequest();
+    public static function emitBefore(Transaction $transaction) {
+        $request = $transaction->request;
         try {
             $request->getEmitter()->emit(
                 'before',
@@ -57,17 +57,17 @@ final class RequestEvents
      * Emits the complete event for a request and emits an error
      * event if an error is encountered during the after send.
      *
-     * @param TransactionInterface $transaction Transaction to emit for
-     * @param array                $stats       Transfer stats
+     * @param Transaction $transaction Transaction to emit for
+     * @param array       $stats       Transfer stats
      *
      * @throws RequestException
      */
     public static function emitComplete(
-        TransactionInterface $transaction,
+        Transaction $transaction,
         array $stats = []
     ) {
-        $request = $transaction->getRequest();
-        $transaction->getResponse()->setEffectiveUrl($request->getUrl());
+        $request = $transaction->request;
+        $transaction->response->setEffectiveUrl($request->getUrl());
         try {
             $request->getEmitter()->emit(
                 'complete',
@@ -79,35 +79,22 @@ final class RequestEvents
     }
 
     /**
-     * Emits the headers event for a request.
-     *
-     * @param TransactionInterface $transaction Transaction to emit for
-     */
-    public static function emitHeaders(TransactionInterface $transaction)
-    {
-        $transaction->getRequest()->getEmitter()->emit(
-            'headers',
-            new HeadersEvent($transaction)
-        );
-    }
-
-    /**
      * Emits an error event for a request and accounts for the propagation
      * of an error event being stopped to prevent the exception from being
      * thrown.
      *
-     * @param TransactionInterface $transaction
-     * @param \Exception           $e
-     * @param array                $stats
+     * @param Transaction $transaction
+     * @param \Exception  $e
+     * @param array       $stats
      *
      * @throws \GuzzleHttp\Exception\RequestException
      */
     public static function emitError(
-        TransactionInterface $transaction,
+        Transaction $transaction,
         \Exception $e,
         array $stats = []
     ) {
-        $request = $transaction->getRequest();
+        $request = $transaction->request;
 
         // Convert non-request exception to a wrapped exception
         if (!($e instanceof RequestException)) {
@@ -162,5 +149,101 @@ final class RequestEvents
         }
 
         return $options;
+    }
+
+    /**
+     * Convert a Guzzle Transaction object into a Guzzle Ring request array.
+     *
+     * @param Transaction             $trans          Transaction to convert.
+     * @param MessageFactoryInterface $messageFactory Factory used to create
+     *                                                response objects.
+     *
+     * @return array Request hash to send via a ring handler.
+     */
+    public static function createRingRequest(
+        Transaction $trans,
+        MessageFactoryInterface $messageFactory
+    ) {
+        $request = $trans->request;
+        $url = $request->getUrl();
+
+        // No need to calculate the query string twice.
+        if (!($pos = strpos($url, '?'))) {
+            $qs = null;
+        } else {
+            $qs = substr($url, $pos);
+        }
+
+        $r = [
+            'scheme'       => $request->getScheme(),
+            'http_method'  => $request->getMethod(),
+            'url'          => $url,
+            'uri'          => $request->getPath(),
+            'query_string' => $qs,
+            'headers'      => $request->getHeaders(),
+            'body'         => $request->getBody(),
+            'client'       => $request->getConfig()->toArray(),
+            'then'         => function ($response) use ($trans, $messageFactory) {
+                self::completeRingResponse($trans, $response, $messageFactory);
+            }
+        ];
+
+        // Emit progress events if any progress listeners are registered.
+        if ($request->getEmitter()->hasListeners('progress')) {
+            $emitter = $request->getEmitter();
+            $r['client']['progress'] = function ($a, $b, $c, $d) use ($trans, $emitter) {
+                $emitter->emit(
+                    'progress',
+                    new ProgressEvent($trans, $a, $b, $c, $d)
+                );
+            };
+        }
+
+        return $r;
+    }
+
+    /**
+     * Handles the process of processing a response received from a handler.
+     */
+    private static function completeRingResponse(
+        Transaction $trans,
+        array $res,
+        MessageFactoryInterface $messageFactory
+    ) {
+        if (!empty($res['status'])) {
+            $options = [];
+            if (isset($res['version'])) {
+                $options['protocol_version'] = $res['version'];
+            }
+            if (isset($res['reason'])) {
+                $options['reason_phrase'] = $res['reason'];
+            }
+
+            $trans->response = $messageFactory->createResponse(
+                $res['status'],
+                $res['headers'],
+                $res['body'],
+                $options
+            );
+
+            if (isset($res['effective_url'])) {
+                $trans->response->setEffectiveUrl($res['effective_url']);
+            }
+        }
+
+        if (!isset($res['error'])) {
+            RequestEvents::emitComplete($trans);
+        } else {
+            RequestEvents::emitError(
+                $trans,
+                new RequestException(
+                    $res['error']->getMessage(),
+                    $trans->request,
+                    $trans->response,
+                    $res['error']
+                ),
+                isset($res['transfer_info']) ? $res['transfer_info'] : []
+            );
+        }
     }
 }

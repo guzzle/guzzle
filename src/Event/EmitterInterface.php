@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Event;
 
 /**
@@ -55,6 +54,15 @@ interface EmitterInterface
      *   callables.
      */
     public function listeners($eventName = null);
+
+    /**
+     * Checks if the emitter has listeners by the given name.
+     *
+     * @param string $eventName The name of the event to check.
+     *
+     * @return bool
+     */
+    public function hasListeners($eventName);
 
     /**
      * Emits an event to all registered listeners.

@@ -1,12 +1,9 @@
 <?php
-
 namespace GuzzleHttp\Subscriber;
 
 use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Event\SubscriberInterface;
-use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Event\BeforeEvent;
-use GuzzleHttp\Event\HeadersEvent;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\ResponseInterface;
@@ -55,16 +52,8 @@ class Mock implements SubscriberInterface, \Countable
             throw $item;
         }
 
-        // Emulate the receiving of the response headers
-        $request = $event->getRequest();
-        $transaction = new Transaction($event->getClient(), $request);
-        $transaction->setResponse($item);
-        $request->getEmitter()->emit(
-            'headers',
-            new HeadersEvent($transaction)
-        );
-
         // Emulate reading a response body
+        $request = $event->getRequest();
         if ($this->readBodies && $request->getBody()) {
             while (!$request->getBody()->eof()) {
                 $request->getBody()->read(8096);

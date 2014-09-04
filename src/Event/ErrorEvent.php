@@ -1,10 +1,9 @@
 <?php
-
 namespace GuzzleHttp\Event;
 
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\ResponseInterface;
-use GuzzleHttp\Adapter\TransactionInterface;
+use GuzzleHttp\Transaction;
 
 /**
  * Event object emitted after a request has been sent and an error was
@@ -18,12 +17,12 @@ class ErrorEvent extends AbstractTransferEvent
     private $exception;
 
     /**
-     * @param TransactionInterface $transaction   Transaction that contains the request
-     * @param RequestException     $e             Exception encountered
+     * @param Transaction $transaction   Transaction that contains the request
+     * @param RequestException     $e    Exception encountered
      * @param array                $transferStats Array of transfer statistics
      */
     public function __construct(
-        TransactionInterface $transaction,
+        Transaction $transaction,
         RequestException $e,
         $transferStats = []
     ) {
@@ -39,7 +38,7 @@ class ErrorEvent extends AbstractTransferEvent
     public function intercept(ResponseInterface $response)
     {
         $this->stopPropagation();
-        $this->getTransaction()->setResponse($response);
+        $this->getTransaction()->response = $response;
         $this->exception->setThrowImmediately(false);
         RequestEvents::emitComplete($this->getTransaction());
     }

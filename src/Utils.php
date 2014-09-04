@@ -1,127 +1,15 @@
 <?php
-
 namespace GuzzleHttp;
 
 use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Event\RequestEvents;
-use GuzzleHttp\Message\ResponseInterface;
-use GuzzleHttp\UriTemplate;
 
-if (!defined('GUZZLE_FUNCTIONS_VERSION')) {
-
-    define('GUZZLE_FUNCTIONS_VERSION', ClientInterface::VERSION);
-
-    /**
-     * Send a custom request
-     *
-     * @param string $method  HTTP request method
-     * @param string $url     URL of the request
-     * @param array  $options Options to use with the request.
-     *
-     * @return ResponseInterface
-     */
-    function request($method, $url, array $options = [])
-    {
-        static $client;
-        if (!$client) {
-            $client = new Client();
-        }
-
-        return $client->send($client->createRequest($method, $url, $options));
-    }
-
-    /**
-     * Send a GET request
-     *
-     * @param string $url     URL of the request
-     * @param array  $options Array of request options
-     *
-     * @return ResponseInterface
-     */
-    function get($url, array $options = [])
-    {
-        return request('GET', $url, $options);
-    }
-
-    /**
-     * Send a HEAD request
-     *
-     * @param string $url     URL of the request
-     * @param array  $options Array of request options
-     *
-     * @return ResponseInterface
-     */
-    function head($url, array $options = [])
-    {
-        return request('HEAD', $url, $options);
-    }
-
-    /**
-     * Send a DELETE request
-     *
-     * @param string $url     URL of the request
-     * @param array  $options Array of request options
-     *
-     * @return ResponseInterface
-     */
-    function delete($url, array $options = [])
-    {
-        return request('DELETE', $url, $options);
-    }
-
-    /**
-     * Send a POST request
-     *
-     * @param string $url     URL of the request
-     * @param array  $options Array of request options
-     *
-     * @return ResponseInterface
-     */
-    function post($url, array $options = [])
-    {
-        return request('POST', $url, $options);
-    }
-
-    /**
-     * Send a PUT request
-     *
-     * @param string $url     URL of the request
-     * @param array  $options Array of request options
-     *
-     * @return ResponseInterface
-     */
-    function put($url, array $options = [])
-    {
-        return request('PUT', $url, $options);
-    }
-
-    /**
-     * Send a PATCH request
-     *
-     * @param string $url     URL of the request
-     * @param array  $options Array of request options
-     *
-     * @return ResponseInterface
-     */
-    function patch($url, array $options = [])
-    {
-        return request('PATCH', $url, $options);
-    }
-
-    /**
-     * Send an OPTIONS request
-     *
-     * @param string $url     URL of the request
-     * @param array  $options Array of request options
-     *
-     * @return ResponseInterface
-     */
-    function options($url, array $options = [])
-    {
-        return request('OPTIONS', $url, $options);
-    }
-
+/**
+ * Utility methods used throughout Guzzle.
+ */
+final class Utils
+{
     /**
      * Convenience method for sending multiple requests in parallel and
      * retrieving a hash map of requests to response objects or
@@ -141,8 +29,11 @@ if (!defined('GUZZLE_FUNCTIONS_VERSION')) {
      *     or a {@see GuzzleHttp\Exception\RequestException} if it failed.
      * @throws \InvalidArgumentException if the event format is incorrect.
      */
-    function batch(ClientInterface $client, $requests, array $options = [])
-    {
+    public static function batch(
+        ClientInterface $client,
+        $requests,
+        array $options = []
+    ) {
         $hash = new \SplObjectStorage();
         foreach ($requests as $request) {
             $hash->attach($request);
@@ -195,7 +86,7 @@ if (!defined('GUZZLE_FUNCTIONS_VERSION')) {
      *
      * @return mixed|null
      */
-    function get_path($data, $path)
+    public static function getPath($data, $path)
     {
         $path = explode('/', $path);
 
@@ -231,7 +122,7 @@ if (!defined('GUZZLE_FUNCTIONS_VERSION')) {
      * @throws \RuntimeException when trying to setPath using a nested path
      *     that travels through a scalar value.
      */
-    function set_path(&$data, $path, $value)
+    public static function setPath(&$data, $path, $value)
     {
         $current =& $data;
         $queue = explode('/', $path);
@@ -262,10 +153,10 @@ if (!defined('GUZZLE_FUNCTIONS_VERSION')) {
      *
      * @return string
      */
-    function uri_template($template, array $variables)
+    public static function uriTemplate($template, array $variables)
     {
         if (function_exists('\\uri_template')) {
-            return \uri_template($template, $variables);
+            return uri_template($template, $variables);
         }
 
         static $uriTemplate;
@@ -290,7 +181,7 @@ if (!defined('GUZZLE_FUNCTIONS_VERSION')) {
      * @throws \InvalidArgumentException if the JSON cannot be parsed.
      * @link http://www.php.net/manual/en/function.json-decode.php
      */
-    function json_decode($json, $assoc = false, $depth = 512, $options = 0)
+    public static function jsonDecode($json, $assoc = false, $depth = 512, $options = 0)
     {
         static $jsonErrors = [
             JSON_ERROR_DEPTH => 'JSON_ERROR_DEPTH - Maximum stack depth exceeded',
@@ -313,26 +204,5 @@ if (!defined('GUZZLE_FUNCTIONS_VERSION')) {
         }
 
         return $data;
-    }
-
-    /**
-     * @internal
-     */
-    function deprecation_proxy($object, $name, $arguments, $map)
-    {
-        if (!isset($map[$name])) {
-            throw new \BadMethodCallException('Unknown method, ' . $name);
-        }
-
-        $message = sprintf('%s is deprecated and will be removed in a future '
-            . 'version. Update your code to use the equivalent %s method '
-            . 'instead to avoid breaking changes when this shim is removed.',
-            get_class($object) . '::' . $name . '()',
-            get_class($object) . '::' . $map[$name] . '()'
-        );
-
-        trigger_error($message, E_USER_DEPRECATED);
-
-        return call_user_func_array([$object, $map[$name]], $arguments);
     }
 }
