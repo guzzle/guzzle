@@ -337,7 +337,7 @@ function ``GuzzleHttp\batch()`` that makes this very simple:
     $results = GuzzleHttp\batch($client, $requests);
 
     // Results is an SplObjectStorage object where each request is a key
-    foreach ($results as $request) {
+    foreach ($requests as $request) {
         echo $request->getUrl() . "\n";
         // Get the result (either a ResponseInterface or RequestException)
         $result = $results[$request];
