@@ -120,7 +120,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(1, $c);
         $this->assertCount(3, $result);
 
-        foreach ($result as $id => $res) {
+        foreach (array_keys($result) as $id) {
             $this->assertTrue(isset($requests[$id]));
         }
 
