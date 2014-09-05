@@ -103,9 +103,9 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         ];
         $client->getEmitter()->attach(new Mock($responses));
         $requests = [
-            $client->createRequest('GET', 'http://foo.com/baz'),
-            $client->createRequest('HEAD', 'http://httpbin.org/get'),
-            $client->createRequest('PUT', 'http://httpbin.org/put'),
+            'baz' => $client->createRequest('GET', 'http://foo.com/baz'),
+            'get' => $client->createRequest('HEAD', 'http://httpbin.org/get'),
+            'put' => $client->createRequest('PUT', 'http://httpbin.org/put'),
         ];
 
         $a = $b = $c = 0;
@@ -120,16 +120,16 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(1, $c);
         $this->assertCount(3, $result);
 
-        foreach ($result as $i => $request) {
-            $this->assertSame($requests[$i], $request);
+        foreach ($result as $id => $res) {
+            $this->assertTrue(isset($requests[$id]));
         }
 
-        // The first result is actually the second (redirect) response.
-        $this->assertSame($responses[1], $result[$requests[0]]);
-        // The second result is a 1:1 request:response map
-        $this->assertSame($responses[2], $result[$requests[1]]);
-        // The third entry is the 404 RequestException
-        $this->assertSame($responses[3], $result[$requests[2]]->getResponse());
+        // // The first result is actually the second (redirect) response.
+        $this->assertSame($responses[1], $result['baz']);
+        // // The second result is a 1:1 request:response map
+        $this->assertSame($responses[2], $result['get']);
+        // // The third entry is the 404 RequestException
+        $this->assertSame($responses[3], $result['put']->getResponse());
     }
 
     /**
