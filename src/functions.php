@@ -132,7 +132,7 @@ if (!defined('GUZZLE_FUNCTIONS_VERSION')) {
      * number of requests in parallel.
      *
      * @param ClientInterface $client   Client used to send the requests
-     * @param array|\Iterator $requests Requests to send in parallel
+     * @param array           $requests Requests to send in parallel
      * @param array           $options  Passes through the options available in
      *                                  {@see GuzzleHttp\ClientInterface::sendAll()}
      *
@@ -166,6 +166,7 @@ if (!defined('GUZZLE_FUNCTIONS_VERSION')) {
         // Send the requests in parallel and aggregate the results.
         $client->sendAll($requests, $options);
 
+        $return = [];
         // Update the received value for any of the intercepted requests.
         foreach ($hash as $request) {
             if ($hash[$request] instanceof CompleteEvent) {
@@ -173,9 +174,13 @@ if (!defined('GUZZLE_FUNCTIONS_VERSION')) {
             } elseif ($hash[$request] instanceof ErrorEvent) {
                 $hash[$request] = $hash[$request]->getException();
             }
+            
+            if ($key = array_search($request, $requests)) {
+                $return[$key] = $hash[$request];
+            }
         }
 
-        return $hash;
+        return $return;
     }
 
     /**
