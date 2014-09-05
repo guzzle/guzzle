@@ -226,15 +226,16 @@ class CurlFactory
             unset($options[CURLOPT_CAINFO]);
             $options[CURLOPT_SSL_VERIFYHOST] = 0;
             $options[CURLOPT_SSL_VERIFYPEER] = false;
-        } elseif ($value === true || is_string($value)) {
-            $options[CURLOPT_SSL_VERIFYHOST] = 2;
-            $options[CURLOPT_SSL_VERIFYPEER] = true;
-            if ($value !== true) {
-                if (!file_exists($value)) {
-                    throw new AdapterException('SSL certificate authority file'
-                        . " not found: {$value}");
-                }
-                $options[CURLOPT_CAINFO] = $value;
+            return;
+        }
+
+        $options[CURLOPT_SSL_VERIFYHOST] = 2;
+        $options[CURLOPT_SSL_VERIFYPEER] = true;
+
+        if (is_string($value)) {
+            $options[CURLOPT_CAINFO] = $value;
+            if (!file_exists($value)) {
+                throw new AdapterException("SSL CA bundle not found: $value");
             }
         }
     }

@@ -260,7 +260,7 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \RuntimeException
-     * @expectedExceptionMessage SSL certificate authority file not found: /does/not/exist
+     * @expectedExceptionMessage SSL CA bundle not found: /does/not/exist
      */
     public function testVerifiesVerifyIsValidIfPath()
     {
@@ -283,13 +283,13 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testVerifyCanBeSetToPath()
     {
-        $path = __DIR__ . '/../../src/cacert.pem';
+        $path = Client::getDefaultCaBundle();
         $this->assertFileExists($path);
         $body = $this->getSendResult(['stream' => true, 'verify' => $path])->getBody();
         $opts = stream_context_get_options($this->getStreamFromBody($body));
-        $this->assertEquals(true, $opts['http']['verify_peer']);
-        $this->assertEquals($path, $opts['http']['cafile']);
-        $this->assertTrue(file_exists($opts['http']['cafile']));
+        $this->assertEquals(true, $opts['ssl']['verify_peer']);
+        $this->assertEquals($path, $opts['ssl']['cafile']);
+        $this->assertTrue(file_exists($opts['ssl']['cafile']));
     }
 
     /**
@@ -307,11 +307,11 @@ class StreamAdapterTest extends \PHPUnit_Framework_TestCase
 
     public function testCanSetPasswordWhenSettingCert()
     {
-        $path = __DIR__ . '/../../src/cacert.pem';
+        $path = __FILE__;
         $body = $this->getSendResult(['stream' => true, 'cert' => [$path, 'foo']])->getBody();
         $opts = stream_context_get_options($this->getStreamFromBody($body));
-        $this->assertEquals($path, $opts['http']['local_cert']);
-        $this->assertEquals('foo', $opts['http']['passphrase']);
+        $this->assertEquals($path, $opts['ssl']['local_cert']);
+        $this->assertEquals('foo', $opts['ssl']['passphrase']);
     }
 
     public function testDebugAttributeWritesStreamInfoToTempBufferByDefault()

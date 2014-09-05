@@ -871,10 +871,12 @@ verify
 ------
 
 :Summary: Describes the SSL certificate verification behavior of a request.
-    Set to ``true`` to enable SSL certificate verification (the default). Set
-    to ``false`` to disable certificate verification (this is insecure!). Set
-    to a string to provide the path to a CA bundle to enable verification using
-    a custom certificate.
+
+    - Set to ``true`` to enable SSL certificate verification and use the default
+      CA bundle provided by operating system.
+    - Set to ``false`` to disable certificate verification (this is insecure!).
+    - Set to a string to provide the path to a CA bundle to enable verification
+      using a custom certificate.
 :Types:
     - bool
     - string
@@ -882,11 +884,49 @@ verify
 
 .. code-block:: php
 
-    // Use a custom SSL certificate
+    // Use the system's CA bundle (this is the default setting)
+    $client->get('/', ['verify' => true]);
+
+    // Use a custom SSL certificate on disk.
     $client->get('/', ['verify' => '/path/to/cert.pem']);
 
-    // Disable validation
+    // Disable validation entirely (don't do this!).
     $client->get('/', ['verify' => false]);
+
+Not all system's have a known CA bundle on disk. For example, Windows and
+OS X do not have a single common location for CA bundles. When setting
+"verify" to ``true``, Guzzle will do its best to find the most appropriate
+CA bundle on your system. When using cURL or the PHP stream wrapper on PHP
+versions >= 5.6, this happens by default. When using the PHP stream
+wrapper on versions < 5.6, Guzzle tries to find your CA bundle in the
+following order:
+
+1. Check if ``openssl.cafile`` is set in your php.ini file.
+2. Check if ``curl.cainfo`` is set in your php.ini file.
+3. Check if ``/etc/pki/tls/certs/ca-bundle.crt`` exists (Red Hat, CentOS,
+   Fedora; provided by the ca-certificates package)
+4. Check if ``/etc/ssl/certs/ca-certificates.crt`` exists (Ubuntu, Debian;
+   provided by the ca-certificates package)
+5. Check if ``/usr/local/share/certs/ca-root-nss.crt`` exists (FreeBSD;
+   provided by the ca_root_nss package)
+6. Check if ``/usr/local/etc/openssl/cert.pem`` (OS X; provided by homebrew)
+7. Check if ``C:\windows\system32\curl-ca-bundle.crt`` exists (Windows)
+8. Check if ``C:\windows\curl-ca-bundle.crt`` exists (Windows)
+
+The result of this lookup is cached in memory so that subsequent calls
+in the same process will return very quickly. However, when sending only
+a single request per-process in something like Apache, you should consider
+setting the ``openssl.cafile`` environment variable to the path on disk
+to the file so that this entire process is skipped.
+
+If you do not need a specific certificate bundle, then Mozilla provides a
+commonly used CA bundle which can be downloaded
+`here <https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt>`_
+(provided by the maintainer of cURL). Once you have a CA bundle available on
+disk, you can set the "openssl.cafile" PHP ini setting to point to the path to
+the file, allowing you to omit the "verify" request option. Much more detail on
+SSL certificates can be found on the
+`cURL website <http://curl.haxx.se/docs/sslcerts.html>`_.
 
 .. _cert-option:
 

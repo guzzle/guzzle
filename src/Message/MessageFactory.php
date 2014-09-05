@@ -1,6 +1,7 @@
 <?php
 namespace GuzzleHttp\Message;
 
+use GuzzleHttp\Client;
 use GuzzleHttp\Event\ListenerAttacherTrait;
 use GuzzleHttp\Post\PostFileInterface;
 use GuzzleHttp\Subscriber\Cookie;
