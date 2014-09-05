@@ -124,11 +124,11 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
             $this->assertTrue(isset($requests[$id]));
         }
 
-        // // The first result is actually the second (redirect) response.
+        // The first result is actually the second (redirect) response.
         $this->assertSame($responses[1], $result['baz']);
-        // // The second result is a 1:1 request:response map
+        // The second result is a 1:1 request:response map
         $this->assertSame($responses[2], $result['get']);
-        // // The third entry is the 404 RequestException
+        // The third entry is the 404 RequestException
         $this->assertSame($responses[3], $result['put']->getResponse());
     }
 
