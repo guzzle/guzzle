@@ -123,7 +123,13 @@ class FutureResponse implements ResponseInterface
     public function __get($name)
     {
         if ($name == 'transaction') {
-            return $this->transaction = call_user_func($this->deref);
+            $deref = $this->deref;
+            $this->transaction = $deref();
+            if (!$this->transaction instanceof Transaction) {
+                throw new \RuntimeException('Future did not return a valid '
+                    . 'transaction. Got ' . gettype($this->transaction));
+            }
+            return $this->transaction;
         }
 
         throw new \RuntimeException('Unknown property: ' . $name);
