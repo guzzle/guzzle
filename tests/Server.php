@@ -23,11 +23,10 @@ class Server
      * Any currently queued responses will be overwritten.  Subsequent requests
      * on the server will return queued responses in FIFO order.
      *
-     * @param array|ResponseInterface $responses A single or array of Responses
-     *                                           to queue.
+     * @param array $responses Responses to queue.
      * @throws \Exception
      */
-    public static function enqueue($responses)
+    public static function enqueue(array $responses)
     {
         static $factory;
         if (!$factory) {
@@ -35,7 +34,7 @@ class Server
         }
 
         $data = [];
-        foreach ((array) $responses as $response) {
+        foreach ($responses as $response) {
             // Create the response object from a string
             if (is_string($response)) {
                 $response = $factory->fromMessage($response);
@@ -45,7 +44,7 @@ class Server
             $data[] = self::convertResponse($response);
         }
 
-        TestServer::enqueue($responses);
+        TestServer::enqueue($data);
     }
 
     /**
@@ -94,7 +93,7 @@ class Server
         TestServer::start();
     }
 
-    private function convertResponse(Response $response)
+    private static function convertResponse(Response $response)
     {
         $headers = array_map(function ($h) {
             return implode(', ', $h);

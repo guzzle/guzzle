@@ -2,6 +2,12 @@
 namespace GuzzleHttp\Tests\Event;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Event\ProgressEvent;
+use GuzzleHttp\Message\MessageFactory;
+use GuzzleHttp\Ring\Client\MockAdapter;
+use GuzzleHttp\Ring\Client\StreamAdapter;
+use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Tests\Server;
 use GuzzleHttp\Transaction;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Event\ErrorEvent;
@@ -207,5 +213,87 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
     ) {
         $result = RequestEvents::convertEventArray($in, $events, $add);
         $this->assertEquals($out, $result);
+    }
+
+    public function testCreatesRingRequests()
+    {
+        $stream = Stream::factory('test');
+        $request = new Request('GET', 'http://httpbin.org/get?a=b', [
+            'test' => 'hello'
+        ], $stream);
+        $request->getConfig()->set('foo', 'bar');
+        $trans = new Transaction(new Client(), $request);
+        $factory = new MessageFactory();
+        $r = RequestEvents::createRingRequest($trans, $factory);
+        $this->assertEquals('http', $r['scheme']);
+        $this->assertEquals('GET', $r['http_method']);
+        $this->assertEquals('http://httpbin.org/get?a=b', $r['url']);
+        $this->assertEquals('/get', $r['uri']);
+        $this->assertEquals('a=b', $r['query_string']);
+        $this->assertEquals([
+            'Host' => ['httpbin.org'],
+            'test' => ['hello']
+        ], $r['headers']);
+        $this->assertSame($stream, $r['body']);
+        $this->assertEquals(['foo' => 'bar'], $r['client']);
+        $this->assertTrue(is_callable($r['then']));
+    }
+
+    public function testCreatesRingRequestsWithNullQueryString()
+    {
+        $request = new Request('GET', 'http://httpbin.org');
+        $trans = new Transaction(new Client(), $request);
+        $factory = new MessageFactory();
+        $r = RequestEvents::createRingRequest($trans, $factory);
+        $this->assertNull($r['query_string']);
+        $this->assertEquals('/', $r['uri']);
+        $this->assertEquals(['Host' => ['httpbin.org']], $r['headers']);
+        $this->assertNull($r['body']);
+        $this->assertEquals([], $r['client']);
+    }
+
+    public function testCallsThenAndAddsProgress()
+    {
+        Server::enqueue([new Response(200)]);
+        $client = new Client(['base_url' => Server::$url]);
+        $request = $client->createRequest('GET');
+        $called = false;
+        $request->getEmitter()->on(
+            'progress',
+            function (ProgressEvent $e) use (&$called) {
+                $called = true;
+            }
+        );
+        $this->assertEquals(200, $client->send($request)->getStatusCode());
+        $this->assertTrue($called);
+    }
+
+    public function testEmitsErrorEventOnError()
+    {
+        $client = new Client(['base_url' => 'http://127.0.0.1:123']);
+        $request = $client->createRequest('GET');
+        $request->getConfig()['timeout'] = 0.001;
+        $request->getConfig()['connect_timeout'] = 0.001;
+        try {
+            $client->send($request);
+            $this->fail('did not throw');
+        } catch (RequestException $e) {
+            $this->assertSame($request, $e->getRequest());
+            $this->assertContains('cURL error 7:', $e->getMessage());
+        }
+    }
+
+    public function testGetsResponseProtocolVersion()
+    {
+        $client = new Client([
+            'adapter' => new MockAdapter([
+                'status'  => 200,
+                'headers' => [],
+                'version' => '1.0'
+            ])
+        ]);
+        $request = $client->createRequest('GET', 'http://foo.com');
+        $response = $client->send($request);
+        $this->assertEquals('1.0', $response->getProtocolVersion());
     }
 }
