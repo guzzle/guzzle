@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . '/../vendor/autoload.php';
-require __DIR__ . '/../vendor/guzzlehttp/ring-client/tests/Server.php';
+require __DIR__ . '/../vendor/guzzlehttp/ring/tests/Client/Server.php';
 
 use GuzzleHttp\Tests\Server;
 

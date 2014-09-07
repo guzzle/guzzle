@@ -432,8 +432,8 @@ class Url
         } elseif (is_array($query)) {
             $this->query = new Query($query);
         } else {
-            throw new \InvalidArgumentException('Query must be a '
-                . 'QueryInterface, array, or string');
+            throw new \InvalidArgumentException('Query must be a Query, '
+                . 'array, or string. ' . gettype($query) . ' provided.');
         }
     }
 

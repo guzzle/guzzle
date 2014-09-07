@@ -1,8 +1,7 @@
 <?php
-
 namespace GuzzleHttp\Tests\Subscriber;
 
-use GuzzleHttp\Adapter\Transaction;
+use GuzzleHttp\Transaction;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Subscriber\Mock;
@@ -65,7 +64,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
         $m = new Mock([$response]);
         $ev = new BeforeEvent($t);
         $m->onBefore($ev);
-        $this->assertSame($response, $t->getResponse());
+        $this->assertSame($response, $t->response);
     }
 
     /**

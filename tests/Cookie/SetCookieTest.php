@@ -60,15 +60,15 @@ class SetCookieTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('baz', $cookie->toArray()['foo']);
         $this->assertEquals('bam', $cookie->toArray()['bar']);
 
-        $cookie->setName('a')
-            ->setValue('b')
-            ->setPath('c')
-            ->setDomain('bar.com')
-            ->setExpires(10)
-            ->setMaxAge(200)
-            ->setSecure(false)
-            ->setHttpOnly(false)
-            ->setDiscard(false);
+        $cookie->setName('a');
+        $cookie->setValue('b');
+        $cookie->setPath('c');
+        $cookie->setDomain('bar.com');
+        $cookie->setExpires(10);
+        $cookie->setMaxAge(200);
+        $cookie->setSecure(false);
+        $cookie->setHttpOnly(false);
+        $cookie->setDiscard(false);
 
         $this->assertEquals('a', $cookie->getName());
         $this->assertEquals('b', $cookie->getValue());

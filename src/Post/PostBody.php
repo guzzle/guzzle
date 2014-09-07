@@ -48,8 +48,6 @@ class PostBody implements PostBodyInterface
     public function forceMultipartUpload($force)
     {
         $this->forceMultipart = $force;
-
-        return $this;
     }
 
     public function setAggregator(callable $aggregator)
@@ -61,16 +59,12 @@ class PostBody implements PostBodyInterface
     {
         $this->fields[$name] = $value;
         $this->mutate();
-
-        return $this;
     }
 
     public function replaceFields(array $fields)
     {
         $this->fields = $fields;
         $this->mutate();
-
-        return $this;
     }
 
     public function getField($name)
@@ -82,8 +76,6 @@ class PostBody implements PostBodyInterface
     {
         unset($this->fields[$name]);
         $this->mutate();
-
-        return $this;
     }
 
     public function getFields($asString = false)
@@ -124,16 +116,12 @@ class PostBody implements PostBodyInterface
     {
         $this->files[] = $file;
         $this->mutate();
-
-        return $this;
     }
 
     public function clearFiles()
     {
         $this->files = [];
         $this->mutate();
-
-        return $this;
     }
 
     /**

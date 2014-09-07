@@ -1,8 +1,7 @@
 <?php
-
 namespace GuzzleHttp\Tests\Event;
 
-use GuzzleHttp\Adapter\Transaction;
+use GuzzleHttp\Transaction;
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Message\Request;
@@ -18,7 +17,7 @@ class BeforeEventTest extends \PHPUnit_Framework_TestCase
         $response = new Response(200);
         $res = null;
         $t = new Transaction(new Client(), new Request('GET', '/'));
-        $t->getRequest()->getEmitter()->on('complete', function ($e) use (&$res) {
+        $t->request->getEmitter()->on('complete', function ($e) use (&$res) {
             $res = $e;
         });
         $e = new BeforeEvent($t);

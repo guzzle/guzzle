@@ -93,24 +93,29 @@ class Redirect implements SubscriberInterface
         }
 
         $event->intercept($event->getClient()->send(
-            $this->createRedirectRequest($parentRequest, $response)
+            $this->createRedirectRequest(
+                $request,
+                $parentRequest,
+                $response
+            )
         ));
     }
 
     private function createRedirectRequest(
-        RequestInterface $request,
+        RequestInterface $lastRequest,
+        RequestInterface $parentRequest,
         ResponseInterface $response
     ) {
-        $config = $request->getConfig();
+        $config = $parentRequest->getConfig();
 
         // Use a GET request if this is an entity enclosing request and we are
         // not forcing RFC compliance, but rather emulating what all browsers
         // would do. Be sure to disable redirects on the clone.
-        $redirectRequest = clone $request;
+        $redirectRequest = clone $lastRequest;
 
         $statusCode = $response->getStatusCode();
         if ($statusCode == 303 ||
-            ($statusCode <= 302 && $request->getBody()
+            ($statusCode <= 302 && $lastRequest->getBody()
                 && !$config->getPath('redirect/strict'))
         ) {
             $redirectRequest->setMethod('GET');
@@ -124,10 +129,11 @@ class Redirect implements SubscriberInterface
         // add the header if we are not redirecting from https to http.
         if ($config->getPath('redirect/referer')
             && ($redirectRequest->getScheme() == 'https'
-                || $redirectRequest->getScheme() == $request->getScheme())
+                || $redirectRequest->getScheme() == $parentRequest->getScheme())
         ) {
-            $url = Url::fromString($request->getUrl());
-            $url->setUsername(null)->setPassword(null);
+            $url = Url::fromString($lastRequest->getUrl());
+            $url->setUsername(null);
+            $url->setPassword(null);
             $redirectRequest->setHeader('Referer', (string) $url);
         }
 

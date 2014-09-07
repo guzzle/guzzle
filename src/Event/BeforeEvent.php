@@ -18,8 +18,9 @@ class BeforeEvent extends AbstractRequestEvent
      */
     public function intercept(ResponseInterface $response)
     {
-        $this->getTransaction()->setResponse($response);
+        $trans = $this->getTransaction();
+        $trans->response = $response;
         $this->stopPropagation();
-        RequestEvents::emitComplete($this->getTransaction());
+        RequestEvents::emitComplete($trans);
     }
 }
