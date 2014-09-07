@@ -1,9 +1,8 @@
 <?php
-
 namespace GuzzleHttp\Tests\Event;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Adapter\Transaction;
+use GuzzleHttp\Transaction;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Event\RequestEvents;
@@ -21,14 +20,14 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
     {
         $res = null;
         $t = new Transaction(new Client(), new Request('GET', '/'));
-        $t->setResponse(new Response(200));
-        $t->getRequest()->getEmitter()->on('complete', function ($e) use (&$res) {
+        $t->response = new Response(200);
+        $t->request->getEmitter()->on('complete', function ($e) use (&$res) {
             $res = $e;
         });
         RequestEvents::emitComplete($t);
-        $this->assertSame($res->getClient(), $t->getClient());
-        $this->assertSame($res->getRequest(), $t->getRequest());
-        $this->assertEquals('/', $t->getResponse()->getEffectiveUrl());
+        $this->assertSame($res->getClient(), $t->client);
+        $this->assertSame($res->getRequest(), $t->request);
+        $this->assertEquals('/', $t->response->getEffectiveUrl());
     }
 
     public function testEmitsAfterSendEventAndEmitsErrorIfNeeded()
@@ -36,13 +35,13 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
         $ex2 = $res = null;
         $request = new Request('GET', '/');
         $t = new Transaction(new Client(), $request);
-        $t->setResponse(new Response(200));
+        $t->response = new Response(200);
         $ex = new RequestException('foo', $request);
-        $t->getRequest()->getEmitter()->on('complete', function ($e) use ($ex) {
+        $t->request->getEmitter()->on('complete', function ($e) use ($ex) {
             $ex->e = $e;
             throw $ex;
         });
-        $t->getRequest()->getEmitter()->on('error', function ($e) use (&$ex2) {
+        $t->request->getEmitter()->on('error', function ($e) use (&$ex2) {
             $ex2 = $e->getException();
             $e->stopPropagation();
         });
@@ -82,7 +81,7 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
         RequestEvents::emitBefore($t);
         $this->assertEquals(1, $beforeCalled);
         $this->assertEquals(1, $errCalled);
-        $this->assertSame($response, $t->getResponse());
+        $this->assertSame($response, $t->response);
     }
 
     public function testThrowsUnInterceptedErrors()

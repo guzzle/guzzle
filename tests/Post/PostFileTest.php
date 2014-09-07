@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Tests\Post;
 
 use GuzzleHttp\Post\PostFile;
@@ -18,7 +17,7 @@ class PostFileTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('foo', $p->getName());
         $this->assertEquals('/path/to/test.php', $p->getFilename());
         $this->assertEquals(
-            'form-data; filename="test.php"; name="foo"',
+            'form-data; name="foo"; filename="test.php"',
             $p->getHeaders()['Content-Disposition']
         );
     }

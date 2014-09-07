@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Tests\Plugin\Redirect;
 
 use GuzzleHttp\Client;
@@ -253,6 +252,9 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
         ]));
         $response = $client->get('/');
-        $this->assertEquals('http://www.bar.com/redirect', $response->getEffectiveUrl());
+        $this->assertEquals(
+            'http://www.bar.com/redirect',
+            $response->getEffectiveUrl()
+        );
     }
 }

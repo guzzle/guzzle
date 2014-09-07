@@ -265,7 +265,8 @@ class MessageFactory implements MessageFactoryInterface
             $original = $request->getQuery();
             // Do not overwrite existing query string variables by overwriting
             // the object with the query string data passed in the URL
-            $request->setQuery($value->overwriteWith($original->toArray()));
+            $value->overwriteWith($original->toArray());
+            $request->setQuery($value);
         } elseif (is_array($value)) {
             // Do not overwrite existing query string variables
             $query = $request->getQuery();

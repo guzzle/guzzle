@@ -22,12 +22,14 @@ Adding support for non-blocking futures and some minor API cleanup.
 
 ### Breaking changes
 
-The breaking changes in this release are relatively minor and should not affect
-most users. The biggest thing to look out for is that request and response
-objects no longer implement fluent interfaces.
+The breaking changes in this release are relatively minor. The biggest thing to
+look out for is that request and response objects no longer implement fluent
+interfaces.
 
 * Removed the fluent interfaces (i.e., ``return $this``) from requests,
-  responses, and ``GuzzleHttp\Url``.
+  responses, ``GuzzleHttp\Collection``, ``GuzzleHttp\Url``,
+  ``GuzzleHttp\Query``, ``GuzzleHttp\Post\PostBody``, and
+  ``GuzzleHttp\Cookie\SetCookie``.
 * Removing all classes from `GuzzleHttp\Adapter`, these are now
   implemented as callables that are stored in `GuzzleHttp\Ring\Client`.
 * Removed the concept of "parallel adapters". If you want an adapter to

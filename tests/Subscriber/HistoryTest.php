@@ -1,8 +1,7 @@
 <?php
-
 namespace GuzzleHttp\Tests\Subscriber;
 
-use GuzzleHttp\Adapter\Transaction;
+use GuzzleHttp\Transaction;
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\ErrorEvent;
@@ -23,7 +22,7 @@ class HistoryTest extends \PHPUnit_Framework_TestCase
         $request = new Request('GET', '/');
         $response = new Response(400);
         $t = new Transaction(new Client(), $request);
-        $t->setResponse($response);
+        $t->response = $response;
         $e = new RequestException('foo', $request, $response);
         $ev = new ErrorEvent($t, $e);
         $h = new History(2);
@@ -48,7 +47,7 @@ class HistoryTest extends \PHPUnit_Framework_TestCase
         $request = new Request('GET', '/');
         $response = new Response(200);
         $t = new Transaction(new Client(), $request);
-        $t->setResponse($response);
+        $t->response = $response;
         $ev = new CompleteEvent($t);
         $h = new History(2);
         $h->onComplete($ev);

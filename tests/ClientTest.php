@@ -1,14 +1,14 @@
 <?php
-
 namespace GuzzleHttp\Tests;
 
-use GuzzleHttp\Adapter\FakeParallelAdapter;
-use GuzzleHttp\Adapter\MockAdapter;
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\BeforeEvent;
+use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Ring\Client\MockAdapter;
+use GuzzleHttp\Ring\Future;
 use GuzzleHttp\Subscriber\History;
 use GuzzleHttp\Subscriber\Mock;
 
@@ -17,9 +17,20 @@ use GuzzleHttp\Subscriber\Mock;
  */
 class ClientTest extends \PHPUnit_Framework_TestCase
 {
+    /** @callable */
+    private $ma;
+
+    public function setup()
+    {
+        $this->ma = function () {
+            throw new \RuntimeException('Should not have been called.');
+        };
+    }
+
     public function testProvidesDefaultUserAgent()
     {
-        $this->assertEquals(1, preg_match('#^Guzzle/.+ curl/.+ PHP/.+$#', Client::getDefaultUserAgent()));
+        $ua = Client::getDefaultUserAgent();
+        $this->assertEquals(1, preg_match('#^Guzzle/.+ curl/.+ PHP/.+$#', $ua));
     }
 
     public function testUsesDefaultDefaultOptions()
@@ -61,14 +72,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testClientUsesDefaultAdapterWhenNoneIsSet()
     {
         $client = new Client();
-        if (!extension_loaded('curl')) {
-            $adapter = 'GuzzleHttp\Adapter\StreamAdapter';
-        } elseif (ini_get('allow_url_fopen')) {
-            $adapter = 'GuzzleHttp\Adapter\StreamingProxyAdapter';
-        } else {
-            $adapter = 'GuzzleHttp\Adapter\Curl\CurlAdapter';
-        }
-        $this->assertInstanceOf($adapter, $this->readAttribute($client, 'adapter'));
+        $this->assertTrue(is_callable($this->readAttribute($client, 'adapter')));
     }
 
     /**
@@ -77,13 +81,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
      */
     public function testCanSpecifyAdapter()
     {
-        $adapter = $this->getMockBuilder('GuzzleHttp\Adapter\AdapterInterface')
-            ->setMethods(['send'])
-            ->getMockForAbstractClass();
-        $adapter->expects($this->once())
-            ->method('send')
-            ->will($this->throwException(new \Exception('Foo')));
-        $client = new Client(['adapter' => $adapter]);
+        $client = new Client(['adapter' => function () {
+            throw new \Exception('Foo');
+        }]);
         $client->get('http://httpbin.org');
     }
 
@@ -295,29 +295,25 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testClientSendsRequests()
     {
-        $response = new Response(200);
-        $adapter = new MockAdapter();
-        $adapter->setResponse($response);
-        $client = new Client(['adapter' => $adapter]);
-        $this->assertSame($response, $client->get('http://test.com'));
+        $mock = new MockAdapter(['status' => 200, 'headers' => []]);
+        $client = new Client(['adapter' => $mock]);
+        $response = $client->get('http://test.com');
+        $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('http://test.com', $response->getEffectiveUrl());
     }
 
     public function testSendingRequestCanBeIntercepted()
     {
         $response = new Response(200);
-        $response2 = new Response(200);
-        $adapter = new MockAdapter();
-        $adapter->setResponse($response);
-        $client = new Client(['adapter' => $adapter]);
+        $client = new Client(['adapter' => $this->ma]);
         $client->getEmitter()->on(
             'before',
-            function (BeforeEvent $e) use ($response2) {
-                $e->intercept($response2);
+            function (BeforeEvent $e) use ($response) {
+                $e->intercept($response);
             }
         );
-        $this->assertSame($response2, $client->get('http://test.com'));
-        $this->assertEquals('http://test.com', $response2->getEffectiveUrl());
+        $this->assertSame($response, $client->get('http://test.com'));
+        $this->assertEquals('http://test.com', $response->getEffectiveUrl());
     }
 
     /**
@@ -326,11 +322,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
      */
     public function testEnsuresResponseIsPresentAfterSending()
     {
-        $adapter = $this->getMockBuilder('GuzzleHttp\Adapter\MockAdapter')
-            ->setMethods(['send'])
-            ->getMock();
-        $adapter->expects($this->once())
-            ->method('send');
+        $adapter = function () {};
         $client = new Client(['adapter' => $adapter]);
         $client->get('http://httpbin.org');
     }
@@ -341,10 +333,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client->getEmitter()->on('before', function ($e) {
             throw new \Exception('foo');
         });
-        $client->getEmitter()->on('error', function ($e) {
+        $client->getEmitter()->on('error', function (ErrorEvent $e) {
             $e->intercept(new Response(200));
         });
-        $this->assertEquals(200, $client->get('http://test.com')->getStatusCode());
+        $this->assertEquals(
+            200,
+            $client->get('http://test.com')->getStatusCode()
+        );
     }
 
     /**
@@ -354,7 +349,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testClientHandlesErrorsDuringBeforeSendAndThrowsIfUnhandled()
     {
         $client = new Client();
-        $client->getEmitter()->on('before', function ($e) {
+        $client->getEmitter()->on('before', function (BeforeEvent $e) {
             throw new RequestException('foo', $e->getRequest());
         });
         $client->get('http://httpbin.org');
@@ -367,7 +362,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testClientWrapsExceptions()
     {
         $client = new Client();
-        $client->getEmitter()->on('before', function ($e) {
+        $client->getEmitter()->on('before', function (BeforeEvent $e) {
             throw new \Exception('foo');
         });
         $client->get('http://httpbin.org');
@@ -399,21 +394,27 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         ];
 
         $client->sendAll($requests);
-        $requests = array_map(function($r) { return $r->getMethod(); }, $history->getRequests());
+        $requests = array_map(function($r) {
+            return $r->getMethod();
+        }, $history->getRequests());
         $this->assertContains('GET', $requests);
         $this->assertContains('POST', $requests);
         $this->assertContains('PUT', $requests);
     }
 
-    public function testCanSetCustomParallelAdapter()
+    public function testCanReturnFutureResults()
     {
         $called = false;
-        $pa = new FakeParallelAdapter(new MockAdapter(function () use (&$called) {
+        $future = new Future(function () use (&$called) {
             $called = true;
-            return new Response(203);
-        }));
-        $client = new Client(['parallel_adapter' => $pa]);
-        $client->sendAll([$client->createRequest('GET', 'http://www.foo.com')]);
+            return ['status' => 201, 'headers' => []];
+        });
+        $mock = new MockAdapter($future);
+        $client = new Client(['adapter' => $mock]);
+        $response = $client->get('http://localhost:123/foo');
+        $this->assertFalse($called);
+        $this->assertInstanceOf('GuzzleHttp\Message\FutureResponse', $response);
+        $this->assertEquals(201, $response->getStatusCode());
         $this->assertTrue($called);
     }
 
@@ -424,15 +425,6 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('foo', $request->getConfig()['auth']);
         $request = $client->createRequest('GET', 'http://test.com', ['auth' => null]);
         $this->assertFalse($request->getConfig()->hasKey('auth'));
-    }
-
-    /**
-     * @expectedException \PHPUnit_Framework_Error_Deprecated
-     */
-    public function testHasDeprecatedGetEmitter()
-    {
-        $client = new Client();
-        $client->getEventDispatcher();
     }
 
     public function testUsesProxyEnvironmentVariables()

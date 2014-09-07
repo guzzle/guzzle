@@ -236,9 +236,12 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
 
     public function testCanSetDefaultQueryWithObject()
     {
-        $request = (new MessageFactory)->createRequest('GET', 'http://foo.com?test=abc', [
-            'query' => new Query(['Foo' => 'Bar', 'test' => 'def'])
-        ]);
+        $request = (new MessageFactory)->createRequest(
+            'GET',
+            'http://foo.com?test=abc', [
+                'query' => new Query(['Foo' => 'Bar', 'test' => 'def'])
+            ]
+        );
         $this->assertEquals('Bar', $request->getQuery()->get('Foo'));
         $this->assertEquals('abc', $request->getQuery()->get('test'));
     }

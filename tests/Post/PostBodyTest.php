@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Tests\Post;
 
 use GuzzleHttp\Post\PostBody;

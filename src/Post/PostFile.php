@@ -112,8 +112,8 @@ class PostFile implements PostFileInterface
         if (!$this->hasHeader('Content-Disposition')) {
             $this->headers['Content-Disposition'] = sprintf(
                 'form-data; name="%s"; filename="%s"',
-                basename($this->filename),
-                $this->name
+                $this->name,
+                basename($this->filename)
             );
         }
 

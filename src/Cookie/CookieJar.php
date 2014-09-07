@@ -194,7 +194,7 @@ class CookieJar implements CookieJarInterface, ToArrayInterface
         RequestInterface $request,
         ResponseInterface $response
     ) {
-        if ($cookieHeader = $response->getHeader('Set-Cookie', true)) {
+        if ($cookieHeader = $response->getHeaderLines('Set-Cookie')) {
             foreach ($cookieHeader as $cookie) {
                 $sc = SetCookie::fromString($cookie);
                 if (!$sc->getDomain()) {

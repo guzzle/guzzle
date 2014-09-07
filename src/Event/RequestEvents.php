@@ -2,6 +2,7 @@
 namespace GuzzleHttp\Event;
 
 use GuzzleHttp\Message\MessageFactoryInterface;
+use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Transaction;
 use GuzzleHttp\Exception\RequestException;
 
@@ -183,7 +184,7 @@ final class RequestEvents
             'headers'      => $request->getHeaders(),
             'body'         => $request->getBody(),
             'client'       => $request->getConfig()->toArray(),
-            'then'         => function ($response) use ($trans, $messageFactory) {
+            'then'         => function (array $response) use ($trans, $messageFactory) {
                 self::completeRingResponse($trans, $response, $messageFactory);
             }
         ];
@@ -212,9 +213,11 @@ final class RequestEvents
     ) {
         if (!empty($res['status'])) {
             $options = [];
+
             if (isset($res['version'])) {
                 $options['protocol_version'] = $res['version'];
             }
+
             if (isset($res['reason'])) {
                 $options['reason_phrase'] = $res['reason'];
             }
@@ -222,7 +225,7 @@ final class RequestEvents
             $trans->response = $messageFactory->createResponse(
                 $res['status'],
                 $res['headers'],
-                $res['body'],
+                isset($res['body']) ? $res['body'] : null,
                 $options
             );
 

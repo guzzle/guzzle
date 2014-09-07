@@ -1,9 +1,8 @@
 <?php
-
 namespace GuzzleHttp\Tests\Event;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Adapter\Transaction;
+use GuzzleHttp\Transaction;
 use GuzzleHttp\Message\Request;
 
 /**
@@ -17,8 +16,8 @@ class AbstractRequestEventTest extends \PHPUnit_Framework_TestCase
         $e = $this->getMockBuilder('GuzzleHttp\Event\AbstractRequestEvent')
             ->setConstructorArgs([$t])
             ->getMockForAbstractClass();
-        $this->assertSame($t->getClient(), $e->getClient());
-        $this->assertSame($t->getRequest(), $e->getRequest());
+        $this->assertSame($t->client, $e->getClient());
+        $this->assertSame($t->request, $e->getRequest());
     }
 
     public function testHasTransaction()

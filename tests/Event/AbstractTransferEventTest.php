@@ -1,9 +1,8 @@
 <?php
-
 namespace GuzzleHttp\Tests\Event;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Adapter\Transaction;
+use GuzzleHttp\Transaction;
 use GuzzleHttp\Message\Request;
 
 /**

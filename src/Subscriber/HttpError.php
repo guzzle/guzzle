@@ -24,10 +24,13 @@ class HttpError implements SubscriberInterface
      */
     public function onComplete(CompleteEvent $event)
     {
-        $code = (int) $event->getResponse()->getStatusCode();
+        $code = (string) $event->getResponse()->getStatusCode();
         // Throw an exception for an unsuccessful response
         if ($code[0] >= 4) {
-            throw RequestException::create($event->getRequest(), $event->getResponse());
+            throw RequestException::create(
+                $event->getRequest(),
+                $event->getResponse()
+            );
         }
     }
 }

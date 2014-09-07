@@ -1,7 +1,7 @@
 <?php
 namespace GuzzleHttp\Tests\Event;
 
-use GuzzleHttp\Adapter\Transaction;
+use GuzzleHttp\Transaction;
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Exception\RequestException;
