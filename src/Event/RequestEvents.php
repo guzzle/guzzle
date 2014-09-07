@@ -172,7 +172,7 @@ final class RequestEvents
         if (!($pos = strpos($url, '?'))) {
             $qs = null;
         } else {
-            $qs = substr($url, $pos);
+            $qs = substr($url, $pos + 1);
         }
 
         $r = [
@@ -184,6 +184,7 @@ final class RequestEvents
             'headers'      => $request->getHeaders(),
             'body'         => $request->getBody(),
             'client'       => $request->getConfig()->toArray(),
+            'version'      => $request->getProtocolVersion(),
             'then'         => function (array $response) use ($trans, $messageFactory) {
                 self::completeRingResponse($trans, $response, $messageFactory);
             }
@@ -205,8 +206,12 @@ final class RequestEvents
 
     /**
      * Handles the process of processing a response received from a handler.
+     *
+     * @param Transaction             $trans          Owns request and response.
+     * @param array                   $res            Response array
+     * @param MessageFactoryInterface $messageFactory Creates response objects.
      */
-    private static function completeRingResponse(
+    public static function completeRingResponse(
         Transaction $trans,
         array $res,
         MessageFactoryInterface $messageFactory
