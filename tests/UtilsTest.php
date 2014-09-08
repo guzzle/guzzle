@@ -52,16 +52,12 @@ class UtilsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(1, $c);
         $this->assertCount(3, $result);
 
-        foreach ($result as $i => $request) {
-            $this->assertSame($requests[$i], $request);
-        }
-
         // The first result is actually the second (redirect) response.
-        $this->assertSame($responses[1], $result[$requests[0]]);
+        $this->assertSame($responses[1], $result[0]);
         // The second result is a 1:1 request:response map
-        $this->assertSame($responses[2], $result[$requests[1]]);
+        $this->assertSame($responses[2], $result[1]);
         // The third entry is the 404 RequestException
-        $this->assertSame($responses[3], $result[$requests[2]]->getResponse());
+        $this->assertSame($responses[3], $result[2]->getResponse());
     }
 
     /**
