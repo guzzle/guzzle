@@ -135,6 +135,13 @@ class CurlAdapter implements AdapterInterface
             curl_close($this->handles[$id]);
             unset($this->handles[$id], $this->ownedHandles[$id]);
         } else {
+            // curl_reset doesn't clear these out for some reason
+            curl_setopt_array($handle, [
+                CURLOPT_HEADERFUNCTION   => null,
+                CURLOPT_WRITEFUNCTION    => null,
+                CURLOPT_READFUNCTION     => null,
+                CURLOPT_PROGRESSFUNCTION => null
+            ]);
             curl_reset($handle);
             $this->ownedHandles[$id] = false;
         }
