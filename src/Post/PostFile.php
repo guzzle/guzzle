@@ -112,9 +112,9 @@ class PostFile implements PostFileInterface
         // Set a default content-disposition header if one was no provided
         if (!$this->hasHeader('Content-Disposition')) {
             $this->headers['Content-Disposition'] = sprintf(
-                'form-data; filename="%s"; name="%s"',
-                basename($this->filename),
-                $this->name
+                'form-data; name="%s"; filename="%s"',
+                $this->name,
+                basename($this->filename)
             );
         }
 

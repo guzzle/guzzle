@@ -23,7 +23,7 @@ class MultipartBodyTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('abcdef', $b->getBoundary());
         $c = (string) $b;
         $this->assertContains("--abcdef\r\nContent-Disposition: form-data; name=\"foo\"\r\n\r\nbar\r\n", $c);
-        $this->assertContains("--abcdef\r\nContent-Disposition: form-data; filename=\"foo.txt\"; name=\"foo\"\r\n"
+        $this->assertContains("--abcdef\r\nContent-Disposition: form-data; name=\"foo\"; filename=\"foo.txt\"\r\n"
             . "Content-Type: text/plain\r\n\r\nabc\r\n--abcdef--", $c);
     }
 
