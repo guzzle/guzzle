@@ -11,7 +11,7 @@ test: start-server
 	$(MAKE) stop-server
 
 coverage: start-server
-	vendor/bin/phpunit --coverage-html=artifacts/coverage
+	vendor/bin/phpunit --debug --coverage-html=artifacts/coverage
 	$(MAKE) stop-server
 
 view-coverage:
