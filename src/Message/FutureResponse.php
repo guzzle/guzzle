@@ -21,7 +21,7 @@ class FutureResponse implements ResponseInterface
 
     public function wait()
     {
-        $this->__get('transaction');
+        $this->transaction;
     }
 
     public function getStatusCode()
@@ -125,6 +125,7 @@ class FutureResponse implements ResponseInterface
         if ($name == 'transaction') {
             $deref = $this->deref;
             $this->transaction = $deref();
+            unset($this->deref);
             if (!$this->transaction instanceof Transaction) {
                 throw new \RuntimeException('Future did not return a valid '
                     . 'transaction. Got ' . gettype($this->transaction));
