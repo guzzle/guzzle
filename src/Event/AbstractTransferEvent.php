@@ -28,8 +28,8 @@ use GuzzleHttp\Message\ResponseInterface;
  *   transfer begins.
  * - starttransfer_time: Time in seconds until the first byte is about to be
  *   transferred.
- * - speed_download: Average download speed
- * - speed_upload: Average upload speed
+ * - speed_download: Average download speed, measured in bytes/second.
+ * - speed_upload: Average upload speed, measured in bytes/second.
  */
 abstract class AbstractTransferEvent extends AbstractRequestEvent
 {
