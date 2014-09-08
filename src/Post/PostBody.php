@@ -205,6 +205,11 @@ class PostBody implements PostBodyInterface
         return false;
     }
 
+    public function getMetadata($key = null)
+    {
+        return $key ? null : [];
+    }
+
     /**
      * Return a stream object that is built from the POST fields and files.
      *
