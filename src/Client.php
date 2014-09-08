@@ -272,7 +272,9 @@ class Client implements ClientInterface
             : self::DEFAULT_CONCURRENCY;
 
         foreach ($requests as $trans) {
-            $trans->request->getConfig()->set('future', true);
+            $config = $trans->request->getConfig();
+            $config['future'] = true;
+            $config['batch_future'] = true;
             $trans->request->getEmitter()->on('error', $stopErrors, 'last');
             $response = $this->sendTransaction($trans);
             if ($response instanceof FutureResponse) {
