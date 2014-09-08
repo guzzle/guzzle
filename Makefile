@@ -7,7 +7,7 @@ stop-server:
 	cd vendor/guzzlehttp/ring && make stop-server
 
 test: start-server
-	vendor/bin/phpunit
+	vendor/bin/phpunit --debug
 	$(MAKE) stop-server
 
 coverage: start-server
