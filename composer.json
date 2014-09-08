@@ -15,7 +15,7 @@
     "require": {
         "php": ">=5.4.0",
         "guzzlehttp/ring": "0.1.*@dev",
-        "guzzlehttp/streams": "3.0.*@dev"
+        "guzzlehttp/streams": "~3.0@dev"
     },
     "minimum-stability": "dev",
     "suggest": {
