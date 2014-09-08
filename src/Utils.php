@@ -11,9 +11,8 @@ use GuzzleHttp\Event\RequestEvents;
 final class Utils
 {
     /**
-     * Convenience method for sending multiple requests in parallel and
-     * retrieving a hash map of requests to response objects or
-     * RequestException objects.
+     * Sends multiple requests in parallel and returns an array of responses
+     * and exceptions that uses the same ordering as the provided requests.
      *
      * Note: This method keeps every request and response in memory, and as
      * such is NOT recommended when sending a large number or an indeterminable
@@ -24,9 +23,10 @@ final class Utils
      * @param array           $options  Passes through the options available in
      *                                  {@see GuzzleHttp\ClientInterface::sendAll()}
      *
-     * @return \SplObjectStorage Requests are the key and each value is a
-     *     {@see GuzzleHttp\Message\ResponseInterface} if the request succeeded
-     *     or a {@see GuzzleHttp\Exception\RequestException} if it failed.
+     * @return array Array of {@see GuzzleHttp\Message\ResponseInterface} if
+     *     a request succeeded or a {@see GuzzleHttp\Exception\RequestException}
+     *     if it failed. The order of the resulting array is the same order as
+     *     the requests that were provided.
      * @throws \InvalidArgumentException if the event format is incorrect.
      */
     public static function batch(
@@ -58,15 +58,16 @@ final class Utils
         $client->sendAll($requests, $options);
 
         // Update the received value for any of the intercepted requests.
+        $result = [];
         foreach ($hash as $request) {
             if ($hash[$request] instanceof CompleteEvent) {
-                $hash[$request] = $hash[$request]->getResponse();
+                $result[] = $hash[$request]->getResponse();
             } elseif ($hash[$request] instanceof ErrorEvent) {
-                $hash[$request] = $hash[$request]->getException();
+                $result[] = $hash[$request]->getException();
             }
         }
 
-        return $hash;
+        return $result;
     }
 
     /**

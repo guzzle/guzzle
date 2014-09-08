@@ -56,6 +56,8 @@ interfaces.
   `GuzzleHttp\Message\MessageInterface::getHeader`. If you want to get a header
   value as an array, then use the newly added ``getHeaderLines()`` method of
   ``MessageInterface``.
+* ``GuzzleHttp\Utils::batch`` now returns an ordred indexed array of respones
+  and exceptions rather than an ``SplObjectStorage`` object.
 
 4.2.2 (2014-09-08)
 ------------------
