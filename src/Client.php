@@ -118,7 +118,7 @@ class Client implements ClientInterface
             $handler = Middleware::wrapStreaming($default, $streaming);
         }
 
-        if ($future && $default !== $future) {
+        if ($future) {
             $handler = Middleware::wrapFuture($handler, $future);
         }
 
