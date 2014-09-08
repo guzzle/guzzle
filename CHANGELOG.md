@@ -1,11 +1,11 @@
 CHANGELOG
 =========
 
-4.2.2 (TBD)
------------
+4.2.2 (2014-09-08)
+------------------
 
 * Fixed a memory leak in the CurlAdapter when reusing cURL handles.
-* No longer using request_fulluri in stream adapter proxies.
+* No longer using `request_fulluri` in stream adapter proxies.
 * Relative redirects are now based on the last response, not the first response.
 
 4.2.1 (2014-08-19)
