@@ -13,6 +13,7 @@ require __DIR__ . '/bootstrap.php';
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Tests\Server;
+use GuzzleHttp\Ring\Client\CurlMultiAdapter;
 
 // Wait until the server is responding
 Server::wait();
@@ -29,7 +30,7 @@ for ($i = 0; $i < $total; $i++) {
 }
 $totalTime = microtime(true) - $t;
 $perRequest = ($totalTime / $total) * 1000;
-printf("Serial:   %f (%f ms / request) %d total\n",
+printf("Serial: %f (%f ms / request) %d total\n",
     $totalTime, $perRequest, $total);
 
 // Create a generator used to yield batches of requests to sendAll
@@ -43,5 +44,17 @@ $t = microtime(true);
 $client->sendAll($reqs(), ['parallel' => $parallel]);
 $totalTime = microtime(true) - $t;
 $perRequest = ($totalTime / $total) * 1000;
-printf("Parallel: %f (%f ms / request) %d total with %d in parallel\n",
+printf("Batch:  %f (%f ms / request) %d total with %d in parallel\n",
     $totalTime, $perRequest, $total, $parallel);
+
+$adapter = new CurlMultiAdapter(['max_handles' => $parallel]);
+$client = new Client(['adapter' => $adapter, 'base_url' => Server::$url]);
+$t = microtime(true);
+for ($i = 0; $i < $total; $i++) {
+    $client->get('/guzzle-server/perf');
+}
+unset($client);
+$totalTime = microtime(true) - $t;
+$perRequest = ($totalTime / $total) * 1000;
+printf("Future: %f (%f ms / request) %d total\n",
+    $totalTime, $perRequest, $total);
