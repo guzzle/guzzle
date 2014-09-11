@@ -28,12 +28,22 @@ class MessageFactory implements MessageFactoryInterface
     private $redirectPlugin;
 
     /** @var array */
-    protected static $classMethods = [];
+    private static $methods;
 
-    public function __construct()
+    /** @var array */
+    private $customOptions;
+
+    /**
+     * @param array $customOptions Associative array of custom request option
+     *                             names mapping to functions used to apply
+     *                             the option. The function accepts the request
+     *                             and the option value to apply.
+     */
+    public function __construct(array $customOptions = [])
     {
         $this->errorPlugin = new HttpError();
         $this->redirectPlugin = new Redirect();
+        $this->customOptions = $customOptions;
     }
 
     public function createResponse(
@@ -162,26 +172,22 @@ class MessageFactory implements MessageFactoryInterface
             'debug' => 1, 'save_to' => 1, 'stream' => 1, 'expect' => 1,
             'future' => 1];
 
-        // Take the class of the instance, not the parent
-        $selfClass = get_class($this);
-
         // Check if we already took it's class methods and had them saved
-        if (!isset(self::$classMethods[$selfClass])) {
-            self::$classMethods[$selfClass] = array_flip(get_class_methods($this));
+        if (!isset(self::$methods)) {
+            self::$methods = array_fill_keys(get_class_methods(__CLASS__), true);
         }
 
-        // Take class methods of this particular instance
-        $methods = self::$classMethods[$selfClass];
-
         // Iterate over each key value pair and attempt to apply a config using
-        // double dispatch.
+        // double dispatch or a custom option handler.
         $config = $request->getConfig();
         foreach ($options as $key => $value) {
             $method = "add_{$key}";
-            if (isset($methods[$method])) {
+            if (isset(self::$methods[$method])) {
                 $this->{$method}($request, $value);
             } elseif (isset($configMap[$key])) {
                 $config[$key] = $value;
+            } elseif (isset($this->customOptions[$key])) {
+                call_user_func($this->customOptions[$key], $request, $value);
             } else {
                 throw new \InvalidArgumentException("No method is configured "
                     . "to handle the {$key} config key");

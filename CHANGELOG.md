@@ -58,6 +58,10 @@ interfaces.
   ``MessageInterface``.
 * ``GuzzleHttp\Utils::batch`` now returns an ordred indexed array of responses
   and exceptions rather than an ``SplObjectStorage`` object.
+* ``GuzzleHttp\Message\MessageFactory`` no longer allows subclasses to add
+  custom request options using double-dispatch. Instead, you should now provide
+  an associative array to the constructor which is a mapping of the request
+  option name mapping to a function that applies the option value to a request.
 
 4.2.2 (2014-09-08)
 ------------------

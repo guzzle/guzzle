@@ -3,6 +3,7 @@
 namespace GuzzleHttp\Tests\Message;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Post\PostFile;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Message\MessageFactory;
@@ -514,21 +515,22 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('null', (string) $request->getBody());
     }
 
-    public function testCanUseCustomSubclassesWithMethods()
+    public function testCanUseCustomRequestOptions()
     {
-        (new ExtendedFactory)->createRequest('PUT', 'http://f.com', [
+        $c = false;
+        $f = new MessageFactory([
+            'foo' => function (RequestInterface $request, $value) use (&$c) {
+                $c = true;
+                $this->assertEquals('bar', $value);
+            }
+        ]);
+
+        $f->createRequest('PUT', 'http://f.com', [
             'headers' => ['Content-Type' => 'foo'],
             'foo' => 'bar'
         ]);
-        try {
-            $f = new MessageFactory;
-            $f->createRequest('PUT', 'http://f.com', [
-                'headers' => ['Content-Type' => 'foo'],
-                'foo' => 'bar'
-            ]);
-        } catch (\InvalidArgumentException $e) {
-            $this->assertContains('foo config', $e->getMessage());
-        }
+
+        $this->assertTrue($c);
     }
 
     /**
