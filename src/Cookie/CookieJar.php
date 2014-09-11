@@ -225,7 +225,7 @@ class CookieJar implements CookieJarInterface, ToArrayInterface
         }
 
         if ($values) {
-            $request->setHeader('Cookie', implode(';', $values));
+            $request->setHeader('Cookie', implode('; ', $values));
         }
     }
 
