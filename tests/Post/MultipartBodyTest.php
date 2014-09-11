@@ -86,14 +86,6 @@ class MultipartBodyTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($b->seek(10));
     }
 
-    public function testGetContentsCanCap()
-    {
-        $b = $this->getTestBody();
-        $c = (string) $b;
-        $b->seek(0);
-        $this->assertSame(substr($c, 0, 10), $b->getContents(10));
-    }
-
     public function testReadsFromBuffer()
     {
         $b = $this->getTestBody();

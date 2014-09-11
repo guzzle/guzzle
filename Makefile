@@ -7,11 +7,11 @@ stop-server:
 	cd vendor/guzzlehttp/ring && make stop-server
 
 test: start-server
-	vendor/bin/phpunit --debug
+	vendor/bin/phpunit
 	$(MAKE) stop-server
 
 coverage: start-server
-	vendor/bin/phpunit --debug --coverage-html=artifacts/coverage
+	vendor/bin/phpunit --coverage-html=artifacts/coverage
 	$(MAKE) stop-server
 
 view-coverage:

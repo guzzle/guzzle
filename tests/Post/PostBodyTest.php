@@ -150,7 +150,7 @@ class PostBodyTest extends \PHPUnit_Framework_TestCase
         $b = new PostBody();
         $b->setField('foo', 'bar');
         $b->detach();
-        $this->assertTrue($b->close());
+        $b->close();
         $this->assertEquals('', $b->read(10));
     }
 

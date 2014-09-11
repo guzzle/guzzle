@@ -23,6 +23,7 @@ class PostBody implements PostBodyInterface
     /** @var PostFileInterface[] */
     private $files = [];
     private $forceMultipart = false;
+    private $detached = false;
 
     /**
      * Applies request headers to a request based on the POST state
@@ -146,13 +147,23 @@ class PostBody implements PostBodyInterface
 
     public function close()
     {
-        return $this->body ? $this->body->close() : true;
+        $this->detach();
     }
 
     public function detach()
     {
-        $this->body = null;
+        $this->detached = true;
         $this->fields = $this->files = [];
+
+        if ($this->body) {
+            $this->body->close();
+            $this->body = null;
+        }
+    }
+
+    public function isDetached()
+    {
+        return $this->detached;
     }
 
     public function eof()
