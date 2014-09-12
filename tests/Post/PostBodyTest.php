@@ -149,9 +149,28 @@ class PostBodyTest extends \PHPUnit_Framework_TestCase
     {
         $b = new PostBody();
         $b->setField('foo', 'bar');
+        $this->assertFalse($b->isDetached());
         $b->detach();
+        $this->assertTrue($b->isDetached());
         $b->close();
         $this->assertEquals('', $b->read(10));
+    }
+
+    public function testDetachesWhenBodyIsPresent()
+    {
+        $b = new PostBody();
+        $b->setField('foo', 'bar');
+        $b->getContents();
+        $b->detach();
+        $this->assertTrue($b->isDetached());
+    }
+
+    public function testFlushAndMetadataPlaceholders()
+    {
+        $b = new PostBody();
+        $this->assertEquals([], $b->getMetadata());
+        $this->assertNull($b->getMetadata('foo'));
+        $this->assertFalse($b->flush());
     }
 
     public function testCreatesMultipartUploadWithMultiFields()
