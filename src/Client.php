@@ -14,6 +14,7 @@ use GuzzleHttp\Ring\Client\Middleware;
 use GuzzleHttp\Ring\Client\CurlMultiAdapter;
 use GuzzleHttp\Ring\Client\CurlAdapter;
 use GuzzleHttp\Ring\Client\StreamAdapter;
+use GuzzleHttp\Ring\RingFutureInterface;
 
 /**
  * HTTP client
@@ -245,12 +246,20 @@ class Client implements ClientInterface
             RequestEvents::createRingRequest($trans, $this->messageFactory)
         );
 
-        if ($response instanceof Future) {
-            return new FutureResponse(function () use ($response, $trans) {
-                $response->deref();
-                return $trans;
-            });
-        } elseif ($trans->response) {
+        if ($response instanceof RingFutureInterface) {
+            // Create a future response that's hooked up to the ring future.
+            return new FutureResponse(
+                function () use ($response, $trans) {
+                    $response->deref();
+                    return $trans;
+                },
+                function () use ($response) {
+                    return $response->cancel();
+                }
+            );
+        }
+
+        if ($trans->response) {
             return $trans->response;
         }
 

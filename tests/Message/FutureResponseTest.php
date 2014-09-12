@@ -43,8 +43,12 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
             $response->setEffectiveUrl('http://www.foo.com');
             return $t;
         });
+        $this->assertFalse($future->realized());
         $this->assertEquals(200, $future->getStatusCode());
-        $future->wait();
+        $this->assertTrue($future->realized());
+        // Deref again does nothing.
+        $future->deref();
+        $this->assertTrue($future->realized());
         $this->assertEquals('bar', $future->getHeader('Foo'));
         $this->assertEquals(['bar'], $future->getHeaderLines('Foo'));
         $this->assertSame($response->getHeaders(), $future->getHeaders());
@@ -92,5 +96,53 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
 
         $future->setHeaders(['a' => '3']);
         $this->assertEquals(['a' => ['3']], $future->getHeaders());
+    }
+
+    public function testCanDereferenceManually()
+    {
+        $response = new Response(200, ['Foo' => 'bar']);
+        $future = new FutureResponse(function () use ($response) {
+            $t = new Transaction(
+                new Client(),
+                new Request('GET', 'http://www.foo.com')
+            );
+            $t->response = $response;
+            return $t;
+        });
+        $this->assertSame($response, $future->deref());
+        $this->assertTrue($future->realized());
+    }
+
+    public function testCanCancel()
+    {
+        $c = false;
+        $future = new FutureResponse(
+            function () {},
+            function () use (&$c) {
+                $c = true;
+                return true;
+            }
+        );
+        $this->assertFalse($future->cancelled());
+        $this->assertTrue($future->cancel());
+        $this->assertTrue($future->cancelled());
+        $this->assertFalse($future->cancel());
+    }
+
+    public function testCanCancelButReturnsFalseForNoCancelFunction()
+    {
+        $future = new FutureResponse(function () {});
+        $this->assertFalse($future->cancel());
+        $this->assertTrue($future->cancelled());
+    }
+
+    /**
+     * @expectedException \GuzzleHttp\Exception\CancelledFutureAccessException
+     */
+    public function testAccessingCancelledResponseThrows()
+    {
+        $future = new FutureResponse(function () {});
+        $this->assertFalse($future->cancel());
+        $future->getStatusCode();
     }
 }
