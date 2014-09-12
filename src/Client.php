@@ -289,7 +289,7 @@ class Client implements ClientInterface
             if ($response instanceof FutureResponse) {
                 $lastFuture = $response;
                 if (++$counter == $concurrency) {
-                    $response->wait();
+                    $response->deref();
                     $counter = $lastFuture = null;
                 }
             }
@@ -297,7 +297,7 @@ class Client implements ClientInterface
 
         // Be sure to wait on the last few responses that may have sent.
         if ($lastFuture) {
-            $lastFuture->wait();
+            $lastFuture->deref();
         }
     }
 
