@@ -173,13 +173,16 @@ After creating a request, you can send it with the client's ``send()`` method.
 Sending Requests in Parallel
 ============================
 
-You can send requests in parallel using a client object's ``sendAll()`` method.
-The ``sendAll()`` method accepts an array or ``\Iterator`` that contains
-``GuzzleHttp\Message\RequestInterface`` objects. In addition to providing the
-requests to send, you can also specify an associative array of options that
-will affect the transfer.
+You can send requests in parallel using ``GuzzleHttp\Pool``. The Pool class
+is an implementation of ``GuzzleHttp\Ring\FutureInterface``, meaning it can
+be dereferenced at a later time or cancelled before sending. The Pool
+constructor accepts a client object, iterator or array that yields
+``GuzzleHttp\Message\RequestInterface`` objects, and an optional associative
+array of options that can be used to affect the transfer.
 
 .. code-block:: php
+
+    use GuzzleHttp\Pool;
 
     $requests = [
         $client->createRequest('GET', 'http://httpbin.org'),
@@ -187,12 +190,25 @@ will affect the transfer.
         $client->createRequest('PUT', 'http://httpbin.org/put', ['body' => 'test'])
     ];
 
-    $client->sendAll($requests);
+    $options = [];
 
-The ``sendAll()`` method accepts the following associative array of options:
+    // Create a pool. Note: the options array is optional.
+    $pool = new Pool($client, $requests, $options);
 
-- **parallel**: Integer representing the maximum number of requests that are
-  allowed to be sent in parallel.
+    // Send the requests
+    $pool->deref();
+
+The Pool class comes with a convenience method that can be used to send
+requests without having to create a new instance and dereference it:
+
+.. code-block:: php
+
+    Pool::send($client, $requests, $options);
+
+The Pool constructor accepts the following associative array of options:
+
+- **pool_size**: Integer representing the maximum number of requests that are
+  allowed to be sent concurrently.
 - **before**: Callable or array representing the event listeners to add to
   each request's :ref:`before_event` event.
 - **complete**: Callable or array representing the event listeners to add to
@@ -209,10 +225,11 @@ it is first triggered.
 
 .. code-block:: php
 
+    use GuzzleHttp\Pool;
     use GuzzleHttp\Event\CompleteEvent;
 
     // Add a single event listener using a callable.
-    $client->sendAll($requests, [
+    Pool::send($client, $requests, [
         'complete' => function (CompleteEvent $event) {
             echo 'Completed request to ' . $event->getRequest()->getUrl() . "\n";
             echo 'Response: ' . $event->getResponse()->getBody() . "\n\n";
@@ -221,7 +238,7 @@ it is first triggered.
 
     // The above is equivalent to the following, but the following structure
     // allows you to add multiple event listeners to the same event name.
-    $client->sendAll($requests, [
+    Pool::send($client, $requests, [
         'complete' => [
             [
                 'fn'       => function (CompleteEvent $event) { /* ... */ },
@@ -235,15 +252,16 @@ Asynchronous Response Handling
 ------------------------------
 
 When sending requests in parallel, the request/response/error lifecycle must be
-handled asynchronously. This means that you give the ``sendAll()`` method
-multiple requests and handle the response or errors that is associated with the
-request using event callbacks.
+handled asynchronously. This means that you give the Pool multiple requests and
+handle the response or errors that is associated with the request using event
+callbacks.
 
 .. code-block:: php
 
+    use GuzzleHttp\Pool;
     use GuzzleHttp\Event\ErrorEvent;
 
-    $client->sendAll($requests, [
+    Pool::send($client, $requests, [
         'complete' => function (CompleteEvent $event) {
             echo 'Completed request to ' . $event->getRequest()->getUrl() . "\n";
             echo 'Response: ' . $event->getResponse()->getBody() . "\n\n";
@@ -272,10 +290,11 @@ failed request to an array that we can use to process errors later.
 
 .. code-block:: php
 
+    use GuzzleHttp\Pool;
     use GuzzleHttp\Event\ErrorEvent;
 
     $errors = [];
-    $client->sendAll($requests, [
+    Pool::send($client, $requests, [
         'error' => function (ErrorEvent $event) use (&$errors) {
             $errors[] = $event;
         }
@@ -290,30 +309,22 @@ Throwing Errors Immediately
 
 It sometimes is useful to throw exceptions immediately when they occur. The
 following example shows how to use an event listener to throw exceptions
-immediately and prevent subsequent requests from being sent.
+immediately and prevent subsequent requests from being sent by cancelling the
+pool. Cancelling a pool will also cancel any requests that are currently
+in-flight and have not completed.
 
 .. code-block:: php
 
+    use GuzzleHttp\Pool;
     use GuzzleHttp\Event\ErrorEvent;
+    use GuzzleHttp\Event\RequestEvents;
 
-    $client->sendAll($requests, [
-        'error' => function (ErrorEvent $event) {
-            $event->throwImmediately(true);
-        }
+    $pool = new Pool($client, $requests, [
+        'error' => function (ErrorEvent $event) use (&$pool) {
+            $pool->cancel();
+            throw $event->getException();
+        }, RequestEvents::LAST
     ]);
-
-Calling the ``ErrorEvent::throwImmediately()`` instructs the
-``ParallelAdapterInterface`` sending the request to stop sending subsequent
-requests, clean up any opened resources, and throw the exception associated
-with the event as soon as possible. If the error event was not sent by a
-``ParallelAdapterInterface``, then calling  ``throwImmediately()`` has no
-effect.
-
-.. note::
-
-    Subsequent listeners of the "error" event can still intercept the error
-    event with a response if needed, which will, as per the standard behavior,
-    prevent the exception from being thrown.
 
 .. _batch-requests:
 
@@ -322,11 +333,14 @@ Batching Requests
 
 Sometimes you just want to send a few requests in parallel and then process
 the results all at once after they've been sent. Guzzle provides a convenience
-function ``GuzzleHttp\batch()`` that makes this very simple:
+function ``GuzzleHttp\Pool::batch()`` that makes this very simple:
 
 .. code-block:: php
 
-    $client = new GuzzleHttp\Client();
+    use GuzzleHttp\Pool;
+    use GuzzleHttp\Client;
+
+    $client = new Client();
 
     $requests = [
         $client->createRequest('GET', 'http://httpbin.org/get'),
@@ -334,7 +348,7 @@ function ``GuzzleHttp\batch()`` that makes this very simple:
         $client->createRequest('PUT', 'http://httpbin.org/put'),
     ];
 
-    $results = GuzzleHttp\batch($client, $requests);
+    $results = Pool::batch($client, $requests);
 
     // Results is an SplObjectStorage object where each request is a key
     foreach ($requests as $request) {
@@ -350,11 +364,10 @@ function ``GuzzleHttp\batch()`` that makes this very simple:
         }
     }
 
-``GuzzleHttp\batch()`` accepts an optional associative array of options in the
-third argument that allows you to specify the 'before', 'complete' and 'error'
-events as well as specify the maximum number of requests to send in parallel
-using the 'parallel' option key. This options array is the exact same format as
-the options array exposed in ``GuzzleHttp\ClientInterface::sendAll()``.
+``GuzzleHttp\Pool::batch()`` accepts an optional associative array of options
+in the third argument that allows you to specify the 'before', 'complete' and
+'error' events as well as specify the maximum number of requests to send
+concurrently using the 'pool_size' option key.
 
 .. _request-options:
 

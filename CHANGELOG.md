@@ -44,7 +44,7 @@ interfaces.
 * Removed "functions.php" so that Guzzle is truly PSR-4 compliant. These
   functions are now implemented in `GuzzleHttp\Utils` using camelCase.
   `GuzzleHttp\json_decode` moved to `GuzzleHttp\Utils::jsonDecode`.
-  `GuzzleHttp\batch` moved to `GuzzleHttp\Utils::batch`.
+  `GuzzleHttp\batch` moved to `GuzzleHttp\Pool::batch`.
   `GuzzleHttp\get_path` moved to `GuzzleHttp\Utils::getPath`.
   `GuzzleHttp\set_path` moved to `GuzzleHttp\Utils::setPath`.
 * Removed the "headers" event. This event was only useful for changing the
@@ -66,6 +66,10 @@ interfaces.
   option name mapping to a function that applies the option value to a request.
 * Removed `GuzzleHttp\ClientInterface::sendAll` and marked
   `GuzzleHttp\Client::sendAll` as deprecated.
+* Removed the concept of "throwImmediately" from exceptions and error events.
+  This control mechanism was used to stop a transfer of parallel requests from
+  completing. This can now be handled by throwing the exception or by
+  cancelling a pool of requests or each outstanding future request individually.
 
 4.2.2 (2014-09-08)
 ------------------

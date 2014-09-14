@@ -34,7 +34,7 @@ $perRequest = ($totalTime / $total) * 1000;
 printf("Serial: %f (%f ms / request) %d total\n",
     $totalTime, $perRequest, $total);
 
-// Create a generator used to yield batches of requests to sendAll
+// Create a generator used to yield batches of requests
 $reqs = function () use ($client, $total) {
     for ($i = 0; $i < $total; $i++) {
         yield $client->createRequest('GET', '/guzzle-server/perf');

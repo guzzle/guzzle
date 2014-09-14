@@ -22,11 +22,6 @@ class ErrorEventTest extends \PHPUnit_Framework_TestCase
         $except = new RequestException('foo', $request, $response);
         $event = new ErrorEvent($transaction, $except);
 
-        $event->throwImmediately(true);
-        $this->assertTrue($except->getThrowImmediately());
-        $event->throwImmediately(false);
-        $this->assertFalse($except->getThrowImmediately());
-
         $this->assertSame($except, $event->getException());
         $this->assertSame($response, $event->getResponse());
         $this->assertSame($request, $event->getRequest());

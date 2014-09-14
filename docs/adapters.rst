@@ -102,32 +102,6 @@ is to set a response on the provided transaction object.
    the adapter MUST throw the exception. If the propagation was stopped, then
    the adapter MUST NOT throw the exception.
 
-Parallel Adapters
------------------
-
-Parallel adapters are used when using a client's ``sendAll()`` method. Parallel
-adapters are expected to send one or more transactions in parallel. Parallel
-adapters accept an ``\Iterator`` that yields
-``GuzzleHttp\Adapter\TransactionInterface`` object. In addition to the
-iterator, the adapter is also provided an integer representing the number of
-transactions to execute in parallel.
-
-Parallel adapters are similar to adapters (described earlier), except for the
-following:
-
-1. RequestExceptions are only thrown from a parallel adapter when the
-   ``GuzzleHttp\Exception\RequestException::getThrowImmediately()`` method of
-   an encountered exception returns ``true``. If this method does not return
-   ``true`` or the exception is not an instance of RequestException, then the
-   parallel adapter MUST NOT throw the exception. Error handling for parallel
-   transfers should normally be handled through event listeners that use
-   ``error`` events.
-
-2. Parallel adapters are not expected to return responses. Because parallel
-   adapters can, in theory, send an infinite number of requests, developers
-   must use event listeners to receive the ``complete`` event and handle
-   responses accordingly.
-
 Emitting Lifecycle Events
 -------------------------
 
