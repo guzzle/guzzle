@@ -207,7 +207,7 @@ class Pool implements FutureInterface
             throw new \RuntimeException($err);
         }
 
-        $request->getConfig()->set('future', 'batch');
+        $request->getConfig()->set('future', 'lazy');
         $this->attachListeners($request, $this->eventListeners);
         $this->derefQueue[spl_object_hash($request)] = $this->client->send($request);
 
