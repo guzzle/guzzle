@@ -118,31 +118,6 @@ interface ClientInterface extends HasEmitterInterface
     public function send(RequestInterface $request);
 
     /**
-     * Sends multiple requests in parallel.
-     *
-     * Exceptions are not thrown for failed requests. Callers are expected to
-     * register an "error" option to handle request errors OR directly register
-     * an event handler for the "error" event of a request's
-     * event emitter.
-     *
-     * The option values for 'before', 'after', and 'error' can be a callable,
-     * an associative array containing event data, or an array of event data
-     * arrays. Event data arrays contain the following keys:
-     *
-     * - fn: callable to invoke that receives the event
-     * - priority: Optional event priority (defaults to 0)
-     * - once: Set to true so that the event is removed after it is triggered
-     *
-     * @param array|\Iterator $requests Requests to send in parallel
-     * @param array           $options  Associative array of options
-     *     - parallel: (int) Maximum number of requests to send in parallel
-     *     - before: (callable|array) Receives a BeforeEvent
-     *     - after: (callable|array) Receives a CompleteEvent
-     *     - error: (callable|array) Receives a ErrorEvent
-     */
-    public function sendAll($requests, array $options = []);
-
-    /**
      * Get default request options of the client.
      *
      * @param string|null $keyOrPath The Path to a particular default request

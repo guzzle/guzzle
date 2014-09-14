@@ -1,7 +1,6 @@
 <?php
 namespace GuzzleHttp;
 
-use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Event\HasEmitterTrait;
 use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Exception\RequestException;
@@ -9,7 +8,6 @@ use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\FutureResponse;
-use GuzzleHttp\Ring\Future;
 use GuzzleHttp\Ring\Client\Middleware;
 use GuzzleHttp\Ring\Client\CurlMultiAdapter;
 use GuzzleHttp\Ring\Client\CurlAdapter;
@@ -224,80 +222,45 @@ class Client implements ClientInterface
     public function send(RequestInterface $request)
     {
         try {
-            return $this->sendTransaction(new Transaction($this, $request));
+            $trans = new Transaction($this, $request);
+            RequestEvents::emitBefore($trans);
+
+            if ($trans->response) {
+                return $trans->response;
+            }
+
+            // Send the request using the Guzzle ring handler
+            $adapter = $this->adapter;
+            $response = $adapter(
+                RequestEvents::createRingRequest($trans, $this->messageFactory)
+            );
+
+            if ($response instanceof RingFutureInterface) {
+                // Create a future response that's hooked up to the ring future.
+                return new FutureResponse(
+                    function () use ($response, $trans) {
+                        $response->deref();
+                        return $trans;
+                    },
+                    function () use ($response) {
+                        return $response->cancel();
+                    }
+                );
+            }
+
+            if ($trans->response) {
+                return $trans->response;
+            }
+
+            throw new \RuntimeException('No response was associated with the '
+                . 'transaction! This means the ring adapter did something '
+                . 'wrong and never completed the transaction.');
+
         } catch (RequestException $e) {
             throw $e;
         } catch (\Exception $e) {
             // Wrap exceptions in a RequestException to adhere to the interface
             throw new RequestException($e->getMessage(), $request, null, $e);
-        }
-    }
-
-    private function sendTransaction(Transaction $trans)
-    {
-        RequestEvents::emitBefore($trans);
-        if ($trans->response) {
-            return $trans->response;
-        }
-
-        // Send the request using the Guzzle ring handler
-        $adapter = $this->adapter;
-        $response = $adapter(
-            RequestEvents::createRingRequest($trans, $this->messageFactory)
-        );
-
-        if ($response instanceof RingFutureInterface) {
-            // Create a future response that's hooked up to the ring future.
-            return new FutureResponse(
-                function () use ($response, $trans) {
-                    $response->deref();
-                    return $trans;
-                },
-                function () use ($response) {
-                    return $response->cancel();
-                }
-            );
-        }
-
-        if ($trans->response) {
-            return $trans->response;
-        }
-
-        throw new \RuntimeException('No response was associated with the '
-            . 'transaction! This means the ring adapter did something '
-            . 'wrong and never completed the transaction.');
-    }
-
-    public function sendAll($requests, array $options = [])
-    {
-        if (!($requests instanceof TransactionIterator)) {
-            $requests = new TransactionIterator($requests, $this, $options);
-        }
-
-        $stopErrors = function (ErrorEvent $e) { $e->stopPropagation(); };
-        $lastFuture = $counter = null;
-        $concurrency = isset($options['parallel'])
-            ? $options['parallel']
-            : self::DEFAULT_CONCURRENCY;
-
-        foreach ($requests as $trans) {
-            $config = $trans->request->getConfig();
-            $config['future'] = true;
-            $config['batch_future'] = true;
-            $trans->request->getEmitter()->on('error', $stopErrors, 'last');
-            $response = $this->sendTransaction($trans);
-            if ($response instanceof FutureResponse) {
-                $lastFuture = $response;
-                if (++$counter == $concurrency) {
-                    $response->deref();
-                    $counter = $lastFuture = null;
-                }
-            }
-        }
-
-        // Be sure to wait on the last few responses that may have sent.
-        if ($lastFuture) {
-            $lastFuture->deref();
         }
     }
 
@@ -413,5 +376,14 @@ class Client implements ClientInterface
         $options = array_replace_recursive($defaults, $options);
 
         return $this->defaults['headers'];
+    }
+
+    /**
+     * @deprecated Use {@see GuzzleHttp\Pool} instead.
+     * @see GuzzleHttp\Pool
+     */
+    public function sendAll($requests, array $options = [])
+    {
+        (new Pool($this, $requests, $options))->deref();
     }
 }

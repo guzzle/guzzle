@@ -2,7 +2,6 @@
 namespace GuzzleHttp\Event;
 
 use GuzzleHttp\Message\MessageFactoryInterface;
-use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Transaction;
 use GuzzleHttp\Exception\RequestException;
 
@@ -166,28 +165,23 @@ final class RequestEvents
         MessageFactoryInterface $messageFactory
     ) {
         $request = $trans->request;
+        $options = $request->getConfig()->toArray();
         $url = $request->getUrl();
-
-        // No need to calculate the query string twice.
-        if (!($pos = strpos($url, '?'))) {
-            $qs = null;
-        } else {
-            $qs = substr($url, $pos + 1);
-        }
-
         $r = [
             'scheme'       => $request->getScheme(),
             'http_method'  => $request->getMethod(),
             'url'          => $url,
             'uri'          => $request->getPath(),
-            'query_string' => $qs,
             'headers'      => $request->getHeaders(),
             'body'         => $request->getBody(),
-            'client'       => $request->getConfig()->toArray(),
             'version'      => $request->getProtocolVersion(),
+            'client'       => $options,
+            'future' => isset($options['future']) ? $options['future'] : null,
+            // No need to calculate the query string twice.
+            'query_string' => ($pos = strpos($url, '?')) ? substr($url, $pos + 1) : null,
             'then'         => function (array $response) use ($trans, $messageFactory) {
                 self::completeRingResponse($trans, $response, $messageFactory);
-            }
+            },
         ];
 
         // Emit progress events if any progress listeners are registered.

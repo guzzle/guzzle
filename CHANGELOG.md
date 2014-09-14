@@ -18,6 +18,8 @@ Adding support for non-blocking futures and some minor API cleanup.
   parallel. Other plugins like this can now be updated to be non-blocking.
 * Added a "progress" event so that you can get upload or download progress
   events.
+* Added `GuzzleHttp\Pool` which implements FutureInterface and transfers
+  requests concurrently using a capped pool size as efficiently as possible.
 * Added `hasListeners()` to EmitterInterface.
 
 ### Breaking changes
@@ -62,6 +64,8 @@ interfaces.
   custom request options using double-dispatch. Instead, you should now provide
   an associative array to the constructor which is a mapping of the request
   option name mapping to a function that applies the option value to a request.
+* Removed `GuzzleHttp\ClientInterface::sendAll` and marked
+  `GuzzleHttp\Client::sendAll` as deprecated.
 
 4.2.2 (2014-09-08)
 ------------------
