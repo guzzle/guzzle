@@ -14,6 +14,7 @@ require __DIR__ . '/bootstrap.php';
 use GuzzleHttp\Client;
 use GuzzleHttp\Tests\Server;
 use GuzzleHttp\Ring\Client\CurlMultiAdapter;
+use GuzzleHttp\Pool;
 
 // Wait until the server is responding
 Server::wait();
@@ -41,7 +42,7 @@ $reqs = function () use ($client, $total) {
 };
 
 $t = microtime(true);
-$client->sendAll($reqs(), ['parallel' => $parallel]);
+Pool::send($client, $reqs(), ['parallel' => $parallel]);
 $totalTime = microtime(true) - $t;
 $perRequest = ($totalTime / $total) * 1000;
 printf("Batch:  %f (%f ms / request) %d total with %d in parallel\n",

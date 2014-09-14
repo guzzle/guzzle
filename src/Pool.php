@@ -82,15 +82,20 @@ class Pool implements FutureInterface
         );
     }
 
-    private function coerceIterable($requests)
-    {
-        if ($requests instanceof \Iterator) {
-            return $requests;
-        } elseif (is_array($requests)) {
-            return new \ArrayIterator($requests);
-        } else {
-            throw new \InvalidArgumentException('Expected Iterator or array');
-        }
+    /**
+     * Convenience method for creating and immediately dereferencing a pool.
+     *
+     * @param ClientInterface $client   Client used to send the requests.
+     * @param array|\Iterator $requests Requests to send in parallel
+     * @param array           $options  Associative array of options
+     * @see GuzzleHttp\Pool::__construct for the list of available options.
+     */
+    public static function send(
+        ClientInterface $client,
+        $requests,
+        array $options = []
+    ) {
+        (new self($client, $requests, $options))->deref();
     }
 
     public function realized()
@@ -148,6 +153,17 @@ class Pool implements FutureInterface
         }
 
         return $success;
+    }
+
+    private function coerceIterable($requests)
+    {
+        if ($requests instanceof \Iterator) {
+            return $requests;
+        } elseif (is_array($requests)) {
+            return new \ArrayIterator($requests);
+        } else {
+            throw new \InvalidArgumentException('Expected Iterator or array');
+        }
     }
 
     private function prepareOptions(array $options)
