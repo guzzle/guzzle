@@ -62,9 +62,9 @@ class Pool implements FutureInterface
      * @param array|\Iterator $requests Requests to send in parallel
      * @param array           $options  Associative array of options
      *     - parallel: (int) Maximum number of requests to send in parallel
-     *     - before: (callable|array) Receives a BeforeEvent
-     *     - after:  (callable|array) Receives a CompleteEvent
-     *     - error:  (callable|array) Receives a ErrorEvent
+     *     - before:   (callable|array) Receives a BeforeEvent
+     *     - after:    (callable|array) Receives a CompleteEvent
+     *     - error:    (callable|array) Receives a ErrorEvent
      */
     public function __construct(
         ClientInterface $client,
@@ -111,6 +111,12 @@ class Pool implements FutureInterface
             }
         }
 
+        // Stop if the pool was cancelled while transferring requests.
+        if ($this->isCancelled) {
+            return false;
+        }
+
+        // Dereference any outstanding FutureResponse objects.
         while ($response = array_pop($this->derefQueue)) {
             if ($response instanceof FutureInterface) {
                 $response->deref();
@@ -129,7 +135,7 @@ class Pool implements FutureInterface
 
     public function cancel()
     {
-        if ($this->isCancelled) {
+        if ($this->isCancelled || $this->realized()) {
             return false;
         }
 
@@ -160,7 +166,7 @@ class Pool implements FutureInterface
 
         // Stop error events from raising
         return RequestEvents::convertEventArray($options, ['error'], [
-            'priority' => RequestEvents::LATE,
+            'priority' => RequestEvents::LATE - 1,
             'fn'       => function (ErrorEvent $e) {
                 $e->stopPropagation();
             }
@@ -169,7 +175,7 @@ class Pool implements FutureInterface
 
     private function addNextRequest()
     {
-        if (!$this->iter->valid()) {
+        if ($this->isCancelled || !$this->iter->valid()) {
             return false;
         }
 

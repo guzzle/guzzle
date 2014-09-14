@@ -39,23 +39,14 @@ final class Utils
             $hash->attach($request);
         }
 
-        // Merge the necessary complete and error events to the event listeners
-        // so that as each request succeeds or fails, it is added to the result
-        // hash.
-        $options = RequestEvents::convertEventArray(
-            $options,
-            ['complete', 'error'],
-            [
-                'priority' => RequestEvents::EARLY,
-                'once' => true,
-                'fn' => function ($e) use ($hash) {
-                    $hash[$e->getRequest()] = $e;
-                }
-            ]
-        );
+        $events = ['complete', 'error'];
+        $fn = function ($e) use ($hash) { $hash[$e->getRequest()] = $e; };
+        $options = RequestEvents::convertEventArray($options, $events, [
+            'priority' => RequestEvents::LATE,
+            'fn'       => $fn
+        ]);
 
-        // Send the requests in parallel and aggregate the results.
-        $client->sendAll($requests, $options);
+        (new Pool($client, $requests, $options))->deref();
 
         // Update the received value for any of the intercepted requests.
         $result = [];
