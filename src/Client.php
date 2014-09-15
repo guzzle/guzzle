@@ -240,7 +240,7 @@ class Client implements ClientInterface
                 return new FutureResponse(
                     function () use ($response, $trans) {
                         $response->deref();
-                        return $trans;
+                        return $trans->response;
                     },
                     function () use ($response) {
                         return $response->cancel();

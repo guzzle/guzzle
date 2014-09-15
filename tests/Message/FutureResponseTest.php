@@ -1,12 +1,9 @@
 <?php
 namespace GuzzleHttp\Tests\Message;
 
-use GuzzleHttp\Client;
 use GuzzleHttp\Message\FutureResponse;
-use GuzzleHttp\Message\Request;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Transaction;
 
 class FutureResponseTest extends \PHPUnit_Framework_TestCase
 {
@@ -22,7 +19,7 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \RuntimeException
-     * @expectedExceptionMessage Future did not return a valid transaction. Got NULL
+     * @expectedExceptionMessage Future did not return a valid response. Found NULL
      */
     public function testEnsuresDerefReturnsTransaction()
     {
@@ -35,13 +32,7 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
         $str = Stream::factory('foo');
         $response = new Response(200, ['Foo' => 'bar'], $str);
         $future = new FutureResponse(function () use ($response) {
-            $t = new Transaction(
-                new Client(),
-                new Request('GET', 'http://www.foo.com')
-            );
-            $t->response = $response;
-            $response->setEffectiveUrl('http://www.foo.com');
-            return $t;
+            return $response;
         });
         $this->assertFalse($future->realized());
         $this->assertEquals(200, $future->getStatusCode());
@@ -102,12 +93,7 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
     {
         $response = new Response(200, ['Foo' => 'bar']);
         $future = new FutureResponse(function () use ($response) {
-            $t = new Transaction(
-                new Client(),
-                new Request('GET', 'http://www.foo.com')
-            );
-            $t->response = $response;
-            return $t;
+            return $response;
         });
         $this->assertSame($response, $future->deref());
         $this->assertTrue($future->realized());

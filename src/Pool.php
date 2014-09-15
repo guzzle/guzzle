@@ -5,6 +5,7 @@ use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Message\RequestInterface;
+use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\FutureInterface;
 use GuzzleHttp\Event\ListenerAttacherTrait;
 
@@ -248,12 +249,11 @@ class Pool implements FutureInterface
         $this->iter->next();
 
         if (!($request instanceof RequestInterface)) {
-            $found = is_object($request)
-                ? get_class($request)
-                : gettype($request);
-            $err = sprintf('All requests in the provided iterator must '
-                . 'implement RequestInterface. Found %s', $found);
-            throw new \RuntimeException($err);
+            throw new \RuntimeException(sprintf(
+                'All requests in the provided iterator must implement '
+                . 'RequestInterface. Found %s',
+                Core::describeType($request)
+            ));
         }
 
         $request->getConfig()->set('future', 'lazy');
