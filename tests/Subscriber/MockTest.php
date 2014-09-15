@@ -1,6 +1,7 @@
 <?php
 namespace GuzzleHttp\Tests\Subscriber;
 
+use GuzzleHttp\Message\FutureResponse;
 use GuzzleHttp\Transaction;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Exception\RequestException;
@@ -103,5 +104,22 @@ class MockTest extends \PHPUnit_Framework_TestCase
             $this->assertSame($e, $ex);
             $this->assertSame($request, $ex->getRequest());
         }
+    }
+
+    public function testCanMockFutureResponses()
+    {
+        $client = new Client(['base_url' => 'http://test.com']);
+        $request = $client->createRequest('GET', '/');
+        $response = new Response(200);
+        $future = new FutureResponse(function () use ($response) {
+            return $response;
+        });
+        $mock = new Mock([$future]);
+        $this->assertCount(1, $mock);
+        $request->getEmitter()->attach($mock);
+        $res = $client->send($request);
+        $this->assertSame($future, $res);
+        $this->assertFalse($res->realized());
+        $this->assertSame($response, $res->deref());
     }
 }

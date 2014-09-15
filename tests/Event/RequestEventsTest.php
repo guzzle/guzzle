@@ -3,9 +3,9 @@ namespace GuzzleHttp\Tests\Event;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\ProgressEvent;
+use GuzzleHttp\Message\FutureResponse;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Ring\Client\MockAdapter;
-use GuzzleHttp\Ring\Client\StreamAdapter;
 use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Tests\Server;
 use GuzzleHttp\Transaction;
@@ -53,6 +53,17 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
         });
         RequestEvents::emitComplete($t);
         $this->assertSame($ex, $ex2);
+    }
+
+    public function testDoesNotEmitCompleteWhenFutureResponse()
+    {
+        $t = new Transaction(new Client(), new Request('GET', '/'));
+        $response = new Response(200);
+        $t->response = new FutureResponse(function () use ($response) {
+            return $response;
+        });
+        RequestEvents::emitComplete($t);
+        $this->assertFalse($t->response->realized());
     }
 
     public function testBeforeSendEmitsErrorEvent()

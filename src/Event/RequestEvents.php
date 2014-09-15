@@ -2,6 +2,7 @@
 namespace GuzzleHttp\Event;
 
 use GuzzleHttp\Message\MessageFactoryInterface;
+use GuzzleHttp\Ring\FutureInterface;
 use GuzzleHttp\Transaction;
 use GuzzleHttp\Exception\RequestException;
 
@@ -66,6 +67,13 @@ final class RequestEvents
         Transaction $transaction,
         array $stats = []
     ) {
+        // Do not emit complete events when a future response is provided.
+        // A future response MUST handle it's own complete event when it is
+        // dereferenced (realized).
+        if ($transaction->response instanceof FutureInterface) {
+            return;
+        }
+
         $request = $transaction->request;
         $transaction->response->setEffectiveUrl($request->getUrl());
         try {
