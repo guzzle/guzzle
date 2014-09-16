@@ -84,7 +84,7 @@ class StreamAdapter implements AdapterInterface
         $response = $this->messageFactory->createResponse(
             $parts[1],
             $this->headersFromLines($headers),
-            null,
+            $stream,
             $options
         );
 
