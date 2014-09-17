@@ -7,7 +7,6 @@ use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Post\PostBodyInterface;
 use GuzzleHttp\Stream\StreamInterface;
-use GuzzleHttp\Stream\MetadataStreamInterface;
 use GuzzleHttp\Mimetypes;
 
 /**
@@ -55,10 +54,6 @@ class Prepare implements SubscriberInterface
         RequestInterface $request,
         StreamInterface $body
     ) {
-        if (!($body instanceof MetadataStreamInterface)) {
-            return;
-        }
-
         if (!($uri = $body->getMetadata('uri'))) {
             return;
         }
