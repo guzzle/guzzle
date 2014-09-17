@@ -479,4 +479,21 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($calledFuture);
         $this->assertEquals(1, $called);
     }
+
+    public function testThrowsExceptionsWhenDereferenced()
+    {
+        $calledFuture = false;
+        $future = new Future(function () use (&$calledFuture) {
+            $calledFuture = true;
+            return ['error' => new \Exception('Noo!')];
+        });
+        $client = new Client(['adapter' => new MockAdapter($future)]);
+        try {
+            $res = $client->get('http://localhost:123/foo', ['future' => true]);
+            $res->deref();
+            $this->fail('Did not throw');
+        } catch (RequestException $e) {
+            $this->assertEquals(1, $calledFuture);
+        }
+    }
 }

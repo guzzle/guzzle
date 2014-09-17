@@ -233,22 +233,10 @@ class Client implements ClientInterface
                 RequestEvents::createRingRequest($trans, $this->messageFactory)
             );
 
-            if ($response instanceof RingFutureInterface) {
-                // Create a future response that's hooked up to the ring future.
-                return new FutureResponse(
-                    function () use ($response, $trans) {
-                        // Only deref if an event listener did not intercept.
-                        if (!$trans->response) {
-                            $response->deref();
-                        }
-                        return $trans->response;
-                    },
-                    function () use ($response) {
-                        return $response->cancel();
-                    }
-                );
-            } elseif ($trans->response) {
+            if ($trans->response) {
                 return $trans->response;
+            } elseif ($response instanceof RingFutureInterface) {
+                return $this->createFutureResponse($response, $trans);
             } elseif (isset($response['error'])) {
                 // Errors are handled outside of the "then" function for
                 // synchronous errors.
@@ -265,6 +253,34 @@ class Client implements ClientInterface
             // Wrap exceptions in a RequestException to adhere to the interface
             throw new RequestException($e->getMessage(), $request, null, $e);
         }
+    }
+
+    private function createFutureResponse(
+        RingFutureInterface $response,
+        Transaction $trans
+    ) {
+        // Create a future response that's hooked up to the ring future.
+        return new FutureResponse(
+            function () use ($response, $trans) {
+                // Only deref if an event listener did not intercept.
+                if (!$trans->response) {
+                    $result = $response->deref();
+                    // The response may have been set when dereferencing.
+                    if (!$trans->response) {
+                        if (isset($result['error'])) {
+                            throw $response['error'];
+                        } else {
+                            throw new \RuntimeException('Did not return a '
+                                . 'response or error.');
+                        }
+                    }
+                }
+                return $trans->response;
+            },
+            function () use ($response) {
+                return $response->cancel();
+            }
+        );
     }
 
     /**
