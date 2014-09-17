@@ -138,7 +138,7 @@ class PoolTest extends \PHPUnit_Framework_TestCase
         $result = Pool::batch($client, $requests, [
             'before'   => function (BeforeEvent $e) use (&$a) { $a++; },
             'complete' => function (CompleteEvent $e) use (&$b) { $b++; },
-            'error'    => function (ErrorEvent $e) use (&$c) { $c++; },
+            'error'    => function (ErrorEvent $e) use (&$c) { $c++; }
         ]);
 
         $this->assertEquals(4, $a);

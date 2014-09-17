@@ -76,8 +76,7 @@ class Pool implements FutureInterface
         $this->client = $client;
         $this->iter = $this->coerceIterable($requests);
         $this->poolSize = isset($options['pool_size'])
-            ? $options['pool_size']
-            : Client::DEFAULT_CONCURRENCY;
+            ? $options['pool_size'] : 25;
         $this->eventListeners = $this->prepareListeners(
             $this->prepareOptions($options),
             ['before', 'complete', 'error']
@@ -129,11 +128,16 @@ class Pool implements FutureInterface
             $hash->attach($request);
         }
 
-        $events = ['complete', 'error'];
-        $fn = function ($e) use ($hash) { $hash[$e->getRequest()] = $e; };
         static::send($client, $requests, RequestEvents::convertEventArray(
-            $options, $events, ['priority' => RequestEvents::LATE, 'fn' => $fn])
-        );
+            $options,
+            ['complete', 'error'],
+            [
+                'priority' => RequestEvents::LATE,
+                'fn'       => function ($e) use ($hash) {
+                    $hash[$e->getRequest()] = $e;
+                }
+            ]
+        ));
 
         // Update the received value for any of the intercepted requests.
         $result = [];
@@ -174,7 +178,11 @@ class Pool implements FutureInterface
         // Dereference any outstanding FutureResponse objects.
         while ($response = array_pop($this->derefQueue)) {
             if ($response instanceof FutureInterface) {
-                $response->deref();
+                try {
+                    $response->deref();
+                } catch (\Exception $e) {
+                    die('a');
+                }
             }
         }
 
@@ -230,7 +238,11 @@ class Pool implements FutureInterface
             ]
         );
 
-        // Stop error events from raising
+        // Stop error events from raising. The pool sends additional requests
+        // on the "complete"/"error" event. Exceptions encountered during these
+        // events are caught an emit an error event that can be handled for
+        // the previous request. This has an unwanted trickle-down effect, so
+        // we prevent the issue from preventing exceptions from being thrown.
         return RequestEvents::convertEventArray($options, ['error'], [
             'priority' => RequestEvents::LATE - 1,
             'fn'       => function (ErrorEvent $e) {

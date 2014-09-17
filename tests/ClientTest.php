@@ -454,4 +454,29 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $_SERVER['HTTP_PROXY'] = $http;
         $_SERVER['HTTPS_PROXY'] = $https;
     }
+
+    public function testCanInjectResponseForError()
+    {
+        $calledFuture = false;
+        $future = new Future(function () use (&$calledFuture) {
+            $calledFuture = true;
+            return ['error' => new \Exception('Noo!')];
+        });
+        $mock = new MockAdapter($future);
+        $client = new Client(['adapter' => $mock]);
+        $called = 0;
+        $response = $client->get('http://localhost:123/foo', [
+            'events' => [
+                'error' => function (ErrorEvent $e) use (&$called) {
+                    $called++;
+                    $e->intercept(new Response(200));
+                }
+            ]
+        ]);
+        $this->assertEquals(0, $called);
+        $this->assertInstanceOf('GuzzleHttp\Message\FutureResponse', $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertTrue($calledFuture);
+        $this->assertEquals(1, $called);
+    }
 }

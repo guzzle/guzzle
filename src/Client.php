@@ -21,8 +21,6 @@ class Client implements ClientInterface
 {
     use HasEmitterTrait;
 
-    const DEFAULT_CONCURRENCY = 50;
-
     /** @var MessageFactoryInterface Request factory used by the client */
     private $messageFactory;
 
@@ -89,14 +87,14 @@ class Client implements ClientInterface
         $default = $future = $streaming = null;
 
         if (extension_loaded('curl')) {
-            $future = new CurlMultiAdapter([
-                'max_handles' => isset($_SERVER['GUZZLE_CURL_MAX_HANDLES'])
-                        ? $_SERVER['GUZZLE_CURL_MAX_HANDLES']
-                        : self::DEFAULT_CONCURRENCY,
+            $config = [
                 'select_timepout' => isset($_SERVER['GUZZLE_CURL_SELECT_TIMEOUT'])
-                        ? $_SERVER['GUZZLE_CURL_SELECT_TIMEOUT']
-                        : 1
-            ]);
+                    ? $_SERVER['GUZZLE_CURL_SELECT_TIMEOUT'] : 1
+            ];
+            if (isset($_SERVER['GUZZLE_CURL_MAX_HANDLES'])) {
+                $config['max_handles'] = $_SERVER['GUZZLE_CURL_MAX_HANDLES'];
+            }
+            $future = new CurlMultiAdapter($config);
             if (function_exists('curl_reset')) {
                 $default = new CurlAdapter();
             }
@@ -239,17 +237,22 @@ class Client implements ClientInterface
                 // Create a future response that's hooked up to the ring future.
                 return new FutureResponse(
                     function () use ($response, $trans) {
-                        $response->deref();
+                        // Only deref if an event listener did not intercept.
+                        if (!$trans->response) {
+                            $response->deref();
+                        }
                         return $trans->response;
                     },
                     function () use ($response) {
                         return $response->cancel();
                     }
                 );
-            }
-
-            if ($trans->response) {
+            } elseif ($trans->response) {
                 return $trans->response;
+            } elseif (isset($response['error'])) {
+                // Errors are handled outside of the "then" function for
+                // synchronous errors.
+                throw $response['error'];
             }
 
             throw new \RuntimeException('No response was associated with the '
