@@ -236,6 +236,17 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('custom', $request->getHeader('Foo'));
     }
 
+    public function testDoesNotOverwriteExistingUA()
+    {
+        $client = new Client(['defaults' => [
+            'headers' => ['User-Agent' => 'test']
+        ]]);
+        $this->assertEquals(
+            ['User-Agent' => 'test'],
+            $client->getDefaultOption('headers')
+        );
+    }
+
     public function testUsesBaseUrlWhenNoUrlIsSet()
     {
         $client = new Client(['base_url' => 'http://www.foo.com/baz?bam=bar']);
