@@ -267,8 +267,7 @@ class Client implements ClientInterface
             function () use ($response, $trans) {
                 // Dereference the underlying future and block until complete.
                 $result = $response->deref();
-                // The transaction response may have been set on the trans
-                // while dereferencing the response (e.g., MockAdapter).
+                // The transaction response should have been set on the trans.
                 if ($trans->response) {
                     return $trans->response;
                 }
