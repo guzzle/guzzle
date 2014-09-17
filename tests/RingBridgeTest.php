@@ -135,4 +135,31 @@ class RingBridgeTest extends \PHPUnit_Framework_TestCase
             $this->assertContains('cURL error', $e->getMessage());
         }
     }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testValidatesRingRequest()
+    {
+        RingBridge::fromRingRequest([]);
+    }
+
+    public function testCreatesRequestFromRing()
+    {
+        $request = RingBridge::fromRingRequest([
+            'http_method' => 'GET',
+            'uri' => '/',
+            'headers' => [
+                'foo' => ['bar'],
+                'host' => ['foo.com']
+            ],
+            'body' => 'test',
+            'version' => '1.0'
+        ]);
+        $this->assertEquals('GET', $request->getMethod());
+        $this->assertEquals('http://foo.com/', $request->getUrl());
+        $this->assertEquals('1.0', $request->getProtocolVersion());
+        $this->assertEquals('test', (string) $request->getBody());
+        $this->assertEquals('bar', $request->getHeader('foo'));
+    }
 }

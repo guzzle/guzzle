@@ -2,10 +2,10 @@
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Message\ResponseInterface;
+use GuzzleHttp\RingBridge;
 use GuzzleHttp\Transaction;
 use GuzzleHttp\Tests\Ring\Client\Server as TestServer;
 
@@ -65,8 +65,7 @@ class Server
             $c = new Client();
             $factory = new MessageFactory();
             $response = array_map(function($message) use ($factory, $c) {
-                $trans = new Transaction($c, $message);
-                return RequestEvents::createRingRequest($trans, $factory);
+                return RingBridge::fromRingRequest($message);
             }, $response);
         }
 

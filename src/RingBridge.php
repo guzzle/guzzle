@@ -6,6 +6,9 @@ use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Event\ProgressEvent;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Event\RequestEvents;
+use GuzzleHttp\Message\Request;
+use GuzzleHttp\Ring\Core;
+use GuzzleHttp\Stream\Stream;
 
 /**
  * Provides the bridge between Guzzle requests and responses and Guzzle Ring.
@@ -148,5 +151,33 @@ class RingBridge
                     ? $response['transfer_info'] : []
             );
         }
+    }
+
+    /**
+     * Creates a Guzzle request object using a ring request array.
+     *
+     * @param array $request Ring request
+     *
+     * @return Request
+     * @throws \InvalidArgumentException for incomplete requests.
+     */
+    public static function fromRingRequest(array $request)
+    {
+        $options = [];
+        if (isset($request['version'])) {
+            $options['protocol_version'] = $request['version'];
+        }
+
+        if (!isset($request['http_method'])) {
+            throw new \InvalidArgumentException('No http_method');
+        }
+
+        return new Request(
+            $request['http_method'],
+            Core::url($request),
+            isset($request['headers']) ? $request['headers'] : [],
+            isset($request['body']) ? Stream::factory($request['body']) : null,
+            $options
+        );
     }
 }
