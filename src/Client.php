@@ -224,29 +224,30 @@ class Client implements ClientInterface
             $trans = new Transaction($this, $request);
             RequestEvents::emitBefore($trans);
 
+            // Return a response if one was set during the before event.
             if ($trans->response) {
                 return $trans->response;
             }
 
-            // Send the request using the Guzzle ring handler
+            // Send the request using the Guzzle Ring handler
             $adapter = $this->adapter;
             $response = $adapter(
-                RequestEvents::createRingRequest($trans, $this->messageFactory)
+                RingBridge::prepareRingRequest($trans, $this->messageFactory)
             );
 
-            if ($trans->response) {
-                return $trans->response;
-            } elseif ($response instanceof RingFutureInterface) {
+            if ($response instanceof RingFutureInterface) {
                 return $this->createFutureResponse($response, $trans);
+            } elseif ($trans->response) {
+                // A response can be set during the "then" ring callback.
+                return $trans->response;
             } elseif (isset($response['error'])) {
-                // Errors are handled outside of the "then" function for
-                // synchronous errors.
+                // Errors are thrown and handled outside of the "then" function
+                // for synchronous errors.
                 throw $response['error'];
             }
 
-            throw new \RuntimeException('No response was associated with the '
-                . 'transaction! This means the ring adapter did something '
-                . 'wrong and never completed the transaction.');
+            // No response, future, or error, so throw an exception.
+            throw $this->getNoRingResponseException($trans->request);
 
         } catch (RequestException $e) {
             throw $e;
@@ -262,22 +263,27 @@ class Client implements ClientInterface
     ) {
         // Create a future response that's hooked up to the ring future.
         return new FutureResponse(
+            // Dereference function
             function () use ($response, $trans) {
-                // Only deref if an event listener did not intercept.
-                if (!$trans->response) {
-                    $result = $response->deref();
-                    // The response may have been set when dereferencing.
-                    if (!$trans->response) {
-                        if (isset($result['error'])) {
-                            throw $response['error'];
-                        } else {
-                            throw new \RuntimeException('Did not return a '
-                                . 'response or error.');
-                        }
-                    }
+                // Event listeners may have intercepted the transaction during
+                // the "then" event of the ring request transfer.
+                if ($trans->response) {
+                    return $trans->response;
                 }
-                return $trans->response;
+                // Dereference the underlying future and block until complete.
+                $result = $response->deref();
+                // The transaction response may have been set on the trans
+                // while dereferencing the response (e.g., MockAdapter).
+                if ($trans->response) {
+                    return $trans->response;
+                }
+                // Throw the appropriate exception, whether one was explicitly
+                // set, or we need to inform the user of a misbehaving adapter.
+                throw isset($result['error'])
+                    ? $response['error']
+                    : $this->getNoRingResponseException($trans->request);
             },
+            // Cancel function. Just proxy to the underlying future.
             function () use ($response) {
                 return $response->cancel();
             }
@@ -384,9 +390,7 @@ class Client implements ClientInterface
     private function mergeDefaults(&$options)
     {
         // Merging optimization for when no headers are present
-        if (!isset($options['headers'])
-            || !isset($this->defaults['headers'])
-        ) {
+        if (!isset($options['headers']) || !isset($this->defaults['headers'])) {
             $options = array_replace_recursive($this->defaults, $options);
             return null;
         }
@@ -405,5 +409,15 @@ class Client implements ClientInterface
     public function sendAll($requests, array $options = [])
     {
         Pool::send($this, $requests, $options);
+    }
+
+    private function getNoRingResponseException(RequestInterface $request)
+    {
+        return new RequestException(
+            'Sending the request did not return a response, exception, or '
+            . 'populate the transaction with a response. This is most likely '
+            . 'due to an incorrectly implemented Guzzle Ring adapter.',
+            $request
+        );
     }
 }
