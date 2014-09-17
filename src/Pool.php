@@ -4,6 +4,7 @@ namespace GuzzleHttp;
 use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\ErrorEvent;
+use GuzzleHttp\Message\FutureResponse;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\FutureInterface;
@@ -20,7 +21,11 @@ use GuzzleHttp\Event\ListenerAttacherTrait;
  * When sending the pool, keep in mind that no results are returned: callers
  * are expected to handle results asynchronously using Guzzle's event system.
  * When requests complete, more are added to the pool to ensure that the
- * requested pool size is always filled when possible.
+ * requested pool size is always filled as much as possible.
+ *
+ * IMPORTANT: Do not provide a pool size greater that what the utilized
+ * underlying Guzzle Ring adapter can support. This will result is extremely
+ * poor performance.
  */
 class Pool implements FutureInterface
 {
@@ -29,7 +34,7 @@ class Pool implements FutureInterface
     /** @var \GuzzleHttp\ClientInterface */
     private $client;
 
-    /** @var array Hash of outstanding responses */
+    /** @var array Hash of outstanding responses to dereference. */
     private $derefQueue = [];
 
     /** @var \Iterator Yields requests */
@@ -45,13 +50,6 @@ class Pool implements FutureInterface
     private $eventListeners = [];
 
     /**
-     * Sends multiple requests concurrently using a fixed pool size.
-     *
-     * Exceptions are not thrown for failed requests. Callers are expected to
-     * register an "error" option to handle request errors OR directly register
-     * an event handler for the "error" event of a request's
-     * event emitter.
-     *
      * The option values for 'before', 'after', and 'error' can be a callable,
      * an associative array containing event data, or an array of event data
      * arrays. Event data arrays contain the following keys:
@@ -63,10 +61,10 @@ class Pool implements FutureInterface
      * @param ClientInterface $client   Client used to send the requests.
      * @param array|\Iterator $requests Requests to send in parallel
      * @param array           $options  Associative array of options
-     *     - parallel: (int) Maximum number of requests to send in parallel
-     *     - before:   (callable|array) Receives a BeforeEvent
-     *     - after:    (callable|array) Receives a CompleteEvent
-     *     - error:    (callable|array) Receives a ErrorEvent
+     *     - pool_size: (int) Maximum number of requests to send concurrently
+     *     - before:    (callable|array) Receives a BeforeEvent
+     *     - after:     (callable|array) Receives a CompleteEvent
+     *     - error:     (callable|array) Receives a ErrorEvent
      */
     public function __construct(
         ClientInterface $client,
@@ -84,7 +82,7 @@ class Pool implements FutureInterface
     }
 
     /**
-     * Convenience method for creating and immediately dereferencing a pool.
+     * Creates and immediately transfers a Pool object.
      *
      * @param ClientInterface $client   Client used to send the requests.
      * @param array|\Iterator $requests Requests to send in parallel
@@ -103,9 +101,9 @@ class Pool implements FutureInterface
      * Sends multiple requests in parallel and returns an array of responses
      * and exceptions that uses the same ordering as the provided requests.
      *
-     * Note: This method keeps every request and response in memory, and as
-     * such is NOT recommended when sending a large number or an indeterminable
-     * number of requests in parallel.
+     * IMPORTANT: This method keeps every request and response in memory, and
+     * as such, is NOT recommended when sending a large number or an
+     * indeterminate number of requests concurrently.
      *
      * @param ClientInterface $client   Client used to send the requests
      * @param array|\Iterator $requests Requests to send in parallel
@@ -128,6 +126,7 @@ class Pool implements FutureInterface
             $hash->attach($request);
         }
 
+        // Continuously track error and complete requests in the hash.
         static::send($client, $requests, RequestEvents::convertEventArray(
             $options,
             ['complete', 'error'],
@@ -164,6 +163,7 @@ class Pool implements FutureInterface
         }
 
         // Seed the pool with N number of requests.
+        // @todo: Is there way to stop seeding when the adapter auto-flushes?
         for ($i = 0; $i < $this->poolSize; $i++) {
             if (!$this->addNextRequest()) {
                 break;
@@ -177,16 +177,11 @@ class Pool implements FutureInterface
 
         // Dereference any outstanding FutureResponse objects.
         while ($response = array_pop($this->derefQueue)) {
-            if ($response instanceof FutureInterface) {
-                try {
-                    $response->deref();
-                } catch (\Exception $e) {
-                    die('a');
-                }
-            }
+            $response->deref();
         }
 
-        $this->iter = $this->derefQueue = null;
+        // Clean up no longer needed state.
+        $this->client = $this->iter = $this->derefQueue = $this->eventListeners = null;
 
         return true;
     }
@@ -219,9 +214,10 @@ class Pool implements FutureInterface
             return $requests;
         } elseif (is_array($requests)) {
             return new \ArrayIterator($requests);
-        } else {
-            throw new \InvalidArgumentException('Expected Iterator or array');
         }
+
+        throw new \InvalidArgumentException('Expected Iterator or array. '
+            . 'Found ' . Core::describeType($requests));
     }
 
     private function prepareOptions(array $options)
@@ -268,9 +264,15 @@ class Pool implements FutureInterface
             ));
         }
 
+        // Be sure to use "lazy" futures, meaning they do not send right away.
         $request->getConfig()->set('future', 'lazy');
         $this->attachListeners($request, $this->eventListeners);
-        $this->derefQueue[spl_object_hash($request)] = $this->client->send($request);
+        $response = $this->client->send($request);
+
+        // Track future responses for later dereference before completing pool.
+        if ($response instanceof FutureResponse) {
+            $this->derefQueue[spl_object_hash($request)] = $response;
+        }
 
         return true;
     }
