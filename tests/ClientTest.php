@@ -379,6 +379,100 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client->get('http://httpbin.org');
     }
 
+    public function testCanInjectResponseForFutureError()
+    {
+        $calledFuture = false;
+        $future = new Future(function () use (&$calledFuture) {
+            $calledFuture = true;
+            return ['error' => new \Exception('Noo!')];
+        });
+        $mock = new MockAdapter($future);
+        $client = new Client(['adapter' => $mock]);
+        $called = 0;
+        $response = $client->get('http://localhost:123/foo', [
+            'events' => [
+                'error' => function (ErrorEvent $e) use (&$called) {
+                    $called++;
+                    $e->intercept(new Response(200));
+                }
+            ]
+        ]);
+        $this->assertEquals(0, $called);
+        $this->assertInstanceOf('GuzzleHttp\Message\FutureResponse', $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertTrue($calledFuture);
+        $this->assertEquals(1, $called);
+    }
+
+    public function testCanInterceptFutureOnThenFunction()
+    {
+        $client = new Client();
+        $request = $client->createRequest('GET', Server::$url, ['future' => true]);
+        $trans = null;
+        // Get the transaction.
+        $request->getEmitter()->on('before', function ($e) use (&$trans) {
+            $trans = $this->readAttribute($e, 'transaction');
+        });
+        // Set the response on the transaction, but set no ring response.
+        $adapter = new MockAdapter(function () use (&$trans) {
+            // Only do the transaction update when dereferenced.
+            return new Future(function () use (&$trans) {
+                $trans->response = new Response(200);
+                return [];
+            });
+        });
+        $client = new Client(['adapter' => $adapter]);
+        $future = $client->send($request);
+        $future->deref();
+        // Did not get a ring response, but the transaction was updated.
+        $this->assertEquals(200, $future->getStatusCode());
+    }
+
+    public function testCanReturnFutureResults()
+    {
+        $called = false;
+        $future = new Future(function () use (&$called) {
+            $called = true;
+            return ['status' => 201, 'headers' => []];
+        });
+        $mock = new MockAdapter($future);
+        $client = new Client(['adapter' => $mock]);
+        $response = $client->get('http://localhost:123/foo');
+        $this->assertFalse($called);
+        $this->assertInstanceOf('GuzzleHttp\Message\FutureResponse', $response);
+        $this->assertEquals(201, $response->getStatusCode());
+        $this->assertTrue($called);
+    }
+
+    public function testThrowsExceptionsWhenDereferenced()
+    {
+        $calledFuture = false;
+        $future = new Future(function () use (&$calledFuture) {
+            $calledFuture = true;
+            return ['error' => new \Exception('Noo!')];
+        });
+        $client = new Client(['adapter' => new MockAdapter($future)]);
+        try {
+            $res = $client->get('http://localhost:123/foo', ['future' => true]);
+            $res->deref();
+            $this->fail('Did not throw');
+        } catch (RequestException $e) {
+            $this->assertEquals(1, $calledFuture);
+        }
+    }
+
+    /**
+     * @expectedExceptionMessage Noo!
+     * @expectedException \GuzzleHttp\Exception\RequestException
+     */
+    public function testThrowsExceptionsSynchronously()
+    {
+        $client = new Client([
+            'adapter' => new MockAdapter(['error' => new \Exception('Noo!')])
+        ]);
+        $client->get('http://localhost:123/foo');
+    }
+
     public function testCanSetDefaultValues()
     {
         $client = new Client(['foo' => 'bar']);
@@ -411,22 +505,6 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('GET', $requests);
         $this->assertContains('POST', $requests);
         $this->assertContains('PUT', $requests);
-    }
-
-    public function testCanReturnFutureResults()
-    {
-        $called = false;
-        $future = new Future(function () use (&$called) {
-            $called = true;
-            return ['status' => 201, 'headers' => []];
-        });
-        $mock = new MockAdapter($future);
-        $client = new Client(['adapter' => $mock]);
-        $response = $client->get('http://localhost:123/foo');
-        $this->assertFalse($called);
-        $this->assertInstanceOf('GuzzleHttp\Message\FutureResponse', $response);
-        $this->assertEquals(201, $response->getStatusCode());
-        $this->assertTrue($called);
     }
 
     public function testCanDisableAuthPerRequest()
@@ -464,47 +542,5 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $_SERVER['HTTP_PROXY'] = $http;
         $_SERVER['HTTPS_PROXY'] = $https;
-    }
-
-    public function testCanInjectResponseForError()
-    {
-        $calledFuture = false;
-        $future = new Future(function () use (&$calledFuture) {
-            $calledFuture = true;
-            return ['error' => new \Exception('Noo!')];
-        });
-        $mock = new MockAdapter($future);
-        $client = new Client(['adapter' => $mock]);
-        $called = 0;
-        $response = $client->get('http://localhost:123/foo', [
-            'events' => [
-                'error' => function (ErrorEvent $e) use (&$called) {
-                    $called++;
-                    $e->intercept(new Response(200));
-                }
-            ]
-        ]);
-        $this->assertEquals(0, $called);
-        $this->assertInstanceOf('GuzzleHttp\Message\FutureResponse', $response);
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertTrue($calledFuture);
-        $this->assertEquals(1, $called);
-    }
-
-    public function testThrowsExceptionsWhenDereferenced()
-    {
-        $calledFuture = false;
-        $future = new Future(function () use (&$calledFuture) {
-            $calledFuture = true;
-            return ['error' => new \Exception('Noo!')];
-        });
-        $client = new Client(['adapter' => new MockAdapter($future)]);
-        try {
-            $res = $client->get('http://localhost:123/foo', ['future' => true]);
-            $res->deref();
-            $this->fail('Did not throw');
-        } catch (RequestException $e) {
-            $this->assertEquals(1, $calledFuture);
-        }
     }
 }

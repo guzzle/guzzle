@@ -265,11 +265,6 @@ class Client implements ClientInterface
         return new FutureResponse(
             // Dereference function
             function () use ($response, $trans) {
-                // Event listeners may have intercepted the transaction during
-                // the "then" event of the ring request transfer.
-                if ($trans->response) {
-                    return $trans->response;
-                }
                 // Dereference the underlying future and block until complete.
                 $result = $response->deref();
                 // The transaction response may have been set on the trans

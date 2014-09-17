@@ -25,6 +25,7 @@ class RingBridgeTest extends \PHPUnit_Framework_TestCase
         $factory = new MessageFactory();
         $r = RingBridge::prepareRingRequest($trans, $factory);
         $this->assertEquals('http', $r['scheme']);
+        $this->assertEquals('1.1', $r['version']);
         $this->assertEquals('GET', $r['http_method']);
         $this->assertEquals('http://httpbin.org/get?a=b', $r['url']);
         $this->assertEquals('/get', $r['uri']);
@@ -36,6 +37,7 @@ class RingBridgeTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($stream, $r['body']);
         $this->assertEquals(['foo' => 'bar'], $r['client']);
         $this->assertTrue(is_callable($r['then']));
+        $this->assertFalse($r['future']);
     }
 
     public function testCreatesRingRequestsWithNullQueryString()
@@ -67,18 +69,56 @@ class RingBridgeTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($called);
     }
 
-    public function testGetsResponseProtocolVersion()
+    public function testGetsResponseProtocolVersionAndEffectiveUrlAndReason()
     {
         $client = new Client([
             'adapter' => new MockAdapter([
                 'status'  => 200,
+                'reason' => 'test',
                 'headers' => [],
-                'version' => '1.0'
+                'version' => '1.0',
+                'effective_url' => 'http://foo.com'
             ])
         ]);
         $request = $client->createRequest('GET', 'http://foo.com');
         $response = $client->send($request);
         $this->assertEquals('1.0', $response->getProtocolVersion());
+        $this->assertEquals('http://foo.com', $response->getEffectiveUrl());
+        $this->assertEquals('test', $response->getReasonPhrase());
+    }
+
+    public function testGetsStreamFromResponse()
+    {
+        $res = fopen('php://temp', 'r+');
+        fwrite($res, 'foo');
+        rewind($res);
+        $client = new Client([
+            'adapter' => new MockAdapter([
+                'status'  => 200,
+                'headers' => [],
+                'body' => $res
+            ])
+        ]);
+        $request = $client->createRequest('GET', 'http://foo.com');
+        $response = $client->send($request);
+        $this->assertEquals('foo', (string) $response->getBody());
+    }
+
+    public function testEmitsCompleteEventOnSuccess()
+    {
+        $c = false;
+        $trans = new Transaction(new Client(), new Request('GET', 'http://f.co'));
+        $trans->request->getEmitter()->on('complete', function () use (&$c) {
+            $c = true;
+        });
+        $f = new MessageFactory();
+        $res = ['status' => 200, 'headers' => []];
+        RingBridge::completeRingResponse($trans, $res, $f);
+        $this->assertInstanceOf(
+            'GuzzleHttp\Message\ResponseInterface',
+            $trans->response
+        );
+        $this->assertTrue($c);
     }
 
     public function testEmitsErrorEventOnError()

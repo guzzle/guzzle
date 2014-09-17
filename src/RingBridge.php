@@ -40,7 +40,7 @@ class RingBridge
             'version'      => $request->getProtocolVersion(),
             'client'       => $options,
             'query_string' => $qs,
-            'future'       => isset($options['future']) ? $options['future'] : null,
+            'future'       => isset($options['future']) ? $options['future'] : false
         ];
     }
 
