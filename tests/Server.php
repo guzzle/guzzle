@@ -6,7 +6,6 @@ use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Message\ResponseInterface;
 use GuzzleHttp\RingBridge;
-use GuzzleHttp\Transaction;
 use GuzzleHttp\Tests\Ring\Client\Server as TestServer;
 
 /**
