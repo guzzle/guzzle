@@ -134,24 +134,8 @@ Mock Adapter
 ============
 
 In addition to using the Mock subscriber, you can use the
-``GuzzleHttp\Adapter\MockAdapter`` as the adapter of a client to return the
+``GuzzleHttp\Ring\Client\MockAdapter`` as the adapter of a client to return the
 same response over and over or return the result of a callable function.
-
-.. code-block:: php
-
-    use GuzzleHttp\Client;
-    use GuzzleHttp\Adapter\MockAdapter;
-    use GuzzleHttp\Adapter\TransactionInterface;
-    use GuzzleHttp\Message\Response;
-
-    $mockAdapter = new MockAdapter(function (TransactionInterface $trans) {
-        // You have access to the request
-        $request = $trans->getRequest();
-        // Return a response
-        return new Response(200);
-    });
-
-    $client = new Client(['adapter' => $mockAdapter]);
 
 Test Web Server
 ===============

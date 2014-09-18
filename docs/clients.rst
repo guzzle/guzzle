@@ -30,21 +30,14 @@ base_url
     through a client will not use the base URL of the client.
 
 adapter
-    Configures the HTTP adapter (``GuzzleHttp\Adapter\AdapterInterface``) used
-    to transfer the HTTP requests of a client. Guzzle will, by default, utilize
-    a stacked adapter that chooses the best adapter to use based on the provided
-    request options and based on the extensions available in the environment. If
-    cURL is installed, it will be used as the default adapter. However, if a
-    request has the ``stream`` request option, the PHP stream wrapper adapter
-    will be used (assuming ``allow_url_fopen`` is enabled in your PHP
-    environment).
-
-parallel_adapter
-    Just like the ``adapter`` option, you can choose to specify an adapter
-    that is used to send requests in parallel
-    (``GuzzleHttp\Adapter\ParallelAdapterInterface``). Guzzle will by default
-    use cURL to send requests in parallel, but if cURL is not available it will
-    use the PHP stream wrapper and simply send requests serially.
+    Configures the `Guzzle-Ring adapter <http://guzzle-ring.readthedocs.org>`_
+    used to transfer the HTTP requests of a client. Guzzle will, by default,
+    utilize a stacked adapter that chooses the best adapter to use based on the
+    provided request options and based on the extensions available in the
+    environment. If cURL is installed, it will be used as the default adapter.
+    However, if a request has the ``stream`` request option, the PHP stream
+    wrapper adapter will be used (assuming ``allow_url_fopen`` is enabled in
+    your PHP environment).
 
 message_factory
     Specifies the factory used to create HTTP requests and responses
@@ -61,9 +54,7 @@ emitter
     to be used by the client to emit request events. This option is useful if
     you need to inject an emitter with listeners/subscribers already attached.
 
-Here's an example of creating a client with various options, including using
-a mock adapter that just returns the result of a callable function and a
-base URL that is a URI template with parameters.
+Here's an example of creating a client with various options.
 
 .. code-block:: php
 
@@ -1224,8 +1215,8 @@ Guzzle exposes a few environment variables that can be used to customize the
 behavior of the library.
 
 ``GUZZLE_CURL_SELECT_TIMEOUT``
-    Controls the duration in seconds that ``GuzzleHttp\Adapter\Curl\MultiAdapter``
-    will use when selecting handles using ``curl_multi_select()``. Some systems
+    Controls the duration in seconds that a curl_multi_* adapter will use when
+    selecting on curl handles using ``curl_multi_select()``. Some systems
     have issues with PHP's implementation of ``curl_multi_select()`` where
     calling this function always results in waiting for the maximum duration of
     the timeout.

@@ -102,11 +102,6 @@ You might need to use Guzzle 3 and Guzzle 4 in the same project due to a
 requirement of a legacy application or a dependency that has not yet migrated
 to Guzzle 4.0.
 
-How do I migrate from Guzzle 3 to 4?
-====================================
-
-See https://github.com/guzzle/guzzle/blob/master/UPGRADING.md#3x-to-40.
-
 What is this Maximum function nesting error?
 ============================================
 

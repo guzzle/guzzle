@@ -52,13 +52,13 @@ resources returned from ``fopen()``, an object that implements
     var_export($stream->tell());
     // 11
 
-Metadata Streams
-================
+Metadata
+========
 
-Guzzle streams that implement ``GuzzleHttp\Stream\MetadataStreamInterface``
-expose stream metadata through the ``getMetadata()`` method. This method
-provides the data you would retrieve when calling PHP's
-`stream_get_meta_data() function <http://php.net/manual/en/function.stream-get-meta-data.php>`_.
+Guzzle streams expose stream metadata through the ``getMetadata()`` method.
+This method provides the data you would retrieve when calling PHP's
+`stream_get_meta_data() function <http://php.net/manual/en/function.stream-get-meta-data.php>`_,
+and can optionally expose other custom data.
 
 .. code-block:: php
 
@@ -74,11 +74,6 @@ provides the data you would retrieve when calling PHP's
     // false
     var_export($stream->isSeekable());
     // true
-
-.. note::
-
-    Streams created using ``GuzzleHttp\Stream\Stream::factory()`` all implement
-    ``GuzzleHttp\Stream\MetadataStreamInterface``.
 
 Stream Decorators
 =================
@@ -174,7 +169,7 @@ byte is read from a stream. This could be implemented by overriding the
 
     use GuzzleHttp\Stream\StreamDecoratorTrait;
 
-    class EofCallbackStream implements StreamInterface, MetadataStreamInterface
+    class EofCallbackStream implements StreamInterface
     {
         use StreamDecoratorTrait;
 
