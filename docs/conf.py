@@ -54,7 +54,6 @@ html_theme_options = {
     "project_nav_name": "Guzzle",
     "github_user": "guzzle",
     "github_repo": "guzzle",
-    "disqus_comments_shortname": "guzzle",
     "google_analytics_account": "UA-22752917-1"
 }
 
