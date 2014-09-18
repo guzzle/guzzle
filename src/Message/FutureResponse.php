@@ -1,7 +1,7 @@
 <?php
 namespace GuzzleHttp\Message;
 
-use GuzzleHttp\Ring\BaseFutureTrait;
+use GuzzleHttp\Ring\MagicFutureTrait;
 use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\FutureInterface;
 use GuzzleHttp\Stream\StreamInterface;
@@ -22,7 +22,7 @@ use GuzzleHttp\Stream\StreamInterface;
  */
 class FutureResponse implements ResponseInterface, FutureInterface
 {
-    use BaseFutureTrait;
+    use MagicFutureTrait;
 
     public function getStatusCode()
     {
