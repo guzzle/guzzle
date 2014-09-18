@@ -3,7 +3,6 @@ namespace GuzzleHttp\Message;
 
 use GuzzleHttp\Ring\BaseFutureTrait;
 use GuzzleHttp\Ring\Core;
-use GuzzleHttp\Ring\Exception\CancelledFutureAccessException;
 use GuzzleHttp\Ring\FutureInterface;
 use GuzzleHttp\Stream\StreamInterface;
 
@@ -19,131 +18,115 @@ use GuzzleHttp\Stream\StreamInterface;
  * arguments and returns a boolean value representing whether or not the
  * response could be cancelled.
  *
- * @property ResponseInterface response
+ * @property ResponseInterface result
  */
 class FutureResponse implements ResponseInterface, FutureInterface
 {
     use BaseFutureTrait;
 
-    public function deref()
-    {
-        return $this->response;
-    }
-
     public function getStatusCode()
     {
-        return $this->response->getStatusCode();
+        return $this->result->getStatusCode();
     }
 
     public function getReasonPhrase()
     {
-        return $this->response->getReasonPhrase();
+        return $this->result->getReasonPhrase();
     }
 
     public function getEffectiveUrl()
     {
-        return $this->response->getEffectiveUrl();
+        return $this->result->getEffectiveUrl();
     }
 
     public function setEffectiveUrl($url)
     {
-        $this->response->setEffectiveUrl($url);
+        $this->result->setEffectiveUrl($url);
     }
 
     public function json(array $config = [])
     {
-        return $this->response->json($config);
+        return $this->result->json($config);
     }
 
     public function xml(array $config = [])
     {
-        return $this->response->xml($config);
+        return $this->result->xml($config);
     }
 
     public function __toString()
     {
-        return $this->response->__toString();
+        return $this->result->__toString();
     }
 
     public function getProtocolVersion()
     {
-        return $this->response->getProtocolVersion();
+        return $this->result->getProtocolVersion();
     }
 
     public function setBody(StreamInterface $body = null)
     {
-        $this->response->setBody($body);
+        $this->result->setBody($body);
     }
 
     public function getBody()
     {
-        return $this->response->getBody();
+        return $this->result->getBody();
     }
 
     public function getHeaders()
     {
-        return $this->response->getHeaders();
+        return $this->result->getHeaders();
     }
 
     public function getHeader($header)
     {
-        return $this->response->getHeader($header);
+        return $this->result->getHeader($header);
     }
 
     public function getHeaderLines($header)
     {
-        return $this->response->getHeaderLines($header);
+        return $this->result->getHeaderLines($header);
     }
 
     public function hasHeader($header)
     {
-        return $this->response->hasHeader($header);
+        return $this->result->hasHeader($header);
     }
 
     public function removeHeader($header)
     {
-        $this->response->removeHeader($header);
+        $this->result->removeHeader($header);
     }
 
     public function addHeader($header, $value)
     {
-        $this->response->addHeader($header, $value);
+        $this->result->addHeader($header, $value);
     }
 
     public function addHeaders(array $headers)
     {
-        $this->response->addHeaders($headers);
+        $this->result->addHeaders($headers);
     }
 
     public function setHeader($header, $value)
     {
-        $this->response->setHeader($header, $value);
+        $this->result->setHeader($header, $value);
     }
 
     public function setHeaders(array $headers)
     {
-        $this->response->setHeaders($headers);
+        $this->result->setHeaders($headers);
     }
 
     /** @internal */
-    public function __get($name)
+    protected function processResult($result)
     {
-        if ($name !== 'response') {
-            throw new \RuntimeException('Unknown property: ' . $name);
-        } elseif ($this->isCancelled) {
-            throw new CancelledFutureAccessException('You are attempting '
-                . 'to access a future that has been cancelled.');
-        }
-
-        $dereffn = $this->dereffn;
-        $this->dereffn = $this->cancelfn = null;
-        $this->response = $dereffn();
-
-        if (!$this->response instanceof ResponseInterface) {
+        if (!$result instanceof ResponseInterface) {
             throw new \RuntimeException('Future did not return a valid '
-                . 'response. Found ' . Core::describeType($this->response));
+                . 'response. Found ' . Core::describeType($result));
         }
 
-        return $this->response;
+        return $result;
     }
 }

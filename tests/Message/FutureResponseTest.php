@@ -9,7 +9,7 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @expectedException \RuntimeException
-     * @expectedExceptionMessage Unknown property: foo
+     * @expectedExceptionMessage Class has no foo property
      */
     public function testValidatesMagicMethod()
     {
