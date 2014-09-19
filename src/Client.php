@@ -249,13 +249,13 @@ class Client implements ClientInterface
             throw $this->getNoRingResponseException($trans->request);
 
         } catch (\Exception $e) {
-            $this->wrapException($request, $e);
+            throw $this->wrapException($request, $e);
         }
     }
 
     private function wrapException(RequestInterface $request, \Exception $e)
     {
-        throw $e instanceof RequestException
+        return $e instanceof RequestException
             ? $e
             : new RequestException($e->getMessage(), $request, null, $e);
     }
@@ -274,7 +274,7 @@ class Client implements ClientInterface
                 // Exceptions need to be removed when intercepting errors,
                 // otherwise, they're thrown.
                 if ($trans->exception) {
-                    $this->wrapException($trans->request, $trans->exception);
+                    throw $this->wrapException($trans->request, $trans->exception);
                 }
                 // No exception, so the transaction should have a response.
                 if ($trans->response) {

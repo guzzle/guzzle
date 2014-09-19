@@ -338,6 +338,19 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client->get('http://httpbin.org');
     }
 
+    /**
+     * @expectedException \GuzzleHttp\Exception\RequestException
+     * @expectedExceptionMessage incorrectly implemented Guzzle Ring adapter
+     */
+    public function testEnsuresResponseIsPresentAfterDereferencing()
+    {
+        $adapter = function () {
+            return new Future(function () { return []; });
+        };
+        $client = new Client(['adapter' => $adapter]);
+        $client->get('http://httpbin.org')->deref();
+    }
+
     public function testClientHandlesErrorsDuringBeforeSend()
     {
         $client = new Client();
