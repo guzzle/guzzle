@@ -20,6 +20,7 @@ class BeforeEvent extends AbstractRequestEvent
     {
         $trans = $this->getTransaction();
         $trans->response = $response;
+        $trans->exception = null;
         $this->stopPropagation();
         RequestEvents::emitComplete($trans);
     }

@@ -12,14 +12,30 @@ use GuzzleHttp\Message\ResponseInterface;
  */
 class Transaction
 {
-    /** @var ClientInterface */
+    /** @var ClientInterface Client used to transfer the request. */
     public $client;
 
-    /** @var RequestInterface */
+    /** @var RequestInterface The request that is being sent. */
     public $request;
 
-    /** @var ResponseInterface */
+    /**
+     * The response associated with the transaction. A response will not be
+     * present when a networking error occurs or an error occurs before sending
+     * the request.
+     *
+     * @var ResponseInterface|null
+     */
     public $response;
+
+    /**
+     * Exception associated with the transaction. If this exception is present
+     * when processing synchronous or future commands, then it is thrown. When
+     * intercepting a failed transaction, you MUST set this value to null in
+     * order to prevent the exception from being thrown.
+     *
+     * @var \Exception
+     */
+    public $exception;
 
     /**
      * @param ClientInterface  $client  Client that is used to send the requests

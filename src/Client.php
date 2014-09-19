@@ -220,8 +220,9 @@ class Client implements ClientInterface
 
     public function send(RequestInterface $request)
     {
+        $trans = new Transaction($this, $request);
+
         try {
-            $trans = new Transaction($this, $request);
             RequestEvents::emitBefore($trans);
 
             // Return a response if one was set during the before event.
@@ -237,25 +238,28 @@ class Client implements ClientInterface
 
             if ($response instanceof RingFutureInterface) {
                 return $this->createFutureResponse($response, $trans);
+            } elseif ($trans->exception) {
+                throw $trans->exception;
             } elseif ($trans->response) {
                 // A response can be set during the "then" ring callback.
                 return $trans->response;
-            } elseif (isset($response['error'])) {
-                // Errors are thrown and handled outside of the "then" function
-                // for synchronous errors.
-                throw $response['error'];
             }
 
             // No response, future, or error, so throw an exception.
             throw $this->getNoRingResponseException($trans->request);
 
-        } catch (RequestException $e) {
-            throw $e;
         } catch (\Exception $e) {
-            // Wrap exceptions in a RequestException to adhere to the interface
-            throw new RequestException($e->getMessage(), $request, null, $e);
+            $this->wrapException($request, $e);
         }
     }
+
+    private function wrapException(RequestInterface $request, \Exception $e)
+    {
+        throw $e instanceof RequestException
+            ? $e
+            : new RequestException($e->getMessage(), $request, null, $e);
+    }
+
 
     private function createFutureResponse(
         RingFutureInterface $response,
@@ -266,16 +270,17 @@ class Client implements ClientInterface
             // Dereference function
             function () use ($response, $trans) {
                 // Dereference the underlying future and block until complete.
-                $result = $response->deref();
-                // The transaction response should have been set on the trans.
+                $response->deref();
+                // Exceptions need to be removed when intercepting errors,
+                // otherwise, they're thrown.
+                if ($trans->exception) {
+                    $this->wrapException($trans->request, $trans->exception);
+                }
+                // No exception, so the transaction should have a response.
                 if ($trans->response) {
                     return $trans->response;
                 }
-                // Throw the appropriate exception, whether one was explicitly
-                // set, or we need to inform the user of a misbehaving adapter.
-                throw isset($result['error'])
-                    ? $response['error']
-                    : $this->getNoRingResponseException($trans->request);
+                throw $this->getNoRingResponseException($trans->request);
             },
             // Cancel function. Just proxy to the underlying future.
             function () use ($response) {

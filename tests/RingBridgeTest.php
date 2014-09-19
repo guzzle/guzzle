@@ -11,6 +11,7 @@ use GuzzleHttp\Message\Request;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Ring\Client\MockAdapter;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Event\ErrorEvent;
 
 class RingBridgeTest extends \PHPUnit_Framework_TestCase
 {
@@ -125,6 +126,10 @@ class RingBridgeTest extends \PHPUnit_Framework_TestCase
     {
         $client = new Client(['base_url' => 'http://127.0.0.1:123']);
         $request = $client->createRequest('GET');
+        $called = false;
+        $request->getEmitter()->on('error', function () use (&$called) {
+            $called = true;
+        });
         $request->getConfig()['timeout'] = 0.001;
         $request->getConfig()['connect_timeout'] = 0.001;
         try {
@@ -133,6 +138,7 @@ class RingBridgeTest extends \PHPUnit_Framework_TestCase
         } catch (RequestException $e) {
             $this->assertSame($request, $e->getRequest());
             $this->assertContains('cURL error', $e->getMessage());
+            $this->assertTrue($called);
         }
     }
 
@@ -161,5 +167,23 @@ class RingBridgeTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('1.0', $request->getProtocolVersion());
         $this->assertEquals('test', (string) $request->getBody());
         $this->assertEquals('bar', $request->getHeader('foo'));
+    }
+
+    public function testCanInterceptException()
+    {
+        $client = new Client(['base_url' => 'http://127.0.0.1:123']);
+        $request = $client->createRequest('GET');
+        $called = false;
+        $request->getEmitter()->on(
+            'error',
+            function (ErrorEvent $e) use (&$called) {
+                $called = true;
+                $e->intercept(new Response(200));
+            }
+        );
+        $request->getConfig()['timeout'] = 0.001;
+        $request->getConfig()['connect_timeout'] = 0.001;
+        $this->assertEquals(200, $client->send($request)->getStatusCode());
+        $this->assertTrue($called);
     }
 }

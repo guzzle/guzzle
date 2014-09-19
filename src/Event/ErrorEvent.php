@@ -40,6 +40,7 @@ class ErrorEvent extends AbstractTransferEvent
         $this->stopPropagation();
         $trans = $this->getTransaction();
         $trans->response = $response;
+        $trans->exception = null;
         RequestEvents::emitComplete($trans);
     }
 

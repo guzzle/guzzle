@@ -96,6 +96,9 @@ class RingBridge
         Transaction $transaction,
         MessageFactoryInterface $factory
     ) {
+        // Clear out the transaction state when initiating.
+        $transaction->exception = null;
+
         return self::addRingRequestCallbacks(
             self::createRingRequest($transaction->request),
             $transaction,
@@ -138,19 +141,23 @@ class RingBridge
 
         if (!isset($response['error'])) {
             RequestEvents::emitComplete($trans);
-        } else {
-            RequestEvents::emitError(
-                $trans,
-                new RequestException(
-                    $response['error']->getMessage(),
-                    $trans->request,
-                    $trans->response,
-                    $response['error']
-                ),
-                isset($response['transfer_info'])
-                    ? $response['transfer_info'] : []
-            );
+            return;
         }
+
+        $trans->exception = $response['error'];
+        unset($response['error']);
+
+        RequestEvents::emitError(
+            $trans,
+            new RequestException(
+                $trans->exception->getMessage(),
+                $trans->request,
+                $trans->response,
+                $trans->exception
+            ),
+            isset($response['transfer_info'])
+                ? $response['transfer_info'] : []
+        );
     }
 
     /**
