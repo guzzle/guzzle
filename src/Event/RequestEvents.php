@@ -31,9 +31,8 @@ final class RequestEvents
      * @throws RequestException
      */
     public static function emitBefore(Transaction $transaction) {
-        $request = $transaction->request;
         try {
-            $request->getEmitter()->emit(
+            $transaction->request->getEmitter()->emit(
                 'before',
                 new BeforeEvent($transaction)
             );
@@ -114,10 +113,10 @@ final class RequestEvents
         $e->emittedError(true);
 
         // Dispatch an event and allow interception
-        if (!$request->getEmitter()->emit(
-            'error',
-            new ErrorEvent($transaction, $e, $stats)
-        )->isPropagationStopped()) {
+        $event = new ErrorEvent($transaction, $e, $stats);
+        $request->getEmitter()->emit('error', $event);
+
+        if (!$event->isPropagationStopped()) {
             throw $e;
         }
     }
