@@ -7,7 +7,7 @@ use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\FutureInterface;
 use GuzzleHttp\Event\ListenerAttacherTrait;
-use GuzzleHttp\Event\DoneEvent;
+use GuzzleHttp\Event\EndEvent;
 
 /**
  * Sends and iterator of requests concurrently using a capped pool size.
@@ -76,7 +76,7 @@ class Pool implements FutureInterface
             ? $options['pool_size'] : 25;
         $this->eventListeners = $this->prepareListeners(
             $this->prepareOptions($options),
-            ['before', 'complete', 'error', 'done']
+            ['before', 'complete', 'error', 'end']
         );
     }
 
@@ -129,10 +129,10 @@ class Pool implements FutureInterface
         // and event to continuously track the results of transfers in the hash.
         static::send($client, $requests, RequestEvents::convertEventArray(
             $options,
-            ['done'],
+            ['end'],
             [
                 'priority' => RequestEvents::LATE,
-                'fn'       => function (DoneEvent $e) use ($hash) {
+                'fn'       => function (EndEvent $e) use ($hash) {
                     $hash[$e->getRequest()] = $e->getException()
                         ? $e->getException()
                         : $e->getResponse();
@@ -215,7 +215,7 @@ class Pool implements FutureInterface
     private function prepareOptions(array $options)
     {
         // Add the next request when requests finish.
-        $options = RequestEvents::convertEventArray($options, ['done'], [
+        $options = RequestEvents::convertEventArray($options, ['end'], [
             'priority' => RequestEvents::EARLY,
             'fn'       => function ($e) {
                 unset($this->derefQueue[spl_object_hash($e->getRequest())]);
@@ -225,9 +225,9 @@ class Pool implements FutureInterface
 
         // Stop errors from throwing by intercepting with a future that throws
         // when accessed.
-        return RequestEvents::convertEventArray($options, ['done'], [
+        return RequestEvents::convertEventArray($options, ['end'], [
             'priority' => RequestEvents::LATE - 1,
-            'fn'       => function (DoneEvent $e) {
+            'fn'       => function (EndEvent $e) {
                 if ($e->getException()) {
                     RequestEvents::stopException($e);
                 }

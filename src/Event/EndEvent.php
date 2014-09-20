@@ -2,13 +2,13 @@
 namespace GuzzleHttp\Event;
 
 /**
- * A terminal event emitted when a request has completed.
+ * A terminal event emitted when a request transaction has ended.
  *
  * This event is emitted for both successful responses and responses that
  * encountered an exception. You need to check if an exception is present
  * in your listener to know the difference.
  */
-class DoneEvent extends AbstractTransferEvent
+class EndEvent extends AbstractTransferEvent
 {
     /**
      * Get the exception that was encountered (if any)

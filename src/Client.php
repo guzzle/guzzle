@@ -13,7 +13,7 @@ use GuzzleHttp\Ring\Client\CurlAdapter;
 use GuzzleHttp\Ring\Client\StreamAdapter;
 use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\RingFutureInterface;
-use GuzzleHttp\Event\RequestFsm;
+use GuzzleHttp\Event\RequestEvents;
 
 /**
  * HTTP client
@@ -82,7 +82,7 @@ class Client implements ClientInterface
             : self::getDefaultAdapter();
         $this->fsm = isset($config['fsm'])
             ? $config['fsm']
-            : new RequestFsm();
+            : RequestEvents::createFsm();
     }
 
     /**
