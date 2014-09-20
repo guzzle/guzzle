@@ -2,7 +2,6 @@
 namespace GuzzleHttp\Event;
 
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Message\ResponseInterface;
 
 /**
  * Event object emitted after a request has been sent and an error was
@@ -13,18 +12,6 @@ use GuzzleHttp\Message\ResponseInterface;
  */
 class ErrorEvent extends AbstractTransferEvent
 {
-    /**
-     * Intercept the exception and inject a response
-     *
-     * @param ResponseInterface $response Response to set
-     */
-    public function intercept(ResponseInterface $response)
-    {
-        $this->transaction->response = $response;
-        $this->transaction->exception = null;
-        $this->stopPropagation();
-    }
-
     /**
      * Get the exception that was encountered
      *

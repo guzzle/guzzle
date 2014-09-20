@@ -2,13 +2,12 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Event\RequestEvents;
-use GuzzleHttp\Event\CompleteEvent;
-use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Message\FutureResponse;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\FutureInterface;
 use GuzzleHttp\Event\ListenerAttacherTrait;
+use GuzzleHttp\Event\DoneEvent;
 
 /**
  * Sends and iterator of requests concurrently using a capped pool size.
@@ -77,7 +76,7 @@ class Pool implements FutureInterface
             ? $options['pool_size'] : 25;
         $this->eventListeners = $this->prepareListeners(
             $this->prepareOptions($options),
-            ['before', 'complete', 'error']
+            ['before', 'complete', 'error', 'done']
         );
     }
 
@@ -126,29 +125,22 @@ class Pool implements FutureInterface
             $hash->attach($request);
         }
 
-        // Continuously track error and complete requests in the hash.
+        // In addition to the normally run events when requests complete, add
+        // and event to continuously track the results of transfers in the hash.
         static::send($client, $requests, RequestEvents::convertEventArray(
             $options,
-            ['complete', 'error'],
+            ['done'],
             [
                 'priority' => RequestEvents::LATE,
-                'fn'       => function ($e) use ($hash) {
-                    $hash[$e->getRequest()] = $e;
+                'fn'       => function (DoneEvent $e) use ($hash) {
+                    $hash[$e->getRequest()] = $e->getException()
+                        ? $e->getException()
+                        : $e->getResponse();
                 }
             ]
         ));
 
-        // Update the received value for any of the intercepted requests.
-        $result = [];
-        foreach ($hash as $request) {
-            if ($hash[$request] instanceof CompleteEvent) {
-                $result[] = $hash[$request]->getResponse();
-            } elseif ($hash[$request] instanceof ErrorEvent) {
-                $result[] = $hash[$request]->getException();
-            }
-        }
-
-        return $result;
+        return iterator_to_array($hash);
     }
 
     public function realized()
@@ -222,27 +214,23 @@ class Pool implements FutureInterface
 
     private function prepareOptions(array $options)
     {
-        // Remove requests from the deref queue on complete and send another.
-        $options = RequestEvents::convertEventArray($options,
-            ['complete', 'error'],
-            [
-                'priority' => RequestEvents::EARLY,
-                'fn'       => function ($e) {
-                    unset($this->derefQueue[spl_object_hash($e->getRequest())]);
-                    $this->addNextRequest();
-                }
-            ]
-        );
+        // Add the next request when requests finish.
+        $options = RequestEvents::convertEventArray($options, ['done'], [
+            'priority' => RequestEvents::EARLY,
+            'fn'       => function ($e) {
+                unset($this->derefQueue[spl_object_hash($e->getRequest())]);
+                $this->addNextRequest();
+            }
+        ]);
 
-        // Stop error events from raising. The pool sends additional requests
-        // on the "complete"/"error" event. Exceptions encountered during these
-        // events are caught an emit an error event that can be handled for
-        // the previous request. This has an unwanted trickle-down effect, so
-        // we prevent the issue from preventing exceptions from being thrown.
-        return RequestEvents::convertEventArray($options, ['error'], [
+        // Stop errors from throwing by intercepting with a future that throws
+        // when accessed.
+        return RequestEvents::convertEventArray($options, ['done'], [
             'priority' => RequestEvents::LATE - 1,
-            'fn'       => function (ErrorEvent $e) {
-                $e->stopPropagation();
+            'fn'       => function (DoneEvent $e) {
+                if ($e->getException()) {
+                    RequestEvents::stopException($e);
+                }
             }
         ]);
     }

@@ -1,6 +1,8 @@
 <?php
 namespace GuzzleHttp\Event;
 
+use GuzzleHttp\Message\FutureResponse;
+
 /**
  * Contains methods used to manage the request event lifecycle.
  */
@@ -52,5 +54,19 @@ final class RequestEvents
         }
 
         return $options;
+    }
+
+    /**
+     * Stops the DoneEvent from throwing an exception by injecting a future
+     * response that throws when dereferenced.
+     *
+     * @param DoneEvent $e
+     */
+    public static function stopException(DoneEvent $e)
+    {
+        $e->intercept(new FutureResponse(
+            function () use ($e) { throw $e->getException(); },
+            function () { return false; }
+        ));
     }
 }

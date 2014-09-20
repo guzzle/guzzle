@@ -9,9 +9,6 @@ use GuzzleHttp\Message\ResponseInterface;
  */
 class RequestException extends TransferException
 {
-    /** @var bool */
-    private $emittedErrorEvent = false;
-
     /** @var RequestInterface */
     private $request;
 
@@ -95,29 +92,5 @@ class RequestException extends TransferException
     public function hasResponse()
     {
         return $this->response !== null;
-    }
-
-    /**
-     * Check or set if the exception was emitted in an error event.
-     *
-     * This value is used in the RequestEvents::emitBefore() method to check
-     * to see if an exception has already been emitted in an error event.
-     *
-     * @param bool|null Set to true to set the exception as having emitted an
-     *     error. Leave null to retrieve the current setting.
-     *
-     * @return null|bool
-     * @throws \InvalidArgumentException if you attempt to set the value to false
-     */
-    public function emittedError($value = null)
-    {
-        if ($value === null) {
-            return $this->emittedErrorEvent;
-        } elseif ($value === true) {
-            $this->emittedErrorEvent = true;
-        } else {
-            throw new \InvalidArgumentException('You cannot set the emitted '
-                . 'error value to false.');
-        }
     }
 }

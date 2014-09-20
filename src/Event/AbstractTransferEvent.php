@@ -36,4 +36,16 @@ abstract class AbstractTransferEvent extends AbstractRequestEvent
     {
         return $this->transaction->response;
     }
+
+    /**
+     * Intercept the request and associate a response
+     *
+     * @param ResponseInterface $response Response to set
+     */
+    public function intercept(ResponseInterface $response)
+    {
+        $this->transaction->response = $response;
+        $this->transaction->exception = null;
+        $this->stopPropagation();
+    }
 }

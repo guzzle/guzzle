@@ -51,6 +51,11 @@ class Fsm
 
         do {
             $terminal = $trans->state === $finalState;
+
+            if (!isset($this->states[$trans->state])) {
+                throw new \RuntimeException("Invalid state: {$trans->state}");
+            }
+
             $state = $this->states[$trans->state];
 
             try {
