@@ -21,6 +21,5 @@ class BeforeEvent extends AbstractRequestEvent
         $this->transaction->response = $response;
         $this->transaction->exception = null;
         $this->stopPropagation();
-        RequestEvents::emitComplete($this->transaction);
     }
 }

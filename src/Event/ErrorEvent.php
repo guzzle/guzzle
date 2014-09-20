@@ -20,10 +20,9 @@ class ErrorEvent extends AbstractTransferEvent
      */
     public function intercept(ResponseInterface $response)
     {
-        $this->stopPropagation();
         $this->transaction->response = $response;
         $this->transaction->exception = null;
-        RequestEvents::emitComplete($this->transaction);
+        $this->stopPropagation();
     }
 
     /**
