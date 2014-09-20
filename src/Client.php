@@ -232,6 +232,8 @@ class Client implements ClientInterface
 
         // Return a response if one was set during the before event.
         if ($trans->response) {
+            $trans->state = 'complete';
+            $this->fsm->run($trans);
             return $trans->response;
         }
 

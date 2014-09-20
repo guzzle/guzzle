@@ -9,6 +9,7 @@ class Fsm
 {
     private $states;
     private $initialState;
+    private $maxTransitions;
 
     /**
      * The states array is an associative array of associative arrays
@@ -24,13 +25,20 @@ class Fsm
      * - error: The state to transition to when an error is raised. If not
      *   present and an exception occurs, then the exception is thrown.
      *
-     * @param string $initialState The initial state of the FSM
-     * @param array  $states       Associative array of state transitions.
+     * @param string $initialState   The initial state of the FSM
+     * @param array  $states         Associative array of state transitions.
+     * @param int    $maxTransitions The maximum number of allows transitions
+     *                               before failing. This is basically a
+     *                               fail-safe to prevent infinite loops.
      */
-    public function __construct($initialState, array $states)
-    {
+    public function __construct(
+        $initialState,
+        array $states,
+        $maxTransitions = 200
+    ) {
         $this->states = $states;
         $this->initialState = $initialState;
+        $this->maxTransitions = $maxTransitions;
     }
 
     /**
@@ -45,11 +53,19 @@ class Fsm
      */
     public function run(Transaction $trans, $finalState = null)
     {
+        $trans->transitionCount = 1;
         if (!$trans->state) {
             $trans->state = $this->initialState;
         }
 
         do {
+
+            if (++$trans->transitionCount > $this->maxTransitions) {
+                throw new \RuntimeException('Too many state transitions were '
+                    . 'encountered. This likely means that a combination of '
+                    . 'event listeners are in an infinite loop.');
+            }
+
             $terminal = $trans->state === $finalState;
 
             if (!isset($this->states[$trans->state])) {
