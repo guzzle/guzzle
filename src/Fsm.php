@@ -62,6 +62,8 @@ class Fsm
                 if (isset($state['transition'])) {
                     $state['transition']($trans);
                 }
+                // Did not throw, so remove any exceptions on the transaction.
+                $trans->exception = null;
                 // Break if the transition told us to bail, or if this is a
                 // terminal state.
                 if (!isset($state['success'])) {
@@ -70,13 +72,12 @@ class Fsm
                 // Transition to the success state
                 $trans->state = $state['success'];
             } catch (\Exception $e) {
+                $trans->exception = $e;
+                // Terminal error states throw the exception.
                 if (!isset($state['error'])) {
-                    // No error state, so this is a terminal state and must
-                    // throw an exception.
                     throw $e;
                 }
                 // Transition to the error state if possible.
-                $trans->exception = $e;
                 $trans->state = $state['error'];
             }
 
