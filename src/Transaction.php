@@ -46,6 +46,23 @@ class Transaction
     public $exception;
 
     /**
+     * Associative array of adapter specific transfer statistics and custom
+     * key value pair information. When providing similar information, adapters
+     * should follow the same key value pair naming conventions as PHP's
+     * curl_getinfo() (http://php.net/manual/en/function.curl-getinfo.php).
+     *
+     * @var array
+     */
+    public $transferInfo = [];
+
+    /**
+     * The transaction's state.
+     *
+     * @var string
+     */
+    public $state;
+
+    /**
      * @param ClientInterface  $client  Client that is used to send the requests
      * @param RequestInterface $request Request to send
      */

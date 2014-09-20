@@ -4,8 +4,6 @@ namespace GuzzleHttp;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Event\ProgressEvent;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Stream\Stream;
@@ -54,18 +52,20 @@ class RingBridge
      * @param array                   $ringRequest Request to update.
      * @param Transaction             $trans       Transaction
      * @param MessageFactoryInterface $factory     Creates responses.
+     * @param Fsm                     $fsm         State machine.
      *
      * @return array Returns the new ring response array.
      */
     public static function addRingRequestCallbacks(
         array $ringRequest,
         Transaction $trans,
-        MessageFactoryInterface $factory
+        MessageFactoryInterface $factory,
+        Fsm $fsm
     ) {
         $request = $trans->request;
 
-        $ringRequest['then'] = function (array $response) use ($trans, $factory) {
-            self::completeRingResponse($trans, $response, $factory);
+        $ringRequest['then'] = function (array $response) use ($trans, $factory, $fsm) {
+            self::completeRingResponse($trans, $response, $factory, $fsm);
         };
 
         // Emit progress events if any progress listeners are registered.
@@ -89,12 +89,14 @@ class RingBridge
      *
      * @param Transaction             $transaction Transaction to update.
      * @param MessageFactoryInterface $factory     Creates responses.
+     * @param Fsm                     $fsm         State machine.
      *
      * @return array Converted Guzzle Ring request.
      */
     public static function prepareRingRequest(
         Transaction $transaction,
-        MessageFactoryInterface $factory
+        MessageFactoryInterface $factory,
+        Fsm $fsm
     ) {
         // Clear out the transaction state when initiating.
         $transaction->exception = null;
@@ -102,7 +104,8 @@ class RingBridge
         return self::addRingRequestCallbacks(
             self::createRingRequest($transaction->request),
             $transaction,
-            $factory
+            $factory,
+            $fsm
         );
     }
 
@@ -114,11 +117,13 @@ class RingBridge
      * @param Transaction             $trans          Owns request and response.
      * @param array                   $response       Ring response array
      * @param MessageFactoryInterface $messageFactory Creates response objects.
+     * @param Fsm                     $fsm            State machine.
      */
     public static function completeRingResponse(
         Transaction $trans,
         array $response,
-        MessageFactoryInterface $messageFactory
+        MessageFactoryInterface $messageFactory,
+        Fsm $fsm
     ) {
         if (!empty($response['status'])) {
             $options = [];
@@ -139,25 +144,19 @@ class RingBridge
             }
         }
 
+        $trans->transferInfo = isset($response['transfer_info'])
+            ? $response['transfer_info'] : [];
+
+        // Determine which state to transition to.
         if (!isset($response['error'])) {
-            RequestEvents::emitComplete($trans);
-            return;
+            $trans->state = 'complete';
+        } else {
+            $trans->exception = $response['error'];
+            $trans->state = 'error';
         }
 
-        $trans->exception = $response['error'];
-        unset($response['error']);
-
-        RequestEvents::emitError(
-            $trans,
-            new RequestException(
-                $trans->exception->getMessage(),
-                $trans->request,
-                $trans->response,
-                $trans->exception
-            ),
-            isset($response['transfer_info'])
-                ? $response['transfer_info'] : []
-        );
+        // Complete the lifecycle of the request.
+        $fsm->run($trans);
     }
 
     /**

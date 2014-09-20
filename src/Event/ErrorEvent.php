@@ -3,7 +3,6 @@ namespace GuzzleHttp\Event;
 
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\ResponseInterface;
-use GuzzleHttp\Transaction;
 
 /**
  * Event object emitted after a request has been sent and an error was
@@ -14,26 +13,6 @@ use GuzzleHttp\Transaction;
  */
 class ErrorEvent extends AbstractTransferEvent
 {
-    /**
-     * @param Transaction      $transaction   Transaction that contains the request
-     * @param RequestException $e             Exception encountered
-     * @param array            $transferStats Array of transfer statistics
-     */
-    public function __construct(
-        Transaction $transaction,
-        RequestException $e,
-        $transferStats = []
-    ) {
-        $transaction->exception = $e;
-
-        // Set the response on the transaction if one is present on the except.
-        if ($response = $e->getResponse()) {
-            $transaction->response = $response;
-        }
-
-        parent::__construct($transaction, $transferStats);
-    }
-
     /**
      * Intercept the exception and inject a response
      *

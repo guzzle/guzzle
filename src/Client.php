@@ -2,7 +2,6 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Event\HasEmitterTrait;
-use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\MessageFactoryInterface;
@@ -14,6 +13,7 @@ use GuzzleHttp\Ring\Client\CurlAdapter;
 use GuzzleHttp\Ring\Client\StreamAdapter;
 use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\RingFutureInterface;
+use GuzzleHttp\Event\RequestFsm;
 
 /**
  * HTTP client
@@ -33,6 +33,9 @@ class Client implements ClientInterface
 
     /** @var array Default request options */
     private $defaults;
+
+    /** @var Fsm Request state machine */
+    private $fsm;
 
     /**
      * Clients accept an array of constructor parameters.
@@ -62,6 +65,7 @@ class Client implements ClientInterface
      *     - message_factory: Factory used to create request and response object
      *     - defaults: Default request options to apply to each request
      *     - emitter: Event emitter used for request events
+     *     - fsm: (internal use only) The request finite state machine.
      */
     public function __construct(array $config = [])
     {
@@ -76,6 +80,9 @@ class Client implements ClientInterface
         $this->adapter = isset($config['adapter'])
             ? $config['adapter']
             : self::getDefaultAdapter();
+        $this->fsm = isset($config['fsm'])
+            ? $config['fsm']
+            : new RequestFsm();
     }
 
     /**
@@ -221,36 +228,38 @@ class Client implements ClientInterface
     public function send(RequestInterface $request)
     {
         $trans = new Transaction($this, $request);
+        $this->fsm->run($trans, 'send');
 
-        try {
-            RequestEvents::emitBefore($trans);
-
-            // Return a response if one was set during the before event.
-            if ($trans->response) {
-                return $trans->response;
-            }
-
-            // Send the request using the Guzzle Ring handler
-            $adapter = $this->adapter;
-            $response = $adapter(
-                RingBridge::prepareRingRequest($trans, $this->messageFactory)
-            );
-
-            if ($response instanceof RingFutureInterface) {
-                return $this->createFutureResponse($response, $trans);
-            } elseif ($trans->exception) {
-                throw $trans->exception;
-            } elseif ($trans->response) {
-                // A response can be set during the "then" ring callback.
-                return $trans->response;
-            }
-
-            // No response, future, or error, so throw an exception.
-            throw $this->getNoRingResponseException($trans->request);
-
-        } catch (\Exception $e) {
-            throw $this->wrapException($request, $e);
+        // Return a response if one was set during the before event.
+        if ($trans->response) {
+            return $trans->response;
         }
+
+        // Send the request using the Guzzle Ring handler
+        $adapter = $this->adapter;
+        $response = $adapter(
+            RingBridge::prepareRingRequest(
+                $trans, $this->messageFactory, $this->fsm
+            )
+        );
+
+        // Future responses do not need to process right away.
+        if ($response instanceof RingFutureInterface) {
+            $trans->response = $this->createFutureResponse($trans, $response);
+            return $trans->response;
+        }
+
+        // Throw a wrapped exception if the transactions has an error.
+        if ($trans->exception) {
+            throw $this->wrapException($trans->request, $trans->exception);
+        }
+
+        // Return a response if one was synchronously available.
+        if ($trans->response) {
+            return $trans->response;
+        }
+
+        throw $this->getNoRingResponseException($trans->request);
     }
 
     private function wrapException(RequestInterface $request, \Exception $e)
@@ -260,10 +269,9 @@ class Client implements ClientInterface
             : new RequestException($e->getMessage(), $request, null, $e);
     }
 
-
     private function createFutureResponse(
-        RingFutureInterface $response,
-        Transaction $trans
+        Transaction $trans,
+        RingFutureInterface $response
     ) {
         // Create a future response that's hooked up to the ring future.
         return new FutureResponse(
@@ -401,15 +409,6 @@ class Client implements ClientInterface
         return $this->defaults['headers'];
     }
 
-    /**
-     * @deprecated Use {@see GuzzleHttp\Pool} instead.
-     * @see GuzzleHttp\Pool
-     */
-    public function sendAll($requests, array $options = [])
-    {
-        Pool::send($this, $requests, $options);
-    }
-
     private function getNoRingResponseException(RequestInterface $request)
     {
         return new RequestException(
@@ -418,5 +417,14 @@ class Client implements ClientInterface
             . 'due to an incorrectly implemented Guzzle Ring adapter.',
             $request
         );
+    }
+
+    /**
+     * @deprecated Use {@see GuzzleHttp\Pool} instead.
+     * @see GuzzleHttp\Pool
+     */
+    public function sendAll($requests, array $options = [])
+    {
+        Pool::send($this, $requests, $options);
     }
 }
