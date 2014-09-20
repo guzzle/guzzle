@@ -19,18 +19,7 @@ class CompleteEvent extends AbstractTransferEvent
     public function intercept(ResponseInterface $response)
     {
         $this->stopPropagation();
-        $trans = $this->getTransaction();
-        $trans->response = $response;
-        $trans->exception = null;
-    }
-
-    /**
-     * Get the response of the request
-     *
-     * @return ResponseInterface
-     */
-    public function getResponse()
-    {
-        return $this->getTransaction()->response;
+        $this->transaction->response = $response;
+        $this->transaction->exception = null;
     }
 }

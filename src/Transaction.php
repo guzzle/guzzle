@@ -12,10 +12,18 @@ use GuzzleHttp\Message\ResponseInterface;
  */
 class Transaction
 {
-    /** @var ClientInterface Client used to transfer the request. */
+    /**
+     * HTTP client used to transfer the request.
+     *
+     * @var ClientInterface
+     */
     public $client;
 
-    /** @var RequestInterface The request that is being sent. */
+    /**
+     * The request that is being sent.
+     *
+     * @var RequestInterface
+     */
     public $request;
 
     /**

@@ -8,7 +8,7 @@ use GuzzleHttp\Message\RequestInterface;
 abstract class AbstractRequestEvent extends AbstractEvent
 {
     /** @var Transaction */
-    private $transaction;
+    protected $transaction;
 
     /**
      * @param Transaction $transaction
@@ -19,7 +19,7 @@ abstract class AbstractRequestEvent extends AbstractEvent
     }
 
     /**
-     * Get the client associated with the event
+     * Get the HTTP client associated with the event.
      *
      * @return ClientInterface
      */

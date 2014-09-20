@@ -14,20 +14,24 @@ use GuzzleHttp\Transaction;
  */
 class ErrorEvent extends AbstractTransferEvent
 {
-    private $exception;
-
     /**
-     * @param Transaction $transaction   Transaction that contains the request
-     * @param RequestException     $e    Exception encountered
-     * @param array                $transferStats Array of transfer statistics
+     * @param Transaction      $transaction   Transaction that contains the request
+     * @param RequestException $e             Exception encountered
+     * @param array            $transferStats Array of transfer statistics
      */
     public function __construct(
         Transaction $transaction,
         RequestException $e,
         $transferStats = []
     ) {
+        $transaction->exception = $e;
+
+        // Set the response on the transaction if one is present on the except.
+        if ($response = $e->getResponse()) {
+            $transaction->response = $response;
+        }
+
         parent::__construct($transaction, $transferStats);
-        $this->exception = $e;
     }
 
     /**
@@ -38,10 +42,9 @@ class ErrorEvent extends AbstractTransferEvent
     public function intercept(ResponseInterface $response)
     {
         $this->stopPropagation();
-        $trans = $this->getTransaction();
-        $trans->response = $response;
-        $trans->exception = null;
-        RequestEvents::emitComplete($trans);
+        $this->transaction->response = $response;
+        $this->transaction->exception = null;
+        RequestEvents::emitComplete($this->transaction);
     }
 
     /**
@@ -51,16 +54,6 @@ class ErrorEvent extends AbstractTransferEvent
      */
     public function getException()
     {
-        return $this->exception;
-    }
-
-    /**
-     * Get the response the was received (if any)
-     *
-     * @return ResponseInterface|null
-     */
-    public function getResponse()
-    {
-        return $this->getException()->getResponse();
+        return $this->transaction->exception;
     }
 }

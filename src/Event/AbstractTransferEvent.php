@@ -32,18 +32,23 @@ use GuzzleHttp\Message\ResponseInterface;
  */
 abstract class AbstractTransferEvent extends AbstractRequestEvent
 {
-    private $transferInfo;
+    /**
+     * Associative array of transfer information. You can access and modify
+     * this array publicly to inspect any transfer information that may have
+     * been provided by the underlying HTTP adapter.
+     *
+     * @var array
+     */
+    public $transferInfo = [];
 
     /**
      * @param Transaction $transaction  Transaction
-     * @param array                $transferInfo Transfer statistics
+     * @param array       $transferInfo Transfer statistics
      */
-    public function __construct(
-        Transaction $transaction,
-        $transferInfo = []
-    ) {
-        parent::__construct($transaction);
+    public function __construct(Transaction $transaction, $transferInfo = [])
+    {
         $this->transferInfo = $transferInfo;
+        parent::__construct($transaction);
     }
 
     /**
@@ -71,12 +76,8 @@ abstract class AbstractTransferEvent extends AbstractRequestEvent
      *
      * @return ResponseInterface|null
      */
-    abstract public function getResponse();
-
-    /**
-     * Intercept the request and associate a response
-     *
-     * @param ResponseInterface $response Response to set
-     */
-    abstract public function intercept(ResponseInterface $response);
+    public function getResponse()
+    {
+        return $this->transaction->response;
+    }
 }
