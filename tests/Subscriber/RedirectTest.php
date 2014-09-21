@@ -24,7 +24,14 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         $client->getEmitter()->attach($history);
         $client->getEmitter()->attach($mock);
 
-        $response = $client->get('/foo');
+        $request = $client->createRequest('GET', '/foo');
+        // Ensure "end" is called only once
+        $called = 0;
+        $request->getEmitter()->on('end', function () use (&$called) {
+            $called++;
+        });
+        $response = $client->send($request);
+
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertContains('/redirect2', $response->getEffectiveUrl());
 
@@ -37,6 +44,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('GET', $requests[1]->getMethod());
         $this->assertEquals('/redirect2', $requests[2]->getPath());
         $this->assertEquals('GET', $requests[2]->getMethod());
+
+        $this->assertEquals(1, $called);
     }
 
     /**
