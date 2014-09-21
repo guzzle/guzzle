@@ -131,4 +131,16 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($future->cancel());
         $future->getStatusCode();
     }
+
+    public function testExceptionInToStringTriggersError()
+    {
+        $future = new FutureResponse(function () {});
+        $err = '';
+        set_error_handler(function () use (&$err) {
+            $err = func_get_args()[1];
+        });
+        echo $future;
+        restore_error_handler();
+        $this->assertContains('Future did not return a valid response', $err);
+    }
 }

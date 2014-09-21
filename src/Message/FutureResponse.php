@@ -56,7 +56,12 @@ class FutureResponse implements ResponseInterface, FutureInterface
 
     public function __toString()
     {
-        return $this->result->__toString();
+        try {
+            return $this->result->__toString();
+        } catch (\Exception $e) {
+            trigger_error($e->getMessage(), E_USER_WARNING);
+            return '';
+        }
     }
 
     public function getProtocolVersion()

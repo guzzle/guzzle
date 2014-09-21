@@ -329,7 +329,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage incorrectly implemented Guzzle Ring adapter
+     * @expectedExceptionMessage not calling the "then"
      */
     public function testEnsuresResponseIsPresentAfterSending()
     {
@@ -340,7 +340,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage incorrectly implemented Guzzle Ring adapter
+     * @expectedExceptionMessage not calling the "then"
      */
     public function testEnsuresResponseIsPresentAfterDereferencing()
     {

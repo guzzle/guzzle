@@ -131,8 +131,6 @@ class RingBridge
             ? $response['transfer_info'] : [];
 
         if (!empty($response['status'])) {
-            // Transition to "error" if an error is present. Otherwise, complete.
-            $trans->state = isset($response['error']) ? 'error' : 'complete';
             $options = [];
             if (isset($response['version'])) {
                 $options['protocol_version'] = $response['version'];
@@ -142,7 +140,7 @@ class RingBridge
             }
             $trans->response = $messageFactory->createResponse(
                 $response['status'],
-                $response['headers'],
+                isset($response['headers']) ? $response['headers'] : [],
                 isset($response['body']) ? $response['body'] : null,
                 $options
             );
@@ -201,11 +199,14 @@ class RingBridge
      */
     public static function getNoRingResponseException(RequestInterface $request)
     {
-        return new RequestException(
-            'Sending the request did not return a response, exception, or '
-            . 'populate the transaction with a response. This is most likely '
-            . 'due to an incorrectly implemented Guzzle Ring adapter.',
-            $request
-        );
+        $message = <<<EOT
+Sending the request did not return a response, exception, or populate the
+transaction with a response. This is most likely due to an incorrectly
+implemented Guzzle-Ring adapter that is not calling the "then" function of a
+request array when the response is ready. If you are simply trying to mock
+responses, then it is recommneded to use the
+GuzzleHttp\Ring\Client\MockAdapter.
+EOT;
+        return new RequestException($message, $request);
     }
 }

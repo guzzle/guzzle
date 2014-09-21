@@ -249,8 +249,7 @@ class Client implements ClientInterface
 
         // Future responses do not need to process right away.
         if ($response instanceof RingFutureInterface) {
-            $trans->response = $this->createFutureResponse($trans, $response);
-            return $trans->response;
+            return $this->createFutureResponse($trans, $response);
         }
 
         // Throw a wrapped exception if the transactions has an error.
@@ -264,33 +263,6 @@ class Client implements ClientInterface
         }
 
         throw RingBridge::getNoRingResponseException($trans->request);
-    }
-
-    private function createFutureResponse(
-        Transaction $trans,
-        RingFutureInterface $response
-    ) {
-        // Create a future response that's hooked up to the ring future.
-        return new FutureResponse(
-            // Dereference function
-            function () use ($response, $trans) {
-                // Dereference the underlying future and block until complete.
-                $response->deref();
-                // Throw an exception if present. Remove them to prevent this.
-                if ($trans->exception) {
-                    throw RequestEvents::wrapException($trans->request, $trans->exception);
-                }
-                // No exception, so the transaction should have a response.
-                if ($trans->response) {
-                    return $trans->response;
-                }
-                throw RingBridge::getNoRingResponseException($trans->request);
-            },
-            // Cancel function. Just proxy to the underlying future.
-            function () use ($response) {
-                return $response->cancel();
-            }
-        );
     }
 
     /**
@@ -319,6 +291,33 @@ class Client implements ClientInterface
         return $settings;
     }
 
+    private function createFutureResponse(
+        Transaction $trans,
+        RingFutureInterface $response
+    ) {
+        // Create a future response that's hooked up to the ring future.
+        return new FutureResponse(
+            // Dereference function
+            function () use ($response, $trans) {
+                $response->deref();
+                // Throw an exception if present. You need to remove transaction
+                // exceptions to prevent them from being thrown.
+                if ($trans->exception) {
+                    throw RequestEvents::wrapException($trans->request, $trans->exception);
+                } elseif ($trans->response) {
+                    // Return the response if one was set on the transaction.
+                    return $trans->response;
+                }
+                // If we know that the events were fired, then there's a problem.
+                throw RingBridge::getNoRingResponseException($trans->request);
+            },
+            // Cancel function. Just proxy to the underlying future.
+            function () use ($response) {
+                return $response->cancel();
+            }
+        );
+    }
+
     /**
      * Expand a URI template and inherit from the base URL if it's relative
      *
@@ -328,15 +327,19 @@ class Client implements ClientInterface
      */
     private function buildUrl($url)
     {
+        // URI template (absolute or relative)
         if (!is_array($url)) {
-            if (strpos($url, '://')) {
-                return (string) $url;
-            }
-            return (string) $this->baseUrl->combine($url);
-        } elseif (strpos($url[0], '://')) {
+            return strpos($url, '://')
+                ? (string) $url
+                : (string) $this->baseUrl->combine($url);
+        }
+
+        // Absolute URL
+        if (strpos($url[0], '://')) {
             return Utils::uriTemplate($url[0], $url[1]);
         }
 
+        // Combine the relative URL with the base URL
         return (string) $this->baseUrl->combine(
             Utils::uriTemplate($url[0], $url[1])
         );
