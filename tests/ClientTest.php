@@ -344,9 +344,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
      */
     public function testEnsuresResponseIsPresentAfterDereferencing()
     {
-        $adapter = function () {
+        $adapter = new MockAdapter(function () {
             return new Future(function () { return []; });
-        };
+        });
         $client = new Client(['adapter' => $adapter]);
         $client->get('http://httpbin.org')->deref();
     }
@@ -415,30 +415,6 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertTrue($calledFuture);
         $this->assertEquals(1, $called);
-    }
-
-    public function testCanInterceptFutureOnThenFunction()
-    {
-        $client = new Client();
-        $request = $client->createRequest('GET', Server::$url, ['future' => true]);
-        $trans = null;
-        // Get the transaction.
-        $request->getEmitter()->on('before', function ($e) use (&$trans) {
-            $trans = $this->readAttribute($e, 'transaction');
-        });
-        // Set the response on the transaction, but set no ring response.
-        $adapter = new MockAdapter(function () use (&$trans) {
-            // Only do the transaction update when dereferenced.
-            return new Future(function () use (&$trans) {
-                $trans->response = new Response(200);
-                return [];
-            });
-        });
-        $client = new Client(['adapter' => $adapter]);
-        $future = $client->send($request);
-        $future->deref();
-        // Did not get a ring response, but the transaction was updated.
-        $this->assertEquals(200, $future->getStatusCode());
     }
 
     public function testCanReturnFutureResults()

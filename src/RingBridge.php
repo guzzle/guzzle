@@ -7,6 +7,7 @@ use GuzzleHttp\Event\ProgressEvent;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Exception\RequestException;
 
 /**
  * Provides the bridge between Guzzle requests and responses and Guzzle Ring.
@@ -125,7 +126,13 @@ class RingBridge
         MessageFactoryInterface $messageFactory,
         Fsm $fsm
     ) {
+        $trans->state = 'complete';
+        $trans->transferInfo = isset($response['transfer_info'])
+            ? $response['transfer_info'] : [];
+
         if (!empty($response['status'])) {
+            // Transition to "error" if an error is present. Otherwise, complete.
+            $trans->state = isset($response['error']) ? 'error' : 'complete';
             $options = [];
             if (isset($response['version'])) {
                 $options['protocol_version'] = $response['version'];
@@ -142,17 +149,14 @@ class RingBridge
             if (isset($response['effective_url'])) {
                 $trans->response->setEffectiveUrl($response['effective_url']);
             }
+        } elseif (empty($response['error'])) {
+            // When nothing was returned, then we need to add an error.
+            $response['error'] = self::getNoRingResponseException($trans->request);
         }
 
-        $trans->transferInfo = isset($response['transfer_info'])
-            ? $response['transfer_info'] : [];
-
-        // Determine which state to transition to.
-        if (!isset($response['error'])) {
-            $trans->state = 'complete';
-        } else {
-            $trans->exception = $response['error'];
+        if (isset($response['error'])) {
             $trans->state = 'error';
+            $trans->exception = $response['error'];
         }
 
         // Complete the lifecycle of the request.
@@ -184,6 +188,24 @@ class RingBridge
             isset($request['headers']) ? $request['headers'] : [],
             isset($request['body']) ? Stream::factory($request['body']) : null,
             $options
+        );
+    }
+
+    /**
+     * Get an exception that can be used when a ring adapter does not populate
+     * a response.
+     *
+     * @param RequestInterface $request
+     *
+     * @return RequestException
+     */
+    public static function getNoRingResponseException(RequestInterface $request)
+    {
+        return new RequestException(
+            'Sending the request did not return a response, exception, or '
+            . 'populate the transaction with a response. This is most likely '
+            . 'due to an incorrectly implemented Guzzle Ring adapter.',
+            $request
         );
     }
 }

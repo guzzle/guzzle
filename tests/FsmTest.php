@@ -65,6 +65,7 @@ class FsmTest extends \PHPUnit_Framework_TestCase
                 'transition' => function (Transaction $trans) use ($t, &$c) {
                     $c[] = 'error';
                     $this->assertInstanceOf('OutOfBoundsException', $t->exception);
+                    $trans->exception = null;
                 }
             ],
             'end' => [

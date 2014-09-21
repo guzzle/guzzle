@@ -2,7 +2,6 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Event\HasEmitterTrait;
-use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
@@ -264,7 +263,7 @@ class Client implements ClientInterface
             return $trans->response;
         }
 
-        throw $this->getNoRingResponseException($trans->request);
+        throw RingBridge::getNoRingResponseException($trans->request);
     }
 
     private function createFutureResponse(
@@ -285,7 +284,7 @@ class Client implements ClientInterface
                 if ($trans->response) {
                     return $trans->response;
                 }
-                throw $this->getNoRingResponseException($trans->request);
+                throw RingBridge::getNoRingResponseException($trans->request);
             },
             // Cancel function. Just proxy to the underlying future.
             function () use ($response) {
@@ -404,16 +403,6 @@ class Client implements ClientInterface
         $options = array_replace_recursive($defaults, $options);
 
         return $this->defaults['headers'];
-    }
-
-    private function getNoRingResponseException(RequestInterface $request)
-    {
-        return new RequestException(
-            'Sending the request did not return a response, exception, or '
-            . 'populate the transaction with a response. This is most likely '
-            . 'due to an incorrectly implemented Guzzle Ring adapter.',
-            $request
-        );
     }
 
     /**
