@@ -232,8 +232,11 @@ class Client implements ClientInterface
 
         // Return a response if one was set during the before event.
         if ($trans->response) {
-            $trans->state = 'complete';
-            $this->fsm->run($trans);
+            // Non-future responses need to finish their complete event now.
+            if (!($trans->response instanceof FutureResponse)) {
+                $trans->state = 'complete';
+                $this->fsm->run($trans);
+            }
             return $trans->response;
         }
 
@@ -253,7 +256,7 @@ class Client implements ClientInterface
 
         // Throw a wrapped exception if the transactions has an error.
         if ($trans->exception) {
-            throw $this->wrapException($trans->request, $trans->exception);
+            throw RequestEvents::wrapException($trans->request, $trans->exception);
         }
 
         // Return a response if one was synchronously available.
@@ -262,13 +265,6 @@ class Client implements ClientInterface
         }
 
         throw $this->getNoRingResponseException($trans->request);
-    }
-
-    private function wrapException(RequestInterface $request, \Exception $e)
-    {
-        return $e instanceof RequestException
-            ? $e
-            : new RequestException($e->getMessage(), $request, null, $e);
     }
 
     private function createFutureResponse(
@@ -281,10 +277,9 @@ class Client implements ClientInterface
             function () use ($response, $trans) {
                 // Dereference the underlying future and block until complete.
                 $response->deref();
-                // Exceptions need to be removed when intercepting errors,
-                // otherwise, they're thrown.
+                // Throw an exception if present. Remove them to prevent this.
                 if ($trans->exception) {
-                    throw $this->wrapException($trans->request, $trans->exception);
+                    throw RequestEvents::wrapException($trans->request, $trans->exception);
                 }
                 // No exception, so the transaction should have a response.
                 if ($trans->response) {

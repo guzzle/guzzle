@@ -6,6 +6,7 @@ use GuzzleHttp\Fsm;
 use GuzzleHttp\Transaction;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Ring\FutureInterface;
+use GuzzleHttp\Message\RequestInterface;
 
 /**
  * Contains methods used to manage the request event lifecycle.
@@ -61,6 +62,21 @@ final class RequestEvents
     }
 
     /**
+     * Wrap non-RequesExceptions with a RequestException
+     *
+     * @param RequestInterface $request
+     * @param \Exception       $e
+     *
+     * @return RequestException
+     */
+    public static function wrapException(RequestInterface $request, \Exception $e)
+    {
+        return $e instanceof RequestException
+            ? $e
+            : new RequestException($e->getMessage(), $request, null, $e);
+    }
+
+    /**
      * Stops the DoneEvent from throwing an exception by injecting a future
      * response that throws when dereferenced.
      *
@@ -68,8 +84,14 @@ final class RequestEvents
      */
     public static function stopException(EndEvent $e)
     {
+        // Keep a reference to the exception because it will be changed.
+        $ex = $e->getException();
+        // Stop further "end" listeners from firing and add a future response
+        // that throws when accessed.
         $e->intercept(new FutureResponse(
-            function () use ($e) { throw $e->getException(); },
+            function () use ($ex) {
+                throw $ex;
+            },
             function () { return false; }
         ));
     }
@@ -143,6 +165,11 @@ final class RequestEvents
     /** @internal */
     public static function completeTransition(Transaction $trans)
     {
+        // Futures will have their own end events emitted when dereferenced.
+        if ($trans->response instanceof FutureInterface) {
+            return;
+        }
+
         $trans->response->setEffectiveUrl($trans->request->getUrl());
         $trans->request->getEmitter()->emit(
             'complete',
@@ -153,11 +180,17 @@ final class RequestEvents
     /** @internal */
     public static function endTransition(Transaction $trans)
     {
-        // Futures will have their own done events emitted when dereferenced.
+        // Futures will have their own end events emitted when dereferenced.
         if ($trans->response instanceof FutureInterface) {
             return;
         }
 
         $trans->request->getEmitter()->emit('end', new EndEvent($trans));
+
+        // Throw exceptions in the terminal event if the exception was not
+        // handled by an "end" event listener.
+        if ($trans->exception) {
+            throw $trans->exception;
+        }
     }
 }

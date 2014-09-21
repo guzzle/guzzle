@@ -4,6 +4,7 @@ namespace GuzzleHttp\Subscriber;
 use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Event\SubscriberInterface;
 use GuzzleHttp\Event\CompleteEvent;
+use GuzzleHttp\Event\EndEvent;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Exception\CouldNotRewindStreamException;
 use GuzzleHttp\Message\RequestInterface;
@@ -136,6 +137,12 @@ class Redirect implements SubscriberInterface
             $url->setPassword(null);
             $redirectRequest->setHeader('Referer', (string) $url);
         }
+
+        // Prevent the "end" event from being fired multiple times on th
+        // original request.
+        $redirectRequest->getEmitter()->on('end', function (EndEvent $e) {
+            $e->stopPropagation();
+        }, 'first');
 
         return $redirectRequest;
     }

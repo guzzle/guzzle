@@ -36,6 +36,9 @@ class Pool implements FutureInterface
     /** @var array Hash of outstanding responses to dereference. */
     private $derefQueue = [];
 
+    /** @var array Hash of completed responses. */
+    private $completedQueue = [];
+
     /** @var \Iterator Yields requests */
     private $iter;
 
@@ -109,10 +112,7 @@ class Pool implements FutureInterface
      * @param array           $options  Passes through the options available in
      *                                  {@see GuzzleHttp\Pool::__construct}
      *
-     * @return array Array of {@see GuzzleHttp\Message\ResponseInterface} if
-     *     a request succeeded or a {@see GuzzleHttp\Exception\RequestException}
-     *     if it failed. The order of the resulting array is the same order as
-     *     the requests that were provided.
+     * @return BatchResults Returns a container for the results.
      * @throws \InvalidArgumentException if the event format is incorrect.
      */
     public static function batch(
@@ -140,7 +140,7 @@ class Pool implements FutureInterface
             ]
         ));
 
-        return iterator_to_array($hash);
+        return new BatchResults($hash);
     }
 
     public function realized()
@@ -183,6 +183,15 @@ class Pool implements FutureInterface
         return $this->isCancelled;
     }
 
+    /**
+     * {@inheritdoc}
+     *
+     * Attempt to cancel all outstanding requests (requests that are queued for
+     * dereferencing). Returns true if all outstanding requests can be
+     * cancelled.
+     *
+     * @return bool
+     */
     public function cancel()
     {
         if ($this->isCancelled || $this->realized()) {
@@ -200,6 +209,14 @@ class Pool implements FutureInterface
         return $success;
     }
 
+    /**
+     * Given the input variable, return an iterator if possible or throw.
+     *
+     * @param mixed $requests
+     *
+     * @return \Iterator
+     * @throws \InvalidArgumentException if unable to coerce into an iterable.
+     */
     private function coerceIterable($requests)
     {
         if ($requests instanceof \Iterator) {
@@ -212,29 +229,38 @@ class Pool implements FutureInterface
             . 'Found ' . Core::describeType($requests));
     }
 
+    /**
+     * Adds the necessary options to manage the pool.
+     */
     private function prepareOptions(array $options)
     {
-        // Add the next request when requests finish.
-        $options = RequestEvents::convertEventArray($options, ['end'], [
-            'priority' => RequestEvents::EARLY,
-            'fn'       => function ($e) {
-                unset($this->derefQueue[spl_object_hash($e->getRequest())]);
-                $this->addNextRequest();
-            }
-        ]);
-
-        // Stop errors from throwing by intercepting with a future that throws
-        // when accessed.
+        // Add the next request when requests finish, and stop errors from
+        // throwing by intercepting with a future that throws when accessed.
         return RequestEvents::convertEventArray($options, ['end'], [
             'priority' => RequestEvents::LATE - 1,
             'fn'       => function (EndEvent $e) {
+                $hash = spl_object_hash($e->getRequest());
+                // Remove from deref queue if present.
+                if (isset($this->derefQueue[$hash])) {
+                    unset($this->derefQueue[$hash]);
+                } else {
+                    // Add to the completed queue to prevent deref'ng
+                    $this->completedQueue[$hash] = true;
+                }
+                // If there was an error, then prevent the exception.
                 if ($e->getException()) {
                     RequestEvents::stopException($e);
                 }
+                // Add the next request in the pool when done with this one.
+                $this->addNextRequest();
             }
         ]);
     }
 
+    /**
+     * Adds the next request to pool and tracks what requests need to be
+     * dereferenced when completing the pool.
+     */
     private function addNextRequest()
     {
         if ($this->isCancelled || !$this->iter->valid()) {
@@ -256,10 +282,18 @@ class Pool implements FutureInterface
         $request->getConfig()->set('future', 'lazy');
         $this->attachListeners($request, $this->eventListeners);
         $response = $this->client->send($request);
+        $hash = spl_object_hash($request);
 
-        // Track future responses for later dereference before completing pool.
-        if ($response instanceof FutureResponse) {
-            $this->derefQueue[spl_object_hash($request)] = $response;
+        // Determine how to track the request based on what happened in events.
+        if (isset($this->completedQueue[$hash])) {
+            // Things in the completed queue were completed in events before
+            // the future was returned from the client. This means there's no
+            // need to dereference them when the pool finishes.
+            unset($this->completedQueue[$hash]);
+        } elseif ($response instanceof FutureResponse) {
+            // Track future responses for later dereference before completing
+            // pool.
+            $this->derefQueue[$hash] = $response;
         }
 
         return true;

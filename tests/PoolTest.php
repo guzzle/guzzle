@@ -10,6 +10,7 @@ use GuzzleHttp\Subscriber\History;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\ErrorEvent;
+use GuzzleHttp\Event\EndEvent;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Subscriber\Mock;
 
@@ -120,13 +121,17 @@ class PoolTest extends \PHPUnit_Framework_TestCase
 
     public function testBatchesRequests()
     {
-        $client = new Client();
+        $client = new Client(['adapter' => function () {
+            throw new \RuntimeException('No network access');
+        }]);
+
         $responses = [
             new Response(301, ['Location' => 'http://foo.com/bar']),
             new Response(200),
             new Response(200),
             new Response(404)
         ];
+
         $client->getEmitter()->attach(new Mock($responses));
         $requests = [
             $client->createRequest('GET', 'http://foo.com/baz'),
@@ -134,17 +139,20 @@ class PoolTest extends \PHPUnit_Framework_TestCase
             $client->createRequest('PUT', 'http://httpbin.org/put'),
         ];
 
-        $a = $b = $c = 0;
+        $a = $b = $c = $d = 0;
         $result = Pool::batch($client, $requests, [
             'before'   => function (BeforeEvent $e) use (&$a) { $a++; },
             'complete' => function (CompleteEvent $e) use (&$b) { $b++; },
-            'error'    => function (ErrorEvent $e) use (&$c) { $c++; }
+            'error'    => function (ErrorEvent $e) use (&$c) { $c++; },
+            'end'      => function (EndEvent $e) use (&$d) { $d++; }
         ]);
 
         $this->assertEquals(4, $a);
         $this->assertEquals(2, $b);
         $this->assertEquals(1, $c);
+        $this->assertEquals(3, $d);
         $this->assertCount(3, $result);
+        $this->assertInstanceOf('GuzzleHttp\BatchResults', $result);
 
         // The first result is actually the second (redirect) response.
         $this->assertSame($responses[1], $result[0]);
@@ -156,7 +164,7 @@ class PoolTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Invalid event format
+     * @expectedExceptionMessage Each event listener must be a callable or
      */
     public function testBatchValidatesTheEventFormat()
     {
