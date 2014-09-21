@@ -1,9 +1,17 @@
 <?php
 namespace GuzzleHttp;
 
+use GuzzleHttp\Exception\StateException;
+
 /**
  * Provides a basic finite state machine that transitions transaction objects
  * through state transitions provided in the constructor.
+ *
+ * As states transition, any exceptions thrown in the state are caught and
+ * passed to the corresponding error state if available. If no error stat is
+ * available, then the exception is thrown. If a
+ * {@see GuzzleHttp\Exception\StateException} is thrown, then the exception
+ * is thrown immediately without allowing any further transitions.
  */
 class Fsm
 {
@@ -59,9 +67,8 @@ class Fsm
         }
 
         do {
-
             if (++$trans->transitionCount > $this->maxTransitions) {
-                throw new \RuntimeException('Too many state transitions were '
+                throw new StateException('Too many state transitions were '
                     . 'encountered. This likely means that a combination of '
                     . 'event listeners are in an infinite loop.');
             }
@@ -69,7 +76,7 @@ class Fsm
             $terminal = $trans->state === $finalState;
 
             if (!isset($this->states[$trans->state])) {
-                throw new \RuntimeException("Invalid state: {$trans->state}");
+                throw new StateException("Invalid state: {$trans->state}");
             }
 
             $state = $this->states[$trans->state];
@@ -85,6 +92,9 @@ class Fsm
                 }
                 // Transition to the success state
                 $trans->state = $state['success'];
+            } catch (StateException $e) {
+                // State exceptions are thrown no matter what.
+                throw $e;
             } catch (\Exception $e) {
                 $trans->exception = $e;
                 // Terminal error states throw the exception.

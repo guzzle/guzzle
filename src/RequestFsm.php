@@ -6,6 +6,7 @@ use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\EndEvent;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\StateException;
 use GuzzleHttp\Ring\FutureInterface;
 
 class RequestFsm extends Fsm
@@ -74,6 +75,10 @@ class RequestFsm extends Fsm
         // Futures will have their own end events emitted when dereferenced.
         if ($trans->response instanceof FutureInterface) {
             return;
+        }
+
+        if (!$trans->response) {
+            throw new StateException('Invalid complete state: no response');
         }
 
         $trans->response->setEffectiveUrl($trans->request->getUrl());

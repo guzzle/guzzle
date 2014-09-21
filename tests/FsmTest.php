@@ -2,6 +2,7 @@
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\StateException;
 use GuzzleHttp\Transaction;
 use GuzzleHttp\Fsm;
 
@@ -112,6 +113,26 @@ class FsmTest extends \PHPUnit_Framework_TestCase
         $request = $client->createRequest('GET', 'http://httpbin.org');
         $t = new Transaction($client, $request);
         $fsm = new Fsm('begin', ['begin' => ['success' => 'begin']], 10);
+        $fsm->run($t);
+    }
+
+    /**
+     * @expectedExceptionMessage Foo
+     * @expectedException \GuzzleHttp\Exception\StateException
+     */
+    public function testThrowsWhenStateException()
+    {
+        $client = new Client();
+        $request = $client->createRequest('GET', 'http://httpbin.org');
+        $t = new Transaction($client, $request);
+        $fsm = new Fsm('begin', [
+            'begin' => [
+                'transition' => function () use ($request) {
+                    throw new StateException('Foo');
+                },
+                'error' => 'not_there'
+            ]
+        ]);
         $fsm->run($t);
     }
 }
