@@ -14,15 +14,13 @@ class BeforeEventTest extends \PHPUnit_Framework_TestCase
 {
     public function testInterceptsWithEvent()
     {
-        $response = new Response(200);
-        $res = null;
         $t = new Transaction(new Client(), new Request('GET', '/'));
-        $t->request->getEmitter()->on('complete', function ($e) use (&$res) {
-            $res = $e;
-        });
+        $t->exception = new \Exception('foo');
         $e = new BeforeEvent($t);
+        $response = new Response(200);
         $e->intercept($response);
         $this->assertTrue($e->isPropagationStopped());
-        $this->assertSame($res->getClient(), $e->getClient());
+        $this->assertSame($t->response, $response);
+        $this->assertNull($t->exception);
     }
 }

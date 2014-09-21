@@ -29,6 +29,7 @@ class BatchResultsTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse(isset($batch[10]));
         $this->assertEquals('1', $batch[0]);
         $this->assertEquals('2', $batch[1]);
+        $this->assertNull($batch[100]);
         $this->assertInstanceOf('Exception', $batch[2]);
 
         $results = iterator_to_array($batch);

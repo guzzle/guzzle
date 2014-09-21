@@ -2,11 +2,6 @@
 namespace GuzzleHttp\Event;
 
 use GuzzleHttp\Message\FutureResponse;
-use GuzzleHttp\Fsm;
-use GuzzleHttp\Transaction;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Ring\FutureInterface;
-use GuzzleHttp\Message\RequestInterface;
 
 /**
  * Contains methods used to manage the request event lifecycle.
@@ -62,21 +57,6 @@ final class RequestEvents
     }
 
     /**
-     * Wrap non-RequesExceptions with a RequestException
-     *
-     * @param RequestInterface $request
-     * @param \Exception       $e
-     *
-     * @return RequestException
-     */
-    public static function wrapException(RequestInterface $request, \Exception $e)
-    {
-        return $e instanceof RequestException
-            ? $e
-            : new RequestException($e->getMessage(), $request, null, $e);
-    }
-
-    /**
      * Stops the DoneEvent from throwing an exception by injecting a future
      * response that throws when dereferenced.
      *
@@ -89,108 +69,8 @@ final class RequestEvents
         // Stop further "end" listeners from firing and add a future response
         // that throws when accessed.
         $e->intercept(new FutureResponse(
-            function () use ($ex) {
-                throw $ex;
-            },
+            function () use ($ex) { throw $ex; },
             function () { return false; }
         ));
-    }
-
-    /**
-     * Create a request state machine used to transition requests
-     *
-     * @return Fsm
-     */
-    public static function createFsm()
-    {
-        return new Fsm('before', [
-            'before'   => [
-                'success'    => 'send',
-                'error'      => 'error',
-                'transition' => [__CLASS__, 'beforeTransition']
-            ],
-            'send' => [
-                'success' => 'complete',
-                'error'   => 'error'
-            ],
-            'complete' => [
-                'success'    => 'end',
-                'error'      => 'error',
-                'transition' => [__CLASS__, 'completeTransition']
-            ],
-            'error' => [
-                'success'    => 'complete',
-                'error'      => 'end',
-                'transition' => [__CLASS__, 'ErrorTransition']
-            ],
-            'end' => [
-                'transition' => [__CLASS__, 'endTransition']
-            ]
-        ]);
-    }
-
-    /** @internal */
-    public static function beforeTransition(Transaction $transaction)
-    {
-        $transaction->request->getEmitter()->emit(
-            'before',
-            new BeforeEvent($transaction)
-        );
-    }
-
-    /** @internal */
-    public static function errorTransition(Transaction $transaction)
-    {
-        // Convert non-request exception to a wrapped exception
-        if (!($transaction->exception instanceof RequestException)) {
-            $transaction->exception = new RequestException(
-                $transaction->exception->getMessage(),
-                $transaction->request,
-                null,
-                $transaction->exception
-            );
-        }
-
-        // Dispatch an event and allow interception
-        $event = new ErrorEvent($transaction);
-        $transaction->request->getEmitter()->emit('error', $event);
-
-        if (!$event->isPropagationStopped()) {
-            throw $transaction->exception;
-        }
-
-        $transaction->exception = null;
-    }
-
-    /** @internal */
-    public static function completeTransition(Transaction $trans)
-    {
-        // Futures will have their own end events emitted when dereferenced.
-        if ($trans->response instanceof FutureInterface) {
-            return;
-        }
-
-        $trans->response->setEffectiveUrl($trans->request->getUrl());
-        $trans->request->getEmitter()->emit(
-            'complete',
-            new CompleteEvent($trans)
-        );
-    }
-
-    /** @internal */
-    public static function endTransition(Transaction $trans)
-    {
-        // Futures will have their own end events emitted when dereferenced.
-        if ($trans->response instanceof FutureInterface) {
-            return;
-        }
-
-        $trans->request->getEmitter()->emit('end', new EndEvent($trans));
-
-        // Throw exceptions in the terminal event if the exception was not
-        // handled by an "end" event listener.
-        if ($trans->exception) {
-            throw $trans->exception;
-        }
     }
 }

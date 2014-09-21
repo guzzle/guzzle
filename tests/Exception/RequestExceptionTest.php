@@ -62,4 +62,13 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
         $e = RequestException::create(new Request('GET', '/'), new Response(442));
         $this->assertEquals(442, $e->getCode());
     }
+
+    public function testWrapsRequestExceptions()
+    {
+        $e = new \Exception('foo');
+        $r = new Request('GET', 'http://www.oo.com');
+        $ex = RequestException::wrapException($r, $e);
+        $this->assertInstanceOf('GuzzleHttp\Exception\RequestException', $ex);
+        $this->assertSame($e, $ex->getPrevious());
+    }
 }

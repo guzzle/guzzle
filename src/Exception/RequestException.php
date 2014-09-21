@@ -28,6 +28,21 @@ class RequestException extends TransferException
     }
 
     /**
+     * Wrap non-RequesExceptions with a RequestException
+     *
+     * @param RequestInterface $request
+     * @param \Exception       $e
+     *
+     * @return RequestException
+     */
+    public static function wrapException(RequestInterface $request, \Exception $e)
+    {
+        return $e instanceof RequestException
+            ? $e
+            : new RequestException($e->getMessage(), $request, null, $e);
+    }
+
+    /**
      * Factory method to create a new exception with a normalized error message
      *
      * @param RequestInterface  $request  Request
