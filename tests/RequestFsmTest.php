@@ -4,6 +4,7 @@ namespace GuzzleHttp\Tests;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\RequestFsm;
+use GuzzleHttp\Subscriber\Mock;
 use GuzzleHttp\Transaction;
 use GuzzleHttp\Client;
 use GuzzleHttp\Message\Request;
@@ -19,7 +20,7 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
 {
     public function testEmitsBeforeEventInTransition()
     {
-        $fsm = new RequestFsm();
+        $fsm = new RequestFsm(function () {});
         $t = new Transaction(new Client(), new Request('GET', 'http://foo.com'));
         $c = false;
         $t->request->getEmitter()->on('before', function (BeforeEvent $e) use (&$c) {
@@ -31,7 +32,7 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
 
     public function testEmitsCompleteEventInTransition()
     {
-        $fsm = new RequestFsm();
+        $fsm = new RequestFsm(function () {});
         $t = new Transaction(new Client(), new Request('GET', 'http://foo.com'));
         $t->response = new Response(200);
         $t->state = 'complete';
@@ -49,7 +50,7 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
      */
     public function testEnsuresResponseIsSetInCompleteState()
     {
-        $fsm = new RequestFsm();
+        $fsm = new RequestFsm(function () {});
         $t = new Transaction(new Client(), new Request('GET', 'http://foo.com'));
         $t->state = 'complete';
         $fsm->run($t, 'complete');
@@ -57,7 +58,7 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
 
     public function testDoesNotEmitCompleteForFuture()
     {
-        $fsm = new RequestFsm();
+        $fsm = new RequestFsm(function () {});
         $t = new Transaction(new Client(), new Request('GET', 'http://foo.com'));
         $t->response = new FutureResponse(function () {});
         $t->state = 'complete';
@@ -71,7 +72,7 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
 
     public function testDoesNotEmitEndForFuture()
     {
-        $fsm = new RequestFsm();
+        $fsm = new RequestFsm(function () {});
         $t = new Transaction(new Client(), new Request('GET', 'http://foo.com'));
         $t->response = new FutureResponse(function () {});
         $t->state = 'end';
@@ -85,19 +86,17 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
 
     public function testTransitionsThroughSuccessfulTransfer()
     {
-        $fsm = new RequestFsm();
-        $t = new Transaction(new Client(), new Request('GET', 'http://foo.com'));
-        $calls = [];
-        $this->addListeners($t->request, $calls);
-        $fsm->run($t, 'send');
-        $t->response = new Response(200);
-        $fsm->run($t);
+        $client = new Client();
+        $client->getEmitter()->attach(new Mock([new Response(200)]));
+        $request = $client->createRequest('GET', 'http://ewfewwef.com');
+        $this->addListeners($request, $calls);
+        $client->send($request);
         $this->assertEquals(['before', 'complete', 'end'], $calls);
     }
 
     public function testTransitionsThroughErrorsInBefore()
     {
-        $fsm = new RequestFsm();
+        $fsm = new RequestFsm(function () {});
         $client = new Client();
         $request = $client->createRequest('GET', 'http://ewfewwef.com');
         $t = new Transaction($client, $request);
@@ -117,29 +116,25 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
 
     public function testTransitionsThroughErrorsInComplete()
     {
-        $fsm = new RequestFsm();
         $client = new Client();
+        $client->getEmitter()->attach(new Mock([new Response(200)]));
         $request = $client->createRequest('GET', 'http://ewfewwef.com');
-        $t = new Transaction($client, $request);
-        $calls = [];
-        $this->addListeners($t->request, $calls);
-        $t->request->getEmitter()->on('complete', function (CompleteEvent $e) {
+        $this->addListeners($request, $calls);
+        $request->getEmitter()->once('complete', function (CompleteEvent $e) {
             throw new \Exception('foo');
         });
-        $fsm->run($t, 'send');
-        $t->response = new Response(200);
         try {
-            $fsm->run($t);
+            $client->send($request);
             $this->fail('did not throw');
         } catch (RequestException $e) {
-            $this->assertContains('foo', $t->exception->getMessage());
+            $this->assertContains('foo', $e->getMessage());
             $this->assertEquals(['before', 'complete', 'error', 'end'], $calls);
         }
     }
 
     public function testTransitionsThroughErrorInterception()
     {
-        $fsm = new RequestFsm();
+        $fsm = new RequestFsm(function () {});
         $client = new Client();
         $request = $client->createRequest('GET', 'http://ewfewwef.com');
         $t = new Transaction($client, $request);
@@ -157,9 +152,21 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(['before', 'complete', 'error', 'complete', 'end'], $calls);
     }
 
+    /**
+     * @expectedException \RuntimeException
+     * @expectedExceptionMessage Invalid error state
+     */
+    public function testEnsuresExceptionIsSetInErrorState()
+    {
+        $fsm = new RequestFsm(function () {});
+        $t = new Transaction(new Client(), new Request('GET', 'http://foo.com'));
+        $t->state = 'error';
+        $fsm->run($t, 'error');
+    }
+
     public function testCanStopExceptionsWithFuture()
     {
-        $fsm = new RequestFsm();
+        $fsm = new RequestFsm(function () {});
         $client = new Client();
         $request = $client->createRequest('GET', 'http://ewfewwef.com');
         $t = new Transaction($client, $request);
@@ -175,6 +182,22 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
         $this->assertNull($t->exception);
         $this->assertEquals(['before', 'complete', 'error', 'end'], $calls);
         $this->assertInstanceOf('GuzzleHttp\Message\FutureResponse', $t->response);
+    }
+
+    public function testExitEnsuresSomethingWasSet()
+    {
+        $fsm = new RequestFsm(function () {});
+        $client = new Client();
+        $request = $client->createRequest('GET', 'http://ewfewwef.com');
+        $t = new Transaction($client, $request);
+        $t->state = 'exit';
+        try {
+            $fsm->run($t, 'exit');
+            $this->fail('did not throw');
+        } catch (RequestException $e) {
+            $this->assertContains('not calling', $e->getMessage());
+            $this->assertSame($t->exception, $e);
+        }
     }
 
     private function addListeners(RequestInterface $request, &$calls)

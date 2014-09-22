@@ -4,8 +4,7 @@ namespace GuzzleHttp\Event;
 use GuzzleHttp\Message\ResponseInterface;
 
 /**
- * Event that contains transaction statistics (time over the wire, lookup time,
- * etc.).
+ * Event that contains transfer statistics, and can be intercepted.
  */
 abstract class AbstractTransferEvent extends AbstractRequestEvent
 {

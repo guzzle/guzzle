@@ -12,7 +12,6 @@ use GuzzleHttp\Ring\Client\CurlAdapter;
 use GuzzleHttp\Ring\Client\StreamAdapter;
 use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\RingFutureInterface;
-use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Exception\RequestException;
 
 /**
@@ -24,9 +23,6 @@ class Client implements ClientInterface
 
     /** @var MessageFactoryInterface Request factory used by the client */
     private $messageFactory;
-
-    /** @var callable */
-    private $adapter;
 
     /** @var Url Base URL of the client */
     private $baseUrl;
@@ -71,16 +67,20 @@ class Client implements ClientInterface
     {
         $this->configureBaseUrl($config);
         $this->configureDefaults($config);
+
         if (isset($config['emitter'])) {
             $this->emitter = $config['emitter'];
         }
+
         $this->messageFactory = isset($config['message_factory'])
             ? $config['message_factory']
             : new MessageFactory();
-        $this->adapter = isset($config['adapter'])
+        $adapter = isset($config['adapter'])
             ? $config['adapter']
             : self::getDefaultAdapter();
-        $this->fsm = isset($config['fsm']) ? $config['fsm'] : new RequestFsm();
+        $this->fsm = isset($config['fsm'])
+            ? $config['fsm']
+            : $this->createDefaultFsm($adapter, $this->messageFactory);
     }
 
     /**
@@ -226,42 +226,13 @@ class Client implements ClientInterface
     public function send(RequestInterface $request)
     {
         $trans = new Transaction($this, $request);
-        $this->fsm->run($trans, 'send');
+        $this->fsm->run($trans);
+        $response = $trans->response;
+        // Remove the response from the transaction to prevent future responses
+        // from returning themselves in an infinite loop when dereferenced.
+        $trans->response = null;
 
-        // Return a response if one was set during the before event.
-        if ($trans->response) {
-            // Non-future responses need to finish their complete event now.
-            if (!($trans->response instanceof FutureResponse)) {
-                $trans->state = 'complete';
-                $this->fsm->run($trans);
-            }
-            return $trans->response;
-        }
-
-        // Send the request using the Guzzle Ring handler
-        $adapter = $this->adapter;
-        $response = $adapter(
-            RingBridge::prepareRingRequest(
-                $trans, $this->messageFactory, $this->fsm
-            )
-        );
-
-        // Future responses do not need to process right away.
-        if ($response instanceof RingFutureInterface) {
-            return $this->createFutureResponse($trans, $response);
-        }
-
-        // Throw a wrapped exception if the transactions has an error.
-        if ($trans->exception) {
-            throw RequestException::wrapException($trans->request, $trans->exception);
-        }
-
-        // Return a response if one was synchronously available.
-        if ($trans->response) {
-            return $trans->response;
-        }
-
-        throw RingBridge::getNoRingResponseException($trans->request);
+        return $response;
     }
 
     /**
@@ -405,6 +376,24 @@ class Client implements ClientInterface
         $options = array_replace_recursive($defaults, $options);
 
         return $this->defaults['headers'];
+    }
+
+    private function createDefaultFsm(
+        callable $adapter,
+        MessageFactoryInterface $mf
+    ) {
+        return new RequestFsm(function (Transaction $trans) use ($adapter, $mf) {
+            // Create a Guzzle-Ring request and send it.
+            $request = RingBridge::prepareRingRequest($trans, $mf, $this->fsm);
+            $response = $adapter($request);
+            // Future responses do not need to process right away, so set the
+            // response on the transaction to designate it as completed.
+            if ($response instanceof RingFutureInterface) {
+                $trans->response = $this->createFutureResponse($trans, $response);
+            }
+            // The remaining events are completed via the ring "then" fn.
+            return 'exit';
+        });
     }
 
     /**

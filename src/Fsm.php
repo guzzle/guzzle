@@ -8,10 +8,16 @@ use GuzzleHttp\Exception\StateException;
  * through state transitions provided in the constructor.
  *
  * As states transition, any exceptions thrown in the state are caught and
- * passed to the corresponding error state if available. If no error stat is
+ * passed to the corresponding error state if available. If no error state is
  * available, then the exception is thrown. If a
  * {@see GuzzleHttp\Exception\StateException} is thrown, then the exception
  * is thrown immediately without allowing any further transitions.
+ *
+ * When a state returns a value, then the state machine manually transitions
+ * to the state matching the value that was returned. If no value is returned,
+ * then the state transitions to the the value of the "success" property if
+ * present, or if any error were thrown, transitions to the "error" property
+ * if present.
  */
 class Fsm
 {
@@ -82,26 +88,36 @@ class Fsm
             $state = $this->states[$trans->state];
 
             try {
+
+                // Call the transition function if available.
                 if (isset($state['transition'])) {
-                    $state['transition']($trans);
+                    $result = $state['transition']($trans);
+                    // Transition to the explicitly returned state value.
+                    if ($result) {
+                        $trans->state = $result;
+                        continue;
+                    }
                 }
-                // Break if the transition told us to bail, or if this is a
-                // terminal state.
-                if (!isset($state['success'])) {
+
+                if (isset($state['success'])) {
+                    // Transition to the success state
+                    $trans->state = $state['success'];
+                } else {
+                    // Break: this is a terminal state with no transition.
                     break;
                 }
-                // Transition to the success state
-                $trans->state = $state['success'];
+
             } catch (StateException $e) {
                 // State exceptions are thrown no matter what.
                 throw $e;
+
             } catch (\Exception $e) {
                 $trans->exception = $e;
                 // Terminal error states throw the exception.
                 if (!isset($state['error'])) {
                     throw $e;
                 }
-                // Transition to the error state if possible.
+                // Transition to the error state.
                 $trans->state = $state['error'];
             }
 

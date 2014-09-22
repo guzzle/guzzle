@@ -4,13 +4,16 @@ namespace GuzzleHttp\Event;
 use GuzzleHttp\Exception\RequestException;
 
 /**
- * Event object emitted after a request has been sent and an error was
- * encountered.
+ * Event emitted when an error occurs while sending a request.
  *
- * You may intercept the exception and inject a response into the event to
- * rescue the request.
+ * This event MAY be emitted multiple times. You MAY intercept the exception
+ * and inject a response into the event to rescue the request using the
+ * intercept() method of the event.
+ *
+ * This event allows the request to be retried using the "retry" method of the
+ * event.
  */
-class ErrorEvent extends AbstractTransferEvent
+class ErrorEvent extends AbstractRetryableEvent
 {
     /**
      * Get the exception that was encountered

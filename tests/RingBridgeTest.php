@@ -26,7 +26,7 @@ class RingBridgeTest extends \PHPUnit_Framework_TestCase
         $request->getConfig()->set('foo', 'bar');
         $trans = new Transaction(new Client(), $request);
         $factory = new MessageFactory();
-        $fsm = new RequestFsm();
+        $fsm = new RequestFsm(function () {});
         $r = RingBridge::prepareRingRequest($trans, $factory, $fsm);
         $this->assertEquals('http', $r['scheme']);
         $this->assertEquals('1.1', $r['version']);
@@ -49,7 +49,7 @@ class RingBridgeTest extends \PHPUnit_Framework_TestCase
         $request = new Request('GET', 'http://httpbin.org');
         $trans = new Transaction(new Client(), $request);
         $factory = new MessageFactory();
-        $fsm = new RequestFsm();
+        $fsm = new RequestFsm(function () {});
         $r = RingBridge::prepareRingRequest($trans, $factory, $fsm);
         $this->assertNull($r['query_string']);
         $this->assertEquals('/', $r['uri']);
@@ -118,7 +118,7 @@ class RingBridgeTest extends \PHPUnit_Framework_TestCase
         });
         $f = new MessageFactory();
         $res = ['status' => 200, 'headers' => []];
-        $fsm = new RequestFsm();
+        $fsm = new RequestFsm(function () {});
         RingBridge::completeRingResponse($trans, $res, $f, $fsm);
         $this->assertInstanceOf(
             'GuzzleHttp\Message\ResponseInterface',

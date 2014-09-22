@@ -5,6 +5,9 @@ use GuzzleHttp\Transaction;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Message\RequestInterface;
 
+/**
+ * Base class for request events, providing a request and client getter.
+ */
 abstract class AbstractRequestEvent extends AbstractEvent
 {
     /** @var Transaction */

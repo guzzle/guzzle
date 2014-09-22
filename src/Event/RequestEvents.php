@@ -57,8 +57,13 @@ final class RequestEvents
     }
 
     /**
-     * Stops the DoneEvent from throwing an exception by injecting a future
-     * response that throws when dereferenced.
+     * Stops the "end" event from throwing an exception by injecting a future
+     * response that throws only when dereferenced.
+     *
+     * This adheres to the contract that sending a request returns a response,
+     * but allows higher level abstractions like the Pool to stop an exception
+     * from being thrown with the knowledge that the response will likely
+     * never be dereferenced.
      *
      * @param EndEvent $e
      */

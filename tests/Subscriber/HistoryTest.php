@@ -73,6 +73,40 @@ class HistoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(0, count($h));
     }
 
+    public function testWorksWithMock()
+    {
+        $client = new Client(['base_url' => 'http://localhost/']);
+        $h = new History();
+        $client->getEmitter()->attach($h);
+        $mock = new Mock([new Response(200), new Response(201), new Response(202)]);
+        $client->getEmitter()->attach($mock);
+        $request = $client->createRequest('GET', '/');
+        $client->send($request);
+        $request->setMethod('PUT');
+        $client->send($request);
+        $request->setMethod('POST');
+        $client->send($request);
+        $this->assertEquals(3, count($h));
+        $this->assertEquals("> GET / HTTP/1.1
+Host: localhost
+User-Agent: Guzzle/5.0.0 curl/7.37.0 PHP/5.5.13
+
+< HTTP/1.1 200 OK
+
+> PUT / HTTP/1.1
+Host: localhost
+User-Agent: Guzzle/5.0.0 curl/7.37.0 PHP/5.5.13
+
+< HTTP/1.1 201 Created
+
+> POST / HTTP/1.1
+Host: localhost
+User-Agent: Guzzle/5.0.0 curl/7.37.0 PHP/5.5.13
+
+< HTTP/1.1 202 Accepted
+", str_replace("\r", '', $h));
+    }
+
     public function testCanCastToString()
     {
         $client = new Client(['base_url' => 'http://localhost/']);
