@@ -33,17 +33,17 @@ class RequestFsm extends Fsm
                 'error'      => 'error',
                 'transition' => [$this, 'sendTransition']
             ],
-            // Note that the complete event might explicitly transition to the
-            // "send" state if the complete event is marked for a retry. This
-            // state may also transition to the "exit" state if the response of
-            // the transaction is a future response.
+            // The complete event might explicitly transition to the "send"
+            // state if the complete event is marked for a retry. This state
+            // may also transition to the "exit" state if the response of the
+            // transaction is a future response.
             'complete' => [
                 'success'    => 'end',
                 'error'      => 'error',
                 'transition' => [$this, 'completeTransition']
             ],
-            // Note that the error event might explicitly transition to the
-            // "send" state if the complete event is marked for a retry.
+            // The error event might explicitly transition to the "send" state
+            // if the error event is marked for a retry.
             'error' => [
                 'success'    => 'complete',
                 'error'      => 'end',
