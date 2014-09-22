@@ -136,7 +136,7 @@ class FsmTest extends \PHPUnit_Framework_TestCase
         $fsm->run($t);
     }
 
-    public function testCanManuallyTransitionStates()
+    public function testCanInterceptTransitionStates()
     {
         $client = new Client();
         $request = $client->createRequest('GET', 'http://httpbin.org');
@@ -144,7 +144,8 @@ class FsmTest extends \PHPUnit_Framework_TestCase
         $called = false;
         $fsm = new Fsm('begin', [
             'begin' => [
-                'transition' => function () { return 'end'; }
+                'transition' => function () { return true; },
+                'intercept'  => 'end'
             ],
             'end' => [
                 'transition' => function () use (&$called) { $called = true; }
@@ -152,5 +153,22 @@ class FsmTest extends \PHPUnit_Framework_TestCase
         ]);
         $fsm->run($t);
         $this->assertTrue($called);
+    }
+
+    /**
+     * @expectedExceptionMessage Invalid intercept state transition from begin
+     * @expectedException \GuzzleHttp\Exception\StateException
+     */
+    public function testEnsuresInterceptStatesAreDefined()
+    {
+        $client = new Client();
+        $request = $client->createRequest('GET', 'http://httpbin.org');
+        $t = new Transaction($client, $request);
+        $fsm = new Fsm('begin', [
+            'begin' => [
+                'transition' => function () { return true; }
+            ]
+        ]);
+        $fsm->run($t);
     }
 }

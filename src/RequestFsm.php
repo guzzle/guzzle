@@ -20,32 +20,33 @@ class RequestFsm extends Fsm
     {
         $this->sendFn = $sendFn;
         parent::__construct('before', [
+            // When a mock intercepts the emitted "before" event, then we
+            // transition to the "complete" intercept state.
             'before'   => [
                 'success'    => 'send',
+                'intercept'  => 'complete',
                 'error'      => 'error',
                 'transition' => [$this, 'beforeTransition']
             ],
-            // Because the complete and error events are handled using the
-            // "then" of a the Ring request, we transition to the exit state
+            // The complete and error events are handled using the "then" of
+            // the Guzzle-Ring request, so we transition to the exit state
             // after the send state.
             'send' => [
                 'success'    => 'exit',
                 'error'      => 'error',
                 'transition' => [$this, 'sendTransition']
             ],
-            // The complete event might explicitly transition to the "send"
-            // state if the complete event is marked for a retry. This state
-            // may also transition to the "exit" state if the response of the
-            // transaction is a future response.
             'complete' => [
                 'success'    => 'end',
+                // Intercept here is used to retry a request.
+                'intercept'  => 'before',
                 'error'      => 'error',
                 'transition' => [$this, 'completeTransition']
             ],
-            // The error event might explicitly transition to the "send" state
-            // if the error event is marked for a retry.
             'error' => [
                 'success'    => 'complete',
+                // Intercept here is used to retry a request.
+                'intercept'  => 'before',
                 'error'      => 'end',
                 'transition' => [$this, 'ErrorTransition']
             ],
@@ -62,6 +63,11 @@ class RequestFsm extends Fsm
     protected function beforeTransition(Transaction $trans)
     {
         $trans->request->getEmitter()->emit('before', new BeforeEvent($trans));
+
+        // When a response is set during the before event (i.e., a mock), then
+        // we don't need to send anything. Skip ahead to the complete event
+        // by returning to to go to the intercept state.
+        return (bool) $trans->response;
     }
 
     /**
@@ -69,17 +75,8 @@ class RequestFsm extends Fsm
      */
     protected function sendTransition(Transaction $trans)
     {
-        // When a response is set, then we don't need to send anything. This
-        // can happen when the before event is intercepted (possibly with mock).
-        if (!$trans->response) {
-            $fn = $this->sendFn;
-            $fn($trans);
-        } elseif (!($trans->response instanceof FutureInterface)) {
-            // Non-future responses that were injected in the "before" event
-            // need to finish their transaction because they are not going
-            // to be emitted at the Guzzle-Ring layer.
-            return 'complete';
-        }
+        $fn = $this->sendFn;
+        $fn($trans);
     }
 
     /**
@@ -113,8 +110,8 @@ class RequestFsm extends Fsm
 
         $trans->exception = null;
 
-        // Manually transition to retry a request if needed.
-        return $trans->state === 'before' ? 'before' : null;
+        // Return true to transition to the 'before' state. False otherwise.
+        return $trans->state === 'before';
     }
 
     /**
@@ -125,7 +122,7 @@ class RequestFsm extends Fsm
     {
         // Futures will have their own end events emitted when dereferenced.
         if ($trans->response instanceof FutureInterface) {
-            return 'exit';
+            return false;
         }
 
         if (!$trans->response) {
@@ -135,8 +132,8 @@ class RequestFsm extends Fsm
         $trans->response->setEffectiveUrl($trans->request->getUrl());
         $trans->request->getEmitter()->emit('complete', new CompleteEvent($trans));
 
-        // Manually transition to retry a request if needed.
-        return $trans->state === 'before' ? 'before' : null;
+        // Return true to transition to the 'before' state. False otherwise.
+        return $trans->state === 'before';
     }
 
     /**

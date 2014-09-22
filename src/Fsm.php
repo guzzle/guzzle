@@ -13,11 +13,11 @@ use GuzzleHttp\Exception\StateException;
  * {@see GuzzleHttp\Exception\StateException} is thrown, then the exception
  * is thrown immediately without allowing any further transitions.
  *
- * When a state returns a value, then the state machine manually transitions
- * to the state matching the value that was returned. If no value is returned,
- * then the state transitions to the the value of the "success" property if
- * present, or if any error were thrown, transitions to the "error" property
- * if present.
+ * States can return true or false/null. When a state returns true, it tells
+ * the FSM to transition to the defined "intercept" state. If no intercept
+ * state is defined then a StateException is thrown. If a state returns
+ * false/null, then the FSM transitions to the "complete" state if one is
+ * defined.
  */
 class Fsm
 {
@@ -36,6 +36,8 @@ class Fsm
      *   error state. Otherwise, the FSM transitions to the success state.
      * - success: The state to transition to when no error is raised. If not
      *   present, then this is a terminal state.
+     * - intercept: The state to transition to if the state is intercepted.
+     *   You can intercept states by returning true in a transition function.
      * - error: The state to transition to when an error is raised. If not
      *   present and an exception occurs, then the exception is thrown.
      *
@@ -67,7 +69,8 @@ class Fsm
      */
     public function run(Transaction $trans, $finalState = null)
     {
-        $trans->transitionCount = 1;
+        $trans->_transitionCount = 1;
+
         if (!$trans->state) {
             $trans->state = $this->initialState;
         }
@@ -92,21 +95,24 @@ class Fsm
 
                 // Call the transition function if available.
                 if (isset($state['transition'])) {
-                    $result = $state['transition']($trans);
-                    // Transition to the explicitly returned state value.
-                    if ($result) {
-                        $trans->state = $result;
-                        continue;
+                    // Handles transitioning to the "intercept" state.
+                    if ($state['transition']($trans)) {
+                        if (isset($state['intercept'])) {
+                            $trans->state = $state['intercept'];
+                            continue;
+                        }
+                        throw new StateException('Invalid intercept state '
+                            . 'transition from ' . $trans->state);
                     }
                 }
 
-                if (isset($state['success'])) {
-                    // Transition to the success state
-                    $trans->state = $state['success'];
-                } else {
-                    // Break: this is a terminal state with no transition.
+                // Break: this is a terminal state with no transition.
+                if (!isset($state['success'])) {
                     break;
                 }
+
+                // Transition to the success state
+                $trans->state = $state['success'];
 
             } catch (StateException $e) {
                 // State exceptions are thrown no matter what.
