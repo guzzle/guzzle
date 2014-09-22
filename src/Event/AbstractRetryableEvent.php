@@ -18,12 +18,23 @@ class AbstractRetryableEvent extends AbstractTransferEvent
      * to prevent infinite loops.
      *
      * This action can only be taken during the "complete" and "error" events.
+     *
+     * @param int $afterDelay If specified, the amount of time in milliseconds
+     *                        to delay before retrying. Note that this must
+     *                        be supported by the underlying Guzzle-Ring
+     *                        adapter to work properly. Set to 0 or provide no
+     *                        value to retry immediately.
      */
-    public function retry()
+    public function retry($afterDelay = 0)
     {
         $this->transaction->response = null;
         $this->transaction->exception = null;
         $this->transaction->state = 'before';
+
+        if ($afterDelay) {
+            $this->transaction->request->getConfig()->set('delay', $afterDelay);
+        }
+
         $this->stopPropagation();
     }
 }
