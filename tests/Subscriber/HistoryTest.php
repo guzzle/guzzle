@@ -87,24 +87,31 @@ class HistoryTest extends \PHPUnit_Framework_TestCase
         $request->setMethod('POST');
         $client->send($request);
         $this->assertEquals(3, count($h));
+
+        $result = implode("\n", array_map(function ($line) {
+            return strpos($line, 'User-Agent') === 0
+                ? 'User-Agent:'
+                : trim($line);
+        }, explode("\n", $h)));
+
         $this->assertEquals("> GET / HTTP/1.1
 Host: localhost
-User-Agent: Guzzle/5.0.0 curl/7.37.0 PHP/5.5.13
+User-Agent:
 
 < HTTP/1.1 200 OK
 
 > PUT / HTTP/1.1
 Host: localhost
-User-Agent: Guzzle/5.0.0 curl/7.37.0 PHP/5.5.13
+User-Agent:
 
 < HTTP/1.1 201 Created
 
 > POST / HTTP/1.1
 Host: localhost
-User-Agent: Guzzle/5.0.0 curl/7.37.0 PHP/5.5.13
+User-Agent:
 
 < HTTP/1.1 202 Accepted
-", str_replace("\r", '', $h));
+", $result);
     }
 
     public function testCanCastToString()
