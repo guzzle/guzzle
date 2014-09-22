@@ -391,8 +391,6 @@ class Client implements ClientInterface
             if ($response instanceof RingFutureInterface) {
                 $trans->response = $this->createFutureResponse($trans, $response);
             }
-            // The remaining events are completed via the ring "then" fn.
-            return 'exit';
         });
     }
 
