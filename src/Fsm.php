@@ -73,10 +73,11 @@ class Fsm
         }
 
         do {
-            if (++$trans->transitionCount > $this->maxTransitions) {
+            if (++$trans->_transitionCount > $this->maxTransitions) {
                 throw new StateException('Too many state transitions were '
-                    . 'encountered. This likely means that a combination of '
-                    . 'event listeners are in an infinite loop.');
+                    . ' encountered ({$trans->_transitionCount}). This likely '
+                    . 'means that a combination of event listeners are in an '
+                    . 'infinite loop.');
             }
 
             $terminal = $trans->state === $finalState;
