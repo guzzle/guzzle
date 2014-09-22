@@ -263,7 +263,7 @@ class Pool implements FutureInterface
      */
     private function addNextRequest()
     {
-        if ($this->isCancelled || !$this->iter->valid()) {
+        if ($this->isCancelled || !$this->iter || !$this->iter->valid()) {
             return false;
         }
 
