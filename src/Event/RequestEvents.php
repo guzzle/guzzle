@@ -1,7 +1,7 @@
 <?php
 namespace GuzzleHttp\Event;
 
-use GuzzleHttp\Message\FutureResponse;
+use GuzzleHttp\Message\CancelledResponse;
 
 /**
  * Contains methods used to manage the request event lifecycle.
@@ -69,13 +69,8 @@ final class RequestEvents
      */
     public static function stopException(EndEvent $e)
     {
-        // Keep a reference to the exception because it will be changed.
-        $ex = $e->getException();
         // Stop further "end" listeners from firing and add a future response
         // that throws when accessed.
-        $e->intercept(new FutureResponse(
-            function () use ($ex) { throw $ex; },
-            function () { return false; }
-        ));
+        $e->intercept(new CancelledResponse($e->getException()));
     }
 }
