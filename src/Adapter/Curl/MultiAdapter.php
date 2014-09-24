@@ -246,7 +246,7 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
             || ($e instanceof RequestException && $e->getThrowImmediately())
         ) {
             $context->removeAll();
-            $this->releaseMultiHandle($context->getMultiHandle());
+            $this->releaseMultiHandle($context->getMultiHandle(), -1);
             throw $e;
         }
     }
@@ -278,14 +278,15 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
      * Releases a curl_multi handle back into the cache and removes excess cache
      *
      * @param resource $handle Curl multi handle to remove
+     * @param int $pruneThreshold (Optional) Maximum number of existing multiHandles to allow before pruning.
      */
-    private function releaseMultiHandle($handle)
+    private function releaseMultiHandle($handle, $pruneThreshold = 3)
     {
         $id = (int) $handle;
 
-        if (count($this->multiHandles) <= 3) {
+        if (count($this->multiHandles) <= $pruneThreshold) {
             $this->multiOwned[$id] = false;
-        } else {
+        } elseif (isset($this->multiHandles[$id], $this->multiOwned[$id])) {
             // Prune excessive handles
             curl_multi_close($this->multiHandles[$id]);
             unset($this->multiHandles[$id], $this->multiOwned[$id]);
