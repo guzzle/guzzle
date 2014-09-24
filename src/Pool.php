@@ -237,7 +237,7 @@ class Pool implements FutureInterface
         // Add the next request when requests finish, and stop errors from
         // throwing by intercepting with a future that throws when accessed.
         return RequestEvents::convertEventArray($options, ['end'], [
-            'priority' => RequestEvents::LATE - 1,
+            'priority' => RequestEvents::LATE,
             'fn'       => function (EndEvent $e) {
                 $hash = spl_object_hash($e->getRequest());
                 // Remove from deref queue if present.
@@ -290,9 +290,9 @@ class Pool implements FutureInterface
             // the future was returned from the client. This means there's no
             // need to dereference them when the pool finishes.
             unset($this->completedQueue[$hash]);
-        } elseif ($response instanceof FutureResponse) {
+        } elseif ($response instanceof FutureResponse && !$response->cancelled()) {
             // Track future responses for later dereference before completing
-            // pool.
+            // pool. Don't dereference cancelled responses.
             $this->derefQueue[$hash] = $response;
         }
 

@@ -11,7 +11,7 @@ use GuzzleHttp\Ring\Client\CurlMultiAdapter;
 use GuzzleHttp\Ring\Client\CurlAdapter;
 use GuzzleHttp\Ring\Client\StreamAdapter;
 use GuzzleHttp\Ring\Core;
-use GuzzleHttp\Ring\RingFutureInterface;
+use GuzzleHttp\Ring\FutureInterface;
 use GuzzleHttp\Exception\RequestException;
 
 /**
@@ -263,7 +263,7 @@ class Client implements ClientInterface
 
     private function createFutureResponse(
         Transaction $trans,
-        RingFutureInterface $response
+        FutureInterface $response
     ) {
         // Create a future response that's hooked up to the ring future.
         return new FutureResponse(
@@ -386,9 +386,9 @@ class Client implements ClientInterface
             // Create a Guzzle-Ring request and send it.
             $request = RingBridge::prepareRingRequest($trans, $mf, $this->fsm);
             $response = $adapter($request);
-            // Future responses do not need to process right away, so set the
-            // response on the transaction to designate it as completed.
-            if ($response instanceof RingFutureInterface) {
+            // Future responses do not need to process right away, so set
+            // the response on the transaction to designate it as completed.
+            if ($response instanceof FutureInterface) {
                 $trans->response = $this->createFutureResponse($trans, $response);
             }
         });

@@ -11,6 +11,8 @@ use GuzzleHttp\Ring\Client\MockAdapter;
 use GuzzleHttp\Ring\Future;
 use GuzzleHttp\Subscriber\History;
 use GuzzleHttp\Subscriber\Mock;
+use GuzzleHttp\Event\RequestEvents;
+use GuzzleHttp\Event\EndEvent;
 
 /**
  * @covers GuzzleHttp\Client
@@ -538,5 +540,18 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $_SERVER['HTTP_PROXY'] = $http;
         $_SERVER['HTTPS_PROXY'] = $https;
+    }
+
+    public function testCanInjectCancelledFutureInRequestEvents()
+    {
+        $client = new Client(['adapter' => new MockAdapter(['status' => 404])]);
+        $request = $client->createRequest('GET', 'http://localhost:123/foo', [
+            'future' => true
+        ]);
+        $request->getEmitter()->on('end', function (EndEvent $e) {
+            RequestEvents::stopException($e);
+        });
+        $res = $client->send($request);
+        $this->assertInstanceOf('GuzzleHttp\Message\CancelledResponse', $res);
     }
 }

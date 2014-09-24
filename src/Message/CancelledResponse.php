@@ -18,4 +18,9 @@ class CancelledResponse extends FutureResponse
             throw $e;
         });
     }
+
+    public function cancelled()
+    {
+        return true;
+    }
 }

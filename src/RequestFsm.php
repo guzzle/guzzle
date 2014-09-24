@@ -104,7 +104,7 @@ class RequestFsm extends Fsm
         $event = new ErrorEvent($trans);
         $trans->request->getEmitter()->emit('error', $event);
 
-        if (!$event->isPropagationStopped()) {
+        if ($trans->exception) {
             throw $trans->exception;
         }
 

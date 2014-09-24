@@ -3,6 +3,7 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\RequestEvents;
+use GuzzleHttp\Message\CancelledResponse;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Ring\Client\MockAdapter;
 use GuzzleHttp\Ring\Future;
@@ -171,5 +172,20 @@ class PoolTest extends \PHPUnit_Framework_TestCase
         $client = new Client();
         $requests = [$client->createRequest('GET', 'http://foo.com/baz')];
         Pool::batch($client, $requests, ['complete' => 'foo']);
+    }
+
+    /**
+     * This does not throw a cancelled access exception because of the
+     * !cancelled() check in Pool::addNextRequest.
+     */
+    public function testDoesNotAddCancelledResponsesToDerefQueue()
+    {
+        $c = $this->getClient();
+        $req = $c->createRequest('GET', 'http://foo.com');
+        $req->getEmitter()->on('before', function (BeforeEvent $e) {
+            $e->intercept(new CancelledResponse());
+        });
+        $p = new Pool($c, [$req]);
+        $p->deref();
     }
 }
