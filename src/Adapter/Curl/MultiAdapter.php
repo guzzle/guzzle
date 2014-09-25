@@ -176,6 +176,9 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
             if (!$this->isCurlException($transaction, $curl, $context, $info) &&
                 $this->validateResponseWasSet($transaction, $context)
             ) {
+                if ($body = $transaction->getResponse()->getBody()) {
+                    $body->seek(0);
+                }
                 RequestEvents::emitComplete($transaction, $info);
             }
         } catch (\Exception $e) {

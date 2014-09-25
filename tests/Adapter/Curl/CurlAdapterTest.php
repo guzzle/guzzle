@@ -136,4 +136,14 @@ class CurlAdapterTest extends AbstractCurl
             $this->assertFileNotExists($tmp);
         }
     }
+
+    public function testRewindsStreamOnComplete()
+    {
+        Server::flush();
+        Server::enqueue("HTTP/1.1 200 OK\r\nFoo: bar\r\nContent-Length: 4\r\n\r\ntest");
+        $t = new Transaction(new Client(), new Request('GET', Server::$url));
+        $a = new CurlAdapter(new MessageFactory());
+        $response = $a->send($t);
+        $this->assertEquals('test', $response->getBody()->read(4));
+    }
 }

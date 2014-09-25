@@ -91,6 +91,9 @@ class CurlAdapter implements AdapterInterface
             $this->handleError($transaction, $info, $handle);
         } else {
             $this->releaseEasyHandle($handle);
+            if ($body = $transaction->getResponse()->getBody()) {
+                $body->seek(0);
+            }
             RequestEvents::emitComplete($transaction, $info);
         }
 
