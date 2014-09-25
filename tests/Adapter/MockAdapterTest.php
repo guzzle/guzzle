@@ -30,10 +30,15 @@ class MockAdapterTest extends \PHPUnit_Framework_TestCase
     {
         $response = new Response(200);
         $r = function (TransactionInterface $trans) use ($response) {
+            $this->assertEquals(0, $trans->getRequest()->getBody()->tell());
             return $response;
         };
         $m = new MockAdapter($r);
-        $this->assertSame($response, $m->send(new Transaction(new Client(), new Request('GET', 'http://httbin.org'))));
+        $body = Stream::factory('foo');
+        $request = new Request('GET', 'http://httbin.org', [], $body);
+        $trans = new Transaction(new Client(), $request);
+        $this->assertSame($response, $m->send($trans));
+        $this->assertEquals(3, $body->tell());
     }
 
     /**
