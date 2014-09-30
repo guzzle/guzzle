@@ -6,7 +6,7 @@ use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Message\CancelledResponse;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Ring\Client\MockAdapter;
-use GuzzleHttp\Ring\Future;
+use GuzzleHttp\Ring\RingFuture;
 use GuzzleHttp\Subscriber\History;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Event\CompleteEvent;
@@ -111,7 +111,7 @@ class PoolTest extends \PHPUnit_Framework_TestCase
 
     private function getClient()
     {
-        $future = new Future(function() {
+        $future = new RingFuture(function() {
             return ['status' => 200, 'headers' => []];
         }, function () {
             echo 'Cancelling';

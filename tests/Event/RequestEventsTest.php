@@ -5,7 +5,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Ring\Client\MockAdapter;
 use GuzzleHttp\Event\EndEvent;
-use GuzzleHttp\Ring\Future;
+use GuzzleHttp\Ring\RingFuture;
 
 /**
  * @covers GuzzleHttp\Event\RequestEvents
@@ -72,7 +72,7 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
     {
         return [
             [['status' => 404]],
-            [new Future(function () { return ['status' => 404]; })]
+            [new RingFuture(function () { return ['status' => 404]; })]
         ];
     }
 

@@ -8,7 +8,7 @@ use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Ring\Client\MockAdapter;
-use GuzzleHttp\Ring\Future;
+use GuzzleHttp\Ring\RingFuture;
 use GuzzleHttp\Subscriber\History;
 use GuzzleHttp\Subscriber\Mock;
 use GuzzleHttp\Event\RequestEvents;
@@ -341,7 +341,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testEnsuresResponseIsPresentAfterDereferencing()
     {
         $adapter = new MockAdapter(function () {
-            return new Future(function () { return []; });
+            return new RingFuture(function () { return []; });
         });
         $client = new Client(['adapter' => $adapter]);
         $client->get('http://httpbin.org')->deref();
@@ -354,7 +354,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testEnsuresResponseIsPresentAfterDereferencingWithBrokenAdapter()
     {
         $adapter = function () {
-            return new Future(function () { return []; });
+            return new RingFuture(function () { return []; });
         };
         $client = new Client(['adapter' => $adapter]);
         $client->get('http://httpbin.org')->deref();
@@ -404,7 +404,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testCanInjectResponseForFutureError()
     {
         $calledFuture = false;
-        $future = new Future(function () use (&$calledFuture) {
+        $future = new RingFuture(function () use (&$calledFuture) {
             $calledFuture = true;
             return ['error' => new \Exception('Noo!')];
         });
@@ -429,7 +429,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testCanReturnFutureResults()
     {
         $called = false;
-        $future = new Future(function () use (&$called) {
+        $future = new RingFuture(function () use (&$called) {
             $called = true;
             return ['status' => 201, 'headers' => []];
         });
@@ -445,7 +445,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testThrowsExceptionsWhenDereferenced()
     {
         $calledFuture = false;
-        $future = new Future(function () use (&$calledFuture) {
+        $future = new RingFuture(function () use (&$calledFuture) {
             $calledFuture = true;
             return ['error' => new \Exception('Noop!')];
         });
