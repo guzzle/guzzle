@@ -186,6 +186,13 @@ class Client implements ClientInterface
         return $this->send($this->createRequest('OPTIONS', $url, $options));
     }
 
+    /**
+     * Sends the request.
+     * @param Message\RequestInterface $request
+     * @return Message\ResponseInterface
+     * @throws Exception\RequestException
+     * @throws \Exception
+     */
     public function send(RequestInterface $request)
     {
         $transaction = new Transaction($this, $request);
