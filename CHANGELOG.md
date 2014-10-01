@@ -21,6 +21,23 @@ Adding support for non-blocking futures and some minor API cleanup.
   requests concurrently using a capped pool size as efficiently as possible.
 * Added `hasListeners()` to EmitterInterface.
 
+### Deprecations
+
+* Removed `GuzzleHttp\ClientInterface::sendAll` and marked
+  `GuzzleHttp\Client::sendAll` as deprecated (it's still there, just not the
+  recommended way).
+* Marked "functions.php" as deprecated, so that Guzzle is truly PSR-4 compliant.
+  functions.php is still available and autoloaded, but it is now deprecated.
+  These functions are now implemented in `GuzzleHttp\Utils` using camelCase.
+  `GuzzleHttp\json_decode` moved to `GuzzleHttp\Utils::jsonDecode`.
+  `GuzzleHttp\get_path` moved to `GuzzleHttp\Utils::getPath`.
+  `GuzzleHttp\set_path` moved to `GuzzleHttp\Utils::setPath`.
+  `GuzzleHttp\batch` should now be `GuzzleHttp\Pool::batch`, which returns a
+  `BatchResults` object instead of an `SplObjectStorage`. Using functions.php
+  caused problems for many users: they aren't PSR-4 compliant, require an
+  explicit include, and needed an if-guard to ensure that the functions are not
+  declared multiple times.
+
 ### Breaking changes
 
 The breaking changes in this release are relatively minor. The biggest thing to
@@ -63,20 +80,6 @@ interfaces.
   This control mechanism was used to stop a transfer of parallel requests from
   completing. This can now be handled by throwing the exception or by
   cancelling a pool of requests or each outstanding future request individually.
-* Removed `GuzzleHttp\ClientInterface::sendAll` and marked
-  `GuzzleHttp\Client::sendAll` as deprecated (it's still there, just not the
-  recommended way).
-* Marked "functions.php" as deprecated, so that Guzzle is truly PSR-4 compliant.
-  functions.php is still available and autoloaded, but it is now deprecated.
-  These functions are now implemented in `GuzzleHttp\Utils` using camelCase.
-  `GuzzleHttp\json_decode` moved to `GuzzleHttp\Utils::jsonDecode`.
-  `GuzzleHttp\get_path` moved to `GuzzleHttp\Utils::getPath`.
-  `GuzzleHttp\set_path` moved to `GuzzleHttp\Utils::setPath`.
-  `GuzzleHttp\batch` should now be `GuzzleHttp\Pool::batch`, which returns a
-  `BatchResults` object instead of an `SplObjectStorage`. Using functions.php
-  caused problems for many users: they aren't PSR-4 compliant, require an
-  explicit include, and needed an if-guard to ensure that the functions are not
-  declared multiple times.
 * Updated to "GuzzleHttp\Streams" 3.0.
     * `GuzzleHttp\Stream\StreamInterface::getContents()` no longer accepts a
       `maxLen` parameter. This update makes the Guzzle streams project
