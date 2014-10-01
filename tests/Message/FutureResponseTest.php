@@ -41,7 +41,7 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
         $future->deref();
         $this->assertTrue($future->realized());
         $this->assertEquals('bar', $future->getHeader('Foo'));
-        $this->assertEquals(['bar'], $future->getHeaderLines('Foo'));
+        $this->assertEquals(['bar'], $future->getHeaderAsarray('Foo'));
         $this->assertSame($response->getHeaders(), $future->getHeaders());
         $this->assertSame(
             $response->getBody(),

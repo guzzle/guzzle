@@ -64,16 +64,13 @@ interface MessageInterface
     public function getHeader($header);
 
     /**
-     * Retrieve an array of header values by the given case-insensitive name.
-     *
-     * The return value is an array of the header lines that have the given
-     * header name.
+     * Retrieves a header by the given case-insensitive name as an array of strings.
      *
      * @param string $header Case-insensitive header name.
      *
-     * @return array
+     * @return string[]
      */
-    public function getHeaderLines($header);
+    public function getHeaderAsArray($header);
 
     /**
      * Checks if a header exists by the given case-insensitive name.

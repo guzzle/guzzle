@@ -133,7 +133,7 @@ class AbstractMessageTest extends \PHPUnit_Framework_TestCase
         $h->addHeader('foo', 'bar');
         $h->addHeader('foo', 'baz');
         $this->assertEquals('bar, baz', $h->getHeader('foo'));
-        $this->assertEquals(['bar', 'baz'], $h->getHeaderLines('foo'));
+        $this->assertEquals(['bar', 'baz'], $h->getHeaderAsArray('foo'));
     }
 
     public function testAddsMultipleHeaders()
@@ -237,7 +237,7 @@ class AbstractMessageTest extends \PHPUnit_Framework_TestCase
     {
         $h = new Request('GET', 'http://foo.com');
         $this->assertInternalType('string', $h->getHeader('foo'));
-        $this->assertInternalType('array', $h->getHeaderLines('foo'));
+        $this->assertInternalType('array', $h->getHeaderAsArray('foo'));
     }
 
     public function testSetsIntegersAndFloatsAsHeaders()

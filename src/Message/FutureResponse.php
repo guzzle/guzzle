@@ -89,9 +89,9 @@ class FutureResponse implements ResponseInterface, FutureInterface
         return $this->result->getHeader($header);
     }
 
-    public function getHeaderLines($header)
+    public function getHeaderAsArray($header)
     {
-        return $this->result->getHeaderLines($header);
+        return $this->result->getHeaderAsArray($header);
     }
 
     public function hasHeader($header)
