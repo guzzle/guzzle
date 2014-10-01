@@ -14,16 +14,16 @@ namespace GuzzleHttp\Adapter\Curl
 
 namespace GuzzleHttp\Tests\Adapter\Curl {
 
-    use GuzzleHttp\Adapter\Curl\MultiAdapter;
-    use GuzzleHttp\Event\BeforeEvent;
-    use GuzzleHttp\Exception\ServerException;
-    use GuzzleHttp\Message\RequestInterface;
-    use GuzzleHttp\Stream\Stream;
     use GuzzleHttp\Adapter\Curl\CurlFactory;
+    use GuzzleHttp\Adapter\Curl\MultiAdapter;
     use GuzzleHttp\Adapter\Transaction;
     use GuzzleHttp\Client;
+    use GuzzleHttp\Event\BeforeEvent;
+    use GuzzleHttp\Exception\ServerException;
     use GuzzleHttp\Message\MessageFactory;
     use GuzzleHttp\Message\Request;
+    use GuzzleHttp\Message\RequestInterface;
+    use GuzzleHttp\Stream\Stream;
     use GuzzleHttp\Tests\Server;
 
     /**

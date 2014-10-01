@@ -2,9 +2,9 @@
 namespace GuzzleHttp\Post;
 
 use GuzzleHttp\Message\RequestInterface;
-use GuzzleHttp\Stream\StreamInterface;
-use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Query;
+use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Stream\StreamInterface;
 
 /**
  * Holds POST fields and files and creates a streaming body when read methods

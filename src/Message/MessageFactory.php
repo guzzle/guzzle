@@ -1,17 +1,17 @@
 <?php
 namespace GuzzleHttp\Message;
 
-use GuzzleHttp\Event\ListenerAttacherTrait;
-use GuzzleHttp\Post\PostFileInterface;
-use GuzzleHttp\Subscriber\Cookie;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\CookieJarInterface;
-use GuzzleHttp\Subscriber\HttpError;
+use GuzzleHttp\Event\ListenerAttacherTrait;
 use GuzzleHttp\Post\PostBody;
 use GuzzleHttp\Post\PostFile;
-use GuzzleHttp\Subscriber\Redirect;
-use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Post\PostFileInterface;
 use GuzzleHttp\Query;
+use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Subscriber\Cookie;
+use GuzzleHttp\Subscriber\HttpError;
+use GuzzleHttp\Subscriber\Redirect;
 use GuzzleHttp\Url;
 
 /**

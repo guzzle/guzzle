@@ -2,9 +2,9 @@
 
 namespace GuzzleHttp\Tests;
 
+use GuzzleHttp\Client;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\ResponseInterface;
-use GuzzleHttp\Client;
 
 /**
  * The Server class is used to control a scripted webserver using node.js that
@@ -108,7 +108,7 @@ class Server
         $data = array_filter(explode(self::REQUEST_DELIMITER, (string) $response->getBody()));
         if ($hydrate) {
             $factory = new MessageFactory();
-            $data = array_map(function($message) use ($factory) {
+            $data = array_map(function ($message) use ($factory) {
                 return $factory->fromMessage($message);
             }, $data);
         }
@@ -142,7 +142,7 @@ class Server
 
     private static function start()
     {
-        if (self::$started){
+        if (self::$started) {
             return;
         }
 

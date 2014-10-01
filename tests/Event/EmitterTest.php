@@ -256,12 +256,12 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
     public function testCanAddFirstAndLastListeners()
     {
         $b = '';
-        $this->emitter->on('foo', function() use (&$b) { $b .= 'a'; }, 'first'); // 1
-        $this->emitter->on('foo', function() use (&$b) { $b .= 'b'; }, 'last');  // 0
-        $this->emitter->on('foo', function() use (&$b) { $b .= 'c'; }, 'first'); // 2
-        $this->emitter->on('foo', function() use (&$b) { $b .= 'd'; }, 'first'); // 3
-        $this->emitter->on('foo', function() use (&$b) { $b .= 'e'; }, 'first'); // 4
-        $this->emitter->on('foo', function() use (&$b) { $b .= 'f'; });          // 0
+        $this->emitter->on('foo', function () use (&$b) { $b .= 'a'; }, 'first'); // 1
+        $this->emitter->on('foo', function () use (&$b) { $b .= 'b'; }, 'last');  // 0
+        $this->emitter->on('foo', function () use (&$b) { $b .= 'c'; }, 'first'); // 2
+        $this->emitter->on('foo', function () use (&$b) { $b .= 'd'; }, 'first'); // 3
+        $this->emitter->on('foo', function () use (&$b) { $b .= 'e'; }, 'first'); // 4
+        $this->emitter->on('foo', function () use (&$b) { $b .= 'f'; });          // 0
         $this->emitter->emit('foo', $this->getEvent());
         $this->assertEquals('edcabf', $b);
     }

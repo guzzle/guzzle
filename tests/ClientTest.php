@@ -6,9 +6,9 @@ use GuzzleHttp\Adapter\FakeParallelAdapter;
 use GuzzleHttp\Adapter\MockAdapter;
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\BeforeEvent;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Response;
-use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Subscriber\History;
 use GuzzleHttp\Subscriber\Mock;
 
@@ -399,7 +399,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         ];
 
         $client->sendAll($requests);
-        $requests = array_map(function($r) { return $r->getMethod(); }, $history->getRequests());
+        $requests = array_map(function ($r) { return $r->getMethod(); }, $history->getRequests());
         $this->assertContains('GET', $requests);
         $this->assertContains('POST', $requests);
         $this->assertContains('PUT', $requests);

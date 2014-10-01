@@ -2,14 +2,14 @@
 
 namespace GuzzleHttp\Subscriber;
 
+use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Event\SubscriberInterface;
 use GuzzleHttp\Message\RequestInterface;
-use GuzzleHttp\Event\BeforeEvent;
-use GuzzleHttp\Post\PostBodyInterface;
-use GuzzleHttp\Stream\StreamInterface;
-use GuzzleHttp\Stream\MetadataStreamInterface;
 use GuzzleHttp\Mimetypes;
+use GuzzleHttp\Post\PostBodyInterface;
+use GuzzleHttp\Stream\MetadataStreamInterface;
+use GuzzleHttp\Stream\StreamInterface;
 
 /**
  * Prepares requests with a body before sending

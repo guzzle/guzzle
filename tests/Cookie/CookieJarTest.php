@@ -4,8 +4,8 @@ namespace GuzzleHttp\Tests\CookieJar;
 
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
-use GuzzleHttp\Message\Response;
 use GuzzleHttp\Message\Request;
+use GuzzleHttp\Message\Response;
 
 /**
  * @covers GuzzleHttp\Cookie\CookieJar

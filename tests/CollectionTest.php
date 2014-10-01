@@ -175,7 +175,7 @@ class CollectionTest extends \PHPUnit_Framework_TestCase
             'same_number' => 'ten'
         ));
 
-        $filtered = $this->coll->filter(function($key, $value) {
+        $filtered = $this->coll->filter(function ($key, $value) {
             return $value == 'ten';
         });
 
@@ -195,7 +195,7 @@ class CollectionTest extends \PHPUnit_Framework_TestCase
             'number_3' => 3
         ));
 
-        $mapped = $this->coll->map(function($key, $value) {
+        $mapped = $this->coll->map(function ($key, $value) {
             return $value * $value;
         });
 

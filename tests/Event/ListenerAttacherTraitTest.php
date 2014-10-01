@@ -23,7 +23,7 @@ class ListenerAttacherTraitTest extends \PHPUnit_Framework_TestCase
 {
     public function testRegistersEvents()
     {
-        $fn = function() {};
+        $fn = function () {};
         $o = new ObjectWithEvents([
             'foo' => $fn,
             'bar' => $fn,
@@ -40,7 +40,7 @@ class ListenerAttacherTraitTest extends \PHPUnit_Framework_TestCase
 
     public function testRegistersEventsWithPriorities()
     {
-        $fn = function() {};
+        $fn = function () {};
         $o = new ObjectWithEvents([
             'foo' => ['fn' => $fn, 'priority' => 99, 'once' => true],
             'bar' => ['fn' => $fn, 'priority' => 50],
@@ -54,7 +54,7 @@ class ListenerAttacherTraitTest extends \PHPUnit_Framework_TestCase
 
     public function testRegistersMultipleEvents()
     {
-        $fn = function() {};
+        $fn = function () {};
         $eventArray = [['fn' => $fn], ['fn' => $fn]];
         $o = new ObjectWithEvents([
             'foo' => $eventArray,

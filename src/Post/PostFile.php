@@ -4,8 +4,8 @@ namespace GuzzleHttp\Post;
 
 use GuzzleHttp\Mimetypes;
 use GuzzleHttp\Stream\MetadataStreamInterface;
-use GuzzleHttp\Stream\StreamInterface;
 use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Stream\StreamInterface;
 
 /**
  * Post file upload

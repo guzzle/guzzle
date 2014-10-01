@@ -2,9 +2,9 @@
 
 namespace GuzzleHttp\Event;
 
+use GuzzleHttp\Adapter\TransactionInterface;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\ResponseInterface;
-use GuzzleHttp\Adapter\TransactionInterface;
 
 /**
  * Event object emitted after a request has been sent and an error was

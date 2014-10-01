@@ -2,11 +2,11 @@
 
 namespace GuzzleHttp\Subscriber;
 
+use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Event\SubscriberInterface;
-use GuzzleHttp\Event\CompleteEvent;
-use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Exception\CouldNotRewindStreamException;
+use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\ResponseInterface;
 use GuzzleHttp\Url;

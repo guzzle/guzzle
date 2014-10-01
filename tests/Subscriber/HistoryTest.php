@@ -9,9 +9,9 @@ use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Message\Response;
+use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Subscriber\History;
 use GuzzleHttp\Subscriber\Mock;
-use GuzzleHttp\Stream\Stream;
 
 /**
  * @covers GuzzleHttp\Subscriber\History

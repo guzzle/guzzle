@@ -9,8 +9,8 @@ use GuzzleHttp\Message\AbstractMessage;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Stream\InflateStream;
-use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Stream\LazyOpenStream;
+use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Stream\StreamInterface;
 use GuzzleHttp\Stream\Utils;
 

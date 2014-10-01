@@ -1,8 +1,8 @@
 <?php
 namespace GuzzleHttp\Message;
 
-use GuzzleHttp\Event\HasEmitterTrait;
 use GuzzleHttp\Collection;
+use GuzzleHttp\Event\HasEmitterTrait;
 use GuzzleHttp\Subscriber\Prepare;
 use GuzzleHttp\Url;
 

@@ -4,11 +4,11 @@ namespace GuzzleHttp\Tests\Subscriber;
 
 use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Client;
-use GuzzleHttp\Event\CompleteEvent;
-use GuzzleHttp\Subscriber\Cookie;
 use GuzzleHttp\Cookie\CookieJar;
-use GuzzleHttp\Message\Response;
+use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Message\Request;
+use GuzzleHttp\Message\Response;
+use GuzzleHttp\Subscriber\Cookie;
 use GuzzleHttp\Subscriber\History;
 use GuzzleHttp\Subscriber\Mock;
 

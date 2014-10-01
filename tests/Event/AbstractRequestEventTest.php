@@ -2,8 +2,8 @@
 
 namespace GuzzleHttp\Tests\Event;
 
-use GuzzleHttp\Client;
 use GuzzleHttp\Adapter\Transaction;
+use GuzzleHttp\Client;
 use GuzzleHttp\Message\Request;
 
 /**

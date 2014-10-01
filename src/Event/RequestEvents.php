@@ -30,7 +30,8 @@ final class RequestEvents
      *
      * @throws RequestException
      */
-    public static function emitBefore(TransactionInterface $transaction) {
+    public static function emitBefore(TransactionInterface $transaction)
+    {
         $request = $transaction->getRequest();
         try {
             $request->getEmitter()->emit(

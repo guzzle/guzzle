@@ -2,11 +2,11 @@
 namespace GuzzleHttp\Adapter\Curl;
 
 use GuzzleHttp\Adapter\TransactionInterface;
+use GuzzleHttp\Exception\AdapterException;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
-use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Stream\LazyOpenStream;
-use GuzzleHttp\Exception\AdapterException;
+use GuzzleHttp\Stream\Stream;
 
 /**
  * Creates curl resources from a request and response object
