@@ -49,6 +49,8 @@ interfaces.
   ``GuzzleHttp\Query``, ``GuzzleHttp\Post\PostBody``, and
   ``GuzzleHttp\Cookie\SetCookie``. This blog post provides a good outline of
    why I did this: http://ocramius.github.io/blog/fluent-interfaces-are-evil/.
+   This also makes the Guzzle message interfaces compatible with the current
+   PSR-7 message proposal.
 * Breaking changes to the adapter layer
     * Removing all classes from `GuzzleHttp\Adapter`, these are now
       implemented as callables that are stored in `GuzzleHttp\Ring\Client`.
