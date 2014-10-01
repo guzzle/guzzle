@@ -11,11 +11,21 @@ if (!defined('GUZZLE_FUNCTIONS_VERSION')) {
     define('GUZZLE_FUNCTIONS_VERSION', ClientInterface::VERSION);
 
     /**
+     * @param ClientInterface $client
+     * @param array           $requests
+     * @param array           $options
+     * @return \SplObjectStorage For backwards compatibility with v4
      * @deprecated Use GuzzleHttp\Pool::batch
      */
     function batch(ClientInterface $client, $requests, array $options = [])
     {
-        return Pool::batch($client, $requests, $options);
+        $result = Pool::batch($client, $requests, $options);
+        $hash = new \SplObjectStorage();
+        foreach ($result->getKeys() as $request) {
+            $hash[$request] = $result->getResult($request);
+        }
+
+        return $hash;
     }
 
     /**
