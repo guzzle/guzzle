@@ -93,7 +93,7 @@ final class Utils
     public static function uriTemplate($template, array $variables)
     {
         if (function_exists('\\uri_template')) {
-            return uri_template($template, $variables);
+            return \uri_template($template, $variables);
         }
 
         static $uriTemplate;

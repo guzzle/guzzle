@@ -24,7 +24,8 @@
     "autoload": {
         "psr-4": {
             "GuzzleHttp\\": "src/"
-        }
+        },
+        "files": ["src/functions.php"]
     },
     "autoload-dev": {
         "psr-4": {

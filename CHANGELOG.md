@@ -31,22 +31,18 @@ interfaces.
 * Removed the fluent interfaces (i.e., ``return $this``) from requests,
   responses, ``GuzzleHttp\Collection``, ``GuzzleHttp\Url``,
   ``GuzzleHttp\Query``, ``GuzzleHttp\Post\PostBody``, and
-  ``GuzzleHttp\Cookie\SetCookie``.
-* Removing all classes from `GuzzleHttp\Adapter`, these are now
-  implemented as callables that are stored in `GuzzleHttp\Ring\Client`.
-* Removed the concept of "parallel adapters". If you want an adapter to
-  send requests in parallel, then have the adapter return
-  ``GuzzleHttp\Ring\Future`` objects that allow futures to be fulfilled in
-  parallel when one of the future objects are dereferenced.
-* Moved `GuzzleHttp\Adapter\Transaction` to `GuzzleHttp\Transaction`. The
-  Transaction object now exposes the request, response, and client as public
-  properties. The getters and setters have been removed.
-* Removed "functions.php" so that Guzzle is truly PSR-4 compliant. These
-  functions are now implemented in `GuzzleHttp\Utils` using camelCase.
-  `GuzzleHttp\json_decode` moved to `GuzzleHttp\Utils::jsonDecode`.
-  `GuzzleHttp\batch` moved to `GuzzleHttp\Pool::batch`.
-  `GuzzleHttp\get_path` moved to `GuzzleHttp\Utils::getPath`.
-  `GuzzleHttp\set_path` moved to `GuzzleHttp\Utils::setPath`.
+  ``GuzzleHttp\Cookie\SetCookie``. This blog post provides a good outline of
+   why I did this: http://ocramius.github.io/blog/fluent-interfaces-are-evil/.
+* Breaking changes to the adapter layer
+    * Removing all classes from `GuzzleHttp\Adapter`, these are now
+      implemented as callables that are stored in `GuzzleHttp\Ring\Client`.
+    * Removed the concept of "parallel adapters". If you want an adapter to
+      send requests in parallel, then have the adapter return
+      ``GuzzleHttp\Ring\Future`` objects that allow futures to be fulfilled in
+      parallel when one of the future objects are dereferenced.
+    * Moved `GuzzleHttp\Adapter\Transaction` to `GuzzleHttp\Transaction`. The
+      Transaction object now exposes the request, response, and client as public
+      properties. The getters and setters have been removed.
 * Removed the "headers" event. This event was only useful for changing the
   body a response once the headers of the response were known. You can implement
   a similar behavior in a number of ways. One example might be to use a
@@ -56,7 +52,7 @@ interfaces.
   written to.
 * Removed the `asArray` parameter from
   `GuzzleHttp\Message\MessageInterface::getHeader`. If you want to get a header
-  value as an array, then use the newly added ``getHeaderLines()`` method of
+  value as an array, then use the newly added ``getHeaderAsArray()`` method of
   ``MessageInterface``.
 * ``GuzzleHttp\Utils::batch`` now returns a `GuzzleHttp\BatchResults` object
   instead of an SplObjectStorage.
@@ -65,13 +61,22 @@ interfaces.
   an associative array to the constructor which is a mapping of the request
   option name mapping to a function that applies the option value to a request.
 * Removed `GuzzleHttp\ClientInterface::sendAll` and marked
-  `GuzzleHttp\Client::sendAll` as deprecated.
+  `GuzzleHttp\Client::sendAll` as deprecated (it's still there, just not the
+  recommended way).
 * Removed the concept of "throwImmediately" from exceptions and error events.
   This control mechanism was used to stop a transfer of parallel requests from
   completing. This can now be handled by throwing the exception or by
   cancelling a pool of requests or each outstanding future request individually.
+* Marked "functions.php" as deprecated, so that Guzzle is truly PSR-4 compliant.
+  These functions are now implemented in `GuzzleHttp\Utils` using camelCase.
+  `GuzzleHttp\json_decode` moved to `GuzzleHttp\Utils::jsonDecode`.
+  `GuzzleHttp\get_path` moved to `GuzzleHttp\Utils::getPath`.
+  `GuzzleHttp\set_path` moved to `GuzzleHttp\Utils::setPath`.
+  `GuzzleHttp\batch` moved to `GuzzleHttp\Pool::batch`. Using functions.php
+  caused problems for many users: they aren't PSR-4 compliant, require an
+  explicit include, and needed an if-guard to ensure that the functions are not
+  declared multiple times.
 * Updated to "GuzzleHttp\Streams" 3.0.
-    * Removed functions.php from Streams
     * `GuzzleHttp\Stream\StreamInterface::getContents()` no longer accepts a
       `maxLen` parameter.
     * ``GuzzleHttp\Stream\Stream::__construct``,
