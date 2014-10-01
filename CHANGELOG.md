@@ -9,9 +9,8 @@ Adding support for non-blocking futures and some minor API cleanup.
 ### New Features
 
 * Added support for non-blocking Future responses based on
-  `guzzlehttp/guzzle-ring`. You can still use the `sendAll()` and `batch()`
-  functions in exactly the same way, but you now also have access to the
-  `future` request option which creates a future request if possible.
+  `guzzlehttp/guzzle-ring`. Note that you can still use the Guzzle 4
+  `sendAll()` and `batch()` functions in exactly the same way.
 * You can now create a default adapter based on the environment using a public
   API.
 * Updated the redirect plugin to be non-blocking so that redirects are sent in
@@ -53,32 +52,35 @@ interfaces.
 * Removed the `asArray` parameter from
   `GuzzleHttp\Message\MessageInterface::getHeader`. If you want to get a header
   value as an array, then use the newly added ``getHeaderAsArray()`` method of
-  ``MessageInterface``.
-* ``GuzzleHttp\Utils::batch`` now returns a `GuzzleHttp\BatchResults` object
-  instead of an SplObjectStorage.
+  ``MessageInterface``. This change makes the Guzzle interfaces compatible with
+  the PSR-7 interfaces.
 * ``GuzzleHttp\Message\MessageFactory`` no longer allows subclasses to add
-  custom request options using double-dispatch. Instead, you should now provide
-  an associative array to the constructor which is a mapping of the request
-  option name mapping to a function that applies the option value to a request.
-* Removed `GuzzleHttp\ClientInterface::sendAll` and marked
-  `GuzzleHttp\Client::sendAll` as deprecated (it's still there, just not the
-  recommended way).
+  custom request options using double-dispatch (this was an implementation
+  detail). Instead, you should now provide an associative array to the
+  constructor which is a mapping of the request option name mapping to a
+  function that applies the option value to a request.
 * Removed the concept of "throwImmediately" from exceptions and error events.
   This control mechanism was used to stop a transfer of parallel requests from
   completing. This can now be handled by throwing the exception or by
   cancelling a pool of requests or each outstanding future request individually.
+* Removed `GuzzleHttp\ClientInterface::sendAll` and marked
+  `GuzzleHttp\Client::sendAll` as deprecated (it's still there, just not the
+  recommended way).
 * Marked "functions.php" as deprecated, so that Guzzle is truly PSR-4 compliant.
+  functions.php is still available and autoloaded, but it is now deprecated.
   These functions are now implemented in `GuzzleHttp\Utils` using camelCase.
   `GuzzleHttp\json_decode` moved to `GuzzleHttp\Utils::jsonDecode`.
   `GuzzleHttp\get_path` moved to `GuzzleHttp\Utils::getPath`.
   `GuzzleHttp\set_path` moved to `GuzzleHttp\Utils::setPath`.
-  `GuzzleHttp\batch` moved to `GuzzleHttp\Pool::batch`. Using functions.php
+  `GuzzleHttp\batch` should now be `GuzzleHttp\Pool::batch`, which returns a
+  `BatchResults` object instead of an `SplObjectStorage`. Using functions.php
   caused problems for many users: they aren't PSR-4 compliant, require an
   explicit include, and needed an if-guard to ensure that the functions are not
   declared multiple times.
 * Updated to "GuzzleHttp\Streams" 3.0.
     * `GuzzleHttp\Stream\StreamInterface::getContents()` no longer accepts a
-      `maxLen` parameter.
+      `maxLen` parameter. This update makes the Guzzle streams project
+      compatible with the current PSR-7 proposal.
     * ``GuzzleHttp\Stream\Stream::__construct``,
       ``GuzzleHttp\Stream\Stream::factory``, and
       ``GuzzleHttp\Stream\Utils::create`` no longer accept a size in the second
