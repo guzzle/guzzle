@@ -139,7 +139,7 @@ interface ClientInterface extends HasEmitterInterface
      * @param array           $options  Associative array of options
      *     - parallel: (int) Maximum number of requests to send in parallel
      *     - before: (callable|array) Receives a BeforeEvent
-     *     - after: (callable|array) Receives a CompleteEvent
+     *     - complete: (callable|array) Receives a CompleteEvent
      *     - error: (callable|array) Receives a ErrorEvent
      *
      * @throws AdapterException When an error occurs in the HTTP adapter.
