@@ -8,6 +8,7 @@ use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\FutureInterface;
 use GuzzleHttp\Event\ListenerAttacherTrait;
 use GuzzleHttp\Event\EndEvent;
+use React\Promise\Deferred;
 
 /**
  * Sends and iterator of requests concurrently using a capped pool size.
@@ -51,6 +52,9 @@ class Pool implements FutureInterface
     /** @var array Listeners to attach to each request */
     private $eventListeners = [];
 
+    /** @var Deferred */
+    private $deferred;
+
     /**
      * The option values for 'before', 'after', and 'error' can be a callable,
      * an associative array containing event data, or an array of event data
@@ -81,6 +85,7 @@ class Pool implements FutureInterface
             $this->prepareOptions($options),
             ['before', 'complete', 'error', 'end']
         );
+        $this->deferred = new Deferred();
     }
 
     /**
@@ -174,6 +179,7 @@ class Pool implements FutureInterface
 
         // Clean up no longer needed state.
         $this->client = $this->iter = $this->derefQueue = $this->eventListeners = null;
+        $this->deferred->resolve(true);
 
         return true;
     }
@@ -207,6 +213,13 @@ class Pool implements FutureInterface
         }
 
         return $success;
+    }
+
+    public function then(callable $onFulfilled = null, callable $onRejected = null, callable $onProgress = null)
+    {
+        return $this->deferred->promise()->then(
+            $onRejected, $onRejected, $onProgress
+        );
     }
 
     /**

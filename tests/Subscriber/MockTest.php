@@ -111,7 +111,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
         $client = new Client(['base_url' => 'http://test.com']);
         $request = $client->createRequest('GET', '/', ['future' => true]);
         $response = new Response(200);
-        $future = new FutureResponse(function () use ($response) {
+        $future = FutureResponse::createFuture(function () use ($response) {
             return $response;
         });
         $mock = new Mock([$future]);
@@ -127,8 +127,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
     {
         $client = new Client(['base_url' => 'http://test.com']);
         $request = $client->createRequest('GET', '/', ['future' => true]);
-
-        $future = new FutureResponse(function () use ($request) {
+        $future = FutureResponse::createFuture(function () use ($request) {
             throw new RequestException('foo', $request);
         });
 
@@ -152,7 +151,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
         $request = $client->createRequest('GET', '/', ['future' => true]);
 
         // The first mock will be a mocked future response.
-        $future = new FutureResponse(function () use ($client) {
+        $future = FutureResponse::createFuture(function () use ($client) {
             // When dereferenced, we will set a mocked response and send
             // another request.
             $client->get('http://httpbin.org', ['events' => [

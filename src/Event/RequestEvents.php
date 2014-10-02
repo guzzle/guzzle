@@ -71,6 +71,6 @@ final class RequestEvents
     {
         // Stop further "end" listeners from firing and add a future response
         // that throws when accessed.
-        $e->intercept(new CancelledResponse($e->getException()));
+        $e->intercept(CancelledResponse::create($e->getException()));
     }
 }

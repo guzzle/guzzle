@@ -2,6 +2,7 @@
 namespace GuzzleHttp\Message;
 
 use GuzzleHttp\Exception\StateException;
+use React\Promise\Deferred;
 
 /**
  * Represents an HTTP response for a request that was cancelled.
@@ -11,12 +12,16 @@ use GuzzleHttp\Exception\StateException;
  */
 class CancelledResponse extends FutureResponse
 {
-    public function __construct(\Exception $e = null)
+    public static function create(\Exception $e = null)
     {
         $e = $e ?: new StateException('Cannot access a cancelled response');
-        parent::__construct(function () use ($e) {
-            throw $e;
-        });
+        $deferred = new Deferred();
+        return new static(
+            $deferred->promise(),
+            function () use ($deferred, $e) {
+                $deferred->reject($e);
+            }
+        );
     }
 
     public function cancelled()

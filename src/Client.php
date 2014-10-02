@@ -2,6 +2,7 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Event\HasEmitterTrait;
+use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
@@ -13,6 +14,8 @@ use GuzzleHttp\Ring\Client\StreamAdapter;
 use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\FutureInterface;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Ring\RingFuture;
+use React\Promise\Deferred;
 
 /**
  * HTTP client
@@ -234,24 +237,32 @@ class Client implements ClientInterface
             $response = $trans->response;
         } catch (\Exception $e) {
             if (!$needsFuture) {
-                throw $e;
+                throw RequestException::wrapException($trans->request, $e);
             }
-            // Wrap the exception if the user asked for a future.
-            return new FutureResponse(function () use ($e) {
-                throw $e;
-            });
+            // Wrap the exception in a promise if the user asked for a future.
+            $deferred = new Deferred();
+            return new FutureResponse(
+                $deferred->promise(),
+                function () use ($e, $deferred) {
+                    $deferred->reject($e);
+                }
+            );
         }
 
         if ($response instanceof FutureInterface) {
             // Don't deref cancelled responses here.
-            if (!$response->cancelled() && !$needsFuture) {
+            if (!$needsFuture && !$response->cancelled()) {
                 $response = $response->deref();
             }
         } elseif ($needsFuture) {
             // Create a future if one was requested
-            $response = new FutureResponse(function () use ($response) {
-                return $response;
-            });
+            $deferred = new Deferred();
+            $response = new FutureResponse(
+                $deferred->promise(),
+                function () use ($response, $deferred) {
+                    $deferred->resolve($response);
+                }
+            );
         }
 
         return $response;
@@ -285,28 +296,39 @@ class Client implements ClientInterface
 
     private function createFutureResponse(
         Transaction $trans,
-        FutureInterface $response
+        RingFuture $response
     ) {
+        // Expect a response to be delivered to the future.
+        $deferred = FutureResponse::createDeferred();
+
+        // When the response promise is resolved, then resolve the future
+        // response promise.
+        $response = $response->then(function ($value) use ($trans, $deferred) {
+            RingBridge::completeRingResponse(
+                $trans, $value, $this->messageFactory, $this->fsm
+            );
+            $deferred->resolve($trans->response);
+        });
+
         // Create a future response that's hooked up to the ring future.
         return new FutureResponse(
+            $deferred->promise(),
             // Dereference function
-            function () use ($response, $trans) {
+            function () use ($deferred, $response, $trans) {
                 $response->deref();
                 // Throw an exception if present. You need to remove transaction
                 // exceptions to prevent them from being thrown.
                 if ($trans->exception) {
-                    throw RequestException::wrapException($trans->request, $trans->exception);
+                    $deferred->reject(RequestException::wrapException($trans->request, $trans->exception));
                 } elseif ($trans->response) {
                     // Return the response if one was set on the transaction.
-                    return $trans->response;
+                    $deferred->resolve($trans->response);
                 }
                 // If we know that the events were fired, then there's a problem.
-                throw RingBridge::getNoRingResponseException($trans->request);
+                $deferred->reject(RingBridge::getNoRingResponseException($trans->request));
             },
             // Cancel function. Just proxy to the underlying future.
-            function () use ($response) {
-                return $response->cancel();
-            }
+            [$response, 'cancel']
         );
     }
 
@@ -406,13 +428,11 @@ class Client implements ClientInterface
     ) {
         return new RequestFsm(function (Transaction $trans) use ($adapter, $mf) {
             // Create a Guzzle-Ring request and send it.
-            $request = RingBridge::prepareRingRequest($trans, $mf, $this->fsm);
-            $response = $adapter($request);
-            // Future responses do not need to process right away, so set
-            // the response on the transaction to designate it as completed.
-            if ($response instanceof FutureInterface) {
-                $trans->response = $this->createFutureResponse($trans, $response);
+            $res = $adapter(RingBridge::prepareRingRequest($trans, $mf, $this->fsm));
+            if (!$res instanceof RingFuture) {
+                throw new \RuntimeException('Adapter must return a RingFuture');
             }
+            $trans->response = $this->createFutureResponse($trans, $res);
         });
     }
 

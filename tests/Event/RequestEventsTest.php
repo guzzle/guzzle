@@ -6,6 +6,7 @@ use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Ring\Client\MockAdapter;
 use GuzzleHttp\Event\EndEvent;
 use GuzzleHttp\Ring\RingFuture;
+use React\Promise\Deferred;
 
 /**
  * @covers GuzzleHttp\Event\RequestEvents
@@ -70,9 +71,17 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
 
     public function adapterResultProvider()
     {
+        $deferred = new Deferred();
+        $future = new RingFuture(
+            $deferred->promise(),
+            function () use ($deferred) {
+                $deferred->resolve(['status' => 404]);
+            }
+        );
+
         return [
             [['status' => 404]],
-            [new RingFuture(function () { return ['status' => 404]; })]
+            [$future]
         ];
     }
 
@@ -88,7 +97,7 @@ class RequestEventsTest extends \PHPUnit_Framework_TestCase
             RequestEvents::stopException($e);
         });
         $response = $client->send($request);
-        $this->assertInstanceOf('GuzzleHttp\Message\FutureResponse', $response);
+        $this->assertInstanceOf('GuzzleHttp\Message\CancelledResponse', $response);
         try {
             $response->getStatusCode();
             $this->fail('Did not throw');
