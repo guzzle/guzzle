@@ -347,19 +347,6 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client->get('http://httpbin.org')->deref();
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage not calling the "then"
-     */
-    public function testEnsuresResponseIsPresentAfterDereferencingWithBrokenAdapter()
-    {
-        $adapter = function () {
-            return new RingFuture(function () { return []; });
-        };
-        $client = new Client(['adapter' => $adapter]);
-        $client->get('http://httpbin.org')->deref();
-    }
-
     public function testClientHandlesErrorsDuringBeforeSend()
     {
         $client = new Client();
@@ -412,6 +399,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client(['adapter' => $mock]);
         $called = 0;
         $response = $client->get('http://localhost:123/foo', [
+            'future' => true,
             'events' => [
                 'error' => function (ErrorEvent $e) use (&$called) {
                     $called++;
@@ -435,7 +423,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         });
         $mock = new MockAdapter($future);
         $client = new Client(['adapter' => $mock]);
-        $response = $client->get('http://localhost:123/foo');
+        $response = $client->get('http://localhost:123/foo', ['future' => true]);
         $this->assertFalse($called);
         $this->assertInstanceOf('GuzzleHttp\Message\FutureResponse', $response);
         $this->assertEquals(201, $response->getStatusCode());
@@ -553,5 +541,32 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         });
         $res = $client->send($request);
         $this->assertInstanceOf('GuzzleHttp\Message\CancelledResponse', $res);
+    }
+
+    public function testReturnsFutureForErrorWhenRequested()
+    {
+        $client = new Client(['adapter' => new MockAdapter(['status' => 404])]);
+        $request = $client->createRequest('GET', 'http://localhost:123/foo', [
+            'future' => true
+        ]);
+        $res = $client->send($request);
+        $this->assertInstanceOf('GuzzleHttp\Message\FutureResponse', $res);
+        try {
+            $res->deref();
+            $this->fail('did not throw');
+        } catch (RequestException $e) {
+            $this->assertContains('404', $e->getMessage());
+        }
+    }
+
+    public function testReturnsFutureForResponseWhenRequested()
+    {
+        $client = new Client(['adapter' => new MockAdapter(['status' => 200])]);
+        $request = $client->createRequest('GET', 'http://localhost:123/foo', [
+            'future' => true
+        ]);
+        $res = $client->send($request);
+        $this->assertInstanceOf('GuzzleHttp\Message\FutureResponse', $res);
+        $this->assertEquals(200, $res->getStatusCode());
     }
 }

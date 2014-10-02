@@ -226,11 +226,33 @@ class Client implements ClientInterface
     public function send(RequestInterface $request)
     {
         $trans = new Transaction($this, $request);
-        $this->fsm->run($trans);
-        $response = $trans->response;
-        // Remove the response from the transaction to prevent future responses
-        // from returning themselves in an infinite loop when dereferenced.
-        $trans->response = null;
+        $needsFuture = $request->getConfig()->get('future');
+
+        // Return a future if one was requested.
+        try {
+            $this->fsm->run($trans);
+            $response = $trans->response;
+        } catch (\Exception $e) {
+            if (!$needsFuture) {
+                throw $e;
+            }
+            // Wrap the exception if the user asked for a future.
+            return new FutureResponse(function () use ($e) {
+                throw $e;
+            });
+        }
+
+        if ($response instanceof FutureInterface) {
+            // Don't deref cancelled responses here.
+            if (!$response->cancelled() && !$needsFuture) {
+                $response = $response->deref();
+            }
+        } elseif ($needsFuture) {
+            // Create a future if one was requested
+            $response = new FutureResponse(function () use ($response) {
+                return $response;
+            });
+        }
 
         return $response;
     }

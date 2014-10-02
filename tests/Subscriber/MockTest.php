@@ -109,7 +109,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
     public function testCanMockFutureResponses()
     {
         $client = new Client(['base_url' => 'http://test.com']);
-        $request = $client->createRequest('GET', '/');
+        $request = $client->createRequest('GET', '/', ['future' => true]);
         $response = new Response(200);
         $future = new FutureResponse(function () use ($response) {
             return $response;
@@ -126,7 +126,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
     public function testCanMockExceptionFutureResponses()
     {
         $client = new Client(['base_url' => 'http://test.com']);
-        $request = $client->createRequest('GET', '/');
+        $request = $client->createRequest('GET', '/', ['future' => true]);
 
         $future = new FutureResponse(function () use ($request) {
             throw new RequestException('foo', $request);
@@ -149,7 +149,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
     public function testCanMockFailedFutureResponses()
     {
         $client = new Client(['base_url' => 'http://test.com']);
-        $request = $client->createRequest('GET', '/');
+        $request = $client->createRequest('GET', '/', ['future' => true]);
 
         // The first mock will be a mocked future response.
         $future = new FutureResponse(function () use ($client) {
