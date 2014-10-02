@@ -298,39 +298,29 @@ class Client implements ClientInterface
         RingFuture $response
     ) {
         // Expect a response to be delivered to the future.
-        $deferred = FutureResponse::createDeferred();
+        //$deferred = FutureResponse::createDeferred();
 
         // When the response promise is resolved, then resolve the future
         // response promise.
-        $response = $response->then(function ($value) use ($trans, $deferred) {
+        $response = $response->then(function ($value) use ($trans) {
             RingBridge::completeRingResponse(
                 $trans, $value, $this->messageFactory, $this->fsm
             );
             if ($trans->exception) {
-                $deferred->reject(
-                    RequestException::wrapException($trans->request, $trans->exception)
-                );
-            } else {
-                $deferred->resolve($trans->response);
+                throw RequestException::wrapException($trans->request, $trans->exception);
+            } elseif ($trans->response) {
+                // If we know that the events were fired, then there's a problem.
+                throw RingBridge::getNoRingResponseException($trans->request);
             }
+            return $trans->response;
         });
 
         // Create a future response that's hooked up to the ring future.
         return new FutureResponse(
-            $deferred->promise(),
+            $response,
             // Dereference function
-            function () use ($deferred, $response, $trans) {
+            function () use ($response) {
                 $response->deref();
-                // Throw an exception if present. You need to remove transaction
-                // exceptions to prevent them from being thrown.
-                if ($trans->exception) {
-                    $deferred->reject(RequestException::wrapException($trans->request, $trans->exception));
-                } elseif ($trans->response) {
-                    // Return the response if one was set on the transaction.
-                    $deferred->resolve($trans->response);
-                }
-                // If we know that the events were fired, then there's a problem.
-                $deferred->reject(RingBridge::getNoRingResponseException($trans->request));
             },
             // Cancel function. Just proxy to the underlying future.
             [$response, 'cancel']
