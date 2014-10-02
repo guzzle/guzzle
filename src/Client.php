@@ -304,9 +304,7 @@ class Client implements ClientInterface
                 throw RingBridge::getNoRingResponseException($trans->request);
             },
             // Cancel function. Just proxy to the underlying future.
-            function () use ($response) {
-                return $response->cancel();
-            }
+            [$response, 'cancel']
         );
     }
 
