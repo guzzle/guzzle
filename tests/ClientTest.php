@@ -560,6 +560,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         });
         $res = $client->send($request);
         $this->assertInstanceOf('GuzzleHttp\Message\CancelledResponse', $res);
+        $this->assertTrue($res->cancelled());
     }
 
     public function testReturnsFutureForErrorWhenRequested()

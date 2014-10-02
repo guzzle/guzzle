@@ -2,7 +2,6 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Event\HasEmitterTrait;
-use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
@@ -307,7 +306,13 @@ class Client implements ClientInterface
             RingBridge::completeRingResponse(
                 $trans, $value, $this->messageFactory, $this->fsm
             );
-            $deferred->resolve($trans->response);
+            if ($trans->exception) {
+                $deferred->reject(
+                    RequestException::wrapException($trans->request, $trans->exception)
+                );
+            } else {
+                $deferred->resolve($trans->response);
+            }
         });
 
         // Create a future response that's hooked up to the ring future.
