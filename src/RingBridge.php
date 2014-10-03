@@ -52,26 +52,16 @@ class RingBridge
      *
      * @param array                   $ringRequest Request to update.
      * @param Transaction             $trans       Transaction
-     * @param MessageFactoryInterface $factory     Creates responses.
-     * @param Fsm                     $fsm         State machine.
      *
      * @return array Returns the new ring response array.
      */
     public static function addRingRequestCallbacks(
         array $ringRequest,
-        Transaction $trans,
-        MessageFactoryInterface $factory,
-        Fsm $fsm
+        Transaction $trans
     ) {
-        $request = $trans->request;
-
-        $ringRequest['then'] = function (array $response) use ($trans, $factory, $fsm) {
-            self::completeRingResponse($trans, $response, $factory, $fsm);
-        };
-
         // Emit progress events if any progress listeners are registered.
-        if ($request->getEmitter()->hasListeners('progress')) {
-            $emitter = $request->getEmitter();
+        if ($trans->request->getEmitter()->hasListeners('progress')) {
+            $emitter = $trans->request->getEmitter();
             $ringRequest['client']['progress'] = function ($a, $b, $c, $d)
                 use ($trans, $emitter)
             {
@@ -89,24 +79,17 @@ class RingBridge
      * Creates a Ring request from a request object AND prepares the callbacks.
      *
      * @param Transaction             $transaction Transaction to update.
-     * @param MessageFactoryInterface $factory     Creates responses.
-     * @param Fsm                     $fsm         State machine.
      *
      * @return array Converted Guzzle Ring request.
      */
-    public static function prepareRingRequest(
-        Transaction $transaction,
-        MessageFactoryInterface $factory,
-        Fsm $fsm
-    ) {
+    public static function prepareRingRequest(Transaction $transaction)
+    {
         // Clear out the transaction state when initiating.
         $transaction->exception = null;
 
         return self::addRingRequestCallbacks(
             self::createRingRequest($transaction->request),
-            $transaction,
-            $factory,
-            $fsm
+            $transaction
         );
     }
 
@@ -202,10 +185,8 @@ class RingBridge
         $message = <<<EOT
 Sending the request did not return a response, exception, or populate the
 transaction with a response. This is most likely due to an incorrectly
-implemented Guzzle-Ring adapter that is not calling the "then" function of a
-request array when the response is ready. If you are simply trying to mock
-responses, then it is recommneded to use the
-GuzzleHttp\Ring\Client\MockAdapter.
+implemented Guzzle-Ring adapter. If you are simply trying to mock responses,
+then it is recommneded to use the GuzzleHttp\Ring\Client\MockAdapter.
 EOT;
         return new RequestException($message, $request);
     }

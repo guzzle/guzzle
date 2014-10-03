@@ -387,7 +387,7 @@ class Client implements ClientInterface
     ) {
         return new RequestFsm(function (Transaction $t) use ($adapter, $mf) {
             $t->response = FutureResponse::proxy(
-                $adapter(RingBridge::prepareRingRequest($t, $mf, $this->fsm)),
+                $adapter(RingBridge::prepareRingRequest($t)),
                 function ($value) use ($t) {
                     RingBridge::completeRingResponse(
                         $t, $value, $this->messageFactory, $this->fsm
