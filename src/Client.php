@@ -227,43 +227,46 @@ class Client implements ClientInterface
     public function send(RequestInterface $request)
     {
         $trans = new Transaction($this, $request);
-        $needsFuture = $request->getConfig()->get('future');
 
-        // Return a future if one was requested.
+        // Ensure a future response is returned if one was requested.
+        if ($request->getConfig()->get('future')) {
+            return $this->returnFuture($trans);
+        }
+
         try {
             $this->fsm->run($trans);
             $response = $trans->response;
-        } catch (\Exception $e) {
-            if (!$needsFuture) {
-                throw RequestException::wrapException($trans->request, $e);
+            // Block until completed if a future was not requested.
+            if ($response instanceof FutureInterface) {
+                // Don't deref cancelled responses
+                if (!$response->cancelled()) {
+                    $response = $response->deref();
+                }
             }
+            return $response;
+        } catch (\Exception $e) {
+            throw RequestException::wrapException($trans->request, $e);
+        }
+    }
+
+    private function returnFuture(Transaction $trans)
+    {
+        try {
+            $this->fsm->run($trans);
+            $response = $trans->response;
+            if ($response instanceof FutureInterface) {
+                return $response;
+            }
+            // Turn the normal response into a future.
+            $deferred = new Deferred();
+            $deferred->resolve($response);
+            return new FutureResponse($deferred->promise());
+        } catch (\Exception $e) {
             // Wrap the exception in a promise if the user asked for a future.
             $deferred = new Deferred();
-            return new FutureResponse(
-                $deferred->promise(),
-                function () use ($e, $deferred) {
-                    $deferred->reject($e);
-                }
-            );
+            $deferred->resolve($e);
+            return new FutureResponse($deferred->promise());
         }
-
-        if ($response instanceof FutureInterface) {
-            // Don't deref cancelled responses here.
-            if (!$needsFuture && !$response->cancelled()) {
-                $response = $response->deref();
-            }
-        } elseif ($needsFuture) {
-            // Create a future if one was requested
-            $deferred = new Deferred();
-            $response = new FutureResponse(
-                $deferred->promise(),
-                function () use ($response, $deferred) {
-                    $deferred->resolve($response);
-                }
-            );
-        }
-
-        return $response;
     }
 
     /**
