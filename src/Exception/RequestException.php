@@ -23,7 +23,7 @@ class RequestException extends TransferException
     private $throwImmediately = false;
 
     public function __construct(
-        $message = '',
+        $message,
         RequestInterface $request,
         ResponseInterface $response = null,
         \Exception $previous = null
