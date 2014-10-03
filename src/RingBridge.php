@@ -57,11 +57,12 @@ class RingBridge
     {
         // Clear out the transaction state when initiating.
         $trans->exception = null;
+        $request = self::createRingRequest($trans->request);
 
         // Emit progress events if any progress listeners are registered.
         if ($trans->request->getEmitter()->hasListeners('progress')) {
             $emitter = $trans->request->getEmitter();
-            $ringRequest['client']['progress'] = function ($a, $b, $c, $d)
+            $request['client']['progress'] = function ($a, $b, $c, $d)
             use ($trans, $emitter)
             {
                 $emitter->emit(
@@ -71,7 +72,7 @@ class RingBridge
             };
         }
 
-        return self::createRingRequest($trans->request);
+        return $request;
     }
 
     /**
