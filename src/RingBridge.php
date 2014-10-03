@@ -47,23 +47,22 @@ class RingBridge
     }
 
     /**
-     * Give a ring request array, this function adds the "then" and "progress"
-     * event callbacks using a transaction and message factory.
+     * Creates a Ring request from a request object AND prepares the callbacks.
      *
-     * @param array                   $ringRequest Request to update.
-     * @param Transaction             $trans       Transaction
+     * @param Transaction $trans Transaction to update.
      *
-     * @return array Returns the new ring response array.
+     * @return array Converted Guzzle Ring request.
      */
-    public static function addRingRequestCallbacks(
-        array $ringRequest,
-        Transaction $trans
-    ) {
+    public static function prepareRingRequest(Transaction $trans)
+    {
+        // Clear out the transaction state when initiating.
+        $trans->exception = null;
+
         // Emit progress events if any progress listeners are registered.
         if ($trans->request->getEmitter()->hasListeners('progress')) {
             $emitter = $trans->request->getEmitter();
             $ringRequest['client']['progress'] = function ($a, $b, $c, $d)
-                use ($trans, $emitter)
+            use ($trans, $emitter)
             {
                 $emitter->emit(
                     'progress',
@@ -72,25 +71,7 @@ class RingBridge
             };
         }
 
-        return $ringRequest;
-    }
-
-    /**
-     * Creates a Ring request from a request object AND prepares the callbacks.
-     *
-     * @param Transaction             $transaction Transaction to update.
-     *
-     * @return array Converted Guzzle Ring request.
-     */
-    public static function prepareRingRequest(Transaction $transaction)
-    {
-        // Clear out the transaction state when initiating.
-        $transaction->exception = null;
-
-        return self::addRingRequestCallbacks(
-            self::createRingRequest($transaction->request),
-            $transaction
-        );
+        return self::createRingRequest($trans->request);
     }
 
     /**
