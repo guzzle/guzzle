@@ -11,7 +11,7 @@ use GuzzleHttp\Stream\StreamInterface;
 class Response extends AbstractMessage implements ResponseInterface
 {
     /** @var array Mapping of status codes to reason phrases */
-    private static $statusTexts = array(
+    private static $statusTexts = [
         100 => 'Continue',
         101 => 'Switching Protocols',
         102 => 'Processing',
@@ -70,7 +70,7 @@ class Response extends AbstractMessage implements ResponseInterface
         508 => 'Loop Detected',
         510 => 'Not Extended',
         511 => 'Network Authentication Required',
-    );
+    ];
 
     /** @var string The reason phrase of the response (human readable code) */
     private $reasonPhrase;
