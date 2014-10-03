@@ -235,15 +235,12 @@ class Client implements ClientInterface
 
         try {
             $this->fsm->run($trans);
-            $response = $trans->response;
-            // Block until completed if a future was not requested.
-            if ($response instanceof FutureInterface) {
-                // Don't deref cancelled responses
-                if (!$response->cancelled()) {
-                    $response = $response->deref();
-                }
-            }
-            return $response;
+            // Block until completed if a future was not requested, but
+            // don't deref cancelled responses.
+            return $trans->response instanceof FutureInterface
+                && !$trans->response->cancelled()
+                ? $trans->response->deref()
+                : $trans->response;
         } catch (\Exception $e) {
             throw RequestException::wrapException($trans->request, $e);
         }
@@ -253,18 +250,17 @@ class Client implements ClientInterface
     {
         try {
             $this->fsm->run($trans);
-            $response = $trans->response;
-            if ($response instanceof FutureInterface) {
-                return $response;
+            if ($trans->response instanceof FutureInterface) {
+                return $trans->response;
             }
             // Turn the normal response into a future.
             $deferred = new Deferred();
-            $deferred->resolve($response);
+            $deferred->resolve($trans->response);
             return new FutureResponse($deferred->promise());
         } catch (\Exception $e) {
             // Wrap the exception in a promise if the user asked for a future.
             $deferred = new Deferred();
-            $deferred->resolve($e);
+            $deferred->reject(RequestException::wrapException($trans->request, $e));
             return new FutureResponse($deferred->promise());
         }
     }
