@@ -19,8 +19,8 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage Future did not return a valid response. Found NULL
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage Expected the resolved value to be an instance of GuzzleHttp\Message\ResponseInterface, but got NULL
      */
     public function testEnsuresDerefReturnsTransaction()
     {
@@ -145,6 +145,9 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
         });
         echo $future;
         restore_error_handler();
-        $this->assertContains('Future did not return a valid response', $err);
+        $this->assertContains(
+            'Expected the resolved value to be an instance of GuzzleHttp\Message\ResponseInterface, but got NULL',
+            $err
+        );
     }
 }

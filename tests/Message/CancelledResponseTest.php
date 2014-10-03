@@ -10,7 +10,7 @@ class CancelledResponseTest extends \PHPUnit_Framework_TestCase
      */
     public function testThrowsWhenAccessed()
     {
-        $r = new CancelledResponse();
+        $r = CancelledResponse::create();
         $this->assertTrue($r->cancelled());
         $r->getStatusCode();
     }

@@ -3,6 +3,7 @@ namespace GuzzleHttp\Message;
 
 use GuzzleHttp\Ring\MagicFutureTrait;
 use GuzzleHttp\Ring\FutureInterface;
+use GuzzleHttp\Ring\ValidatedDeferred;
 use GuzzleHttp\Stream\StreamInterface;
 
 /**
@@ -39,7 +40,7 @@ class FutureResponse implements ResponseInterface, FutureInterface
         callable $onRejected = null,
         callable $onProgress = null
     ) {
-        return new self(
+        return new FutureResponse(
             $future->then($onFulfilled, $onRejected, $onProgress),
             [$future, 'deref'],
             [$future, 'cancel']
@@ -58,7 +59,7 @@ class FutureResponse implements ResponseInterface, FutureInterface
         callable $deref,
         callable $cancel = null
     ) {
-        $deferred = self::createDeferred();
+        $deferred = ValidatedDeferred::forInstance('GuzzleHttp\Message\ResponseInterface');
         return new FutureResponse(
             $deferred->promise(),
             function () use ($deferred, $deref) {

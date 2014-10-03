@@ -6,7 +6,6 @@ use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\FutureResponse;
-use GuzzleHttp\Ring\ArrayFutureInterface;
 use GuzzleHttp\Ring\Client\Middleware;
 use GuzzleHttp\Ring\Client\CurlMultiAdapter;
 use GuzzleHttp\Ring\Client\CurlAdapter;
