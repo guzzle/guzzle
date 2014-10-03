@@ -3,6 +3,7 @@
 namespace GuzzleHttp\Message;
 
 use GuzzleHttp\Exception\ParseException;
+use GuzzleHttp\Exception\XmlParseException;
 use GuzzleHttp\Stream\StreamInterface;
 
 /**
@@ -160,9 +161,11 @@ class Response extends AbstractMessage implements ResponseInterface
         } catch (\Exception $e) {
             libxml_disable_entity_loader($disableEntities);
             libxml_use_internal_errors($internalErrors);
-            throw new ParseException(
+            throw new XmlParseException(
                 'Unable to parse response body into XML: ' . $e->getMessage(),
-                $this
+                $this,
+                $e,
+                (libxml_get_last_error()) ?: null
             );
         }
 

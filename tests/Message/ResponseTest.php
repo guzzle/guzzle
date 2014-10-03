@@ -2,6 +2,7 @@
 
 namespace GuzzleHttp\Tests\Message;
 
+use GuzzleHttp\Exception\XmlParseException;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Stream\Stream;
 
@@ -68,13 +69,20 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \GuzzleHttp\Exception\ParseException
+     * @expectedException \GuzzleHttp\Exception\XmlParseException
      * @expectedExceptionMessage Unable to parse response body into XML: String could not be parsed as XML
      */
     public function testThrowsExceptionWhenFailsToParseXmlResponse()
     {
         $response = new Response(200, [], Stream::factory('<abc'));
-        $response->xml();
+        try {
+            $response->xml();
+        } catch (XmlParseException $e) {
+            $xmlParseError = $e->getError();
+            $this->assertInstanceOf('\LibXMLError', $xmlParseError);
+            $this->assertContains("Couldn't find end of Start Tag abc line 1", $xmlParseError->message);
+            throw $e;
+        }
     }
 
     public function testHasEffectiveUrl()
