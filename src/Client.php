@@ -14,7 +14,8 @@ use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\Exception\CancelledFutureAccessException;
 use GuzzleHttp\Ring\FutureInterface;
 use GuzzleHttp\Exception\RequestException;
-use React\Promise\Deferred;
+use React\Promise\FulfilledPromise;
+use React\Promise\RejectedPromise;
 
 /**
  * HTTP client
@@ -256,18 +257,15 @@ class Client implements ClientInterface
     {
         try {
             $this->fsm->run($trans);
-            if ($trans->response instanceof FutureInterface) {
-                return $trans->response;
-            }
-            // Turn the normal response into a future.
-            $deferred = new Deferred();
-            $deferred->resolve($trans->response);
-            return new FutureResponse($deferred->promise());
+            // Turn the normal response into a future if needed.
+            return $trans->response instanceof FutureInterface
+                ? $trans->response
+                : new FutureResponse(new FulfilledPromise($trans->response));
         } catch (\Exception $e) {
             // Wrap the exception in a promise if the user asked for a future.
-            $deferred = new Deferred();
-            $deferred->reject(RequestException::wrapException($trans->request, $e));
-            return new FutureResponse($deferred->promise());
+            return new FutureResponse(
+                new RejectedPromise(RequestException::wrapException($trans->request, $e))
+            );
         }
     }
 

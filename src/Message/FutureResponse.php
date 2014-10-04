@@ -1,9 +1,9 @@
 <?php
 namespace GuzzleHttp\Message;
 
-use GuzzleHttp\Ring\MagicFutureTrait;
-use GuzzleHttp\Ring\FutureInterface;
-use GuzzleHttp\Ring\ValidatedDeferred;
+use GuzzleHttp\Ring\Future\MagicFutureTrait;
+use GuzzleHttp\Ring\Future\FutureInterface;
+use GuzzleHttp\Ring\ValidatedDeferredInstance;
 use GuzzleHttp\Stream\StreamInterface;
 
 /**
@@ -63,7 +63,7 @@ class FutureResponse implements ResponseInterface, FutureInterface
         callable $deref,
         callable $cancel = null
     ) {
-        $deferred = ValidatedDeferred::forInstance('GuzzleHttp\Message\ResponseInterface');
+        $deferred = new ValidatedDeferredInstance('GuzzleHttp\Message\ResponseInterface');
         return new FutureResponse(
             $deferred->promise(),
             function () use ($deferred, $deref) {
