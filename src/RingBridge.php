@@ -62,13 +62,8 @@ class RingBridge
         // Emit progress events if any progress listeners are registered.
         if ($trans->request->getEmitter()->hasListeners('progress')) {
             $emitter = $trans->request->getEmitter();
-            $request['client']['progress'] = function ($a, $b, $c, $d)
-            use ($trans, $emitter)
-            {
-                $emitter->emit(
-                    'progress',
-                    new ProgressEvent($trans, $a, $b, $c, $d)
-                );
+            $request['client']['progress'] = function ($a, $b, $c, $d) use ($trans, $emitter) {
+                $emitter->emit('progress', new ProgressEvent($trans, $a, $b, $c, $d));
             };
         }
 

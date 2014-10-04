@@ -12,7 +12,7 @@ use GuzzleHttp\Ring\Client\CurlAdapter;
 use GuzzleHttp\Ring\Client\StreamAdapter;
 use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\Exception\CancelledFutureAccessException;
-use GuzzleHttp\Ring\FutureInterface;
+use GuzzleHttp\Ring\Future\FutureInterface;
 use GuzzleHttp\Exception\RequestException;
 use React\Promise\FulfilledPromise;
 use React\Promise\RejectedPromise;
