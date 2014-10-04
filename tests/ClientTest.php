@@ -558,7 +558,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $ex = null;
         $request->getEmitter()->on('end', function (EndEvent $e) use (&$ex) {
             $ex = $e->getException();
-            RequestEvents::stopException($e);
+            RequestEvents::cancelRequest($ex);
         });
         $res = $client->send($request);
         $this->assertTrue($res->cancelled());
@@ -577,7 +577,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $ex = null;
         $request->getEmitter()->on('end', function (EndEvent $e) use (&$ex) {
             $ex = $e->getException();
-            RequestEvents::stopException($e);
+            RequestEvents::cancelRequest($ex);
         });
         $res = $client->send($request);
         $this->assertTrue($res->cancelled());

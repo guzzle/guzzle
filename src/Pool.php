@@ -262,7 +262,7 @@ class Pool implements FutureInterface
                 }
                 // If there was an error, then prevent the exception.
                 if ($e->getException()) {
-                    RequestEvents::stopException($e);
+                    RequestEvents::cancelRequest($e->getException());
                 }
                 // Add the next request in the pool when done with this one.
                 $this->addNextRequest();

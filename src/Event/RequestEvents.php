@@ -60,14 +60,12 @@ final class RequestEvents
      * Throws an exception that marks the future as cancelled, preventing the
      * end event from throwing an exception.
      *
-     * @param EndEvent $e
+     * @param \Exception Previous exception
      *
      * @throws CancelledFutureAccessException
      */
-    public static function stopException(EndEvent $e)
+    public static function cancelRequest(\Exception $e = null)
     {
-        throw new CancelledFutureAccessException(
-            'Cancelled future', 0, $e->getException()
-        );
+        throw new CancelledFutureAccessException('Cancelled future', 0, $e);
     }
 }

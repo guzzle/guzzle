@@ -11,6 +11,7 @@ use GuzzleHttp\Ring\Client\CurlMultiAdapter;
 use GuzzleHttp\Ring\Client\CurlAdapter;
 use GuzzleHttp\Ring\Client\StreamAdapter;
 use GuzzleHttp\Ring\Core;
+use GuzzleHttp\Ring\Exception\CancelledFutureAccessException;
 use GuzzleHttp\Ring\FutureInterface;
 use GuzzleHttp\Exception\RequestException;
 use React\Promise\Deferred;
@@ -235,12 +236,17 @@ class Client implements ClientInterface
 
         try {
             $this->fsm->run($trans);
-            // Block until completed if a future was not requested, but
-            // don't deref cancelled responses.
-            return $trans->response instanceof FutureInterface
-                && !$trans->response->cancelled()
-                ? $trans->response->deref()
-                : $trans->response;
+            $response = $trans->response;
+            try {
+                // Block until completed.
+                return $response instanceof FutureInterface
+                    ? $response->deref()
+                    : $response;
+            } catch (CancelledFutureAccessException $e) {
+                // Don't fail when the future was cancelled, so just return
+                // the original future that holds a cancelled exception.
+                return $response;
+            }
         } catch (\Exception $e) {
             throw RequestException::wrapException($trans->request, $e);
         }

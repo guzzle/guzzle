@@ -15,6 +15,7 @@ use GuzzleHttp\Event\EndEvent;
 use GuzzleHttp\Message\FutureResponse;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Event\RequestEvents;
+use React\Promise\Deferred;
 
 class RequestFsmTest extends \PHPUnit_Framework_TestCase
 {
@@ -60,7 +61,8 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
     {
         $fsm = new RequestFsm(function () {});
         $t = new Transaction(new Client(), new Request('GET', 'http://foo.com'));
-        $t->response = new FutureResponse(function () {});
+        $deferred = new Deferred();
+        $t->response = new FutureResponse($deferred->promise());
         $t->state = 'complete';
         $c = false;
         $t->request->getEmitter()->on('complete', function (CompleteEvent $e) use (&$c) {
@@ -74,7 +76,8 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
     {
         $fsm = new RequestFsm(function () {});
         $t = new Transaction(new Client(), new Request('GET', 'http://foo.com'));
-        $t->response = new FutureResponse(function () {});
+        $deferred = new Deferred();
+        $t->response = new FutureResponse($deferred->promise());
         $t->state = 'end';
         $c = false;
         $t->request->getEmitter()->on('end', function (EndEvent $e) use (&$c) {
@@ -164,26 +167,6 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
         $fsm->run($t, 'error');
     }
 
-    public function testCanStopExceptionsWithFuture()
-    {
-        $fsm = new RequestFsm(function () {});
-        $client = new Client();
-        $request = $client->createRequest('GET', 'http://ewfewwef.com');
-        $t = new Transaction($client, $request);
-        $calls = [];
-        $this->addListeners($t->request, $calls);
-        $t->request->getEmitter()->on('end', function (EndEvent $e) {
-            RequestEvents::stopException($e);
-        });
-        $fsm->run($t, 'send');
-        $t->response = new Response(404);
-        $t->state = 'complete';
-        $fsm->run($t);
-        $this->assertNull($t->exception);
-        $this->assertEquals(['before', 'complete', 'error', 'end'], $calls);
-        $this->assertInstanceOf('GuzzleHttp\Message\FutureResponse', $t->response);
-    }
-
     public function testExitEnsuresSomethingWasSet()
     {
         $fsm = new RequestFsm(function () {});
@@ -195,7 +178,7 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
             $fsm->run($t, 'exit');
             $this->fail('did not throw');
         } catch (RequestException $e) {
-            $this->assertContains('not calling', $e->getMessage());
+            $this->assertContains('Guzzle-Ring adapter', $e->getMessage());
             $this->assertSame($t->exception, $e);
         }
     }
