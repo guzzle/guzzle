@@ -31,7 +31,7 @@ class UriTemplateTest extends \PHPUnit_Framework_TestCase
             'empty_keys' => array(),
         );
 
-        return array_map(function($t) use ($params) {
+        return array_map(function ($t) use ($params) {
             $t[] = $params;
             return $t;
         }, array(

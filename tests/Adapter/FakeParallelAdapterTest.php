@@ -3,11 +3,11 @@ namespace GuzzleHttp\Tests\Adapter;
 
 use GuzzleHttp\Adapter\FakeParallelAdapter;
 use GuzzleHttp\Adapter\MockAdapter;
+use GuzzleHttp\Adapter\TransactionIterator;
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\Response;
-use GuzzleHttp\Adapter\TransactionIterator;
 
 /**
  * @covers GuzzleHttp\Adapter\FakeParallelAdapter

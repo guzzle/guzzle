@@ -3,14 +3,14 @@
 namespace GuzzleHttp\Tests\Subscriber;
 
 use GuzzleHttp\Adapter\Transaction;
+use GuzzleHttp\Client;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Subscriber\Mock;
-use GuzzleHttp\Client;
+use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Message\Response;
-use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Subscriber\Mock;
 
 /**
  * @covers GuzzleHttp\Subscriber\Mock

@@ -89,7 +89,7 @@ class SetCookie implements ToArrayInterface
     {
         $str = $this->data['Name'] . '=' . $this->data['Value'] . '; ';
         foreach ($this->data as $k => $v) {
-            if ($k != 'Name' && $k != 'Value'&& $v !== null && $v !== false) {
+            if ($k != 'Name' && $k != 'Value' && $v !== null && $v !== false) {
                 if ($k == 'Expires') {
                     $str .= 'Expires=' . gmdate('D, d M Y H:i:s \G\M\T', $v) . '; ';
                 } else {

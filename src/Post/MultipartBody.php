@@ -3,9 +3,9 @@
 namespace GuzzleHttp\Post;
 
 use GuzzleHttp\Stream\AppendStream;
-use GuzzleHttp\Stream\StreamInterface;
-use GuzzleHttp\Stream\StreamDecoratorTrait;
 use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Stream\StreamDecoratorTrait;
+use GuzzleHttp\Stream\StreamInterface;
 
 /**
  * Stream that when read returns bytes for a streaming multipart/form-data body

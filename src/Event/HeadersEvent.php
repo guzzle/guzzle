@@ -2,8 +2,8 @@
 
 namespace GuzzleHttp\Event;
 
-use GuzzleHttp\Message\ResponseInterface;
 use GuzzleHttp\Adapter\TransactionInterface;
+use GuzzleHttp\Message\ResponseInterface;
 
 /**
  * Event object emitted after the response headers of a request have been

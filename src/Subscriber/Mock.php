@@ -2,11 +2,11 @@
 
 namespace GuzzleHttp\Subscriber;
 
-use GuzzleHttp\Event\RequestEvents;
-use GuzzleHttp\Event\SubscriberInterface;
 use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Event\HeadersEvent;
+use GuzzleHttp\Event\RequestEvents;
+use GuzzleHttp\Event\SubscriberInterface;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\ResponseInterface;

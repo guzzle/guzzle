@@ -9,8 +9,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Event\HeadersEvent;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Request;
-use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Message\Response;
+use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Tests\Server;
 
 /**

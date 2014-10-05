@@ -7,12 +7,12 @@ require_once __DIR__ . '/AbstractCurl.php';
 use GuzzleHttp\Adapter\Curl\CurlAdapter;
 use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Client;
+use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Event\HeadersEvent;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Request;
-use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Tests\Server;
 

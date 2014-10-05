@@ -4,8 +4,8 @@ namespace GuzzleHttp\Tests\Message;
 
 use GuzzleHttp\Event\Emitter;
 use GuzzleHttp\Message\Request;
-use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Query;
+use GuzzleHttp\Stream\Stream;
 
 /**
  * @covers GuzzleHttp\Message\Request

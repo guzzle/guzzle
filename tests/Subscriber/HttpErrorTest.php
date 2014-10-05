@@ -2,12 +2,12 @@
 
 namespace GuzzleHttp\Tests\Message;
 
+use GuzzleHttp\Adapter\Transaction;
+use GuzzleHttp\Client;
 use GuzzleHttp\Event\CompleteEvent;
+use GuzzleHttp\Message\Request;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Subscriber\HttpError;
-use GuzzleHttp\Adapter\Transaction;
-use GuzzleHttp\Message\Request;
-use GuzzleHttp\Client;
 use GuzzleHttp\Subscriber\Mock;
 
 /**

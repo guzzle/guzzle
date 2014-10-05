@@ -5,10 +5,10 @@ namespace GuzzleHttp\Tests\Message;
 use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\BeforeEvent;
-use GuzzleHttp\Subscriber\Prepare;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Stream\NoSeekStream;
 use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Subscriber\Prepare;
 
 /**
  * @covers GuzzleHttp\Subscriber\Prepare

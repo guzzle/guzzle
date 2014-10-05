@@ -2,16 +2,16 @@
 
 namespace GuzzleHttp;
 
+use GuzzleHttp\Adapter\AdapterInterface;
+use GuzzleHttp\Adapter\Curl\CurlAdapter;
 use GuzzleHttp\Adapter\Curl\MultiAdapter;
-use GuzzleHttp\Event\HasEmitterTrait;
 use GuzzleHttp\Adapter\FakeParallelAdapter;
 use GuzzleHttp\Adapter\ParallelAdapterInterface;
-use GuzzleHttp\Adapter\AdapterInterface;
 use GuzzleHttp\Adapter\StreamAdapter;
 use GuzzleHttp\Adapter\StreamingProxyAdapter;
-use GuzzleHttp\Adapter\Curl\CurlAdapter;
 use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Adapter\TransactionIterator;
+use GuzzleHttp\Event\HasEmitterTrait;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\MessageFactoryInterface;

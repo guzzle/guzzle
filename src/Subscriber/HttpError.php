@@ -2,9 +2,9 @@
 
 namespace GuzzleHttp\Subscriber;
 
+use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Event\SubscriberInterface;
-use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Exception\RequestException;
 
 /**

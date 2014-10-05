@@ -2,10 +2,10 @@
 
 namespace GuzzleHttp\Tests\Adapter;
 
+use GuzzleHttp\Adapter\StreamingProxyAdapter;
 use GuzzleHttp\Adapter\Transaction;
 use GuzzleHttp\Client;
 use GuzzleHttp\Message\Request;
-use GuzzleHttp\Adapter\StreamingProxyAdapter;
 use GuzzleHttp\Message\Response;
 
 /**
