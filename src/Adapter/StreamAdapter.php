@@ -309,7 +309,7 @@ class StreamAdapter implements AdapterInterface
             'bytes_transferred', 'bytes_max'];
 
         if (!is_resource($value)) {
-            $value = fopen('php://output', 'w');
+            $value = defined('STDOUT') ? STDOUT : fopen('php://output', 'w');
         }
 
         $params['notification'] = function () use ($request, $value, $map, $args) {
