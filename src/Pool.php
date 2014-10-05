@@ -5,7 +5,7 @@ use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Message\FutureResponse;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Ring\Core;
-use GuzzleHttp\Ring\FutureInterface;
+use GuzzleHttp\Ring\Future\FutureInterface;
 use GuzzleHttp\Event\ListenerAttacherTrait;
 use GuzzleHttp\Event\EndEvent;
 use React\Promise\Deferred;
