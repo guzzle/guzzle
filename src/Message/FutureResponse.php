@@ -42,12 +42,8 @@ class FutureResponse implements ResponseInterface, FutureInterface
     ) {
         return new FutureResponse(
             $future->then($onFulfilled, $onRejected, $onProgress),
-            function () use ($future) {
-                $future->deref();
-            },
-            function () use ($future) {
-                return $future->cancel();
-            }
+            [$future, 'deref'],
+            [$future, 'cancel']
         );
     }
 

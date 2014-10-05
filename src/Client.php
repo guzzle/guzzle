@@ -13,6 +13,7 @@ use GuzzleHttp\Ring\Client\CurlAdapter;
 use GuzzleHttp\Ring\Client\StreamAdapter;
 use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\Exception\CancelledException;
+use GuzzleHttp\Ring\Future\FutureArrayInterface;
 use GuzzleHttp\Ring\Future\FutureInterface;
 use GuzzleHttp\Exception\RequestException;
 use React\Promise\FulfilledPromise;
@@ -99,7 +100,7 @@ class Client implements ClientInterface
             $config = [
                 'select_timeout' => getenv('GUZZLE_CURL_SELECT_TIMEOUT') ?: 1
             ];
-            if ($maxHandles = gettype('GUZZLE_CURL_MAX_HANDLES')) {
+            if ($maxHandles = getenv('GUZZLE_CURL_MAX_HANDLES')) {
                 $config['max_handles'] = $maxHandles;
             }
             $future = new CurlMultiAdapter($config);
@@ -397,8 +398,6 @@ class Client implements ClientInterface
                     );
                     if ($t->exception) {
                         throw RequestException::wrapException($t->request, $t->exception);
-                    } elseif (!$t->response) {
-                        throw RingBridge::getNoRingResponseException($t->request);
                     }
                     return $t->response;
                 }

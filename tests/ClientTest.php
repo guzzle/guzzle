@@ -327,7 +327,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage Argument 1 passed to GuzzleHttp\Message\FutureResponse::proxy()
+     * @expectedExceptionMessage Argument 1 passed to GuzzleHttp\Message\FutureResponse::proxy() must implement interface GuzzleHttp\Ring\Future\FutureInterface
      */
     public function testEnsuresResponseIsPresentAfterSending()
     {
@@ -346,13 +346,12 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $adapter = new MockAdapter(function () use ($deferred) {
             return new FutureArray(
                 $deferred->promise(),
-                function () {
-                    return [];
-                }
+                function () {}
             );
         });
         $client = new Client(['adapter' => $adapter]);
-        $client->get('http://httpbin.org')->deref();
+        $response = $client->get('http://httpbin.org');
+        $response->deref();
     }
 
     public function testClientHandlesErrorsDuringBeforeSend()
