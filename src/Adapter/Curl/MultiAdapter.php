@@ -38,6 +38,9 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
     /** @var array Array of curl multi handles */
     private $multiOwned = [];
 
+    /** @var int Total number of idle handles to keep in cache */
+    private $maxHandles;
+
     /** @var double */
     private $selectTimeout;
 
@@ -50,6 +53,7 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
      *   handle to modify. The factory method must then return a cURL resource.
      * - select_timeout: Specify a float in seconds to use for a
      *   curl_multi_select timeout.
+     * - max_handles: Maximum number of idle handles (defaults to 3).
      *
      * @param MessageFactoryInterface $messageFactory
      * @param array $options Array of options to use with the adapter:
@@ -70,6 +74,10 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
         } else {
             $this->selectTimeout = 1;
         }
+
+        $this->maxHandles = isset($options['max_handles'])
+            ? $options['max_handles']
+            : 3;
     }
 
     public function __destruct()
@@ -148,7 +156,7 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
 
         } while ($context->isActive() || $active);
 
-        $this->releaseMultiHandle($multi);
+        $this->releaseMultiHandle($multi, $this->maxHandles);
     }
 
     private function processMessages(BatchContext $context)
@@ -249,7 +257,7 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
             || ($e instanceof RequestException && $e->getThrowImmediately())
         ) {
             $context->removeAll();
-            $this->releaseMultiHandle($context->getMultiHandle());
+            $this->releaseMultiHandle($context->getMultiHandle(), -1);
             throw $e;
         }
     }
@@ -281,14 +289,15 @@ class MultiAdapter implements AdapterInterface, ParallelAdapterInterface
      * Releases a curl_multi handle back into the cache and removes excess cache
      *
      * @param resource $handle Curl multi handle to remove
+     * @param int $maxHandles (Optional) Maximum number of existing multiHandles to allow before pruning.
      */
-    private function releaseMultiHandle($handle)
+    private function releaseMultiHandle($handle, $maxHandles)
     {
         $id = (int) $handle;
 
-        if (count($this->multiHandles) <= 3) {
+        if (count($this->multiHandles) <= $maxHandles) {
             $this->multiOwned[$id] = false;
-        } else {
+        } elseif (isset($this->multiHandles[$id], $this->multiOwned[$id])) {
             // Prune excessive handles
             curl_multi_close($this->multiHandles[$id]);
             unset($this->multiHandles[$id], $this->multiOwned[$id]);

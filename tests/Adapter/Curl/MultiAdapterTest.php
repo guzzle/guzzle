@@ -53,6 +53,14 @@ class MultiAdapterTest extends AbstractCurl
         $_SERVER[MultiAdapter::ENV_SELECT_TIMEOUT] = $current;
     }
 
+    public function testCanSetMaxHandles()
+    {
+        $a = new MultiAdapter(new MessageFactory());
+        $this->assertEquals(3, $this->readAttribute($a, 'maxHandles'));
+        $a = new MultiAdapter(new MessageFactory(), ['max_handles' => 10]);
+        $this->assertEquals(10, $this->readAttribute($a, 'maxHandles'));
+    }
+
     /**
      * @expectedException \GuzzleHttp\Exception\AdapterException
      * @expectedExceptionMessage cURL error -2:
