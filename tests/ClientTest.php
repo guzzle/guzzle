@@ -4,6 +4,7 @@ namespace GuzzleHttp\Tests;
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Event\ErrorEvent;
+use GuzzleHttp\Exception\CancelledRequestException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Exception\RequestException;
@@ -523,30 +524,28 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testUsesProxyEnvironmentVariables()
     {
-        $http = isset($_SERVER['HTTP_PROXY']) ? $_SERVER['HTTP_PROXY'] : null;
-        $https = isset($_SERVER['HTTPS_PROXY']) ? $_SERVER['HTTPS_PROXY'] : null;
-        unset($_SERVER['HTTP_PROXY']);
-        unset($_SERVER['HTTPS_PROXY']);
+        $http = getenv('HTTP_PROXY');
+        $https = getenv('HTTPS_PROXY');
 
         $client = new Client();
         $this->assertNull($client->getDefaultOption('proxy'));
 
-        $_SERVER['HTTP_PROXY'] = '127.0.0.1';
+        putenv('HTTP_PROXY=127.0.0.1');
         $client = new Client();
         $this->assertEquals(
             ['http' => '127.0.0.1'],
             $client->getDefaultOption('proxy')
         );
 
-        $_SERVER['HTTPS_PROXY'] = '127.0.0.2';
+        putenv('HTTPS_PROXY=127.0.0.2');
         $client = new Client();
         $this->assertEquals(
             ['http' => '127.0.0.1', 'https' => '127.0.0.2'],
             $client->getDefaultOption('proxy')
         );
 
-        $_SERVER['HTTP_PROXY'] = $http;
-        $_SERVER['HTTPS_PROXY'] = $https;
+        putenv("HTTP_PROXY=$http");
+        putenv("HTTPS_PROXY=$https");
     }
 
     public function testCanInjectCancelledFutureInRequestEvents()
@@ -558,15 +557,20 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $ex = null;
         $request->getEmitter()->on('end', function (EndEvent $e) use (&$ex) {
             $ex = $e->getException();
-            RequestEvents::cancelRequest($ex);
+            RequestEvents::cancelEndEvent($e);
         });
+
+        // Should not throw yet!
         $res = $client->send($request);
-        $this->assertTrue($res->cancelled());
+
         try {
+            // now it throws
             $res->deref();
             $this->fail('Did not throw');
-        } catch (\Exception $e) {
-            $this->assertSame($e->getPrevious(), $ex);
+        } catch (CancelledRequestException $e) {
+            $this->assertTrue($res->cancelled());
+            $this->assertTrue($res->realized());
+            $this->assertInstanceOf('GuzzleHttp\Exception\ClientException', $e->getPrevious());
         }
     }
 
@@ -577,9 +581,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $ex = null;
         $request->getEmitter()->on('end', function (EndEvent $e) use (&$ex) {
             $ex = $e->getException();
-            RequestEvents::cancelRequest($ex);
+            RequestEvents::cancelEndEvent($e);
         });
         $res = $client->send($request);
+        $this->assertInstanceOf('GuzzleHttp\Message\CancelledFutureResponse', $res);
         $this->assertTrue($res->cancelled());
         $this->assertTrue($res->realized());
     }

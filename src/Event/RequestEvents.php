@@ -1,7 +1,14 @@
 <?php
 namespace GuzzleHttp\Event;
 
-use GuzzleHttp\Ring\Exception\CancelledFutureAccessException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Message\CancelledFutureResponse;
+use GuzzleHttp\Message\FutureResponse;
+use GuzzleHttp\Message\RequestInterface;
+use GuzzleHttp\Exception\CancelledRequestException;
+use GuzzleHttp\Message\ResponseInterface;
+use React\Promise\Deferred;
+use React\Promise\RejectedPromise;
 
 /**
  * Contains methods used to manage the request event lifecycle.
@@ -57,15 +64,16 @@ final class RequestEvents
     }
 
     /**
-     * Throws an exception that marks the future as cancelled, preventing the
-     * end event from throwing an exception.
+     * Cancels an end event with a cancelled exception.
      *
-     * @param \Exception Previous exception
+     * @param EndEvent $e
      *
-     * @throws CancelledFutureAccessException
+     * @throws CancelledRequestException
      */
-    public static function cancelRequest(\Exception $e = null)
+    public static function cancelEndEvent(EndEvent $e)
     {
-        throw new CancelledFutureAccessException('Cancelled future', 0, $e);
+        throw CancelledRequestException::fromTrans(
+            $e->getRequest(), $e->getResponse(), $e->getException()
+        );
     }
 }
