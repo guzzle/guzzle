@@ -97,11 +97,10 @@ class Client implements ClientInterface
 
         if (extension_loaded('curl')) {
             $config = [
-                'select_timepout' => isset($_SERVER['GUZZLE_CURL_SELECT_TIMEOUT'])
-                    ? $_SERVER['GUZZLE_CURL_SELECT_TIMEOUT'] : 1
+                'select_timeout' => getenv('GUZZLE_CURL_SELECT_TIMEOUT') ?: 1
             ];
-            if (isset($_SERVER['GUZZLE_CURL_MAX_HANDLES'])) {
-                $config['max_handles'] = $_SERVER['GUZZLE_CURL_MAX_HANDLES'];
+            if ($maxHandles = gettype('GUZZLE_CURL_MAX_HANDLES')) {
+                $config['max_handles'] = $maxHandles;
             }
             $future = new CurlMultiAdapter($config);
             if (function_exists('curl_reset')) {
@@ -284,12 +283,12 @@ class Client implements ClientInterface
         ];
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set
-        if (isset($_SERVER['HTTP_PROXY'])) {
-            $settings['proxy']['http'] = $_SERVER['HTTP_PROXY'];
+        if ($proxy = getenv('HTTP_PROXY')) {
+            $settings['proxy']['http'] = $proxy;
         }
 
-        if (isset($_SERVER['HTTPS_PROXY'])) {
-            $settings['proxy']['https'] = $_SERVER['HTTPS_PROXY'];
+        if ($proxy = getenv('HTTPS_PROXY')) {
+            $settings['proxy']['https'] = $proxy;
         }
 
         return $settings;
