@@ -239,12 +239,12 @@ class Client implements ClientInterface
         }
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set
-        if (isset($_SERVER['HTTP_PROXY'])) {
-            $settings['proxy']['http'] = $_SERVER['HTTP_PROXY'];
+        if ($proxy = getenv('HTTP_PROXY')) {
+            $settings['proxy']['http'] = $proxy;
         }
 
-        if (isset($_SERVER['HTTPS_PROXY'])) {
-            $settings['proxy']['https'] = $_SERVER['HTTPS_PROXY'];
+        if ($proxy = getenv('HTTPS_PROXY')) {
+            $settings['proxy']['https'] = $proxy;
         }
 
         return $settings;
