@@ -13,7 +13,7 @@ use GuzzleHttp\Message\ResponseInterface;
  */
 interface ClientInterface extends HasEmitterInterface
 {
-    const VERSION = '4.2.2';
+    const VERSION = '4.2.3';
 
     /**
      * Create and return a new {@see RequestInterface} object.

@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+4.2.3 (2014-10-05)
+------------------
+
+* Using `getenv` rather than `$_SERVER` for proxy settings to prevent a
+  potential security issue.
+* Cookies now use a space between semicolons.
+* Curl adapters now rewind the response body stream to match the behavior of
+  the stream adapter.
+* The body of a request in the MockAdapter is now only read after invoking a
+  callback.
+* Can now configure the maximum number of open curl multi handles.
+* Added an XmlException for more XML parsing error information.
+* Using STDOUT for debug only when it is available.
+
 4.2.2 (2014-09-08)
 ------------------
 
