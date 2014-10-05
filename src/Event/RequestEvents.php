@@ -1,14 +1,7 @@
 <?php
 namespace GuzzleHttp\Event;
 
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Message\CancelledFutureResponse;
-use GuzzleHttp\Message\FutureResponse;
-use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Exception\CancelledRequestException;
-use GuzzleHttp\Message\ResponseInterface;
-use React\Promise\Deferred;
-use React\Promise\RejectedPromise;
 
 /**
  * Contains methods used to manage the request event lifecycle.
