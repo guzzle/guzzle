@@ -8,7 +8,7 @@ use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Ring\Client\MockAdapter;
-use GuzzleHttp\Ring\FutureArray;
+use GuzzleHttp\Ring\Future\FutureArray;
 use GuzzleHttp\Subscriber\History;
 use GuzzleHttp\Subscriber\Mock;
 use GuzzleHttp\Event\RequestEvents;

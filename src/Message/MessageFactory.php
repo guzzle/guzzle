@@ -13,6 +13,7 @@ use GuzzleHttp\Subscriber\Redirect;
 use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Query;
 use GuzzleHttp\Url;
+use \InvalidArgumentException as Iae;
 
 /**
  * Default HTTP request factory used to create Request and Response objects.
@@ -28,10 +29,21 @@ class MessageFactory implements MessageFactoryInterface
     private $redirectPlugin;
 
     /** @var array */
-    private static $methods;
-
-    /** @var array */
     private $customOptions;
+
+    /** @var array Request options passed through to request Config object */
+    private static $configMap = [
+        'connect_timeout' => 1, 'timeout' => 1, 'verify' => 1, 'ssl_key' => 1,
+        'cert' => 1, 'proxy' => 1, 'debug' => 1, 'save_to' => 1, 'stream' => 1,
+        'expect' => 1, 'future' => 1
+    ];
+
+    /** @var array Default allow_redirects request option settings  */
+    private static $defaultRedirect = [
+        'max'     => 5,
+        'strict'  => false,
+        'referer' => false
+    ];
 
     /**
      * @param array $customOptions Associative array of custom request option
@@ -74,9 +86,9 @@ class MessageFactory implements MessageFactoryInterface
         unset($options['config']);
 
         // Use a POST body by default
-        if ($method == 'POST' &&
-            !isset($options['body']) &&
-            !isset($options['json'])
+        if ($method == 'POST'
+            && !isset($options['body'])
+            && !isset($options['json'])
         ) {
             $options['body'] = [];
         }
@@ -166,203 +178,188 @@ class MessageFactory implements MessageFactoryInterface
         RequestInterface $request,
         array $options = []
     ) {
-        // Values specified in the config map are passed to request options
-        static $configMap = ['connect_timeout' => 1, 'timeout' => 1,
-            'verify' => 1, 'ssl_key' => 1, 'cert' => 1, 'proxy' => 1,
-            'debug' => 1, 'save_to' => 1, 'stream' => 1, 'expect' => 1,
-            'future' => 1];
-
-        // Check if we already took it's class methods and had them saved
-        if (!isset(self::$methods)) {
-            self::$methods = array_fill_keys(get_class_methods(__CLASS__), true);
-        }
-
-        // Iterate over each key value pair and attempt to apply a config using
-        // double dispatch or a custom option handler.
         $config = $request->getConfig();
-        foreach ($options as $key => $value) {
-            $method = "add_{$key}";
-            if (isset(self::$methods[$method])) {
-                $this->{$method}($request, $value);
-            } elseif (isset($configMap[$key])) {
-                $config[$key] = $value;
-            } elseif (isset($this->customOptions[$key])) {
-                call_user_func($this->customOptions[$key], $request, $value);
-            } else {
-                throw new \InvalidArgumentException("No method is configured "
-                    . "to handle the {$key} config key");
-            }
-        }
-    }
-
-    private function add_body(RequestInterface $request, $value)
-    {
-        if ($value !== null) {
-            if (is_array($value)) {
-                $this->addPostData($request, $value);
-            } else {
-                $request->setBody(Stream::factory($value));
-            }
-        }
-    }
-
-    private function add_allow_redirects(RequestInterface $request, $value)
-    {
-        static $defaultRedirect = [
-            'max'     => 5,
-            'strict'  => false,
-            'referer' => false
-        ];
-
-        if ($value === false) {
-            return;
-        }
-
-        if ($value === true) {
-            $value = $defaultRedirect;
-        } elseif (!isset($value['max'])) {
-            throw new \InvalidArgumentException('allow_redirects must be '
-                . 'true, false, or an array that contains the \'max\' key');
-        } else {
-            // Merge the default settings with the provided settings
-            $value += $defaultRedirect;
-        }
-
-        $request->getConfig()['redirect'] = $value;
-        $request->getEmitter()->attach($this->redirectPlugin);
-    }
-
-    private function add_exceptions(RequestInterface $request, $value)
-    {
-        if ($value === true) {
-            $request->getEmitter()->attach($this->errorPlugin);
-        }
-    }
-
-    private function add_auth(RequestInterface $request, $value)
-    {
-        if (!$value) {
-            return;
-        } elseif (is_array($value)) {
-            $authType = isset($value[2]) ? strtolower($value[2]) : 'basic';
-        } else {
-            $authType = strtolower($value);
-        }
-
-        $request->getConfig()->set('auth', $value);
-
-        if ($authType == 'basic') {
-            $request->setHeader(
-                'Authorization',
-                'Basic ' . base64_encode("$value[0]:$value[1]")
-            );
-        } elseif ($authType == 'digest') {
-            // Currently only implemented by the cURL adapter.
-            // @todo: Need an event listener solution that does not rely on cURL
-            $config = $request->getConfig();
-            $config->setPath('curl/' . CURLOPT_HTTPAUTH, CURLAUTH_DIGEST);
-            $config->setPath('curl/' . CURLOPT_USERPWD, "$value[0]:$value[1]");
-        }
-    }
-
-    private function add_query(RequestInterface $request, $value)
-    {
-        if ($value instanceof Query) {
-            $original = $request->getQuery();
-            // Do not overwrite existing query string variables by overwriting
-            // the object with the query string data passed in the URL
-            $value->overwriteWith($original->toArray());
-            $request->setQuery($value);
-        } elseif (is_array($value)) {
-            // Do not overwrite existing query string variables
-            $query = $request->getQuery();
-            foreach ($value as $k => $v) {
-                if (!isset($query[$k])) {
-                    $query[$k] = $v;
-                }
-            }
-        } else {
-            throw new \InvalidArgumentException('query value must be an array '
-                . 'or Query object');
-        }
-    }
-
-    private function add_headers(RequestInterface $request, $value)
-    {
-        if (!is_array($value)) {
-            throw new \InvalidArgumentException('header value must be an array');
-        }
-
-        // Do not overwrite existing headers
-        foreach ($value as $k => $v) {
-            if (!$request->hasHeader($k)) {
-                $request->setHeader($k, $v);
-            }
-        }
-    }
-
-    private function add_cookies(RequestInterface $request, $value)
-    {
-        if ($value === true) {
-            static $cookie = null;
-            if (!$cookie) {
-                $cookie = new Cookie();
-            }
-            $request->getEmitter()->attach($cookie);
-        } elseif (is_array($value)) {
-            $request->getEmitter()->attach(
-                new Cookie(CookieJar::fromArray($value, $request->getHost()))
-            );
-        } elseif ($value instanceof CookieJarInterface) {
-            $request->getEmitter()->attach(new Cookie($value));
-        } elseif ($value !== false) {
-            throw new \InvalidArgumentException('cookies must be an array, '
-                . 'true, or a CookieJarInterface object');
-        }
-    }
-
-    private function add_events(RequestInterface $request, $value)
-    {
-        if (!is_array($value)) {
-            throw new \InvalidArgumentException('events value must be an array');
-        }
-
-        $this->attachListeners($request, $this->prepareListeners($value,
-            ['before', 'complete', 'error', 'progress']
-        ));
-    }
-
-    private function add_subscribers(RequestInterface $request, $value)
-    {
-        if (!is_array($value)) {
-            throw new \InvalidArgumentException('subscribers must be an array');
-        }
-
         $emitter = $request->getEmitter();
-        foreach ($value as $subscribers) {
-            $emitter->attach($subscribers);
+
+        foreach ($options as $key => $value) {
+
+            if (isset(self::$configMap[$key])) {
+                $config[$key] = $value;
+                continue;
+            }
+
+            switch ($key) {
+
+            case 'allow_redirects':
+
+                if ($value === false) {
+                    continue;
+                }
+
+                if ($value === true) {
+                    $value = self::$defaultRedirect;
+                } elseif (!isset($value['max'])) {
+                    throw new Iae('allow_redirects must be true, false, or an '
+                        . 'array that contains the \'max\' key');
+                } else {
+                    // Merge the default settings with the provided settings
+                    $value += self::$defaultRedirect;
+                }
+
+                $config['redirect'] = $value;
+                $emitter->attach($this->redirectPlugin);
+                break;
+
+            case 'decode_content':
+
+                if ($value === false) {
+                    continue;
+                }
+
+                $config['decode_content'] = true;
+                if ($value !== true) {
+                    $request->setHeader('Accept-Encoding', $value);
+                }
+                break;
+
+            case 'headers':
+
+                if (!is_array($value)) {
+                    throw new Iae('header value must be an array');
+                }
+
+                // Do not overwrite existing headers
+                foreach ($value as $k => $v) {
+                    if (!$request->hasHeader($k)) {
+                        $request->setHeader($k, $v);
+                    }
+                }
+                break;
+
+            case 'exceptions':
+
+                if ($value === true) {
+                    $emitter->attach($this->errorPlugin);
+                }
+                break;
+
+            case 'body':
+
+                if (is_array($value)) {
+                    $this->addPostData($request, $value);
+                } elseif ($value !== null) {
+                    $request->setBody(Stream::factory($value));
+                }
+                break;
+
+            case 'auth':
+
+                if (!$value) {
+                    continue;
+                }
+
+                if (is_array($value)) {
+                    $type = isset($value[2]) ? strtolower($value[2]) : 'basic';
+                } else {
+                    $type = strtolower($value);
+                }
+
+                $config['auth'] = $value;
+
+                if ($type == 'basic') {
+                    $request->setHeader(
+                        'Authorization',
+                        'Basic ' . base64_encode("$value[0]:$value[1]")
+                    );
+                } elseif ($type == 'digest') {
+                    // @todo: Do not rely on curl
+                    $config->setPath('curl/' . CURLOPT_HTTPAUTH, CURLAUTH_DIGEST);
+                    $config->setPath('curl/' . CURLOPT_USERPWD, "$value[0]:$value[1]");
+                }
+                break;
+
+            case 'query':
+
+                if ($value instanceof Query) {
+                    $original = $request->getQuery();
+                    // Do not overwrite existing query string variables by
+                    // overwriting the object with the query string data passed
+                    // in the URL
+                    $value->overwriteWith($original->toArray());
+                    $request->setQuery($value);
+                } elseif (is_array($value)) {
+                    // Do not overwrite existing query string variables
+                    $query = $request->getQuery();
+                    foreach ($value as $k => $v) {
+                        if (!isset($query[$k])) {
+                            $query[$k] = $v;
+                        }
+                    }
+                } else {
+                    throw new Iae('query must be an array or Query object');
+                }
+                break;
+
+            case 'cookies':
+
+                if ($value === true) {
+                    static $cookie = null;
+                    if (!$cookie) {
+                        $cookie = new Cookie();
+                    }
+                    $emitter->attach($cookie);
+                } elseif (is_array($value)) {
+                    $emitter->attach(
+                        new Cookie(CookieJar::fromArray($value, $request->getHost()))
+                    );
+                } elseif ($value instanceof CookieJarInterface) {
+                    $emitter->attach(new Cookie($value));
+                } elseif ($value !== false) {
+                    throw new Iae('cookies must be an array, true, or CookieJarInterface');
+                }
+                break;
+
+            case 'events':
+
+                if (!is_array($value)) {
+                    throw new Iae('events must be an array');
+                }
+
+                $this->attachListeners($request, $this->prepareListeners($value,
+                    ['before', 'complete', 'error', 'progress']
+                ));
+                break;
+
+            case 'subscribers':
+
+                if (!is_array($value)) {
+                    throw new Iae('subscribers must be an array');
+                }
+
+                foreach ($value as $subscribers) {
+                    $emitter->attach($subscribers);
+                }
+                break;
+
+            case 'json':
+
+                $request->setBody(Stream::factory(json_encode($value)));
+                if (!$request->hasHeader('Content-Type')) {
+                    $request->setHeader('Content-Type', 'application/json');
+                }
+                break;
+
+            default:
+
+                // Check for custom handler functions.
+                if (isset($this->customOptions[$key])) {
+                    $fn = $this->customOptions[$key];
+                    $fn($request, $value);
+                    continue;
+                }
+
+                throw new Iae("No method can handle the {$key} config key");
+            }
         }
-    }
-
-    private function add_json(RequestInterface $request, $value)
-    {
-        if (!$request->hasHeader('Content-Type')) {
-            $request->setHeader('Content-Type', 'application/json');
-        }
-
-        $request->setBody(Stream::factory(json_encode($value)));
-    }
-
-    private function add_decode_content(RequestInterface $request, $value)
-    {
-        if ($value === false) {
-            return;
-        }
-
-        if ($value !== true) {
-            $request->setHeader('Accept-Encoding', $value);
-        }
-
-        $request->getConfig()['decode_content'] = true;
     }
 }

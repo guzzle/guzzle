@@ -5,7 +5,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Ring\Client\MockAdapter;
-use GuzzleHttp\Ring\FutureArray;
+use GuzzleHttp\Ring\Future\FutureArray;
 use GuzzleHttp\Subscriber\History;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Event\CompleteEvent;

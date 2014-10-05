@@ -5,7 +5,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Ring\Client\MockAdapter;
 use GuzzleHttp\Event\EndEvent;
-use GuzzleHttp\Ring\FutureArray;
+use GuzzleHttp\Ring\Future\FutureArray;
 use React\Promise\Deferred;
 
 /**
