@@ -7,7 +7,7 @@ use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\EndEvent;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\StateException;
-use GuzzleHttp\Ring\FutureInterface;
+use GuzzleHttp\Ring\Future\FutureInterface;
 
 /**
  * Responsible for transitioning requests through lifecycle events.

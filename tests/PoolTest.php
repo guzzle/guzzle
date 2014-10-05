@@ -3,6 +3,7 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\RequestEvents;
+use GuzzleHttp\Exception\CancelledRequestException;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Ring\Client\MockAdapter;
 use GuzzleHttp\Ring\Future\FutureArray;
@@ -186,8 +187,8 @@ class PoolTest extends \PHPUnit_Framework_TestCase
     {
         $c = $this->getClient();
         $req = $c->createRequest('GET', 'http://foo.com');
-        $req->getEmitter()->on('before', function () {
-            RequestEvents::cancelRequest();
+        $req->getEmitter()->on('before', function (BeforeEvent $e) {
+            CancelledRequestException::create($e->getRequest());
         });
         $p = new Pool($c, [$req]);
         $p->deref();
