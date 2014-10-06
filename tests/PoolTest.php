@@ -35,7 +35,7 @@ class PoolTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \RuntimeException
+     * @expectedException \InvalidArgumentException
      */
     public function testValidatesEachElement()
     {
@@ -109,8 +109,8 @@ class PoolTest extends \PHPUnit_Framework_TestCase
         $deferred = new Deferred();
         $future = new FutureArray(
             $deferred->promise(),
-            function() {
-                return ['status' => 200, 'headers' => []];
+            function() use ($deferred) {
+                $deferred->resolve(['status' => 200, 'headers' => []]);
             }, function () {
                 echo 'Cancelling';
             }
