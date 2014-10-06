@@ -325,9 +325,12 @@ class MessageFactory implements MessageFactoryInterface
                     throw new Iae('events must be an array');
                 }
 
-                $this->attachListeners($request, $this->prepareListeners($value,
-                    ['before', 'complete', 'error', 'progress']
-                ));
+                $this->attachListeners($request,
+                    $this->prepareListeners(
+                        $value,
+                        ['before', 'complete', 'error', 'progress', 'end']
+                    )
+                );
                 break;
 
             case 'subscribers':
