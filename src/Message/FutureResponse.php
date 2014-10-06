@@ -1,10 +1,10 @@
 <?php
 namespace GuzzleHttp\Message;
 
-use GuzzleHttp\Ring\MagicFutureTrait;
-use GuzzleHttp\Ring\Core;
-use GuzzleHttp\Ring\FutureInterface;
+use GuzzleHttp\Ring\Future\MagicFutureTrait;
+use GuzzleHttp\Ring\Future\FutureInterface;
 use GuzzleHttp\Stream\StreamInterface;
+use React\Promise\Deferred;
 
 /**
  * Represents a response that has not been fulfilled.
@@ -18,46 +18,91 @@ use GuzzleHttp\Stream\StreamInterface;
  * arguments and returns a boolean value representing whether or not the
  * response could be cancelled.
  *
- * @property ResponseInterface result
+ * @property ResponseInterface $_value
  */
 class FutureResponse implements ResponseInterface, FutureInterface
 {
     use MagicFutureTrait;
 
+    /**
+     * Returns a FutureResponse that wraps another future.
+     *
+     * @param FutureInterface $future      Future to wrap with a new future
+     * @param callable        $onFulfilled Invoked when the future fulfilled
+     * @param callable        $onRejected  Invoked when the future rejected
+     * @param callable        $onProgress  Invoked when the future progresses
+     *
+     * @return FutureResponse
+     */
+    public static function proxy(
+        FutureInterface $future,
+        callable $onFulfilled = null,
+        callable $onRejected = null,
+        callable $onProgress = null
+    ) {
+        return new FutureResponse(
+            $future->then($onFulfilled, $onRejected, $onProgress),
+            [$future, 'deref'],
+            [$future, 'cancel']
+        );
+    }
+
+    /**
+     * Create a future response that can only be dereferenced to be used.
+     *
+     * @param callable $deref  Function used to dereference the response.
+     * @param callable $cancel Function used to cancel the response.
+     *
+     * @return self
+     */
+    public static function createFuture(
+        callable $deref,
+        callable $cancel = null
+    ) {
+        $deferred = new Deferred();
+        return new FutureResponse(
+            $deferred->promise(),
+            function () use ($deferred, $deref) {
+                $deferred->resolve($deref());
+            },
+            $cancel
+        );
+    }
+
     public function getStatusCode()
     {
-        return $this->result->getStatusCode();
+        return $this->_value->getStatusCode();
     }
 
     public function getReasonPhrase()
     {
-        return $this->result->getReasonPhrase();
+        return $this->_value->getReasonPhrase();
     }
 
     public function getEffectiveUrl()
     {
-        return $this->result->getEffectiveUrl();
+        return $this->_value->getEffectiveUrl();
     }
 
     public function setEffectiveUrl($url)
     {
-        $this->result->setEffectiveUrl($url);
+        $this->_value->setEffectiveUrl($url);
     }
 
     public function json(array $config = [])
     {
-        return $this->result->json($config);
+        return $this->_value->json($config);
     }
 
     public function xml(array $config = [])
     {
-        return $this->result->xml($config);
+        return $this->_value->xml($config);
     }
 
     public function __toString()
     {
         try {
-            return $this->result->__toString();
+            return $this->_value->__toString();
         } catch (\Exception $e) {
             trigger_error($e->getMessage(), E_USER_WARNING);
             return '';
@@ -66,72 +111,61 @@ class FutureResponse implements ResponseInterface, FutureInterface
 
     public function getProtocolVersion()
     {
-        return $this->result->getProtocolVersion();
+        return $this->_value->getProtocolVersion();
     }
 
     public function setBody(StreamInterface $body = null)
     {
-        $this->result->setBody($body);
+        $this->_value->setBody($body);
     }
 
     public function getBody()
     {
-        return $this->result->getBody();
+        return $this->_value->getBody();
     }
 
     public function getHeaders()
     {
-        return $this->result->getHeaders();
+        return $this->_value->getHeaders();
     }
 
     public function getHeader($header)
     {
-        return $this->result->getHeader($header);
+        return $this->_value->getHeader($header);
     }
 
     public function getHeaderAsArray($header)
     {
-        return $this->result->getHeaderAsArray($header);
+        return $this->_value->getHeaderAsArray($header);
     }
 
     public function hasHeader($header)
     {
-        return $this->result->hasHeader($header);
+        return $this->_value->hasHeader($header);
     }
 
     public function removeHeader($header)
     {
-        $this->result->removeHeader($header);
+        $this->_value->removeHeader($header);
     }
 
     public function addHeader($header, $value)
     {
-        $this->result->addHeader($header, $value);
+        $this->_value->addHeader($header, $value);
     }
 
     public function addHeaders(array $headers)
     {
-        $this->result->addHeaders($headers);
+        $this->_value->addHeaders($headers);
     }
 
     public function setHeader($header, $value)
     {
-        $this->result->setHeader($header, $value);
+        $this->_value->setHeader($header, $value);
     }
 
     public function setHeaders(array $headers)
     {
-        $this->result->setHeaders($headers);
-    }
-
-    /** @internal */
-    protected function processResult($result)
-    {
-        if (!$result instanceof ResponseInterface) {
-            throw new \RuntimeException('Future did not return a valid '
-                . 'response. Found ' . Core::describeType($result));
-        }
-
-        return $result;
+        $this->_value->setHeaders($headers);
     }
 }

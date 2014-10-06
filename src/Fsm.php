@@ -75,18 +75,15 @@ class Fsm
             $trans->state = $this->initialState;
         }
 
-        do {
-            if (++$trans->_transitionCount > $this->maxTransitions) {
+        while ($trans->state !== $finalState) {
+
+            if (!isset($this->states[$trans->state])) {
+                throw new StateException("Invalid state: {$trans->state}");
+            } elseif (++$trans->_transitionCount > $this->maxTransitions) {
                 throw new StateException('Too many state transitions were '
                     . ' encountered ({$trans->_transitionCount}). This likely '
                     . 'means that a combination of event listeners are in an '
                     . 'infinite loop.');
-            }
-
-            $terminal = $trans->state === $finalState;
-
-            if (!isset($this->states[$trans->state])) {
-                throw new StateException("Invalid state: {$trans->state}");
             }
 
             $state = $this->states[$trans->state];
@@ -106,18 +103,17 @@ class Fsm
                     }
                 }
 
-                // Break: this is a terminal state with no transition.
-                if (!isset($state['success'])) {
+                if (isset($state['success'])) {
+                    // Transition to the success state
+                    $trans->state = $state['success'];
+                } else {
+                    // Break: this is a terminal state with no transition.
                     break;
                 }
-
-                // Transition to the success state
-                $trans->state = $state['success'];
 
             } catch (StateException $e) {
                 // State exceptions are thrown no matter what.
                 throw $e;
-
             } catch (\Exception $e) {
                 $trans->exception = $e;
                 // Terminal error states throw the exception.
@@ -127,7 +123,6 @@ class Fsm
                 // Transition to the error state.
                 $trans->state = $state['error'];
             }
-
-        } while (!$terminal);
+        }
     }
 }

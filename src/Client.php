@@ -6,13 +6,16 @@ use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\FutureResponse;
+use GuzzleHttp\Message\CancelledFutureResponse;
 use GuzzleHttp\Ring\Client\Middleware;
 use GuzzleHttp\Ring\Client\CurlMultiAdapter;
 use GuzzleHttp\Ring\Client\CurlAdapter;
 use GuzzleHttp\Ring\Client\StreamAdapter;
 use GuzzleHttp\Ring\Core;
-use GuzzleHttp\Ring\FutureInterface;
+use GuzzleHttp\Ring\Exception\CancelledException;
+use GuzzleHttp\Ring\Future\FutureInterface;
 use GuzzleHttp\Exception\RequestException;
+use React\Promise\FulfilledPromise;
 
 /**
  * HTTP client
@@ -94,11 +97,10 @@ class Client implements ClientInterface
 
         if (extension_loaded('curl')) {
             $config = [
-                'select_timepout' => isset($_SERVER['GUZZLE_CURL_SELECT_TIMEOUT'])
-                    ? $_SERVER['GUZZLE_CURL_SELECT_TIMEOUT'] : 1
+                'select_timeout' => getenv('GUZZLE_CURL_SELECT_TIMEOUT') ?: 1
             ];
-            if (isset($_SERVER['GUZZLE_CURL_MAX_HANDLES'])) {
-                $config['max_handles'] = $_SERVER['GUZZLE_CURL_MAX_HANDLES'];
+            if ($maxHandles = getenv('GUZZLE_CURL_MAX_HANDLES')) {
+                $config['max_handles'] = $maxHandles;
             }
             $future = new CurlMultiAdapter($config);
             if (function_exists('curl_reset')) {
@@ -226,35 +228,39 @@ class Client implements ClientInterface
     public function send(RequestInterface $request)
     {
         $trans = new Transaction($this, $request);
-        $needsFuture = $request->getConfig()->get('future');
 
-        // Return a future if one was requested.
+        // Ensure a future response is returned if one was requested.
+        if ($request->getConfig()->get('future')) {
+            try {
+                $this->fsm->run($trans);
+                // Turn the normal response into a future if needed.
+                return $trans->response instanceof FutureInterface
+                    ? $trans->response
+                    : new FutureResponse(new FulfilledPromise($trans->response));
+            } catch (\Exception $e) {
+                // Wrap the exception in a promise if the user asked for a future.
+                return CancelledFutureResponse::fromException(
+                    RequestException::wrapException($trans->request, $e)
+                );
+            }
+        }
+
         try {
             $this->fsm->run($trans);
             $response = $trans->response;
+            // Block until completed.
+            return $response instanceof FutureInterface
+                ? $response->deref()
+                : $response;
         } catch (\Exception $e) {
-            if (!$needsFuture) {
-                throw $e;
+            $wrapped = RequestException::wrapException($trans->request, $e);
+            // Don't fail when the future was cancelled, so just return
+            // the original future that holds a cancelled exception.
+            if ($e instanceof CancelledException) {
+                return CancelledFutureResponse::fromException($wrapped);
             }
-            // Wrap the exception if the user asked for a future.
-            return new FutureResponse(function () use ($e) {
-                throw $e;
-            });
+            throw $wrapped;
         }
-
-        if ($response instanceof FutureInterface) {
-            // Don't deref cancelled responses here.
-            if (!$response->cancelled() && !$needsFuture) {
-                $response = $response->deref();
-            }
-        } elseif ($needsFuture) {
-            // Create a future if one was requested
-            $response = new FutureResponse(function () use ($response) {
-                return $response;
-            });
-        }
-
-        return $response;
     }
 
     /**
@@ -272,40 +278,15 @@ class Client implements ClientInterface
         ];
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set
-        if (isset($_SERVER['HTTP_PROXY'])) {
-            $settings['proxy']['http'] = $_SERVER['HTTP_PROXY'];
+        if ($proxy = getenv('HTTP_PROXY')) {
+            $settings['proxy']['http'] = $proxy;
         }
 
-        if (isset($_SERVER['HTTPS_PROXY'])) {
-            $settings['proxy']['https'] = $_SERVER['HTTPS_PROXY'];
+        if ($proxy = getenv('HTTPS_PROXY')) {
+            $settings['proxy']['https'] = $proxy;
         }
 
         return $settings;
-    }
-
-    private function createFutureResponse(
-        Transaction $trans,
-        FutureInterface $response
-    ) {
-        // Create a future response that's hooked up to the ring future.
-        return new FutureResponse(
-            // Dereference function
-            function () use ($response, $trans) {
-                $response->deref();
-                // Throw an exception if present. You need to remove transaction
-                // exceptions to prevent them from being thrown.
-                if ($trans->exception) {
-                    throw RequestException::wrapException($trans->request, $trans->exception);
-                } elseif ($trans->response) {
-                    // Return the response if one was set on the transaction.
-                    return $trans->response;
-                }
-                // If we know that the events were fired, then there's a problem.
-                throw RingBridge::getNoRingResponseException($trans->request);
-            },
-            // Cancel function. Just proxy to the underlying future.
-            [$response, 'cancel']
-        );
     }
 
     /**
@@ -402,15 +383,19 @@ class Client implements ClientInterface
         callable $adapter,
         MessageFactoryInterface $mf
     ) {
-        return new RequestFsm(function (Transaction $trans) use ($adapter, $mf) {
-            // Create a Guzzle-Ring request and send it.
-            $request = RingBridge::prepareRingRequest($trans, $mf, $this->fsm);
-            $response = $adapter($request);
-            // Future responses do not need to process right away, so set
-            // the response on the transaction to designate it as completed.
-            if ($response instanceof FutureInterface) {
-                $trans->response = $this->createFutureResponse($trans, $response);
-            }
+        return new RequestFsm(function (Transaction $t) use ($adapter, $mf) {
+            $t->response = FutureResponse::proxy(
+                $adapter(RingBridge::prepareRingRequest($t)),
+                function ($value) use ($t) {
+                    RingBridge::completeRingResponse(
+                        $t, $value, $this->messageFactory, $this->fsm
+                    );
+                    if ($t->exception) {
+                        throw RequestException::wrapException($t->request, $t->exception);
+                    }
+                    return $t->response;
+                }
+            );
         });
     }
 
@@ -420,6 +405,6 @@ class Client implements ClientInterface
      */
     public function sendAll($requests, array $options = [])
     {
-        Pool::send($this, $requests, $options);
+        (new Pool($this, $requests, $options))->deref();
     }
 }

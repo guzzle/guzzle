@@ -2,12 +2,13 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Event\RequestEvents;
-use GuzzleHttp\Message\FutureResponse;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Ring\Core;
-use GuzzleHttp\Ring\FutureInterface;
+use GuzzleHttp\Ring\Future\FutureInterface;
 use GuzzleHttp\Event\ListenerAttacherTrait;
 use GuzzleHttp\Event\EndEvent;
+use React\Promise\Deferred;
+use React\Promise\PromiseInterface;
 
 /**
  * Sends and iterator of requests concurrently using a capped pool size.
@@ -33,23 +34,20 @@ class Pool implements FutureInterface
     /** @var \GuzzleHttp\ClientInterface */
     private $client;
 
-    /** @var array Hash of outstanding responses to dereference. */
-    private $derefQueue = [];
-
-    /** @var array Hash of completed responses. */
-    private $completedQueue = [];
-
     /** @var \Iterator Yields requests */
     private $iter;
 
-    /** @var int */
-    private $poolSize;
+    /** @var Deferred */
+    private $deferred;
 
-    /** @var bool */
-    private $isCancelled = false;
+    /** @var PromiseInterface */
+    private $promise;
 
-    /** @var array Listeners to attach to each request */
+    private $derefQueue = [];
     private $eventListeners = [];
+    private $poolSize;
+    private $isCancelled = false;
+    private $isRealized = false;
 
     /**
      * The option values for 'before', 'after', and 'error' can be a callable,
@@ -75,28 +73,14 @@ class Pool implements FutureInterface
     ) {
         $this->client = $client;
         $this->iter = $this->coerceIterable($requests);
+        $this->deferred = new Deferred();
+        $this->promise = $this->deferred->promise();
         $this->poolSize = isset($options['pool_size'])
             ? $options['pool_size'] : 25;
         $this->eventListeners = $this->prepareListeners(
-            $this->prepareOptions($options),
+            $options,
             ['before', 'complete', 'error', 'end']
         );
-    }
-
-    /**
-     * Creates and immediately transfers a Pool object.
-     *
-     * @param ClientInterface $client   Client used to send the requests.
-     * @param array|\Iterator $requests Requests to send in parallel
-     * @param array           $options  Associative array of options
-     * @see GuzzleHttp\Pool::__construct for the list of available options.
-     */
-    public static function send(
-        ClientInterface $client,
-        $requests,
-        array $options = []
-    ) {
-        (new self($client, $requests, $options))->deref();
     }
 
     /**
@@ -127,7 +111,7 @@ class Pool implements FutureInterface
 
         // In addition to the normally run events when requests complete, add
         // and event to continuously track the results of transfers in the hash.
-        static::send($client, $requests, RequestEvents::convertEventArray(
+        (new self($client, $requests, RequestEvents::convertEventArray(
             $options,
             ['end'],
             [
@@ -138,24 +122,28 @@ class Pool implements FutureInterface
                         : $e->getResponse();
                 }
             ]
-        ));
+        )))->deref();
 
         return new BatchResults($hash);
     }
 
+    public function cancelled()
+    {
+        return $this->isCancelled;
+    }
+
     public function realized()
     {
-        return !$this->iter || $this->cancelled();
+        return $this->isRealized;
     }
 
     public function deref()
     {
-        if ($this->realized()) {
+        if ($this->isRealized) {
             return false;
         }
 
         // Seed the pool with N number of requests.
-        // @todo: Is there way to stop seeding when the adapter auto-flushes?
         for ($i = 0; $i < $this->poolSize; $i++) {
             if (!$this->addNextRequest()) {
                 break;
@@ -173,14 +161,12 @@ class Pool implements FutureInterface
         }
 
         // Clean up no longer needed state.
-        $this->client = $this->iter = $this->derefQueue = $this->eventListeners = null;
+        $this->isRealized = true;
+        $this->derefQueue = $this->eventListeners = [];
+        $this->client = $this->iter = null;
+        $this->deferred->resolve(true);
 
         return true;
-    }
-
-    public function cancelled()
-    {
-        return $this->isCancelled;
     }
 
     /**
@@ -194,12 +180,11 @@ class Pool implements FutureInterface
      */
     public function cancel()
     {
-        if ($this->isCancelled || $this->realized()) {
+        if ($this->isRealized) {
             return false;
         }
 
-        // Return true if ALL in-flight requests could be cancelled.
-        $success = $this->isCancelled = true;
+        $success = $this->isCancelled = $this->isRealized = true;
         foreach ($this->derefQueue as $response) {
             if (!$response->cancel()) {
                 $success = false;
@@ -210,13 +195,19 @@ class Pool implements FutureInterface
     }
 
     /**
-     * Given the input variable, return an iterator if possible or throw.
+     * Returns a promise that is invoked when the pool completed. There will be
+     * no passed value.
      *
-     * @param mixed $requests
-     *
-     * @return \Iterator
-     * @throws \InvalidArgumentException if unable to coerce into an iterable.
+     * {@inheritdoc}
      */
+    public function then(
+        callable $onFulfilled = null,
+        callable $onRejected = null,
+        callable $onProgress = null
+    ) {
+        return $this->promise->then($onRejected, $onRejected, $onProgress);
+    }
+
     private function coerceIterable($requests)
     {
         if ($requests instanceof \Iterator) {
@@ -227,34 +218,6 @@ class Pool implements FutureInterface
 
         throw new \InvalidArgumentException('Expected Iterator or array. '
             . 'Found ' . Core::describeType($requests));
-    }
-
-    /**
-     * Adds the necessary options to manage the pool.
-     */
-    private function prepareOptions(array $options)
-    {
-        // Add the next request when requests finish, and stop errors from
-        // throwing by intercepting with a future that throws when accessed.
-        return RequestEvents::convertEventArray($options, ['end'], [
-            'priority' => RequestEvents::LATE,
-            'fn'       => function (EndEvent $e) {
-                $hash = spl_object_hash($e->getRequest());
-                // Remove from deref queue if present.
-                if (isset($this->derefQueue[$hash])) {
-                    unset($this->derefQueue[$hash]);
-                } else {
-                    // Add to the completed queue to prevent deref'ng
-                    $this->completedQueue[$hash] = true;
-                }
-                // If there was an error, then prevent the exception.
-                if ($e->getException()) {
-                    RequestEvents::stopException($e);
-                }
-                // Add the next request in the pool when done with this one.
-                $this->addNextRequest();
-            }
-        ]);
     }
 
     /**
@@ -271,7 +234,7 @@ class Pool implements FutureInterface
         $this->iter->next();
 
         if (!($request instanceof RequestInterface)) {
-            throw new \RuntimeException(sprintf(
+            throw new \InvalidArgumentException(sprintf(
                 'All requests in the provided iterator must implement '
                 . 'RequestInterface. Found %s',
                 Core::describeType($request)
@@ -283,18 +246,18 @@ class Pool implements FutureInterface
         $this->attachListeners($request, $this->eventListeners);
         $response = $this->client->send($request);
         $hash = spl_object_hash($request);
+        $this->derefQueue[$hash] = $response;
 
-        // Determine how to track the request based on what happened in events.
-        if (isset($this->completedQueue[$hash])) {
-            // Things in the completed queue were completed in events before
-            // the future was returned from the client. This means there's no
-            // need to dereference them when the pool finishes.
-            unset($this->completedQueue[$hash]);
-        } elseif ($response instanceof FutureResponse && !$response->cancelled()) {
-            // Track future responses for later dereference before completing
-            // pool. Don't dereference cancelled responses.
-            $this->derefQueue[$hash] = $response;
-        }
+        $fn = function ($value) use ($request, $hash) {
+            unset($this->derefQueue[$hash]);
+            $this->deferred->progress([
+                'request' => $request,
+                'result'  => $value
+            ]);
+            $this->addNextRequest();
+        };
+
+        $response->then($fn, $fn);
 
         return true;
     }

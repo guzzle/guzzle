@@ -55,7 +55,7 @@ class Emitter implements EmitterInterface
 
     public function removeListener($eventName, callable $listener)
     {
-        if (!isset($this->listeners[$eventName])) {
+        if (empty($this->listeners[$eventName])) {
             return;
         }
 
@@ -74,7 +74,7 @@ class Emitter implements EmitterInterface
         // Return all events in a sorted priority order
         if ($eventName === null) {
             foreach (array_keys($this->listeners) as $eventName) {
-                if (!isset($this->sorted[$eventName])) {
+                if (empty($this->sorted[$eventName])) {
                     $this->listeners($eventName);
                 }
             }
@@ -82,15 +82,15 @@ class Emitter implements EmitterInterface
         }
 
         // Return the listeners for a specific event, sorted in priority order
-        if (!isset($this->sorted[$eventName])) {
-            if (!isset($this->listeners[$eventName])) {
-                return [];
-            } else {
-                krsort($this->listeners[$eventName]);
-                $this->sorted[$eventName] = call_user_func_array(
-                    'array_merge',
-                    $this->listeners[$eventName]
-                );
+        if (empty($this->sorted[$eventName])) {
+            $this->sorted[$eventName] = [];
+            if (isset($this->listeners[$eventName])) {
+                krsort($this->listeners[$eventName], SORT_NUMERIC);
+                foreach ($this->listeners[$eventName] as $listeners) {
+                    foreach ($listeners as $listener) {
+                        $this->sorted[$eventName][] = $listener;
+                    }
+                }
             }
         }
 
@@ -140,7 +140,7 @@ class Emitter implements EmitterInterface
     public function detach(SubscriberInterface $subscriber)
     {
         foreach ($subscriber->getEvents() as $eventName => $listener) {
-            $this->removeListener($eventName, array($subscriber, $listener[0]));
+            $this->removeListener($eventName, [$subscriber, $listener[0]]);
         }
     }
 }

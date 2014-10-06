@@ -14,8 +14,9 @@
     ],
     "require": {
         "php": ">=5.4.0",
-        "guzzlehttp/ring": "0.1.*@dev",
-        "guzzlehttp/streams": "~3.0@dev"
+        "guzzlehttp/ring": "dev-master",
+        "guzzlehttp/streams": "~3.0@dev",
+        "react/promise": "~2.0"
     },
     "minimum-stability": "dev",
     "suggest": {

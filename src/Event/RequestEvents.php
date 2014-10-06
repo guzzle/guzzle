@@ -1,7 +1,7 @@
 <?php
 namespace GuzzleHttp\Event;
 
-use GuzzleHttp\Message\CancelledResponse;
+use GuzzleHttp\Exception\CancelledRequestException;
 
 /**
  * Contains methods used to manage the request event lifecycle.
@@ -57,20 +57,16 @@ final class RequestEvents
     }
 
     /**
-     * Stops the "end" event from throwing an exception by injecting a future
-     * response that throws only when dereferenced.
-     *
-     * This adheres to the contract that sending a request returns a response,
-     * but allows higher level abstractions like the Pool to stop an exception
-     * from being thrown with the knowledge that the response will likely
-     * never be dereferenced.
+     * Cancels an end event with a cancelled exception.
      *
      * @param EndEvent $e
+     *
+     * @throws CancelledRequestException
      */
-    public static function stopException(EndEvent $e)
+    public static function cancelEndEvent(EndEvent $e)
     {
-        // Stop further "end" listeners from firing and add a future response
-        // that throws when accessed.
-        $e->intercept(new CancelledResponse($e->getException()));
+        throw CancelledRequestException::fromTrans(
+            $e->getRequest(), $e->getResponse(), $e->getException()
+        );
     }
 }

@@ -4,6 +4,7 @@ namespace GuzzleHttp\Tests\Message;
 use GuzzleHttp\Message\FutureResponse;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Stream\Stream;
+use React\Promise\Deferred;
 
 class FutureResponseTest extends \PHPUnit_Framework_TestCase
 {
@@ -13,25 +14,15 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatesMagicMethod()
     {
-        $f = new FutureResponse(function () {});
+        $f = FutureResponse::createFuture(function () {});
         $f->foo;
-    }
-
-    /**
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage Future did not return a valid response. Found NULL
-     */
-    public function testEnsuresDerefReturnsTransaction()
-    {
-        $f = new FutureResponse(function () {});
-        $f->getStatusCode();
     }
 
     public function testDoesTheSameAsResponseWhenDereferenced()
     {
         $str = Stream::factory('foo');
         $response = new Response(200, ['Foo' => 'bar'], $str);
-        $future = new FutureResponse(function () use ($response) {
+        $future = FutureResponse::createFuture(function () use ($response) {
             return $response;
         });
         $this->assertFalse($future->realized());
@@ -92,7 +83,7 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
     public function testCanDereferenceManually()
     {
         $response = new Response(200, ['Foo' => 'bar']);
-        $future = new FutureResponse(function () use ($response) {
+        $future = FutureResponse::createFuture(function () use ($response) {
             return $response;
         });
         $this->assertSame($response, $future->deref());
@@ -102,13 +93,16 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
     public function testCanCancel()
     {
         $c = false;
+        $deferred = new Deferred();
         $future = new FutureResponse(
+            $deferred->promise(),
             function () {},
             function () use (&$c) {
                 $c = true;
                 return true;
             }
         );
+
         $this->assertFalse($future->cancelled());
         $this->assertTrue($future->cancel());
         $this->assertTrue($future->cancelled());
@@ -117,7 +111,7 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
 
     public function testCanCancelButReturnsFalseForNoCancelFunction()
     {
-        $future = new FutureResponse(function () {});
+        $future = FutureResponse::createFuture(function () {});
         $this->assertFalse($future->cancel());
         $this->assertTrue($future->cancelled());
     }
@@ -127,20 +121,22 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
      */
     public function testAccessingCancelledResponseThrows()
     {
-        $future = new FutureResponse(function () {});
+        $future = FutureResponse::createFuture(function () {});
         $this->assertFalse($future->cancel());
         $future->getStatusCode();
     }
 
     public function testExceptionInToStringTriggersError()
     {
-        $future = new FutureResponse(function () {});
+        $future = FutureResponse::createFuture(function () {
+            throw new \Exception('foo');
+        });
         $err = '';
         set_error_handler(function () use (&$err) {
             $err = func_get_args()[1];
         });
         echo $future;
         restore_error_handler();
-        $this->assertContains('Future did not return a valid response', $err);
+        $this->assertContains('foo', $err);
     }
 }
