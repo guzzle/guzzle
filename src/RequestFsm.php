@@ -6,7 +6,6 @@ use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\EndEvent;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\StateException;
 use GuzzleHttp\Ring\Future\FutureInterface;
 
 /**
@@ -29,33 +28,25 @@ class RequestFsm extends Fsm
                 'transition' => [$this, 'beforeTransition']
             ],
             // The complete and error events are handled using the "then" of
-            // the Guzzle-Ring request, so we transition to the exit state
-            // after the send state.
+            // the Guzzle-Ring request, so we exit the FSM.
             'send' => [
-                'success'    => 'exit',
                 'error'      => 'error',
-                'transition' => [$this, 'sendTransition']
+                'transition' => $this->sendFn
             ],
             'complete' => [
                 'success'    => 'end',
-                // Intercept here is used to retry a request.
                 'intercept'  => 'before',
                 'error'      => 'error',
                 'transition' => [$this, 'completeTransition']
             ],
             'error' => [
                 'success'    => 'complete',
-                // Intercept here is used to retry a request.
                 'intercept'  => 'before',
                 'error'      => 'end',
                 'transition' => [$this, 'ErrorTransition']
             ],
             'end' => [
                 'transition' => [$this, 'endTransition']
-            ],
-            // The exit state is used to bail from the FSM.
-            'exit' => [
-                'transition' => [$this, 'exitTransition']
             ]
         ]);
     }
@@ -71,15 +62,6 @@ class RequestFsm extends Fsm
     }
 
     /**
-     * Sends the request using the provided function.
-     */
-    protected function sendTransition(Transaction $trans)
-    {
-        $fn = $this->sendFn;
-        $fn($trans);
-    }
-
-    /**
      * Emits the error event and ensures that the exception is set and is an
      * instance of RequestException. If the error event is not intercepted,
      * then the exception is thrown and we transition to the "end" event. This
@@ -89,10 +71,6 @@ class RequestFsm extends Fsm
      */
     protected function errorTransition(Transaction $trans)
     {
-        if (!$trans->exception) {
-            throw new StateException('Invalid error state: no exception');
-        }
-
         // Convert non-request exception to a wrapped exception
         if (!($trans->exception instanceof RequestException)) {
             $trans->exception = RequestException::wrapException(
@@ -125,10 +103,6 @@ class RequestFsm extends Fsm
             return false;
         }
 
-        if (!$trans->response) {
-            throw new StateException('Invalid complete state: no response');
-        }
-
         $trans->response->setEffectiveUrl($trans->request->getUrl());
         $trans->request->getEmitter()->emit('complete', new CompleteEvent($trans));
 
@@ -151,24 +125,6 @@ class RequestFsm extends Fsm
         // Throw exceptions in the terminal event if the exception was not
         // handled by an "end" event listener.
         if ($trans->exception) {
-            throw $trans->exception;
-        }
-    }
-
-    /**
-     * Ensure that a response or exception are present, and if not, throw an
-     * exception.
-     *
-     * Throws an exception if one is present on the transaction.
-     */
-    protected function exitTransition(Transaction $trans)
-    {
-        if (!$trans->response && !$trans->exception) {
-            $trans->exception = RingBridge::getNoRingResponseException($trans->request);
-        }
-
-        // Only throw if the response is not a future.
-        if ($trans->exception && !($trans->response instanceof FutureInterface)) {
             throw $trans->exception;
         }
     }
