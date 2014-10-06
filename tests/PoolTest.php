@@ -56,12 +56,6 @@ class PoolTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($p->cancelled());
     }
 
-    public function testHasSendFunction()
-    {
-        $c = $this->getClient();
-        Pool::send($c, [$c->createRequest('GET', 'http://foo.com')]);
-    }
-
     public function testSendsManyRequestsInCappedPool()
     {
         $c = $this->getClient();

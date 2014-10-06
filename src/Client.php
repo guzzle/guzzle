@@ -411,6 +411,6 @@ class Client implements ClientInterface
      */
     public function sendAll($requests, array $options = [])
     {
-        Pool::send($this, $requests, $options);
+        (new Pool($this, $requests, $options))->deref();
     }
 }
