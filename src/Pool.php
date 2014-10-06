@@ -2,8 +2,6 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Event\RequestEvents;
-use GuzzleHttp\Message\CancelledFutureResponse;
-use GuzzleHttp\Message\FutureResponse;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\Future\FutureInterface;
@@ -46,7 +44,6 @@ class Pool implements FutureInterface
     private $promise;
 
     private $derefQueue = [];
-    private $completedQueue = [];
     private $eventListeners = [];
     private $poolSize;
     private $isCancelled = false;
@@ -81,7 +78,7 @@ class Pool implements FutureInterface
         $this->poolSize = isset($options['pool_size'])
             ? $options['pool_size'] : 25;
         $this->eventListeners = $this->prepareListeners(
-            $this->prepareOptions($options),
+            $options,
             ['before', 'complete', 'error', 'end']
         );
     }
@@ -222,36 +219,6 @@ class Pool implements FutureInterface
     }
 
     /**
-     * Adds the necessary options to manage the pool, stops exceptions from
-     * being thrown, emits promise progress, and adds the next request.
-     */
-    private function prepareOptions(array $options)
-    {
-        return RequestEvents::convertEventArray($options, ['end'], [
-            'priority' => RequestEvents::LATE,
-            'fn'       => function (EndEvent $e) {
-                $request = $e->getRequest();
-                $error = $e->getException();
-                $this->deferred->progress([
-                    'request'  => $request,
-                    'response' => $e->getResponse(),
-                    'error'    => $error
-                ]);
-                $hash = spl_object_hash($request);
-                if (isset($this->derefQueue[$hash])) {
-                    unset($this->derefQueue[$hash]);
-                } else {
-                    $this->completedQueue[$hash] = true;
-                }
-                if ($error) {
-                    RequestEvents::cancelEndEvent($e);
-                }
-                $this->addNextRequest();
-            }
-        ]);
-    }
-
-    /**
      * Adds the next request to pool and tracks what requests need to be
      * dereferenced when completing the pool.
      */
@@ -277,19 +244,18 @@ class Pool implements FutureInterface
         $this->attachListeners($request, $this->eventListeners);
         $response = $this->client->send($request);
         $hash = spl_object_hash($request);
+        $this->derefQueue[$hash] = $response;
 
-        if (isset($this->completedQueue[$hash])) {
-            // Things in the completed queue were completed in events before
-            // the future was returned from the client. This means there's no
-            // need to dereference them when the pool finishes.
-            unset($this->completedQueue[$hash]);
-        } elseif ($response instanceof FutureResponse
-            && !$response instanceof CancelledFutureResponse
-        ) {
-            // Track future responses for later dereference before completing
-            // pool. Don't dereference cancelled responses.
-            $this->derefQueue[$hash] = $response;
-        }
+        $fn = function ($value) use ($request, $hash) {
+            unset($this->derefQueue[$hash]);
+            $this->deferred->progress([
+                'request' => $request,
+                'result'  => $value
+            ]);
+            $this->addNextRequest();
+        };
+
+        $response->then($fn, $fn);
 
         return true;
     }
