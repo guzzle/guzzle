@@ -3,8 +3,8 @@ namespace GuzzleHttp\Message;
 
 use GuzzleHttp\Ring\Future\MagicFutureTrait;
 use GuzzleHttp\Ring\Future\FutureInterface;
-use GuzzleHttp\Ring\ValidatedDeferredInstance;
 use GuzzleHttp\Stream\StreamInterface;
+use React\Promise\Deferred;
 
 /**
  * Represents a response that has not been fulfilled.
@@ -59,15 +59,11 @@ class FutureResponse implements ResponseInterface, FutureInterface
         callable $deref,
         callable $cancel = null
     ) {
-        $deferred = new ValidatedDeferredInstance('GuzzleHttp\Message\ResponseInterface');
+        $deferred = new Deferred();
         return new FutureResponse(
             $deferred->promise(),
             function () use ($deferred, $deref) {
-                try {
-                    $deferred->resolve(call_user_func($deref));
-                } catch (\Exception $e) {
-                    $deferred->reject($e);
-                }
+                $deferred->resolve($deref());
             },
             $cancel
         );

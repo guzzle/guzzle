@@ -18,16 +18,6 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
         $f->foo;
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Expected the resolved value to be an instance of "GuzzleHttp\Message\ResponseInterface", but got NULL
-     */
-    public function testEnsuresDerefReturnsTransaction()
-    {
-        $f = FutureResponse::createFuture(function () {});
-        $f->getStatusCode();
-    }
-
     public function testDoesTheSameAsResponseWhenDereferenced()
     {
         $str = Stream::factory('foo');
@@ -138,16 +128,15 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
 
     public function testExceptionInToStringTriggersError()
     {
-        $future = FutureResponse::createFuture(function () {});
+        $future = FutureResponse::createFuture(function () {
+            throw new \Exception('foo');
+        });
         $err = '';
         set_error_handler(function () use (&$err) {
             $err = func_get_args()[1];
         });
         echo $future;
         restore_error_handler();
-        $this->assertContains(
-            'Expected the resolved value to be an instance of "GuzzleHttp\Message\ResponseInterface", but got NULL',
-            $err
-        );
+        $this->assertContains('foo', $err);
     }
 }
