@@ -6,6 +6,7 @@ use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\EndEvent;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Ring\Exception\CancelledException;
 use GuzzleHttp\Ring\Future\FutureInterface;
 
 /**

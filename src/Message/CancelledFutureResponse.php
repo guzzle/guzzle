@@ -19,7 +19,7 @@ class CancelledFutureResponse extends FutureResponse
      */
     public static function fromException(RequestException $e)
     {
-        return new CancelledFutureResponse(new RejectedPromise($e));
+        return new self(new RejectedPromise($e));
     }
 
     public function realized()
