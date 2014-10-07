@@ -26,12 +26,12 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
         $future = MockTest::createFuture(function () use ($response) {
             return $response;
         });
-        $this->assertFalse($future->realized());
+        $this->assertFalse($this->readAttribute($future, 'isRealized'));
         $this->assertEquals(200, $future->getStatusCode());
-        $this->assertTrue($future->realized());
+        $this->assertTrue($this->readAttribute($future, 'isRealized'));
         // Deref again does nothing.
-        $future->deref();
-        $this->assertTrue($future->realized());
+        $future->wait();
+        $this->assertTrue($this->readAttribute($future, 'isRealized'));
         $this->assertEquals('bar', $future->getHeader('Foo'));
         $this->assertEquals(['bar'], $future->getHeaderAsarray('Foo'));
         $this->assertSame($response->getHeaders(), $future->getHeaders());
@@ -87,8 +87,8 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
         $future = MockTest::createFuture(function () use ($response) {
             return $response;
         });
-        $this->assertSame($response, $future->deref());
-        $this->assertTrue($future->realized());
+        $this->assertSame($response, $future->wait());
+        $this->assertTrue($this->readAttribute($future, 'isRealized'));
     }
 
     public function testCanCancel()
@@ -104,9 +104,9 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
             }
         );
 
-        $this->assertFalse($future->cancelled());
+        $this->assertFalse($this->readAttribute($future, 'isRealized'));
         $this->assertTrue($future->cancel());
-        $this->assertTrue($future->cancelled());
+        $this->assertTrue($this->readAttribute($future, 'isRealized'));
         $this->assertFalse($future->cancel());
     }
 
@@ -114,7 +114,7 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
     {
         $future = MockTest::createFuture(function () {});
         $this->assertFalse($future->cancel());
-        $this->assertTrue($future->cancelled());
+        $this->assertTrue($this->readAttribute($future, 'isRealized'));
     }
 
     /**

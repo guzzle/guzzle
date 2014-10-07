@@ -41,40 +41,34 @@ class PoolTest extends \PHPUnit_Framework_TestCase
         $c = new Client();
         $requests = ['foo'];
         $p = new Pool($c, new \ArrayIterator($requests));
-        $p->deref();
+        $p->wait();
     }
 
     public function testSendsAndRealizesFuture()
     {
         $c = $this->getClient();
         $p = new Pool($c, [$c->createRequest('GET', 'http://foo.com')]);
-        $this->assertTrue($p->deref());
-        $this->assertFalse($p->deref());
-        $this->assertTrue($p->realized());
+        $this->assertTrue($p->wait());
+        $this->assertFalse($p->wait());
+        $this->assertTrue($this->readAttribute($p, 'isRealized'));
         $this->assertFalse($p->cancel());
-        $this->assertFalse($p->cancelled());
     }
 
     public function testSendsManyRequestsInCappedPool()
     {
         $c = $this->getClient();
         $p = new Pool($c, [$c->createRequest('GET', 'http://foo.com')]);
-        $this->assertTrue($p->deref());
-        $this->assertFalse($p->deref());
-        $this->assertTrue($p->realized());
-        $this->assertFalse($p->cancel());
-        $this->assertFalse($p->cancelled());
+        $this->assertTrue($p->wait());
+        $this->assertFalse($p->wait());
     }
 
     public function testSendsRequestsThatHaveNotBeenRealized()
     {
         $c = $this->getClient();
         $p = new Pool($c, [$c->createRequest('GET', 'http://foo.com')]);
-        $this->assertTrue($p->deref());
-        $this->assertFalse($p->deref());
-        $this->assertTrue($p->realized());
+        $this->assertTrue($p->wait());
+        $this->assertFalse($p->wait());
         $this->assertFalse($p->cancel());
-        $this->assertFalse($p->cancelled());
     }
 
     public function testCancelsInFlightRequests()
@@ -96,9 +90,8 @@ class PoolTest extends \PHPUnit_Framework_TestCase
             ])
         ]);
         ob_start();
-        $p->deref();
+        $p->wait();
         $contents = ob_get_clean();
-        $this->assertTrue($p->cancelled());
         $this->assertEquals(1, count($h));
         $this->assertEquals('Cancelling', $contents);
     }
@@ -208,7 +201,7 @@ class PoolTest extends \PHPUnit_Framework_TestCase
             }
         );
 
-        $pool->deref();
+        $pool->wait();
         $this->assertEquals(2, $count);
         $this->assertEquals(true, $thenned);
     }

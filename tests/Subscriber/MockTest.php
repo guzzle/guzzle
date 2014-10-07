@@ -19,14 +19,14 @@ use React\Promise\Deferred;
 class MockTest extends \PHPUnit_Framework_TestCase
 {
     public static function createFuture(
-        callable $deref,
+        callable $wait,
         callable $cancel = null
     ) {
         $deferred = new Deferred();
         return new FutureResponse(
             $deferred->promise(),
-            function () use ($deferred, $deref) {
-                $deferred->resolve($deref());
+            function () use ($deferred, $wait) {
+                $deferred->resolve($wait());
             },
             $cancel
         );
@@ -134,8 +134,8 @@ class MockTest extends \PHPUnit_Framework_TestCase
         $request->getEmitter()->attach($mock);
         $res = $client->send($request);
         $this->assertSame($future, $res);
-        $this->assertFalse($res->realized());
-        $this->assertSame($response, $res->deref());
+        $this->assertFalse($this->readAttribute($res, 'isRealized'));
+        $this->assertSame($response, $res->wait());
     }
 
     public function testCanMockExceptionFutureResponses()
@@ -150,10 +150,10 @@ class MockTest extends \PHPUnit_Framework_TestCase
         $request->getEmitter()->attach($mock);
         $response = $client->send($request);
         $this->assertSame($future, $response);
-        $this->assertFalse($response->realized());
+        $this->assertFalse($this->readAttribute($response, 'isRealized'));
 
         try {
-            $response->deref();
+            $response->wait();
             $this->fail('Did not throw');
         } catch (RequestException $e) {
             $this->assertContains('foo', $e->getMessage());
@@ -180,10 +180,10 @@ class MockTest extends \PHPUnit_Framework_TestCase
         $request->getEmitter()->attach($mock);
         $response = $client->send($request);
         $this->assertSame($future, $response);
-        $this->assertFalse($response->realized());
+        $this->assertFalse($this->readAttribute($response, 'isRealized'));
 
         try {
-            $response->deref();
+            $response->wait();
             $this->fail('Did not throw');
         } catch (RequestException $e) {
             $this->assertEquals(404, $e->getResponse()->getStatusCode());

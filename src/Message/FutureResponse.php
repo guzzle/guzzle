@@ -41,7 +41,7 @@ class FutureResponse implements ResponseInterface, FutureInterface
     ) {
         return new FutureResponse(
             $future->then($onFulfilled, $onRejected, $onProgress),
-            [$future, 'deref'],
+            [$future, 'wait'],
             [$future, 'cancel']
         );
     }

@@ -44,10 +44,9 @@ class Pool implements FutureInterface
     /** @var PromiseInterface */
     private $promise;
 
-    private $derefQueue = [];
+    private $waitQueue = [];
     private $eventListeners = [];
     private $poolSize;
-    private $isCancelled = false;
     private $isRealized = false;
 
     /**
@@ -123,22 +122,12 @@ class Pool implements FutureInterface
                         : $e->getResponse();
                 }
             ]
-        )))->deref();
+        )))->wait();
 
         return new BatchResults($hash);
     }
 
-    public function cancelled()
-    {
-        return $this->isCancelled;
-    }
-
-    public function realized()
-    {
-        return $this->isRealized;
-    }
-
-    public function deref()
+    public function wait()
     {
         if ($this->isRealized) {
             return false;
@@ -152,14 +141,14 @@ class Pool implements FutureInterface
         }
 
         // Stop if the pool was cancelled while transferring requests.
-        if ($this->isCancelled) {
+        if ($this->isRealized) {
             return false;
         }
 
-        // Dereference any outstanding FutureResponse objects.
-        while ($response = array_pop($this->derefQueue)) {
+        // Wait on any outstanding FutureResponse objects.
+        while ($response = array_pop($this->waitQueue)) {
             try {
-                $response->deref();
+                $response->wait();
             } catch (\Exception $e) {
                 // Eat exceptions because they should be handled asynchronously
             }
@@ -167,7 +156,7 @@ class Pool implements FutureInterface
 
         // Clean up no longer needed state.
         $this->isRealized = true;
-        $this->derefQueue = $this->eventListeners = [];
+        $this->waitQueue = $this->eventListeners = [];
         $this->client = $this->iter = null;
         $this->deferred->resolve(true);
 
@@ -189,8 +178,8 @@ class Pool implements FutureInterface
             return false;
         }
 
-        $success = $this->isCancelled = $this->isRealized = true;
-        foreach ($this->derefQueue as $response) {
+        $success = $this->isRealized = true;
+        foreach ($this->waitQueue as $response) {
             if (!$response->cancel()) {
                 $success = false;
             }
@@ -231,7 +220,7 @@ class Pool implements FutureInterface
      */
     private function addNextRequest()
     {
-        if ($this->isCancelled || !$this->iter || !$this->iter->valid()) {
+        if ($this->isRealized || !$this->iter || !$this->iter->valid()) {
             return false;
         }
 
@@ -251,11 +240,11 @@ class Pool implements FutureInterface
         $this->attachListeners($request, $this->eventListeners);
         $response = $this->client->send($request);
         $hash = spl_object_hash($request);
-        $this->derefQueue[$hash] = $response;
+        $this->waitQueue[$hash] = $response;
 
         // Use this function for both resolution and rejection.
         $fn = function ($value) use ($request, $hash) {
-            unset($this->derefQueue[$hash]);
+            unset($this->waitQueue[$hash]);
             $result = $value instanceof ResponseInterface
                 ? ['request' => $request, 'response' => $value, 'error' => null]
                 : ['request' => $request, 'response' => null, 'error' => $value];

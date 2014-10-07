@@ -244,7 +244,7 @@ class Client implements ClientInterface
             try {
                 $this->fsm->run($trans);
                 return $trans->response instanceof FutureInterface
-                    ? $trans->response->deref()
+                    ? $trans->response->wait()
                     : $trans->response;
             } catch (\Exception $e) {
                 throw RequestException::wrapException($trans->request, $e);
@@ -391,6 +391,6 @@ class Client implements ClientInterface
      */
     public function sendAll($requests, array $options = [])
     {
-        (new Pool($this, $requests, $options))->deref();
+        (new Pool($this, $requests, $options))->wait();
     }
 }
