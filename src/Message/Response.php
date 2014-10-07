@@ -119,9 +119,19 @@ class Response extends AbstractMessage implements ResponseInterface
         return $this->statusCode;
     }
 
+    public function setStatusCode($code)
+    {
+        return $this->statusCode = $code;
+    }
+
     public function getReasonPhrase()
     {
         return $this->reasonPhrase;
+    }
+
+    public function setReasonPhrase($phrase)
+    {
+        return $this->reasonPhrase = $phrase;
     }
 
     public function json(array $config = [])

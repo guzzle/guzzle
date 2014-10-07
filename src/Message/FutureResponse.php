@@ -51,9 +51,19 @@ class FutureResponse implements ResponseInterface, FutureInterface
         return $this->_value->getStatusCode();
     }
 
+    public function setStatusCode($code)
+    {
+        $this->_value->setStatusCode($code);
+    }
+
     public function getReasonPhrase()
     {
         return $this->_value->getReasonPhrase();
+    }
+
+    public function setReasonPhrase($phrase)
+    {
+        $this->_value->setReasonPhrase($phrase);
     }
 
     public function getEffectiveUrl()
