@@ -4,7 +4,6 @@ namespace GuzzleHttp\Message;
 use GuzzleHttp\Ring\Future\MagicFutureTrait;
 use GuzzleHttp\Ring\Future\FutureInterface;
 use GuzzleHttp\Stream\StreamInterface;
-use React\Promise\Deferred;
 
 /**
  * Represents a response that has not been fulfilled.
@@ -44,28 +43,6 @@ class FutureResponse implements ResponseInterface, FutureInterface
             $future->then($onFulfilled, $onRejected, $onProgress),
             [$future, 'deref'],
             [$future, 'cancel']
-        );
-    }
-
-    /**
-     * Create a future response that can only be dereferenced to be used.
-     *
-     * @param callable $deref  Function used to dereference the response.
-     * @param callable $cancel Function used to cancel the response.
-     *
-     * @return self
-     */
-    public static function createFuture(
-        callable $deref,
-        callable $cancel = null
-    ) {
-        $deferred = new Deferred();
-        return new FutureResponse(
-            $deferred->promise(),
-            function () use ($deferred, $deref) {
-                $deferred->resolve($deref());
-            },
-            $cancel
         );
     }
 

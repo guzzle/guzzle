@@ -583,7 +583,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             RequestEvents::cancelEndEvent($e);
         });
         $res = $client->send($request);
-        $this->assertInstanceOf('GuzzleHttp\Message\CancelledFutureResponse', $res);
+        $this->assertInstanceOf('GuzzleHttp\Message\FutureResponse', $res);
         $this->assertTrue($res->cancelled());
         $this->assertTrue($res->realized());
     }

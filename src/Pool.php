@@ -160,7 +160,9 @@ class Pool implements FutureInterface
         while ($response = array_pop($this->derefQueue)) {
             try {
                 $response->deref();
-            } catch (\Exception $e) {}
+            } catch (\Exception $e) {
+                // Eat exceptions because they should be handled asynchronously
+            }
         }
 
         // Clean up no longer needed state.

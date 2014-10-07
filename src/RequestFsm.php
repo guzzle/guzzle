@@ -6,7 +6,6 @@ use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\EndEvent;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Ring\Exception\CancelledException;
 use GuzzleHttp\Ring\Future\FutureInterface;
 
 /**
@@ -116,8 +115,9 @@ class RequestFsm extends Fsm
      */
     protected function endTransition(Transaction $trans)
     {
-        // Futures will have their own end events emitted when dereferenced.
-        if ($trans->response instanceof FutureInterface) {
+        // Futures will have their own end events emitted when dereferenced,
+        // but still emit, even for futures, when an exception is present.
+        if (!$trans->exception && $trans->response instanceof FutureInterface) {
             return;
         }
 

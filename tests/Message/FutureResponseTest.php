@@ -5,6 +5,7 @@ use GuzzleHttp\Message\FutureResponse;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Stream\Stream;
 use React\Promise\Deferred;
+use GuzzleHttp\Tests\Subscriber\MockTest;
 
 class FutureResponseTest extends \PHPUnit_Framework_TestCase
 {
@@ -14,7 +15,7 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatesMagicMethod()
     {
-        $f = FutureResponse::createFuture(function () {});
+        $f = MockTest::createFuture(function () {});
         $f->foo;
     }
 
@@ -22,7 +23,7 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
     {
         $str = Stream::factory('foo');
         $response = new Response(200, ['Foo' => 'bar'], $str);
-        $future = FutureResponse::createFuture(function () use ($response) {
+        $future = MockTest::createFuture(function () use ($response) {
             return $response;
         });
         $this->assertFalse($future->realized());
@@ -83,7 +84,7 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
     public function testCanDereferenceManually()
     {
         $response = new Response(200, ['Foo' => 'bar']);
-        $future = FutureResponse::createFuture(function () use ($response) {
+        $future = MockTest::createFuture(function () use ($response) {
             return $response;
         });
         $this->assertSame($response, $future->deref());
@@ -111,7 +112,7 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
 
     public function testCanCancelButReturnsFalseForNoCancelFunction()
     {
-        $future = FutureResponse::createFuture(function () {});
+        $future = MockTest::createFuture(function () {});
         $this->assertFalse($future->cancel());
         $this->assertTrue($future->cancelled());
     }
@@ -121,14 +122,14 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
      */
     public function testAccessingCancelledResponseThrows()
     {
-        $future = FutureResponse::createFuture(function () {});
+        $future = MockTest::createFuture(function () {});
         $this->assertFalse($future->cancel());
         $future->getStatusCode();
     }
 
     public function testExceptionInToStringTriggersError()
     {
-        $future = FutureResponse::createFuture(function () {
+        $future = MockTest::createFuture(function () {
             throw new \Exception('foo');
         });
         $err = '';
