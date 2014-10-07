@@ -379,9 +379,6 @@ class Client implements ClientInterface
                     RingBridge::completeRingResponse(
                         $t, $value, $this->messageFactory, $this->fsm
                     );
-                    if ($t->exception) {
-                        throw RequestException::wrapException($t->request, $t->exception);
-                    }
                     return $t->response;
                 }
             );
