@@ -4,7 +4,6 @@ namespace GuzzleHttp\Tests;
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Event\ErrorEvent;
-use GuzzleHttp\Exception\CancelledRequestException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Exception\RequestException;
@@ -12,8 +11,6 @@ use GuzzleHttp\Ring\Client\MockAdapter;
 use GuzzleHttp\Ring\Future\FutureArray;
 use GuzzleHttp\Subscriber\History;
 use GuzzleHttp\Subscriber\Mock;
-use GuzzleHttp\Event\RequestEvents;
-use GuzzleHttp\Event\EndEvent;
 use React\Promise\Deferred;
 
 /**
@@ -545,47 +542,6 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         putenv("HTTP_PROXY=$http");
         putenv("HTTPS_PROXY=$https");
-    }
-
-    public function testCanInjectCancelledFutureInRequestEvents()
-    {
-        $client = new Client(['adapter' => new MockAdapter(['status' => 404])]);
-        $request = $client->createRequest('GET', 'http://localhost:123/foo', [
-            'future' => true
-        ]);
-        $ex = null;
-        $request->getEmitter()->on('end', function (EndEvent $e) use (&$ex) {
-            $ex = $e->getException();
-            RequestEvents::cancelEndEvent($e);
-        });
-
-        // Should not throw yet!
-        $res = $client->send($request);
-
-        try {
-            // now it throws
-            $res->deref();
-            $this->fail('Did not throw');
-        } catch (CancelledRequestException $e) {
-            $this->assertTrue($res->cancelled());
-            $this->assertTrue($res->realized());
-            $this->assertInstanceOf('GuzzleHttp\Exception\ClientException', $e->getPrevious());
-        }
-    }
-
-    public function testCanInjectCancelledFutureForSynchronous()
-    {
-        $client = new Client(['adapter' => new MockAdapter(['status' => 404])]);
-        $request = $client->createRequest('GET', 'http://localhost:123/foo');
-        $ex = null;
-        $request->getEmitter()->on('end', function (EndEvent $e) use (&$ex) {
-            $ex = $e->getException();
-            RequestEvents::cancelEndEvent($e);
-        });
-        $res = $client->send($request);
-        $this->assertInstanceOf('GuzzleHttp\Message\FutureResponse', $res);
-        $this->assertTrue($res->cancelled());
-        $this->assertTrue($res->realized());
     }
 
     public function testReturnsFutureForErrorWhenRequested()

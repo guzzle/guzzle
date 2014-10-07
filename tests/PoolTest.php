@@ -3,7 +3,6 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\RequestEvents;
-use GuzzleHttp\Message\CancelledFutureResponse;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Ring\Client\MockAdapter;
 use GuzzleHttp\Ring\Future\FutureArray;
@@ -216,22 +215,12 @@ class PoolTest extends \PHPUnit_Framework_TestCase
 
     public function testDoesNotThrowInErrorEvent()
     {
-        Server::flush();
-        Server::enqueue([new Response(404)]);
         $client = new Client();
+        $responses = [new Response(404)];
+        $client->getEmitter()->attach(new Mock($responses));
         $requests = [$client->createRequest('GET', 'http://foo.com/baz')];
-        $c = false;
-        // "Cancel" the error.
-        $requests[0]->getEmitter()->on(
-            'error',
-            function (ErrorEvent $e) use (&$c) {
-                $c = true;
-                $e->intercept(
-                    CancelledFutureResponse::fromException($e->getException())
-                );
-            }
-        );
         $result = Pool::batch($client, $requests);
-        $this->assertTrue($c);
+        $this->assertCount(1, $result);
+        $this->assertInstanceOf('GuzzleHttp\Exception\ClientException', $result[0]);
     }
 }
