@@ -27,7 +27,7 @@ class CookieJar implements CookieJarInterface, ToArrayInterface
         $this->strictMode = $strictMode;
 
         foreach ($cookieArray as $cookie) {
-            if (!($cookieArray instanceof SetCookie)) {
+            if (!($cookie instanceof SetCookie)) {
                 $cookie = new SetCookie($cookie);
             }
             $this->setCookie($cookie);
