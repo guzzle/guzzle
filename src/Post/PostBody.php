@@ -2,6 +2,7 @@
 namespace GuzzleHttp\Post;
 
 use GuzzleHttp\Message\RequestInterface;
+use GuzzleHttp\Stream\Exception\CannotAttachException;
 use GuzzleHttp\Stream\StreamInterface;
 use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Query;
@@ -161,9 +162,9 @@ class PostBody implements PostBodyInterface
         }
     }
 
-    public function isDetached()
+    public function attach($stream)
     {
-        return $this->detached;
+        throw new CannotAttachException();
     }
 
     public function eof()
