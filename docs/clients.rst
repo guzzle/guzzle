@@ -83,20 +83,28 @@ Requests can be created using various methods of a client. You can create
 Each of the above methods accepts a URL as the first argument and an optional
 associative array of :ref:`request-options` as the second argument.
 
+Synchronous Requests
+--------------------
+
+Guzzle sends synchronous (blocking) requests when the ``future`` request option
+is not specified. This means that the request will complete immediately, and if
+an error is encountered, a ``GuzzleHttp\Exception\RequestException`` will be
+thrown.
+
 .. code-block:: php
 
     $client = new GuzzleHttp\Client();
 
     $client->put('http://httpbin.org', [
-        'headers' => ['X-Foo' => 'Bar'],
-        'body' => 'this is the body!',
-        'save_to' => '/path/to/local/file',
+        'headers'         => ['X-Foo' => 'Bar'],
+        'body'            => 'this is the body!',
+        'save_to'         => '/path/to/local/file',
         'allow_redirects' => false,
-        'timeout' => 5
+        'timeout'         => 5
     ]);
 
-Error Handling
---------------
+Synchronous Error Handling
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When a recoverable error is encountered while calling the ``send()`` method of
 a client, a ``GuzzleHttp\Exception\RequestException`` is thrown.
@@ -128,8 +136,89 @@ response, then you can access the associated
 ``GuzzleHttp\Message\ResponseInterface`` using the ``getResponse()`` method of
 the exception.
 
+Asynchronous Requests
+---------------------
+
+You can send asynchronous requests by setting the ``future`` request option
+to ``true`` (or a string that your adapter understands). This creates a
+``GuzzleHttp\Message\FutureResponse`` object that has not yet completed. Once
+you have a future response, you can use a promise object obtained by calling
+the ``then`` method of the response to take an action when the response has
+completed or encounters an error.
+
+.. code-block:: php
+
+    $response = $client->put('http://httpbin.org/get', ['future' => true]);
+
+    // Call the function when the response completes
+    $response->then(function ($response) {
+        echo $response->getStatusCode();
+    });
+
+You can call the ``wait()`` method of a future response to block until it has
+completed. You also use a future response object just like a normal response
+object by accessing the methods of the response. Using a future response like a
+normal response object, also known as *dereferencing*, will block until the
+response has completed.
+
+.. code-block:: php
+
+    $response = $client->put('http://httpbin.org/get', ['future' => true]);
+
+    // Block until the response has completed
+    echo $response->getStatusCode();
+
+.. important::
+
+    If an exception occurred while transferring the future response, then the
+    exception encountered will be thrown when dereferencing.
+
+Asynchronous Error Handling
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Handling errors with future response object promises is a bit different. When
+using a promise, exceptions are forwarded to the ``$onError`` function provided
+to the second argument of the ``then()`` function.
+
+.. code-block:: php
+
+    $response = $client->put('http://httpbin.org/get', ['future' => true]);
+
+    $response
+        ->then(
+            function ($response) {
+                // This is called when the request succeeded
+                echo 'Success: ' . $response->getStatusCode();
+                // Returning a value will forward the value to the next promise
+                // in the chain.
+                return $response;
+            },
+            function ($error) {
+                // This is called when the exception failed.
+                echo 'Exception: ' . $error->getMessage();
+                // Throwing will "forward" the exception to the next promise
+                // in the chain.
+                throw $error;
+            }
+        )
+        ->then(
+            function($response) {
+                // This is called after the first promise in the chain. It
+                // receives the value returned from the first promise.
+                echo $response->getReasonPhrase();
+            },
+            function ($error) {
+                // This is called if the first promise error handler in the
+                // chain rethrows the exception.
+                echo 'Error: ' . $error->getMessage();
+            }
+        );
+
+Please see the `React/Promises project documentation <https://github.com/reactphp/promise>`_
+for more information on how promise resolution and rejection forwarding works.
+
 HTTP Errors
-~~~~~~~~~~~
+-----------
 
 If the ``exceptions`` request option is not set to ``false``, then exceptions
 are thrown for HTTP protocol errors as well:
@@ -141,7 +230,7 @@ Creating Requests
 -----------------
 
 You can create a request without sending it. This is useful for building up
-requests over time or sending requests in parallel.
+requests over time or sending requests in concurrently.
 
 .. code-block:: php
 
@@ -158,15 +247,16 @@ After creating a request, you can send it with the client's ``send()`` method.
 
     $response = $client->send($request);
 
-Sending Requests in Parallel
+Sending Requests With a Pool
 ============================
 
-You can send requests in parallel using ``GuzzleHttp\Pool``. The Pool class
-is an implementation of ``GuzzleHttp\Ring\FutureInterface``, meaning it can
-be dereferenced at a later time or cancelled before sending. The Pool
-constructor accepts a client object, iterator or array that yields
-``GuzzleHttp\Message\RequestInterface`` objects, and an optional associative
-array of options that can be used to affect the transfer.
+You can send requests concurrently using a fixed size pool via the
+``GuzzleHttp\Pool`` class. The Pool class is an implementation of
+``GuzzleHttp\Ring\Future\FutureInterface``, meaning it can be dereferenced at a
+later time or cancelled before sending. The Pool constructor accepts a client
+object, iterator or array that yields ``GuzzleHttp\Message\RequestInterface``
+objects, and an optional associative array of options that can be used to
+affect the transfer.
 
 .. code-block:: php
 
@@ -184,14 +274,7 @@ array of options that can be used to affect the transfer.
     $pool = new Pool($client, $requests, $options);
 
     // Send the requests
-    $pool->deref();
-
-The Pool class comes with a convenience method that can be used to send
-requests without having to create a new instance and dereference it:
-
-.. code-block:: php
-
-    Pool::send($client, $requests, $options);
+    $pool->wait();
 
 The Pool constructor accepts the following associative array of options:
 
@@ -203,9 +286,11 @@ The Pool constructor accepts the following associative array of options:
   each request's :ref:`complete_event` event.
 - **error**: Callable or array representing the event listeners to add to
   each request's :ref:`error_event` event.
+- **end**: Callable or array representing the event listeners to add to
+  each request's :ref:`end_event` event.
 
-The "before", "complete", and "error" event options accept a callable or an
-array of associative arrays where each associative array contains a "fn" key
+The "before", "complete", "error", and "end" event options accept a callable or
+an array of associative arrays where each associative array contains a "fn" key
 with a callable value, an optional "priority" key representing the event
 priority (with a default value of 0), and an optional "once" key that can be
 set to true so that the event listener will be removed from the request after
@@ -239,10 +324,10 @@ it is first triggered.
 Asynchronous Response Handling
 ------------------------------
 
-When sending requests in parallel, the request/response/error lifecycle must be
-handled asynchronously. This means that you give the Pool multiple requests and
-handle the response or errors that is associated with the request using event
-callbacks.
+When sending requests concurrently using a pool, the request/response/error
+lifecycle must be handled asynchronously. This means that you give the Pool
+multiple requests and handle the response or errors that is associated with the
+request using event callbacks.
 
 .. code-block:: php
 
@@ -292,34 +377,12 @@ failed request to an array that we can use to process errors later.
         // Handle the error...
     }
 
-Throwing Errors Immediately
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-It sometimes is useful to throw exceptions immediately when they occur. The
-following example shows how to use an event listener to throw exceptions
-immediately and prevent subsequent requests from being sent by cancelling the
-pool. Cancelling a pool will also cancel any requests that are currently
-in-flight and have not completed.
-
-.. code-block:: php
-
-    use GuzzleHttp\Pool;
-    use GuzzleHttp\Event\ErrorEvent;
-    use GuzzleHttp\Event\RequestEvents;
-
-    $pool = new Pool($client, $requests, [
-        'error' => function (ErrorEvent $event) use (&$pool) {
-            $pool->cancel();
-            throw $event->getException();
-        }, RequestEvents::LAST
-    ]);
-
 .. _batch-requests:
 
 Batching Requests
 -----------------
 
-Sometimes you just want to send a few requests in parallel and then process
+Sometimes you just want to send a few requests concurrently and then process
 the results all at once after they've been sent. Guzzle provides a convenience
 function ``GuzzleHttp\Pool::batch()`` that makes this very simple:
 
@@ -336,26 +399,29 @@ function ``GuzzleHttp\Pool::batch()`` that makes this very simple:
         $client->createRequest('PUT', 'http://httpbin.org/put'),
     ];
 
+    // Results is a GuzzleHttp\BatchResults object.
     $results = Pool::batch($client, $requests);
 
-    // Results is an SplObjectStorage object where each request is a key
-    foreach ($requests as $request) {
-        echo $request->getUrl() . "\n";
-        // Get the result (either a ResponseInterface or RequestException)
-        $result = $results[$request];
-        if ($result instanceof ResponseInterface) {
-            // Interact with the response directly
-            echo $result->getStatusCode();
-        } else {
-            // Get the exception message
-            echo $result->getMessage();
-        }
+    // Can be accessed by index.
+    echo $results[0]->getStatusCode();
+
+    // Can be accessed by request.
+    echo $results->getResult($requests[0])->getStatusCode();
+
+    // Retrieve all successful responses
+    foreach ($results->getSuccessful() as $response) {
+        echo $response->getStatusCode() . "\n";
+    }
+
+    // Retrieve all failures.
+    foreach ($results->getFailures() as $requestException) {
+        echo $requestException->getMessage() . "\n";
     }
 
 ``GuzzleHttp\Pool::batch()`` accepts an optional associative array of options
-in the third argument that allows you to specify the 'before', 'complete' and
-'error' events as well as specify the maximum number of requests to send
-concurrently using the 'pool_size' option key.
+in the third argument that allows you to specify the 'before', 'complete',
+'error', and 'end' events as well as specify the maximum number of requests to
+send concurrently using the 'pool_size' option key.
 
 .. _request-options:
 
