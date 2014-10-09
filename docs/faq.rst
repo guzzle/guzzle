@@ -13,6 +13,8 @@ By providing an object oriented interface for HTTP clients, requests, responses,
 headers, and message bodies, Guzzle makes it so that you no longer need to fool
 around with cURL options, stream contexts, or sockets.
 
+**Asynchronous and Synchronous Requests**
+
 Guzzle allows you to send both asynchronous and synchronous requests using the
 same interface and no direct dependency on an event loop. This flexibility
 allows Guzzle to send an HTTP request using the most appropriate HTTP adapter
@@ -22,6 +24,8 @@ ensure you're using the fastest possible method for serially transferring HTTP
 requests. When sending asynchronous requests, Guzzle might use cURL's multi
 interface or any other asynchronous adapter you configure. When you request
 streaming data, Guzzle will by default use PHP's stream wrapper.
+
+**Streams**
 
 Request and response message bodies use :doc:`Guzzle Streams <streams>`,
 allowing you to stream data without needing to load it all into memory.
@@ -33,6 +37,8 @@ Guzzle's stream layer provides a large suite of functionality:
 - You can validate the integrity of a stream using a rolling hash as data is
   read from a stream.
 
+**Event System and Plugins**
+
 Guzzle's  event system allows you to completely modify the behavior of a client
 or request at runtime to cater them for any API. You can send a request with a
 client, and the client can do things like automatically retry your request if
@@ -41,9 +47,13 @@ wire, emit progress events as data is uploaded and downloaded, sign requests
 using OAuth 1.0, verify the integrity of messages before and after they are
 sent over the wire, and anything else you might need.
 
+**Testable**
+
 Another important aspect of Guzzle is that it's really
 :doc:`easy to test clients <testing>`. You can mock HTTP responses and when
 testing an adapter implementation, Guzzle provides a mock node.js web server.
+
+**Ecosystem**
 
 Guzzle has a large `ecosystem of plugins <http://guzzle.readthedocs.org/en/latest/index.html#http-components>`_,
 including `service descriptions <https://github.com/guzzle/guzzle-services>`_
@@ -156,26 +166,6 @@ Why am I getting an SSL verification error?
 You need to specify the path on disk to the CA bundle used by Guzzle for
 verifying the peer certificate. See :ref:`verify-option`.
 
-Is it possible to use Guzzle 3 and 4 in the same project?
-=========================================================
-
-Yes, because Guzzle 3 and 4 use different Packagist packages and different
-namespaces. You simply need to add ``guzzle/guzzle`` (Guzzle 3) and
-``guzzlehttp/guzzle`` (Guzzle 4+) to your project's composer.json file.
-
-.. code-block:: javascript
-
-    {
-        "require": {
-            "guzzle/guzzle": 3.*,
-            "guzzlehttp/guzzle": 4.*
-        }
-    }
-
-You might need to use Guzzle 3 and Guzzle 4 in the same project due to a
-requirement of a legacy application or a dependency that has not yet migrated
-to Guzzle 4.0.
-
 What is this Maximum function nesting error?
 ============================================
 
@@ -187,8 +177,6 @@ specifically from the XDebug extension. PHP itself does not have a function
 nesting limit. Change this setting in your php.ini to increase the limit::
 
     xdebug.max_nesting_level = 1000
-
-[`source <http://stackoverflow.com/a/4293870/151504>`_]
 
 Why am I getting a 417 error response?
 ======================================
