@@ -105,15 +105,15 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
         );
 
         $this->assertFalse($this->readAttribute($future, 'isRealized'));
-        $this->assertTrue($future->cancel());
+        $future->cancel();
         $this->assertTrue($this->readAttribute($future, 'isRealized'));
-        $this->assertFalse($future->cancel());
+        $future->cancel();
     }
 
     public function testCanCancelButReturnsFalseForNoCancelFunction()
     {
         $future = MockTest::createFuture(function () {});
-        $this->assertFalse($future->cancel());
+        $future->cancel();
         $this->assertTrue($this->readAttribute($future, 'isRealized'));
     }
 
@@ -123,7 +123,7 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
     public function testAccessingCancelledResponseThrows()
     {
         $future = MockTest::createFuture(function () {});
-        $this->assertFalse($future->cancel());
+        $future->cancel();
         $future->getStatusCode();
     }
 
