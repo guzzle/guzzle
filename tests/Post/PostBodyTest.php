@@ -167,7 +167,6 @@ class PostBodyTest extends \PHPUnit_Framework_TestCase
         $b = new PostBody();
         $this->assertEquals([], $b->getMetadata());
         $this->assertNull($b->getMetadata('foo'));
-        $this->assertFalse($b->flush());
     }
 
     public function testCreatesMultipartUploadWithMultiFields()

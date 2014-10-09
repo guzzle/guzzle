@@ -212,11 +212,6 @@ class PostBody implements PostBodyInterface
         return false;
     }
 
-    public function flush()
-    {
-        return false;
-    }
-
     public function getMetadata($key = null)
     {
         return $key ? null : [];

@@ -202,6 +202,11 @@ class Pool implements FutureInterface
         return $this->promise->then($onFulfilled, $onRejected, $onProgress);
     }
 
+    public function promise()
+    {
+        return $this->promise;
+    }
+
     private function coerceIterable($requests)
     {
         if ($requests instanceof \Iterator) {
