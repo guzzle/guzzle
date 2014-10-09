@@ -3,8 +3,19 @@ Guzzle, PHP HTTP client and webservice framework
 
 [![Build Status](https://secure.travis-ci.org/guzzle/guzzle.png?branch=master)](http://travis-ci.org/guzzle/guzzle)
 
-Guzzle is a PHP HTTP client that makes it easy to work with HTTP/1.1 and takes
-the pain out of consuming web services.
+Guzzle is a PHP HTTP client that makes it easy to send HTTP requests and super
+simple to integrate with web services.
+
+- Manages things like persistent connections, represents query strings as
+  collections, simplifies sending streaming POST requests with fields and
+  files, and abstracts away the underlying HTTP transport layer.
+- Can send both synchronous and asynchronous requests using the same interface
+  without requiring a dependency on an event loop.
+- Pluggable HTTP adapters allows Guzzle to integrate with any method you choose
+  for sending HTTP requests over the wire (e.g., cURL, sockets, PHP's stream
+  wrapper, non-blocking event loops like `React <http://reactphp.org/>`_, etc.).
+- Guzzle makes it so that you no longer need to fool around with cURL options,
+  stream contexts, or sockets.
 
 ```php
 $client = new GuzzleHttp\Client();
@@ -18,10 +29,17 @@ echo $res->getBody();
 // {"type":"User"...'
 var_export($res->json());
 // Outputs the JSON decoded data
+
+// Send an asynchronous request.
+$req = $client->createRequest('GET', 'http://httpbin.org', ['future' => true]);
+$client->send($req)->then(function ($response) {
+    echo 'I completed! ' . $response;
+});
 ```
 
-- Pluggable HTTP adapters that can send requests serially or in parallel
-- Doesn't require cURL, but uses cURL by default
+- Supports both blocking and non-blocking requests.
+- Pluggable HTTP adapters that can send requests using cURL, streams, sockets,
+  etc. As such, Guzzle doesn't require cURL, but uses cURL by default
 - Streams data for both uploads and downloads
 - Provides event hooks & plugins for cookies, caching, logging, OAuth, mocks,
   etc.
@@ -51,7 +69,7 @@ Next, update your project's composer.json file to include Guzzle:
 ```javascript
 {
     "require": {
-        "guzzlehttp/guzzle": "~4.0"
+        "guzzlehttp/guzzle": "~5.0"
     }
 }
 ```
