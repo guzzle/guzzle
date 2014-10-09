@@ -65,6 +65,16 @@ You can get the status code and reason phrase of the response.
     $reason = $response->getReasonPhrase();
     // OK
 
+By providing the ``future`` request option to a request, you can send requests
+asynchronously using the promise interface of a future response.
+
+.. code-block:: php
+
+    $client->get('http://httpbin.org', ['future' => true])
+        ->then(function ($response) {
+            echo $response->getStatusCode();
+        });
+
 Response Body
 -------------
 

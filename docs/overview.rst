@@ -35,7 +35,7 @@ You can add Guzzle as a dependency using the composer.phar CLI:
 
 .. code-block:: bash
 
-    php composer.phar require guzzlehttp/guzzle:~4
+    php composer.phar require guzzlehttp/guzzle:~5
 
 Alternatively, you can specify Guzzle as a dependency in your project's
 existing composer.json file:
@@ -44,7 +44,7 @@ existing composer.json file:
 
     {
       "require": {
-         "guzzlehttp/guzzle": "4.*"
+         "guzzlehttp/guzzle": "~5"
       }
    }
 

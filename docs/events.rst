@@ -298,9 +298,9 @@ Requests emit lifecycle events when they are transferred.
 
 .. important::
 
-    Request lifecycle events may be triggered multiple times due to redirects,
-    retries, or reusing a request multiple times. Use the ``once()`` method
-    of an event emitter if you only want the event to be triggered once. You
+    Excluding the ``end`` event, request lifecycle events may be triggered
+    multiple times due to redirects, retries, or reusing a request multiple
+    times. Use the ``once()`` method want the event to be triggered once. You
     can also remove an event listener from an emitter by using the emitter which
     is provided to the listener.
 
@@ -469,6 +469,39 @@ This event cannot be intercepted.
     $request->getEmitter()->on('progress', function (ProgressEvent $e) {
         echo 'Downloaded ' . $e->downloaded . ' of ' . $e->downloadSize . ' '
             . 'Uploaded ' . $e->uploaded . ' of ' . $e->uploadSize . "\r";
+    });
+
+    $client->send($request);
+    echo "\n";
+
+.. _end_event:
+
+end
+---
+
+The ``end`` event is a terminal event, emitted once per request, that provides
+access to the repsonse that was received or the exception that was encountered.
+The event emitted is a ``GuzzleHttp\Event\EndEvent``.
+
+This event can be intercepted, but keep in mind that the ``complete`` event
+will not fire after intercepting this event.
+
+.. code-block:: php
+
+    use GuzzleHttp\Client;
+    use GuzzleHttp\Event\EndEvent;
+
+    $client = new Client(['base_url' => 'http://httpbin.org']);
+    $request = $client->createRequest('PUT', '/put', [
+        'body' => str_repeat('.', 100000)
+    ]);
+
+    $request->getEmitter()->on('end', function (EndEvent $e) {
+        if ($e->getException()) {
+            echo 'Error: ' . $e->getException()->getMessage();
+        } else {
+            echo 'Response: ' . $e->getResponse();
+        }
     });
 
     $client->send($request);

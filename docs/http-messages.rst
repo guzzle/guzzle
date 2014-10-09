@@ -32,17 +32,20 @@ headers:
     ]);
 
     $parsed = Request::parseHeader($request, 'Link');
-    echo json_encode($parsed, JSON_PRETTY_PRINT);
+    var_export($parsed);
 
-::
+Will output:
 
-    [
-        {
-            "0": "<http:\/...\/front.jpeg>",
-            "rel": "front",
-            "type": "image\/jpeg"
-        }
-    ]
+.. code-block:: php
+
+    array (
+      0 =>
+      array (
+        0 => '<http:/.../front.jpeg>',
+        'rel' => 'front',
+        'type' => 'image/jpeg',
+      ),
+    )
 
 The result contains a hash of key value pairs. Header values that have no key
 (i.e., the link) are indexed numerically while headers parts that form a key
@@ -128,7 +131,7 @@ Request Methods
 
 When creating a request, you are expected to provide the HTTP method you wish
 to perform. You can specify any method you'd like, including a custom method
-that might not be part of RFC 2616 (like "MOVE").
+that might not be part of RFC 7231 (like "MOVE").
 
 .. code-block:: php
 

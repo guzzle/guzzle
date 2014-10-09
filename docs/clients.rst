@@ -34,10 +34,7 @@ adapter
     used to transfer the HTTP requests of a client. Guzzle will, by default,
     utilize a stacked adapter that chooses the best adapter to use based on the
     provided request options and based on the extensions available in the
-    environment. If cURL is installed, it will be used as the default adapter.
-    However, if a request has the ``stream`` request option, the PHP stream
-    wrapper adapter will be used (assuming ``allow_url_fopen`` is enabled in
-    your PHP environment).
+    environment.
 
 message_factory
     Specifies the factory used to create HTTP requests and responses
@@ -1156,6 +1153,7 @@ future
     ``GuzzleHttp\Message\FutureResponse`` object.
 :Types:
         - bool
+        - string
 :Default: ``false``
 
 By default, Guzzle requests should be synchronous. You can create asynchronous
@@ -1165,19 +1163,18 @@ response will only be executed when it is used like a normal response, the
 created the response is destructing and there are futures that have not been
 resolved.
 
-This option only has an effect if your adapter can create and return future
-responses. By default, Guzzle relies on cURL's multi interface to implement
-future responses. When cURL is not installed and you haven't configured a
-custom adapter, your responses will be blocking and will return regular
-response objects with no ``wait()`` method.
+.. important::
+
+    This option only has an effect if your adapter can create and return future
+    responses. However, even if a response is completed synchronously, Guzzle
+    will ensure that a FutureResponse object is returned for API consistency.
 
 .. code-block:: php
 
-    $response = $client->get('/foo', ['future' => true]);
-    // Do some other stuff including sending more future responses...
-    // Get the status of the response, which implicitly blocks until the
-    // response is complete.
-    echo $response->getStatus();
+    $response = $client->get('/foo', ['future' => true])
+        ->then(function ($response) {
+            echo 'I got a response! ' . $response;
+        });
 
 Event Subscribers
 =================
