@@ -4,6 +4,7 @@ namespace GuzzleHttp\Tests\Event;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Message\Response;
+use GuzzleHttp\Ring\Exception\ConnectException;
 
 /**
  * @covers GuzzleHttp\Exception\RequestException
@@ -70,5 +71,13 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
         $ex = RequestException::wrapException($r, $e);
         $this->assertInstanceOf('GuzzleHttp\Exception\RequestException', $ex);
         $this->assertSame($e, $ex->getPrevious());
+    }
+
+    public function testWrapsConnectExceptions()
+    {
+        $e = new ConnectException('foo');
+        $r = new Request('GET', 'http://www.oo.com');
+        $ex = RequestException::wrapException($r, $e);
+        $this->assertInstanceOf('GuzzleHttp\Exception\ConnectException', $ex);
     }
 }

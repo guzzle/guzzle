@@ -3,6 +3,8 @@ namespace GuzzleHttp\Exception;
 
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\ResponseInterface;
+use GuzzleHttp\Ring\Exception\ConnectException;
+use GuzzleHttp\Exception\ConnectException as HttpConnectException;
 use GuzzleHttp\Ring\Future\FutureInterface;
 
 /**
@@ -41,9 +43,13 @@ class RequestException extends TransferException
      */
     public static function wrapException(RequestInterface $request, \Exception $e)
     {
-        return $e instanceof RequestException
-            ? $e
-            : new RequestException($e->getMessage(), $request, null, $e);
+        if ($e instanceof RequestException) {
+            return $e;
+        } elseif ($e instanceof ConnectException) {
+            return new HttpConnectException($e->getMessage(), $request, null, $e);
+        } else {
+            return new RequestException($e->getMessage(), $request, null, $e);
+        }
     }
 
     /**
