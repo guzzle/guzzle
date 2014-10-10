@@ -8,6 +8,10 @@ use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Message\ResponseInterface;
 use GuzzleHttp\UriTemplate;
 
+if (version_compare(PHP_VERSION, '5.4.0', '<')) {
+    trigger_error('Guzzle requires at least PHP 5.4', E_ERROR);
+}
+
 if (!defined('GUZZLE_FUNCTIONS_VERSION')) {
 
     define('GUZZLE_FUNCTIONS_VERSION', ClientInterface::VERSION);
