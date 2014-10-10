@@ -4,8 +4,8 @@
 Guzzle
 ======
 
-Guzzle is a PHP HTTP client that makes it easy to send HTTP requests and super
-simple to integrate with web services.
+Guzzle is a PHP HTTP client that makes it easy to send HTTP requests and
+trivial to integrate with web services.
 
 - Manages things like persistent connections, represents query strings as
   collections, simplifies sending streaming POST requests with fields and
