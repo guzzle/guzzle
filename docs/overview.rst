@@ -35,7 +35,7 @@ You can add Guzzle as a dependency using the composer.phar CLI:
 
 .. code-block:: bash
 
-    php composer.phar require guzzlehttp/guzzle:~4
+    php composer.phar require guzzlehttp/guzzle:~4.0
 
 Alternatively, you can specify Guzzle as a dependency in your project's
 existing composer.json file:
@@ -44,7 +44,7 @@ existing composer.json file:
 
     {
       "require": {
-         "guzzlehttp/guzzle": "4.*"
+         "guzzlehttp/guzzle": "~4.0"
       }
    }
 
@@ -61,13 +61,13 @@ Bleeding edge
 -------------
 
 During your development, you can keep up with the latest changes on the master
-branch by setting the version requirement for Guzzle to ``dev-master``.
+branch by setting the version requirement for Guzzle to ``~4.0@dev``.
 
 .. code-block:: js
 
    {
       "require": {
-         "guzzlehttp/guzzle": "dev-master"
+         "guzzlehttp/guzzle": "~4.0@dev"
       }
    }
 
