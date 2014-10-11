@@ -2,6 +2,7 @@
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\RequestFsm;
 use GuzzleHttp\Subscriber\Mock;
@@ -19,21 +20,28 @@ use React\Promise\Deferred;
 
 class RequestFsmTest extends \PHPUnit_Framework_TestCase
 {
+    private $mf;
+
+    public function setup()
+    {
+        $this->mf = new MessageFactory();
+    }
+
     public function testEmitsBeforeEventInTransition()
     {
-        $fsm = new RequestFsm(function () {});
+        $fsm = new RequestFsm(function () {}, $this->mf);
         $t = new Transaction(new Client(), new Request('GET', 'http://foo.com'));
         $c = false;
         $t->request->getEmitter()->on('before', function (BeforeEvent $e) use (&$c) {
             $c = true;
         });
-        $fsm->run($t, 'send');
+        $fsm($t, 'send');
         $this->assertTrue($c);
     }
 
     public function testEmitsCompleteEventInTransition()
     {
-        $fsm = new RequestFsm(function () {});
+        $fsm = new RequestFsm(function () {}, $this->mf);
         $t = new Transaction(new Client(), new Request('GET', 'http://foo.com'));
         $t->response = new Response(200);
         $t->state = 'complete';
@@ -41,13 +49,13 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
         $t->request->getEmitter()->on('complete', function (CompleteEvent $e) use (&$c) {
             $c = true;
         });
-        $fsm->run($t, 'end');
+        $fsm($t, 'end');
         $this->assertTrue($c);
     }
 
     public function testDoesNotEmitCompleteForFuture()
     {
-        $fsm = new RequestFsm(function () {});
+        $fsm = new RequestFsm(function () {}, $this->mf);
         $t = new Transaction(new Client(), new Request('GET', 'http://foo.com'));
         $deferred = new Deferred();
         $t->response = new FutureResponse($deferred->promise());
@@ -56,13 +64,13 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
         $t->request->getEmitter()->on('complete', function (CompleteEvent $e) use (&$c) {
             $c = true;
         });
-        $fsm->run($t, 'end');
+        $fsm($t, 'end');
         $this->assertFalse($c);
     }
 
     public function testDoesNotEmitEndForFuture()
     {
-        $fsm = new RequestFsm(function () {});
+        $fsm = new RequestFsm(function () {}, $this->mf);
         $t = new Transaction(new Client(), new Request('GET', 'http://foo.com'));
         $deferred = new Deferred();
         $t->response = new FutureResponse($deferred->promise());
@@ -71,7 +79,7 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
         $t->request->getEmitter()->on('end', function (EndEvent $e) use (&$c) {
             $c = true;
         });
-        $fsm->run($t);
+        $fsm($t);
         $this->assertFalse($c);
     }
 
@@ -87,7 +95,7 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
 
     public function testTransitionsThroughErrorsInBefore()
     {
-        $fsm = new RequestFsm(function () {});
+        $fsm = new RequestFsm(function () {}, $this->mf);
         $client = new Client();
         $request = $client->createRequest('GET', 'http://ewfewwef.com');
         $t = new Transaction($client, $request);
@@ -97,7 +105,7 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
             throw new \Exception('foo');
         });
         try {
-            $fsm->run($t, 'send');
+            $fsm($t, 'send');
             $this->fail('did not throw');
         } catch (RequestException $e) {
             $this->assertContains('foo', $t->exception->getMessage());
@@ -125,7 +133,7 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
 
     public function testTransitionsThroughErrorInterception()
     {
-        $fsm = new RequestFsm(function () {});
+        $fsm = new RequestFsm(function () {}, $this->mf);
         $client = new Client();
         $request = $client->createRequest('GET', 'http://ewfewwef.com');
         $t = new Transaction($client, $request);
@@ -134,10 +142,10 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
         $t->request->getEmitter()->on('error', function (ErrorEvent $e) {
             $e->intercept(new Response(200));
         });
-        $fsm->run($t, 'send');
+        $fsm($t, 'send');
         $t->response = new Response(404);
         $t->state = 'complete';
-        $fsm->run($t);
+        $fsm($t);
         $this->assertEquals(200, $t->response->getStatusCode());
         $this->assertNull($t->exception);
         $this->assertEquals(['before', 'complete', 'error', 'complete', 'end'], $calls);
@@ -157,5 +165,28 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
         $request->getEmitter()->on('end', function (EndEvent $e) use (&$calls) {
             $calls[] = 'end';
         }, RequestEvents::EARLY);
+    }
+
+    /**
+     * @expectedException \GuzzleHttp\Exception\RequestException
+     * @expectedExceptionMessage Too many state transitions
+     */
+    public function testDetectsInfiniteLoops()
+    {
+        $client = new Client([
+            'fsm' => $fsm = new RequestFsm(
+                    function () {},
+                    new MessageFactory(),
+                    3
+                )
+        ]);
+        $request = $client->createRequest('GET', 'http://foo.com:123');
+        $request->getEmitter()->on('before', function () {
+            throw new \Exception('foo');
+        });
+        $request->getEmitter()->on('error', function ($e) {
+            $e->retry();
+        });
+        $client->send($request);
     }
 }

@@ -32,7 +32,7 @@ class Client implements ClientInterface
     /** @var array Default request options */
     private $defaults;
 
-    /** @var Fsm Request state machine */
+    /** @var callable Request state machine */
     private $fsm;
 
     /**
@@ -63,7 +63,10 @@ class Client implements ClientInterface
      *     - message_factory: Factory used to create request and response object
      *     - defaults: Default request options to apply to each request
      *     - emitter: Event emitter used for request events
-     *     - fsm: (internal use only) The request finite state machine.
+     *     - fsm: (internal use only) The request finite state machine. A
+     *       function that accepts a transaction and optional final state. The
+     *       function is responsible for transitioning a request through its
+     *       lifecycle events.
      */
     public function __construct(array $config = [])
     {
@@ -77,12 +80,15 @@ class Client implements ClientInterface
         $this->messageFactory = isset($config['message_factory'])
             ? $config['message_factory']
             : new MessageFactory();
-        $adapter = isset($config['adapter'])
-            ? $config['adapter']
-            : self::getDefaultAdapter();
-        $this->fsm = isset($config['fsm'])
-            ? $config['fsm']
-            : $this->createDefaultFsm($adapter, $this->messageFactory);
+
+        if (isset($config['fsm'])) {
+            $this->fsm = $config['fsm'];
+        } else {
+            $this->fsm = new RequestFsm(
+                isset($config['adapter']) ? $config['adapter'] : self::getDefaultAdapter(),
+                $this->messageFactory
+            );
+        }
     }
 
     /**
@@ -227,11 +233,12 @@ class Client implements ClientInterface
     public function send(RequestInterface $request)
     {
         $trans = new Transaction($this, $request);
+        $fn = $this->fsm;
 
         // Ensure a future response is returned if one was requested.
         if ($request->getConfig()->get('future')) {
             try {
-                $this->fsm->run($trans);
+                $fn($trans);
                 // Turn the normal response into a future if needed.
                 return $trans->response instanceof FutureInterface
                     ? $trans->response
@@ -242,7 +249,7 @@ class Client implements ClientInterface
             }
         } else {
             try {
-                $this->fsm->run($trans);
+                $fn($trans);
                 return $trans->response instanceof FutureInterface
                     ? $trans->response->wait()
                     : $trans->response;
@@ -366,23 +373,6 @@ class Client implements ClientInterface
         $options = array_replace_recursive($defaults, $options);
 
         return $this->defaults['headers'];
-    }
-
-    private function createDefaultFsm(
-        callable $adapter,
-        MessageFactoryInterface $mf
-    ) {
-        return new RequestFsm(function (Transaction $t) use ($adapter, $mf) {
-            $t->response = FutureResponse::proxy(
-                $adapter(RingBridge::prepareRingRequest($t)),
-                function ($value) use ($t) {
-                    RingBridge::completeRingResponse(
-                        $t, $value, $this->messageFactory, $this->fsm
-                    );
-                    return $t->response;
-                }
-            );
-        });
     }
 
     /**

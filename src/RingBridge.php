@@ -78,13 +78,13 @@ class RingBridge
      * @param Transaction             $trans          Owns request and response.
      * @param array                   $response       Ring response array
      * @param MessageFactoryInterface $messageFactory Creates response objects.
-     * @param Fsm                     $fsm            State machine.
+     * @param callable                $fsm            Request FSM function.
      */
     public static function completeRingResponse(
         Transaction $trans,
         array $response,
         MessageFactoryInterface $messageFactory,
-        Fsm $fsm
+        callable $fsm
     ) {
         $trans->state = 'complete';
         $trans->transferInfo = isset($response['transfer_info'])
@@ -118,7 +118,7 @@ class RingBridge
         }
 
         // Complete the lifecycle of the request.
-        $fsm->run($trans);
+        $fsm($trans);
     }
 
     /**
