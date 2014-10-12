@@ -18,8 +18,10 @@
         "guzzlehttp/streams": "~3.0",
         "react/promise": "~2.0"
     },
-    "suggest": {
-        "ext-curl": "Guzzle will use specific adapters if cURL is present"
+    "require-dev": {
+        "ext-curl": "*",
+        "psr/log": "~1.0",
+        "phpunit/phpunit": "~4.0"
     },
     "autoload": {
         "psr-4": {
@@ -30,11 +32,6 @@
         "psr-4": {
             "GuzzleHttp\\Tests\\": "tests/"
         }
-    },
-    "require-dev": {
-        "ext-curl": "*",
-        "psr/log": "~1.0",
-        "phpunit/phpunit": "~4.0"
     },
     "extra": {
         "branch-alias": {
