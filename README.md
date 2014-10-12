@@ -10,7 +10,7 @@ trivial to integrate with web services.
   collections, simplifies sending streaming POST requests with fields and
   files, and abstracts away the underlying HTTP transport layer.
 - Can send both synchronous and asynchronous requests using the same interface
-  without requiring a dependency on an event loop.
+  without requiring a dependency on a specific event loop.
 - Pluggable HTTP adapters allows Guzzle to integrate with any method you choose
   for sending HTTP requests over the wire (e.g., cURL, sockets, PHP's stream
   wrapper, non-blocking event loops like ReactPHP.
