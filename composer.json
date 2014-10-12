@@ -14,11 +14,10 @@
     ],
     "require": {
         "php": ">=5.4.0",
-        "guzzlehttp/ring": "dev-master",
-        "guzzlehttp/streams": "~3.0@dev",
+        "guzzlehttp/ring": "~1.0@dev",
+        "guzzlehttp/streams": "~3.0",
         "react/promise": "~2.0"
     },
-    "minimum-stability": "dev",
     "suggest": {
         "ext-curl": "Guzzle will use specific adapters if cURL is present"
     },
