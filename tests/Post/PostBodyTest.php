@@ -230,4 +230,13 @@ class PostBodyTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('name="a"', $contents);
         $this->assertContains('b&c=d', $contents);
     }
+
+    /**
+     * @expectedException \GuzzleHttp\Stream\Exception\CannotAttachException
+     */
+    public function testCannotAttach()
+    {
+        $b = new PostBody();
+        $b->attach('foo');
+    }
 }

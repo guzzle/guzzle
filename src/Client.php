@@ -86,8 +86,8 @@ class Client implements ClientInterface
         } else {
             if (isset($config['handler'])) {
                 $handler = $config['handler'];
-            } elseif (isset($config['Handler'])) {
-                $handler = $config['Handler'];
+            } elseif (isset($config['adapter'])) {
+                $handler = $config['adapter'];
             } else {
                 $handler = static::getDefaultHandler();
             }

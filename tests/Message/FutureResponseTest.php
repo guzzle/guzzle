@@ -140,4 +140,21 @@ class FutureResponseTest extends \PHPUnit_Framework_TestCase
         restore_error_handler();
         $this->assertContains('foo', $err);
     }
+
+    public function testProxiesSetters()
+    {
+        $str = Stream::factory('foo');
+        $response = new Response(200, ['Foo' => 'bar'], $str);
+        $future = MockTest::createFuture(function () use ($response) {
+            return $response;
+        });
+
+        $future->setStatusCode(202);
+        $this->assertEquals(202, $future->getStatusCode());
+        $this->assertEquals(202, $response->getStatusCode());
+
+        $future->setReasonPhrase('foo');
+        $this->assertEquals('foo', $future->getReasonPhrase());
+        $this->assertEquals('foo', $response->getReasonPhrase());
+    }
 }

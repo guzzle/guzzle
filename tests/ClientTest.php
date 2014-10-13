@@ -86,6 +86,18 @@ class ClientTest extends \PHPUnit_Framework_TestCase
      * @expectedException \Exception
      * @expectedExceptionMessage Foo
      */
+    public function testCanSpecifyHandlerAsAdapter()
+    {
+        $client = new Client(['adapter' => function () {
+            throw new \Exception('Foo');
+        }]);
+        $client->get('http://httpbin.org');
+    }
+
+    /**
+     * @expectedException \Exception
+     * @expectedExceptionMessage Foo
+     */
     public function testCanSpecifyMessageFactory()
     {
         $factory = $this->getMockBuilder('GuzzleHttp\Message\MessageFactoryInterface')
