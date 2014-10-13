@@ -6,16 +6,16 @@ Requirements
 ============
 
 #. PHP 5.4.0
-#. To use the PHP stream adapter, ``allow_url_fopen`` must be enabled in your
+#. To use the PHP stream handler, ``allow_url_fopen`` must be enabled in your
    system's php.ini.
-#. To use the cURL adapter, you must have a recent version of cURL >= 7.16.2
+#. To use the cURL handler, you must have a recent version of cURL >= 7.16.2
    compiled with OpenSSL and zlib.
 
 .. note::
 
     Guzzle no longer requires cURL in order to send HTTP requests. Guzzle will
     use the PHP stream wrapper to send HTTP requests if cURL is not installed.
-    Alternatively, you can provide your own HTTP adapter used to send requests.
+    Alternatively, you can provide your own HTTP handler used to send requests.
 
 .. _installation:
 
@@ -130,7 +130,7 @@ binary:
 .. note::
 
     You'll need to install node.js v0.5.0 or newer in order to perform
-    integration tests on Guzzle's HTTP adapters.
+    integration tests on Guzzle's HTTP handlers.
 
 Reporting a security vulnerability
 ==================================

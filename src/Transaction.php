@@ -46,8 +46,8 @@ class Transaction
     public $exception;
 
     /**
-     * Associative array of adapter specific transfer statistics and custom
-     * key value pair information. When providing similar information, adapters
+     * Associative array of handler specific transfer statistics and custom
+     * key value pair information. When providing similar information, handlers
      * should follow the same key value pair naming conventions as PHP's
      * curl_getinfo() (http://php.net/manual/en/function.curl-getinfo.php).
      *

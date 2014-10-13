@@ -21,9 +21,9 @@ class AbstractRetryableEvent extends AbstractTransferEvent
      *
      * @param int $afterDelay If specified, the amount of time in milliseconds
      *                        to delay before retrying. Note that this must
-     *                        be supported by the underlying Guzzle-Ring
-     *                        adapter to work properly. Set to 0 or provide no
-     *                        value to retry immediately.
+     *                        be supported by the underlying RingPHP handler
+     *                        to work properly. Set to 0 or provide no value
+     *                        to retry immediately.
      */
     public function retry($afterDelay = 0)
     {

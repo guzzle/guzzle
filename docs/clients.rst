@@ -3,7 +3,7 @@ Clients
 =======
 
 Clients are used to create requests, create transactions, send requests
-through an HTTP adapter, and return a response. You can add default request
+through an HTTP handler, and return a response. You can add default request
 options to a client that are applied to every request (e.g., default headers,
 default query string parameters, etc.), and you can add event listeners and
 subscribers to every request created by a client.
@@ -29,10 +29,10 @@ base_url
     `Absolute URLs <http://tools.ietf.org/html/rfc3986#section-4.3>`_ sent
     through a client will not use the base URL of the client.
 
-adapter
-    Configures the `Guzzle-Ring adapter <http://guzzle-ring.readthedocs.org>`_
+handler
+    Configures the `RingPHP handler <http://ringphp.readthedocs.org>`_
     used to transfer the HTTP requests of a client. Guzzle will, by default,
-    utilize a stacked adapter that chooses the best adapter to use based on the
+    utilize a stacked handlers that chooses the best handler to use based on the
     provided request options and based on the extensions available in the
     environment.
 
@@ -140,7 +140,7 @@ Asynchronous Requests
 ---------------------
 
 You can send asynchronous requests by setting the ``future`` request option
-to ``true`` (or a string that your adapter understands). This creates a
+to ``true`` (or a string that your handler understands). This creates a
 ``GuzzleHttp\Message\FutureResponse`` object that has not yet completed. Once
 you have a future response, you can use a promise object obtained by calling
 the ``then`` method of the response to take an action when the response has
@@ -587,14 +587,14 @@ basic
 
 digest
     Use `digest authentication <http://www.ietf.org/rfc/rfc2069.txt>`_ (must be
-    supported by the HTTP adapter).
+    supported by the HTTP handler).
 
     .. code-block:: php
 
         $client->get('/get', ['auth' => ['username', 'password', 'digest']]);
 
-    *This is currently only supported when using the cURL adapter, but creating
-    a replacement that can be used with any HTTP adapter is planned.*
+    *This is currently only supported when using the cURL handler, but creating
+    a replacement that can be used with any HTTP handler is planned.*
 
 .. important::
 
@@ -653,7 +653,7 @@ Adapter Specific Authentication Schemes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you need to use authentication methods provided by cURL (e.g., NTLM, GSS,
-etc.), then you need to specify a curl adapter option in the ``options``
+etc.), then you need to specify a curl handler option in the ``options``
 request option array. See :ref:`config-option` for more information.
 
 .. _cookies-option:
@@ -754,7 +754,7 @@ handled. By default, ``decode_content`` is set to true, meaning any gzipped
 or deflated response will be decoded by Guzzle.
 
 When set to ``false``, the body of a response is never decoded, meaning the
-bytes pass through the adapter unchanged.
+bytes pass through the handler unchanged.
 
 .. code-block:: php
 
@@ -927,9 +927,9 @@ connect_timeout
 
 .. note::
 
-    This setting must be supported by the HTTP adapter used to send a request.
+    This setting must be supported by the HTTP handler used to send a request.
     ``connect_timeout`` is currently only supported by the built-in cURL
-    adapter.
+    handler.
 
 .. _verify-option:
 
@@ -1029,9 +1029,9 @@ ssl_key
 
 .. note::
 
-    ``ssl_key`` is implemented by HTTP adapters. This is currently only
-    supported by the cURL adapter, but might be supported by other third-part
-    adapters.
+    ``ssl_key`` is implemented by HTTP handlers. This is currently only
+    supported by the cURL handler, but might be supported by other third-part
+    handlers.
 
 .. _proxy-option:
 
@@ -1074,7 +1074,7 @@ debug
 -----
 
 :Summary: Set to ``true`` or set to a PHP stream returned by ``fopen()`` to
-    enable debug output with the adapter used to send a request. For example,
+    enable debug output with the handler used to send a request. For example,
     when using cURL to transfer requests, cURL's verbose of ``CURLOPT_VERBOSE``
     will be emitted. When using the PHP stream wrapper, stream wrapper
     notifications will be emitted. If set to true, the output is written to
@@ -1129,10 +1129,10 @@ stream
 
 .. note::
 
-    Streaming response support must be implemented by the HTTP adapter used by
-    a client. This option might not be supported by every HTTP adapter, but the
+    Streaming response support must be implemented by the HTTP handler used by
+    a client. This option might not be supported by every HTTP handler, but the
     interface of the response object remains the same regardless of whether or
-    not it is supported by the adapter.
+    not it is supported by the handler.
 
 .. _expect-option:
 
@@ -1160,7 +1160,7 @@ the body of a request is greater than 1 MB and a request is using HTTP/1.1.
     This option only takes effect when using HTTP/1.1. The HTTP/1.0 and
     HTTP/2.0 protocols do not support the "Expect: 100-Continue" header.
     Support for handling the "Expect: 100-Continue" workflow must be
-    implemented by Guzzle HTTP adapters used by a client.
+    implemented by Guzzle HTTP handlers used by a client.
 
 .. _version-option:
 
@@ -1185,7 +1185,7 @@ config
 
 :Summary: Associative array of config options that are forwarded to a request's
     configuration collection. These values are used as configuration options
-    that can be consumed by plugins and adapters.
+    that can be consumed by plugins and handlers.
 :Types: array
 :Default: None
 
@@ -1195,7 +1195,7 @@ config
     echo $request->getConfig('foo');
     // 'bar'
 
-Some HTTP adapters allow you to specify custom adapter-specific settings. For
+Some HTTP handlers allow you to specify custom handler-specific settings. For
 example, you can pass custom cURL options to requests by passing an associative
 array in the ``config`` request option under the ``curl`` key.
 
@@ -1225,13 +1225,13 @@ future
 By default, Guzzle requests should be synchronous. You can create asynchronous
 future responses by passing the ``future`` request option as ``true``. The
 response will only be executed when it is used like a normal response, the
-``wait()`` method of the response is called, or the corresponding adapter that
+``wait()`` method of the response is called, or the corresponding handler that
 created the response is destructing and there are futures that have not been
 resolved.
 
 .. important::
 
-    This option only has an effect if your adapter can create and return future
+    This option only has an effect if your handler can create and return future
     responses. However, even if a response is completed synchronously, Guzzle
     will ensure that a FutureResponse object is returned for API consistency.
 
@@ -1278,7 +1278,7 @@ Guzzle exposes a few environment variables that can be used to customize the
 behavior of the library.
 
 ``GUZZLE_CURL_SELECT_TIMEOUT``
-    Controls the duration in seconds that a curl_multi_* adapter will use when
+    Controls the duration in seconds that a curl_multi_* handler will use when
     selecting on curl handles using ``curl_multi_select()``. Some systems
     have issues with PHP's implementation of ``curl_multi_select()`` where
     calling this function always results in waiting for the maximum duration of

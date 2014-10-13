@@ -4,7 +4,7 @@ namespace GuzzleHttp\Tests;
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Pool;
-use GuzzleHttp\Ring\Client\MockAdapter;
+use GuzzleHttp\Ring\Client\MockHandler;
 use GuzzleHttp\Ring\Future\FutureArray;
 use GuzzleHttp\Subscriber\History;
 use GuzzleHttp\Event\BeforeEvent;
@@ -108,12 +108,12 @@ class PoolTest extends \PHPUnit_Framework_TestCase
             }
         );
 
-        return new Client(['adapter' => new MockAdapter($future)]);
+        return new Client(['handler' => new MockHandler($future)]);
     }
 
     public function testBatchesRequests()
     {
-        $client = new Client(['adapter' => function () {
+        $client = new Client(['handler' => function () {
             throw new \RuntimeException('No network access');
         }]);
 
@@ -167,7 +167,7 @@ class PoolTest extends \PHPUnit_Framework_TestCase
 
     public function testEmitsProgress()
     {
-        $client = new Client(['adapter' => function () {
+        $client = new Client(['handler' => function () {
             throw new \RuntimeException('No network access');
         }]);
 

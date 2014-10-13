@@ -9,7 +9,7 @@ use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Transaction;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Message\Response;
-use GuzzleHttp\Ring\Client\MockAdapter;
+use GuzzleHttp\Ring\Client\MockHandler;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\RequestFsm;
@@ -75,7 +75,7 @@ class RingBridgeTest extends \PHPUnit_Framework_TestCase
     public function testGetsResponseProtocolVersionAndEffectiveUrlAndReason()
     {
         $client = new Client([
-            'adapter' => new MockAdapter([
+            'handler' => new MockHandler([
                 'status'  => 200,
                 'reason' => 'test',
                 'headers' => [],
@@ -96,7 +96,7 @@ class RingBridgeTest extends \PHPUnit_Framework_TestCase
         fwrite($res, 'foo');
         rewind($res);
         $client = new Client([
-            'adapter' => new MockAdapter([
+            'handler' => new MockHandler([
                 'status'  => 200,
                 'headers' => [],
                 'body' => $res
@@ -207,7 +207,7 @@ class RingBridgeTest extends \PHPUnit_Framework_TestCase
             RingBridge::completeRingResponse($trans, [], $f, $fsm);
         } catch (RequestException $e) {
             $this->assertSame($trans->request, $e->getRequest());
-            $this->assertContains('Guzzle-Ring', $e->getMessage());
+            $this->assertContains('RingPHP', $e->getMessage());
         }
     }
 }

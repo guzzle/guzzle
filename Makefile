@@ -1,10 +1,10 @@
 all: clean coverage docs
 
 start-server:
-	cd vendor/guzzlehttp/ring && make start-server
+	cd vendor/guzzlehttp/ringphp && make start-server
 
 stop-server:
-	cd vendor/guzzlehttp/ring && make stop-server
+	cd vendor/guzzlehttp/ringphp && make stop-server
 
 test: start-server
 	vendor/bin/phpunit
@@ -47,4 +47,4 @@ burgomaster:
 	mkdir -p build/artifacts
 	curl -s https://raw.githubusercontent.com/mtdowling/Burgomaster/0.0.1/src/Burgomaster.php > build/artifacts/Burgomaster.php
 
-.PHONY: doc burgomaster
+.PHONY: docs burgomaster

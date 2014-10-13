@@ -7,9 +7,9 @@ use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\FutureResponse;
 use GuzzleHttp\Ring\Client\Middleware;
-use GuzzleHttp\Ring\Client\CurlMultiAdapter;
-use GuzzleHttp\Ring\Client\CurlAdapter;
-use GuzzleHttp\Ring\Client\StreamAdapter;
+use GuzzleHttp\Ring\Client\CurlMultiHandler;
+use GuzzleHttp\Ring\Client\CurlHandler;
+use GuzzleHttp\Ring\Client\StreamHandler;
 use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\Future\FutureInterface;
 use GuzzleHttp\Exception\RequestException;
@@ -59,7 +59,7 @@ class Client implements ClientInterface
      *       Can be a string or an array that contains a URI template followed
      *       by an associative array of expansion variables to inject into the
      *       URI template.
-     *     - adapter: callable adapter used to transfer requests
+     *     - handler: callable RingPHP handler used to transfer requests
      *     - message_factory: Factory used to create request and response object
      *     - defaults: Default request options to apply to each request
      *     - emitter: Event emitter used for request events
@@ -84,19 +84,23 @@ class Client implements ClientInterface
         if (isset($config['fsm'])) {
             $this->fsm = $config['fsm'];
         } else {
-            $this->fsm = new RequestFsm(
-                isset($config['adapter']) ? $config['adapter'] : self::getDefaultAdapter(),
-                $this->messageFactory
-            );
+            if (isset($config['handler'])) {
+                $handler = $config['handler'];
+            } elseif (isset($config['Handler'])) {
+                $handler = $config['Handler'];
+            } else {
+                $handler = static::getDefaultHandler();
+            }
+            $this->fsm = new RequestFsm($handler, $this->messageFactory);
         }
     }
 
     /**
-     * Create a default adapter to use based on the environment
+     * Create a default handler to use based on the environment
      *
-     * @throws \RuntimeException if no viable adapter is available.
+     * @throws \RuntimeException if no viable Handler is available.
      */
-    public static function getDefaultAdapter()
+    public static function getDefaultHandler()
     {
         $default = $future = $streaming = null;
 
@@ -107,19 +111,19 @@ class Client implements ClientInterface
             if ($maxHandles = getenv('GUZZLE_CURL_MAX_HANDLES')) {
                 $config['max_handles'] = $maxHandles;
             }
-            $future = new CurlMultiAdapter($config);
+            $future = new CurlMultiHandler($config);
             if (function_exists('curl_reset')) {
-                $default = new CurlAdapter();
+                $default = new CurlHandler();
             }
         }
 
         if (ini_get('allow_url_fopen')) {
-            $streaming = new StreamAdapter();
+            $streaming = new StreamHandler();
         }
 
         if (!($default = ($default ?: $future) ?: $streaming)) {
             throw new \RuntimeException('Guzzle requires cURL, the '
-                . 'allow_url_fopen ini setting, or a custom HTTP adapter.');
+                . 'allow_url_fopen ini setting, or a custom HTTP handler.');
         }
 
         $handler = $default;

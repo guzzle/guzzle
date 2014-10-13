@@ -13,7 +13,7 @@ require __DIR__ . '/bootstrap.php';
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Tests\Server;
-use GuzzleHttp\Ring\Client\CurlMultiAdapter;
+use GuzzleHttp\Ring\Client\CurlMultiHandler;
 use GuzzleHttp\Pool;
 
 // Wait until the server is responding
@@ -48,8 +48,8 @@ $perRequest = ($totalTime / $total) * 1000;
 printf("Batch:  %f (%f ms / request) %d total with %d in parallel\n",
     $totalTime, $perRequest, $total, $parallel);
 
-$adapter = new CurlMultiAdapter(['max_handles' => $parallel]);
-$client = new Client(['adapter' => $adapter, 'base_url' => Server::$url]);
+$handler = new CurlMultiHandler(['max_handles' => $parallel]);
+$client = new Client(['handler' => $handler, 'base_url' => Server::$url]);
 $t = microtime(true);
 for ($i = 0; $i < $total; $i++) {
     $client->get('/guzzle-server/perf');

@@ -12,7 +12,7 @@ trivial to integrate with web services.
   files, and abstracts away the underlying HTTP transport layer.
 - Can send both synchronous and asynchronous requests using the same interface
   without requiring a dependency on a specific event loop.
-- Pluggable HTTP adapters allows Guzzle to integrate with any method you choose
+- Pluggable HTTP handlers allows Guzzle to integrate with any method you choose
   for sending HTTP requests over the wire (e.g., cURL, sockets, PHP's stream
   wrapper, non-blocking event loops like `React <http://reactphp.org/>`_, etc.).
 - Guzzle makes it so that you no longer need to fool around with cURL options,
@@ -50,7 +50,7 @@ User guide
     http-messages
     events
     streams
-    adapters
+    handlers
     testing
     faq
 

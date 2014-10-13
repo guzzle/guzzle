@@ -14,9 +14,7 @@
     ],
     "require": {
         "php": ">=5.4.0",
-        "guzzlehttp/ring": "~1.0@dev",
-        "guzzlehttp/streams": "~3.0",
-        "react/promise": "~2.0"
+        "guzzlehttp/ringphp": "~1.0"
     },
     "require-dev": {
         "ext-curl": "*",

@@ -25,8 +25,8 @@ use React\Promise\PromiseInterface;
  * requested pool size is always filled as much as possible.
  *
  * IMPORTANT: Do not provide a pool size greater that what the utilized
- * underlying Guzzle Ring adapter can support. This will result is extremely
- * poor performance.
+ * underlying RingPHP handler can support. This will result is extremely poor
+ * performance.
  */
 class Pool implements FutureInterface
 {

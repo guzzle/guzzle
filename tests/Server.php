@@ -9,7 +9,7 @@ use GuzzleHttp\RingBridge;
 use GuzzleHttp\Tests\Ring\Client\Server as TestServer;
 
 /**
- * Placeholder for the Guzzle-Ring-Client server that makes it easier to use.
+ * Placeholder for the RingPHP-Client server that makes it easier to use.
  */
 class Server
 {

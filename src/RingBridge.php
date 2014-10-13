@@ -19,7 +19,7 @@ class RingBridge
      *
      * This function does not hook up the "then" and "progress" events that
      * would be required for actually sending a Guzzle request through a
-     * ring adapter.
+     * RingPHP handler.
      *
      * @param RequestInterface $request Request to convert.
      *
@@ -150,8 +150,8 @@ class RingBridge
     }
 
     /**
-     * Get an exception that can be used when a ring adapter does not populate
-     * a response.
+     * Get an exception that can be used when a RingPHP handler does not
+     * populate a response.
      *
      * @param RequestInterface $request
      *
@@ -162,8 +162,8 @@ class RingBridge
         $message = <<<EOT
 Sending the request did not return a response, exception, or populate the
 transaction with a response. This is most likely due to an incorrectly
-implemented Guzzle-Ring adapter. If you are simply trying to mock responses,
-then it is recommneded to use the GuzzleHttp\Ring\Client\MockAdapter.
+implemented RingPHP handler. If you are simply trying to mock responses,
+then it is recommneded to use the GuzzleHttp\Ring\Client\MockHandler.
 EOT;
         return new RequestException($message, $request);
     }

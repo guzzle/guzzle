@@ -7,7 +7,7 @@ use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Ring\Client\MockAdapter;
+use GuzzleHttp\Ring\Client\MockHandler;
 use GuzzleHttp\Ring\Future\FutureArray;
 use GuzzleHttp\Subscriber\History;
 use GuzzleHttp\Subscriber\Mock;
@@ -74,9 +74,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
      * @expectedException \Exception
      * @expectedExceptionMessage Foo
      */
-    public function testCanSpecifyAdapter()
+    public function testCanSpecifyHandler()
     {
-        $client = new Client(['adapter' => function () {
+        $client = new Client(['handler' => function () {
                 throw new \Exception('Foo');
             }]);
         $client->get('http://httpbin.org');
@@ -301,8 +301,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testClientSendsRequests()
     {
-        $mock = new MockAdapter(['status' => 200, 'headers' => []]);
-        $client = new Client(['adapter' => $mock]);
+        $mock = new MockHandler(['status' => 200, 'headers' => []]);
+        $client = new Client(['handler' => $mock]);
         $response = $client->get('http://test.com');
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('http://test.com', $response->getEffectiveUrl());
@@ -311,7 +311,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testSendingRequestCanBeIntercepted()
     {
         $response = new Response(200);
-        $client = new Client(['adapter' => $this->ma]);
+        $client = new Client(['handler' => $this->ma]);
         $client->getEmitter()->on(
             'before',
             function (BeforeEvent $e) use ($response) {
@@ -328,8 +328,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
      */
     public function testEnsuresResponseIsPresentAfterSending()
     {
-        $adapter = function () {};
-        $client = new Client(['adapter' => $adapter]);
+        $handler = function () {};
+        $client = new Client(['handler' => $handler]);
         $client->get('http://httpbin.org');
     }
 
@@ -340,13 +340,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testEnsuresResponseIsPresentAfterDereferencing()
     {
         $deferred = new Deferred();
-        $adapter = new MockAdapter(function () use ($deferred) {
+        $handler = new MockHandler(function () use ($deferred) {
             return new FutureArray(
                 $deferred->promise(),
                 function () {}
             );
         });
-        $client = new Client(['adapter' => $adapter]);
+        $client = new Client(['handler' => $handler]);
         $response = $client->get('http://httpbin.org');
         $response->wait();
     }
@@ -403,8 +403,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
                 $deferred->resolve(['error' => new \Exception('Noo!')]);
             }
         );
-        $mock = new MockAdapter($future);
-        $client = new Client(['adapter' => $mock]);
+        $mock = new MockHandler($future);
+        $client = new Client(['handler' => $mock]);
         $called = 0;
         $response = $client->get('http://localhost:123/foo', [
             'future' => true,
@@ -433,8 +433,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
                 $deferred->resolve(['status' => 201, 'headers' => []]);
             }
         );
-        $mock = new MockAdapter($future);
-        $client = new Client(['adapter' => $mock]);
+        $mock = new MockHandler($future);
+        $client = new Client(['handler' => $mock]);
         $response = $client->get('http://localhost:123/foo', ['future' => true]);
         $this->assertFalse($called);
         $this->assertInstanceOf('GuzzleHttp\Message\FutureResponse', $response);
@@ -453,7 +453,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
                 $deferred->resolve(['error' => new \Exception('Noop!')]);
             }
         );
-        $client = new Client(['adapter' => new MockAdapter($future)]);
+        $client = new Client(['handler' => new MockHandler($future)]);
         try {
             $res = $client->get('http://localhost:123/foo', ['future' => true]);
             $res->wait();
@@ -470,7 +470,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testThrowsExceptionsSynchronously()
     {
         $client = new Client([
-            'adapter' => new MockAdapter(['error' => new \Exception('Noo!')])
+            'handler' => new MockHandler(['error' => new \Exception('Noo!')])
         ]);
         $client->get('http://localhost:123/foo');
     }
@@ -546,7 +546,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testReturnsFutureForErrorWhenRequested()
     {
-        $client = new Client(['adapter' => new MockAdapter(['status' => 404])]);
+        $client = new Client(['handler' => new MockHandler(['status' => 404])]);
         $request = $client->createRequest('GET', 'http://localhost:123/foo', [
             'future' => true
         ]);
@@ -562,7 +562,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testReturnsFutureForResponseWhenRequested()
     {
-        $client = new Client(['adapter' => new MockAdapter(['status' => 200])]);
+        $client = new Client(['handler' => new MockHandler(['status' => 200])]);
         $request = $client->createRequest('GET', 'http://localhost:123/foo', [
             'future' => true
         ]);

@@ -16,7 +16,7 @@ use GuzzleHttp\Ring\Future\FutureInterface;
  */
 class RequestFsm
 {
-    private $adapter;
+    private $handler;
     private $mf;
     private $maxTransitions;
 
@@ -29,7 +29,7 @@ class RequestFsm
             'error'      => 'error'
         ],
         // The complete and error events are handled using the "then" of
-        // the Guzzle-Ring request, so we exit the FSM.
+        // the RingPHP request, so we exit the FSM.
         'send' => ['error' => 'error'],
         'complete' => [
             'success'    => 'end',
@@ -45,13 +45,13 @@ class RequestFsm
     ];
 
     public function __construct(
-        callable $adapter,
+        callable $handler,
         MessageFactoryInterface $messageFactory,
         $maxTransitions = 200
     ) {
         $this->mf = $messageFactory;
         $this->maxTransitions = $maxTransitions;
-        $this->adapter = $adapter;
+        $this->handler = $handler;
     }
 
     /**
@@ -133,7 +133,7 @@ class RequestFsm
 
     private function send(Transaction $trans)
     {
-        $fn = $this->adapter;
+        $fn = $this->handler;
         $trans->response = FutureResponse::proxy(
             $fn(RingBridge::prepareRingRequest($trans)),
             function ($value) use ($trans) {

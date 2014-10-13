@@ -17,12 +17,12 @@ around with cURL options, stream contexts, or sockets.
 
 Guzzle allows you to send both asynchronous and synchronous requests using the
 same interface and no direct dependency on an event loop. This flexibility
-allows Guzzle to send an HTTP request using the most appropriate HTTP adapter
+allows Guzzle to send an HTTP request using the most appropriate HTTP handler
 based on the request being sent. For example, when sending synchronous
 requests, Guzzle will by default send requests using cURL easy handles to
 ensure you're using the fastest possible method for serially transferring HTTP
 requests. When sending asynchronous requests, Guzzle might use cURL's multi
-interface or any other asynchronous adapter you configure. When you request
+interface or any other asynchronous handler you configure. When you request
 streaming data, Guzzle will by default use PHP's stream wrapper.
 
 **Streams**
@@ -51,7 +51,7 @@ sent over the wire, and anything else you might need.
 
 Another important aspect of Guzzle is that it's really
 :doc:`easy to test clients <testing>`. You can mock HTTP responses and when
-testing an adapter implementation, Guzzle provides a mock node.js web server.
+testing an handler implementation, Guzzle provides a mock node.js web server.
 
 **Ecosystem**
 
@@ -70,10 +70,10 @@ an HTTP response into a more meaningful model object.
 Does Guzzle require cURL?
 =========================
 
-No. Guzzle can use any HTTP adapter to send requests. This means that Guzzle
+No. Guzzle can use any HTTP handler to send requests. This means that Guzzle
 can be used with cURL, PHP's stream wrapper, sockets, and non-blocking libraries
 like `React <http://reactphp.org/>`_. You just need to configure a
-`Guzzle-Ring <http://guzzle-ring.readthedocs.org/en/latest/>`_ adapter to use a
+`RingPHP <http://guzzle-ring.readthedocs.org/en/latest/>`_ handler to use a
 different method of sending requests.
 
 .. note::
@@ -82,7 +82,7 @@ different method of sending requests.
     an amazing HTTP client (arguably the best), and Guzzle will continue to use
     it by default when it is available. It is rare, but some developers don't
     have cURL installed on their systems or run into version specific issues.
-    By allowing swappable HTTP adapters, Guzzle is now much more customizable
+    By allowing swappable HTTP handlers, Guzzle is now much more customizable
     and able to adapt to fit the needs of more developers.
 
 Can Guzzle send asynchronous requests?
@@ -115,7 +115,7 @@ How can I add custom cURL options?
 ==================================
 
 cURL offer a huge number of `customizable options <http://us1.php.net/curl_setopt>`_.
-While Guzzle normalizes many of these options across different adapters, there
+While Guzzle normalizes many of these options across different handlers, there
 are times when you need to set custom cURL options. This can be accomplished
 by passing an associative array of cURL settings in the **curl** key of the
 **config** request option.
