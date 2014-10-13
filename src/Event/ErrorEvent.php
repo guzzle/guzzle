@@ -1,7 +1,6 @@
 <?php
 namespace GuzzleHttp\Event;
 
-use GuzzleHttp\Adapter\TransactionInterface;
 use GuzzleHttp\Exception\RequestException;
 
 /**
