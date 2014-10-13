@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Tests\Plugin\Redirect;
 
 use GuzzleHttp\Client;
@@ -25,12 +24,19 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         $client->getEmitter()->attach($history);
         $client->getEmitter()->attach($mock);
 
-        $response = $client->get('/foo');
+        $request = $client->createRequest('GET', '/foo');
+        // Ensure "end" is called only once
+        $called = 0;
+        $request->getEmitter()->on('end', function () use (&$called) {
+            $called++;
+        });
+        $response = $client->send($request);
+
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertContains('/redirect2', $response->getEffectiveUrl());
 
         // Ensure that two requests were sent
-        $requests = $history->getRequests();
+        $requests = $history->getRequests(true);
 
         $this->assertEquals('/foo', $requests[0]->getPath());
         $this->assertEquals('GET', $requests[0]->getMethod());
@@ -38,6 +44,8 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('GET', $requests[1]->getMethod());
         $this->assertEquals('/redirect2', $requests[2]->getPath());
         $this->assertEquals('GET', $requests[2]->getMethod());
+
+        $this->assertEquals(1, $called);
     }
 
     /**
@@ -75,7 +83,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
             'body' => 'testing'
         ]);
 
-        $requests = $h->getRequests();
+        $requests = $h->getRequests(true);
         $this->assertEquals('POST', $requests[0]->getMethod());
         $this->assertEquals('GET', $requests[1]->getMethod());
         $this->assertEquals('bar', (string) $requests[1]->getHeader('X-Baz'));
@@ -99,7 +107,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
             'allow_redirects' => ['max' => 10, 'strict' => true]
         ]);
 
-        $requests = $h->getRequests();
+        $requests = $h->getRequests(true);
         $this->assertEquals('POST', $requests[0]->getMethod());
         $this->assertEquals('POST', $requests[1]->getMethod());
         $this->assertEquals('bar', (string) $requests[1]->getHeader('X-Baz'));
@@ -179,7 +187,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         ]));
         $client->getEmitter()->attach($h);
         $client->get('?foo=bar');
-        $requests = $h->getRequests();
+        $requests = $h->getRequests(true);
         $this->assertEquals('http://www.foo.com?foo=bar', $requests[0]->getUrl());
         $this->assertEquals('http://www.foo.com/redirect?foo=bar', $requests[1]->getUrl());
     }
@@ -194,7 +202,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         $h = new History();
         $client->getEmitter()->attach($h);
         $client->get('/foo');
-        $reqs = $h->getRequests();
+        $reqs = $h->getRequests(true);
         $this->assertEquals('/redirect%201', $reqs[1]->getResource());
     }
 
@@ -208,7 +216,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         $h = new History();
         $client->getEmitter()->attach($h);
         $client->get('/foo', ['allow_redirects' => ['max' => 5, 'referer' => true]]);
-        $reqs = $h->getRequests();
+        $reqs = $h->getRequests(true);
         $this->assertEquals('http://www.foo.com/foo', $reqs[1]->getHeader('Referer'));
     }
 
@@ -224,7 +232,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         $h = new History();
         $client->getEmitter()->attach($h);
         $client->get('/foo', ['allow_redirects' => ['max' => 5, 'referer' => true]]);
-        $reqs = $h->getRequests();
+        $reqs = $h->getRequests(true);
         $this->assertFalse($reqs[1]->hasHeader('Referer'));
     }
 
@@ -239,7 +247,7 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
         $client->getEmitter()->attach($mock);
         $client->getEmitter()->attach($h);
         $client->post('http://test.com/foo', ['body' => 'testing']);
-        $requests = $h->getRequests();
+        $requests = $h->getRequests(true);
         $this->assertEquals('POST', $requests[0]->getMethod());
         $this->assertEquals('GET', $requests[1]->getMethod());
     }
@@ -253,6 +261,9 @@ class RedirectTest extends \PHPUnit_Framework_TestCase
             "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"
         ]));
         $response = $client->get('/');
-        $this->assertEquals('http://www.bar.com/redirect', $response->getEffectiveUrl());
+        $this->assertEquals(
+            'http://www.bar.com/redirect',
+            $response->getEffectiveUrl()
+        );
     }
 }

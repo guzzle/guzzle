@@ -1,8 +1,7 @@
 <?php
-
 namespace GuzzleHttp\Tests\Subscriber;
 
-use GuzzleHttp\Adapter\Transaction;
+use GuzzleHttp\Transaction;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Event\CompleteEvent;
@@ -31,7 +30,7 @@ class CookieTest extends \PHPUnit_Framework_TestCase
 
         $plugin = new Cookie($mock);
         $t = new Transaction(new Client(), $request);
-        $t->setResponse($response);
+        $t->response = $response;
         $plugin->onComplete(new CompleteEvent($t));
     }
 

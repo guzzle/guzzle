@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Tests\Event;
 
 use GuzzleHttp\Event\HasEmitterInterface;

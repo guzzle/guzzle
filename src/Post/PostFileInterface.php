@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Post;
 
 use GuzzleHttp\Stream\StreamInterface;

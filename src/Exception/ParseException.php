@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Exception;
 
 use GuzzleHttp\Message\ResponseInterface;

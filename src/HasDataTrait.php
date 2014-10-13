@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp;
 
 /**
@@ -56,7 +55,7 @@ trait HasDataTrait
      */
     public function getPath($path)
     {
-        return \GuzzleHttp\get_path($this->data, $path);
+        return Utils::getPath($this->data, $path);
     }
 
     /**
@@ -71,6 +70,6 @@ trait HasDataTrait
      */
     public function setPath($path, $value)
     {
-        \GuzzleHttp\set_path($this->data, $path, $value);
+        Utils::setPath($this->data, $path, $value);
     }
 }

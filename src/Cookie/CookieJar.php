@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Cookie;
 
 use GuzzleHttp\Message\RequestInterface;
@@ -28,7 +27,7 @@ class CookieJar implements CookieJarInterface, ToArrayInterface
         $this->strictMode = $strictMode;
 
         foreach ($cookieArray as $cookie) {
-            if (!($cookieArray instanceof SetCookie)) {
+            if (!($cookie instanceof SetCookie)) {
                 $cookie = new SetCookie($cookie);
             }
             $this->setCookie($cookie);
@@ -195,7 +194,7 @@ class CookieJar implements CookieJarInterface, ToArrayInterface
         RequestInterface $request,
         ResponseInterface $response
     ) {
-        if ($cookieHeader = $response->getHeader('Set-Cookie', true)) {
+        if ($cookieHeader = $response->getHeaderAsArray('Set-Cookie')) {
             foreach ($cookieHeader as $cookie) {
                 $sc = SetCookie::fromString($cookie);
                 if (!$sc->getDomain()) {

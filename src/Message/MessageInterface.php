@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Message;
 
 use GuzzleHttp\Stream\StreamInterface;
@@ -30,8 +29,6 @@ interface MessageInterface
      * remove the existing body.
      *
      * @param StreamInterface|null $body Body.
-     *
-     * @return self Returns the message.
      */
     public function setBody(StreamInterface $body = null);
 
@@ -60,19 +57,20 @@ interface MessageInterface
     /**
      * Retrieve a header by the given case-insensitive name.
      *
-     * By default, this method returns all of the header values of the given
-     * case-insensitive header name as a string concatenated together using
-     * a comma. Because some header should not be concatenated together using a
-     * comma, this method provides a Boolean argument that can be used to
-     * retrieve the associated header values as an array of strings.
+     * @param string $header Case-insensitive header name.
      *
-     * @param string $header  Case-insensitive header name.
-     * @param bool   $asArray Set to true to retrieve the header value as an
-     *                        array of strings.
-     *
-     * @return array|string
+     * @return string
      */
-    public function getHeader($header, $asArray = false);
+    public function getHeader($header);
+
+    /**
+     * Retrieves a header by the given case-insensitive name as an array of strings.
+     *
+     * @param string $header Case-insensitive header name.
+     *
+     * @return string[]
+     */
+    public function getHeaderAsArray($header);
 
     /**
      * Checks if a header exists by the given case-insensitive name.
@@ -89,8 +87,6 @@ interface MessageInterface
      * Remove a specific header by case-insensitive name.
      *
      * @param string $header Case-insensitive header name.
-     *
-     * @return self
      */
     public function removeHeader($header);
 
@@ -100,8 +96,6 @@ interface MessageInterface
      *
      * @param string $header Header name to add
      * @param string $value  Value of the header
-     *
-     * @return self
      */
     public function addHeader($header, $value);
 
@@ -115,8 +109,6 @@ interface MessageInterface
      * header is added.
      *
      * @param array $headers Associative array of headers to add to the message
-     *
-     * @return self
      */
     public function addHeaders(array $headers);
 
@@ -128,8 +120,6 @@ interface MessageInterface
      *
      * @param string       $header Header name
      * @param string|array $value  Header value(s)
-     *
-     * @return self Returns the message.
      */
     public function setHeader($header, $value);
 
@@ -141,8 +131,6 @@ interface MessageInterface
      * string or an array of strings.
      *
      * @param array $headers Headers to set.
-     *
-     * @return self Returns the message.
      */
     public function setHeaders(array $headers);
 }

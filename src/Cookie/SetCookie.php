@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Cookie;
 
 use GuzzleHttp\ToArrayInterface;
@@ -120,14 +119,10 @@ class SetCookie implements ToArrayInterface
      * Set the cookie name
      *
      * @param string $name Cookie name
-     *
-     * @return self
      */
     public function setName($name)
     {
         $this->data['Name'] = $name;
-
-        return $this;
     }
 
     /**
@@ -144,14 +139,10 @@ class SetCookie implements ToArrayInterface
      * Set the cookie value
      *
      * @param string $value Cookie value
-     *
-     * @return self
      */
     public function setValue($value)
     {
         $this->data['Value'] = $value;
-
-        return $this;
     }
 
     /**
@@ -168,14 +159,10 @@ class SetCookie implements ToArrayInterface
      * Set the domain of the cookie
      *
      * @param string $domain
-     *
-     * @return self
      */
     public function setDomain($domain)
     {
         $this->data['Domain'] = $domain;
-
-        return $this;
     }
 
     /**
@@ -192,14 +179,10 @@ class SetCookie implements ToArrayInterface
      * Set the path of the cookie
      *
      * @param string $path Path of the cookie
-     *
-     * @return self
      */
     public function setPath($path)
     {
         $this->data['Path'] = $path;
-
-        return $this;
     }
 
     /**
@@ -216,14 +199,10 @@ class SetCookie implements ToArrayInterface
      * Set the max-age of the cookie
      *
      * @param int $maxAge Max age of the cookie in seconds
-     *
-     * @return self
      */
     public function setMaxAge($maxAge)
     {
         $this->data['Max-Age'] = $maxAge;
-
-        return $this;
     }
 
     /**
@@ -240,16 +219,12 @@ class SetCookie implements ToArrayInterface
      * Set the unix timestamp for which the cookie will expire
      *
      * @param int $timestamp Unix timestamp
-     *
-     * @return self
      */
     public function setExpires($timestamp)
     {
         $this->data['Expires'] = is_numeric($timestamp)
             ? (int) $timestamp
             : strtotime($timestamp);
-
-        return $this;
     }
 
     /**
@@ -266,14 +241,10 @@ class SetCookie implements ToArrayInterface
      * Set whether or not the cookie is secure
      *
      * @param bool $secure Set to true or false if secure
-     *
-     * @return self
      */
     public function setSecure($secure)
     {
         $this->data['Secure'] = $secure;
-
-        return $this;
     }
 
     /**
@@ -290,14 +261,10 @@ class SetCookie implements ToArrayInterface
      * Set whether or not this is a session cookie
      *
      * @param bool $discard Set to true or false if this is a session cookie
-     *
-     * @return self
      */
     public function setDiscard($discard)
     {
         $this->data['Discard'] = $discard;
-
-        return $this;
     }
 
     /**
@@ -314,14 +281,10 @@ class SetCookie implements ToArrayInterface
      * Set whether or not this is an HTTP only cookie
      *
      * @param bool $httpOnly Set to true or false if this is HTTP only
-     *
-     * @return self
      */
     public function setHttpOnly($httpOnly)
     {
         $this->data['HttpOnly'] = $httpOnly;
-
-        return $this;
     }
 
     /**

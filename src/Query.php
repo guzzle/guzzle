@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp;
 
 /**
@@ -115,14 +114,10 @@ class Query extends Collection
      *     pairs. The callable accepts an array of query data and returns a
      *     flattened array of key value pairs where each value is an array of
      *     strings.
-     *
-     * @return self
      */
     public function setAggregator(callable $aggregator)
     {
         $this->aggregator = $aggregator;
-
-        return $this;
     }
 
     /**
@@ -130,7 +125,6 @@ class Query extends Collection
      *
      * @param string|bool $type One of 'RFC1738', 'RFC3986', or false to disable encoding
      *
-     * @return self
      * @throws \InvalidArgumentException
      */
     public function setEncodingType($type)
@@ -140,8 +134,6 @@ class Query extends Collection
         } else {
             throw new \InvalidArgumentException('Invalid URL encoding type');
         }
-
-        return $this;
     }
 
     /**

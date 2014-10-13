@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Tests\CookieJar;
 
 use GuzzleHttp\Cookie\FileCookieJar;

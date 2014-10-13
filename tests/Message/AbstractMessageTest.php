@@ -47,7 +47,8 @@ class AbstractMessageTest extends \PHPUnit_Framework_TestCase
     {
         $m = new Request('GET', 'http://foo.com');
         $m->setBody(Stream::factory('foo'));
-        $m->setHeader('Content-Length', 3)->setHeader('Transfer-Encoding', 'chunked');
+        $m->setHeader('Content-Length', 3);
+        $m->setHeader('Transfer-Encoding', 'chunked');
         $m->setBody(null);
         $this->assertNull($m->getBody());
         $this->assertFalse($m->hasHeader('Content-Length'));
@@ -129,9 +130,10 @@ class AbstractMessageTest extends \PHPUnit_Framework_TestCase
     public function testAddsHeadersWhenPresentSameCase()
     {
         $h = new Request('GET', 'http://foo.com');
-        $h->addHeader('foo', 'bar')->addHeader('foo', 'baz');
+        $h->addHeader('foo', 'bar');
+        $h->addHeader('foo', 'baz');
         $this->assertEquals('bar, baz', $h->getHeader('foo'));
-        $this->assertEquals(['bar', 'baz'], $h->getHeader('foo', true));
+        $this->assertEquals(['bar', 'baz'], $h->getHeaderAsArray('foo'));
     }
 
     public function testAddsMultipleHeaders()
@@ -151,7 +153,8 @@ class AbstractMessageTest extends \PHPUnit_Framework_TestCase
     public function testAddsHeadersWhenPresentDifferentCase()
     {
         $h = new Request('GET', 'http://foo.com');
-        $h->addHeader('Foo', 'bar')->addHeader('fOO', 'baz');
+        $h->addHeader('Foo', 'bar');
+        $h->addHeader('fOO', 'baz');
         $this->assertEquals('bar, baz', $h->getHeader('foo'));
     }
 
@@ -160,14 +163,6 @@ class AbstractMessageTest extends \PHPUnit_Framework_TestCase
         $h = new Request('GET', 'http://foo.com');
         $h->addHeader('Foo', ['bar', 'baz']);
         $this->assertEquals('bar, baz', $h->getHeader('foo'));
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testThrowsExceptionWhenInvalidValueProvidedToAddHeader()
-    {
-        (new Request('GET', 'http://foo.com'))->addHeader('foo', false);
     }
 
     public function testGetHeadersReturnsAnArrayOfOverTheWireHeaderValues()
@@ -209,14 +204,6 @@ class AbstractMessageTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('bar', $h->getHeader('foo'));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testThrowsExceptionWhenInvalidValueProvidedToSetHeader()
-    {
-        (new Request('GET', 'http://foo.com'))->setHeader('foo', false);
-    }
-
     public function testSetHeadersOverwritesAllHeaders()
     {
         $h = new Request('GET', 'http://foo.com');
@@ -250,7 +237,7 @@ class AbstractMessageTest extends \PHPUnit_Framework_TestCase
     {
         $h = new Request('GET', 'http://foo.com');
         $this->assertInternalType('string', $h->getHeader('foo'));
-        $this->assertInternalType('array', $h->getHeader('foo', true));
+        $this->assertInternalType('array', $h->getHeaderAsArray('foo'));
     }
 
     public function testSetsIntegersAndFloatsAsHeaders()

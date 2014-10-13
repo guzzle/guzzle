@@ -83,7 +83,7 @@ Adding Event Listeners
 After you have the emitter, you can register event listeners that listen to
 specific events using the ``on()`` method. When registering an event listener,
 you must tell the emitter what event to listen to (e.g., "before", "after",
-"headers", "complete", "error", etc.), what callable to invoke when the
+"progress", "complete", "error", etc.), what callable to invoke when the
 event is triggered, and optionally provide a priority.
 
 .. code-block:: php
@@ -298,9 +298,9 @@ Requests emit lifecycle events when they are transferred.
 
 .. important::
 
-    Request lifecycle events may be triggered multiple times due to redirects,
-    retries, or reusing a request multiple times. Use the ``once()`` method
-    of an event emitter if you only want the event to be triggered once. You
+    Excluding the ``end`` event, request lifecycle events may be triggered
+    multiple times due to redirects, retries, or reusing a request multiple
+    times. Use the ``once()`` method want the event to be triggered once. You
     can also remove an event listener from an emitter by using the emitter which
     is provided to the listener.
 
@@ -359,49 +359,6 @@ the request from being sent over the wire and stops the propagation of the
 
     Any exception encountered while executing the ``before`` event will trigger
     the ``error`` event of a request.
-
-.. _headers_event:
-
-headers
--------
-
-The ``headers`` event is emitted after the headers of a response have been
-received before any of the response body has been downloaded. The event
-emitted is a ``GuzzleHttp\Event\HeadersEvent``.
-
-This event can be useful if you need to conditionally wrap the response body
-of a request in a special decorator or if you only want to conditionally
-download a response body based on response headers.
-
-This event cannot be intercepted.
-
-.. code-block:: php
-
-    use GuzzleHttp\Client;
-    use GuzzleHttp\Event\HeadersEvent;
-
-    $client = new Client(['base_url' => 'http://httpbin.org']);
-    $request = $client->createRequest('GET', '/stream/100');
-    $request->getEmitter()->on('headers', function (HeadersEvent $e) {
-        echo $e->getResponse();
-        // Prints the response headers
-
-        // Wrap the response body in a custom decorator if the response has a body
-        if ($e->getResponse()->getHeader('Content-Length') ||
-            $e->getResponse()->getHeader('Content-Encoding')
-        ) {
-            $customBody = new MyCustomStreamDecorator($e->getResponse()->getBody());
-            $e->getResponse()->setBody($customBody);
-        }
-    });
-
-.. note::
-
-    A response may or may not yet have a body associated with it. If a request
-    used a ``save_to`` request option, then the response will have a body.
-    Otherwise, the response will have no body but you are free to associate one
-    with the response. As an example, this is done in the
-    `progress subscriber <https://github.com/guzzle/progress-subscriber/blob/master/src/Progress.php>`_.
 
 .. _complete_event:
 
@@ -480,3 +437,72 @@ a username and password.
     If an ``error`` event is intercepted with a response, then the ``complete``
     event of a request is triggered. If the ``complete`` event fails, then the
     ``error`` event is triggered once again.
+
+.. _progress_event:
+
+progress
+--------
+
+The ``progress`` event is emitted when data is uploaded or downloaded. The
+event emitted is a ``GuzzleHttp\Event\ProgressEvent``.
+
+You can access the emitted progress values using the corresponding public
+properties of the event object:
+
+- ``$downloadSize``: The number of bytes that will be downloaded (if known)
+- ``$downloaded``: The number of bytes that have been downloaded
+- ``$uploadSize``: The number of bytes that will be uploaded (if known)
+- ``$uploaded``: The number of bytes that have been uploaded
+
+This event cannot be intercepted.
+
+.. code-block:: php
+
+    use GuzzleHttp\Client;
+    use GuzzleHttp\Event\ProgressEvent;
+
+    $client = new Client(['base_url' => 'http://httpbin.org']);
+    $request = $client->createRequest('PUT', '/put', [
+        'body' => str_repeat('.', 100000)
+    ]);
+
+    $request->getEmitter()->on('progress', function (ProgressEvent $e) {
+        echo 'Downloaded ' . $e->downloaded . ' of ' . $e->downloadSize . ' '
+            . 'Uploaded ' . $e->uploaded . ' of ' . $e->uploadSize . "\r";
+    });
+
+    $client->send($request);
+    echo "\n";
+
+.. _end_event:
+
+end
+---
+
+The ``end`` event is a terminal event, emitted once per request, that provides
+access to the repsonse that was received or the exception that was encountered.
+The event emitted is a ``GuzzleHttp\Event\EndEvent``.
+
+This event can be intercepted, but keep in mind that the ``complete`` event
+will not fire after intercepting this event.
+
+.. code-block:: php
+
+    use GuzzleHttp\Client;
+    use GuzzleHttp\Event\EndEvent;
+
+    $client = new Client(['base_url' => 'http://httpbin.org']);
+    $request = $client->createRequest('PUT', '/put', [
+        'body' => str_repeat('.', 100000)
+    ]);
+
+    $request->getEmitter()->on('end', function (EndEvent $e) {
+        if ($e->getException()) {
+            echo 'Error: ' . $e->getException()->getMessage();
+        } else {
+            echo 'Response: ' . $e->getResponse();
+        }
+    });
+
+    $client->send($request);
+    echo "\n";

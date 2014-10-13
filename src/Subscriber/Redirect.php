@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Subscriber;
 
 use GuzzleHttp\Event\CompleteEvent;
@@ -43,8 +42,7 @@ class Redirect implements SubscriberInterface
     public static function rewindEntityBody(RequestInterface $redirectRequest)
     {
         // Rewind the entity body of the request if needed
-        if ($redirectRequest->getBody()) {
-            $body = $redirectRequest->getBody();
+        if ($body = $redirectRequest->getBody()) {
             // Only rewind the body if some of it has been read already, and
             // throw an exception if the rewind fails
             if ($body->tell() && !$body->seek(0)) {
@@ -66,48 +64,37 @@ class Redirect implements SubscriberInterface
     {
         $response = $event->getResponse();
 
-        if (substr($response->getStatusCode(), 0, 1) != '3' ||
-            !$response->hasHeader('Location')
+        if (substr($response->getStatusCode(), 0, 1) != '3'
+            || !$response->hasHeader('Location')
         ) {
             return;
         }
 
-        $redirectCount = 0;
-        $redirectRequest = $event->getRequest();
-        $redirectResponse = $response;
-        $max = $redirectRequest->getConfig()->getPath('redirect/max') ?: 5;
+        $request = $event->getRequest();
+        $config = $request->getConfig();
 
-        do {
-            if (++$redirectCount > $max) {
-                throw new TooManyRedirectsException(
-                    "Will not follow more than {$redirectCount} redirects",
-                    $redirectRequest
-                );
-            }
-            $redirectRequest = $this->createRedirectRequest($redirectRequest, $redirectResponse);
-            $redirectResponse = $event->getClient()->send($redirectRequest);
-        } while (substr($redirectResponse->getStatusCode(), 0, 1) == '3' &&
-            $redirectResponse->hasHeader('Location')
-        );
-
-        if ($redirectResponse !== $response) {
-            $event->intercept($redirectResponse);
+        // Increment the redirect and initialize the redirect state.
+        if ($redirectCount = $config['redirect_count']) {
+            $config['redirect_count'] = ++$redirectCount;
+        } else {
+            $config['redirect_scheme'] = $request->getScheme();
+            $config['redirect_count'] = $redirectCount = 1;
         }
+
+        $max = $config->getPath('redirect/max') ?: 5;
+
+        if ($redirectCount > $max) {
+            throw new TooManyRedirectsException(
+                "Will not follow more than {$redirectCount} redirects",
+                $request
+            );
+        }
+
+        $this->modifyRedirectRequest($request, $response);
+        $event->retry();
     }
 
-    /**
-     * Create a redirect request for a specific request object
-     *
-     * Takes into account strict RFC compliant redirection (e.g. redirect POST
-     * with POST) vs doing what most clients do (e.g. redirect POST with GET).
-     *
-     * @param RequestInterface  $request
-     * @param ResponseInterface $response
-     *
-     * @return RequestInterface Returns a new redirect request
-     * @throws CouldNotRewindStreamException If the body cannot be rewound.
-     */
-    private function createRedirectRequest(
+    private function modifyRedirectRequest(
         RequestInterface $request,
         ResponseInterface $response
     ) {
@@ -115,44 +102,41 @@ class Redirect implements SubscriberInterface
 
         // Use a GET request if this is an entity enclosing request and we are
         // not forcing RFC compliance, but rather emulating what all browsers
-        // would do. Be sure to disable redirects on the clone.
-        $redirectRequest = clone $request;
-        $redirectRequest->getEmitter()->detach($this);
+        // would do.
         $statusCode = $response->getStatusCode();
-
         if ($statusCode == 303 ||
-            ($statusCode <= 302 && $request->getBody() &&
-                !$config->getPath('redirect/strict'))
+            ($statusCode <= 302 && $request->getBody() && !$config->getPath('redirect/strict'))
         ) {
-            $redirectRequest->setMethod('GET');
-            $redirectRequest->setBody(null);
+            $request->setMethod('GET');
+            $request->setBody(null);
         }
 
-        $this->setRedirectUrl($redirectRequest, $response);
-        $this->rewindEntityBody($redirectRequest);
+        $previousUrl = $request->getUrl();
+        $this->setRedirectUrl($request, $response);
+        $this->rewindEntityBody($request);
 
         // Add the Referer header if it is told to do so and only
         // add the header if we are not redirecting from https to http.
-        if ($config->getPath('redirect/referer') && (
-            $redirectRequest->getScheme() == 'https' ||
-            $redirectRequest->getScheme() == $request->getScheme()
-        )) {
-            $url = Url::fromString($request->getUrl());
-            $url->setUsername(null)->setPassword(null);
-            $redirectRequest->setHeader('Referer', (string) $url);
+        if ($config->getPath('redirect/referer')
+            && ($request->getScheme() == 'https' || $request->getScheme() == $config['redirect_scheme'])
+        ) {
+            $url = Url::fromString($previousUrl);
+            $url->setUsername(null);
+            $url->setPassword(null);
+            $request->setHeader('Referer', (string) $url);
+        } else {
+            $request->removeHeader('Referer');
         }
-
-        return $redirectRequest;
     }
 
     /**
      * Set the appropriate URL on the request based on the location header
      *
-     * @param RequestInterface  $redirectRequest
+     * @param RequestInterface  $request
      * @param ResponseInterface $response
      */
     private function setRedirectUrl(
-        RequestInterface $redirectRequest,
+        RequestInterface $request,
         ResponseInterface $response
     ) {
         $location = $response->getHeader('Location');
@@ -160,13 +144,13 @@ class Redirect implements SubscriberInterface
 
         // Combine location with the original URL if it is not absolute.
         if (!$location->isAbsolute()) {
-            $originalUrl = Url::fromString($redirectRequest->getUrl());
+            $originalUrl = Url::fromString($request->getUrl());
             // Remove query string parameters and just take what is present on
             // the redirect Location header
             $originalUrl->getQuery()->clear();
             $location = $originalUrl->combine($location);
         }
 
-        $redirectRequest->setUrl($location);
+        $request->setUrl($location);
     }
 }

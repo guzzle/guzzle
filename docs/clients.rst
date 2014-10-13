@@ -3,7 +3,7 @@ Clients
 =======
 
 Clients are used to create requests, create transactions, send requests
-through an HTTP adapter, and return a response. You can add default request
+through an HTTP handler, and return a response. You can add default request
 options to a client that are applied to every request (e.g., default headers,
 default query string parameters, etc.), and you can add event listeners and
 subscribers to every request created by a client.
@@ -29,22 +29,12 @@ base_url
     `Absolute URLs <http://tools.ietf.org/html/rfc3986#section-4.3>`_ sent
     through a client will not use the base URL of the client.
 
-adapter
-    Configures the HTTP adapter (``GuzzleHttp\Adapter\AdapterInterface``) used
-    to transfer the HTTP requests of a client. Guzzle will, by default, utilize
-    a stacked adapter that chooses the best adapter to use based on the provided
-    request options and based on the extensions available in the environment. If
-    cURL is installed, it will be used as the default adapter. However, if a
-    request has the ``stream`` request option, the PHP stream wrapper adapter
-    will be used (assuming ``allow_url_fopen`` is enabled in your PHP
-    environment).
-
-parallel_adapter
-    Just like the ``adapter`` option, you can choose to specify an adapter
-    that is used to send requests in parallel
-    (``GuzzleHttp\Adapter\ParallelAdapterInterface``). Guzzle will by default
-    use cURL to send requests in parallel, but if cURL is not available it will
-    use the PHP stream wrapper and simply send requests serially.
+handler
+    Configures the `RingPHP handler <http://ringphp.readthedocs.org>`_
+    used to transfer the HTTP requests of a client. Guzzle will, by default,
+    utilize a stacked handlers that chooses the best handler to use based on the
+    provided request options and based on the extensions available in the
+    environment.
 
 message_factory
     Specifies the factory used to create HTTP requests and responses
@@ -61,9 +51,7 @@ emitter
     to be used by the client to emit request events. This option is useful if
     you need to inject an emitter with listeners/subscribers already attached.
 
-Here's an example of creating a client with various options, including using
-a mock adapter that just returns the result of a callable function and a
-base URL that is a URI template with parameters.
+Here's an example of creating a client with various options.
 
 .. code-block:: php
 
@@ -95,20 +83,28 @@ Requests can be created using various methods of a client. You can create
 Each of the above methods accepts a URL as the first argument and an optional
 associative array of :ref:`request-options` as the second argument.
 
+Synchronous Requests
+--------------------
+
+Guzzle sends synchronous (blocking) requests when the ``future`` request option
+is not specified. This means that the request will complete immediately, and if
+an error is encountered, a ``GuzzleHttp\Exception\RequestException`` will be
+thrown.
+
 .. code-block:: php
 
     $client = new GuzzleHttp\Client();
 
     $client->put('http://httpbin.org', [
-        'headers' => ['X-Foo' => 'Bar'],
-        'body' => 'this is the body!',
-        'save_to' => '/path/to/local/file',
+        'headers'         => ['X-Foo' => 'Bar'],
+        'body'            => 'this is the body!',
+        'save_to'         => '/path/to/local/file',
         'allow_redirects' => false,
-        'timeout' => 5
+        'timeout'         => 5
     ]);
 
-Error Handling
---------------
+Synchronous Error Handling
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When a recoverable error is encountered while calling the ``send()`` method of
 a client, a ``GuzzleHttp\Exception\RequestException`` is thrown.
@@ -140,8 +136,89 @@ response, then you can access the associated
 ``GuzzleHttp\Message\ResponseInterface`` using the ``getResponse()`` method of
 the exception.
 
+Asynchronous Requests
+---------------------
+
+You can send asynchronous requests by setting the ``future`` request option
+to ``true`` (or a string that your handler understands). This creates a
+``GuzzleHttp\Message\FutureResponse`` object that has not yet completed. Once
+you have a future response, you can use a promise object obtained by calling
+the ``then`` method of the response to take an action when the response has
+completed or encounters an error.
+
+.. code-block:: php
+
+    $response = $client->put('http://httpbin.org/get', ['future' => true]);
+
+    // Call the function when the response completes
+    $response->then(function ($response) {
+        echo $response->getStatusCode();
+    });
+
+You can call the ``wait()`` method of a future response to block until it has
+completed. You also use a future response object just like a normal response
+object by accessing the methods of the response. Using a future response like a
+normal response object, also known as *dereferencing*, will block until the
+response has completed.
+
+.. code-block:: php
+
+    $response = $client->put('http://httpbin.org/get', ['future' => true]);
+
+    // Block until the response has completed
+    echo $response->getStatusCode();
+
+.. important::
+
+    If an exception occurred while transferring the future response, then the
+    exception encountered will be thrown when dereferencing.
+
+Asynchronous Error Handling
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Handling errors with future response object promises is a bit different. When
+using a promise, exceptions are forwarded to the ``$onError`` function provided
+to the second argument of the ``then()`` function.
+
+.. code-block:: php
+
+    $response = $client->put('http://httpbin.org/get', ['future' => true]);
+
+    $response
+        ->then(
+            function ($response) {
+                // This is called when the request succeeded
+                echo 'Success: ' . $response->getStatusCode();
+                // Returning a value will forward the value to the next promise
+                // in the chain.
+                return $response;
+            },
+            function ($error) {
+                // This is called when the exception failed.
+                echo 'Exception: ' . $error->getMessage();
+                // Throwing will "forward" the exception to the next promise
+                // in the chain.
+                throw $error;
+            }
+        )
+        ->then(
+            function($response) {
+                // This is called after the first promise in the chain. It
+                // receives the value returned from the first promise.
+                echo $response->getReasonPhrase();
+            },
+            function ($error) {
+                // This is called if the first promise error handler in the
+                // chain rethrows the exception.
+                echo 'Error: ' . $error->getMessage();
+            }
+        );
+
+Please see the `React/Promises project documentation <https://github.com/reactphp/promise>`_
+for more information on how promise resolution and rejection forwarding works.
+
 HTTP Errors
-~~~~~~~~~~~
+-----------
 
 If the ``exceptions`` request option is not set to ``false``, then exceptions
 are thrown for HTTP protocol errors as well:
@@ -153,7 +230,7 @@ Creating Requests
 -----------------
 
 You can create a request without sending it. This is useful for building up
-requests over time or sending requests in parallel.
+requests over time or sending requests in concurrently.
 
 .. code-block:: php
 
@@ -170,16 +247,20 @@ After creating a request, you can send it with the client's ``send()`` method.
 
     $response = $client->send($request);
 
-Sending Requests in Parallel
+Sending Requests With a Pool
 ============================
 
-You can send requests in parallel using a client object's ``sendAll()`` method.
-The ``sendAll()`` method accepts an array or ``\Iterator`` that contains
-``GuzzleHttp\Message\RequestInterface`` objects. In addition to providing the
-requests to send, you can also specify an associative array of options that
-will affect the transfer.
+You can send requests concurrently using a fixed size pool via the
+``GuzzleHttp\Pool`` class. The Pool class is an implementation of
+``GuzzleHttp\Ring\Future\FutureInterface``, meaning it can be dereferenced at a
+later time or cancelled before sending. The Pool constructor accepts a client
+object, iterator or array that yields ``GuzzleHttp\Message\RequestInterface``
+objects, and an optional associative array of options that can be used to
+affect the transfer.
 
 .. code-block:: php
+
+    use GuzzleHttp\Pool;
 
     $requests = [
         $client->createRequest('GET', 'http://httpbin.org'),
@@ -187,21 +268,29 @@ will affect the transfer.
         $client->createRequest('PUT', 'http://httpbin.org/put', ['body' => 'test'])
     ];
 
-    $client->sendAll($requests);
+    $options = [];
 
-The ``sendAll()`` method accepts the following associative array of options:
+    // Create a pool. Note: the options array is optional.
+    $pool = new Pool($client, $requests, $options);
 
-- **parallel**: Integer representing the maximum number of requests that are
-  allowed to be sent in parallel.
+    // Send the requests
+    $pool->wait();
+
+The Pool constructor accepts the following associative array of options:
+
+- **pool_size**: Integer representing the maximum number of requests that are
+  allowed to be sent concurrently.
 - **before**: Callable or array representing the event listeners to add to
   each request's :ref:`before_event` event.
 - **complete**: Callable or array representing the event listeners to add to
   each request's :ref:`complete_event` event.
 - **error**: Callable or array representing the event listeners to add to
   each request's :ref:`error_event` event.
+- **end**: Callable or array representing the event listeners to add to
+  each request's :ref:`end_event` event.
 
-The "before", "complete", and "error" event options accept a callable or an
-array of associative arrays where each associative array contains a "fn" key
+The "before", "complete", "error", and "end" event options accept a callable or
+an array of associative arrays where each associative array contains a "fn" key
 with a callable value, an optional "priority" key representing the event
 priority (with a default value of 0), and an optional "once" key that can be
 set to true so that the event listener will be removed from the request after
@@ -209,10 +298,11 @@ it is first triggered.
 
 .. code-block:: php
 
+    use GuzzleHttp\Pool;
     use GuzzleHttp\Event\CompleteEvent;
 
     // Add a single event listener using a callable.
-    $client->sendAll($requests, [
+    Pool::send($client, $requests, [
         'complete' => function (CompleteEvent $event) {
             echo 'Completed request to ' . $event->getRequest()->getUrl() . "\n";
             echo 'Response: ' . $event->getResponse()->getBody() . "\n\n";
@@ -221,7 +311,7 @@ it is first triggered.
 
     // The above is equivalent to the following, but the following structure
     // allows you to add multiple event listeners to the same event name.
-    $client->sendAll($requests, [
+    Pool::send($client, $requests, [
         'complete' => [
             [
                 'fn'       => function (CompleteEvent $event) { /* ... */ },
@@ -234,16 +324,17 @@ it is first triggered.
 Asynchronous Response Handling
 ------------------------------
 
-When sending requests in parallel, the request/response/error lifecycle must be
-handled asynchronously. This means that you give the ``sendAll()`` method
+When sending requests concurrently using a pool, the request/response/error
+lifecycle must be handled asynchronously. This means that you give the Pool
 multiple requests and handle the response or errors that is associated with the
 request using event callbacks.
 
 .. code-block:: php
 
+    use GuzzleHttp\Pool;
     use GuzzleHttp\Event\ErrorEvent;
 
-    $client->sendAll($requests, [
+    Pool::send($client, $requests, [
         'complete' => function (CompleteEvent $event) {
             echo 'Completed request to ' . $event->getRequest()->getUrl() . "\n";
             echo 'Response: ' . $event->getResponse()->getBody() . "\n\n";
@@ -272,10 +363,11 @@ failed request to an array that we can use to process errors later.
 
 .. code-block:: php
 
+    use GuzzleHttp\Pool;
     use GuzzleHttp\Event\ErrorEvent;
 
     $errors = [];
-    $client->sendAll($requests, [
+    Pool::send($client, $requests, [
         'error' => function (ErrorEvent $event) use (&$errors) {
             $errors[] = $event;
         }
@@ -285,48 +377,21 @@ failed request to an array that we can use to process errors later.
         // Handle the error...
     }
 
-Throwing Errors Immediately
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-It sometimes is useful to throw exceptions immediately when they occur. The
-following example shows how to use an event listener to throw exceptions
-immediately and prevent subsequent requests from being sent.
-
-.. code-block:: php
-
-    use GuzzleHttp\Event\ErrorEvent;
-
-    $client->sendAll($requests, [
-        'error' => function (ErrorEvent $event) {
-            $event->throwImmediately(true);
-        }
-    ]);
-
-Calling the ``ErrorEvent::throwImmediately()`` instructs the
-``ParallelAdapterInterface`` sending the request to stop sending subsequent
-requests, clean up any opened resources, and throw the exception associated
-with the event as soon as possible. If the error event was not sent by a
-``ParallelAdapterInterface``, then calling  ``throwImmediately()`` has no
-effect.
-
-.. note::
-
-    Subsequent listeners of the "error" event can still intercept the error
-    event with a response if needed, which will, as per the standard behavior,
-    prevent the exception from being thrown.
-
 .. _batch-requests:
 
 Batching Requests
 -----------------
 
-Sometimes you just want to send a few requests in parallel and then process
+Sometimes you just want to send a few requests concurrently and then process
 the results all at once after they've been sent. Guzzle provides a convenience
-function ``GuzzleHttp\batch()`` that makes this very simple:
+function ``GuzzleHttp\Pool::batch()`` that makes this very simple:
 
 .. code-block:: php
 
-    $client = new GuzzleHttp\Client();
+    use GuzzleHttp\Pool;
+    use GuzzleHttp\Client;
+
+    $client = new Client();
 
     $requests = [
         $client->createRequest('GET', 'http://httpbin.org/get'),
@@ -334,27 +399,29 @@ function ``GuzzleHttp\batch()`` that makes this very simple:
         $client->createRequest('PUT', 'http://httpbin.org/put'),
     ];
 
-    $results = GuzzleHttp\batch($client, $requests);
+    // Results is a GuzzleHttp\BatchResults object.
+    $results = Pool::batch($client, $requests);
 
-    // Results is an SplObjectStorage object where each request is a key
-    foreach ($requests as $request) {
-        echo $request->getUrl() . "\n";
-        // Get the result (either a ResponseInterface or RequestException)
-        $result = $results[$request];
-        if ($result instanceof ResponseInterface) {
-            // Interact with the response directly
-            echo $result->getStatusCode();
-        } else {
-            // Get the exception message
-            echo $result->getMessage();
-        }
+    // Can be accessed by index.
+    echo $results[0]->getStatusCode();
+
+    // Can be accessed by request.
+    echo $results->getResult($requests[0])->getStatusCode();
+
+    // Retrieve all successful responses
+    foreach ($results->getSuccessful() as $response) {
+        echo $response->getStatusCode() . "\n";
     }
 
-``GuzzleHttp\batch()`` accepts an optional associative array of options in the
-third argument that allows you to specify the 'before', 'complete' and 'error'
-events as well as specify the maximum number of requests to send in parallel
-using the 'parallel' option key. This options array is the exact same format as
-the options array exposed in ``GuzzleHttp\ClientInterface::sendAll()``.
+    // Retrieve all failures.
+    foreach ($results->getFailures() as $requestException) {
+        echo $requestException->getMessage() . "\n";
+    }
+
+``GuzzleHttp\Pool::batch()`` accepts an optional associative array of options
+in the third argument that allows you to specify the 'before', 'complete',
+'error', and 'end' events as well as specify the maximum number of requests to
+send concurrently using the 'pool_size' option key.
 
 .. _request-options:
 
@@ -520,14 +587,14 @@ basic
 
 digest
     Use `digest authentication <http://www.ietf.org/rfc/rfc2069.txt>`_ (must be
-    supported by the HTTP adapter).
+    supported by the HTTP handler).
 
     .. code-block:: php
 
         $client->get('/get', ['auth' => ['username', 'password', 'digest']]);
 
-    *This is currently only supported when using the cURL adapter, but creating
-    a replacement that can be used with any HTTP adapter is planned.*
+    *This is currently only supported when using the cURL handler, but creating
+    a replacement that can be used with any HTTP handler is planned.*
 
 .. important::
 
@@ -586,7 +653,7 @@ Adapter Specific Authentication Schemes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you need to use authentication methods provided by cURL (e.g., NTLM, GSS,
-etc.), then you need to specify a curl adapter option in the ``options``
+etc.), then you need to specify a curl handler option in the ``options``
 request option array. See :ref:`config-option` for more information.
 
 .. _cookies-option:
@@ -687,7 +754,7 @@ handled. By default, ``decode_content`` is set to true, meaning any gzipped
 or deflated response will be decoded by Guzzle.
 
 When set to ``false``, the body of a response is never decoded, meaning the
-bytes pass through the adapter unchanged.
+bytes pass through the handler unchanged.
 
 .. code-block:: php
 
@@ -764,7 +831,6 @@ events
     $client->get('/', [
         'events' => [
             'before' => function (BeforeEvent $e) { echo 'Before'; },
-            'headers' => function (HeadersEvent $e) { echo 'Headers'; },
             'complete' => function (CompleteEvent $e) { echo 'Complete'; },
             'error' => function (ErrorEvent $e) { echo 'Error'; },
         ]
@@ -861,9 +927,9 @@ connect_timeout
 
 .. note::
 
-    This setting must be supported by the HTTP adapter used to send a request.
+    This setting must be supported by the HTTP handler used to send a request.
     ``connect_timeout`` is currently only supported by the built-in cURL
-    adapter.
+    handler.
 
 .. _verify-option:
 
@@ -871,10 +937,12 @@ verify
 ------
 
 :Summary: Describes the SSL certificate verification behavior of a request.
-    Set to ``true`` to enable SSL certificate verification (the default). Set
-    to ``false`` to disable certificate verification (this is insecure!). Set
-    to a string to provide the path to a CA bundle to enable verification using
-    a custom certificate.
+
+    - Set to ``true`` to enable SSL certificate verification and use the default
+      CA bundle provided by operating system.
+    - Set to ``false`` to disable certificate verification (this is insecure!).
+    - Set to a string to provide the path to a CA bundle to enable verification
+      using a custom certificate.
 :Types:
     - bool
     - string
@@ -882,11 +950,49 @@ verify
 
 .. code-block:: php
 
-    // Use a custom SSL certificate
+    // Use the system's CA bundle (this is the default setting)
+    $client->get('/', ['verify' => true]);
+
+    // Use a custom SSL certificate on disk.
     $client->get('/', ['verify' => '/path/to/cert.pem']);
 
-    // Disable validation
+    // Disable validation entirely (don't do this!).
     $client->get('/', ['verify' => false]);
+
+Not all system's have a known CA bundle on disk. For example, Windows and
+OS X do not have a single common location for CA bundles. When setting
+"verify" to ``true``, Guzzle will do its best to find the most appropriate
+CA bundle on your system. When using cURL or the PHP stream wrapper on PHP
+versions >= 5.6, this happens by default. When using the PHP stream
+wrapper on versions < 5.6, Guzzle tries to find your CA bundle in the
+following order:
+
+1. Check if ``openssl.cafile`` is set in your php.ini file.
+2. Check if ``curl.cainfo`` is set in your php.ini file.
+3. Check if ``/etc/pki/tls/certs/ca-bundle.crt`` exists (Red Hat, CentOS,
+   Fedora; provided by the ca-certificates package)
+4. Check if ``/etc/ssl/certs/ca-certificates.crt`` exists (Ubuntu, Debian;
+   provided by the ca-certificates package)
+5. Check if ``/usr/local/share/certs/ca-root-nss.crt`` exists (FreeBSD;
+   provided by the ca_root_nss package)
+6. Check if ``/usr/local/etc/openssl/cert.pem`` (OS X; provided by homebrew)
+7. Check if ``C:\windows\system32\curl-ca-bundle.crt`` exists (Windows)
+8. Check if ``C:\windows\curl-ca-bundle.crt`` exists (Windows)
+
+The result of this lookup is cached in memory so that subsequent calls
+in the same process will return very quickly. However, when sending only
+a single request per-process in something like Apache, you should consider
+setting the ``openssl.cafile`` environment variable to the path on disk
+to the file so that this entire process is skipped.
+
+If you do not need a specific certificate bundle, then Mozilla provides a
+commonly used CA bundle which can be downloaded
+`here <https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt>`_
+(provided by the maintainer of cURL). Once you have a CA bundle available on
+disk, you can set the "openssl.cafile" PHP ini setting to point to the path to
+the file, allowing you to omit the "verify" request option. Much more detail on
+SSL certificates can be found on the
+`cURL website <http://curl.haxx.se/docs/sslcerts.html>`_.
 
 .. _cert-option:
 
@@ -923,9 +1029,9 @@ ssl_key
 
 .. note::
 
-    ``ssl_key`` is implemented by HTTP adapters. This is currently only
-    supported by the cURL adapter, but might be supported by other third-part
-    adapters.
+    ``ssl_key`` is implemented by HTTP handlers. This is currently only
+    supported by the cURL handler, but might be supported by other third-part
+    handlers.
 
 .. _proxy-option:
 
@@ -968,7 +1074,7 @@ debug
 -----
 
 :Summary: Set to ``true`` or set to a PHP stream returned by ``fopen()`` to
-    enable debug output with the adapter used to send a request. For example,
+    enable debug output with the handler used to send a request. For example,
     when using cURL to transfer requests, cURL's verbose of ``CURLOPT_VERBOSE``
     will be emitted. When using the PHP stream wrapper, stream wrapper
     notifications will be emitted. If set to true, the output is written to
@@ -1023,10 +1129,10 @@ stream
 
 .. note::
 
-    Streaming response support must be implemented by the HTTP adapter used by
-    a client. This option might not be supported by every HTTP adapter, but the
+    Streaming response support must be implemented by the HTTP handler used by
+    a client. This option might not be supported by every HTTP handler, but the
     interface of the response object remains the same regardless of whether or
-    not it is supported by the adapter.
+    not it is supported by the handler.
 
 .. _expect-option:
 
@@ -1054,7 +1160,7 @@ the body of a request is greater than 1 MB and a request is using HTTP/1.1.
     This option only takes effect when using HTTP/1.1. The HTTP/1.0 and
     HTTP/2.0 protocols do not support the "Expect: 100-Continue" header.
     Support for handling the "Expect: 100-Continue" workflow must be
-    implemented by Guzzle HTTP adapters used by a client.
+    implemented by Guzzle HTTP handlers used by a client.
 
 .. _version-option:
 
@@ -1079,7 +1185,7 @@ config
 
 :Summary: Associative array of config options that are forwarded to a request's
     configuration collection. These values are used as configuration options
-    that can be consumed by plugins and adapters.
+    that can be consumed by plugins and handlers.
 :Types: array
 :Default: None
 
@@ -1089,7 +1195,7 @@ config
     echo $request->getConfig('foo');
     // 'bar'
 
-Some HTTP adapters allow you to specify custom adapter-specific settings. For
+Some HTTP handlers allow you to specify custom handler-specific settings. For
 example, you can pass custom cURL options to requests by passing an associative
 array in the ``config`` request option under the ``curl`` key.
 
@@ -1105,6 +1211,36 @@ array in the ``config`` request option under the ``curl`` key.
             ]
         ]
     ]);
+
+future
+------
+
+:Summary: Specifies whether or not a response SHOULD be an instance of a
+    ``GuzzleHttp\Message\FutureResponse`` object.
+:Types:
+        - bool
+        - string
+:Default: ``false``
+
+By default, Guzzle requests should be synchronous. You can create asynchronous
+future responses by passing the ``future`` request option as ``true``. The
+response will only be executed when it is used like a normal response, the
+``wait()`` method of the response is called, or the corresponding handler that
+created the response is destructing and there are futures that have not been
+resolved.
+
+.. important::
+
+    This option only has an effect if your handler can create and return future
+    responses. However, even if a response is completed synchronously, Guzzle
+    will ensure that a FutureResponse object is returned for API consistency.
+
+.. code-block:: php
+
+    $response = $client->get('/foo', ['future' => true])
+        ->then(function ($response) {
+            echo 'I got a response! ' . $response;
+        });
 
 Event Subscribers
 =================
@@ -1142,8 +1278,8 @@ Guzzle exposes a few environment variables that can be used to customize the
 behavior of the library.
 
 ``GUZZLE_CURL_SELECT_TIMEOUT``
-    Controls the duration in seconds that ``GuzzleHttp\Adapter\Curl\MultiAdapter``
-    will use when selecting handles using ``curl_multi_select()``. Some systems
+    Controls the duration in seconds that a curl_multi_* handler will use when
+    selecting on curl handles using ``curl_multi_select()``. Some systems
     have issues with PHP's implementation of ``curl_multi_select()`` where
     calling this function always results in waiting for the maximum duration of
     the timeout.

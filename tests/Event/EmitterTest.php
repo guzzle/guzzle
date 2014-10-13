@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Tests\Event;
 
 use GuzzleHttp\Event\Emitter;
@@ -42,7 +41,9 @@ class EmitterTest extends \PHPUnit_Framework_TestCase
     {
         $this->emitter->on('pre.foo', array($this->listener, 'preFoo'));
         $this->emitter->on('post.foo', array($this->listener, 'postFoo'));
-        $this->assertCount(1, $this->emitter->listeners(self::preFoo));
+        $this->assertTrue($this->emitter->hasListeners(self::preFoo));
+        $this->assertTrue($this->emitter->hasListeners(self::preFoo));
+        $this->assertCount(1, $this->emitter->listeners(self::postFoo));
         $this->assertCount(1, $this->emitter->listeners(self::postFoo));
         $this->assertCount(2, $this->emitter->listeners());
     }

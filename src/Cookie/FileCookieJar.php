@@ -1,6 +1,7 @@
 <?php
-
 namespace GuzzleHttp\Cookie;
+
+use GuzzleHttp\Utils;
 
 /**
  * Persists non-session cookies using a JSON formatted file
@@ -73,9 +74,9 @@ class FileCookieJar extends CookieJar
             // @codeCoverageIgnoreEnd
         }
 
-        $data = \GuzzleHttp\json_decode($json, true);
+        $data = Utils::jsonDecode($json, true);
         if (is_array($data)) {
-            foreach (\GuzzleHttp\json_decode($json, true) as $cookie) {
+            foreach (Utils::jsonDecode($json, true) as $cookie) {
                 $this->setCookie(new SetCookie($cookie));
             }
         } elseif (strlen($data)) {

@@ -1,26 +1,22 @@
 <?php
-
 namespace GuzzleHttp\Exception;
 
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\ResponseInterface;
+use GuzzleHttp\Ring\Exception\ConnectException;
+use GuzzleHttp\Exception\ConnectException as HttpConnectException;
+use GuzzleHttp\Ring\Future\FutureInterface;
 
 /**
  * HTTP Request exception
  */
 class RequestException extends TransferException
 {
-    /** @var bool */
-    private $emittedErrorEvent = false;
-
     /** @var RequestInterface */
     private $request;
 
     /** @var ResponseInterface */
     private $response;
-
-    /** @var bool */
-    private $throwImmediately = false;
 
     public function __construct(
         $message,
@@ -28,10 +24,32 @@ class RequestException extends TransferException
         ResponseInterface $response = null,
         \Exception $previous = null
     ) {
-        $code = $response ? $response->getStatusCode() : 0;
+        // Set the code of the exception if the response is set and not future.
+        $code = $response && !($response instanceof FutureInterface)
+            ? $response->getStatusCode()
+            : 0;
         parent::__construct($message, $code, $previous);
         $this->request = $request;
         $this->response = $response;
+    }
+
+    /**
+     * Wrap non-RequesExceptions with a RequestException
+     *
+     * @param RequestInterface $request
+     * @param \Exception       $e
+     *
+     * @return RequestException
+     */
+    public static function wrapException(RequestInterface $request, \Exception $e)
+    {
+        if ($e instanceof RequestException) {
+            return $e;
+        } elseif ($e instanceof ConnectException) {
+            return new HttpConnectException($e->getMessage(), $request, null, $e);
+        } else {
+            return new RequestException($e->getMessage(), $request, null, $e);
+        }
     }
 
     /**
@@ -99,52 +117,5 @@ class RequestException extends TransferException
     public function hasResponse()
     {
         return $this->response !== null;
-    }
-
-    /**
-     * Check or set if the exception was emitted in an error event.
-     *
-     * This value is used in the RequestEvents::emitBefore() method to check
-     * to see if an exception has already been emitted in an error event.
-     *
-     * @param bool|null Set to true to set the exception as having emitted an
-     *     error. Leave null to retrieve the current setting.
-     *
-     * @return null|bool
-     * @throws \InvalidArgumentException if you attempt to set the value to false
-     */
-    public function emittedError($value = null)
-    {
-        if ($value === null) {
-            return $this->emittedErrorEvent;
-        } elseif ($value === true) {
-            $this->emittedErrorEvent = true;
-        } else {
-            throw new \InvalidArgumentException('You cannot set the emitted '
-                . 'error value to false.');
-        }
-    }
-
-    /**
-     * Sets whether or not parallel adapters SHOULD throw the exception
-     * immediately rather than handling errors through asynchronous error
-     * handling.
-     *
-     * @param bool $throwImmediately
-     *
-     */
-    public function setThrowImmediately($throwImmediately)
-    {
-        $this->throwImmediately = $throwImmediately;
-    }
-
-    /**
-     * Gets the setting specified by setThrowImmediately().
-     *
-     * @return bool
-     */
-    public function getThrowImmediately()
-    {
-        return $this->throwImmediately;
     }
 }

@@ -108,4 +108,13 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
             chdir($oldCwd);
         }
     }
+
+    public function testStatusAndReasonAreMutable()
+    {
+        $response = new Response(200);
+        $response->setStatusCode(201);
+        $this->assertEquals(201, $response->getStatusCode());
+        $response->setReasonPhrase('Foo');
+        $this->assertEquals('Foo', $response->getReasonPhrase());
+    }
 }

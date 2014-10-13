@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Message;
 
 /**
@@ -8,19 +7,44 @@ namespace GuzzleHttp\Message;
 interface ResponseInterface extends MessageInterface
 {
     /**
-     * Get the response status code (e.g. "200", "404", etc.)
+     * Gets the response Status-Code.
      *
-     * @return string
+     * The Status-Code is a 3-digit integer result code of the server's attempt
+     * to understand and satisfy the request.
+     *
+     * @return integer Status code.
      */
     public function getStatusCode();
 
     /**
-     * Get the response reason phrase- a human readable version of the numeric
-     * status code
+     * Sets the status code of this response.
      *
-     * @return string
+     * @param integer $code The 3-digit integer result code to set.
+     */
+    public function setStatusCode($code);
+
+    /**
+     * Gets the response Reason-Phrase, a short textual description of the
+     * Status-Code.
+     *
+     * Because a Reason-Phrase is not a required element in response
+     * Status-Line, the Reason-Phrase value MAY be null. Implementations MAY
+     * choose to return the default RFC 2616 recommended reason phrase for the
+     * response's Status-Code.
+     *
+     * @return string|null Reason phrase, or null if unknown.
      */
     public function getReasonPhrase();
+
+    /**
+     * Sets the Reason-Phrase of the response.
+     *
+     * If no Reason-Phrase is specified, implementations MAY choose to default
+     * to the RFC 2616 recommended reason phrase for the response's Status-Code.
+     *
+     * @param string $phrase The Reason-Phrase to set.
+     */
+    public function setReasonPhrase($phrase);
 
     /**
      * Get the effective URL that resulted in this response (e.g. the last
@@ -35,8 +59,6 @@ interface ResponseInterface extends MessageInterface
      * redirect URL).
      *
      * @param string $url Effective URL
-     *
-     * @return self
      */
     public function setEffectiveUrl($url);
 

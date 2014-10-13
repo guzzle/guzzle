@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp;
 
 /**
@@ -50,14 +49,10 @@ class Collection implements
 
     /**
      * Removes all key value pairs
-     *
-     * @return Collection
      */
     public function clear()
     {
         $this->data = [];
-
-        return $this;
     }
 
     /**
@@ -77,14 +72,10 @@ class Collection implements
      *
      * @param string $key   Key to set
      * @param mixed  $value Value to set
-     *
-     * @return Collection Returns a reference to the object
      */
     public function set($key, $value)
     {
         $this->data[$key] = $value;
-
-        return $this;
     }
 
     /**
@@ -94,8 +85,6 @@ class Collection implements
      *
      * @param string $key   Key to add
      * @param mixed  $value Value to add to the key
-     *
-     * @return Collection Returns a reference to the object.
      */
     public function add($key, $value)
     {
@@ -106,22 +95,16 @@ class Collection implements
         } else {
             $this->data[$key] = array($this->data[$key], $value);
         }
-
-        return $this;
     }
 
     /**
      * Remove a specific key value pair
      *
      * @param string $key A key to remove
-     *
-     * @return Collection
      */
     public function remove($key)
     {
         unset($this->data[$key]);
-
-        return $this;
     }
 
     /**
@@ -163,39 +146,29 @@ class Collection implements
      * Replace the data of the object with the value of an array
      *
      * @param array $data Associative array of data
-     *
-     * @return Collection Returns a reference to the object
      */
     public function replace(array $data)
     {
         $this->data = $data;
-
-        return $this;
     }
 
     /**
      * Add and merge in a Collection or array of key value pair data.
      *
      * @param Collection|array $data Associative array of key value pair data
-     *
-     * @return Collection Returns a reference to the object.
      */
     public function merge($data)
     {
         foreach ($data as $key => $value) {
             $this->add($key, $value);
         }
-
-        return $this;
     }
 
     /**
-     * Over write key value pairs in this collection with all of the data from
+     * Overwrite key value pairs in this collection with all of the data from
      * an array or collection.
      *
      * @param array|\Traversable $data Values to override over this config
-     *
-     * @return self
      */
     public function overwriteWith($data)
     {
@@ -208,8 +181,6 @@ class Collection implements
                 $this->data[$key] = $value;
             }
         }
-
-        return $this;
     }
 
     /**

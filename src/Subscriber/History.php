@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Subscriber;
 
 use GuzzleHttp\Event\CompleteEvent;
@@ -43,7 +42,8 @@ class History implements SubscriberInterface, \IteratorAggregate, \Countable
         $lines = array();
         foreach ($this->transactions as $entry) {
             $response = isset($entry['response']) ? $entry['response'] : '';
-            $lines[] = '> ' . trim($entry['request']) . "\n\n< " . trim($response) . "\n";
+            $lines[] = '> ' . trim($entry['sent_request'])
+                . "\n\n< " . trim($response) . "\n";
         }
 
         return implode("\n", $lines);
@@ -65,7 +65,11 @@ class History implements SubscriberInterface, \IteratorAggregate, \Countable
 
     /**
      * Returns an Iterator that yields associative array values where each
-     * associative array contains a 'request' and 'response' key.
+     * associative array contains the following key value pairs:
+     *
+     * - request: Representing the actual request that was received.
+     * - sent_request: A clone of the request that will not be mutated.
+     * - response: The response that was received (if available).
      *
      * @return \Iterator
      */
@@ -75,14 +79,24 @@ class History implements SubscriberInterface, \IteratorAggregate, \Countable
     }
 
     /**
-     * Get all of the requests sent through the plugin
+     * Get all of the requests sent through the plugin.
+     *
+     * Requests can be modified after they are logged by the history
+     * subscriber. By default this method will return the actual request
+     * instances that were received. Pass true to this method if you wish to
+     * get copies of the requests that represent the request state when it was
+     * initially logged by the history subscriber.
+     *
+     * @param bool $asSent Set to true to get clones of the requests that have
+     *                     not been mutated since the request was received by
+     *                     the history subscriber.
      *
      * @return RequestInterface[]
      */
-    public function getRequests()
+    public function getRequests($asSent = false)
     {
-        return array_map(function ($t) {
-            return $t['request'];
+        return array_map(function ($t) use ($asSent) {
+            return $asSent ? $t['sent_request'] : $t['request'];
         }, $this->transactions);
     }
 
@@ -97,13 +111,25 @@ class History implements SubscriberInterface, \IteratorAggregate, \Countable
     }
 
     /**
-     * Get the last request sent
+     * Get the last request sent.
+     *
+     * Requests can be modified after they are logged by the history
+     * subscriber. By default this method will return the actual request
+     * instance that was received. Pass true to this method if you wish to get
+     * a copy of the request that represents the request state when it was
+     * initially logged by the history subscriber.
+     *
+     * @param bool $asSent Set to true to get a clone of the last request that
+     *                     has not been mutated since the request was received
+     *                     by the history subscriber.
      *
      * @return RequestInterface
      */
-    public function getLastRequest()
+    public function getLastRequest($asSent = false)
     {
-        return end($this->transactions)['request'];
+        return $asSent
+            ? end($this->transactions)['sent_request']
+            : end($this->transactions)['request'];
     }
 
     /**
@@ -134,7 +160,11 @@ class History implements SubscriberInterface, \IteratorAggregate, \Countable
         RequestInterface $request,
         ResponseInterface $response = null
     ) {
-        $this->transactions[] = ['request' => $request, 'response' => $response];
+        $this->transactions[] = [
+            'request'      => $request,
+            'sent_request' => clone $request,
+            'response'     => $response
+        ];
         if (count($this->transactions) > $this->limit) {
             array_shift($this->transactions);
         }

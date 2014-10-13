@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp;
 
 /**
@@ -203,8 +202,6 @@ class Url
             $this->host = $host;
             $this->setPort($port);
         }
-
-        return $this;
     }
 
     /**
@@ -221,8 +218,6 @@ class Url
      * Set the scheme part of the URL (http, https, ftp, etc.)
      *
      * @param string $scheme Scheme to set
-     *
-     * @return Url
      */
     public function setScheme($scheme)
     {
@@ -234,8 +229,6 @@ class Url
         }
 
         $this->scheme = $scheme;
-
-        return $this;
     }
 
     /**
@@ -252,14 +245,10 @@ class Url
      * Set the port part of the URL
      *
      * @param int $port Port to set
-     *
-     * @return Url
      */
     public function setPort($port)
     {
         $this->port = $port;
-
-        return $this;
     }
 
     /**
@@ -285,22 +274,16 @@ class Url
      * Set the path part of the URL
      *
      * @param string $path Path string to set
-     *
-     * @return Url
      */
     public function setPath($path)
     {
         static $search  = [' ',   '?'];
         static $replace = ['%20', '%3F'];
         $this->path = str_replace($search, $replace, $path);
-
-        return $this;
     }
 
     /**
      * Removes dot segments from a URL
-     *
-     * @return Url
      * @link http://tools.ietf.org/html/rfc3986#section-5.2.4
      */
     public function removeDotSegments()
@@ -309,7 +292,7 @@ class Url
         static $ignoreSegments = ['.' => true, '..' => true];
 
         if (isset($noopPaths[$this->path])) {
-            return $this;
+            return;
         }
 
         $results = [];
@@ -337,16 +320,12 @@ class Url
         }
 
         $this->path = $newPath;
-
-        return $this;
     }
 
     /**
      * Add a relative path to the currently set path.
      *
      * @param string $relativePath Relative path to add
-     *
-     * @return Url
      */
     public function addPath($relativePath)
     {
@@ -363,8 +342,6 @@ class Url
 
             $this->setPath($this->path . $relativePath);
         }
-
-        return $this;
     }
 
     /**
@@ -391,14 +368,10 @@ class Url
      * Set the password part of the URL
      *
      * @param string $password Password to set
-     *
-     * @return Url
      */
     public function setPassword($password)
     {
         $this->password = $password;
-
-        return $this;
     }
 
     /**
@@ -415,14 +388,10 @@ class Url
      * Set the username part of the URL
      *
      * @param string $username Username to set
-     *
-     * @return Url
      */
     public function setUsername($username)
     {
         $this->username = $username;
-
-        return $this;
     }
 
     /**
@@ -452,7 +421,6 @@ class Url
      *     be a string that will be parsed into a Query object, an array
      *     of key value pairs, or a Query object.
      *
-     * @return Url
      * @throws \InvalidArgumentException
      */
     public function setQuery($query)
@@ -464,11 +432,9 @@ class Url
         } elseif (is_array($query)) {
             $this->query = new Query($query);
         } else {
-            throw new \InvalidArgumentException('Query must be a '
-                . 'QueryInterface, array, or string');
+            throw new \InvalidArgumentException('Query must be a Query, '
+                . 'array, or string. ' . gettype($query) . ' provided.');
         }
-
-        return $this;
     }
 
     /**
@@ -485,14 +451,10 @@ class Url
      * Set the fragment part of the URL
      *
      * @param string $fragment Fragment to set
-     *
-     * @return Url
      */
     public function setFragment($fragment)
     {
         $this->fragment = $fragment;
-
-        return $this;
     }
 
     /**

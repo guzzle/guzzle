@@ -9,34 +9,8 @@ page.
 Make a Request
 ==============
 
-You can send requests with Guzzle in one of two ways: through the procedural
-API or using a ``GuzzleHttp\ClientInterface`` object. Using the procedural API
-is an easy way to send a quick HTTP request. Using a Client object provides
-much more flexibility in how requests are transferred and allows you to more
-easily test the client.
-
-Procedural API
---------------
-
-Here's an example of sending a ``POST`` request using the procedural API.
-
-.. code-block:: php
-
-    $response = GuzzleHttp\post('http://httpbin.org/post', [
-        'headers' => ['X-Foo' => 'Bar'],
-        'body'    => ['field_name' => 'value']
-    ]);
-
-You can send all kinds of HTTP requests with the procedural API. Just call
-the function that maps to the HTTP method name.
-
-.. code-block:: php
-
-    $response = GuzzleHttp\head('http://httpbin.org/get');
-    $response = GuzzleHttp\post('http://httpbin.org/post');
-    $response = GuzzleHttp\put('http://httpbin.org/put');
-    $response = GuzzleHttp\delete('http://httpbin.org/delete');
-    $response = GuzzleHttp\options('http://httpbin.org/get');
+You can send requests with Guzzle using a ``GuzzleHttp\ClientInterface``
+object.
 
 Creating a Client
 -----------------
@@ -90,6 +64,16 @@ You can get the status code and reason phrase of the response.
 
     $reason = $response->getReasonPhrase();
     // OK
+
+By providing the ``future`` request option to a request, you can send requests
+asynchronously using the promise interface of a future response.
+
+.. code-block:: php
+
+    $client->get('http://httpbin.org', ['future' => true])
+        ->then(function ($response) {
+            echo $response->getStatusCode();
+        });
 
 Response Body
 -------------
@@ -459,9 +443,6 @@ Guzzle throws exceptions for errors that occur during a transfer.
   exception extends from ``GuzzleHttp\Exception\BadResponseException``.
 - A ``GuzzleHttp\Exception\TooManyRedirectsException`` is thrown when too
   many redirects are followed. This exception extends from ``GuzzleHttp\Exception\RequestException``.
-- A ``GuzzleHttp\Exception\AdapterException`` is thrown when an error occurs
-  in an HTTP adapter during a parallel request. This exception is only thrown
-  when using the ``sendAll()`` method of a client.
 
 All of the above exceptions extend from
 ``GuzzleHttp\Exception\TransferException``.

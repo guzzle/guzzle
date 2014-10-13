@@ -6,16 +6,16 @@ Requirements
 ============
 
 #. PHP 5.4.0
-#. To use the PHP stream adapter, ``allow_url_fopen`` must be enabled in your
+#. To use the PHP stream handler, ``allow_url_fopen`` must be enabled in your
    system's php.ini.
-#. To use the cURL adapter, you must have a recent version of cURL >= 7.16.2
+#. To use the cURL handler, you must have a recent version of cURL >= 7.16.2
    compiled with OpenSSL and zlib.
 
 .. note::
 
     Guzzle no longer requires cURL in order to send HTTP requests. Guzzle will
     use the PHP stream wrapper to send HTTP requests if cURL is not installed.
-    Alternatively, you can provide your own HTTP adapter used to send requests.
+    Alternatively, you can provide your own HTTP handler used to send requests.
 
 .. _installation:
 
@@ -35,7 +35,7 @@ You can add Guzzle as a dependency using the composer.phar CLI:
 
 .. code-block:: bash
 
-    php composer.phar require guzzlehttp/guzzle:~4
+    php composer.phar require guzzlehttp/guzzle:~5.0
 
 Alternatively, you can specify Guzzle as a dependency in your project's
 existing composer.json file:
@@ -44,7 +44,7 @@ existing composer.json file:
 
     {
       "require": {
-         "guzzlehttp/guzzle": "4.*"
+         "guzzlehttp/guzzle": "~5.0"
       }
    }
 
@@ -61,13 +61,13 @@ Bleeding edge
 -------------
 
 During your development, you can keep up with the latest changes on the master
-branch by setting the version requirement for Guzzle to ``dev-master``.
+branch by setting the version requirement for Guzzle to ``~5.0@dev``.
 
 .. code-block:: js
 
    {
       "require": {
-         "guzzlehttp/guzzle": "dev-master"
+         "guzzlehttp/guzzle": "~5.0@dev"
       }
    }
 
@@ -130,7 +130,7 @@ binary:
 .. note::
 
     You'll need to install node.js v0.5.0 or newer in order to perform
-    integration tests on Guzzle's HTTP adapters.
+    integration tests on Guzzle's HTTP handlers.
 
 Reporting a security vulnerability
 ==================================

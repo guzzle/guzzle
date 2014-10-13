@@ -1,22 +1,35 @@
 <?php
-
 namespace GuzzleHttp\Tests\Subscriber;
 
-use GuzzleHttp\Adapter\Transaction;
-use GuzzleHttp\Client;
+use GuzzleHttp\Message\FutureResponse;
+use GuzzleHttp\Transaction;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Subscriber\Mock;
+use React\Promise\Deferred;
 
 /**
  * @covers GuzzleHttp\Subscriber\Mock
  */
 class MockTest extends \PHPUnit_Framework_TestCase
 {
+    public static function createFuture(
+        callable $wait,
+        callable $cancel = null
+    ) {
+        $deferred = new Deferred();
+        return new FutureResponse(
+            $deferred->promise(),
+            function () use ($deferred, $wait) {
+                $deferred->resolve($wait());
+            },
+            $cancel
+        );
+    }
+
     public function testDescribesSubscribedEvents()
     {
         $mock = new Mock();
@@ -65,7 +78,7 @@ class MockTest extends \PHPUnit_Framework_TestCase
         $m = new Mock([$response]);
         $ev = new BeforeEvent($t);
         $m->onBefore($ev);
-        $this->assertSame($response, $t->getResponse());
+        $this->assertSame($response, $t->response);
     }
 
     /**
@@ -103,6 +116,75 @@ class MockTest extends \PHPUnit_Framework_TestCase
         } catch (RequestException $e) {
             $this->assertSame($e, $ex);
             $this->assertSame($request, $ex->getRequest());
+        }
+    }
+
+    public function testCanMockFutureResponses()
+    {
+        $client = new Client(['base_url' => 'http://test.com']);
+        $request = $client->createRequest('GET', '/', ['future' => true]);
+        $response = new Response(200);
+        $future = self::createFuture(function () use ($response) {
+            return $response;
+        });
+        $mock = new Mock([$future]);
+        $this->assertCount(1, $mock);
+        $request->getEmitter()->attach($mock);
+        $res = $client->send($request);
+        $this->assertSame($future, $res);
+        $this->assertFalse($this->readAttribute($res, 'isRealized'));
+        $this->assertSame($response, $res->wait());
+    }
+
+    public function testCanMockExceptionFutureResponses()
+    {
+        $client = new Client(['base_url' => 'http://test.com']);
+        $request = $client->createRequest('GET', '/', ['future' => true]);
+        $future = self::createFuture(function () use ($request) {
+            throw new RequestException('foo', $request);
+        });
+
+        $mock = new Mock([$future]);
+        $request->getEmitter()->attach($mock);
+        $response = $client->send($request);
+        $this->assertSame($future, $response);
+        $this->assertFalse($this->readAttribute($response, 'isRealized'));
+
+        try {
+            $response->wait();
+            $this->fail('Did not throw');
+        } catch (RequestException $e) {
+            $this->assertContains('foo', $e->getMessage());
+        }
+    }
+
+    public function testCanMockFailedFutureResponses()
+    {
+        $client = new Client(['base_url' => 'http://test.com']);
+        $request = $client->createRequest('GET', '/', ['future' => true]);
+
+        // The first mock will be a mocked future response.
+        $future = self::createFuture(function () use ($client) {
+            // When dereferenced, we will set a mocked response and send
+            // another request.
+            $client->get('http://httpbin.org', ['events' => [
+                'before' => function (BeforeEvent $e) {
+                    $e->intercept(new Response(404));
+                }
+            ]]);
+        });
+
+        $mock = new Mock([$future]);
+        $request->getEmitter()->attach($mock);
+        $response = $client->send($request);
+        $this->assertSame($future, $response);
+        $this->assertFalse($this->readAttribute($response, 'isRealized'));
+
+        try {
+            $response->wait();
+            $this->fail('Did not throw');
+        } catch (RequestException $e) {
+            $this->assertEquals(404, $e->getResponse()->getStatusCode());
         }
     }
 }

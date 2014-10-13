@@ -1,9 +1,8 @@
 <?php
-
 namespace GuzzleHttp\Post;
 
 use GuzzleHttp\Mimetypes;
-use GuzzleHttp\Stream\MetadataStreamInterface;
+use GuzzleHttp\Stream\StreamInterface;
 use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Stream\StreamInterface;
 
@@ -93,9 +92,7 @@ class PostFile implements PostFileInterface
     {
         $this->filename = $filename;
 
-        if (!$this->filename &&
-            $this->content instanceof MetadataStreamInterface
-        ) {
+        if (!$this->filename) {
             $this->filename = $this->content->getMetadata('uri');
         }
 
