@@ -1,6 +1,8 @@
 <?php
 namespace GuzzleHttp\Tests\Subscriber;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Subscriber\Mock;
 use GuzzleHttp\Message\FutureResponse;
 use GuzzleHttp\Transaction;
 use GuzzleHttp\Event\BeforeEvent;

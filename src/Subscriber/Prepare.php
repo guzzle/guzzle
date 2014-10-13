@@ -8,7 +8,6 @@ use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Mimetypes;
 use GuzzleHttp\Post\PostBodyInterface;
 use GuzzleHttp\Stream\StreamInterface;
-use GuzzleHttp\Mimetypes;
 
 /**
  * Prepares requests with a body before sending

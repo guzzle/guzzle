@@ -2,11 +2,9 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Event\HasEmitterInterface;
-use GuzzleHttp\Exception\AdapterException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\ResponseInterface;
-use GuzzleHttp\Exception\RequestException;
 
 /**
  * Client interface for sending HTTP requests

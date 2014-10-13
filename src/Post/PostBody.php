@@ -6,8 +6,6 @@ use GuzzleHttp\Stream\Exception\CannotAttachException;
 use GuzzleHttp\Stream\StreamInterface;
 use GuzzleHttp\Stream\Stream;
 use GuzzleHttp\Query;
-use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Stream\StreamInterface;
 
 /**
  * Holds POST fields and files and creates a streaming body when read methods

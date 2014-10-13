@@ -8,12 +8,8 @@ use GuzzleHttp\Message\Response;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Subscriber\Cookie;
 use GuzzleHttp\Cookie\CookieJar;
-use GuzzleHttp\Message\MessageFactory;
-use GuzzleHttp\Message\Response;
-use GuzzleHttp\Post\PostFile;
 use GuzzleHttp\Query;
 use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Subscriber\Cookie;
 use GuzzleHttp\Subscriber\History;
 use GuzzleHttp\Subscriber\Mock;
 
