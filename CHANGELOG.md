@@ -1,8 +1,8 @@
 CHANGELOG
 =========
 
-5.0.0 (TBD)
------------
+5.0.0 (2014-10-12)
+------------------
 
 Adding support for non-blocking responses and some minor API cleanup.
 
