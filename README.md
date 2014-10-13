@@ -52,14 +52,10 @@ The recommended way to install Guzzle is through
 curl -sS https://getcomposer.org/installer | php
 ```
 
-Next, update your project's composer.json file to include Guzzle:
+Next, run the Composer command to install the latest stable version of Guzzle:
 
-```javascript
-{
-    "require": {
-        "guzzlehttp/guzzle": "~5.0"
-    }
-}
+```bash
+composer require guzzlehttp/guzzle
 ```
 
 After installing, you need to require Composer's autoloader:
