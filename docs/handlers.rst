@@ -38,6 +38,6 @@ up to the RingPHP project using a very simple bridge class
 Creating a handler
 ------------------
 
-See the `RingPHP <http://guzzle-ring.readthedocs.org>`_ project
+See the `RingPHP <http://ringphp.readthedocs.org>`_ project
 documentation for more information on creating custom handlers that can be
 used with Guzzle clients.
