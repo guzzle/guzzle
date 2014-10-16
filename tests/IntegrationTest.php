@@ -3,6 +3,8 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\AbstractTransferEvent;
+use GuzzleHttp\Event\EndEvent;
+use GuzzleHttp\Message\Response;
 use GuzzleHttp\Pool;
 
 class IntegrationTest extends \PHPUnit_Framework_TestCase
@@ -47,5 +49,25 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('GuzzleHttp\Event\EndEvent', $events[1][0]);
         $this->assertFalse($events[1][1]);
         $this->assertNull($events[1][2]);
+    }
+
+    /**
+     * @issue https://github.com/guzzle/guzzle/issues/866
+     */
+    public function testProperyGetsTransferStats()
+    {
+        $transfer = [];
+        Server::enqueue([new Response(200)]);
+        $c = new Client();
+        $response = $c->get(Server::$url . '/foo', [
+            'events' => [
+                'end' => function (EndEvent $e) use (&$transfer) {
+                    $transfer = $e->getTransferInfo();
+                }
+            ]
+        ]);
+        $this->assertEquals(Server::$url . '/foo', $response->getEffectiveUrl());
+        $this->assertNotEmpty($transfer);
+        $this->assertArrayHasKey('url', $transfer);
     }
 }

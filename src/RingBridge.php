@@ -87,8 +87,8 @@ class RingBridge
         callable $fsm
     ) {
         $trans->state = 'complete';
-        $trans->transferInfo = isset($response['transfer_info'])
-            ? $response['transfer_info'] : [];
+        $trans->transferInfo = isset($response['transfer_stats'])
+            ? $response['transfer_stats'] : [];
 
         if (!empty($response['status'])) {
             $options = [];
