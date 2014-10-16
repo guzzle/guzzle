@@ -1,6 +1,18 @@
 CHANGELOG
 =========
 
+5.0.1 (2014-10-16)
+------------------
+
+Bugfix release.
+
+* Fixed an issue where connection errors still returned response object in
+  error and end events event though the response is unusable. This has been
+  corrected so that a response is not returned in the `getResponse` method of
+  these events if the response did not complete. https://github.com/guzzle/guzzle/issues/867
+* Fixed an issue where transfer statistics were not being populated in the
+  RingBridge. https://github.com/guzzle/guzzle/issues/866
+
 5.0.0 (2014-10-12)
 ------------------
 
