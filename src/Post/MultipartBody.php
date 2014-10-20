@@ -104,6 +104,11 @@ class MultipartBody implements StreamInterface
         // Add the trailing boundary
         $stream->addStream(Stream::factory("--{$this->boundary}--"));
 
+        // .NET's MVC 4 fails to parse multipart uploads which lack a trailing CRLF.
+        // This is safe to add to all multipart requests since it is after the final boundary
+        // which is considered part of the epilogue and is ignored (per RFC1341 section 7.2.1).
+        $stream->addStream(Stream::factory("\r\n"));
+
         return $stream;
     }
 }
