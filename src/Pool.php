@@ -127,6 +127,22 @@ class Pool implements FutureInterface
         return new BatchResults($hash);
     }
 
+    /**
+     * Creates a Pool and immediately sends the requests.
+     *
+     * @param ClientInterface $client   Client used to send the requests
+     * @param array|\Iterator $requests Requests to send in parallel
+     * @param array           $options  Passes through the options available in
+     *                                  {@see GuzzleHttp\Pool::__construct}
+     */
+    public static function send(
+        ClientInterface $client,
+        $requests,
+        array $options = []
+    ) {
+        (new self($client, $requests, $options))->wait();
+    }
+
     public function wait()
     {
         if ($this->isRealized) {

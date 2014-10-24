@@ -216,4 +216,16 @@ class PoolTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(1, $result);
         $this->assertInstanceOf('GuzzleHttp\Exception\ClientException', $result[0]);
     }
+
+    public function testHasSendMethod()
+    {
+        $client = new Client();
+        $responses = [new Response(404)];
+        $history = new History();
+        $client->getEmitter()->attach($history);
+        $client->getEmitter()->attach(new Mock($responses));
+        $requests = [$client->createRequest('GET', 'http://foo.com/baz')];
+        Pool::send($client, $requests);
+        $this->assertCount(1, $history);
+    }
 }
