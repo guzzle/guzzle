@@ -33,7 +33,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-ring": "5.0-dev"
+            "dev-master": "5.0-dev"
         }
     }
 }
