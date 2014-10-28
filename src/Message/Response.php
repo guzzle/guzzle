@@ -96,7 +96,7 @@ class Response extends AbstractMessage implements ResponseInterface
         StreamInterface $body = null,
         array $options = []
     ) {
-        $this->statusCode = (string) $statusCode;
+        $this->statusCode = (integer) $statusCode;
         $this->handleOptions($options);
 
         // Assume a reason phrase if one was not applied as an option
