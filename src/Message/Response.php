@@ -83,7 +83,7 @@ class Response extends AbstractMessage implements ResponseInterface
     private $effectiveUrl;
 
     /**
-     * @param string          $statusCode The response status code (e.g. 200)
+     * @param int|string      $statusCode The response status code (e.g. 200)
      * @param array           $headers    The response headers
      * @param StreamInterface $body       The body of the response
      * @param array           $options    Response message options
@@ -96,7 +96,7 @@ class Response extends AbstractMessage implements ResponseInterface
         StreamInterface $body = null,
         array $options = []
     ) {
-        $this->statusCode = (string) $statusCode;
+        $this->statusCode = (int) $statusCode;
         $this->handleOptions($options);
 
         // Assume a reason phrase if one was not applied as an option
@@ -122,7 +122,7 @@ class Response extends AbstractMessage implements ResponseInterface
 
     public function setStatusCode($code)
     {
-        return $this->statusCode = $code;
+        return $this->statusCode = (int) $code;
     }
 
     public function getReasonPhrase()
