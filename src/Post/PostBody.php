@@ -38,8 +38,11 @@ class PostBody implements PostBodyInterface
                 'Content-Type',
                 'multipart/form-data; boundary=' . $this->getBody()->getBoundary()
             );
-        } elseif ($this->fields) {
-            $request->setHeader('Content-Type', 'application/x-www-form-urlencoded');
+        } elseif ($this->fields && !$request->hasHeader('Content-Type')) {
+            $request->setHeader(
+                'Content-Type',
+                'application/x-www-form-urlencoded'
+            );
         }
 
         if ($size = $this->getSize()) {

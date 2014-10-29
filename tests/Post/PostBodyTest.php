@@ -239,4 +239,18 @@ class PostBodyTest extends \PHPUnit_Framework_TestCase
         $b = new PostBody();
         $b->attach('foo');
     }
+
+    public function testDoesNotOverwriteExistingHeaderForUrlencoded()
+    {
+        $m = new Request('POST', 'http://foo.com', [
+            'content-type' => 'application/x-www-form-urlencoded; charset=utf-8'
+        ]);
+        $b = new PostBody();
+        $b->setField('foo', 'bar');
+        $b->applyRequestHeaders($m);
+        $this->assertEquals(
+            'application/x-www-form-urlencoded; charset=utf-8',
+            $m->getHeader('Content-Type')
+        );
+    }
 }

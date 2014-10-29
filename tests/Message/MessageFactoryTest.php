@@ -555,7 +555,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $client->getEmitter()->attach($history);
         $client->post('http://foo.com', [
             'headers' => ['Content-Type' => 'multipart/form-data'],
-            'body' => ['foo' => 'bar']
+            'body'    => ['foo' => 'bar']
         ]);
         $this->assertContains(
             'multipart/form-data; boundary=',
