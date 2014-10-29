@@ -97,7 +97,7 @@ exception.
 
 .. code-block:: php
 
-    $request = $client->createRequest('GET', ['future' => true']);
+    $request = $client->createRequest('GET', ['future' => true]);
     $client->send($request)->then(function ($response) {
         echo 'Got a response! ' . $response;
     });
@@ -107,7 +107,7 @@ of a response.
 
 .. code-block:: php
 
-    $request = $client->createRequest('GET', ['future' => true']);
+    $request = $client->createRequest('GET', ['future' => true]);
     $futureResponse = $client->send($request);
     $futureResponse->wait();
 
