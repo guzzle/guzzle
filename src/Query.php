@@ -100,7 +100,9 @@ class Query extends Collection
             }
         }
 
-        return $result;
+        // Query strings allow for "/" characters.
+        // See: http://tools.ietf.org/html/rfc3986#section-3.4
+        return $this->encoding ? str_replace('%2F', '/', $result) : $result;
     }
 
     /**
