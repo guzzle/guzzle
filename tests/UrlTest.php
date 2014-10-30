@@ -330,4 +330,10 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $url->addPath('?');
         $this->assertEquals('http://foo.com/baz%20bar/%3F?a=b', (string) $url);
     }
+
+    public function testCorrectlyEncodesPathWithoutDoubleEncoding()
+    {
+        $url = Url::fromString('http://foo.com/baz%20 bar:boo/baz!');
+        $this->assertEquals('/baz%20%20bar:boo/baz!', $url->getPath());
+    }
 }

@@ -1,6 +1,8 @@
 <?php
 namespace GuzzleHttp;
 
+use GuzzleHttp\Ring\Core;
+
 /**
  * Parses and generates URLs based on URL parts
  */
@@ -13,10 +15,11 @@ class Url
     private $password;
     private $path = '';
     private $fragment;
-    private static $defaultPorts = ['http' => 80, 'https' => 443, 'ftp' => 21];
 
     /** @var Query Query part of the URL */
     private $query;
+
+    private static $defaultPorts = ['http' => 80, 'https' => 443, 'ftp' => 21];
 
     /**
      * Factory method to create a new URL from a URL string
@@ -28,9 +31,9 @@ class Url
      */
     public static function fromString($url)
     {
-        static $defaults = array('scheme' => null, 'host' => null,
+        static $defaults = ['scheme' => null, 'host' => null,
             'path' => null, 'port' => null, 'query' => null,
-            'user' => null, 'pass' => null, 'fragment' => null);
+            'user' => null, 'pass' => null, 'fragment' => null];
 
         if (false === ($parts = parse_url($url))) {
             throw new \InvalidArgumentException('Unable to parse malformed '
@@ -141,11 +144,13 @@ class Url
         $this->username = $username;
         $this->password = $password;
         $this->fragment = $fragment;
+
         if (!$query) {
             $this->query = new Query();
         } else {
             $this->setQuery($query);
         }
+
         $this->setPath($path);
     }
 
@@ -222,8 +227,9 @@ class Url
     public function setScheme($scheme)
     {
         // Remove the default port if one is specified
-        if ($this->port && isset(self::$defaultPorts[$this->scheme]) &&
-            self::$defaultPorts[$this->scheme] == $this->port
+        if ($this->port
+            && isset(self::$defaultPorts[$this->scheme])
+            && self::$defaultPorts[$this->scheme] == $this->port
         ) {
             $this->port = null;
         }
@@ -271,15 +277,15 @@ class Url
     }
 
     /**
-     * Set the path part of the URL
+     * Set the path part of the URL.
+     *
+     * The provided URL is URL encoded as necessary.
      *
      * @param string $path Path string to set
      */
     public function setPath($path)
     {
-        static $search  = [' ',   '?'];
-        static $replace = ['%20', '%3F'];
-        $this->path = str_replace($search, $replace, $path);
+        $this->path = self::encodePath($path);
     }
 
     /**
@@ -433,7 +439,7 @@ class Url
             $this->query = new Query($query);
         } else {
             throw new \InvalidArgumentException('Query must be a Query, '
-                . 'array, or string. ' . gettype($query) . ' provided.');
+                . 'array, or string. Got ' . Core::describeType($query));
         }
     }
 
@@ -550,5 +556,25 @@ class Url
         }
 
         return $result;
+    }
+
+    /**
+     * Encodes the path part of a URL without double-encoding percent-encoded
+     * key value pairs.
+     *
+     * @param string $path Path to encode
+     *
+     * @return string
+     */
+    public static function encodePath($path)
+    {
+        static $pattern = '/[^a-zA-Z0-9\-\._~!\$&\'\(\)\*\+,;=%:@\/]+|%(?![A-Fa-f0-9]{2})/';
+        static $cb = [__CLASS__, 'encodeMatch'];
+        return preg_replace_callback($pattern, $cb, $path);
+    }
+
+    private static function encodeMatch(array $match)
+    {
+        return rawurlencode($match[0]);
     }
 }

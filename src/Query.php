@@ -9,11 +9,13 @@ class Query extends Collection
     const RFC3986 = 'RFC3986';
     const RFC1738 = 'RFC1738';
 
-    /** @var bool URL encode fields and values */
-    private $encoding = self::RFC3986;
+    /** @var callable Encoding function */
+    private $encoding = [__CLASS__, 'rfc3986Encoding'];
 
     /** @var callable */
     private $aggregator;
+
+    private static $queryPattern = '/[^a-zA-Z0-9\-\._~!\$\'\(\)\*\+,;%:@\/\?]+|%(?![A-Fa-f0-9]{2})/';
 
     /**
      * Parse a query string into a Query object
@@ -75,34 +77,21 @@ class Query extends Collection
 
         $result = '';
         $aggregator = $this->aggregator;
+        $encoder = $this->encoding;
 
         foreach ($aggregator($this->data) as $key => $values) {
             foreach ($values as $value) {
                 if ($result) {
                     $result .= '&';
                 }
-                if ($this->encoding == self::RFC1738) {
-                    $result .= urlencode($key);
-                    if ($value !== null) {
-                        $result .= '=' . urlencode($value);
-                    }
-                } elseif ($this->encoding == self::RFC3986) {
-                    $result .= rawurlencode($key);
-                    if ($value !== null) {
-                        $result .= '=' . rawurlencode($value);
-                    }
-                } else {
-                    $result .= $key;
-                    if ($value !== null) {
-                        $result .= '=' . $value;
-                    }
+                $result .= $encoder($key);
+                if ($value !== null) {
+                    $result .= '=' . $encoder($value);
                 }
             }
         }
 
-        // Query strings allow for "/" characters.
-        // See: http://tools.ietf.org/html/rfc3986#section-3.4
-        return $this->encoding ? str_replace('%2F', '/', $result) : $result;
+        return $result;
     }
 
     /**
@@ -131,10 +120,18 @@ class Query extends Collection
      */
     public function setEncodingType($type)
     {
-        if ($type === false || $type === self::RFC1738 || $type === self::RFC3986) {
-            $this->encoding = $type;
-        } else {
-            throw new \InvalidArgumentException('Invalid URL encoding type');
+        switch ($type) {
+            case self::RFC3986:
+                $this->encoding = [__CLASS__, 'rfc3986Encoding'];
+                break;
+            case self::RFC1738:
+                $this->encoding = [__CLASS__, 'rfc1738Encoding'];
+                break;
+            case false:
+                $this->encoding = function ($v) { return $v; };
+                break;
+            default:
+                throw new \InvalidArgumentException('Invalid URL encoding type');
         }
     }
 
@@ -206,5 +203,27 @@ class Query extends Collection
         }
 
         return $result;
+    }
+
+    private static function rfc3986Encoding($str)
+    {
+        static $cb = [__CLASS__, 'rawurlencodeMatch'];
+        return preg_replace_callback(self::$queryPattern, $cb, $str);
+    }
+
+    private static function rfc1738Encoding($str)
+    {
+        static $cb = [__CLASS__, 'urlencodeMatch'];
+        return preg_replace_callback(self::$queryPattern, $cb, $str);
+    }
+
+    private static function rawurlencodeMatch(array $match)
+    {
+        return rawurlencode($match[0]);
+    }
+
+    private static function urlencodeMatch(array $match)
+    {
+        return urlencode($match[0]);
     }
 }
