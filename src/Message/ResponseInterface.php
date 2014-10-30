@@ -12,7 +12,7 @@ interface ResponseInterface extends MessageInterface
      * The Status-Code is a 3-digit integer result code of the server's attempt
      * to understand and satisfy the request.
      *
-     * @return integer Status code.
+     * @return string Status code.
      */
     public function getStatusCode();
 

@@ -122,7 +122,7 @@ class Response extends AbstractMessage implements ResponseInterface
 
     public function setStatusCode($code)
     {
-        return $this->statusCode = $code;
+        return $this->statusCode = (string) $code;
     }
 
     public function getReasonPhrase()
