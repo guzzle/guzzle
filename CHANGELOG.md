@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 5.0.2 - 2014-10-30
+
+* Added a trailing `\r\n` to multipart/form-data payloads. See
+  https://github.com/guzzle/guzzle/pull/871
+* Added a `GuzzleHttp\Pool::send()` convenience method to match the docs.
+* Status codes are now returned as integers. See
+  https://github.com/guzzle/guzzle/issues/881
+* No longer overwriting an existing `application/x-www-form-urlencoded` header
+  when sending POST requests, allowing for customized headers. See
+  https://github.com/guzzle/guzzle/issues/877
+* Improved query string and path URL serialization.
+
+  * No longer double percent-encoding characters in the path or query string if
+    they are already encoded.
+  * Now properly encoding the supplied path to a URL object, instead of only
+    encoding ' ' and '?'.
+  * Now allowing many more characters to be present in the query string without
+    being percent encoded. See http://tools.ietf.org/html/rfc3986#appendix-A
+
 ## 5.0.1 - 2014-10-16
 
 Bugfix release.

@@ -29,7 +29,7 @@ view-docs:
 tag:
 	$(if $(TAG),,$(error TAG is not defined. Pass via "make tag TAG=4.2.1"))
 	@echo Tagging $(TAG)
-	chag update -m '$(TAG) ()'
+	chag update $(TAG)
 	sed -i '' -e "s/VERSION = '.*'/VERSION = '$(TAG)'/" src/ClientInterface.php
 	php -l src/ClientInterface.php
 	git add -A
@@ -45,6 +45,6 @@ package: burgomaster
 
 burgomaster:
 	mkdir -p build/artifacts
-	curl -s https://raw.githubusercontent.com/mtdowling/Burgomaster/0.0.1/src/Burgomaster.php > build/artifacts/Burgomaster.php
+	curl -s https://raw.githubusercontent.com/mtdowling/Burgomaster/0.0.2/src/Burgomaster.php > build/artifacts/Burgomaster.php
 
 .PHONY: docs burgomaster
