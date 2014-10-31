@@ -38,7 +38,7 @@ handler
 
 message_factory
     Specifies the factory used to create HTTP requests and responses
-    (``GuzzleHttp\Message\MessageFactoryInterface``).
+    (``Guzzle\Http\Message\MessageFactoryInterface``).
 
 defaults
     Associative array of :ref:`request-options` that are applied to every
@@ -55,7 +55,7 @@ Here's an example of creating a client with various options.
 
 .. code-block:: php
 
-    use GuzzleHttp\Client;
+    use Guzzle\Http\Client;
 
     $client = new Client([
         'base_url' => ['https://api.twitter.com/{version}/', ['version' => 'v1.1']],
@@ -73,12 +73,12 @@ Sending Requests
 Requests can be created using various methods of a client. You can create
 **and** send requests using one of the following methods:
 
-- ``GuzzleHttp\Client::get``: Sends a GET request.
-- ``GuzzleHttp\Client::head``: Sends a HEAD request
-- ``GuzzleHttp\Client::post``: Sends a POST request
-- ``GuzzleHttp\Client::put``: Sends a PUT request
-- ``GuzzleHttp\Client::delete``: Sends a DELETE request
-- ``GuzzleHttp\Client::options``: Sends an OPTIONS request
+- ``Guzzle\Http\Client::get``: Sends a GET request.
+- ``Guzzle\Http\Client::head``: Sends a HEAD request
+- ``Guzzle\Http\Client::post``: Sends a POST request
+- ``Guzzle\Http\Client::put``: Sends a PUT request
+- ``Guzzle\Http\Client::delete``: Sends a DELETE request
+- ``Guzzle\Http\Client::options``: Sends an OPTIONS request
 
 Each of the above methods accepts a URL as the first argument and an optional
 associative array of :ref:`request-options` as the second argument.
@@ -88,12 +88,12 @@ Synchronous Requests
 
 Guzzle sends synchronous (blocking) requests when the ``future`` request option
 is not specified. This means that the request will complete immediately, and if
-an error is encountered, a ``GuzzleHttp\Exception\RequestException`` will be
+an error is encountered, a ``Guzzle\Http\Exception\RequestException`` will be
 thrown.
 
 .. code-block:: php
 
-    $client = new GuzzleHttp\Client();
+    $client = new Guzzle\Http\Client();
 
     $client->put('http://httpbin.org', [
         'headers'         => ['X-Foo' => 'Bar'],
@@ -107,12 +107,12 @@ Synchronous Error Handling
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When a recoverable error is encountered while calling the ``send()`` method of
-a client, a ``GuzzleHttp\Exception\RequestException`` is thrown.
+a client, a ``Guzzle\Http\Exception\RequestException`` is thrown.
 
 .. code-block:: php
 
-    use GuzzleHttp\Client;
-    use GuzzleHttp\Exception\RequestException;
+    use Guzzle\Http\Client;
+    use Guzzle\Http\Exception\RequestException;
 
     $client = new Client();
 
@@ -125,15 +125,15 @@ a client, a ``GuzzleHttp\Exception\RequestException`` is thrown.
         }
     }
 
-``GuzzleHttp\Exception\RequestException`` always contains a
-``GuzzleHttp\Message\RequestInterface`` object that can be accessed using the
+``Guzzle\Http\Exception\RequestException`` always contains a
+``Guzzle\Http\Message\RequestInterface`` object that can be accessed using the
 exception's ``getRequest()`` method.
 
 A response might be present in the exception. In the event of a networking
 error, no response will be received. You can check if a ``RequestException``
 has a response using the ``hasResponse()`` method. If the exception has a
 response, then you can access the associated
-``GuzzleHttp\Message\ResponseInterface`` using the ``getResponse()`` method of
+``Guzzle\Http\Message\ResponseInterface`` using the ``getResponse()`` method of
 the exception.
 
 Asynchronous Requests
@@ -141,7 +141,7 @@ Asynchronous Requests
 
 You can send asynchronous requests by setting the ``future`` request option
 to ``true`` (or a string that your handler understands). This creates a
-``GuzzleHttp\Message\FutureResponse`` object that has not yet completed. Once
+``Guzzle\Http\Message\FutureResponse`` object that has not yet completed. Once
 you have a future response, you can use a promise object obtained by calling
 the ``then`` method of the response to take an action when the response has
 completed or encounters an error.
@@ -222,9 +222,9 @@ HTTP Errors
 
 If the ``exceptions`` request option is not set to ``false``, then exceptions
 are thrown for HTTP protocol errors as well:
-``GuzzleHttp\Exception\ClientErrorResponseException`` for 4xx level HTTP
-responses and ``GuzzleHttp\Exception\ServerException`` for 5xx level responses,
-both of which extend from ``GuzzleHttp\Exception\BadResponseException``.
+``Guzzle\Http\Exception\ClientErrorResponseException`` for 4xx level HTTP
+responses and ``Guzzle\Http\Exception\ServerException`` for 5xx level responses,
+both of which extend from ``Guzzle\Http\Exception\BadResponseException``.
 
 Creating Requests
 -----------------
