@@ -18,7 +18,7 @@ trivial to integrate with web services.
   stream contexts, or sockets.
 
 ```php
-$client = new GuzzleHttp\Client();
+$client = new Guzzle\Http\Client();
 $response = $client->get('http://guzzlephp.org');
 $res = $client->get('https://api.github.com/user', ['auth' =>  ['user', 'pass']]);
 echo $res->getStatusCode();
