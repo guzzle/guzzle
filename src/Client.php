@@ -158,6 +158,13 @@ class Client implements ClientInterface
         return $defaultAgent;
     }
 
+    /**
+     * Get the default value for the given key or path
+     *
+     * @param string|null $keyOrPath
+     *
+     * @return array|mixed|null
+     */
     public function getDefaultOption($keyOrPath = null)
     {
         return $keyOrPath === null
@@ -165,16 +172,36 @@ class Client implements ClientInterface
             : Utils::getPath($this->defaults, $keyOrPath);
     }
 
+    /**
+     * Set a default value for the given key or path
+     *
+     * @param string $keyOrPath
+     * @param mixed  $value
+     */
     public function setDefaultOption($keyOrPath, $value)
     {
         Utils::setPath($this->defaults, $keyOrPath, $value);
     }
 
+    /**
+     * Return the base URL
+     *
+     * @return string
+     */
     public function getBaseUrl()
     {
         return (string) $this->baseUrl;
     }
 
+    /**
+     * Create a request with the given method url and options
+     *
+     * @param string       $method
+     * @param string|array $url
+     * @param array        $options
+     *
+     * @return Message\Request|RequestInterface
+     */
     public function createRequest($method, $url = null, array $options = [])
     {
         $headers = $this->mergeDefaults($options);
@@ -199,41 +226,104 @@ class Client implements ClientInterface
         return $request;
     }
 
+    /**
+     * Send a GET request with the given url and options
+     *
+     * @param string|array $url
+     * @param array        $options
+     *
+     * @return Message\ResponseInterface|void
+     */
     public function get($url = null, $options = [])
     {
         return $this->send($this->createRequest('GET', $url, $options));
     }
 
+    /**
+     * Send a HEAD request with the given url and options
+     *
+     * @param string|array $url
+     * @param array        $options
+     *
+     * @return Message\ResponseInterface|void
+     */
     public function head($url = null, array $options = [])
     {
         return $this->send($this->createRequest('HEAD', $url, $options));
     }
 
+    /**
+     * Send a DELETE request with the given url and options
+     *
+     * @param string|array $url
+     * @param array        $options
+     *
+     * @return Message\ResponseInterface|void
+     */
     public function delete($url = null, array $options = [])
     {
         return $this->send($this->createRequest('DELETE', $url, $options));
     }
 
+    /**
+     * Send a PUT request with the given url and options
+     *
+     * @param string|array $url
+     * @param array        $options
+     *
+     * @return Message\ResponseInterface|void
+     */
     public function put($url = null, array $options = [])
     {
         return $this->send($this->createRequest('PUT', $url, $options));
     }
 
+    /**
+     * Send a PATCH request with the given url and options
+     *
+     * @param string|array $url
+     * @param array        $options
+     *
+     * @return Message\ResponseInterface|void
+     */
     public function patch($url = null, array $options = [])
     {
         return $this->send($this->createRequest('PATCH', $url, $options));
     }
 
+    /**
+     * Send a POST request with the given url and options
+     *
+     * @param string|array $url
+     * @param array        $options
+     *
+     * @return Message\ResponseInterface|void
+     */
     public function post($url = null, array $options = [])
     {
         return $this->send($this->createRequest('POST', $url, $options));
     }
 
+    /**
+     * Send a OPTIONS request with the given url and options
+     *
+     * @param string|array $url
+     * @param array        $options
+     *
+     * @return Message\ResponseInterface|void
+     */
     public function options($url = null, array $options = [])
     {
         return $this->send($this->createRequest('OPTIONS', $url, $options));
     }
 
+    /**
+     * Send the given request
+     *
+     * @param RequestInterface $request
+     *
+     * @return Message\ResponseInterface|void
+     */
     public function send(RequestInterface $request)
     {
         $trans = new Transaction($this, $request);
