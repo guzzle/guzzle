@@ -159,6 +159,8 @@ class Client implements ClientInterface
     }
 
     /**
+     * Get the default value for the given key or path
+     *
      * @param string|null $keyOrPath
      *
      * @return array|mixed|null
@@ -171,6 +173,8 @@ class Client implements ClientInterface
     }
 
     /**
+     * Set a default value for the given key or path
+     *
      * @param string $keyOrPath
      * @param mixed  $value
      */
@@ -180,6 +184,8 @@ class Client implements ClientInterface
     }
 
     /**
+     * Return the base URL
+     *
      * @return string
      */
     public function getBaseUrl()
@@ -188,6 +194,8 @@ class Client implements ClientInterface
     }
 
     /**
+     * Create a request with the given method url and options
+     *
      * @param string       $method
      * @param string|array $url
      * @param array        $options
@@ -219,6 +227,8 @@ class Client implements ClientInterface
     }
 
     /**
+     * Send a GET request with the given url and options
+     *
      * @param string|array $url
      * @param array        $options
      *
@@ -230,6 +240,8 @@ class Client implements ClientInterface
     }
 
     /**
+     * Send a HEAD request with the given url and options
+     *
      * @param string|array $url
      * @param array        $options
      *
@@ -241,6 +253,8 @@ class Client implements ClientInterface
     }
 
     /**
+     * Send a DELETE request with the given url and options
+     *
      * @param string|array $url
      * @param array        $options
      *
@@ -252,6 +266,8 @@ class Client implements ClientInterface
     }
 
     /**
+     * Send a PUT request with the given url and options
+     *
      * @param string|array $url
      * @param array        $options
      *
@@ -263,6 +279,8 @@ class Client implements ClientInterface
     }
 
     /**
+     * Send a PATCH request with the given url and options
+     *
      * @param string|array $url
      * @param array        $options
      *
@@ -274,6 +292,8 @@ class Client implements ClientInterface
     }
 
     /**
+     * Send a POST request with the given url and options
+     *
      * @param string|array $url
      * @param array        $options
      *
@@ -285,6 +305,8 @@ class Client implements ClientInterface
     }
 
     /**
+     * Send a OPTIONS request with the given url and options
+     *
      * @param string|array $url
      * @param array        $options
      *
@@ -296,6 +318,8 @@ class Client implements ClientInterface
     }
 
     /**
+     * Send the given request
+     *
      * @param RequestInterface $request
      *
      * @return Message\ResponseInterface|void
