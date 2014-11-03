@@ -158,6 +158,11 @@ class Client implements ClientInterface
         return $defaultAgent;
     }
 
+    /**
+     * @param string|null $keyOrPath
+     *
+     * @return array|mixed|null
+     */
     public function getDefaultOption($keyOrPath = null)
     {
         return $keyOrPath === null
@@ -165,16 +170,30 @@ class Client implements ClientInterface
             : Utils::getPath($this->defaults, $keyOrPath);
     }
 
+    /**
+     * @param string $keyOrPath
+     * @param mixed  $value
+     */
     public function setDefaultOption($keyOrPath, $value)
     {
         Utils::setPath($this->defaults, $keyOrPath, $value);
     }
 
+    /**
+     * @return string
+     */
     public function getBaseUrl()
     {
         return (string) $this->baseUrl;
     }
 
+    /**
+     * @param string       $method
+     * @param string|array $url
+     * @param array        $options
+     *
+     * @return Message\Request|RequestInterface
+     */
     public function createRequest($method, $url = null, array $options = [])
     {
         $headers = $this->mergeDefaults($options);
@@ -199,41 +218,88 @@ class Client implements ClientInterface
         return $request;
     }
 
+    /**
+     * @param string|array $url
+     * @param array        $options
+     *
+     * @return Message\ResponseInterface|void
+     */
     public function get($url = null, $options = [])
     {
         return $this->send($this->createRequest('GET', $url, $options));
     }
 
+    /**
+     * @param string|array $url
+     * @param array        $options
+     *
+     * @return Message\ResponseInterface|void
+     */
     public function head($url = null, array $options = [])
     {
         return $this->send($this->createRequest('HEAD', $url, $options));
     }
 
+    /**
+     * @param string|array $url
+     * @param array        $options
+     *
+     * @return Message\ResponseInterface|void
+     */
     public function delete($url = null, array $options = [])
     {
         return $this->send($this->createRequest('DELETE', $url, $options));
     }
 
+    /**
+     * @param string|array $url
+     * @param array        $options
+     *
+     * @return Message\ResponseInterface|void
+     */
     public function put($url = null, array $options = [])
     {
         return $this->send($this->createRequest('PUT', $url, $options));
     }
 
+    /**
+     * @param string|array $url
+     * @param array        $options
+     *
+     * @return Message\ResponseInterface|void
+     */
     public function patch($url = null, array $options = [])
     {
         return $this->send($this->createRequest('PATCH', $url, $options));
     }
 
+    /**
+     * @param string|array $url
+     * @param array        $options
+     *
+     * @return Message\ResponseInterface|void
+     */
     public function post($url = null, array $options = [])
     {
         return $this->send($this->createRequest('POST', $url, $options));
     }
 
+    /**
+     * @param string|array $url
+     * @param array        $options
+     *
+     * @return Message\ResponseInterface|void
+     */
     public function options($url = null, array $options = [])
     {
         return $this->send($this->createRequest('OPTIONS', $url, $options));
     }
 
+    /**
+     * @param RequestInterface $request
+     *
+     * @return Message\ResponseInterface|void
+     */
     public function send(RequestInterface $request)
     {
         $trans = new Transaction($this, $request);
