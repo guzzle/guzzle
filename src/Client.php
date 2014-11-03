@@ -158,6 +158,9 @@ class Client implements ClientInterface
         return $defaultAgent;
     }
 
+    /**
+     * @Override
+     */
     public function getDefaultOption($keyOrPath = null)
     {
         return $keyOrPath === null
@@ -165,16 +168,25 @@ class Client implements ClientInterface
             : Utils::getPath($this->defaults, $keyOrPath);
     }
 
+    /**
+     * @Override
+     */
     public function setDefaultOption($keyOrPath, $value)
     {
         Utils::setPath($this->defaults, $keyOrPath, $value);
     }
 
+    /**
+     * @Override
+     */
     public function getBaseUrl()
     {
         return (string) $this->baseUrl;
     }
 
+    /**
+     * @Override
+     */
     public function createRequest($method, $url = null, array $options = [])
     {
         $headers = $this->mergeDefaults($options);
@@ -199,41 +211,65 @@ class Client implements ClientInterface
         return $request;
     }
 
+    /**
+     * @Override
+     */
     public function get($url = null, $options = [])
     {
         return $this->send($this->createRequest('GET', $url, $options));
     }
 
+    /**
+     * @Override
+     */
     public function head($url = null, array $options = [])
     {
         return $this->send($this->createRequest('HEAD', $url, $options));
     }
 
+    /**
+     * @Override
+     */
     public function delete($url = null, array $options = [])
     {
         return $this->send($this->createRequest('DELETE', $url, $options));
     }
 
+    /**
+     * @Override
+     */
     public function put($url = null, array $options = [])
     {
         return $this->send($this->createRequest('PUT', $url, $options));
     }
 
+    /**
+     * @Override
+     */
     public function patch($url = null, array $options = [])
     {
         return $this->send($this->createRequest('PATCH', $url, $options));
     }
 
+    /**
+     * @Override
+     */
     public function post($url = null, array $options = [])
     {
         return $this->send($this->createRequest('POST', $url, $options));
     }
 
+    /**
+     * @Override
+     */
     public function options($url = null, array $options = [])
     {
         return $this->send($this->createRequest('OPTIONS', $url, $options));
     }
 
+    /**
+     * @Override
+     */
     public function send(RequestInterface $request)
     {
         $trans = new Transaction($this, $request);
