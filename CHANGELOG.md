@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 5.0.3 - 2014-11-03
+
+This change updates query strings so that they are treated as un-encoded values
+by default where the value represents an un-encoded value to send over the
+wire. A Query object then encodes the value before sending over the wire. This
+means that even value query string values (e.g., ":") are url encoded. This
+makes the Query class match PHP's http_build_query function. However, if you
+want to send requests over the wire using valid query string characters that do
+not need to be encoded, then you can provide a string to Url::setQuery() and
+pass true as the second argument to specify that the query string is a raw
+string that should not be parsed or encoded (unless a call to getQuery() is
+subsequently made, forcing the query-string to be converted into a Query
+object).
+
 ## 5.0.2 - 2014-10-30
 
 * Added a trailing `\r\n` to multipart/form-data payloads. See
@@ -10,14 +24,16 @@
 * No longer overwriting an existing `application/x-www-form-urlencoded` header
   when sending POST requests, allowing for customized headers. See
   https://github.com/guzzle/guzzle/issues/877
-* Improved query string and path URL serialization.
+* Improved path URL serialization.
 
   * No longer double percent-encoding characters in the path or query string if
     they are already encoded.
   * Now properly encoding the supplied path to a URL object, instead of only
     encoding ' ' and '?'.
-  * Now allowing many more characters to be present in the query string without
-    being percent encoded. See http://tools.ietf.org/html/rfc3986#appendix-A
+  * Note: This has been changed in 5.0.3 to now encode query string values by
+    default unless the `rawString` argument is provided when setting the query
+    string on a URL: Now allowing many more characters to be present in the
+    query string without being percent encoded. See http://tools.ietf.org/html/rfc3986#appendix-A
 
 ## 5.0.1 - 2014-10-16
 
