@@ -15,11 +15,11 @@ class Url
     private $password;
     private $path = '';
     private $fragment;
-
-    /** @var Query Query part of the URL */
-    private $query;
-
     private static $defaultPorts = ['http' => 80, 'https' => 443, 'ftp' => 21];
+    private static $pathPattern = '/[^a-zA-Z0-9\-\._~!\$&\'\(\)\*\+,;=%:@\/]+|%(?![A-Fa-f0-9]{2})/';
+    private static $queryPattern = '/[^a-zA-Z0-9\-\._~!\$\'\(\)\*\+,;%:@\/\?=&]+|%(?![A-Fa-f0-9]{2})/';
+    /** @var Query|string Query part of the URL */
+    private $query;
 
     /**
      * Factory method to create a new URL from a URL string
@@ -119,14 +119,14 @@ class Url
     /**
      * Create a new URL from URL parts
      *
-     * @param string                   $scheme   Scheme of the URL
-     * @param string                   $host     Host of the URL
-     * @param string                   $username Username of the URL
-     * @param string                   $password Password of the URL
-     * @param int                      $port     Port of the URL
-     * @param string                   $path     Path of the URL
+     * @param string             $scheme   Scheme of the URL
+     * @param string             $host     Host of the URL
+     * @param string             $username Username of the URL
+     * @param string             $password Password of the URL
+     * @param int                $port     Port of the URL
+     * @param string             $path     Path of the URL
      * @param Query|array|string $query    Query string of the URL
-     * @param string                   $fragment Fragment of the URL
+     * @param string             $fragment Fragment of the URL
      */
     public function __construct(
         $scheme,
@@ -145,9 +145,7 @@ class Url
         $this->password = $password;
         $this->fragment = $fragment;
 
-        if (!$query) {
-            $this->query = new Query();
-        } else {
+        if ($query) {
             $this->setQuery($query);
         }
 
@@ -159,7 +157,9 @@ class Url
      */
     public function __clone()
     {
-        $this->query = clone $this->query;
+        if ($this->query instanceof Query) {
+            $this->query = clone $this->query;
+        }
     }
 
     /**
@@ -417,24 +417,47 @@ class Url
      */
     public function getQuery()
     {
+        // Convert the query string to a query object if not already done.
+        if (!$this->query instanceof Query) {
+            $this->query = $this->query === null
+                ? new Query()
+                : Query::fromString($this->query);
+        }
+
         return $this->query;
     }
 
     /**
-     * Set the query part of the URL
+     * Set the query part of the URL.
+     *
+     * You may provide a query string as a string and pass $rawString as true
+     * to provide a query string that is not parsed until a call to getQuery()
+     * is made. Setting a raw query string will still encode invalid characters
+     * in a query string.
      *
      * @param Query|string|array $query Query string value to set. Can
      *     be a string that will be parsed into a Query object, an array
      *     of key value pairs, or a Query object.
+     * @param bool $rawString Set to true when providing a raw query string.
      *
      * @throws \InvalidArgumentException
      */
-    public function setQuery($query)
+    public function setQuery($query, $rawString = false)
     {
         if ($query instanceof Query) {
             $this->query = $query;
         } elseif (is_string($query)) {
-            $this->query = Query::fromString($query);
+            if (!$rawString) {
+                $this->query = Query::fromString($query);
+            } else {
+                // Ensure the query does not have illegal characters.
+                $this->query = preg_replace_callback(
+                    self::$queryPattern,
+                    [__CLASS__, 'encodeMatch'],
+                    $query
+                );
+            }
+
         } elseif (is_array($query)) {
             $this->query = new Query($query);
         } else {
@@ -497,16 +520,7 @@ class Url
 
         // Passing a URL with a scheme overrides everything
         if ($parts['scheme']) {
-            return new static(
-                $parts['scheme'],
-                $parts['host'],
-                $parts['user'],
-                $parts['pass'],
-                $parts['port'],
-                $parts['path'],
-                clone $parts['query'],
-                $parts['fragment']
-            );
+            return clone $url;
         }
 
         // Setting a host overrides the entire rest of the URL
@@ -518,7 +532,9 @@ class Url
                 $parts['pass'],
                 $parts['port'],
                 $parts['path'],
-                clone $parts['query'],
+                $parts['query'] instanceof Query
+                    ? clone $parts['query']
+                    : $parts['query'],
                 $parts['fragment']
             );
         }
@@ -526,7 +542,7 @@ class Url
         if (!$parts['path'] && $parts['path'] !== '0') {
             // The relative URL has no path, so check if it is just a query
             $path = $this->path ?: '';
-            $query = count($parts['query']) ? $parts['query'] : $this->query;
+            $query = $parts['query'] ?: $this->query;
         } else {
             $query = $parts['query'];
             if ($parts['path'][0] == '/' || !$this->path) {
@@ -547,7 +563,7 @@ class Url
             $this->password,
             $this->port,
             $path,
-            clone $query,
+            $query instanceof Query ? clone $query : $query,
             $parts['fragment']
         );
 
@@ -568,9 +584,8 @@ class Url
      */
     public static function encodePath($path)
     {
-        static $pattern = '/[^a-zA-Z0-9\-\._~!\$&\'\(\)\*\+,;=%:@\/]+|%(?![A-Fa-f0-9]{2})/';
         static $cb = [__CLASS__, 'encodeMatch'];
-        return preg_replace_callback($pattern, $cb, $path);
+        return preg_replace_callback(self::$pathPattern, $cb, $path);
     }
 
     private static function encodeMatch(array $match)

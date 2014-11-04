@@ -10,12 +10,9 @@ class Query extends Collection
     const RFC1738 = 'RFC1738';
 
     /** @var callable Encoding function */
-    private $encoding = [__CLASS__, 'rfc3986Encoding'];
-
+    private $encoding = 'rawurlencode';
     /** @var callable */
     private $aggregator;
-
-    private static $queryPattern = '/[^a-zA-Z0-9\-\._~!\$\'\(\)\*\+,;%:@\/\?]+|%(?![A-Fa-f0-9]{2})/';
 
     /**
      * Parse a query string into a Query object
@@ -122,10 +119,10 @@ class Query extends Collection
     {
         switch ($type) {
             case self::RFC3986:
-                $this->encoding = [__CLASS__, 'rfc3986Encoding'];
+                $this->encoding = 'rawurlencode';
                 break;
             case self::RFC1738:
-                $this->encoding = [__CLASS__, 'rfc1738Encoding'];
+                $this->encoding = 'urlencode';
                 break;
             case false:
                 $this->encoding = function ($v) { return $v; };
@@ -203,27 +200,5 @@ class Query extends Collection
         }
 
         return $result;
-    }
-
-    private static function rfc3986Encoding($str)
-    {
-        static $cb = [__CLASS__, 'rawurlencodeMatch'];
-        return preg_replace_callback(self::$queryPattern, $cb, $str);
-    }
-
-    private static function rfc1738Encoding($str)
-    {
-        static $cb = [__CLASS__, 'urlencodeMatch'];
-        return preg_replace_callback(self::$queryPattern, $cb, $str);
-    }
-
-    private static function rawurlencodeMatch(array $match)
-    {
-        return rawurlencode($match[0]);
-    }
-
-    private static function urlencodeMatch(array $match)
-    {
-        return urlencode($match[0]);
     }
 }

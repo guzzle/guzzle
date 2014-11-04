@@ -156,12 +156,6 @@ class QueryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('foo=bar%20baz', (string) $q);
     }
 
-    public function testQueryStringsAllowSlash()
-    {
-        $q = Query::fromString('foo=bar/baz&bam=boo boo', Query::RFC3986);
-        $this->assertEquals('foo=bar/baz&bam=boo%20boo', (string) $q);
-    }
-
     public function testQueryStringsAllowSlashButDoesNotDecodeWhenDisable()
     {
         $q = Query::fromString('foo=bar%2Fbaz&bam=boo%20boo', Query::RFC3986);
@@ -173,18 +167,5 @@ class QueryTest extends \PHPUnit_Framework_TestCase
     {
         $q = Query::fromString('foo=bar%2Fbaz&bam=boo boo!', false);
         $this->assertEquals('foo=bar%2Fbaz&bam=boo boo!', (string) $q);
-    }
-
-    public function testQueryDoesNotDoubleEncodeValues()
-    {
-        $q = new Query();
-        $q->set('foo%20baz', 'bar');
-        $this->assertEquals('foo%20baz=bar', (string) $q);
-    }
-
-    public function testQueryIsNormalizedAndProperlyEncodedFromString()
-    {
-        $q = Query::fromString('foo=bar%2Fbaz&bam=boo boo!?');
-        $this->assertEquals('foo=bar/baz&bam=boo%20boo!?', (string) $q);
     }
 }
