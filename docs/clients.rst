@@ -173,6 +173,12 @@ response has completed.
     If an exception occurred while transferring the future response, then the
     exception encountered will be thrown when dereferencing.
 
+.. note::
+
+    It depends on the RingPHP handler used by a client, but you typically need
+    to use the same RingPHP handler in order to utilize asynchronous requests
+    across multiple clients.
+
 Asynchronous Error Handling
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
