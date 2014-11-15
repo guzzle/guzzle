@@ -213,6 +213,18 @@ priority of the listener (as shown in the ``before`` listener in the example).
         }
     }
 
+To register the listeners the subscriber needs to be attached to the emitter:
+
+.. code-block:: php
+
+    $client = new GuzzleHttp\Client();
+    $emitter = $client->getEmitter();
+    $subscriber = new SimpleSubscriber();
+    $emitter->attach($subscriber);
+
+    //to remove the listeners
+    $emitter->detach($subscriber);
+
 .. note::
 
     You can specify event priorities using integers or ``"first"`` and
