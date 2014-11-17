@@ -11,12 +11,12 @@ Event Emitters
 ==============
 
 Clients, requests, and any other class that implements the
-``GuzzleHttp\Common\HasEmitterInterface`` interface have a
-``GuzzleHttp\Common\EventEmitter`` object. You can add event *listeners* and
+``GuzzleHttp\Event\HasEmitterInterface`` interface have a
+``GuzzleHttp\Event\Emitter`` object. You can add event *listeners* and
 event *subscribers* to an event *emitter*.
 
 emitter
-    An object that implements ``GuzzleHttp\Common\EventEmitterInterface``. This
+    An object that implements ``GuzzleHttp\Event\EmitterInterface``. This
     object emits named events to event listeners. You may register event
     listeners on subscribers on an emitter.
 
@@ -58,7 +58,7 @@ propagation
 Getting an EventEmitter
 -----------------------
 
-You can get the event emitter of ``GuzzleHttp\Common\HasEmitterInterface``
+You can get the event emitter of ``GuzzleHttp\Event\HasEmitterInterface``
 object using the the ``getEmitter()`` method. Here's an example of getting a
 client object's event emitter.
 
@@ -95,7 +95,7 @@ event is triggered, and optionally provide a priority.
     });
 
 When a listener is triggered, it is passed an event that implements the
-``GuzzleHttp\Common\EventInterface`` interface, the name of the event, and the
+``GuzzleHttp\Event\EventInterface`` interface, the name of the event, and the
 event emitter itself. The above example could more verbosely be written as
 follows:
 
@@ -134,7 +134,7 @@ state. This technique is used in Guzzle extensively when intercepting error
 events with responses.
 
 You can stop the propagation of an event using the ``stopPropagation()`` method
-of a ``GuzzleHttp\Common\EventInterface`` object:
+of a ``GuzzleHttp\Event\EventInterface`` object:
 
 .. code-block:: php
 
@@ -168,7 +168,7 @@ Event Subscribers
 -----------------
 
 Event subscribers are classes that implement the
-``GuzzleHttp\Common\EventSubscriberInterface`` object. They are used to register
+``GuzzleHttp\Event\SubscriberInterface`` object. They are used to register
 one or more event listeners to methods of the class. Event subscribers tell
 event emitters exactly which events to listen to and what method to invoke on
 the class when the event is triggered by called the ``getEvents()`` method of
@@ -327,7 +327,7 @@ a ``GuzzleHttp\Event\BeforeEvent``.
 .. code-block:: php
 
     use GuzzleHttp\Client;
-    use GuzzleHttp\Common\EmitterInterface;
+    use GuzzleHttp\Event\EmitterInterface;
     use GuzzleHttp\Event\BeforeEvent;
 
     $client = new Client(['base_url' => 'http://httpbin.org']);
