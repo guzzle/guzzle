@@ -269,15 +269,11 @@ class Pool implements FutureInterface
         $promise = $response->promise();
 
         // Don't recursively call itself for completed or rejected responses.
-        if ($promise instanceof FulfilledPromise) {
-            $this->finishResponse($request, $response->wait(), $hash);
-            goto add_next;
-        }
-
-        // Extract the failure from the rejected response and send the next req.
-        if ($promise instanceof RejectedPromise) {
+        if ($promise instanceof FulfilledPromise
+            || $promise instanceof RejectedPromise
+        ) {
             try {
-                $response->wait();
+                $this->finishResponse($request, $response->wait(), $hash);
             } catch (\Exception $e) {
                 $this->finishResponse($request, $e, $hash);
             }

@@ -208,6 +208,11 @@ class RequestFsm
         // Throw exceptions in the terminal event if the exception was not
         // handled by an "end" event listener.
         if ($trans->exception) {
+            if (!($trans->exception instanceof RequestException)) {
+                $trans->exception = RequestException::wrapException(
+                    $trans->request, $trans->exception
+                );
+            }
             throw $trans->exception;
         }
     }
