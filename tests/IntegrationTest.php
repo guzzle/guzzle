@@ -120,4 +120,29 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase
             $this->assertEquals(502, $e->getResponse()->getStatusCode());
         }
     }
+    
+    public function testDigestAuthWithBadPasswordDetectsRejection()
+    {
+        Server::enqueue([new Response(200)]);
+        $c = new Client();
+        try {
+            $response = $c->get(Server::$url . 'secure/by-digest/anything');
+        } catch(\GuzzleHttp\Exception\ClientException $e) {
+            if ($e->hasResponse()) {
+                $response = $e->getResponse();
+            }
+        }
+        $this->assertEquals(401, $response->getStatusCode());
+    }
+    
+    public function testDigestAuthWithRightPasswordPasses()
+    {
+        $c = new Client();
+        // Digest has a way to prevent replay attacks by requiring a nonce to be incremented at each request. Ensure we pass multiple successive requests.
+        for ($i = 3; --$i >= 0;) {
+            Server::enqueue([new Response(200)]);
+            $response = $c->get(Server::$url . 'secure/by-digest/anything', ['auth' => ['me', 'test', 'digest']]); // @todo Someday there should be autodetection of the authentification type, based on the return headers to the first rejected query.
+            $this->assertEquals(200, $response->getStatusCode());
+        }
+    }
 }
