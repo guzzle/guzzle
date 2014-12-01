@@ -492,7 +492,7 @@ end
 ---
 
 The ``end`` event is a terminal event, emitted once per request, that provides
-access to the repsonse that was received or the exception that was encountered.
+access to the response that was received or the exception that was encountered.
 The event emitted is a ``GuzzleHttp\Event\EndEvent``.
 
 This event can be intercepted, but keep in mind that the ``complete`` event
