@@ -359,7 +359,7 @@ interfaces.
 * Bug fix: FilterIterator now relies on `\Iterator` instead of `\Traversable`.
 * Bug fix: Gracefully handling malformed responses in RequestMediator::writeResponseBody()
 * Bug fix: Replaced call to canCache with canCacheRequest in the CallbackCanCacheStrategy of the CachePlugin
-* Bug fix: Visiting XML attributes first before visting XML children when serializing requests
+* Bug fix: Visiting XML attributes first before visiting XML children when serializing requests
 * Bug fix: Properly parsing headers that contain commas contained in quotes
 * Bug fix: mimetype guessing based on a filename is now case-insensitive
 
@@ -517,7 +517,7 @@ interfaces.
 ## 3.5.0 - 2013-05-13
 
 * Bug: Fixed a regression so that request responses are parsed only once per oncomplete event rather than multiple times
-* Bug: Better cleanup of one-time events accross the board (when an event is meant to fire once, it will now remove
+* Bug: Better cleanup of one-time events across the board (when an event is meant to fire once, it will now remove
   itself from the EventDispatcher)
 * Bug: `Guzzle\Log\MessageFormatter` now properly writes "total_time" and "connect_time" values
 * Bug: Cloning an EntityEnclosingRequest now clones the EntityBody too

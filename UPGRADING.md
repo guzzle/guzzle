@@ -503,7 +503,7 @@ allow developers to more easily extend and decorate stream behavior.
 ## Metadata streams
 
 `GuzzleHttp\Stream\MetadataStreamInterface` has been added to denote streams
-that contain additonal metadata accessible via `getMetadata()`.
+that contain additional metadata accessible via `getMetadata()`.
 `GuzzleHttp\Stream\StreamInterface::getMetadata` and
 `GuzzleHttp\Stream\StreamInterface::setMetadata` have been removed.
 
