@@ -180,13 +180,9 @@ class Client implements ClientInterface
         $headers = $this->mergeDefaults($options);
         // Use a clone of the client's emitter
         $options['config']['emitter'] = clone $this->getEmitter();
-
-        if ((is_string($url) && strlen($url)) || $url) {
-          $url = $this->buildUrl($url);
-        } else {
-          $url = (string) $this->baseUrl;
-        }
-
+        $url = $url || (is_string($url) && strlen($url))
+            ? $this->buildUrl($url)
+            : (string) $this->baseUrl;
         $request = $this->messageFactory->createRequest($method, $url, $options);
 
         // Merge in default headers
