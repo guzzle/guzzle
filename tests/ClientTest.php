@@ -272,6 +272,15 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function testFalsyPathsAreCombinedWithBaseUrl()
+    {
+        $client = new Client(['base_url' => 'http://www.foo.com/baz?bam=bar']);
+        $this->assertEquals(
+            'http://www.foo.com/0',
+            $client->createRequest('GET', '0')->getUrl()
+        );
+    }
+
     public function testUsesBaseUrlCombinedWithProvidedUrlViaUriTemplate()
     {
         $client = new Client(['base_url' => 'http://www.foo.com/baz?bam=bar']);

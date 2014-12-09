@@ -181,11 +181,13 @@ class Client implements ClientInterface
         // Use a clone of the client's emitter
         $options['config']['emitter'] = clone $this->getEmitter();
 
-        $request = $this->messageFactory->createRequest(
-            $method,
-            $url ? (string) $this->buildUrl($url) : (string) $this->baseUrl,
-            $options
-        );
+        if ((is_string($url) && strlen($url)) || $url) {
+          $url = $this->buildUrl($url);
+        } else {
+          $url = (string) $this->baseUrl;
+        }
+
+        $request = $this->messageFactory->createRequest($method, $url, $options);
 
         // Merge in default headers
         if ($headers) {
