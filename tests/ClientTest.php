@@ -7,10 +7,12 @@ use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Query;
 use GuzzleHttp\Ring\Client\MockHandler;
 use GuzzleHttp\Ring\Future\FutureArray;
 use GuzzleHttp\Subscriber\History;
 use GuzzleHttp\Subscriber\Mock;
+use GuzzleHttp\Url;
 use React\Promise\Deferred;
 
 /**
@@ -590,5 +592,16 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $res = $client->send($request);
         $this->assertInstanceOf('GuzzleHttp\Message\FutureResponse', $res);
         $this->assertEquals(200, $res->getStatusCode());
+    }
+
+    public function testCanUseUrlWithCustomQuery()
+    {
+        $client = new Client();
+        $url = Url::fromString('http://foo.com/bar');
+        $query = new Query(['baz' => '123%20']);
+        $query->setEncodingType(false);
+        $url->setQuery($query);
+        $r = $client->createRequest('GET', $url);
+        $this->assertEquals('http://foo.com/bar?baz=123%20', $r->getUrl());
     }
 }

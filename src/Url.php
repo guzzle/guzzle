@@ -135,7 +135,7 @@ class Url
         $password = null,
         $port = null,
         $path = null,
-        Query $query = null,
+        $query = null,
         $fragment = null
     ) {
         $this->scheme = $scheme;
