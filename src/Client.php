@@ -177,24 +177,14 @@ class Client implements ClientInterface
 
     public function createRequest($method, $url = null, array $options = [])
     {
-        $headers = $this->mergeDefaults($options);
+        $options = $this->mergeDefaults($options);
         // Use a clone of the client's emitter
         $options['config']['emitter'] = clone $this->getEmitter();
         $url = $url || (is_string($url) && strlen($url))
             ? $this->buildUrl($url)
             : (string) $this->baseUrl;
-        $request = $this->messageFactory->createRequest($method, $url, $options);
 
-        // Merge in default headers
-        if ($headers) {
-            foreach ($headers as $key => $value) {
-                if (!$request->hasHeader($key)) {
-                    $request->setHeader($key, $value);
-                }
-            }
-        }
-
-        return $request;
+        return $this->messageFactory->createRequest($method, $url, $options);
     }
 
     public function get($url = null, $options = [])
@@ -354,27 +344,42 @@ class Client implements ClientInterface
     }
 
     /**
-     * Merges default options into the array passed by reference and returns
-     * an array of headers that need to be merged in after the request is
-     * created.
+     * Merges default options into the array passed by reference.
      *
      * @param array $options Options to modify by reference
      *
-     * @return array|null
+     * @return array
      */
-    private function mergeDefaults(&$options)
+    private function mergeDefaults($options)
     {
-        // Merging optimization for when no headers are present
-        if (!isset($options['headers']) || !isset($this->defaults['headers'])) {
-            $options = array_replace_recursive($this->defaults, $options);
-            return null;
+        $defaults = $this->defaults;
+
+        // Case-insensitively merge in default headers if both defaults and
+        // options have headers specified.
+        if (!empty($defaults['headers']) && !empty($options['headers'])) {
+            // Create a set of lowercased keys that are present.
+            $lkeys = [];
+            foreach (array_keys($options['headers']) as $k) {
+                $lkeys[strtolower($k)] = true;
+            }
+            // Merge in lowercase default keys when not present in above set.
+            foreach ($defaults['headers'] as $key => $value) {
+                if (!isset($lkeys[strtolower($key)])) {
+                    $options['headers'][$key] = $value;
+                }
+            }
+            // No longer need to merge in headers.
+            unset($defaults['headers']);
         }
 
-        $defaults = $this->defaults;
-        unset($defaults['headers']);
-        $options = array_replace_recursive($defaults, $options);
+        $result = array_replace_recursive($defaults, $options);
+        foreach ($options as $k => $v) {
+            if ($v === null) {
+                unset($result[$k]);
+            }
+        }
 
-        return $this->defaults['headers'];
+        return $result;
     }
 
     /**

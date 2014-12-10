@@ -227,12 +227,8 @@ class MessageFactory implements MessageFactoryInterface
                 if (!is_array($value)) {
                     throw new Iae('header value must be an array');
                 }
-
-                // Do not overwrite existing headers
                 foreach ($value as $k => $v) {
-                    if (!$request->hasHeader($k)) {
-                        $request->setHeader($k, $v);
-                    }
+                    $request->setHeader($k, $v);
                 }
                 break;
 
