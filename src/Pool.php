@@ -52,9 +52,9 @@ class Pool implements FutureInterface
     private $isRealized = false;
 
     /**
-     * The option values for 'before', 'after', and 'error' can be a callable,
-     * an associative array containing event data, or an array of event data
-     * arrays. Event data arrays contain the following keys:
+     * The option values for 'before', 'complete', 'error' and 'end' can be a 
+     * callable, an associative array containing event data, or an array of
+     * event data arrays. Event data arrays contain the following keys:
      *
      * - fn: callable to invoke that receives the event
      * - priority: Optional event priority (defaults to 0)
@@ -65,8 +65,9 @@ class Pool implements FutureInterface
      * @param array           $options  Associative array of options
      *     - pool_size: (int) Maximum number of requests to send concurrently
      *     - before:    (callable|array) Receives a BeforeEvent
-     *     - after:     (callable|array) Receives a CompleteEvent
+     *     - complete:  (callable|array) Receives a CompleteEvent
      *     - error:     (callable|array) Receives a ErrorEvent
+     *     - end:       (callable|array) Receives an EndEvent
      */
     public function __construct(
         ClientInterface $client,
