@@ -84,7 +84,7 @@ interfaces.
   moved to `GuzzleHttp\Utils::jsonDecode`. `GuzzleHttp\get_path` moved to
   `GuzzleHttp\Utils::getPath`. `GuzzleHttp\set_path` moved to
   `GuzzleHttp\Utils::setPath`. `GuzzleHttp\batch` should now be
-  `GuzzleHttp\Pool::batch`, which returns a bjectStorage`. Using functions.php
+  `GuzzleHttp\Pool::batch`, which returns an objectStorage`. Using functions.php
   caused problems for many users: they aren't PSR-4 compliant, require an
   explicit include, and needed an if-guard to ensure that the functions are not
   declared multiple times.
