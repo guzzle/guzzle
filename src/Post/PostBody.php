@@ -66,6 +66,20 @@ class PostBody implements PostBodyInterface
         $this->mutate();
     }
 
+    public function addField(PostFieldInterface $field)
+    {
+        $name = $field->getName();
+
+        if (empty($name)) {
+            $this->fields[] = $field;
+            $this->mutate();
+            return;
+        }
+
+        $this->setField($name, $field);
+
+    }
+
     public function replaceFields(array $fields)
     {
         $this->fields = $fields;

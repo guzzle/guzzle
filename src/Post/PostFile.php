@@ -36,6 +36,13 @@ class PostFile implements PostFileInterface
         $this->prepareDefaultHeaders();
     }
 
+    public function addHeader($name, $value)
+    {
+        $this->headers[$name] = $value;
+
+        return $this;
+    }
+
     public function getName()
     {
         return $this->name;
