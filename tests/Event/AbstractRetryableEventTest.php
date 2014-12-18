@@ -19,7 +19,7 @@ class AbstractRetryableEventTest extends \PHPUnit_Framework_TestCase
             ->getMockForAbstractClass();
         $e->retry();
         $this->assertTrue($e->isPropagationStopped());
-        $this->assertEquals('before', $t->state);
+        $this->assertEquals('retry', $t->state);
     }
 
     public function testCanRetryAfterDelay()
@@ -31,7 +31,7 @@ class AbstractRetryableEventTest extends \PHPUnit_Framework_TestCase
             ->getMockForAbstractClass();
         $e->retry(10);
         $this->assertTrue($e->isPropagationStopped());
-        $this->assertEquals('before', $t->state);
+        $this->assertEquals('retry', $t->state);
         $this->assertEquals(10, $t->request->getConfig()->get('delay'));
     }
 }

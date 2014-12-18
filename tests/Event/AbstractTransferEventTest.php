@@ -46,4 +46,14 @@ class AbstractTransferEventTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($t->response, $e->getResponse());
         $this->assertTrue($e->isPropagationStopped());
     }
+
+    public function testReturnsNumberOfRetries()
+    {
+        $t = new Transaction(new Client(), new Request('GET', '/'));
+        $t->retries = 2;
+        $e = $this->getMockBuilder('GuzzleHttp\Event\AbstractTransferEvent')
+            ->setConstructorArgs([$t])
+            ->getMockForAbstractClass();
+        $this->assertEquals(2, $e->getRetryCount());
+    }
 }

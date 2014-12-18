@@ -33,15 +33,16 @@ class RequestFsm
         'send' => ['error' => 'error'],
         'complete' => [
             'success'    => 'end',
-            'intercept'  => 'before',
+            'intercept'  => 'retry',
             'error'      => 'error'
         ],
         'error' => [
             'success'    => 'complete',
-            'intercept'  => 'before',
+            'intercept'  => 'retry',
             'error'      => 'end'
         ],
-        'end' => []
+        'retry' => ['success' => 'before'],
+        'end'   => [],
     ];
 
     public function __construct(
@@ -131,6 +132,12 @@ class RequestFsm
         return (bool) $trans->response;
     }
 
+    private function retry(Transaction $trans)
+    {
+        $trans->response = $trans->exception = null;
+        $trans->retries++;
+    }
+
     private function send(Transaction $trans)
     {
         $fn = $this->handler;
@@ -138,6 +145,12 @@ class RequestFsm
             $fn(RingBridge::prepareRingRequest($trans)),
             function ($value) use ($trans) {
                 RingBridge::completeRingResponse($trans, $value, $this->mf, $this);
+                // Resolve deep futures if this is not a future transaction.
+                // This accounts for things like retries that would otherwise
+                // not have an immediate side-effect.
+                if (!$trans->future && $trans->response instanceof FutureInterface) {
+                    $trans->response = $trans->response->wait();
+                }
                 return $trans->response;
             }
         );
@@ -164,14 +177,15 @@ class RequestFsm
         $event = new ErrorEvent($trans);
         $trans->request->getEmitter()->emit('error', $event);
 
+        if ($trans->state === 'retry') {
+            return true;
+        }
+
         if ($trans->exception) {
             throw $trans->exception;
         }
 
-        $trans->exception = null;
-
-        // Return true to transition to the 'before' state. False otherwise.
-        return $trans->state === 'before';
+        return false;
     }
 
     /**
@@ -189,7 +203,7 @@ class RequestFsm
         $trans->request->getEmitter()->emit('complete', new CompleteEvent($trans));
 
         // Return true to transition to the 'before' state. False otherwise.
-        return $trans->state === 'before';
+        return $trans->state === 'retry';
     }
 
     /**

@@ -27,9 +27,9 @@ class AbstractRetryableEvent extends AbstractTransferEvent
      */
     public function retry($afterDelay = 0)
     {
-        $this->transaction->response = null;
-        $this->transaction->exception = null;
-        $this->transaction->state = 'before';
+        // Setting the transition state to 'retry' will cause the next state
+        // transition of the transaction to retry the request.
+        $this->transaction->state = 'retry';
 
         if ($afterDelay) {
             $this->transaction->request->getConfig()->set('delay', $afterDelay);

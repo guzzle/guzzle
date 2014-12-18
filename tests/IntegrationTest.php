@@ -3,7 +3,10 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Event\AbstractTransferEvent;
+use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\EndEvent;
+use GuzzleHttp\Event\ErrorEvent;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\Response;
 use GuzzleHttp\Pool;
 
@@ -69,5 +72,52 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(Server::$url . '/foo', $response->getEffectiveUrl());
         $this->assertNotEmpty($transfer);
         $this->assertArrayHasKey('url', $transfer);
+    }
+
+    public function testNestedFutureResponsesAreResolvedWhenSending()
+    {
+        $c = new Client();
+        $total = 3;
+        Server::enqueue([
+            new Response(200),
+            new Response(201),
+            new Response(202)
+        ]);
+        $c->getEmitter()->on(
+            'complete',
+            function (CompleteEvent $e) use (&$total) {
+                if (--$total) {
+                    $e->retry();
+                }
+            }
+        );
+        $response = $c->get(Server::$url);
+        $this->assertEquals(202, $response->getStatusCode());
+        $this->assertEquals('GuzzleHttp\Message\Response', get_class($response));
+    }
+
+    public function testNestedFutureErrorsAreResolvedWhenSending()
+    {
+        $c = new Client();
+        $total = 3;
+        Server::enqueue([
+            new Response(500),
+            new Response(501),
+            new Response(502)
+        ]);
+        $c->getEmitter()->on(
+            'error',
+            function (ErrorEvent $e) use (&$total) {
+                if (--$total) {
+                    $e->retry();
+                }
+            }
+        );
+        try {
+            $c->get(Server::$url);
+            $this->fail('Did not throw!');
+        } catch (RequestException $e) {
+            $this->assertEquals(502, $e->getResponse()->getStatusCode());
+        }
     }
 }
