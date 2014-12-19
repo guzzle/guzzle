@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 5.1.0 - Unreleased
+## 5.1.0 - 2014-12-19
 
 * Pool class no longer uses recursion when a request is intercepted.
 * The size of a Pool can now be dynamically adjusted using a callback.
