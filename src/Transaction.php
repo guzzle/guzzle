@@ -56,30 +56,48 @@ class Transaction
     public $transferInfo = [];
 
     /**
-     * The transaction's state.
+     * The number of transaction retries.
+     *
+     * @var int
+     */
+    public $retries = 0;
+
+    /**
+     * The transaction's current state.
      *
      * @var string
      */
     public $state;
 
     /**
-     * The number of state transitions that this transactions has been through.
+     * Whether or not this is a future transaction. This value should not be
+     * changed after the future is constructed.
+     *
+     * @var bool
+     */
+    public $future;
+
+    /**
+     * The number of state transitions that this transaction has been through.
      *
      * @var int
      * @internal This is for internal use only. If you modify this, then you
      *           are asking for trouble.
      */
-    public $_transitionCount;
+    public $_transitionCount = 0;
 
     /**
      * @param ClientInterface  $client  Client that is used to send the requests
      * @param RequestInterface $request Request to send
+     * @param bool             $future  Whether or not this is a future request.
      */
     public function __construct(
         ClientInterface $client,
-        RequestInterface $request
+        RequestInterface $request,
+        $future = false
     ) {
         $this->client = $client;
         $this->request = $request;
+        $this->_future = $future;
     }
 }

@@ -224,11 +224,12 @@ class Client implements ClientInterface
 
     public function send(RequestInterface $request)
     {
-        $trans = new Transaction($this, $request);
+        $isFuture = $request->getConfig()->get('future');
+        $trans = new Transaction($this, $request, $isFuture);
         $fn = $this->fsm;
 
         // Ensure a future response is returned if one was requested.
-        if ($request->getConfig()->get('future')) {
+        if ($isFuture) {
             try {
                 $fn($trans);
                 // Turn the normal response into a future if needed.

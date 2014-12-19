@@ -20,11 +20,23 @@ abstract class AbstractTransferEvent extends AbstractRequestEvent
      */
     public function getTransferInfo($name = null)
     {
-        return !$name
-            ? $this->transaction->transferInfo
-            : (isset($this->transaction->transferInfo[$name])
-                ? $this->transaction->transferInfo[$name]
-                : null);
+        if (!$name) {
+            return $this->transaction->transferInfo;
+        }
+
+        return isset($this->transaction->transferInfo[$name])
+            ? $this->transaction->transferInfo[$name]
+            : null;
+    }
+
+    /**
+     * Get the number of transaction retries.
+     *
+     * @return int
+     */
+    public function getRetryCount()
+    {
+        return $this->transaction->retries;
     }
 
     /**
