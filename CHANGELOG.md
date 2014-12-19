@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## 5.1.0 - Unreleased
+
+* Pool class no longer uses recursion when a request is intercepted.
+* The size of a Pool can now be dynamically adjusted using a callback.
+  See https://github.com/guzzle/guzzle/pull/943.
+* Setting a request option to `null` when creating a request with a client will
+  ensure that the option is not set. This allows you to overwrite default
+  request options on a per-request basis.
+  See https://github.com/guzzle/guzzle/pull/937.
+* Nested futures due to retries are now resolved when waiting for synchronous
+  responses. See https://github.com/guzzle/guzzle/pull/947.
+* `"0"` is now an allowed URI path. See
+  https://github.com/guzzle/guzzle/pull/935.
+* `Query` no longer typehints on the `$query` argument in the constructor,
+  allowing for strings and arrays.
+* Exceptions thrown in the `end` event are now correctly wrapped with Guzzle
+  specific exceptions if necessary.
+
 ## 5.0.3 - 2014-11-03
 
 This change updates query strings so that they are treated as un-encoded values
