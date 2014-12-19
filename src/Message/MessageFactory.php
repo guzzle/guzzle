@@ -40,9 +40,10 @@ class MessageFactory implements MessageFactoryInterface
 
     /** @var array Default allow_redirects request option settings  */
     private static $defaultRedirect = [
-        'max'     => 5,
-        'strict'  => false,
-        'referer' => false
+        'max'       => 5,
+        'strict'    => false,
+        'referer'   => false,
+        'protocols' => ['http', 'https']
     ];
 
     /**
@@ -198,9 +199,8 @@ class MessageFactory implements MessageFactoryInterface
 
                 if ($value === true) {
                     $value = self::$defaultRedirect;
-                } elseif (!isset($value['max'])) {
-                    throw new Iae('allow_redirects must be true, false, or an '
-                        . 'array that contains the \'max\' key');
+                } elseif (!is_array($value)) {
+                    throw new Iae('allow_redirects must be true, false, or array');
                 } else {
                     // Merge the default settings with the provided settings
                     $value += self::$defaultRedirect;

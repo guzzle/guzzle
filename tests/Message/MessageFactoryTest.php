@@ -144,7 +144,7 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatesRedirects()
     {
-        (new MessageFactory())->createRequest('GET', '/', ['allow_redirects' => []]);
+        (new MessageFactory())->createRequest('GET', '/', ['allow_redirects' => 'foo']);
     }
 
     public function testCanEnableStrictRedirectsAndSpecifyMax()

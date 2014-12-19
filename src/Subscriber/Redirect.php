@@ -4,6 +4,7 @@ namespace GuzzleHttp\Subscriber;
 use GuzzleHttp\Event\CompleteEvent;
 use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Event\SubscriberInterface;
+use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\CouldNotRewindStreamException;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Message\RequestInterface;
@@ -25,6 +26,9 @@ use GuzzleHttp\Url;
  *     POST request with a GET request).
  *   - referer: Set to true to automatically add the "Referer" header when a
  *     redirect request is sent.
+ *   - protocols: Array of allowed protocols. Defaults to 'http' and 'https'.
+ *     When a redirect attempts to utilize a protocol that is not white listed,
+ *     an exception is thrown.
  */
 class Redirect implements SubscriberInterface
 {
@@ -99,6 +103,7 @@ class Redirect implements SubscriberInterface
         ResponseInterface $response
     ) {
         $config = $request->getConfig();
+        $protocols = $config->getPath('redirect/protocols') ?: ['http', 'https'];
 
         // Use a GET request if this is an entity enclosing request and we are
         // not forcing RFC compliance, but rather emulating what all browsers
@@ -112,7 +117,7 @@ class Redirect implements SubscriberInterface
         }
 
         $previousUrl = $request->getUrl();
-        $this->setRedirectUrl($request, $response);
+        $this->setRedirectUrl($request, $response, $protocols);
         $this->rewindEntityBody($request);
 
         // Add the Referer header if it is told to do so and only
@@ -134,10 +139,12 @@ class Redirect implements SubscriberInterface
      *
      * @param RequestInterface  $request
      * @param ResponseInterface $response
+     * @param array             $protocols
      */
     private function setRedirectUrl(
         RequestInterface $request,
-        ResponseInterface $response
+        ResponseInterface $response,
+        array $protocols
     ) {
         $location = $response->getHeader('Location');
         $location = Url::fromString($location);
@@ -149,6 +156,19 @@ class Redirect implements SubscriberInterface
             // the redirect Location header
             $originalUrl->getQuery()->clear();
             $location = $originalUrl->combine($location);
+        }
+
+        // Ensure that the redirect URL is allowed based on the protocols.
+        if (!in_array($location->getScheme(), $protocols)) {
+            throw new BadResponseException(
+                sprintf(
+                    'Redirect URL, %s, does not use one of the allowed redirect protocols: %s',
+                    $location,
+                    implode(', ', $protocols)
+                ),
+                $request,
+                $response
+            );
         }
 
         $request->setUrl($location);
