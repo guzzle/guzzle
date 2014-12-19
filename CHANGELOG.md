@@ -9,6 +9,8 @@
   ensure that the option is not set. This allows you to overwrite default
   request options on a per-request basis.
   See https://github.com/guzzle/guzzle/pull/937.
+* Added the ability to limit which protocols are allowed for redirects by
+  specifying a `protocols` array in the `allow_redirects` request option.
 * Nested futures due to retries are now resolved when waiting for synchronous
   responses. See https://github.com/guzzle/guzzle/pull/947.
 * `"0"` is now an allowed URI path. See
