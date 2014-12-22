@@ -1,22 +1,15 @@
 <?php
 namespace GuzzleHttp\Post;
 
-use GuzzleHttp\Message\RequestInterface;
+use GuzzleHttp\Message\AppliesHeadersInterface;
 use GuzzleHttp\Stream\StreamInterface;
 
 /**
  * Represents a POST body that is sent as either a multipart/form-data stream
  * or application/x-www-urlencoded stream.
  */
-interface PostBodyInterface extends StreamInterface, \Countable
+interface PostBodyInterface extends StreamInterface, \Countable, AppliesHeadersInterface
 {
-    /**
-     * Apply headers to the request appropriate for the current state of the object
-     *
-     * @param RequestInterface $request Request
-     */
-    public function applyRequestHeaders(RequestInterface $request);
-
     /**
      * Set a specific field
      *
