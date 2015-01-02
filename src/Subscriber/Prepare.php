@@ -4,9 +4,9 @@ namespace GuzzleHttp\Subscriber;
 use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Event\SubscriberInterface;
+use GuzzleHttp\Message\AppliesHeadersInterface;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Mimetypes;
-use GuzzleHttp\Post\PostBodyInterface;
 use GuzzleHttp\Stream\StreamInterface;
 
 /**
@@ -40,8 +40,8 @@ class Prepare implements SubscriberInterface
 
         $this->addContentLength($request, $body);
 
-        if ($body instanceof PostBodyInterface) {
-            // Synchronize the POST body with the request's headers
+        if ($body instanceof AppliesHeadersInterface) {
+            // Synchronize the body with the request headers
             $body->applyRequestHeaders($request);
         } elseif (!$request->hasHeader('Content-Type')) {
             $this->addContentType($request, $body);
