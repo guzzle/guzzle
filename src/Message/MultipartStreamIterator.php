@@ -81,15 +81,17 @@ class MultipartStreamIterator implements Iterator
      */
     private function isBoundary($line)
     {
-        if ($line === $this->boundaryItem) {
-            return true;
-        }
+        return ($line === $this->boundaryItem);
+    }
 
-        if ($line === $this->boundaryEnd) {
-            return true;
-        }
-
-        return false;
+    /**
+     * @param string $line
+     *
+     * @return boolean
+     */
+    private function isLastBoundary($line)
+    {
+        return ($line === $this->boundaryEnd);
     }
 
     /**
@@ -114,7 +116,15 @@ class MultipartStreamIterator implements Iterator
 
         while ( ! $this->stream->eof()) {
 
-            if ($this->isBoundary($line = $this->readLine())) {
+            $line = $this->readLine();
+
+            if ($this->isBoundary($line)) {
+                break;
+            }
+
+            if ($this->isLastBoundary($line)) {
+                // read last bytes
+                $this->stream->read(2);
                 break;
             }
 
