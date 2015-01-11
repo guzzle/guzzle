@@ -73,6 +73,14 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testValidatesUriTemplateValue()
+    {
+        new Client(['base_url' => ['http://foo.com/']]);
+    }
+
+    /**
      * @expectedException \Exception
      * @expectedExceptionMessage Foo
      */

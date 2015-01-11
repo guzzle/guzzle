@@ -281,9 +281,10 @@ class Client implements ClientInterface
     /**
      * Expand a URI template and inherit from the base URL if it's relative
      *
-     * @param string|array $url URL or URI template to expand
-     *
+     * @param string|array $url URL or an array of the URI template to expand
+     *                          followed by a hash of template varnames.
      * @return string
+     * @throws \InvalidArgumentException
      */
     private function buildUrl($url)
     {
@@ -292,6 +293,11 @@ class Client implements ClientInterface
             return strpos($url, '://')
                 ? (string) $url
                 : (string) $this->baseUrl->combine($url);
+        }
+
+        if (!isset($url[1])) {
+            throw new \InvalidArgumentException('You must provide a hash of '
+                . 'varname options in the second element of a URL array.');
         }
 
         // Absolute URL
@@ -309,7 +315,12 @@ class Client implements ClientInterface
     {
         if (!isset($config['base_url'])) {
             $this->baseUrl = new Url('', '');
-        } elseif (is_array($config['base_url'])) {
+        } elseif (!is_array($config['base_url'])) {
+            $this->baseUrl = Url::fromString($config['base_url']);
+        } elseif (count($config['base_url']) < 2) {
+            throw new \InvalidArgumentException('You must provide a hash of '
+                . 'varname options in the second element of a base_url array.');
+        } else {
             $this->baseUrl = Url::fromString(
                 Utils::uriTemplate(
                     $config['base_url'][0],
@@ -317,8 +328,6 @@ class Client implements ClientInterface
                 )
             );
             $config['base_url'] = (string) $this->baseUrl;
-        } else {
-            $this->baseUrl = Url::fromString($config['base_url']);
         }
     }
 
