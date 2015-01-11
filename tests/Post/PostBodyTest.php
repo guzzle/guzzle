@@ -130,7 +130,6 @@ class PostBodyTest extends \PHPUnit_Framework_TestCase
         $b->seek(0);
         $this->assertEquals('foo=bar&baz=123', $b->read(1000));
         $this->assertEquals(15, $b->tell());
-        $this->assertTrue($b->eof());
     }
 
     public function testCanSpecifyQueryAggregator()
