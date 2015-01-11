@@ -389,6 +389,6 @@ class Client implements ClientInterface
      */
     public function sendAll($requests, array $options = [])
     {
-        (new Pool($this, $requests, $options))->wait();
+        Pool::send($this, $requests, $options);
     }
 }

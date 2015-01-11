@@ -52,7 +52,7 @@ class Pool implements FutureInterface
     private $isRealized = false;
 
     /**
-     * The option values for 'before', 'complete', 'error' and 'end' can be a 
+     * The option values for 'before', 'complete', 'error' and 'end' can be a
      * callable, an associative array containing event data, or an array of
      * event data arrays. Event data arrays contain the following keys:
      *
@@ -146,7 +146,8 @@ class Pool implements FutureInterface
         $requests,
         array $options = []
     ) {
-        (new self($client, $requests, $options))->wait();
+        $pool = new self($client, $requests, $options);
+        $pool->wait();
     }
 
     private function getPoolSize()
