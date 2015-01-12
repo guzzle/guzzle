@@ -162,6 +162,7 @@ class MultipartStreamIterator implements Iterator
     public function next()
     {
         $this->count ++;
+        $this->current = $this->readNext();
     }
 
     /**
@@ -169,11 +170,7 @@ class MultipartStreamIterator implements Iterator
      */
     public function valid()
     {
-        if (($this->current = $this->readNext()) !== null) {
-            return true;
-        }
-
-        return false;
+        return ($this->current !== null);
     }
 
     /**
@@ -183,8 +180,9 @@ class MultipartStreamIterator implements Iterator
     {
         $this->stream->seek(0);
 
-        $this->count = 0;
-
         $this->moveToNext();
+
+        $this->count   = 0;
+        $this->current = $this->readNext();
     }
 }

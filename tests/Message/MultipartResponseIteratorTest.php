@@ -94,8 +94,8 @@ class MultipartResponseIteratorTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(2, $values);
         $this->assertInstanceOf('GuzzleHttp\Message\ResponseInterface', $values[0]);
         $this->assertInstanceOf('GuzzleHttp\Message\ResponseInterface', $values[1]);
-        $this->assertEquals('{"value":"[1,1,1]"}', $values[0]->getBody());
-        $this->assertEquals('{"value":"[2,2,2]"}', $values[1]->getBody());
+        $this->assertEquals('{"value":"[1,1,1]"}', (string) $values[0]->getBody());
+        $this->assertEquals('{"value":"[2,2,2]"}', (string) $values[1]->getBody());
         $this->assertEquals('5QqlA6qFh2Z88mxEDN5edh', $values[0]->getHeader('Etag'));
         $this->assertEquals('3JmLc4m8r37FL6R89fJoJr', $values[1]->getHeader('Etag'));
         $this->assertEquals('application/json', $values[0]->getHeader('Content-Type'));
