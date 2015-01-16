@@ -175,6 +175,13 @@ class Client implements ClientInterface
         return (string) $this->baseUrl;
     }
 
+    /**
+     * Creates a Request object
+     * @param string $method the HTTP verb e.g. GET, POST, PUT, ...
+     * @param string $url the request URL
+     * @param array $options for configuring the Request object.
+     * @return Message\Request|RequestInterface
+     */
     public function createRequest($method, $url = null, array $options = [])
     {
         $options = $this->mergeDefaults($options);
@@ -187,41 +194,88 @@ class Client implements ClientInterface
         return $this->messageFactory->createRequest($method, $url, $options);
     }
 
+    /**
+     * Sends a HTTP GET request
+     * @param string $url the request URL
+     * @param array $options for configuring the Request object.
+     * @return Message\ResponseInterface
+     */
     public function get($url = null, $options = [])
     {
         return $this->send($this->createRequest('GET', $url, $options));
     }
 
+    /**
+     * Sends a HTTP HEAD request
+     * @param string $url the request URL
+     * @param array $options for configuring the Request object.
+     * @return Message\ResponseInterface
+     */
     public function head($url = null, array $options = [])
     {
         return $this->send($this->createRequest('HEAD', $url, $options));
     }
 
+    /**
+     * Sends a HTTP DELETE request
+     * @param string $url the request URL
+     * @param array $options for configuring the Request object.
+     * @return Message\ResponseInterface
+     */
     public function delete($url = null, array $options = [])
     {
         return $this->send($this->createRequest('DELETE', $url, $options));
     }
 
+    /**
+     * Sends a HTTP PUT request
+     * @param string $url the request URL
+     * @param array $options for configuring the Request object.
+     * @return Message\ResponseInterface
+     */
     public function put($url = null, array $options = [])
     {
         return $this->send($this->createRequest('PUT', $url, $options));
     }
 
+    /**
+     * Sends a HTTP PATCH request
+     * @param string $url the request URL
+     * @param array $options for configuring the Request object.
+     * @return Message\ResponseInterface
+     */
     public function patch($url = null, array $options = [])
     {
         return $this->send($this->createRequest('PATCH', $url, $options));
     }
 
+    /**
+     * Sends a HTTP POST request
+     * @param string $url the request URL
+     * @param array $options for configuring the Request object.
+     * @return Message\ResponseInterface
+     */
     public function post($url = null, array $options = [])
     {
         return $this->send($this->createRequest('POST', $url, $options));
     }
 
+    /**
+     * Sends a HTTP OPTIONS request
+     * @param string $url the request URL
+     * @param array $options for configuring the Request object.
+     * @return Message\ResponseInterface
+     */
     public function options($url = null, array $options = [])
     {
         return $this->send($this->createRequest('OPTIONS', $url, $options));
     }
 
+    /**
+     * Sends a HTTP request
+     * @param RequestInterface $request the request to send.
+     * @return Message\ResponseInterface
+     */
     public function send(RequestInterface $request)
     {
         $isFuture = $request->getConfig()->get('future');
