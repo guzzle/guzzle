@@ -20,31 +20,6 @@ class RequestFsm
     private $mf;
     private $maxTransitions;
 
-    private $states = [
-        // When a mock intercepts the emitted "before" event, then we
-        // transition to the "complete" intercept state.
-        'before'   => [
-            'success'    => 'send',
-            'intercept'  => 'complete',
-            'error'      => 'error'
-        ],
-        // The complete and error events are handled using the "then" of
-        // the RingPHP request, so we exit the FSM.
-        'send' => ['error' => 'error'],
-        'complete' => [
-            'success'    => 'end',
-            'intercept'  => 'retry',
-            'error'      => 'error'
-        ],
-        'error' => [
-            'success'    => 'complete',
-            'intercept'  => 'retry',
-            'error'      => 'end'
-        ],
-        'retry' => ['success' => 'before'],
-        'end'   => [],
-    ];
-
     public function __construct(
         callable $handler,
         MessageFactoryInterface $messageFactory,
@@ -60,174 +35,138 @@ class RequestFsm
      * optionally supplied $finalState is entered.
      *
      * @param Transaction $trans      Transaction being transitioned.
-     * @param string      $finalState The state to stop on. If unspecified,
-     *                                runs until a terminal state is found.
      *
      * @throws \Exception if a terminal state throws an exception.
      */
-    public function __invoke(Transaction $trans, $finalState = null)
+    public function __invoke(Transaction $trans)
     {
-        $trans->_transitionCount = 1;
+        $trans->_transitionCount = 0;
 
         if (!$trans->state) {
             $trans->state = 'before';
         }
 
-        while ($trans->state !== $finalState) {
+        transition:
 
-            if (!isset($this->states[$trans->state])) {
-                throw new StateException("Invalid state: {$trans->state}");
-            } elseif (++$trans->_transitionCount > $this->maxTransitions) {
-                throw new StateException('Too many state transitions were '
-                    . 'encountered ({$trans->_transitionCount}). This likely '
-                    . 'means that a combination of event listeners are in an '
-                    . 'infinite loop.');
-            }
+        if (++$trans->_transitionCount > $this->maxTransitions) {
+            throw new StateException("Too many state transitions were "
+                . "encountered ({$trans->_transitionCount}). This likely "
+                . "means that a combination of event listeners are in an "
+                . "infinite loop.");
+        }
 
-            $state = $this->states[$trans->state];
+        switch ($trans->state) {
+            case 'before': goto before;
+            case 'complete': goto complete;
+            case 'error': goto error;
+            case 'retry': goto retry;
+            case 'send': goto send;
+            case 'end': goto end;
+            default: throw new StateException("Invalid state: {$trans->state}");
+        }
 
+        before: {
             try {
-                /** @var callable $fn */
-                $fn = [$this, $trans->state];
-                if ($fn($trans)) {
-                    // Handles transitioning to the "intercept" state.
-                    if (isset($state['intercept'])) {
-                        $trans->state = $state['intercept'];
-                        continue;
-                    }
-                    throw new StateException('Invalid intercept state '
-                        . 'transition from ' . $trans->state);
+                $trans->request->getEmitter()->emit('before', new BeforeEvent($trans));
+                $trans->state = 'send';
+                if ((bool) $trans->response) {
+                    $trans->state = 'complete';
                 }
-
-                if (isset($state['success'])) {
-                    // Transition to the success state
-                    $trans->state = $state['success'];
-                } else {
-                    // Break: this is a terminal state with no transition.
-                    break;
-                }
-
-            } catch (StateException $e) {
-                // State exceptions are thrown no matter what.
-                throw $e;
             } catch (\Exception $e) {
+                $trans->state = 'error';
                 $trans->exception = $e;
-                // Terminal error states throw the exception.
-                if (!isset($state['error'])) {
-                    throw $e;
-                }
-                // Transition to the error state.
-                $trans->state = $state['error'];
             }
+            goto transition;
         }
-    }
 
-    private function before(Transaction $trans)
-    {
-        $trans->request->getEmitter()->emit('before', new BeforeEvent($trans));
-
-        // When a response is set during the before event (i.e., a mock), then
-        // we don't need to send anything. Skip ahead to the complete event
-        // by returning to to go to the intercept state.
-        return (bool) $trans->response;
-    }
-
-    private function retry(Transaction $trans)
-    {
-        $trans->response = $trans->exception = null;
-        $trans->retries++;
-    }
-
-    private function send(Transaction $trans)
-    {
-        $fn = $this->handler;
-        $trans->response = FutureResponse::proxy(
-            $fn(RingBridge::prepareRingRequest($trans)),
-            function ($value) use ($trans) {
-                RingBridge::completeRingResponse($trans, $value, $this->mf, $this);
-                // Resolve deep futures if this is not a future transaction.
-                // This accounts for things like retries that would otherwise
-                // not have an immediate side-effect.
-                if (!$trans->future && $trans->response instanceof FutureInterface) {
-                    $trans->response = $trans->response->wait();
+        complete: {
+            try {
+                // Futures will have their own end events emitted when
+                // dereferenced.
+                $trans->state = 'end';
+                if (!($trans->response instanceof FutureInterface)) {
+                    $trans->response->setEffectiveUrl($trans->request->getUrl());
+                    $trans->request->getEmitter()->emit('complete', new CompleteEvent($trans));
                 }
-                return $trans->response;
+            } catch (\Exception $e) {
+                $trans->state = 'error';
+                $trans->exception = $e;
             }
-        );
-    }
-
-    /**
-     * Emits the error event and ensures that the exception is set and is an
-     * instance of RequestException. If the error event is not intercepted,
-     * then the exception is thrown and we transition to the "end" event. This
-     * event also allows requests to be retried, and when retried, transitions
-     * to the "before" event. Otherwise, when no retries, and the exception is
-     * intercepted, transition to the "complete" event.
-     */
-    private function error(Transaction $trans)
-    {
-        // Convert non-request exception to a wrapped exception
-        if (!($trans->exception instanceof RequestException)) {
-            $trans->exception = RequestException::wrapException(
-                $trans->request, $trans->exception
-            );
+            goto transition;
         }
 
-        // Dispatch an event and allow interception
-        $event = new ErrorEvent($trans);
-        $trans->request->getEmitter()->emit('error', $event);
-
-        if ($trans->state === 'retry') {
-            return true;
-        }
-
-        if ($trans->exception) {
-            throw $trans->exception;
-        }
-
-        return false;
-    }
-
-    /**
-     * Emits a complete event, and if a request is marked for a retry during
-     * the complete event, then the "before" state is transitioned to.
-     */
-    private function complete(Transaction $trans)
-    {
-        // Futures will have their own end events emitted when dereferenced.
-        if ($trans->response instanceof FutureInterface) {
-            return false;
-        }
-
-        $trans->response->setEffectiveUrl($trans->request->getUrl());
-        $trans->request->getEmitter()->emit('complete', new CompleteEvent($trans));
-
-        // Return true to transition to the 'before' state. False otherwise.
-        return $trans->state === 'retry';
-    }
-
-    /**
-     * Emits the "end" event and throws an exception if one is present.
-     */
-    private function end(Transaction $trans)
-    {
-        // Futures will have their own end events emitted when dereferenced,
-        // but still emit, even for futures, when an exception is present.
-        if (!$trans->exception && $trans->response instanceof FutureInterface) {
-            return;
-        }
-
-        $trans->request->getEmitter()->emit('end', new EndEvent($trans));
-
-        // Throw exceptions in the terminal event if the exception was not
-        // handled by an "end" event listener.
-        if ($trans->exception) {
-            if (!($trans->exception instanceof RequestException)) {
+        error: {
+            try {
+                // Convert non-request exception to a wrapped exception
                 $trans->exception = RequestException::wrapException(
                     $trans->request, $trans->exception
                 );
+                $trans->state = 'end';
+                $trans->request->getEmitter()->emit('error', new ErrorEvent($trans));
+                // An intercepted request (not retried) transitions to complete
+                if (!$trans->exception && $trans->state !== 'retry') {
+                    $trans->state = 'complete';
+                }
+            } catch (\Exception $e) {
+                $trans->state = 'end';
+                $trans->exception = $e;
             }
-            throw $trans->exception;
+            goto transition;
+        }
+
+        retry: {
+            $trans->retries++;
+            $trans->response = null;
+            $trans->exception = null;
+            $trans->state = 'before';
+            goto transition;
+        }
+
+        send: {
+            $fn = $this->handler;
+            $trans->response = FutureResponse::proxy(
+                $fn(RingBridge::prepareRingRequest($trans)),
+                function ($value) use ($trans) {
+                    RingBridge::completeRingResponse($trans, $value, $this->mf, $this);
+                    $this($trans);
+                    // Resolve deep futures if this is not a future
+                    // transaction. This accounts for things like retries
+                    // that do not have an immediate side-effect.
+                    if (!$trans->future
+                        && $trans->response instanceof FutureInterface
+                    ) {
+                        $trans->response = $trans->response->wait();
+                    }
+                    return $trans->response;
+                }
+            );
+            return;
+        }
+
+        end: {
+            // Futures will have their own end events emitted when
+            // dereferenced, but still emit, even for futures, when an
+            // exception is present.
+            if (!$trans->exception
+                && $trans->response instanceof FutureInterface
+            ) {
+                return;
+            }
+
+            $trans->request->getEmitter()->emit('end', new EndEvent($trans));
+
+            // Throw exceptions in the terminal event if the exception
+            // was not handled by an "end" event listener.
+            if ($trans->exception) {
+                if (!($trans->exception instanceof RequestException)) {
+                    $trans->exception = RequestException::wrapException(
+                        $trans->request, $trans->exception
+                    );
+                }
+                throw $trans->exception;
+            }
+
+            return;
         }
     }
 }
