@@ -165,8 +165,6 @@ class RequestFsm
                 }
                 throw $trans->exception;
             }
-
-            return;
         }
     }
 }
