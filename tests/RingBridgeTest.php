@@ -107,24 +107,6 @@ class RingBridgeTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('foo', (string) $response->getBody());
     }
 
-    public function testEmitsCompleteEventOnSuccess()
-    {
-        $c = false;
-        $trans = new Transaction(new Client(), new Request('GET', 'http://f.co'));
-        $trans->request->getEmitter()->on('complete', function () use (&$c) {
-            $c = true;
-        });
-        $f = new MessageFactory();
-        $res = ['status' => 200, 'headers' => []];
-        $fsm = new RequestFsm(function () {}, new MessageFactory());
-        RingBridge::completeRingResponse($trans, $res, $f, $fsm);
-        $this->assertInstanceOf(
-            'GuzzleHttp\Message\ResponseInterface',
-            $trans->response
-        );
-        $this->assertTrue($c);
-    }
-
     public function testEmitsErrorEventOnError()
     {
         $client = new Client(['base_url' => 'http://127.0.0.1:123']);

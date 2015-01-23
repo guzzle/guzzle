@@ -72,19 +72,17 @@ class RingBridge
 
     /**
      * Handles the process of processing a response received from a ring
-     * handler. The created response is added to the transaction, and any
-     * necessary events are emitted based on the ring response.
+     * handler. The created response is added to the transaction, and the
+     * transaction stat is set appropriately.
      *
      * @param Transaction             $trans          Owns request and response.
      * @param array                   $response       Ring response array
      * @param MessageFactoryInterface $messageFactory Creates response objects.
-     * @param callable                $fsm            Request FSM function.
      */
     public static function completeRingResponse(
         Transaction $trans,
         array $response,
-        MessageFactoryInterface $messageFactory,
-        callable $fsm
+        MessageFactoryInterface $messageFactory
     ) {
         $trans->state = 'complete';
         $trans->transferInfo = isset($response['transfer_stats'])
@@ -116,9 +114,6 @@ class RingBridge
             $trans->state = 'error';
             $trans->exception = $response['error'];
         }
-
-        // Complete the lifecycle of the request.
-        $fsm($trans);
     }
 
     /**
@@ -163,7 +158,7 @@ class RingBridge
 Sending the request did not return a response, exception, or populate the
 transaction with a response. This is most likely due to an incorrectly
 implemented RingPHP handler. If you are simply trying to mock responses,
-then it is recommneded to use the GuzzleHttp\Ring\Client\MockHandler.
+then it is recommended to use the GuzzleHttp\Ring\Client\MockHandler.
 EOT;
         return new RequestException($message, $request);
     }
