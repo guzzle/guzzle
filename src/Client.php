@@ -228,27 +228,27 @@ class Client implements ClientInterface
         $trans = new Transaction($this, $request, $isFuture);
         $fn = $this->fsm;
 
-        // Ensure a future response is returned if one was requested.
-        if ($isFuture) {
-            try {
-                $fn($trans);
+        try {
+            $fn($trans);
+            if ($isFuture) {
                 // Turn the normal response into a future if needed.
                 return $trans->response instanceof FutureInterface
                     ? $trans->response
                     : new FutureResponse(new FulfilledPromise($trans->response));
-            } catch (RequestException $e) {
-                // Wrap the exception in a promise if the user asked for a future.
+            }
+            // Resolve deep futures if this is not a future
+            // transaction. This accounts for things like retries
+            // that do not have an immediate side-effect.
+            while ($trans->response instanceof FutureInterface) {
+                $trans->response = $trans->response->wait();
+            }
+            return $trans->response;
+        } catch (\Exception $e) {
+            if ($isFuture) {
+                // Wrap the exception in a promise
                 return new FutureResponse(new RejectedPromise($e));
             }
-        } else {
-            try {
-                $fn($trans);
-                return $trans->response instanceof FutureInterface
-                    ? $trans->response->wait()
-                    : $trans->response;
-            } catch (\Exception $e) {
-                throw RequestException::wrapException($trans->request, $e);
-            }
+            throw RequestException::wrapException($trans->request, $e);
         }
     }
 

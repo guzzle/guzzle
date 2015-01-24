@@ -81,13 +81,14 @@ class RequestFsm
 
         complete: {
             try {
-                // Futures will have their own end events emitted when
-                // dereferenced.
-                $trans->state = 'end';
-                if (!($trans->response instanceof FutureInterface)) {
-                    $trans->response->setEffectiveUrl($trans->request->getUrl());
-                    $trans->request->getEmitter()->emit('complete', new CompleteEvent($trans));
+                if ($trans->response instanceof FutureInterface) {
+                    // Futures will have their own end events emitted when
+                    // dereferenced.
+                    return;
                 }
+                $trans->state = 'end';
+                $trans->response->setEffectiveUrl($trans->request->getUrl());
+                $trans->request->getEmitter()->emit('complete', new CompleteEvent($trans));
             } catch (\Exception $e) {
                 $trans->state = 'error';
                 $trans->exception = $e;
@@ -129,14 +130,6 @@ class RequestFsm
                 function ($value) use ($trans) {
                     RingBridge::completeRingResponse($trans, $value, $this->mf, $this);
                     $this($trans);
-                    // Resolve deep futures if this is not a future
-                    // transaction. This accounts for things like retries
-                    // that do not have an immediate side-effect.
-                    if (!$trans->future
-                        && $trans->response instanceof FutureInterface
-                    ) {
-                        $trans->response = $trans->response->wait();
-                    }
                     return $trans->response;
                 }
             );
@@ -144,17 +137,7 @@ class RequestFsm
         }
 
         end: {
-            // Futures will have their own end events emitted when
-            // dereferenced, but still emit, even for futures, when an
-            // exception is present.
-            if (!$trans->exception
-                && $trans->response instanceof FutureInterface
-            ) {
-                return;
-            }
-
             $trans->request->getEmitter()->emit('end', new EndEvent($trans));
-
             // Throw exceptions in the terminal event if the exception
             // was not handled by an "end" event listener.
             if ($trans->exception) {

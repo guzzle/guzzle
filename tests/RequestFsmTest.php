@@ -75,23 +75,6 @@ class RequestFsmTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($c);
     }
 
-    public function testDoesNotEmitEndForFuture()
-    {
-        $fsm = new RequestFsm(function () {
-            return new CompletedFutureArray(['status' => 200]);
-        }, $this->mf);
-        $t = new Transaction(new Client(), new Request('GET', 'http://foo.com'));
-        $deferred = new Deferred();
-        $t->response = new FutureResponse($deferred->promise());
-        $t->state = 'end';
-        $c = false;
-        $t->request->getEmitter()->on('end', function (EndEvent $e) use (&$c) {
-            $c = true;
-        });
-        $fsm($t);
-        $this->assertFalse($c);
-    }
-
     public function testTransitionsThroughSuccessfulTransfer()
     {
         $client = new Client();
