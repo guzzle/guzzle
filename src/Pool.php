@@ -1,6 +1,7 @@
 <?php
 namespace GuzzleHttp;
 
+use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Event\RequestEvents;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\ResponseInterface;
@@ -191,6 +192,7 @@ class Pool implements FutureInterface
             } catch (\Exception $e) {
                 // Eat exceptions because they should be handled asynchronously
             }
+            $this->addNextRequests();
         }
 
         // Clean up no longer needed state.
@@ -283,9 +285,10 @@ class Pool implements FutureInterface
 
         // Be sure to use "lazy" futures, meaning they do not send right away.
         $request->getConfig()->set('future', 'lazy');
-        $this->attachListeners($request, $this->eventListeners);
-        $response = $this->client->send($request);
         $hash = spl_object_hash($request);
+        $this->attachListeners($request, $this->eventListeners);
+        $request->getEmitter()->on('before', [$this, '_trackRetries'], RequestEvents::EARLY);
+        $response = $this->client->send($request);
         $this->waitQueue[$hash] = $response;
         $promise = $response->promise();
 
@@ -304,12 +307,19 @@ class Pool implements FutureInterface
         // Use this function for both resolution and rejection.
         $thenFn = function ($value) use ($request, $hash) {
             $this->finishResponse($request, $value, $hash);
-            $this->addNextRequests();
+            if (!$request->getConfig()->get('_pool_retries')) {
+                $this->addNextRequests();
+            }
         };
 
         $promise->then($thenFn, $thenFn);
 
         return true;
+    }
+
+    public function _trackRetries(BeforeEvent $e)
+    {
+        $e->getRequest()->getConfig()->set('_pool_retries', $e->getRetryCount());
     }
 
     private function finishResponse($request, $value, $hash)

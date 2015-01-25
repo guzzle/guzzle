@@ -42,6 +42,16 @@ abstract class AbstractRequestEvent extends AbstractEvent
     }
 
     /**
+     * Get the number of transaction retries.
+     *
+     * @return int
+     */
+    public function getRetryCount()
+    {
+        return $this->transaction->retries;
+    }
+
+    /**
      * @return Transaction
      */
     protected function getTransaction()
