@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 5.2.0 - 2014-01-27
+
+* Added `AppliesHeadersInterface` to make applying headers to a request based
+  on the body more generic and not specific to `PostBodyInterface`.
+* Reduced the number of stack frames needed to send requests.
+* Nested futures are now resolved in the client rather than the RequestFsm
+* Finishing state transitions is now handled in the RequestFsm rather than the
+  RingBridge.
+* Added a guard in the Pool class to not use recursion for request retries.
+
 ## 5.1.0 - 2014-12-19
 
 * Pool class no longer uses recursion when a request is intercepted.
