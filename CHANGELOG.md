@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 5.2.0 - 2014-01-27
+## 5.2.0 - 2015-01-27
 
 * Added `AppliesHeadersInterface` to make applying headers to a request based
   on the body more generic and not specific to `PostBodyInterface`.
