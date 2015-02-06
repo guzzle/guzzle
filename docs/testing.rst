@@ -75,7 +75,7 @@ subscriber maintains a history of the requests that were sent by a client.
     // Get the last request
     $lastRequest = $history->getLastRequest();
     // Get the last response
-    $lastRequest = $history->getLastResponse();
+    $lastResponse = $history->getLastResponse();
 
     // Iterate over the transactions that were sent
     foreach ($history as $transaction) {
@@ -134,7 +134,7 @@ Mock Adapter
 ============
 
 In addition to using the Mock subscriber, you can use the
-``GuzzleHttp\Ring\Client\MockAdapter`` as the handler of a client to return the
+``GuzzleHttp\Ring\Client\MockHandler`` as the handler of a client to return the
 same response over and over or return the result of a callable function.
 
 Test Web Server
