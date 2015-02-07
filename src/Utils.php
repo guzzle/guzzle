@@ -61,8 +61,14 @@ final class Utils
      */
     public static function setPath(&$data, $path, $value)
     {
-        $current =& $data;
         $queue = explode('/', $path);
+        // Optimization for simple sets.
+        if (count($queue) === 1) {
+            $data[$path] = $value;
+            return;
+        }
+
+        $current =& $data;
         while (null !== ($key = array_shift($queue))) {
             if (!is_array($current)) {
                 throw new \RuntimeException("Trying to setPath {$path}, but "
