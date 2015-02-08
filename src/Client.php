@@ -102,7 +102,7 @@ class Client implements ClientInterface
      */
     public static function getDefaultHandler()
     {
-        $default = $future = $streaming = null;
+        $default = $future = null;
 
         if (extension_loaded('curl')) {
             $config = [
@@ -111,30 +111,24 @@ class Client implements ClientInterface
             if ($maxHandles = getenv('GUZZLE_CURL_MAX_HANDLES')) {
                 $config['max_handles'] = $maxHandles;
             }
-            $default = $future = new CurlMultiHandler($config);
             if (function_exists('curl_reset')) {
                 $default = new CurlHandler();
+                $future = new CurlMultiHandler($config);
+            } else {
+                $default = new CurlMultiHandler($config);
             }
         }
 
         if (ini_get('allow_url_fopen')) {
-            $streaming = new StreamHandler();
-            if (!$default) {
-                $default = $streaming;
-            }
-        }
-
-        if (!$default) {
+            $default = !$default
+                ? new StreamHandler()
+                : Middleware::wrapStreaming($default, new StreamHandler());
+        } elseif (!$default) {
             throw new \RuntimeException('Guzzle requires cURL, the '
                 . 'allow_url_fopen ini setting, or a custom HTTP handler.');
         }
 
-        $handler = $default;
-        if ($streaming && $streaming !== $default) {
-            $handler = Middleware::wrapStreaming($default, $streaming);
-        }
-
-        return $future ? Middleware::wrapFuture($handler, $future) : $handler;
+        return $future ? Middleware::wrapFuture($default, $future) : $default;
     }
 
     /**
