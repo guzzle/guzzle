@@ -78,13 +78,16 @@ asynchronously using the promise interface of a future response.
 Response Body
 -------------
 
-The body of a response can be retrieved and cast to a string.
+The body of a response can be retrieved and cast to a string (previously you pass a `true` parameter - `getBody(true)`).
 
 .. code-block:: php
 
     $body = $response->getBody();
     echo $body;
     // { "some_json_data" ...}
+    // or to pass to other function that expect a string
+    $body = (string) $response->getBody();
+    $crawler = new Crawler($body);
 
 You can also read read bytes from body of a response like a stream.
 
