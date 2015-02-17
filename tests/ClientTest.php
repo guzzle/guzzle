@@ -339,6 +339,34 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    /**
+     * Test that base URLs ending with a slash are resolved as per RFC3986.
+     *
+     * @link http://tools.ietf.org/html/rfc3986#section-5.2.3
+     */
+    public function testMultipleSubdirectoryWithSlash()
+    {
+        $client = new Client(['base_url' => 'http://www.foo.com/bar/bam/']);
+        $this->assertEquals(
+          'http://www.foo.com/bar/bam/httpfoo',
+          $client->createRequest('GET', 'httpfoo')->getUrl()
+        );
+    }
+
+    /**
+     * Test that base URLs ending without a slash are resolved as per RFC3986.
+     *
+     * @link http://tools.ietf.org/html/rfc3986#section-5.2.3
+     */
+    public function testMultipleSubdirectoryNoSlash()
+    {
+        $client = new Client(['base_url' => 'http://www.foo.com/bar/bam']);
+        $this->assertEquals(
+          'http://www.foo.com/bar/httpfoo',
+          $client->createRequest('GET', 'httpfoo')->getUrl()
+        );
+    }
+
     public function testClientSendsRequests()
     {
         $mock = new MockHandler(['status' => 200, 'headers' => []]);
