@@ -1,121 +1,42 @@
 <?php
 namespace GuzzleHttp;
 
-use GuzzleHttp\Event\HasEmitterInterface;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Message\RequestInterface;
-use GuzzleHttp\Message\ResponseInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\UriInterface;
 
 /**
- * Client interface for sending HTTP requests
+ * Client interface for sending HTTP requests.
  */
-interface ClientInterface extends HasEmitterInterface
+interface ClientInterface
 {
-    const VERSION = '5.2.0';
+    const VERSION = '6.0.0-alpha.1';
 
     /**
-     * Create and return a new {@see RequestInterface} object.
+     * Send an HTTP request.
+     *
+     * @param RequestInterface $request Request to send
+     * @param array            $options Request options to apply to the given
+     *                                  request and to the transfer.
+     *
+     * @return ResponsePromiseInterface
+     */
+    public function send(RequestInterface $request, array $options = []);
+
+    /**
+     * Create and send an HTTP request.
      *
      * Use an absolute path to override the base path of the client, or a
      * relative path to append to the base path of the client. The URL can
      * contain the query string as well. Use an array to provide a URL
      * template and additional variables to use in the URL template expansion.
      *
-     * @param string           $method  HTTP method
-     * @param string|array|Url $url     URL or URI template
-     * @param array            $options Array of request options to apply.
+     * @param string                    $method  HTTP method
+     * @param string|array|UriInterface $uri     URI or URI template
+     * @param array                     $options Request options to apply.
      *
-     * @return RequestInterface
+     * @return ResponsePromiseInterface
      */
-    public function createRequest($method, $url = null, array $options = []);
-
-    /**
-     * Send a GET request
-     *
-     * @param string|array|Url $url     URL or URI template
-     * @param array            $options Array of request options to apply.
-     *
-     * @return ResponseInterface
-     * @throws RequestException When an error is encountered
-     */
-    public function get($url = null, $options = []);
-
-    /**
-     * Send a HEAD request
-     *
-     * @param string|array|Url $url     URL or URI template
-     * @param array            $options Array of request options to apply.
-     *
-     * @return ResponseInterface
-     * @throws RequestException When an error is encountered
-     */
-    public function head($url = null, array $options = []);
-
-    /**
-     * Send a DELETE request
-     *
-     * @param string|array|Url $url     URL or URI template
-     * @param array            $options Array of request options to apply.
-     *
-     * @return ResponseInterface
-     * @throws RequestException When an error is encountered
-     */
-    public function delete($url = null, array $options = []);
-
-    /**
-     * Send a PUT request
-     *
-     * @param string|array|Url $url     URL or URI template
-     * @param array            $options Array of request options to apply.
-     *
-     * @return ResponseInterface
-     * @throws RequestException When an error is encountered
-     */
-    public function put($url = null, array $options = []);
-
-    /**
-     * Send a PATCH request
-     *
-     * @param string|array|Url $url     URL or URI template
-     * @param array            $options Array of request options to apply.
-     *
-     * @return ResponseInterface
-     * @throws RequestException When an error is encountered
-     */
-    public function patch($url = null, array $options = []);
-
-    /**
-     * Send a POST request
-     *
-     * @param string|array|Url $url     URL or URI template
-     * @param array            $options Array of request options to apply.
-     *
-     * @return ResponseInterface
-     * @throws RequestException When an error is encountered
-     */
-    public function post($url = null, array $options = []);
-
-    /**
-     * Send an OPTIONS request
-     *
-     * @param string|array|Url $url     URL or URI template
-     * @param array            $options Array of request options to apply.
-     *
-     * @return ResponseInterface
-     * @throws RequestException When an error is encountered
-     */
-    public function options($url = null, array $options = []);
-
-    /**
-     * Sends a single request
-     *
-     * @param RequestInterface $request Request to send
-     *
-     * @return \GuzzleHttp\Message\ResponseInterface
-     * @throws \LogicException When the handler does not populate a response
-     * @throws RequestException When an error is encountered
-     */
-    public function send(RequestInterface $request);
+    public function request($method, $uri = null, array $options = []);
 
     /**
      * Get default request options of the client.
@@ -142,9 +63,9 @@ interface ClientInterface extends HasEmitterInterface
     public function setDefaultOption($keyOrPath, $value);
 
     /**
-     * Get the base URL of the client.
+     * Get the base URI of the client.
      *
-     * @return string Returns the base URL if present
+     * @return UriInterface Returns the base URI if present
      */
-    public function getBaseUrl();
+    public function getBaseUri();
 }

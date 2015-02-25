@@ -1,11 +1,10 @@
 <?php
-
 namespace GuzzleHttp\Tests\CookieJar;
 
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
-use GuzzleHttp\Message\Request;
-use GuzzleHttp\Message\Response;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 
 /**
  * @covers GuzzleHttp\Cookie\CookieJar
@@ -286,7 +285,7 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
         }
 
         $request = new Request('GET', $url);
-        $this->jar->addCookieHeader($request);
+        $request = $this->jar->withCookieHeader($request);
         $this->assertEquals($cookies, $request->getHeader('Cookie'));
     }
 

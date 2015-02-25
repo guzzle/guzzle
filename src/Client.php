@@ -1,258 +1,216 @@
 <?php
 namespace GuzzleHttp;
 
-use GuzzleHttp\Event\HasEmitterTrait;
-use GuzzleHttp\Message\MessageFactory;
-use GuzzleHttp\Message\MessageFactoryInterface;
-use GuzzleHttp\Message\RequestInterface;
-use GuzzleHttp\Message\FutureResponse;
-use GuzzleHttp\Ring\Client\Middleware;
-use GuzzleHttp\Ring\Client\CurlMultiHandler;
-use GuzzleHttp\Ring\Client\CurlHandler;
-use GuzzleHttp\Ring\Client\StreamHandler;
-use GuzzleHttp\Ring\Core;
-use GuzzleHttp\Ring\Future\FutureInterface;
-use GuzzleHttp\Exception\RequestException;
-use React\Promise\FulfilledPromise;
-use React\Promise\RejectedPromise;
+use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Cookie\CookieJarInterface;
+use GuzzleHttp\Promise\FulfilledPromise;
+use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Stream;
+use GuzzleHttp\Psr7\Uri;
+use Psr\Http\Message\UriInterface;
+use Psr\Http\Message\RequestInterface;
+use \InvalidArgumentException as Iae;
 
 /**
- * HTTP client
+ * GuzzleHttp client implementation.
+ *
+ *     $client = new GuzzleHttp\Client();
+ *     $response = $client->request('GET', 'http://www.google.com');
+ *     $response->then(
+ *         function ($response) {
+ *             echo "Got a response: \n" . GuzzleHttp\str_message($response) . "\n";
+ *         },
+ *         function ($e) {
+ *             echo 'Got an error: ' . $e->getMessage() . "\n";
+ *         }
+ *     );
+ *     $response->wait();
+ *     echo $response->getStatusCode();
  */
 class Client implements ClientInterface
 {
-    use HasEmitterTrait;
-
-    /** @var MessageFactoryInterface Request factory used by the client */
-    private $messageFactory;
-
-    /** @var Url Base URL of the client */
-    private $baseUrl;
+    /** @var Uri Base URI of the client */
+    private $baseUri;
 
     /** @var array Default request options */
     private $defaults;
 
-    /** @var callable Request state machine */
-    private $fsm;
+    /** @var callable Request handler */
+    private $handler;
+
+    /** @var callable Cached error middleware */
+    private $errorMiddleware;
+
+    /** @var callable Cached redirect middleware */
+    private $redirectMiddleware;
+
+    /** @var callable Cached cookie middleware */
+    private $cookieMiddleware;
+
+    /** @var array Known pass-through transfer request options */
+    private static $transferOptions = [
+        'connect_timeout' => true,
+        'timeout' => true,
+        'verify' => true,
+        'ssl_key' => true,
+        'cert' => true,
+        'progress' => true,
+        'proxy' => true,
+        'debug' => true,
+        'sink' => true,
+        'stream' => true,
+        'expect' => true,
+        'allow_redirects' => true,
+        'sync' => true
+    ];
+
+    /** @var array Default allow_redirects request option settings  */
+    private static $defaultRedirect = [
+        'max'       => 5,
+        'strict'    => false,
+        'referer'   => false,
+        'protocols' => ['http', 'https']
+    ];
 
     /**
      * Clients accept an array of constructor parameters.
      *
      * Here's an example of creating a client using an URI template for the
-     * client's base_url and an array of default request options to apply
+     * client's base_uri and an array of default request options to apply
      * to each request:
      *
      *     $client = new Client([
-     *         'base_url' => [
+     *         'base_uri' => [
      *              'http://www.foo.com/{version}/',
      *              ['version' => '123']
      *          ],
      *         'defaults' => [
-     *             'timeout'         => 10,
+     *             'timeout'         => 0,
      *             'allow_redirects' => false,
      *             'proxy'           => '192.168.16.1:10'
      *         ]
      *     ]);
      *
      * @param array $config Client configuration settings
-     *     - base_url: Base URL of the client that is merged into relative URLs.
+     *     - base_uri: Base URI of the client that is merged into relative URIs.
      *       Can be a string or an array that contains a URI template followed
      *       by an associative array of expansion variables to inject into the
      *       URI template.
      *     - handler: callable RingPHP handler used to transfer requests
-     *     - message_factory: Factory used to create request and response object
      *     - defaults: Default request options to apply to each request
-     *     - emitter: Event emitter used for request events
-     *     - fsm: (internal use only) The request finite state machine. A
-     *       function that accepts a transaction and optional final state. The
-     *       function is responsible for transitioning a request through its
-     *       lifecycle events.
      */
     public function __construct(array $config = [])
     {
-        $this->configureBaseUrl($config);
+        $this->configureBaseUri($config);
         $this->configureDefaults($config);
-
-        if (isset($config['emitter'])) {
-            $this->emitter = $config['emitter'];
-        }
-
-        $this->messageFactory = isset($config['message_factory'])
-            ? $config['message_factory']
-            : new MessageFactory();
-
-        if (isset($config['fsm'])) {
-            $this->fsm = $config['fsm'];
-        } else {
-            if (isset($config['handler'])) {
-                $handler = $config['handler'];
-            } elseif (isset($config['adapter'])) {
-                $handler = $config['adapter'];
-            } else {
-                $handler = static::getDefaultHandler();
-            }
-            $this->fsm = new RequestFsm($handler, $this->messageFactory);
-        }
+        $this->handler = isset($config['handler'])
+            ? $config['handler']
+            : \GuzzleHttp\default_handler();
     }
 
-    /**
-     * Create a default handler to use based on the environment
-     *
-     * @throws \RuntimeException if no viable Handler is available.
-     */
-    public static function getDefaultHandler()
+    public function send(RequestInterface $request, array $options = [])
     {
-        $default = $future = null;
-
-        if (extension_loaded('curl')) {
-            $config = [
-                'select_timeout' => getenv('GUZZLE_CURL_SELECT_TIMEOUT') ?: 1
-            ];
-            if ($maxHandles = getenv('GUZZLE_CURL_MAX_HANDLES')) {
-                $config['max_handles'] = $maxHandles;
-            }
-            if (function_exists('curl_reset')) {
-                $default = new CurlHandler();
-                $future = new CurlMultiHandler($config);
-            } else {
-                $default = new CurlMultiHandler($config);
-            }
+        // Merge the base URI into the request URI if needed.
+        $original = $request->getUri();
+        $uri = $this->buildUri($original);
+        if ($uri !== $original) {
+            $request = $request->withUri($uri);
         }
 
-        if (ini_get('allow_url_fopen')) {
-            $default = !$default
-                ? new StreamHandler()
-                : Middleware::wrapStreaming($default, new StreamHandler());
-        } elseif (!$default) {
-            throw new \RuntimeException('Guzzle requires cURL, the '
-                . 'allow_url_fopen ini setting, or a custom HTTP handler.');
-        }
-
-        return $future ? Middleware::wrapFuture($default, $future) : $default;
+        return $this->transfer($request, $this->mergeDefaults($options));
     }
 
-    /**
-     * Get the default User-Agent string to use with Guzzle
-     *
-     * @return string
-     */
-    public static function getDefaultUserAgent()
+    public function request($method, $uri = null, array $options = [])
     {
-        static $defaultAgent = '';
-        if (!$defaultAgent) {
-            $defaultAgent = 'Guzzle/' . self::VERSION;
-            if (extension_loaded('curl')) {
-                $defaultAgent .= ' curl/' . curl_version()['version'];
-            }
-            $defaultAgent .= ' PHP/' . PHP_VERSION;
-        }
+        $options = $this->mergeDefaults($options);
+        $headers = isset($options['headers']) ? $options['headers'] : [];
+        $body = isset($options['body']) ? $options['body'] : null;
+        $version = isset($options['version']) ? $options['version'] : '1.1';
+        // Merge the URI into the base URI.
+        $uri = $this->buildUri($uri);
+        $request = new Request($method, $uri, $headers, $body, $version);
+        unset($options['headers'], $options['body'], $options['version']);
 
-        return $defaultAgent;
+        return $this->transfer($request, $options);
     }
 
     public function getDefaultOption($keyOrPath = null)
     {
         return $keyOrPath === null
             ? $this->defaults
-            : Utils::getPath($this->defaults, $keyOrPath);
+            : get_path($this->defaults, $keyOrPath);
     }
 
     public function setDefaultOption($keyOrPath, $value)
     {
-        Utils::setPath($this->defaults, $keyOrPath, $value);
+        set_path($this->defaults, $keyOrPath, $value);
     }
 
-    public function getBaseUrl()
+    public function getBaseUri()
     {
-        return (string) $this->baseUrl;
+        return $this->baseUri;
     }
 
-    public function createRequest($method, $url = null, array $options = [])
+    /**
+     * Expand a URI template and inherit from the base URL if it's relative
+     *
+     * @param string|array $uri URL or an array of the URI template to expand
+     *                          followed by a hash of template varnames.
+     * @return UriInterface
+     * @throws \InvalidArgumentException
+     */
+    private function buildUri($uri)
     {
-        $options = $this->mergeDefaults($options);
-        // Use a clone of the client's emitter
-        $options['config']['emitter'] = clone $this->getEmitter();
-        $url = $url || (is_string($url) && strlen($url))
-            ? $this->buildUrl($url)
-            : (string) $this->baseUrl;
+        // URI template (absolute or relative)
+        if (!is_array($uri)) {
+            return Uri::resolve($this->baseUri, $uri);
+        }
 
-        return $this->messageFactory->createRequest($method, $url, $options);
+        if (!isset($uri[1])) {
+            throw new \InvalidArgumentException('You must provide a hash of '
+                . 'varname options in the second element of a URL array.');
+        }
+
+        // Absolute URL
+        if (strpos($uri[0], '://')) {
+            return new Uri(uri_template($uri[0], $uri[1]));
+        }
+
+        // Combine the relative URL with the base URL
+        return Uri::resolve($this->baseUri, uri_template($uri[0], $uri[1]));
     }
 
-    public function get($url = null, $options = [])
+    private function configureBaseUri($config)
     {
-        return $this->send($this->createRequest('GET', $url, $options));
-    }
-
-    public function head($url = null, array $options = [])
-    {
-        return $this->send($this->createRequest('HEAD', $url, $options));
-    }
-
-    public function delete($url = null, array $options = [])
-    {
-        return $this->send($this->createRequest('DELETE', $url, $options));
-    }
-
-    public function put($url = null, array $options = [])
-    {
-        return $this->send($this->createRequest('PUT', $url, $options));
-    }
-
-    public function patch($url = null, array $options = [])
-    {
-        return $this->send($this->createRequest('PATCH', $url, $options));
-    }
-
-    public function post($url = null, array $options = [])
-    {
-        return $this->send($this->createRequest('POST', $url, $options));
-    }
-
-    public function options($url = null, array $options = [])
-    {
-        return $this->send($this->createRequest('OPTIONS', $url, $options));
-    }
-
-    public function send(RequestInterface $request)
-    {
-        $isFuture = $request->getConfig()->get('future');
-        $trans = new Transaction($this, $request, $isFuture);
-        $fn = $this->fsm;
-
-        try {
-            $fn($trans);
-            if ($isFuture) {
-                // Turn the normal response into a future if needed.
-                return $trans->response instanceof FutureInterface
-                    ? $trans->response
-                    : new FutureResponse(new FulfilledPromise($trans->response));
-            }
-            // Resolve deep futures if this is not a future
-            // transaction. This accounts for things like retries
-            // that do not have an immediate side-effect.
-            while ($trans->response instanceof FutureInterface) {
-                $trans->response = $trans->response->wait();
-            }
-            return $trans->response;
-        } catch (\Exception $e) {
-            if ($isFuture) {
-                // Wrap the exception in a promise
-                return new FutureResponse(new RejectedPromise($e));
-            }
-            throw RequestException::wrapException($trans->request, $e);
+        if (!isset($config['base_uri'])) {
+            $this->baseUri = new Uri('');
+        } elseif (!is_array($config['base_uri'])) {
+            $this->baseUri = new Uri($config['base_uri']);
+        } elseif (count($config['base_uri']) < 2) {
+            throw new \InvalidArgumentException('You must provide a hash of '
+                . 'varname options in the second element of a base_uri array.');
+        } else {
+            $this->baseUri = new Uri(
+                uri_template(
+                    $config['base_uri'][0],
+                    $config['base_uri'][1]
+                )
+            );
         }
     }
 
     /**
-     * Get an array of default options to apply to the client
+     * Configures the default options for a client.
+     *
+     * @param array $config
      *
      * @return array
      */
-    protected function getDefaultOptions()
+    private function configureDefaults(array $config)
     {
-        $settings = [
-            'allow_redirects' => true,
+        $defaults = [
+            'allow_redirects' => self::$defaultRedirect,
             'exceptions'      => true,
             'decode_content'  => true,
             'verify'          => true
@@ -260,93 +218,35 @@ class Client implements ClientInterface
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set
         if ($proxy = getenv('HTTP_PROXY')) {
-            $settings['proxy']['http'] = $proxy;
+            $defaults['proxy']['http'] = $proxy;
         }
 
         if ($proxy = getenv('HTTPS_PROXY')) {
-            $settings['proxy']['https'] = $proxy;
+            $defaults['proxy']['https'] = $proxy;
         }
 
-        return $settings;
-    }
+        $this->defaults = empty($config['defaults'])
+            ? $defaults
+            : $config['defaults'] + $defaults;
 
-    /**
-     * Expand a URI template and inherit from the base URL if it's relative
-     *
-     * @param string|array $url URL or an array of the URI template to expand
-     *                          followed by a hash of template varnames.
-     * @return string
-     * @throws \InvalidArgumentException
-     */
-    private function buildUrl($url)
-    {
-        // URI template (absolute or relative)
-        if (!is_array($url)) {
-            return strpos($url, '://')
-                ? (string) $url
-                : (string) $this->baseUrl->combine($url);
-        }
-
-        if (!isset($url[1])) {
-            throw new \InvalidArgumentException('You must provide a hash of '
-                . 'varname options in the second element of a URL array.');
-        }
-
-        // Absolute URL
-        if (strpos($url[0], '://')) {
-            return Utils::uriTemplate($url[0], $url[1]);
-        }
-
-        // Combine the relative URL with the base URL
-        return (string) $this->baseUrl->combine(
-            Utils::uriTemplate($url[0], $url[1])
-        );
-    }
-
-    private function configureBaseUrl(&$config)
-    {
-        if (!isset($config['base_url'])) {
-            $this->baseUrl = new Url('', '');
-        } elseif (!is_array($config['base_url'])) {
-            $this->baseUrl = Url::fromString($config['base_url']);
-        } elseif (count($config['base_url']) < 2) {
-            throw new \InvalidArgumentException('You must provide a hash of '
-                . 'varname options in the second element of a base_url array.');
-        } else {
-            $this->baseUrl = Url::fromString(
-                Utils::uriTemplate(
-                    $config['base_url'][0],
-                    $config['base_url'][1]
-                )
-            );
-            $config['base_url'] = (string) $this->baseUrl;
-        }
-    }
-
-    private function configureDefaults($config)
-    {
-        if (!isset($config['defaults'])) {
-            $this->defaults = $this->getDefaultOptions();
-        } else {
-            $this->defaults = array_replace(
-                $this->getDefaultOptions(),
-                $config['defaults']
-            );
-        }
-
-        // Add the default user-agent header
+        // Add the default user-agent header.
         if (!isset($this->defaults['headers'])) {
             $this->defaults['headers'] = [
-                'User-Agent' => static::getDefaultUserAgent()
+                'User-Agent' => \GuzzleHttp\default_user_agent()
             ];
-        } elseif (!Core::hasHeader($this->defaults, 'User-Agent')) {
-            // Add the User-Agent header if one was not already set
-            $this->defaults['headers']['User-Agent'] = static::getDefaultUserAgent();
+        } else {
+            // Add the User-Agent header if one was not already set.
+            foreach (array_keys($this->defaults['headers']) as $name) {
+                if (strtolower($name) === 'user-agent') {
+                    return;
+                }
+            }
+            $this->defaults['headers']['User-Agent'] = \GuzzleHttp\default_user_agent();
         }
     }
 
     /**
-     * Merges default options into the array passed by reference.
+     * Merges default options into the array.
      *
      * @param array $options Options to modify by reference
      *
@@ -359,7 +259,7 @@ class Client implements ClientInterface
         // Case-insensitively merge in default headers if both defaults and
         // options have headers specified.
         if (!empty($defaults['headers']) && !empty($options['headers'])) {
-            // Create a set of lowercased keys that are present.
+            // Create a set of lowercase keys that are present.
             $lkeys = [];
             foreach (array_keys($options['headers']) as $k) {
                 $lkeys[strtolower($k)] = true;
@@ -385,11 +285,230 @@ class Client implements ClientInterface
     }
 
     /**
-     * @deprecated Use {@see GuzzleHttp\Pool} instead.
-     * @see GuzzleHttp\Pool
+     * Transfers the given request and applies request options.
+     *
+     * The URI of the request is not modified and the request options are used
+     * as-is without merging in default options.
+     *
+     * @param RequestInterface $request
+     * @param array            $options
+     *
+     * @return FulfilledPromise|FulfilledResponse|RejectedResponse|ResponsePromise
      */
-    public function sendAll($requests, array $options = [])
+    private function transfer(RequestInterface $request, array $options)
     {
-        Pool::send($this, $requests, $options);
+        if (!isset($options['stack'])) {
+            $options['stack'] = new HandlerBuilder();
+        } elseif (!($options['stack'] instanceof HandlerBuilder)) {
+            throw new \InvalidArgumentException('The stack option must be an instance of GuzzleHttp\\HandlerBuilder');
+        }
+
+        $handler = $this->createHandler($request, $options);
+        $request = $this->applyOptions($request, $options);
+
+        try {
+            $response = $handler($request, $options);
+            if ($response instanceof ResponsePromiseInterface) {
+                return $response;
+            } elseif ($response instanceof PromiseInterface) {
+                return ResponsePromise::fromPromise($response);
+            }
+            return new FulfilledResponse($response);
+        } catch (\Exception $e) {
+            return new RejectedResponse($e);
+        }
+    }
+
+    /**
+     * Create a composite handler based on the given request options.
+     *
+     * @param RequestInterface $request Request to send.
+     * @param array            $options Array of request options.
+     *
+     * @return callable
+     */
+    private function createHandler(RequestInterface $request, array &$options)
+    {
+        /** @var HandlerBuilder $stack */
+        $stack = $options['stack'];
+
+        // Add the redirect middleware if needed.
+        if (!empty($options['allow_redirects'])) {
+            if (!$this->errorMiddleware) {
+                $this->redirectMiddleware = Middleware::redirect();
+            }
+            $stack->append($this->redirectMiddleware);
+            if ($options['allow_redirects'] === true) {
+                $options['allow_redirects'] = self::$defaultRedirect;
+            } elseif (!is_array($options['allow_redirects'])) {
+                throw new Iae('allow_redirects must be true, false, or array');
+            } else {
+                // Merge the default settings with the provided settings
+                $options['allow_redirects'] += self::$defaultRedirect;
+            }
+        }
+
+        // Add the httpError middleware if needed.
+        if (!empty($options['exceptions'])) {
+            if (!$this->errorMiddleware) {
+                $this->errorMiddleware = Middleware::httpError();
+            }
+            $stack->append($this->errorMiddleware);
+            unset($options['exceptions']);
+        }
+
+        // Add the cookies middleware if needed.
+        if (!empty($options['cookies'])) {
+            if ($options['cookies'] === true) {
+                if (!$this->cookieMiddleware) {
+                    $jar = new CookieJar();
+                    $this->cookieMiddleware = Middleware::cookies($jar);
+                }
+                $cookie = $this->cookieMiddleware;
+            } elseif ($options['cookies'] instanceof CookieJarInterface) {
+                $cookie = Middleware::cookies($options['cookies']);
+            } elseif (is_array($options['cookies'])) {
+                $cookie = Middleware::cookies(CookieJar::fromArray(
+                    $options['cookies'],
+                    $request->getUri()->getHost()
+                ));
+            } else {
+                throw new Iae('cookies must be an array, true, or CookieJarInterface');
+            }
+            $stack->append($cookie);
+        }
+
+        if (!$stack->hasHandler()) {
+            $stack->setHandler($this->handler);
+        }
+
+        return $stack->resolve();
+    }
+
+    /**
+     * Applies the array of request options to a request.
+     *
+     * @param RequestInterface $request
+     * @param array            $options
+     *
+     * @return RequestInterface
+     */
+    private function applyOptions(RequestInterface $request, array &$options)
+    {
+        $modify = [];
+        $this->extractPostData($options);
+
+        foreach ($options as $key => $value) {
+            if (isset(self::$transferOptions[$key])) {
+                $config[$key] = $value;
+                continue;
+            }
+            switch ($key) {
+
+                case 'decode_content':
+                    if ($value === false) {
+                        continue;
+                    }
+                    if ($value !== true) {
+                        $modify['set_headers']['Accept-Encoding'] = $value;
+                    }
+                    break;
+
+                case 'headers':
+                    if (!is_array($value)) {
+                        throw new Iae('header value must be an array');
+                    }
+                    foreach ($value as $k => $v) {
+                        $modify['set_headers'][$k] = $v;
+                    }
+                    unset($options['headers']);
+                    break;
+
+                case 'body':
+                    $modify['body'] = Stream::factory($value);
+                    unset($options['body']);
+                    break;
+
+                case 'auth':
+                    if (!$value) {
+                        continue;
+                    }
+                    if (is_array($value)) {
+                        $type = isset($value[2]) ? strtolower($value[2]) : 'basic';
+                    } else {
+                        $type = strtolower($value);
+                    }
+                    $config['auth'] = $value;
+                    if ($type == 'basic') {
+                        $modify['set_headers']['Authorization'] = 'Basic ' . base64_encode("$value[0]:$value[1]");
+                    } elseif ($type == 'digest') {
+                        // @todo: Do not rely on curl
+                        $options['curl'][CURLOPT_HTTPAUTH] = CURLAUTH_DIGEST;
+                        $options['curl'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
+                    }
+                    break;
+
+                case 'query':
+                    if (is_array($value)) {
+                        $value = http_build_query($value, null, null, PHP_QUERY_RFC3986);
+                    }
+                    if (!is_string($value)) {
+                        throw new Iae('query must be a string or array');
+                    }
+                    $modify['query'] = $value;
+                    unset($options['query']);
+                    break;
+
+                case 'json':
+                    $modify['body'] = Stream::factory(json_encode($value));
+                    if (!$request->hasHeader('Content-Type')) {
+                        $modify['set_headers']['Content-Type'] = 'application/json';
+                    }
+                    unset($options['json']);
+                    break;
+            }
+        }
+
+        return \GuzzleHttp\modify_request($request, $modify);
+    }
+
+    /**
+     * Extracts post_fields and post_files into the "body" option.
+     *
+     * @param array $options
+     */
+    private function extractPostData(array &$options)
+    {
+        if (empty($options['post_files']) && empty($options['post_fields'])) {
+            return;
+        }
+
+        $contentType = null;
+        if (!empty($options['headers'])) {
+            foreach ($options['headers'] as $name => $value) {
+                if (strtolower($name) === 'content-type') {
+                    $contentType = $value;
+                    break;
+                }
+            }
+        }
+
+        $fields = [];
+        if (isset($options['post_fields'])) {
+            if (!isset($options['post_files'])) {
+                $options['body'] = http_build_query($options['post_fields']);
+                unset($options['post_fields']);
+                $options['headers']['Content-Type'] = $contentType ?: 'application/x-www-form-urlencoded';
+                return;
+            }
+            $fields = $options['post_fields'];
+            unset($options['post_fields']);
+        }
+
+        $files = $options['post_files'];
+        unset($options['post_files']);
+        $options['body'] = new MultipartPostBody($fields, $files);
+        $options['headers']['Content-Type'] = $contentType
+            ?: 'multipart/form-data; boundary=' . $options['body']->getBoundary();
     }
 }

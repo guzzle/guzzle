@@ -1,10 +1,14 @@
 all: clean coverage docs
 
-start-server:
-	cd vendor/guzzlehttp/ringphp && make start-server
+start-server: stop-server
+	node tests/server.js &> /dev/null &
 
 stop-server:
-	cd vendor/guzzlehttp/ringphp && make stop-server
+	@PID=$(shell ps axo pid,command \
+	  | grep 'tests/server.js' \
+	  | grep -v grep \
+	  | cut -f 1 -d " "\
+	) && [ -n "$$PID" ] && kill $$PID || true
 
 test: start-server
 	vendor/bin/phpunit
@@ -36,15 +40,4 @@ tag:
 	git commit -m '$(TAG) release'
 	chag tag
 
-perf: start-server
-	php tests/perf.php
-	$(MAKE) stop-server
-
-package: burgomaster
-	php build/packager.php
-
-burgomaster:
-	mkdir -p build/artifacts
-	curl -s https://raw.githubusercontent.com/mtdowling/Burgomaster/0.0.2/src/Burgomaster.php > build/artifacts/Burgomaster.php
-
-.PHONY: docs burgomaster
+.PHONY: docs
