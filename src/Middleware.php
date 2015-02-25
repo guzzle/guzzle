@@ -4,6 +4,8 @@ namespace GuzzleHttp;
 use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Psr7\Utils;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -176,5 +178,39 @@ final class Middleware
     public static function exponentialBackoffDelay($retries)
     {
         return (int) pow(2, $retries - 1);
+    }
+
+    /**
+     * This middleware adds a default content-type if possible and a default
+     * content-length or transfer-encoding header.
+     *
+     * @return callable
+     */
+    public static function prepareBody()
+    {
+        $mimetypes = Mimetypes::getInstance();
+        return function (callable $handler) use ($mimetypes) {
+            return function (RequestInterface $request, array $options) use ($handler, $mimetypes) {
+                $modify = [];
+                // Add a default content-type if possible.
+                if (!$request->hasHeader('Content-Type')) {
+                    if ($uri = $request->getBody()->getMetadata('uri')) {
+                        if ($type = $mimetypes->fromFilename($uri)) {
+                            $modify['set_headers']['Content-Type'] = $type;
+                        }
+                    }
+                }
+                // Add a default content-length or transfer-encoding header.
+                if (!$request->hasHeader('Content-Length') && !$request->hasHeader('Transfer-Encoding')) {
+                    $size = $request->getBody()->getSize();
+                    if ($size !== null) {
+                        $modify['set_headers']['Content-Length'] = $size;
+                    } else {
+                        $modify['set_headers']['Transfer-Encoding'] = 'chunked';
+                    }
+                }
+                return $handler(Utils::modifyRequest($request, $modify), $options);
+            };
+        };
     }
 }

@@ -8,6 +8,7 @@ use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Stream;
 use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\Psr7\Utils;
 use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\RequestInterface;
 use \InvalidArgumentException as Iae;
@@ -47,6 +48,9 @@ class Client implements ClientInterface
 
     /** @var callable Cached cookie middleware */
     private $cookieMiddleware;
+
+    /** @var callable Cached prepare body middleware */
+    private $prepareBodyMiddleware;
 
     /** @var array Known pass-through transfer request options */
     private static $transferOptions = [
@@ -104,6 +108,7 @@ class Client implements ClientInterface
     {
         $this->configureBaseUri($config);
         $this->configureDefaults($config);
+        $this->prepareBodyMiddleware = Middleware::prepareBody();
         $this->handler = isset($config['handler'])
             ? $config['handler']
             : \GuzzleHttp\default_handler();
@@ -378,6 +383,8 @@ class Client implements ClientInterface
             $stack->append($cookie);
         }
 
+        $stack->append($this->prepareBodyMiddleware);
+
         if (!$stack->hasHandler()) {
             $stack->setHandler($this->handler);
         }
@@ -469,7 +476,7 @@ class Client implements ClientInterface
             }
         }
 
-        return \GuzzleHttp\modify_request($request, $modify);
+        return Utils::modifyRequest($request, $modify);
     }
 
     /**

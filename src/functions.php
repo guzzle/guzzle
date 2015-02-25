@@ -1,16 +1,11 @@
 <?php
 namespace GuzzleHttp;
 
-use GuzzleHttp\Exception\SeekException;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7\Request;
-use Psr\Http\Message\MessageInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 
 /**
  * Gets a value from an array using a path syntax to retrieve nested data.
@@ -222,106 +217,6 @@ EOT
 }
 
 /**
- * Returns the string representation of an HTTP message.
- *
- * @param MessageInterface|PromiseInterface $message Message to convert to a string.
- *
- * @return string
- */
-function str($message)
-{
-    if ($message instanceof PromiseInterface) {
-        $message = $message->wait();
-    }
-
-    if ($message instanceof RequestInterface) {
-        $msg = trim($message->getMethod() . ' '
-            . $message->getRequestTarget())
-            . ' HTTP/' . $message->getProtocolVersion();
-        if (!$message->hasHeader('host')) {
-            $msg .= "\r\nHost: " . $message->getUri()->getHost();
-        }
-    } elseif ($message instanceof ResponseInterface) {
-        $msg = 'HTTP/' . $message->getProtocolVersion() . ' '
-            . $message->getStatusCode() . ' '
-            . $message->getReasonPhrase();
-    } else {
-        throw new \InvalidArgumentException('Unknown message type');
-    }
-
-    foreach ($message->getHeaders() as $name => $values) {
-        $msg .= "\r\n{$name}: " . implode(', ', $values);
-    }
-
-    return "{$msg}\r\n\r\n" . $message->getBody();
-}
-
-/**
- * Parse an array of header values containing ";" separated data into an
- * array of associative arrays representing the header key value pair
- * data of the header. When a parameter does not contain a value, but just
- * contains a key, this function will inject a key with a '' string value.
- *
- * @param string|array $header Header to parse into components.
- *
- * @return array Returns the parsed header values.
- */
-function parse_header($header)
-{
-    static $trimmed = "\"'  \n\t\r";
-    $params = $matches = [];
-
-    foreach (normalize_header($header) as $val) {
-        $part = [];
-        foreach (preg_split('/;(?=([^"]*"[^"]*")*[^"]*$)/', $val) as $kvp) {
-            if (preg_match_all('/<[^>]+>|[^=]+/', $kvp, $matches)) {
-                $m = $matches[0];
-                if (isset($m[1])) {
-                    $part[trim($m[0], $trimmed)] = trim($m[1], $trimmed);
-                } else {
-                    $part[] = trim($m[0], $trimmed);
-                }
-            }
-        }
-        if ($part) {
-            $params[] = $part;
-        }
-    }
-
-    return $params;
-}
-
-/**
- * Converts an array of header values that may contain comma separated
- * headers into an array of headers with no comma separated values.
- *
- * @param string|array $header Header to normalize.
- *
- * @return array Returns the normalized header field values.
- */
-function normalize_header($header)
-{
-    if (!is_array($header)) {
-        return array_map('trim', explode(',', $header));
-    }
-
-    $result = [];
-    foreach ($header as $value) {
-        foreach ((array) $value as $v) {
-            if (strpos($v, ',') === false) {
-                $result[] = $v;
-                continue;
-            }
-            foreach (preg_split('/,(?=([^"]*"[^"]*")*[^"]*$)/', $v) as $vv) {
-                $result[] = trim($vv);
-            }
-        }
-    }
-
-    return $result;
-}
-
-/**
  * Debug function used to describe the provided value type and class.
  *
  * @param mixed $input
@@ -381,56 +276,6 @@ function get_debug_resource($value = null)
     }
 
     return fopen('php://output', 'w');
-}
-
-/**
- * Clone and modify a request with the given changes.
- *
- * The changes can be one of:
- * - method: (string) Changes the HTTP method.
- * - set_headers: (array) Sets the given headers.
- * - remove_headers: (array) Remove the given headers.
- * - body: (mixed) Sets the given body.
- * - uri: (UriInterface) Set the URI.
- * - query: (string) Set the query string value of the URI.
- * - version: (string) Set the protocol version.
- *
- * @param RequestInterface $request Request to clone and modify.
- * @param array            $changes Changes to apply.
- *
- * @return RequestInterface
- */
-function modify_request(RequestInterface $request, array $changes)
-{
-    if (!$changes) {
-        return $request;
-    }
-
-    $headers = $request->getHeaders();
-    if (isset($changes['remove_headers'])) {
-        foreach ($changes['remove_headers'] as $header) {
-            unset($headers[$header]);
-        }
-    }
-
-    if (isset($changes['set_headers'])) {
-        $headers = $changes['set_headers'] + $headers;
-    }
-
-    $uri = isset($changes['uri']) ? $changes['uri'] : $request->getUri();
-    if (isset($changes['query'])) {
-        $uri = $uri->withQuery($changes['query']);
-    }
-
-    return new Request(
-        isset($changes['method']) ? $changes['method'] : $request->getMethod(),
-        $uri,
-        $headers,
-        isset($changes['body']) ? $changes['body'] : $request->getBody(),
-        isset($changes['version'])
-            ? $changes['version']
-            : $request->getProtocolVersion()
-    );
 }
 
 /**
@@ -502,19 +347,4 @@ function wait_all(array $promises)
     }
 
     return $results;
-}
-
-/**
- * Attempts to rewind a message body and throws an exception on failure.
- *
- * @param MessageInterface $message Message to rewind
- *
- * @throws SeekException
- */
-function rewind_body(MessageInterface $message)
-{
-    $body = $message->getBody();
-    if ($body->tell() && !$body->rewind()) {
-        throw new SeekException($body, 0);
-    }
 }

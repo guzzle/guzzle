@@ -5,6 +5,7 @@ use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\Psr7\Utils;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
@@ -126,7 +127,7 @@ class RedirectMiddleware
         }
 
         $modify['uri'] = $this->redirectUri($request, $response, $protocols);
-        rewind_body($request);
+        Utils::rewindBody($request);
 
         // Add the Referer header if it is told to do so and only
         // add the header if we are not redirecting from https to http.
@@ -140,7 +141,7 @@ class RedirectMiddleware
             $modify['remove_headers'][] = 'Referer';
         }
 
-        return modify_request($request, $modify);
+        return Utils::modifyRequest($request, $modify);
     }
 
     /**
