@@ -4,6 +4,7 @@ namespace GuzzleHttp;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Promise\Promise;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Sends and iterator of requests concurrently using a capped pool size.
@@ -32,12 +33,19 @@ class Pool extends Promise implements PromiseInterface
     /** @var array */
     private $requestOptions;
 
+    /** @var callable[] */
+    private $thenFns;
+
     /**
      * @param ClientInterface $client   Client used to send the requests.
      * @param array|\Iterator $requests Requests to send concurrently.
      * @param array           $options  Associative array of options
      *     - pool_size: (int) Maximum number of requests to send concurrently
      *     - request_options: Array of request options to apply to each.
+     *     - then: (callable[]) Array containing an optional onFulfilled then
+     *       function to invoke after each response completes (null to omit)
+     *       and an onRejected function to invoke after each failure (null to
+     *       omit, or do not pass element 1 in the array).
      */
     public function __construct(
         ClientInterface $client,
@@ -51,16 +59,59 @@ class Pool extends Promise implements PromiseInterface
         $this->requestOptions = isset($options['request_options'])
             ? $options['request_options']
             : [];
+        if (!empty($options['then'])) {
+            if (count($options['then']) == 1) {
+                $options['then'][] = null;
+            }
+            $this->thenFns = $options['then'];
+        } else {
+            $this->thenFns = null;
+        }
 
         parent::__construct(function () {
             // Seed the pool with N number of requests.
-            $this->addNextRequests();
-            while ($this->pending) {
+            while ($this->pending || $this->addNextRequests()) {
                 array_pop($this->pending)->wait(false);
-                $this->addNextRequests();
             }
             $this->resolve(true);
         });
+    }
+
+    /**
+     * Sends multiple requests in parallel and returns an array of responses
+     * and exceptions that uses the same ordering as the provided requests.
+     *
+     * IMPORTANT: This method keeps every request and response in memory, and
+     * as such, is NOT recommended when sending a large number or an
+     * indeterminate number of requests concurrently.
+     *
+     * @param ClientInterface $client   Client used to send the requests
+     * @param array|\Iterator $requests Requests to send in parallel
+     * @param array           $options  Passes through the options available in
+     *                                  {@see GuzzleHttp\Pool::__construct}
+     *
+     * @return array Returns an array containing the response or an exception
+     *               in the same order that the requests were sent.
+     * @throws \InvalidArgumentException if the event format is incorrect.
+     */
+    public static function batch(
+        ClientInterface $client,
+        $requests,
+        array $options = []
+    ) {
+        $results = [];
+        $options['then'] = [
+            function (ResponseInterface $response, $index) use (&$results) {
+                $results[$index] = $response;
+            },
+            function ($reason, $index) use (&$results) {
+                $results[$index] = $reason;
+            }
+        ];
+        $pool = new static($client, $requests, $options);
+        $pool->wait();
+
+        return $results;
     }
 
     /**
@@ -94,9 +145,11 @@ class Pool extends Promise implements PromiseInterface
         $limit = max($this->getPoolSize() - count($this->pending), 0);
         while ($limit--) {
             if (!$this->addNextRequest()) {
-                break;
+                return false;
             }
         }
+
+        return true;
     }
 
     /**
@@ -110,6 +163,7 @@ class Pool extends Promise implements PromiseInterface
             return false;
         }
 
+        $index = $this->iter->key();
         $request = $this->iter->current();
         $this->iter->next();
 
@@ -125,6 +179,10 @@ class Pool extends Promise implements PromiseInterface
             $response = $this->client->send($request, $this->requestOptions);
         }
 
+        if ($this->thenFns) {
+            $this->callThens($response, $index);
+        }
+
         if ($response->getState() !== 'pending') {
             goto add_next;
         }
@@ -138,5 +196,24 @@ class Pool extends Promise implements PromiseInterface
         $response->then($fn, $fn);
 
         return true;
+    }
+
+    private function callThens(ResponsePromiseInterface $response, $index)
+    {
+        $fns = [null, null];
+
+        if (isset($this->thenFns[0])) {
+            $fns[0] = function (ResponseInterface $response) use ($index) {
+                call_user_func($this->thenFns[0], $response, $index);
+            };
+        }
+
+        if (isset($this->thenFns[1])) {
+            $fns[1] = function ($reason) use ($index) {
+                call_user_func($this->thenFns[1], $reason, $index);
+            };
+        }
+
+        $response->then($fns[0], $fns[1]);
     }
 }

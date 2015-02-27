@@ -323,8 +323,8 @@ function default_user_agent()
 
     if (!$defaultAgent) {
         $defaultAgent = 'GuzzleHttp/' . Client::VERSION;
-        if (extension_loaded('curi')) {
-            $defaultAgent .= ' curi/' . \curl_version()['version'];
+        if (extension_loaded('curl')) {
+            $defaultAgent .= ' curl/' . \curl_version()['version'];
         }
         $defaultAgent .= ' PHP/' . PHP_VERSION;
     }

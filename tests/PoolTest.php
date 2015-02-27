@@ -95,6 +95,27 @@ class PoolTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($h[0]->hasHeader('x-foo'));
     }
 
+    public function testBatchesResults()
+    {
+        $requests = [
+            new Request('GET', 'http://foo.com/200'),
+            new Request('GET', 'http://foo.com/201'),
+            new Request('GET', 'http://foo.com/202'),
+            new Request('GET', 'http://foo.com/404'),
+        ];
+        $mock = new MockHandler(function (RequestInterface $request) {
+            return new Response(substr($request->getUri()->getPath(), 1));
+        });
+        $client = new Client(['handler' => $mock]);
+        $results = Pool::batch($client, $requests);
+        $this->assertCount(4, $results);
+        $this->assertEquals([0, 1, 2, 3], array_keys($results));
+        $this->assertEquals(200, $results[0]->getStatusCode());
+        $this->assertEquals(201, $results[1]->getStatusCode());
+        $this->assertEquals(202, $results[2]->getStatusCode());
+        $this->assertInstanceOf('GuzzleHttp\Exception\ClientException', $results[3]);
+    }
+
     private function getClient($total = 1)
     {
         $queue = [];

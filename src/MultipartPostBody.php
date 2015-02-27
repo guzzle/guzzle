@@ -20,8 +20,13 @@ class MultipartPostBody implements StreamableInterface
      *                         each value is a string or array of strings.
      * @param array  $files    Associative array of POST field names to either
      *                         an fopen resource, StreamableInterface, or an
-     *                         array containing a StreamableInterface/resource
-     *                         followed by an array of headers for the file.
+     *                         associative array containing the "contents"
+     *                         key mapping to a StreamableInterface/resource,
+     *                         optional "headers" associative array of custom
+     *                         headers, and optional "filename" key mapping
+     *                         to a string to send as the filename in the part.
+     *                         You can also send an array of associative arrays
+     *                         to send multiple files under the same name.
      * @param string $boundary You can optionally provide a specific boundary
      *
      * @throws \InvalidArgumentException
@@ -92,23 +97,44 @@ class MultipartPostBody implements StreamableInterface
         }
 
         foreach ($files as $name => $file) {
-            if ($file instanceof StreamableInterface || is_resource($file)) {
-                $file = $this->createPostFile($name, $file);
-            } elseif (is_array($file)) {
-                $file = $this->createPostFile($name, $file[0], $file[1]);
-            } else {
-                throw new \InvalidArgumentException('All POST files must be '
-                    . 'an array or StreamableInterface');
-            }
-            $stream->addStream(Stream::factory($this->getFileHeaders($file[1])));
-            $stream->addStream($file[0]);
-            $stream->addStream(Stream::factory("\r\n"));
+            $this->addFileArray($stream, $name, $file);
         }
 
         // Add the trailing boundary with CRLF
         $stream->addStream(Stream::factory("--{$this->boundary}--\r\n"));
 
         return $stream;
+    }
+
+    private function addFileArray(AppendStream $stream, $name, $file)
+    {
+        if ($file instanceof StreamableInterface || is_resource($file)) {
+            // A single file
+            $this->addFile($stream, $this->createPostFile($name, $file));
+            return;
+        }
+
+        if (!is_array($file)) {
+            throw new \InvalidArgumentException('Invalid POST file fields or files');
+        }
+
+        if (array_key_exists('contents', $file)) {
+            $headers = isset($file['headers']) ? $file['headers'] : [];
+            $this->addFile($stream, $this->createPostFile($name, $file['contents'], $headers));
+            return;
+        }
+
+        // Add an array of associative array of files of array of files
+        foreach ($file as $f) {
+            $this->addFileArray($stream, $name, $f);
+        }
+    }
+
+    private function addFile(AppendStream $stream, array $file)
+    {
+        $stream->addStream(Stream::factory($this->getFileHeaders($file[1])));
+        $stream->addStream($file[0]);
+        $stream->addStream(Stream::factory("\r\n"));
     }
 
     /**
