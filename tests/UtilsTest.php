@@ -31,4 +31,10 @@ class UtilsTest extends \PHPUnit_Framework_TestCase
     {
         Utils::jsonDecode('!narf!');
     }
+
+    public function testProvidesDefaultUserAgent()
+    {
+        $ua = Utils::getDefaultUserAgent();
+        $this->assertEquals(1, preg_match('#^Guzzle/.+ curl/.+ PHP/.+$#', $ua));
+    }
 }

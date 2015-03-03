@@ -13,6 +13,7 @@ use GuzzleHttp\Ring\Future\FutureArray;
 use GuzzleHttp\Subscriber\History;
 use GuzzleHttp\Subscriber\Mock;
 use GuzzleHttp\Url;
+use GuzzleHttp\Utils;
 use React\Promise\Deferred;
 
 /**
@@ -28,12 +29,6 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->ma = function () {
             throw new \RuntimeException('Should not have been called.');
         };
-    }
-
-    public function testProvidesDefaultUserAgent()
-    {
-        $ua = Client::getDefaultUserAgent();
-        $this->assertEquals(1, preg_match('#^Guzzle/.+ curl/.+ PHP/.+$#', $ua));
     }
 
     public function testUsesDefaultDefaultOptions()
@@ -138,7 +133,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client(['defaults' => ['allow_redirects' => false]]);
         $this->assertFalse($client->getDefaultOption('allow_redirects'));
         $this->assertEquals(
-            ['User-Agent' => Client::getDefaultUserAgent()],
+            ['User-Agent' => Utils::getDefaultUserAgent()],
             $client->getDefaultOption('headers')
         );
     }
@@ -147,7 +142,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $client = new Client();
         $this->assertEquals(
-            ['User-Agent' => Client::getDefaultUserAgent()],
+            ['User-Agent' => Utils::getDefaultUserAgent()],
             $client->getDefaultOption('headers')
         );
     }

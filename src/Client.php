@@ -6,10 +6,6 @@ use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\MessageFactoryInterface;
 use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Message\FutureResponse;
-use GuzzleHttp\Ring\Client\Middleware;
-use GuzzleHttp\Ring\Client\CurlMultiHandler;
-use GuzzleHttp\Ring\Client\CurlHandler;
-use GuzzleHttp\Ring\Client\StreamHandler;
 use GuzzleHttp\Ring\Core;
 use GuzzleHttp\Ring\Future\FutureInterface;
 use GuzzleHttp\Exception\RequestException;
@@ -89,65 +85,10 @@ class Client implements ClientInterface
             } elseif (isset($config['adapter'])) {
                 $handler = $config['adapter'];
             } else {
-                $handler = static::getDefaultHandler();
+                $handler = Utils::getDefaultHandler();
             }
             $this->fsm = new RequestFsm($handler, $this->messageFactory);
         }
-    }
-
-    /**
-     * Create a default handler to use based on the environment
-     *
-     * @throws \RuntimeException if no viable Handler is available.
-     */
-    public static function getDefaultHandler()
-    {
-        $default = $future = null;
-
-        if (extension_loaded('curl')) {
-            $config = [
-                'select_timeout' => getenv('GUZZLE_CURL_SELECT_TIMEOUT') ?: 1
-            ];
-            if ($maxHandles = getenv('GUZZLE_CURL_MAX_HANDLES')) {
-                $config['max_handles'] = $maxHandles;
-            }
-            if (function_exists('curl_reset')) {
-                $default = new CurlHandler();
-                $future = new CurlMultiHandler($config);
-            } else {
-                $default = new CurlMultiHandler($config);
-            }
-        }
-
-        if (ini_get('allow_url_fopen')) {
-            $default = !$default
-                ? new StreamHandler()
-                : Middleware::wrapStreaming($default, new StreamHandler());
-        } elseif (!$default) {
-            throw new \RuntimeException('Guzzle requires cURL, the '
-                . 'allow_url_fopen ini setting, or a custom HTTP handler.');
-        }
-
-        return $future ? Middleware::wrapFuture($default, $future) : $default;
-    }
-
-    /**
-     * Get the default User-Agent string to use with Guzzle
-     *
-     * @return string
-     */
-    public static function getDefaultUserAgent()
-    {
-        static $defaultAgent = '';
-        if (!$defaultAgent) {
-            $defaultAgent = 'Guzzle/' . self::VERSION;
-            if (extension_loaded('curl')) {
-                $defaultAgent .= ' curl/' . curl_version()['version'];
-            }
-            $defaultAgent .= ' PHP/' . PHP_VERSION;
-        }
-
-        return $defaultAgent;
     }
 
     public function getDefaultOption($keyOrPath = null)
@@ -337,11 +278,11 @@ class Client implements ClientInterface
         // Add the default user-agent header
         if (!isset($this->defaults['headers'])) {
             $this->defaults['headers'] = [
-                'User-Agent' => static::getDefaultUserAgent()
+                'User-Agent' => Utils::getDefaultUserAgent()
             ];
         } elseif (!Core::hasHeader($this->defaults, 'User-Agent')) {
             // Add the User-Agent header if one was not already set
-            $this->defaults['headers']['User-Agent'] = static::getDefaultUserAgent();
+            $this->defaults['headers']['User-Agent'] = Utils::getDefaultUserAgent();
         }
     }
 
@@ -391,5 +332,21 @@ class Client implements ClientInterface
     public function sendAll($requests, array $options = [])
     {
         Pool::send($this, $requests, $options);
+    }
+
+    /**
+     * @deprecated Use GuzzleHttp\Utils::getDefaultHandler
+     */
+    public static function getDefaultHandler()
+    {
+        return Utils::getDefaultHandler();
+    }
+
+    /**
+     * @deprecated Use GuzzleHttp\Utils::getDefaultUserAgent
+     */
+    public static function getDefaultUserAgent()
+    {
+        return Utils::getDefaultUserAgent();
     }
 }
