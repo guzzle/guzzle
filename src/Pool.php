@@ -127,7 +127,7 @@ class Pool extends Promise implements PromiseInterface
         }
 
         throw new \InvalidArgumentException('Expected Iterator or array.'
-            . 'Found ' . describe_type($requests));
+            . 'Found ' . Utils::describeType($requests));
     }
 
     private function getPoolSize()
@@ -173,7 +173,7 @@ class Pool extends Promise implements PromiseInterface
             throw new \InvalidArgumentException(sprintf(
                 'All requests in the provided iterator must implement '
                 . 'RequestInterface. Found %s',
-                describe_type($request)
+                Utils::describeType($request)
             ));
         } else {
             $response = $this->client->send($request, $this->requestOptions);

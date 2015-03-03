@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\LazyOpenStream;
+use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamableInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -80,7 +81,7 @@ class CurlFactory
 
         if (!empty($headers)) {
             $startLine = explode(' ', array_shift($headers), 3);
-            $headerList = \GuzzleHttp\headers_from_lines($headers);
+            $headerList = Utils::headersFromLines($headers);
             $response['headers'] = $headerList;
             $response['status'] = isset($startLine[1]) ? (int) $startLine[1] : null;
             $response['reason'] = isset($startLine[2]) ? $startLine[2] : null;
@@ -394,6 +395,7 @@ class CurlFactory
                 }
                 break;
 
+            case 'save_to':
             case 'sink':
 
                 if (is_string($value)) {
@@ -498,7 +500,7 @@ class CurlFactory
             case 'debug':
 
                 if ($value) {
-                    $conf[CURLOPT_STDERR] = \GuzzleHttp\get_debug_resource($value);
+                    $conf[CURLOPT_STDERR] = Utils::getDebugResource($value);
                     $conf[CURLOPT_VERBOSE] = true;
                 }
                 break;

@@ -8,7 +8,7 @@ use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Stream;
 use GuzzleHttp\Psr7\Uri;
-use GuzzleHttp\Psr7\Utils;
+use GuzzleHttp\Psr7\Utils as Psr7Utils;
 use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\RequestInterface;
 use \InvalidArgumentException as Iae;
@@ -111,7 +111,7 @@ class Client implements ClientInterface
         $this->prepareBodyMiddleware = Middleware::prepareBody();
         $this->handler = isset($config['handler'])
             ? $config['handler']
-            : \GuzzleHttp\default_handler();
+            : Utils::defaultHandler();
     }
 
     public function send(RequestInterface $request, array $options = [])
@@ -144,12 +144,12 @@ class Client implements ClientInterface
     {
         return $keyOrPath === null
             ? $this->defaults
-            : get_path($this->defaults, $keyOrPath);
+            : Utils::getPath($this->defaults, $keyOrPath);
     }
 
     public function setDefaultOption($keyOrPath, $value)
     {
-        set_path($this->defaults, $keyOrPath, $value);
+        Utils::setPath($this->defaults, $keyOrPath, $value);
     }
 
     public function getBaseUri()
@@ -179,11 +179,11 @@ class Client implements ClientInterface
 
         // Absolute URL
         if (strpos($uri[0], '://')) {
-            return new Uri(uri_template($uri[0], $uri[1]));
+            return new Uri(Utils::uriTemplate($uri[0], $uri[1]));
         }
 
         // Combine the relative URL with the base URL
-        return Uri::resolve($this->baseUri, uri_template($uri[0], $uri[1]));
+        return Uri::resolve($this->baseUri, Utils::uriTemplate($uri[0], $uri[1]));
     }
 
     private function configureBaseUri($config)
@@ -197,7 +197,7 @@ class Client implements ClientInterface
                 . 'varname options in the second element of a base_uri array.');
         } else {
             $this->baseUri = new Uri(
-                uri_template(
+                Utils::uriTemplate(
                     $config['base_uri'][0],
                     $config['base_uri'][1]
                 )
@@ -237,7 +237,7 @@ class Client implements ClientInterface
         // Add the default user-agent header.
         if (!isset($this->defaults['headers'])) {
             $this->defaults['headers'] = [
-                'User-Agent' => \GuzzleHttp\default_user_agent()
+                'User-Agent' => Utils::defaultUserAgent()
             ];
         } else {
             // Add the User-Agent header if one was not already set.
@@ -246,7 +246,7 @@ class Client implements ClientInterface
                     return;
                 }
             }
-            $this->defaults['headers']['User-Agent'] = \GuzzleHttp\default_user_agent();
+            $this->defaults['headers']['User-Agent'] = Utils::defaultUserAgent();
         }
     }
 
@@ -476,7 +476,7 @@ class Client implements ClientInterface
             }
         }
 
-        return Utils::modifyRequest($request, $modify);
+        return Psr7Utils::modifyRequest($request, $modify);
     }
 
     /**

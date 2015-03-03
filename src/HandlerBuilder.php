@@ -31,29 +31,74 @@ class HandlerBuilder
         $this->stack[0] = $middleware;
     }
 
+    /**
+     * Set the HTTP handler that actually returns a response.
+     *
+     * @param callable $handler Accepts a request and array of options and
+     *                          returns a Promise.
+     *
+     * @return $this
+     */
     public function setHandler(callable $handler)
     {
         $this->handler = $handler;
         return $this;
     }
 
+    /**
+     * Returns true if the builder has a handler.
+     *
+     * @return bool
+     */
     public function hasHandler()
     {
         return (bool) $this->handler;
     }
 
+    /**
+     * Prepend a middleware to the front of the list.
+     *
+     * "Sticky" prepended middleware will always be invoked before non-sticky
+     * prepended middleware. Subsequently prepended sticky middleware will push
+     * the middleware before the previously added middleware in the list.
+     *
+     * @param callable $middleware
+     * @param bool     $sticky
+     *
+     * @return $this
+     */
     public function prepend(callable $middleware, $sticky = false)
     {
         array_unshift($this->stack[-1 * (bool) $sticky], $middleware);
         return $this;
     }
 
+
+    /**
+     * Append a middleware to the end of the list.
+     *
+     * "Sticky" middleware will always be invoked after non-sticky middleware.
+     * Subsequently appending sticky middleware will push the middleware after
+     * the previously added middleware in the list.
+     *
+     * @param callable $middleware
+     * @param bool     $sticky
+     *
+     * @return $this
+     */
     public function append(callable $middleware, $sticky = false)
     {
         $this->stack[(bool) $sticky][] = $middleware;
         return $this;
     }
 
+    /**
+     * Remove a middleware by instance from the list.
+     *
+     * @param callable $remove Middleware to remove.
+     *
+     * @return $this
+     */
     public function remove(callable $remove)
     {
         for ($i = -1; $i < 2; $i++) {
@@ -68,6 +113,11 @@ class HandlerBuilder
         return $this;
     }
 
+    /**
+     * Compose the middleware and handler into a single callable function.
+     *
+     * @return callable
+     */
     public function resolve()
     {
         if (!($prev = $this->handler)) {
