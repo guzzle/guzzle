@@ -31,6 +31,9 @@ class Client implements ClientInterface
     /** @var callable Request state machine */
     private $fsm;
 
+    /** Return last Guzzle answer */
+    private $guzzleLastResponse;
+
     /**
      * Clients accept an array of constructor parameters.
      *
@@ -175,6 +178,7 @@ class Client implements ClientInterface
             while ($trans->response instanceof FutureInterface) {
                 $trans->response = $trans->response->wait();
             }
+            $this->guzzleLastResponse = $trans->response;
             return $trans->response;
         } catch (\Exception $e) {
             if ($isFuture) {
@@ -183,6 +187,13 @@ class Client implements ClientInterface
             }
             throw RequestException::wrapException($trans->request, $e);
         }
+    }
+
+    /**
+     * Return last Guzzle response
+     */
+    public function getGuzzleLastResponse() {
+        return $this->guzzleLastResponse;
     }
 
     /**
