@@ -51,18 +51,30 @@ class MultipartBody implements StreamInterface
      */
     private function getFieldString($name, $value)
     {
+        $boundary = sprintf("--%s\r\n", $this->boundary);
+
+        if ($value instanceof PostFieldInterface) {
+            $headers = $value->getHeaders();
+            if ($name = $value->getName() && !isset($headers['Content-Disposition'])) {
+                $value->addHeader('Content-Disposition', sprintf('form-data; name="%s"', $value->getName()));
+            }
+
+            return $this->getHeaders($value) . $value->getValue() . "\r\n";
+        }
+
+        // This is a form post data
         return sprintf(
-            "--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n",
-            $this->boundary,
+            "%sContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n",
+            $boundary,
             $name,
             $value
         );
     }
 
     /**
-     * Get the headers needed before transferring the content of a POST file
+     * Get the headers needed before transferring the content of a POST element
      */
-    private function getFileHeaders(PostFileInterface $file)
+    private function getHeaders(PostElementInterface $file)
     {
         $headers = '';
         foreach ($file->getHeaders() as $key => $value) {
@@ -95,7 +107,7 @@ class MultipartBody implements StreamInterface
             }
 
             $stream->addStream(
-                Stream::factory($this->getFileHeaders($file))
+                Stream::factory($this->getHeaders($file))
             );
             $stream->addStream($file->getContent());
             $stream->addStream(Stream::factory("\r\n"));

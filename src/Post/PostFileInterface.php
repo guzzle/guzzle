@@ -6,7 +6,7 @@ use GuzzleHttp\Stream\StreamInterface;
 /**
  * Post file upload interface
  */
-interface PostFileInterface
+interface PostFileInterface extends PostElementInterface
 {
     /**
      * Get the name of the form field
@@ -28,14 +28,4 @@ interface PostFileInterface
      * @return StreamInterface
      */
     public function getContent();
-
-    /**
-     * Gets all POST file headers.
-     *
-     * The keys represent the header name as it will be sent over the wire, and
-     * each value is a string.
-     *
-     * @return array Returns an associative array of the file's headers.
-     */
-    public function getHeaders();
 }
