@@ -14,7 +14,7 @@ class FulfilledResponseTest extends \PHPUnit_Framework_TestCase
 {
     public function testActsAsResponse()
     {
-        $r = new Response(200, ['foo' => 'bar'], 'baz', 'bam');
+        $r = new Response(200, ['foo' => 'bar'], 'baz', '1.1', 'bam');
         $p = new FulfilledResponse($r);
         $this->assertEquals('fulfilled', $p->getState());
         $this->assertEquals(200, $p->getStatusCode());

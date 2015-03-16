@@ -1,10 +1,9 @@
 <?php
 namespace GuzzleHttp;
 
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Promise\Promise;
+use GuzzleHttp\Promise\PromisorInterface;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use GuzzleHttp\Promise\EachPromise;
 
 /**
  * Sends and iterator of requests concurrently using a capped pool size.
@@ -12,73 +11,71 @@ use Psr\Http\Message\ResponseInterface;
  * The pool will read from an iterator until it is cancelled or until the
  * iterator is consumed. When a request is yielded, the request is sent after
  * applying the "request_options" request options (if provided in the ctor).
- * When a function is yielded, the function is provided the "request_options"
- * array that should be merged on top of any existing options, and
- * the function MUST then return a wait-able promise.
+ *
+ * When a function is yielded by the iterator, the function is provided the
+ * "request_options" array that should be merged on top of any existing
+ * options, and the function MUST then return a wait-able promise.
  */
-class Pool extends Promise implements PromiseInterface
+class Pool implements PromisorInterface
 {
-    /** @var ClientInterface */
-    private $client;
-
-    /** @var \Iterator Yields requests */
-    private $iter;
-
-    /** @var int|callable */
-    private $poolSize;
-
-    /** @var array */
-    private $pending = [];
-
-    /** @var array */
-    private $requestOptions;
-
-    /** @var callable[] */
-    private $thenFns;
+    /** @var EachPromise */
+    private $each;
 
     /**
      * @param ClientInterface $client   Client used to send the requests.
-     * @param array|\Iterator $requests Requests to send concurrently.
-     * @param array           $options  Associative array of options
-     *     - pool_size: (int) Maximum number of requests to send concurrently
-     *     - request_options: Array of request options to apply to each.
-     *     - then: (callable[]) Array containing an optional onFulfilled then
-     *       function to invoke after each response completes (null to omit)
-     *       and an onRejected function to invoke after each failure (null to
-     *       omit, or do not pass element 1 in the array).
+     * @param array|\Iterator $requests Requests or functions that return
+     *                                  requests to send concurrently.
+     * @param array           $config   Associative array of options
+     *     - limit: (int) Maximum number of requests to send concurrently
+     *     - options: Array of request options to apply to each request.
+     *     - onFulfilled: (callable) Function to invoke when a request
+     *       completes.
+           - onRejected: (callable) Function to invoke when a request is
+     *       rejected.
      */
     public function __construct(
         ClientInterface $client,
         $requests,
-        array $options = []
+        array $config = []
     ) {
-        $this->client = $client;
-        $this->iter = $this->coerceIterable($requests);
-        $this->poolSize = isset($options['pool_size'])
-            ? $options['pool_size'] : 25;
-        $this->requestOptions = isset($options['request_options'])
-            ? $options['request_options']
-            : [];
-        if (!empty($options['then'])) {
-            if (count($options['then']) == 1) {
-                $options['then'][] = null;
-            }
-            $this->thenFns = $options['then'];
-        } else {
-            $this->thenFns = null;
+        // Backwards compatibility.
+        if (isset($config['pool_size'])) {
+            $config['limit'] = $config['pool_size'];
         }
 
-        parent::__construct(function () {
-            // Seed the pool with N number of requests.
-            while ($this->pending || $this->addNextRequests()) {
-                array_pop($this->pending)->wait(false);
+        if (!isset($config['limit'])) {
+            $config['limit'] = 25;
+        }
+
+        if (isset($config['options'])) {
+            $opts = $config['options'];
+            unset($config['options']);
+        } else {
+            $opts = [];
+        }
+
+        $config['mapfn'] = function ($requestOrFunction) use ($client, $opts) {
+            if ($requestOrFunction instanceof RequestInterface) {
+                return $client->send($requestOrFunction, $opts);
+            } elseif (is_callable($requestOrFunction)) {
+                return $requestOrFunction($opts);
             }
-            $this->resolve(true);
-        });
+            throw new \InvalidArgumentException('Each value yielded by the '
+                . 'iterator must be a Psr7\Http\Message\RequestInterface or '
+                . 'a callable that returns a promise that fulfills with a '
+                . 'Psr7\Message\Http\ResponseInterface object.');
+        };
+
+        $this->each = new EachPromise($requests, $config);
+    }
+
+    public function promise()
+    {
+        return $this->each->promise();
     }
 
     /**
-     * Sends multiple requests in parallel and returns an array of responses
+     * Sends multiple requests concurrently and returns an array of responses
      * and exceptions that uses the same ordering as the provided requests.
      *
      * IMPORTANT: This method keeps every request and response in memory, and
@@ -86,7 +83,7 @@ class Pool extends Promise implements PromiseInterface
      * indeterminate number of requests concurrently.
      *
      * @param ClientInterface $client   Client used to send the requests
-     * @param array|\Iterator $requests Requests to send in parallel
+     * @param array|\Iterator $requests Requests to send concurrently.
      * @param array           $options  Passes through the options available in
      *                                  {@see GuzzleHttp\Pool::__construct}
      *
@@ -99,121 +96,28 @@ class Pool extends Promise implements PromiseInterface
         $requests,
         array $options = []
     ) {
-        $results = [];
-        $options['then'] = [
-            function (ResponseInterface $response, $index) use (&$results) {
-                $results[$index] = $response;
-            },
-            function ($reason, $index) use (&$results) {
-                $results[$index] = $reason;
-            }
-        ];
+        $res = [];
+        self::cmpCallback($options, 'onFulfilled', $res);
+        self::cmpCallback($options, 'onRejected', $res);
         $pool = new static($client, $requests, $options);
-        $pool->wait();
+        $pool->promise()->wait();
+        ksort($res);
 
-        return $results;
+        return $res;
     }
 
-    /**
-     * @param $requests
-     * @return \Iterator
-     */
-    private function coerceIterable($requests)
+    private static function cmpCallback(array &$options, $name, array &$results)
     {
-        if ($requests instanceof \Iterator) {
-            return $requests;
-        } elseif (is_array($requests)) {
-            return new \ArrayIterator($requests);
-        }
-
-        throw new \InvalidArgumentException('Expected Iterator or array.'
-            . 'Found ' . Utils::describeType($requests));
-    }
-
-    private function getPoolSize()
-    {
-        return is_callable($this->poolSize)
-            ? call_user_func($this->poolSize, count($this->pending))
-            : $this->poolSize;
-    }
-
-    /**
-     * Add as many requests as possible up to the current pool limit.
-     */
-    private function addNextRequests()
-    {
-        $limit = max($this->getPoolSize() - count($this->pending), 0);
-        while ($limit--) {
-            if (!$this->addNextRequest()) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Adds the next request to pool and tracks what requests need to be
-     * dereferenced when completing the pool.
-     */
-    private function addNextRequest()
-    {
-        add_next:
-        if ($this->getState() !== 'pending' || !$this->iter->valid()) {
-            return false;
-        }
-
-        $index = $this->iter->key();
-        $request = $this->iter->current();
-        $this->iter->next();
-
-        if (is_callable($request)) {
-            $response = $request($this->requestOptions);
-        } elseif (!($request instanceof RequestInterface)) {
-            throw new \InvalidArgumentException(sprintf(
-                'All requests in the provided iterator must implement '
-                . 'RequestInterface. Found %s',
-                Utils::describeType($request)
-            ));
+        if (!isset($options[$name])) {
+            $options[$name] = function ($v, $k) use (&$results) {
+                $results[$k] = $v;
+            };
         } else {
-            $response = $this->client->send($request, $this->requestOptions);
-        }
-
-        if ($this->thenFns) {
-            $this->callThens($response, $index);
-        }
-
-        if ($response->getState() !== 'pending') {
-            goto add_next;
-        }
-
-        $this->pending[spl_object_hash($response)] = $response;
-        $fn = function () use ($response) {
-            unset($this->pending[spl_object_hash($response)]);
-            $this->addNextRequests();
-        };
-
-        $response->then($fn, $fn);
-
-        return true;
-    }
-
-    private function callThens(ResponsePromiseInterface $response, $index)
-    {
-        $fns = [null, null];
-
-        if (isset($this->thenFns[0])) {
-            $fns[0] = function (ResponseInterface $response) use ($index) {
-                call_user_func($this->thenFns[0], $response, $index);
+            $currentFn = $options[$name];
+            $options[$name] = function ($v, $k) use (&$results, $currentFn) {
+                $currentFn($v, $k);
+                $results[$k] = $v;
             };
         }
-
-        if (isset($this->thenFns[1])) {
-            $fns[1] = function ($reason) use ($index) {
-                call_user_func($this->thenFns[1], $reason, $index);
-            };
-        }
-
-        $response->then($fns[0], $fns[1]);
     }
 }

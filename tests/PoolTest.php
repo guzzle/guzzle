@@ -16,15 +16,8 @@ class PoolTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatesIterable()
     {
-        new Pool(new Client(), 'foo');
-    }
-
-    public function testCanControlPoolSizeAndClient()
-    {
-        $c = new Client();
-        $p = new Pool($c, [], ['pool_size' => 10]);
-        $this->assertSame($c, $this->readAttribute($p, 'client'));
-        $this->assertEquals(10, $this->readAttribute($p, 'poolSize'));
+        $p = new Pool(new Client(), 'foo');
+        $p->promise()->wait();
     }
 
     /**
@@ -35,14 +28,14 @@ class PoolTest extends \PHPUnit_Framework_TestCase
         $c = new Client();
         $requests = ['foo'];
         $p = new Pool($c, new \ArrayIterator($requests));
-        $p->wait();
+        $p->promise()->wait();
     }
 
     public function testSendsAndRealizesFuture()
     {
         $c = $this->getClient();
         $p = new Pool($c, [new Request('GET', 'http://example.com')]);
-        $p->wait();
+        $p->promise()->wait();
     }
 
     public function testExecutesPendingWhenWaiting()
@@ -57,7 +50,7 @@ class PoolTest extends \PHPUnit_Framework_TestCase
             new Request('GET', 'http://example.com'),
             new Request('GET', 'http://example.com'),
         ], ['pool_size' => 2]);
-        $p->wait();
+        $p->promise()->wait();
     }
 
     public function testUsesRequestOptions()
@@ -68,9 +61,9 @@ class PoolTest extends \PHPUnit_Framework_TestCase
             return new Response();
         });
         $c = new Client(['handler' => $handler]);
-        $opts = ['request_options' => ['headers' => ['x-foo' => 'bar']]];
+        $opts = ['options' => ['headers' => ['x-foo' => 'bar']]];
         $p = new Pool($c, [new Request('GET', 'http://example.com')], $opts);
-        $p->wait();
+        $p->promise()->wait();
         $this->assertCount(1, $h);
         $this->assertTrue($h[0]->hasHeader('x-foo'));
     }
@@ -88,9 +81,9 @@ class PoolTest extends \PHPUnit_Framework_TestCase
             $optHistory = $opts;
             return $c->request('GET', 'http://example.com', $opts);
         };
-        $opts = ['request_options' => ['headers' => ['x-foo' => 'bar']]];
+        $opts = ['options' => ['headers' => ['x-foo' => 'bar']]];
         $p = new Pool($c, [$fn], $opts);
-        $p->wait();
+        $p->promise()->wait();
         $this->assertCount(1, $h);
         $this->assertTrue($h[0]->hasHeader('x-foo'));
     }

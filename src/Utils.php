@@ -5,7 +5,6 @@ use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
-use GuzzleHttp\Promise\PromiseInterface;
 
 /**
  * Utility methods used throughout Guzzle.
@@ -335,22 +334,5 @@ EOT
         }
 
         return $defaultAgent;
-    }
-
-    /**
-     * Wait on multiple promises
-     *
-     * @param PromiseInterface[] $promises Promise to await.
-     *
-     * @return array Returns the responses
-     */
-    public static function waitAll(array $promises)
-    {
-        $results = [];
-        foreach ($promises as $promise) {
-            $results[] = $promise->wait();
-        }
-
-        return $results;
     }
 }

@@ -2,9 +2,7 @@
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\MessageParser;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\Psr7;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -97,17 +95,9 @@ class Server
         $response = self::getClient()->request('GET', 'guzzle-server/requests')->wait();
         $data = array_filter(explode(self::REQUEST_DELIMITER, (string) $response->getBody()));
         if ($hydrate) {
-            $parser = new MessageParser();
             $data = array_map(
-                function ($message) use ($parser) {
-                    $parts = $parser->parseRequest($message);
-                    return new Request(
-                        $parts['method'],
-                        Uri::fromParts($parts['request_url']),
-                        $parts['headers'],
-                        $parts['body'],
-                        $parts['protocol_version']
-                    );
+                function ($message) {
+                    return Psr7\parse_request($message);
                 },
                 $data
             );

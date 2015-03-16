@@ -6,10 +6,7 @@ use GuzzleHttp\RejectedResponse;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\FulfilledResponse;
 use GuzzleHttp\ResponsePromiseInterface;
-use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Psr7\InflateStream;
-use GuzzleHttp\Psr7\Stream;
-use GuzzleHttp\Psr7\Utils;
+use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamableInterface;
 
@@ -76,7 +73,7 @@ class StreamHandler
         }
 
         return new FulfilledResponse(
-            new Response(
+            new Psr7\Response(
                 $response['status'],
                 $response['headers'],
                 $stream
@@ -91,7 +88,9 @@ class StreamHandler
             foreach ($headers as $key => $value) {
                 if (strtolower($key) == 'content-encoding') {
                     if ($value == 'gzip' || $value == 'deflate') {
-                        return new InflateStream(Stream::factory($stream));
+                        return new Psr7\InflateStream(
+                            Psr7\Stream::factory($stream)
+                        );
                     }
                 }
             }
@@ -113,21 +112,21 @@ class StreamHandler
     {
         if (is_resource($stream)) {
             if (!is_resource($dest)) {
-                $stream = Stream::factory($stream);
+                $stream = Psr7\Stream::factory($stream);
             } else {
                 stream_copy_to_stream($stream, $dest);
                 fclose($stream);
                 rewind($dest);
-                return Stream::factory($dest);
+                return Psr7\Stream::factory($dest);
             }
         }
 
         // Stream the response into the destination stream
         $dest = is_string($dest)
-            ? new Stream(Utils::open($dest, 'r+'))
-            : Stream::factory($dest);
+            ? new Psr7\Stream(Psr7\try_fopen($dest, 'r+'))
+            : Psr7\Stream::factory($dest);
 
-        Utils::copyToStream($stream, $dest);
+        Psr7\copy_to_stream($stream, $dest);
         $dest->seek(0);
         $stream->close();
 

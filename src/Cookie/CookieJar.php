@@ -210,7 +210,7 @@ class CookieJar implements CookieJarInterface
         $uri = $request->getUri();
         $scheme = $uri->getScheme();
         $host = $uri->getHost();
-        $path = $uri->getPath();
+        $path = $uri->getPath() ?: '/';
 
         foreach ($this->cookies as $cookie) {
             if ($cookie->matchesPath($path) &&

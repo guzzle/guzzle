@@ -4,8 +4,7 @@ namespace GuzzleHttp;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7\Uri;
-use GuzzleHttp\Psr7\Utils as Psr7Utils;
+use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
@@ -127,7 +126,7 @@ class RedirectMiddleware
         }
 
         $modify['uri'] = $this->redirectUri($request, $response, $protocols);
-        Psr7Utils::rewindBody($request);
+        Psr7\rewind_body($request);
 
         // Add the Referer header if it is told to do so and only
         // add the header if we are not redirecting from https to http.
@@ -141,7 +140,7 @@ class RedirectMiddleware
             $modify['remove_headers'][] = 'Referer';
         }
 
-        return Psr7Utils::modifyRequest($request, $modify);
+        return Psr7\modify_request($request, $modify);
     }
 
     /**
@@ -158,14 +157,14 @@ class RedirectMiddleware
         ResponseInterface $response,
         array $protocols
     ) {
-        $location = new Uri($response->getHeader('Location'));
+        $location = new Psr7\Uri($response->getHeader('Location'));
 
         // Combine location with the original URL if it is not absolute.
         if (!$location->getScheme()) {
             // Remove query string parameters and just take what is present on
             // the redirect Location header
             $base = $request->getUri()->withQuery('');
-            $location = Uri::resolve($base, $location);
+            $location = Psr7\Uri::resolve($base, $location);
         }
 
         // Ensure that the redirect URL is allowed based on the protocols.

@@ -4,7 +4,7 @@ namespace GuzzleHttp;
 use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
-use GuzzleHttp\Psr7\Utils as Psr7Utils;
+use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -209,7 +209,7 @@ final class Middleware
                         $modify['set_headers']['Transfer-Encoding'] = 'chunked';
                     }
                 }
-                return $handler(Psr7Utils::modifyRequest($request, $modify), $options);
+                return $handler(Psr7\modify_request($request, $modify), $options);
             };
         };
     }
