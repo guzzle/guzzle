@@ -28,10 +28,8 @@ class Pool implements PromisorInterface
      * @param array           $config   Associative array of options
      *     - limit: (int) Maximum number of requests to send concurrently
      *     - options: Array of request options to apply to each request.
-     *     - onFulfilled: (callable) Function to invoke when a request
-     *       completes.
-           - onRejected: (callable) Function to invoke when a request is
-     *       rejected.
+     *     - fulfilled: (callable) Function to invoke when a request completes.
+           - rejected: (callable) Function to invoke when a request is rejected.
      */
     public function __construct(
         ClientInterface $client,
@@ -97,8 +95,8 @@ class Pool implements PromisorInterface
         array $options = []
     ) {
         $res = [];
-        self::cmpCallback($options, 'onFulfilled', $res);
-        self::cmpCallback($options, 'onRejected', $res);
+        self::cmpCallback($options, 'fulfilled', $res);
+        self::cmpCallback($options, 'rejected', $res);
         $pool = new static($client, $requests, $options);
         $pool->promise()->wait();
         ksort($res);
