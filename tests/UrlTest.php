@@ -353,4 +353,12 @@ class UrlTest extends \PHPUnit_Framework_TestCase
         $url = Url::fromString('http://foo.com/baz%20 bar:boo/baz!');
         $this->assertEquals('/baz%20%20bar:boo/baz!', $url->getPath());
     }
+
+    public function testLowercaseScheme()
+    {
+        $url = Url::fromString('HTTP://foo.com/');
+        $this->assertEquals('http', $url->getScheme());
+        $url->setScheme('HTTPS');
+        $this->assertEquals('https', $url->getScheme());
+    }
 }
