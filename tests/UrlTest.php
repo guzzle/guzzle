@@ -358,5 +358,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
     {
         $url = Url::fromString('HTTP://foo.com/');
         $this->assertEquals('http', $url->getScheme());
+        $url->setScheme('HTTPS');
+        $this->assertEquals('https', $url->getScheme());
     }
 }
