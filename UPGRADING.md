@@ -35,7 +35,7 @@ functions can be used as replacements.
   deprecated in favor of using `GuzzleHttp\Pool::batch()`.
 
 The "procedural" global client has been removed with no replacement (e.g.,
-`GuzzleHttp\get()`, `GuzzleHttp\post()`, etc.). Use a `GuzzleHttl\Client`
+`GuzzleHttp\get()`, `GuzzleHttp\post()`, etc.). Use a `GuzzleHttp\Client`
 object as a replacement.
 
 ## `throwImmediately` has been removed
