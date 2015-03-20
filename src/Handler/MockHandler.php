@@ -1,10 +1,9 @@
 <?php
 namespace GuzzleHttp\Handler;
 
+use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\ResponsePromiseInterface;
-use GuzzleHttp\RejectedResponse;
-use GuzzleHttp\FulfilledResponse;
+use GuzzleHttp\Promise\RejectedPromise;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -43,12 +42,12 @@ class MockHandler
             : $this->result;
 
         if ($response instanceof \Exception) {
-            return new RejectedResponse($response);
-        } elseif ($response instanceof ResponsePromiseInterface) {
+            return new RejectedPromise($response);
+        } elseif ($response instanceof PromiseInterface) {
             return $response;
         }
 
-        return new FulfilledResponse($response);
+        return new FulfilledPromise($response);
     }
 
     private function createQueueFn(array $queue)

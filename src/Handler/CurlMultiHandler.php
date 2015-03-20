@@ -1,7 +1,7 @@
 <?php
 namespace GuzzleHttp\Handler;
 
-use GuzzleHttp\ResponsePromise;
+use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Psr7\Stream;
 use Psr\Http\Message\RequestInterface;
 
@@ -78,7 +78,7 @@ class CurlMultiHandler
         $factory = $this->factory;
         $result = $factory($request, $options);
         $id = (int) $result[0];
-        $promise = new ResponsePromise(
+        $promise = new Promise(
             [$this, 'execute'],
             function () use ($id) { return $this->cancel($id); }
         );

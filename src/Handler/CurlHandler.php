@@ -1,7 +1,7 @@
 <?php
 namespace GuzzleHttp\Handler;
 
-use GuzzleHttp\FulfilledResponse;
+use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Psr7\Stream;
 use Psr\Http\Message\RequestInterface;
 
@@ -77,7 +77,7 @@ class CurlHandler
         $response['curl']['errno'] = curl_errno($h);
         $this->releaseEasyHandle($h);
 
-        return new FulfilledResponse(
+        return new FulfilledPromise(
             CurlFactory::createResponse(
                 $this, $request, $options, $response, $hd, Stream::factory($bd)
             )

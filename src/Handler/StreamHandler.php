@@ -2,10 +2,10 @@
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\RejectedResponse;
 use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\FulfilledResponse;
-use GuzzleHttp\ResponsePromiseInterface;
+use GuzzleHttp\Promise\FulfilledPromise;
+use GuzzleHttp\Promise\RejectedPromise;
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamableInterface;
@@ -21,7 +21,7 @@ class StreamHandler
      * @param RequestInterface $request Request to send.
      * @param array            $options Request transfer options.
      *
-     * @return ResponsePromiseInterface
+     * @return PromiseInterface
      */
     public function __invoke(RequestInterface $request, array $options)
     {
@@ -44,7 +44,7 @@ class StreamHandler
             ) {
                 $e = new ConnectException($e->getMessage(), $request, null, $e);
             }
-            return new RejectedResponse(
+            return new RejectedPromise(
                 RequestException::wrapException($request, $e)
             );
         }
@@ -59,7 +59,7 @@ class StreamHandler
         $response = [
             'status'         => $parts[1],
             'reason'         => isset($parts[2]) ? $parts[2] : null,
-            'headers'        => \GuzzleHttp\Utils::headersFromLines($hdrs)
+            'headers'        => \GuzzleHttp\headers_from_lines($hdrs)
         ];
 
         $stream = $this->checkDecode($options, $response['headers'], $stream);
@@ -72,7 +72,7 @@ class StreamHandler
             $stream = $this->drain($stream, $dest);
         }
 
-        return new FulfilledResponse(
+        return new FulfilledPromise(
             new Psr7\Response(
                 $response['status'],
                 $response['headers'],
@@ -280,7 +280,7 @@ class StreamHandler
             // PHP 5.6 or greater will find the system cert by default. When
             // < 5.6, use the Guzzle bundled cacert.
             if (PHP_VERSION_ID < 50600) {
-                $options['ssl']['cafile'] = \GuzzleHttp\Utils::defaultCaBundle();
+                $options['ssl']['cafile'] = \GuzzleHttp\default_ca_bundle();
             }
         } elseif (is_string($value)) {
             $options['ssl']['cafile'] = $value;
@@ -345,7 +345,7 @@ class StreamHandler
         static $args = ['severity', 'message', 'message_code',
             'bytes_transferred', 'bytes_max'];
 
-        $value = \GuzzleHttp\Utils::getDebugResource($value);
+        $value = \GuzzleHttp\get_debug_resource($value);
         $ident = $request->getMethod() . ' ' . $request->getUri();
         $this->addNotification(
             $params,

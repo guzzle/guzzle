@@ -3,7 +3,6 @@ namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\CookieJarInterface;
-use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\UriInterface;
@@ -108,10 +107,10 @@ class Client implements ClientInterface
         $this->prepareBodyMiddleware = Middleware::prepareBody();
         $this->handler = isset($config['handler'])
             ? $config['handler']
-            : Utils::defaultHandler();
+            : default_handler();
     }
 
-    public function send(RequestInterface $request, array $options = [])
+    public function sendAsync(RequestInterface $request, array $options = [])
     {
         // Merge the base URI into the request URI if needed.
         $original = $request->getUri();
@@ -123,7 +122,12 @@ class Client implements ClientInterface
         return $this->transfer($request, $this->mergeDefaults($options));
     }
 
-    public function request($method, $uri = null, array $options = [])
+    public function send(RequestInterface $request, array $options = [])
+    {
+        return $this->send($request, $options)->wait();
+    }
+
+    public function requestAsync($method, $uri = null, array $options = [])
     {
         $options = $this->mergeDefaults($options);
         $headers = isset($options['headers']) ? $options['headers'] : [];
@@ -137,16 +141,21 @@ class Client implements ClientInterface
         return $this->transfer($request, $options);
     }
 
+    public function request($method, $uri = null, array $options = [])
+    {
+        return $this->requestAsync($method, $uri, $options)->wait();
+    }
+
     public function getDefaultOption($keyOrPath = null)
     {
         return $keyOrPath === null
             ? $this->defaults
-            : Utils::getPath($this->defaults, $keyOrPath);
+            : get_path($this->defaults, $keyOrPath);
     }
 
     public function setDefaultOption($keyOrPath, $value)
     {
-        Utils::setPath($this->defaults, $keyOrPath, $value);
+        set_path($this->defaults, $keyOrPath, $value);
     }
 
     public function getBaseUri()
@@ -176,13 +185,13 @@ class Client implements ClientInterface
 
         // Absolute URL
         if (strpos($uri[0], '://')) {
-            return new Psr7\Uri(Utils::uriTemplate($uri[0], $uri[1]));
+            return new Psr7\Uri(uri_template($uri[0], $uri[1]));
         }
 
         // Combine the relative URL with the base URL
         return Psr7\Uri::resolve(
             $this->baseUri,
-            Utils::uriTemplate($uri[0], $uri[1])
+            uri_template($uri[0], $uri[1])
         );
     }
 
@@ -197,10 +206,7 @@ class Client implements ClientInterface
                 . 'varname options in the second element of a base_uri array.');
         } else {
             $this->baseUri = new Psr7\Uri(
-                Utils::uriTemplate(
-                    $config['base_uri'][0],
-                    $config['base_uri'][1]
-                )
+                uri_template($config['base_uri'][0], $config['base_uri'][1])
             );
         }
     }
@@ -237,7 +243,7 @@ class Client implements ClientInterface
         // Add the default user-agent header.
         if (!isset($this->defaults['headers'])) {
             $this->defaults['headers'] = [
-                'User-Agent' => Utils::defaultUserAgent()
+                'User-Agent' => default_user_agent()
             ];
         } else {
             // Add the User-Agent header if one was not already set.
@@ -246,7 +252,7 @@ class Client implements ClientInterface
                     return;
                 }
             }
-            $this->defaults['headers']['User-Agent'] = Utils::defaultUserAgent();
+            $this->defaults['headers']['User-Agent'] = default_user_agent();
         }
     }
 
@@ -298,7 +304,7 @@ class Client implements ClientInterface
      * @param RequestInterface $request
      * @param array            $options
      *
-     * @return FulfilledPromise|FulfilledResponse|RejectedResponse|ResponsePromise
+     * @return PromiseInterface
      */
     private function transfer(RequestInterface $request, array $options)
     {
@@ -313,14 +319,12 @@ class Client implements ClientInterface
 
         try {
             $response = $handler($request, $options);
-            if ($response instanceof ResponsePromiseInterface) {
+            if ($response instanceof PromiseInterface) {
                 return $response;
-            } elseif ($response instanceof PromiseInterface) {
-                return ResponsePromise::fromPromise($response);
             }
-            return new FulfilledResponse($response);
+            return \GuzzleHttp\Promise\promise_for($response);
         } catch (\Exception $e) {
-            return new RejectedResponse($e);
+            return \GuzzleHttp\Promise\rejection_for($e);
         }
     }
 
