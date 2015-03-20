@@ -196,7 +196,7 @@ class Response extends AbstractMessage implements ResponseInterface
      */
     public function isNotFound()
     {
-        return (404 === $this->getStatusCode());
+        return (404 == $this->getStatusCode());
     }
 
     /**
@@ -206,7 +206,7 @@ class Response extends AbstractMessage implements ResponseInterface
      */
     public function isOk()
     {
-        return (200 === $this->getStatusCode());
+        return (200 == $this->getStatusCode());
     }
 
     /**
