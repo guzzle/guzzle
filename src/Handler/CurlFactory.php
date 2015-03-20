@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\LazyOpenStream;
 use Psr\Http\Message\RequestInterface;
@@ -146,7 +147,7 @@ class CurlFactory
             );
         }
 
-        return new RejectedResponse($error);
+        return new RejectedPromise($error);
     }
 
     private function getOutputBody(RequestInterface $request, array $options, array &$conf)

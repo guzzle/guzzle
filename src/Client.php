@@ -7,6 +7,7 @@ use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use \InvalidArgumentException as Iae;
 
 /**
@@ -24,6 +25,19 @@ use \InvalidArgumentException as Iae;
  *     );
  *     $response->wait();
  *     echo $response->getStatusCode();
+ *
+ * @method ResponseInterface get($uri, $options)
+ * @method ResponseInterface head($uri, $options)
+ * @method ResponseInterface put($uri, $options)
+ * @method ResponseInterface post($uri, $options)
+ * @method ResponseInterface patch($uri, $options)
+ * @method ResponseInterface delete($uri, $options)
+ * @method PromiseInterface getAsync($uri, $options)
+ * @method PromiseInterface headAsync($uri, $options)
+ * @method PromiseInterface putAsync($uri, $options)
+ * @method PromiseInterface postAsync($uri, $options)
+ * @method PromiseInterface patchAsync($uri, $options)
+ * @method PromiseInterface deleteAsync($uri, $options)
  */
 class Client implements ClientInterface
 {
@@ -108,6 +122,20 @@ class Client implements ClientInterface
         $this->handler = isset($config['handler'])
             ? $config['handler']
             : default_handler();
+    }
+
+    public function __call($method, $args)
+    {
+        if (count($args) < 1) {
+            throw new \InvalidArgumentException('Magic request methods require a URI and optional options array');
+        }
+
+        $uri = $args[0];
+        $opts = isset($args[1]) ? $args[1] : [];
+
+        return substr($method, -6) === 'Async'
+            ? $this->requestAsync(substr($method, 0, -6), $uri, $opts)
+            : $this->request($method, $uri, $opts);
     }
 
     public function sendAsync(RequestInterface $request, array $options = [])
