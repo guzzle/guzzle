@@ -117,4 +117,76 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
         $response->setReasonPhrase('Foo');
         $this->assertEquals('Foo', $response->getReasonPhrase());
     }
+
+    public function testIsClientError()
+    {
+        $response = new Response(401);
+        $this->assertTrue($response->isClientError());
+
+        $response = new Response(200);
+        $this->assertFalse($response->isClientError());
+    }
+
+    public function testIsForbidden()
+    {
+        $response = new Response(403);
+        $this->assertTrue($response->isForbidden());
+
+        $response = new Response(200);
+        $this->assertFalse($response->isForbidden());
+    }
+
+    public function testIsInformational()
+    {
+        $response = new Response(101);
+        $this->assertTrue($response->isInformational());
+
+        $response = new Response(200);
+        $this->assertFalse($response->isInformational());
+    }
+
+    public function testIsNotFound()
+    {
+        $response = new Response(404);
+        $this->assertTrue($response->isNotFound());
+
+        $response = new Response(200);
+        $this->assertFalse($response->isNotFound());
+    }
+
+    public function testIsOk()
+    {
+        $response = new Response(200);
+        $this->assertTrue($response->isOk());
+
+        $response = new Response(404);
+        $this->assertFalse($response->isOk());
+    }
+
+    public function testIsServerError()
+    {
+        $response = new Response(503);
+        $this->assertTrue($response->isServerError());
+
+        $response = new Response(200);
+        $this->assertFalse($response->isServerError());
+    }
+
+    public function testIsRedirect()
+    {
+        $response = new Response(301);
+        $this->assertTrue($response->isRedirect());
+
+        $response = new Response(200);
+        $this->assertFalse($response->isRedirect());
+    }
+
+    public function testIsSuccess()
+    {
+        $response = new Response(200);
+        $this->assertTrue($response->isSuccess());
+
+        $response = new Response(404);
+        $this->assertFalse($response->isSuccess());
+    }
 }

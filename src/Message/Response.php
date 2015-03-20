@@ -115,26 +115,140 @@ class Response extends AbstractMessage implements ResponseInterface
         }
     }
 
+    /**
+     * Retrieves the status code from the Response
+     *
+     * @return integer
+     */
     public function getStatusCode()
     {
         return $this->statusCode;
     }
 
+    /**
+     * Sets the status code for the Response
+     *
+     * @param integer   $code   The response status code (e.g. 200)
+     * @return integer
+     */
     public function setStatusCode($code)
     {
         return $this->statusCode = (int) $code;
     }
 
+    /**
+     * Gets the reason for the Response
+     *
+     * @return string   This will be either our defined phrases or a passed in phrase
+     */
     public function getReasonPhrase()
     {
         return $this->reasonPhrase;
     }
 
+    /**
+     * Sets a custom reason phrase for the Response
+     *
+     * @param string   $phrase   Set a custom reason phrase
+     * @return string
+     */
     public function setReasonPhrase($phrase)
     {
         return $this->reasonPhrase = $phrase;
     }
 
+    /**
+     * Does the status code indicate a client error?
+     *
+     * @return bool
+     */
+    public function isClientError()
+    {
+        $code = $this->getStatusCode();
+        return ($code < 500 && $code >= 400);
+    }
+
+    /**
+     * Is the request forbidden due to ACLs?
+     *
+     * @return bool
+     */
+    public function isForbidden()
+    {
+        return (403 == $this->getStatusCode());
+    }
+
+    /**
+     * Is the current status "informational"?
+     *
+     * @return bool
+     */
+    public function isInformational()
+    {
+        $code = $this->getStatusCode();
+        return ($code >= 100 && $code < 200);
+    }
+
+    /**
+     * Does the status code indicate the resource is not found?
+     *
+     * @return bool
+     */
+    public function isNotFound()
+    {
+        return (404 == $this->getStatusCode());
+    }
+
+    /**
+     * Do we have a normal, OK response?
+     *
+     * @return bool
+     */
+    public function isOk()
+    {
+        return (200 == $this->getStatusCode());
+    }
+
+    /**
+     * Does the status code reflect a server error?
+     *
+     * @return bool
+     */
+    public function isServerError()
+    {
+        $code = $this->getStatusCode();
+        return (500 <= $code && 600 > $code);
+    }
+
+    /**
+     * Do we have a redirect?
+     *
+     * @return bool
+     */
+    public function isRedirect()
+    {
+        $code = $this->getStatusCode();
+        return (300 <= $code && 400 > $code);
+    }
+
+    /**
+     * Was the response successful?
+     *
+     * @return bool
+     */
+    public function isSuccess()
+    {
+        $code = $this->getStatusCode();
+        return (200 <= $code && 300 > $code);
+    }
+
+    /**
+     * Converts the response body to json
+     *
+     * @param  array    $config
+     * @throws \ParseException
+     * @return mixed   json encoded representation of the response body
+     */
     public function json(array $config = [])
     {
         try {
@@ -152,6 +266,13 @@ class Response extends AbstractMessage implements ResponseInterface
         }
     }
 
+    /**
+     * Converts the response body to a SimpleXmlElement
+     *
+     * @param  array    $config
+     * @throws \XmlParseException
+     * @return \SimpleXMLElement
+     */
     public function xml(array $config = [])
     {
         $disableEntities = libxml_disable_entity_loader(true);
@@ -182,11 +303,21 @@ class Response extends AbstractMessage implements ResponseInterface
         return $xml;
     }
 
+    /**
+     * Retrieves the effective_url from the Response (the URL of the final page)
+     *
+     * @return string
+     */
     public function getEffectiveUrl()
     {
         return $this->effectiveUrl;
     }
 
+    /**
+     * Sets the effective_url for the Response (the URL of the final page)
+     *
+     * @return string
+     */
     public function setEffectiveUrl($url)
     {
         $this->effectiveUrl = $url;
