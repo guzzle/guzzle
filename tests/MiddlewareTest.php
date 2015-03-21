@@ -7,11 +7,11 @@ use GuzzleHttp\Cookie\SetCookie;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerBuilder;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Stream;
-use GuzzleHttp\ResponsePromiseInterface;
 use Psr\Http\Message\RequestInterface;
 
 class MiddlewareTest extends \PHPUnit_Framework_TestCase
@@ -93,7 +93,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
             function (RequestInterface $request, array $options) use (&$calls) {
                 $calls[] = '1';
             },
-            function (RequestInterface $request, array $options, ResponsePromiseInterface $p) use (&$calls) {
+            function (RequestInterface $request, array $options, PromiseInterface $p) use (&$calls) {
                 $calls[] = '3';
             }
         );
@@ -103,7 +103,8 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $comp = $b->append($m2)->append($m)->resolve();
         $p = $comp(new Request('GET', 'http://foo.com'), []);
         $this->assertEquals('123', implode('', $calls));
-        $this->assertInstanceOf('GuzzleHttp\ResponsePromiseInterface', $p);
+        $this->assertInstanceOf('GuzzleHttp\Promise\PromiseInterface', $p);
+        $this->assertEquals(200, $p->wait()->getStatusCode());
     }
 
     public function testBackoffCalculateDelay()
@@ -132,11 +133,11 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $h = new MockHandler([new Response(200), new Response(201), new Response(202)]);
         $f = $m($h);
         $c = new Client(['handler' => $f]);
-        $p = $c->send(new Request('GET', 'http://test.com'), []);
-        $this->assertEquals(202, $p->getStatusCode());
-        $this->assertInstanceOf('GuzzleHttp\FulfilledResponse', $p);
+        $p = $c->sendAsync(new Request('GET', 'http://test.com'), []);
+        $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
         $this->assertCount(3, $calls);
         $this->assertEquals(2, $delayCalls);
+        $this->assertEquals(202, $p->wait()->getStatusCode());
     }
 
     public function testDoesNotRetryWhenDeciderReturnsFalse()
@@ -145,9 +146,9 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $m = Middleware::retry($decider);
         $h = new MockHandler([new Response(200)]);
         $c = new Client(['handler' => $m($h)]);
-        $p = $c->send(new Request('GET', 'http://test.com'), []);
-        $this->assertEquals(200, $p->getStatusCode());
-        $this->assertInstanceOf('GuzzleHttp\FulfilledResponse', $p);
+        $p = $c->sendAsync(new Request('GET', 'http://test.com'), []);
+        $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
+        $this->assertEquals(200, $p->wait()->getStatusCode());
     }
 
     public function testCanRetryExceptions()
@@ -160,9 +161,9 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $m = Middleware::retry($decider);
         $h = new MockHandler([new \Exception(), new Response(201)]);
         $c = new Client(['handler' => $m($h)]);
-        $p = $c->send(new Request('GET', 'http://test.com'), []);
-        $this->assertEquals(201, $p->getStatusCode());
-        $this->assertInstanceOf('GuzzleHttp\FulfilledResponse', $p);
+        $p = $c->sendAsync(new Request('GET', 'http://test.com'), []);
+        $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
+        $this->assertEquals(201, $p->wait()->getStatusCode());
         $this->assertCount(2, $calls);
         $this->assertEquals(0, $calls[0][0]);
         $this->assertNull($calls[0][2]);
@@ -182,7 +183,8 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $comp = (new HandlerBuilder())->append($m)->setHandler($h)->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com', [], '123'), []);
         $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
-        $this->assertEquals(200, $p->getStatusCode());
+        $response = $p->wait();
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
     public function testAddsTransferEncodingWhenNoContentLength()
@@ -199,14 +201,15 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $comp = (new HandlerBuilder())->append($m)->setHandler($h)->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com', [], $body), []);
         $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
-        $this->assertEquals(200, $p->getStatusCode());
+        $response = $p->wait();
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
     public function testAddsContentTypeWhenMissingAndPossible()
     {
-        $bd = Stream::factory(fopen(__FILE__, 'r'));
+        $bd = Stream::factory(fopen(__DIR__ . '/../composer.json', 'r'));
         $h = new MockHandler(function (RequestInterface $request) {
-            $this->assertEquals('text/x-php', $request->getHeader('Content-Type'));
+            $this->assertEquals('application/json', $request->getHeader('Content-Type'));
             $this->assertTrue($request->hasHeader('Content-Length'));
             return new Response(200);
         });
@@ -214,6 +217,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $comp = (new HandlerBuilder())->append($m)->setHandler($h)->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com', [], $bd), []);
         $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
-        $this->assertEquals(200, $p->getStatusCode());
+        $response = $p->wait();
+        $this->assertEquals(200, $response->getStatusCode());
     }
 }

@@ -69,7 +69,7 @@ class FileCookieJar extends CookieJar
             throw new \RuntimeException("Unable to load file {$filename}");
         }
 
-        $data =json_decode($json, true);
+        $data = json_decode($json, true);
         if (is_array($data)) {
             foreach (json_decode($json, true) as $cookie) {
                 $this->setCookie(new SetCookie($cookie));

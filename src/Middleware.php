@@ -188,14 +188,13 @@ final class Middleware
      */
     public static function prepareBody()
     {
-        $mimetypes = Mimetypes::getInstance();
-        return function (callable $handler) use ($mimetypes) {
-            return function (RequestInterface $request, array $options) use ($handler, $mimetypes) {
+        return function (callable $handler) {
+            return function (RequestInterface $request, array $options) use ($handler) {
                 $modify = [];
                 // Add a default content-type if possible.
                 if (!$request->hasHeader('Content-Type')) {
                     if ($uri = $request->getBody()->getMetadata('uri')) {
-                        if ($type = $mimetypes->fromFilename($uri)) {
+                        if ($type = Psr7\mimetype_from_filename($uri)) {
                             $modify['set_headers']['Content-Type'] = $type;
                         }
                     }
