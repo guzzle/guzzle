@@ -99,7 +99,9 @@ function set_path(&$data, $path, $value)
 function uri_template($template, array $variables)
 {
     if (function_exists('\\uri_template')) {
+        // @codeCoverageIgnoreStart
         return \uri_template($template, $variables);
+        // @codeCoverageIgnoreEnd
     }
 
     static $uriTemplate;
