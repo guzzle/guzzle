@@ -109,6 +109,23 @@ class PoolTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('GuzzleHttp\Exception\ClientException', $results[3]);
     }
 
+    public function testBatchesResultsWithCallbacks()
+    {
+        $requests = [
+            new Request('GET', 'http://foo.com/200'),
+            new Request('GET', 'http://foo.com/201')
+        ];
+        $mock = new MockHandler(function (RequestInterface $request) {
+            return new Response(substr($request->getUri()->getPath(), 1));
+        });
+        $client = new Client(['handler' => $mock]);
+        $results = Pool::batch($client, $requests, [
+            'fulfilled' => function ($value) use (&$called) { $called = true; }
+        ]);
+        $this->assertCount(2, $results);
+        $this->assertTrue($called);
+    }
+
     private function getClient($total = 1)
     {
         $queue = [];
