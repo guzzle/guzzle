@@ -152,7 +152,7 @@ class Client implements ClientInterface
 
     public function send(RequestInterface $request, array $options = [])
     {
-        return $this->send($request, $options)->wait();
+        return $this->sendAsync($request, $options)->wait();
     }
 
     public function requestAsync($method, $uri = null, array $options = [])

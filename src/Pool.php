@@ -26,7 +26,7 @@ class Pool implements PromisorInterface
      * @param array|\Iterator $requests Requests or functions that return
      *                                  requests to send concurrently.
      * @param array           $config   Associative array of options
-     *     - limit: (int) Maximum number of requests to send concurrently
+     *     - concurrency: (int) Maximum number of requests to send concurrently
      *     - options: Array of request options to apply to each request.
      *     - fulfilled: (callable) Function to invoke when a request completes.
            - rejected: (callable) Function to invoke when a request is rejected.
@@ -38,11 +38,9 @@ class Pool implements PromisorInterface
     ) {
         // Backwards compatibility.
         if (isset($config['pool_size'])) {
-            $config['limit'] = $config['pool_size'];
-        }
-
-        if (!isset($config['limit'])) {
-            $config['limit'] = 25;
+            $config['concurrency'] = $config['pool_size'];
+        } elseif (!isset($config['concurrency'])) {
+            $config['concurrency'] = 25;
         }
 
         if (isset($config['options'])) {
@@ -54,7 +52,7 @@ class Pool implements PromisorInterface
 
         $config['mapfn'] = function ($requestOrFunction) use ($client, $opts) {
             if ($requestOrFunction instanceof RequestInterface) {
-                return $client->send($requestOrFunction, $opts);
+                return $client->sendAsync($requestOrFunction, $opts);
             } elseif (is_callable($requestOrFunction)) {
                 return $requestOrFunction($opts);
             }

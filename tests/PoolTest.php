@@ -6,7 +6,7 @@ use GuzzleHttp\Pool;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\ResponsePromise;
+use GuzzleHttp\Promise\Promise;
 use Psr\Http\Message\RequestInterface;
 
 class PoolTest extends \PHPUnit_Framework_TestCase
@@ -40,9 +40,9 @@ class PoolTest extends \PHPUnit_Framework_TestCase
 
     public function testExecutesPendingWhenWaiting()
     {
-        $r1 = new ResponsePromise(function () use (&$r1) { $r1->resolve(new Response()); });
-        $r2 = new ResponsePromise(function () use (&$r2) { $r2->resolve(new Response()); });
-        $r3 = new ResponsePromise(function () use (&$r3) { $r3->resolve(new Response()); });
+        $r1 = new Promise(function () use (&$r1) { $r1->resolve(new Response()); });
+        $r2 = new Promise(function () use (&$r2) { $r2->resolve(new Response()); });
+        $r3 = new Promise(function () use (&$r3) { $r3->resolve(new Response()); });
         $handler = new MockHandler([$r1, $r2, $r3]);
         $c = new Client(['handler' => $handler]);
         $p = new Pool($c, [
