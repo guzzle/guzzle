@@ -64,6 +64,7 @@ class Client implements ClientInterface
 
     /** @var array Known pass-through transfer request options */
     private static $transferOptions = [
+        'delay' => true,
         'connect_timeout' => true,
         'timeout' => true,
         'verify' => true,
@@ -99,29 +100,99 @@ class Client implements ClientInterface
      *              'http://www.foo.com/{version}/',
      *              ['version' => '123']
      *          ],
-     *         'defaults' => [
-     *             'timeout'         => 0,
-     *             'allow_redirects' => false,
-     *             'proxy'           => '192.168.16.1:10'
-     *         ]
+     *          'timeout'         => 0,
+     *          'allow_redirects' => false,
+     *          'proxy'           => '192.168.16.1:10'
      *     ]);
      *
-     * @param array $config Client configuration settings
-     *     - base_uri: Base URI of the client that is merged into relative URIs.
-     *       Can be a string or an array that contains a URI template followed
-     *       by an associative array of expansion variables to inject into the
-     *       URI template.
-     *     - handler: callable RingPHP handler used to transfer requests
-     *     - defaults: Default request options to apply to each request
+     * Client configuration settings include the following options:
+     *
+     * - base_uri: (string) Base URI of the client that is merged into relative
+     *   URIs. Can be a string or an array that contains a URI template
+     *   followed by an associative array of expansion variables to inject into
+     *   the URI template.
+     * - handler: (callable) Function that transfers HTTP requests over the
+     *   wire. The function is called with a Psr7\Http\Message\RequestInterface
+     *   and array of transfer options, and must return a
+     *   GuzzleHttp\Promise\PromiseInterface that is fulfilled with a
+     *   Psr7\Http\Message\ResponseInterface on success.
+     * - delay: (int) The amount of time to delay before sending in
+     *   milliseconds.
+     * - connect_timeout: (float) Float describing the number of seconds to
+     *   wait while trying to connect to a server. Use ``0`` to wait
+     *   indefinitely (the default behavior).
+     * - timeout: (float) Float describing the timeout of the request in
+     *   seconds. Use ``0`` to wait indefinitely (the default behavior).
+     * - verify: (bool|string) Describes the SSL certificate verification
+     *   behavior of a request. Set to true to enable SSL certificate
+     *   verification using the system CA bundle when available (the default).
+     *   Set to false to disable certificate verification (this is insecure!).
+     *   Set to a string to provide the path to a CA bundle on disk to enable
+     *   verification using a custom certificate.
+     * - ssl_key: (array) Specify the path to a file containing a private SSL
+     *   key in PEM format. If a password is required, then set to an array
+     *   containing the path to the SSL key in the first array element followed
+     *   by the password required for the certificate in the second element.
+     * - cert: (array) Set to a string to specify the path to a file containing
+     *   a PEM formatted SSL client side certificate. If a password is
+     *   required, then set cert to an array containing the path to the PEM
+     *   file in the first array element followed by the certificate password
+     *   in the second array element.
+     * - progress: (callable) Defines a function to invoke when transfer
+     *   progress is made. The function accepts the following positional
+     *   arguments: the total number of bytes expected to be downloaded, the
+     *   number of bytes downloaded so far, the number of bytes expected to be
+     *   uploaded, the number of bytes uploaded so far.
+     * - proxy: (string|array)
+     * - debug: (bool|resource) Set to true or set to a PHP stream returned by
+     *   fopen()  enable debug output with the HTTP handler used to send a
+     *   request.
+     * - sink: (resource|string|StreamableInterface) Where the data of the
+     *   response is written to. Defaults to a PHP temp stream. Providing a
+     *   string will write data to a file by the given name.
+     * - stream: Set to true to attempt to stream a response rather than
+     *   download it all up-front.
+     * - expect: (bool|integer) Controls the behavior of the
+     *   "Expect: 100-Continue" header.
+     * - allow_redirects: (bool|array) Controls redirect behavior. Pass false
+     *   to disable redirects, pass true to enable redirects, pass an
+     *   associative to provide custom redirect settings. Defaults to "false".
+     * - sync: (bool) Set to true to inform HTTP handlers that you intend on
+     *   waiting on the response. This can be useful for optimizations.
+     * - decode_content: Specify whether or not Content-Encoding responses
+     *   (gzip, deflate, etc.) are automatically decoded. Defaults to "true".
+     * - headers: (array) Associative array of HTTP headers. Each value MUST be
+     *   a string or array of strings.
+     * - body: (string|null|callable|iterator|object) Body to send in the
+     *   request.
+     * - query: (array|string) Associative array of query string values to add
+     *   to the request. This option uses PHP's http_build_query() to create
+     *   the string representation. Pass a string value if you need more
+     *   control than what this method provides
+     * - auth: (array) Pass an array of HTTP authentication parameters to use
+     *   with the request. The array must contain the username in index [0],
+     *   the password in index [1], and you can optionally provide a built-in
+     *   authentication type in index [2]. Pass null to disable authentication
+     *   for a request.
+     * - json: (mixed) Adds JSON data to a request. The provided value is JSON
+     *   encoded and a Content-Type header of application/json will be added to
+     *   the request if no Content-Type header is already present.
+     *
+     * @param array $config Client configuration settings.
      */
     public function __construct(array $config = [])
     {
+        if (isset($config['handler'])) {
+            $this->handler = $config['handler'];
+            unset($config['handler']);
+        } else {
+            $this->handler = default_handler();
+        }
+
         $this->configureBaseUri($config);
+        unset($config['base_uri']);
         $this->configureDefaults($config);
         $this->prepareBodyMiddleware = Middleware::prepareBody();
-        $this->handler = isset($config['handler'])
-            ? $config['handler']
-            : default_handler();
     }
 
     public function __call($method, $args)
@@ -264,9 +335,7 @@ class Client implements ClientInterface
             $defaults['proxy']['https'] = $proxy;
         }
 
-        $this->defaults = empty($config['defaults'])
-            ? $defaults
-            : $config['defaults'] + $defaults;
+        $this->defaults = $config + $defaults;
 
         // Add the default user-agent header.
         if (!isset($this->defaults['headers'])) {
@@ -436,6 +505,12 @@ class Client implements ClientInterface
     {
         $modify = [];
         $this->extractPostData($options);
+
+        // Backwards compatibility: save_to -> sink
+        if (isset($options['save_to'])) {
+            $options['sink'] = $options['save_to'];
+            unset($options['save_to']);
+        }
 
         foreach ($options as $key => $value) {
             if (isset(self::$transferOptions[$key])) {
