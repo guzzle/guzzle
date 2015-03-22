@@ -26,18 +26,18 @@ use \InvalidArgumentException as Iae;
  *     $response->wait();
  *     echo $response->getStatusCode();
  *
- * @method ResponseInterface get($uri, $options)
- * @method ResponseInterface head($uri, $options)
- * @method ResponseInterface put($uri, $options)
- * @method ResponseInterface post($uri, $options)
- * @method ResponseInterface patch($uri, $options)
- * @method ResponseInterface delete($uri, $options)
- * @method PromiseInterface getAsync($uri, $options)
- * @method PromiseInterface headAsync($uri, $options)
- * @method PromiseInterface putAsync($uri, $options)
- * @method PromiseInterface postAsync($uri, $options)
- * @method PromiseInterface patchAsync($uri, $options)
- * @method PromiseInterface deleteAsync($uri, $options)
+ * @method ResponseInterface get($uri, array $options = [])
+ * @method ResponseInterface head($uri, array $options = [])
+ * @method ResponseInterface put($uri, array $options = [])
+ * @method ResponseInterface post($uri, array $options = [])
+ * @method ResponseInterface patch($uri, array $options = [])
+ * @method ResponseInterface delete($uri, array $options = [])
+ * @method PromiseInterface getAsync($uri, array $options = [])
+ * @method PromiseInterface headAsync($uri, array $options = [])
+ * @method PromiseInterface putAsync($uri, array $options = [])
+ * @method PromiseInterface postAsync($uri, array $options = [])
+ * @method PromiseInterface patchAsync($uri, array $options = [])
+ * @method PromiseInterface deleteAsync($uri, array $options = [])
  */
 class Client implements ClientInterface
 {
@@ -133,8 +133,8 @@ class Client implements ClientInterface
         $uri = $args[0];
         $opts = isset($args[1]) ? $args[1] : [];
 
-        return substr($method, -6) === 'Async'
-            ? $this->requestAsync(substr($method, 0, -6), $uri, $opts)
+        return substr($method, -5) === 'Async'
+            ? $this->requestAsync(substr($method, 0, -5), $uri, $opts)
             : $this->request($method, $uri, $opts);
     }
 

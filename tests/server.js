@@ -58,7 +58,7 @@ var GuzzleServer = function(port, log) {
     var hasher = crypto.createHash('md5');
     hasher.update(input);
     return hasher.digest('hex');
-  }
+  };
 
   /**
    * Node.js HTTP server authentication module.

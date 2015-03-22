@@ -200,7 +200,11 @@ final class Middleware
                     }
                 }
                 // Add a default content-length or transfer-encoding header.
-                if (!$request->hasHeader('Content-Length') && !$request->hasHeader('Transfer-Encoding')) {
+                static $skip = ['GET' => true, 'HEAD' => true];
+                if (!isset($skip[$request->getMethod()])
+                    && !$request->hasHeader('Content-Length')
+                    && !$request->hasHeader('Transfer-Encoding')
+                ) {
                     $size = $request->getBody()->getSize();
                     if ($size !== null) {
                         $modify['set_headers']['Content-Length'] = $size;

@@ -5,7 +5,4 @@ require __DIR__ . '/Server.php';
 use GuzzleHttp\Tests\Server;
 
 Server::start();
-
-register_shutdown_function(function () {
-    Server::stop();
-});
+register_shutdown_function(function () { Server::stop(); });
