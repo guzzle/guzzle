@@ -499,7 +499,7 @@ class CurlFactory
             case 'debug':
 
                 if ($value) {
-                    $conf[CURLOPT_STDERR] = \GuzzleHttp\get_debug_resource($value);
+                    $conf[CURLOPT_STDERR] = \GuzzleHttp\debug_resource($value);
                     $conf[CURLOPT_VERBOSE] = true;
                 }
                 break;

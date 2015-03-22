@@ -81,7 +81,7 @@ function headers_from_lines($lines)
  *
  * @return resource
  */
-function get_debug_resource($value = null)
+function debug_resource($value = null)
 {
     if (is_resource($value)) {
         return $value;
