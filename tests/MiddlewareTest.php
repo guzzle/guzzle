@@ -4,6 +4,7 @@ namespace GuzzleHttp\Tests;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerBuilder;
 use GuzzleHttp\Middleware;
@@ -77,6 +78,19 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('HEAD', $container[1]['request']->getMethod());
         $this->assertEquals('bar', $container[0]['options']['headers']['foo']);
         $this->assertEquals('baz', $container[1]['options']['headers']['foo']);
+    }
+
+    public function testTracksHistoryForFailures()
+    {
+        $container = [];
+        $m = Middleware::history($container);
+        $request = new Request('GET', 'http://foo.com');
+        $h = new MockHandler([new RequestException('error', $request)]);
+        $f = $m($h);
+        $f($request, []);
+        $this->assertCount(1, $container);
+        $this->assertEquals('GET', $container[0]['request']->getMethod());
+        $this->assertInstanceOf('GuzzleHttp\Exception\RequestException', $container[0]['error']);
     }
 
     public function testTapsBeforeAndAfter()

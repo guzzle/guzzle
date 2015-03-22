@@ -41,6 +41,14 @@ class MultipartPostBodyTest extends \PHPUnit_Framework_TestCase
         new MultipartPostBody([], [['foo' => 'bar']]);
     }
 
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testEnsuresFileHasName()
+    {
+        new MultipartPostBody([], [['contents' => 'bar']]);
+    }
+
     public function testSerializesFields()
     {
         $b = new MultipartPostBody([
