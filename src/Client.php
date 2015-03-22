@@ -118,17 +118,17 @@ class Client implements ClientInterface
      *   Psr7\Http\Message\ResponseInterface on success.
      * - delay: (int) The amount of time to delay before sending in
      *   milliseconds.
-     * - connect_timeout: (float) Float describing the number of seconds to
-     *   wait while trying to connect to a server. Use ``0`` to wait
+     * - connect_timeout: (float, default=0) Float describing the number of
+     *   seconds to wait while trying to connect to a server. Use 0 to wait
      *   indefinitely (the default behavior).
-     * - timeout: (float) Float describing the timeout of the request in
-     *   seconds. Use ``0`` to wait indefinitely (the default behavior).
-     * - verify: (bool|string) Describes the SSL certificate verification
-     *   behavior of a request. Set to true to enable SSL certificate
-     *   verification using the system CA bundle when available (the default).
-     *   Set to false to disable certificate verification (this is insecure!).
-     *   Set to a string to provide the path to a CA bundle on disk to enable
-     *   verification using a custom certificate.
+     * - timeout: (float, default=0) Float describing the timeout of the
+     *   request in seconds. Use 0 to wait indefinitely (the default behavior).
+     * - verify: (bool|string, default=true) Describes the SSL certificate
+     *   verification behavior of a request. Set to true to enable SSL
+     *   certificate verification using the system CA bundle when available
+     *   (the default). Set to false to disable certificate verification (this
+     *   is insecure!). Set to a string to provide the path to a CA bundle on
+     *   disk to enable verification using a custom certificate.
      * - ssl_key: (array) Specify the path to a file containing a private SSL
      *   key in PEM format. If a password is required, then set to an array
      *   containing the path to the SSL key in the first array element followed
@@ -159,8 +159,9 @@ class Client implements ClientInterface
      *   associative to provide custom redirect settings. Defaults to "false".
      * - sync: (bool) Set to true to inform HTTP handlers that you intend on
      *   waiting on the response. This can be useful for optimizations.
-     * - decode_content: Specify whether or not Content-Encoding responses
-     *   (gzip, deflate, etc.) are automatically decoded. Defaults to "true".
+     * - decode_content: (bool, default=true) Specify whether or not
+     *   Content-Encoding responses (gzip, deflate, etc.) are automatically
+     *   decoded.
      * - headers: (array) Associative array of HTTP headers. Each value MUST be
      *   a string or array of strings.
      * - body: (string|null|callable|iterator|object) Body to send in the
@@ -174,9 +175,24 @@ class Client implements ClientInterface
      *   the password in index [1], and you can optionally provide a built-in
      *   authentication type in index [2]. Pass null to disable authentication
      *   for a request.
+     * - cookies: (bool|array|GuzzleHttp\Cookie\CookieJarInterface, default=false)
+     *   Specifies whether or not cookies are used in a request or what cookie
+     *   jar to use or what cookies to send.
+     * - http_errors: (bool, default=true) Set to false to disable exceptions
+     *   when a non- successful HTTP response is received. By default,
+     *   exceptions will be thrown for 4xx and 5xx responses.
      * - json: (mixed) Adds JSON data to a request. The provided value is JSON
      *   encoded and a Content-Type header of application/json will be added to
      *   the request if no Content-Type header is already present.
+     * - form_fields: (array) Associative array of field names to values where
+     *   each value is a string or array of strings.
+     * - form_files: (array) Associative array of POST field names to either
+     *   an fopen resource, StreamableInterface, or an associative array
+     *   containing the "contents" key mapping to a StreamableInterface/resource,
+     *   optional "headers" associative array of custom headers, and optional
+     *   "filename" key mapping to a string to send as the filename in the
+     *   part. You can also send an array of associative arrays to send
+     *   multiple files under the same name.
      *
      * @param array $config Client configuration settings.
      */
@@ -504,7 +520,7 @@ class Client implements ClientInterface
     private function applyOptions(RequestInterface $request, array &$options)
     {
         $modify = [];
-        $this->extractPostData($options);
+        $this->extractFormData($options);
 
         // Backwards compatibility: save_to -> sink
         if (isset($options['save_to'])) {
@@ -587,13 +603,13 @@ class Client implements ClientInterface
     }
 
     /**
-     * Extracts post_fields and post_files into the "body" option.
+     * Extracts form_fields and form_files into the "body" option.
      *
      * @param array $options
      */
-    private function extractPostData(array &$options)
+    private function extractFormData(array &$options)
     {
-        if (empty($options['post_files']) && empty($options['post_fields'])) {
+        if (empty($options['form_files']) && empty($options['form_fields'])) {
             return;
         }
 
@@ -608,19 +624,19 @@ class Client implements ClientInterface
         }
 
         $fields = [];
-        if (isset($options['post_fields'])) {
-            if (!isset($options['post_files'])) {
-                $options['body'] = http_build_query($options['post_fields']);
-                unset($options['post_fields']);
+        if (isset($options['form_fields'])) {
+            if (!isset($options['form_files'])) {
+                $options['body'] = http_build_query($options['form_fields']);
+                unset($options['form_fields']);
                 $options['headers']['Content-Type'] = $contentType ?: 'application/x-www-form-urlencoded';
                 return;
             }
-            $fields = $options['post_fields'];
-            unset($options['post_fields']);
+            $fields = $options['form_fields'];
+            unset($options['form_fields']);
         }
 
-        $files = $options['post_files'];
-        unset($options['post_files']);
+        $files = $options['form_files'];
+        unset($options['form_files']);
         $options['body'] = new MultipartPostBody($fields, $files);
         $options['headers']['Content-Type'] = $contentType
             ?: 'multipart/form-data; boundary=' . $options['body']->getBoundary();
