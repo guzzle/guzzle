@@ -37,14 +37,17 @@ class RedirectMiddleware
     public function __invoke(RequestInterface $request, array $options)
     {
         $fn = $this->nextHandler;
-        if (empty($options['allow_redirects'])) {
+        if (empty($options['allow_redirects'])
+            || empty($options['allow_redirects']['max'])
+        ) {
             return $fn($request, $options);
         }
 
         $options['allow_redirects'] += [
             'max'       => 5,
             'protocols' => ['http', 'https'],
-            'strict'    => false
+            'strict'    => false,
+            'referer'   => false
         ];
 
         return $fn($request, $options)
@@ -83,11 +86,6 @@ class RedirectMiddleware
             ? $options['__redirect_count']
             : 0;
         $options['__redirect_count'] = $current + 1;
-
-        if (!isset($options['__redirect_scheme'])) {
-            $options['__redirect_scheme'] = $request->getUri()->getScheme();
-        }
-
         $max = $options['allow_redirects']['max'];
 
         if ($options['__redirect_count'] > $max) {
@@ -130,9 +128,8 @@ class RedirectMiddleware
 
         // Add the Referer header if it is told to do so and only
         // add the header if we are not redirecting from https to http.
-        $scheme = $request->getUri()->getScheme();
         if ($options['allow_redirects']['referer']
-            && ($scheme == 'https' || $scheme == $options['__redirect_scheme'])
+            && $modify['uri']->getScheme() === $request->getUri()->getScheme()
         ) {
             $uri = $request->getUri()->withUserInfo('', '');
             $modify['set_headers']['Referer'] = (string) $uri;
@@ -157,21 +154,16 @@ class RedirectMiddleware
         ResponseInterface $response,
         array $protocols
     ) {
-        $location = new Psr7\Uri($response->getHeader('Location'));
+        $location = Psr7\Uri::resolve(
+            $request->getUri(),
+            $response->getHeader('Location')
+        );
 
-        // Combine location with the original URL if it is not absolute.
-        if (!$location->getScheme()) {
-            // Remove query string parameters and just take what is present on
-            // the redirect Location header
-            $base = $request->getUri()->withQuery('');
-            $location = Psr7\Uri::resolve($base, $location);
-        }
-
-        // Ensure that the redirect URL is allowed based on the protocols.
+        // Ensure that the redirect URI is allowed based on the protocols.
         if (!in_array($location->getScheme(), $protocols)) {
             throw new BadResponseException(
                 sprintf(
-                    'Redirect URL, %s, does not use one of the allowed redirect protocols: %s',
+                    'Redirect URI, %s, does not use one of the allowed redirect protocols: %s',
                     $location,
                     implode(', ', $protocols)
                 ),
