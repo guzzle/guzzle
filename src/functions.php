@@ -5,6 +5,26 @@ use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
+use Psr\Http\Message\UriInterface;
+use GuzzleHttp\Psr7\Uri;
+
+/**
+ * Returns a UriInterface for the given value.
+ *
+ * @param string|UriInterface $uri
+ * @return UriInterface
+ * @throws \InvalidArgumentException
+ */
+function uri_for($uri)
+{
+    if ($uri instanceof UriInterface) {
+        return $uri;
+    } elseif (is_string($uri)) {
+        return new Uri($uri);
+    }
+
+    throw new \InvalidArgumentException('URI must be a string or UriInterface');
+}
 
 /**
  * Expands a URI template

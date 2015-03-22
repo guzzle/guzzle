@@ -41,14 +41,11 @@ use \InvalidArgumentException as Iae;
  */
 class Client implements ClientInterface
 {
-    /** @var Psr7\Uri Base URI of the client */
-    private $baseUri;
-
     /** @var array Default request options */
     private $defaults;
 
-    /** @var callable Request handler */
-    private $handler;
+    /** @var HandlerStack */
+    private $stack;
 
     /** @var callable Cached error middleware */
     private $errorMiddleware;
@@ -96,26 +93,23 @@ class Client implements ClientInterface
      * to each request:
      *
      *     $client = new Client([
-     *         'base_uri' => [
-     *              'http://www.foo.com/{version}/',
-     *              ['version' => '123']
-     *          ],
-     *          'timeout'         => 0,
-     *          'allow_redirects' => false,
-     *          'proxy'           => '192.168.16.1:10'
+     *         'base_uri'        => 'http://www.foo.com/1.0/',
+     *         'timeout'         => 0,
+     *         'allow_redirects' => false,
+     *         'proxy'           => '192.168.16.1:10'
      *     ]);
      *
      * Client configuration settings include the following options:
      *
-     * - base_uri: (string) Base URI of the client that is merged into relative
-     *   URIs. Can be a string or an array that contains a URI template
-     *   followed by an associative array of expansion variables to inject into
-     *   the URI template.
      * - handler: (callable) Function that transfers HTTP requests over the
      *   wire. The function is called with a Psr7\Http\Message\RequestInterface
      *   and array of transfer options, and must return a
      *   GuzzleHttp\Promise\PromiseInterface that is fulfilled with a
-     *   Psr7\Http\Message\ResponseInterface on success.
+     *   Psr7\Http\Message\ResponseInterface on success. "handler" is a
+     *   constructor only option that cannot be overridden in per/request
+     *   options.
+     * - base_uri: (string|UriInterface) Base URI of the client that is merged
+     *   into relative URIs. Can be a string or instance of UriInterface.
      * - delay: (int) The amount of time to delay before sending in
      *   milliseconds.
      * - connect_timeout: (float, default=0) Float describing the number of
@@ -197,15 +191,18 @@ class Client implements ClientInterface
      */
     public function __construct(array $config = [])
     {
-        if (isset($config['handler'])) {
-            $this->handler = $config['handler'];
-            unset($config['handler']);
+        if (!isset($config['handler'])) {
+            $this->stack = new HandlerStack(default_handler());
         } else {
-            $this->handler = default_handler();
+            $this->stack = new HandlerStack($config['handler']);
+            unset($config['handler']);
         }
 
-        $this->configureBaseUri($config);
-        unset($config['base_uri']);
+        // Convert the base_uri to a UriInterface
+        if (isset($config['base_uri'])) {
+            $config['base_uri'] = uri_for($config['base_uri']);
+        }
+
         $this->configureDefaults($config);
         $this->prepareBodyMiddleware = Middleware::prepareBody();
     }
@@ -224,16 +221,20 @@ class Client implements ClientInterface
             : $this->request($method, $uri, $opts);
     }
 
+    public function getHandlerStack()
+    {
+        return $this->stack;
+    }
+
     public function sendAsync(RequestInterface $request, array $options = [])
     {
         // Merge the base URI into the request URI if needed.
-        $original = $request->getUri();
-        $uri = $this->buildUri($original);
-        if ($uri !== $original) {
-            $request = $request->withUri($uri);
-        }
+        $options = $this->mergeDefaults($options);
 
-        return $this->transfer($request, $this->mergeDefaults($options));
+        return $this->transfer(
+            $request->withUri($this->buildUri($request->getUri(), $options)),
+            $options
+        );
     }
 
     public function send(RequestInterface $request, array $options = [])
@@ -248,7 +249,7 @@ class Client implements ClientInterface
         $body = isset($options['body']) ? $options['body'] : null;
         $version = isset($options['version']) ? $options['version'] : '1.1';
         // Merge the URI into the base URI.
-        $uri = $this->buildUri($uri);
+        $uri = $this->buildUri($uri, $options);
         $request = new Psr7\Request($method, $uri, $headers, $body, $version);
         unset($options['headers'], $options['body'], $options['version']);
 
@@ -269,56 +270,13 @@ class Client implements ClientInterface
                 : null);
     }
 
-    public function setDefaultOption($option, $value)
-    {
-        $this->defaults[$option] = $value;
-    }
-
-    public function getBaseUri()
-    {
-        return $this->baseUri;
-    }
-
-    /**
-     * Expand a URI template and inherit from the base URL if it's relative
-     *
-     * @param string|array $uri URL or an array of the URI template to expand
-     *                          followed by a hash of template varnames.
-     * @return UriInterface
-     * @throws \InvalidArgumentException
-     */
-    private function buildUri($uri)
-    {
-        // URI template (absolute or relative)
-        if (!is_array($uri)) {
-            return Psr7\Uri::resolve($this->baseUri, $uri);
-        }
-
-        if (!isset($uri[1])) {
-            throw new \InvalidArgumentException('You must provide a hash of '
-                . 'varname options in the second element of a URL array.');
-        }
-
-        return Psr7\Uri::resolve(
-            $this->baseUri,
-            uri_template($uri[0], $uri[1])
-        );
-    }
-
-    private function configureBaseUri($config)
+    private function buildUri($uri, array $config)
     {
         if (!isset($config['base_uri'])) {
-            $this->baseUri = new Psr7\Uri('');
-        } elseif (!is_array($config['base_uri'])) {
-            $this->baseUri = new Psr7\Uri($config['base_uri']);
-        } elseif (count($config['base_uri']) < 2) {
-            throw new \InvalidArgumentException('You must provide a hash of '
-                . 'varname options in the second element of a base_uri array.');
-        } else {
-            $this->baseUri = new Psr7\Uri(
-                uri_template($config['base_uri'][0], $config['base_uri'][1])
-            );
+            return $uri instanceof UriInterface ? $uri : new Psr7\Uri($uri);
         }
+
+        return Psr7\Uri::resolve(uri_for($config['base_uri']), $uri);
     }
 
     /**
@@ -416,7 +374,7 @@ class Client implements ClientInterface
      */
     private function transfer(RequestInterface $request, array $options)
     {
-        $stack = new HandlerStack($this->handler);
+        $stack = clone $this->stack;
         $handler = $this->createHandler($request, $stack, $options);
         $request = $this->applyOptions($request, $options);
 

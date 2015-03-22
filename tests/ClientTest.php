@@ -56,14 +56,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             'headers'  => ['bar' => 'baz'],
             'handler'  => new MockHandler()
         ]);
-        $this->assertEquals('http://foo.com', $client->getBaseUri());
-        $this->assertNull($client->getDefaultOption('base_uri'));
+        $base = $client->getDefaultOption('base_uri');
+        $this->assertEquals('http://foo.com', (string) $base);
+        $this->assertInstanceOf('GuzzleHttp\Psr7\Uri', $base);
         $this->assertNull($client->getDefaultOption('handler'));
         $this->assertEquals(2, $client->getDefaultOption('timeout'));
         $this->assertArrayHasKey('timeout', $client->getDefaultOption());
         $this->assertArrayHasKey('headers', $client->getDefaultOption());
-        $client->setDefaultOption('timeout', 3);
-        $this->assertEquals(3, $client->getDefaultOption('timeout'));
     }
 
     public function testCanMergeOnBaseUri()
@@ -80,19 +79,6 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    public function testCanUseUriTemplate()
-    {
-        $mock = new MockHandler(new Response());
-        $client = new Client([
-            'handler'  => $mock
-        ]);
-        $client->get(['http://bar.com/{a}', ['a' => 'baz']]);
-        $this->assertEquals(
-            'http://bar.com/baz',
-            $mock->getLastRequest()->getUri()
-        );
-    }
-
     public function testCanUseRelativeUriWithSend()
     {
         $mock = new MockHandler(new Response());
@@ -100,43 +86,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             'handler'  => $mock,
             'base_uri' => 'http://bar.com'
         ]);
+        $this->assertEquals('http://bar.com', (string) $client->getDefaultOption('base_uri'));
         $request = new Request('GET', '/baz');
         $client->send($request);
         $this->assertEquals(
             'http://bar.com/baz',
-            $mock->getLastRequest()->getUri()
+            (string) $mock->getLastRequest()->getUri()
         );
-    }
-
-    public function testCanUseUriTemplateBaseUri()
-    {
-        $mock = new MockHandler(new Response());
-        $client = new Client([
-            'base_uri' => ['http://foo.com/{a}/', ['a' => 'bar']],
-            'handler'  => $mock
-        ]);
-        $client->get('baz');
-        $this->assertEquals(
-            'http://foo.com/bar/baz',
-            $mock->getLastRequest()->getUri()
-        );
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testEnsuresUriTemplateIsValid()
-    {
-        $client = new Client();
-        $client->get(['http://bar.com/{a}']);
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testEnsuresUriTemplateIsValidInCtor()
-    {
-        new Client(['base_uri' => ['http://bar.com/{a}']]);
     }
 
     public function testMergesDefaultOptionsAndDoesNotOverwriteUa()
