@@ -30,14 +30,14 @@ class HandlerStackTest extends \PHPUnit_Framework_TestCase
         $h->resolve();
     }
 
-    public function testAppendsInOrder()
+    public function testPushInOrder()
     {
         $meths = $this->getFunctions();
         $builder = new HandlerStack();
         $builder->setHandler($meths[1]);
-        $builder->append($meths[2]);
-        $builder->append($meths[3]);
-        $builder->append($meths[4]);
+        $builder->push($meths[2]);
+        $builder->push($meths[3]);
+        $builder->push($meths[4]);
         $composed = $builder->resolve();
         $this->assertEquals('Hello - test123', $composed('test'));
         $this->assertEquals(
@@ -46,14 +46,14 @@ class HandlerStackTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    public function testPrependsInOrder()
+    public function testUnshiftsInReverseOrder()
     {
         $meths = $this->getFunctions();
         $builder = new HandlerStack();
         $builder->setHandler($meths[1]);
-        $builder->prepend($meths[2]);
-        $builder->prepend($meths[3]);
-        $builder->prepend($meths[4]);
+        $builder->unshift($meths[2]);
+        $builder->unshift($meths[3]);
+        $builder->unshift($meths[4]);
         $composed = $builder->resolve();
         $this->assertEquals('Hello - test321', $composed('test'));
         $this->assertEquals(
@@ -67,14 +67,14 @@ class HandlerStackTest extends \PHPUnit_Framework_TestCase
         $meths = $this->getFunctions();
         $builder = new HandlerStack();
         $builder->setHandler($meths[1]);
-        $builder->prepend($meths[2]);
-        $builder->prepend($meths[3]);
-        $builder->append($meths[4]);
-        $builder->remove($meths[2]);
+        $builder->push($meths[2]);
+        $builder->push($meths[2]);
+        $builder->push($meths[3]);
+        $builder->push($meths[4]);
+        $builder->push($meths[2]);
         $builder->remove($meths[3]);
-        $builder->remove($meths[4]);
         $composed = $builder->resolve();
-        $this->assertEquals('Hello - test', $composed('test'));
+        $this->assertEquals('Hello - test1131', $composed('test'));
     }
 
     public function testCanPrintMiddleware()
@@ -82,16 +82,20 @@ class HandlerStackTest extends \PHPUnit_Framework_TestCase
         $meths = $this->getFunctions();
         $builder = new HandlerStack();
         $builder->setHandler($meths[1]);
-        $builder->append($meths[2], 'a');
-        $builder->append([__CLASS__, 'foo']);
-        $builder->append([$this, 'bar']);
-        $builder->append(__CLASS__ . '::' . 'foo');
+        $builder->push($meths[2], 'a');
+        $builder->push([__CLASS__, 'foo']);
+        $builder->push([$this, 'bar']);
+        $builder->push(__CLASS__ . '::' . 'foo');
         $lines = explode("\n", (string) $builder);
-        $this->assertContains("0) Name: a, Function: callable(", $lines[0]);
-        $this->assertContains("1) Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[1]);
-        $this->assertContains("2) Function: callable(['GuzzleHttp\\Tests\\HandlerStackTest', 'bar'])", $lines[2]);
-        $this->assertContains("3) Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[3]);
-        $this->assertContains("4) Handler: callable(", $lines[4]);
+        $this->assertContains("> 4) Name: 'a', Function: callable(", $lines[0]);
+        $this->assertContains("> 3) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[1]);
+        $this->assertContains("> 2) Name: '', Function: callable(['GuzzleHttp\\Tests\\HandlerStackTest', 'bar'])", $lines[2]);
+        $this->assertContains("> 1) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[3]);
+        $this->assertContains("< 0) Handler: callable(", $lines[4]);
+        $this->assertContains("< 1) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[5]);
+        $this->assertContains("< 2) Name: '', Function: callable(['GuzzleHttp\\Tests\\HandlerStackTest', 'bar'])", $lines[6]);
+        $this->assertContains("< 3) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[7]);
+        $this->assertContains("< 4) Name: 'a', Function: callable(", $lines[8]);
     }
 
     public function testCanAddBeforeByName()
@@ -99,13 +103,15 @@ class HandlerStackTest extends \PHPUnit_Framework_TestCase
         $meths = $this->getFunctions();
         $builder = new HandlerStack();
         $builder->setHandler($meths[1]);
-        $builder->append($meths[2], 'a');
-        $builder->before('a', $meths[3], 'b');
-        $builder->before('b', $meths[4], 'c');
+        $builder->push($meths[2], 'foo');
+        $builder->before('foo', $meths[3], 'baz');
+        $builder->before('baz', $meths[4], 'bar');
+        $builder->before('baz', $meths[4], 'qux');
         $lines = explode("\n", (string) $builder);
-        $this->assertContains('0) Name: c', $lines[0]);
-        $this->assertContains('1) Name: b', $lines[1]);
-        $this->assertContains('2) Name: a', $lines[2]);
+        $this->assertContains('> 4) Name: \'bar\'', $lines[0]);
+        $this->assertContains('> 3) Name: \'qux\'', $lines[1]);
+        $this->assertContains('> 2) Name: \'baz\'', $lines[2]);
+        $this->assertContains('> 1) Name: \'foo\'', $lines[3]);
     }
 
     /**
@@ -122,13 +128,13 @@ class HandlerStackTest extends \PHPUnit_Framework_TestCase
         $meths = $this->getFunctions();
         $builder = new HandlerStack();
         $builder->setHandler($meths[1]);
-        $builder->append($meths[2], 'a');
-        $builder->append($meths[3], 'b');
+        $builder->push($meths[2], 'a');
+        $builder->push($meths[3], 'b');
         $builder->after('a', $meths[4], 'c');
         $lines = explode("\n", (string) $builder);
-        $this->assertContains('0) Name: a', $lines[0]);
-        $this->assertContains('1) Name: c', $lines[1]);
-        $this->assertContains('2) Name: b', $lines[2]);
+        $this->assertContains('3) Name: \'a\'', $lines[0]);
+        $this->assertContains('2) Name: \'c\'', $lines[1]);
+        $this->assertContains('1) Name: \'b\'', $lines[2]);
     }
 
     private function getFunctions()

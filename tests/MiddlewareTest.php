@@ -114,8 +114,8 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
 
         $h = new MockHandler(new Response());
         $b = new HandlerStack($h);
-        $b->append($m2);
-        $b->append($m);
+        $b->push($m2);
+        $b->push($m);
         $comp = $b->resolve();
         $p = $comp(new Request('GET', 'http://foo.com'), []);
         $this->assertEquals('123', implode('', $calls));
@@ -197,7 +197,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         });
         $m = Middleware::prepareBody();
         $stack = new HandlerStack($h);
-        $stack->append($m);
+        $stack->push($m);
         $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com', [], '123'), []);
         $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
@@ -217,7 +217,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         });
         $m = Middleware::prepareBody();
         $stack = new HandlerStack($h);
-        $stack->append($m);
+        $stack->push($m);
         $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com', [], $body), []);
         $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
@@ -235,7 +235,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         });
         $m = Middleware::prepareBody();
         $stack = new HandlerStack($h);
-        $stack->append($m);
+        $stack->push($m);
         $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com', [], $bd), []);
         $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);

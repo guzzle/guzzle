@@ -16,7 +16,7 @@ class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
     {
         $response = new Response(200);
         $stack = new HandlerStack(new MockHandler($response));
-        $stack->append(Middleware::redirect());
+        $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com');
         $promise = $handler($request, []);
@@ -28,7 +28,7 @@ class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
     {
         $response = new Response(304);
         $stack = new HandlerStack(new MockHandler($response));
-        $stack->append(Middleware::redirect());
+        $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com');
         $promise = $handler($request, []);
@@ -43,7 +43,7 @@ class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
             new Response(200)
         ]);
         $stack = new HandlerStack($mock);
-        $stack->append(Middleware::redirect());
+        $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com?a=b');
         $promise = $handler($request, [
@@ -61,7 +61,7 @@ class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
             new Response(200)
         ]);
         $stack = new HandlerStack($mock);
-        $stack->append(Middleware::redirect());
+        $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com?a=b');
         $promise = $handler($request, [
@@ -85,7 +85,7 @@ class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
             new Response(304, ['Location' => 'http://test.com'])
         ]);
         $stack = new HandlerStack($mock);
-        $stack->append(Middleware::redirect());
+        $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com');
         $promise = $handler($request, ['allow_redirects' => ['max' => 3]]);
@@ -102,7 +102,7 @@ class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
             new Response(301, ['Location' => 'ftp://test.com'])
         ]);
         $stack = new HandlerStack($mock);
-        $stack->append(Middleware::redirect());
+        $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com');
         $handler($request, ['allow_redirects' => ['max' => 3]])->wait();
@@ -115,7 +115,7 @@ class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
             new Response(200)
         ]);
         $stack = new HandlerStack($mock);
-        $stack->append(Middleware::redirect());
+        $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com?a=b');
         $promise = $handler($request, [
@@ -135,7 +135,7 @@ class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
             new Response(200)
         ]);
         $stack = new HandlerStack($mock);
-        $stack->append(Middleware::redirect());
+        $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'https://example.com?a=b');
         $promise = $handler($request, [

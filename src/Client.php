@@ -416,13 +416,8 @@ class Client implements ClientInterface
      */
     private function transfer(RequestInterface $request, array $options)
     {
-        if (!isset($options['stack'])) {
-            $options['stack'] = new HandlerStack();
-        } elseif (!($options['stack'] instanceof HandlerStack)) {
-            throw new \InvalidArgumentException('The stack option must be an instance of GuzzleHttp\\HandlerStack');
-        }
-
-        $handler = $this->createHandler($request, $options);
+        $stack = new HandlerStack($this->handler);
+        $handler = $this->createHandler($request, $stack, $options);
         $request = $this->applyOptions($request, $options);
 
         try {
@@ -436,21 +431,22 @@ class Client implements ClientInterface
      * Create a composite handler based on the given request options.
      *
      * @param RequestInterface $request Request to send.
+     * @param HandlerStack     $stack
      * @param array            $options Array of request options.
      *
      * @return callable
      */
-    private function createHandler(RequestInterface $request, array &$options)
-    {
-        /** @var HandlerStack $stack */
-        $stack = $options['stack'];
-
+    private function createHandler(
+        RequestInterface $request,
+        HandlerStack $stack,
+        array &$options
+    ) {
         // Add the redirect middleware if needed.
         if (!empty($options['allow_redirects'])) {
             if (!$this->errorMiddleware) {
                 $this->redirectMiddleware = Middleware::redirect();
             }
-            $stack->append($this->redirectMiddleware, 'redirect');
+            $stack->push($this->redirectMiddleware, 'redirect');
             if ($options['allow_redirects'] === true) {
                 $options['allow_redirects'] = self::$defaultRedirect;
             } elseif (!is_array($options['allow_redirects'])) {
@@ -466,7 +462,7 @@ class Client implements ClientInterface
             if (!$this->errorMiddleware) {
                 $this->errorMiddleware = Middleware::httpError();
             }
-            $stack->append($this->errorMiddleware, 'http_errors');
+            $stack->push($this->errorMiddleware, 'http_errors');
         }
 
         // Add the cookies middleware if needed.
@@ -487,13 +483,17 @@ class Client implements ClientInterface
             } else {
                 throw new Iae('cookies must be an array, true, or CookieJarInterface');
             }
-            $stack->append($cookie, 'cookies');
+            $stack->push($cookie, 'cookies');
         }
 
-        $stack->append($this->prepareBodyMiddleware, 'prepare_body');
+        $stack->push($this->prepareBodyMiddleware, 'prepare_body');
 
-        if (!$stack->hasHandler()) {
-            $stack->setHandler($this->handler);
+        if (isset($options['stack'])) {
+            if (!is_callable($options['stack'])) {
+                throw new \InvalidArgumentException('The stack option must '
+                    . 'be a function that accepts a HandlerStack.');
+            }
+            $options['stack']($stack);
         }
 
         return $stack->resolve();
