@@ -627,10 +627,12 @@ class Client implements ClientInterface
 
         $fields = [];
         if (isset($options['form_fields'])) {
+            // Use a application/x-www-form-urlencoded POST with no files.
             if (!isset($options['form_files'])) {
                 $options['body'] = http_build_query($options['form_fields']);
                 unset($options['form_fields']);
-                $options['headers']['Content-Type'] = $contentType ?: 'application/x-www-form-urlencoded';
+                $options['headers']['Content-Type'] = $contentType
+                    ?: 'application/x-www-form-urlencoded';
                 return;
             }
             $fields = $options['form_fields'];
@@ -640,6 +642,7 @@ class Client implements ClientInterface
         $files = $options['form_files'];
         unset($options['form_files']);
         $options['body'] = new MultipartPostBody($fields, $files);
+        // Use a multipart/form-data POST if a Content-Type is not set.
         $options['headers']['Content-Type'] = $contentType
             ?: 'multipart/form-data; boundary=' . $options['body']->getBoundary();
     }

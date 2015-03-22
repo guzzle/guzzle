@@ -19,12 +19,14 @@ Requirements
 
 .. _installation:
 
+
 Installation
 ============
 
-The recommended way to install Guzzle is with `Composer <http://getcomposer.org>`_. Composer is a dependency
-management tool for PHP that allows you to declare the dependencies your project needs and installs them into your
-project.
+The recommended way to install Guzzle is with
+`Composer <http://getcomposer.org>`_. Composer is a dependency management tool
+for PHP that allows you to declare the dependencies your project needs and
+installs them into your project.
 
 .. code-block:: bash
 
@@ -35,7 +37,7 @@ You can add Guzzle as a dependency using the composer.phar CLI:
 
 .. code-block:: bash
 
-    php composer.phar require guzzlehttp/guzzle:~5.0
+    php composer.phar require guzzlehttp/guzzle:~6.0
 
 Alternatively, you can specify Guzzle as a dependency in your project's
 existing composer.json file:
@@ -44,7 +46,7 @@ existing composer.json file:
 
     {
       "require": {
-         "guzzlehttp/guzzle": "~5.0"
+         "guzzlehttp/guzzle": "~6.0"
       }
    }
 
@@ -57,19 +59,21 @@ After installing, you need to require Composer's autoloader:
 You can find out more on how to install Composer, configure autoloading, and
 other best-practices for defining dependencies at `getcomposer.org <http://getcomposer.org>`_.
 
+
 Bleeding edge
 -------------
 
 During your development, you can keep up with the latest changes on the master
-branch by setting the version requirement for Guzzle to ``~5.0@dev``.
+branch by setting the version requirement for Guzzle to ``~6.0@dev``.
 
 .. code-block:: js
 
    {
       "require": {
-         "guzzlehttp/guzzle": "~5.0@dev"
+         "guzzlehttp/guzzle": "~6.0@dev"
       }
    }
+
 
 License
 =======
@@ -96,8 +100,10 @@ Licensed using the `MIT license <http://opensource.org/licenses/MIT>`_.
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     THE SOFTWARE.
 
+
 Contributing
 ============
+
 
 Guidelines
 ----------
@@ -108,6 +114,7 @@ Guidelines
    not require a PHP version greater than PHP 5.4.
 4. All pull requests must include unit tests to ensure the change works as
    expected and to prevent regressions.
+
 
 Running the tests
 -----------------
@@ -120,17 +127,17 @@ install Guzzle's dependencies using Composer:
     git clone https://github.com/guzzle/guzzle.git
     cd guzzle && curl -s http://getcomposer.org/installer | php && ./composer.phar install --dev
 
-Guzzle is unit tested with PHPUnit. Run the tests using the vendored PHPUnit
-binary:
+Guzzle is unit tested with PHPUnit. Run the tests using the Makefile:
 
 .. code-block:: bash
 
-    vendor/bin/phpunit
+    make test
 
 .. note::
 
     You'll need to install node.js v0.5.0 or newer in order to perform
     integration tests on Guzzle's HTTP handlers.
+
 
 Reporting a security vulnerability
 ==================================

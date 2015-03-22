@@ -71,13 +71,24 @@ final class Middleware
         return function (callable $handler) use (&$container) {
             return function ($request, array $options) use ($handler, &$container) {
                 $response = $handler($request, $options);
-                $response->then(function ($value) use ($request, &$container, $options) {
-                    $container[] = [
-                        'request'  => $request,
-                        'response' => $value,
-                        'options'  => $options
-                    ];
-                });
+                $response->then(
+                    function ($value) use ($request, &$container, $options) {
+                        $container[] = [
+                            'request'  => $request,
+                            'response' => $value,
+                            'error'    => null,
+                            'options'  => $options
+                        ];
+                    },
+                    function ($reason) use ($request, &$container, $options) {
+                        $container[] = [
+                            'request'  => $request,
+                            'response' => null,
+                            'error'    => $reason,
+                            'options'  => $options
+                        ];
+                    }
+                );
                 return $response;
             };
         };

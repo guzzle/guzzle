@@ -5,38 +5,38 @@ Testing Guzzle Clients
 Guzzle provides several tools that will enable you to easily mock the HTTP
 layer without needing to send requests over the internet.
 
-* Mock subscriber
 * Mock handler
+* History middleware
 * Node.js web server for integration testing
 
-Mock Subscriber
-===============
+
+Mock Handler
+============
 
 When testing HTTP clients, you often need to simulate specific scenarios like
 returning a successful response, returning an error, or returning specific
 responses in a certain order. Because unit tests need to be predictable, easy
 to bootstrap, and fast, hitting an actual remote API is a test smell.
 
-Guzzle provides a mock subscriber that can be attached to clients or requests
-that allows you to queue up a list of responses to use rather than hitting a
-remote API.
+Guzzle provides a mock handler that can be used to fulfill HTTP requests with
+a response or exception by shifting return values off of a queue.
 
 .. code-block:: php
 
     use GuzzleHttp\Client;
-    use GuzzleHttp\Subscriber\Mock;
-    use GuzzleHttp\Message\Response;
+    use GuzzleHttp\MockHandler;
+    use GuzzleHttp\Psr7\Response;
 
     $client = new Client();
 
-    // Create a mock subscriber and queue two responses.
-    $mock = new Mock([
-        new Response(200, ['X-Foo' => 'Bar']),         // Use response object
-        "HTTP/1.1 202 OK\r\nContent-Length: 0\r\n\r\n"  // Use a response string
+    // Create a mock and queue two responses.
+    $mock = new MockHandler([
+        new Response(200, ['X-Foo' => 'Bar']),
+        new Response(202, ['Content-Length' => 0])
     ]);
 
-    // Add the mock subscriber to the client.
-    $client->getEmitter()->attach($mock);
+    // Set the handler on the client
+    $client->getHandlerList()->setHandler($mock);
     // The first request is intercepted with the first response.
     echo $client->get('/')->getStatusCode();
     //> 200
@@ -47,108 +47,64 @@ remote API.
 When no more responses are in the queue and a request is sent, an
 ``OutOfBoundsException`` is thrown.
 
-History Subscriber
+
+History Middleware
 ==================
 
-When using things like the ``Mock`` subscriber, you often need to know if the
+When using things like the ``Mock`` handler, you often need to know if the
 requests you expected to send were sent exactly as you intended. While the mock
-subscriber responds with mocked responses, the ``GuzzleHttp\Subscriber\History``
-subscriber maintains a history of the requests that were sent by a client.
+handler responds with mocked responses, the history middleware maintains a
+history of the requests that were sent by a client.
 
 .. code-block:: php
 
     use GuzzleHttp\Client;
-    use GuzzleHttp\Subscriber\History;
+    use GuzzleHttp\Middleware;
 
     $client = new Client();
-    $history = new History();
 
-    // Add the history subscriber to the client.
-    $client->getEmitter()->attach($history);
+    $container = [];
+    $history = Middleware::history($container);
+
+    // Add the history middleware to the client.
+    $client->getHandlerList()->append($history);
 
     $client->get('http://httpbin.org/get');
     $client->head('http://httpbin.org/get');
 
     // Count the number of transactions
-    echo count($history);
+    echo count($container);
     //> 2
-    // Get the last request
-    $lastRequest = $history->getLastRequest();
-    // Get the last response
-    $lastResponse = $history->getLastResponse();
 
-    // Iterate over the transactions that were sent
-    foreach ($history as $transaction) {
+    // Iterate over the requests and responses
+    foreach ($container as $transaction) {
         echo $transaction['request']->getMethod();
         //> GET, HEAD
-        echo $transaction['response']->getStatusCode();
-        //> 200, 200
+        if ($transaction['response']) {
+            echo $transaction['response']->getStatusCode();
+            //> 200, 200
+        } elseif ($transaction['error']) {
+            echo $transaction['error'];
+            //> exception
+        }
+        var_dump($transaction['options']);
+        //> dumps the request options of the sent request.
     }
 
-The history subscriber can also be printed, revealing the requests and
-responses that were sent as a string, in order.
-
-.. code-block:: php
-
-    echo $history;
-
-::
-
-    > GET /get HTTP/1.1
-    Host: httpbin.org
-    User-Agent: Guzzle/4.0-dev curl/7.21.4 PHP/5.5.8
-
-    < HTTP/1.1 200 OK
-    Access-Control-Allow-Origin: *
-    Content-Type: application/json
-    Date: Tue, 25 Mar 2014 03:53:27 GMT
-    Server: gunicorn/0.17.4
-    Content-Length: 270
-    Connection: keep-alive
-
-    {
-      "headers": {
-        "Connection": "close",
-        "X-Request-Id": "3d0f7d5c-c937-4394-8248-2b8e03fcccdb",
-        "User-Agent": "Guzzle/4.0-dev curl/7.21.4 PHP/5.5.8",
-        "Host": "httpbin.org"
-      },
-      "origin": "76.104.247.1",
-      "args": {},
-      "url": "http://httpbin.org/get"
-    }
-
-    > HEAD /get HTTP/1.1
-    Host: httpbin.org
-    User-Agent: Guzzle/4.0-dev curl/7.21.4 PHP/5.5.8
-
-    < HTTP/1.1 200 OK
-    Access-Control-Allow-Origin: *
-    Content-length: 270
-    Content-Type: application/json
-    Date: Tue, 25 Mar 2014 03:53:27 GMT
-    Server: gunicorn/0.17.4
-    Connection: keep-alive
-
-Mock Adapter
-============
-
-In addition to using the Mock subscriber, you can use the
-``GuzzleHttp\Ring\Client\MockHandler`` as the handler of a client to return the
-same response over and over or return the result of a callable function.
 
 Test Web Server
 ===============
 
 Using mock responses is almost always enough when testing a web service client.
-When implementing custom :doc:`HTTP handlers <handlers>`, you'll need to send
-actual HTTP requests in order to sufficiently test the handler. However, a
-best practice is to contact a local web server rather than a server over the
-internet.
+When implementing custom :doc:`HTTP handlers <handlers-and-middleware>`, you'll
+need to send actual HTTP requests in order to sufficiently test the handler.
+However, a best practice is to contact a local web server rather than a server
+over the internet.
 
 - Tests are more reliable
 - Tests do not require a network connection
 - Tests have no external dependencies
+
 
 Using the test server
 ---------------------
@@ -167,7 +123,7 @@ Using the test server
     You almost never need to use this test web server. You should only ever
     consider using it when developing HTTP handlers. The test web server
     is not necessary for mocking requests. For that, please use the
-    Mock subcribers and History subscriber.
+    Mock handler and history middleware.
 
 Guzzle ships with a node.js test server that receives requests and returns
 responses from a queue. The test server exposes a simple API that is used to
@@ -177,34 +133,25 @@ Any operation on the ``Server`` object will ensure that
 the server is running and wait until it is able to receive requests before
 returning.
 
+``GuzzleHttp\Tests\Server`` provides a static interface to the test server. You
+can queue an HTTP response or an array of responses by calling
+``Server::enqueue()``. This method accepts an array of
+``Psr\Http\Message\ResponseInterface`` and ``Exception`` objects.
+
 .. code-block:: php
 
     use GuzzleHttp\Client;
+    use GuzzleHttp\Psr7\Response;
     use GuzzleHttp\Tests\Server;
 
     // Start the server and queue a response
-    Server::enqueue("HTTP/1.1 200 OK\r\n\Content-Length: 0r\n\r\n");
+    Server::enqueue([
+        new Response(200, ['Content-Length' => 0])
+    ]);
 
-    $client = new Client(['base_url' => Server::$url]);
+    $client = new Client(['base_uri' => Server::$url]);
     echo $client->get('/foo')->getStatusCode();
     // 200
-
-``GuzzleHttp\Tests\Server`` provides a static interface to the test server. You
-can queue an HTTP response or an array of responses by calling
-``Server::enqueue()``. This method accepts a string representing an HTTP
-response message, a ``GuzzleHttp\Message\ResponseInterface``, or an array of
-HTTP message strings / ``GuzzleHttp\Message\ResponseInterface`` objects.
-
-.. code-block:: php
-
-    // Queue single response
-    Server::enqueue("HTTP/1.1 200 OK\r\n\Content-Length: 0r\n\r\n");
-
-    // Clear the queue and queue an array of responses
-    Server::enqueue([
-        "HTTP/1.1 200 OK\r\n\Content-Length: 0r\n\r\n",
-        "HTTP/1.1 404 Not Found\r\n\Content-Length: 0r\n\r\n"
-    ]);
 
 When a response is queued on the test server, the test server will remove any
 previously queued responses. As the server receives requests, queued responses
@@ -212,14 +159,12 @@ are dequeued and returned to the request. When the queue is empty, the server
 will return a 500 response.
 
 You can inspect the requests that the server has retrieved by calling
-``Server::received()``. This method accepts an optional ``$hydrate`` parameter
-that specifies if you are retrieving an array of HTTP requests as strings or an
-array of ``GuzzleHttp\Message\RequestInterface`` objects.
+``Server::received()``.
 
 .. code-block:: php
 
     foreach (Server::received() as $response) {
-        echo $response;
+        echo $response->getStatusCode();
     }
 
 You can clear the list of received requests from the web server using the

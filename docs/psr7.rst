@@ -1,14 +1,20 @@
-=============================
-Request and Response Messages
-=============================
+===============
+Guzzle and PSR7
+===============
+
+
+HTTP Messages
+-------------
 
 Guzzle is an HTTP client that sends HTTP requests to a server and receives HTTP
 responses. Both requests and responses are referred to as messages.
+
 
 Headers
 =======
 
 Both request and response messages contain HTTP headers.
+
 
 Complex Headers
 ---------------
@@ -53,6 +59,7 @@ value pair are added as a key value pair.
 
 See :ref:`headers` for information on how the headers of a request and response
 can be accessed and modified.
+
 
 Body
 ====
@@ -110,6 +117,7 @@ write bytes off of the stream as needed.
 
 You can find out more about Guzzle stream objects in :doc:`streams`.
 
+
 Requests
 ========
 
@@ -125,6 +133,7 @@ You create requests with a client using the ``createRequest()`` method.
 
     // Create a request but don't send it immediately
     $request = $client->createRequest('GET', 'http://httpbin.org/get');
+
 
 Request Methods
 ---------------
@@ -159,6 +168,7 @@ HTTP method you wish to use.
 .. code-block:: php
 
     $response = $client->patch('http://httpbin.org/patch', ['body' => 'content']);
+
 
 Request URI
 -----------
@@ -196,6 +206,7 @@ You can change the path of the request using ``setPath()``:
     echo $request->getUrl();
     // http://httpbin.com/get
 
+
 Scheme
 ~~~~~~
 
@@ -213,6 +224,7 @@ You can change the scheme of the request using the ``setScheme()`` method:
     // https
     echo $request->getUrl();
     // https://httpbin.com/get
+
 
 Port
 ~~~~
@@ -239,67 +251,8 @@ the specified scheme from the default setting, then you must use the
 Query string
 ~~~~~~~~~~~~
 
-You can get the query string of the request using the ``getQuery()`` method.
-This method returns a ``GuzzleHttp\Query`` object. A Query object can be
-accessed like a PHP array, iterated in a foreach statement like a PHP array,
-and cast to a string.
 
-.. code-block:: php
 
-    $request = $client->createRequest('GET', 'http://httbin.org');
-    $query = $request->getQuery();
-    $query['foo'] = 'bar';
-    $query['baz'] = 'bam';
-    $query['bam'] = ['test' => 'abc'];
-
-    echo $request->getQuery();
-    // foo=bar&baz=bam&bam%5Btest%5D=abc
-
-    echo $request->getQuery()['foo'];
-    // bar
-    echo $request->getQuery()->get('foo');
-    // bar
-    echo $request->getQuery()->get('foo');
-    // bar
-
-    var_export($request->getQuery()['bam']);
-    // array('test' => 'abc')
-
-    foreach ($query as $key => $value) {
-        var_export($value);
-    }
-
-    echo $request->getUrl();
-    // https://httpbin.com/get?foo=bar&baz=bam&bam%5Btest%5D=abc
-
-Query Aggregators
-^^^^^^^^^^^^^^^^^
-
-Query objects can store scalar values or arrays of values. When an array of
-values is added to a query object, the query object uses a query aggregator to
-convert the complex structure into a string. Query objects will use
-`PHP style query strings <http://www.php.net/http_build_query>`_ when complex
-query string parameters are converted to a string. You can customize how
-complex query string parameters are aggregated using the ``setAggregator()``
-method of a query string object.
-
-.. code-block:: php
-
-    $query->setAggregator($query::duplicateAggregator());
-
-In the above example, we've changed the query object to use the
-"duplicateAggregator". This aggregator will allow duplicate entries to appear
-in a query string rather than appending "[n]" to each value. So if you had a
-query string with ``['a' => ['b', 'c']]``, the duplicate aggregator would
-convert this to "a=b&a=c" while the default aggregator would convert this to
-"a[0]=b&a[1]=c" (with urlencoded brackets).
-
-The ``setAggregator()`` method accepts a ``callable`` which is used to convert
-a deeply nested array of query string variables into a flattened array of key
-value pairs. The callable accepts an array of query data and returns a
-flattened array of key value pairs where each value is an array of strings.
-You can use the ``GuzzleHttp\Query::walkQuery()`` static function to easily
-create custom query aggregators.
 
 Host
 ~~~~
@@ -322,6 +275,7 @@ You can change the host header of the request in a predictable way using the
     sending a request to a different Host than what is specified in the Host
     header (sometimes this is actually the desired behavior).
 
+
 Resource
 ~~~~~~~~
 
@@ -333,6 +287,7 @@ query string of a request in a single string.
     $request = $client->createRequest('GET', 'http://httpbin.org/get?baz=bar');
     echo $request->getResource();
     // /get?baz=bar
+
 
 Request Config
 --------------
@@ -390,6 +345,7 @@ options to the cURL handler, you need to specify an associative array in the
 Consult the HTTP handlers and event listeners you are using to see if they
 allow customization through request configuration options.
 
+
 Event Emitter
 -------------
 
@@ -402,11 +358,13 @@ of all requests created by the client.
 
 See :doc:`events` for more information.
 
+
 Responses
 =========
 
 Responses are the HTTP messages a client receives from a server after sending
 an HTTP request message.
+
 
 Start-Line
 ----------
@@ -423,6 +381,7 @@ status code, and reason phrase.
     // OK
     echo $response->getProtocolVersion();
     // 1.1
+
 
 Body
 ----
@@ -464,20 +423,223 @@ You can use the ``xml()`` method when working with XML data.
     Guzzle uses the ``SimpleXMLElement`` objects when converting response
     bodies to XML.
 
-Effective URL
--------------
 
-The URL that was ultimately accessed that returned a response can be accessed
-using the ``getEffectiveUrl()`` method of a response. This method will return
-the URL of a request or the URL of the last redirected URL if any redirects
-occurred while transferring a request.
+Streams
+-------
+
+Guzzle uses stream objects to represent request and response message bodies.
+These stream objects allow you to work with various types of data all using a
+common interface.
+
+HTTP messages consist of a start-line, headers, and a body. The body of an HTTP
+message can be very small or extremely large. Attempting to represent the body
+of a message as a string can easily consume more memory than intended because
+the body must be stored completely in memory. Attempting to store the body of a
+request or response in memory would preclude the use of that implementation from
+being able to work with large message bodies. The StreamInterface is used in
+order to hide the implementation details of where a stream of data is read from
+or written to.
+
+Guzzle's StreamInterface exposes several methods that enable streams to be read
+from, written to, and traversed effectively.
+
+Streams expose their capabilities using three methods: ``isReadable()``,
+``isWritable()``, and ``isSeekable()``. These methods can be used by stream
+collaborators to determine if a stream is capable of their requirements.
+
+Each stream instance has various capabilities: they can be read-only,
+write-only, read-write, allow arbitrary random access (seeking forwards or
+backwards to any location), or only allow sequential access (for example in the
+case of a socket or pipe).
+
+
+Creating Streams
+================
+
+The best way to create a stream is using the static factory method,
+``GuzzleHttp\Stream\Stream::factory()``. This factory accepts strings,
+resources returned from ``fopen()``, an object that implements
+``__toString()``, and an object that implements
+``GuzzleHttp\Stream\StreamInterface``.
 
 .. code-block:: php
 
-    $response = GuzzleHttp\get('http://httpbin.org/get');
-    echo $response->getEffectiveUrl();
-    // http://httpbin.org/get
+    use GuzzleHttp\Stream\Stream;
 
-    $response = GuzzleHttp\get('http://httpbin.org/redirect-to?url=http://www.google.com');
-    echo $response->getEffectiveUrl();
-    // http://www.google.com
+    $stream = Stream::factory('string data');
+    echo $stream;
+    // string data
+    echo $stream->read(3);
+    // str
+    echo $stream->getContents();
+    // ing data
+    var_export($stream->eof());
+    // true
+    var_export($stream->tell());
+    // 11
+
+
+Metadata
+========
+
+Guzzle streams expose stream metadata through the ``getMetadata()`` method.
+This method provides the data you would retrieve when calling PHP's
+`stream_get_meta_data() function <http://php.net/manual/en/function.stream-get-meta-data.php>`_,
+and can optionally expose other custom data.
+
+.. code-block:: php
+
+    use GuzzleHttp\Stream\Stream;
+
+    $resource = fopen('/path/to/file', 'r');
+    $stream = Stream::factory($resource);
+    echo $stream->getMetadata('uri');
+    // /path/to/file
+    var_export($stream->isReadable());
+    // true
+    var_export($stream->isWritable());
+    // false
+    var_export($stream->isSeekable());
+    // true
+
+
+Stream Decorators
+=================
+
+With the small and focused interface, add custom functionality to streams is
+very simple with stream decorators. Guzzle provides several built-in decorators
+that provide additional stream functionality.
+
+
+CachingStream
+-------------
+
+The CachingStream is used to allow seeking over previously read bytes on
+non-seekable streams. This can be useful when transferring a non-seekable
+entity body fails due to needing to rewind the stream (for example, resulting
+from a redirect). Data that is read from the remote stream will be buffered in
+a PHP temp stream so that previously read bytes are cached first in memory,
+then on disk.
+
+.. code-block:: php
+
+    use GuzzleHttp\Stream\Stream;
+    use GuzzleHttp\Stream\CachingStream;
+
+    $original = Stream::factory(fopen('http://www.google.com', 'r'));
+    $stream = new CachingStream($original);
+
+    $stream->read(1024);
+    echo $stream->tell();
+    // 1024
+
+    $stream->seek(0);
+    echo $stream->tell();
+    // 0
+
+
+LimitStream
+-----------
+
+LimitStream can be used to read a subset or slice of an existing stream object.
+This can be useful for breaking a large file into smaller pieces to be sent in
+chunks (e.g. Amazon S3's multipart upload API).
+
+.. code-block:: php
+
+    use GuzzleHttp\Stream\Stream;
+    use GuzzleHttp\Stream\LimitStream;
+
+    $original = Stream::factory(fopen('/tmp/test.txt', 'r+'));
+    echo $original->getSize();
+    // >>> 1048576
+
+    // Limit the size of the body to 1024 bytes and start reading from byte 2048
+    $stream = new LimitStream($original, 1024, 2048);
+    echo $stream->getSize();
+    // >>> 1024
+    echo $stream->tell();
+    // >>> 0
+
+
+NoSeekStream
+------------
+
+NoSeekStream wraps a stream and does not allow seeking.
+
+.. code-block:: php
+
+    use GuzzleHttp\Stream\Stream;
+    use GuzzleHttp\Stream\LimitStream;
+
+    $original = Stream::factory('foo');
+    $noSeek = new NoSeekStream($original);
+
+    echo $noSeek->read(3);
+    // foo
+    var_export($noSeek->isSeekable());
+    // false
+    $noSeek->seek(0);
+    var_export($noSeek->read(3));
+    // NULL
+
+
+Creating Custom Decorators
+--------------------------
+
+Creating a stream decorator is very easy thanks to the
+``GuzzleHttp\Stream\StreamDecoratorTrait``. This trait provides methods that
+implement ``GuzzleHttp\Stream\StreamInterface`` by proxying to an underlying
+stream. Just ``use`` the ``StreamDecoratorTrait`` and implement your custom
+methods.
+
+For example, let's say we wanted to call a specific function each time the last
+byte is read from a stream. This could be implemented by overriding the
+``read()`` method.
+
+.. code-block:: php
+
+    use GuzzleHttp\Stream\StreamDecoratorTrait;
+
+    class EofCallbackStream implements StreamInterface
+    {
+        use StreamDecoratorTrait;
+
+        private $callback;
+
+        public function __construct(StreamInterface $stream, callable $callback)
+        {
+            $this->stream = $stream;
+            $this->callback = $callback;
+        }
+
+        public function read($length)
+        {
+            $result = $this->stream->read($length);
+
+            // Invoke the callback when EOF is hit.
+            if ($this->eof()) {
+                call_user_func($this->callback);
+            }
+
+            return $result;
+        }
+    }
+
+This decorator could be added to any existing stream and used like so:
+
+.. code-block:: php
+
+    use GuzzleHttp\Stream\Stream;
+
+    $original = Stream::factory('foo');
+    $eofStream = new EofCallbackStream($original, function () {
+        echo 'EOF!';
+    });
+
+    $eofStream->read(2);
+    $eofStream->read(1);
+    // echoes "EOF!"
+    $eofStream->seek(0);
+    $eofStream->read(3);
+    // echoes "EOF!"
