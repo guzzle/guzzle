@@ -131,10 +131,12 @@ class HandlerStackTest extends \PHPUnit_Framework_TestCase
         $builder->push($meths[2], 'a');
         $builder->push($meths[3], 'b');
         $builder->after('a', $meths[4], 'c');
+        $builder->after('b', $meths[4], 'd');
         $lines = explode("\n", (string) $builder);
-        $this->assertContains('3) Name: \'a\'', $lines[0]);
-        $this->assertContains('2) Name: \'c\'', $lines[1]);
-        $this->assertContains('1) Name: \'b\'', $lines[2]);
+        $this->assertContains('4) Name: \'a\'', $lines[0]);
+        $this->assertContains('3) Name: \'c\'', $lines[1]);
+        $this->assertContains('2) Name: \'b\'', $lines[2]);
+        $this->assertContains('1) Name: \'d\'', $lines[3]);
     }
 
     private function getFunctions()
