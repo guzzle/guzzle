@@ -417,9 +417,9 @@ class Client implements ClientInterface
     private function transfer(RequestInterface $request, array $options)
     {
         if (!isset($options['stack'])) {
-            $options['stack'] = new HandlerBuilder();
-        } elseif (!($options['stack'] instanceof HandlerBuilder)) {
-            throw new \InvalidArgumentException('The stack option must be an instance of GuzzleHttp\\HandlerBuilder');
+            $options['stack'] = new HandlerStack();
+        } elseif (!($options['stack'] instanceof HandlerStack)) {
+            throw new \InvalidArgumentException('The stack option must be an instance of GuzzleHttp\\HandlerStack');
         }
 
         $handler = $this->createHandler($request, $options);
@@ -442,7 +442,7 @@ class Client implements ClientInterface
      */
     private function createHandler(RequestInterface $request, array &$options)
     {
-        /** @var HandlerBuilder $stack */
+        /** @var HandlerStack $stack */
         $stack = $options['stack'];
 
         // Add the redirect middleware if needed.
@@ -450,7 +450,7 @@ class Client implements ClientInterface
             if (!$this->errorMiddleware) {
                 $this->redirectMiddleware = Middleware::redirect();
             }
-            $stack->append($this->redirectMiddleware);
+            $stack->append($this->redirectMiddleware, 'redirect');
             if ($options['allow_redirects'] === true) {
                 $options['allow_redirects'] = self::$defaultRedirect;
             } elseif (!is_array($options['allow_redirects'])) {
@@ -466,7 +466,7 @@ class Client implements ClientInterface
             if (!$this->errorMiddleware) {
                 $this->errorMiddleware = Middleware::httpError();
             }
-            $stack->append($this->errorMiddleware);
+            $stack->append($this->errorMiddleware, 'http_errors');
         }
 
         // Add the cookies middleware if needed.
@@ -487,10 +487,10 @@ class Client implements ClientInterface
             } else {
                 throw new Iae('cookies must be an array, true, or CookieJarInterface');
             }
-            $stack->append($cookie);
+            $stack->append($cookie, 'cookies');
         }
 
-        $stack->append($this->prepareBodyMiddleware);
+        $stack->append($this->prepareBodyMiddleware, 'prepare_body');
 
         if (!$stack->hasHandler()) {
             $stack->setHandler($this->handler);

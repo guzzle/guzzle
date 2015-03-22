@@ -6,7 +6,7 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerBuilder;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\FnStream;
@@ -113,8 +113,10 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         );
 
         $h = new MockHandler(new Response());
-        $b = new HandlerBuilder($h);
-        $comp = $b->append($m2)->append($m)->resolve();
+        $b = new HandlerStack($h);
+        $b->append($m2);
+        $b->append($m);
+        $comp = $b->resolve();
         $p = $comp(new Request('GET', 'http://foo.com'), []);
         $this->assertEquals('123', implode('', $calls));
         $this->assertInstanceOf('GuzzleHttp\Promise\PromiseInterface', $p);
@@ -194,7 +196,9 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
             return new Response(200);
         });
         $m = Middleware::prepareBody();
-        $comp = (new HandlerBuilder())->append($m)->setHandler($h)->resolve();
+        $stack = new HandlerStack($h);
+        $stack->append($m);
+        $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com', [], '123'), []);
         $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
         $response = $p->wait();
@@ -212,7 +216,9 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
             return new Response(200);
         });
         $m = Middleware::prepareBody();
-        $comp = (new HandlerBuilder())->append($m)->setHandler($h)->resolve();
+        $stack = new HandlerStack($h);
+        $stack->append($m);
+        $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com', [], $body), []);
         $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
         $response = $p->wait();
@@ -228,7 +234,9 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
             return new Response(200);
         });
         $m = Middleware::prepareBody();
-        $comp = (new HandlerBuilder())->append($m)->setHandler($h)->resolve();
+        $stack = new HandlerStack($h);
+        $stack->append($m);
+        $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com', [], $bd), []);
         $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
         $response = $p->wait();
