@@ -186,13 +186,12 @@ class Client implements ClientInterface
      *   the request if no Content-Type header is already present.
      * - form_fields: (array) Associative array of field names to values where
      *   each value is a string or array of strings.
-     * - form_files: (array) Associative array of POST field names to either
-     *   an fopen resource, StreamableInterface, or an associative array
-     *   containing the "contents" key mapping to a StreamableInterface/resource,
-     *   optional "headers" associative array of custom headers, and optional
-     *   "filename" key mapping to a string to send as the filename in the
-     *   part. You can also send an array of associative arrays to send
-     *   multiple files under the same name.
+     * - form_files: (array) Array of associative arrays, each containing a
+     *   required "name" key mapping to the form field, name, a required
+     *   "contents" key mapping to a StreamableInterface/resource/string, an
+     *   optional "headers" associative array of custom headers, and an
+     *   optional "filename" key mapping to a string to send as the filename in
+     *   the part.
      *
      * @param array $config Client configuration settings.
      */

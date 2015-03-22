@@ -36,17 +36,9 @@ class MultipartPostBodyTest extends \PHPUnit_Framework_TestCase
     /**
      * @expectedException \InvalidArgumentException
      */
-    public function testValidatesTopLevelFiles()
-    {
-        new MultipartPostBody([], ['foo' => false]);
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testValidatesFilesArrayElement()
     {
-        new MultipartPostBody([], ['foo' => [false]]);
+        new MultipartPostBody([], [['foo' => 'bar']]);
     }
 
     public function testSerializesFields()
@@ -83,8 +75,18 @@ class MultipartPostBodyTest extends \PHPUnit_Framework_TestCase
         ]);
 
         $b = new MultipartPostBody([], [
-            'foo' => $f1,
-            'qux' => [$f2, $f3]
+            [
+                'name'      => 'foo',
+                'contents' => $f1
+            ],
+            [
+                'name' => 'qux',
+                'contents' => $f2
+            ],
+            [
+                'name'     => 'qux',
+                'contents' => $f3
+            ],
         ], 'boundary');
 
         $expected = <<<EOT
@@ -122,7 +124,8 @@ EOT;
         ]);
 
         $b = new MultipartPostBody([], [
-            'foo' => [
+            [
+                'name' => 'foo',
                 'contents' => $f1,
                 'headers'  => [
                     'x-foo' => 'bar',
@@ -161,19 +164,18 @@ EOT;
         ]);
 
         $b = new MultipartPostBody([], [
-            'foo' => [
-                [
-                    'contents' => $f1,
-                    'headers'  => [
-                        'x-foo' => 'bar',
-                        'content-disposition' => 'custom'
-                    ]
-                ],
-                [
-                    'contents' => $f2,
-                    'headers'  => ['content-type' => 'custom'],
-
+            [
+                'name'     => 'foo',
+                'contents' => $f1,
+                'headers'  => [
+                    'x-foo' => 'bar',
+                    'content-disposition' => 'custom'
                 ]
+            ],
+            [
+                'name'     => 'foo',
+                'contents' => $f2,
+                'headers'  => ['content-type' => 'custom'],
             ]
         ], 'boundary');
 
