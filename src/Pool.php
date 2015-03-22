@@ -29,7 +29,7 @@ class Pool implements PromisorInterface
      *     - concurrency: (int) Maximum number of requests to send concurrently
      *     - options: Array of request options to apply to each request.
      *     - fulfilled: (callable) Function to invoke when a request completes.
-           - rejected: (callable) Function to invoke when a request is rejected.
+     *     - rejected: (callable) Function to invoke when a request is rejected.
      */
     public function __construct(
         ClientInterface $client,
