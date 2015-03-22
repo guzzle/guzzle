@@ -77,14 +77,10 @@ class Server
     /**
      * Get all of the received requests
      *
-     * @param bool $hydrate Set to TRUE to turn the messages into
-     *      actual {@see RequestInterface} objects.  If $hydrate is FALSE,
-     *      requests will be returned as strings.
-     *
-     * @return array
+     * @return ResponseInterface[]
      * @throws \RuntimeException
      */
-    public static function received($hydrate = false)
+    public static function received()
     {
         if (!self::$started) {
             return [];
@@ -93,26 +89,22 @@ class Server
         $response = self::getClient()->request('GET', 'guzzle-server/requests');
         $data = json_decode($response->getBody(), true);
 
-        if ($hydrate) {
-            $data = array_map(
-                function ($message) {
-                    $uri = $message['uri'];
-                    if (isset($message['query_string'])) {
-                        $uri .= '?' . $message['query_string'];
-                    }
-                    return new Psr7\Request(
-                        $message['http_method'],
-                        $uri,
-                        $message['headers'],
-                        $message['body'],
-                        $message['version']
-                    );
-                },
-                $data
-            );
-        }
-
-        return $data;
+        return array_map(
+            function ($message) {
+                $uri = $message['uri'];
+                if (isset($message['query_string'])) {
+                    $uri .= '?' . $message['query_string'];
+                }
+                return new Psr7\Request(
+                    $message['http_method'],
+                    $uri,
+                    $message['headers'],
+                    $message['body'],
+                    $message['version']
+                );
+            },
+            $data
+        );
     }
 
     /**
