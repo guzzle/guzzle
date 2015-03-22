@@ -3,7 +3,7 @@ namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\CookieJarInterface;
-use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Promise;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\RequestInterface;
@@ -32,12 +32,12 @@ use \InvalidArgumentException as Iae;
  * @method ResponseInterface post($uri, array $options = [])
  * @method ResponseInterface patch($uri, array $options = [])
  * @method ResponseInterface delete($uri, array $options = [])
- * @method PromiseInterface getAsync($uri, array $options = [])
- * @method PromiseInterface headAsync($uri, array $options = [])
- * @method PromiseInterface putAsync($uri, array $options = [])
- * @method PromiseInterface postAsync($uri, array $options = [])
- * @method PromiseInterface patchAsync($uri, array $options = [])
- * @method PromiseInterface deleteAsync($uri, array $options = [])
+ * @method Promise\PromiseInterface getAsync($uri, array $options = [])
+ * @method Promise\PromiseInterface headAsync($uri, array $options = [])
+ * @method Promise\PromiseInterface putAsync($uri, array $options = [])
+ * @method Promise\PromiseInterface postAsync($uri, array $options = [])
+ * @method Promise\PromiseInterface patchAsync($uri, array $options = [])
+ * @method Promise\PromiseInterface deleteAsync($uri, array $options = [])
  */
 class Client implements ClientInterface
 {
@@ -299,12 +299,6 @@ class Client implements ClientInterface
                 . 'varname options in the second element of a URL array.');
         }
 
-        // Absolute URL
-        if (strpos($uri[0], '://')) {
-            return new Psr7\Uri(uri_template($uri[0], $uri[1]));
-        }
-
-        // Combine the relative URL with the base URL
         return Psr7\Uri::resolve(
             $this->baseUri,
             uri_template($uri[0], $uri[1])
@@ -338,7 +332,7 @@ class Client implements ClientInterface
     {
         $defaults = [
             'allow_redirects' => self::$defaultRedirect,
-            'exceptions'      => true,
+            'http_errors'     => true,
             'decode_content'  => true,
             'verify'          => true
         ];
@@ -418,7 +412,7 @@ class Client implements ClientInterface
      * @param RequestInterface $request
      * @param array            $options
      *
-     * @return PromiseInterface
+     * @return Promise\PromiseInterface
      */
     private function transfer(RequestInterface $request, array $options)
     {
@@ -432,13 +426,9 @@ class Client implements ClientInterface
         $request = $this->applyOptions($request, $options);
 
         try {
-            $response = $handler($request, $options);
-            if ($response instanceof PromiseInterface) {
-                return $response;
-            }
-            return \GuzzleHttp\Promise\promise_for($response);
+            return Promise\promise_for($handler($request, $options));
         } catch (\Exception $e) {
-            return \GuzzleHttp\Promise\rejection_for($e);
+            return Promise\rejection_for($e);
         }
     }
 
@@ -472,12 +462,11 @@ class Client implements ClientInterface
         }
 
         // Add the httpError middleware if needed.
-        if (!empty($options['exceptions'])) {
+        if (!empty($options['http_errors'])) {
             if (!$this->errorMiddleware) {
                 $this->errorMiddleware = Middleware::httpError();
             }
             $stack->append($this->errorMiddleware);
-            unset($options['exceptions']);
         }
 
         // Add the cookies middleware if needed.
@@ -522,12 +511,7 @@ class Client implements ClientInterface
     {
         $modify = [];
         $this->extractFormData($options);
-
-        // Backwards compatibility: save_to -> sink
-        if (isset($options['save_to'])) {
-            $options['sink'] = $options['save_to'];
-            unset($options['save_to']);
-        }
+        $this->backwardsCompat($options);
 
         foreach ($options as $key => $value) {
             if (isset(self::$transferOptions[$key])) {
@@ -644,5 +628,20 @@ class Client implements ClientInterface
         // Use a multipart/form-data POST if a Content-Type is not set.
         $options['headers']['Content-Type'] = $contentType
             ?: 'multipart/form-data; boundary=' . $options['body']->getBoundary();
+    }
+
+    private function backwardsCompat(array &$options)
+    {
+        // save_to -> sink
+        if (isset($options['save_to'])) {
+            $options['sink'] = $options['save_to'];
+            unset($options['save_to']);
+        }
+
+        // exceptions -> http_error
+        if (isset($options['exceptions'])) {
+            $options['http_errors'] = $options['exceptions'];
+            unset($options['exceptions']);
+        }
     }
 }

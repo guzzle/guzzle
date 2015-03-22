@@ -50,6 +50,7 @@ class MockHandler implements \Countable
             usleep($options['delay'] * 1000);
         }
 
+        $this->lastRequest = $request;
         $response = array_shift($this->queue);
 
         if (is_callable($response)) {
