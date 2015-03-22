@@ -1,63 +1,107 @@
 <?php
 namespace GuzzleHttp\Handler;
 
-use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Promise\RejectedPromise;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * Handler that returns a canned response or evaluated function result.
+ * Handler that returns responses or throw exceptions from a queue.
  */
-class MockHandler
+class MockHandler implements \Countable
 {
-    /** @var array|PromiseInterface|ResponseInterface|callable */
-    private $result;
+    private $queue;
+    private $lastRequest;
+    private $onFulfilled;
+    private $onRejected;
 
     /**
-     * Provide a Response, Promise, or Exception to always return the same
-     * value. Provide a callable that accepts a request object and request
-     * options and returns a Response, Promise, or Exception. Provide an array
-     * to have the mock handler return responses or throw exceptions using a
-     * queue of responses.
+     * The passed in value must be an array of
+     * {@see Psr7\Http\Message\ResponseInterface} objects, Exceptions,
+     * callables, or Promises.
      *
-     * @param mixed $resultOrQueue Response, queue, exception, or callable.
+     * @param array|ResponseInterface|\Exception|callable|PromiseInterface $queue
+     * @param callable $onFulfilled Callback to invoke when the return value is fulfilled.
+     * @param callable $onRejected  Callback to invoke when the return value is rejected.
      */
-    public function __construct($resultOrQueue)
-    {
-        $this->result = !is_callable($resultOrQueue) && is_array($resultOrQueue)
-            ? $this->createQueueFn($resultOrQueue)
-            : $resultOrQueue;
+    public function __construct(
+        $queue = null,
+        callable $onFulfilled = null,
+        callable $onRejected = null
+    ) {
+        $this->onFulfilled = $onFulfilled;
+        $this->onRejected = $onRejected;
+
+        if (is_array($queue)) {
+            call_user_func_array([$this, 'append'], $queue);
+        } elseif ($queue) {
+            $this->append($queue);
+        }
     }
 
     public function __invoke(RequestInterface $request, array $options)
     {
+        if (!$this->queue) {
+            throw new \RuntimeException('Mock queue is empty');
+        }
+
         if (isset($options['delay'])) {
             usleep($options['delay'] * 1000);
         }
 
-        $response = is_callable($this->result)
-            ? call_user_func($this->result, $request)
-            : $this->result;
+        $response = array_shift($this->queue);
 
-        if ($response instanceof \Exception) {
-            return new RejectedPromise($response);
-        } elseif ($response instanceof PromiseInterface) {
-            return $response;
+        if (is_callable($response)) {
+            $response = $response($request, $options);
         }
 
-        return new FulfilledPromise($response);
+        $response = $response instanceof \Exception
+            ? new RejectedPromise($response)
+            : \GuzzleHttp\Promise\promise_for($response);
+
+        $response->then($this->onFulfilled, $this->onRejected);
+
+        return $response;
     }
 
-    private function createQueueFn(array $queue)
+    /**
+     * Adds one or more variadic requests, exceptions, callables, or promises
+     * to the queue.
+     */
+    public function append()
     {
-        return function () use (&$queue) {
-            if (empty($queue)) {
-                throw new \RuntimeException('Mock queue is empty');
+        foreach (func_get_args() as $value) {
+            if ($value instanceof ResponseInterface
+                || $value instanceof \Exception
+                || $value instanceof PromiseInterface
+                || is_callable($value)
+            ) {
+                $this->queue[] = $value;
+            } else {
+                throw new \InvalidArgumentException('Expected a response or '
+                    . 'exception. Found ' . \GuzzleHttp\describe_type($value));
             }
+        }
+    }
 
-            return array_shift($queue);
-        };
+    /**
+     * Get the last received request.
+     *
+     * @return RequestInterface
+     */
+    public function getLastRequest()
+    {
+        return $this->lastRequest;
+    }
+
+    /**
+     * Returns the number of remaining items in the queue.
+     *
+     * @return int
+     */
+    public function count()
+    {
+        return count($this->queue);
     }
 }
