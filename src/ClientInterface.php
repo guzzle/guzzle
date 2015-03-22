@@ -70,26 +70,21 @@ interface ClientInterface
     /**
      * Get default request options of the client.
      *
-     * @param string|null $keyOrPath The Path to a particular default request
-     *     option to retrieve or pass null to retrieve all default request
-     *     options. The syntax uses "/" to denote a path through nested PHP
-     *     arrays. For example, "headers/content-type".
+     * @param string|null $option The default request option to retrieve.
      *
      * @return mixed
      */
-    public function getDefaultOption($keyOrPath = null);
+    public function getDefaultOption($option = null);
 
     /**
      * Set a default request option on the client so that any request created
      * by the client will use the provided default value unless overridden
      * explicitly when creating a request.
      *
-     * @param string|null $keyOrPath The Path to a particular configuration
-     *     value to set. The syntax uses a path notation that allows you to
-     *     specify nested configuration values (e.g., 'headers/content-type').
-     * @param mixed $value Default request option value to set
+     * @param string $option The option to set.
+     * @param mixed  $value  Default request option value to set
      */
-    public function setDefaultOption($keyOrPath, $value);
+    public function setDefaultOption($option, $value);
 
     /**
      * Get the base URI of the client.

@@ -261,16 +261,18 @@ class Client implements ClientInterface
         return $this->requestAsync($method, $uri, $options)->wait();
     }
 
-    public function getDefaultOption($keyOrPath = null)
+    public function getDefaultOption($option = null)
     {
-        return $keyOrPath === null
+        return $option === null
             ? $this->defaults
-            : get_path($this->defaults, $keyOrPath);
+            : (isset($this->defaults[$option])
+                ? $this->defaults[$option]
+                : null);
     }
 
-    public function setDefaultOption($keyOrPath, $value)
+    public function setDefaultOption($option, $value)
     {
-        set_path($this->defaults, $keyOrPath, $value);
+        $this->defaults[$option] = $value;
     }
 
     public function getBaseUri()
