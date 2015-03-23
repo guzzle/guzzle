@@ -15,7 +15,7 @@ class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
     public function testIgnoresNonRedirects()
     {
         $response = new Response(200);
-        $stack = new HandlerStack(new MockHandler($response));
+        $stack = new HandlerStack(new MockHandler([$response]));
         $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com');
@@ -27,7 +27,7 @@ class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
     public function testIgnoresWhenNoLocation()
     {
         $response = new Response(304);
-        $stack = new HandlerStack(new MockHandler($response));
+        $stack = new HandlerStack(new MockHandler([$response]));
         $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com');

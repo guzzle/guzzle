@@ -45,7 +45,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testCanSendSynchronously()
     {
-        $client = new Client(['handler' => new MockHandler(new Response())]);
+        $client = new Client(['handler' => new MockHandler([new Response()])]);
         $request = new Request('GET', 'http://example.com');
         $r = $client->send($request);
         $this->assertInstanceOf('Psr\Http\Message\ResponseInterface', $r);
@@ -71,7 +71,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testCanMergeOnBaseUri()
     {
-        $mock = new MockHandler(new Response());
+        $mock = new MockHandler([new Response()]);
         $client = new Client([
             'base_uri' => 'http://foo.com/bar/',
             'handler'  => $mock
@@ -85,7 +85,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testCanUseRelativeUriWithSend()
     {
-        $mock = new MockHandler(new Response());
+        $mock = new MockHandler([new Response()]);
         $client = new Client([
             'handler'  => $mock,
             'base_uri' => 'http://bar.com'
@@ -111,7 +111,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testDoesNotOverwriteHeaderWithDefault()
     {
-        $mock = new MockHandler(new Response());
+        $mock = new MockHandler([new Response()]);
         $c = new Client([
             'headers' => ['User-agent' => 'foo'],
             'handler' => $mock
@@ -122,7 +122,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testCanUnsetRequestOptionWithNull()
     {
-        $mock = new MockHandler(new Response());
+        $mock = new MockHandler([new Response()]);
         $c = new Client([
             'headers' => ['foo' => 'bar'],
             'handler' => $mock

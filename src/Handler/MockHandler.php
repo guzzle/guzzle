@@ -22,22 +22,20 @@ class MockHandler implements \Countable
      * {@see Psr7\Http\Message\ResponseInterface} objects, Exceptions,
      * callables, or Promises.
      *
-     * @param array|ResponseInterface|\Exception|callable|PromiseInterface $queue
+     * @param array $queue
      * @param callable $onFulfilled Callback to invoke when the return value is fulfilled.
      * @param callable $onRejected  Callback to invoke when the return value is rejected.
      */
     public function __construct(
-        $queue = null,
+        array $queue = null,
         callable $onFulfilled = null,
         callable $onRejected = null
     ) {
         $this->onFulfilled = $onFulfilled;
         $this->onRejected = $onRejected;
 
-        if (is_array($queue)) {
+        if ($queue) {
             call_user_func_array([$this, 'append'], $queue);
-        } elseif ($queue) {
-            $this->append($queue);
         }
     }
 

@@ -56,10 +56,12 @@ class PoolTest extends \PHPUnit_Framework_TestCase
     public function testUsesRequestOptions()
     {
         $h = [];
-        $handler = new MockHandler(function (RequestInterface $request) use (&$h) {
-            $h[] = $request;
-            return new Response();
-        });
+        $handler = new MockHandler([
+            function (RequestInterface $request) use (&$h) {
+                $h[] = $request;
+                return new Response();
+            }
+        ]);
         $c = new Client(['handler' => $handler]);
         $opts = ['options' => ['headers' => ['x-foo' => 'bar']]];
         $p = new Pool($c, [new Request('GET', 'http://example.com')], $opts);
@@ -71,10 +73,12 @@ class PoolTest extends \PHPUnit_Framework_TestCase
     public function testCanProvideCallablesThatReturnResponses()
     {
         $h = [];
-        $handler = new MockHandler(function (RequestInterface $request) use (&$h) {
-            $h[] = $request;
-            return new Response();
-        });
+        $handler = new MockHandler([
+            function (RequestInterface $request) use (&$h) {
+                $h[] = $request;
+                return new Response();
+            }
+        ]);
         $c = new Client(['handler' => $handler]);
         $optHistory = [];
         $fn = function (array $opts) use (&$optHistory, $c) {
@@ -116,9 +120,11 @@ class PoolTest extends \PHPUnit_Framework_TestCase
             new Request('GET', 'http://foo.com/200'),
             new Request('GET', 'http://foo.com/201')
         ];
-        $mock = new MockHandler(function (RequestInterface $request) {
-            return new Response(substr($request->getUri()->getPath(), 1));
-        });
+        $mock = new MockHandler([
+            function (RequestInterface $request) {
+                return new Response(substr($request->getUri()->getPath(), 1));
+            }
+        ]);
         $client = new Client(['handler' => $mock]);
         $results = Pool::batch($client, $requests, [
             'fulfilled' => function ($value) use (&$called) { $called = true; }

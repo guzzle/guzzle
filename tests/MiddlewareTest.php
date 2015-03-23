@@ -21,15 +21,19 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
     {
         $jar = new CookieJar();
         $m = Middleware::cookies($jar);
-        $h = new MockHandler(function (RequestInterface $request) {
-            return new Response(200, [
-                'Set-Cookie' => new SetCookie([
-                    'Name'   => 'name',
-                    'Value'  => 'value',
-                    'Domain' => 'foo.com'
-                ])
-            ]);
-        });
+        $h = new MockHandler(
+            [
+                function (RequestInterface $request) {
+                    return new Response(200, [
+                        'Set-Cookie' => new SetCookie([
+                            'Name'   => 'name',
+                            'Value'  => 'value',
+                            'Domain' => 'foo.com'
+                        ])
+                    ]);
+                }
+            ]
+        );
         $f = $m($h);
         $f(new Request('GET', 'http://foo.com'), []);
         $this->assertCount(1, $jar);
@@ -41,7 +45,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
     public function testThrowsExceptionOnHttpClientError()
     {
         $m = Middleware::httpError();
-        $h = new MockHandler(new Response(404));
+        $h = new MockHandler([new Response(404)]);
         $f = $m($h);
         $p = $f(new Request('GET', 'http://foo.com'), []);
         $this->assertEquals('rejected', $p->getState());
@@ -54,7 +58,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
     public function testThrowsExceptionOnHttpServerError()
     {
         $m = Middleware::httpError();
-        $h = new MockHandler(new Response(500));
+        $h = new MockHandler([new Response(500)]);
         $f = $m($h);
         $p = $f(new Request('GET', 'http://foo.com'), []);
         $this->assertEquals('rejected', $p->getState());
@@ -112,7 +116,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
             }
         );
 
-        $h = new MockHandler(new Response());
+        $h = new MockHandler([new Response()]);
         $b = new HandlerStack($h);
         $b->push($m2);
         $b->push($m);
@@ -191,10 +195,12 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
 
     public function testAddsContentLengthWhenMissingAndPossible()
     {
-        $h = new MockHandler(function (RequestInterface $request) {
-            $this->assertEquals(3, $request->getHeader('Content-Length'));
-            return new Response(200);
-        });
+        $h = new MockHandler([
+            function (RequestInterface $request) {
+                $this->assertEquals(3, $request->getHeader('Content-Length'));
+                return new Response(200);
+            }
+        ]);
         $m = Middleware::prepareBody();
         $stack = new HandlerStack($h);
         $stack->push($m);
@@ -210,11 +216,13 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $body = FnStream::decorate(Psr7\stream_for('foo'), [
             'getSize' => function () { return null; }
         ]);
-        $h = new MockHandler(function (RequestInterface $request) {
-            $this->assertFalse($request->hasHeader('Content-Length'));
-            $this->assertEquals('chunked', $request->getHeader('Transfer-Encoding'));
-            return new Response(200);
-        });
+        $h = new MockHandler([
+            function (RequestInterface $request) {
+                $this->assertFalse($request->hasHeader('Content-Length'));
+                $this->assertEquals('chunked', $request->getHeader('Transfer-Encoding'));
+                return new Response(200);
+            }
+        ]);
         $m = Middleware::prepareBody();
         $stack = new HandlerStack($h);
         $stack->push($m);
@@ -228,11 +236,13 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
     public function testAddsContentTypeWhenMissingAndPossible()
     {
         $bd = Psr7\stream_for(fopen(__DIR__ . '/../composer.json', 'r'));
-        $h = new MockHandler(function (RequestInterface $request) {
-            $this->assertEquals('application/json', $request->getHeader('Content-Type'));
-            $this->assertTrue($request->hasHeader('Content-Length'));
-            return new Response(200);
-        });
+        $h = new MockHandler([
+            function (RequestInterface $request) {
+                $this->assertEquals('application/json', $request->getHeader('Content-Type'));
+                $this->assertTrue($request->hasHeader('Content-Length'));
+                return new Response(200);
+            }
+        ]);
         $m = Middleware::prepareBody();
         $stack = new HandlerStack($h);
         $stack->push($m);
