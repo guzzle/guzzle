@@ -336,6 +336,11 @@ class Client implements ClientInterface
         // Case-insensitively merge in default headers if both defaults and
         // options have headers specified.
         if (!empty($defaults['headers']) && !empty($options['headers'])) {
+
+            if (!is_array($options['headers'])) {
+                throw new \InvalidArgumentException('headers must be an array');
+            }
+
             // Create a set of lowercase keys that are present.
             $lkeys = [];
             foreach (array_keys($options['headers']) as $k) {
@@ -468,8 +473,9 @@ class Client implements ClientInterface
      */
     private function applyOptions(RequestInterface $request, array &$options)
     {
-        $modify = [];
-        $this->extractFormData($options);
+        $modify = ['set_headers' => []];
+        $conditional = [];
+        $this->extractFormData($options, $conditional);
 
         foreach ($options as $key => $value) {
             if (isset(self::$transferOptions[$key])) {
@@ -488,12 +494,7 @@ class Client implements ClientInterface
                     break;
 
                 case 'headers':
-                    if (!is_array($value)) {
-                        throw new Iae('header value must be an array');
-                    }
-                    foreach ($value as $k => $v) {
-                        $modify['set_headers'][$k] = $v;
-                    }
+                    $modify['set_headers'] = $options['headers'] + $modify['set_headers'];
                     unset($options['headers']);
                     break;
 
@@ -506,18 +507,20 @@ class Client implements ClientInterface
                     if (!$value) {
                         continue;
                     }
-                    if (is_array($value)) {
-                        $type = isset($value[2]) ? strtolower($value[2]) : 'basic';
-                    } else {
-                        $type = strtolower($value);
-                    }
+                    $type = is_array($value)
+                        ? (isset($value[2]) ? strtolower($value[2]) : 'basic')
+                        : $value;
                     $config['auth'] = $value;
-                    if ($type == 'basic') {
-                        $modify['set_headers']['Authorization'] = 'Basic ' . base64_encode("$value[0]:$value[1]");
-                    } elseif ($type == 'digest') {
-                        // @todo: Do not rely on curl
-                        $options['curl'][CURLOPT_HTTPAUTH] = CURLAUTH_DIGEST;
-                        $options['curl'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
+                    switch (strtolower($type)) {
+                        case 'basic':
+                            $modify['set_headers']['Authorization'] = 'Basic '
+                                . base64_encode("$value[0]:$value[1]");
+                            break;
+                        case 'digest':
+                            // @todo: Do not rely on curl
+                            $options['config']['curl'][CURLOPT_HTTPAUTH] = CURLAUTH_DIGEST;
+                            $options['config']['curl'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
+                            break;
                     }
                     break;
 
@@ -534,36 +537,28 @@ class Client implements ClientInterface
 
                 case 'json':
                     $modify['body'] = Psr7\stream_for(json_encode($value));
-                    if (!$request->hasHeader('Content-Type')) {
-                        $modify['set_headers']['Content-Type'] = 'application/json';
-                    }
+                    $conditional['Content-Type'] = 'application/json';
                     unset($options['json']);
                     break;
             }
         }
 
-        return Psr7\modify_request($request, $modify);
+        $request = Psr7\modify_request($request, $modify);
+
+        // Add in conditional headers.
+        foreach ($conditional as $k => $v) {
+            if (!$request->hasHeader($k)) {
+                $request = $request->withHeader($k, $v);
+            }
+        }
+
+        return $request;
     }
 
-    /**
-     * Extracts form_fields and form_files into the "body" option.
-     *
-     * @param array $options
-     */
-    private function extractFormData(array &$options)
+    private function extractFormData(array &$options, array &$conditional)
     {
         if (empty($options['form_files']) && empty($options['form_fields'])) {
             return;
-        }
-
-        $contentType = null;
-        if (!empty($options['headers'])) {
-            foreach ($options['headers'] as $name => $value) {
-                if (strtolower($name) === 'content-type') {
-                    $contentType = $value;
-                    break;
-                }
-            }
         }
 
         $fields = [];
@@ -572,8 +567,7 @@ class Client implements ClientInterface
             if (!isset($options['form_files'])) {
                 $options['body'] = http_build_query($options['form_fields']);
                 unset($options['form_fields']);
-                $options['headers']['Content-Type'] = $contentType
-                    ?: 'application/x-www-form-urlencoded';
+                $conditional['Content-Type'] = 'application/x-www-form-urlencoded';
                 return;
             }
             $fields = $options['form_fields'];
@@ -584,8 +578,8 @@ class Client implements ClientInterface
         unset($options['form_files']);
         $options['body'] = new MultipartPostBody($fields, $files);
         // Use a multipart/form-data POST if a Content-Type is not set.
-        $options['headers']['Content-Type'] = $contentType
-            ?: 'multipart/form-data; boundary=' . $options['body']->getBoundary();
+        $conditional['Content-Type'] = 'multipart/form-data; boundary='
+            . $options['body']->getBoundary();
     }
 
     private function backwardsCompat(array &$options)
