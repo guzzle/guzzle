@@ -2,7 +2,7 @@
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Promise\Promise;
-use GuzzleHttp\Psr7\Stream;
+use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -233,7 +233,7 @@ class CurlMultiHandler
                 $entry['options'],
                 $entry['response'],
                 $entry['headers'],
-                Stream::factory($entry['body'])
+                Psr7\stream_for($entry['body'])
             );
 
             $this->removeProcessed($id);

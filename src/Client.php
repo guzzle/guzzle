@@ -200,7 +200,7 @@ class Client implements ClientInterface
 
         // Convert the base_uri to a UriInterface
         if (isset($config['base_uri'])) {
-            $config['base_uri'] = uri_for($config['base_uri']);
+            $config['base_uri'] = Psr7\uri_for($config['base_uri']);
         }
 
         $this->configureDefaults($config);
@@ -276,7 +276,7 @@ class Client implements ClientInterface
             return $uri instanceof UriInterface ? $uri : new Psr7\Uri($uri);
         }
 
-        return Psr7\Uri::resolve(uri_for($config['base_uri']), $uri);
+        return Psr7\Uri::resolve(Psr7\uri_for($config['base_uri']), $uri);
     }
 
     /**
@@ -375,6 +375,7 @@ class Client implements ClientInterface
     private function transfer(RequestInterface $request, array $options)
     {
         $stack = clone $this->stack;
+        $this->backwardsCompat($options);
         $handler = $this->createHandler($request, $stack, $options);
         $request = $this->applyOptions($request, $options);
 
@@ -469,7 +470,6 @@ class Client implements ClientInterface
     {
         $modify = [];
         $this->extractFormData($options);
-        $this->backwardsCompat($options);
 
         foreach ($options as $key => $value) {
             if (isset(self::$transferOptions[$key])) {
@@ -498,7 +498,7 @@ class Client implements ClientInterface
                     break;
 
                 case 'body':
-                    $modify['body'] = Psr7\Stream::factory($value);
+                    $modify['body'] = Psr7\stream_for($value);
                     unset($options['body']);
                     break;
 
@@ -533,7 +533,7 @@ class Client implements ClientInterface
                     break;
 
                 case 'json':
-                    $modify['body'] = Psr7\Stream::factory(json_encode($value));
+                    $modify['body'] = Psr7\stream_for(json_encode($value));
                     if (!$request->hasHeader('Content-Type')) {
                         $modify['set_headers']['Content-Type'] = 'application/json';
                     }

@@ -9,10 +9,10 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Psr7\Stream;
 use Psr\Http\Message\RequestInterface;
 
 class MiddlewareTest extends \PHPUnit_Framework_TestCase
@@ -207,7 +207,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
 
     public function testAddsTransferEncodingWhenNoContentLength()
     {
-        $body = FnStream::decorate(Stream::factory('foo'), [
+        $body = FnStream::decorate(Psr7\stream_for('foo'), [
             'getSize' => function () { return null; }
         ]);
         $h = new MockHandler(function (RequestInterface $request) {
@@ -227,7 +227,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
 
     public function testAddsContentTypeWhenMissingAndPossible()
     {
-        $bd = Stream::factory(fopen(__DIR__ . '/../composer.json', 'r'));
+        $bd = Psr7\stream_for(fopen(__DIR__ . '/../composer.json', 'r'));
         $h = new MockHandler(function (RequestInterface $request) {
             $this->assertEquals('application/json', $request->getHeader('Content-Type'));
             $this->assertTrue($request->hasHeader('Content-Length'));

@@ -13,6 +13,7 @@ class MockHandler implements \Countable
 {
     private $queue;
     private $lastRequest;
+    private $lastOptions;
     private $onFulfilled;
     private $onRejected;
 
@@ -51,6 +52,7 @@ class MockHandler implements \Countable
         }
 
         $this->lastRequest = $request;
+        $this->lastOptions = $options;
         $response = array_shift($this->queue);
 
         if (is_callable($response)) {
@@ -94,6 +96,16 @@ class MockHandler implements \Countable
     public function getLastRequest()
     {
         return $this->lastRequest;
+    }
+
+    /**
+     * Get the last received request options.
+     *
+     * @return RequestInterface
+     */
+    public function getLastOptions()
+    {
+        return $this->lastOptions;
     }
 
     /**

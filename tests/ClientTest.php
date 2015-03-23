@@ -3,6 +3,7 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 
@@ -125,5 +126,29 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         ]);
         $c->get('http://example.com', ['headers' => null]);
         $this->assertFalse($mock->getLastRequest()->hasHeader('foo'));
+    }
+
+    public function testCanGetHandlerStack()
+    {
+        $client = new Client();
+        $stack = $client->getHandlerStack();
+        $this->assertInstanceOf('GuzzleHttp\HandlerStack', $stack);
+        $this->assertTrue($stack->hasHandler());
+    }
+
+    public function testRewriteExceptionsToHttpErrors()
+    {
+        $client = new Client(['handler' => new MockHandler([new Response(404)])]);
+        $res = $client->get('http://foo.com', ['exceptions' => false]);
+        $this->assertEquals(404, $res->getStatusCode());
+    }
+
+    public function testRewriteSaveToToSink()
+    {
+        $r = Psr7\stream_for(fopen('php://temp', 'r+'));
+        $mock = new MockHandler([new Response(200, [], 'foo')]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', ['save_to' => $r]);
+        $this->assertSame($r, $mock->getLastOptions()['sink']);
     }
 }

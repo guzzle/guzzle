@@ -89,7 +89,7 @@ class StreamHandler
                 if (strtolower($key) == 'content-encoding') {
                     if ($value == 'gzip' || $value == 'deflate') {
                         return new Psr7\InflateStream(
-                            Psr7\Stream::factory($stream)
+                            Psr7\stream_for($stream)
                         );
                     }
                 }
@@ -112,19 +112,19 @@ class StreamHandler
     {
         if (is_resource($stream)) {
             if (!is_resource($dest)) {
-                $stream = Psr7\Stream::factory($stream);
+                $stream = Psr7\stream_for($stream);
             } else {
                 stream_copy_to_stream($stream, $dest);
                 fclose($stream);
                 rewind($dest);
-                return Psr7\Stream::factory($dest);
+                return Psr7\stream_for($dest);
             }
         }
 
         // Stream the response into the destination stream
         $dest = is_string($dest)
             ? new Psr7\Stream(Psr7\try_fopen($dest, 'r+'))
-            : Psr7\Stream::factory($dest);
+            : Psr7\stream_for($dest);
 
         Psr7\copy_to_stream($stream, $dest);
         $dest->seek(0);

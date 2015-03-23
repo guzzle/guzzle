@@ -87,7 +87,7 @@ class MultipartPostBody implements StreamableInterface
         foreach ($fields as $name => $fieldValues) {
             foreach ((array) $fieldValues as $value) {
                 $stream->addStream(
-                    Psr7\Stream::factory($this->getFieldString($name, $value))
+                    Psr7\stream_for($this->getFieldString($name, $value))
                 );
             }
         }
@@ -97,7 +97,7 @@ class MultipartPostBody implements StreamableInterface
         }
 
         // Add the trailing boundary with CRLF
-        $stream->addStream(Psr7\Stream::factory("--{$this->boundary}--\r\n"));
+        $stream->addStream(Psr7\stream_for("--{$this->boundary}--\r\n"));
 
         return $stream;
     }
@@ -118,9 +118,9 @@ class MultipartPostBody implements StreamableInterface
             isset($file['headers']) ? $file['headers'] : []
         );
 
-        $stream->addStream(Psr7\Stream::factory($this->getFileHeaders($headers)));
+        $stream->addStream(Psr7\stream_for($this->getFileHeaders($headers)));
         $stream->addStream($body);
-        $stream->addStream(Psr7\Stream::factory("\r\n"));
+        $stream->addStream(Psr7\stream_for("\r\n"));
     }
 
     /**
@@ -128,7 +128,7 @@ class MultipartPostBody implements StreamableInterface
      */
     private function createPostFile($name, $stream, array $headers = [])
     {
-        $stream = Psr7\Stream::factory($stream);
+        $stream = Psr7\stream_for($stream);
         $filename = $name;
 
         if ($uri = $stream->getMetadata('uri')) {

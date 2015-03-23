@@ -2,7 +2,7 @@
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Promise\FulfilledPromise;
-use GuzzleHttp\Psr7\Stream;
+use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -79,7 +79,7 @@ class CurlHandler
 
         return new FulfilledPromise(
             CurlFactory::createResponse(
-                $this, $request, $options, $response, $hd, Stream::factory($bd)
+                $this, $request, $options, $response, $hd, Psr7\stream_for($bd)
             )
         );
     }
