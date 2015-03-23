@@ -1,5 +1,6 @@
 <?php
 namespace GuzzleHttp\Test\Handler;
+
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Psr7\Request;

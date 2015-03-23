@@ -57,9 +57,9 @@ class StreamHandler
     ) {
         $parts = explode(' ', array_shift($hdrs), 3);
         $response = [
-            'status'         => $parts[1],
-            'reason'         => isset($parts[2]) ? $parts[2] : null,
-            'headers'        => \GuzzleHttp\headers_from_lines($hdrs)
+            'status'  => $parts[1],
+            'reason'  => isset($parts[2]) ? $parts[2] : null,
+            'headers' => \GuzzleHttp\headers_from_lines($hdrs)
         ];
 
         $stream = $this->checkDecode($options, $response['headers'], $stream);
@@ -87,7 +87,7 @@ class StreamHandler
         if (!empty($options['decode_content'])) {
             foreach ($headers as $key => $value) {
                 if (strtolower($key) == 'content-encoding') {
-                    if ($value == 'gzip' || $value == 'deflate') {
+                    if ($value[0] == 'gzip' || $value[0] == 'deflate') {
                         return new Psr7\InflateStream(
                             Psr7\stream_for($stream)
                         );

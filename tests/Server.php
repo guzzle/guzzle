@@ -21,8 +21,6 @@ use Psr\Http\Message\ResponseInterface;
  */
 class Server
 {
-    /** @var Client */
-    private static $client;
     private static $started = false;
     public static $url = 'http://127.0.0.1:8126/';
     public static $port = 8126;
@@ -33,9 +31,7 @@ class Server
      */
     public static function flush()
     {
-        self::start();
-
-        return self::$client->request('DELETE', 'guzzle-server/requests');
+        return self::getClient()->request('DELETE', 'guzzle-server/requests');
     }
 
     /**
@@ -50,8 +46,6 @@ class Server
      */
     public static function enqueue($responses)
     {
-        self::start();
-
         $data = [];
         foreach ((array) $responses as $response) {
             if (!($response instanceof ResponseInterface)) {
@@ -95,12 +89,17 @@ class Server
                 if (isset($message['query_string'])) {
                     $uri .= '?' . $message['query_string'];
                 }
-                return new Psr7\Request(
+                $response = new Psr7\Request(
                     $message['http_method'],
                     $uri,
                     $message['headers'],
                     $message['body'],
                     $message['version']
+                );
+                return $response->withUri(
+                    $response->getUri()
+                        ->withScheme('http')
+                        ->withHost($response->getHeader('host'))
                 );
             },
             $data
@@ -161,10 +160,10 @@ class Server
 
     private static function getClient()
     {
-        if (!self::$client) {
-            self::$client = new Client(['base_uri' => self::$url]);
-        }
-
-        return self::$client;
+        return new Client([
+            'base_uri'        => self::$url,
+            'sync'            => true,
+            'allow_redirects' => false
+        ]);
     }
 }

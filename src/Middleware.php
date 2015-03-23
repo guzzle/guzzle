@@ -4,6 +4,7 @@ namespace GuzzleHttp;
 use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -43,7 +44,7 @@ final class Middleware
     public static function httpError()
     {
         return function (callable $handler) {
-            return $fn = function ($request, array $options) use ($handler) {
+            return function ($request, array $options) use ($handler) {
                 return $handler($request, $options)->then(
                     function (ResponseInterface $response) use ($request, $handler) {
                         $code = $response->getStatusCode();
