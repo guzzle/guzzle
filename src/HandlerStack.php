@@ -23,6 +23,14 @@ class HandlerStack
     }
 
     /**
+     * Ensure the stack is cloned.
+     */
+    public function __clone()
+    {
+        $this->stack = clone $this->stack;
+    }
+
+    /**
      * Dumps a string representation of the stack.
      *
      * @return string

@@ -21,6 +21,8 @@ use Psr\Http\Message\ResponseInterface;
  */
 class Server
 {
+    /** @var Client */
+    private static $client;
     private static $started = false;
     public static $url = 'http://127.0.0.1:8126/';
     public static $port = 8126;
@@ -160,10 +162,13 @@ class Server
 
     private static function getClient()
     {
-        return new Client([
-            'base_uri'        => self::$url,
-            'sync'            => true,
-            'allow_redirects' => false
-        ]);
+        if (!self::$client) {
+            self::$client = new Client([
+                'base_uri' => self::$url,
+                'sync'     => true,
+            ]);
+        }
+
+        return self::$client;
     }
 }
