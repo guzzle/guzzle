@@ -458,4 +458,20 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         putenv("HTTP_PROXY=$http");
         putenv("HTTPS_PROXY=$https");
     }
+
+    public function testRequestSendsWithSync()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->request('GET', 'http://foo.com');
+        $this->assertTrue($mock->getLastOptions()['sync']);
+    }
+
+    public function testSendSendsWithSync()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->send(new Request('GET', 'http://foo.com'));
+        $this->assertTrue($mock->getLastOptions()['sync']);
+    }
 }

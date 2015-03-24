@@ -239,6 +239,7 @@ class Client implements ClientInterface
 
     public function send(RequestInterface $request, array $options = [])
     {
+        $options['sync'] = true;
         return $this->sendAsync($request, $options)->wait();
     }
 
@@ -258,6 +259,7 @@ class Client implements ClientInterface
 
     public function request($method, $uri = null, array $options = [])
     {
+        $options['sync'] = true;
         return $this->requestAsync($method, $uri, $options)->wait();
     }
 
