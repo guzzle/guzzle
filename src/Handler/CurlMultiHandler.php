@@ -8,12 +8,9 @@ use Psr\Http\Message\RequestInterface;
 /**
  * Returns an asynchronous response using curl_multi_* functions.
  *
- * This handler supports future responses and the "delay" request client
- * option that can be used to delay before sending a request.
- *
  * When using the CurlMultiHandler, custom curl options can be specified as an
  * associative array of curl option constants mapping to values in the
- * **curl** key of the "client" key of the request.
+ * **curl** key of the provided request options.
  *
  * @property resource $_mh Internal use only. Lazy loaded multi-handle.
  */
@@ -62,11 +59,6 @@ class CurlMultiHandler
 
     public function __destruct()
     {
-        // Finish any open connections before terminating the script.
-        if ($this->handles) {
-            $this->execute();
-        }
-
         if (isset($this->_mh)) {
             curl_multi_close($this->_mh);
             unset($this->_mh);
@@ -140,21 +132,16 @@ class CurlMultiHandler
         $id = (int) $entry['handle'];
         $this->handles[$id] = $entry;
 
-        // If the request is a delay, then add the reques to the curl multi
+        // If the request is a delay, then add the request to the curl multi
         // pool only after the specified delay.
         if (isset($entry['options']['delay'])) {
             $this->delays[$id] = microtime(true) + ($entry['options']['delay'] / 1000);
-        } elseif (empty($entry['options']['future'])) {
-            curl_multi_add_handle($this->_mh, $entry['handle']);
         } else {
             curl_multi_add_handle($this->_mh, $entry['handle']);
-            // "lazy" futures are only sent once the pool has many requests.
-            if ($entry['options']['future'] !== 'lazy') {
-                do {
-                    $mrc = curl_multi_exec($this->_mh, $this->active);
-                } while ($mrc === CURLM_CALL_MULTI_PERFORM);
-                $this->processMessages();
-            }
+            do {
+                $mrc = curl_multi_exec($this->_mh, $this->active);
+            } while ($mrc === CURLM_CALL_MULTI_PERFORM);
+            $this->processMessages();
         }
     }
 
