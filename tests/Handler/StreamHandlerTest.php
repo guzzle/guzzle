@@ -375,4 +375,15 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('4', $response->getHeader('Content-Length'));
         $this->assertEquals('test', (string) $response->getBody());
     }
+
+    public function testDoesSleep()
+    {
+        $response = new response(200);
+        Server::enqueue([$response]);
+        $a = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $s = microtime(true);
+        $a($request, ['delay' => 0.1])->wait();
+        $this->assertGreaterThan(0.0001, microtime(true) - $s);
+    }
 }

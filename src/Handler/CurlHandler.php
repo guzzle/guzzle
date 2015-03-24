@@ -1,7 +1,6 @@
 <?php
 namespace GuzzleHttp\Handler;
 
-use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 
@@ -77,7 +76,7 @@ class CurlHandler
         $response['curl']['errno'] = curl_errno($h);
         $this->releaseEasyHandle($h);
 
-        return new FulfilledPromise(
+        return \GuzzleHttp\Promise\promise_for(
             CurlFactory::createResponse(
                 $this, $request, $options, $response, $hd, Psr7\stream_for($bd)
             )
