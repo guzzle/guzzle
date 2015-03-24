@@ -181,6 +181,14 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $this->getSendResult(['proxy' => '127.0.0.1:8125']);
     }
 
+    public function testAddsProxyByProtocol()
+    {
+        $url = str_replace('http', 'tcp', Server::$url);
+        $res = $this->getSendResult(['proxy' => ['http' => $url]]);
+        $opts = stream_context_get_options($res->getBody()->detach());
+        $this->assertEquals($url, $opts['http']['proxy']);
+    }
+
     public function testAddsTimeout()
     {
         $res = $this->getSendResult(['stream' => true, 'timeout' => 200]);
@@ -247,5 +255,124 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $opts = stream_context_get_options($res->getBody()->detach());
         $this->assertEquals($path, $opts['ssl']['local_cert']);
         $this->assertEquals('foo', $opts['ssl']['passphrase']);
+    }
+
+    public function testDebugAttributeWritesToStream()
+    {
+        $this->queueRes();
+        $f = fopen('php://temp', 'w+');
+        $this->getSendResult(['debug' => $f]);
+        fseek($f, 0);
+        $contents = stream_get_contents($f);
+        $this->assertContains('<GET http://127.0.0.1:8126/> [CONNECT]', $contents);
+        $this->assertContains('<GET http://127.0.0.1:8126/> [FILE_SIZE_IS]', $contents);
+        $this->assertContains('<GET http://127.0.0.1:8126/> [PROGRESS]', $contents);
+    }
+
+    public function testDebugAttributeWritesStreamInfoToBuffer()
+    {
+        $called = false;
+        $this->queueRes();
+        $buffer = fopen('php://temp', 'r+');
+        $this->getSendResult([
+            'progress' => function () use (&$called) { $called = true; },
+            'debug' => $buffer,
+        ]);
+        fseek($buffer, 0);
+        $contents = stream_get_contents($buffer);
+        $this->assertContains('<GET http://127.0.0.1:8126/> [CONNECT]', $contents);
+        $this->assertContains('<GET http://127.0.0.1:8126/> [FILE_SIZE_IS] message: "Content-Length: 8"', $contents);
+        $this->assertContains('<GET http://127.0.0.1:8126/> [PROGRESS] bytes_max: "8"', $contents);
+        $this->assertTrue($called);
+    }
+
+    public function testEmitsProgressInformation()
+    {
+        $called = [];
+        $this->queueRes();
+        $this->getSendResult([
+            'progress' => function () use (&$called) {
+                $called[] = func_get_args();
+            },
+        ]);
+        $this->assertNotEmpty($called);
+        $this->assertEquals(8, $called[0][0]);
+        $this->assertEquals(0, $called[0][1]);
+    }
+
+    public function testEmitsProgressInformationAndDebugInformation()
+    {
+        $called = [];
+        $this->queueRes();
+        $buffer = fopen('php://memory', 'w+');
+        $this->getSendResult([
+            'debug'    => $buffer,
+            'progress' => function () use (&$called) {
+                $called[] = func_get_args();
+            },
+        ]);
+        $this->assertNotEmpty($called);
+        $this->assertEquals(8, $called[0][0]);
+        $this->assertEquals(0, $called[0][1]);
+        rewind($buffer);
+        $this->assertNotEmpty(stream_get_contents($buffer));
+        fclose($buffer);
+    }
+
+    public function testPerformsShallowMergeOfCustomContextOptions()
+    {
+        $res = $this->getSendResult([
+            'stream_context' => [
+                'http' => [
+                    'request_fulluri' => true,
+                    'method' => 'HEAD',
+                ],
+                'socket' => [
+                    'bindto' => '127.0.0.1:0',
+                ],
+                'ssl' => [
+                    'verify_peer' => false,
+                ],
+            ],
+        ]);
+        $opts = stream_context_get_options($res->getBody()->detach());
+        $this->assertEquals('HEAD', $opts['http']['method']);
+        $this->assertTrue($opts['http']['request_fulluri']);
+        $this->assertEquals('127.0.0.1:0', $opts['socket']['bindto']);
+        $this->assertFalse($opts['ssl']['verify_peer']);
+    }
+
+    /**
+     * @expectedException \GuzzleHttp\Exception\RequestException
+     * @expectedExceptionMessage stream_context must be an array
+     */
+    public function testEnsuresThatStreamContextIsAnArray()
+    {
+        $this->getSendResult(['stream_context' => 'foo']);
+    }
+
+    public function testDoesNotAddContentTypeByDefault()
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('PUT', Server::$url, ['Content-Length' => 3], 'foo');
+        $handler($request, []);
+        $req = Server::received()[0];
+        $this->assertEquals('', $req->getHeader('Content-Type'));
+        $this->assertEquals(3, $req->getHeader('Content-Length'));
+    }
+
+    public function testSupports100Continue()
+    {
+        Server::flush();
+        $response = new Response(200, ['Test' => 'Hello', 'Content-Length' => '4'], 'test');
+        Server::enqueue([$response]);
+        $request = new Request('PUT', Server::$url, ['Expect' => '100-Continue'], 'test');
+        $handler = new StreamHandler();
+        $response = $handler($request, [])->wait();
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('Hello', $response->getHeader('Test'));
+        $this->assertEquals('4', $response->getHeader('Content-Length'));
+        $this->assertEquals('test', (string) $response->getBody());
     }
 }

@@ -194,12 +194,6 @@ class StreamHandler
 
         $params = [];
         $context = $this->getDefaultContext($request, $options);
-        if (isset($options['stream_context'])) {
-            $context = array_replace_recursive(
-                $context,
-                $options['stream_context']
-            );
-        }
 
         if (!empty($options)) {
             foreach ($options as $key => $value) {
@@ -208,6 +202,16 @@ class StreamHandler
                     $this->{$method}($request, $context, $value, $params);
                 }
             }
+        }
+
+        if (isset($options['stream_context'])) {
+            if (!is_array($options['stream_context'])) {
+                throw new \InvalidArgumentException('stream_context must be an array');
+            }
+            $context = array_replace_recursive(
+                $context,
+                $options['stream_context']
+            );
         }
 
         $context = $this->createResource(
