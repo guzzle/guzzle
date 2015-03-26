@@ -86,7 +86,7 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         Server::enqueue([new Psr7\Response()]);
         $a = new Handler\CurlMultiHandler();
         $req = new Psr7\Request('GET', Server::$url);
-        $a($req, ['curl' => [CURLOPT_LOW_SPEED_LIMIT => 10]]);
+        $a($req, ['curlopts' => [CURLOPT_LOW_SPEED_LIMIT => 10]]);
         $this->assertEquals(10, $_SERVER['_curl'][CURLOPT_LOW_SPEED_LIMIT]);
     }
 

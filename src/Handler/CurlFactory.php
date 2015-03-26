@@ -40,14 +40,11 @@ class CurlFactory
         $this->applyHeaders($request, $conf);
         unset($conf['_headers']);
         // Add handler options from the request configuration options
-        if (isset($options['curl'])) {
-            $conf = $this->applyCustomCurlOptions($options['curl'], $conf);
+        if (isset($options['curlopts'])) {
+            $conf += $options['curlopts'];
         }
 
-        if (!$handle) {
-            $handle = curl_init();
-        }
-
+        $handle = $handle ?: curl_init();
         $body = $this->getOutputBody($request, $options, $conf);
         curl_setopt_array($handle, $conf);
 
@@ -216,22 +213,20 @@ class CurlFactory
             return;
         }
 
-        switch ($request->getMethod()) {
-            case 'PUT':
-            case 'POST':
-                // See http://tools.ietf.org/html/rfc7230#section-3.3.2
-                if (!$request->hasHeader('Content-Length')) {
-                    $conf[CURLOPT_HTTPHEADER][] = 'Content-Length: 0';
-                }
-                break;
-            case 'HEAD':
-                $conf[CURLOPT_NOBODY] = true;
-                unset(
-                    $conf[CURLOPT_WRITEFUNCTION],
-                    $conf[CURLOPT_READFUNCTION],
-                    $conf[CURLOPT_FILE],
-                    $conf[CURLOPT_INFILE]
-                );
+        $method = $request->getMethod();
+        if ($method === 'PUT' || $method === 'POST') {
+            // See http://tools.ietf.org/html/rfc7230#section-3.3.2
+            if (!$request->hasHeader('Content-Length')) {
+                $conf[CURLOPT_HTTPHEADER][] = 'Content-Length: 0';
+            }
+        } elseif ($method === 'HEAD') {
+            $conf[CURLOPT_NOBODY] = true;
+            unset(
+                $conf[CURLOPT_WRITEFUNCTION],
+                $conf[CURLOPT_READFUNCTION],
+                $conf[CURLOPT_FILE],
+                $conf[CURLOPT_INFILE]
+            );
         }
     }
 
@@ -301,29 +296,6 @@ class CurlFactory
     }
 
     /**
-     * Takes an array of curl options specified in the 'curl' option of a
-     * request's configuration array and maps them to CURLOPT_* options.
-     *
-     * This method is only called when a request has a 'curl' config setting.
-     *
-     * @param array $options Configuration array of custom curl option
-     * @param array $conf    Array of existing curl options
-     *
-     * @return array Returns a new array of curl options
-     */
-    private function applyCustomCurlOptions(array $options, array $conf)
-    {
-        $curlOptions = [];
-        foreach ($options as $key => $value) {
-            if (is_int($key)) {
-                $curlOptions[$key] = $value;
-            }
-        }
-
-        return $curlOptions + $conf;
-    }
-
-    /**
      * Remove a header from the options array.
      *
      * @param string $name    Case-insensitive header to remove
@@ -354,156 +326,126 @@ class CurlFactory
         array $options,
         array &$conf
     ) {
-        foreach ($options as $key => $value) {
-            switch ($key) {
-            // Violating PSR-4 to provide more room.
-            case 'verify':
-
-                if ($value === false) {
-                    unset($conf[CURLOPT_CAINFO]);
-                    $conf[CURLOPT_SSL_VERIFYHOST] = 0;
-                    $conf[CURLOPT_SSL_VERIFYPEER] = false;
-                    continue;
-                }
-
+        if (isset($options['verify'])) {
+            if ($options['verify'] === false) {
+                unset($conf[CURLOPT_CAINFO]);
+                $conf[CURLOPT_SSL_VERIFYHOST] = 0;
+                $conf[CURLOPT_SSL_VERIFYPEER] = false;
+            } else {
                 $conf[CURLOPT_SSL_VERIFYHOST] = 2;
                 $conf[CURLOPT_SSL_VERIFYPEER] = true;
-
-                if (is_string($value)) {
-                    $conf[CURLOPT_CAINFO] = $value;
-                    if (!file_exists($value)) {
+                if (is_string($options['verify'])) {
+                    $conf[CURLOPT_CAINFO] = $options['verify'];
+                    if (!file_exists($options['verify'])) {
                         throw new \InvalidArgumentException(
-                            "SSL CA bundle not found: $value"
+                            "SSL CA bundle not found: {$options['verify']}"
                         );
                     }
                 }
-                break;
-
-            case 'decode_content':
-
-                if ($value === false) {
-                    continue;
-                }
-
-                $accept = $request->getHeader('Accept-Encoding');
-                if ($accept) {
-                    $conf[CURLOPT_ENCODING] = $accept;
-                } else {
-                    $conf[CURLOPT_ENCODING] = '';
-                    // Don't let curl send the header over the wire
-                    $conf[CURLOPT_HTTPHEADER][] = 'Accept-Encoding:';
-                }
-                break;
-
-            case 'save_to':
-            case 'sink':
-
-                if (is_string($value)) {
-                    $value = new LazyOpenStream($value, 'w+');
-                }
-
-                if ($value instanceof StreamableInterface) {
-                    $conf[CURLOPT_WRITEFUNCTION] =
-                        function ($ch, $write) use ($value) {
-                            return $value->write($write);
-                        };
-                } elseif (is_resource($value)) {
-                    $conf[CURLOPT_FILE] = $value;
-                } else {
-                    throw new \InvalidArgumentException('sink must be a '
-                        . 'Psr\Http\Message\StreamableInterface or resource');
-                }
-                break;
-
-            case 'timeout':
-
-                if (defined('CURLOPT_TIMEOUT_MS')) {
-                    $conf[CURLOPT_TIMEOUT_MS] = $value * 1000;
-                } else {
-                    $conf[CURLOPT_TIMEOUT] = $value;
-                }
-                break;
-
-            case 'connect_timeout':
-
-                if (defined('CURLOPT_CONNECTTIMEOUT_MS')) {
-                    $conf[CURLOPT_CONNECTTIMEOUT_MS] = $value * 1000;
-                } else {
-                    $conf[CURLOPT_CONNECTTIMEOUT] = $value;
-                }
-                break;
-
-            case 'proxy':
-
-                if (!is_array($value)) {
-                    $conf[CURLOPT_PROXY] = $value;
-                } elseif ($scheme = $request->getUri()->getScheme()) {
-                    if (isset($value[$scheme])) {
-                        $conf[CURLOPT_PROXY] = $value[$scheme];
-                    }
-                }
-                break;
-
-            case 'cert':
-
-                if (is_array($value)) {
-                    $conf[CURLOPT_SSLCERTPASSWD] = $value[1];
-                    $value = $value[0];
-                }
-
-                if (!file_exists($value)) {
-                    throw new \InvalidArgumentException(
-                        "SSL certificate not found: {$value}"
-                    );
-                }
-
-                $conf[CURLOPT_SSLCERT] = $value;
-                break;
-
-            case 'ssl_key':
-
-                if (is_array($value)) {
-                    $conf[CURLOPT_SSLKEYPASSWD] = $value[1];
-                    $value = $value[0];
-                }
-
-                if (!file_exists($value)) {
-                    throw new \InvalidArgumentException(
-                        "SSL private key not found: {$value}"
-                    );
-                }
-
-                $conf[CURLOPT_SSLKEY] = $value;
-                break;
-
-            case 'progress':
-
-                if (!is_callable($value)) {
-                    throw new \InvalidArgumentException(
-                        'progress client option must be callable'
-                    );
-                }
-
-                $conf[CURLOPT_NOPROGRESS] = false;
-                $conf[CURLOPT_PROGRESSFUNCTION] =
-                    function () use ($value) {
-                        $args = func_get_args();
-                        // PHP 5.5 pushed the handle onto the start of the args
-                        if (is_resource($args[0])) {
-                            array_shift($args);
-                        }
-                        call_user_func_array($value, $args);
-                    };
-                break;
-
-            case 'debug':
-
-                if ($value) {
-                    $conf[CURLOPT_STDERR] = \GuzzleHttp\debug_resource($value);
-                    $conf[CURLOPT_VERBOSE] = true;
-                }
-                break;
             }
+        }
+
+        if (!empty($options['decode_content'])) {
+            $accept = $request->getHeader('Accept-Encoding');
+            if ($accept) {
+                $conf[CURLOPT_ENCODING] = $accept;
+            } else {
+                $conf[CURLOPT_ENCODING] = '';
+                // Don't let curl send the header over the wire
+                $conf[CURLOPT_HTTPHEADER][] = 'Accept-Encoding:';
+            }
+        }
+
+        // Backwards compat with "save_to" => "sink"
+        if (isset($options['save_to'])) {
+            $options['sink'] = $options['save_to'];
+        }
+
+        if (isset($options['sink'])) {
+            $sink = $options['sink'];
+            $sink = is_string($sink)
+                ? new LazyOpenStream($sink, 'w+')
+                : \GuzzleHttp\Psr7\stream_for($sink);
+            $conf[CURLOPT_WRITEFUNCTION] = function ($ch, $write) use ($sink) {
+                return $sink->write($write);
+            };
+        }
+
+        if (isset($options['timeout'])) {
+            if (defined('CURLOPT_TIMEOUT_MS')) {
+                $conf[CURLOPT_TIMEOUT_MS] = $options['timeout'] * 1000;
+            } else {
+                $conf[CURLOPT_TIMEOUT] = $options['timeout'];
+            }
+        }
+
+        if (isset($options['connect_timeout'])) {
+            if (defined('CURLOPT_CONNECTTIMEOUT_MS')) {
+                $conf[CURLOPT_CONNECTTIMEOUT_MS] = $options['connect_timeout'] * 1000;
+            } else {
+                $conf[CURLOPT_CONNECTTIMEOUT] = $options['connect_timeout'];
+            }
+        }
+
+        if (isset($options['proxy'])) {
+            if (!is_array($options['proxy'])) {
+                $conf[CURLOPT_PROXY] = $options['proxy'];
+            } elseif ($scheme = $request->getUri()->getScheme()) {
+                if (isset($options['proxy'][$scheme])) {
+                    $conf[CURLOPT_PROXY] = $options['proxy'][$scheme];
+                }
+            }
+        }
+
+        if (isset($options['cert'])) {
+            $cert = $options['cert'];
+            if (is_array($cert)) {
+                $conf[CURLOPT_SSLCERTPASSWD] = $cert[1];
+                $cert = $cert[0];
+            }
+            if (!file_exists($cert)) {
+                throw new \InvalidArgumentException(
+                    "SSL certificate not found: {$cert}"
+                );
+            }
+            $conf[CURLOPT_SSLCERT] = $cert;
+        }
+
+        if (isset($options['ssl_key'])) {
+            $sslKey = $options['ssl_key'];
+            if (is_array($sslKey)) {
+                $conf[CURLOPT_SSLKEYPASSWD] = $sslKey[1];
+                $sslKey = $sslKey[0];
+            }
+            if (!file_exists($sslKey)) {
+                throw new \InvalidArgumentException(
+                    "SSL private key not found: {$sslKey}"
+                );
+            }
+            $conf[CURLOPT_SSLKEY] = $sslKey;
+        }
+
+        if (isset($options['progress'])) {
+            $progress = $options['progress'];
+            if (!is_callable($progress)) {
+                throw new \InvalidArgumentException(
+                    'progress client option must be callable'
+                );
+            }
+            $conf[CURLOPT_NOPROGRESS] = false;
+            $conf[CURLOPT_PROGRESSFUNCTION] = function () use ($progress) {
+                $args = func_get_args();
+                // PHP 5.5 pushed the handle onto the start of the args
+                if (is_resource($args[0])) {
+                    array_shift($args);
+                }
+                call_user_func_array($progress, $args);
+            };
+        }
+
+        if (!empty($options['debug'])) {
+            $conf[CURLOPT_STDERR] = \GuzzleHttp\debug_resource($options['debug']);
+            $conf[CURLOPT_VERBOSE] = true;
         }
     }
 
