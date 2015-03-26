@@ -41,7 +41,7 @@ class CurlFactory
         unset($conf['_headers']);
         // Add handler options from the request configuration options
         if (isset($options['curl'])) {
-            $options = $this->applyCustomCurlOptions($options['curl'], $conf);
+            $conf = $this->applyCustomCurlOptions($options['curl'], $conf);
         }
 
         if (!$handle) {
@@ -211,7 +211,7 @@ class CurlFactory
         $body = $request->getBody();
         $size = $body->getSize();
 
-        if ($size !== null && $size > 0) {
+        if ($size === null || $size > 0) {
             $this->applyBody($request, $options, $conf);
             return;
         }
@@ -237,13 +237,14 @@ class CurlFactory
 
     private function applyBody(RequestInterface $request, array $options, array &$conf)
     {
-        $contentLength = $request->getHeader('Content-Length');
-        $size = $contentLength !== null ? (int) $contentLength : null;
+        $size = $request->hasHeader('Content-Length')
+            ? (int) $request->getHeader('Content-Length')
+            : $request->getBody()->getSize();
 
         // Send the body as a string if the size is less than 1MB OR if the
-        // [client][curl][body_as_string] request value is set.
+        // [curl][body_as_string] request value is set.
         if (($size !== null && $size < 1000000) ||
-            isset($options['curl']['body_as_string'])
+            !empty($options['curl']['body_as_string'])
         ) {
             $conf[CURLOPT_POSTFIELDS] = (string) $request->getBody();
             // Don't duplicate the Content-Length header
@@ -303,7 +304,7 @@ class CurlFactory
      * Takes an array of curl options specified in the 'curl' option of a
      * request's configuration array and maps them to CURLOPT_* options.
      *
-     * This method is only called when a  request has a 'curl' config setting.
+     * This method is only called when a request has a 'curl' config setting.
      *
      * @param array $options Configuration array of custom curl option
      * @param array $conf    Array of existing curl options
@@ -436,8 +437,7 @@ class CurlFactory
 
                 if (!is_array($value)) {
                     $conf[CURLOPT_PROXY] = $value;
-                } elseif (isset($request['scheme'])) {
-                    $scheme = $request['scheme'];
+                } elseif ($scheme = $request->getUri()->getScheme()) {
                     if (isset($value[$scheme])) {
                         $conf[CURLOPT_PROXY] = $value[$scheme];
                     }
@@ -529,7 +529,7 @@ class CurlFactory
         array $options,
         array $response
     ) {
-        if ($request->getBody()->rewind()) {
+        if (!$request->getBody()->rewind()) {
             $response['err_message'] = 'The connection unexpectedly failed '
                 . 'without providing an error. The request would have been '
                 . 'retried, but attempting to rewind the request body failed.';
@@ -541,7 +541,7 @@ class CurlFactory
             $options['curl']['retries'] = 1;
         } elseif ($options['curl']['retries'] == 2) {
             $response['err_message'] = 'The cURL request was retried 3 times '
-                . 'and did no succeed. cURL was unable to rewind the body of '
+                . 'and did not succeed. cURL was unable to rewind the body of '
                 . 'the request and subsequent retries resulted in the same '
                 . 'error. Turn on the debug option to see what went wrong. '
                 . 'See https://bugs.php.net/bug.php?id=47204 for more information.';
