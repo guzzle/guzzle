@@ -1,5 +1,5 @@
-Guzzle, PHP HTTP client and webservice framework
-================================================
+Guzzle, PHP HTTP client
+=======================
 
 [![Build Status](https://secure.travis-ci.org/guzzle/guzzle.png?branch=master)](http://travis-ci.org/guzzle/guzzle)
 
@@ -27,20 +27,20 @@ echo $res->getHeader('content-type');
 // 'application/json; charset=utf8'
 echo $res->getBody();
 // {"type":"User"...'
-var_export($res->json());
-// Outputs the JSON decoded data
 
 // Send an asynchronous request.
-$req = $client->createRequest('GET', 'http://httpbin.org', ['future' => true]);
-$client->send($req)->then(function ($response) {
+$request = new \GuzzleHttp\Psr7\Request('GET', 'http://httpbin.org');
+$promise = $client->sendAsync($req)->then(function ($response) {
     echo 'I completed! ' . $response;
 });
+$promise->wait();
 ```
 
 Get more information and answers with the
 [Documentation](http://guzzlephp.org/),
 [Forums](https://groups.google.com/forum/?hl=en#!forum/guzzle),
 and [Gitter](https://gitter.im/guzzle/guzzle).
+
 
 ### Installing via Composer
 
@@ -63,6 +63,7 @@ After installing, you need to require Composer's autoloader:
 ```php
 require 'vendor/autoload.php';
 ```
+
 
 ### Documentation
 
