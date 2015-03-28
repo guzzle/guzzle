@@ -51,8 +51,8 @@ How can I add custom cURL options?
 cURL offer a huge number of `customizable options <http://us1.php.net/curl_setopt>`_.
 While Guzzle normalizes many of these options across different handlers, there
 are times when you need to set custom cURL options. This can be accomplished
-by passing an associative array of cURL settings in the **curl** key of the
-**config** request option.
+by passing an associative array of cURL settings in the **curl** key of a
+request.
 
 For example, let's say you need to customize the outgoing network interface
 used with a client.
@@ -60,10 +60,8 @@ used with a client.
 .. code-block:: php
 
     $client->get('/', [
-        'config' => [
-            'curl' => [
-                CURLOPT_INTERFACE => 'xxx.xxx.xxx.xxx'
-            ]
+        'curl' => [
+            CURLOPT_INTERFACE => 'xxx.xxx.xxx.xxx'
         ]
     ]);
 
@@ -72,9 +70,9 @@ How can I add custom stream context options?
 ============================================
 
 You can pass custom `stream context options <http://www.php.net/manual/en/context.php>`_
-using the **stream_context** key of the **config** request option. The
-**stream_context** array is an associative array where each key is a PHP
-transport, and each value is an associative array of transport options.
+using the **stream_context** key of the request option. The **stream_context**
+array is an associative array where each key is a PHP transport, and each value
+is an associative array of transport options.
 
 For example, let's say you need to customize the outgoing network interface
 used with a client and allow self-signed certificates.
@@ -83,14 +81,12 @@ used with a client and allow self-signed certificates.
 
     $client->get('/', [
         'stream' => true,
-        'config' => [
-            'stream_context' => [
-                'ssl' => [
-                    'allow_self_signed' => true
-                ],
-                'socket' => [
-                    'bindto' => 'xxx.xxx.xxx.xxx'
-                ]
+        'stream_context' => [
+            'ssl' => [
+                'allow_self_signed' => true
+            ],
+            'socket' => [
+                'bindto' => 'xxx.xxx.xxx.xxx'
             ]
         ]
     ]);

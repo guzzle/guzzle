@@ -8,6 +8,7 @@ options to a client that are applied to every request (e.g., default headers,
 default query string parameters, etc.), and you can add event listeners and
 subscribers to every request created by a client.
 
+
 Creating a client
 =================
 
@@ -67,6 +68,7 @@ Here's an example of creating a client with various options.
         ]
     ]);
 
+
 Sending Requests
 ================
 
@@ -82,6 +84,7 @@ Requests can be created using various methods of a client. You can create
 
 Each of the above methods accepts a URL as the first argument and an optional
 associative array of :ref:`request-options` as the second argument.
+
 
 Synchronous Requests
 --------------------
@@ -102,6 +105,7 @@ thrown.
         'allow_redirects' => false,
         'timeout'         => 5
     ]);
+
 
 Synchronous Error Handling
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -135,6 +139,7 @@ has a response using the ``hasResponse()`` method. If the exception has a
 response, then you can access the associated
 ``GuzzleHttp\Message\ResponseInterface`` using the ``getResponse()`` method of
 the exception.
+
 
 Asynchronous Requests
 ---------------------
@@ -178,6 +183,7 @@ response has completed.
     It depends on the RingPHP handler used by a client, but you typically need
     to use the same RingPHP handler in order to utilize asynchronous requests
     across multiple clients.
+
 
 Asynchronous Error Handling
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -223,6 +229,7 @@ to the second argument of the ``then()`` function.
 Please see the `React/Promises project documentation <https://github.com/reactphp/promise>`_
 for more information on how promise resolution and rejection forwarding works.
 
+
 HTTP Errors
 -----------
 
@@ -231,6 +238,7 @@ are thrown for HTTP protocol errors as well:
 ``GuzzleHttp\Exception\ClientErrorResponseException`` for 4xx level HTTP
 responses and ``GuzzleHttp\Exception\ServerException`` for 5xx level responses,
 both of which extend from ``GuzzleHttp\Exception\BadResponseException``.
+
 
 Creating Requests
 -----------------
@@ -252,6 +260,7 @@ After creating a request, you can send it with the client's ``send()`` method.
 .. code-block:: php
 
     $response = $client->send($request);
+
 
 Sending Requests With a Pool
 ============================
@@ -327,6 +336,7 @@ it is first triggered.
         ]
     ]);
 
+
 Asynchronous Response Handling
 ------------------------------
 
@@ -360,6 +370,7 @@ transfer statistics, and the ability to intercept the exception with a
 different ``GuzzleHttp\Message\ResponseInterface`` object. See :doc:`events`
 for more information.
 
+
 Handling Errors After Transferring
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -382,6 +393,7 @@ failed request to an array that we can use to process errors later.
     foreach ($errors as $error) {
         // Handle the error...
     }
+
 
 .. _batch-requests:
 
@@ -429,6 +441,7 @@ in the third argument that allows you to specify the 'before', 'complete',
 'error', and 'end' events as well as specify the maximum number of requests to
 send concurrently using the 'pool_size' option key.
 
+
 .. _request-options:
 
 Request Options
@@ -444,6 +457,7 @@ All of the following examples use the following client:
 .. code-block:: php
 
     $client = new GuzzleHttp\Client(['base_url' => 'http://httpbin.org']);
+
 
 headers
 -------
@@ -464,6 +478,7 @@ headers
             'X-Foo'      => ['Bar', 'Baz']
         ]
     ]);
+
 
 body
 ----
@@ -494,22 +509,6 @@ This setting can be set to any of the following types:
       $resource = fopen('http://httpbin.org', 'r');
       $client->put('/put', ['body' => $resource]);
 
-- Array
-
-  Use an array to send POST style requests that use a
-  ``GuzzleHttp\Post\PostBodyInterface`` object as the body.
-
-  .. code-block:: php
-
-      // You can send requests that use a POST body containing fields & files.
-      $client->post('/post', [
-          'body' => [
-              'field' => 'abc',
-              'other_field' => '123',
-              'file_name' => fopen('/path/to/file', 'r')
-          ]
-      ]);
-
 - ``GuzzleHttp\Stream\StreamInterface``
 
   .. code-block:: php
@@ -517,6 +516,7 @@ This setting can be set to any of the following types:
       // You can send requests that use a Guzzle stream object as the body
       $stream = GuzzleHttp\Stream\Stream::factory('contents...');
       $client->post('/post', ['body' => $stream]);
+
 
 json
 ----
@@ -545,13 +545,14 @@ json
     option and you must specify the correct Content-Type header using the
     ``headers`` request option.
 
+
 query
 -----
 
 :Summary: Associative array of query string values to add to the request.
 :Types:
     - array
-    - ``GuzzleHttp\Query``
+    - string
 :Default: None
 
 .. code-block:: php
@@ -566,6 +567,7 @@ string values that are parsed from the URL.
 
     // Send a GET request to /get?abc=123&foo=bar
     $client->get('/get?abc=123', ['query' => ['foo' => 'bar']]);
+
 
 auth
 ----
@@ -608,6 +610,7 @@ digest
     option in an array) is always converted to a lowercase string. Take this
     into account when implementing custom authentication types and when
     implementing custom message factories.
+
 
 Custom Authentication Schemes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -655,12 +658,14 @@ to ensure that they are fired last or near last in the event chain.
     $client->getEmitter()->attach(new FooAuth('password'));
     $client->get('/', ['auth' => 'foo']);
 
+
 Adapter Specific Authentication Schemes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you need to use authentication methods provided by cURL (e.g., NTLM, GSS,
 etc.), then you need to specify a curl handler option in the ``options``
 request option array. See :ref:`config-option` for more information.
+
 
 .. _cookies-option:
 
@@ -697,6 +702,7 @@ cookie jar.
 
     $jar = new GuzzleHttp\Cookie\CookieJar();
     $client->get('/get', ['cookies' => $jar]);
+
 
 .. _allow_redirects-option:
 
@@ -756,6 +762,7 @@ specifies which protocols are supported for redirects (defaults to
     echo $res->getStatusCode();
     // 200
 
+
 decode_content
 --------------
 
@@ -789,6 +796,7 @@ header of the request.
 
     // Pass "gzip" as the Accept-Encoding header.
     $client->get('/foo.js', ['decode_content' => 'gzip']);
+
 
 .. _save_to-option:
 
@@ -824,6 +832,7 @@ to an open Guzzle stream:
     $resource = fopen('/path/to/file', 'w');
     $stream = GuzzleHttp\Stream\Stream::factory($resource);
     $client->get('/stream/20', ['save_to' => $stream]);
+
 
 .. _events-option:
 
@@ -868,6 +877,7 @@ priority and whether or not an event should be triggered more than once.
         ]
     ]);
 
+
 .. _subscribers-option:
 
 subscribers
@@ -891,10 +901,11 @@ subscribers
     echo $history;
     // Outputs the request and response history
 
-.. _exceptions-option:
 
-exceptions
-----------
+.. _http-errors-option:
+
+http_errors
+-----------
 
 :Summary: Set to ``false`` to disable throwing exceptions on an HTTP protocol
     errors (i.e., 4xx and 5xx responses). Exceptions are thrown by default when
@@ -907,9 +918,10 @@ exceptions
     $client->get('/status/500');
     // Throws a GuzzleHttp\Exception\ServerException
 
-    $res = $client->get('/status/500', ['exceptions' => false]);
+    $res = $client->get('/status/500', ['http_errors' => false]);
     echo $res->getStatusCode();
     // 500
+
 
 .. _timeout-option:
 
@@ -926,6 +938,7 @@ timeout
     // Timeout if a server does not return a response in 3.14 seconds.
     $client->get('/delay/5', ['timeout' => 3.14]);
     // PHP Fatal error:  Uncaught exception 'GuzzleHttp\Exception\RequestException'
+
 
 .. _connect_timeout-option:
 
@@ -947,6 +960,7 @@ connect_timeout
     This setting must be supported by the HTTP handler used to send a request.
     ``connect_timeout`` is currently only supported by the built-in cURL
     handler.
+
 
 .. _verify-option:
 
@@ -1011,6 +1025,7 @@ the file, allowing you to omit the "verify" request option. Much more detail on
 SSL certificates can be found on the
 `cURL website <http://curl.haxx.se/docs/sslcerts.html>`_.
 
+
 .. _cert-option:
 
 cert
@@ -1029,6 +1044,7 @@ cert
 .. code-block:: php
 
     $client->get('/', ['cert' => ['/path/server.pem', 'password']]);
+
 
 .. _ssl_key-option:
 
@@ -1049,6 +1065,7 @@ ssl_key
     ``ssl_key`` is implemented by HTTP handlers. This is currently only
     supported by the cURL handler, but might be supported by other third-part
     handlers.
+
 
 .. _proxy-option:
 
@@ -1084,6 +1101,7 @@ Pass an associative array to specify HTTP proxies for specific URI schemes
 
     You can provide proxy URLs that contain a scheme, username, and password.
     For example, ``"http://username:password@192.168.16.1:10"``.
+
 
 .. _debug-option:
 
@@ -1125,6 +1143,7 @@ Running the above example would output something like the following:
     <
     * Connection #0 to host httpbin.org left intact
 
+
 .. _stream-option:
 
 stream
@@ -1150,6 +1169,7 @@ stream
     a client. This option might not be supported by every HTTP handler, but the
     interface of the response object remains the same regardless of whether or
     not it is supported by the handler.
+
 
 .. _expect-option:
 
@@ -1179,6 +1199,7 @@ the body of a request is greater than 1 MB and a request is using HTTP/1.1.
     Support for handling the "Expect: 100-Continue" workflow must be
     implemented by Guzzle HTTP handlers used by a client.
 
+
 .. _version-option:
 
 version
@@ -1195,98 +1216,12 @@ version
     echo $request->getProtocolVersion();
     // 1.0
 
-.. _config-option:
 
-config
-------
+Request middleware
+==================
 
-:Summary: Associative array of config options that are forwarded to a request's
-    configuration collection. These values are used as configuration options
-    that can be consumed by plugins and handlers.
-:Types: array
-:Default: None
 
-.. code-block:: php
 
-    $request = $client->createRequest('GET', '/get', ['config' => ['foo' => 'bar']]);
-    echo $request->getConfig('foo');
-    // 'bar'
-
-Some HTTP handlers allow you to specify custom handler-specific settings. For
-example, you can pass custom cURL options to requests by passing an associative
-array in the ``config`` request option under the ``curl`` key.
-
-.. code-block:: php
-
-    // Use custom cURL options with the request. This example uses NTLM auth
-    // to authenticate with a server.
-    $client->get('/', [
-        'config' => [
-            'curl' => [
-                CURLOPT_HTTPAUTH => CURLAUTH_NTLM,
-                CURLOPT_USERPWD  => 'username:password'
-            ]
-        ]
-    ]);
-
-future
-------
-
-:Summary: Specifies whether or not a response SHOULD be an instance of a
-    ``GuzzleHttp\Message\FutureResponse`` object.
-:Types:
-        - bool
-        - string
-:Default: ``false``
-
-By default, Guzzle requests should be synchronous. You can create asynchronous
-future responses by passing the ``future`` request option as ``true``. The
-response will only be executed when it is used like a normal response, the
-``wait()`` method of the response is called, or the corresponding handler that
-created the response is destructing and there are futures that have not been
-resolved.
-
-.. important::
-
-    This option only has an effect if your handler can create and return future
-    responses. However, even if a response is completed synchronously, Guzzle
-    will ensure that a FutureResponse object is returned for API consistency.
-
-.. code-block:: php
-
-    $response = $client->get('/foo', ['future' => true])
-        ->then(function ($response) {
-            echo 'I got a response! ' . $response;
-        });
-
-Event Subscribers
-=================
-
-Requests emit lifecycle events when they are transferred. A client object has a
-``GuzzleHttp\Common\EventEmitter`` object that can be used to add event
-*listeners* and event *subscribers* to all requests created by the client.
-
-.. important::
-
-    **Every** event listener or subscriber added to a client will be added to
-    every request created by the client.
-
-.. code-block:: php
-
-    use GuzzleHttp\Client;
-    use GuzzleHttp\Event\BeforeEvent;
-
-    $client = new Client();
-
-    // Add a listener that will echo out requests before they are sent
-    $client->getEmitter()->on('before', function (BeforeEvent $e) {
-        echo 'About to send request: ' . $e->getRequest();
-    });
-
-    $client->get('http://httpbin.org/get');
-    // Outputs the request as a string because of the event
-
-See :doc:`events` for more information on the event system used in Guzzle.
 
 Environment Variables
 =====================
@@ -1304,6 +1239,7 @@ behavior of the library.
     Defines the proxy to use when sending requests using the "http" protocol.
 ``HTTPS_PROXY``
     Defines the proxy to use when sending requests using the "https" protocol.
+
 
 Relevant ini Settings
 ---------------------

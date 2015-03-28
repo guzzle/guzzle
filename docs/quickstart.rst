@@ -7,8 +7,8 @@ If you have not already installed, Guzzle, head over to the :ref:`installation`
 page.
 
 
-Make a Request
-==============
+Making a Request
+================
 
 You can send requests with Guzzle using a ``GuzzleHttp\ClientInterface``
 object.
@@ -80,8 +80,8 @@ Using Responses
 ===============
 
 In the previous examples, we retrieved a ``$response`` variable. This value is
-actually a ``GuzzleHttp\Message\ResponseInterface`` object and contains lots
-of helpful information.
+actually an instance of ``Psr\Http\Message\ResponseInterface`` and contains
+lots of helpful information.
 
 You can get the status code and reason phrase of the response.
 
@@ -92,16 +92,6 @@ You can get the status code and reason phrase of the response.
 
     $reason = $response->getReasonPhrase();
     // OK
-
-By providing the ``future`` request option to a request, you can send requests
-asynchronously using the promise interface of a future response.
-
-.. code-block:: php
-
-    $client->get('http://httpbin.org', ['future' => true])
-        ->then(function ($response) {
-            echo $response->getStatusCode();
-        });
 
 
 Response Body
@@ -114,6 +104,7 @@ The body of a response can be retrieved and cast to a string.
     $body = $response->getBody();
     echo $body;
     // { "some_json_data" ...}
+    $asString = (string) $body;
 
 You can also read read bytes from body of a response like a stream.
 
