@@ -13,11 +13,12 @@ foreach (['README.md', 'LICENSE'] as $file) {
 
 // Copy each dependency to the staging directory. Copy *.php and *.pem files.
 $packager->recursiveCopy('src', 'GuzzleHttp', ['php']);
-$packager->recursiveCopy('vendor/guzzlehttp/promise/src', 'GuzzleHttp/Promise');
+$packager->recursiveCopy('vendor/guzzlehttp/promises/src', 'GuzzleHttp/Promise');
 $packager->recursiveCopy('vendor/guzzlehttp/psr7/src', 'GuzzleHttp/Psr7');
-$packager->recursiveCopy('vendor/psr/http-message/src', 'Psr\Http\Message');
+$packager->recursiveCopy('vendor/psr/http-message/src', 'Psr/Http/Message');
 
 $packager->createAutoloader([
+    'GuzzleHttp/functions.php',
     'GuzzleHttp/Psr7/functions.php',
     'GuzzleHttp/Promise/functions.php',
 ]);

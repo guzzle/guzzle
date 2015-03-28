@@ -40,4 +40,11 @@ tag:
 	git commit -m '$(TAG) release'
 	chag tag
 
-.PHONY: docs
+burgomaster:
+	mkdir -p build/artifacts
+	curl -s https://raw.githubusercontent.com/mtdowling/Burgomaster/0.0.2/src/Burgomaster.php > build/artifacts/Burgomaster.php
+
+package: burgomaster
+	php build/packager.php
+
+.PHONY: docs burgomaster
