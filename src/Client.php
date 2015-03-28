@@ -59,24 +59,6 @@ class Client implements ClientInterface
     /** @var callable Cached prepare body middleware */
     private $prepareBodyMiddleware;
 
-    /** @var array Known pass-through transfer request options */
-    private static $transferOptions = [
-        'delay' => true,
-        'connect_timeout' => true,
-        'timeout' => true,
-        'verify' => true,
-        'ssl_key' => true,
-        'cert' => true,
-        'progress' => true,
-        'proxy' => true,
-        'debug' => true,
-        'sink' => true,
-        'stream' => true,
-        'expect' => true,
-        'allow_redirects' => true,
-        'sync' => true
-    ];
-
     /** @var array Default allow_redirects request option settings  */
     private static $defaultRedirect = [
         'max'       => 5,
@@ -479,70 +461,57 @@ class Client implements ClientInterface
         $conditional = [];
         $this->extractFormData($options, $conditional);
 
-        foreach ($options as $key => $value) {
-            if (isset(self::$transferOptions[$key])) {
-                $config[$key] = $value;
-                continue;
+        if (!empty($options['decode_content'])) {
+            if ($options['decode_content'] !== true) {
+                $modify['set_headers']['Accept-Encoding'] = $options['decode_content'];
             }
-            switch ($key) {
+        }
 
-                case 'decode_content':
-                    if ($value === false) {
-                        continue;
-                    }
-                    if ($value !== true) {
-                        $modify['set_headers']['Accept-Encoding'] = $value;
-                    }
+        if (isset($options['headers'])) {
+            $modify['set_headers'] = $options['headers'] + $modify['set_headers'];
+            unset($options['headers']);
+        }
+
+        if (isset($options['body'])) {
+            $modify['body'] = Psr7\stream_for($options['body']);
+            unset($options['body']);
+        }
+
+        if (!empty($options['auth'])) {
+            $value = $options['auth'];
+            $type = is_array($value)
+                ? (isset($value[2]) ? strtolower($value[2]) : 'basic')
+                : $value;
+            $config['auth'] = $value;
+            switch (strtolower($type)) {
+                case 'basic':
+                    $modify['set_headers']['Authorization'] = 'Basic '
+                        . base64_encode("$value[0]:$value[1]");
                     break;
-
-                case 'headers':
-                    $modify['set_headers'] = $options['headers'] + $modify['set_headers'];
-                    unset($options['headers']);
-                    break;
-
-                case 'body':
-                    $modify['body'] = Psr7\stream_for($value);
-                    unset($options['body']);
-                    break;
-
-                case 'auth':
-                    if (!$value) {
-                        continue;
-                    }
-                    $type = is_array($value)
-                        ? (isset($value[2]) ? strtolower($value[2]) : 'basic')
-                        : $value;
-                    $config['auth'] = $value;
-                    switch (strtolower($type)) {
-                        case 'basic':
-                            $modify['set_headers']['Authorization'] = 'Basic '
-                                . base64_encode("$value[0]:$value[1]");
-                            break;
-                        case 'digest':
-                            // @todo: Do not rely on curl
-                            $options['config']['curl'][CURLOPT_HTTPAUTH] = CURLAUTH_DIGEST;
-                            $options['config']['curl'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
-                            break;
-                    }
-                    break;
-
-                case 'query':
-                    if (is_array($value)) {
-                        $value = http_build_query($value, null, null, PHP_QUERY_RFC3986);
-                    }
-                    if (!is_string($value)) {
-                        throw new Iae('query must be a string or array');
-                    }
-                    $modify['query'] = $value;
-                    unset($options['query']);
-                    break;
-
-                case 'json':
-                    $modify['body'] = Psr7\stream_for(json_encode($value));
-                    $conditional['Content-Type'] = 'application/json';
-                    unset($options['json']);
+                case 'digest':
+                    // @todo: Do not rely on curl
+                    $options['curlopts'][CURLOPT_HTTPAUTH] = CURLAUTH_DIGEST;
+                    $options['curlopts'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
                     break;
             }
+        }
+
+        if (isset($options['query'])) {
+            $value = $options['query'];
+            if (is_array($value)) {
+                $value = http_build_query($value, null, null, PHP_QUERY_RFC3986);
+            }
+            if (!is_string($value)) {
+                throw new Iae('query must be a string or array');
+            }
+            $modify['query'] = $value;
+            unset($options['query']);
+        }
+
+        if (isset($options['json'])) {
+            $modify['body'] = Psr7\stream_for(json_encode($options['json']));
+            $conditional['Content-Type'] = 'application/json';
+            unset($options['json']);
         }
 
         $request = Psr7\modify_request($request, $modify);

@@ -372,7 +372,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals([
             CURLOPT_HTTPAUTH => 2,
             CURLOPT_USERPWD  => 'a:b'
-        ], $last['config']['curl']);
+        ], $last['curlopts']);
     }
 
     public function testAuthCanBeCustomType()
