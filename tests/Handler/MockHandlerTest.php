@@ -92,4 +92,15 @@ class MockHandlerTest extends \PHPUnit_Framework_TestCase
         $mock($request, []);
         $this->assertSame($e, $c);
     }
+
+    /**
+     * @expectedException \OutOfBoundsException
+     */
+    public function testThrowsWhenNoMoreResponses()
+    {
+        $e = new \Exception('a');
+        $mock = new MockHandler();
+        $request = new Request('GET', 'http://example.com');
+        $mock($request, []);
+    }
 }

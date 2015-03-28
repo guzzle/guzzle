@@ -42,7 +42,7 @@ class MockHandler implements \Countable
     public function __invoke(RequestInterface $request, array $options)
     {
         if (!$this->queue) {
-            throw new \RuntimeException('Mock queue is empty');
+            throw new \OutOfBoundsException('Mock queue is empty');
         }
 
         if (isset($options['delay'])) {
