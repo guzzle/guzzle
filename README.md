@@ -19,7 +19,6 @@ trivial to integrate with web services.
 
 ```php
 $client = new GuzzleHttp\Client();
-$response = $client->get('http://guzzlephp.org');
 $res = $client->get('https://api.github.com/user', ['auth' =>  ['user', 'pass']]);
 echo $res->getStatusCode();
 // "200"
