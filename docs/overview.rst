@@ -108,10 +108,12 @@ Contributing
 Guidelines
 ----------
 
-1. Guzzle follows PSR-0, PSR-1, and PSR-2.
-2. Guzzle is meant to be lean and fast with very few dependencies.
+1. Guzzle utilizes PSR-0, PSR-1, PSR-2, and PSR-7.
+2. Guzzle is meant to be lean and fast with very few dependencies. This means
+   that not every feature request will be accepted.
 3. Guzzle has a minimum PHP version requirement of PHP 5.4. Pull requests must
-   not require a PHP version greater than PHP 5.4.
+   not require a PHP version greater than PHP 5.4 unless the feature is only
+   utilized conditionally.
 4. All pull requests must include unit tests to ensure the change works as
    expected and to prevent regressions.
 

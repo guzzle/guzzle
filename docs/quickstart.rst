@@ -6,27 +6,52 @@ This page provides a quick introduction to Guzzle and introductory examples.
 If you have not already installed, Guzzle, head over to the :ref:`installation`
 page.
 
+
 Make a Request
 ==============
 
 You can send requests with Guzzle using a ``GuzzleHttp\ClientInterface``
 object.
 
+
 Creating a Client
 -----------------
-
-The procedural API is simple but not very testable; it's best left for quick
-prototyping. If you want to use Guzzle in a more flexible and testable way,
-then you'll need to use a ``GuzzleHttp\ClientInterface`` object.
 
 .. code-block:: php
 
     use GuzzleHttp\Client;
 
-    $client = new Client();
-    $response = $client->get('http://httpbin.org/get');
+    $client = new Client([
+        // Base URI is used with relative requests
+        'base_uri' => 'http://httpbin.org',
+        // You can set any number of default request options.
+        'timeout'  => 2.0,
+    ]);
 
-    // You can use the same methods you saw in the procedural API
+The client constructor accepts an associative array of options:
+
+`base_uri`
+    (string|UriInterface) Base URI of the client that is merged into relative
+    URIs. Can be a string or instance of UriInterface.
+
+`handler`
+    (callable) Function that transfers HTTP requests over the wire. The
+    function is called with a `Psr7\Http\Message\RequestInterface` and array
+     of transfer options, and must return a
+     `GuzzleHttp\Promise\PromiseInterface` that is fulfilled with a
+     `Psr7\Http\Message\ResponseInterface` on success. `handler` is a
+     constructor only option that cannot be overridden in per/request options.
+
+`...`
+    (mixed) All other options passed to the constructor are used as default
+    request options with every request created by the client.
+
+
+Sending Requests
+----------------
+
+    // Magic methods on the client make it easy to send synchronous requests.
+    $response = $client->get('http://httpbin.org/get');
     $response = $client->delete('http://httpbin.org/delete');
     $response = $client->head('http://httpbin.org/get');
     $response = $client->options('http://httpbin.org/get');
@@ -34,19 +59,22 @@ then you'll need to use a ``GuzzleHttp\ClientInterface`` object.
     $response = $client->post('http://httpbin.org/post');
     $response = $client->put('http://httpbin.org/put');
 
-You can create a request with a client and then send the request with the
-client when you're ready.
+You can create a request and then send the request with the client when you're
+ready.
 
 .. code-block:: php
 
-    $request = $client->createRequest('GET', 'http://www.foo.com');
-    $response = $client->send($request);
+    use GuzzleHttp\Psr7\Request;
+
+    $request = new Request('PUT', 'http:/httpbin.org/put');
+    $response = $client->send($request, ['timeout' => 2]);
 
 Client objects provide a great deal of flexibility in how request are
-transferred including default request options, subscribers that are attached
-to each request, and a base URL that allows you to send requests with relative
-URLs. You can find out all about clients in the :doc:`clients` page of the
-documentation.
+transferred including default request options, default handler stack middleware
+that are used by each request, and a base URI that allows you to send requests
+with relative URIs. You can find out all about clients in the :doc:`clients`
+page of the documentation.
+
 
 Using Responses
 ===============
@@ -75,6 +103,7 @@ asynchronously using the promise interface of a future response.
             echo $response->getStatusCode();
         });
 
+
 Response Body
 -------------
 
@@ -96,38 +125,6 @@ You can also read read bytes from body of a response like a stream.
         echo $body->read(1024);
     }
 
-JSON Responses
-~~~~~~~~~~~~~~
-
-You can more easily work with JSON responses using the ``json()`` method of a
-response.
-
-.. code-block:: php
-
-    $response = $client->get('http://httpbin.org/get');
-    $json = $response->json();
-    var_dump($json[0]['origin']);
-
-Guzzle internally uses PHP's ``json_decode()`` function to parse responses. If
-Guzzle is unable to parse the JSON response body, then a
-``GuzzleHttp\Exception\ParseException`` is thrown.
-
-XML Responses
-~~~~~~~~~~~~~
-
-You can use a response's ``xml()`` method to more easily work with responses
-that contain XML data.
-
-.. code-block:: php
-
-    $response = $client->get('https://github.com/mtdowling.atom');
-    $xml = $response->xml();
-    echo $xml->id;
-    // tag:github.com,2008:/mtdowling
-
-Guzzle internally uses a ``SimpleXMLElement`` object to parse responses. If
-Guzzle is unable to parse the XML response body, then a
-``GuzzleHttp\Exception\ParseException`` is thrown.
 
 Query String Parameters
 =======================
@@ -174,6 +171,7 @@ calling the ``getQuery()`` method of a request and modifying the request's
     $query['empty'] = '';
     echo $query;
     // foo=bar&baz=bam&empty=
+
 
 .. _headers:
 
@@ -232,6 +230,7 @@ value is an array of strings associated with the header.
         echo $name . ": " . implode(", ", $values);
     }
 
+
 Modifying headers
 -----------------
 
@@ -260,6 +259,7 @@ or response object.
     echo $request->getHeader('X-Foo');
     // Echoes an empty string: ''
 
+
 Uploading Data
 ==============
 
@@ -279,11 +279,13 @@ You can easily upload JSON data using the ``json`` request option.
 
     $r = $client->put('http://httpbin.org/put', ['json' => ['foo' => 'bar']]);
 
+
 POST Requests
 -------------
 
 In addition to specifying the raw data of a request using the ``body`` request
 option, Guzzle provides helpful abstractions over sending POST data.
+
 
 Sending POST Fields
 ~~~~~~~~~~~~~~~~~~~
@@ -317,6 +319,7 @@ You can also build up POST requests before sending them.
 
     // Send the POST request
     $response = $client->send($request);
+
 
 Sending POST Files
 ~~~~~~~~~~~~~~~~~~
@@ -352,6 +355,7 @@ files before sending them.
     $postBody->addFile(new PostFile('test', fopen('/path/to/file', 'r')));
     $response = $client->send($request);
 
+
 Cookies
 =======
 
@@ -363,6 +367,7 @@ Guzzle can maintain a cookie session for you if instructed using the
   a new cookie session.
 - Set to a ``GuzzleHttp\Subscriber\CookieJar\CookieJarInterface`` object to use
   an existing cookie jar.
+
 
 Redirects
 =========
@@ -396,6 +401,7 @@ The following example shows that redirects can be disabled.
     // 301
     echo $response->getEffectiveUrl();
     // 'http://github.com/'
+
 
 Exceptions
 ==========

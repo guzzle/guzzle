@@ -29,8 +29,6 @@ trivial to integrate with web services.
     // 'application/json; charset=utf8'
     echo $res->getBody();
     // {"type":"User"...'
-    var_export($res->json());
-    // Outputs the JSON decoded data
 
     // Send an asynchronous request.
     $promise = $client->getAsync('http://httpbin.org');
