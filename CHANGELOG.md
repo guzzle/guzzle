@@ -1,5 +1,56 @@
 # CHANGELOG
 
+## 6.0.0-beta.1
+
+* Updated to use PSR-7
+  * Requires immutable messages, which basically means an event based system
+    owned by a request instance is no longer possible.
+  * Utilizing the [Guzzle PSR-7 package](https://github.com/guzzle/psr7).
+  * Removed the dependency on `guzzlehttp/streams`. These stream abstractions
+    are available in the `guzzlehttp/psr7` package under the `GuzzleHttp\Psr7`
+    namespace.
+* Added middleware and handler system
+  * Replaced the Guzzle event and subscriber system with a middleware system.
+  * No longer depends on RingPHP, but rather places the HTTP handlers directly
+    in Guzzle, operating on PSR-7 messages.
+  * Retry logic is now encapsulated in `GuzzleHttp\Middleware::retry`, which
+    means the `guzzlehttp/retry-subscriber` is now obsolete.
+  * Mocking responses is now handled using `GuzzleHttp\Handler\MockHandler`.
+* Asynchronous responses
+  * No longer supports the `future` request option to send an async request.
+    Instead, use one of the `*Async` methods of a client (e.g., `requestAsync`,
+    `getAsync`, etc.).
+  * Utilizing `GuzzleHttp\Promise` instead of React's promise library to avoid
+    recursion required by chaining and forwarding react promises. See
+    https://github.com/guzzle/promises
+  * Added `requestAsync` and `sendAsync` to send request asynchronously.
+  * Added magic methods for `getAsync()`, `postAsync()`, etc. to send requests
+    asynchronously.
+* Request options
+  * POST and form updates
+    * Added the `form_fields` and `form_files` request options.
+    * Removed the `GuzzleHttp\Post` namespace.
+    * The `body` request option no longer accepts an array for POST requests.
+  * The `exceptions` request option has been deprecated in favor of the
+    `http_errors` request options.
+  * The `save_to` request option has been deprecated in favor of `sink` request
+    option.
+* Clients no longer accept an array of URI template string and variables for
+  URI variables. You will need to expand URI templates before passing them
+  into a client constructor or request method.
+* Client methods `get()`, `post()`, `put()`, `patch()`, `options()`, etc. are
+  now magic methods that will send synchronous requests.
+* Replaced `Utils.php` with plain functions in `functions.php`.
+* Removed `GuzzleHttp\Collection`.
+* Removed `GuzzleHttp\BatchResults`. Batched pool results are now returned as
+  an array.
+* Removed `GuzzleHttp\Query`. Query string handling is now handled using an
+  associative array passed into the `query` request option. The query string
+  is serialized using PHP's `http_build_query`. If you need more control, you
+  can pass the query string in as a string.
+* `GuzzleHttp\QueryParser` has been replaced with the
+  `GuzzleHttp\Psr7\parse_query`.
+
 ## 5.2.0 - 2015-01-27
 
 * Added `AppliesHeadersInterface` to make applying headers to a request based
