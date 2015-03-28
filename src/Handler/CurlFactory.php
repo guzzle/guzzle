@@ -39,9 +39,15 @@ class CurlFactory
         $this->applyHandlerOptions($request, $options, $conf);
         $this->applyHeaders($request, $conf);
         unset($conf['_headers']);
+
+        if (isset($options['curl']['body_as_string'])) {
+            $options['_body_as_string'] = $options['curl']['body_as_string'];
+            unset($options['curl']['body_as_string']);
+        }
+
         // Add handler options from the request configuration options
-        if (isset($options['curlopts'])) {
-            $conf += $options['curlopts'];
+        if (isset($options['curl'])) {
+            $conf += $options['curl'];
         }
 
         $handle = $handle ?: curl_init();
@@ -239,7 +245,7 @@ class CurlFactory
         // Send the body as a string if the size is less than 1MB OR if the
         // [curl][body_as_string] request value is set.
         if (($size !== null && $size < 1000000) ||
-            !empty($options['curl']['body_as_string'])
+            !empty($options['_body_as_string'])
         ) {
             $conf[CURLOPT_POSTFIELDS] = (string) $request->getBody();
             // Don't duplicate the Content-Length header

@@ -490,8 +490,8 @@ class Client implements ClientInterface
                     break;
                 case 'digest':
                     // @todo: Do not rely on curl
-                    $options['curlopts'][CURLOPT_HTTPAUTH] = CURLAUTH_DIGEST;
-                    $options['curlopts'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
+                    $options['curl'][CURLOPT_HTTPAUTH] = CURLAUTH_DIGEST;
+                    $options['curl'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
                     break;
             }
         }
