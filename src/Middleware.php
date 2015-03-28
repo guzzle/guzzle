@@ -4,7 +4,6 @@ namespace GuzzleHttp;
 use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
-use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -225,6 +224,40 @@ final class Middleware
                     }
                 }
                 return $handler(Psr7\modify_request($request, $modify), $options);
+            };
+        };
+    }
+
+    /**
+     * Middleware that applies a map function to the request before passing to
+     * the next handler.
+     *
+     * @param callable $fn Function that accepts a RequestInterface and returns
+     *                     a RequestInterface.
+     * @return callable
+     */
+    public static function mapRequest(callable $fn)
+    {
+        return function (callable $handler) use ($fn) {
+            return function ($request, array $options) use ($handler, $fn) {
+                return $handler($fn($request), $options);
+            };
+        };
+    }
+
+    /**
+     * Middleware that applies a map function to the resolved promise's
+     * response.
+     *
+     * @param callable $fn Function that accepts a ResponseInterface and
+     *                     returns a ResponseInterface.
+     * @return callable
+     */
+    public static function mapResponse(callable $fn)
+    {
+        return function (callable $handler) use ($fn) {
+            return function ($request, array $options) use ($handler, $fn) {
+                return $handler($request, $options)->then($fn);
             };
         };
     }

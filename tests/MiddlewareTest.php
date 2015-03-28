@@ -14,6 +14,7 @@ use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class MiddlewareTest extends \PHPUnit_Framework_TestCase
 {
@@ -251,5 +252,35 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
         $response = $p->wait();
         $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testMapsRequest()
+    {
+        $h = new MockHandler([
+            function (RequestInterface $request, array $options) {
+                $this->assertEquals('foo', $request->getHeader('Bar'));
+                return new Response(200);
+            }
+        ]);
+        $stack = new HandlerStack($h);
+        $stack->push(Middleware::mapRequest(function (RequestInterface $request) {
+            return $request->withHeader('Bar', 'foo');
+        }));
+        $comp = $stack->resolve();
+        $p = $comp(new Request('PUT', 'http://www.google.com'), []);
+        $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
+    }
+
+    public function testMapsResponse()
+    {
+        $h = new MockHandler([new Response(200)]);
+        $stack = new HandlerStack($h);
+        $stack->push(Middleware::mapResponse(function (ResponseInterface $response) {
+            return $response->withHeader('Bar', 'foo');
+        }));
+        $comp = $stack->resolve();
+        $p = $comp(new Request('PUT', 'http://www.google.com'), []);
+        $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
+        $this->assertEquals('foo', $p->wait()->getHeader('Bar'));
     }
 }
