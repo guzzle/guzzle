@@ -10,8 +10,8 @@ class HandlerStack
     /** @var callable */
     private $handler;
 
-    /** @var \SplStack */
-    private $stack;
+    /** @var array */
+    private $stack = [];
 
     /**
      * @param callable $handler Underlying HTTP handler.
@@ -19,15 +19,6 @@ class HandlerStack
     public function __construct(callable $handler = null)
     {
         $this->handler = $handler;
-        $this->stack = new \SplStack();
-    }
-
-    /**
-     * Ensure the stack is cloned.
-     */
-    public function __clone()
-    {
-        $this->stack = clone $this->stack;
     }
 
     /**
@@ -39,12 +30,12 @@ class HandlerStack
     {
         $depth = 0;
         $stack = [];
-        if ($this->stack) {
+        if ($this->handler) {
             $stack[] = "0) Handler: " . $this->debugCallable($this->handler);
         }
 
         $result = '';
-        foreach ($this->stack as $tuple) {
+        foreach (array_reverse($this->stack) as $tuple) {
             $depth++;
             $str = "{$depth}) Name: '{$tuple[1]}', ";
             $str .= "Function: " . $this->debugCallable($tuple[0]);
@@ -88,7 +79,7 @@ class HandlerStack
      */
     public function unshift(callable $middleware, $name = null)
     {
-        $this->stack->unshift([$middleware, $name]);
+        array_unshift($this->stack, [$middleware, $name]);
     }
 
     /**
@@ -99,7 +90,7 @@ class HandlerStack
      */
     public function push(callable $middleware, $name = '')
     {
-        $this->stack->push([$middleware, $name]);
+        $this->stack[] = [$middleware, $name];
     }
 
     /**
@@ -134,15 +125,12 @@ class HandlerStack
     public function remove($remove)
     {
         $idx = is_callable($remove) ? 0 : 1;
-        $newStack = new \SplStack();
-
-        foreach ($this->stack as $i => $tuple) {
-            if ($tuple[$idx] !== $remove) {
-                $newStack->unshift($tuple);
+        $this->stack = array_values(array_filter(
+            $this->stack,
+            function ($tuple) use ($idx, $remove) {
+                return $tuple[$idx] !== $remove;
             }
-        }
-
-        $this->stack = $newStack;
+        ));
     }
 
     /**
@@ -156,7 +144,7 @@ class HandlerStack
             throw new \LogicException('No handler has been specified');
         }
 
-        foreach ($this->stack as $fn) {
+        foreach (array_reverse($this->stack) as $fn) {
             $prev = $fn[0]($prev);
         }
 
@@ -193,14 +181,16 @@ class HandlerStack
 
         if ($before) {
             if ($idx === 0) {
-                $this->stack->unshift($tuple);
+                array_unshift($this->stack, $tuple);
             } else {
-                $this->stack->add($idx, $tuple);
+                $replacement = [$tuple, $this->stack[$idx]];
+                array_splice($this->stack, $idx, 1, $replacement);
             }
         } elseif ($idx === count($this->stack) - 1) {
-            $this->stack->push($tuple);
+            $this->stack[] = $tuple;
         } else {
-            $this->stack->add($idx, $tuple);
+            $replacement = [$this->stack[$idx], $tuple];
+            array_splice($this->stack, $idx, 1, $replacement);
         }
     }
 
