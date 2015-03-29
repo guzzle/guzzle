@@ -15,7 +15,7 @@ trivial to integrate with web services.
 - Abstracts away the underlying HTTP transport, allowing you to write
   environment and transport agnostic code; i.e., no hard dependency on cURL,
   PHP streams, sockets, or non-blocking event loops.
-
+- Middleware system allows you to augment and compose client behavior.
 
 ```php
 $client = new GuzzleHttp\Client();
