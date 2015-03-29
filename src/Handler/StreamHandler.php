@@ -320,7 +320,7 @@ class StreamHandler
     {
         $this->addNotification(
             $params,
-            function ($code, $_, $_, $_, $transferred, $total) use ($value) {
+            function ($code, $a, $b, $c, $transferred, $total) use ($value) {
                 if ($code == STREAM_NOTIFY_PROGRESS) {
                     $value($total, $transferred, null, null);
                 }
