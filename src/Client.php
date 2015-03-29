@@ -153,6 +153,10 @@ class Client implements ClientInterface
      *   optional "headers" associative array of custom headers, and an
      *   optional "filename" key mapping to a string to send as the filename in
      *   the part.
+     * - stack: (callable) A function that accepts a
+     *   ``GuzzleHttp\HandlerStack`` object and the array of request options
+     *   before a request is sent. The function may mutate the handler stack to
+     *   add custom conditional middleware before sending each request.
      *
      * @param array $config Client configuration settings.
      */
@@ -429,7 +433,7 @@ class Client implements ClientInterface
                 throw new \InvalidArgumentException('The stack option must '
                     . 'be a function that accepts a HandlerStack.');
             }
-            $options['stack']($stack);
+            $options['stack']($stack, $options);
         }
 
         return $stack->resolve();

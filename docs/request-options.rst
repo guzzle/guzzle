@@ -13,252 +13,6 @@ All of the following examples use the following client:
 
     $client = new GuzzleHttp\Client(['base_uri' => 'http://httpbin.org']);
 
-
-headers
--------
-
-:Summary: Associative array of headers to add to the request. Each key is the
-    name of a header, and each value is a string or array of strings
-    representing the header field values.
-:Types: array
-:Defaults: None
-
-.. code-block:: php
-
-    // Set various headers on a request
-    $client->get('/get', [
-        'headers' => [
-            'User-Agent' => 'testing/1.0',
-            'Accept'     => 'application/json',
-            'X-Foo'      => ['Bar', 'Baz']
-        ]
-    ]);
-
-
-body
-----
-
-:Summary: The ``body`` option is used to control the body of an entity
-    enclosing request (e.g., PUT, POST, PATCH).
-:Types:
-    - string
-    - ``fopen()`` resource
-    - ``GuzzleHttp\Stream\StreamInterface``
-    - ``GuzzleHttp\Post\PostBodyInterface``
-:Default: None
-
-This setting can be set to any of the following types:
-
-- string
-
-  .. code-block:: php
-
-      // You can send requests that use a string as the message body.
-      $client->put('/put', ['body' => 'foo']);
-
-- resource returned from ``fopen()``
-
-  .. code-block:: php
-
-      // You can send requests that use a stream resource as the body.
-      $resource = fopen('http://httpbin.org', 'r');
-      $client->put('/put', ['body' => $resource]);
-
-- ``GuzzleHttp\Stream\StreamInterface``
-
-  .. code-block:: php
-
-      // You can send requests that use a Guzzle stream object as the body
-      $stream = GuzzleHttp\Stream\Stream::factory('contents...');
-      $client->post('/post', ['body' => $stream]);
-
-
-json
-----
-
-:Summary: The ``json`` option is used to easily upload JSON encoded data as the
-    body of a request. A Content-Type header of ``application/json`` will be
-    added if no Content-Type header is already present on the message.
-:Types:
-    Any PHP type that can be operated on by PHP's ``json_encode()`` function.
-:Default: None
-
-.. code-block:: php
-
-    $request = $client->createRequest('PUT', '/put', ['json' => ['foo' => 'bar']]);
-    echo $request->getHeader('Content-Type');
-    // application/json
-    echo $request->getBody();
-    // {"foo":"bar"}
-
-.. note::
-
-    This request option does not support customizing the Content-Type header
-    or any of the options from PHP's `json_encode() <http://www.php.net/manual/en/function.json-encode.php>`_
-    function. If you need to customize these settings, then you must pass the
-    JSON encoded data into the request yourself using the ``body`` request
-    option and you must specify the correct Content-Type header using the
-    ``headers`` request option.
-
-
-query
------
-
-:Summary: Associative array of query string values to add to the request.
-:Types:
-    - array
-    - string
-:Default: None
-
-.. code-block:: php
-
-    // Send a GET request to /get?foo=bar
-    $client->get('/get', ['query' => ['foo' => 'bar']]);
-
-Query strings specified in the ``query`` option are combined with any query
-string values that are parsed from the URL.
-
-.. code-block:: php
-
-    // Send a GET request to /get?abc=123&foo=bar
-    $client->get('/get?abc=123', ['query' => ['foo' => 'bar']]);
-
-
-auth
-----
-
-:Summary: Pass an array of HTTP authentication parameters to use with the
-    request. The array must contain the username in index [0], the password in
-    index [1], and you can optionally provide a built-in authentication type in
-    index [2]. Pass ``null`` to disable authentication for a request.
-:Types:
-    - array
-    - string
-    - null
-:Default: None
-
-The built-in authentication types are as follows:
-
-basic
-    Use `basic HTTP authentication <http://www.ietf.org/rfc/rfc2069.txt>`_ in
-    the ``Authorization`` header (the default setting used if none is
-    specified).
-
-    .. code-block:: php
-
-        $client->get('/get', ['auth' => ['username', 'password']]);
-
-digest
-    Use `digest authentication <http://www.ietf.org/rfc/rfc2069.txt>`_ (must be
-    supported by the HTTP handler).
-
-    .. code-block:: php
-
-        $client->get('/get', ['auth' => ['username', 'password', 'digest']]);
-
-    *This is currently only supported when using the cURL handler, but creating
-    a replacement that can be used with any HTTP handler is planned.*
-
-.. important::
-
-    The authentication type (whether it's provided as a string or as the third
-    option in an array) is always converted to a lowercase string. Take this
-    into account when implementing custom authentication types and when
-    implementing custom message factories.
-
-
-Custom Authentication Schemes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You can also provide a string representing a custom authentication type name.
-When using a custom authentication type string, you will need to implement
-the authentication method in an event listener that checks the ``auth`` request
-option of a request before it is sent. Authentication listeners that require
-a request is not modified after they are signed should have a very low priority
-to ensure that they are fired last or near last in the event chain.
-
-.. code-block:: php
-
-    use GuzzleHttp\Event\BeforeEvent;
-    use GuzzleHttp\Event\RequestEvents;
-
-    /**
-     * Custom authentication listener that handles the "foo" auth type.
-     *
-     * Listens to the "before" event of a request and only modifies the request
-     * when the "auth" config setting of the request is "foo".
-     */
-    class FooAuth implements GuzzleHttp\Event\SubscriberInterface
-    {
-        private $password;
-
-        public function __construct($password)
-        {
-            $this->password = $password;
-        }
-
-        public function getEvents()
-        {
-            return ['before' => ['sign', RequestEvents::SIGN_REQUEST]];
-        }
-
-        public function sign(BeforeEvent $e)
-        {
-            if ($e->getRequest()->getConfig()['auth'] == 'foo') {
-                $e->getRequest()->setHeader('X-Foo', 'Foo ' . $this->password);
-            }
-        }
-    }
-
-    $client->getEmitter()->attach(new FooAuth('password'));
-    $client->get('/', ['auth' => 'foo']);
-
-
-Adapter Specific Authentication Schemes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If you need to use authentication methods provided by cURL (e.g., NTLM, GSS,
-etc.), then you need to specify a curl handler option in the ``options``
-request option array. See :ref:`config-option` for more information.
-
-
-.. _cookies-option:
-
-cookies
--------
-
-:Summary: Specifies whether or not cookies are used in a request or what cookie
-    jar to use or what cookies to send.
-:Types:
-    - bool
-    - array
-    - ``GuzzleHttp\Cookie\CookieJarInterface``
-:Default: None
-
-Set to ``true`` to use a shared cookie session associated with the client.
-
-.. code-block:: php
-
-    // Enable cookies using the shared cookie jar of the client.
-    $client->get('/get', ['cookies' => true]);
-
-Pass an associative array containing cookies to send in the request and start a
-new cookie session.
-
-.. code-block:: php
-
-    // Enable cookies and send specific cookies
-    $client->get('/get', ['cookies' => ['foo' => 'bar']]);
-
-Set to a ``GuzzleHttp\Cookie\CookieJarInterface`` object to use an existing
-cookie jar.
-
-.. code-block:: php
-
-    $jar = new GuzzleHttp\Cookie\CookieJar();
-    $client->get('/get', ['cookies' => $jar]);
-
-
 .. _allow_redirects-option:
 
 allow_redirects
@@ -266,17 +20,18 @@ allow_redirects
 
 :Summary: Describes the redirect behavior of a request
 :Types:
-    - bool
-    - array
+        - bool
+        - array
 :Default:
-    ::
 
-        [
-            'max'       => 5,
-            'strict'    => false,
-            'referer'   => true,
-            'protocols' => ['http', 'https']
-        ]
+::
+
+    [
+        'max'       => 5,
+        'strict'    => false,
+        'referer'   => true,
+        'protocols' => ['http', 'https']
+    ]
 
 Set to ``false`` to disable redirects.
 
@@ -318,14 +73,211 @@ specifies which protocols are supported for redirects (defaults to
     // 200
 
 
+auth
+----
+
+:Summary: Pass an array of HTTP authentication parameters to use with the
+        request. The array must contain the username in index [0], the password in
+        index [1], and you can optionally provide a built-in authentication type in
+        index [2]. Pass ``null`` to disable authentication for a request.
+:Types:
+        - array
+        - string
+        - null
+:Default: None
+
+    The built-in authentication types are as follows:
+
+    basic
+        Use `basic HTTP authentication <http://www.ietf.org/rfc/rfc2069.txt>`_
+        in the ``Authorization`` header (the default setting used if none is
+        specified).
+
+    .. code-block:: php
+
+        $client->get('/get', ['auth' => ['username', 'password']]);
+
+    digest
+        Use `digest authentication <http://www.ietf.org/rfc/rfc2069.txt>`_
+        (must be supported by the HTTP handler).
+
+    .. code-block:: php
+
+        $client->get('/get', ['auth' => ['username', 'password', 'digest']]);
+
+    .. note::
+
+        This is currently only supported when using the cURL handler, but
+        creating a replacement that can be used with any HTTP handler is
+        planned.
+
+
+body
+----
+
+:Summary: The ``body`` option is used to control the body of an entity
+    enclosing request (e.g., PUT, POST, PATCH).
+:Types:
+    - string
+    - ``fopen()`` resource
+    - ``GuzzleHttp\Stream\StreamInterface``
+    - ``GuzzleHttp\Post\PostBodyInterface``
+:Default: None
+
+    This setting can be set to any of the following types:
+
+    - string
+
+      .. code-block:: php
+
+      // You can send requests that use a string as the message body.
+      $client->put('/put', ['body' => 'foo']);
+
+- resource returned from ``fopen()``
+
+  .. code-block:: php
+
+      // You can send requests that use a stream resource as the body.
+      $resource = fopen('http://httpbin.org', 'r');
+      $client->put('/put', ['body' => $resource]);
+
+- ``GuzzleHttp\Stream\StreamInterface``
+
+  .. code-block:: php
+
+      // You can send requests that use a Guzzle stream object as the body
+      $stream = GuzzleHttp\Psr7\stream_for('contents...');
+      $client->post('/post', ['body' => $stream]);
+
+
+.. _cert-option:
+
+cert
+----
+
+:Summary: Set to a string to specify the path to a file containing a PEM
+        formatted client side certificate. If a password is required, then set to
+        an array containing the path to the PEM file in the first array element
+        followed by the password required for the certificate in the second array
+        element.
+:Types:
+        - string
+        - array
+:Default: None
+
+.. code-block:: php
+
+    $client->get('/', ['cert' => ['/path/server.pem', 'password']]);
+
+
+.. _cookies-option:
+
+cookies
+-------
+
+:Summary: Specifies whether or not cookies are used in a request or what cookie
+        jar to use or what cookies to send.
+:Types:
+        - bool
+        - array
+        - ``GuzzleHttp\Cookie\CookieJarInterface``
+:Default: None
+
+    Set to ``true`` to use a shared cookie session associated with the client.
+
+.. code-block:: php
+
+    // Enable cookies using the shared cookie jar of the client.
+    $client->get('/get', ['cookies' => true]);
+
+Pass an associative array containing cookies to send in the request and start a
+new cookie session.
+
+.. code-block:: php
+
+    // Enable cookies and send specific cookies
+    $client->get('/get', ['cookies' => ['foo' => 'bar']]);
+
+Set to a ``GuzzleHttp\Cookie\CookieJarInterface`` object to use an existing
+cookie jar.
+
+.. code-block:: php
+
+    $jar = new GuzzleHttp\Cookie\CookieJar();
+    $client->get('/get', ['cookies' => $jar]);
+
+
+.. _connect_timeout-option:
+
+connect_timeout
+---------------
+
+:Summary: Float describing the number of seconds to wait while trying to connect
+        to a server. Use ``0`` to wait indefinitely (the default behavior).
+:Types: float
+:Default: ``0``
+
+.. code-block:: php
+
+    // Timeout if the client fails to connect to the server in 3.14 seconds.
+    $client->get('/delay/5', ['connect_timeout' => 3.14]);
+
+.. note::
+
+    This setting must be supported by the HTTP handler used to send a request.
+    ``connect_timeout`` is currently only supported by the built-in cURL
+    handler.
+
+
+.. _debug-option:
+
+debug
+-----
+
+:Summary: Set to ``true`` or set to a PHP stream returned by ``fopen()`` to
+    enable debug output with the handler used to send a request. For example,
+    when using cURL to transfer requests, cURL's verbose of ``CURLOPT_VERBOSE``
+    will be emitted. When using the PHP stream wrapper, stream wrapper
+    notifications will be emitted. If set to true, the output is written to
+    PHP's STDOUT. If a PHP stream is provided, output is written to the stream.
+:Types:
+        - bool
+        - ``fopen()`` resource
+:Default: None
+
+.. code-block:: php
+
+    $client->get('/get', ['debug' => true]);
+
+Running the above example would output something like the following:
+
+::
+
+    * About to connect() to httpbin.org port 80 (#0)
+    *   Trying 107.21.213.98... * Connected to httpbin.org (107.21.213.98) port 80 (#0)
+    > GET /get HTTP/1.1
+    Host: httpbin.org
+    User-Agent: Guzzle/4.0 curl/7.21.4 PHP/5.5.7
+
+    < HTTP/1.1 200 OK
+    < Access-Control-Allow-Origin: *
+    < Content-Type: application/json
+    < Date: Sun, 16 Feb 2014 06:50:09 GMT
+    < Server: gunicorn/0.17.4
+    < Content-Length: 335
+    < Connection: keep-alive
+    <
+    * Connection #0 to host httpbin.org left intact
+
+
 decode_content
 --------------
 
 :Summary: Specify whether or not ``Content-Encoding`` responses (gzip,
     deflate, etc.) are automatically decoded.
 :Types:
-    - string
-    - bool
+        - string
+        - bool
 :Default: ``true``
 
 This option can be used to control how content-encoded response bodies are
@@ -353,108 +305,54 @@ header of the request.
     $client->get('/foo.js', ['decode_content' => 'gzip']);
 
 
-.. _save_to-option:
+.. _expect-option:
 
-save_to
--------
-
-:Summary: Specify where the body of a response will be saved.
-:Types:
-    - string
-    - ``fopen()`` resource
-    - ``GuzzleHttp\Stream\StreamInterface``
-:Default: PHP temp stream
-
-Pass a string to specify the path to a file that will store the contents of the
-response body:
-
-.. code-block:: php
-
-    $client->get('/stream/20', ['save_to' => '/path/to/file']);
-
-Pass a resource returned from ``fopen()`` to write the response to a PHP stream:
-
-.. code-block:: php
-
-    $resource = fopen('/path/to/file', 'w');
-    $client->get('/stream/20', ['save_to' => $resource]);
-
-Pass a ``GuzzleHttp\Stream\StreamInterface`` object to stream the response body
-to an open Guzzle stream:
-
-.. code-block:: php
-
-    $resource = fopen('/path/to/file', 'w');
-    $stream = GuzzleHttp\Stream\Stream::factory($resource);
-    $client->get('/stream/20', ['save_to' => $stream]);
-
-
-.. _events-option:
-
-events
+expect
 ------
 
-:Summary: An associative array mapping event names to a callable. Or an
-    associative array containing the 'fn' key that maps to a callable, an
-    optional 'priority' key used to specify the event priority, and an optional
-    'once' key used to specify if the event should remove itself the first time
-    it is triggered.
+:Summary: Controls the behavior of the "Expect: 100-Continue" header.
+:Types:
+        - bool
+        - integer
+:Default: ``1048576``
+
+Set to ``true`` to enable the "Expect: 100-Continue" header for all requests
+that sends a body. Set to ``false`` to disable the "Expect: 100-Continue"
+header for all requests. Set to a number so that the size of the payload must
+be greater than the number in order to send the Expect header. Setting to a
+number will send the Expect header for all requests in which the size of the
+payload cannot be determined or where the body is not rewindable.
+
+By default, Guzzle will add the "Expect: 100-Continue" header when the size of
+the body of a request is greater than 1 MB and a request is using HTTP/1.1.
+
+.. note::
+
+    This option only takes effect when using HTTP/1.1. The HTTP/1.0 and
+    HTTP/2.0 protocols do not support the "Expect: 100-Continue" header.
+    Support for handling the "Expect: 100-Continue" workflow must be
+    implemented by Guzzle HTTP handlers used by a client.
+
+
+headers
+-------
+
+:Summary: Associative array of headers to add to the request. Each key is the
+    name of a header, and each value is a string or array of strings
+    representing the header field values.
 :Types: array
-:Default: None
+:Defaults: None
 
 .. code-block:: php
 
-    use GuzzleHttp\Event\BeforeEvent;
-    use GuzzleHttp\Event\HeadersEvent;
-    use GuzzleHttp\Event\CompleteEvent;
-    use GuzzleHttp\Event\ErrorEvent;
-
-    $client->get('/', [
-        'events' => [
-            'before' => function (BeforeEvent $e) { echo 'Before'; },
-            'complete' => function (CompleteEvent $e) { echo 'Complete'; },
-            'error' => function (ErrorEvent $e) { echo 'Error'; },
+    // Set various headers on a request
+    $client->get('/get', [
+        'headers' => [
+            'User-Agent' => 'testing/1.0',
+            'Accept'     => 'application/json',
+            'X-Foo'      => ['Bar', 'Baz']
         ]
     ]);
-
-Here's an example of using the associative array format for control over the
-priority and whether or not an event should be triggered more than once.
-
-.. code-block:: php
-
-    $client->get('/', [
-        'events' => [
-            'before' => [
-                'fn'       => function (BeforeEvent $e) { echo 'Before'; },
-                'priority' => 100,
-                'once'     => true
-            ]
-        ]
-    ]);
-
-
-.. _subscribers-option:
-
-subscribers
------------
-
-:Summary: Array of event subscribers to add to the request. Each value in the
-    array must be an instance of ``GuzzleHttp\Event\SubscriberInterface``.
-:Types: array
-:Default: None
-
-.. code-block:: php
-
-    use GuzzleHttp\Subscriber\History;
-    use GuzzleHttp\Subscriber\Mock;
-    use GuzzleHttp\Message\Response;
-
-    $history = new History();
-    $mock = new Mock([new Response(200)]);
-    $client->get('/', ['subscribers' => [$history, $mock]]);
-
-    echo $history;
-    // Outputs the request and response history
 
 
 .. _http-errors-option:
@@ -478,6 +376,171 @@ http_errors
     // 500
 
 
+json
+----
+
+:Summary: The ``json`` option is used to easily upload JSON encoded data as the
+    body of a request. A Content-Type header of ``application/json`` will be
+    added if no Content-Type header is already present on the message.
+:Types:
+    Any PHP type that can be operated on by PHP's ``json_encode()`` function.
+:Default: None
+
+.. code-block:: php
+
+    $request = $client->createRequest('PUT', '/put', ['json' => ['foo' => 'bar']]);
+    echo $request->getHeader('Content-Type');
+    // application/json
+    echo $request->getBody();
+    // {"foo":"bar"}
+
+.. note::
+
+    This request option does not support customizing the Content-Type header
+    or any of the options from PHP's `json_encode() <http://www.php.net/manual/en/function.json-encode.php>`_
+    function. If you need to customize these settings, then you must pass the
+    JSON encoded data into the request yourself using the ``body`` request
+    option and you must specify the correct Content-Type header using the
+    ``headers`` request option.
+
+
+.. _proxy-option:
+
+proxy
+-----
+
+:Summary: Pass a string to specify an HTTP proxy, or an array to specify
+    different proxies for different protocols.
+:Types:
+    - string
+    - array
+:Default: None
+
+Pass a string to specify a proxy for all protocols.
+
+.. code-block:: php
+
+    $client->get('/', ['proxy' => 'tcp://localhost:8125']);
+
+Pass an associative array to specify HTTP proxies for specific URI schemes
+(i.e., "http", "https").
+
+.. code-block:: php
+
+    $client->get('/', [
+        'proxy' => [
+            'http'  => 'tcp://localhost:8125', // Use this proxy with "http"
+            'https' => 'tcp://localhost:9124'  // Use this proxy with "https"
+        ]
+    ]);
+
+.. note::
+
+    You can provide proxy URLs that contain a scheme, username, and password.
+    For example, ``"http://username:password@192.168.16.1:10"``.
+
+
+query
+-----
+
+:Summary: Associative array of query string values to add to the request.
+:Types:
+    - array
+    - string
+:Default: None
+
+.. code-block:: php
+
+    // Send a GET request to /get?foo=bar
+    $client->get('/get', ['query' => ['foo' => 'bar']]);
+
+Query strings specified in the ``query`` option will overwrite an query string
+values supplied in the URI of a request.
+
+.. code-block:: php
+
+    // Send a GET request to /get?foo=bar
+    $client->get('/get?abc=123', ['query' => ['foo' => 'bar']]);
+
+
+.. _sink-option:
+
+sink
+----
+
+:Summary: Specify where the body of a response will be saved.
+:Types:
+    - string
+    - ``fopen()`` resource
+    - ``GuzzleHttp\Stream\StreamInterface``
+:Default: PHP temp stream
+
+Pass a string to specify the path to a file that will store the contents of the
+response body:
+
+.. code-block:: php
+
+    $client->get('/stream/20', ['sink' => '/path/to/file']);
+
+Pass a resource returned from ``fopen()`` to write the response to a PHP stream:
+
+.. code-block:: php
+
+    $resource = fopen('/path/to/file', 'w');
+    $client->get('/stream/20', ['sink' => $resource]);
+
+Pass a ``Psr\Http\Message\StreamableInterface`` object to stream the response
+body to an open PSR-7 stream.
+
+.. code-block:: php
+
+    $resource = fopen('/path/to/file', 'w');
+    $stream = GuzzleHttp\Psr7\stream_for($resource);
+    $client->get('/stream/20', ['save_to' => $stream]);
+
+.. note::
+
+    The ``save_to`` request option has been deprecated in favor of the
+    ``sink`` request option. Providing the ``save_to`` option is now an alias
+    of ``sink``.
+
+
+.. _stack-option:
+
+stack
+-----
+
+:Summary: A function that accepts a ``GuzzleHttp\HandlerStack`` object before
+    a request is sent. The function may mutate the handler stack to add custom
+    conditional middleware before sending each request. This is useful when you
+    wish to only apply middleware conditionally, or if the middleware needs to
+    be in a certain position in the handler stack relative to other middleware
+    added by Guzzle (e.g., 'redirect', 'http_errors', 'cookies', and
+    'prepare_body').
+:Types: callable
+:Default: None
+
+.. code-block:: php
+
+    use Psr\Http\Message\RequestInterface;
+    use GuzzleHttp\HandlerStack;
+
+    $client->get('/', [
+        'stack' => function (HandlerStack $stack, array $options) {
+            // Add a custom middleware to each request after the redirect
+            // middleware.
+            $stack->after('redirect', function ($handler) {
+                return function (RequestInterface, array $options) use ($handler) {
+                    // Create a modified request.
+                    $request = $request->withHeader('X-Foo' => 'Bar');
+                    // Send the request using the next handler.
+                    return $handler($request, $options);
+                }
+            });
+        }
+    ]);
+
+
 .. _timeout-option:
 
 timeout
@@ -495,26 +558,52 @@ timeout
     // PHP Fatal error:  Uncaught exception 'GuzzleHttp\Exception\RequestException'
 
 
-.. _connect_timeout-option:
+.. _ssl_key-option:
 
-connect_timeout
----------------
+ssl_key
+-------
 
-:Summary: Float describing the number of seconds to wait while trying to connect
-    to a server. Use ``0`` to wait indefinitely (the default behavior).
-:Types: float
-:Default: ``0``
-
-.. code-block:: php
-
-    // Timeout if the client fails to connect to the server in 3.14 seconds.
-    $client->get('/delay/5', ['connect_timeout' => 3.14]);
+:Summary: Specify the path to a file containing a private SSL key in PEM
+        format. If a password is required, then set to an array containing the path
+        to the SSL key in the first array element followed by the password required
+        for the certificate in the second element.
+:Types:
+        - string
+        - array
+:Default: None
 
 .. note::
 
-    This setting must be supported by the HTTP handler used to send a request.
-    ``connect_timeout`` is currently only supported by the built-in cURL
-    handler.
+    ``ssl_key`` is implemented by HTTP handlers. This is currently only
+    supported by the cURL handler, but might be supported by other third-part
+    handlers.
+
+
+.. _stream-option:
+
+stream
+------
+
+:Summary: Set to ``true`` to stream a response rather than download it all
+    up-front.
+:Types: bool
+:Default: ``false``
+
+.. code-block:: php
+
+    $response = $client->get('/stream/20', ['stream' => true]);
+    // Read bytes off of the stream until the end of the stream is reached
+    $body = $response->getBody();
+    while (!$body->eof()) {
+        echo $body->read(1024);
+    }
+
+.. note::
+
+    Streaming response support must be implemented by the HTTP handler used by
+    a client. This option might not be supported by every HTTP handler, but the
+    interface of the response object remains the same regardless of whether or
+    not it is supported by the handler.
 
 
 .. _verify-option:
@@ -579,180 +668,6 @@ disk, you can set the "openssl.cafile" PHP ini setting to point to the path to
 the file, allowing you to omit the "verify" request option. Much more detail on
 SSL certificates can be found on the
 `cURL website <http://curl.haxx.se/docs/sslcerts.html>`_.
-
-
-.. _cert-option:
-
-cert
-----
-
-:Summary: Set to a string to specify the path to a file containing a PEM
-    formatted client side certificate. If a password is required, then set to
-    an array containing the path to the PEM file in the first array element
-    followed by the password required for the certificate in the second array
-    element.
-:Types:
-    - string
-    - array
-:Default: None
-
-.. code-block:: php
-
-    $client->get('/', ['cert' => ['/path/server.pem', 'password']]);
-
-
-.. _ssl_key-option:
-
-ssl_key
--------
-
-:Summary: Specify the path to a file containing a private SSL key in PEM
-    format. If a password is required, then set to an array containing the path
-    to the SSL key in the first array element followed by the password required
-    for the certificate in the second element.
-:Types:
-    - string
-    - array
-:Default: None
-
-.. note::
-
-    ``ssl_key`` is implemented by HTTP handlers. This is currently only
-    supported by the cURL handler, but might be supported by other third-part
-    handlers.
-
-
-.. _proxy-option:
-
-proxy
------
-
-:Summary: Pass a string to specify an HTTP proxy, or an array to specify
-    different proxies for different protocols.
-:Types:
-    - string
-    - array
-:Default: None
-
-Pass a string to specify a proxy for all protocols.
-
-.. code-block:: php
-
-    $client->get('/', ['proxy' => 'tcp://localhost:8125']);
-
-Pass an associative array to specify HTTP proxies for specific URI schemes
-(i.e., "http", "https").
-
-.. code-block:: php
-
-    $client->get('/', [
-        'proxy' => [
-            'http'  => 'tcp://localhost:8125', // Use this proxy with "http"
-            'https' => 'tcp://localhost:9124'  // Use this proxy with "https"
-        ]
-    ]);
-
-.. note::
-
-    You can provide proxy URLs that contain a scheme, username, and password.
-    For example, ``"http://username:password@192.168.16.1:10"``.
-
-
-.. _debug-option:
-
-debug
------
-
-:Summary: Set to ``true`` or set to a PHP stream returned by ``fopen()`` to
-    enable debug output with the handler used to send a request. For example,
-    when using cURL to transfer requests, cURL's verbose of ``CURLOPT_VERBOSE``
-    will be emitted. When using the PHP stream wrapper, stream wrapper
-    notifications will be emitted. If set to true, the output is written to
-    PHP's STDOUT. If a PHP stream is provided, output is written to the stream.
-:Types:
-    - bool
-    - ``fopen()`` resource
-:Default: None
-
-.. code-block:: php
-
-    $client->get('/get', ['debug' => true]);
-
-Running the above example would output something like the following:
-
-::
-
-    * About to connect() to httpbin.org port 80 (#0)
-    *   Trying 107.21.213.98... * Connected to httpbin.org (107.21.213.98) port 80 (#0)
-    > GET /get HTTP/1.1
-    Host: httpbin.org
-    User-Agent: Guzzle/4.0 curl/7.21.4 PHP/5.5.7
-
-    < HTTP/1.1 200 OK
-    < Access-Control-Allow-Origin: *
-    < Content-Type: application/json
-    < Date: Sun, 16 Feb 2014 06:50:09 GMT
-    < Server: gunicorn/0.17.4
-    < Content-Length: 335
-    < Connection: keep-alive
-    <
-    * Connection #0 to host httpbin.org left intact
-
-
-.. _stream-option:
-
-stream
-------
-
-:Summary: Set to ``true`` to stream a response rather than download it all
-    up-front.
-:Types: bool
-:Default: ``false``
-
-.. code-block:: php
-
-    $response = $client->get('/stream/20', ['stream' => true]);
-    // Read bytes off of the stream until the end of the stream is reached
-    $body = $response->getBody();
-    while (!$body->eof()) {
-        echo $body->read(1024);
-    }
-
-.. note::
-
-    Streaming response support must be implemented by the HTTP handler used by
-    a client. This option might not be supported by every HTTP handler, but the
-    interface of the response object remains the same regardless of whether or
-    not it is supported by the handler.
-
-
-.. _expect-option:
-
-expect
-------
-
-:Summary: Controls the behavior of the "Expect: 100-Continue" header.
-:Types:
-    - bool
-    - integer
-:Default: ``1048576``
-
-Set to ``true`` to enable the "Expect: 100-Continue" header for all requests
-that sends a body. Set to ``false`` to disable the "Expect: 100-Continue"
-header for all requests. Set to a number so that the size of the payload must
-be greater than the number in order to send the Expect header. Setting to a
-number will send the Expect header for all requests in which the size of the
-payload cannot be determined or where the body is not rewindable.
-
-By default, Guzzle will add the "Expect: 100-Continue" header when the size of
-the body of a request is greater than 1 MB and a request is using HTTP/1.1.
-
-.. note::
-
-    This option only takes effect when using HTTP/1.1. The HTTP/1.0 and
-    HTTP/2.0 protocols do not support the "Expect: 100-Continue" header.
-    Support for handling the "Expect: 100-Continue" workflow must be
-    implemented by Guzzle HTTP handlers used by a client.
 
 
 .. _version-option:
