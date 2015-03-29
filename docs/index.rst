@@ -45,7 +45,7 @@ User guide
 
     overview
     quickstart
-    clients
+    request-options
     psr7
     handlers-and-middleware
     testing

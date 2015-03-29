@@ -32,7 +32,19 @@ The client constructor accepts an associative array of options:
 
 ``base_uri``
     (string|UriInterface) Base URI of the client that is merged into relative
-    URIs. Can be a string or instance of UriInterface.
+    URIs. Can be a string or instance of UriInterface. When a relative URI
+    is provided to a client, the client will combine the base URI with the
+    relative URI using the rules described in
+    `RFC 3986, section 2 <http://tools.ietf.org/html/rfc3986#section-5.2>`_.
+
+    .. code-block:: php
+
+        // Create a client with a base URI
+        $client = new GuzzleHttp\Client(['base_uri' => 'https://foo.com/api/']);
+        // Send a request to https://foo.com/api/test
+        $response = $client->get('test');
+        // Send a request to https://foo.com/root
+        $response = $client->get('/root');
 
 ``handler``
     (callable) Function that transfers HTTP requests over the wire. The
@@ -75,8 +87,10 @@ ready:
 Client objects provide a great deal of flexibility in how request are
 transferred including default request options, default handler stack middleware
 that are used by each request, and a base URI that allows you to send requests
-with relative URIs. You can find out all about clients in the :doc:`clients`
-page of the documentation.
+with relative URIs.
+
+You can find out more about client middleware in the
+:doc:`handlers-and-middleware` page of the documentation.
 
 
 Async Requests
@@ -468,3 +482,31 @@ Guzzle throws exceptions for errors that occur during a transfer.
 
 All of the above exceptions extend from
 ``GuzzleHttp\Exception\TransferException``.
+
+
+Environment Variables
+=====================
+
+Guzzle exposes a few environment variables that can be used to customize the
+behavior of the library.
+
+``GUZZLE_CURL_SELECT_TIMEOUT``
+    Controls the duration in seconds that a curl_multi_* handler will use when
+    selecting on curl handles using ``curl_multi_select()``. Some systems
+    have issues with PHP's implementation of ``curl_multi_select()`` where
+    calling this function always results in waiting for the maximum duration of
+    the timeout.
+``HTTP_PROXY``
+    Defines the proxy to use when sending requests using the "http" protocol.
+``HTTPS_PROXY``
+    Defines the proxy to use when sending requests using the "https" protocol.
+
+
+Relevant ini Settings
+---------------------
+
+Guzzle can utilize PHP ini settings when configuring clients.
+
+``openssl.cafile``
+    Specifies the path on disk to a CA file in PEM format to use when sending
+    requests over "https". See: https://wiki.php.net/rfc/tls-peer-verification#phpini_defaults
