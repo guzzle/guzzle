@@ -382,7 +382,7 @@ class Client implements ClientInterface
             if (!self::$redirectMiddleware) {
                 self::$redirectMiddleware = Middleware::redirect();
             }
-            $stack->push(self::$redirectMiddleware, 'redirect');
+            $stack->push(self::$redirectMiddleware, 'allow_redirects');
             if ($options['allow_redirects'] === true) {
                 $options['allow_redirects'] = self::$defaultRedirect;
             } elseif (!is_array($options['allow_redirects'])) {

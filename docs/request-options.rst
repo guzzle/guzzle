@@ -269,6 +269,7 @@ Running the above example would output something like the following:
     <
     * Connection #0 to host httpbin.org left intact
 
+.. _decode_content-option:
 
 decode_content
 --------------
@@ -303,6 +304,18 @@ header of the request.
 
     // Pass "gzip" as the Accept-Encoding header.
     $client->get('/foo.js', ['decode_content' => 'gzip']);
+
+
+.. _delay-option:
+
+delay
+-----
+
+:Summary: The number of milliseconds to delay before sending the request. This
+    is often used for delaying before retrying a request. Handlers SHOULD
+    implement this if possible, but it is not a strict requirement.
+:Types: integer/float
+:Default: 0
 
 
 .. _expect-option:
@@ -515,10 +528,27 @@ stack
     conditional middleware before sending each request. This is useful when you
     wish to only apply middleware conditionally, or if the middleware needs to
     be in a certain position in the handler stack relative to other middleware
-    added by Guzzle (e.g., 'redirect', 'http_errors', 'cookies', and
+    added by Guzzle (e.g., 'allow_redirects', 'http_errors', 'cookies', and
     'prepare_body').
 :Types: callable
 :Default: None
+
+Each time a request is created, Guzzle will clone the client's handler stack
+and use it to send the request. Guzzle adds a few middleware to the request's
+handler stack based on the provided request options.
+
+- If the ``allow_redirects`` option is set, Guzzle will add a middleware with
+  the name ``allow_redirects``.
+- If the ``http_errors`` request option is set, Guzzle will add a middleware
+  with the name ``http_errors``.
+- If the ``cookies`` request option is set, Guzzle will add a middleware with
+  the name ``cookies``.
+- Finally, Guzzle will always add a middleware called ``prepare_body`` which is
+  used to add a Content-Length and Content-Type header if needed.
+
+If you need to add middleware before or after any of these default middlewares,
+you can use the ``stack`` request option to add middleware before or after
+them by name.
 
 .. code-block:: php
 
@@ -539,23 +569,6 @@ stack
             });
         }
     ]);
-
-
-.. _timeout-option:
-
-timeout
--------
-
-:Summary: Float describing the timeout of the request in seconds. Use ``0``
-    to wait indefinitely (the default behavior).
-:Types: float
-:Default: ``0``
-
-.. code-block:: php
-
-    // Timeout if a server does not return a response in 3.14 seconds.
-    $client->get('/delay/5', ['timeout' => 3.14]);
-    // PHP Fatal error:  Uncaught exception 'GuzzleHttp\Exception\RequestException'
 
 
 .. _ssl_key-option:
@@ -668,6 +681,23 @@ disk, you can set the "openssl.cafile" PHP ini setting to point to the path to
 the file, allowing you to omit the "verify" request option. Much more detail on
 SSL certificates can be found on the
 `cURL website <http://curl.haxx.se/docs/sslcerts.html>`_.
+
+
+.. _timeout-option:
+
+timeout
+-------
+
+:Summary: Float describing the timeout of the request in seconds. Use ``0``
+        to wait indefinitely (the default behavior).
+:Types: float
+:Default: ``0``
+
+.. code-block:: php
+
+    // Timeout if a server does not return a response in 3.14 seconds.
+    $client->get('/delay/5', ['timeout' => 3.14]);
+    // PHP Fatal error:  Uncaught exception 'GuzzleHttp\Exception\RequestException'
 
 
 .. _version-option:
