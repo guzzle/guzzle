@@ -6,16 +6,16 @@ Guzzle, PHP HTTP client
 Guzzle is a PHP HTTP client that makes it easy to send HTTP requests and
 trivial to integrate with web services.
 
-- Manages things like persistent connections, represents query strings as
-  collections, simplifies sending streaming POST requests with fields and
-  files, and abstracts away the underlying HTTP transport layer.
-- Can send both synchronous and asynchronous requests using the same interface
-  without requiring a dependency on a specific event loop.
-- Pluggable HTTP adapters allows Guzzle to integrate with any method you choose
-  for sending HTTP requests over the wire (e.g., cURL, sockets, PHP's stream
-  wrapper, non-blocking event loops like ReactPHP.
-- Guzzle makes it so that you no longer need to fool around with cURL options,
-  stream contexts, or sockets.
+- Simple interface for building query strings, POST requests, streaming large
+  uploads, streaming large downloads, using HTTP cookies, uploading JSON data,
+  etc...
+- Can send both synchronous and asynchronous requests using the same interface.
+- Uses PSR-7 interfaces for requests, responses, and streams. This allows you
+  to utilize other PSR-7 compatible libraries with Guzzle.
+- Abstracts away the underlying HTTP transport, allowing you to write
+  environment and transport agnostic code; i.e., no hard dependency on cURL,
+  PHP streams, sockets, or non-blocking event loops.
+
 
 ```php
 $client = new GuzzleHttp\Client();
@@ -35,13 +35,14 @@ $promise = $client->sendAsync($req)->then(function ($response) {
 $promise->wait();
 ```
 
-Get more information and answers with the
-[Documentation](http://guzzlephp.org/),
-[Forums](https://groups.google.com/forum/?hl=en#!forum/guzzle),
-and [Gitter](https://gitter.im/guzzle/guzzle).
+## Help and docs
+
+- [Documentation](http://guzzlephp.org/)
+- [stackoverflow](http://stackoverflow.com/questions/tagged/guzzle)
+- [Gitter](https://gitter.im/guzzle/guzzle)
 
 
-### Installing via Composer
+## Installing Guzzle
 
 The recommended way to install Guzzle is through
 [Composer](http://getcomposer.org).
@@ -54,7 +55,7 @@ curl -sS https://getcomposer.org/installer | php
 Next, run the Composer command to install the latest stable version of Guzzle:
 
 ```bash
-composer require guzzlehttp/guzzle
+composer.phar require guzzlehttp/guzzle
 ```
 
 After installing, you need to require Composer's autoloader:
@@ -63,8 +64,8 @@ After installing, you need to require Composer's autoloader:
 require 'vendor/autoload.php';
 ```
 
+You can then later update Guzzle using composer:
 
-### Documentation
-
-More information can be found in the online documentation at
-http://guzzlephp.org/.
+ ```bash
+composer.phar update
+ ```
