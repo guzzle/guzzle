@@ -11,7 +11,7 @@ use Psr\Http\Message\UriInterface;
  */
 interface ClientInterface
 {
-    const VERSION = '6.0.0-alpha.1';
+    const VERSION = '6.0.0-beta.1';
 
     /**
      * Send an HTTP request.
