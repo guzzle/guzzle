@@ -2,18 +2,86 @@
 Guzzle and PSR-7
 ================
 
-
-HTTP Messages
--------------
+Guzzle utilizes PSR-7 as the HTTP message interface. This allows Guzzle to work
+with any other library that utilizes PSR-7 message interfaces.
 
 Guzzle is an HTTP client that sends HTTP requests to a server and receives HTTP
 responses. Both requests and responses are referred to as messages.
+
+Guzzle relies on the ``guzzlehttp/psr7`` Composer package for its message
+implementation of PSR-7.
+
+You can create a request using the ``GuzzleHttp\Psr7\Request`` class:
+
+.. code-block:: php
+
+    use GuzzleHttp\Psr7\Request;
+
+    $request = new Request('GET', 'http://httpbin.org/get');
+
+    // You can provide other optional constructor arguments.
+    $headers = ['X-Foo' => 'Bar'];
+    $body = 'hello!';
+    $request = new Request('PUT', 'http://httpbin.org/put', $headers, $body);
+
+You can create a response using the ``GuzzleHttp\Psr7\Response`` class:
+
+.. code-block:: php
+
+    use GuzzleHttp\Psr7\Response;
+
+    // The constructor requires no arguments.
+    $response = new Response();
+    echo $response->getStatusCode(); // 200
+    echo $response->getProtocolVersion(); // 1.1
+
+    // You can supply any number of optional arguments.
+    $status = 200;
+    $headers = ['X-Foo' => 'Bar'];
+    $body = 'hello!';
+    $protocol = '1.1';
+    $response = new Response($status, $headers, $body, $protocol);
 
 
 Headers
 =======
 
 Both request and response messages contain HTTP headers.
+
+
+Accessing Headers
+-----------------
+
+You can check if a request or response has a specific header using the
+``hasHeader()`` method.
+
+.. code-block:: php
+
+    use GuzzleHttp\Psr7;
+
+    $request = new Psr7\Request('GET', '/', ['X-Foo' => 'bar']);
+
+    if ($request->hasHeader('X-Foo')) {
+        echo 'It is there';
+    }
+
+You can retrieve a header value as a string using ``getHeader()``.
+
+.. code-block:: php
+
+    echo $request->getHeader('X-Foo'); // bar
+
+    // Retrieving a missing header returns an empty string.
+    echo $request->getHeader('X-Bar') // outputs nothing
+
+You can iterate over the headers of a message using the ``getHeaders()``
+method.
+
+.. code-block:: php
+
+    foreach ($request->getHeaders() as $name => $values) {
+        echo $name . ': ' . implode(', ', $values) . "\r\n";
+    }
 
 
 Complex Headers
@@ -31,13 +99,13 @@ headers:
 
 .. code-block:: php
 
-    use GuzzleHttp\Message\Request;
+    use GuzzleHttp\Psr7;
 
-    $request = new Request('GET', '/', [
+    $request = new Psr7\Request('GET', '/', [
         'Link' => '<http:/.../front.jpeg>; rel="front"; type="image/jpeg"'
     ]);
 
-    $parsed = Request::parseHeader($request, 'Link');
+    $parsed = Psr7\parse_header($request->getHeader('Link'));
     var_export($parsed);
 
 Will output:
@@ -57,46 +125,32 @@ The result contains a hash of key value pairs. Header values that have no key
 (i.e., the link) are indexed numerically while headers parts that form a key
 value pair are added as a key value pair.
 
-See :ref:`headers` for information on how the headers of a request and response
-can be accessed and modified.
-
 
 Body
 ====
 
 Both request and response messages can contain a body.
 
-You can check to see if a request or response has a body using the
-``getBody()`` method:
+You can retrieve the body of a message using the ``getBody()`` method:
 
 .. code-block:: php
 
     $response = GuzzleHttp\get('http://httpbin.org/get');
-    if ($response->getBody()) {
-        echo $response->getBody();
-        // JSON string: { ... }
-    }
+    echo $response->getBody();
+    // JSON string: { ... }
 
 The body used in request and response objects is a
-``GuzzleHttp\Stream\StreamInterface``. This stream is used for both uploading
-data and downloading data. Guzzle will, by default, store the body of a message
-in a stream that uses PHP temp streams. When the size of the body exceeds
-2 MB, the stream will automatically switch to storing data on disk rather than
-in memory (protecting your application from memory exhaustion).
+``Psr\Http\Message\StreamableInterface``. This stream is used for both
+uploading data and downloading data. Guzzle will, by default, store the body of
+a message in a stream that uses PHP temp streams. When the size of the body
+exceeds 2 MB, the stream will automatically switch to storing data on disk
+rather than in memory (protecting your application from memory exhaustion).
 
-You can change the body used in a request or response using the ``setBody()``
-method:
-
-.. code-block:: php
-
-    use GuzzleHttp\Stream\Stream;
-    $request = $client->createRequest('PUT', 'http://httpbin.org/put');
-    $request->setBody(Stream::factory('foo'));
-
-The easiest way to create a body for a request is using the static
-``GuzzleHttp\Stream\Stream::factory()`` method. This method accepts various
-inputs like strings, resources returned from ``fopen()``, and other
-``GuzzleHttp\Stream\StreamInterface`` objects.
+The easiest way to create a body for a message is using the ``stream_for``
+function from the ``GuzzleHttp\Psr7`` namespace --
+``GuzzleHttp\Psr7\stream_for``. This function accepts strings, resources,
+callables, iterators, other streamables, and returns an instance of
+``Psr\Http\Message\StreamableInterface``.
 
 The body of a request or response can be cast to a string or you can read and
 write bytes off of the stream as needed.
@@ -115,8 +169,6 @@ write bytes off of the stream as needed.
     var_export($request->eof());
     // true
 
-You can find out more about Guzzle stream objects in :doc:`streams`.
-
 
 Requests
 ========
@@ -124,15 +176,6 @@ Requests
 Requests are sent from a client to a server. Requests include the method to
 be applied to a resource, the identifier of the resource, and the protocol
 version to use.
-
-Clients are used to create request messages. More precisely, clients use
-a ``GuzzleHttp\Message\MessageFactoryInterface`` to create request messages.
-You create requests with a client using the ``createRequest()`` method.
-
-.. code-block:: php
-
-    // Create a request but don't send it immediately
-    $request = $client->createRequest('GET', 'http://httpbin.org/get');
 
 
 Request Methods
@@ -145,14 +188,10 @@ that might not be part of RFC 7231 (like "MOVE").
 .. code-block:: php
 
     // Create a request using a completely custom HTTP method
-    $request = $client->createRequest('MOVE', 'http://httpbin.org/move', ['exceptions' => false]);
+    $request = new \GuzzleHttp\Psr7\Request('MOVE', 'http://httpbin.org/move');
 
     echo $request->getMethod();
     // MOVE
-
-    $response = $client->send($request);
-    echo $response->getStatusCode();
-    // 405
 
 You can create and send a request using methods on a client that map to the
 HTTP method you wish to use.
@@ -165,6 +204,8 @@ HTTP method you wish to use.
 :OPTIONS: ``$client->options('http://httpbin.org/get', [/** options **/])``
 :PATCH: ``$client->patch('http://httpbin.org/put', [/** options **/])``
 
+For example:
+
 .. code-block:: php
 
     $response = $client->patch('http://httpbin.org/patch', ['body' => 'content']);
@@ -173,190 +214,88 @@ HTTP method you wish to use.
 Request URI
 -----------
 
-The resource you are requesting with an HTTP request is identified by the
-path of the request, the query string, and the "Host" header of the request.
+The request URI is represented by a ``Psr\Http\Message\UriInterface`` object.
+Guzzle provides an implementation of this interface using the
+``GuzzleHttp\Psr7\Uri`` class.
 
-When creating a request, you can provide the entire resource URI as a URL.
+When creating a request, you can provide the URI as a string or an instance of
+``Psr\Http\Message\UriInterface``.
 
 .. code-block:: php
 
     $response = $client->get('http://httbin.org/get?q=foo');
 
-Using the above code, you will send a request that uses ``httpbin.org`` as
-the Host header, sends the request over port 80, uses ``/get`` as the path,
-and sends ``?q=foo`` as the query string. All of this is parsed automatically
-from the provided URI.
-
-Sometimes you don't know what the entire request will be when it is created.
-In these cases, you can modify the request as needed before sending it using
-the ``createRequest()`` method of the client and methods on the request that
-allow you to change it.
-
-.. code-block:: php
-
-    $request = $client->createRequest('GET', 'http://httbin.org');
-
-You can change the path of the request using ``setPath()``:
-
-.. code-block:: php
-
-    $request->setPath('/get');
-    echo $request->getPath();
-    // /get
-    echo $request->getUrl();
-    // http://httpbin.com/get
-
 
 Scheme
-~~~~~~
+------
 
 The `scheme <http://tools.ietf.org/html/rfc3986#section-3.1>`_ of a request
 specifies the protocol to use when sending the request. When using Guzzle, the
 scheme can be set to "http" or "https".
 
-You can change the scheme of the request using the ``setScheme()`` method:
-
 .. code-block:: php
 
     $request = $client->createRequest('GET', 'http://httbin.org');
-    $request->setScheme('https');
-    echo $request->getScheme();
-    // https
-    echo $request->getUrl();
-    // https://httpbin.com/get
-
-
-Port
-~~~~
-
-No port is necessary when using the "http" or "https" schemes, but you can
-override the port using ``setPort()``. If you need to modify the port used with
-the specified scheme from the default setting, then you must use the
-``setPort()`` method.
-
-.. code-block:: php
-
-    $request = $client->createRequest('GET', 'http://httbin.org');
-    $request->setPort(8080);
-    echo $request->getPort();
-    // 8080
-    echo $request->getUrl();
-    // https://httpbin.com:8080/get
-
-    // Set the port back to the default value for the scheme
-    $request->setPort(443);
-    echo $request->getUrl();
-    // https://httpbin.com/get
-
-Query string
-~~~~~~~~~~~~
-
-
+    echo $request->getUri()->getScheme(); // http
+    echo $request->getUri(); // http://httpbin.com/get
 
 
 Host
-~~~~
+----
 
-You can change the host header of the request in a predictable way using the
-``setHost()`` method of a request:
-
-.. code-block:: php
-
-    $request->setHost('www.google.com');
-    echo $request->getHost();
-    // www.google.com
-    echo $request->getUrl();
-    // https://www.google.com/get?foo=bar&baz=bam
-
-.. note::
-
-    The Host header can also be changed by modifying the Host header of a
-    request directly, but modifying the Host header directly could result in
-    sending a request to a different Host than what is specified in the Host
-    header (sometimes this is actually the desired behavior).
-
-
-Resource
-~~~~~~~~
-
-You can use the ``getResource()`` method of a request to return the path and
-query string of a request in a single string.
+The host is accessible using the URI owned by the request or by accessing the
+Host header.
 
 .. code-block:: php
 
-    $request = $client->createRequest('GET', 'http://httpbin.org/get?baz=bar');
-    echo $request->getResource();
-    // /get?baz=bar
+    $request = new Request('GET', 'http://httbin.org');
+    echo $request->getUri()->getHost(); // httpbin.org
+    echo $request->getHeader('Host'); // httpbin.org
 
 
-Request Config
---------------
+Port
+----
 
-Request messages contain a configuration collection that can be used by
-event listeners and HTTP handlers to modify how a request behaves or is
-transferred over the wire. For example, many of the request options that are
-specified when creating a request are actually set as config options that are
-only acted upon by handlers and listeners when the request is sent.
-
-You can get access to the request's config object using the ``getConfig()``
-method of a request.
+No port is necessary when using the "http" or "https" schemes.
 
 .. code-block:: php
 
-    $request = $client->createRequest('GET', '/');
-    $config = $request->getConfig();
+    $request = $client->createRequest('GET', 'http://httbin.org:8080');
+    echo $request->getUri()->getPort(); // 8080
+    echo $request->getUrl(); // https://httpbin.com:8080t
 
-The config object is a ``GuzzleHttp\Collection`` object that acts like
-an associative array. You can grab values from the collection using array like
-access. You can also modify and remove values using array like access.
 
-.. code-block:: php
+Path
+----
 
-    $config['foo'] = 'bar';
-    echo $config['foo'];
-    // bar
-
-    var_export(isset($config['foo']));
-    // true
-
-    unset($config['foo']);
-    var_export(isset($config['foo']));
-    // false
-
-    var_export($config['foo']);
-    // NULL
-
-HTTP handlers and event listeners can expose additional customization options
-through request config settings. For example, in order to specify custom cURL
-options to the cURL handler, you need to specify an associative array in the
-``curl`` ``config`` request option.
+The path of a request is accessible via the URI object.
 
 .. code-block:: php
 
-    $client->get('/', [
-        'config' => [
-            'curl' => [
-                CURLOPT_HTTPAUTH => CURLAUTH_NTLM,
-                CURLOPT_USERPWD  => 'username:password'
-            ]
-        ]
-    ]);
+    $request = new Request('GET', 'http://httbin.org/get');
+    echo $request->getUri()->getPath(); // /get
 
-Consult the HTTP handlers and event listeners you are using to see if they
-allow customization through request configuration options.
+The contents of the path will be automatically filtered to ensure that only
+allowed characters are present in the path. Any characters that are not allowed
+in the path will be percent-encoded according to
+`RFC 3986 section 3.3 <https://tools.ietf.org/html/rfc3986#section-3.3>`_
 
 
-Event Emitter
--------------
+Query string
+------------
 
-Request objects implement ``GuzzleHttp\Event\HasEmitterInterface``, so they
-have a method called ``getEmitter()`` that can be used to get an event emitter
-used by the request. Any listener or subscriber attached to a request will only
-be triggered for the lifecycle events of a specific request. Conversely, adding
-an event listener or subscriber to a client will listen to all lifecycle events
-of all requests created by the client.
+The query string of a request can be accessed using the ``getQuery()`` of the
+URI object owned by the request.
 
-See :doc:`events` for more information.
+.. code-block:: php
+
+    $request = new Request('GET', 'http://httbin.org/?foo=bar');
+    echo $request->getUri()->getQuery(); // foo=bar
+
+The contents of the query string will be automatically filtered to ensure that
+only allowed characters are present in the query string. Any characters that
+are not allowed in the query string will be percent-encoded according to
+`RFC 3986 section 3.4 <https://tools.ietf.org/html/rfc3986#section-3.4>`_
 
 
 Responses
@@ -374,13 +313,12 @@ status code, and reason phrase.
 
 .. code-block:: php
 
-    $response = GuzzleHttp\get('http://httpbin.org/get');
-    echo $response->getStatusCode();
-    // 200
-    echo $response->getReasonPhrase();
-    // OK
-    echo $response->getProtocolVersion();
-    // 1.1
+    $client = new \GuzzleHttp\Client();
+    $response = $client->get('http://httpbin.org/get');
+
+    echo $response->getStatusCode(); // 200
+    echo $response->getReasonPhrase(); // OK
+    echo $response->getProtocolVersion(); // 1.1
 
 
 Body
@@ -391,45 +329,21 @@ As described earlier, you can get the body of a response using the
 
 .. code-block:: php
 
-    if ($body = $response->getBody()) {
-        echo $body;
-        // Cast to a string: { ... }
-        $body->seek(0);
-        // Rewind the body
-        $body->read(1024);
-        // Read bytes of the body
-    }
-
-When working with JSON responses, you can use the ``json()`` method of a
-response:
-
-.. code-block:: php
-
-    $json = $response->json();
-
-.. note::
-
-    Guzzle uses the ``json_decode()`` method of PHP and uses arrays rather than
-    ``stdClass`` objects for objects.
-
-You can use the ``xml()`` method when working with XML data.
-
-.. code-block:: php
-
-    $xml = $response->xml();
-
-.. note::
-
-    Guzzle uses the ``SimpleXMLElement`` objects when converting response
-    bodies to XML.
+    $body = $response->getBody()) {
+    echo $body;
+    // Cast to a string: { ... }
+    $body->seek(0);
+    // Rewind the body
+    $body->read(1024);
+    // Read bytes of the body
 
 
 Streams
--------
+=======
 
-Guzzle uses stream objects to represent request and response message bodies.
-These stream objects allow you to work with various types of data all using a
-common interface.
+Guzzle uses PSR-7 stream objects to represent request and response message
+bodies. These stream objects allow you to work with various types of data all
+using a common interface.
 
 HTTP messages consist of a start-line, headers, and a body. The body of an HTTP
 message can be very small or extremely large. Attempting to represent the body
@@ -440,8 +354,8 @@ being able to work with large message bodies. The StreamInterface is used in
 order to hide the implementation details of where a stream of data is read from
 or written to.
 
-Guzzle's StreamInterface exposes several methods that enable streams to be read
-from, written to, and traversed effectively.
+The PSR-7 ``Psr\Http\Message\StreamableInterface`` exposes several methods
+that enable streams to be read from, written to, and traversed effectively.
 
 Streams expose their capabilities using three methods: ``isReadable()``,
 ``isWritable()``, and ``isSeekable()``. These methods can be used by stream
@@ -454,19 +368,18 @@ case of a socket or pipe).
 
 
 Creating Streams
-================
+----------------
 
-The best way to create a stream is using the static factory method,
-``GuzzleHttp\Stream\Stream::factory()``. This factory accepts strings,
-resources returned from ``fopen()``, an object that implements
-``__toString()``, and an object that implements
-``GuzzleHttp\Stream\StreamInterface``.
+The best way to create a stream is using the ``GuzzleHttp\Psr7\stream_for``
+function. This function accepts strings, resources returned from ``fopen()``,
+an object that implements ``__toString()``, iterators, callables, and instances
+of ``Psr\Http\Message\StreamableInterface``.
 
 .. code-block:: php
 
-    use GuzzleHttp\Stream\Stream;
+    use GuzzleHttp\Psr7;
 
-    $stream = Stream::factory('string data');
+    $stream = Psr7\stream_for('string data');
     echo $stream;
     // string data
     echo $stream->read(3);
@@ -478,21 +391,39 @@ resources returned from ``fopen()``, an object that implements
     var_export($stream->tell());
     // 11
 
+You can create streams from iterators. The iterator can yield any number of
+bytes per iteration. Any excess bytes returned by the iterator that were not
+requested by a stream consumer will be buffered until a subsequent read.
+
+.. code-block:: php
+
+    use GuzzleHttp\Psr7;
+
+    $generator = function ($bytes) {
+        for ($i = 0; $i < $bytes; $i++) {
+            yield '.';
+        }
+    };
+
+    $iter = $generator(1024);
+    $stream = Psr7\stream_for($iter);
+    echo $stream->read(3); // ...
+
 
 Metadata
-========
+--------
 
-Guzzle streams expose stream metadata through the ``getMetadata()`` method.
-This method provides the data you would retrieve when calling PHP's
+Streams expose stream metadata through the ``getMetadata()`` method. This
+method provides the data you would retrieve when calling PHP's
 `stream_get_meta_data() function <http://php.net/manual/en/function.stream-get-meta-data.php>`_,
 and can optionally expose other custom data.
 
 .. code-block:: php
 
-    use GuzzleHttp\Stream\Stream;
+    use GuzzleHttp\Psr7;
 
     $resource = fopen('/path/to/file', 'r');
-    $stream = Stream::factory($resource);
+    $stream = Psr7\stream_for($resource);
     echo $stream->getMetadata('uri');
     // /path/to/file
     var_export($stream->isReadable());
@@ -504,15 +435,52 @@ and can optionally expose other custom data.
 
 
 Stream Decorators
-=================
+-----------------
 
-With the small and focused interface, add custom functionality to streams is
-very simple with stream decorators. Guzzle provides several built-in decorators
-that provide additional stream functionality.
+Adding custom functionality to streams is very simple with stream decorators.
+Guzzle provides several built-in decorators that provide additional stream
+functionality.
+
+
+AppendStream
+~~~~~~~~~~~~
+
+Reads from multiple streams, one after the other.
+
+.. code-block:: php
+
+    use GuzzleHttp\Psr7;
+
+    $a = Psr7\steam_for('abc, ');
+    $b = Psr7\steam_for('123.');
+    $composed = new Psr7\AppendStream([$a, $b]);
+
+    $composed->addStream(Psr7\stream_for(' Above all listen to me').
+
+    echo $composed(); // abc, 123. Above all listen to me.
+
+
+BufferStream
+~~~~~~~~~~~~
+
+Provides a buffer stream that can be written to to fill a buffer, and read
+from to remove bytes from the buffer.
+
+This stream returns a "hwm" metadata value that tells upstream consumers
+what the configured high water mark of the stream is, or the maximum
+preferred size of the buffer.
+
+.. code-block:: php
+
+    use GuzzleHttp\Psr7;
+
+    // When more than 1024 bytes are in the buffer, it will begin returning
+    // false to writes. This is an indication that writers should slow down.
+    $buffer = new Psr7\BufferStream(1024);
 
 
 CachingStream
--------------
+~~~~~~~~~~~~~
 
 The CachingStream is used to allow seeking over previously read bytes on
 non-seekable streams. This can be useful when transferring a non-seekable
@@ -523,11 +491,10 @@ then on disk.
 
 .. code-block:: php
 
-    use GuzzleHttp\Stream\Stream;
-    use GuzzleHttp\Stream\CachingStream;
+    use GuzzleHttp\Psr7;
 
-    $original = Stream::factory(fopen('http://www.google.com', 'r'));
-    $stream = new CachingStream($original);
+    $original = Psr7\stream_for(fopen('http://www.google.com', 'r'));
+    $stream = new Psr7\CachingStream($original);
 
     $stream->read(1024);
     echo $stream->tell();
@@ -538,8 +505,81 @@ then on disk.
     // 0
 
 
+DroppingStream
+~~~~~~~~~~~~~~
+
+Stream decorator that begins dropping data once the size of the underlying
+stream becomes too full.
+
+.. code-block:: php
+
+    use GuzzleHttp\Psr7;
+
+    // Create an empty stream
+    $stream = Psr7\stream_for();
+
+    // Start dropping data when the stream has more than 10 bytes
+    $dropping = new Psr7\DroppingStream($stream, 10);
+
+    $stream->write('01234567890123456789');
+    echo $stream; // 0123456789
+
+
+FnStream
+~~~~~~~~
+
+Compose stream implementations based on a hash of functions.
+
+Allows for easy testing and extension of a provided stream without needing to
+to create a concrete class for a simple extension point.
+
+.. code-block:: php
+
+    use GuzzleHttp\Psr7;
+
+    $stream = Psr7\stream_for('hi');
+    $fnStream = Psr7\FnStream::decorate($stream, [
+        'rewind' => function () use ($stream) {
+            echo 'About to rewind - ';
+            $stream->rewind();
+            echo 'rewound!';
+        }
+    ]);
+
+    $fnStream->rewind();
+    // Outputs: About to rewind - rewound!
+
+
+InflateStream
+~~~~~~~~~~~~~
+
+Uses PHP's zlib.inflate filter to inflate deflate or gzipped content.
+
+This stream decorator skips the first 10 bytes of the given stream to remove
+the gzip header, converts the provided stream to a PHP stream resource,
+then appends the zlib.inflate filter. The stream is then converted back
+to a Guzzle stream resource to be used as a Guzzle stream.
+
+
+LazyOpenStream
+~~~~~~~~~~~~~~
+
+Lazily reads or writes to a file that is opened only after an IO operation
+take place on the stream.
+
+.. code-block:: php
+
+    use GuzzleHttp\Psr7;
+
+    $stream = new Psr7\LazyOpenStream('/path/to/file', 'r');
+    // The file has not yet been opened...
+
+    echo $stream->read(10);
+    // The file is opened and read from only when needed.
+
+
 LimitStream
------------
+~~~~~~~~~~~
 
 LimitStream can be used to read a subset or slice of an existing stream object.
 This can be useful for breaking a large file into smaller pieces to be sent in
@@ -547,15 +587,14 @@ chunks (e.g. Amazon S3's multipart upload API).
 
 .. code-block:: php
 
-    use GuzzleHttp\Stream\Stream;
-    use GuzzleHttp\Stream\LimitStream;
+    use GuzzleHttp\Psr7;
 
-    $original = Stream::factory(fopen('/tmp/test.txt', 'r+'));
+    $original = Psr7\stream_for(fopen('/tmp/test.txt', 'r+'));
     echo $original->getSize();
     // >>> 1048576
 
     // Limit the size of the body to 1024 bytes and start reading from byte 2048
-    $stream = new LimitStream($original, 1024, 2048);
+    $stream = new Psr7\LimitStream($original, 1024, 2048);
     echo $stream->getSize();
     // >>> 1024
     echo $stream->tell();
@@ -563,17 +602,16 @@ chunks (e.g. Amazon S3's multipart upload API).
 
 
 NoSeekStream
-------------
+~~~~~~~~~~~~
 
 NoSeekStream wraps a stream and does not allow seeking.
 
 .. code-block:: php
 
-    use GuzzleHttp\Stream\Stream;
-    use GuzzleHttp\Stream\LimitStream;
+    use GuzzleHttp\Psr7;
 
-    $original = Stream::factory('foo');
-    $noSeek = new NoSeekStream($original);
+    $original = Psr7\stream_for('foo');
+    $noSeek = new Psr7\NoSeekStream($original);
 
     echo $noSeek->read(3);
     // foo
@@ -584,12 +622,31 @@ NoSeekStream wraps a stream and does not allow seeking.
     // NULL
 
 
+NullStream
+~~~~~~~~~~
+
+The NullStream does nothing. It stores no data and returns no data when read.
+
+
+PumpStream
+~~~~~~~~~~
+
+Provides a read only stream that pumps data from a PHP callable.
+
+When invoking the provided callable, the PumpStream will pass the amount of
+data requested to read to the callable. The callable can choose to ignore
+this value and return fewer or more bytes than requested. Any extra data
+returned by the provided callable is buffered internally until drained using
+the read() function of the PumpStream. The provided callable MUST return
+false when there is no more data to read.
+
+
 Creating Custom Decorators
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Creating a stream decorator is very easy thanks to the
-``GuzzleHttp\Stream\StreamDecoratorTrait``. This trait provides methods that
-implement ``GuzzleHttp\Stream\StreamInterface`` by proxying to an underlying
+``GuzzleHttp\Psr7\StreamDecoratorTrait``. This trait provides methods that
+implement ``Psr\Http\Message\StreamableInterface`` by proxying to an underlying
 stream. Just ``use`` the ``StreamDecoratorTrait`` and implement your custom
 methods.
 
@@ -599,18 +656,19 @@ byte is read from a stream. This could be implemented by overriding the
 
 .. code-block:: php
 
-    use GuzzleHttp\Stream\StreamDecoratorTrait;
+    use Psr\Http\Message\StreamableInterface;
+    use GuzzleHttp\Psr7\StreamDecoratorTrait;
 
-    class EofCallbackStream implements StreamInterface
+    class EofCallbackStream implements StreamableInterface
     {
         use StreamDecoratorTrait;
 
         private $callback;
 
-        public function __construct(StreamInterface $stream, callable $callback)
+        public function __construct(StreamableInterface $stream, callable $cb)
         {
             $this->stream = $stream;
-            $this->callback = $callback;
+            $this->callback = $cb;
         }
 
         public function read($length)
@@ -630,9 +688,10 @@ This decorator could be added to any existing stream and used like so:
 
 .. code-block:: php
 
-    use GuzzleHttp\Stream\Stream;
+    use GuzzleHttp\Psr7;
 
-    $original = Stream::factory('foo');
+    $original = Psr7\stream_for('foo');
+
     $eofStream = new EofCallbackStream($original, function () {
         echo 'EOF!';
     });
