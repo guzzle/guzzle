@@ -11,21 +11,6 @@ use Psr\Http\Message\ResponseInterface;
 use \InvalidArgumentException as Iae;
 
 /**
- * GuzzleHttp client implementation.
- *
- *     $client = new GuzzleHttp\Client();
- *     $response = $client->request('GET', 'http://www.google.com');
- *     $response->then(
- *         function ($response) {
- *             echo "Got a response: \n" . GuzzleHttp\str_message($response) . "\n";
- *         },
- *         function ($e) {
- *             echo 'Got an error: ' . $e->getMessage() . "\n";
- *         }
- *     );
- *     $response->wait();
- *     echo $response->getStatusCode();
- *
  * @method ResponseInterface get($uri, array $options = [])
  * @method ResponseInterface head($uri, array $options = [])
  * @method ResponseInterface put($uri, array $options = [])
@@ -47,17 +32,17 @@ class Client implements ClientInterface
     /** @var HandlerStack */
     private $stack;
 
-    /** @var callable Cached error middleware */
-    private $errorMiddleware;
-
-    /** @var callable Cached redirect middleware */
-    private $redirectMiddleware;
-
     /** @var callable Cached cookie middleware */
     private $cookieMiddleware;
 
+    /** @var callable Cached error middleware */
+    private static $errorMiddleware;
+
+    /** @var callable Cached redirect middleware */
+    private static $redirectMiddleware;
+
     /** @var callable Cached prepare body middleware */
-    private $prepareBodyMiddleware;
+    private static $prepareBodyMiddleware;
 
     /** @var array Default allow_redirects request option settings  */
     private static $defaultRedirect = [
@@ -186,7 +171,6 @@ class Client implements ClientInterface
         }
 
         $this->configureDefaults($config);
-        $this->prepareBodyMiddleware = Middleware::prepareBody();
     }
 
     public function __call($method, $args)
@@ -391,10 +375,10 @@ class Client implements ClientInterface
     ) {
         // Add the redirect middleware if needed.
         if (!empty($options['allow_redirects'])) {
-            if (!$this->errorMiddleware) {
-                $this->redirectMiddleware = Middleware::redirect();
+            if (!self::$redirectMiddleware) {
+                self::$redirectMiddleware = Middleware::redirect();
             }
-            $stack->push($this->redirectMiddleware, 'redirect');
+            $stack->push(self::$redirectMiddleware, 'redirect');
             if ($options['allow_redirects'] === true) {
                 $options['allow_redirects'] = self::$defaultRedirect;
             } elseif (!is_array($options['allow_redirects'])) {
@@ -407,10 +391,10 @@ class Client implements ClientInterface
 
         // Add the httpError middleware if needed.
         if (!empty($options['http_errors'])) {
-            if (!$this->errorMiddleware) {
-                $this->errorMiddleware = Middleware::httpError();
+            if (!self::$errorMiddleware) {
+                self::$errorMiddleware = Middleware::httpError();
             }
-            $stack->push($this->errorMiddleware, 'http_errors');
+            $stack->push(self::$errorMiddleware, 'http_errors');
         }
 
         // Add the cookies middleware if needed.
@@ -434,7 +418,11 @@ class Client implements ClientInterface
             $stack->push($cookie, 'cookies');
         }
 
-        $stack->push($this->prepareBodyMiddleware, 'prepare_body');
+        if (!self::$prepareBodyMiddleware) {
+            self::$prepareBodyMiddleware = Middleware::prepareBody();
+        }
+
+        $stack->push(self::$prepareBodyMiddleware, 'prepare_body');
 
         if (isset($options['stack'])) {
             if (!is_callable($options['stack'])) {
