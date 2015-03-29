@@ -15,13 +15,13 @@
     "require": {
         "php": ">=5.4.0",
         "psr/http-message": "^0.9",
-        "guzzlehttp/psr7": "dev-master",
-        "guzzlehttp/promises": "dev-master"
+        "guzzlehttp/psr7": "^0.1",
+        "guzzlehttp/promises": "^0.1"
     },
     "require-dev": {
         "ext-curl": "*",
-        "psr/log": "~1.0",
-        "phpunit/phpunit": "~4.0"
+        "psr/log": "^1.0",
+        "phpunit/phpunit": "^4.0"
     },
     "autoload": {
         "files": ["src/functions.php"],
@@ -34,6 +34,7 @@
             "GuzzleHttp\\Tests\\": "tests/"
         }
     },
+    "minimum-stability" : "dev",
     "extra": {
         "branch-alias": {
             "dev-master": "5.0-dev",
