@@ -15,11 +15,11 @@ test: start-server
 	$(MAKE) stop-server
 
 coverage: start-server
-	vendor/bin/phpunit --coverage-html=artifacts/coverage
+	vendor/bin/phpunit --coverage-html=build/artifacts/coverage
 	$(MAKE) stop-server
 
 view-coverage:
-	open artifacts/coverage/index.html
+	open build/artifacts/coverage/index.html
 
 clean:
 	rm -rf artifacts/*
