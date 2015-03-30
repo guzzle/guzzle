@@ -33,8 +33,8 @@ class StreamHandler
         try {
             // Does not support the expect header.
             $request = $request->withoutHeader('Expect');
-            $stream = $this->createStream($request, $options, $headers);
-            return $this->createResponse($options, $headers ?: [], $stream);
+            list($headers, $stream) = $this->createStream($request, $options);
+            return $this->createResponse($options, $headers, $stream);
         } catch (\Exception $e) {
             // Determine if the error was a networking error.
             $message = $e->getMessage();
@@ -169,11 +169,8 @@ class StreamHandler
         return $resource;
     }
 
-    private function createStream(
-        RequestInterface $request,
-        array $options,
-        &$http_response_header
-    ) {
+    private function createStream(RequestInterface $request, array $options)
+    {
         static $methods;
         if (!$methods) {
             $methods = array_flip(get_class_methods(__CLASS__));
@@ -220,11 +217,14 @@ class StreamHandler
             }
         );
 
-        return $this->createResource(
+        $http_response_header = [];
+        $stream = $this->createResource(
             function () use ($request, &$http_response_header, $context) {
                 return fopen($request->getUri(), 'r', null, $context);
             }
         );
+
+        return [$http_response_header, $stream];
     }
 
     private function getDefaultContext(RequestInterface $request)
