@@ -15,6 +15,8 @@ use Psr\Http\Message\StreamableInterface;
  */
 class StreamHandler
 {
+    private $lastHeaders = [];
+
     /**
      * Sends an HTTP request.
      *
@@ -33,8 +35,8 @@ class StreamHandler
         try {
             // Does not support the expect header.
             $request = $request->withoutHeader('Expect');
-            list($headers, $stream) = $this->createStream($request, $options);
-            return $this->createResponse($options, $headers, $stream);
+            $stream = $this->createStream($request, $options);
+            return $this->createResponse($options, $stream);
         } catch (\Exception $e) {
             // Determine if the error was a networking error.
             $message = $e->getMessage();
@@ -50,11 +52,10 @@ class StreamHandler
         }
     }
 
-    private function createResponse(
-        array $options,
-        array $hdrs,
-        $stream
-    ) {
+    private function createResponse(array $options, $stream)
+    {
+        $hdrs = $this->lastHeaders;
+        $this->lastHeaders = [];
         $parts = explode(' ', array_shift($hdrs), 3);
         $response = [
             'status'  => $parts[1],
@@ -217,14 +218,13 @@ class StreamHandler
             }
         );
 
-        $http_response_header = [];
-        $stream = $this->createResource(
+        return $this->createResource(
             function () use ($request, &$http_response_header, $context) {
-                return fopen($request->getUri(), 'r', null, $context);
+                $resource = fopen($request->getUri(), 'r', null, $context);
+                $this->lastHeaders = $http_response_header;
+                return $resource;
             }
         );
-
-        return [$http_response_header, $stream];
     }
 
     private function getDefaultContext(RequestInterface $request)
