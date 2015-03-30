@@ -94,36 +94,42 @@ class CurlMultiHandler
     }
 
     /**
+     * Ticks the curl event loop.
+     */
+    public function tick()
+    {
+        if ($this->active &&
+            curl_multi_select($this->_mh, $this->selectTimeout) === -1
+        ) {
+            // Perform a usleep if a select returns -1.
+            // See: https://bugs.php.net/bug.php?id=61141
+            usleep(250);
+        }
+
+        // Add any delayed futures if needed.
+        if ($this->delays) {
+            $this->addDelays();
+        }
+
+        do {
+            $mrc = curl_multi_exec($this->_mh, $this->active);
+        } while ($mrc === CURLM_CALL_MULTI_PERFORM);
+
+        $this->processMessages();
+
+        // If there are delays but no transfers, then sleep for a bit.
+        if (!$this->active && $this->delays) {
+            usleep(500);
+        }
+    }
+
+    /**
      * Runs until all outstanding connections have completed.
      */
     public function execute()
     {
         do {
-
-            if ($this->active &&
-                curl_multi_select($this->_mh, $this->selectTimeout) === -1
-            ) {
-                // Perform a usleep if a select returns -1.
-                // See: https://bugs.php.net/bug.php?id=61141
-                usleep(250);
-            }
-
-            // Add any delayed futures if needed.
-            if ($this->delays) {
-                $this->addDelays();
-            }
-
-            do {
-                $mrc = curl_multi_exec($this->_mh, $this->active);
-            } while ($mrc === CURLM_CALL_MULTI_PERFORM);
-
-            $this->processMessages();
-
-            // If there are delays but no transfers, then sleep for a bit.
-            if (!$this->active && $this->delays) {
-                usleep(500);
-            }
-
+            $this->tick();
         } while ($this->active || $this->handles);
     }
 
@@ -138,10 +144,7 @@ class CurlMultiHandler
             $this->delays[$id] = microtime(true) + ($entry['options']['delay'] / 1000);
         } else {
             curl_multi_add_handle($this->_mh, $entry['handle']);
-            do {
-                $mrc = curl_multi_exec($this->_mh, $this->active);
-            } while ($mrc === CURLM_CALL_MULTI_PERFORM);
-            $this->processMessages();
+            $this->tick();
         }
     }
 
@@ -223,8 +226,9 @@ class CurlMultiHandler
                 Psr7\stream_for($entry['body'])
             );
 
+            $deferred = $entry['deferred'];
             $this->removeProcessed($id);
-            $entry['deferred']->resolve($result);
+            $deferred->resolve($result);
         }
     }
 }
