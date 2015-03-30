@@ -34,7 +34,7 @@ class StreamHandler
             // Does not support the expect header.
             $request = $request->withoutHeader('Expect');
             $stream = $this->createStream($request, $options, $headers);
-            return $this->createResponse($options, $headers, $stream);
+            return $this->createResponse($options, $headers ?: [], $stream);
         } catch (\Exception $e) {
             // Determine if the error was a networking error.
             $message = $e->getMessage();
@@ -52,7 +52,7 @@ class StreamHandler
 
     private function createResponse(
         array $options,
-        array $hdrs = [],
+        array $hdrs,
         $stream
     ) {
         $parts = explode(' ', array_shift($hdrs), 3);
