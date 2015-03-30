@@ -52,7 +52,7 @@ class StreamHandler
 
     private function createResponse(
         array $options,
-        array $hdrs,
+        array $hdrs = [],
         $stream
     ) {
         $parts = explode(' ', array_shift($hdrs), 3);

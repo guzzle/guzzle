@@ -66,7 +66,6 @@ class CurlMultiHandlerTest extends \PHPUnit_Framework_TestCase
             $response->cancel();
             $responses[] = $response;
         }
-        $this->assertNotCount(10, Server::received());
     }
 
     public function testCannotCancelFinished()
