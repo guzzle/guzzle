@@ -311,11 +311,15 @@ header of the request.
 delay
 -----
 
-:Summary: The number of milliseconds to delay before sending the request. This
-    is often used for delaying before retrying a request. Handlers SHOULD
-    implement this if possible, but it is not a strict requirement.
-:Types: integer/float
-:Default: 0
+:Summary: The number of milliseconds to delay before sending the request or set
+    to ``true`` to delay sending the request until the next tick of an event
+    loop (when using an event-loop based HTTP handler). This is often used for
+    delaying before retrying a request.
+:Types:
+    - integer
+    - float
+    - bool (true)
+:Default: null
 
 
 .. _expect-option:
@@ -325,8 +329,8 @@ expect
 
 :Summary: Controls the behavior of the "Expect: 100-Continue" header.
 :Types:
-        - bool
-        - integer
+    - bool
+    - integer
 :Default: ``1048576``
 
 Set to ``true`` to enable the "Expect: 100-Continue" header for all requests

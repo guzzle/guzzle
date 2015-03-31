@@ -45,7 +45,7 @@ class MockHandler implements \Countable
             throw new \OutOfBoundsException('Mock queue is empty');
         }
 
-        if (isset($options['delay'])) {
+        if (!empty($options['delay']) && $options['delay'] !== true) {
             usleep($options['delay'] * 1000);
         }
 

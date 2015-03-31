@@ -140,11 +140,13 @@ class CurlMultiHandler
 
         // If the request is a delay, then add the request to the curl multi
         // pool only after the specified delay.
-        if (isset($entry['options']['delay'])) {
-            $this->delays[$id] = microtime(true) + ($entry['options']['delay'] / 1000);
-        } else {
+        if (empty($entry['options']['delay'])) {
             curl_multi_add_handle($this->_mh, $entry['handle']);
             $this->tick();
+        } elseif ($entry['options']['delay'] === true) {
+            $this->delays[$id] = 0;
+        } else {
+            $this->delays[$id] = microtime(true) + ($entry['options']['delay'] / 1000);
         }
     }
 
