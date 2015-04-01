@@ -51,7 +51,7 @@ class Pool implements PromisorInterface
         }
 
         // Add a delay by default to ensure resolving on future tick.
-        $opts['delay'] = 0.0001;
+        $opts['delay'] = true;
 
         $config['mapfn'] = function ($requestOrFunction) use ($client, $opts) {
             if ($requestOrFunction instanceof RequestInterface) {
