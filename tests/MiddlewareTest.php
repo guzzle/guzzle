@@ -36,7 +36,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
             ]
         );
         $f = $m($h);
-        $f(new Request('GET', 'http://foo.com'), []);
+        $f(new Request('GET', 'http://foo.com'), ['cookies' => $jar]);
         $this->assertCount(1, $jar);
     }
 
@@ -45,10 +45,10 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
      */
     public function testThrowsExceptionOnHttpClientError()
     {
-        $m = Middleware::httpError();
+        $m = Middleware::httpErrors();
         $h = new MockHandler([new Response(404)]);
         $f = $m($h);
-        $p = $f(new Request('GET', 'http://foo.com'), []);
+        $p = $f(new Request('GET', 'http://foo.com'), ['http_errors' => true]);
         $this->assertEquals('rejected', $p->getState());
         $p->wait();
     }
@@ -58,10 +58,10 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
      */
     public function testThrowsExceptionOnHttpServerError()
     {
-        $m = Middleware::httpError();
+        $m = Middleware::httpErrors();
         $h = new MockHandler([new Response(500)]);
         $f = $m($h);
-        $p = $f(new Request('GET', 'http://foo.com'), []);
+        $p = $f(new Request('GET', 'http://foo.com'), ['http_errors' => true]);
         $this->assertEquals('rejected', $p->getState());
         $p->wait();
     }

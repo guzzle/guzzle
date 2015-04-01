@@ -185,13 +185,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage cookies must be an array, true, or CookieJarInterface
+     * @expectedExceptionMessage cookies must be an instance of GuzzleHttp\Cookie\CookieJarInterface
      */
     public function testValidatesCookies()
     {
         $mock = new MockHandler([new Response(200, [], 'foo')]);
         $client = new Client(['handler' => $mock]);
-        $client->get('http://foo.com', ['cookies' => 'foo']);
+        $client->get('http://foo.com', ['cookies' => 'foo'])->wait();
     }
 
     public function testSetCookieToTrueUsesSharedJar()
@@ -473,5 +473,18 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client(['handler' => $mock]);
         $client->send(new Request('GET', 'http://foo.com'));
         $this->assertTrue($mock->getLastOptions()['sync']);
+    }
+
+    public function testCanDisableDefaultMiddleware()
+    {
+        $mock = new MockHandler([new Response(500)]);
+        $client = new Client([
+            'handler' => $mock,
+            'disable_default_middleware' => true
+        ]);
+        $this->assertEquals(
+            500,
+            $client->send(new Request('GET', 'http://foo.com'))->getStatusCode()
+        );
     }
 }

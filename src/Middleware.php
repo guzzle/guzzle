@@ -16,14 +16,21 @@ final class Middleware
     /**
      * Middleware that adds cookies to requests.
      *
-     * @param CookieJarInterface $cookieJar Cookie jar to store state.
+     * The options array must be set to a CookieJarInterface in order to use
+     * cookies. This is typically handled for you by a client.
      *
      * @return callable Returns a function that accepts the next handler.
      */
-    public static function cookies(CookieJarInterface $cookieJar)
+    public static function cookies()
     {
-        return function (callable $handler) use ($cookieJar) {
-            return function ($request, array $options) use ($handler, $cookieJar) {
+        return function (callable $handler) {
+            return function ($request, array $options) use ($handler) {
+                if (empty($options['cookies'])) {
+                    return $handler($request, $options);
+                } elseif (!($options['cookies'] instanceof CookieJarInterface)) {
+                    throw new \InvalidArgumentException('cookies must be an instance of GuzzleHttp\Cookie\CookieJarInterface');
+                }
+                $cookieJar = $options['cookies'];
                 $request = $cookieJar->withCookieHeader($request);
                 return $handler($request, $options)
                     ->then(function ($response) use ($cookieJar, $request) {
@@ -36,14 +43,18 @@ final class Middleware
     }
 
     /**
-     * Middleware that throws exceptions for 4xx or 5xx responses.
+     * Middleware that throws exceptions for 4xx or 5xx responses when the
+     * "http_error" request option is set to true.
      *
      * @return callable Returns a function that accepts the next handler.
      */
-    public static function httpError()
+    public static function httpErrors()
     {
         return function (callable $handler) {
             return function ($request, array $options) use ($handler) {
+                if (empty($options['http_errors'])) {
+                    return $handler($request, $options);
+                }
                 return $handler($request, $options)->then(
                     function (ResponseInterface $response) use ($request, $handler) {
                         $code = $response->getStatusCode();

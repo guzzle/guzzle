@@ -32,25 +32,8 @@ class Client implements ClientInterface
     /** @var HandlerStack */
     private $stack;
 
-    /** @var callable Cached cookie middleware */
-    private $cookieMiddleware;
-
-    /** @var callable Cached error middleware */
-    private static $errorMiddleware;
-
-    /** @var callable Cached redirect middleware */
-    private static $redirectMiddleware;
-
-    /** @var callable Cached prepare body middleware */
-    private static $prepareBodyMiddleware;
-
-    /** @var array Default allow_redirects request option settings  */
-    private static $defaultRedirect = [
-        'max'       => 5,
-        'strict'    => false,
-        'referer'   => false,
-        'protocols' => ['http', 'https']
-    ];
+    /** @var CookieJarInterface */
+    private $cookieJar;
 
     /**
      * Clients accept an array of constructor parameters.
@@ -75,6 +58,9 @@ class Client implements ClientInterface
      *   Psr7\Http\Message\ResponseInterface on success. "handler" is a
      *   constructor only option that cannot be overridden in per/request
      *   options.
+     * - disable_default_middleware: (bool) Client constructor only option,
+     *   that when set, disables adding the default 'allow_redirects',
+     *   'http_errors', 'cookies', and 'prepare_body' middleware.
      * - base_uri: (string|UriInterface) Base URI of the client that is merged
      *   into relative URIs. Can be a string or instance of UriInterface.
      * - delay: (int) The amount of time to delay before sending in
@@ -174,6 +160,15 @@ class Client implements ClientInterface
             $config['base_uri'] = Psr7\uri_for($config['base_uri']);
         }
 
+        if (!empty($config['disable_default_middleware'])) {
+            unset($config['disable_default_middleware']);
+        } else {
+            $this->stack->push(Middleware::redirect(), 'allow_redirects');
+            $this->stack->push(Middleware::httpErrors(), 'http_errors');
+            $this->stack->push(Middleware::cookies(), 'cookies');
+            $this->stack->push(Middleware::prepareBody(), 'prepare_body');
+        }
+
         $this->configureDefaults($config);
     }
 
@@ -261,10 +256,11 @@ class Client implements ClientInterface
     private function configureDefaults(array $config)
     {
         $defaults = [
-            'allow_redirects' => self::$defaultRedirect,
+            'allow_redirects' => RedirectMiddleware::$defaultSettings,
             'http_errors'     => true,
             'decode_content'  => true,
-            'verify'          => true
+            'verify'          => true,
+            'cookies'         => false
         ];
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set
@@ -353,80 +349,6 @@ class Client implements ClientInterface
     {
         $stack = clone $this->stack;
         $this->backwardsCompat($options);
-        $handler = $this->createHandler($request, $stack, $options);
-        $request = $this->applyOptions($request, $options);
-
-        try {
-            return Promise\promise_for($handler($request, $options));
-        } catch (\Exception $e) {
-            return Promise\rejection_for($e);
-        }
-    }
-
-    /**
-     * Create a composite handler based on the given request options.
-     *
-     * @param RequestInterface $request Request to send.
-     * @param HandlerStack     $stack
-     * @param array            $options Array of request options.
-     *
-     * @return callable
-     */
-    private function createHandler(
-        RequestInterface $request,
-        HandlerStack $stack,
-        array &$options
-    ) {
-        // Add the redirect middleware if needed.
-        if (!empty($options['allow_redirects'])) {
-            if (!self::$redirectMiddleware) {
-                self::$redirectMiddleware = Middleware::redirect();
-            }
-            $stack->push(self::$redirectMiddleware, 'allow_redirects');
-            if ($options['allow_redirects'] === true) {
-                $options['allow_redirects'] = self::$defaultRedirect;
-            } elseif (!is_array($options['allow_redirects'])) {
-                throw new Iae('allow_redirects must be true, false, or array');
-            } else {
-                // Merge the default settings with the provided settings
-                $options['allow_redirects'] += self::$defaultRedirect;
-            }
-        }
-
-        // Add the httpError middleware if needed.
-        if (!empty($options['http_errors'])) {
-            if (!self::$errorMiddleware) {
-                self::$errorMiddleware = Middleware::httpError();
-            }
-            $stack->push(self::$errorMiddleware, 'http_errors');
-        }
-
-        // Add the cookies middleware if needed.
-        if (!empty($options['cookies'])) {
-            if ($options['cookies'] === true) {
-                if (!$this->cookieMiddleware) {
-                    $jar = new CookieJar();
-                    $this->cookieMiddleware = Middleware::cookies($jar);
-                }
-                $cookie = $this->cookieMiddleware;
-            } elseif ($options['cookies'] instanceof CookieJarInterface) {
-                $cookie = Middleware::cookies($options['cookies']);
-            } elseif (is_array($options['cookies'])) {
-                $cookie = Middleware::cookies(CookieJar::fromArray(
-                    $options['cookies'],
-                    $request->getUri()->getHost()
-                ));
-            } else {
-                throw new Iae('cookies must be an array, true, or CookieJarInterface');
-            }
-            $stack->push($cookie, 'cookies');
-        }
-
-        if (!self::$prepareBodyMiddleware) {
-            self::$prepareBodyMiddleware = Middleware::prepareBody();
-        }
-
-        $stack->push(self::$prepareBodyMiddleware, 'prepare_body');
 
         if (isset($options['stack'])) {
             if (!is_callable($options['stack'])) {
@@ -436,7 +358,14 @@ class Client implements ClientInterface
             $options['stack']($stack, $options);
         }
 
-        return $stack->resolve();
+        $handler = $stack->resolve();
+        $request = $this->applyOptions($request, $options);
+
+        try {
+            return Promise\promise_for($handler($request, $options));
+        } catch (\Exception $e) {
+            return Promise\rejection_for($e);
+        }
     }
 
     /**
@@ -452,6 +381,21 @@ class Client implements ClientInterface
         $modify = ['set_headers' => []];
         $conditional = [];
         $this->extractFormData($options, $conditional);
+
+        // Turn cookies settings true and array into a cookie jar.
+        if (!empty($options['cookies'])) {
+            if ($options['cookies'] === true) {
+                if (!$this->cookieJar) {
+                    $this->cookieJar = new CookieJar();
+                }
+                $options['cookies'] = $this->cookieJar;
+            } elseif (is_array($options['cookies'])) {
+                $options['cookies'] = CookieJar::fromArray(
+                    $options['cookies'],
+                    $request->getUri()->getHost()
+                );
+            }
+        }
 
         if (!empty($options['decode_content'])) {
             if ($options['decode_content'] !== true) {

@@ -17,6 +17,13 @@ use Psr\Http\Message\UriInterface;
  */
 class RedirectMiddleware
 {
+    public static $defaultSettings = [
+        'max'       => 5,
+        'protocols' => ['http', 'https'],
+        'strict'    => false,
+        'referer'   => false
+    ];
+
     /** @var callable  */
     private $nextHandler;
 
@@ -37,18 +44,23 @@ class RedirectMiddleware
     public function __invoke(RequestInterface $request, array $options)
     {
         $fn = $this->nextHandler;
-        if (empty($options['allow_redirects'])
-            || empty($options['allow_redirects']['max'])
-        ) {
+
+        if (empty($options['allow_redirects'])) {
             return $fn($request, $options);
         }
 
-        $options['allow_redirects'] += [
-            'max'       => 5,
-            'protocols' => ['http', 'https'],
-            'strict'    => false,
-            'referer'   => false
-        ];
+        if ($options['allow_redirects'] === true) {
+            $options['allow_redirects'] = self::$defaultSettings;
+        } elseif (!is_array($options['allow_redirects'])) {
+            throw new \InvalidArgumentException('allow_redirects must be true, false, or array');
+        } else {
+            // Merge the default settings with the provided settings
+            $options['allow_redirects'] += self::$defaultSettings;
+        }
+
+        if (empty($options['allow_redirects']['max'])) {
+            return $fn($request, $options);
+        }
 
         return $fn($request, $options)
             ->then(function (ResponseInterface $response) use ($request, $options) {
