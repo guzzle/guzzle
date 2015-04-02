@@ -1,8 +1,8 @@
-.. title:: Guzzle | PHP HTTP client and framework for consuming RESTful web services
+.. title:: Guzzle, PHP HTTP client
 
-======
-Guzzle
-======
+====================
+Guzzle Documentation
+====================
 
 Guzzle is a PHP HTTP client that makes it easy to send HTTP requests and
 trivial to integrate with web services.
@@ -37,11 +37,11 @@ trivial to integrate with web services.
     $promise->wait();
 
 
-User guide
-----------
+User Guide
+==========
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
 
     overview
     quickstart
