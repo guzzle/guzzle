@@ -60,6 +60,12 @@ class Mock implements SubscriberInterface, \Countable
             }
         }
 
+        $save_to = $event->getRequest()->getConfig()->get('save_to');
+
+        if ($save_to) {
+            file_put_contents($save_to, $item->getBody());
+        }
+
         $event->intercept($item);
     }
 
