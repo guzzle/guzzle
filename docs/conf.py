@@ -22,9 +22,6 @@ html_static_path = ['_static']
 
 ##### Guzzle sphinx theme
 
-# @TODO: Temporary hack while developing the theme.
-sys.path.insert(0, '/Users/dowling/projects/guzzle_sphinx_theme')
-
 import guzzle_sphinx_theme
 html_translator_class = 'guzzle_sphinx_theme.HTMLTranslator'
 html_theme_path = guzzle_sphinx_theme.html_theme_path()
