@@ -162,18 +162,35 @@ class MockTest extends \PHPUnit_Framework_TestCase
 
     public function testSaveToFile()
     {
-        $file = sys_get_temp_dir().'/mock_test_'.uniqid();
+        $filename = sys_get_temp_dir().'/mock_test_'.uniqid();
+        $file = tmpfile();
+        $stream = new Stream(tmpfile());
 
-        $m = new Mock([new Response(200, [], Stream::factory('TEST FILE'))]);
+        $m = new Mock([
+        	new Response(200, [], Stream::factory('TEST FILENAME')),
+        	new Response(200, [], Stream::factory('TEST FILE')),
+        	new Response(200, [], Stream::factory('TEST STREAM')),
+        ]);
+
         $client = new Client();
         $client->getEmitter()->attach($m);
 
+        $client->get('/', ['save_to' => $filename]);
         $client->get('/', ['save_to' => $file]);
+        $client->get('/', ['save_to' => $stream]);
 
-        $this->assertFileExists($file);
-        $this->assertEquals('TEST FILE', file_get_contents($file));
+        $this->assertFileExists($filename);
+        $this->assertEquals('TEST FILENAME', file_get_contents($filename));
 
-        unlink($file);
+        $meta = stream_get_meta_data($file);
+
+        $this->assertFileExists($meta['uri']);
+        $this->assertEquals('TEST FILE', file_get_contents($meta['uri']));
+
+        $this->assertFileExists($stream->getMetadata('uri'));
+        $this->assertEquals('TEST STREAM', file_get_contents($stream->getMetadata('uri')));
+
+        unlink($filename);
     }
 
     public function testCanMockFailedFutureResponses()
