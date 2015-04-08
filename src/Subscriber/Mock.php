@@ -61,17 +61,17 @@ class Mock implements SubscriberInterface, \Countable
             }
         }
 
-        $save_to = $event->getRequest()->getConfig()->get('save_to');
+        $saveTo = $event->getRequest()->getConfig()->get('save_to');
 
-        if (null !== $save_to) {
+        if (null !== $saveTo) {
         	$body = $item->getBody();
 
-        	if (is_resource($save_to)) {
-        		fwrite($save_to, $body);
-        	} elseif (is_string($save_to)) {
-	            file_put_contents($save_to, $body);
-        	} elseif ($save_to instanceof StreamInterface) {
-        		$save_to->write($body);
+        	if (is_resource($saveTo)) {
+        		fwrite($saveTo, $body);
+        	} elseif (is_string($saveTo)) {
+	            file_put_contents($saveTo, $body);
+        	} elseif ($saveTo instanceof StreamInterface) {
+        		$saveTo->write($body);
         	}
         }
 
