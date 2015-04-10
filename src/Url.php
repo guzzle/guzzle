@@ -16,7 +16,7 @@ class Url
     private $path = '';
     private $fragment;
     private static $defaultPorts = ['http' => 80, 'https' => 443, 'ftp' => 21];
-    private static $pathPattern = '/[^a-zA-Z0-9\-\._~!\$&\'\(\)\*\+,;=%:@\/]+|%(?![A-Fa-f0-9]{2})/';
+    private static $pathPattern = '/[^a-zA-Z0-9\-\._~!\/%]+|%(?![A-Fa-f0-9]{2})/';
     private static $queryPattern = '/[^a-zA-Z0-9\-\._~!\$\'\(\)\*\+,;%:@\/\?=&]+|%(?![A-Fa-f0-9]{2})/';
     /** @var Query|string Query part of the URL */
     private $query;

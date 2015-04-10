@@ -9,7 +9,7 @@ use GuzzleHttp\Url;
  */
 class UrlTest extends \PHPUnit_Framework_TestCase
 {
-    const RFC3986_BASE = "http://a/b/c/d;p?q";
+    const RFC3986_BASE = "http://a/b/c/d%3Bp?q";
 
     public function testEmptyUrl()
     {
@@ -183,14 +183,14 @@ class UrlTest extends \PHPUnit_Framework_TestCase
             [self::RFC3986_BASE, 'g/',            'http://a/b/c/g/'],
             [self::RFC3986_BASE, '/g',            'http://a/g'],
             [self::RFC3986_BASE, '//g',           'http://g'],
-            [self::RFC3986_BASE, '?y',            'http://a/b/c/d;p?y'],
+            [self::RFC3986_BASE, '?y',            'http://a/b/c/d%3Bp?y'],
             [self::RFC3986_BASE, 'g?y',           'http://a/b/c/g?y'],
-            [self::RFC3986_BASE, '#s',            'http://a/b/c/d;p?q#s'],
+            [self::RFC3986_BASE, '#s',            'http://a/b/c/d%3Bp?q#s'],
             [self::RFC3986_BASE, 'g#s',           'http://a/b/c/g#s'],
             [self::RFC3986_BASE, 'g?y#s',         'http://a/b/c/g?y#s'],
-            [self::RFC3986_BASE, ';x',            'http://a/b/c/;x'],
-            [self::RFC3986_BASE, 'g;x',           'http://a/b/c/g;x'],
-            [self::RFC3986_BASE, 'g;x?y#s',       'http://a/b/c/g;x?y#s'],
+            [self::RFC3986_BASE, ';x',            'http://a/b/c/%3Bx'],
+            [self::RFC3986_BASE, 'g;x',           'http://a/b/c/g%3Bx'],
+            [self::RFC3986_BASE, 'g;x?y#s',       'http://a/b/c/g%3Bx?y#s'],
             [self::RFC3986_BASE, '',              self::RFC3986_BASE],
             [self::RFC3986_BASE, '.',             'http://a/b/c/'],
             [self::RFC3986_BASE, './',            'http://a/b/c/'],
@@ -213,7 +213,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
             [self::RFC3986_BASE, './g/.',         'http://a/b/c/g/'],
             [self::RFC3986_BASE, 'g/./h',         'http://a/b/c/g/h'],
             [self::RFC3986_BASE, 'g/../h',        'http://a/b/c/h'],
-            [self::RFC3986_BASE, 'g;x=1/./y',     'http://a/b/c/g;x=1/y'],
+            [self::RFC3986_BASE, 'g;x=1/./y',     'http://a/b/c/g%3Bx%3D1/y'],
             [self::RFC3986_BASE, 'g;x=1/../y',    'http://a/b/c/y'],
             [self::RFC3986_BASE, 'http:g',        'http:g'],
         ];
@@ -302,7 +302,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
             array('/./foo/..', '/'),
             array('/./foo', '/foo'),
             array('/./foo/', '/foo/'),
-            array('*', '*'),
+            array('*', '%2A'),
             array('/foo', '/foo'),
             array('/abc/123/../foo/', '/abc/foo/'),
             array('/a/b/c/./../../g', '/a/g'),
@@ -351,7 +351,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
     public function testCorrectlyEncodesPathWithoutDoubleEncoding()
     {
         $url = Url::fromString('http://foo.com/baz%20 bar:boo/baz!');
-        $this->assertEquals('/baz%20%20bar:boo/baz!', $url->getPath());
+        $this->assertEquals('/baz%20%20bar%3Aboo/baz!', $url->getPath());
     }
 
     public function testLowercaseScheme()
