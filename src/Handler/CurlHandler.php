@@ -59,8 +59,8 @@ class CurlHandler
 
     public function __invoke(RequestInterface $request, array $options)
     {
-        $factory = $this->factory;
         // Ensure headers are by reference. They're updated elsewhere.
+        $factory = $this->factory;
         $result = $factory($request, $options, $this->checkoutEasyHandle());
         $h = $result[0];
         $hd =& $result[1];

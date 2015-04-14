@@ -79,7 +79,7 @@ class MockHandlerTest extends \PHPUnit_Framework_TestCase
             $c = $v;
         });
         $request = new Request('GET', 'http://example.com');
-        $mock($request, []);
+        $mock($request, [])->wait();
         $this->assertSame($res, $c);
     }
 
@@ -89,7 +89,7 @@ class MockHandlerTest extends \PHPUnit_Framework_TestCase
         $c = null;
         $mock = new MockHandler([$e], null, function ($v) use (&$c) { $c = $v; });
         $request = new Request('GET', 'http://example.com');
-        $mock($request, []);
+        $mock($request, [])->wait(false);
         $this->assertSame($e, $c);
     }
 

@@ -36,7 +36,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
             ]
         );
         $f = $m($h);
-        $f(new Request('GET', 'http://foo.com'), ['cookies' => $jar]);
+        $f(new Request('GET', 'http://foo.com'), ['cookies' => $jar])->wait();
         $this->assertCount(1, $jar);
     }
 
@@ -49,8 +49,9 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $h = new MockHandler([new Response(404)]);
         $f = $m($h);
         $p = $f(new Request('GET', 'http://foo.com'), ['http_errors' => true]);
-        $this->assertEquals('rejected', $p->getState());
+        $this->assertEquals('pending', $p->getState());
         $p->wait();
+        $this->assertEquals('rejected', $p->getState());
     }
 
     /**
@@ -62,8 +63,9 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $h = new MockHandler([new Response(500)]);
         $f = $m($h);
         $p = $f(new Request('GET', 'http://foo.com'), ['http_errors' => true]);
-        $this->assertEquals('rejected', $p->getState());
+        $this->assertEquals('pending', $p->getState());
         $p->wait();
+        $this->assertEquals('rejected', $p->getState());
     }
 
     public function testTracksHistory()
@@ -92,7 +94,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $request = new Request('GET', 'http://foo.com');
         $h = new MockHandler([new RequestException('error', $request)]);
         $f = $m($h);
-        $f($request, []);
+        $f($request, [])->wait(false);
         $this->assertCount(1, $container);
         $this->assertEquals('GET', $container[0]['request']->getMethod());
         $this->assertInstanceOf('GuzzleHttp\Exception\RequestException', $container[0]['error']);
@@ -155,7 +157,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $f = $m($h);
         $c = new Client(['handler' => $f]);
         $p = $c->sendAsync(new Request('GET', 'http://test.com'), []);
-        $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
+        $p->wait();
         $this->assertCount(3, $calls);
         $this->assertEquals(2, $delayCalls);
         $this->assertEquals(202, $p->wait()->getStatusCode());
@@ -168,7 +170,6 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $h = new MockHandler([new Response(200)]);
         $c = new Client(['handler' => $m($h)]);
         $p = $c->sendAsync(new Request('GET', 'http://test.com'), []);
-        $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
         $this->assertEquals(200, $p->wait()->getStatusCode());
     }
 
@@ -183,7 +184,6 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $h = new MockHandler([new \Exception(), new Response(201)]);
         $c = new Client(['handler' => $m($h)]);
         $p = $c->sendAsync(new Request('GET', 'http://test.com'), []);
-        $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
         $this->assertEquals(201, $p->wait()->getStatusCode());
         $this->assertCount(2, $calls);
         $this->assertEquals(0, $calls[0][0]);
@@ -280,7 +280,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         }));
         $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com'), []);
-        $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
+        $p->wait();
         $this->assertEquals('foo', $p->wait()->getHeader('Bar'));
     }
 }
