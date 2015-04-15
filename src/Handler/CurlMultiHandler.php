@@ -144,7 +144,7 @@ class CurlMultiHandler
     {
         $tramp = P\trampoline();
 
-        while ($this->handles || $tramp->hasThunks()) {
+        while ($this->handles || !$tramp->isEmpty()) {
             $this->tick();
         }
     }
