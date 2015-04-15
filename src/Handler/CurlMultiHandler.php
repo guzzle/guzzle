@@ -162,7 +162,7 @@ class CurlMultiHandler
             $this->tick();
         } elseif ($entry['options']['delay'] === true) {
             $mh = $this->_mh;
-            P\trampoline()->enqueue(static function () use ($handle, $mh) {
+            P\trampoline()->schedule(static function () use ($handle, $mh) {
                 curl_multi_add_handle($mh, $handle);
             });
         } else {
