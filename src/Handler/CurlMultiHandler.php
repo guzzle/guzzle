@@ -103,7 +103,7 @@ class CurlMultiHandler
     public function tick()
     {
         // Step through the trampoline which may add additional requests.
-        P\trampoline()->step();
+        P\trampoline()->run();
 
         // Add any delayed handles if needed.
         if ($this->delays) {
