@@ -311,14 +311,10 @@ header of the request.
 delay
 -----
 
-:Summary: The number of milliseconds to delay before sending the request or set
-    to ``true`` to delay sending the request until the next tick of an event
-    loop (when using an event-loop based HTTP handler). This is often used for
-    delaying before retrying a request.
+:Summary: The number of milliseconds to delay before sending the request.
 :Types:
     - integer
     - float
-    - bool (true)
 :Default: null
 
 

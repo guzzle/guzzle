@@ -159,11 +159,6 @@ class CurlMultiHandler
         // pool only after the specified delay.
         if (empty($entry['options']['delay'])) {
             curl_multi_add_handle($this->_mh, $handle);
-            // Do the connection, but don't process any messages as that can
-            // lead to recursion.
-            while (curl_multi_exec($this->_mh, $this->active) === CURLM_CALL_MULTI_PERFORM);
-        } elseif ($entry['options']['delay'] === true) {
-            curl_multi_add_handle($this->_mh, $handle);
         } else {
             $this->delays[$id] = microtime(true) + ($entry['options']['delay'] / 1000);
         }

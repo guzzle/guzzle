@@ -66,7 +66,7 @@ class CurlHandler
         $hd =& $result[1];
         $bd = $result[2];
 
-        if (!empty($options['delay']) && $options['delay'] !== true) {
+        if (isset($options['delay'])) {
             usleep($options['delay'] * 1000);
         }
 

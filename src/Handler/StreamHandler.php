@@ -28,7 +28,7 @@ class StreamHandler
     public function __invoke(RequestInterface $request, array $options)
     {
         // Sleep if there is a delay specified.
-        if (!empty($options['delay']) && $options['delay'] !== true) {
+        if (isset($options['delay'])) {
             usleep($options['delay'] * 1000);
         }
 
