@@ -102,9 +102,6 @@ class CurlMultiHandler
      */
     public function tick()
     {
-        // Step through the trampoline which may add additional requests.
-        P\trampoline()->run();
-
         // Add any delayed handles if needed.
         if ($this->delays) {
             $currentTime = microtime(true);
@@ -119,6 +116,9 @@ class CurlMultiHandler
             }
         }
 
+        // Step through the trampoline which may add additional requests.
+        P\trampoline()->run();
+
         if ($this->active &&
             curl_multi_select($this->_mh, $this->selectTimeout) === -1
         ) {
@@ -130,11 +130,6 @@ class CurlMultiHandler
         while (curl_multi_exec($this->_mh, $this->active) === CURLM_CALL_MULTI_PERFORM);
 
         $this->processMessages();
-
-        // If there are delays but no transfers, then sleep for a bit.
-        if (!$this->active && $this->delays) {
-            usleep(500);
-        }
     }
 
     /**
@@ -145,6 +140,10 @@ class CurlMultiHandler
         $tramp = P\trampoline();
 
         while ($this->handles || !$tramp->isEmpty()) {
+            // If there are no transfers, then sleep for the next delay
+            if (!$this->active && $this->delays) {
+                usleep($this->timeToNext());
+            }
             $this->tick();
         }
     }
@@ -154,9 +153,6 @@ class CurlMultiHandler
         $handle = $entry['handle'];
         $id = (int) $handle;
         $this->handles[$id] = $entry;
-
-        // If the request is a delay, then add the request to the curl multi
-        // pool only after the specified delay.
         if (empty($entry['options']['delay'])) {
             curl_multi_add_handle($this->_mh, $handle);
         } else {
@@ -221,5 +217,18 @@ class CurlMultiHandler
             curl_close($done['handle']);
             $entry['deferred']->resolve($result);
         }
+    }
+
+    private function timeToNext()
+    {
+        $currentTime = microtime(true);
+        $nextTime = PHP_INT_MAX;
+        foreach ($this->delays as $time) {
+            if ($time < $nextTime) {
+                $nextTime = $time;
+            }
+        }
+
+        return max(0, $currentTime - $nextTime);
     }
 }
