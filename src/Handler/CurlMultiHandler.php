@@ -116,8 +116,8 @@ class CurlMultiHandler
             }
         }
 
-        // Step through the trampoline which may add additional requests.
-        P\trampoline()->run();
+        // Step through the task queue which may add additional requests.
+        P\queue()->run();
 
         if ($this->active &&
             curl_multi_select($this->_mh, $this->selectTimeout) === -1
@@ -137,9 +137,9 @@ class CurlMultiHandler
      */
     public function execute()
     {
-        $tramp = P\trampoline();
+        $queue = P\queue();
 
-        while ($this->handles || !$tramp->isEmpty()) {
+        while ($this->handles || !$queue->isEmpty()) {
             // If there are no transfers, then sleep for the next delay
             if (!$this->active && $this->delays) {
                 usleep($this->timeToNext());
