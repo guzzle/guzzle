@@ -518,59 +518,6 @@ body to an open PSR-7 stream.
     of ``sink``.
 
 
-.. _stack-option:
-
-stack
------
-
-:Summary: A function that accepts a ``GuzzleHttp\HandlerStack`` object before
-    a request is sent. The function may mutate the handler stack to add custom
-    conditional middleware before sending each request. This is useful when you
-    wish to only apply middleware conditionally, or if the middleware needs to
-    be in a certain position in the handler stack relative to other middleware
-    added by Guzzle (e.g., 'allow_redirects', 'http_errors', 'cookies', and
-    'prepare_body').
-:Types: callable
-:Default: None
-
-Each time a request is created, Guzzle will clone the client's handler stack
-and use it to send the request. Guzzle adds a few middleware to the request's
-handler stack based on the provided request options.
-
-- If the ``allow_redirects`` option is set, Guzzle will add a middleware with
-  the name ``allow_redirects``.
-- If the ``http_errors`` request option is set, Guzzle will add a middleware
-  with the name ``http_errors``.
-- If the ``cookies`` request option is set, Guzzle will add a middleware with
-  the name ``cookies``.
-- Finally, Guzzle will always add a middleware called ``prepare_body`` which is
-  used to add a Content-Length and Content-Type header if needed.
-
-If you need to add middleware before or after any of these default middlewares,
-you can use the ``stack`` request option to add middleware before or after
-them by name.
-
-.. code-block:: php
-
-    use Psr\Http\Message\RequestInterface;
-    use GuzzleHttp\HandlerStack;
-
-    $client->get('/', [
-        'stack' => function (HandlerStack $stack, array $options) {
-            // Add a custom middleware to each request after the redirect
-            // middleware.
-            $stack->after('redirect', function ($handler) {
-                return function (RequestInterface, array $options) use ($handler) {
-                    // Create a modified request.
-                    $request = $request->withHeader('X-Foo' => 'Bar');
-                    // Send the request using the next handler.
-                    return $handler($request, $options);
-                }
-            });
-        }
-    ]);
-
-
 .. _ssl_key-option:
 
 ssl_key

@@ -93,12 +93,33 @@ function debug_resource($value = null)
 }
 
 /**
+ * Gets the default Guzzle handler stack that has support for cookies,
+ * redirects, HTTP error exceptions, and preparing a body before sending.
+ *
+ * @param callable $handler HTTP handler function to use with the stack. If no
+ *                          handler is provided, the best handler for your
+ *                          system will be utilized.
+ *
+ * @return HandlerStack
+ */
+function default_handler(callable $handler = null)
+{
+    $stack = new HandlerStack($handler ?: default_http_handler());
+    $stack->push(Middleware::redirect(), 'allow_redirects');
+    $stack->push(Middleware::httpErrors(), 'http_errors');
+    $stack->push(Middleware::cookies(), 'cookies');
+    $stack->push(Middleware::prepareBody(), 'prepare_body');
+
+    return $stack;
+}
+
+/**
  * Create a default handler to use based on the environment
  *
  * @throws \RuntimeException if no viable Handler is available.
  * @return callable Returns the best handler for the given system.
  */
-function default_handler()
+function default_http_handler()
 {
     $handler = null;
     if (extension_loaded('curl')) {

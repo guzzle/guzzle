@@ -22,14 +22,10 @@ a client constructor.
 
     $client = new Client(['handler' => new CurlHandler()]);
 
-The handler of a client is then stored in the handler stack of the client
-(a ``GuzzleHttp\HandlerStack`` object). The handler stack contains the client
-and any middleware that will be composed on the handler.
-
-.. code-block:: php
-
-    $stack = $client->getHandlerStack();
-    assert(true === $stack->hasHandler());
+The handler provided to a client determines how request options are applied and
+utilized for each request sent by a client. For example, if you do not have a
+cookie middleware associated with a client, then setting the ``cookies``
+request option will have no effect on the request.
 
 
 Middleware
@@ -74,12 +70,15 @@ Here's an example of adding a header to each request.
         };
     }
 
-Once a middleware has been created, you can add it to a client using the
-client's handler stack.
+Once a middleware has been created, you can add it to a client by either
+wrapping the handler used by the client or by decorating a handler stack.
 
 .. code-block:: php
 
-    $client->getHandlerStack()->push(add_header('X-Foo', 'bar'));
+    $stack = new \GuzzleHttp\HandlerStack();
+    $stack->setHandler(new \GuzzleHttp\Handler\CurlHandler());
+    $stack->push(add_header('X-Foo', 'bar'));
+    $client = new \GuzzleHttp\Client(['handler' => $stack]);
 
 Now when you send a request, the client will use a handler composed with your
 added middleware, adding a header to each request.
@@ -108,7 +107,10 @@ downstream handler. This example adds a header to the response.
         };
     }
 
-    $client->getHandlerStack()->push(add_response_header('X-Foo', 'bar'));
+    $stack = new \GuzzleHttp\HandlerStack();
+    $stack->setHandler(new \GuzzleHttp\Handler\CurlHandler());
+    $stack->push(add_response_header('X-Foo', 'bar'));
+    $client = new \GuzzleHttp\Client(['handler' => $stack]);
 
 Creating a middleware that modifies a request is made much simpler using the
 ``GuzzleHttp\Middleware::mapRequest()`` middleware. This middleware accepts
@@ -124,8 +126,10 @@ a function that takes the request argument and returns the request to send.
         return $request->withHeader('X-Foo', 'bar');
     }));
 
-Modifying a response is also much simpler using the ``GuzzleHttp\Middleware::mapResponse()``
-middleware.
+    $client = new \GuzzleHttp\Client(['handler' => $stack]);
+
+Modifying a response is also much simpler using the
+``GuzzleHttp\Middleware::mapResponse()`` middleware.
 
 .. code-block:: php
 
@@ -136,6 +140,8 @@ middleware.
     $stack->push(Middleware::mapResponse(function (ResponseInterface $response) {
         return $response->withHeader('X-Foo', 'bar');
     }));
+
+    $client = new \GuzzleHttp\Client(['handler' => $stack]);
 
 
 HandlerStack
@@ -150,7 +156,8 @@ stack.
 
 .. code-block:: php
 
-    $stack = $client->getHandlerStack();
+    $stack = new \GuzzleHttp\HandlerStack();
+    $stack->setHandler(\GuzzleHttp\default_http_handler());
 
     $stack->push(Middleware::mapRequest(function ($r) {
         echo 'A';
@@ -175,6 +182,7 @@ stack.
         return $r;
     });
 
+    $client = new \GuzzleHttp\Client(['handler' => $stack]);
     $client->get('http://httpbin.org/');
     // echoes '0ABC';
 
@@ -183,8 +191,6 @@ other named middleware, after other named middleware, or remove middleware
 by name.
 
 .. code-block:: php
-
-    $stack = $client->getHandlerStack();
 
     // Add a middleware with a name
     $stack->push(Middleware::mapRequest(function ($r) {
@@ -203,12 +209,6 @@ by name.
 
     // Remove a middleware by name
     $stack->remove('add_foo');
-
-Each request created by a client uses a clone of the client's handler stack.
-This means that any middleware added to a client is also added to each request.
-Guzzle will then add some default middlewares to each request based on the
-provided options. You can add positional middleware to the handler stack of a
-request using the :ref:`stack-option` request option.
 
 
 Creating a Handler

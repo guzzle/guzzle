@@ -27,16 +27,15 @@ a response or exception by shifting return values off of a queue.
     use GuzzleHttp\MockHandler;
     use GuzzleHttp\Psr7\Response;
 
-    $client = new Client();
-
     // Create a mock and queue two responses.
     $mock = new MockHandler([
         new Response(200, ['X-Foo' => 'Bar']),
         new Response(202, ['Content-Length' => 0])
     ]);
 
-    // Set the handler on the client
-    $client->getHandlerList()->setHandler($mock);
+    $handler = \GuzzleHttp\default_handler($mock);
+    $client = new Client(['handler' => $mock]);
+
     // The first request is intercepted with the first response.
     echo $client->get('/')->getStatusCode();
     //> 200
@@ -61,13 +60,14 @@ history of the requests that were sent by a client.
     use GuzzleHttp\Client;
     use GuzzleHttp\Middleware;
 
-    $client = new Client();
+    $stack = \GuzzleHttp\default_handler();
+    // Add the history middleware to the handler stack.
+    $stack->append($history);
+
+    $client = new Client(['handler' => $stack]);
 
     $container = [];
     $history = Middleware::history($container);
-
-    // Add the history middleware to the client.
-    $client->getHandlerList()->append($history);
 
     $client->get('http://httpbin.org/get');
     $client->head('http://httpbin.org/get');

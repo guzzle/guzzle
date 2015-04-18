@@ -1,6 +1,8 @@
 <?php
 namespace GuzzleHttp;
 
+use Psr\Http\Message\RequestInterface;
+
 /**
  * Creates a composed Guzzle handler function by stacking middlewares on top of
  * an HTTP handler function.
@@ -13,12 +15,31 @@ class HandlerStack
     /** @var array */
     private $stack = [];
 
+    /** @var callable|null */
+    private $cached;
+
     /**
      * @param callable $handler Underlying HTTP handler.
      */
     public function __construct(callable $handler = null)
     {
         $this->handler = $handler;
+    }
+
+    /**
+     * Invokes the handler stack as a composed handler
+     *
+     * @param RequestInterface $request
+     * @param array            $options
+     */
+    public function __invoke(RequestInterface $request, array $options)
+    {
+        if (!$this->cached) {
+            $this->cached = $this->resolve();
+        }
+
+        $handler = $this->cached;
+        return $handler($request, $options);
     }
 
     /**
@@ -59,6 +80,7 @@ class HandlerStack
     public function setHandler(callable $handler)
     {
         $this->handler = $handler;
+        $this->cached = null;
     }
 
     /**
@@ -80,6 +102,7 @@ class HandlerStack
     public function unshift(callable $middleware, $name = null)
     {
         array_unshift($this->stack, [$middleware, $name]);
+        $this->cached = null;
     }
 
     /**
@@ -91,6 +114,7 @@ class HandlerStack
     public function push(callable $middleware, $name = '')
     {
         $this->stack[] = [$middleware, $name];
+        $this->cached = null;
     }
 
     /**
@@ -124,6 +148,7 @@ class HandlerStack
      */
     public function remove($remove)
     {
+        $this->cached = null;
         $idx = is_callable($remove) ? 0 : 1;
         $this->stack = array_values(array_filter(
             $this->stack,
@@ -176,6 +201,7 @@ class HandlerStack
      */
     private function splice($findName, $withName, callable $middleware, $before)
     {
+        $this->cached = null;
         $idx = $this->findByName($findName);
         $tuple = [$middleware, $withName];
 

@@ -128,4 +128,4 @@ setting the ``expect`` request option to ``false``:
     $response = $client->put('/', ['expect' => false]);
 
     // Disable the expect header on all client requests
-    $client->setDefaultOption('expect', false)
+    $client = new GuzzleHttp\Client(['expect' => false]);

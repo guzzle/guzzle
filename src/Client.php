@@ -26,11 +26,11 @@ use \InvalidArgumentException as Iae;
  */
 class Client implements ClientInterface
 {
+    /** @var callable */
+    private $handler;
+
     /** @var array Default request options */
     private $defaults;
-
-    /** @var HandlerStack */
-    private $stack;
 
     /** @var CookieJarInterface */
     private $cookieJar;
@@ -139,34 +139,21 @@ class Client implements ClientInterface
      *   optional "headers" associative array of custom headers, and an
      *   optional "filename" key mapping to a string to send as the filename in
      *   the part.
-     * - stack: (callable) A function that accepts a
-     *   ``GuzzleHttp\HandlerStack`` object and the array of request options
-     *   before a request is sent. The function may mutate the handler stack to
-     *   add custom conditional middleware before sending each request.
      *
      * @param array $config Client configuration settings.
      */
     public function __construct(array $config = [])
     {
-        if (!isset($config['handler'])) {
-            $this->stack = new HandlerStack(default_handler());
-        } else {
-            $this->stack = new HandlerStack($config['handler']);
+        if (isset($config['handler'])) {
+            $this->handler = $config['handler'];
             unset($config['handler']);
+        } else {
+            $this->handler = default_handler();
         }
 
         // Convert the base_uri to a UriInterface
         if (isset($config['base_uri'])) {
             $config['base_uri'] = Psr7\uri_for($config['base_uri']);
-        }
-
-        if (!empty($config['disable_default_middleware'])) {
-            unset($config['disable_default_middleware']);
-        } else {
-            $this->stack->push(Middleware::redirect(), 'allow_redirects');
-            $this->stack->push(Middleware::httpErrors(), 'http_errors');
-            $this->stack->push(Middleware::cookies(), 'cookies');
-            $this->stack->push(Middleware::prepareBody(), 'prepare_body');
         }
 
         $this->configureDefaults($config);
@@ -184,11 +171,6 @@ class Client implements ClientInterface
         return substr($method, -5) === 'Async'
             ? $this->requestAsync(substr($method, 0, -5), $uri, $opts)
             : $this->request($method, $uri, $opts);
-    }
-
-    public function getHandlerStack()
-    {
-        return $this->stack;
     }
 
     public function sendAsync(RequestInterface $request, array $options = [])
@@ -347,19 +329,9 @@ class Client implements ClientInterface
      */
     private function transfer(RequestInterface $request, array $options)
     {
-        $stack = clone $this->stack;
         $this->backwardsCompat($options);
-
-        if (isset($options['stack'])) {
-            if (!is_callable($options['stack'])) {
-                throw new \InvalidArgumentException('The stack option must '
-                    . 'be a function that accepts a HandlerStack.');
-            }
-            $options['stack']($stack, $options);
-        }
-
-        $handler = $stack->resolve();
         $request = $this->applyOptions($request, $options);
+        $handler = $this->handler;
 
         try {
             return Promise\promise_for($handler($request, $options));

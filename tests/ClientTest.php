@@ -131,14 +131,6 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($mock->getLastRequest()->hasHeader('foo'));
     }
 
-    public function testCanGetHandlerStack()
-    {
-        $client = new Client();
-        $stack = $client->getHandlerStack();
-        $this->assertInstanceOf('GuzzleHttp\HandlerStack', $stack);
-        $this->assertTrue($stack->hasHandler());
-    }
-
     public function testRewriteExceptionsToHttpErrors()
     {
         $client = new Client(['handler' => new MockHandler([new Response(404)])]);
@@ -158,7 +150,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testAllowRedirectsCanBeTrue()
     {
         $mock = new MockHandler([new Response(200, [], 'foo')]);
-        $client = new Client(['handler' => $mock]);
+        $handler = \GuzzleHttp\default_handler($mock);
+        $client = new Client(['handler' => $handler]);
         $client->get('http://foo.com', ['allow_redirects' => true]);
         $this->assertInternalType('array',  $mock->getLastOptions()['allow_redirects']);
     }
@@ -170,7 +163,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testValidatesAllowRedirects()
     {
         $mock = new MockHandler([new Response(200, [], 'foo')]);
-        $client = new Client(['handler' => $mock]);
+        $handler = \GuzzleHttp\default_handler($mock);
+        $client = new Client(['handler' => $handler]);
         $client->get('http://foo.com', ['allow_redirects' => 'foo']);
     }
 
@@ -179,7 +173,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
      */
     public function testThrowsHttpErrorsByDefault()
     {
-        $client = new Client(['handler' => new MockHandler([new Response(404)])]);
+        $mock = new MockHandler([new Response(404)]);
+        $handler = \GuzzleHttp\default_handler($mock);
+        $client = new Client(['handler' => $handler]);
         $client->get('http://foo.com');
     }
 
@@ -190,8 +186,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testValidatesCookies()
     {
         $mock = new MockHandler([new Response(200, [], 'foo')]);
-        $client = new Client(['handler' => $mock]);
-        $client->get('http://foo.com', ['cookies' => 'foo'])->wait();
+        $handler = \GuzzleHttp\default_handler($mock);
+        $client = new Client(['handler' => $handler]);
+        $client->get('http://foo.com', ['cookies' => 'foo']);
     }
 
     public function testSetCookieToTrueUsesSharedJar()
@@ -200,7 +197,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             new Response(200, ['Set-Cookie' => 'foo=bar']),
             new Response()
         ]);
-        $client = new Client(['handler' => $mock]);
+        $handler = \GuzzleHttp\default_handler($mock);
+        $client = new Client(['handler' => $handler]);
         $client->get('http://foo.com', ['cookies' => true]);
         $client->get('http://foo.com', ['cookies' => true]);
         $this->assertEquals('foo=bar', $mock->getLastRequest()->getHeader('Cookie'));
@@ -212,7 +210,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             new Response(200, ['Set-Cookie' => 'foo=bar']),
             new Response()
         ]);
-        $client = new Client(['handler' => $mock]);
+        $handler = \GuzzleHttp\default_handler($mock);
+        $client = new Client(['handler' => $handler]);
         $jar = new CookieJar();
         $client->get('http://foo.com', ['cookies' => $jar]);
         $client->get('http://foo.com', ['cookies' => $jar]);
@@ -222,33 +221,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testSetCookieToArray()
     {
         $mock = new MockHandler([new Response()]);
-        $client = new Client(['handler' => $mock]);
+        $handler = \GuzzleHttp\default_handler($mock);
+        $client = new Client(['handler' => $handler]);
         $client->get('http://foo.com', ['cookies' => ['foo' => 'bar']]);
         $this->assertEquals('foo=bar', $mock->getLastRequest()->getHeader('Cookie'));
-    }
-
-    public function testCanInjectIntoHandlerStackWithCallback()
-    {
-        $mock = new MockHandler([new Response()]);
-        $client = new Client(['handler' => $mock]);
-        $client->get('http://foo.com', [
-            'stack' => function (HandlerStack $s) use (&$called) {
-                $s->push(Middleware::tap(function () use (&$called) {
-                    $called = true;
-                }));
-            }
-        ]);
-        $this->assertTrue($called);
-    }
-
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testStackOptionMustBeCallable()
-    {
-        $mock = new MockHandler([new Response()]);
-        $client = new Client(['handler' => $mock]);
-        $client->get('http://foo.com', ['stack' => 'foo']);
     }
 
     public function testCanDisableContentDecoding()

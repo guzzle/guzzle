@@ -2,6 +2,7 @@
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
@@ -104,7 +105,8 @@ class PoolTest extends \PHPUnit_Framework_TestCase
             return new Response(substr($request->getUri()->getPath(), 1));
         };
         $mock = new MockHandler([$fn, $fn, $fn, $fn]);
-        $client = new Client(['handler' => $mock]);
+        $handler = \GuzzleHttp\default_handler($mock);
+        $client = new Client(['handler' => $handler]);
         $results = Pool::batch($client, $requests);
         $this->assertCount(4, $results);
         $this->assertEquals([0, 1, 2, 3], array_keys($results));
