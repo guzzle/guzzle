@@ -5,7 +5,6 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -150,7 +149,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testAllowRedirectsCanBeTrue()
     {
         $mock = new MockHandler([new Response(200, [], 'foo')]);
-        $handler = \GuzzleHttp\default_handler($mock);
+        $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
         $client->get('http://foo.com', ['allow_redirects' => true]);
         $this->assertInternalType('array',  $mock->getLastOptions()['allow_redirects']);
@@ -163,7 +162,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testValidatesAllowRedirects()
     {
         $mock = new MockHandler([new Response(200, [], 'foo')]);
-        $handler = \GuzzleHttp\default_handler($mock);
+        $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
         $client->get('http://foo.com', ['allow_redirects' => 'foo']);
     }
@@ -174,7 +173,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testThrowsHttpErrorsByDefault()
     {
         $mock = new MockHandler([new Response(404)]);
-        $handler = \GuzzleHttp\default_handler($mock);
+        $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
         $client->get('http://foo.com');
     }
@@ -186,7 +185,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testValidatesCookies()
     {
         $mock = new MockHandler([new Response(200, [], 'foo')]);
-        $handler = \GuzzleHttp\default_handler($mock);
+        $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
         $client->get('http://foo.com', ['cookies' => 'foo']);
     }
@@ -197,7 +196,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             new Response(200, ['Set-Cookie' => 'foo=bar']),
             new Response()
         ]);
-        $handler = \GuzzleHttp\default_handler($mock);
+        $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
         $client->get('http://foo.com', ['cookies' => true]);
         $client->get('http://foo.com', ['cookies' => true]);
@@ -210,7 +209,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             new Response(200, ['Set-Cookie' => 'foo=bar']),
             new Response()
         ]);
-        $handler = \GuzzleHttp\default_handler($mock);
+        $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
         $jar = new CookieJar();
         $client->get('http://foo.com', ['cookies' => $jar]);
@@ -221,7 +220,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testSetCookieToArray()
     {
         $mock = new MockHandler([new Response()]);
-        $handler = \GuzzleHttp\default_handler($mock);
+        $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
         $client->get('http://foo.com', ['cookies' => ['foo' => 'bar']]);
         $this->assertEquals('foo=bar', $mock->getLastRequest()->getHeader('Cookie'));

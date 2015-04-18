@@ -57,10 +57,9 @@ class Client implements ClientInterface
      *   GuzzleHttp\Promise\PromiseInterface that is fulfilled with a
      *   Psr7\Http\Message\ResponseInterface on success. "handler" is a
      *   constructor only option that cannot be overridden in per/request
-     *   options.
-     * - disable_default_middleware: (bool) Client constructor only option,
-     *   that when set, disables adding the default 'allow_redirects',
-     *   'http_errors', 'cookies', and 'prepare_body' middleware.
+     *   options. If no handler is provided, a default handler will be created
+     *   that enables all of the request options below by attaching all of the
+     *   default middleware to the handler.
      * - base_uri: (string|UriInterface) Base URI of the client that is merged
      *   into relative URIs. Can be a string or instance of UriInterface.
      * - delay: (int) The amount of time to delay before sending in
@@ -104,6 +103,7 @@ class Client implements ClientInterface
      * - allow_redirects: (bool|array) Controls redirect behavior. Pass false
      *   to disable redirects, pass true to enable redirects, pass an
      *   associative to provide custom redirect settings. Defaults to "false".
+     *   This option only works if your handler has the RedirectMiddleware.
      * - sync: (bool) Set to true to inform HTTP handlers that you intend on
      *   waiting on the response. This can be useful for optimizations.
      * - decode_content: (bool, default=true) Specify whether or not
@@ -124,10 +124,12 @@ class Client implements ClientInterface
      *   for a request.
      * - cookies: (bool|array|GuzzleHttp\Cookie\CookieJarInterface, default=false)
      *   Specifies whether or not cookies are used in a request or what cookie
-     *   jar to use or what cookies to send.
+     *   jar to use or what cookies to send. This option only works if your
+     *   handler has the `cookie` middleware.
      * - http_errors: (bool, default=true) Set to false to disable exceptions
      *   when a non- successful HTTP response is received. By default,
-     *   exceptions will be thrown for 4xx and 5xx responses.
+     *   exceptions will be thrown for 4xx and 5xx responses. This option only
+     *   works if your handler has the `httpErrors` middleware.
      * - json: (mixed) Adds JSON data to a request. The provided value is JSON
      *   encoded and a Content-Type header of application/json will be added to
      *   the request if no Content-Type header is already present.
@@ -148,7 +150,7 @@ class Client implements ClientInterface
             $this->handler = $config['handler'];
             unset($config['handler']);
         } else {
-            $this->handler = default_handler();
+            $this->handler = HandlerStack::create();
         }
 
         // Convert the base_uri to a UriInterface

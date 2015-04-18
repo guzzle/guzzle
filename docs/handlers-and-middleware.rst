@@ -13,19 +13,33 @@ fulfilled with a ``Psr\Http\Message\ResponseInterface`` or rejected with an
 exception.
 
 You can provide a custom handler to a client using the ``handler`` option of
-a client constructor.
+a client constructor. It is important to understand that several request
+options used by Guzzle require that specific middlewares wrap the handler used
+by the client (i.e., ``cookies``, ``http_errors``, ``redirect``). You can
+ensure that the handler you provide to a client uses the default middlewares
+by wrapping the handler in the
+``GuzzleHttp\HandlerStack::create(callable $handler = null)`` static method.
 
 .. code-block:: php
 
     use GuzzleHttp\Client;
+    use GuzzleHttp\HandlerStack;
     use GuzzleHttp\Handler\CurlHandler;
 
-    $client = new Client(['handler' => new CurlHandler()]);
+    $handler = new CurlHandler();
+    $stack = HandlerStack::create($handler); // Wrap w/ middleware
+    $client = new Client(['handler' => $stack]);
 
-The handler provided to a client determines how request options are applied and
-utilized for each request sent by a client. For example, if you do not have a
-cookie middleware associated with a client, then setting the ``cookies``
-request option will have no effect on the request.
+When provided no ``$handler`` argument, ``GuzzleHttp\HandlerStack::create()``
+will choose the most appropriate handler based on the extensions available on
+your system.
+
+.. important::
+
+    The handler provided to a client determines how request options are applied
+    and utilized for each request sent by a client. For example, if you do not
+    have a cookie middleware associated with a client, then setting the
+    ``cookies`` request option will have no effect on the request.
 
 
 Middleware
@@ -157,7 +171,7 @@ stack.
 .. code-block:: php
 
     $stack = new \GuzzleHttp\HandlerStack();
-    $stack->setHandler(\GuzzleHttp\default_http_handler());
+    $stack->setHandler(\GuzzleHttp\choose_handler());
 
     $stack->push(Middleware::mapRequest(function ($r) {
         echo 'A';

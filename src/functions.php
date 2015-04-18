@@ -93,38 +93,19 @@ function debug_resource($value = null)
 }
 
 /**
- * Gets the default Guzzle handler stack that has support for cookies,
- * redirects, HTTP error exceptions, and preparing a body before sending.
+ * Chooses and creates a default handler to use based on the environment.
  *
- * @param callable $handler HTTP handler function to use with the stack. If no
- *                          handler is provided, the best handler for your
- *                          system will be utilized.
- *
- * @return HandlerStack
- */
-function default_handler(callable $handler = null)
-{
-    $stack = new HandlerStack($handler ?: default_http_handler());
-    $stack->push(Middleware::redirect(), 'allow_redirects');
-    $stack->push(Middleware::httpErrors(), 'http_errors');
-    $stack->push(Middleware::cookies(), 'cookies');
-    $stack->push(Middleware::prepareBody(), 'prepare_body');
-
-    return $stack;
-}
-
-/**
- * Create a default handler to use based on the environment
+ * The returned handler is not wrapped by any default middlewares.
  *
  * @throws \RuntimeException if no viable Handler is available.
  * @return callable Returns the best handler for the given system.
  */
-function default_http_handler()
+function choose_handler()
 {
     $handler = null;
     if (extension_loaded('curl')) {
         $config = [];
-        if ($maxHandles = getenv('MUZZLE_CURL_MAX_HANDLES')) {
+        if ($maxHandles = getenv('GUZZLE_CURL_MAX_HANDLES')) {
             $config['max_handles'] = $maxHandles;
         }
         $handler = new CurlMultiHandler($config);
