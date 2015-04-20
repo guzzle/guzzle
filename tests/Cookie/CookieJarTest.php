@@ -286,7 +286,7 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
 
         $request = new Request('GET', $url);
         $request = $this->jar->withCookieHeader($request);
-        $this->assertEquals($cookies, $request->getHeader('Cookie'));
+        $this->assertEquals($cookies, $request->getHeaderLine('Cookie'));
     }
 
     /**

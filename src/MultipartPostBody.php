@@ -2,12 +2,12 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Psr7;
-use Psr\Http\Message\StreamableInterface;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Stream that when read returns bytes for a streaming multipart/form-data body
  */
-class MultipartPostBody implements StreamableInterface
+class MultipartPostBody implements StreamInterface
 {
     use Psr7\StreamDecoratorTrait;
 
@@ -19,7 +19,7 @@ class MultipartPostBody implements StreamableInterface
      * @param array  $files    Array of associative arrays, each containing a
      *                         required "name" key mapping to the form field,
      *                         name, a required "contents" key mapping to a
-     *                         StreamableInterface/resource/string, an optional
+     *                         StreamInterface/resource/string, an optional
      *                         "headers" associative array of custom headers,
      *                         and an optional "filename" key mapping to a
      *                         string to send as the filename in the part.

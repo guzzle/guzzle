@@ -198,7 +198,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
     {
         $h = new MockHandler([
             function (RequestInterface $request) {
-                $this->assertEquals(3, $request->getHeader('Content-Length'));
+                $this->assertEquals(3, $request->getHeaderLine('Content-Length'));
                 return new Response(200);
             }
         ]);
@@ -220,7 +220,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $h = new MockHandler([
             function (RequestInterface $request) {
                 $this->assertFalse($request->hasHeader('Content-Length'));
-                $this->assertEquals('chunked', $request->getHeader('Transfer-Encoding'));
+                $this->assertEquals('chunked', $request->getHeaderLine('Transfer-Encoding'));
                 return new Response(200);
             }
         ]);
@@ -239,7 +239,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $bd = Psr7\stream_for(fopen(__DIR__ . '/../composer.json', 'r'));
         $h = new MockHandler([
             function (RequestInterface $request) {
-                $this->assertEquals('application/json', $request->getHeader('Content-Type'));
+                $this->assertEquals('application/json', $request->getHeaderLine('Content-Type'));
                 $this->assertTrue($request->hasHeader('Content-Length'));
                 return new Response(200);
             }
@@ -258,7 +258,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
     {
         $h = new MockHandler([
             function (RequestInterface $request, array $options) {
-                $this->assertEquals('foo', $request->getHeader('Bar'));
+                $this->assertEquals('foo', $request->getHeaderLine('Bar'));
                 return new Response(200);
             }
         ]);
@@ -281,6 +281,6 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com'), []);
         $p->wait();
-        $this->assertEquals('foo', $p->wait()->getHeader('Bar'));
+        $this->assertEquals('foo', $p->wait()->getHeaderLine('Bar'));
     }
 }

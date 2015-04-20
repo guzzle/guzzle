@@ -101,7 +101,7 @@ class Server
                 return $response->withUri(
                     $response->getUri()
                         ->withScheme('http')
-                        ->withHost($response->getHeader('host'))
+                        ->withHost($response->getHeaderLine('host'))
                 );
             },
             $data

@@ -525,7 +525,7 @@ Pass a resource returned from ``fopen()`` to write the response to a PHP stream:
     $resource = fopen('/path/to/file', 'w');
     $client->get('/stream/20', ['sink' => $resource]);
 
-Pass a ``Psr\Http\Message\StreamableInterface`` object to stream the response
+Pass a ``Psr\Http\Message\StreamInterface`` object to stream the response
 body to an open PSR-7 stream.
 
 .. code-block:: php

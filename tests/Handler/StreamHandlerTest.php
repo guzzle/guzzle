@@ -32,14 +32,14 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         )->wait();
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals('Bar', $response->getHeader('Foo'));
-        $this->assertEquals('8', $response->getHeader('Content-Length'));
+        $this->assertEquals('Bar', $response->getHeaderLine('Foo'));
+        $this->assertEquals('8', $response->getHeaderLine('Content-Length'));
         $this->assertEquals('hi there', (string) $response->getBody());
         $sent = Server::received()[0];
         $this->assertEquals('GET', $sent->getMethod());
         $this->assertEquals('/', $sent->getUri()->getPath());
-        $this->assertEquals('127.0.0.1:8126', $sent->getHeader('Host'));
-        $this->assertEquals('Bar', $sent->getHeader('foo'));
+        $this->assertEquals('127.0.0.1:8126', $sent->getHeaderLine('Host'));
+        $this->assertEquals('Bar', $sent->getHeaderLine('foo'));
     }
 
     /**
@@ -67,7 +67,7 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $response = $handler($request, ['stream' => true])->wait();
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals('8', $response->getHeader('Content-Length'));
+        $this->assertEquals('8', $response->getHeaderLine('Content-Length'));
         $body = $response->getBody();
         $stream = $body->detach();
         $this->assertTrue(is_resource($stream));
@@ -77,7 +77,7 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $sent = Server::received()[0];
         $this->assertEquals('PUT', $sent->getMethod());
         $this->assertEquals('http://127.0.0.1:8126/foo?baz=bar', (string) $sent->getUri());
-        $this->assertEquals('Bar', $sent->getHeader('Foo'));
+        $this->assertEquals('Bar', $sent->getHeaderLine('Foo'));
         $this->assertEquals('test', (string) $sent->getBody());
     }
 
@@ -358,8 +358,8 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $request = new Request('PUT', Server::$url, ['Content-Length' => 3], 'foo');
         $handler($request, []);
         $req = Server::received()[0];
-        $this->assertEquals('', $req->getHeader('Content-Type'));
-        $this->assertEquals(3, $req->getHeader('Content-Length'));
+        $this->assertEquals('', $req->getHeaderLine('Content-Type'));
+        $this->assertEquals(3, $req->getHeaderLine('Content-Length'));
     }
 
     public function testSupports100Continue()
@@ -371,8 +371,8 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $handler = new StreamHandler();
         $response = $handler($request, [])->wait();
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('Hello', $response->getHeader('Test'));
-        $this->assertEquals('4', $response->getHeader('Content-Length'));
+        $this->assertEquals('Hello', $response->getHeaderLine('Test'));
+        $this->assertEquals('4', $response->getHeaderLine('Content-Length'));
         $this->assertEquals('test', (string) $response->getBody());
     }
 

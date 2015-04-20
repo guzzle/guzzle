@@ -168,7 +168,7 @@ class RedirectMiddleware
     ) {
         $location = Psr7\Uri::resolve(
             $request->getUri(),
-            $response->getHeader('Location')
+            $response->getHeaderLine('Location')
         );
 
         // Ensure that the redirect URI is allowed based on the protocols.

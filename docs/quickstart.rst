@@ -280,7 +280,7 @@ Guzzle provides several methods for uploading data.
 
 You can send requests that contain a stream of data by passing a string,
 resource returned from ``fopen``, or an instance of a
-``Psr\Http\Message\StreamableInterface`` to the ``body`` request option.
+``Psr\Http\Message\StreamInterface`` to the ``body`` request option.
 
 .. code-block:: php
 
@@ -341,7 +341,7 @@ associative arrays, where each associative array contains the following keys:
 - name: (required, string) key mapping to the form field name.
 - contents: (required, mixed) Provide a string to send the contents of the
   file as a string, provide an fopen resource to stream the contents from a
-  PHP stream, or provide a ``Psr\Http\Message\StreamableInterface`` to stream
+  PHP stream, or provide a ``Psr\Http\Message\StreamInterface`` to stream
   the contents from a PSR-7 stream.
 
 .. code-block:: php

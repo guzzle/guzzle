@@ -124,7 +124,7 @@ class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
         $promise->wait();
         $this->assertEquals(
             'http://example.com?a=b',
-            $mock->getLastRequest()->getHeader('Referer')
+            $mock->getLastRequest()->getHeaderLine('Referer')
         );
     }
 

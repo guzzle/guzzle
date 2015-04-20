@@ -140,7 +140,7 @@ You can retrieve the body of a message using the ``getBody()`` method:
     // JSON string: { ... }
 
 The body used in request and response objects is a
-``Psr\Http\Message\StreamableInterface``. This stream is used for both
+``Psr\Http\Message\StreamInterface``. This stream is used for both
 uploading data and downloading data. Guzzle will, by default, store the body of
 a message in a stream that uses PHP temp streams. When the size of the body
 exceeds 2 MB, the stream will automatically switch to storing data on disk
@@ -150,7 +150,7 @@ The easiest way to create a body for a message is using the ``stream_for``
 function from the ``GuzzleHttp\Psr7`` namespace --
 ``GuzzleHttp\Psr7\stream_for``. This function accepts strings, resources,
 callables, iterators, other streamables, and returns an instance of
-``Psr\Http\Message\StreamableInterface``.
+``Psr\Http\Message\StreamInterface``.
 
 The body of a request or response can be cast to a string or you can read and
 write bytes off of the stream as needed.
@@ -354,7 +354,7 @@ being able to work with large message bodies. The StreamInterface is used in
 order to hide the implementation details of where a stream of data is read from
 or written to.
 
-The PSR-7 ``Psr\Http\Message\StreamableInterface`` exposes several methods
+The PSR-7 ``Psr\Http\Message\StreamInterface`` exposes several methods
 that enable streams to be read from, written to, and traversed effectively.
 
 Streams expose their capabilities using three methods: ``isReadable()``,
@@ -373,7 +373,7 @@ Creating Streams
 The best way to create a stream is using the ``GuzzleHttp\Psr7\stream_for``
 function. This function accepts strings, resources returned from ``fopen()``,
 an object that implements ``__toString()``, iterators, callables, and instances
-of ``Psr\Http\Message\StreamableInterface``.
+of ``Psr\Http\Message\StreamInterface``.
 
 .. code-block:: php
 
@@ -646,7 +646,7 @@ Creating Custom Decorators
 
 Creating a stream decorator is very easy thanks to the
 ``GuzzleHttp\Psr7\StreamDecoratorTrait``. This trait provides methods that
-implement ``Psr\Http\Message\StreamableInterface`` by proxying to an underlying
+implement ``Psr\Http\Message\StreamInterface`` by proxying to an underlying
 stream. Just ``use`` the ``StreamDecoratorTrait`` and implement your custom
 methods.
 
@@ -656,16 +656,16 @@ byte is read from a stream. This could be implemented by overriding the
 
 .. code-block:: php
 
-    use Psr\Http\Message\StreamableInterface;
+    use Psr\Http\Message\StreamInterface;
     use GuzzleHttp\Psr7\StreamDecoratorTrait;
 
-    class EofCallbackStream implements StreamableInterface
+    class EofCallbackStream implements StreamInterface
     {
         use StreamDecoratorTrait;
 
         private $callback;
 
-        public function __construct(StreamableInterface $stream, callable $cb)
+        public function __construct(StreamInterface $stream, callable $cb)
         {
             $this->stream = $stream;
             $this->callback = $cb;

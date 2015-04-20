@@ -271,7 +271,7 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $response = $response->wait();
         $this->assertEquals('gzip', $_SERVER['_curl'][CURLOPT_ENCODING]);
         $sent = Server::received()[0];
-        $this->assertEquals('gzip', $sent->getHeader('Accept-Encoding'));
+        $this->assertEquals('gzip', $sent->getHeaderLine('Accept-Encoding'));
         $this->assertEquals('test', (string) $response->getBody());
     }
 
@@ -359,7 +359,7 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $response = $handler($request, []);
         $response->wait();
         $sent = Server::received()[0];
-        $this->assertEquals(3, $sent->getHeader('Content-Length'));
+        $this->assertEquals(3, $sent->getHeaderLine('Content-Length'));
         $this->assertFalse($sent->hasHeader('Transfer-Encoding'));
         $this->assertEquals('foo', (string) $sent->getBody());
     }
@@ -375,7 +375,7 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $received = Server::received()[0];
         $this->assertEquals('POST', $received->getMethod());
         $this->assertFalse($received->hasHeader('content-type'));
-        $this->assertSame('0', $received->getHeader('content-length'));
+        $this->assertSame('0', $received->getHeaderLine('content-length'));
     }
 
     /**
@@ -462,8 +462,8 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $response = $handler($request, [])->wait();
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals('Hello', $response->getHeader('Test'));
-        $this->assertEquals('4', $response->getHeader('Content-Length'));
+        $this->assertEquals('Hello', $response->getHeaderLine('Test'));
+        $this->assertEquals('4', $response->getHeaderLine('Content-Length'));
         $this->assertEquals('test', (string) $response->getBody());
     }
 

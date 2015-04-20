@@ -93,7 +93,7 @@ class Client implements ClientInterface
      * - debug: (bool|resource) Set to true or set to a PHP stream returned by
      *   fopen()  enable debug output with the HTTP handler used to send a
      *   request.
-     * - sink: (resource|string|StreamableInterface) Where the data of the
+     * - sink: (resource|string|StreamInterface) Where the data of the
      *   response is written to. Defaults to a PHP temp stream. Providing a
      *   string will write data to a file by the given name.
      * - stream: Set to true to attempt to stream a response rather than
@@ -137,7 +137,7 @@ class Client implements ClientInterface
      *   each value is a string or array of strings.
      * - form_files: (array) Array of associative arrays, each containing a
      *   required "name" key mapping to the form field, name, a required
-     *   "contents" key mapping to a StreamableInterface/resource/string, an
+     *   "contents" key mapping to a StreamInterface/resource/string, an
      *   optional "headers" associative array of custom headers, and an
      *   optional "filename" key mapping to a string to send as the filename in
      *   the part.

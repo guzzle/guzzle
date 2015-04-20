@@ -8,7 +8,7 @@ use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\LazyOpenStream;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\StreamableInterface;
+use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -65,7 +65,7 @@ class CurlFactory
      * @param array               $options  Request transfer options.
      * @param array               $response Response hash.
      * @param array               $headers  Headers received during transfer.
-     * @param StreamableInterface $body     Response body.
+     * @param StreamInterface $body     Response body.
      *
      * @return ResponseInterface
      */
@@ -75,7 +75,7 @@ class CurlFactory
         array $options,
         array $response,
         array $headers,
-        StreamableInterface $body
+        StreamInterface $body
     ) {
         if (isset($response['transfer_stats']['url'])) {
             $response['effective_url'] = $response['transfer_stats']['url'];
@@ -239,7 +239,7 @@ class CurlFactory
     private function applyBody(RequestInterface $request, array $options, array &$conf)
     {
         $size = $request->hasHeader('Content-Length')
-            ? (int) $request->getHeader('Content-Length')
+            ? (int) $request->getHeaderLine('Content-Length')
             : $request->getBody()->getSize();
 
         // Send the body as a string if the size is less than 1MB OR if the
@@ -352,7 +352,7 @@ class CurlFactory
         }
 
         if (!empty($options['decode_content'])) {
-            $accept = $request->getHeader('Accept-Encoding');
+            $accept = $request->getHeaderLine('Accept-Encoding');
             if ($accept) {
                 $conf[CURLOPT_ENCODING] = $accept;
             } else {
@@ -477,10 +477,13 @@ class CurlFactory
         array $options,
         array $response
     ) {
-        if (!$request->getBody()->rewind()) {
+        try {
+            $request->getBody()->rewind();
+        } catch (\RuntimeException $e) {
             $response['err_message'] = 'The connection unexpectedly failed '
                 . 'without providing an error. The request would have been '
-                . 'retried, but attempting to rewind the request body failed.';
+                . 'retried, but attempting to rewind the request body failed. '
+                . 'Exception: ' . $e;
             return self::createErrorResponse($handler, $request, $options, $response);
         }
 

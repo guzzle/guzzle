@@ -116,7 +116,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             'handler' => $mock
         ]);
         $c->get('http://example.com', ['headers' => ['User-Agent' => 'bar']]);
-        $this->assertEquals('bar', $mock->getLastRequest()->getHeader('User-Agent'));
+        $this->assertEquals('bar', $mock->getLastRequest()->getHeaderLine('User-Agent'));
     }
 
     public function testCanUnsetRequestOptionWithNull()
@@ -200,7 +200,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client(['handler' => $handler]);
         $client->get('http://foo.com', ['cookies' => true]);
         $client->get('http://foo.com', ['cookies' => true]);
-        $this->assertEquals('foo=bar', $mock->getLastRequest()->getHeader('Cookie'));
+        $this->assertEquals('foo=bar', $mock->getLastRequest()->getHeaderLine('Cookie'));
     }
 
     public function testSetCookieToJar()
@@ -214,7 +214,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $jar = new CookieJar();
         $client->get('http://foo.com', ['cookies' => $jar]);
         $client->get('http://foo.com', ['cookies' => $jar]);
-        $this->assertEquals('foo=bar', $mock->getLastRequest()->getHeader('Cookie'));
+        $this->assertEquals('foo=bar', $mock->getLastRequest()->getHeaderLine('Cookie'));
     }
 
     public function testSetCookieToArray()
@@ -223,7 +223,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
         $client->get('http://foo.com', ['cookies' => ['foo' => 'bar']]);
-        $this->assertEquals('foo=bar', $mock->getLastRequest()->getHeader('Cookie'));
+        $this->assertEquals('foo=bar', $mock->getLastRequest()->getHeaderLine('Cookie'));
     }
 
     public function testCanDisableContentDecoding()
@@ -242,7 +242,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client(['handler' => $mock]);
         $client->get('http://foo.com', ['decode_content' => 'gzip']);
         $last = $mock->getLastRequest();
-        $this->assertEquals('gzip', $last->getHeader('Accept-Encoding'));
+        $this->assertEquals('gzip', $last->getHeaderLine('Accept-Encoding'));
         $this->assertEquals('gzip', $mock->getLastOptions()['decode_content']);
     }
 
@@ -303,7 +303,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client->send($request, ['json' => ['foo' => 'bar']]);
         $last = $mock->getLastRequest();
         $this->assertEquals('{"foo":"bar"}', (string) $mock->getLastRequest()->getBody());
-        $this->assertEquals('application/json', $last->getHeader('Content-Type'));
+        $this->assertEquals('application/json', $last->getHeaderLine('Content-Type'));
     }
 
     public function testCanAddJsonDataWithoutOverwritingContentType()
@@ -317,7 +317,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         ]);
         $last = $mock->getLastRequest();
         $this->assertEquals('"a"', (string) $mock->getLastRequest()->getBody());
-        $this->assertEquals('foo', $last->getHeader('Content-Type'));
+        $this->assertEquals('foo', $last->getHeaderLine('Content-Type'));
     }
 
     public function testAuthCanBeTrue()
@@ -335,7 +335,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client(['handler' => $mock]);
         $client->get('http://foo.com', ['auth' => ['a', 'b']]);
         $last = $mock->getLastRequest();
-        $this->assertEquals('Basic YTpi', $last->getHeader('Authorization'));
+        $this->assertEquals('Basic YTpi', $last->getHeaderLine('Authorization'));
     }
 
     public function testAuthCanBeArrayForDigestAuth()
@@ -372,7 +372,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $last = $mock->getLastRequest();
         $this->assertEquals(
             'application/x-www-form-urlencoded',
-            $last->getHeader('Content-Type')
+            $last->getHeaderLine('Content-Type')
         );
         $this->assertEquals(
             'foo=bar+bam&baz%5Bboo%5D=qux',
@@ -397,7 +397,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $last = $mock->getLastRequest();
         $this->assertContains(
             'multipart/form-data; boundary=',
-            $last->getHeader('Content-Type')
+            $last->getHeaderLine('Content-Type')
         );
 
         $this->assertContains(
