@@ -91,7 +91,7 @@ class CurlMultiHandler
 
         // Transfer outstanding requests if there are too many open handles.
         if (count($this->handles) >= $this->maxHandles) {
-            $this->execute();
+            $this->tickUntilBelowMaxHandles();
         }
 
         return $promise;
@@ -230,5 +230,16 @@ class CurlMultiHandler
         }
 
         return max(0, $currentTime - $nextTime);
+    }
+
+    private function tickUntilBelowMaxHandles()
+    {
+        while (count($this->handles) >= $this->maxHandles) {
+            // If there are no transfers, then sleep for the next delay
+            if (!$this->active && $this->delays) {
+                usleep($this->timeToNext());
+            }
+            $this->tick();
+        }
     }
 }
