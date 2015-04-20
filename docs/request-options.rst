@@ -187,31 +187,17 @@ cookies
         jar to use or what cookies to send.
 :Types:
         - bool
-        - array
         - ``GuzzleHttp\Cookie\CookieJarInterface``
 :Default: None
 
-    Set to ``true`` to use a shared cookie session associated with the client.
+    When creating a client, you can set the default cookie option to ``true``
+    to use a shared cookie session associated with the client. Othewise, you
+    must specify the cookies option as a ``GuzzleHttp\Cookie\CookieJarInterface``
+    or ``false``.
 
 .. code-block:: php
 
-    // Enable cookies using the shared cookie jar of the client.
-    $client->get('/get', ['cookies' => true]);
-
-Pass an associative array containing cookies to send in the request and start a
-new cookie session.
-
-.. code-block:: php
-
-    // Enable cookies and send specific cookies
-    $client->get('/get', ['cookies' => ['foo' => 'bar']]);
-
-Set to a ``GuzzleHttp\Cookie\CookieJarInterface`` object to use an existing
-cookie jar.
-
-.. code-block:: php
-
-    $jar = new GuzzleHttp\Cookie\CookieJar();
+    $jar = new \GuzzleHttp\Cookie\CookieJar();
     $client->get('/get', ['cookies' => $jar]);
 
 .. warning::

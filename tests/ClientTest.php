@@ -197,9 +197,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             new Response()
         ]);
         $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
-        $client->get('http://foo.com', ['cookies' => true]);
-        $client->get('http://foo.com', ['cookies' => true]);
+        $client = new Client(['handler' => $handler, 'cookies' => true]);
+        $client->get('http://foo.com');
+        $client->get('http://foo.com');
         $this->assertEquals('foo=bar', $mock->getLastRequest()->getHeaderLine('Cookie'));
     }
 
@@ -214,15 +214,6 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $jar = new CookieJar();
         $client->get('http://foo.com', ['cookies' => $jar]);
         $client->get('http://foo.com', ['cookies' => $jar]);
-        $this->assertEquals('foo=bar', $mock->getLastRequest()->getHeaderLine('Cookie'));
-    }
-
-    public function testSetCookieToArray()
-    {
-        $mock = new MockHandler([new Response()]);
-        $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
-        $client->get('http://foo.com', ['cookies' => ['foo' => 'bar']]);
         $this->assertEquals('foo=bar', $mock->getLastRequest()->getHeaderLine('Cookie'));
     }
 

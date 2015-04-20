@@ -2,7 +2,6 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJar;
-use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Promise;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\UriInterface;
@@ -31,9 +30,6 @@ class Client implements ClientInterface
 
     /** @var array Default request options */
     private $defaults;
-
-    /** @var CookieJarInterface */
-    private $cookieJar;
 
     /**
      * Clients accept an array of constructor parameters.
@@ -122,7 +118,7 @@ class Client implements ClientInterface
      *   the password in index [1], and you can optionally provide a built-in
      *   authentication type in index [2]. Pass null to disable authentication
      *   for a request.
-     * - cookies: (bool|array|GuzzleHttp\Cookie\CookieJarInterface, default=false)
+     * - cookies: (bool|GuzzleHttp\Cookie\CookieJarInterface, default=false)
      *   Specifies whether or not cookies are used in a request or what cookie
      *   jar to use or what cookies to send. This option only works if your
      *   handler has the `cookie` middleware.
@@ -272,6 +268,10 @@ class Client implements ClientInterface
             }
             $this->defaults['headers']['User-Agent'] = default_user_agent();
         }
+
+        if (!empty($config['cookies']) && $config['cookies'] === true) {
+            $this->defaults['cookies'] = new CookieJar();
+        }
     }
 
     /**
@@ -355,21 +355,6 @@ class Client implements ClientInterface
         $modify = ['set_headers' => []];
         $conditional = [];
         $this->extractFormData($options, $conditional);
-
-        // Turn cookies settings true and array into a cookie jar.
-        if (!empty($options['cookies'])) {
-            if ($options['cookies'] === true) {
-                if (!$this->cookieJar) {
-                    $this->cookieJar = new CookieJar();
-                }
-                $options['cookies'] = $this->cookieJar;
-            } elseif (is_array($options['cookies'])) {
-                $options['cookies'] = CookieJar::fromArray(
-                    $options['cookies'],
-                    $request->getUri()->getHost()
-                );
-            }
-        }
 
         if (!empty($options['decode_content'])) {
             if ($options['decode_content'] !== true) {
