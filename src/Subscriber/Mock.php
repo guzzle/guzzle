@@ -7,6 +7,7 @@ use GuzzleHttp\Event\BeforeEvent;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Message\MessageFactory;
 use GuzzleHttp\Message\ResponseInterface;
+use GuzzleHttp\Stream\StreamInterface;
 
 /**
  * Queues mock responses or exceptions and delivers mock responses or
@@ -57,6 +58,20 @@ class Mock implements SubscriberInterface, \Countable
         if ($this->readBodies && $request->getBody()) {
             while (!$request->getBody()->eof()) {
                 $request->getBody()->read(8096);
+            }
+        }
+
+        $saveTo = $event->getRequest()->getConfig()->get('save_to');
+
+        if (null !== $saveTo) {
+            $body = $item->getBody();
+
+            if (is_resource($saveTo)) {
+                fwrite($saveTo, $body);
+            } elseif (is_string($saveTo)) {
+                file_put_contents($saveTo, $body);
+            } elseif ($saveTo instanceof StreamInterface) {
+                $saveTo->write($body);
             }
         }
 
