@@ -33,7 +33,7 @@ interface MessageFactoryInterface
      *
      * This method accepts an associative array of request options. Below is a
      * brief description of each parameter. See
-     * http://docs.guzzlephp.org/clients.html#request-options for a much more
+     * http://docs.guzzlephp.org/en/latest/clients.html#request-options for a much more
      * in-depth description of each parameter.
      *
      * - headers: Associative array of headers to add to the request
@@ -65,7 +65,7 @@ interface MessageFactoryInterface
      * @param array      $options Array of options to apply to the request
      *
      * @return RequestInterface
-     * @link http://docs.guzzlephp.org/clients.html#request-options
+     * @link http://docs.guzzlephp.org/en/latest/clients.html#request-options
      */
     public function createRequest($method, $url, array $options = []);
 }
