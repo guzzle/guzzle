@@ -54,7 +54,7 @@ abstract class AbstractRequestEvent extends AbstractEvent
     /**
      * @return Transaction
      */
-    protected function getTransaction()
+    public function getTransaction()
     {
         return $this->transaction;
     }
