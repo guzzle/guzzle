@@ -129,10 +129,11 @@ class CurlFactory
                     ? $response['curl']['error']
                     : 'See http://curl.haxx.se/libcurl/c/libcurl-errors.html');
 
+        $ctx = isset($response['curl']) ? $response['curl'] : [];
         if (isset($response['curl']['errno'])
             && isset($connectionErrors[$response['curl']['errno']])
         ) {
-            $error = new ConnectException($message, $request);
+            $error = new ConnectException($message, $request, null, null, $ctx);
         } else {
             $error = new RequestException(
                 $message,
@@ -142,7 +143,9 @@ class CurlFactory
                     isset($response['headers']) ? $response['headers'] : [],
                     isset($response['body']) ? $response['body'] : null,
                     isset($response['reason']) ? $response['reason'] : null
-                )
+                ),
+                null,
+                $ctx
             );
         }
 

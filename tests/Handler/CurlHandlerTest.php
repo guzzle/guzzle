@@ -1,6 +1,7 @@
 <?php
 namespace GuzzleHttp\Test\Handler;
 
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -77,5 +78,19 @@ class CurlHandlerTest extends \PHPUnit_Framework_TestCase
         $s = microtime(true);
         $a($request, ['delay' => 0.1])->wait();
         $this->assertGreaterThan(0.0001, microtime(true) - $s);
+    }
+
+    public function testCreatesCurlErrorsWithContext()
+    {
+        $handler = new CurlHandler();
+        $request = new Request('GET', 'http://localhost:123');
+        $called = false;
+        $p = $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])
+            ->otherwise(function (ConnectException $e) use (&$called) {
+                $called = true;
+                $this->assertArrayHasKey('errno', $e->getHandlerContext());
+            });
+        $p->wait();
+        $this->assertTrue($called);
     }
 }

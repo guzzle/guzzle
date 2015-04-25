@@ -79,4 +79,11 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
         $e2 = RequestException::wrapException($r, $e);
         $this->assertSame($e, $e2);
     }
+
+    public function testCanProvideHandlerContext()
+    {
+        $r = new Request('GET', 'http://www.oo.com');
+        $e = new RequestException('foo', $r, null, null, ['bar' => 'baz']);
+        $this->assertEquals(['bar' => 'baz'], $e->getHandlerContext());
+    }
 }
