@@ -26,8 +26,19 @@ base_url
         // Send a request to https://github.com/notifications
         $response = $client->get('/notifications');
 
-    `Absolute URLs <http://tools.ietf.org/html/rfc3986#section-4.3>`_ sent
-    through a client will not use the base URL of the client.
+    Don't feel like reading RFC 3986? Here are some quick examples on how a
+    ``base_url`` is resolved with another URI.
+
+    =======================  ==================  ===============================
+    base_url                 URI                 Result
+    =======================  ==================  ===============================
+    ``http://foo.com``       ``/bar``            ``http://foo.com/bar``
+    ``http://foo.com/foo``   ``/bar``            ``http://foo.com/bar``
+    ``http://foo.com/foo``   ``bar``             ``http://foo.com/bar``
+    ``http://foo.com/foo/``  ``bar``             ``http://foo.com/foo/bar``
+    ``http://foo.com``       ``http://baz.com``  ``http://baz.com``
+    ``http://foo.com/?bar``  ``bar``             ``http://foo.com/bar``
+    =======================  ==================  ===============================
 
 handler
     Configures the `RingPHP handler <http://ringphp.readthedocs.org>`_
