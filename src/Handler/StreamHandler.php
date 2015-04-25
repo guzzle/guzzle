@@ -299,7 +299,7 @@ class StreamHandler
         }
 
         $options['ssl']['verify_peer'] = true;
-        $options['ssl']['allow_self_signed'] = true;
+        $options['ssl']['allow_self_signed'] = false;
     }
 
     private function add_cert(RequestInterface $request, &$options, $value, &$params)
