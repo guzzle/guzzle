@@ -71,7 +71,6 @@ class CurlHandler
         }
 
         curl_exec($h);
-        $response = ['transfer_stats' => curl_getinfo($h)];
         $response['curl']['error'] = curl_error($h);
         $response['curl']['errno'] = curl_errno($h);
         $this->releaseEasyHandle($h);
@@ -107,14 +106,6 @@ class CurlHandler
             curl_close($this->handles[$id]);
             unset($this->handles[$id], $this->ownedHandles[$id]);
         } else {
-            // curl_reset doesn't clear these out for some reason
-            static $unsetValues = [
-                CURLOPT_HEADERFUNCTION   => null,
-                CURLOPT_WRITEFUNCTION    => null,
-                CURLOPT_READFUNCTION     => null,
-                CURLOPT_PROGRESSFUNCTION => null,
-            ];
-            curl_setopt_array($handle, $unsetValues);
             curl_reset($handle);
             $this->ownedHandles[$id] = false;
         }

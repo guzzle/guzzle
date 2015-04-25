@@ -191,12 +191,14 @@ class Client implements ClientInterface
     public function requestAsync($method, $uri = null, array $options = [])
     {
         $options = $this->mergeDefaults($options);
+        // Remove request modifying parameter because it can be done up-front.
         $headers = isset($options['headers']) ? $options['headers'] : [];
         $body = isset($options['body']) ? $options['body'] : null;
         $version = isset($options['version']) ? $options['version'] : '1.1';
         // Merge the URI into the base URI.
         $uri = $this->buildUri($uri, $options);
         $request = new Psr7\Request($method, $uri, $headers, $body, $version);
+        // Remove the option so that they are not doubly-applied.
         unset($options['headers'], $options['body'], $options['version']);
 
         return $this->transfer($request, $options);
@@ -331,7 +333,18 @@ class Client implements ClientInterface
      */
     private function transfer(RequestInterface $request, array $options)
     {
-        $this->backwardsCompat($options);
+        // save_to -> sink
+        if (isset($options['save_to'])) {
+            $options['sink'] = $options['save_to'];
+            unset($options['save_to']);
+        }
+
+        // exceptions -> http_error
+        if (isset($options['exceptions'])) {
+            $options['http_errors'] = $options['exceptions'];
+            unset($options['exceptions']);
+        }
+
         $request = $this->applyOptions($request, $options);
         $handler = $this->handler;
 
@@ -352,18 +365,27 @@ class Client implements ClientInterface
      */
     private function applyOptions(RequestInterface $request, array &$options)
     {
-        $modify = ['set_headers' => []];
-        $conditional = [];
-        $this->extractFormData($options, $conditional);
+        $modify = $conditional = [];
 
-        if (!empty($options['decode_content'])) {
-            if ($options['decode_content'] !== true) {
-                $modify['set_headers']['Accept-Encoding'] = $options['decode_content'];
-            }
+        // Extract POST/form parameters if present.
+        if (!empty($options['form_files'])
+            || !empty($options['form_fields'])
+        ) {
+            $this->extractFormData($options, $conditional);
+        }
+
+        if (!empty($options['decode_content'])
+            && $options['decode_content'] !== true
+        ) {
+            $modify['set_headers']['Accept-Encoding'] = $options['decode_content'];
         }
 
         if (isset($options['headers'])) {
-            $modify['set_headers'] = $options['headers'] + $modify['set_headers'];
+            if (isset($modify['set_headers'])) {
+                $modify['set_headers'] = $options['headers'] + $modify['set_headers'];
+            } else {
+                $modify['set_headers'] = $options['headers'];
+            }
             unset($options['headers']);
         }
 
@@ -423,10 +445,6 @@ class Client implements ClientInterface
 
     private function extractFormData(array &$options, array &$conditional)
     {
-        if (empty($options['form_files']) && empty($options['form_fields'])) {
-            return;
-        }
-
         $fields = [];
         if (isset($options['form_fields'])) {
             // Use a application/x-www-form-urlencoded POST with no files.
@@ -446,20 +464,5 @@ class Client implements ClientInterface
         // Use a multipart/form-data POST if a Content-Type is not set.
         $conditional['Content-Type'] = 'multipart/form-data; boundary='
             . $options['body']->getBoundary();
-    }
-
-    private function backwardsCompat(array &$options)
-    {
-        // save_to -> sink
-        if (isset($options['save_to'])) {
-            $options['sink'] = $options['save_to'];
-            unset($options['save_to']);
-        }
-
-        // exceptions -> http_error
-        if (isset($options['exceptions'])) {
-            $options['http_errors'] = $options['exceptions'];
-            unset($options['exceptions']);
-        }
     }
 }

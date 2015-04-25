@@ -77,10 +77,6 @@ class CurlFactory
         array $headers,
         StreamInterface $body
     ) {
-        if (isset($response['transfer_stats']['url'])) {
-            $response['effective_url'] = $response['transfer_stats']['url'];
-        }
-
         if (!empty($headers)) {
             $startLine = explode(' ', array_shift($headers), 3);
             $headerList = \GuzzleHttp\headers_from_lines($headers);
@@ -184,6 +180,7 @@ class CurlFactory
             CURLOPT_RETURNTRANSFER => false,
             CURLOPT_HEADER         => false,
             CURLOPT_CONNECTTIMEOUT => 150,
+            CURLOPT_PROTOCOLS      => CURLPROTO_HTTP | CURLPROTO_HTTPS,
             CURLOPT_HEADERFUNCTION => function ($ch, $h) use (&$headers, &$startingResponse) {
                 $value = trim($h);
                 if ($value === '') {
@@ -198,12 +195,13 @@ class CurlFactory
             },
         ];
 
-        $options[CURLOPT_HTTP_VERSION] = $request->getProtocolVersion() == 1.1
-            ? CURL_HTTP_VERSION_1_1
-            : CURL_HTTP_VERSION_1_0;
-
-        if (defined('CURLOPT_PROTOCOLS')) {
-            $options[CURLOPT_PROTOCOLS] = CURLPROTO_HTTP | CURLPROTO_HTTPS;
+        $version = $request->getProtocolVersion();
+        if ($version == 1.1) {
+            $options[CURLOPT_HTTP_VERSION] = CURL_HTTP_VERSION_1_1;
+        } elseif ($version == 2.0) {
+            $options[CURLOPT_HTTP_VERSION] = CURL_HTTP_VERSION_2_0;
+        } else {
+            $options[CURLOPT_HTTP_VERSION] = CURL_HTTP_VERSION_1_0;
         }
 
         return $options;
@@ -362,11 +360,6 @@ class CurlFactory
             }
         }
 
-        // Backwards compat with "save_to" => "sink"
-        if (isset($options['save_to'])) {
-            $options['sink'] = $options['save_to'];
-        }
-
         if (isset($options['sink'])) {
             $sink = $options['sink'];
             $sink = is_string($sink)
@@ -378,19 +371,11 @@ class CurlFactory
         }
 
         if (isset($options['timeout'])) {
-            if (defined('CURLOPT_TIMEOUT_MS')) {
-                $conf[CURLOPT_TIMEOUT_MS] = $options['timeout'] * 1000;
-            } else {
-                $conf[CURLOPT_TIMEOUT] = $options['timeout'];
-            }
+            $conf[CURLOPT_TIMEOUT_MS] = $options['timeout'] * 1000;
         }
 
         if (isset($options['connect_timeout'])) {
-            if (defined('CURLOPT_CONNECTTIMEOUT_MS')) {
-                $conf[CURLOPT_CONNECTTIMEOUT_MS] = $options['connect_timeout'] * 1000;
-            } else {
-                $conf[CURLOPT_CONNECTTIMEOUT] = $options['connect_timeout'];
-            }
+            $conf[CURLOPT_CONNECTTIMEOUT_MS] = $options['connect_timeout'] * 1000;
         }
 
         if (isset($options['proxy'])) {
