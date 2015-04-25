@@ -47,7 +47,7 @@ class Emitter implements EmitterInterface
             $eventName
         ) use (&$onceListener, $eventName, $listener, $priority) {
             $this->removeListener($eventName, $onceListener);
-            $listener($event, $eventName, $this);
+            $listener($event, $eventName);
         };
 
         $this->on($eventName, $onceListener, $priority);

@@ -103,11 +103,7 @@ follows:
 
     use GuzzleHttp\Event\BeforeEvent;
 
-    $emitter->on('before', function (
-        BeforeEvent $event,
-        $name,
-        EmitterInterface $emitter
-    ) {
+    $emitter->on('before', function (BeforeEvent $event, $name) {
         echo $event->getRequest();
     });
 
@@ -334,7 +330,7 @@ a ``GuzzleHttp\Event\BeforeEvent``.
     $request = $client->createRequest('GET', '/');
     $request->getEmitter()->on(
         'before',
-        function (BeforeEvent $e, $name, EmitterInterface $emitter) {
+        function (BeforeEvent $e, $name) {
             echo $name . "\n";
             // "before"
             echo $e->getRequest()->getMethod() . "\n";
