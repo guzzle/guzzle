@@ -513,4 +513,16 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(1, $_SERVER['_curl'][CURLOPT_UPLOAD]);
         $this->assertTrue(is_callable($_SERVER['_curl'][CURLOPT_READFUNCTION]));
     }
+
+    /**
+     * @expectedException \RuntimeException
+     * @expectedExceptionMessage Directory /does/not/exist/so does not exist for sink value of /does/not/exist/so/error.txt
+     */
+    public function testEnsuresDirExistsBeforeThrowingWarning()
+    {
+        $f = new Handler\CurlFactory();
+        $f(new Psr7\Request('GET', Server::$url), [
+            'sink' => '/does/not/exist/so/error.txt'
+        ]);
+    }
 }

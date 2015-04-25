@@ -362,9 +362,18 @@ class CurlFactory
 
         if (isset($options['sink'])) {
             $sink = $options['sink'];
-            $sink = is_string($sink)
-                ? new LazyOpenStream($sink, 'w+')
-                : \GuzzleHttp\Psr7\stream_for($sink);
+            if (!is_string($sink)) {
+                $sink = \GuzzleHttp\Psr7\stream_for($sink);
+            } elseif (!is_dir(dirname($sink))) {
+                // Ensure that the directory exists before failing in curl.
+                throw new \RuntimeException(sprintf(
+                    'Directory %s does not exist for sink value of %s',
+                    dirname($sink),
+                    $sink
+                ));
+            } else {
+                $sink = new LazyOpenStream($sink, 'w+');
+            }
             $conf[CURLOPT_WRITEFUNCTION] = function ($ch, $write) use ($sink) {
                 return $sink->write($write);
             };
