@@ -16,14 +16,14 @@ class CurlHandler
     /** @var callable */
     private $factory;
 
-    /** @var array Array of curl easy handles */
-    private $handles = [];
-
-    /** @var array Array of owned curl easy handles */
-    private $ownedHandles = [];
+    /** @var \SplQueue */
+    private $free;
 
     /** @var int Total number of idle handles to keep in cache */
     private $maxHandles;
+
+    /** @var int */
+    private $totalHandles = 0;
 
     /**
      * Accepts an associative array of options:
@@ -37,22 +37,13 @@ class CurlHandler
      */
     public function __construct(array $options = [])
     {
-        $this->handles = $this->ownedHandles = [];
+        $this->handles = new \SplQueue();
         $this->factory = isset($options['handle_factory'])
             ? $options['handle_factory']
             : new CurlFactory();
         $this->maxHandles = isset($options['max_handles'])
             ? $options['max_handles']
             : 5;
-    }
-
-    public function __destruct()
-    {
-        foreach ($this->handles as $handle) {
-            if (is_resource($handle)) {
-                curl_close($handle);
-            }
-        }
     }
 
     public function __invoke(RequestInterface $request, array $options)
@@ -82,30 +73,26 @@ class CurlHandler
 
     private function checkoutEasyHandle()
     {
-        // Find an unused handle in the cache
-        if (false !== ($key = array_search(false, $this->ownedHandles, true))) {
-            $this->ownedHandles[$key] = true;
-            return $this->handles[$key];
+        // Find a free handle.
+        if (!$this->handles->isEmpty()) {
+            return $this->handles->dequeue();
         }
 
         // Add a new handle
         $handle = curl_init();
-        $id = (int) $handle;
-        $this->handles[$id] = $handle;
-        $this->ownedHandles[$id] = true;
+        $this->totalHandles++;
 
         return $handle;
     }
 
     private function releaseEasyHandle($handle)
     {
-        $id = (int) $handle;
-        if (count($this->ownedHandles) > $this->maxHandles) {
-            curl_close($this->handles[$id]);
-            unset($this->handles[$id], $this->ownedHandles[$id]);
+        if ($this->totalHandles > $this->maxHandles) {
+            curl_close($handle);
+            $this->totalHandles--;
         } else {
             curl_reset($handle);
-            $this->ownedHandles[$id] = false;
+            $this->handles->enqueue($handle);
         }
     }
 }
