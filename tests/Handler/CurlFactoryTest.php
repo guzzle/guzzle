@@ -36,11 +36,11 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $request = new Psr7\Request('PUT', Server::$url, ['Hi' => ' 123'], 'testing');
         $f = new Handler\CurlFactory();
         $result = $f($request, ['sink' => $stream]);
-        $this->assertInternalType('array', $result);
-        $this->assertInternalType('resource', $result[0]);
-        $this->assertInternalType('array', $result[1]);
-        $this->assertSame($stream, $result[2]);
-        curl_close($result[0]);
+        $this->assertInstanceOf('GuzzleHttp\Handler\EasyHandle', $result);
+        $this->assertInternalType('resource', $result->handle);
+        $this->assertInternalType('array', $result->headers);
+        $this->assertSame($stream, $result->body);
+        curl_close($result->handle);
         $this->assertEquals('PUT', $_SERVER['_curl'][CURLOPT_CUSTOMREQUEST]);
         $this->assertEquals(
             'http://127.0.0.1:8126/',

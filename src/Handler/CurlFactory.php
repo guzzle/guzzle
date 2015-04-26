@@ -24,8 +24,7 @@ class CurlFactory
      * @param array            $options Transfer options
      * @param null|resource    $handle  Options cURL handle to modify
      *
-     * @return array Returns an array of the curl handle, headers array, and
-     *               response body handle.
+     * @return EasyHandle
      * @throws \RuntimeException when an option cannot be applied
      */
     public function __invoke(
@@ -33,8 +32,8 @@ class CurlFactory
         array $options,
         $handle = null
     ) {
-        $headers = [];
-        $conf = $this->getDefaultOptions($request, $headers);
+        $easy = new EasyHandle;
+        $conf = $this->getDefaultOptions($request, $easy);
         $this->applyMethod($request, $options, $conf);
         $this->applyHandlerOptions($request, $options, $conf);
         $this->applyHeaders($request, $conf);
@@ -50,11 +49,11 @@ class CurlFactory
             $conf += $options['curl'];
         }
 
-        $handle = $handle ?: curl_init();
-        $body = $this->getOutputBody($request, $options, $conf);
-        curl_setopt_array($handle, $conf);
+        $easy->handle = $handle ?: curl_init();
+        $easy->body = $this->getOutputBody($request, $options, $conf);
+        curl_setopt_array($easy->handle, $conf);
 
-        return [$handle, &$headers, $body];
+        return $easy;
     }
 
     /**
@@ -65,7 +64,7 @@ class CurlFactory
      * @param array               $options  Request transfer options.
      * @param array               $response Response hash.
      * @param array               $headers  Headers received during transfer.
-     * @param StreamInterface $body     Response body.
+     * @param StreamInterface     $body     Response body.
      *
      * @return ResponseInterface
      */
@@ -171,7 +170,7 @@ class CurlFactory
         return null;
     }
 
-    private function getDefaultOptions(RequestInterface $request, array &$headers)
+    private function getDefaultOptions(RequestInterface $request, EasyHandle $easy)
     {
         $url = (string) $request->getUri();
         $startingResponse = false;
@@ -184,15 +183,15 @@ class CurlFactory
             CURLOPT_HEADER         => false,
             CURLOPT_CONNECTTIMEOUT => 150,
             CURLOPT_PROTOCOLS      => CURLPROTO_HTTP | CURLPROTO_HTTPS,
-            CURLOPT_HEADERFUNCTION => function ($ch, $h) use (&$headers, &$startingResponse) {
+            CURLOPT_HEADERFUNCTION => function ($ch, $h) use ($easy, &$startingResponse) {
                 $value = trim($h);
                 if ($value === '') {
                     $startingResponse = true;
                 } elseif ($startingResponse) {
                     $startingResponse = false;
-                    $headers = [$value];
+                    $easy->headers = [$value];
                 } else {
-                    $headers[] = $value;
+                    $easy->headers[] = $value;
                 }
                 return strlen($h);
             },

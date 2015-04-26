@@ -24,12 +24,6 @@ class CurlHandlerTest extends \PHPUnit_Framework_TestCase
         return new CurlHandler($options);
     }
 
-    public function testCanSetMaxHandles()
-    {
-        $a = new CurlHandler(['max_handles' => 10]);
-        $this->assertEquals(10, $this->readAttribute($a, 'maxHandles'));
-    }
-
     /**
      * @expectedException \GuzzleHttp\Exception\ConnectException
      * @expectedExceptionMessage cURL
@@ -46,16 +40,16 @@ class CurlHandlerTest extends \PHPUnit_Framework_TestCase
         Server::flush();
         $response = new Response(200, ['Content-Length' => 4], 'test');
         Server::enqueue([$response, $response, $response, $response]);
-        $a = new CurlHandler(['max_handles' => 2]);
+        $a = new CurlHandler();
         $fn = function () use (&$calls, $a, &$fn) {
-            if (++$calls < 4) {
+            if (++$calls < 5) {
                 $request = new Request('GET', Server::$url);
                 $a($request, ['progress' => $fn]);
             }
         };
         $request = new Request('GET', Server::$url);
         $a($request, ['progress' => $fn]);
-        $this->assertCount(2, $this->readAttribute($a, 'handles'));
+        $this->assertCount(4, $this->readAttribute($a, 'handles'));
     }
 
     public function testReusesHandles()

@@ -24,7 +24,6 @@ class CurlMultiHandler
     private $handles = [];
     private $delays = [];
     private $maxHandles;
-    private $hasCurlError;
 
     /**
      * This handler accepts the following options:
@@ -42,7 +41,6 @@ class CurlMultiHandler
      */
     public function __construct(array $options = [])
     {
-        $this->hasCurlError = function_exists('curl_strerror');
         $this->factory = isset($options['handle_factory'])
             ? $options['handle_factory'] : new CurlFactory();
         $this->selectTimeout = isset($options['select_timeout'])
@@ -71,8 +69,9 @@ class CurlMultiHandler
     public function __invoke(RequestInterface $request, array $options)
     {
         $factory = $this->factory;
-        $result = $factory($request, $options);
-        $id = (int) $result[0];
+        $easy = $factory($request, $options);
+        $id = (int) $easy->handle;
+
         $promise = new Promise(
             [$this, 'execute'],
             function () use ($id) { return $this->cancel($id); }
@@ -81,12 +80,10 @@ class CurlMultiHandler
         $entry = [
             'request'  => $request,
             'options'  => $options,
-            'response' => [],
-            'handle'   => $result[0],
-            'headers'  => &$result[1],
-            'body'     => $result[2],
+            'easy'     => $easy,
             'deferred' => $promise,
         ];
+
         $this->addRequest($entry);
 
         // Transfer outstanding requests if there are too many open handles.
@@ -110,7 +107,7 @@ class CurlMultiHandler
                     unset($this->delays[$id]);
                     curl_multi_add_handle(
                         $this->_mh,
-                        $this->handles[$id]['handle']
+                        $this->handles[$id]['easy']->handle
                     );
                 }
             }
@@ -148,13 +145,13 @@ class CurlMultiHandler
         }
     }
 
-    private function addRequest(array &$entry)
+    private function addRequest(array $entry)
     {
-        $handle = $entry['handle'];
-        $id = (int) $handle;
+        $easy = $entry['easy'];
+        $id = (int) $easy->handle;
         $this->handles[$id] = $entry;
         if (empty($entry['options']['delay'])) {
-            curl_multi_add_handle($this->_mh, $handle);
+            curl_multi_add_handle($this->_mh, $easy->handle);
         } else {
             $this->delays[$id] = microtime(true) + ($entry['options']['delay'] / 1000);
         }
@@ -174,7 +171,7 @@ class CurlMultiHandler
             return false;
         }
 
-        $handle = $this->handles[$id]['handle'];
+        $handle = $this->handles[$id]['easy']->handle;
         unset($this->delays[$id], $this->handles[$id]);
         curl_multi_remove_handle($this->_mh, $handle);
         curl_close($handle);
@@ -195,22 +192,21 @@ class CurlMultiHandler
 
             $entry = $this->handles[$id];
             unset($this->handles[$id], $this->delays[$id]);
-            $entry['response']['transfer_stats'] = curl_getinfo($done['handle']);
 
+            $response = [];
             if ($done['result'] !== CURLM_OK) {
-                $entry['response']['curl']['errno'] = $done['result'];
-                if ($this->hasCurlError) {
-                    $entry['response']['curl']['error'] = curl_strerror($done['result']);
-                }
+                $response['curl']['errno'] = $done['result'];
+                $response['curl']['error'] = curl_strerror($done['result']);
             }
 
+            $easy = $entry['easy'];
             $result = CurlFactory::createResponse(
                 $this,
                 $entry['request'],
                 $entry['options'],
-                $entry['response'],
-                $entry['headers'],
-                Psr7\stream_for($entry['body'])
+                $response,
+                $easy->headers,
+                Psr7\stream_for($easy->body)
             );
 
             curl_multi_remove_handle($this->_mh, $done['handle']);
