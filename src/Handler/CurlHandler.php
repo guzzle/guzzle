@@ -17,7 +17,7 @@ class CurlHandler
     private $factory;
 
     /** @var \SplQueue */
-    private $free;
+    private $handles;
 
     /** @var int Total number of idle handles to keep in cache */
     private $maxHandles;
