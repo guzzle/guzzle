@@ -2,6 +2,7 @@
 
 ## 6.0.0-beta.1
 
+* Requires PHP >= 5.5
 * Updated to use PSR-7
   * Requires immutable messages, which basically means an event based system
     owned by a request instance is no longer possible.

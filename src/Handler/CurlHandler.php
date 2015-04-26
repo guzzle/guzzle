@@ -7,8 +7,6 @@ use Psr\Http\Message\RequestInterface;
 /**
  * HTTP handler that uses cURL easy handles as a transport layer.
  *
- * Requires PHP 5.5+
- *
  * When using the CurlHandler, custom curl options can be specified as an
  * associative array of curl option constants mapping to values in the
  * **curl** key of the "client" key of the request.

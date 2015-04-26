@@ -53,19 +53,23 @@ class Pool implements PromisorInterface
         // Add a delay by default to ensure resolving on future tick.
         $opts['delay'] = true;
 
-        $config['mapfn'] = function ($requestOrFunction) use ($client, $opts) {
-            if ($requestOrFunction instanceof RequestInterface) {
-                return $client->sendAsync($requestOrFunction, $opts);
-            } elseif (is_callable($requestOrFunction)) {
-                return $requestOrFunction($opts);
+        $iterable = \GuzzleHttp\Promise\iter_for($requests);
+        $requests = function () use ($iterable, $client, $opts) {
+            foreach ($iterable as $rfn) {
+                if ($rfn instanceof RequestInterface) {
+                    yield $client->sendAsync($rfn, $opts);
+                } elseif (is_callable($rfn)) {
+                    yield $rfn($opts);
+                } else {
+                    throw new \InvalidArgumentException('Each value yielded by '
+                        . 'the iterator must be a Psr7\Http\Message\RequestInterface '
+                        . 'or a callable that returns a promise that fulfills '
+                        . 'with a Psr7\Message\Http\ResponseInterface object.');
+                }
             }
-            throw new \InvalidArgumentException('Each value yielded by the '
-                . 'iterator must be a Psr7\Http\Message\RequestInterface or '
-                . 'a callable that returns a promise that fulfills with a '
-                . 'Psr7\Message\Http\ResponseInterface object.');
         };
 
-        $this->each = new EachPromise($requests, $config);
+        $this->each = new EachPromise($requests(), $config);
     }
 
     public function promise()

@@ -104,22 +104,13 @@ function choose_handler()
 {
     $handler = null;
     if (extension_loaded('curl')) {
-        $config = [];
-        if ($maxHandles = getenv('GUZZLE_CURL_MAX_HANDLES')) {
-            $config['max_handles'] = $maxHandles;
-        }
-        $handler = new CurlMultiHandler($config);
-        if (function_exists('curl_reset')) {
-            $handler = Proxy::wrapSync($handler, new CurlHandler());
-        }
+        $handler = Proxy::wrapSync(new CurlMultiHandler(), new CurlHandler());
     }
 
     if (ini_get('allow_url_fopen')) {
-        if ($handler) {
-            $handler = Proxy::wrapStreaming($handler, new StreamHandler());
-        } else {
-            $handler = new StreamHandler();
-        }
+        $handler = $handler
+            ? Proxy::wrapStreaming($handler, new StreamHandler())
+            : new StreamHandler();
     } elseif (!$handler) {
         throw new \RuntimeException('GuzzleHttp requires cURL, the '
             . 'allow_url_fopen ini setting, or a custom HTTP handler.');
