@@ -27,31 +27,10 @@ class CurlMultiHandlerTest extends \PHPUnit_Framework_TestCase
         $a(new Request('GET', 'http://localhost:123'), [])->wait();
     }
 
-    public function testCanSetMaxHandles()
-    {
-        $a = new CurlMultiHandler(['max_handles' => 2]);
-        $this->assertEquals(2, $this->readAttribute($a, 'maxHandles'));
-    }
-
     public function testCanSetSelectTimeout()
     {
         $a = new CurlMultiHandler(['select_timeout' => 2]);
         $this->assertEquals(2, $this->readAttribute($a, 'selectTimeout'));
-    }
-
-    public function testSendsWhenMaxHandlesIsReached()
-    {
-        $request = new Request('PUT', Server::$url);
-        $response = new Response();
-        Server::flush();
-        Server::enqueue([$response, $response, $response]);
-        $a = new CurlMultiHandler(['max_handles' => 3]);
-        for ($i = 0; $i < 5; $i++) {
-            $responses[] = $a($request, ['delay' => 0.1]);
-        }
-        $this->assertCount(3, Server::received());
-        $responses[3]->cancel();
-        $responses[4]->cancel();
     }
 
     public function testCanCancel()

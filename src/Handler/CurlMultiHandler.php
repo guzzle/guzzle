@@ -23,7 +23,6 @@ class CurlMultiHandler
     private $active;
     private $handles = [];
     private $delays = [];
-    private $maxHandles;
 
     /**
      * This handler accepts the following options:
@@ -33,9 +32,6 @@ class CurlMultiHandler
      *   of the handle, headers file resource, and the body resource.
      * - select_timeout: Optional timeout (in seconds) to block before timing
      *   out while selecting curl handles. Defaults to 1 second.
-     * - max_handles: Optional integer representing the maximum number of
-     *   open requests. When this number is reached, the queued futures are
-     *   flushed.
      *
      * @param array $options
      */
@@ -45,8 +41,6 @@ class CurlMultiHandler
             ? $options['handle_factory'] : new CurlFactory();
         $this->selectTimeout = isset($options['select_timeout'])
             ? $options['select_timeout'] : 1;
-        $this->maxHandles = isset($options['max_handles'])
-            ? $options['max_handles'] : 100;
     }
 
     public function __get($name)
@@ -85,11 +79,6 @@ class CurlMultiHandler
         ];
 
         $this->addRequest($entry);
-
-        // Transfer outstanding requests if there are too many open handles.
-        if (count($this->handles) >= $this->maxHandles) {
-            $this->tickUntilBelowMaxHandles();
-        }
 
         return $promise;
     }
@@ -226,16 +215,5 @@ class CurlMultiHandler
         }
 
         return max(0, $currentTime - $nextTime);
-    }
-
-    private function tickUntilBelowMaxHandles()
-    {
-        while (count($this->handles) >= $this->maxHandles) {
-            // If there are no transfers, then sleep for the next delay
-            if (!$this->active && $this->delays) {
-                usleep($this->timeToNext());
-            }
-            $this->tick();
-        }
     }
 }
