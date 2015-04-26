@@ -16,7 +16,7 @@ class CurlHandler
     /** @var callable */
     private $factory;
 
-    /** @var \SplQueue */
+    /** @var array */
     private $handles;
 
     /** @var int Total number of idle handles to keep in cache */
@@ -37,7 +37,6 @@ class CurlHandler
      */
     public function __construct(array $options = [])
     {
-        $this->handles = new \SplQueue();
         $this->factory = isset($options['handle_factory'])
             ? $options['handle_factory']
             : new CurlFactory();
@@ -74,8 +73,8 @@ class CurlHandler
     private function checkoutEasyHandle()
     {
         // Find a free handle.
-        if (!$this->handles->isEmpty()) {
-            return $this->handles->dequeue();
+        if ($this->handles) {
+            return array_pop($this->handles);
         }
 
         // Add a new handle
@@ -92,7 +91,7 @@ class CurlHandler
             $this->totalHandles--;
         } else {
             curl_reset($handle);
-            $this->handles->enqueue($handle);
+            $this->handles[] = $handle;
         }
     }
 }
