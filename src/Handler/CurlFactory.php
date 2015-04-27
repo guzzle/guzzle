@@ -252,7 +252,7 @@ class CurlFactory implements CurlFactoryInterface
     {
         $size = $request->hasHeader('Content-Length')
             ? (int) $request->getHeaderLine('Content-Length')
-            : $request->getBody()->getSize();
+            : null;
 
         // Send the body as a string if the size is less than 1MB OR if the
         // [curl][body_as_string] request value is set.
@@ -265,12 +265,10 @@ class CurlFactory implements CurlFactoryInterface
             $this->removeHeader('Transfer-Encoding', $conf);
         } else {
             $conf[CURLOPT_UPLOAD] = true;
-            if ($size !== null) {
-                // Let cURL handle setting the Content-Length header
-                $conf[CURLOPT_INFILESIZE] = $size;
-                $this->removeHeader('Content-Length', $conf);
-            }
-            $this->addStreamingBody($request, $conf);
+            $body = $request->getBody();
+            $conf[CURLOPT_READFUNCTION] = function ($ch, $fd, $length) use ($body) {
+                return $body->read($length);
+            };
         }
 
         // If the Expect header is not present, prevent curl from adding it
@@ -281,21 +279,6 @@ class CurlFactory implements CurlFactoryInterface
         // cURL sometimes adds a content-type by default. Prevent this.
         if (!$request->hasHeader('Content-Type')) {
             $conf[CURLOPT_HTTPHEADER][] = 'Content-Type:';
-        }
-    }
-
-    private function addStreamingBody(RequestInterface $request, array &$conf)
-    {
-        $body = $request->getBody();
-        $size = $body->getSize();
-
-        if ($size > 0 || $size === null) {
-            $conf[CURLOPT_READFUNCTION] = function ($ch, $fd, $length) use ($body) {
-                return (string) $body->read($length);
-            };
-            if ($size !== null && !isset($conf[CURLOPT_INFILESIZE])) {
-                $conf[CURLOPT_INFILESIZE] = $size;
-            }
         }
     }
 
