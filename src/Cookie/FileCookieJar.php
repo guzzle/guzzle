@@ -44,7 +44,7 @@ class FileCookieJar extends CookieJar
     public function save($filename)
     {
         $json = [];
-        foreach ($this as $cookie) {
+        foreach ($this->cookies as $cookie) {
             if ($cookie->getExpires() && !$cookie->getDiscard()) {
                 $json[] = $cookie->toArray();
             }
