@@ -33,7 +33,10 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
             ], 'hi')
         ]);
         $stream = Psr7\stream_for();
-        $request = new Psr7\Request('PUT', Server::$url, ['Hi' => ' 123'], 'testing');
+        $request = new Psr7\Request('PUT', Server::$url, [
+            'Hi'             => ' 123',
+            'Content-Length' => '7'
+        ], 'testing');
         $f = new Handler\CurlFactory(3);
         $result = $f->create($request, ['sink' => $stream]);
         $this->assertInstanceOf('GuzzleHttp\Handler\EasyHandle', $result);
