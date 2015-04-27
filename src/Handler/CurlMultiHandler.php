@@ -17,7 +17,7 @@ use Psr\Http\Message\RequestInterface;
  */
 class CurlMultiHandler
 {
-    /** @var callable */
+    /** @var CurlFactoryInterface */
     private $factory;
     private $selectTimeout;
     private $active;
@@ -27,9 +27,7 @@ class CurlMultiHandler
     /**
      * This handler accepts the following options:
      *
-     * - handle_factory: An optional callable used to generate curl handle
-     *   resources. the callable accepts a request hash and returns an array
-     *   of the handle, headers file resource, and the body resource.
+     * - handle_factory: An optional factory  used to create curl handles
      * - select_timeout: Optional timeout (in seconds) to block before timing
      *   out while selecting curl handles. Defaults to 1 second.
      *
@@ -38,7 +36,7 @@ class CurlMultiHandler
     public function __construct(array $options = [])
     {
         $this->factory = isset($options['handle_factory'])
-            ? $options['handle_factory'] : new CurlFactory();
+            ? $options['handle_factory'] : new CurlFactory(50);
         $this->selectTimeout = isset($options['select_timeout'])
             ? $options['select_timeout'] : 1;
     }
@@ -62,8 +60,7 @@ class CurlMultiHandler
 
     public function __invoke(RequestInterface $request, array $options)
     {
-        $factory = $this->factory;
-        $easy = $factory($request, $options);
+        $easy = $this->factory->create($request, $options);
         $id = (int) $easy->handle;
 
         $promise = new Promise(
@@ -199,7 +196,7 @@ class CurlMultiHandler
             );
 
             curl_multi_remove_handle($this->_mh, $done['handle']);
-            curl_close($done['handle']);
+            $this->factory->release($easy);
             $entry['deferred']->resolve($result);
         }
     }

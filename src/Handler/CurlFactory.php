@@ -14,24 +14,24 @@ use Psr\Http\Message\ResponseInterface;
 /**
  * Creates curl resources from a request
  */
-class CurlFactory
+class CurlFactory implements CurlFactoryInterface
 {
+    /** @var array */
+    private $handles;
+
+    /** @var int Total number of idle handles to keep in cache */
+    private $maxHandles;
+
     /**
-     * Creates a cURL handle, header resource, and body resource based on a
-     * transaction.
-     *
-     * @param RequestInterface $request Request
-     * @param array            $options Transfer options
-     * @param null|resource    $handle  Options cURL handle to modify
-     *
-     * @return EasyHandle
-     * @throws \RuntimeException when an option cannot be applied
+     * @param int $maxHandles Maximum number of idle handles.
      */
-    public function __invoke(
-        RequestInterface $request,
-        array $options,
-        $handle = null
-    ) {
+    public function __construct($maxHandles)
+    {
+        $this->maxHandles = $maxHandles;
+    }
+
+    public function create(RequestInterface $request, array $options)
+    {
         $easy = new EasyHandle;
         $conf = $this->getDefaultOptions($request, $easy);
         $this->applyMethod($request, $options, $conf);
@@ -49,11 +49,23 @@ class CurlFactory
             $conf += $options['curl'];
         }
 
-        $easy->handle = $handle ?: curl_init();
+        $easy->handle = $this->handles
+            ? array_pop($this->handles)
+            : curl_init();
         $easy->body = $this->getOutputBody($request, $options, $conf);
         curl_setopt_array($easy->handle, $conf);
 
         return $easy;
+    }
+
+    public function release(EasyHandle $easy)
+    {
+        if (count($this->handles) >= $this->maxHandles) {
+            curl_close($easy->handle);
+        } else {
+            curl_reset($easy->handle);
+            $this->handles[] = $easy->handle;
+        }
     }
 
     /**

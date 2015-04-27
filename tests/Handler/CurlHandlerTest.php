@@ -35,23 +35,6 @@ class CurlHandlerTest extends \PHPUnit_Framework_TestCase
         $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])->wait();
     }
 
-    public function testReleasesAdditionalEasyHandles()
-    {
-        Server::flush();
-        $response = new Response(200, ['Content-Length' => 4], 'test');
-        Server::enqueue([$response, $response, $response, $response]);
-        $a = new CurlHandler();
-        $fn = function () use (&$calls, $a, &$fn) {
-            if (++$calls < 5) {
-                $request = new Request('GET', Server::$url);
-                $a($request, ['progress' => $fn]);
-            }
-        };
-        $request = new Request('GET', Server::$url);
-        $a($request, ['progress' => $fn]);
-        $this->assertCount(4, $this->readAttribute($a, 'handles'));
-    }
-
     public function testReusesHandles()
     {
         Server::flush();

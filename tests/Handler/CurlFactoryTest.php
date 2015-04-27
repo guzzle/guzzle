@@ -34,8 +34,8 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         ]);
         $stream = Psr7\stream_for();
         $request = new Psr7\Request('PUT', Server::$url, ['Hi' => ' 123'], 'testing');
-        $f = new Handler\CurlFactory();
-        $result = $f($request, ['sink' => $stream]);
+        $f = new Handler\CurlFactory(3);
+        $result = $f->create($request, ['sink' => $stream]);
         $this->assertInstanceOf('GuzzleHttp\Handler\EasyHandle', $result);
         $this->assertInternalType('resource', $result->handle);
         $this->assertInternalType('array', $result->headers);
@@ -96,14 +96,14 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatesVerify()
     {
-        $f = new Handler\CurlFactory();
-        $f(new Psr7\Request('GET', Server::$url), ['verify' => '/does/not/exist']);
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['verify' => '/does/not/exist']);
     }
 
     public function testCanSetVerifyToFile()
     {
-        $f = new Handler\CurlFactory();
-        $f(new Psr7\Request('GET', 'http://foo.com'), ['verify' => __FILE__]);
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'http://foo.com'), ['verify' => __FILE__]);
         $this->assertEquals(__FILE__, $_SERVER['_curl'][CURLOPT_CAINFO]);
         $this->assertEquals(2, $_SERVER['_curl'][CURLOPT_SSL_VERIFYHOST]);
         $this->assertEquals(true, $_SERVER['_curl'][CURLOPT_SSL_VERIFYPEER]);
@@ -111,8 +111,8 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
 
     public function testAddsVerifyAsTrue()
     {
-        $f = new Handler\CurlFactory();
-        $f(new Psr7\Request('GET', Server::$url), ['verify' => true]);
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['verify' => true]);
         $this->assertEquals(2, $_SERVER['_curl'][CURLOPT_SSL_VERIFYHOST]);
         $this->assertEquals(true, $_SERVER['_curl'][CURLOPT_SSL_VERIFYPEER]);
         $this->assertArrayNotHasKey(CURLOPT_CAINFO, $_SERVER['_curl']);
@@ -120,23 +120,23 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
 
     public function testCanDisableVerify()
     {
-        $f = new Handler\CurlFactory();
-        $f(new Psr7\Request('GET', Server::$url), ['verify' => false]);
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['verify' => false]);
         $this->assertEquals(0, $_SERVER['_curl'][CURLOPT_SSL_VERIFYHOST]);
         $this->assertEquals(false, $_SERVER['_curl'][CURLOPT_SSL_VERIFYPEER]);
     }
 
     public function testAddsProxy()
     {
-        $f = new Handler\CurlFactory();
-        $f(new Psr7\Request('GET', Server::$url), ['proxy' => 'http://bar.com']);
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['proxy' => 'http://bar.com']);
         $this->assertEquals('http://bar.com', $_SERVER['_curl'][CURLOPT_PROXY]);
     }
 
     public function testAddsViaScheme()
     {
-        $f = new Handler\CurlFactory();
-        $f(new Psr7\Request('GET', Server::$url), [
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
             'proxy' => ['http' => 'http://bar.com', 'https' => 'https://t'],
         ]);
         $this->assertEquals('http://bar.com', $_SERVER['_curl'][CURLOPT_PROXY]);
@@ -148,21 +148,21 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatesSslKey()
     {
-        $f = new Handler\CurlFactory();
-        $f(new Psr7\Request('GET', Server::$url), ['ssl_key' => '/does/not/exist']);
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['ssl_key' => '/does/not/exist']);
     }
 
     public function testAddsSslKey()
     {
-        $f = new Handler\CurlFactory();
-        $f(new Psr7\Request('GET', Server::$url), ['ssl_key' => __FILE__]);
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['ssl_key' => __FILE__]);
         $this->assertEquals(__FILE__, $_SERVER['_curl'][CURLOPT_SSLKEY]);
     }
 
     public function testAddsSslKeyWithPassword()
     {
-        $f = new Handler\CurlFactory();
-        $f(new Psr7\Request('GET', Server::$url), ['ssl_key' => [__FILE__, 'test']]);
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['ssl_key' => [__FILE__, 'test']]);
         $this->assertEquals(__FILE__, $_SERVER['_curl'][CURLOPT_SSLKEY]);
         $this->assertEquals('test', $_SERVER['_curl'][CURLOPT_SSLKEYPASSWD]);
     }
@@ -173,21 +173,21 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatesCert()
     {
-        $f = new Handler\CurlFactory();
-        $f(new Psr7\Request('GET', Server::$url), ['cert' => '/does/not/exist']);
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['cert' => '/does/not/exist']);
     }
 
     public function testAddsCert()
     {
-        $f = new Handler\CurlFactory();
-        $f(new Psr7\Request('GET', Server::$url), ['cert' => __FILE__]);
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['cert' => __FILE__]);
         $this->assertEquals(__FILE__, $_SERVER['_curl'][CURLOPT_SSLCERT]);
     }
 
     public function testAddsCertWithPassword()
     {
-        $f = new Handler\CurlFactory();
-        $f(new Psr7\Request('GET', Server::$url), ['cert' => [__FILE__, 'test']]);
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['cert' => [__FILE__, 'test']]);
         $this->assertEquals(__FILE__, $_SERVER['_curl'][CURLOPT_SSLCERT]);
         $this->assertEquals('test', $_SERVER['_curl'][CURLOPT_SSLCERTPASSWD]);
     }
@@ -198,8 +198,8 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatesProgress()
     {
-        $f = new Handler\CurlFactory();
-        $f(new Psr7\Request('GET', Server::$url), ['progress' => 'foo']);
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['progress' => 'foo']);
     }
 
     public function testEmitsDebugInfoToStream()
@@ -491,8 +491,8 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
 
     public function testAddsTimeouts()
     {
-        $f = new Handler\CurlFactory();
-        $f(new Psr7\Request('GET', Server::$url), [
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
             'timeout'         => 0.1,
             'connect_timeout' => 0.2
         ]);
@@ -502,14 +502,14 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
 
     public function testAddsStreamingBody()
     {
-        $f = new Handler\CurlFactory();
+        $f = new Handler\CurlFactory(3);
         $bd = Psr7\FnStream::decorate(Psr7\stream_for('foo'), [
             'getSize' => function () {
                 return null;
             }
         ]);
         $request = new Psr7\Request('PUT', Server::$url, [], $bd);
-        $f($request, []);
+        $f->create($request, []);
         $this->assertEquals(1, $_SERVER['_curl'][CURLOPT_UPLOAD]);
         $this->assertTrue(is_callable($_SERVER['_curl'][CURLOPT_READFUNCTION]));
     }
@@ -520,9 +520,32 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
      */
     public function testEnsuresDirExistsBeforeThrowingWarning()
     {
-        $f = new Handler\CurlFactory();
-        $f(new Psr7\Request('GET', Server::$url), [
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
             'sink' => '/does/not/exist/so/error.txt'
         ]);
+    }
+
+    public function testClosesIdleHandles()
+    {
+        $f = new Handler\CurlFactory(3);
+        $req = new Psr7\Request('GET', Server::$url);
+        $easy = $f->create($req, []);
+        $h1 = $easy->handle;
+        $f->release($easy);
+        $this->assertCount(1, $this->readAttribute($f, 'handles'));
+        $easy = $f->create($req, []);
+        $this->assertSame($easy->handle, $h1);
+        $easy2 = $f->create($req, []);
+        $easy3 = $f->create($req, []);
+        $easy4 = $f->create($req, []);
+        $f->release($easy);
+        $this->assertCount(1, $this->readAttribute($f, 'handles'));
+        $f->release($easy2);
+        $this->assertCount(2, $this->readAttribute($f, 'handles'));
+        $f->release($easy3);
+        $this->assertCount(3, $this->readAttribute($f, 'handles'));
+        $f->release($easy4);
+        $this->assertCount(3, $this->readAttribute($f, 'handles'));
     }
 }
