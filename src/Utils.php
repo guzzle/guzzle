@@ -138,7 +138,8 @@ final class Utils
             JSON_ERROR_SYNTAX => 'JSON_ERROR_SYNTAX - Syntax error, malformed JSON',
             JSON_ERROR_UTF8 => 'JSON_ERROR_UTF8 - Malformed UTF-8 characters, possibly incorrectly encoded'
         ];
-
+		
+		$json = preg_replace ('/:\s?(\d{14,})/', ': "${1}"', $json);		
         $data = \json_decode($json, $assoc, $depth, $options);
 
         if (JSON_ERROR_NONE !== json_last_error()) {
