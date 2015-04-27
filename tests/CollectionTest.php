@@ -252,7 +252,7 @@ class CollectionTest extends \PHPUnit_Framework_TestCase
         ), $c->toArray());
 
         try {
-            $c = Collection::fromConfig(array(), array(), array('a'));
+            Collection::fromConfig(array(), array(), array('a'));
             $this->fail('Exception not throw when missing config');
         } catch (\InvalidArgumentException $e) {
         }
