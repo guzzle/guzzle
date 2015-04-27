@@ -36,7 +36,7 @@ class SessionCookieJar extends CookieJar
     public function save()
     {
         $json = [];
-        foreach ($this as $cookie) {
+        foreach ($this->cookies as $cookie) {
             if ($cookie->getExpires() && !$cookie->getDiscard()) {
                 $json[] = $cookie->toArray();
             }

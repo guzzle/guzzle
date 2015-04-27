@@ -11,7 +11,7 @@ use GuzzleHttp\ToArrayInterface;
 class CookieJar implements CookieJarInterface, ToArrayInterface
 {
     /** @var SetCookie[] Loaded cookie data */
-    private $cookies = [];
+    protected $cookies = [];
 
     /** @var bool */
     private $strictMode;
