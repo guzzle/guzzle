@@ -328,6 +328,6 @@ class Pool implements FutureInterface
         $result = $value instanceof ResponseInterface
             ? ['request' => $request, 'response' => $value, 'error' => null]
             : ['request' => $request, 'response' => null, 'error' => $value];
-        $this->deferred->progress($result);
+        $this->deferred->notify($result);
     }
 }
