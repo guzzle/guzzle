@@ -369,6 +369,37 @@ headers
         ]
     ]);
 
+Headers may be added as default options when creating a client. When headers
+are used as default options, they are only applied if the request being created
+does not already contain the specific header. This include both requests passed
+to the client in the ``send()`` and ``sendAsync()`` methods and requests
+created by the client (e.g., ``request()`` and ``requestAsync()``).
+
+.. code-block:: php
+
+    $client = new GuzzleHttp\Client(['headers' => ['X-Foo' => 'Bar']]);
+
+    // Will send a request with the X-Foo header.
+    $client->get('/get');
+
+    // Sets the X-Foo header to "test", which prevents the default header
+    // from being applied.
+    $client->get('/get', ['headers' => ['X-Foo' => 'test']);
+
+    // Will disable adding in default headers.
+    $client->get('/get', ['headers' => null]);
+
+    // Will not overwrite the X-Foo header because it is in the message.
+    use GuzzleHttp\Psr7\Request;
+    $request = new Request('GET', 'http://foo.com', ['X-Foo' => 'test']);
+    $client->send($request);
+
+    // Will overwrite the X-Foo header with the request option provided in the
+    // send method.
+    use GuzzleHttp\Psr7\Request;
+    $request = new Request('GET', 'http://foo.com', ['X-Foo' => 'test']);
+    $client->send($request, ['headers' => ['X-Foo' => 'overwrite']]);
+
 
 .. _http-errors-option:
 

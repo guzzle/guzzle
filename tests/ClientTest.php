@@ -119,6 +119,30 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('bar', $mock->getLastRequest()->getHeaderLine('User-Agent'));
     }
 
+    public function testDoesNotOverwriteHeaderWithDefaultInRequest()
+    {
+        $mock = new MockHandler([new Response()]);
+        $c = new Client([
+            'headers' => ['User-agent' => 'foo'],
+            'handler' => $mock
+        ]);
+        $request = new Request('GET', Server::$url, ['User-Agent' => 'bar']);
+        $c->send($request);
+        $this->assertEquals('bar', $mock->getLastRequest()->getHeaderLine('User-Agent'));
+    }
+
+    public function testDoesOverwriteHeaderWithSetRequestOption()
+    {
+        $mock = new MockHandler([new Response()]);
+        $c = new Client([
+            'headers' => ['User-agent' => 'foo'],
+            'handler' => $mock
+        ]);
+        $request = new Request('GET', Server::$url, ['User-Agent' => 'bar']);
+        $c->send($request, ['headers' => ['User-Agent' => 'YO']]);
+        $this->assertEquals('YO', $mock->getLastRequest()->getHeaderLine('User-Agent'));
+    }
+
     public function testCanUnsetRequestOptionWithNull()
     {
         $mock = new MockHandler([new Response()]);

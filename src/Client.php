@@ -174,7 +174,7 @@ class Client implements ClientInterface
     public function sendAsync(RequestInterface $request, array $options = [])
     {
         // Merge the base URI into the request URI if needed.
-        $options = $this->mergeDefaults($options);
+        $options = $this->prepareDefaults($options);
 
         return $this->transfer(
             $request->withUri($this->buildUri($request->getUri(), $options)),
@@ -190,7 +190,7 @@ class Client implements ClientInterface
 
     public function requestAsync($method, $uri = null, array $options = [])
     {
-        $options = $this->mergeDefaults($options);
+        $options = $this->prepareDefaults($options);
         // Remove request modifying parameter because it can be done up-front.
         $headers = isset($options['headers']) ? $options['headers'] : [];
         $body = isset($options['body']) ? $options['body'] : null;
@@ -256,11 +256,13 @@ class Client implements ClientInterface
 
         $this->defaults = $config + $defaults;
 
+        if (!empty($config['cookies']) && $config['cookies'] === true) {
+            $this->defaults['cookies'] = new CookieJar();
+        }
+
         // Add the default user-agent header.
         if (!isset($this->defaults['headers'])) {
-            $this->defaults['headers'] = [
-                'User-Agent' => default_user_agent()
-            ];
+            $this->defaults['headers'] = ['User-Agent' => default_user_agent()];
         } else {
             // Add the User-Agent header if one was not already set.
             foreach (array_keys($this->defaults['headers']) as $name) {
@@ -269,10 +271,6 @@ class Client implements ClientInterface
                 }
             }
             $this->defaults['headers']['User-Agent'] = default_user_agent();
-        }
-
-        if (!empty($config['cookies']) && $config['cookies'] === true) {
-            $this->defaults['cookies'] = new CookieJar();
         }
     }
 
@@ -283,35 +281,33 @@ class Client implements ClientInterface
      *
      * @return array
      */
-    private function mergeDefaults($options)
+    private function prepareDefaults($options)
     {
         $defaults = $this->defaults;
 
-        // Case-insensitively merge in default headers if both defaults and
-        // options have headers specified.
-        if (!empty($defaults['headers']) && !empty($options['headers'])) {
-
-            if (!is_array($options['headers'])) {
-                throw new \InvalidArgumentException('headers must be an array');
-            }
-
-            // Create a set of lowercase keys that are present.
-            $lkeys = [];
-            foreach (array_keys($options['headers']) as $k) {
-                $lkeys[strtolower($k)] = true;
-            }
-            // Merge in lowercase default keys when not present in above set.
-            foreach ($defaults['headers'] as $key => $value) {
-                if (!isset($lkeys[strtolower($key)])) {
-                    $options['headers'][$key] = $value;
-                }
-            }
-            // No longer need to merge in headers.
+        if (!empty($defaults['headers'])) {
+            // Default headers are only added if they are not present.
+            $defaults['_conditional'] = $defaults['headers'];
             unset($defaults['headers']);
         }
 
-        $result = array_replace_recursive($defaults, $options);
-        foreach ($options as $k => $v) {
+        // Special handling for headers is required as they are added as
+        // conditional headers and as headers passed to a request ctor.
+        if (array_key_exists('headers', $options)) {
+            // Allows default headers to be unset.
+            if ($options['headers'] === null) {
+                $defaults['_conditional'] = null;
+                unset($options['headers']);
+            } elseif (!is_array($options['headers'])) {
+                throw new \InvalidArgumentException('headers must be an array');
+            }
+        }
+
+        // Shallow merge defaults underneath options.
+        $result = $options + $defaults;
+
+        // Remove null values.
+        foreach ($result as $k => $v) {
             if ($v === null) {
                 unset($result[$k]);
             }
@@ -365,13 +361,13 @@ class Client implements ClientInterface
      */
     private function applyOptions(RequestInterface $request, array &$options)
     {
-        $modify = $conditional = [];
+        $modify = [];
 
         // Extract POST/form parameters if present.
         if (!empty($options['form_files'])
             || !empty($options['form_fields'])
         ) {
-            $this->extractFormData($options, $conditional);
+            $this->extractFormData($options);
         }
 
         if (!empty($options['decode_content'])
@@ -427,23 +423,30 @@ class Client implements ClientInterface
 
         if (isset($options['json'])) {
             $modify['body'] = Psr7\stream_for(json_encode($options['json']));
-            $conditional['Content-Type'] = 'application/json';
+            $options['_conditional']['Content-Type'] = 'application/json';
             unset($options['json']);
         }
 
         $request = Psr7\modify_request($request, $modify);
 
-        // Add in conditional headers.
-        foreach ($conditional as $k => $v) {
-            if (!$request->hasHeader($k)) {
-                $request = $request->withHeader($k, $v);
+        // Merge in conditional headers if they are not present.
+        if (isset($options['_conditional'])) {
+            // Build up the changes so it's in a single clone of the message.
+            $modify = [];
+            foreach ($options['_conditional'] as $k => $v) {
+                if (!$request->hasHeader($k)) {
+                    $modify['set_headers'][$k] = $v;
+                }
             }
+            $request = Psr7\modify_request($request, $modify);
+            // Don't pass this internal value along to middleware/handlers.
+            unset($options['_conditional']);
         }
 
         return $request;
     }
 
-    private function extractFormData(array &$options, array &$conditional)
+    private function extractFormData(array &$options)
     {
         $fields = [];
         if (isset($options['form_fields'])) {
@@ -451,7 +454,7 @@ class Client implements ClientInterface
             if (!isset($options['form_files'])) {
                 $options['body'] = http_build_query($options['form_fields']);
                 unset($options['form_fields']);
-                $conditional['Content-Type'] = 'application/x-www-form-urlencoded';
+                $options['_conditional']['Content-Type'] = 'application/x-www-form-urlencoded';
                 return;
             }
             $fields = $options['form_fields'];
@@ -462,7 +465,7 @@ class Client implements ClientInterface
         unset($options['form_files']);
         $options['body'] = new MultipartPostBody($fields, $files);
         // Use a multipart/form-data POST if a Content-Type is not set.
-        $conditional['Content-Type'] = 'multipart/form-data; boundary='
+        $options['_conditional']['Content-Type'] = 'multipart/form-data; boundary='
             . $options['body']->getBoundary();
     }
 }
