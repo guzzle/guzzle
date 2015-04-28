@@ -265,6 +265,10 @@ class CurlFactory implements CurlFactoryInterface
             $this->removeHeader('Transfer-Encoding', $conf);
         } else {
             $conf[CURLOPT_UPLOAD] = true;
+            if ($size !== null) {
+                $conf[CURLOPT_INFILESIZE] = $size;
+                $this->removeHeader('Content-Length', $conf);
+            }
             $body = $request->getBody();
             $conf[CURLOPT_READFUNCTION] = function ($ch, $fd, $length) use ($body) {
                 return $body->read($length);
