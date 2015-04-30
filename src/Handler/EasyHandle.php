@@ -38,10 +38,9 @@ final class EasyHandle
 
     public function __get($name)
     {
-        throw new \BadMethodCallException(
-            $name === 'handle'
-                ? 'The EasyHandle has been released'
-                : 'Invalid property: ' . $name
-        );
+        $msg = $name === 'handle'
+            ? 'The EasyHandle has been released'
+            : 'Invalid property: ' . $name;
+        throw new \BadMethodCallException($msg);
     }
 }

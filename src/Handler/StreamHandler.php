@@ -74,14 +74,9 @@ class StreamHandler
             try {
                 $options['on_headers']($response);
             } catch (\Exception $e) {
-                return new RejectedPromise(
-                    new RequestException(
-                        'An error was encountered during the on_headers event',
-                        $request,
-                        $response,
-                        $e
-                    )
-                );
+                $msg = 'An error was encountered during the on_headers event';
+                $ex = new RequestException($msg, $request, $response, $e);
+                return new RejectedPromise($ex);
             }
         }
 
