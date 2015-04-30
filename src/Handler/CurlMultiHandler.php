@@ -68,14 +68,7 @@ class CurlMultiHandler
             function () use ($id) { return $this->cancel($id); }
         );
 
-        $entry = [
-            'request'  => $request,
-            'options'  => $options,
-            'easy'     => $easy,
-            'deferred' => $promise,
-        ];
-
-        $this->addRequest($entry);
+        $this->addRequest(['easy' => $easy, 'deferred' => $promise]);
 
         return $promise;
     }
@@ -136,10 +129,10 @@ class CurlMultiHandler
         $easy = $entry['easy'];
         $id = (int) $easy->handle;
         $this->handles[$id] = $entry;
-        if (empty($entry['options']['delay'])) {
+        if (empty($easy->options['delay'])) {
             curl_multi_add_handle($this->_mh, $easy->handle);
         } else {
-            $this->delays[$id] = microtime(true) + ($entry['options']['delay'] / 1000);
+            $this->delays[$id] = microtime(true) + ($easy->options['delay'] / 1000);
         }
     }
 
@@ -168,8 +161,8 @@ class CurlMultiHandler
     private function processMessages()
     {
         while ($done = curl_multi_info_read($this->_mh)) {
-
             $id = (int) $done['handle'];
+            curl_multi_remove_handle($this->_mh, $done['handle']);
 
             if (!isset($this->handles[$id])) {
                 // Probably was cancelled.
@@ -178,26 +171,14 @@ class CurlMultiHandler
 
             $entry = $this->handles[$id];
             unset($this->handles[$id], $this->delays[$id]);
-
-            $response = [];
-            if ($done['result'] !== CURLM_OK) {
-                $response['curl']['errno'] = $done['result'];
-                $response['curl']['error'] = curl_strerror($done['result']);
-            }
-
-            $easy = $entry['easy'];
-            $result = CurlFactory::createResponse(
-                $this,
-                $entry['request'],
-                $entry['options'],
-                $response,
-                $easy->headers,
-                Psr7\stream_for($easy->body)
+            $entry['easy']->errno = $done['result'];
+            $entry['deferred']->resolve(
+                CurlFactory::finish(
+                    $this,
+                    $entry['easy'],
+                    $this->factory
+                )
             );
-
-            curl_multi_remove_handle($this->_mh, $done['handle']);
-            $this->factory->release($easy);
-            $entry['deferred']->resolve($result);
         }
     }
 

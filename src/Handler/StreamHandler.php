@@ -36,7 +36,9 @@ class StreamHandler
             // Does not support the expect header.
             $request = $request->withoutHeader('Expect');
             $stream = $this->createStream($request, $options);
-            return $this->createResponse($options, $stream);
+            return $this->createResponse($request, $options, $stream);
+        } catch (\InvalidArgumentException $e) {
+            throw $e;
         } catch (\Exception $e) {
             // Determine if the error was a networking error.
             $message = $e->getMessage();
@@ -52,34 +54,57 @@ class StreamHandler
         }
     }
 
-    private function createResponse(array $options, $stream)
-    {
+    private function createResponse(
+        RequestInterface $request,
+        array $options,
+        $stream
+    ) {
         $hdrs = $this->lastHeaders;
         $this->lastHeaders = [];
         $parts = explode(' ', array_shift($hdrs), 3);
-        $response = [
-            'status'  => $parts[1],
-            'reason'  => isset($parts[2]) ? $parts[2] : null,
-            'headers' => \GuzzleHttp\headers_from_lines($hdrs)
-        ];
+        $ver = explode('/', $parts[0])[1];
+        $status = $parts[1];
+        $reason = isset($parts[2]) ? $parts[2] : null;
+        $headers = \GuzzleHttp\headers_from_lines($hdrs);
+        $stream = Psr7\stream_for($this->checkDecode($options, $headers, $stream));
+        $sink = $this->createSink($stream, $options);
+        $response = new Psr7\Response($status, $headers, $sink, $ver, $reason);
 
-        $stream = $this->checkDecode($options, $response['headers'], $stream);
-
-        // If not streaming, then drain the response into a stream.
-        if (empty($options['stream'])) {
-            $dest = isset($options['sink'])
-                ? $options['sink']
-                : fopen('php://temp', 'r+');
-            $stream = $this->drain($stream, $dest);
+        if (isset($options['on_headers'])) {
+            try {
+                $options['on_headers']($response);
+            } catch (\Exception $e) {
+                return new RejectedPromise(
+                    new RequestException(
+                        'An error was encountered during the on_headers event',
+                        $request,
+                        $response,
+                        $e
+                    )
+                );
+            }
         }
 
-        return new FulfilledPromise(
-            new Psr7\Response(
-                $response['status'],
-                $response['headers'],
-                $stream
-            )
-        );
+        if ($sink !== $stream) {
+            $this->drain($stream, $sink);
+        }
+
+        return new FulfilledPromise($response);
+    }
+
+    private function createSink(StreamInterface $stream, array $options)
+    {
+        if (!empty($options['stream'])) {
+            return $stream;
+        }
+
+        $sink = isset($options['sink'])
+            ? $options['sink']
+            : fopen('php://temp', 'r+');
+
+        return is_string($sink)
+            ? new Psr7\Stream(Psr7\try_fopen($sink, 'r+'))
+            : Psr7\stream_for($sink);
     }
 
     private function checkDecode(array $options, array $headers, $stream)
@@ -101,37 +126,21 @@ class StreamHandler
     }
 
     /**
-     * Drains the stream into the "sink" client option.
+     * Drains the source stream into the "sink" client option.
      *
-     * @param resource                            $stream
-     * @param string|resource|StreamInterface $dest
+     * @param StreamInterface $source
+     * @param StreamInterface $sink
      *
      * @return StreamInterface
      * @throws \RuntimeException when the sink option is invalid.
      */
-    private function drain($stream, $dest)
+    private function drain(StreamInterface $source, StreamInterface $sink)
     {
-        if (is_resource($stream)) {
-            if (!is_resource($dest)) {
-                $stream = Psr7\stream_for($stream);
-            } else {
-                stream_copy_to_stream($stream, $dest);
-                fclose($stream);
-                rewind($dest);
-                return Psr7\stream_for($dest);
-            }
-        }
+        Psr7\copy_to_stream($source, $sink);
+        $sink->seek(0);
+        $source->close();
 
-        // Stream the response into the destination stream
-        $dest = is_string($dest)
-            ? new Psr7\Stream(Psr7\try_fopen($dest, 'r+'))
-            : Psr7\stream_for($dest);
-
-        Psr7\copy_to_stream($stream, $dest);
-        $dest->seek(0);
-        $stream->close();
-
-        return $dest;
+        return $sink;
     }
 
     /**
@@ -192,6 +201,10 @@ class StreamHandler
 
         $params = [];
         $context = $this->getDefaultContext($request, $options);
+
+        if (isset($options['on_headers']) && !is_callable($options['on_headers'])) {
+            throw new \InvalidArgumentException('on_headers must be callable');
+        }
 
         if (!empty($options)) {
             foreach ($options as $key => $value) {

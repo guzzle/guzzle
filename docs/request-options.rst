@@ -457,6 +457,40 @@ json
     ``headers`` request option.
 
 
+.. _on-headers:
+
+on_headers
+----------
+
+:Summary: A callable that is invoked when the HTTP headers of the response have
+    been received but the body has not yet begun to download.
+:Types: - callable
+
+The callable accepts a ``Psr\Http\ResponseInterface`` object. If an exception
+is thrown by the callable, then the promise associated with the response will
+be rejected with a ``GuzzleHttp\Exception\RequestException`` that wraps the
+exception that was thrown.
+
+You may need to know what headers and status codes were received before data
+can be written to the sink.
+
+.. code-block:: php
+
+    // Reject responses that are greater than 1024 bytes.
+    $client->get('http://httpbin.org/stream/1024', [
+        'on_headers' => function (ResponseInterface $response) {
+            if ($response->getHeaderLine('Content-Length') > 1024) {
+                throw new \Exception('The file is too big!');
+            }
+        }
+    ]);
+
+.. note::
+
+    When writing HTTP handlers, the ``on_headers`` function must be invoked
+    before writing data to the body of the response.
+
+
 .. _proxy-option:
 
 proxy
@@ -496,7 +530,8 @@ Pass an associative array to specify HTTP proxies for specific URI schemes
 query
 -----
 
-:Summary: Associative array of query string values to add to the request.
+:Summary: Associative array of query string values or query string to add to
+    the request.
 :Types:
     - array
     - string
@@ -523,9 +558,10 @@ sink
 
 :Summary: Specify where the body of a response will be saved.
 :Types:
-    - string
+    - string (path to file on disk)
     - ``fopen()`` resource
-    - ``GuzzleHttp\Stream\StreamInterface``
+    - ``Psr\Http\Message\StreamInterface``
+
 :Default: PHP temp stream
 
 Pass a string to specify the path to a file that will store the contents of the

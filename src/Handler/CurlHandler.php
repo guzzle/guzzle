@@ -32,30 +32,14 @@ class CurlHandler
 
     public function __invoke(RequestInterface $request, array $options)
     {
-        $easy = $this->factory->create($request, $options);
-
         if (isset($options['delay'])) {
             usleep($options['delay'] * 1000);
         }
 
+        $easy = $this->factory->create($request, $options);
         curl_exec($easy->handle);
-        $response = [
-            'curl' => [
-                'error' => curl_error($easy->handle),
-                'errno' => curl_errno($easy->handle)
-            ]
-        ];
-        $this->factory->release($easy);
+        $easy->errno = curl_errno($easy->handle);
 
-        return \GuzzleHttp\Promise\promise_for(
-            CurlFactory::createResponse(
-                $this,
-                $request,
-                $options,
-                $response,
-                $easy->headers,
-                Psr7\stream_for($easy->body)
-            )
-        );
+        return CurlFactory::finish($this, $easy, $this->factory);
     }
 }

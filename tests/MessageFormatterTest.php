@@ -8,7 +8,7 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\MessageFormatter;
 
 /**
- * @covers GuzzleHttp\Subscriber\Log\Formatter
+ * @covers GuzzleHttp\MessageFormatter
  */
 class MessageFormatterTest extends \PHPUnit_Framework_TestCase
 {

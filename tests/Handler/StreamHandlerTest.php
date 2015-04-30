@@ -2,9 +2,12 @@
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Handler\StreamHandler;
+use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Tests\Server;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * @covers \GuzzleHttp\Handler\StreamHandler
@@ -240,7 +243,7 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \GuzzleHttp\Exception\RequestException
+     * @expectedException \InvalidArgumentException
      * @expectedExceptionMessage Invalid verify request option
      */
     public function testEnsuresVerifyOptionIsValid()
@@ -343,7 +346,7 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \GuzzleHttp\Exception\RequestException
+     * @expectedException \InvalidArgumentException
      * @expectedExceptionMessage stream_context must be an array
      */
     public function testEnsuresThatStreamContextIsAnArray()
@@ -385,5 +388,68 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $s = microtime(true);
         $a($request, ['delay' => 0.1])->wait();
         $this->assertGreaterThan(0.0001, microtime(true) - $s);
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testEnsuresOnHeadersIsCallable()
+    {
+        $req = new Request('GET', Server::$url);
+        $handler = new StreamHandler();
+        $handler($req, ['on_headers' => 'error!']);
+    }
+
+    /**
+     * @expectedException \GuzzleHttp\Exception\RequestException
+     * @expectedExceptionMessage An error was encountered during the on_headers event
+     * @expectedExceptionMessage test
+     */
+    public function testRejectsPromiseWhenOnHeadersFails()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['X-Foo' => 'bar'], 'abc 123')
+        ]);
+        $req = new Request('GET', Server::$url);
+        $handler = new StreamHandler();
+        $promise = $handler($req, [
+            'on_headers' => function () {
+                throw new \Exception('test');
+            }
+        ]);
+        $promise->wait();
+    }
+
+    public function testSuccessfullyCallsOnHeadersBeforeWritingToSink()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['X-Foo' => 'bar'], 'abc 123')
+        ]);
+        $req = new Request('GET', Server::$url);
+        $got = null;
+
+        $stream = Psr7\stream_for();
+        $stream = FnStream::decorate($stream, [
+            'write' => function ($data) use ($stream, &$got) {
+                $this->assertNotNull($got);
+                return $stream->write($data);
+            }
+        ]);
+
+        $handler = new StreamHandler();
+        $promise = $handler($req, [
+            'sink'       => $stream,
+            'on_headers' => function (ResponseInterface $res) use (&$got) {
+                $got = $res;
+                $this->assertEquals('bar', $res->getHeaderLine('X-Foo'));
+            }
+        ]);
+
+        $response = $promise->wait();
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('bar', $response->getHeaderLine('X-Foo'));
+        $this->assertEquals('abc 123', (string) $response->getBody());
     }
 }

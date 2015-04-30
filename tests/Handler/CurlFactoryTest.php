@@ -1,10 +1,10 @@
 <?php
-
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Tests\Server;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Psr7;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * @covers \GuzzleHttp\Handler\CurlFactory
@@ -42,7 +42,7 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('GuzzleHttp\Handler\EasyHandle', $result);
         $this->assertInternalType('resource', $result->handle);
         $this->assertInternalType('array', $result->headers);
-        $this->assertSame($stream, $result->body);
+        $this->assertSame($stream, $result->sink);
         curl_close($result->handle);
         $this->assertEquals('PUT', $_SERVER['_curl'][CURLOPT_CUSTOMREQUEST]);
         $this->assertEquals(
@@ -76,7 +76,7 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $response = $a(new Psr7\Request('HEAD', Server::$url), []);
         $response->wait();
         $this->assertEquals(true, $_SERVER['_curl'][CURLOPT_NOBODY]);
-        $checks = [CURLOPT_WRITEFUNCTION, CURLOPT_READFUNCTION, CURLOPT_FILE, CURLOPT_INFILE];
+        $checks = [CURLOPT_WRITEFUNCTION, CURLOPT_READFUNCTION, CURLOPT_INFILE];
         foreach ($checks as $check) {
             $this->assertArrayNotHasKey($check, $_SERVER['_curl']);
         }
@@ -383,29 +383,20 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage The connection unexpectedly failed
-     */
-    public function testFailsWhenNoResponseAndNoBody()
-    {
-        $req = new Psr7\Request('PUT', Server::$url, [], new Psr7\NoSeekStream(Psr7\stream_for()));
-        $bd = Psr7\stream_for('');
-        $fn = function () {};
-        $p = Handler\CurlFactory::createResponse($fn, $req, [], [], [], $bd);
-        $p->wait();
-    }
-
-    /**
-     * @expectedException \GuzzleHttp\Exception\RequestException
      * @expectedExceptionMessage but attempting to rewind the request body failed
      */
-    public function testFailsWhenCannotRewindRetry()
+    public function testFailsWhenCannotRewindRetryAfterNoResponse()
     {
-        $body = new Psr7\NoSeekStream(Psr7\stream_for('foo'));
-        $req = new Psr7\Request('PUT', Server::$url, [], $body);
-        $fn = function () {};
-        $rbody = Psr7\stream_for();
-        $res = Handler\CurlFactory::createResponse($fn, $req, [], [], [], $rbody);
-        $res->wait();
+        $factory = new Handler\CurlFactory(1);
+        $stream = Psr7\stream_for('abc');
+        $stream->read(1);
+        $stream = new Psr7\NoSeekStream($stream);
+        $request = new Psr7\Request('PUT', Server::$url, [], $stream);
+        $fn = function ($request, $options) use (&$fn, $factory) {
+            $easy = $factory->create($request, $options);
+            return Handler\CurlFactory::finish($fn, $easy, $factory);
+        };
+        $fn($request, [])->wait();
     }
 
     public function testRetriesWhenBodyCanBeRewound()
@@ -418,15 +409,14 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         };
 
         $bd = Psr7\FnStream::decorate(Psr7\stream_for('test'), [
-            'rewind' => function () use (&$called) {
-                $called = true;
-                return true;
-            }
+            'tell'   => function () { return 1; },
+            'rewind' => function () use (&$called) { $called = true; }
         ]);
 
+        $factory = new Handler\CurlFactory(1);
         $req = new Psr7\Request('PUT', Server::$url, [], $bd);
-        $rbd = Psr7\stream_for();
-        $res = Handler\CurlFactory::createResponse($fn, $req, [], [], [], $rbd);
+        $easy = $factory->create($req, []);
+        $res = Handler\CurlFactory::finish($fn, $easy, $factory);
         $res = $res->wait();
         $this->assertTrue($callHandler);
         $this->assertTrue($called);
@@ -439,11 +429,12 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
      */
     public function testFailsWhenRetryMoreThanThreeTimes()
     {
+        $factory = new Handler\CurlFactory(1);
         $call = 0;
-        $fn = function ($request, $options) use (&$mock, &$call) {
+        $fn = function ($request, $options) use (&$mock, &$call, $factory) {
             $call++;
-            $bd = Psr7\stream_for();
-            return Handler\CurlFactory::createResponse($mock, $request, $options, [], [], $bd);
+            $easy = $factory->create($request, $options);
+            return Handler\CurlFactory::finish($mock, $easy, $factory);
         };
         $mock = new Handler\MockHandler([$fn, $fn, $fn]);
         $p = $mock(new Psr7\Request('PUT', Server::$url, [], 'test'), []);
@@ -475,19 +466,16 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
      */
     public function testCreatesConnectException()
     {
-        $m = new \ReflectionMethod('GuzzleHttp\Handler\CurlFactory', 'createErrorResponse');
+        $m = new \ReflectionMethod('GuzzleHttp\Handler\CurlFactory', 'finishError');
         $m->setAccessible(true);
+        $factory = new Handler\CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+        $easy->errno = CURLE_COULDNT_CONNECT;
         $response = $m->invoke(
             null,
             function () {},
-            new Psr7\Request('GET', Server::$url),
-            [],
-            [
-                'err_message' => 'foo',
-                'curl' => [
-                    'errno' => CURLE_COULDNT_CONNECT,
-                ]
-            ]
+            $easy,
+            $factory
         );
         $response->wait();
     }
@@ -550,5 +538,68 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(3, $this->readAttribute($f, 'handles'));
         $f->release($easy4);
         $this->assertCount(3, $this->readAttribute($f, 'handles'));
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testEnsuresOnHeadersIsCallable()
+    {
+        $req = new Psr7\Request('GET', Server::$url);
+        $handler = new Handler\CurlHandler();
+        $handler($req, ['on_headers' => 'error!']);
+    }
+
+    /**
+     * @expectedException \GuzzleHttp\Exception\RequestException
+     * @expectedExceptionMessage An error was encountered during the on_headers event
+     * @expectedExceptionMessage test
+     */
+    public function testRejectsPromiseWhenOnHeadersFails()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, ['X-Foo' => 'bar'], 'abc 123')
+        ]);
+        $req = new Psr7\Request('GET', Server::$url);
+        $handler = new Handler\CurlHandler();
+        $promise = $handler($req, [
+            'on_headers' => function () {
+                throw new \Exception('test');
+            }
+        ]);
+        $promise->wait();
+    }
+
+    public function testSuccessfullyCallsOnHeadersBeforeWritingToSink()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, ['X-Foo' => 'bar'], 'abc 123')
+        ]);
+        $req = new Psr7\Request('GET', Server::$url);
+        $got = null;
+
+        $stream = Psr7\stream_for();
+        $stream = Psr7\FnStream::decorate($stream, [
+            'write' => function ($data) use ($stream, &$got) {
+                $this->assertNotNull($got);
+                return $stream->write($data);
+            }
+        ]);
+
+        $handler = new Handler\CurlHandler();
+        $promise = $handler($req, [
+            'sink'       => $stream,
+            'on_headers' => function (ResponseInterface $res) use (&$got) {
+                $got = $res;
+                $this->assertEquals('bar', $res->getHeaderLine('X-Foo'));
+            }
+        ]);
+
+        $response = $promise->wait();
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('bar', $response->getHeaderLine('X-Foo'));
+        $this->assertEquals('abc 123', (string) $response->getBody());
     }
 }
