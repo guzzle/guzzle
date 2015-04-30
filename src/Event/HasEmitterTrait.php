@@ -7,7 +7,7 @@ namespace GuzzleHttp\Event;
 trait HasEmitterTrait
 {
     /** @var EmitterInterface */
-    private $emitter;
+    protected $emitter;
 
     public function getEmitter()
     {
