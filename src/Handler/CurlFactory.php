@@ -6,7 +6,6 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Psr7;
-use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\LazyOpenStream;
 use Psr\Http\Message\RequestInterface;
 
@@ -475,9 +474,8 @@ class CurlFactory implements CurlFactoryInterface
             $value = trim($h);
             if ($value === '') {
                 $startingResponse = true;
-                $this->attachResponse($easy);
-                // Only call onHeaders if the response was received.
-                if ($easy->response && $onHeaders) {
+                $easy->createResponse();
+                if ($onHeaders) {
                     try {
                         $onHeaders($easy->response);
                     } catch (\Exception $e) {
@@ -495,25 +493,5 @@ class CurlFactory implements CurlFactoryInterface
             }
             return strlen($h);
         };
-    }
-
-    private function attachResponse(EasyHandle $easy)
-    {
-        $startLine = explode(' ', array_shift($easy->headers), 3);
-
-        // Set the response to null if the headers were invalid.
-        if (!isset($startLine[1])) {
-            $easy->response = null;
-            return null;
-        }
-
-        // Attach a response to the easy handle with the parsed headers.
-        $easy->response = new Response(
-            $startLine[1],
-            \GuzzleHttp\headers_from_lines($easy->headers),
-            $easy->sink,
-            substr($startLine[0], 5),
-            isset($startLine[2]) ? (int) $startLine[2] : null
-        );
     }
 }
