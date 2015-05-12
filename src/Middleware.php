@@ -5,6 +5,7 @@ use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -82,8 +83,7 @@ final class Middleware
     {
         return function (callable $handler) use (&$container) {
             return function ($request, array $options) use ($handler, &$container) {
-                $response = $handler($request, $options);
-                $response->then(
+                return $handler($request, $options)->then(
                     function ($value) use ($request, &$container, $options) {
                         $container[] = [
                             'request'  => $request,
@@ -91,6 +91,7 @@ final class Middleware
                             'error'    => null,
                             'options'  => $options
                         ];
+                        return $value;
                     },
                     function ($reason) use ($request, &$container, $options) {
                         $container[] = [
@@ -99,9 +100,9 @@ final class Middleware
                             'error'    => $reason,
                             'options'  => $options
                         ];
+                        return new RejectedPromise($reason);
                     }
                 );
-                return $response;
             };
         };
     }
@@ -164,30 +165,8 @@ final class Middleware
      */
     public static function retry(callable $decider, callable $delay = null)
     {
-        /** @var callable $delay */
-        $delay = $delay ?: [__CLASS__, 'exponentialBackoffDelay'];
         return function (callable $handler) use ($decider, $delay) {
-            return $f = function ($request, array $options) use ($handler, $decider, $delay, &$f) {
-                if (!isset($options['retries'])) {
-                    $options['retries'] = 0;
-                }
-                // Then function used for both onFulfilled and onRejected.
-                $g = function ($value) use ($handler, $request, $options, $decider, $delay, &$f) {
-                    if ($value instanceof \Exception) {
-                        $response = null;
-                        $error = $value;
-                    } else {
-                        $response = $value;
-                        $error = null;
-                    }
-                    if (!$decider($options['retries'], $request, $response, $error)) {
-                        return $response;
-                    }
-                    $options['delay'] = $delay(++$options['retries']);
-                    return $f($request, $options);
-                };
-                return $handler($request, $options)->then($g, $g);
-            };
+            return new RetryMiddleware($decider, $handler, $delay);
         };
     }
 
@@ -221,18 +200,6 @@ final class Middleware
                 );
             };
         };
-    }
-
-    /**
-     * Default exponential backoff delay function.
-     *
-     * @param $retries
-     *
-     * @return int
-     */
-    public static function exponentialBackoffDelay($retries)
-    {
-        return (int) pow(2, $retries - 1);
     }
 
     /**

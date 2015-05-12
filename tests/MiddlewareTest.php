@@ -1,7 +1,6 @@
 <?php
 namespace GuzzleHttp\Tests;
 
-use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use GuzzleHttp\Exception\RequestException;
@@ -130,70 +129,6 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('123', implode('', $calls));
         $this->assertInstanceOf('GuzzleHttp\Promise\PromiseInterface', $p);
         $this->assertEquals(200, $p->wait()->getStatusCode());
-    }
-
-    public function testBackoffCalculateDelay()
-    {
-        $this->assertEquals(0, Middleware::exponentialBackoffDelay(0));
-        $this->assertEquals(1, Middleware::exponentialBackoffDelay(1));
-        $this->assertEquals(2, Middleware::exponentialBackoffDelay(2));
-        $this->assertEquals(4, Middleware::exponentialBackoffDelay(3));
-        $this->assertEquals(8, Middleware::exponentialBackoffDelay(4));
-    }
-
-    public function testRetriesWhenDeciderReturnsTrue()
-    {
-        $delayCalls = 0;
-        $calls = [];
-        $decider = function ($retries, $request, $response, $error) use (&$calls) {
-            $calls[] = func_get_args();
-            return count($calls) < 3;
-        };
-        $delay = function ($retries) use (&$delayCalls) {
-            $delayCalls++;
-            $this->assertEquals($retries, $delayCalls);
-            return 1;
-        };
-        $m = Middleware::retry($decider, $delay);
-        $h = new MockHandler([new Response(200), new Response(201), new Response(202)]);
-        $f = $m($h);
-        $c = new Client(['handler' => $f]);
-        $p = $c->sendAsync(new Request('GET', 'http://test.com'), []);
-        $p->wait();
-        $this->assertCount(3, $calls);
-        $this->assertEquals(2, $delayCalls);
-        $this->assertEquals(202, $p->wait()->getStatusCode());
-    }
-
-    public function testDoesNotRetryWhenDeciderReturnsFalse()
-    {
-        $decider = function () { return false; };
-        $m = Middleware::retry($decider);
-        $h = new MockHandler([new Response(200)]);
-        $c = new Client(['handler' => $m($h)]);
-        $p = $c->sendAsync(new Request('GET', 'http://test.com'), []);
-        $this->assertEquals(200, $p->wait()->getStatusCode());
-    }
-
-    public function testCanRetryExceptions()
-    {
-        $calls = [];
-        $decider = function ($retries, $request, $response, $error) use (&$calls) {
-            $calls[] = func_get_args();
-            return $error instanceof \Exception;
-        };
-        $m = Middleware::retry($decider);
-        $h = new MockHandler([new \Exception(), new Response(201)]);
-        $c = new Client(['handler' => $m($h)]);
-        $p = $c->sendAsync(new Request('GET', 'http://test.com'), []);
-        $this->assertEquals(201, $p->wait()->getStatusCode());
-        $this->assertCount(2, $calls);
-        $this->assertEquals(0, $calls[0][0]);
-        $this->assertNull($calls[0][2]);
-        $this->assertInstanceOf('Exception', $calls[0][3]);
-        $this->assertEquals(1, $calls[1][0]);
-        $this->assertInstanceOf('GuzzleHttp\Psr7\Response', $calls[1][2]);
-        $this->assertNull($calls[1][3]);
     }
 
     public function testMapsRequest()
