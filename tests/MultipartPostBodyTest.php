@@ -14,7 +14,7 @@ class MultipartPostBodyTest extends \PHPUnit_Framework_TestCase
 
     public function testCanProvideBoundary()
     {
-        $b = new MultipartPostBody([], [], 'foo');
+        $b = new MultipartPostBody([], 'foo');
         $this->assertEquals('foo', $b->getBoundary());
     }
 
@@ -37,7 +37,7 @@ class MultipartPostBodyTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatesFilesArrayElement()
     {
-        new MultipartPostBody([], [['foo' => 'bar']]);
+        new MultipartPostBody([['foo' => 'bar']]);
     }
 
     /**
@@ -45,20 +45,25 @@ class MultipartPostBodyTest extends \PHPUnit_Framework_TestCase
      */
     public function testEnsuresFileHasName()
     {
-        new MultipartPostBody([], [['contents' => 'bar']]);
+        new MultipartPostBody([['contents' => 'bar']]);
     }
 
     public function testSerializesFields()
     {
         $b = new MultipartPostBody([
-            'foo' => 'bar',
-            'baz' => ['bam', 'boo']
-        ], [], 'boundary');
+            [
+                'name'     => 'foo',
+                'contents' => 'bar'
+            ],
+            [
+                'name' => 'baz',
+                'contents' => 'bam'
+            ]
+        ], 'boundary');
         $this->assertEquals(
-            "--boundary\r\nContent-Disposition: form-data; name=\"foo\"\r\n\r\n"
-            . "bar\r\n--boundary\r\nContent-Disposition: form-data; name=\"baz\""
-            . "\r\n\r\nbam\r\n--boundary\r\nContent-Disposition: form-data; name=\"baz\""
-            . "\r\n\r\nboo\r\n--boundary--\r\n", (string) $b);
+            "--boundary\r\nContent-Disposition: form-data; name=\"foo\"\r\nContent-Length: 3\r\n\r\n"
+            . "bar\r\n--boundary\r\nContent-Disposition: form-data; name=\"baz\"\r\nContent-Length: 3"
+            . "\r\n\r\nbam\r\n--boundary--\r\n", (string) $b);
     }
 
     public function testSerializesFiles()
@@ -81,9 +86,9 @@ class MultipartPostBodyTest extends \PHPUnit_Framework_TestCase
             }
         ]);
 
-        $b = new MultipartPostBody([], [
+        $b = new MultipartPostBody([
             [
-                'name'      => 'foo',
+                'name'     => 'foo',
                 'contents' => $f1
             ],
             [
@@ -130,7 +135,7 @@ EOT;
             }
         ]);
 
-        $b = new MultipartPostBody([], [
+        $b = new MultipartPostBody([
             [
                 'name' => 'foo',
                 'contents' => $f1,
@@ -170,7 +175,7 @@ EOT;
             }
         ]);
 
-        $b = new MultipartPostBody([], [
+        $b = new MultipartPostBody([
             [
                 'name'     => 'foo',
                 'contents' => $f1,

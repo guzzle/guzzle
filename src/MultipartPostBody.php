@@ -14,9 +14,7 @@ class MultipartPostBody implements StreamInterface
     private $boundary;
 
     /**
-     * @param array  $fields   Associative array of field names to values where
-     *                         each value is a string or array of strings.
-     * @param array  $files    Array of associative arrays, each containing a
+     * @param array  $elements Array of associative arrays, each containing a
      *                         required "name" key mapping to the form field,
      *                         name, a required "contents" key mapping to a
      *                         StreamInterface/resource/string, an optional
@@ -27,13 +25,10 @@ class MultipartPostBody implements StreamInterface
      *
      * @throws \InvalidArgumentException
      */
-    public function __construct(
-        array $fields = [],
-        array $files = [],
-        $boundary = null
-    ) {
+    public function __construct(array $elements = [], $boundary = null)
+    {
         $this->boundary = $boundary ?: uniqid();
-        $this->stream = $this->createStream($fields, $files);
+        $this->stream = $this->createStream($elements);
     }
 
     /**
@@ -52,22 +47,9 @@ class MultipartPostBody implements StreamInterface
     }
 
     /**
-     * Get the string needed to transfer a POST field
-     */
-    private function getFieldString($name, $value)
-    {
-        return sprintf(
-            "--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n",
-            $this->boundary,
-            $name,
-            $value
-        );
-    }
-
-    /**
      * Get the headers needed before transferring the content of a POST file
      */
-    private function getFileHeaders(array $headers)
+    private function getHeaders(array $headers)
     {
         $str = '';
         foreach ($headers as $key => $value) {
@@ -80,20 +62,12 @@ class MultipartPostBody implements StreamInterface
     /**
      * Create the aggregate stream that will be used to upload the POST data
      */
-    protected function createStream(array $fields, array $files)
+    protected function createStream(array $elements)
     {
         $stream = new Psr7\AppendStream();
 
-        foreach ($fields as $name => $fieldValues) {
-            foreach ((array) $fieldValues as $value) {
-                $stream->addStream(
-                    Psr7\stream_for($this->getFieldString($name, $value))
-                );
-            }
-        }
-
-        foreach ($files as $file) {
-            $this->addFile($stream, $file);
+        foreach ($elements as $element) {
+            $this->addElement($stream, $element);
         }
 
         // Add the trailing boundary with CRLF
@@ -102,23 +76,31 @@ class MultipartPostBody implements StreamInterface
         return $stream;
     }
 
-    private function addFile(Psr7\AppendStream $stream, array $file)
+    private function addElement(Psr7\AppendStream $stream, array $element)
     {
-        if (!array_key_exists('contents', $file)) {
-            throw new \InvalidArgumentException('A "contents" key is required');
+        foreach (['contents', 'name'] as $key) {
+            if (!array_key_exists($key, $element)) {
+                throw new \InvalidArgumentException("A '{$key}' key is required");
+            }
         }
 
-        if (!isset($file['name'])) {
-            throw new \InvalidArgumentException('A "name" key is required');
+        $element['contents'] = Psr7\stream_for($element['contents']);
+
+        if (empty($element['filename'])) {
+            $uri = $element['contents']->getMetadata('uri');
+            if (substr($uri, 0, 6) !== 'php://') {
+                $element['filename'] = $uri;
+            }
         }
 
-        list($body, $headers) = $this->createPostFile(
-            $file['name'],
-            $file['contents'],
-            isset($file['headers']) ? $file['headers'] : []
+        list($body, $headers) = $this->createElement(
+            $element['name'],
+            $element['contents'],
+            isset($element['filename']) ? $element['filename'] : null,
+            isset($element['headers']) ? $element['headers'] : []
         );
 
-        $stream->addStream(Psr7\stream_for($this->getFileHeaders($headers)));
+        $stream->addStream(Psr7\stream_for($this->getHeaders($headers)));
         $stream->addStream($body);
         $stream->addStream(Psr7\stream_for("\r\n"));
     }
@@ -126,25 +108,16 @@ class MultipartPostBody implements StreamInterface
     /**
      * @return array
      */
-    private function createPostFile($name, $stream, array $headers = [])
+    private function createElement($name, $stream, $filename, array $headers)
     {
-        $stream = Psr7\stream_for($stream);
-        $filename = $name;
-
-        if ($uri = $stream->getMetadata('uri')) {
-            if (substr($uri, 0, 6) !== 'php://') {
-                $filename = $uri;
-            }
-        }
-
         // Set a default content-disposition header if one was no provided
         $disposition = $this->getHeader($headers, 'content-disposition');
         if (!$disposition) {
-            $headers['Content-Disposition'] = sprintf(
-                'form-data; name="%s"; filename="%s"',
-                $name,
-                basename($filename)
-            );
+            $headers['Content-Disposition'] = $filename
+                ? sprintf('form-data; name="%s"; filename="%s"',
+                          $name,
+                          basename($filename))
+                : "form-data; name=\"{$name}\"";
         }
 
         // Set a default content-length header if one was no provided
@@ -157,7 +130,7 @@ class MultipartPostBody implements StreamInterface
 
         // Set a default Content-Type if one was not supplied
         $type = $this->getHeader($headers, 'content-type');
-        if (!$type) {
+        if (!$type && $filename) {
             if ($type = Psr7\mimetype_from_filename($filename)) {
                 $headers['Content-Type'] = $type;
             }

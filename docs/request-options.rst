@@ -457,6 +457,23 @@ json
     ``headers`` request option.
 
 
+multipart
+---------
+
+:Summary: Sets the body of the request to a multipart/form-data form.
+:Types: array
+
+The value of ``multipart`` is an array of associative arrays, each containing
+the following key value pairs:
+
+- ``name``: (string, required) the form field name
+- ``contents``: (StreamInterface/resource/string, required) The data to use in
+  the form element.
+- ``headers``: (array) Optional associative array of custom headers to use with
+  the form element.
+- ``filename``: (string) Optional string to send as the filename in the part.
+
+
 .. _on-headers:
 
 on_headers
@@ -640,6 +657,15 @@ stream
     a client. This option might not be supported by every HTTP handler, but the
     interface of the response object remains the same regardless of whether or
     not it is supported by the handler.
+
+
+sync
+----
+
+:Summary: Set to true to inform HTTP handlers that you intend on waiting on the
+    response. This can be useful for optimizations.
+:Types: bool
+:Default: none
 
 
 .. _verify-option:

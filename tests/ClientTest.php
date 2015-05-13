@@ -374,12 +374,12 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('foo', $last['auth']);
     }
 
-    public function testCanAddFormFields()
+    public function testCanAddFormParams()
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
         $client->post('http://foo.com', [
-            'form_fields' => [
+            'form_params' => [
                 'foo' => 'bar bam',
                 'baz' => ['boo' => 'qux']
             ]
@@ -395,13 +395,16 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    public function testCanAddFormFieldsAndFiles()
+    public function testCanSendMultipart()
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
         $client->post('http://foo.com', [
-            'form_fields' => ['foo' => 'bar'],
-            'form_files'  => [
+            'multipart' => [
+                [
+                    'name'     => 'foo',
+                    'contents' => 'bar'
+                ],
                 [
                     'name'     => 'test',
                     'contents' => fopen(__FILE__, 'r')
@@ -421,6 +424,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         );
 
         $this->assertContains('bar', (string) $last->getBody());
+        $this->assertContains(
+            'Content-Disposition: form-data; name="foo"' . "\r\n",
+            (string) $last->getBody()
+        );
         $this->assertContains(
             'Content-Disposition: form-data; name="test"; filename="ClientTest.php"',
             (string) $last->getBody()

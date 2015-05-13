@@ -58,87 +58,10 @@ class Client implements ClientInterface
      *   default middleware to the handler.
      * - base_uri: (string|UriInterface) Base URI of the client that is merged
      *   into relative URIs. Can be a string or instance of UriInterface.
-     * - delay: (int) The amount of time to delay before sending in
-     *   milliseconds.
-     * - connect_timeout: (float, default=0) Float describing the number of
-     *   seconds to wait while trying to connect to a server. Use 0 to wait
-     *   indefinitely (the default behavior).
-     * - timeout: (float, default=0) Float describing the timeout of the
-     *   request in seconds. Use 0 to wait indefinitely (the default behavior).
-     * - verify: (bool|string, default=true) Describes the SSL certificate
-     *   verification behavior of a request. Set to true to enable SSL
-     *   certificate verification using the system CA bundle when available
-     *   (the default). Set to false to disable certificate verification (this
-     *   is insecure!). Set to a string to provide the path to a CA bundle on
-     *   disk to enable verification using a custom certificate.
-     * - ssl_key: (array) Specify the path to a file containing a private SSL
-     *   key in PEM format. If a password is required, then set to an array
-     *   containing the path to the SSL key in the first array element followed
-     *   by the password required for the certificate in the second element.
-     * - cert: (array) Set to a string to specify the path to a file containing
-     *   a PEM formatted SSL client side certificate. If a password is
-     *   required, then set cert to an array containing the path to the PEM
-     *   file in the first array element followed by the certificate password
-     *   in the second array element.
-     * - progress: (callable) Defines a function to invoke when transfer
-     *   progress is made. The function accepts the following positional
-     *   arguments: the total number of bytes expected to be downloaded, the
-     *   number of bytes downloaded so far, the number of bytes expected to be
-     *   uploaded, the number of bytes uploaded so far.
-     * - proxy: (string|array)
-     * - debug: (bool|resource) Set to true or set to a PHP stream returned by
-     *   fopen()  enable debug output with the HTTP handler used to send a
-     *   request.
-     * - sink: (resource|string|StreamInterface) Where the data of the
-     *   response is written to. Defaults to a PHP temp stream. Providing a
-     *   string will write data to a file by the given name.
-     * - stream: Set to true to attempt to stream a response rather than
-     *   download it all up-front.
-     * - expect: (bool|integer) Controls the behavior of the
-     *   "Expect: 100-Continue" header.
-     * - allow_redirects: (bool|array) Controls redirect behavior. Pass false
-     *   to disable redirects, pass true to enable redirects, pass an
-     *   associative to provide custom redirect settings. Defaults to "false".
-     *   This option only works if your handler has the RedirectMiddleware.
-     * - sync: (bool) Set to true to inform HTTP handlers that you intend on
-     *   waiting on the response. This can be useful for optimizations.
-     * - decode_content: (bool, default=true) Specify whether or not
-     *   Content-Encoding responses (gzip, deflate, etc.) are automatically
-     *   decoded.
-     * - headers: (array) Associative array of HTTP headers. Each value MUST be
-     *   a string or array of strings.
-     * - body: (string|null|callable|iterator|object) Body to send in the
-     *   request.
-     * - query: (array|string) Associative array of query string values to add
-     *   to the request. This option uses PHP's http_build_query() to create
-     *   the string representation. Pass a string value if you need more
-     *   control than what this method provides
-     * - auth: (array) Pass an array of HTTP authentication parameters to use
-     *   with the request. The array must contain the username in index [0],
-     *   the password in index [1], and you can optionally provide a built-in
-     *   authentication type in index [2]. Pass null to disable authentication
-     *   for a request.
-     * - cookies: (bool|GuzzleHttp\Cookie\CookieJarInterface, default=false)
-     *   Specifies whether or not cookies are used in a request or what cookie
-     *   jar to use or what cookies to send. This option only works if your
-     *   handler has the `cookie` middleware.
-     * - http_errors: (bool, default=true) Set to false to disable exceptions
-     *   when a non- successful HTTP response is received. By default,
-     *   exceptions will be thrown for 4xx and 5xx responses. This option only
-     *   works if your handler has the `httpErrors` middleware.
-     * - json: (mixed) Adds JSON data to a request. The provided value is JSON
-     *   encoded and a Content-Type header of application/json will be added to
-     *   the request if no Content-Type header is already present.
-     * - form_fields: (array) Associative array of field names to values where
-     *   each value is a string or array of strings.
-     * - form_files: (array) Array of associative arrays, each containing a
-     *   required "name" key mapping to the form field, name, a required
-     *   "contents" key mapping to a StreamInterface/resource/string, an
-     *   optional "headers" associative array of custom headers, and an
-     *   optional "filename" key mapping to a string to send as the filename in
-     *   the part.
+     * - **: any request option
      *
      * @param array $config Client configuration settings.
+     * @see \GuzzleHttp\RequestOptions for a list of available request options.
      */
     public function __construct(array $config = [])
     {
@@ -363,11 +286,19 @@ class Client implements ClientInterface
     {
         $modify = [];
 
-        // Extract POST/form parameters if present.
-        if (!empty($options['form_files'])
-            || !empty($options['form_fields'])
-        ) {
-            $this->extractFormData($options);
+        if (isset($options['form_params'])) {
+            $options['body'] = http_build_query($options['form_params']);
+            unset($options['form_params']);
+            $options['_conditional']['Content-Type'] = 'application/x-www-form-urlencoded';
+        }
+
+        if (isset($options['multipart'])) {
+            $elements = $options['multipart'];
+            unset($options['multipart']);
+            $options['body'] = new MultipartPostBody($elements);
+            // Use a multipart/form-data POST if a Content-Type is not set.
+            $options['_conditional']['Content-Type'] = 'multipart/form-data; boundary='
+                . $options['body']->getBoundary();
         }
 
         if (!empty($options['decode_content'])
@@ -444,28 +375,5 @@ class Client implements ClientInterface
         }
 
         return $request;
-    }
-
-    private function extractFormData(array &$options)
-    {
-        $fields = [];
-        if (isset($options['form_fields'])) {
-            // Use a application/x-www-form-urlencoded POST with no files.
-            if (!isset($options['form_files'])) {
-                $options['body'] = http_build_query($options['form_fields']);
-                unset($options['form_fields']);
-                $options['_conditional']['Content-Type'] = 'application/x-www-form-urlencoded';
-                return;
-            }
-            $fields = $options['form_fields'];
-            unset($options['form_fields']);
-        }
-
-        $files = $options['form_files'];
-        unset($options['form_files']);
-        $options['body'] = new MultipartPostBody($fields, $files);
-        // Use a multipart/form-data POST if a Content-Type is not set.
-        $options['_conditional']['Content-Type'] = 'multipart/form-data; boundary='
-            . $options['body']->getBoundary();
     }
 }
