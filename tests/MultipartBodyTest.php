@@ -1,32 +1,32 @@
 <?php
 namespace GuzzleHttp\Tests;
 
-use GuzzleHttp\MultipartPostBody;
+use GuzzleHttp\MultipartBody;
 use GuzzleHttp\Psr7;
 
-class MultipartPostBodyTest extends \PHPUnit_Framework_TestCase
+class MultipartBodyTest extends \PHPUnit_Framework_TestCase
 {
     public function testCreatesDefaultBoundary()
     {
-        $b = new MultipartPostBody();
+        $b = new MultipartBody();
         $this->assertNotEmpty($b->getBoundary());
     }
 
     public function testCanProvideBoundary()
     {
-        $b = new MultipartPostBody([], 'foo');
+        $b = new MultipartBody([], 'foo');
         $this->assertEquals('foo', $b->getBoundary());
     }
 
     public function testIsNotWritable()
     {
-        $b = new MultipartPostBody();
+        $b = new MultipartBody();
         $this->assertFalse($b->isWritable());
     }
 
     public function testCanCreateEmptyStream()
     {
-        $b = new MultipartPostBody();
+        $b = new MultipartBody();
         $boundary = $b->getBoundary();
         $this->assertSame("--{$boundary}--\r\n", $b->getContents());
         $this->assertSame(strlen($boundary) + 6, $b->getSize());
@@ -37,7 +37,7 @@ class MultipartPostBodyTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatesFilesArrayElement()
     {
-        new MultipartPostBody([['foo' => 'bar']]);
+        new MultipartBody([['foo' => 'bar']]);
     }
 
     /**
@@ -45,12 +45,12 @@ class MultipartPostBodyTest extends \PHPUnit_Framework_TestCase
      */
     public function testEnsuresFileHasName()
     {
-        new MultipartPostBody([['contents' => 'bar']]);
+        new MultipartBody([['contents' => 'bar']]);
     }
 
     public function testSerializesFields()
     {
-        $b = new MultipartPostBody([
+        $b = new MultipartBody([
             [
                 'name'     => 'foo',
                 'contents' => 'bar'
@@ -86,7 +86,7 @@ class MultipartPostBodyTest extends \PHPUnit_Framework_TestCase
             }
         ]);
 
-        $b = new MultipartPostBody([
+        $b = new MultipartBody([
             [
                 'name'     => 'foo',
                 'contents' => $f1
@@ -135,7 +135,7 @@ EOT;
             }
         ]);
 
-        $b = new MultipartPostBody([
+        $b = new MultipartBody([
             [
                 'name' => 'foo',
                 'contents' => $f1,
@@ -175,7 +175,7 @@ EOT;
             }
         ]);
 
-        $b = new MultipartPostBody([
+        $b = new MultipartBody([
             [
                 'name'     => 'foo',
                 'contents' => $f1,
