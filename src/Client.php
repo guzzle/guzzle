@@ -295,7 +295,7 @@ class Client implements ClientInterface
         if (isset($options['multipart'])) {
             $elements = $options['multipart'];
             unset($options['multipart']);
-            $options['body'] = new MultipartBody($elements);
+            $options['body'] = new Psr7\MultipartStream($elements);
             // Use a multipart/form-data POST if a Content-Type is not set.
             $options['_conditional']['Content-Type'] = 'multipart/form-data; boundary='
                 . $options['body']->getBoundary();
