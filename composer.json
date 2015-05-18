@@ -15,8 +15,8 @@
     "require": {
         "php": ">=5.5.0",
         "psr/http-message": "^0.10",
-        "guzzlehttp/psr7": "^0.1",
-        "guzzlehttp/promises": "^0.1.2"
+        "guzzlehttp/psr7": "^1.0.0@dev",
+        "guzzlehttp/promises": "^1.0.0"
     },
     "require-dev": {
         "ext-curl": "*",
