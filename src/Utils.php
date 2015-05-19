@@ -139,6 +139,7 @@ final class Utils
             JSON_ERROR_UTF8 => 'JSON_ERROR_UTF8 - Malformed UTF-8 characters, possibly incorrectly encoded'
         ];
 
+        $json = str_replace("\xEF\xBB\xBF", '', $json);
         $data = \json_decode($json, $assoc, $depth, $options);
 
         if (JSON_ERROR_NONE !== json_last_error()) {
