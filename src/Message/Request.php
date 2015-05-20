@@ -51,7 +51,7 @@ class Request extends AbstractMessage implements RequestInterface
 
         if ($headers) {
             foreach ($headers as $key => $value) {
-                $this->setHeader($key, $value);
+                $this->addHeader($key, $value);
             }
         }
     }

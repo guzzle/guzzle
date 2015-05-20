@@ -21,6 +21,18 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('foo', $r->getBody());
     }
 
+    public function testConstructorInitializesMessageWithMixedCaseHeaders()
+    {
+        $r = new Request('GET', '/test', [
+            'Set-Cookie' => 'foo=bar, baz=bam',
+            'Set-cookie' => 'hi=there',
+            'other' => ['1', '2']
+        ]);
+
+        $this->assertEquals('foo=bar, baz=bam, hi=there', $r->getHeader('Set-Cookie'));
+        $this->assertEquals('1, 2', $r->getHeader('other'));
+    }
+
     public function testConstructorInitializesMessageWithProtocolVersion()
     {
         $r = new Request('GET', '', [], null, ['protocol_version' => 10]);
