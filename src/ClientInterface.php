@@ -11,7 +11,7 @@ use GuzzleHttp\Message\ResponseInterface;
  */
 interface ClientInterface extends HasEmitterInterface
 {
-    const VERSION = '5.2.0';
+    const VERSION = '5.3.0';
 
     /**
      * Create and return a new {@see RequestInterface} object.

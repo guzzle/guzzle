@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 5.3.0 - 2015-05-19
+
+* Mock now supports `save_to`
+* Marked `AbstractRequestEvent::getTransaction()` as public.
+* Fixed a bug in which multiple headers using different casing would overwrite
+  previous headers in the associative array.
+* Added `Utils::getDefaultHandler()`
+* Marked `GuzzleHttp\Client::getDefaultUserAgent` as deprecated.
+* URL scheme is now always lowercased.
+
 ## 5.2.0 - 2015-01-27
 
 * Added `AppliesHeadersInterface` to make applying headers to a request based
