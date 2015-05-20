@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## 6.0.0 - TBD
+
+* Added `multipart` and `form_params` request options.
+* Added `synchronous` request option.
+* Added the `on_headers` request option.
+* Fixed `expect` handling.
+* No longer adding default middlewares in the client ctor. These need to be
+  present on the provided handler in order to work.
+* Requests are no longer initiated when sending async requests with the
+  CurlMultiHandler. This prevents unexpected recursion from requests completing
+  while ticking the cURL loop.
+* Removed the semantics of setting `default` to `true`. This is no longer
+  required now that the cURL loop is not ticked for async requests.
+* Added request and response logging middleware.
+* No longer allowing self signed certificates when using the StreamHandler.
+* Ensuring that `sink` is valid if saving to a file.
+* Request exceptions now include a "handler context" which provides handler
+  specific contextual information.
+* Added `GuzzleHttp\RequestOptions` to allow request options to be applied
+  using constants.
+* `$maxHandles` has been removed from CurlMultiHandler.
+* `MultipartPostBody` is now part of the `guzzlehttp/psr7` package.
+
 ## 6.0.0-beta.1
 
 * Requires PHP >= 5.5
