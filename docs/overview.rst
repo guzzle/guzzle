@@ -5,7 +5,7 @@ Overview
 Requirements
 ============
 
-#. PHP 5.4.0
+#. PHP 5.5.0
 #. To use the PHP stream handler, ``allow_url_fopen`` must be enabled in your
    system's php.ini.
 #. To use the cURL handler, you must have a recent version of cURL >= 7.19.4
@@ -108,11 +108,11 @@ Contributing
 Guidelines
 ----------
 
-1. Guzzle utilizes PSR-0, PSR-1, PSR-2, and PSR-7.
+1. Guzzle utilizes PSR-1, PSR-2, PSR-4, and PSR-7.
 2. Guzzle is meant to be lean and fast with very few dependencies. This means
    that not every feature request will be accepted.
-3. Guzzle has a minimum PHP version requirement of PHP 5.4. Pull requests must
-   not require a PHP version greater than PHP 5.4 unless the feature is only
+3. Guzzle has a minimum PHP version requirement of PHP 5.5. Pull requests must
+   not require a PHP version greater than PHP 5.5 unless the feature is only
    utilized conditionally.
 4. All pull requests must include unit tests to ensure the change works as
    expected and to prevent regressions.
