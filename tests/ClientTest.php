@@ -461,7 +461,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
         $client->request('GET', 'http://foo.com');
-        $this->assertTrue($mock->getLastOptions()['sync']);
+        $this->assertTrue($mock->getLastOptions()['synchronous']);
     }
 
     public function testSendSendsWithSync()
@@ -469,7 +469,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
         $client->send(new Request('GET', 'http://foo.com'));
-        $this->assertTrue($mock->getLastOptions()['sync']);
+        $this->assertTrue($mock->getLastOptions()['synchronous']);
     }
 
     public function testCanDisableDefaultMiddleware()

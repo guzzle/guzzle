@@ -163,10 +163,10 @@ final class RequestOptions
     const SINK = 'sink';
 
     /**
-     * sync: (bool) Set to true to inform HTTP handlers that you intend on
-     * waiting on the response. This can be useful for optimizations.
+     * synchronous: (bool) Set to true to inform HTTP handlers that you intend
+     * on waiting on the response. This can be useful for optimizations.
      */
-    const SYNC = 'sync';
+    const SYNCHRONOUS = 'synchronous';
 
     /**
      * ssl_key: (array) Specify the path to a file containing a private SSL

@@ -25,14 +25,16 @@ allow_redirects
         - array
 :Default:
 
-::
+    ::
 
-    [
-        'max'       => 5,
-        'strict'    => false,
-        'referer'   => true,
-        'protocols' => ['http', 'https']
-    ]
+        [
+            'max'       => 5,
+            'strict'    => false,
+            'referer'   => true,
+            'protocols' => ['http', 'https']
+        ]
+
+:Constant: ``GuzzleHttp\RequestOptions::ALLOW_REDIRECTS``
 
 Set to ``false`` to disable redirects.
 
@@ -93,31 +95,32 @@ auth
         - string
         - null
 :Default: None
+:Constant: ``GuzzleHttp\RequestOptions::AUTH``
 
-    The built-in authentication types are as follows:
+The built-in authentication types are as follows:
 
-    basic
-        Use `basic HTTP authentication <http://www.ietf.org/rfc/rfc2069.txt>`_
-        in the ``Authorization`` header (the default setting used if none is
-        specified).
+basic
+    Use `basic HTTP authentication <http://www.ietf.org/rfc/rfc2069.txt>`_
+    in the ``Authorization`` header (the default setting used if none is
+    specified).
 
-    .. code-block:: php
+.. code-block:: php
 
-        $client->get('/get', ['auth' => ['username', 'password']]);
+    $client->get('/get', ['auth' => ['username', 'password']]);
 
-    digest
-        Use `digest authentication <http://www.ietf.org/rfc/rfc2069.txt>`_
-        (must be supported by the HTTP handler).
+digest
+    Use `digest authentication <http://www.ietf.org/rfc/rfc2069.txt>`_
+    (must be supported by the HTTP handler).
 
-    .. code-block:: php
+.. code-block:: php
 
-        $client->get('/get', ['auth' => ['username', 'password', 'digest']]);
+    $client->get('/get', ['auth' => ['username', 'password', 'digest']]);
 
-    .. note::
+.. note::
 
-        This is currently only supported when using the cURL handler, but
-        creating a replacement that can be used with any HTTP handler is
-        planned.
+    This is currently only supported when using the cURL handler, but
+    creating a replacement that can be used with any HTTP handler is
+    planned.
 
 
 body
@@ -131,15 +134,16 @@ body
     - ``GuzzleHttp\Stream\StreamInterface``
     - ``GuzzleHttp\Post\PostBodyInterface``
 :Default: None
+:Constant: ``GuzzleHttp\RequestOptions::BODY``
 
-    This setting can be set to any of the following types:
+This setting can be set to any of the following types:
 
-    - string
+- string
 
-      .. code-block:: php
+  .. code-block:: php
 
-      // You can send requests that use a string as the message body.
-      $client->put('/put', ['body' => 'foo']);
+  // You can send requests that use a string as the message body.
+  $client->put('/put', ['body' => 'foo']);
 
 - resource returned from ``fopen()``
 
@@ -172,6 +176,7 @@ cert
         - string
         - array
 :Default: None
+:Constant: ``GuzzleHttp\RequestOptions::CERT``
 
 .. code-block:: php
 
@@ -189,11 +194,12 @@ cookies
         - bool
         - ``GuzzleHttp\Cookie\CookieJarInterface``
 :Default: None
+:Constant: ``GuzzleHttp\RequestOptions::COOKIES``
 
-    When creating a client, you can set the default cookie option to ``true``
-    to use a shared cookie session associated with the client. Othewise, you
-    must specify the cookies option as a ``GuzzleHttp\Cookie\CookieJarInterface``
-    or ``false``.
+When creating a client, you can set the default cookie option to ``true``
+to use a shared cookie session associated with the client. Othewise, you
+must specify the cookies option as a ``GuzzleHttp\Cookie\CookieJarInterface``
+or ``false``.
 
 .. code-block:: php
 
@@ -217,6 +223,7 @@ connect_timeout
         to a server. Use ``0`` to wait indefinitely (the default behavior).
 :Types: float
 :Default: ``0``
+:Constant: ``GuzzleHttp\RequestOptions::CONNECT_TIMEOUT``
 
 .. code-block:: php
 
@@ -245,6 +252,7 @@ debug
         - bool
         - ``fopen()`` resource
 :Default: None
+:Constant: ``GuzzleHttp\RequestOptions::DEBUG``
 
 .. code-block:: php
 
@@ -282,6 +290,7 @@ decode_content
         - string
         - bool
 :Default: ``true``
+:Constant: ``GuzzleHttp\RequestOptions::DECODE_CONTENT``
 
 This option can be used to control how content-encoded response bodies are
 handled. By default, ``decode_content`` is set to true, meaning any gzipped
@@ -318,6 +327,7 @@ delay
     - integer
     - float
 :Default: null
+:Constant: ``GuzzleHttp\RequestOptions::DELAY``
 
 
 .. _expect-option:
@@ -330,6 +340,7 @@ expect
     - bool
     - integer
 :Default: ``1048576``
+:Constant: ``GuzzleHttp\RequestOptions::EXPECT``
 
 Set to ``true`` to enable the "Expect: 100-Continue" header for all requests
 that sends a body. Set to ``false`` to disable the "Expect: 100-Continue"
@@ -357,6 +368,7 @@ headers
     representing the header field values.
 :Types: array
 :Defaults: None
+:Constant: ``GuzzleHttp\RequestOptions::HEADERS``
 
 .. code-block:: php
 
@@ -411,6 +423,7 @@ http_errors
     HTTP protocol errors are encountered.
 :Types: bool
 :Default: ``true``
+:Constant: ``GuzzleHttp\RequestOptions::HTTP_ERRORS``
 
 .. code-block:: php
 
@@ -438,6 +451,7 @@ json
 :Types:
     Any PHP type that can be operated on by PHP's ``json_encode()`` function.
 :Default: None
+:Constant: ``GuzzleHttp\RequestOptions::JSON``
 
 .. code-block:: php
 
@@ -462,6 +476,7 @@ multipart
 
 :Summary: Sets the body of the request to a multipart/form-data form.
 :Types: array
+:Constant: ``GuzzleHttp\RequestOptions::MULTIPART``
 
 The value of ``multipart`` is an array of associative arrays, each containing
 the following key value pairs:
@@ -482,6 +497,7 @@ on_headers
 :Summary: A callable that is invoked when the HTTP headers of the response have
     been received but the body has not yet begun to download.
 :Types: - callable
+:Constant: ``GuzzleHttp\RequestOptions::ON_HEADERS``
 
 The callable accepts a ``Psr\Http\ResponseInterface`` object. If an exception
 is thrown by the callable, then the promise associated with the response will
@@ -519,6 +535,7 @@ proxy
     - string
     - array
 :Default: None
+:Constant: ``GuzzleHttp\RequestOptions::PROXY``
 
 Pass a string to specify a proxy for all protocols.
 
@@ -553,6 +570,7 @@ query
     - array
     - string
 :Default: None
+:Constant: ``GuzzleHttp\RequestOptions::QUERY``
 
 .. code-block:: php
 
@@ -580,6 +598,7 @@ sink
     - ``Psr\Http\Message\StreamInterface``
 
 :Default: PHP temp stream
+:Constant: ``GuzzleHttp\RequestOptions::SINK``
 
 Pass a string to specify the path to a file that will store the contents of the
 response body:
@@ -624,6 +643,7 @@ ssl_key
         - string
         - array
 :Default: None
+:Constant: ``GuzzleHttp\RequestOptions::SSL_KEY``
 
 .. note::
 
@@ -641,6 +661,7 @@ stream
     up-front.
 :Types: bool
 :Default: ``false``
+:Constant: ``GuzzleHttp\RequestOptions::STREAM``
 
 .. code-block:: php
 
@@ -659,13 +680,14 @@ stream
     not it is supported by the handler.
 
 
-sync
-----
+synchronous
+-----------
 
 :Summary: Set to true to inform HTTP handlers that you intend on waiting on the
     response. This can be useful for optimizations.
 :Types: bool
 :Default: none
+:Constant: ``GuzzleHttp\RequestOptions::SYNCHRONOUS``
 
 
 .. _verify-option:
@@ -684,6 +706,7 @@ verify
     - bool
     - string
 :Default: ``true``
+:Constant: ``GuzzleHttp\RequestOptions::VERIFY``
 
 .. code-block:: php
 
@@ -741,6 +764,7 @@ timeout
         to wait indefinitely (the default behavior).
 :Types: float
 :Default: ``0``
+:Constant: ``GuzzleHttp\RequestOptions::TIMEOUT``
 
 .. code-block:: php
 
@@ -757,6 +781,7 @@ version
 :Summary: Protocol version to use with the request.
 :Types: string, float
 :Default: ``1.1``
+:Constant: ``GuzzleHttp\RequestOptions::VERSION``
 
 .. code-block:: php
 
