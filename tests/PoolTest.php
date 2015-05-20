@@ -1,19 +1,14 @@
 <?php
 namespace GuzzleHttp\Tests;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Event\RequestEvents;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Pool;
-use GuzzleHttp\Ring\Client\MockHandler;
-use GuzzleHttp\Ring\Future\FutureArray;
-use GuzzleHttp\Subscriber\History;
-use GuzzleHttp\Event\BeforeEvent;
-use GuzzleHttp\Event\CompleteEvent;
-use GuzzleHttp\Event\ErrorEvent;
-use GuzzleHttp\Event\EndEvent;
-use GuzzleHttp\Message\Response;
-use GuzzleHttp\Subscriber\Mock;
-use React\Promise\Deferred;
+use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Promise\Promise;
+use Psr\Http\Message\RequestInterface;
 
 class PoolTest extends \PHPUnit_Framework_TestCase
 {
@@ -22,15 +17,8 @@ class PoolTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatesIterable()
     {
-        new Pool(new Client(), 'foo');
-    }
-
-    public function testCanControlPoolSizeAndClient()
-    {
-        $c = new Client();
-        $p = new Pool($c, [], ['pool_size' => 10]);
-        $this->assertSame($c, $this->readAttribute($p, 'client'));
-        $this->assertEquals(10, $this->readAttribute($p, 'poolSize'));
+        $p = new Pool(new Client(), 'foo');
+        $p->promise()->wait();
     }
 
     /**
@@ -41,279 +29,119 @@ class PoolTest extends \PHPUnit_Framework_TestCase
         $c = new Client();
         $requests = ['foo'];
         $p = new Pool($c, new \ArrayIterator($requests));
-        $p->wait();
+        $p->promise()->wait();
     }
 
     public function testSendsAndRealizesFuture()
     {
         $c = $this->getClient();
-        $p = new Pool($c, [$c->createRequest('GET', 'http://foo.com')]);
-        $this->assertTrue($p->wait());
-        $this->assertFalse($p->wait());
-        $this->assertTrue($this->readAttribute($p, 'isRealized'));
-        $this->assertFalse($p->cancel());
+        $p = new Pool($c, [new Request('GET', 'http://example.com')]);
+        $p->promise()->wait();
     }
 
-    public function testSendsManyRequestsInCappedPool()
+    public function testExecutesPendingWhenWaiting()
     {
-        $c = $this->getClient();
-        $p = new Pool($c, [$c->createRequest('GET', 'http://foo.com')]);
-        $this->assertTrue($p->wait());
-        $this->assertFalse($p->wait());
-    }
-
-    public function testSendsRequestsThatHaveNotBeenRealized()
-    {
-        $c = $this->getClient();
-        $p = new Pool($c, [$c->createRequest('GET', 'http://foo.com')]);
-        $this->assertTrue($p->wait());
-        $this->assertFalse($p->wait());
-        $this->assertFalse($p->cancel());
-    }
-
-    public function testCancelsInFlightRequests()
-    {
-        $c = $this->getClient();
-        $h = new History();
-        $c->getEmitter()->attach($h);
+        $r1 = new Promise(function () use (&$r1) { $r1->resolve(new Response()); });
+        $r2 = new Promise(function () use (&$r2) { $r2->resolve(new Response()); });
+        $r3 = new Promise(function () use (&$r3) { $r3->resolve(new Response()); });
+        $handler = new MockHandler([$r1, $r2, $r3]);
+        $c = new Client(['handler' => $handler]);
         $p = new Pool($c, [
-            $c->createRequest('GET', 'http://foo.com'),
-            $c->createRequest('GET', 'http://foo.com', [
-                'events' => [
-                    'before' => [
-                        'fn' => function () use (&$p) {
-                            $this->assertTrue($p->cancel());
-                        },
-                        'priority' => RequestEvents::EARLY
-                    ]
-                ]
-            ])
-        ]);
-        ob_start();
-        $p->wait();
-        $contents = ob_get_clean();
-        $this->assertEquals(1, count($h));
-        $this->assertEquals('Cancelling', $contents);
+            new Request('GET', 'http://example.com'),
+            new Request('GET', 'http://example.com'),
+            new Request('GET', 'http://example.com'),
+        ], ['pool_size' => 2]);
+        $p->promise()->wait();
     }
 
-    private function getClient()
+    public function testUsesRequestOptions()
     {
-        $deferred = new Deferred();
-        $future = new FutureArray(
-            $deferred->promise(),
-            function() use ($deferred) {
-                $deferred->resolve(['status' => 200, 'headers' => []]);
-            }, function () {
-                echo 'Cancelling';
-            }
-        );
-
-        return new Client(['handler' => new MockHandler($future)]);
-    }
-
-    public function testBatchesRequests()
-    {
-        $client = new Client(['handler' => function () {
-            throw new \RuntimeException('No network access');
-        }]);
-
-        $responses = [
-            new Response(301, ['Location' => 'http://foo.com/bar']),
-            new Response(200),
-            new Response(200),
-            new Response(404)
-        ];
-
-        $client->getEmitter()->attach(new Mock($responses));
-        $requests = [
-            $client->createRequest('GET', 'http://foo.com/baz'),
-            $client->createRequest('HEAD', 'http://httpbin.org/get'),
-            $client->createRequest('PUT', 'http://httpbin.org/put'),
-        ];
-
-        $a = $b = $c = $d = 0;
-        $result = Pool::batch($client, $requests, [
-            'before'   => function (BeforeEvent $e) use (&$a) { $a++; },
-            'complete' => function (CompleteEvent $e) use (&$b) { $b++; },
-            'error'    => function (ErrorEvent $e) use (&$c) { $c++; },
-            'end'      => function (EndEvent $e) use (&$d) { $d++; }
-        ]);
-
-        $this->assertEquals(4, $a);
-        $this->assertEquals(2, $b);
-        $this->assertEquals(1, $c);
-        $this->assertEquals(3, $d);
-        $this->assertCount(3, $result);
-        $this->assertInstanceOf('GuzzleHttp\BatchResults', $result);
-
-        // The first result is actually the second (redirect) response.
-        $this->assertSame($responses[1], $result[0]);
-        // The second result is a 1:1 request:response map
-        $this->assertSame($responses[2], $result[1]);
-        // The third entry is the 404 RequestException
-        $this->assertSame($responses[3], $result[2]->getResponse());
-    }
-
-    public function testBatchesRequestsWithDynamicPoolSize()
-    {
-        $client = new Client(['handler' => function () {
-            throw new \RuntimeException('No network access');
-        }]);
-
-        $responses = [
-            new Response(301, ['Location' => 'http://foo.com/bar']),
-            new Response(200),
-            new Response(200),
-            new Response(404)
-        ];
-
-        $client->getEmitter()->attach(new Mock($responses));
-        $requests = [
-            $client->createRequest('GET', 'http://foo.com/baz'),
-            $client->createRequest('HEAD', 'http://httpbin.org/get'),
-            $client->createRequest('PUT', 'http://httpbin.org/put'),
-        ];
-
-        $a = $b = $c = $d = 0;
-        $result = Pool::batch($client, $requests, [
-            'before'    => function (BeforeEvent $e) use (&$a) { $a++; },
-            'complete'  => function (CompleteEvent $e) use (&$b) { $b++; },
-            'error'     => function (ErrorEvent $e) use (&$c) { $c++; },
-            'end'       => function (EndEvent $e) use (&$d) { $d++; },
-            'pool_size' => function ($queueSize) {
-                static $options = [1, 2, 1];
-                static $queued  = 0;
-
-                $this->assertEquals(
-                    $queued,
-                    $queueSize,
-                    'The number of queued requests should be equal to the sum of pool sizes so far.'
-                );
-
-                $next    = array_shift($options);
-                $queued += $next;
-
-                return $next;
+        $h = [];
+        $handler = new MockHandler([
+            function (RequestInterface $request) use (&$h) {
+                $h[] = $request;
+                return new Response();
             }
         ]);
-
-        $this->assertEquals(4, $a);
-        $this->assertEquals(2, $b);
-        $this->assertEquals(1, $c);
-        $this->assertEquals(3, $d);
-        $this->assertCount(3, $result);
-        $this->assertInstanceOf('GuzzleHttp\BatchResults', $result);
-
-        // The first result is actually the second (redirect) response.
-        $this->assertSame($responses[1], $result[0]);
-        // The second result is a 1:1 request:response map
-        $this->assertSame($responses[2], $result[1]);
-        // The third entry is the 404 RequestException
-        $this->assertSame($responses[3], $result[2]->getResponse());
+        $c = new Client(['handler' => $handler]);
+        $opts = ['options' => ['headers' => ['x-foo' => 'bar']]];
+        $p = new Pool($c, [new Request('GET', 'http://example.com')], $opts);
+        $p->promise()->wait();
+        $this->assertCount(1, $h);
+        $this->assertTrue($h[0]->hasHeader('x-foo'));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Each event listener must be a callable or
-     */
-    public function testBatchValidatesTheEventFormat()
+    public function testCanProvideCallablesThatReturnResponses()
     {
-        $client = new Client();
-        $requests = [$client->createRequest('GET', 'http://foo.com/baz')];
-        Pool::batch($client, $requests, ['complete' => 'foo']);
+        $h = [];
+        $handler = new MockHandler([
+            function (RequestInterface $request) use (&$h) {
+                $h[] = $request;
+                return new Response();
+            }
+        ]);
+        $c = new Client(['handler' => $handler]);
+        $optHistory = [];
+        $fn = function (array $opts) use (&$optHistory, $c) {
+            $optHistory = $opts;
+            return $c->request('GET', 'http://example.com', $opts);
+        };
+        $opts = ['options' => ['headers' => ['x-foo' => 'bar']]];
+        $p = new Pool($c, [$fn], $opts);
+        $p->promise()->wait();
+        $this->assertCount(1, $h);
+        $this->assertTrue($h[0]->hasHeader('x-foo'));
     }
 
-    public function testEmitsProgress()
+    public function testBatchesResults()
     {
-        $client = new Client(['handler' => function () {
-            throw new \RuntimeException('No network access');
-        }]);
-
-        $responses = [new Response(200), new Response(404)];
-        $client->getEmitter()->attach(new Mock($responses));
         $requests = [
-            $client->createRequest('GET', 'http://foo.com/baz'),
-            $client->createRequest('HEAD', 'http://httpbin.org/get')
+            new Request('GET', 'http://foo.com/200'),
+            new Request('GET', 'http://foo.com/201'),
+            new Request('GET', 'http://foo.com/202'),
+            new Request('GET', 'http://foo.com/404'),
         ];
+        $fn = function (RequestInterface $request) {
+            return new Response(substr($request->getUri()->getPath(), 1));
+        };
+        $mock = new MockHandler([$fn, $fn, $fn, $fn]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
+        $results = Pool::batch($client, $requests);
+        $this->assertCount(4, $results);
+        $this->assertEquals([0, 1, 2, 3], array_keys($results));
+        $this->assertEquals(200, $results[0]->getStatusCode());
+        $this->assertEquals(201, $results[1]->getStatusCode());
+        $this->assertEquals(202, $results[2]->getStatusCode());
+        $this->assertInstanceOf('GuzzleHttp\Exception\ClientException', $results[3]);
+    }
 
-        $pool = new Pool($client, $requests);
-        $count = 0;
-        $thenned = null;
-        $pool->then(
-            function ($value) use (&$thenned) {
-                $thenned = $value;
-            },
-            null,
-            function ($result) use (&$count, $requests) {
-                $this->assertSame($requests[$count], $result['request']);
-                if ($count == 0) {
-                    $this->assertNull($result['error']);
-                    $this->assertEquals(200, $result['response']->getStatusCode());
-                } else {
-                    $this->assertInstanceOf(
-                        'GuzzleHttp\Exception\ClientException',
-                        $result['error']
-                    );
-                }
-                $count++;
+    public function testBatchesResultsWithCallbacks()
+    {
+        $requests = [
+            new Request('GET', 'http://foo.com/200'),
+            new Request('GET', 'http://foo.com/201')
+        ];
+        $mock = new MockHandler([
+            function (RequestInterface $request) {
+                return new Response(substr($request->getUri()->getPath(), 1));
             }
-        );
-
-        $pool->wait();
-        $this->assertEquals(2, $count);
-        $this->assertEquals(true, $thenned);
+        ]);
+        $client = new Client(['handler' => $mock]);
+        $results = Pool::batch($client, $requests, [
+            'fulfilled' => function ($value) use (&$called) { $called = true; }
+        ]);
+        $this->assertCount(2, $results);
+        $this->assertTrue($called);
     }
 
-    public function testDoesNotThrowInErrorEvent()
+    private function getClient($total = 1)
     {
-        $client = new Client();
-        $responses = [new Response(404)];
-        $client->getEmitter()->attach(new Mock($responses));
-        $requests = [$client->createRequest('GET', 'http://foo.com/baz')];
-        $result = Pool::batch($client, $requests);
-        $this->assertCount(1, $result);
-        $this->assertInstanceOf('GuzzleHttp\Exception\ClientException', $result[0]);
-    }
-
-    public function testHasSendMethod()
-    {
-        $client = new Client();
-        $responses = [new Response(404)];
-        $history = new History();
-        $client->getEmitter()->attach($history);
-        $client->getEmitter()->attach(new Mock($responses));
-        $requests = [$client->createRequest('GET', 'http://foo.com/baz')];
-        Pool::send($client, $requests);
-        $this->assertCount(1, $history);
-    }
-
-    public function testDoesNotInfinitelyRecurse()
-    {
-        $client = new Client(['handler' => function () {
-            throw new \RuntimeException('No network access');
-        }]);
-
-        $last = null;
-        $client->getEmitter()->on(
-            'before',
-            function (BeforeEvent $e) use (&$last) {
-                $e->intercept(new Response(200));
-                if (function_exists('xdebug_get_stack_depth')) {
-                    if ($last) {
-                        $this->assertEquals($last, xdebug_get_stack_depth());
-                    } else {
-                        $last = xdebug_get_stack_depth();
-                    }
-                }
-            }
-        );
-
-        $requests = [];
-        for ($i = 0; $i < 100; $i++) {
-            $requests[] = $client->createRequest('GET', 'http://foo.com');
+        $queue = [];
+        for ($i = 0; $i < $total; $i++) {
+            $queue[] = new Response();
         }
-
-        $pool = new Pool($client, $requests);
-        $pool->wait();
+        $handler = new MockHandler($queue);
+        return new Client(['handler' => $handler]);
     }
 }

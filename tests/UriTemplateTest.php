@@ -1,5 +1,4 @@
 <?php
-
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\UriTemplate;

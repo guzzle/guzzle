@@ -1,6 +1,85 @@
 Guzzle Upgrade Guide
 ====================
 
+5.0 to 6.0
+----------
+
+Guzzle now uses [PSR-7](http://www.php-fig.org/psr/psr-7/) for HTTP messages.
+Due to the fact that these messages are immutable, this prompted a
+re-architecting of Guzzle to use a middleware based system rather than an
+event system. Any HTTP message interaction (e.g., `GuzzleHttp\Message\Request`)
+need to be updated to work with the new immutable PSR-7 request and response
+objects. Any event listeners or subscribers need to be updated to become
+middleware functions that wrap handlers (or are injected into a
+`GuzzleHttp\HandlerStack`.
+
+- Removed `GuzzleHttp\BatchResults`
+- Removed `GuzzleHttp\Collection`
+- Removed `GuzzleHttp\HasDataTrait`
+- Removed `GuzzleHttp\ToArrayInterface`
+- The `guzzlehttp/streams` dependency has been removed. Stream functionality
+  is now present in the `GuzzleHttp\Psr7` namespace provided by the
+  `guzzlehttp/psr7` package.
+- Guzzle no longer uses ReactPHP promises and now uses the
+  `guzzlehttp/promises` library. We use a custom promise library for three
+  significant reasons:
+  1. React promises (at the time of writing this) are recursive. Promise
+     chaining and promise resolution will eventually blow the stack. Guzzle
+     promises are not recursive as they use a sort of trampolining technique.
+     Note: there has been movement in the React project to modify promises to
+     no longer utilize recursion.
+  2. Guzzle needs to have the ability to synchronously block on a promise to
+     wait for a result. Guzzle promises allows this functionality.
+  3. Because we need to be able to wait on a result, doing so using React
+     promises requiring wrapping react promises with RingPHP futures. This
+     overhead is no longer needed, reducing stack sizes, reducing complexity,
+     and improving performance.
+- `GuzzleHttp\Mimetypes` has been moved to a function in
+  `GuzzleHttp\Psr7\mimetype_from_extension` and
+  `GuzzleHttp\Psr7\mimetype_from_filename`.
+- `GuzzleHttp\Query` and `GuzzleHttp\QueryParser` have been removed. Query
+  strings must now be passed into request objects as strings, or provided to
+  the `query` request option when creating requests with clients. The `query`
+  option uses PHP's `http_build_query` to convert an array to a string. If you
+  need a different serialization technique, you will need to pass the query
+  string in as a string. There are a couple helper functions that will make
+  working with query strings easier: `GuzzleHttp\Psr7\parse_query` and
+  `GuzzleHttp\Psr7\build_query`.
+- Guzzle no longer has a dependency on RingPHP. Due to the use of a middleware
+  system based on PSR-7, using RingPHP and it's middleware system as well adds
+  more complexity than the benefits it provides. All HTTP handlers that were
+  present in RingPHP have been modified to work directly with PSR-7 messages
+  and placed in the `GuzzleHttp\Handler` namespace. This significantly reduces
+  complexity in Guzzle, removes a dependency, and improves performance. RingPHP
+  will be maintained for Guzzle 5 support, but will no longer be a part of
+  Guzzle 6.
+- As Guzzle now uses a middleware based systems the event system and RingPHP
+  integration has been removed. Note: while the event system has been removed,
+  if there is sufficient demand, it would be possible that a package could be
+  created that adds event support into the middleware system.
+  - Removed the `Event` namespace.
+  - Removed the `Subscriber` namespace.
+  - Removed `Transaction` class
+  - Removed `RequestFsm`
+  - Removed `RingBridge`
+  - `GuzzleHttp\Subscriber\Cookie` is now provided by
+    `GuzzleHttp\Middleware::cookies`
+  - `GuzzleHttp\Subscriber\HttpError` is now provided by
+    `GuzzleHttp\Middleware::httpError`
+  - `GuzzleHttp\Subscriber\History` is now provided by
+    `GuzzleHttp\Middleware::history`
+  - `GuzzleHttp\Subscriber\Mock` is now provided by
+    `GuzzleHttp\Middleware::mock`
+  - `GuzzleHttp\Subscriber\Prepare` is now provided by
+    `GuzzleHttp\PrepareBodyMiddleware`
+  - `GuzzleHttp\Subscriber\Redirect` is now provided by
+    `GuzzleHttp\RedirectMiddleware`
+- Guzzle now uses `Psr\Http\Message\UriInterface` (implements in
+  `GuzzleHttp\Psr7\Uri`) for URI support. `GuzzleHttp\Url` is now gone.
+- Static functions in `GuzzleHttp\Utils` have been moved to namespaced
+  functions under the `GuzzleHttp` namespace. This requires either a Composer
+  based autoloader or you to include functions.php.
+
 4.x to 5.0
 ----------
 

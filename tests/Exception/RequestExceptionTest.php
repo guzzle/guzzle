@@ -2,9 +2,8 @@
 namespace GuzzleHttp\Tests\Event;
 
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Message\Request;
-use GuzzleHttp\Message\Response;
-use GuzzleHttp\Ring\Exception\ConnectException;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 
 /**
  * @covers GuzzleHttp\Exception\RequestException
@@ -73,11 +72,18 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($e, $ex->getPrevious());
     }
 
-    public function testWrapsConnectExceptions()
+    public function testDoesNotWrapExistingRequestExceptions()
     {
-        $e = new ConnectException('foo');
         $r = new Request('GET', 'http://www.oo.com');
-        $ex = RequestException::wrapException($r, $e);
-        $this->assertInstanceOf('GuzzleHttp\Exception\ConnectException', $ex);
+        $e = new RequestException('foo', $r);
+        $e2 = RequestException::wrapException($r, $e);
+        $this->assertSame($e, $e2);
+    }
+
+    public function testCanProvideHandlerContext()
+    {
+        $r = new Request('GET', 'http://www.oo.com');
+        $e = new RequestException('foo', $r, null, null, ['bar' => 'baz']);
+        $this->assertEquals(['bar' => 'baz'], $e->getHandlerContext());
     }
 }

@@ -1,12 +1,10 @@
 <?php
 namespace GuzzleHttp\Cookie;
 
-use GuzzleHttp\ToArrayInterface;
-
 /**
  * Set-Cookie object
  */
-class SetCookie implements ToArrayInterface
+class SetCookie
 {
     /** @var array */
     private static $defaults = [
