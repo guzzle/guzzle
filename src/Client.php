@@ -25,11 +25,8 @@ use \InvalidArgumentException as Iae;
  */
 class Client implements ClientInterface
 {
-    /** @var callable */
-    private $handler;
-
     /** @var array Default request options */
-    private $defaults;
+    private $config;
 
     /**
      * Clients accept an array of constructor parameters.
@@ -65,11 +62,8 @@ class Client implements ClientInterface
      */
     public function __construct(array $config = [])
     {
-        if (isset($config['handler'])) {
-            $this->handler = $config['handler'];
-            unset($config['handler']);
-        } else {
-            $this->handler = HandlerStack::create();
+        if (!isset($config['handler'])) {
+            $config['handler'] = HandlerStack::create();
         }
 
         // Convert the base_uri to a UriInterface
@@ -133,13 +127,11 @@ class Client implements ClientInterface
         return $this->requestAsync($method, $uri, $options)->wait();
     }
 
-    public function getDefaultOption($option = null)
+    public function getConfig($option = null)
     {
         return $option === null
-            ? $this->defaults
-            : (isset($this->defaults[$option])
-                ? $this->defaults[$option]
-                : null);
+            ? $this->config
+            : (isset($this->config[$option]) ? $this->config[$option] : null);
     }
 
     private function buildUri($uri, array $config)
@@ -177,23 +169,23 @@ class Client implements ClientInterface
             $defaults['proxy']['https'] = $proxy;
         }
 
-        $this->defaults = $config + $defaults;
+        $this->config = $config + $defaults;
 
         if (!empty($config['cookies']) && $config['cookies'] === true) {
-            $this->defaults['cookies'] = new CookieJar();
+            $this->config['cookies'] = new CookieJar();
         }
 
         // Add the default user-agent header.
-        if (!isset($this->defaults['headers'])) {
-            $this->defaults['headers'] = ['User-Agent' => default_user_agent()];
+        if (!isset($this->config['headers'])) {
+            $this->config['headers'] = ['User-Agent' => default_user_agent()];
         } else {
             // Add the User-Agent header if one was not already set.
-            foreach (array_keys($this->defaults['headers']) as $name) {
+            foreach (array_keys($this->config['headers']) as $name) {
                 if (strtolower($name) === 'user-agent') {
                     return;
                 }
             }
-            $this->defaults['headers']['User-Agent'] = default_user_agent();
+            $this->config['headers']['User-Agent'] = default_user_agent();
         }
     }
 
@@ -206,7 +198,7 @@ class Client implements ClientInterface
      */
     private function prepareDefaults($options)
     {
-        $defaults = $this->defaults;
+        $defaults = $this->config;
 
         if (!empty($defaults['headers'])) {
             // Default headers are only added if they are not present.
@@ -265,7 +257,7 @@ class Client implements ClientInterface
         }
 
         $request = $this->applyOptions($request, $options);
-        $handler = $this->handler;
+        $handler = $options['handler'];
 
         try {
             return Promise\promise_for($handler($request, $options));

@@ -59,13 +59,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             'headers'  => ['bar' => 'baz'],
             'handler'  => new MockHandler()
         ]);
-        $base = $client->getDefaultOption('base_uri');
+        $base = $client->getConfig('base_uri');
         $this->assertEquals('http://foo.com', (string) $base);
         $this->assertInstanceOf('GuzzleHttp\Psr7\Uri', $base);
-        $this->assertNull($client->getDefaultOption('handler'));
-        $this->assertEquals(2, $client->getDefaultOption('timeout'));
-        $this->assertArrayHasKey('timeout', $client->getDefaultOption());
-        $this->assertArrayHasKey('headers', $client->getDefaultOption());
+        $this->assertNotNull($client->getConfig('handler'));
+        $this->assertEquals(2, $client->getConfig('timeout'));
+        $this->assertArrayHasKey('timeout', $client->getConfig());
+        $this->assertArrayHasKey('headers', $client->getConfig());
     }
 
     public function testCanMergeOnBaseUri()
@@ -89,7 +89,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             'handler'  => $mock,
             'base_uri' => 'http://bar.com'
         ]);
-        $this->assertEquals('http://bar.com', (string) $client->getDefaultOption('base_uri'));
+        $this->assertEquals('http://bar.com', (string) $client->getConfig('base_uri'));
         $request = new Request('GET', '/baz');
         $client->send($request);
         $this->assertEquals(
@@ -101,11 +101,11 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testMergesDefaultOptionsAndDoesNotOverwriteUa()
     {
         $c = new Client(['headers' => ['User-agent' => 'foo']]);
-        $this->assertEquals(['User-agent' => 'foo'], $c->getDefaultOption('headers'));
-        $this->assertInternalType('array', $c->getDefaultOption('allow_redirects'));
-        $this->assertTrue($c->getDefaultOption('http_errors'));
-        $this->assertTrue($c->getDefaultOption('decode_content'));
-        $this->assertTrue($c->getDefaultOption('verify'));
+        $this->assertEquals(['User-agent' => 'foo'], $c->getConfig('headers'));
+        $this->assertInternalType('array', $c->getConfig('allow_redirects'));
+        $this->assertTrue($c->getConfig('http_errors'));
+        $this->assertTrue($c->getConfig('decode_content'));
+        $this->assertTrue($c->getConfig('verify'));
     }
 
     public function testDoesNotOverwriteHeaderWithDefault()
@@ -439,18 +439,18 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $http = getenv('HTTP_PROXY');
         $https = getenv('HTTPS_PROXY');
         $client = new Client();
-        $this->assertNull($client->getDefaultOption('proxy'));
+        $this->assertNull($client->getConfig('proxy'));
         putenv('HTTP_PROXY=127.0.0.1');
         $client = new Client();
         $this->assertEquals(
             ['http' => '127.0.0.1'],
-            $client->getDefaultOption('proxy')
+            $client->getConfig('proxy')
         );
         putenv('HTTPS_PROXY=127.0.0.2');
         $client = new Client();
         $this->assertEquals(
             ['http' => '127.0.0.1', 'https' => '127.0.0.2'],
-            $client->getDefaultOption('proxy')
+            $client->getConfig('proxy')
         );
         putenv("HTTP_PROXY=$http");
         putenv("HTTPS_PROXY=$https");
@@ -472,16 +472,16 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($mock->getLastOptions()['synchronous']);
     }
 
-    public function testCanDisableDefaultMiddleware()
+    public function testCanSetCustomHandler()
     {
         $mock = new MockHandler([new Response(500)]);
-        $client = new Client([
-            'handler' => $mock,
-            'disable_default_middleware' => true
-        ]);
+        $client = new Client(['handler' => $mock]);
+        $mock2 = new MockHandler([new Response(200)]);
         $this->assertEquals(
-            500,
-            $client->send(new Request('GET', 'http://foo.com'))->getStatusCode()
+            200,
+            $client->send(new Request('GET', 'http://foo.com'), [
+                'handler' => $mock2
+            ])->getStatusCode()
         );
     }
 }

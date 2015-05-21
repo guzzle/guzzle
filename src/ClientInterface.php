@@ -68,11 +68,15 @@ interface ClientInterface
     public function requestAsync($method, $uri = null, array $options = []);
 
     /**
-     * Get default request options of the client.
+     * Get a client configuration option.
      *
-     * @param string|null $option The default request option to retrieve.
+     * These options include default request options of the client, a "handler"
+     * (if utilized by the concrete client), and a "base_uri" if utilized by
+     * the concrete client.
+     *
+     * @param string|null $option The config option to retrieve.
      *
      * @return mixed
      */
-    public function getDefaultOption($option = null);
+    public function getConfig($option = null);
 }

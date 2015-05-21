@@ -79,6 +79,9 @@ middleware functions that wrap handlers (or are injected into a
 - Static functions in `GuzzleHttp\Utils` have been moved to namespaced
   functions under the `GuzzleHttp` namespace. This requires either a Composer
   based autoloader or you to include functions.php.
+- `GuzzleHttp\ClientInterface::getDefaultOption` has been renamed to
+  `GuzzleHttp\ClientInterface::getConfig`.
+- `GuzzleHttp\ClientInterface::setDefaultOption` has been removed.
 
 4.x to 5.0
 ----------
