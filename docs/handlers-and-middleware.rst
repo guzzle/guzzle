@@ -15,9 +15,8 @@ exception.
 You can provide a custom handler to a client using the ``handler`` option of
 a client constructor. It is important to understand that several request
 options used by Guzzle require that specific middlewares wrap the handler used
-by the client (i.e., ``cookies``, ``http_errors``, ``redirect``). You can
-ensure that the handler you provide to a client uses the default middlewares
-by wrapping the handler in the
+by the client. You can ensure that the handler you provide to a client uses the
+default middlewares by wrapping the handler in the
 ``GuzzleHttp\HandlerStack::create(callable $handler = null)`` static method.
 
 .. code-block:: php
@@ -29,6 +28,20 @@ by wrapping the handler in the
     $handler = new CurlHandler();
     $stack = HandlerStack::create($handler); // Wrap w/ middleware
     $client = new Client(['handler' => $stack]);
+
+The ``create`` method adds default handlers to the ``HandlerStack``. When the
+``HandlerStack`` is resolved, the handlers will execute in the following order
+(note that when adding handlers the order is reversed as this is a stack):
+
+1. ``prepare_body`` - First the body of an HTTP request will be prepared (e.g.,
+   add default headers like Content-Length, Content-Type, etc.).
+2. ``http_errors`` - This middleware checks if the response returned was ``>``
+   300.
+3. ``allow_redirects`` - Follows redirects
+4. ``cookies`` - Adds cookies to requests and extracts cookies from responses.
+   Notice that this is at the end of the list (or the first handler pushed
+   onto the stack) to ensure that cookies are extracted before HTTP error
+   exceptions are thrown and before redirects are followed.
 
 When provided no ``$handler`` argument, ``GuzzleHttp\HandlerStack::create()``
 will choose the most appropriate handler based on the extensions available on

@@ -38,9 +38,9 @@ class HandlerStack
     public static function create(callable $handler = null)
     {
         $stack = new self($handler ?: choose_handler());
+        $stack->push(Middleware::cookies(), 'cookies');
         $stack->push(Middleware::redirect(), 'allow_redirects');
         $stack->push(Middleware::httpErrors(), 'http_errors');
-        $stack->push(Middleware::cookies(), 'cookies');
         $stack->push(Middleware::prepareBody(), 'prepare_body');
 
         return $stack;
