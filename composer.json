@@ -18,7 +18,6 @@
     },
     "require-dev": {
         "ext-curl": "*",
-        "psr/log": "^1.0",
         "phpunit/phpunit": "^4.0"
     },
     "autoload": {
