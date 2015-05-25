@@ -13,14 +13,6 @@ event listeners or subscribers need to be updated to become middleware
 functions that wrap handlers (or are injected into a
 `GuzzleHttp\HandlerStack`).
 
-The change to PSR-7 unfortunately required significant refactoring to Guzzle
-due to the fact that PSR-7 messages are immutable. Guzzle 5 relied on an event
-system from plugins. The event system relied on mutability of HTTP messages and
-side effects in order to work. With immutable messages, you have to change your
-workflow to become more about either returning a value (e.g., functional
-middlewares) or setting a value on an object. Guzzle v6 has chosen the
-functional middleware approach.
-
 - Removed `GuzzleHttp\BatchResults`
 - Removed `GuzzleHttp\Collection`
 - Removed `GuzzleHttp\HasDataTrait`
@@ -64,8 +56,8 @@ functional middleware approach.
   Guzzle 6.
 - As Guzzle now uses a middleware based systems the event system and RingPHP
   integration has been removed. Note: while the event system has been removed,
-  if there is sufficient demand, it would be possible that a package could be
-  created that adds event support into the middleware system.
+  it is possible to add your own type of event system that is powered by the
+  middleware system.
   - Removed the `Event` namespace.
   - Removed the `Subscriber` namespace.
   - Removed `Transaction` class
@@ -91,6 +83,55 @@ functional middleware approach.
 - `GuzzleHttp\ClientInterface::getDefaultOption` has been renamed to
   `GuzzleHttp\ClientInterface::getConfig`.
 - `GuzzleHttp\ClientInterface::setDefaultOption` has been removed.
+
+## Migrating to middleware
+
+The change to PSR-7 unfortunately required significant refactoring to Guzzle
+due to the fact that PSR-7 messages are immutable. Guzzle 5 relied on an event
+system from plugins. The event system relied on mutability of HTTP messages and
+side effects in order to work. With immutable messages, you have to change your
+workflow to become more about either returning a value (e.g., functional
+middlewares) or setting a value on an object. Guzzle v6 has chosen the
+functional middleware approach.
+
+Instead of using the event system to listen for things like the `before` event,
+you now create a stack based middleware function that intercepts a request on
+the way in and the promise of the response on the way out. This is a much
+simpler and more predictable approach than the event system and works nicely
+with PSR-7 middleware. Due to the use of promises, the middleware system is
+also asynchronous.
+
+v5:
+
+```php
+use GuzzleHttp\Event\BeforeEvent;
+$client = new GuzzleHttp\Client();
+// Get the emitter and listen to the before event.
+$client->getEmitter()->on('before', function (BeforeEvent $e) {
+    // Guzzle v5 events relied on mutation
+    $e->getRequest()->setHeader('X-Foo', 'Bar');
+});
+```
+
+v6:
+
+In v6, you can modify the request before it is sent using the `mapRequest`
+middleware. The idiomatic way in v6 to modify the request/response lifecycle is
+to setup a handler middleware stack up front and inject the handler into a
+client.
+
+```php
+use GuzzleHttp\Middleware;
+// Create a handler stack that has all of the default middlewares attached
+$handler = GuzzleHttp\HandlerStack::create();
+// Push the handler onto the handler stack
+$handler->push(Middleware::mapRequest(function (RequestInterface $request) {
+    // Notice that we have to return a request object
+    return $request->withHeader('X-Foo', 'Bar');
+});
+// Inject the handler into the client
+$client = new GuzzleHttp\Client(['handler' => $handler]);
+```
 
 4.x to 5.0
 ----------
