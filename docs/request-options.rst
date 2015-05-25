@@ -190,16 +190,12 @@ cookies
 
 :Summary: Specifies whether or not cookies are used in a request or what cookie
         jar to use or what cookies to send.
-:Types:
-        - bool
-        - ``GuzzleHttp\Cookie\CookieJarInterface``
+:Types: ``GuzzleHttp\Cookie\CookieJarInterface``
 :Default: None
 :Constant: ``GuzzleHttp\RequestOptions::COOKIES``
 
-When creating a client, you can set the default cookie option to ``true``
-to use a shared cookie session associated with the client. Othewise, you
-must specify the cookies option as a ``GuzzleHttp\Cookie\CookieJarInterface``
-or ``false``.
+You must specify the cookies option as a
+``GuzzleHttp\Cookie\CookieJarInterface`` or ``false``.
 
 .. code-block:: php
 
@@ -212,6 +208,11 @@ or ``false``.
     ``GuzzleHttp\Middleware::cookies`` middleware. This middleware is added
     by default when a client is created with no handler, and is added by
     default when creating a handler with ``GuzzleHttp\default_handler``.
+
+.. tip::
+
+    When creating a client, you can set the default cookie option to ``true``
+    to use a shared cookie session associated with the client.
 
 
 .. _connect_timeout-option:

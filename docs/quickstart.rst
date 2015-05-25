@@ -386,30 +386,23 @@ Cookies
 =======
 
 Guzzle can maintain a cookie session for you if instructed using the
-``cookies`` request option.
-
-- Set to ``true`` to use a shared cookie session associated with the client.
-- Pass an associative array containing cookies to send in the request and start
-  a new cookie session.
-- Set to a ``GuzzleHttp\Subscriber\CookieJar\CookieJarInterface`` object to use
-  an existing cookie jar.
+``cookies`` request option. When sending a request, the ``cookies`` option
+must be set an an instance of ``GuzzleHttp\Subscriber\CookieJar\CookieJarInterface``.
 
 .. code-block:: php
-
-    // Use a shared client cookie jar
-    $r = $client->get('http://httpbin.org/cookies', ['cookies' => true]);
-
-    // Use an array of cookies
-    $r = $client->get('http://httpbin.org/cookies', [
-        'cookies' => [
-            'foo' => 'bar',
-            'baz' => 'qux',
-        ]
-    ]);
 
     // Use a specific cookie jar
     $jar = new \GuzzleHttp\Cookie\CookieJar;
     $r = $client->get('http://httpbin.org/cookies', ['cookies' => $jar]);
+
+You can set ``cookies`` to ``true`` in a client constructor if you would like
+to use a shared cookie jar for all requests.
+
+.. code-block:: php
+
+    // Use a shared client cookie jar
+    $client = new \GuzzleHttp\Client(['cookies' => true]);
+    $r = $client->get('http://httpbin.org/cookies');
 
 
 Redirects
