@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/artifacts/Burgomaster.php';
+require __DIR__ . '/Burgomaster.php';
 
 $stageDirectory = __DIR__ . '/artifacts/staging';
 $projectRoot = __DIR__ . '/../';
