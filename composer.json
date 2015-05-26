@@ -29,10 +29,5 @@
         "psr-4": {
             "GuzzleHttp\\Tests\\": "tests/"
         }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "5.0-dev"
-        }
     }
 }
