@@ -1,8 +1,8 @@
 <?php
 namespace GuzzleHttp\Cookie;
 
-use GuzzleHttp\Message\RequestInterface;
-use GuzzleHttp\Message\ResponseInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Stores HTTP cookies.
@@ -17,14 +17,16 @@ use GuzzleHttp\Message\ResponseInterface;
 interface CookieJarInterface extends \Countable, \IteratorAggregate
 {
     /**
-     * Add a Cookie header to a request.
+     * Create a request with added cookie headers.
      *
      * If no matching cookies are found in the cookie jar, then no Cookie
-     * header is added to the request.
+     * header is added to the request and the same request is returned.
      *
-     * @param RequestInterface $request Request object to update
+     * @param RequestInterface $request Request object to modify.
+     *
+     * @return RequestInterface returns the modified request.
      */
-    public function addCookieHeader(RequestInterface $request);
+    public function withCookieHeader(RequestInterface $request);
 
     /**
      * Extract cookies from an HTTP response and store them in the CookieJar.
@@ -72,4 +74,11 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      * to RFC 2965.
      */
     public function clearSessionCookies();
+
+    /**
+     * Converts the cookie jar to an array.
+     *
+     * @return array
+     */
+    public function toArray();
 }

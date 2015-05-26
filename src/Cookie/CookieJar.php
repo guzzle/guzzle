@@ -1,14 +1,13 @@
 <?php
 namespace GuzzleHttp\Cookie;
 
-use GuzzleHttp\Message\RequestInterface;
-use GuzzleHttp\Message\ResponseInterface;
-use GuzzleHttp\ToArrayInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Cookie jar that stores cookies an an array
  */
-class CookieJar implements CookieJarInterface, ToArrayInterface
+class CookieJar implements CookieJarInterface
 {
     /** @var SetCookie[] Loaded cookie data */
     private $cookies = [];
@@ -194,23 +193,24 @@ class CookieJar implements CookieJarInterface, ToArrayInterface
         RequestInterface $request,
         ResponseInterface $response
     ) {
-        if ($cookieHeader = $response->getHeaderAsArray('Set-Cookie')) {
+        if ($cookieHeader = $response->getHeader('Set-Cookie')) {
             foreach ($cookieHeader as $cookie) {
                 $sc = SetCookie::fromString($cookie);
                 if (!$sc->getDomain()) {
-                    $sc->setDomain($request->getHost());
+                    $sc->setDomain($request->getUri()->getHost());
                 }
                 $this->setCookie($sc);
             }
         }
     }
 
-    public function addCookieHeader(RequestInterface $request)
+    public function withCookieHeader(RequestInterface $request)
     {
         $values = [];
-        $scheme = $request->getScheme();
-        $host = $request->getHost();
-        $path = $request->getPath();
+        $uri = $request->getUri();
+        $scheme = $uri->getScheme();
+        $host = $uri->getHost();
+        $path = $uri->getPath() ?: '/';
 
         foreach ($this->cookies as $cookie) {
             if ($cookie->matchesPath($path) &&
@@ -223,9 +223,9 @@ class CookieJar implements CookieJarInterface, ToArrayInterface
             }
         }
 
-        if ($values) {
-            $request->setHeader('Cookie', implode('; ', $values));
-        }
+        return $values
+            ? $request->withHeader('Cookie', implode('; ', $values))
+            : $request;
     }
 
     /**
