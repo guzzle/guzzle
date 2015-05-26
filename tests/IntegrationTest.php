@@ -120,4 +120,45 @@ class IntegrationTest extends \PHPUnit_Framework_TestCase
             $this->assertEquals(502, $e->getResponse()->getStatusCode());
         }
     }
+    
+    public function testDigestAuthWithBadPasswordDetectsRejection()
+    {
+        Server::enqueue([new Response(200)]);
+        $c = new Client();
+        try {
+            $response = $c->get(Server::$url . 'secure/by-digest/anything');
+        } catch(\GuzzleHttp\Exception\ClientException $e) {
+            if ($e->hasResponse()) {
+                $response = $e->getResponse();
+            }
+        } catch(\GuzzleHttp\Exception\ServerException $e) {
+            // 501 Exceptions are thrown when our test server is incomplete. Let us tell the user.
+            if ($e->getCode() == 501) {
+                $this->markTestSkipped('Cannot currently test HTTP Auth; please run an \'npm install http-auth\' to cover this case');
+                return;
+            }
+            throw $e;
+        }
+        $this->assertEquals(401, $response->getStatusCode());
+    }
+    
+    public function testDigestAuthWithRightPasswordPasses()
+    {
+        $c = new Client();
+        // Digest has a way to prevent replay attacks by requiring a nonce to be incremented at each request. Ensure we pass multiple successive requests.
+        for ($i = 3; --$i >= 0;) {
+            Server::enqueue([new Response(200)]);
+            try {
+                $response = $c->get(Server::$url . 'secure/by-digest/anything', ['auth' => ['me', 'test', 'digest']]); // @todo Someday there should be autodetection of the authentification type, based on the return headers to the first rejected query.
+            } catch(\GuzzleHttp\Exception\ServerException $e) {
+                // 501 Exceptions are thrown when our test server is incomplete. Let us tell the user.
+                if ($e->getCode() == 501) {
+                    $this->markTestSkipped('Cannot currently test HTTP Auth; please run an \'npm install http-auth\' to cover this case');
+                    break;
+                }
+                throw $e;
+            }
+            $this->assertEquals(200, $response->getStatusCode());
+        }
+    }
 }
