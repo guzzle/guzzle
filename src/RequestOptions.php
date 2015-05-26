@@ -34,9 +34,9 @@ final class RequestOptions
     const BODY = 'body';
 
     /**
-     * cert: (array) Set to a string to specify the path to a file containing
-     * a PEM formatted SSL client side certificate. If a password is
-     * required, then set cert to an array containing the path to the PEM
+     * cert: (string|array) Set to a string to specify the path to a file
+     * containing a PEM formatted SSL client side certificate. If a password
+     * is required, then set cert to an array containing the path to the PEM
      * file in the first array element followed by the certificate password
      * in the second array element.
      */
@@ -46,7 +46,8 @@ final class RequestOptions
      * cookies: (bool|GuzzleHttp\Cookie\CookieJarInterface, default=false)
      * Specifies whether or not cookies are used in a request or what cookie
      * jar to use or what cookies to send. This option only works if your
-     * handler has the `cookie` middleware.
+     * handler has the `cookie` middleware. Valid values are `false` and
+     * an instance of {@see GuzzleHttp\Cookie\CookieJarInterface}.
      */
     const COOKIES = 'cookies';
 
@@ -80,8 +81,8 @@ final class RequestOptions
      * expect: (bool|integer) Controls the behavior of the
      * "Expect: 100-Continue" header.
      *
-     * Set to ``true`` to enable the "Expect: 100-Continue" header for all
-     * requests that sends a body. Set to ``false`` to disable the
+     * Set to `true` to enable the "Expect: 100-Continue" header for all
+     * requests that sends a body. Set to `false` to disable the
      * "Expect: 100-Continue" header for all requests. Set to a number so that
      * the size of the payload must be greater than the number in order to send
      * the Expect header. Setting to a number will send the Expect header for
@@ -97,7 +98,8 @@ final class RequestOptions
     /**
      * form_params: (array) Associative array of form field names to values
      * where each value is a string or array of strings. Sets the Content-Type
-     * header to application/x-www-form-urlencoded when the header is not set.
+     * header to application/x-www-form-urlencoded when no Content-Type header
+     * is already present.
      */
     const FORM_PARAMS = 'form_params';
 
@@ -125,10 +127,11 @@ final class RequestOptions
     /**
      * multipart: (array) Array of associative arrays, each containing a
      * required "name" key mapping to the form field, name, a required
-     * "contents" key mapping to a StreamInterface/resource/string, an
+     * "contents" key mapping to a StreamInterface|resource|string, an
      * optional "headers" associative array of custom headers, and an
      * optional "filename" key mapping to a string to send as the filename in
-     * the part.
+     * the part. If no "filename" key is present, then no "filename" attribute
+     * will be added to the part.
      */
     const MULTIPART = 'multipart';
 
@@ -143,7 +146,8 @@ final class RequestOptions
 
     /**
      * proxy: (string|array) Pass a string to specify an HTTP proxy, or an
-     * array to specify different proxies for different protocols.
+     * array to specify different proxies for different protocols (where the
+     * key is the protocol and the value is a proxy string).
      */
     const PROXY = 'proxy';
 
@@ -164,13 +168,15 @@ final class RequestOptions
 
     /**
      * synchronous: (bool) Set to true to inform HTTP handlers that you intend
-     * on waiting on the response. This can be useful for optimizations.
+     * on waiting on the response. This can be useful for optimizations. Note
+     * that a promise is still returned if you are using one of the async
+     * client methods.
      */
     const SYNCHRONOUS = 'synchronous';
 
     /**
-     * ssl_key: (array) Specify the path to a file containing a private SSL
-     * key in PEM format. If a password is required, then set to an array
+     * ssl_key: (array|string) Specify the path to a file containing a private
+     * SSL key in PEM format. If a password is required, then set to an array
      * containing the path to the SSL key in the first array element followed
      * by the password required for the certificate in the second element.
      */
