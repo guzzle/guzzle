@@ -6,7 +6,7 @@ use Psr\Http\Message\StreamInterface;
 /**
  * Exception thrown when a seek fails on a stream.
  */
-class SeekException extends \RuntimeException
+class SeekException extends \RuntimeException implements GuzzleException
 {
     private $stream;
 

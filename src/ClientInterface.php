@@ -2,6 +2,7 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
@@ -21,6 +22,7 @@ interface ClientInterface
      *                                  request and to the transfer.
      *
      * @return ResponseInterface
+     * @throws GuzzleException
      */
     public function send(RequestInterface $request, array $options = []);
 
@@ -47,6 +49,7 @@ interface ClientInterface
      * @param array               $options Request options to apply.
      *
      * @return ResponseInterface
+     * @throws GuzzleException
      */
     public function request($method, $uri, array $options = []);
 

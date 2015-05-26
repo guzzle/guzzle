@@ -46,7 +46,7 @@ class StreamHandler
             if (strpos($message, 'getaddrinfo') // DNS lookup failed
                 || strpos($message, 'Connection refused')
             ) {
-                $e = new ConnectException($e->getMessage(), $request, null, $e);
+                $e = new ConnectException($e->getMessage(), $request, $e);
             }
             return new RejectedPromise(
                 RequestException::wrapException($request, $e)
