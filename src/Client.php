@@ -31,9 +31,8 @@ class Client implements ClientInterface
     /**
      * Clients accept an array of constructor parameters.
      *
-     * Here's an example of creating a client using an URI template for the
-     * client's base_uri and an array of default request options to apply
-     * to each request:
+     * Here's an example of creating a client using a base_uri and an array of
+     * default request options to apply to each request:
      *
      *     $client = new Client([
      *         'base_uri'        => 'http://www.foo.com/1.0/',
@@ -58,6 +57,7 @@ class Client implements ClientInterface
      * - **: any request option
      *
      * @param array $config Client configuration settings.
+     *
      * @see \GuzzleHttp\RequestOptions for a list of available request options.
      */
     public function __construct(array $config = [])

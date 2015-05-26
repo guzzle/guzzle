@@ -40,16 +40,15 @@ interface ClientInterface
      *
      * Use an absolute path to override the base path of the client, or a
      * relative path to append to the base path of the client. The URL can
-     * contain the query string as well. Use an array to provide a URL
-     * template and additional variables to use in the URL template expansion.
+     * contain the query string as well.
      *
-     * @param string                    $method  HTTP method
-     * @param string|array|UriInterface $uri     URI or URI template
-     * @param array                     $options Request options to apply.
+     * @param string              $method  HTTP method
+     * @param string|UriInterface $uri     URI object or string.
+     * @param array               $options Request options to apply.
      *
      * @return ResponseInterface
      */
-    public function request($method, $uri = null, array $options = []);
+    public function request($method, $uri, array $options = []);
 
     /**
      * Create and send an asynchronous HTTP request.
@@ -59,13 +58,13 @@ interface ClientInterface
      * contain the query string as well. Use an array to provide a URL
      * template and additional variables to use in the URL template expansion.
      *
-     * @param string                    $method  HTTP method
-     * @param string|array|UriInterface $uri     URI or URI template
-     * @param array                     $options Request options to apply.
+     * @param string              $method  HTTP method
+     * @param string|UriInterface $uri     URI object or string.
+     * @param array               $options Request options to apply.
      *
      * @return ResponseInterface
      */
-    public function requestAsync($method, $uri = null, array $options = []);
+    public function requestAsync($method, $uri, array $options = []);
 
     /**
      * Get a client configuration option.
