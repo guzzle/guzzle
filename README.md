@@ -69,3 +69,15 @@ You can then later update Guzzle using composer:
  ```bash
 composer.phar update
  ```
+
+
+## Version Guidance
+
+- Guzzle 3.x (`guzzle/guzzle`) is now EOL and will no longer be maintained.
+  Requires PHP 5.3+.
+- Guzzle 4.x (`guzzlehttp/guzzle`) is now EOL and will no longer be maintained.
+  Requires PHP 5.4+.
+- Guzzle 5.x (`guzzlehttp/guzzle`) is still maintained under the `5.3` branch.
+  Requires PHP 5.4+.
+- Guzzle 6.x (`guzzlehttp/guzzle`) is the latest stable version of Guzzle. This
+  is the only version that is PSR-7 compatible. Requires PHP 5.5+.
