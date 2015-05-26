@@ -253,7 +253,7 @@ You can retrieve headers from the response:
 
     // Get all of the response headers.
     foreach ($response->getHeaders() as $name => $values) {
-        echo $name ': ' . implode(', ', $values) . "\r\n";
+        echo $name . ': ' . implode(', ', $values) . "\r\n";
     }
 
 
