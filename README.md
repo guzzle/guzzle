@@ -73,12 +73,12 @@ composer.phar update
 
 ## Version Guidance
 
-| Version | Status      | Packagist           | Repo                | Docs                | PSR-7 |
-|---------|-------------|---------------------|---------------------|---------------------|-------|
-| 3.x     | EOL         | `guzzle/guzzle`     | [v3][guzzle-3-repo] | [v3][guzzle-3-docs] | No    |
-| 4.x     | EOL         | `guzzlehttp/guzzle` | N/A                 | N/A                 | No    |
-| 5.x     | Maintained  | `guzzlehttp/guzzle` | [v5][guzzle-5-repo] | [v5][guzzle-5-docs] | No    |
-| 6.x     | Latest      | `guzzlehttp/guzzle` | [v6][guzzle-6-repo] | [v6][guzzle-6-docs] | Yes   |
+| Version | Status      | Packagist           | Namespace    | Repo                | Docs                | PSR-7 |
+|---------|-------------|---------------------|--------------|---------------------|---------------------|-------|
+| 3.x     | EOL         | `guzzle/guzzle`     | `Guzzle`     | [v3][guzzle-3-repo] | [v3][guzzle-3-docs] | No    |
+| 4.x     | EOL         | `guzzlehttp/guzzle` | `GuzzleHttp` | N/A                 | N/A                 | No    |
+| 5.x     | Maintained  | `guzzlehttp/guzzle` | `GuzzleHttp` | [v5][guzzle-5-repo] | [v5][guzzle-5-docs] | No    |
+| 6.x     | Latest      | `guzzlehttp/guzzle` | `GuzzleHttp` | [v6][guzzle-6-repo] | [v6][guzzle-6-docs] | Yes   |
 
 [guzzle-3-repo]: https://github.com/guzzle/guzzle3
 [guzzle-5-repo]: https://github.com/guzzle/guzzle/tree/5.3
