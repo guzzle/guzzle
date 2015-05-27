@@ -361,6 +361,28 @@ the body of a request is greater than 1 MB and a request is using HTTP/1.1.
     implemented by Guzzle HTTP handlers used by a client.
 
 
+form_params
+-----------
+
+:Summary: Used to send an `application/x-www-form-urlencoded` POST request.
+:Types: array
+:Constant: ``GuzzleHttp\RequestOptions::FORM_PARAMS``
+
+Associative array of form field names to values where each value is a string or
+array of strings. Sets the Content-Type header to
+application/x-www-form-urlencoded when no Content-Type header is already
+present.
+
+.. code-block:: php
+
+    $client->post('/post', [
+        'form_params' => [
+            'foo' => 'bar',
+            'baz' => ['hi', 'there!']
+        ]
+    ]);
+
+
 headers
 -------
 
@@ -488,6 +510,27 @@ the following key value pairs:
 - ``headers``: (array) Optional associative array of custom headers to use with
   the form element.
 - ``filename``: (string) Optional string to send as the filename in the part.
+
+.. code-block:: php
+
+    $client->post('/post', [
+        'multipart' => [
+            [
+                'name'     => 'foo',
+                'contents' => 'data',
+                'headers'  => ['X-Baz' => 'bar']
+            ],
+            [
+                'name'     => 'baz',
+                'contents' => fopen('/path/to/file', 'r')
+            ],
+            [
+                'name'     => 'qux',
+                'contents' => fopen('/path/to/file', 'r'),
+                'filename' => 'custom_filename.txt'
+            ],
+        ]
+    ]);
 
 
 .. _on-headers:

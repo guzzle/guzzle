@@ -133,6 +133,21 @@ $handler->push(Middleware::mapRequest(function (RequestInterface $request) {
 $client = new GuzzleHttp\Client(['handler' => $handler]);
 ```
 
+## POST Requests
+
+This version added the [`form_params`](http://guzzle.readthedocs.org/en/latest/request-options.html#form_params)
+and `multipart` request options. `form_params` is an associative array of
+strings or array of strings and is used to serialize an
+`application/x-www-form-urlencoded` POST request. The
+[`multipart`](http://guzzle.readthedocs.org/en/latest/request-options.html#multipart)
+option is now used to send a multipart/form-data POST request.
+
+`GuzzleHttp\Post\PostFile` has been removed. Use the `multipart` option to add
+POST files to a multipart/form-data request.
+
+The `body` option no longer accepts an array to send POST requests. Please use
+`multipart` or `form_params` instead.
+
 4.x to 5.0
 ----------
 
