@@ -341,7 +341,7 @@ class Client implements ClientInterface
         if (isset($options['query'])) {
             $value = $options['query'];
             if (is_array($value)) {
-                $value = http_build_query($value, null, null, PHP_QUERY_RFC3986);
+                $value = http_build_query($value, null, '&', PHP_QUERY_RFC3986);
             }
             if (!is_string($value)) {
                 throw new Iae('query must be a string or array');

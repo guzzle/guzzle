@@ -484,4 +484,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             ])->getStatusCode()
         );
     }
+
+    public function testProperlyBuildsQuery()
+    {
+        $mock = new MockHandler([new Response(200)]);
+        $client = new Client(['handler' => $mock]);
+        $request = new Request('PUT', 'http://foo.com');
+        $client->send($request, ['query' => ['foo' => 'bar', 'john' => 'doe']]);
+        $this->assertEquals('foo=bar&john=doe', $mock->getLastRequest()->getUri()->getQuery());
+    }
 }
