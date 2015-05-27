@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 6.0.1 - 2016-06-27
+
+* Fixed a bug with serializing the `query` request option where the `&`
+  separator was missing.
+* Added a better error message for when `body` is provided as an array. Please
+  use `form_params` or `multipart` instead.
+* Various doc fixes.
+
 ## 6.0.0 - 2015-05-26
 
 * See the UPGRADING.md document for more information.
