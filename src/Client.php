@@ -114,6 +114,9 @@ class Client implements ClientInterface
         $version = isset($options['version']) ? $options['version'] : '1.1';
         // Merge the URI into the base URI.
         $uri = $this->buildUri($uri, $options);
+        if (is_array($body)) {
+            $this->invalidBody();
+        }
         $request = new Psr7\Request($method, $uri, $headers, $body, $version);
         // Remove the option so that they are not doubly-applied.
         unset($options['headers'], $options['body'], $options['version']);
@@ -309,6 +312,9 @@ class Client implements ClientInterface
         }
 
         if (isset($options['body'])) {
+            if (is_array($options['body'])) {
+                $this->invalidBody();
+            }
             $modify['body'] = Psr7\stream_for($options['body']);
             unset($options['body']);
         }
@@ -367,5 +373,14 @@ class Client implements ClientInterface
         }
 
         return $request;
+    }
+
+    private function invalidBody()
+    {
+        throw new \InvalidArgumentException('Passing in the "body" request '
+            . 'option as an array to send a POST request has been deprecated. '
+            . 'Please use the "form_params" request option to send a '
+            . 'application/x-www-form-urlencoded request, or a the "multipart" '
+            . 'request option to send a multipart/form-data request.');
     }
 }
