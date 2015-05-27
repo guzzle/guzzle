@@ -24,7 +24,7 @@ a response or exception by shifting return values off of a queue.
 .. code-block:: php
 
     use GuzzleHttp\Client;
-    use GuzzleHttp\MockHandler;
+    use GuzzleHttp\Handler\MockHandler;
     use GuzzleHttp\Psr7\Response;
 
     // Create a mock and queue two responses.
