@@ -25,6 +25,7 @@ a response or exception by shifting return values off of a queue.
 
     use GuzzleHttp\Client;
     use GuzzleHttp\Handler\MockHandler;
+    use GuzzleHttp\HandlerStack;
     use GuzzleHttp\Psr7\Response;
 
     // Create a mock and queue two responses.
@@ -33,7 +34,7 @@ a response or exception by shifting return values off of a queue.
         new Response(202, ['Content-Length' => 0])
     ]);
 
-    $handler = \GuzzleHttp\default_handler($mock);
+    $handler = HandlerStack::create($mock);
     $client = new Client(['handler' => $mock]);
 
     // The first request is intercepted with the first response.
@@ -58,9 +59,10 @@ history of the requests that were sent by a client.
 .. code-block:: php
 
     use GuzzleHttp\Client;
+    use GuzzleHttp\HandlerStack;
     use GuzzleHttp\Middleware;
 
-    $stack = \GuzzleHttp\default_handler();
+    $stack = HandlerStack::create();
     // Add the history middleware to the handler stack.
     $stack->append($history);
 
