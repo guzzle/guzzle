@@ -80,7 +80,7 @@ composer.phar update
 | 5.x     | Maintained  | `guzzlehttp/guzzle` | [v5][guzzle-5-repo] | [v5][guzzle-5-docs] | No    |
 | 6.x     | Latest      | `guzzlehttp/guzzle` | [v6][guzzle-6-repo] | [v6][guzzle-6-docs] | Yes   |
 
-[guzzle-3-repo]: https://github.com/guzzle3/guzzle
+[guzzle-3-repo]: https://github.com/guzzle/guzzle3
 [guzzle-5-repo]: https://github.com/guzzle/guzzle/tree/5.3
 [guzzle-6-repo]: https://github.com/guzzle/guzzle
 [guzzle-3-docs]: http://guzzle3.readthedocs.org/en/latest/
