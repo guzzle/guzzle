@@ -81,9 +81,8 @@ composer.phar update
 | 6.x     | Latest      | `guzzlehttp/guzzle` | [v6][guzzle-6-repo] | [v6][guzzle-6-docs] | Yes   |
 
 [guzzle-3-repo]: https://github.com/guzzle3/guzzle
-[guzzle-5-repo]: https://github.com/guzzle/guzzle
+[guzzle-5-repo]: https://github.com/guzzle/guzzle/tree/5.3
 [guzzle-6-repo]: https://github.com/guzzle/guzzle
-[this-repo]: https://github.com/guzzle/guzzle
-[guzzle-3-docs]: https://github.com/guzzle3/guzzle
-[guzzle-5-docs]: https://github.com/guzzle/guzzle
-[guzzle-6-docs]: https://github.com/guzzle/guzzle
+[guzzle-3-docs]: http://guzzle3.readthedocs.org/en/latest/
+[guzzle-5-docs]: http://guzzle.readthedocs.org/en/5.3/
+[guzzle-6-docs]: http://guzzle.readthedocs.org/en/latest/
