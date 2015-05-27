@@ -330,12 +330,12 @@ Sending form fields
 ~~~~~~~~~~~~~~~~~~~
 
 Sending ``application/x-www-form-urlencoded`` POST requests requires that you
-specify the POST fields as an array in the ``form_fields`` request options.
+specify the POST fields as an array in the ``form_params`` request options.
 
 .. code-block:: php
 
     $response = $client->post('http://httpbin.org/post', [
-        'form_fields' => [
+        'form_params' => [
             'field_name' => 'abc',
             'other_field' => '123',
             'nested_field' => [
@@ -363,7 +363,7 @@ associative arrays, where each associative array contains the following keys:
     use GuzzleHttp\Post\PostFile;
 
     $response = $client->post('http://httpbin.org/post', [
-        'form_fields' => [
+        'form_params' => [
             'field_name' => 'abc',
         ],
         'form_files' => [
