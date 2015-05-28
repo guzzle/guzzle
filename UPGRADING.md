@@ -70,7 +70,7 @@ functions that wrap handlers (or are injected into a
   - `GuzzleHttp\Subscriber\History` is now provided by
     `GuzzleHttp\Middleware::history`
   - `GuzzleHttp\Subscriber\Mock` is now provided by
-    `GuzzleHttp\Middleware::mock`
+    `GuzzleHttp\Handler\MockHandler`
   - `GuzzleHttp\Subscriber\Prepare` is now provided by
     `GuzzleHttp\PrepareBodyMiddleware`
   - `GuzzleHttp\Subscriber\Redirect` is now provided by
