@@ -62,14 +62,14 @@ history of the requests that were sent by a client.
     use GuzzleHttp\HandlerStack;
     use GuzzleHttp\Middleware;
 
-    $stack = HandlerStack::create();
-    // Add the history middleware to the handler stack.
-    $stack->append($history);
-
-    $client = new Client(['handler' => $stack]);
-
     $container = [];
     $history = Middleware::history($container);
+    
+    $stack = HandlerStack::create();
+    // Add the history middleware to the handler stack.
+    $stack->push($history);
+
+    $client = new Client(['handler' => $stack]);
 
     $client->get('http://httpbin.org/get');
     $client->head('http://httpbin.org/get');
