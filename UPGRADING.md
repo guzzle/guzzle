@@ -148,6 +148,8 @@ POST files to a multipart/form-data request.
 The `body` option no longer accepts an array to send POST requests. Please use
 `multipart` or `form_params` instead.
 
+The `base_url` option has been renamed to `base_uri`.
+
 4.x to 5.0
 ----------
 
