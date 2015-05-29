@@ -174,6 +174,20 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('"PUT / HTTP/1.1" 200', $logger->output);
     }
 
+    public function testLogsRequestsAndResponsesCustomLevel()
+    {
+        $h = new MockHandler([new Response(200)]);
+        $stack = new HandlerStack($h);
+        $logger = new Logger();
+        $formatter = new MessageFormatter();
+        $stack->push(Middleware::log($logger, $formatter, 'debug'));
+        $comp = $stack->resolve();
+        $p = $comp(new Request('PUT', 'http://www.google.com'), []);
+        $p->wait();
+        $this->assertContains('"PUT / HTTP/1.1" 200', $logger->output);
+        $this->assertContains('[debug]', $logger->output);
+    }
+
     public function testLogsRequestsAndErrors()
     {
         $h = new MockHandler([new Response(404)]);
@@ -199,6 +213,6 @@ class Logger implements LoggerInterface
 
     public function log($level, $message, array $context = [])
     {
-        $this->output .= $message . "\n";
+        $this->output .= "[{$level}] {$message}\n";
     }
 }
