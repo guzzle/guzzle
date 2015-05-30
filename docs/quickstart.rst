@@ -349,7 +349,7 @@ Sending form files
 ~~~~~~~~~~~~~~~~~~
 
 You can send files along with a form (``multipart/form-data`` POST requests),
-using the ``form_files`` request option. ``form_files`` accepts an array of
+using the ``multipart`` request option. ``multipart`` accepts an array of
 associative arrays, where each associative array contains the following keys:
 
 - name: (required, string) key mapping to the form field name.
@@ -360,13 +360,11 @@ associative arrays, where each associative array contains the following keys:
 
 .. code-block:: php
 
-    use GuzzleHttp\Post\PostFile;
-
     $response = $client->post('http://httpbin.org/post', [
         'form_params' => [
             'field_name' => 'abc',
         ],
-        'form_files' => [
+        'multipart' => [
             [
                 'name'     => 'file_name',
                 'contents' => fopen('/path/to/file', 'r')
@@ -374,6 +372,7 @@ associative arrays, where each associative array contains the following keys:
             [
                 'name'     => 'other_file',
                 'contents' => 'hello',
+                'filename' => 'filename.txt',
                 'headers'  => [
                     'X-Foo' => 'this is an extra header to include'
                 ]
