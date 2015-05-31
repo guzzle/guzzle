@@ -105,9 +105,8 @@ class Client implements ClientInterface
         return $this->sendAsync($request, $options)->wait();
     }
 
-    public function requestAsync($method, $uri = null, array $options = [])
+    public function requestFactory($method, $uri = null, array $options = [])
     {
-        $options = $this->prepareDefaults($options);
         // Remove request modifying parameter because it can be done up-front.
         $headers = isset($options['headers']) ? $options['headers'] : [];
         $body = isset($options['body']) ? $options['body'] : null;
@@ -120,6 +119,14 @@ class Client implements ClientInterface
         $request = new Psr7\Request($method, $uri, $headers, $body, $version);
         // Remove the option so that they are not doubly-applied.
         unset($options['headers'], $options['body'], $options['version']);
+
+        return $this->applyOptions($request, $options);
+    }
+
+    public function requestAsync($method, $uri = null, array $options = [])
+    {
+        $request = $this->requestFactory($method, $uri, $options);
+        $options = $this->prepareDefaults($options);
 
         return $this->transfer($request, $options);
     }
@@ -245,7 +252,7 @@ class Client implements ClientInterface
      *
      * @return Promise\PromiseInterface
      */
-    private function transfer(RequestInterface $request, array $options)
+    private function transfer(RequestInterface $request, array $options = [])
     {
         // save_to -> sink
         if (isset($options['save_to'])) {
