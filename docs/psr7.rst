@@ -65,14 +65,15 @@ You can check if a request or response has a specific header using the
         echo 'It is there';
     }
 
-You can retrieve a header value as a string using ``getHeader()``.
+You can retrieve all the header values as an array of strings using
+``getHeader()``.
 
 .. code-block:: php
 
-    echo $request->getHeader('X-Foo'); // bar
+    $request->getHeader('X-Foo'); // ['bar']
 
-    // Retrieving a missing header returns an empty string.
-    echo $request->getHeader('X-Bar') // outputs nothing
+    // Retrieving a missing header returns an empty array.
+    $request->getHeader('X-Bar'); // []
 
 You can iterate over the headers of a message using the ``getHeaders()``
 method.
