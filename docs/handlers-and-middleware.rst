@@ -147,7 +147,7 @@ a function that takes the request argument and returns the request to send.
 
     use Psr7\Http\Message\RequestInterface;
 
-    $stack = $client->getHandlerStack();
+    $stack = new \GuzzleHttp\HandlerStack();
 
     $stack->push(Middleware::mapRequest(function (RequestInterface $request) {
         return $request->withHeader('X-Foo', 'bar');
@@ -162,7 +162,7 @@ Modifying a response is also much simpler using the
 
     use Psr7\Http\Message\ResponseInterface;
 
-    $stack = $client->getHandlerStack();
+    $stack = new \GuzzleHttp\HandlerStack();
 
     $stack->push(Middleware::mapResponse(function (ResponseInterface $response) {
         return $response->withHeader('X-Foo', 'bar');
