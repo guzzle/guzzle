@@ -64,6 +64,8 @@ function that takes the following form.
 
 .. code-block:: php
 
+    use Psr7\Http\Message\RequestInterface;
+
     function my_middleware()
     {
         return function (callable $handler) {
@@ -84,6 +86,8 @@ Here's an example of adding a header to each request.
 
 .. code-block:: php
 
+    use Psr7\Http\Message\RequestInterface;
+
     function add_header($header, $value)
     {
         return function (callable $handler) use ($header, $value) {
@@ -102,10 +106,14 @@ wrapping the handler used by the client or by decorating a handler stack.
 
 .. code-block:: php
 
-    $stack = new \GuzzleHttp\HandlerStack();
-    $stack->setHandler(new \GuzzleHttp\Handler\CurlHandler());
+    use GuzzleHttp\HandlerStack;
+    use GuzzleHttp\Handler\CurlHandler;
+    use GuzzleHttp\Client;
+
+    $stack = new HandlerStack();
+    $stack->setHandler(new CurlHandler());
     $stack->push(add_header('X-Foo', 'bar'));
-    $client = new \GuzzleHttp\Client(['handler' => $stack]);
+    $client = new Client(['handler' => $stack]);
 
 Now when you send a request, the client will use a handler composed with your
 added middleware, adding a header to each request.
@@ -115,7 +123,11 @@ downstream handler. This example adds a header to the response.
 
 .. code-block:: php
 
+    use Psr7\Http\Message\RequestInterface;
     use Psr7\Http\Message\ResponseInterface;
+    use GuzzleHttp\HandlerStack;
+    use GuzzleHttp\Handler\CurlHandler;
+    use GuzzleHttp\Client;
 
     function add_response_header($header, $value)
     {
@@ -134,10 +146,10 @@ downstream handler. This example adds a header to the response.
         };
     }
 
-    $stack = new \GuzzleHttp\HandlerStack();
-    $stack->setHandler(new \GuzzleHttp\Handler\CurlHandler());
+    $stack = new HandlerStack();
+    $stack->setHandler(new CurlHandler());
     $stack->push(add_response_header('X-Foo', 'bar'));
-    $client = new \GuzzleHttp\Client(['handler' => $stack]);
+    $client = new Client(['handler' => $stack]);
 
 Creating a middleware that modifies a request is made much simpler using the
 ``GuzzleHttp\Middleware::mapRequest()`` middleware. This middleware accepts
@@ -146,14 +158,19 @@ a function that takes the request argument and returns the request to send.
 .. code-block:: php
 
     use Psr7\Http\Message\RequestInterface;
+    use GuzzleHttp\HandlerStack;
+    use GuzzleHttp\Handler\CurlHandler;
+    use GuzzleHttp\Client;
+    use GuzzleHttp\Middleware;
 
-    $stack = new \GuzzleHttp\HandlerStack();
+    $stack = new HandlerStack();
+    $stack->setHandler(new CurlHandler());
 
     $stack->push(Middleware::mapRequest(function (RequestInterface $request) {
         return $request->withHeader('X-Foo', 'bar');
     }));
 
-    $client = new \GuzzleHttp\Client(['handler' => $stack]);
+    $client = new Client(['handler' => $stack]);
 
 Modifying a response is also much simpler using the
 ``GuzzleHttp\Middleware::mapResponse()`` middleware.
@@ -161,14 +178,19 @@ Modifying a response is also much simpler using the
 .. code-block:: php
 
     use Psr7\Http\Message\ResponseInterface;
+    use GuzzleHttp\HandlerStack;
+    use GuzzleHttp\Handler\CurlHandler;
+    use GuzzleHttp\Client;
+    use GuzzleHttp\Middleware;
 
-    $stack = new \GuzzleHttp\HandlerStack();
+    $stack = new HandlerStack();
+    $stack->setHandler(new CurlHandler());
 
     $stack->push(Middleware::mapResponse(function (ResponseInterface $response) {
         return $response->withHeader('X-Foo', 'bar');
     }));
 
-    $client = new \GuzzleHttp\Client(['handler' => $stack]);
+    $client = new Client(['handler' => $stack]);
 
 
 HandlerStack
@@ -183,20 +205,25 @@ stack.
 
 .. code-block:: php
 
-    $stack = new \GuzzleHttp\HandlerStack();
+    use Psr7\Http\Message\RequestInterface;
+    use GuzzleHttp\HandlerStack;
+    use GuzzleHttp\Middleware;
+    use GuzzleHttp\Client;
+
+    $stack = new HandlerStack();
     $stack->setHandler(\GuzzleHttp\choose_handler());
 
-    $stack->push(Middleware::mapRequest(function ($r) {
+    $stack->push(Middleware::mapRequest(function (RequestInterface $r) {
         echo 'A';
         return $r;
     });
 
-    $stack->push(Middleware::mapRequest(function ($r) {
+    $stack->push(Middleware::mapRequest(function (RequestInterface $r) {
         echo 'B';
         return $r;
     });
 
-    $stack->push(Middleware::mapRequest(function ($r) {
+    $stack->push(Middleware::mapRequest(function (RequestInterface $r) {
         echo 'C';
         return $r;
     });
@@ -204,12 +231,12 @@ stack.
     $client->get('http://httpbin.org/');
     // echoes 'ABC';
 
-    $stack->unshift(Middleware::mapRequest(function ($r) {
+    $stack->unshift(Middleware::mapRequest(function (RequestInterface $r) {
         echo '0';
         return $r;
     });
 
-    $client = new \GuzzleHttp\Client(['handler' => $stack]);
+    $client = new Client(['handler' => $stack]);
     $client->get('http://httpbin.org/');
     // echoes '0ABC';
 
@@ -219,18 +246,21 @@ by name.
 
 .. code-block:: php
 
+    use Psr7\Http\Message\RequestInterface;
+    use GuzzleHttp\Middleware;
+
     // Add a middleware with a name
-    $stack->push(Middleware::mapRequest(function ($r) {
+    $stack->push(Middleware::mapRequest(function (RequestInterface $r) {
         return $r->withHeader('X-Foo', 'Bar');
     }, 'add_foo');
 
     // Add a middleware before a named middleware (unshift before).
-    $stack->before('add_foo', Middleware::mapRequest(function ($r) {
+    $stack->before('add_foo', Middleware::mapRequest(function (RequestInterface $r) {
         return $r->withHeader('X-Baz', 'Qux');
     }, 'add_baz');
 
     // Add a middleware after a named middleware (pushed after).
-    $stack->after('add_baz', Middleware::mapRequest(function ($r) {
+    $stack->after('add_baz', Middleware::mapRequest(function (RequestInterface $r) {
         return $r->withHeader('X-Lorem', 'Ipsum');
     });
 
