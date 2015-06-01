@@ -1,7 +1,11 @@
 <?php
 namespace GuzzleHttp\Tests;
 
+use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 
 class HandlerStackTest extends \PHPUnit_Framework_TestCase
 {
@@ -137,6 +141,28 @@ class HandlerStackTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('3) Name: \'c\'', $lines[1]);
         $this->assertContains('2) Name: \'b\'', $lines[2]);
         $this->assertContains('1) Name: \'d\'', $lines[3]);
+    }
+
+    public function testPicksUpCookiesFromRedirects()
+    {
+        $mock = new MockHandler([
+            new Response(301, [
+                'Location'   => 'http://foo.com/baz',
+                'Set-Cookie' => 'foo=bar; Domain=foo.com'
+            ]),
+            new Response(200)
+        ]);
+        $handler = HandlerStack::create($mock);
+        $request = new Request('GET', 'http://foo.com/bar');
+        $jar = new CookieJar();
+        $response = $handler($request, [
+            'allow_redirects' => true,
+            'cookies' => $jar
+        ])->wait();
+        $this->assertEquals(200, $response->getStatusCode());
+        $lastRequest = $mock->getLastRequest();
+        $this->assertEquals('http://foo.com/baz', (string) $lastRequest->getUri());
+        $this->assertEquals('foo=bar', $lastRequest->getHeaderLine('Cookie'));
     }
 
     private function getFunctions()

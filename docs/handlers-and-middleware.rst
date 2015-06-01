@@ -30,18 +30,27 @@ default middlewares by wrapping the handler in the
     $client = new Client(['handler' => $stack]);
 
 The ``create`` method adds default handlers to the ``HandlerStack``. When the
-``HandlerStack`` is resolved, the handlers will execute in the following order
-(note that when adding handlers the order is reversed as this is a stack):
+``HandlerStack`` is resolved, the handlers will execute in the following order:
 
-1. ``prepare_body`` - First the body of an HTTP request will be prepared (e.g.,
-   add default headers like Content-Length, Content-Type, etc.).
-2. ``http_errors`` - This middleware checks if the response returned was ``>``
-   300.
-3. ``allow_redirects`` - Follows redirects
-4. ``cookies`` - Adds cookies to requests and extracts cookies from responses.
-   Notice that this is at the end of the list (or the first handler pushed
-   onto the stack) to ensure that cookies are extracted before HTTP error
-   exceptions are thrown and before redirects are followed.
+1. Sending request:
+
+  1. ``http_errors`` - No op when sending a request. The response status code
+     is checked in the response processing when returning a response promise up
+     the stack.
+  2. ``allow_redirects`` - No op when sending a request. Following redirects
+     occurs when a response promise is being returned up the stack.
+  3. ``cookies`` - Adds cookies to requests.
+  4. ``prepare_body`` - The body of an HTTP request will be prepared (e.g.,
+     add default headers like Content-Length, Content-Type, etc.).
+  5. <send request with handler>
+
+2. Processing response:
+
+  1. ``prepare_body`` - no op on response processing.
+  2. ``cookies`` - extracts response cookies into the cookie jar.
+  3. ``allow_redirects`` - Follows redirects.
+  4. ``http_errors`` - throws exceptions when the response status code ``>=``
+     300.
 
 When provided no ``$handler`` argument, ``GuzzleHttp\HandlerStack::create()``
 will choose the most appropriate handler based on the extensions available on
