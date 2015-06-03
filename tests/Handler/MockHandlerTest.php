@@ -102,4 +102,15 @@ class MockHandlerTest extends \PHPUnit_Framework_TestCase
         $request = new Request('GET', 'http://example.com');
         $mock($request, []);
     }
+
+    /**
+     * @expectedException \GuzzleHttp\Exception\BadResponseException
+     */
+    public function testCanCreateWithDefaultMiddleware()
+    {
+        $r = new Response(500);
+        $mock = MockHandler::createWithMiddleware([$r]);
+        $request = new Request('GET', 'http://example.com');
+        $mock($request, ['http_errors' => true])->wait();
+    }
 }

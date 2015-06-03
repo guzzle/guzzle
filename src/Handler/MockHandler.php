@@ -1,6 +1,7 @@
 <?php
 namespace GuzzleHttp\Handler;
 
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Promise\RejectedPromise;
 use Psr\Http\Message\RequestInterface;
@@ -16,6 +17,24 @@ class MockHandler implements \Countable
     private $lastOptions;
     private $onFulfilled;
     private $onRejected;
+
+    /**
+     * Creates a new MockHandler that uses the default handler stack list of
+     * middlewares.
+     *
+     * @param array $queue Array of responses, callables, or exceptions.
+     * @param callable $onFulfilled Callback to invoke when the return value is fulfilled.
+     * @param callable $onRejected  Callback to invoke when the return value is rejected.
+     *
+     * @return MockHandler
+     */
+    public static function createWithMiddleware(
+        array $queue = null,
+        callable $onFulfilled = null,
+        callable $onRejected = null
+    ) {
+        return HandlerStack::create(new self($queue, $onFulfilled, $onRejected));
+    }
 
     /**
      * The passed in value must be an array of
