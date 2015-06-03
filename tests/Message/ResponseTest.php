@@ -29,6 +29,18 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\ntest", (string) $response);
     }
 
+    public function testConstructorInitializesMessageWithMixedCaseHeaders()
+    {
+        $r = new Response(200, [
+            'Set-Cookie' => 'foo=bar, baz=bam',
+            'Set-cookie' => 'hi=there',
+            'other' => ['1', '2']
+        ]);
+
+        $this->assertEquals('foo=bar, baz=bam, hi=there', $r->getHeader('Set-Cookie'));
+        $this->assertEquals('1, 2', $r->getHeader('other'));
+    }
+
     public function testConvertsToStringAndSeeksToByteZero()
     {
         $response = new Response(200);

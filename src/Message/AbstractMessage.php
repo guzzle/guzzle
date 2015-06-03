@@ -107,7 +107,7 @@ abstract class AbstractMessage implements MessageInterface
     {
         $this->headers = $this->headerNames = [];
         foreach ($headers as $key => $value) {
-            $this->setHeader($key, $value);
+            $this->addHeader($key, $value);
         }
     }
 
