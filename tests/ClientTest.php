@@ -509,6 +509,20 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(['baz'], $request->getHeader('bar'));
     }
 
+    public function testSendingRequestFactoryInstance()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $request = $client->requestFactory('GET', 'http://foo.com', [
+            'headers'  => ['bar' => 'baz'],
+            'query' => ['foo' => 'bar', 'john' => 'doe'],
+        ]);
+
+        $response = $client->send($request);
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
     public function testRequestFactoryHeaders()
     {
         $client = new Client();
