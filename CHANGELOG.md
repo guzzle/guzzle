@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 6.0.1 - 2016-06-27
+## 6.0.1 - 2015-05-27
 
 * Fixed a bug with serializing the `query` request option where the `&`
   separator was missing.
