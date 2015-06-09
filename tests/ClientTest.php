@@ -493,4 +493,53 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client->send($request, ['query' => ['foo' => 'bar', 'john' => 'doe']]);
         $this->assertEquals('foo=bar&john=doe', $mock->getLastRequest()->getUri()->getQuery());
     }
+
+    public function testRequestFactory()
+    {
+        $client = new Client([
+            'base_uri' => 'http://foo.com',
+            'headers'  => ['bar' => 'baz'],
+        ]);
+
+        $request = $client->requestFactory('GET', 'http://foo.com', [
+            'query' => ['foo' => 'bar', 'john' => 'doe'],
+        ]);
+
+        $this->assertEquals('foo=bar&john=doe', $request->getUri()->getQuery());
+        $this->assertEquals(['baz'], $request->getHeader('bar'));
+    }
+
+    public function testSendingRequestFactoryInstance()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $request = $client->requestFactory('GET', 'http://foo.com');
+
+        $response = $client->send($request);
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testRequestFactoryHeaders()
+    {
+        $client = new Client();
+
+        $request = $client->requestFactory('GET', 'http://foo.com', [
+            'headers'  => ['bar' => 'baz'],
+        ]);
+
+        $this->assertEquals(['baz'], $request->getHeader('bar'));
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testRequestFactoryInvalidBody()
+    {
+        $client = new Client();
+
+        $client->requestFactory('GET', 'http://foo.com', [
+            'body' => ['foo' => 'bar', 'john' => 'doe'],
+        ]);
+    }
 }
