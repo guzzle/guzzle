@@ -65,7 +65,7 @@ interface ClientInterface
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply.
      *
-     * @return ResponseInterface
+     * @return PromiseInterface
      */
     public function requestAsync($method, $uri, array $options = []);
 
