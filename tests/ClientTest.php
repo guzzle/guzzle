@@ -8,6 +8,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Uri;
 
 class ClientTest extends \PHPUnit_Framework_TestCase
 {
@@ -79,6 +80,20 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(
             'http://foo.com/bar/baz',
             $mock->getLastRequest()->getUri()
+        );
+    }
+
+    public function testCanMergeOnBaseUriWithRequest()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client([
+            'handler'  => $mock,
+            'base_uri' => 'http://foo.com/bar/'
+        ]);
+        $client->request('GET', new Uri('baz'));
+        $this->assertEquals(
+            'http://bar.com/bar/baz',
+            (string) $mock->getLastRequest()->getUri()
         );
     }
 
