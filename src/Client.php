@@ -282,6 +282,13 @@ class Client implements ClientInterface
         $modify = [];
 
         if (isset($options['form_params'])) {
+            if (isset($options['multipart'])) {
+                throw new \InvalidArgumentException('You cannot use '
+                    . 'form_params and multipart at the same time. Use the '
+                    . 'form_params option if you want to send application/'
+                    . 'x-www-form-urlencoded requests, and the multipart '
+                    . 'option to send multipart/form-data requests.');
+            }
             $options['body'] = http_build_query($options['form_params']);
             unset($options['form_params']);
             $options['_conditional']['Content-Type'] = 'application/x-www-form-urlencoded';
