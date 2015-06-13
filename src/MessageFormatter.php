@@ -108,7 +108,7 @@ class MessageFormatter
                         $result = $response ? $response->getBody() : 'NULL';
                         break;
                     case 'ts':
-                        $result = gmdate('c');
+                        $result = gmdate("d/M/Y:H:i:s O");
                         break;
                     case 'method':
                         $result = $request->getMethod();
