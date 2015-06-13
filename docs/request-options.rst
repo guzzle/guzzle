@@ -478,11 +478,29 @@ json
 
 .. code-block:: php
 
-    $request = $client->createRequest('PUT', '/put', ['json' => ['foo' => 'bar']]);
-    echo $request->getHeader('Content-Type');
-    // application/json
-    echo $request->getBody();
-    // {"foo":"bar"}
+    $response = $client->put('/put', ['json' => ['foo' => 'bar']]);
+
+Here's an example of using the ``tap`` middleware to see what request is sent
+over the wire.
+
+.. code-block:: php
+
+    use GuzzleHttp\Middleware;
+
+    // Grab the client's handler instance.
+    $clientHandler = $client->getConfig('handler');
+    // Create a middleware that echoes parts of the request.
+    $tapMiddleware = Middleware::tap(function ($request) {
+        echo $request->getHeader('Content-Type');
+        // application/json
+        echo $request->getBody();
+        // {"foo":"bar"}
+    });
+
+    $response = $client->put('/put', [
+        'json'    => ['foo' => 'bar'],
+        'handler' => $tapMiddleware($clientHandler)
+    ]);
 
 .. note::
 
@@ -830,6 +848,4 @@ version
 .. code-block:: php
 
     // Force HTTP/1.0
-    $request = $client->createRequest('GET', '/get', ['version' => 1.0]);
-    echo $request->getProtocolVersion();
-    // 1.0
+    $request = $client->get('/get', ['version' => 1.0]);
