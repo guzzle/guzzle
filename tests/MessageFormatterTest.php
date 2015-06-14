@@ -25,7 +25,7 @@ class MessageFormatterTest extends \PHPUnit_Framework_TestCase
         return [
             ['{ts}', '/^[0-9]{4}\-[0-9]{2}\-[0-9]{2}/'],
             ['{date_iso_8601}', '/^[0-9]{4}\-[0-9]{2}\-[0-9]{2}/'],
-            ['{date_common_log}', '/^\d\d\/[A-Z][a-z]{2}\/[0-9]{4}:\d\d:\d\d:\d\d \-[\d]{4}/']
+            ['{date_common_log}', '/^\d\d\/[A-Z][a-z]{2}\/[0-9]{4}/']
         ];
     }
 
