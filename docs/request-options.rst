@@ -382,6 +382,12 @@ present.
         ]
     ]);
 
+.. note::
+
+    ``form_params`` cannot be used with the ``multipart`` option. You will need to use
+    one or the other. Use ``form_params`` for ``application/x-www-form-urlencoded``
+    requests, and ``multipart`` for ``multipart/form-data`` requests.
+
 
 headers
 -------
@@ -515,7 +521,7 @@ over the wire.
 multipart
 ---------
 
-:Summary: Sets the body of the request to a multipart/form-data form.
+:Summary: Sets the body of the request to a `multipart/form-data` form.
 :Types: array
 :Constant: ``GuzzleHttp\RequestOptions::MULTIPART``
 
@@ -549,6 +555,12 @@ the following key value pairs:
             ],
         ]
     ]);
+
+.. note::
+
+    ``multipart`` cannot be used with the ``form_params`` option. You will need to
+    use one or the other. Use ``form_params`` for ``application/x-www-form-urlencoded``
+    requests, and ``multipart`` for ``multipart/form-data`` requests.
 
 
 .. _on-headers:
