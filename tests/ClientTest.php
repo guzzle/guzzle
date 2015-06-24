@@ -92,7 +92,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         ]);
         $client->request('GET', new Uri('baz'));
         $this->assertEquals(
-            'http://bar.com/bar/baz',
+            'http://foo.com/bar/baz',
             (string) $mock->getLastRequest()->getUri()
         );
     }
