@@ -361,10 +361,11 @@ associative arrays, where each associative array contains the following keys:
 .. code-block:: php
 
     $response = $client->post('http://httpbin.org/post', [
-        'form_params' => [
-            'field_name' => 'abc',
-        ],
         'multipart' => [
+            [
+                'name'     => 'field_name',
+                'contents' => 'abc'
+            ],
             [
                 'name'     => 'file_name',
                 'contents' => fopen('/path/to/file', 'r')
