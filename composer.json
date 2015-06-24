@@ -14,7 +14,7 @@
     ],
     "require": {
         "php": ">=5.5.0",
-        "guzzlehttp/psr7": "~1.0",
+        "guzzlehttp/psr7": "~1.1",
         "guzzlehttp/promises": "~1.0"
     },
     "require-dev": {
