@@ -173,8 +173,11 @@ class CurlFactory implements CurlFactoryInterface
             CURLOPT_RETURNTRANSFER => false,
             CURLOPT_HEADER         => false,
             CURLOPT_CONNECTTIMEOUT => 150,
-            CURLOPT_PROTOCOLS      => CURLPROTO_HTTP | CURLPROTO_HTTPS,
         ];
+
+        if (defined('CURLOPT_PROTOCOLS')) {
+            $conf += [CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS];
+        }
 
         $version = $easy->request->getProtocolVersion();
         if ($version == 1.1) {
