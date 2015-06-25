@@ -23,7 +23,7 @@
         "psr/log": "~1.0"
     },
     "autoload": {
-        "files": ["src/functions.php"],
+        "files": ["src/functions_include.php"],
         "psr-4": {
             "GuzzleHttp\\": "src/"
         }
