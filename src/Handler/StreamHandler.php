@@ -45,6 +45,7 @@ class StreamHandler
             // This list can probably get more comprehensive.
             if (strpos($message, 'getaddrinfo') // DNS lookup failed
                 || strpos($message, 'Connection refused')
+                || strpos($message, "couldn't connect to host")
             ) {
                 $e = new ConnectException($e->getMessage(), $request, $e);
             }
