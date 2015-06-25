@@ -178,7 +178,7 @@ class CurlFactory implements CurlFactoryInterface
         ];
 
         if (defined('CURLOPT_PROTOCOLS')) {
-            $conf += [CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS];
+            $conf[CURLOPT_PROTOCOLS] = CURLPROTO_HTTP | CURLPROTO_HTTPS;
         }
 
         $version = $easy->request->getProtocolVersion();
