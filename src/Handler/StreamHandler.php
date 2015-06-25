@@ -8,6 +8,7 @@ use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 
 /**
@@ -67,8 +68,10 @@ class StreamHandler
         $reason = isset($parts[2]) ? $parts[2] : null;
         $headers = \GuzzleHttp\headers_from_lines($hdrs);
         $stream = Psr7\stream_for($this->checkDecode($options, $headers, $stream));
-        $sink = $this->createSink($stream, $options);
-        $response = new Psr7\Response($status, $headers, $sink, $ver, $reason);
+        // Create a response to easily query the returned headers.
+        $response = new Psr7\Response($status, $headers, null, $ver, $reason);
+        $sink = $this->createSink($stream, $options, $response);
+        $response = $response->withBody($sink);
 
         if (isset($options['on_headers'])) {
             try {
@@ -80,18 +83,33 @@ class StreamHandler
             }
         }
 
-        if ($sink !== $stream) {
+        // Only drain the stream if the sink is not the same as the created
+        // stream AND if the "stream" option is disabled.
+        if (empty($options['stream']) && $sink !== $stream) {
             $this->drain($stream, $sink);
         }
 
         return new FulfilledPromise($response);
     }
 
-    private function createSink(StreamInterface $stream, array $options)
-    {
+    private function createSink(
+        StreamInterface $stream,
+        array $options,
+        ResponseInterface $response
+    ) {
+        $size = $response->getHeaderLine('Content-Length') ?: null;
+
         if (!empty($options['stream'])) {
-            return $stream;
-        }
+            // If the size cannot be determined, return the stream directly.
+            if ($size === null) {
+                return $stream;
+            }
+            // if the size can be determined, return a decorated stream that
+            // responds with the correct size when requested.
+            return Psr7\FnStream::decorate($stream, [
+                'getSize' => function () use ($size) { return (int) $size; }
+            ]);
+        };
 
         $sink = isset($options['sink'])
             ? $options['sink']

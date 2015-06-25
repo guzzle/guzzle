@@ -452,4 +452,30 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('bar', $response->getHeaderLine('X-Foo'));
         $this->assertEquals('abc 123', (string) $response->getBody());
     }
+
+    public function testAddsSizeWhenStreamOptionEnabled()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '5'], '12345')
+        ]);
+        $req = new Request('GET', Server::$url);
+        $handler = new StreamHandler();
+        $promise = $handler($req, ['stream' => true]);
+        $response = $promise->wait();
+        $this->assertEquals(5, $response->getBody()->getSize());
+    }
+
+    public function testHasSizeWhenStreamOptionDisabled()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '5'], '12345')
+        ]);
+        $req = new Request('GET', Server::$url);
+        $handler = new StreamHandler();
+        $promise = $handler($req, []);
+        $response = $promise->wait();
+        $this->assertEquals(5, $response->getBody()->getSize());
+    }
 }
