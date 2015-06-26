@@ -110,10 +110,7 @@ class CurlFactory implements CurlFactoryInterface
         // Get error information and release the handle to the factory.
         $ctx = [
             'errno' => $easy->errno,
-            'error' => curl_error($easy->handle)
-              ?: (function_exists('curl_strerror')
-                ? curl_strerror($easy->errno)
-                : 'Error code: ' . $easy->errno),
+            'error' => curl_error($easy->handle),
         ] + curl_getinfo($easy->handle);
         $factory->release($easy);
 
