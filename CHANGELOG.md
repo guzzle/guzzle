@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## Next Release - TBD
+
+* Fixed a memory leak in the curl handlers in which references to callbacks
+  were not being removed by `curl_reset`.
+
 ## 6.0.1 - 2015-05-27
 
 * Fixed a bug with serializing the `query` request option where the `&`
