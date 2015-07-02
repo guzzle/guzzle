@@ -90,6 +90,7 @@ class RequestException extends TransferException
         }
 
         $message = $label . ' [url] ' . $request->getUri()
+            . ' [http method] ' . $request->getMethod()
             . ' [status code] ' . $response->getStatusCode()
             . ' [reason phrase] ' . $response->getReasonPhrase();
 
