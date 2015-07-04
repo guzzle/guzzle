@@ -50,10 +50,12 @@ final class EasyHandle
 
         // HTTP-version SP status-code SP reason-phrase
         $startLine = explode(' ', array_shift($this->headers), 3);
-
         $headers = \GuzzleHttp\headers_from_lines($this->headers);
-        $normalizedKeys = array_combine(array_map('strtolower', array_keys($headers)), array_keys($headers));
-        if (!empty($this->options['decode_content']) && isset($normalizedKeys['content-encoding'])) {
+        $normalizedKeys = \GuzzleHttp\normalize_header_keys($headers);
+
+        if (!empty($this->options['decode_content'])
+            && isset($normalizedKeys['content-encoding'])
+        ) {
             unset($headers[$normalizedKeys['content-encoding']]);
             if (isset($normalizedKeys['content-length'])) {
                 $bodyLength = (int) $this->sink->getSize();

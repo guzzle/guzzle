@@ -108,8 +108,7 @@ class StreamHandler
     {
         // Automatically decode responses when instructed.
         if (!empty($options['decode_content'])) {
-            $normalizedKeys = array_combine(array_map('strtolower', array_keys($headers)), array_keys($headers));
-
+            $normalizedKeys = \GuzzleHttp\normalize_header_keys($headers);
             if (isset($normalizedKeys['content-encoding'])) {
                 $encoding = $headers[$normalizedKeys['content-encoding']];
                 if ($encoding[0] == 'gzip' || $encoding[0] == 'deflate') {
@@ -124,14 +123,14 @@ class StreamHandler
                         if ($length == 0) {
                             unset($headers[$normalizedKeys['content-length']]);
                         } else {
-                            $headers[$normalizedKeys['content-length']] = array($length);
+                            $headers[$normalizedKeys['content-length']] = [$length];
                         }
                     }
                 }
             }
         }
 
-        return array($stream, $headers);
+        return [$stream, $headers];
     }
 
     /**
