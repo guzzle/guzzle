@@ -32,7 +32,7 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(400));
         $this->assertEquals(
-            'Client error response [url] / [status code] 400 [reason phrase] Bad Request',
+            'Client error response [url] / [http method] GET [status code] 400 [reason phrase] Bad Request',
             $e->getMessage()
         );
         $this->assertInstanceOf('GuzzleHttp\Exception\ClientException', $e);
@@ -42,7 +42,7 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(500));
         $this->assertEquals(
-            'Server error response [url] / [status code] 500 [reason phrase] Internal Server Error',
+            'Server error response [url] / [http method] GET [status code] 500 [reason phrase] Internal Server Error',
             $e->getMessage()
         );
         $this->assertInstanceOf('GuzzleHttp\Exception\ServerException', $e);
@@ -52,7 +52,7 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(600));
         $this->assertEquals(
-            'Unsuccessful response [url] / [status code] 600 [reason phrase] ',
+            'Unsuccessful response [url] / [http method] GET [status code] 600 [reason phrase] ',
             $e->getMessage()
         );
         $this->assertInstanceOf('GuzzleHttp\Exception\RequestException', $e);
