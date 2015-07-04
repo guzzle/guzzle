@@ -1,9 +1,21 @@
 # CHANGELOG
 
-## Next Release - TBD
+## 6.0.2 - 2015-07-04
 
 * Fixed a memory leak in the curl handlers in which references to callbacks
   were not being removed by `curl_reset`.
+* Cookies are now extracted properly before redirects.
+* Cookies now allow more character ranges.
+* Decoded Content-Encoding responses are now modified to correctly reflect
+  their state if the encoding was automatically removed by a handler. This
+  means that the `Content-Encoding` header may be removed an the
+  `Content-Length` modified to reflect the message size after removing the
+  encoding.
+* Added a more explicit error message when trying to use `form_params` and
+  `multipart` in the same request.
+* Several fixes for HHVM support.
+* Functions are now conditionally required using an additional level of
+  indirection to help with global Composer installations.
 
 ## 6.0.1 - 2015-05-27
 
