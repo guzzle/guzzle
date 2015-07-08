@@ -410,6 +410,27 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function testFormParamsEncodedProperly()
+    {
+        $separator = ini_get('arg_separator.output');
+        ini_set('arg_separator.output', '&amp;');
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->post('http://foo.com', [
+            'form_params' => [
+                'foo' => 'bar bam',
+                'baz' => ['boo' => 'qux']
+            ]
+        ]);
+        $last = $mock->getLastRequest();
+        $this->assertEquals(
+            'foo=bar+bam&baz%5Bboo%5D=qux',
+            (string) $last->getBody()
+        );
+
+        ini_set('arg_separator.output', $separator);
+    }
+
     /**
      * @expectedException \InvalidArgumentException
      */
