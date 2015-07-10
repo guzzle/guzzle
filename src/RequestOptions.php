@@ -14,7 +14,18 @@ final class RequestOptions
      * allow_redirects: (bool|array) Controls redirect behavior. Pass false
      * to disable redirects, pass true to enable redirects, pass an
      * associative to provide custom redirect settings. Defaults to "false".
-     * This option only works if your handler has the RedirectMiddleware.
+     * This option only works if your handler has the RedirectMiddleware. When
+     * passing an associative array, you can provide the following key value
+     * pairs:
+     *
+     * - max: (int, default=5) maximum number of allowed redirects.
+     * - strict: (bool, default=false) Set to true to use strict redirects
+     *   meaning redirect POST requests with POST requests vs. doing what most
+     *   browsers do which is redirect POST requests with GET requests
+     * - referer: (bool, default=true) Set to false to disable the Referer
+     *   header.
+     * - protocols: (array, default=['http', 'https']) Allowed redirect
+     *   protocols.
      */
     const ALLOW_REDIRECTS = 'allow_redirects';
 
