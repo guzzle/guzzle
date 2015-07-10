@@ -89,6 +89,15 @@ class RedirectMiddleware
         $this->guardMax($request, $options);
         $nextRequest = $this->modifyRequest($request, $options, $response);
 
+        if (isset($options['allow_redirects']['on_redirect'])) {
+            call_user_func(
+                $options['allow_redirects']['on_redirect'],
+                $request,
+                $response,
+                $nextRequest->getUri()
+            );
+        }
+
         return $this($nextRequest, $options);
     }
 
