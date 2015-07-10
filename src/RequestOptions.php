@@ -26,6 +26,10 @@ final class RequestOptions
      *   header.
      * - protocols: (array, default=['http', 'https']) Allowed redirect
      *   protocols.
+     * - on_redirect: (callable) PHP callable that is invoked when a redirect
+     *   is encountered. The callable is invoked with the request, the redirect
+     *   response that was received, and the effective URI. Any return value
+     *   from the on_redirect function is ignored.
      */
     const ALLOW_REDIRECTS = 'allow_redirects';
 

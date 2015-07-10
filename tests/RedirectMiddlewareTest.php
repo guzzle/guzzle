@@ -144,4 +144,30 @@ class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
         $promise->wait();
         $this->assertFalse($mock->getLastRequest()->hasHeader('Referer'));
     }
+
+    public function testInvokesOnRedirectForRedirects()
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://test.com']),
+            new Response(200)
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('GET', 'http://example.com?a=b');
+        $call = false;
+        $promise = $handler($request, [
+            'allow_redirects' => [
+                'max' => 2,
+                'on_redirect' => function ($request, $response, $uri) use (&$call) {
+                    $this->assertEquals(302, $response->getStatusCode());
+                    $this->assertEquals('GET', $request->getMethod());
+                    $this->assertEquals('http://test.com', (string) $uri);
+                    $call = true;
+                }
+            ]
+        ]);
+        $promise->wait();
+        $this->assertTrue($call);
+    }
 }

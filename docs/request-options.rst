@@ -53,23 +53,44 @@ number of 5 redirects.
     echo $res->getStatusCode();
     // 200
 
-Pass an associative array containing the 'max' key to specify the maximum
-number of redirects, provide a 'strict' key value to specify whether or not to
-use strict RFC compliant redirects (meaning redirect POST requests with POST
-requests vs. doing what most browsers do which is redirect POST requests with
-GET requests), provide a 'referer' key to specify whether or not the "Referer"
-header should be added when redirecting, and provide a 'protocols' array that
-specifies which protocols are supported for redirects (defaults to
-``['http', 'https']``).
+You can also pass an associative array containing the following key value
+pairs:
+
+- max: (int, default=5) maximum number of allowed redirects.
+- strict: (bool, default=false) Set to true to use strict redirects.
+  Strict RFC compliant redirects mean that POST redirect requests are sent as
+  POST requests vs. doing what most browsers do which is redirect POST requests
+  with GET requests.
+- referer: (bool, default=true) Set to false to disable adding the Referer
+  header when redirecting.
+- protocols: (array, default=['http', 'https']) Specified which protocols are
+  allowed for redirect requests.
+- on_redirect: (callable) PHP callable that is invoked when a redirect
+  is encountered. The callable is invoked with the original request and the
+  redirect response that was received. Any return value from the on_redirect
+  function is ignored.
 
 .. code-block:: php
 
+    use Psr\Http\Message\RequestInterface;
+    use Psr\Http\Message\ResponseInterface;
+    use Psr\Http\Message\UriInterface;
+
+    $onRedirect = function(
+        RequestInterface $request,
+        ResponseInterface $response,
+        UriInterface $uri
+    ) {
+        echo 'Redirecting! ' . $request->getUri() . ' to ' . $uri . "\n";
+    }
+
     $res = $client->get('/redirect/3', [
         'allow_redirects' => [
-            'max'       => 10,       // allow at most 10 redirects.
-            'strict'    => true,     // use "strict" RFC compliant redirects.
-            'referer'   => true,     // add a Referer header
-            'protocols' => ['https'] // only allow https URLs
+            'max'         => 10,        // allow at most 10 redirects.
+            'strict'      => true,      // use "strict" RFC compliant redirects.
+            'referer'     => true,      // add a Referer header
+            'protocols'   => ['https'], // only allow https URLs
+            'on_redirect' => $onRedirect
         ]
     ]);
     echo $res->getStatusCode();
