@@ -21,7 +21,8 @@ class RedirectMiddleware
         'max'       => 5,
         'protocols' => ['http', 'https'],
         'strict'    => false,
-        'referer'   => false
+        'referer'   => false,
+        'track_redirects' => false,
     ];
 
     /** @var callable  */
@@ -98,7 +99,18 @@ class RedirectMiddleware
             );
         }
 
-        return $this($nextRequest, $options);
+        /** @var PromiseInterface|ResponseInterface $response */
+        $options['_previous_uris'][] = $request->getUri();
+        $response = $this($nextRequest, $options);
+
+        // Add headers to be able to track history of redirects.
+        if (!empty($options['allow_redirects']['track_redirects'])) {
+            $response = $response->wait(TRUE);
+            if (!$response->hasHeader('X-Guzzle-Redirect')) {
+                $response = $response->withHeader('X-Guzzle-Redirect', $options['_previous_uris']);
+            }
+        }
+        return $response;
     }
 
     private function guardMax(RequestInterface $request, array &$options)
