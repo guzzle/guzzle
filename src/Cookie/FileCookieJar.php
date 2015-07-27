@@ -49,7 +49,7 @@ class FileCookieJar extends CookieJar
         $json = [];
         foreach ($this as $cookie) {
             /** @var SetCookie $cookie */
-            if($cookie->getExpires() || $this->storeSessionCookies){
+            if($cookie->getExpires() || $this->storeSessionCookies) {
                 if (!$cookie->getDiscard()) {
                     $json[] = $cookie->toArray();
                 }
