@@ -35,6 +35,13 @@ class StreamHandler
         try {
             // Does not support the expect header.
             $request = $request->withoutHeader('Expect');
+
+            // Append a content-length header if body size is zero to match
+            // cURL's behavior.
+            if (0 === $request->getBody()->getSize()) {
+                $request = $request->withHeader('Content-Length', 0);
+            }
+
             $stream = $this->createStream($request, $options);
             return $this->createResponse($request, $options, $stream);
         } catch (\InvalidArgumentException $e) {
