@@ -75,6 +75,23 @@ class CookieJar implements CookieJarInterface
 
         return $value;
     }
+    
+    /**
+     * Evaluate if this cookie should be persisted to storage that survives between requests.
+     * 
+     * @param SetCookie $cookie Being evaluated.
+     * @param bool $allowSessionCookies If we should presist session cookies.
+     * @return bool
+     */
+    public static function shouldPersist(SetCookie $cookie, $allowSessionCookies = false)
+    {
+    	if($cookie->getExpires() || $this->storeSessionCookies) {
+    	    if (!$cookie->getDiscard()) {
+    	        return true;
+    	    }
+    	}
+    	return false;
+    }
 
     public function toArray()
     {
