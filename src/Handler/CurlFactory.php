@@ -362,9 +362,12 @@ class CurlFactory implements CurlFactoryInterface
             if (!is_array($options['proxy'])) {
                 $conf[CURLOPT_PROXY] = $options['proxy'];
             } elseif ($scheme = $easy->request->getUri()->getScheme()) {
-                if (isset($options['proxy'][$scheme])) {
-                    $conf[CURLOPT_PROXY] = $options['proxy'][$scheme];
-                }
+            	$host = $easy->request->getUri()->getHost();
+            	if(!isset($options['proxy']['no']) || !in_array($host, $options['proxy']['no'])){
+                    if (isset($options['proxy'][$scheme])) {
+                        $conf[CURLOPT_PROXY] = $options['proxy'][$scheme];
+                    }        		
+            	}
             }
         }
 

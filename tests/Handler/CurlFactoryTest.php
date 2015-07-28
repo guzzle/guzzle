@@ -143,6 +143,12 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
             'proxy' => ['http' => 'http://bar.com', 'https' => 'https://t'],
         ]);
         $this->assertEquals('http://bar.com', $_SERVER['_curl'][CURLOPT_PROXY]);
+        $request = new Psr7\Request('GET', Server::$url);
+        $host = $request->getUri()->getHost();
+        $f->create($request, [
+            'proxy' => ['http' => 'http://bar.com', 'https' => 'https://t', 'no' => [$host]],
+        ]);
+        $this->assertArrayNotHasKey(CURLOPT_PROXY, $_SERVER['_curl']);
     }
 
     /**
