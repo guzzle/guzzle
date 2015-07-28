@@ -73,7 +73,7 @@ final class EasyHandle
             $headers,
             $this->sink,
             substr($startLine[0], 5),
-            isset($startLine[2]) ? (int) $startLine[2] : null
+            isset($startLine[2]) ? (string) $startLine[2] : null
         );
     }
 
