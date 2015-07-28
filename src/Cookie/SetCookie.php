@@ -46,7 +46,7 @@ class SetCookie
             $cookieParts = explode('=', $part, 2);
             $key = trim($cookieParts[0]);
             $value = isset($cookieParts[1])
-                ? trim($cookieParts[1], " \n\r\t\0\x0B\"")
+                ? trim($cookieParts[1], " \n\r\t\0\x0B")
                 : true;
 
             // Only check for non-cookies when cookies have been found

@@ -186,7 +186,7 @@ class SetCookieTest extends \PHPUnit_Framework_TestCase
     {
         return array(
             array(
-                'ASIHTTPRequestTestCookie=This+is+the+value; expires=Sat, 26-Jul-2008 17:00:42 GMT; path=/tests; domain=allseeing-i.com; PHPSESSID=6c951590e7a9359bcedde25cda73e43c; path=/";',
+                'ASIHTTPRequestTestCookie=This+is+the+value; expires=Sat, 26-Jul-2008 17:00:42 GMT; path=/tests; domain=allseeing-i.com; PHPSESSID=6c951590e7a9359bcedde25cda73e43c; path=/;',
                 array(
                     'Domain' => 'allseeing-i.com',
                     'Path' => '/',
@@ -202,6 +202,20 @@ class SetCookieTest extends \PHPUnit_Framework_TestCase
             ),
             array('', []),
             array('foo', []),
+            array(
+                'foo="bar"',
+                [
+                    'Name' => 'foo',
+                    'Value' => '"bar"',
+                    'Discard' => null,
+                    'Domain' => null,
+                    'Expires' => null,
+                    'Max-Age' => null,
+                    'Path' => '/',
+                    'Secure' => null,
+                    'HttpOnly' => false
+                ]
+            ),
             // Test setting a blank value for a cookie
             array(array(
                 'foo=', 'foo =', 'foo =;', 'foo= ;', 'foo =', 'foo= '),
@@ -219,7 +233,7 @@ class SetCookieTest extends \PHPUnit_Framework_TestCase
             ),
             // Test setting a value and removing quotes
             array(array(
-                'foo=1', 'foo =1', 'foo =1;', 'foo=1 ;', 'foo =1', 'foo= 1', 'foo = 1 ;', 'foo="1"', 'foo="1";', 'foo= "1";'),
+                'foo=1', 'foo =1', 'foo =1;', 'foo=1 ;', 'foo =1', 'foo= 1', 'foo = 1 ;'),
                 array(
                     'Name' => 'foo',
                     'Value' => '1',
