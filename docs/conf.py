@@ -15,7 +15,7 @@ project = u'Guzzle'
 copyright = u'2015, Michael Dowling'
 version = '6'
 html_title = "Guzzle Documentation"
-html_short_title = "Guzzle"
+html_short_title = "Guzzle 6"
 
 exclude_patterns = ['_build']
 html_static_path = ['_static']
