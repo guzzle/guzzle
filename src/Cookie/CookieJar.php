@@ -85,7 +85,7 @@ class CookieJar implements CookieJarInterface
      */
     public static function shouldPersist(SetCookie $cookie, $allowSessionCookies = false)
     {
-    	if($cookie->getExpires() || $this->storeSessionCookies) {
+    	if($cookie->getExpires() || $allowSessionCookies) {
     	    if (!$cookie->getDiscard()) {
     	        return true;
     	    }
