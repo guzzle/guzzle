@@ -30,6 +30,11 @@ class CurlFactory implements CurlFactoryInterface
 
     public function create(RequestInterface $request, array $options)
     {
+        if (isset($options['curl']['body_as_string'])) {
+            $options['_body_as_string'] = $options['curl']['body_as_string'];
+            unset($options['curl']['body_as_string']);
+        }
+
         $easy = new EasyHandle;
         $easy->request = $request;
         $easy->options = $options;
@@ -38,11 +43,6 @@ class CurlFactory implements CurlFactoryInterface
         $this->applyHandlerOptions($easy, $conf);
         $this->applyHeaders($easy, $conf);
         unset($conf['_headers']);
-
-        if (isset($options['curl']['body_as_string'])) {
-            $options['_body_as_string'] = $options['curl']['body_as_string'];
-            unset($options['curl']['body_as_string']);
-        }
 
         // Add handler options from the request configuration options
         if (isset($options['curl'])) {
