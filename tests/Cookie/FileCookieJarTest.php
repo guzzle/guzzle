@@ -32,9 +32,9 @@ class FileCookieJarTest extends \PHPUnit_Framework_TestCase
         unlink($this->file);
     }
 
-    public function testPersistsToFileFile()
+    public function testPersistsToFileFile($testSaveSessionCookie = false)
     {
-        $jar = new FileCookieJar($this->file);
+        $jar = new FileCookieJar($this->file, $testSaveSessionCookie);
         $jar->setCookie(new SetCookie([
             'Name'    => 'foo',
             'Value'   => 'bar',
@@ -63,9 +63,20 @@ class FileCookieJarTest extends \PHPUnit_Framework_TestCase
         // Load the cookieJar from the file
         $jar = new FileCookieJar($this->file);
 
-        // Weeds out temporary and session cookies
+        if($testSaveSessionCookie) {
+            $this->assertEquals(3, count($jar));
+        } else {
+            // Weeds out temporary and session cookies
+            $this->assertEquals(2, count($jar));
+        }
+
         $this->assertEquals(2, count($jar));
         unset($jar);
         unlink($this->file);
+    }
+
+    public function testPersistsToFilefileWithSessionCookie()
+    {
+        testPersistsToFileFile(true);
     }
 }

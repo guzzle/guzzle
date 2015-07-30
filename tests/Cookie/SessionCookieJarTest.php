@@ -36,9 +36,9 @@ class SessionCookieJarTest extends \PHPUnit_Framework_TestCase
         unset($_SESSION[$this->sessionVar]);
     }
 
-    public function testPersistsToSession()
+    public function testPersistsToSession($testSaveSessionCookie = false)
     {
-        $jar = new SessionCookieJar($this->sessionVar);
+        $jar = new SessionCookieJar($this->sessionVar, $testSaveSessionCookie);
         $jar->setCookie(new SetCookie([
             'Name'    => 'foo',
             'Value'   => 'bar',
@@ -67,9 +67,19 @@ class SessionCookieJarTest extends \PHPUnit_Framework_TestCase
         // Load the cookieJar from the file
         $jar = new SessionCookieJar($this->sessionVar);
 
-        // Weeds out temporary and session cookies
-        $this->assertEquals(2, count($jar));
+        if($testSaveSessionCookie) {
+            $this->assertEquals(3, count($jar));
+        } else {
+            // Weeds out temporary and session cookies
+            $this->assertEquals(2, count($jar));
+        }
+
         unset($jar);
         unset($_SESSION[$this->sessionVar]);
+    }
+
+    public function testPersistsToSessionWithSessionCookie()
+    {
+        testPersistsToSession(true);
     }
 }

@@ -18,8 +18,9 @@ class CookieJar implements CookieJarInterface
     /**
      * @param bool $strictMode   Set to true to throw exceptions when invalid
      *                           cookies are added to the cookie jar.
-     * @param array $cookieArray Array of SetCookie objects or a hash of arrays
-     *                           that can be used with the SetCookie constructor
+     * @param array $cookieArray Array of SetCookie objects or a hash of 
+     *                           arrays that can be used with the SetCookie 
+     *                           constructor
      */
     public function __construct($strictMode = false, $cookieArray = [])
     {
@@ -77,14 +78,17 @@ class CookieJar implements CookieJarInterface
     }
     
     /**
-     * Evaluate if this cookie should be persisted to storage that survives between requests.
+     * Evaluate if this cookie should be persisted to storage 
+     * that survives between requests.
      * 
      * @param SetCookie $cookie Being evaluated.
-     * @param bool $allowSessionCookies If we should presist session cookies.
+     * @param bool $allowSessionCookies If we should presist session cookies
      * @return bool
      */
-    public static function shouldPersist(SetCookie $cookie, $allowSessionCookies = false)
-    {
+    public static function shouldPersist(
+        SetCookie $cookie,
+        $allowSessionCookies = false
+    ) {
     	if($cookie->getExpires() || $allowSessionCookies) {
     	    if (!$cookie->getDiscard()) {
     	        return true;
