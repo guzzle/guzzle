@@ -70,7 +70,6 @@ class FileCookieJarTest extends \PHPUnit_Framework_TestCase
             $this->assertEquals(2, count($jar));
         }
 
-        $this->assertEquals(2, count($jar));
         unset($jar);
         unlink($this->file);
     }
