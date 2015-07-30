@@ -80,6 +80,6 @@ class SessionCookieJarTest extends \PHPUnit_Framework_TestCase
 
     public function testPersistsToSessionWithSessionCookie()
     {
-        testPersistsToSession(true);
+        $this->testPersistsToSession(true);
     }
 }

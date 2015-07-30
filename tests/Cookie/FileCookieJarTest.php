@@ -77,6 +77,6 @@ class FileCookieJarTest extends \PHPUnit_Framework_TestCase
 
     public function testPersistsToFilefileWithSessionCookie()
     {
-        testPersistsToFileFile(true);
+        $this->testPersistsToFileFile(true);
     }
 }
