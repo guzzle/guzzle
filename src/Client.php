@@ -173,8 +173,8 @@ class Client implements ClientInterface
         }
 
         if ($noProxy = getenv('NO_PROXY')) {
-        	$cleanedNoProxy = preg_replace('/\s/', '', $noProxy);
-        	$defaults['proxy']['no'] = explode(',', $cleanedNoProxy);
+            $cleanedNoProxy = preg_replace('/\s/', '', $noProxy);
+            $defaults['proxy']['no'] = explode(',', $cleanedNoProxy);
         }
         
         $this->config = $config + $defaults;
