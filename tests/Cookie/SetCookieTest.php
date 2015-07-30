@@ -117,15 +117,35 @@ class SetCookieTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($cookie->matchesDomain('example.local'));
     }
 
-    public function testMatchesPath()
+    public function pathMatchProvider()
+    {
+        return [
+            ['/foo', '/foo', true],
+            ['/foo', '/Foo', false],
+            ['/foo', '/fo', false],
+            ['/foo', '/foo/bar', true],
+            ['/foo', '/foo/bar/baz', true],
+            ['/foo', '/foo/bar//baz', true],
+            ['/foo', '/foobar', false],
+            ['/foo/bar', '/foo', false],
+            ['/foo/bar', '/foobar', false],
+            ['/foo/bar', '/foo/bar', true],
+            ['/foo/bar', '/foo/bar/', true],
+            ['/foo/bar', '/foo/bar/baz', true],
+            ['/foo/bar/', '/foo/bar', false],
+            ['/foo/bar/', '/foo/bar/', true],
+            ['/foo/bar/', '/foo/bar/baz', true],
+        ];
+    }
+
+    /**
+     * @dataProvider pathMatchProvider
+     */
+    public function testMatchesPath($cookiePath, $requestPath, $isMatch)
     {
         $cookie = new SetCookie();
-        $this->assertTrue($cookie->matchesPath('/foo'));
-
-        $cookie->setPath('/foo');
-        $this->assertTrue($cookie->matchesPath('/foo'));
-        $this->assertTrue($cookie->matchesPath('/foo/bar'));
-        $this->assertFalse($cookie->matchesPath('/bar'));
+        $cookie->setPath($cookiePath);
+        $this->assertEquals($isMatch, $cookie->matchesPath($requestPath));
     }
 
     public function cookieValidateProvider()

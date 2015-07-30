@@ -286,15 +286,43 @@ class SetCookie
     }
 
     /**
-     * Check if the cookie matches a path value
+     * Check if the cookie matches a path value.
      *
-     * @param string $path Path to check against
+     * A request-path path-matches a given cookie-path if at least one of
+     * the following conditions holds:
+     *
+     * - The cookie-path and the request-path are identical.
+     * - The cookie-path is a prefix of the request-path, and the last
+     *   character of the cookie-path is %x2F ("/").
+     * - The cookie-path is a prefix of the request-path, and the first
+     *   character of the request-path that is not included in the cookie-
+     *   path is a %x2F ("/") character.
+     *
+     * @param string $requestPath Path to check against
      *
      * @return bool
      */
-    public function matchesPath($path)
+    public function matchesPath($requestPath)
     {
-        return !$this->getPath() || 0 === stripos($path, $this->getPath());
+        $cookiePath = $this->getPath();
+
+        // Match on exact matches or when path is the default empty "/"
+        if ($cookiePath == '/' || $cookiePath == $requestPath) {
+            return true;
+        }
+
+        // Ensure that the cookie-path is a prefix of the request path.
+        if (0 !== strpos($requestPath, $cookiePath)) {
+            return false;
+        }
+
+        // Match if the last character of the cookie-path is "/"
+        if (substr($cookiePath, -1, 1) == '/') {
+            return true;
+        }
+
+        // Match if the first character not included in cookie path is "/"
+        return substr($requestPath, strlen($cookiePath), 1) == '/';
     }
 
     /**
@@ -321,7 +349,7 @@ class SetCookie
             return false;
         }
 
-        return (bool) preg_match('/\.' . preg_quote($cookieDomain) . '$/i', $domain);
+        return (bool) preg_match('/\.' . preg_quote($cookieDomain) . '$/', $domain);
     }
 
     /**
@@ -348,8 +376,13 @@ class SetCookie
         }
 
         // Check if any of the invalid characters are present in the cookie name
-        if (preg_match('/[\x00-\x20\x22\x28-\x29\x2c\x2f\x3a-\x40\x5b-\x5d\x7b\x7d\x7f]/', $name)) {
-            return 'Cookie name must not contain invalid characters: ASCII Control characters (0-31;127), space, tab and the following characters: ()<>@,;:\"/[]?={}';
+        if (preg_match(
+            '/[\x00-\x20\x22\x28-\x29\x2c\x2f\x3a-\x40\x5b-\x5d\x7b\x7d\x7f]/',
+            $name)
+        ) {
+            return 'Cookie name must not contain invalid characters: ASCII '
+                . 'Control characters (0-31;127), space, tab and the '
+                . 'following characters: ()<>@,;:\"/[]?={}';
         }
 
         // Value must not be empty, but can be 0
