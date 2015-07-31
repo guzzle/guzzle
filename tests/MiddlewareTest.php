@@ -145,7 +145,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         }));
         $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com'), []);
-        $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $p);
+        $this->assertInstanceOf('GuzzleHttp\Promise\PromiseInterface', $p);
     }
 
     public function testMapsResponse()

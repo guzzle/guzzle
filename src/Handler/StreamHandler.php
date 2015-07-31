@@ -7,7 +7,9 @@ use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
+use GuzzleHttp\TransferStats;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 
 /**
@@ -32,6 +34,8 @@ class StreamHandler
             usleep($options['delay'] * 1000);
         }
 
+        $startTime = isset($options['on_stats']) ? microtime(true) : null;
+
         try {
             // Does not support the expect header.
             $request = $request->withoutHeader('Expect');
@@ -42,8 +46,12 @@ class StreamHandler
                 $request = $request->withHeader('Content-Length', 0);
             }
 
-            $stream = $this->createStream($request, $options);
-            return $this->createResponse($request, $options, $stream);
+            return $this->createResponse(
+                $request,
+                $options,
+                $this->createStream($request, $options),
+                $startTime
+            );
         } catch (\InvalidArgumentException $e) {
             throw $e;
         } catch (\Exception $e) {
@@ -56,16 +64,37 @@ class StreamHandler
             ) {
                 $e = new ConnectException($e->getMessage(), $request, $e);
             }
-            return new RejectedPromise(
-                RequestException::wrapException($request, $e)
+            $e = RequestException::wrapException($request, $e);
+            $this->invokeStatsFunction($options, $request, $startTime, null, $e);
+
+            return new RejectedPromise($e);
+        }
+    }
+
+    private function invokeStatsFunction(
+        array $options,
+        RequestInterface $request,
+        $startTime,
+        ResponseInterface $response = null,
+        $error = null
+    ) {
+        if (isset($options['on_stats'])) {
+            $stats = new TransferStats(
+                $request,
+                $response,
+                microtime(true) - $startTime,
+                $error,
+                []
             );
+            call_user_func($options['on_stats'], $stats);
         }
     }
 
     private function createResponse(
         RequestInterface $request,
         array $options,
-        $stream
+        $stream,
+        $startTime
     ) {
         $hdrs = $this->lastHeaders;
         $this->lastHeaders = [];
@@ -92,6 +121,8 @@ class StreamHandler
         if ($sink !== $stream) {
             $this->drain($stream, $sink);
         }
+
+        $this->invokeStatsFunction($options, $request, $startTime, $response, null);
 
         return new FulfilledPromise($response);
     }
