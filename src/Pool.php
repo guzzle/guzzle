@@ -52,11 +52,11 @@ class Pool implements PromisorInterface
 
         $iterable = \GuzzleHttp\Promise\iter_for($requests);
         $requests = function () use ($iterable, $client, $opts) {
-            foreach ($iterable as $rfn) {
+            foreach ($iterable as $key => $rfn) {
                 if ($rfn instanceof RequestInterface) {
-                    yield $client->sendAsync($rfn, $opts);
+                    yield $key => $client->sendAsync($rfn, $opts);
                 } elseif (is_callable($rfn)) {
-                    yield $rfn($opts);
+                    yield $key => $rfn($opts);
                 } else {
                     throw new \InvalidArgumentException('Each value yielded by '
                         . 'the iterator must be a Psr7\Http\Message\RequestInterface '
