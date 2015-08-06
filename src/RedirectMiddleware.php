@@ -158,6 +158,11 @@ class RedirectMiddleware
             $modify['remove_headers'][] = 'Referer';
         }
 
+        // Remove Authorization header if host is different.
+        if ($request->getUri()->getHost() !== $modify['uri']->getHost()) {
+            $modify['remove_headers'][] = 'Authorization';
+        }
+
         return Psr7\modify_request($request, $modify);
     }
 
