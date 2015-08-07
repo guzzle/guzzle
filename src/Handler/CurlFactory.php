@@ -363,7 +363,8 @@ class CurlFactory implements CurlFactoryInterface
                 $conf[CURLOPT_PROXY] = $options['proxy'];
             } elseif ($scheme = $easy->request->getUri()->getScheme()) {
             	$host = $easy->request->getUri()->getHost();
-            	if(!isset($options['proxy']['no']) || !$this->isHostInProxyArea($host, $options['proxy']['no'])) {
+            	if(!isset($options['proxy']['no']) 
+        	       ||!$this->isHostInProxyArea($host, $options['proxy']['no'])) {
                     if (isset($options['proxy'][$scheme])) {
                         $conf[CURLOPT_PROXY] = $options['proxy'][$scheme];
                     }        		
@@ -429,14 +430,13 @@ class CurlFactory implements CurlFactoryInterface
         foreach ($areas as $area) {
             $areaToMatch = $area;
             // if include all subdomains 
-            if(preg_match('#^\.#', $area)) {
+            if (!empty($area) && substr($area, 0, 1) === '.'){
                 $areaToMatch = "*$area";
             }
             // Use wilcards
             $delimiter = '#';
-            $starEscaped = preg_quote('*', $delimiter);
             $areaToMatch = preg_quote($areaToMatch, $delimiter);
-            $areaToMatch = str_replace($starEscaped, '.*', $areaToMatch);  
+            $areaToMatch = str_replace('\*', '.*', $areaToMatch);  
             if(preg_match("$delimiter^$areaToMatch$$delimiter", $host)) {
                 $matches = true;
                 break;
