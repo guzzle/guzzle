@@ -7,7 +7,6 @@ use GuzzleHttp\Psr7;
 use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use \InvalidArgumentException as Iae;
 
 /**
  * @method ResponseInterface get($uri, array $options = [])
@@ -351,7 +350,7 @@ class Client implements ClientInterface
                 $value = http_build_query($value, null, '&', PHP_QUERY_RFC3986);
             }
             if (!is_string($value)) {
-                throw new Iae('query must be a string or array');
+                throw new \InvalidArgumentException('query must be a string or array');
             }
             $modify['query'] = $value;
             unset($options['query']);
