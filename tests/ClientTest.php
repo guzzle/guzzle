@@ -321,8 +321,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
         $request = new Request('PUT', 'http://foo.com');
-        $client->send($request, ['query' => ['foo' => 'bar baz']]);
-        $this->assertEquals('foo=bar%20baz', $mock->getLastRequest()->getUri()->getQuery());
+	    $client->send($request, ['query' => ['foo' => 'bar', 'john' => 'doe']]);
+	    $this->assertEquals('foo=bar&john=doe', $mock->getLastRequest()->getUri()->getQuery());
     }
 
     public function testCanAddJsonData()
@@ -533,12 +533,21 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         );
     }
 
-    public function testProperlyBuildsQuery()
+    public function testProperlyBuildsQueryWithRFC3986()
     {
         $mock = new MockHandler([new Response(200)]);
-        $client = new Client(['handler' => $mock]);
+        $client = new Client(['handler' => $mock, 'enc_type' => PHP_QUERY_RFC3986]);
         $request = new Request('PUT', 'http://foo.com');
-        $client->send($request, ['query' => ['foo' => 'bar', 'john' => 'doe']]);
-        $this->assertEquals('foo=bar&john=doe', $mock->getLastRequest()->getUri()->getQuery());
+        $client->send($request, ['query' => ['foo' => 'bar baz', 'john' => 'doe']]);
+	    $this->assertEquals('foo=bar%20baz&john=doe', $mock->getLastRequest()->getUri()->getQuery());
     }
+
+	public function testProperlyBuildsQueryWithRFC1738()
+	{
+		$mock = new MockHandler([new Response(200)]);
+		$client = new Client(['handler' => $mock, 'enc_type' => PHP_QUERY_RFC1738]);
+		$request = new Request('PUT', 'http://foo.com');
+		$client->send($request, ['query' => ['foo' => 'bar baz', 'john' => 'doe']]);
+		$this->assertEquals('foo=bar+baz&john=doe', $mock->getLastRequest()->getUri()->getQuery());
+	}
 }
