@@ -160,7 +160,8 @@ class Client implements ClientInterface
             'http_errors'     => true,
             'decode_content'  => true,
             'verify'          => true,
-            'cookies'         => false
+            'cookies'         => false,
+            'enc_type'        => PHP_QUERY_RFC3986
         ];
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set
@@ -348,7 +349,17 @@ class Client implements ClientInterface
         if (isset($options['query'])) {
             $value = $options['query'];
             if (is_array($value)) {
-                $value = http_build_query($value, null, '&', PHP_QUERY_RFC3986);
+
+	            // Check to see if the constant for enc_type is valid.
+	            if ($options['enc_type'] !== PHP_QUERY_RFC1738
+		            && $options['enc_type'] !== PHP_QUERY_RFC3986) {
+		            throw new \InvalidArgumentException(
+			            'The enc_type given is not a valid constant. You must'
+			            . ' specify either PHP_QUERY_RFC1738 or PHP_QUERY_RFC3986.'
+		            );
+	            }
+
+                $value = http_build_query($value, null, '&', $options['enc_type']);
             }
             if (!is_string($value)) {
                 throw new Iae('query must be a string or array');
