@@ -363,7 +363,7 @@ class CurlFactory implements CurlFactoryInterface
                 $conf[CURLOPT_PROXY] = $options['proxy'];
             } elseif ($scheme = $easy->request->getUri()->getScheme()) {
             	$host = $easy->request->getUri()->getHost();
-            	if(!isset($options['proxy']['no']) 
+            	if (!isset($options['proxy']['no']) 
         	       ||!$this->isHostInProxyArea($host, $options['proxy']['no'])) {
                     if (isset($options['proxy'][$scheme])) {
                         $conf[CURLOPT_PROXY] = $options['proxy'][$scheme];
@@ -437,7 +437,7 @@ class CurlFactory implements CurlFactoryInterface
             $delimiter = '#';
             $areaToMatch = preg_quote($areaToMatch, $delimiter);
             $areaToMatch = str_replace('\*', '.*', $areaToMatch);  
-            if(preg_match("$delimiter^$areaToMatch$$delimiter", $host)) {
+            if (preg_match("$delimiter^$areaToMatch$$delimiter", $host)) {
                 $matches = true;
                 break;
             }
