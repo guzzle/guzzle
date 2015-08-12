@@ -81,11 +81,6 @@ class SessionCookieJarTest extends \PHPUnit_Framework_TestCase
         unset($_SESSION[$this->sessionVar]);
     }
 
-    public function testPersistsToSessionWithSessionCookie()
-    {
-        $this->testPersistsToSession(true);
-    }
-    
     public function testPersistsToSessionParameters()
     {
         return array(
