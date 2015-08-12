@@ -89,7 +89,7 @@ class CookieJar implements CookieJarInterface
         SetCookie $cookie,
         $allowSessionCookies = false
     ) {
-    	if($cookie->getExpires() || $allowSessionCookies) {
+    	if ($cookie->getExpires() || $allowSessionCookies) {
     	    if (!$cookie->getDiscard()) {
     	        return true;
     	    }
