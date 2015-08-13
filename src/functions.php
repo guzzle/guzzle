@@ -166,6 +166,8 @@ function default_ca_bundle()
         '/usr/local/share/certs/ca-root-nss.crt',
         // OS X provided by homebrew (using the default path)
         '/usr/local/etc/openssl/cert.pem',
+        // Google app engine
+        '/etc/ca-certificates.crt',
         // Windows?
         'C:\\windows\\system32\\curl-ca-bundle.crt',
         'C:\\windows\\curl-ca-bundle.crt',
