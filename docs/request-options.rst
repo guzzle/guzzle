@@ -152,8 +152,7 @@ body
 :Types:
     - string
     - ``fopen()`` resource
-    - ``GuzzleHttp\Stream\StreamInterface``
-    - ``GuzzleHttp\Post\PostBodyInterface``
+    - ``Psr\Http\Message\StreamInterface``
 :Default: None
 :Constant: ``GuzzleHttp\RequestOptions::BODY``
 
@@ -174,7 +173,7 @@ This setting can be set to any of the following types:
       $resource = fopen('http://httpbin.org', 'r');
       $client->put('/put', ['body' => $resource]);
 
-- ``GuzzleHttp\Stream\StreamInterface``
+- ``Psr\Http\Message\StreamInterface``
 
   .. code-block:: php
 
