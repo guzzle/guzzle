@@ -482,6 +482,52 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function testCanSendMultipartWithExplicitBody()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->send(
+            new Request(
+                'POST',
+                'http://foo.com',
+                [],
+                new Psr7\MultipartStream(
+                    [
+                        [
+                            'name' => 'foo',
+                            'contents' => 'bar',
+                        ],
+                        [
+                            'name' => 'test',
+                            'contents' => fopen(__FILE__, 'r'),
+                        ],
+                    ]
+                )
+            )
+        );
+
+        $last = $mock->getLastRequest();
+        $this->assertContains(
+            'multipart/form-data; boundary=',
+            $last->getHeaderLine('Content-Type')
+        );
+
+        $this->assertContains(
+            'Content-Disposition: form-data; name="foo"',
+            (string) $last->getBody()
+        );
+
+        $this->assertContains('bar', (string) $last->getBody());
+        $this->assertContains(
+            'Content-Disposition: form-data; name="foo"' . "\r\n",
+            (string) $last->getBody()
+        );
+        $this->assertContains(
+            'Content-Disposition: form-data; name="test"; filename="ClientTest.php"',
+            (string) $last->getBody()
+        );
+    }
+
     public function testUsesProxyEnvironmentVariables()
     {
         $http = getenv('HTTP_PROXY');
