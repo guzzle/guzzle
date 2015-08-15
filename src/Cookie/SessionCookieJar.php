@@ -8,15 +8,22 @@ class SessionCookieJar extends CookieJar
 {
     /** @var string session key */
     private $sessionKey;
+    
+    /** @var bool Control whether to presist session cookies or not. */
+    private $storeSessionCookies;
 
     /**
      * Create a new SessionCookieJar object
      *
-     * @param string $sessionKey Session key name to store the cookie data in session
+     * @param string $sessionKey        Session key name to store the cookie 
+     *                                  data in session
+     * @param bool $storeSessionCookies Set to true to store session cookies
+     *                                  in the cookie jar.
      */
-    public function __construct($sessionKey)
+    public function __construct($sessionKey, $storeSessionCookies = false)
     {
         $this->sessionKey = $sessionKey;
+        $this->storeSessionCookies = $storeSessionCookies;
         $this->load();
     }
 
@@ -36,7 +43,7 @@ class SessionCookieJar extends CookieJar
         $json = [];
         foreach ($this as $cookie) {
             /** @var SetCookie $cookie */
-            if ($cookie->getExpires() && !$cookie->getDiscard()) {
+            if (CookieJar::shouldPersist($cookie, $this->storeSessionCookies)) {
                 $json[] = $cookie->toArray();
             }
         }

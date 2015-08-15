@@ -9,16 +9,22 @@ class FileCookieJar extends CookieJar
     /** @var string filename */
     private $filename;
 
+    /** @var bool Control whether to presist session cookies or not. */
+    private $storeSessionCookies;
+    
     /**
      * Create a new FileCookieJar object
      *
-     * @param string $cookieFile File to store the cookie data
+     * @param string $cookieFile        File to store the cookie data
+     * @param bool $storeSessionCookies Set to true to store session cookies
+     *                                  in the cookie jar.
      *
      * @throws \RuntimeException if the file cannot be found or created
      */
-    public function __construct($cookieFile)
+    public function __construct($cookieFile, $storeSessionCookies = false)
     {
         $this->filename = $cookieFile;
+        $this->storeSessionCookies = $storeSessionCookies;
 
         if (file_exists($cookieFile)) {
             $this->load($cookieFile);
@@ -44,7 +50,7 @@ class FileCookieJar extends CookieJar
         $json = [];
         foreach ($this as $cookie) {
             /** @var SetCookie $cookie */
-            if ($cookie->getExpires() && !$cookie->getDiscard()) {
+            if (CookieJar::shouldPersist($cookie, $this->storeSessionCookies)) {
                 $json[] = $cookie->toArray();
             }
         }
