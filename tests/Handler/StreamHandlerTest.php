@@ -196,6 +196,17 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($url, $opts['http']['proxy']);
     }
 
+    public function testAddsProxyButHonorsNoProxy()
+    {
+        $url = str_replace('http', 'tcp', Server::$url);
+        $res = $this->getSendResult(['proxy' => [
+            'http' => $url,
+            'no'   => ['*']
+        ]]);
+        $opts = stream_context_get_options($res->getBody()->detach());
+        $this->assertTrue(empty($opts['http']['proxy']));
+    }
+
     public function testAddsTimeout()
     {
         $res = $this->getSendResult(['stream' => true, 'timeout' => 200]);

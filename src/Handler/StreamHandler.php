@@ -296,7 +296,14 @@ class StreamHandler
         } else {
             $scheme = $request->getUri()->getScheme();
             if (isset($value[$scheme])) {
-                $options['http']['proxy'] = $value[$scheme];
+                if (!isset($value['no'])
+                    || !\GuzzleHttp\is_host_in_noproxy(
+                        $request->getUri()->getHost(),
+                        $value['no']
+                    )
+                ) {
+                    $options['http']['proxy'] = $value[$scheme];
+                }
             }
         }
     }

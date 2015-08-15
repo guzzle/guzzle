@@ -638,14 +638,24 @@ Pass a string to specify a proxy for all protocols.
     $client->get('/', ['proxy' => 'tcp://localhost:8125']);
 
 Pass an associative array to specify HTTP proxies for specific URI schemes
-(i.e., "http", "https").
+(i.e., "http", "https"). Provide a ``no`` key value pair to provide a list of
+host names that should not be proxied to.
+
+.. note::
+
+    Guzzle will automatically populate this value with your environment's
+    ``NO_PROXY`` environment variable. However, when providing a ``proxy``
+    request option, it is up to your to provide the ``no`` value parsed from
+    the ``NO_PROXY`` environment variable
+    (e.g., ``explode(',', getenv('NO_PROXY'))``).
 
 .. code-block:: php
 
     $client->get('/', [
         'proxy' => [
             'http'  => 'tcp://localhost:8125', // Use this proxy with "http"
-            'https' => 'tcp://localhost:9124'  // Use this proxy with "https"
+            'https' => 'tcp://localhost:9124', // Use this proxy with "https",
+            'no' => ['.mit.edu', 'foo.com']    // Don't use a proxy with these
         ]
     ]);
 

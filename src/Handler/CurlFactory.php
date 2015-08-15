@@ -361,14 +361,16 @@ class CurlFactory implements CurlFactoryInterface
         if (isset($options['proxy'])) {
             if (!is_array($options['proxy'])) {
                 $conf[CURLOPT_PROXY] = $options['proxy'];
-            } elseif ($scheme = $easy->request->getUri()->getScheme()) {
-            	$host = $easy->request->getUri()->getHost();
-            	if (!isset($options['proxy']['no']) 
-        	       ||!$this->isHostInProxyArea($host, $options['proxy']['no'])) {
-                    if (isset($options['proxy'][$scheme])) {
+            } else {
+                $scheme = $easy->request->getUri()->getScheme();
+                if (isset($options['proxy'][$scheme])) {
+                    $host = $easy->request->getUri()->getHost();
+                    if (!isset($options['proxy']['no']) ||
+                        !\GuzzleHttp\is_host_in_noproxy($host, $options['proxy']['no'])
+                    ) {
                         $conf[CURLOPT_PROXY] = $options['proxy'][$scheme];
-                    }        		
-            	}
+                    }
+                }
             }
         }
 
@@ -422,27 +424,6 @@ class CurlFactory implements CurlFactoryInterface
             $conf[CURLOPT_STDERR] = \GuzzleHttp\debug_resource($options['debug']);
             $conf[CURLOPT_VERBOSE] = true;
         }
-    }
-    
-    private function isHostInProxyArea($host, array $areas)
-    {
-        $matches = false;
-        foreach ($areas as $area) {
-            $areaToMatch = $area;
-            // if include all subdomains 
-            if (!empty($area) && substr($area, 0, 1) === '.'){
-                $areaToMatch = "*$area";
-            }
-            // Use wilcards
-            $delimiter = '#';
-            $areaToMatch = preg_quote($areaToMatch, $delimiter);
-            $areaToMatch = str_replace('\*', '.*', $areaToMatch);  
-            if (preg_match("$delimiter^$areaToMatch$$delimiter", $host)) {
-                $matches = true;
-                break;
-            }
-        }
-        return $matches;
     }
 
     /**
