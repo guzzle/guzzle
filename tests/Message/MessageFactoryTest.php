@@ -547,6 +547,12 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('foo=bar&foo=baz', $request->getBody());
     }
 
+    public function testDoesNotRequireUppercasePost()
+    {
+        $request = (new MessageFactory())->createRequest('post', 'http://foo.com');
+        $request->getBody()->setField('foo', 'bar');
+    }
+
     public function testCanForceMultipartUploadWithContentType()
     {
         $client = new Client();
