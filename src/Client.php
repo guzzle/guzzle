@@ -171,6 +171,11 @@ class Client implements ClientInterface
             $defaults['proxy']['https'] = $proxy;
         }
 
+        if ($noProxy = getenv('NO_PROXY')) {
+            $cleanedNoProxy = str_replace(' ', '', $noProxy);
+            $defaults['proxy']['no'] = explode(',', $cleanedNoProxy);
+        }
+        
         $this->config = $config + $defaults;
 
         if (!empty($config['cookies']) && $config['cookies'] === true) {

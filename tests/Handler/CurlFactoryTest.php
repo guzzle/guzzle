@@ -143,7 +143,27 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
             'proxy' => ['http' => 'http://bar.com', 'https' => 'https://t'],
         ]);
         $this->assertEquals('http://bar.com', $_SERVER['_curl'][CURLOPT_PROXY]);
+        $this->checkNoProxyForHost('http://test.test.com', ['test.test.com'], false);
+        $this->checkNoProxyForHost('http://test.test.com', ['.test.com'], false);
+        $this->checkNoProxyForHost('http://test.test.com', ['*.test.com'], false);
+        $this->checkNoProxyForHost('http://test.test.com', ['*.test2.com'], true);
+        $this->checkNoProxyForHost('http://127.0.0.1', ['127.0.0.*'], false);
     }
+    
+    
+    private function checkNoProxyForHost($url, $noProxy, $assertUseProxy)
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', $url), [
+            'proxy' => ['http' => 'http://bar.com', 'https' => 'https://t', 'no' => $noProxy],
+        ]);
+        if($assertUseProxy) {
+            $this->assertArrayHasKey(CURLOPT_PROXY, $_SERVER['_curl']);
+        }else{
+            $this->assertArrayNotHasKey(CURLOPT_PROXY, $_SERVER['_curl']);
+        }
+    }
+    
 
     /**
      * @expectedException \InvalidArgumentException
