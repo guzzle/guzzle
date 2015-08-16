@@ -263,7 +263,7 @@ No port is necessary when using the "http" or "https" schemes.
 
     $request = $client->createRequest('GET', 'http://httpbin.org:8080');
     echo $request->getUri()->getPort(); // 8080
-    echo $request->getUri(); // https://httpbin.org:8080
+    echo $request->getUri(); // http://httpbin.org:8080
 
 
 Path
