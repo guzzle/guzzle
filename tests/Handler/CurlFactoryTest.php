@@ -93,6 +93,16 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(10, $_SERVER['_curl'][CURLOPT_LOW_SPEED_LIMIT]);
     }
 
+    public function testCanChangeCurlOptions()
+    {
+        Server::flush();
+        Server::enqueue([new Psr7\Response()]);
+        $a = new Handler\CurlMultiHandler();
+        $req = new Psr7\Request('GET', Server::$url);
+        $a($req, ['curl' => [CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_0]]);
+        $this->assertEquals(CURL_HTTP_VERSION_1_0, $_SERVER['_curl'][CURLOPT_HTTP_VERSION]);
+    }
+
     /**
      * @expectedException \InvalidArgumentException
      * @expectedExceptionMessage SSL CA bundle not found: /does/not/exist
