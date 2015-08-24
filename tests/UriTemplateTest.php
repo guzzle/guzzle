@@ -119,7 +119,7 @@ class UriTemplateTest extends \PHPUnit_Framework_TestCase
      */
     public function testExpandsUriTemplates($template, $expansion, $params)
     {
-        $uri = new UriTemplate($template);
+        $uri = new UriTemplate();
         $this->assertEquals($expansion, $uri->expand($template, $params));
     }
 
@@ -162,7 +162,7 @@ class UriTemplateTest extends \PHPUnit_Framework_TestCase
      */
     public function testParsesExpressions($exp, $data)
     {
-        $template = new UriTemplate($exp);
+        $template = new UriTemplate();
 
         // Access the config object
         $class = new \ReflectionClass($template);
