@@ -69,7 +69,7 @@ class CookieJar implements CookieJarInterface
     {
         if (substr($value, 0, 1) !== '"' &&
             substr($value, -1, 1) !== '"' &&
-            strpbrk($value, ';,')
+            strpbrk($value, ';,=')
         ) {
             $value = '"' . $value . '"';
         }
