@@ -156,7 +156,7 @@ class SetCookieTest extends \PHPUnit_Framework_TestCase
             array('', 'baz', 'bar', 'The cookie name must not be empty'),
             array('foo', '', 'bar', 'The cookie value must not be empty'),
             array('foo', 'baz', '', 'The cookie domain must not be empty'),
-            array("foo\r", 'baz', '0', 'Cookie name must not contain invalid characters: ASCII Control characters (0-31;127), space, tab and the following characters: ()<>@,;:\"/[]?={}'),
+            array("foo\r", 'baz', '0', 'Cookie name must not contain invalid characters: ASCII Control characters (0-31;127), space, tab and the following characters: ()<>@,;:\"/?={}'),
         );
     }
 
