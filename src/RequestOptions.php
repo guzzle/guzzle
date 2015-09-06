@@ -151,6 +151,24 @@ final class RequestOptions
     const MULTIPART = 'multipart';
 
     /**
+     * on_headers: (callable) A callable that is invoked when the HTTP headers
+     * of the response have been received but the body has not yet begun to
+     * download.
+     */
+    const ON_HEADERS = 'on_headers';
+
+    /**
+     * on_stats: (callable) allows you to get access to transfer statistics of
+     * a request and access the lower level transfer details of the handler
+     * associated with your client. ``on_stats`` is a callable that is invoked
+     * when a handler has finished sending a request. The callback is invoked
+     * with transfer statistics about the request, the response received, or
+     * the error encountered. Included in the data is the total amount of time
+     * taken to send the request.
+     */
+    const ON_STATS = 'on_stats';
+
+    /**
      * progress: (callable) Defines a function to invoke when transfer
      * progress is made. The function accepts the following positional
      * arguments: the total number of bytes expected to be downloaded, the
