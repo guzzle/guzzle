@@ -24,5 +24,6 @@ class TransferStatsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('bar', $stats->getHandlerStat('foo'));
         $this->assertSame($request->getUri(), $stats->getEffectiveUri());
         $this->assertEquals(10.5, $stats->getTransferTime());
+        $this->assertNull($stats->getHandlerErrorData());
     }
 }
