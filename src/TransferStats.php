@@ -47,6 +47,8 @@ final class TransferStats
     }
 
     /**
+     * Returns the response that was received (if any).
+     *
      * @return ResponseInterface|null
      */
     public function getResponse()
@@ -55,6 +57,8 @@ final class TransferStats
     }
 
     /**
+     * Returns true if a response was received.
+     *
      * @return bool
      */
     public function hasResponse()
@@ -65,6 +69,10 @@ final class TransferStats
     /**
      * Gets handler specific error data.
      *
+     * This might be an exception, a integer representing an error code, or
+     * anything else. Relying on this value assumes that you know what handler
+     * you are using.
+     *
      * @return mixed
      */
     public function getHandlerErrorData()
@@ -73,7 +81,7 @@ final class TransferStats
     }
 
     /**
-     * Get the effective URI the request was sent to
+     * Get the effective URI the request was sent to.
      *
      * @return UriInterface
      */
@@ -93,7 +101,7 @@ final class TransferStats
     }
 
     /**
-     * Gets an array of handler stat data.
+     * Gets an array of all of the handler specific transfer data.
      *
      * @return array
      */
@@ -103,7 +111,7 @@ final class TransferStats
     }
 
     /**
-     * Get a specific handler stat from the handler by name.
+     * Get a specific handler statistic from the handler by name.
      *
      * @param string $stat Handler specific transfer stat to retrieve.
      *
