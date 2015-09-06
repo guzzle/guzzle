@@ -65,13 +65,13 @@ class StreamHandler
                 $e = new ConnectException($e->getMessage(), $request, $e);
             }
             $e = RequestException::wrapException($request, $e);
-            $this->invokeStatsFunction($options, $request, $startTime, null, $e);
+            $this->invokeStats($options, $request, $startTime, null, $e);
 
             return new RejectedPromise($e);
         }
     }
 
-    private function invokeStatsFunction(
+    private function invokeStats(
         array $options,
         RequestInterface $request,
         $startTime,
@@ -122,7 +122,7 @@ class StreamHandler
             $this->drain($stream, $sink);
         }
 
-        $this->invokeStatsFunction($options, $request, $startTime, $response, null);
+        $this->invokeStats($options, $request, $startTime, $response, null);
 
         return new FulfilledPromise($response);
     }
