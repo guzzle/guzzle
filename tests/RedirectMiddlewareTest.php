@@ -130,6 +130,35 @@ class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function testAddsGuzzleRedirectHeader()
+    {
+        $mock = new MockHandler([
+          new Response(302, ['Location' => 'http://example.com']),
+          new Response(302, ['Location' => 'http://example.com/foo']),
+          new Response(302, ['Location' => 'http://example.com/bar']),
+          new Response(200)
+        ]);
+
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('GET', 'http://example.com?a=b');
+        $promise = $handler($request, [
+            'allow_redirects' => [
+                  'track_redirects' => true,
+            ],
+        ]);
+        $response = $promise->wait(true);
+        $this->assertEquals(
+            [
+                'http://example.com?a=b',
+                'http://example.com',
+                'http://example.com/foo'
+            ],
+            $response->getHeader('X-Guzzle-Redirect')
+        );
+    }
+
     public function testDoesNotAddRefererWhenGoingFromHttpsToHttp()
     {
         $mock = new MockHandler([
