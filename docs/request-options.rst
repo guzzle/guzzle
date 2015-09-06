@@ -40,7 +40,7 @@ Set to ``false`` to disable redirects.
 
 .. code-block:: php
 
-    $res = $client->get('/redirect/3', ['allow_redirects' => false]);
+    $res = $client->request('GET', '/redirect/3', ['allow_redirects' => false]);
     echo $res->getStatusCode();
     // 302
 
@@ -49,7 +49,7 @@ number of 5 redirects.
 
 .. code-block:: php
 
-    $res = $client->get('/redirect/3');
+    $res = $client->request('GET', '/redirect/3');
     echo $res->getStatusCode();
     // 200
 
@@ -84,7 +84,7 @@ pairs:
         echo 'Redirecting! ' . $request->getUri() . ' to ' . $uri . "\n";
     }
 
-    $res = $client->get('/redirect/3', [
+    $res = $client->request('GET', '/redirect/3', [
         'allow_redirects' => [
             'max'         => 10,        // allow at most 10 redirects.
             'strict'      => true,      // use "strict" RFC compliant redirects.
@@ -127,7 +127,7 @@ basic
 
 .. code-block:: php
 
-    $client->get('/get', ['auth' => ['username', 'password']]);
+    $client->request('GET', '/get', ['auth' => ['username', 'password']]);
 
 digest
     Use `digest authentication <http://www.ietf.org/rfc/rfc2069.txt>`_
@@ -135,7 +135,9 @@ digest
 
 .. code-block:: php
 
-    $client->get('/get', ['auth' => ['username', 'password', 'digest']]);
+    $client->request('GET', '/get', [
+        'auth' => ['username', 'password', 'digest']
+    ]);
 
 .. note::
 
@@ -163,7 +165,7 @@ This setting can be set to any of the following types:
   .. code-block:: php
 
   // You can send requests that use a string as the message body.
-  $client->put('/put', ['body' => 'foo']);
+  $client->request('PUT', '/put', ['body' => 'foo']);
 
 - resource returned from ``fopen()``
 
@@ -171,7 +173,7 @@ This setting can be set to any of the following types:
 
       // You can send requests that use a stream resource as the body.
       $resource = fopen('http://httpbin.org', 'r');
-      $client->put('/put', ['body' => $resource]);
+      $client->request('PUT', '/put', ['body' => $resource]);
 
 - ``Psr\Http\Message\StreamInterface``
 
@@ -179,7 +181,7 @@ This setting can be set to any of the following types:
 
       // You can send requests that use a Guzzle stream object as the body
       $stream = GuzzleHttp\Psr7\stream_for('contents...');
-      $client->post('/post', ['body' => $stream]);
+      $client->request('POST', '/post', ['body' => $stream]);
 
 
 .. _cert-option:
@@ -200,7 +202,7 @@ cert
 
 .. code-block:: php
 
-    $client->get('/', ['cert' => ['/path/server.pem', 'password']]);
+    $client->request('GET', '/', ['cert' => ['/path/server.pem', 'password']]);
 
 
 .. _cookies-option:
@@ -220,7 +222,7 @@ You must specify the cookies option as a
 .. code-block:: php
 
     $jar = new \GuzzleHttp\Cookie\CookieJar();
-    $client->get('/get', ['cookies' => $jar]);
+    $client->request('GET', '/get', ['cookies' => $jar]);
 
 .. warning::
 
@@ -249,7 +251,7 @@ connect_timeout
 .. code-block:: php
 
     // Timeout if the client fails to connect to the server in 3.14 seconds.
-    $client->get('/delay/5', ['connect_timeout' => 3.14]);
+    $client->request('GET', '/delay/5', ['connect_timeout' => 3.14]);
 
 .. note::
 
@@ -277,7 +279,7 @@ debug
 
 .. code-block:: php
 
-    $client->get('/get', ['debug' => true]);
+    $client->request('GET', '/get', ['debug' => true]);
 
 Running the above example would output something like the following:
 
@@ -323,7 +325,7 @@ bytes pass through the handler unchanged.
 .. code-block:: php
 
     // Request gzipped data, but do not decode it while downloading
-    $client->get('/foo.js', [
+    $client->request('GET', '/foo.js', [
         'headers'        => ['Accept-Encoding' => 'gzip'],
         'decode_content' => false
     ]);
@@ -335,7 +337,7 @@ header of the request.
 .. code-block:: php
 
     // Pass "gzip" as the Accept-Encoding header.
-    $client->get('/foo.js', ['decode_content' => 'gzip']);
+    $client->request('GET', '/foo.js', ['decode_content' => 'gzip']);
 
 
 .. _delay-option:
@@ -395,7 +397,7 @@ present.
 
 .. code-block:: php
 
-    $client->post('/post', [
+    $client->request('POST', '/post', [
         'form_params' => [
             'foo' => 'bar',
             'baz' => ['hi', 'there!']
@@ -422,7 +424,7 @@ headers
 .. code-block:: php
 
     // Set various headers on a request
-    $client->get('/get', [
+    $client->request('GET', '/get', [
         'headers' => [
             'User-Agent' => 'testing/1.0',
             'Accept'     => 'application/json',
@@ -441,14 +443,14 @@ created by the client (e.g., ``request()`` and ``requestAsync()``).
     $client = new GuzzleHttp\Client(['headers' => ['X-Foo' => 'Bar']]);
 
     // Will send a request with the X-Foo header.
-    $client->get('/get');
+    $client->request('GET', '/get');
 
     // Sets the X-Foo header to "test", which prevents the default header
     // from being applied.
-    $client->get('/get', ['headers' => ['X-Foo' => 'test']);
+    $client->request('GET', '/get', ['headers' => ['X-Foo' => 'test']);
 
     // Will disable adding in default headers.
-    $client->get('/get', ['headers' => null]);
+    $client->request('GET', '/get', ['headers' => null]);
 
     // Will not overwrite the X-Foo header because it is in the message.
     use GuzzleHttp\Psr7\Request;
@@ -476,10 +478,10 @@ http_errors
 
 .. code-block:: php
 
-    $client->get('/status/500');
+    $client->request('GET', '/status/500');
     // Throws a GuzzleHttp\Exception\ServerException
 
-    $res = $client->get('/status/500', ['http_errors' => false]);
+    $res = $client->request('GET', '/status/500', ['http_errors' => false]);
     echo $res->getStatusCode();
     // 500
 
@@ -504,7 +506,7 @@ json
 
 .. code-block:: php
 
-    $response = $client->put('/put', ['json' => ['foo' => 'bar']]);
+    $response = $client->request('PUT', '/put', ['json' => ['foo' => 'bar']]);
 
 Here's an example of using the ``tap`` middleware to see what request is sent
 over the wire.
@@ -523,7 +525,7 @@ over the wire.
         // {"foo":"bar"}
     });
 
-    $response = $client->put('/put', [
+    $response = $client->request('PUT', '/put', [
         'json'    => ['foo' => 'bar'],
         'handler' => $tapMiddleware($clientHandler)
     ]);
@@ -557,7 +559,7 @@ the following key value pairs:
 
 .. code-block:: php
 
-    $client->post('/post', [
+    $client->request('POST', '/post', [
         'multipart' => [
             [
                 'name'     => 'foo',
@@ -604,7 +606,7 @@ can be written to the sink.
 .. code-block:: php
 
     // Reject responses that are greater than 1024 bytes.
-    $client->get('http://httpbin.org/stream/1024', [
+    $client->request('GET', 'http://httpbin.org/stream/1024', [
         'on_headers' => function (ResponseInterface $response) {
             if ($response->getHeaderLine('Content-Length') > 1024) {
                 throw new \Exception('The file is too big!');
@@ -635,7 +637,7 @@ Pass a string to specify a proxy for all protocols.
 
 .. code-block:: php
 
-    $client->get('/', ['proxy' => 'tcp://localhost:8125']);
+    $client->request('GET', '/', ['proxy' => 'tcp://localhost:8125']);
 
 Pass an associative array to specify HTTP proxies for specific URI schemes
 (i.e., "http", "https"). Provide a ``no`` key value pair to provide a list of
@@ -651,7 +653,7 @@ host names that should not be proxied to.
 
 .. code-block:: php
 
-    $client->get('/', [
+    $client->request('GET', '/', [
         'proxy' => [
             'http'  => 'tcp://localhost:8125', // Use this proxy with "http"
             'https' => 'tcp://localhost:9124', // Use this proxy with "https",
@@ -679,7 +681,7 @@ query
 .. code-block:: php
 
     // Send a GET request to /get?foo=bar
-    $client->get('/get', ['query' => ['foo' => 'bar']]);
+    $client->request('GET', '/get', ['query' => ['foo' => 'bar']]);
 
 Query strings specified in the ``query`` option will overwrite an query string
 values supplied in the URI of a request.
@@ -687,7 +689,7 @@ values supplied in the URI of a request.
 .. code-block:: php
 
     // Send a GET request to /get?foo=bar
-    $client->get('/get?abc=123', ['query' => ['foo' => 'bar']]);
+    $client->request('GET', '/get?abc=123', ['query' => ['foo' => 'bar']]);
 
 
 .. _sink-option:
@@ -709,14 +711,14 @@ response body:
 
 .. code-block:: php
 
-    $client->get('/stream/20', ['sink' => '/path/to/file']);
+    $client->request('GET', '/stream/20', ['sink' => '/path/to/file']);
 
 Pass a resource returned from ``fopen()`` to write the response to a PHP stream:
 
 .. code-block:: php
 
     $resource = fopen('/path/to/file', 'w');
-    $client->get('/stream/20', ['sink' => $resource]);
+    $client->request('GET', '/stream/20', ['sink' => $resource]);
 
 Pass a ``Psr\Http\Message\StreamInterface`` object to stream the response
 body to an open PSR-7 stream.
@@ -725,7 +727,7 @@ body to an open PSR-7 stream.
 
     $resource = fopen('/path/to/file', 'w');
     $stream = GuzzleHttp\Psr7\stream_for($resource);
-    $client->get('/stream/20', ['save_to' => $stream]);
+    $client->request('GET', '/stream/20', ['save_to' => $stream]);
 
 .. note::
 
@@ -769,7 +771,7 @@ stream
 
 .. code-block:: php
 
-    $response = $client->get('/stream/20', ['stream' => true]);
+    $response = $client->request('GET', '/stream/20', ['stream' => true]);
     // Read bytes off of the stream until the end of the stream is reached
     $body = $response->getBody();
     while (!$body->eof()) {
@@ -815,13 +817,13 @@ verify
 .. code-block:: php
 
     // Use the system's CA bundle (this is the default setting)
-    $client->get('/', ['verify' => true]);
+    $client->request('GET', '/', ['verify' => true]);
 
     // Use a custom SSL certificate on disk.
-    $client->get('/', ['verify' => '/path/to/cert.pem']);
+    $client->request('GET', '/', ['verify' => '/path/to/cert.pem']);
 
     // Disable validation entirely (don't do this!).
-    $client->get('/', ['verify' => false]);
+    $client->request('GET', '/', ['verify' => false]);
 
 Not all system's have a known CA bundle on disk. For example, Windows and
 OS X do not have a single common location for CA bundles. When setting
@@ -873,7 +875,7 @@ timeout
 .. code-block:: php
 
     // Timeout if a server does not return a response in 3.14 seconds.
-    $client->get('/delay/5', ['timeout' => 3.14]);
+    $client->request('GET', '/delay/5', ['timeout' => 3.14]);
     // PHP Fatal error:  Uncaught exception 'GuzzleHttp\Exception\RequestException'
 
 
@@ -890,4 +892,4 @@ version
 .. code-block:: php
 
     // Force HTTP/1.0
-    $request = $client->get('/get', ['version' => 1.0]);
+    $request = $client->request('GET', '/get', ['version' => 1.0]);

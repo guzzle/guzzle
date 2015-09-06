@@ -42,9 +42,9 @@ The client constructor accepts an associative array of options:
         // Create a client with a base URI
         $client = new GuzzleHttp\Client(['base_uri' => 'https://foo.com/api/']);
         // Send a request to https://foo.com/api/test
-        $response = $client->get('test');
+        $response = $client->request('GET', 'test');
         // Send a request to https://foo.com/root
-        $response = $client->get('/root');
+        $response = $client->request('GET', '/root');
 
     Don't feel like reading RFC 3986? Here are some quick examples on how a
     ``base_uri`` is resolved with another URI.
@@ -256,6 +256,21 @@ You can retrieve headers from the response:
         echo $name . ': ' . implode(', ', $values) . "\r\n";
     }
 
+The body of a response can be retrieved using the ``getBody`` method. The body
+can be used as a string, cast to a string, or used as a stream like object.
+
+.. code-block:: php
+
+    $body = $response->getBody();
+    // Implicitly cast the body to a string and echo it
+    echo $body;
+    // Explicitly cast the body to a string
+    $stringBody = (string) $body;
+    // Read 10 bytes from the body
+    $tenBytes = $body->read(10);
+    // Read the remaining contents of the body as a string
+    $remainingBytes = $body->getContents();
+
 
 Query String Parameters
 =======================
@@ -266,14 +281,14 @@ You can set query string parameters in the request's URI:
 
 .. code-block:: php
 
-    $response = $client->get('http://httpbin.org?foo=bar');
+    $response = $client->request('GET', 'http://httpbin.org?foo=bar');
 
 You can specify the query string parameters using the ``query`` request
 option as an array.
 
 .. code-block:: php
 
-    $client->get('http://httpbin.org', [
+    $client->request('GET', 'http://httpbin.org', [
         'query' => ['foo' => 'bar']
     ]);
 
@@ -284,7 +299,7 @@ And finally, you can provide the ``query`` request option as a string.
 
 .. code-block:: php
 
-    $client->get('http://httpbin.org', ['query' => 'foo=bar']);
+    $client->request('GET', 'http://httpbin.org', ['query' => 'foo=bar']);
 
 
 Uploading Data
@@ -299,22 +314,24 @@ resource returned from ``fopen``, or an instance of a
 .. code-block:: php
 
     // Provide the body as a string.
-    $r = $client->post('http://httpbin.org/post', ['body' => 'raw data']);
+    $r = $client->request('POST', 'http://httpbin.org/post', [
+        'body' => 'raw data'
+    ]);
 
     // Provide an fopen resource.
     $body = fopen('/path/to/file', 'r');
-    $r = $client->post('http://httpbin.org/post', ['body' => $body]);
+    $r = $client->request('POST', 'http://httpbin.org/post', ['body' => $body]);
 
     // Use the stream_for() function to create a PSR-7 stream.
     $body = \GuzzleHttp\Psr7\stream_for('hello!');
-    $r = $client->post('http://httpbin.org/post', ['body' => $body]);
+    $r = $client->request('POST', 'http://httpbin.org/post', ['body' => $body]);
 
 An easy way to upload JSON data and set the appropriate header is using the
 ``json`` request option:
 
 .. code-block:: php
 
-    $r = $client->put('http://httpbin.org/put', [
+    $r = $client->request('PUT', 'http://httpbin.org/put', [
         'json' => ['foo' => 'bar']
     ]);
 
@@ -334,7 +351,7 @@ specify the POST fields as an array in the ``form_params`` request options.
 
 .. code-block:: php
 
-    $response = $client->post('http://httpbin.org/post', [
+    $response = $client->request('POST', 'http://httpbin.org/post', [
         'form_params' => [
             'field_name' => 'abc',
             'other_field' => '123',
@@ -360,7 +377,7 @@ associative arrays, where each associative array contains the following keys:
 
 .. code-block:: php
 
-    $response = $client->post('http://httpbin.org/post', [
+    $response = $client->request('POST', 'http://httpbin.org/post', [
         'multipart' => [
             [
                 'name'     => 'field_name',
@@ -393,7 +410,9 @@ must be set an an instance of ``GuzzleHttp\Subscriber\CookieJar\CookieJarInterfa
 
     // Use a specific cookie jar
     $jar = new \GuzzleHttp\Cookie\CookieJar;
-    $r = $client->get('http://httpbin.org/cookies', ['cookies' => $jar]);
+    $r = $client->request('GET', 'http://httpbin.org/cookies', [
+        'cookies' => $jar
+    ]);
 
 You can set ``cookies`` to ``true`` in a client constructor if you would like
 to use a shared cookie jar for all requests.
@@ -402,7 +421,7 @@ to use a shared cookie jar for all requests.
 
     // Use a shared client cookie jar
     $client = new \GuzzleHttp\Client(['cookies' => true]);
-    $r = $client->get('http://httpbin.org/cookies');
+    $r = $client->request('GET', 'http://httpbin.org/cookies');
 
 
 Redirects
@@ -422,7 +441,7 @@ customize the redirect behavior using the ``allow_redirects`` request option.
 
 .. code-block:: php
 
-    $response = $client->get('http://github.com');
+    $response = $client->request('GET', 'http://github.com');
     echo $response->getStatusCode();
     // 200
 
@@ -430,7 +449,9 @@ The following example shows that redirects can be disabled.
 
 .. code-block:: php
 
-    $response = $client->get('http://github.com', ['allow_redirects' => false]);
+    $response = $client->request('GET', 'http://github.com', [
+        'allow_redirects' => false
+    ]);
     echo $response->getStatusCode();
     // 301
 
@@ -451,7 +472,7 @@ Guzzle throws exceptions for errors that occur during a transfer.
       use GuzzleHttp\Exception\RequestException;
 
       try {
-          $client->get('https://github.com/_abc_123_404');
+          $client->request('GET', 'https://github.com/_abc_123_404');
       } catch (RequestException $e) {
           echo $e->getRequest();
           if ($e->hasResponse()) {
@@ -474,7 +495,7 @@ Guzzle throws exceptions for errors that occur during a transfer.
       use GuzzleHttp\Exception\ClientException;
 
       try {
-          $client->get('https://github.com/_abc_123_404');
+          $client->request('GET', 'https://github.com/_abc_123_404');
       } catch (ClientException $e) {
           echo $e->getRequest();
           echo $e->getResponse();

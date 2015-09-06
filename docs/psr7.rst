@@ -159,16 +159,12 @@ write bytes off of the stream as needed.
 .. code-block:: php
 
     use GuzzleHttp\Stream\Stream;
-    $request = $client->createRequest('PUT', 'http://httpbin.org/put', ['body' => 'testing...']);
+    $response = $client->request('GET', 'http://httpbin.org/get');
 
-    echo $request->getBody()->read(4);
-    // test
-    echo $request->getBody()->read(4);
-    // ing.
-    echo $request->getBody()->read(1024);
-    // ..
-    var_export($request->eof());
-    // true
+    echo $response->getBody()->read(4);
+    echo $response->getBody()->read(4);
+    echo $response->getBody()->read(1024);
+    var_export($response->eof());
 
 
 Requests
@@ -224,7 +220,7 @@ When creating a request, you can provide the URI as a string or an instance of
 
 .. code-block:: php
 
-    $response = $client->get('http://httpbin.org/get?q=foo');
+    $response = $client->request('GET', 'http://httpbin.org/get?q=foo');
 
 
 Scheme
@@ -236,7 +232,7 @@ scheme can be set to "http" or "https".
 
 .. code-block:: php
 
-    $request = $client->createRequest('GET', 'http://httpbin.org');
+    $request = new Request('GET', 'http://httpbin.org');
     echo $request->getUri()->getScheme(); // http
     echo $request->getUri(); // http://httpbin.org/get
 
@@ -315,7 +311,7 @@ status code, and reason phrase.
 .. code-block:: php
 
     $client = new \GuzzleHttp\Client();
-    $response = $client->get('http://httpbin.org/get');
+    $response = $client->request('GET', 'http://httpbin.org/get');
 
     echo $response->getStatusCode(); // 200
     echo $response->getReasonPhrase(); // OK

@@ -237,7 +237,7 @@ stack.
         return $r;
     });
 
-    $client->get('http://httpbin.org/');
+    $client->request('GET', 'http://httpbin.org/');
     // echoes 'ABC';
 
     $stack->unshift(Middleware::mapRequest(function (RequestInterface $r) {
@@ -246,7 +246,7 @@ stack.
     });
 
     $client = new Client(['handler' => $stack]);
-    $client->get('http://httpbin.org/');
+    $client->request('GET', 'http://httpbin.org/');
     // echoes '0ABC';
 
 You can give middleware a name, which allows you to add middleware before

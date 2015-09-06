@@ -59,7 +59,7 @@ used with a client.
 
 .. code-block:: php
 
-    $client->get('/', [
+    $client->request('GET', '/', [
         'curl' => [
             CURLOPT_INTERFACE => 'xxx.xxx.xxx.xxx'
         ]
@@ -79,7 +79,7 @@ used with a client and allow self-signed certificates.
 
 .. code-block:: php
 
-    $client->get('/', [
+    $client->request('GET', '/', [
         'stream' => true,
         'stream_context' => [
             'ssl' => [
@@ -125,7 +125,7 @@ setting the ``expect`` request option to ``false``:
     $client = new GuzzleHttp\Client();
 
     // Disable the expect header on a single request
-    $response = $client->put('/', ['expect' => false]);
+    $response = $client->request('PUT', '/', ['expect' => false]);
 
     // Disable the expect header on all client requests
     $client = new GuzzleHttp\Client(['expect' => false]);

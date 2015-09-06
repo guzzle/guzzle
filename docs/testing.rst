@@ -38,10 +38,10 @@ a response or exception by shifting return values off of a queue.
     $client = new Client(['handler' => $handler]);
 
     // The first request is intercepted with the first response.
-    echo $client->get('/')->getStatusCode();
+    echo $client->request('GET', '/')->getStatusCode();
     //> 200
     // The second request is intercepted with the second response.
-    echo $client->get('/')->getStatusCode();
+    echo $client->request('GET', '/')->getStatusCode();
     //> 202
 
 When no more responses are in the queue and a request is sent, an
@@ -64,15 +64,15 @@ history of the requests that were sent by a client.
 
     $container = [];
     $history = Middleware::history($container);
-    
+
     $stack = HandlerStack::create();
     // Add the history middleware to the handler stack.
     $stack->push($history);
 
     $client = new Client(['handler' => $stack]);
 
-    $client->get('http://httpbin.org/get');
-    $client->head('http://httpbin.org/get');
+    $client->request('GET', 'http://httpbin.org/get');
+    $client->request('HEAD', 'http://httpbin.org/get');
 
     // Count the number of transactions
     echo count($container);
@@ -152,7 +152,7 @@ can queue an HTTP response or an array of responses by calling
     ]);
 
     $client = new Client(['base_uri' => Server::$url]);
-    echo $client->get('/foo')->getStatusCode();
+    echo $client->request('GET', '/foo')->getStatusCode();
     // 200
 
 When a response is queued on the test server, the test server will remove any
