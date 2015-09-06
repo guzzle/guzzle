@@ -129,8 +129,22 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
         ))));
     }
 
+    public function testDoesNotAddEmptyCookies()
+    {
+        $this->assertFalse($this->jar->setCookie(new SetCookie(array(
+            'Name'   => '',
+            'Domain' => 'foo.com',
+            'Value'  => 0
+        ))));
+    }
+
     public function testDoesAddValidCookies()
     {
+        $this->assertTrue($this->jar->setCookie(new SetCookie(array(
+            'Name'   => '0',
+            'Domain' => 'foo.com',
+            'Value'  => 0
+        ))));
         $this->assertTrue($this->jar->setCookie(new SetCookie(array(
             'Name'   => 'foo',
             'Domain' => 'foo.com',

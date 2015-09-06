@@ -148,6 +148,12 @@ class CookieJar implements CookieJarInterface
 
     public function setCookie(SetCookie $cookie)
     {
+        // If the name string is empty (but not 0), ignore the set-cookie-string
+        // entirely.
+        $name = $this->getName();
+        if (empty($name) && !is_numeric($name)) {
+            return false;
+        }
         // Only allow cookies with set and valid domain, name, value
         $result = $cookie->validate();
         if ($result !== true) {
