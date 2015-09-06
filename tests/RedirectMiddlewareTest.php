@@ -133,10 +133,10 @@ class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
     public function testAddsGuzzleRedirectHeader()
     {
         $mock = new MockHandler([
-          new Response(302, ['Location' => 'http://example.com']),
-          new Response(302, ['Location' => 'http://example.com/foo']),
-          new Response(302, ['Location' => 'http://example.com/bar']),
-          new Response(200)
+            new Response(302, ['Location' => 'http://example.com']),
+            new Response(302, ['Location' => 'http://example.com/foo']),
+            new Response(302, ['Location' => 'http://example.com/bar']),
+            new Response(200)
         ]);
 
         $stack = new HandlerStack($mock);
