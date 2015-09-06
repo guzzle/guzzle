@@ -18,8 +18,8 @@ class CookieJar implements CookieJarInterface
     /**
      * @param bool $strictMode   Set to true to throw exceptions when invalid
      *                           cookies are added to the cookie jar.
-     * @param array $cookieArray Array of SetCookie objects or a hash of 
-     *                           arrays that can be used with the SetCookie 
+     * @param array $cookieArray Array of SetCookie objects or a hash of
+     *                           arrays that can be used with the SetCookie
      *                           constructor
      */
     public function __construct($strictMode = false, $cookieArray = [])
@@ -76,11 +76,11 @@ class CookieJar implements CookieJarInterface
 
         return $value;
     }
-    
+
     /**
-     * Evaluate if this cookie should be persisted to storage 
+     * Evaluate if this cookie should be persisted to storage
      * that survives between requests.
-     * 
+     *
      * @param SetCookie $cookie Being evaluated.
      * @param bool $allowSessionCookies If we should presist session cookies
      * @return bool
@@ -89,12 +89,13 @@ class CookieJar implements CookieJarInterface
         SetCookie $cookie,
         $allowSessionCookies = false
     ) {
-    	if ($cookie->getExpires() || $allowSessionCookies) {
-    	    if (!$cookie->getDiscard()) {
-    	        return true;
-    	    }
-    	}
-    	return false;
+        if ($cookie->getExpires() || $allowSessionCookies) {
+            if (!$cookie->getDiscard()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function toArray()
@@ -148,12 +149,13 @@ class CookieJar implements CookieJarInterface
 
     public function setCookie(SetCookie $cookie)
     {
-        // If the name string is empty (but not 0), ignore the set-cookie-string
-        // entirely.
-        $name = $this->getName();
-        if (empty($name) && !is_numeric($name)) {
+        // If the name string is empty (but not 0), ignore the set-cookie
+        // string entirely.
+        $name = $cookie->getName();
+        if (!$name && $name !== '0') {
             return false;
         }
+
         // Only allow cookies with set and valid domain, name, value
         $result = $cookie->validate();
         if ($result !== true) {
