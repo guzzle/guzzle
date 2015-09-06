@@ -151,7 +151,11 @@ class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
         /** @var ResponseInterface $response */
         $response = $promise->wait(TRUE);
 
-        $this->assertEquals(['http://example.com?a=b', 'http://example.com', 'http://example.com/foo'], $response->getHeader('X-Guzzle-Redirect'));
+        $this->assertEquals([
+            'http://example.com?a=b',
+            'http://example.com',
+            'http://example.com/foo',
+        ], $response->getHeader('X-Guzzle-Redirect'));
     }
 
     public function testDoesNotAddRefererWhenGoingFromHttpsToHttp()
