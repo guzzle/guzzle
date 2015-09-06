@@ -28,10 +28,11 @@ allow_redirects
     ::
 
         [
-            'max'       => 5,
-            'strict'    => false,
-            'referer'   => true,
-            'protocols' => ['http', 'https']
+            'max'             => 5,
+            'strict'          => false,
+            'referer'         => true,
+            'protocols'       => ['http', 'https'],
+            'track_redirects' => false
         ]
 
 :Constant: ``GuzzleHttp\RequestOptions::ALLOW_REDIRECTS``
@@ -69,6 +70,9 @@ pairs:
   is encountered. The callable is invoked with the original request and the
   redirect response that was received. Any return value from the on_redirect
   function is ignored.
+- track_redirects: (bool) When set to ``true``, each redirected URI encountered
+  will be tracked in the ``X-Guzzle-Redirect-History`` header in the order in
+  which the redirects were encountered.
 
 .. code-block:: php
 
@@ -86,15 +90,20 @@ pairs:
 
     $res = $client->request('GET', '/redirect/3', [
         'allow_redirects' => [
-            'max'         => 10,        // allow at most 10 redirects.
-            'strict'      => true,      // use "strict" RFC compliant redirects.
-            'referer'     => true,      // add a Referer header
-            'protocols'   => ['https'], // only allow https URLs
-            'on_redirect' => $onRedirect
+            'max'             => 10,        // allow at most 10 redirects.
+            'strict'          => true,      // use "strict" RFC compliant redirects.
+            'referer'         => true,      // add a Referer header
+            'protocols'       => ['https'], // only allow https URLs
+            'on_redirect'     => $onRedirect,
+            'track_redirects' => true
         ]
     ]);
+
     echo $res->getStatusCode();
     // 200
+
+    echo $res->getHeaderLine('X-Guzzle-Redirect-History');
+    // http://first-redirect, http://second-redirect, etc...
 
 .. warning::
 

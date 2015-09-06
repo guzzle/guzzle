@@ -17,6 +17,8 @@ use Psr\Http\Message\UriInterface;
  */
 class RedirectMiddleware
 {
+    const HISTORY_HEADER = 'X-Guzzle-Redirect-History';
+
     public static $defaultSettings = [
         'max'             => 5,
         'protocols'       => ['http', 'https'],
@@ -99,18 +101,32 @@ class RedirectMiddleware
             );
         }
 
-        /** @var PromiseInterface|ResponseInterface $response */
-        $options['_previous_uris'][] = $request->getUri();
-        $response = $this($nextRequest, $options);
+        /** @var PromiseInterface|ResponseInterface $promise */
+        $promise = $this($nextRequest, $options);
 
         // Add headers to be able to track history of redirects.
         if (!empty($options['allow_redirects']['track_redirects'])) {
-            $response = $response->wait(TRUE);
-            if (!$response->hasHeader('X-Guzzle-Redirect')) {
-                $response = $response->withHeader('X-Guzzle-Redirect', $options['_previous_uris']);
-            }
+            return $this->withTracking(
+                $promise,
+                (string) $nextRequest->getUri()
+            );
         }
-        return $response;
+
+        return $promise;
+    }
+
+    private function withTracking(PromiseInterface $promise, $uri)
+    {
+        return $promise->then(
+            function (ResponseInterface $response) use ($uri) {
+                // Note that we are pushing to the front of the list as this
+                // would be an earlier response than what is currently present
+                // in the history header.
+                $header = $response->getHeader(self::HISTORY_HEADER);
+                array_unshift($header, $uri);
+                return $response->withHeader(self::HISTORY_HEADER, $header);
+            }
+        );
     }
 
     private function guardMax(RequestInterface $request, array &$options)
