@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Promise\RejectedPromise;
+use GuzzleHttp\TransferStats;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -80,18 +81,16 @@ class MockHandler implements \Countable
             ? new RejectedPromise($response)
             : \GuzzleHttp\Promise\promise_for($response);
 
-        if (!$this->onFulfilled && !$this->onRejected) {
-            return $response;
-        }
-
         return $response->then(
-            function ($value) {
+            function ($value) use ($request, $options) {
+                $this->invokeStats($request, $options, $value);
                 if ($this->onFulfilled) {
                     call_user_func($this->onFulfilled, $value);
                 }
                 return $value;
             },
-            function ($reason) {
+            function ($reason) use ($request, $options) {
+                $this->invokeStats($request, $options, null, $reason);
                 if ($this->onRejected) {
                     call_user_func($this->onRejected, $reason);
                 }
@@ -148,5 +147,17 @@ class MockHandler implements \Countable
     public function count()
     {
         return count($this->queue);
+    }
+
+    private function invokeStats(
+        RequestInterface $request,
+        array $options,
+        ResponseInterface $response = null,
+        $reason = null
+    ) {
+        if (isset($options['on_stats'])) {
+            $stats = new TransferStats($request, $response, 0, $reason);
+            call_user_func($options['on_stats'], $stats);
+        }
     }
 }

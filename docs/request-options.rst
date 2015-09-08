@@ -629,6 +629,49 @@ can be written to the sink.
     before writing data to the body of the response.
 
 
+.. _on_stats:
+
+on_stats
+--------
+
+:Summary: ``on_stats`` allows you to get access to transfer statistics of a
+    request and access the lower level transfer details of the handler
+    associated with your client. ``on_stats`` is a callable that is invoked
+    when a handler has finished sending a request. The callback is invoked
+    with transfer statistics about the request, the response received, or the
+    error encountered. Included in the data is the total amount of time taken
+    to send the request.
+:Types: - callable
+:Constant: ``GuzzleHttp\RequestOptions::ON_STATS``
+
+The callable accepts a ``GuzzleHttp\TransferStats`` object.
+
+.. code-block:: php
+
+    use GuzzleHttp\TransferStats;
+
+    $client = new GuzzleHttp\Client();
+
+    $client->request('GET', 'http://httpbin.org/stream/1024', [
+        'on_stats' => function (TransferStats $stats) {
+            echo $stats->getEffectiveUri() . "\n";
+            echo $stats->getTransferTime() . "\n";
+            var_dump($stats->getHandlerStats());
+
+            // You must check if a response was received before using the
+            // response object.
+            if ($stats->hasResponse()) {
+                echo $stats->getResponse()->getStatusCode();
+            } else {
+                // Error data is handler specific. You will need to know what
+                // type of error data your handler uses before using this
+                // value.
+                var_dump($stats->getHandlerErrorData());
+            }
+        }
+    ]);
+
+
 .. _proxy-option:
 
 proxy

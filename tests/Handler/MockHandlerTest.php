@@ -5,6 +5,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\TransferStats;
 
 /**
  * @covers \GuzzleHttp\Handler\MockHandler
@@ -43,7 +44,6 @@ class MockHandlerTest extends \PHPUnit_Framework_TestCase
         $mock = new MockHandler([$e]);
         $request = new Request('GET', 'http://example.com');
         $p = $mock($request, []);
-        $this->assertEquals(PromiseInterface::REJECTED, $p->getState());
         try {
             $p->wait();
             $this->fail();
@@ -112,5 +112,36 @@ class MockHandlerTest extends \PHPUnit_Framework_TestCase
         $mock = MockHandler::createWithMiddleware([$r]);
         $request = new Request('GET', 'http://example.com');
         $mock($request, ['http_errors' => true])->wait();
+    }
+
+    public function testInvokesOnStatsFunctionForResponse()
+    {
+        $res = new Response();
+        $mock = new MockHandler([$res]);
+        $request = new Request('GET', 'http://example.com');
+        $stats = null;
+        $onStats = function (TransferStats $s) use (&$stats) {
+            $stats = $s;
+        };
+        $p = $mock($request, ['on_stats' => $onStats]);
+        $p->wait();
+        $this->assertSame($res, $stats->getResponse());
+        $this->assertSame($request, $stats->getRequest());
+    }
+
+    public function testInvokesOnStatsFunctionForError()
+    {
+        $e = new \Exception('a');
+        $c = null;
+        $mock = new MockHandler([$e], null, function ($v) use (&$c) { $c = $v; });
+        $request = new Request('GET', 'http://example.com');
+        $stats = null;
+        $onStats = function (TransferStats $s) use (&$stats) {
+            $stats = $s;
+        };
+        $mock($request, ['on_stats' => $onStats])->wait(false);
+        $this->assertSame($e, $stats->getHandlerErrorData());
+        $this->assertSame(null, $stats->getResponse());
+        $this->assertSame($request, $stats->getRequest());
     }
 }

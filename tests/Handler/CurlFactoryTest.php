@@ -4,6 +4,7 @@ namespace GuzzleHttp\Test\Handler;
 use GuzzleHttp\Tests\Server;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Psr7;
+use GuzzleHttp\TransferStats;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -636,5 +637,57 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertEquals('bar', $response->getHeaderLine('X-Foo'));
         $this->assertEquals('abc 123', (string) $response->getBody());
+    }
+
+    public function testInvokesOnStatsOnSuccess()
+    {
+        Server::flush();
+        Server::enqueue([new Psr7\Response(200)]);
+        $req = new Psr7\Request('GET', Server::$url);
+        $gotStats = null;
+        $handler = new Handler\CurlHandler();
+        $promise = $handler($req, [
+            'on_stats' => function (TransferStats $stats) use (&$gotStats) {
+                $gotStats = $stats;
+            }
+        ]);
+        $response = $promise->wait();
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals(200, $gotStats->getResponse()->getStatusCode());
+        $this->assertEquals(
+            Server::$url,
+            (string) $gotStats->getEffectiveUri()
+        );
+        $this->assertEquals(
+            Server::$url,
+            (string) $gotStats->getRequest()->getUri()
+        );
+        $this->assertGreaterThan(0, $gotStats->getTransferTime());
+    }
+
+    public function testInvokesOnStatsOnError()
+    {
+        $req = new Psr7\Request('GET', 'http://127.0.0.1:123');
+        $gotStats = null;
+        $handler = new Handler\CurlHandler();
+        $promise = $handler($req, [
+            'connect_timeout' => 0.001,
+            'timeout' => 0.001,
+            'on_stats' => function (TransferStats $stats) use (&$gotStats) {
+                $gotStats = $stats;
+            }
+        ]);
+        $promise->wait(false);
+        $this->assertFalse($gotStats->hasResponse());
+        $this->assertEquals(
+            'http://127.0.0.1:123',
+            $gotStats->getEffectiveUri()
+        );
+        $this->assertEquals(
+            'http://127.0.0.1:123',
+            $gotStats->getRequest()->getUri()
+        );
+        $this->assertInternalType('float', $gotStats->getTransferTime());
+        $this->assertInternalType('int', $gotStats->getHandlerErrorData());
     }
 }
