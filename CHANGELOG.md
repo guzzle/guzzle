@@ -1,5 +1,39 @@
 # CHANGELOG
 
+## 6.1.0 - 2015-09-08
+
+* Feature: Added the `on_stats` request option to provide access to transfer
+  statistics for requests. https://github.com/guzzle/guzzle/pull/1202
+* Feature: Added the ability to persist session cookies in CookieJars.
+  https://github.com/guzzle/guzzle/pull/1195
+* Feature: Some compatibility updates for Google APP Engine
+  https://github.com/guzzle/guzzle/pull/1216
+* Feature: Added support for NO_PROXY to prevent the use of a proxy based on
+  a simple set of rules. https://github.com/guzzle/guzzle/pull/1197
+* Feature: Cookies can now contain square brackets.
+  https://github.com/guzzle/guzzle/pull/1237
+* Bug fix: Now correctly parsing `=` inside of quotes in Cookies.
+  https://github.com/guzzle/guzzle/pull/1232
+* Bug fix: Cusotm cURL options now correctly override curl options of the
+  same name. https://github.com/guzzle/guzzle/pull/1221
+* Bug fix: Content-Type header is now added when using an explicitly provided
+  multipart body. https://github.com/guzzle/guzzle/pull/1218
+* Bug fix: Now ignoring Set-Cookie headers that have no name.
+* Bug fix: Reason phrase is no longer cast to an int in some cases in the
+  cURL handler. https://github.com/guzzle/guzzle/pull/1187
+* Bug fix: Remove the Authorization header when redirecting if the Host
+  header changes. https://github.com/guzzle/guzzle/pull/1207
+* Bug fix: Cookie path matching fixes
+  https://github.com/guzzle/guzzle/issues/1129
+* Bug fix: Fixing the cURL `body_as_string` setting
+  https://github.com/guzzle/guzzle/pull/1201
+* Bug fix: quotes are no longer stripped when parsing cookies.
+  https://github.com/guzzle/guzzle/issues/1172
+* Bug fix: `form_params` and `query` now always uses the `&` separator.
+  https://github.com/guzzle/guzzle/pull/1163
+* Bug fix: Adding a Content-Length to PHP stream wrapper requests if not set.
+  https://github.com/guzzle/guzzle/pull/1189
+
 ## 6.0.2 - 2015-07-04
 
 * Fixed a memory leak in the curl handlers in which references to callbacks
