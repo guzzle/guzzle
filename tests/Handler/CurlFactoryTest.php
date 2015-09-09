@@ -1,6 +1,8 @@
 <?php
 namespace GuzzleHttp\Test\Handler;
 
+use GuzzleHttp\Handler\CurlFactory;
+use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Tests\Server;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Psr7;
@@ -40,7 +42,7 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         ], 'testing');
         $f = new Handler\CurlFactory(3);
         $result = $f->create($request, ['sink' => $stream]);
-        $this->assertInstanceOf('GuzzleHttp\Handler\EasyHandle', $result);
+        $this->assertInstanceOf(EasyHandle::class, $result);
         $this->assertInternalType('resource', $result->handle);
         $this->assertInternalType('array', $result->headers);
         $this->assertSame($stream, $result->sink);
@@ -502,7 +504,7 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
      */
     public function testCreatesConnectException()
     {
-        $m = new \ReflectionMethod('GuzzleHttp\Handler\CurlFactory', 'finishError');
+        $m = new \ReflectionMethod(CurlFactory::class, 'finishError');
         $m->setAccessible(true);
         $factory = new Handler\CurlFactory(1);
         $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);

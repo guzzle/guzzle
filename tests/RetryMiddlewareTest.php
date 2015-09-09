@@ -62,7 +62,7 @@ class RetryMiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertNull($calls[0][2]);
         $this->assertInstanceOf('Exception', $calls[0][3]);
         $this->assertEquals(1, $calls[1][0]);
-        $this->assertInstanceOf('GuzzleHttp\Psr7\Response', $calls[1][2]);
+        $this->assertInstanceOf(Response::class, $calls[1][2]);
         $this->assertNull($calls[1][3]);
     }
 

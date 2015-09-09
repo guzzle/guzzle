@@ -98,7 +98,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $f($request, [])->wait(false);
         $this->assertCount(1, $container);
         $this->assertEquals('GET', $container[0]['request']->getMethod());
-        $this->assertInstanceOf('GuzzleHttp\Exception\RequestException', $container[0]['error']);
+        $this->assertInstanceOf(RequestException::class, $container[0]['error']);
     }
 
     public function testTapsBeforeAndAfter()
@@ -127,7 +127,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $comp = $b->resolve();
         $p = $comp(new Request('GET', 'http://foo.com'), []);
         $this->assertEquals('123', implode('', $calls));
-        $this->assertInstanceOf('GuzzleHttp\Promise\PromiseInterface', $p);
+        $this->assertInstanceOf(PromiseInterface::class, $p);
         $this->assertEquals(200, $p->wait()->getStatusCode());
     }
 
@@ -145,7 +145,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         }));
         $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com'), []);
-        $this->assertInstanceOf('GuzzleHttp\Promise\PromiseInterface', $p);
+        $this->assertInstanceOf(PromiseInterface::class, $p);
     }
 
     public function testMapsResponse()
