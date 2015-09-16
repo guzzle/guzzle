@@ -4,6 +4,7 @@ namespace GuzzleHttp\Tests;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
@@ -25,7 +26,7 @@ class PrepareBodyMiddlewareTest extends \PHPUnit_Framework_TestCase
         $stack->push($m);
         $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com', [], '123'), []);
-        $this->assertInstanceOf('GuzzleHttp\Promise\PromiseInterface', $p);
+        $this->assertInstanceOf(PromiseInterface::class, $p);
         $response = $p->wait();
         $this->assertEquals(200, $response->getStatusCode());
     }
@@ -47,7 +48,7 @@ class PrepareBodyMiddlewareTest extends \PHPUnit_Framework_TestCase
         $stack->push($m);
         $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com', [], $body), []);
-        $this->assertInstanceOf('GuzzleHttp\Promise\PromiseInterface', $p);
+        $this->assertInstanceOf(PromiseInterface::class, $p);
         $response = $p->wait();
         $this->assertEquals(200, $response->getStatusCode());
     }
@@ -67,7 +68,7 @@ class PrepareBodyMiddlewareTest extends \PHPUnit_Framework_TestCase
         $stack->push($m);
         $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com', [], $bd), []);
-        $this->assertInstanceOf('GuzzleHttp\Promise\PromiseInterface', $p);
+        $this->assertInstanceOf(PromiseInterface::class, $p);
         $response = $p->wait();
         $this->assertEquals(200, $response->getStatusCode());
     }
@@ -103,7 +104,7 @@ class PrepareBodyMiddlewareTest extends \PHPUnit_Framework_TestCase
         $p = $comp(new Request('PUT', 'http://www.google.com', [], $bd), [
             'expect' => $value
         ]);
-        $this->assertInstanceOf('GuzzleHttp\Promise\PromiseInterface', $p);
+        $this->assertInstanceOf(PromiseInterface::class, $p);
         $response = $p->wait();
         $this->assertEquals(200, $response->getStatusCode());
     }
@@ -126,7 +127,7 @@ class PrepareBodyMiddlewareTest extends \PHPUnit_Framework_TestCase
             new Request('PUT', 'http://www.google.com', ['Expect' => 'Foo'], $bd),
             ['expect' => true]
         );
-        $this->assertInstanceOf('GuzzleHttp\Promise\PromiseInterface', $p);
+        $this->assertInstanceOf(PromiseInterface::class, $p);
         $response = $p->wait();
         $this->assertEquals(200, $response->getStatusCode());
     }

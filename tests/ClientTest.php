@@ -5,10 +5,12 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
+use Psr\Http\Message\ResponseInterface;
 
 class ClientTest extends \PHPUnit_Framework_TestCase
 {
@@ -36,7 +38,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         Server::flush();
         Server::enqueue([new Response(200, ['Content-Length' => 2], 'hi')]);
         $p = $client->getAsync(Server::$url, ['query' => ['test' => 'foo']]);
-        $this->assertInstanceOf('GuzzleHttp\Promise\PromiseInterface', $p);
+        $this->assertInstanceOf(PromiseInterface::class, $p);
         $this->assertEquals(200, $p->wait()->getStatusCode());
         $received = Server::received(true);
         $this->assertCount(1, $received);
@@ -48,7 +50,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client(['handler' => new MockHandler([new Response()])]);
         $request = new Request('GET', 'http://example.com');
         $r = $client->send($request);
-        $this->assertInstanceOf('Psr\Http\Message\ResponseInterface', $r);
+        $this->assertInstanceOf(ResponseInterface::class, $r);
         $this->assertEquals(200, $r->getStatusCode());
     }
 
@@ -62,7 +64,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         ]);
         $base = $client->getConfig('base_uri');
         $this->assertEquals('http://foo.com', (string) $base);
-        $this->assertInstanceOf('GuzzleHttp\Psr7\Uri', $base);
+        $this->assertInstanceOf(Uri::class, $base);
         $this->assertNotNull($client->getConfig('handler'));
         $this->assertEquals(2, $client->getConfig('timeout'));
         $this->assertArrayHasKey('timeout', $client->getConfig());

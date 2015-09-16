@@ -1,6 +1,7 @@
 <?php
 namespace GuzzleHttp\Test\Handler;
 
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
@@ -539,7 +540,7 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         );
         $this->assertInternalType('float', $gotStats->getTransferTime());
         $this->assertInstanceOf(
-            'GuzzleHttp\Exception\ConnectException',
+            ConnectException::class,
             $gotStats->getHandlerErrorData()
         );
     }

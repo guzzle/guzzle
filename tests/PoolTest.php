@@ -1,6 +1,7 @@
 <?php
 namespace GuzzleHttp\Tests;
 
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Pool;
@@ -113,7 +114,7 @@ class PoolTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(200, $results[0]->getStatusCode());
         $this->assertEquals(201, $results[1]->getStatusCode());
         $this->assertEquals(202, $results[2]->getStatusCode());
-        $this->assertInstanceOf('GuzzleHttp\Exception\ClientException', $results[3]);
+        $this->assertInstanceOf(ClientException::class, $results[3]);
     }
 
     public function testBatchesResultsWithCallbacks()
