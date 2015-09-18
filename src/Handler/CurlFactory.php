@@ -492,12 +492,14 @@ class CurlFactory implements CurlFactoryInterface
 
     private function createHeaderFn(EasyHandle $easy)
     {
-        if (!isset($easy->options['on_headers'])) {
-            $onHeaders = null;
-        } elseif (!is_callable($easy->options['on_headers'])) {
-            throw new \InvalidArgumentException('on_headers must be callable');
-        } else {
+        $onHeaders = null;
+
+        if (isset($easy->options['on_headers'])) {
             $onHeaders = $easy->options['on_headers'];
+        }
+
+        if (!is_callable($onHeaders)) {
+            throw new \InvalidArgumentException('on_headers must be callable');
         }
 
         return function ($ch, $h) use (
