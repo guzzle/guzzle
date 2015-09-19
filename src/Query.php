@@ -4,7 +4,7 @@ namespace GuzzleHttp;
 /**
  * Manages query string variables and can aggregate them into a string
  */
-class Query extends Collection
+class Query implements \ArrayAccess, \Countable, \IteratorAggregate
 {
     const RFC3986 = 'RFC3986';
     const RFC1738 = 'RFC1738';
@@ -13,42 +13,12 @@ class Query extends Collection
     private $encoding = 'rawurlencode';
     /** @var callable */
     private $aggregator;
+    /** @var array */
+    private $data;
 
-    /**
-     * Parse a query string into a Query object
-     *
-     * $urlEncoding is used to control how the query string is parsed and how
-     * it is ultimately serialized. The value can be set to one of the
-     * following:
-     *
-     * - true: (default) Parse query strings using RFC 3986 while still
-     *   converting "+" to " ".
-     * - false: Disables URL decoding of the input string and URL encoding when
-     *   the query string is serialized.
-     * - 'RFC3986': Use RFC 3986 URL encoding/decoding
-     * - 'RFC1738': Use RFC 1738 URL encoding/decoding
-     *
-     * @param string      $query       Query string to parse
-     * @param bool|string $urlEncoding Controls how the input string is decoded
-     *                                 and encoded.
-     * @return self
-     */
-    public static function fromString($query, $urlEncoding = true)
+    public function __construct(array $data = [])
     {
-        static $qp;
-        if (!$qp) {
-            $qp = new QueryParser();
-        }
-
-        $q = new static();
-
-        if ($urlEncoding !== true) {
-            $q->setEncodingType($urlEncoding);
-        }
-
-        $qp->parseInto($q, $query, $urlEncoding);
-
-        return $q;
+        $this->data = $data;
     }
 
     /**
@@ -200,5 +170,40 @@ class Query extends Collection
         }
 
         return $result;
+    }
+
+    public function offsetGet($offset)
+    {
+        return isset($this->data[$offset]) ? $this->data[$offset] : null;
+    }
+
+    public function offsetSet($offset, $value)
+    {
+        $this->data[$offset] = $value;
+    }
+
+    public function offsetExists($offset)
+    {
+        return isset($this->data[$offset]);
+    }
+
+    public function offsetUnset($offset)
+    {
+        unset($this->data[$offset]);
+    }
+
+    public function getIterator()
+    {
+        return new \ArrayIterator($this->data);
+    }
+
+    public function count()
+    {
+        return count($this->data);
+    }
+
+    public function toArray()
+    {
+        return $this->data;
     }
 }

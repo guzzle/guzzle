@@ -55,7 +55,7 @@ class QueryParserTest extends \PHPUnit_Framework_TestCase
      */
     public function testParsesQueries($input, $output)
     {
-        $query = Query::fromString($input);
+        $query = (new QueryParser)->parseString($input);
         $this->assertEquals($output, $query->toArray());
         // Normalize the input and output
         $query->setEncodingType(false);
@@ -64,17 +64,16 @@ class QueryParserTest extends \PHPUnit_Framework_TestCase
 
     public function testConvertsPlusSymbolsToSpacesByDefault()
     {
-        $query = Query::fromString('var=foo+bar', true);
-        $this->assertEquals('foo bar', $query->get('var'));
+        $query = (new QueryParser)->parseString('var=foo+bar', true);
+        $this->assertEquals('foo bar', $query['var']);
     }
 
     public function testCanControlDecodingType()
     {
         $qp = new QueryParser();
-        $q = new Query();
-        $qp->parseInto($q, 'var=foo+bar', Query::RFC3986);
-        $this->assertEquals('foo+bar', $q->get('var'));
-        $qp->parseInto($q, 'var=foo+bar', Query::RFC1738);
-        $this->assertEquals('foo bar', $q->get('var'));
+        $q = $qp->parseString('var=foo+bar', Query::RFC3986);
+        $this->assertEquals('foo+bar', $q['var']);
+        $q = $qp->parseString('var=foo+bar', Query::RFC1738);
+        $this->assertEquals('foo bar', $q['var']);
     }
 }

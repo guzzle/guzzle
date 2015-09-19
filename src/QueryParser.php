@@ -8,8 +8,6 @@ namespace GuzzleHttp;
  * query string aggregator to use when serializing the parsed query string
  * object back into a string. The hope is that parsing then serializing a
  * query string should be a lossless operation.
- *
- * @internal Use Query::fromString()
  */
 class QueryParser
 {
@@ -17,16 +15,28 @@ class QueryParser
     private $numericIndices;
 
     /**
-     * Parse a query string into a Query object.
+     * Parse a query string into a Query object
      *
-     * @param Query       $query       Query object to populate
+     * $urlEncoding is used to control how the query string is parsed and how
+     * it is ultimately serialized. The value can be set to one of the
+     * following:
+     *
+     * - true: (default) Parse query strings using RFC 3986 while still
+     *   converting "+" to " ".
+     * - false: Disables URL decoding of the input string and URL encoding when
+     *   the query string is serialized.
+     * - 'RFC3986': Use RFC 3986 URL encoding/decoding
+     * - 'RFC1738': Use RFC 1738 URL encoding/decoding
+     *
      * @param string      $str         Query string to parse
-     * @param bool|string $urlEncoding How the query string is encoded
+     * @param bool|string $urlEncoding Controls how the input string is decoded
+     *                                 and encoded.
+     * @return Query
      */
-    public function parseInto(Query $query, $str, $urlEncoding = true)
+    public function parseString($str, $urlEncoding = true)
     {
         if ($str === '') {
-            return;
+            return new Query;
         }
 
         $result = [];
@@ -35,7 +45,6 @@ class QueryParser
         $decoder = self::getDecoder($urlEncoding);
 
         foreach (explode('&', $str) as $kvp) {
-
             $parts = explode('=', $kvp, 2);
             $key = $decoder($parts[0]);
             $value = isset($parts[1]) ? $decoder($parts[1]) : null;
@@ -57,13 +66,16 @@ class QueryParser
             }
         }
 
-        $query->replace($result);
+        $query = new Query($result);
+        $query->setEncodingType($urlEncoding);
 
         if (!$this->numericIndices) {
             $query->setAggregator(Query::phpAggregator(false));
         } elseif ($this->duplicates) {
             $query->setAggregator(Query::duplicateAggregator());
         }
+
+        return $query;
     }
 
     /**

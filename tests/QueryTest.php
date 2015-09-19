@@ -3,6 +3,7 @@
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Query;
+use GuzzleHttp\QueryParser;
 
 class QueryTest extends \PHPUnit_Framework_TestCase
 {
@@ -58,10 +59,10 @@ class QueryTest extends \PHPUnit_Framework_TestCase
 
     public function testAllowsMultipleValuesPerKey()
     {
-        $q = new Query();
-        $q->add('facet', 'size');
-        $q->add('facet', 'width');
-        $q->add('facet.field', 'foo');
+        $q = new Query([
+            'facet' => ['size', 'width'],
+            'facet.field' => 'foo',
+        ]);
         // Use the duplicate aggregator
         $q->setAggregator($q::duplicateAggregator());
         $this->assertEquals('facet=size&facet=width&facet.field=foo', (string) $q);
@@ -137,35 +138,35 @@ class QueryTest extends \PHPUnit_Framework_TestCase
 
     public function testCanDisableUrlEncodingDecoding()
     {
-        $q = Query::fromString('foo=bar+baz boo%20', false);
+        $q = (new QueryParser)->parseString('foo=bar+baz boo%20', false);
         $this->assertEquals('bar+baz boo%20', $q['foo']);
         $this->assertEquals('foo=bar+baz boo%20', (string) $q);
     }
 
     public function testCanChangeUrlEncodingDecodingToRfc1738()
     {
-        $q = Query::fromString('foo=bar+baz', Query::RFC1738);
+        $q = (new QueryParser)->parseString('foo=bar+baz', Query::RFC1738);
         $this->assertEquals('bar baz', $q['foo']);
         $this->assertEquals('foo=bar+baz', (string) $q);
     }
 
     public function testCanChangeUrlEncodingDecodingToRfc3986()
     {
-        $q = Query::fromString('foo=bar%20baz', Query::RFC3986);
+        $q = (new QueryParser)->parseString('foo=bar%20baz', Query::RFC3986);
         $this->assertEquals('bar baz', $q['foo']);
         $this->assertEquals('foo=bar%20baz', (string) $q);
     }
 
     public function testQueryStringsAllowSlashButDoesNotDecodeWhenDisable()
     {
-        $q = Query::fromString('foo=bar%2Fbaz&bam=boo%20boo', Query::RFC3986);
+        $q = (new QueryParser)->parseString('foo=bar%2Fbaz&bam=boo%20boo', Query::RFC3986);
         $q->setEncodingType(false);
         $this->assertEquals('foo=bar/baz&bam=boo boo', (string) $q);
     }
 
     public function testQueryStringsAllowDecodingEncodingCompletelyDisabled()
     {
-        $q = Query::fromString('foo=bar%2Fbaz&bam=boo boo!', false);
+        $q = (new QueryParser)->parseString('foo=bar%2Fbaz&bam=boo boo!', false);
         $this->assertEquals('foo=bar%2Fbaz&bam=boo boo!', (string) $q);
     }
 }
