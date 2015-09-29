@@ -10,6 +10,7 @@ use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\Query;
 use Psr\Http\Message\ResponseInterface;
 
 class ClientTest extends \PHPUnit_Framework_TestCase
@@ -324,6 +325,15 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client(['handler' => $mock]);
         $request = new Request('PUT', 'http://foo.com');
         $client->send($request, ['query' => ['foo' => 'bar baz']]);
+        $this->assertEquals('foo=bar%20baz', $mock->getLastRequest()->getUri()->getQuery());
+    }
+
+    public function testQueryCanBeStringableObject()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $request = new Request('PUT', 'http://foo.com');
+        $client->send($request, ['query' => new Query(['foo' => 'bar baz'])]);
         $this->assertEquals('foo=bar%20baz', $mock->getLastRequest()->getUri()->getQuery());
     }
 

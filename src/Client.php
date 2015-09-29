@@ -349,6 +349,9 @@ class Client implements ClientInterface
             if (is_array($value)) {
                 $value = http_build_query($value, null, '&', PHP_QUERY_RFC3986);
             }
+            if (is_object($value) && method_exists($value, '__toString')) {
+                $value = (string) $value;
+            }
             if (!is_string($value)) {
                 throw new \InvalidArgumentException('query must be a string or array');
             }
