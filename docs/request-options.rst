@@ -173,8 +173,8 @@ This setting can be set to any of the following types:
 
   .. code-block:: php
 
-  // You can send requests that use a string as the message body.
-  $client->request('PUT', '/put', ['body' => 'foo']);
+      // You can send requests that use a string as the message body.
+      $client->request('PUT', '/put', ['body' => 'foo']);
 
 - resource returned from ``fopen()``
 
