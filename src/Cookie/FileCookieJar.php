@@ -9,7 +9,7 @@ class FileCookieJar extends CookieJar
     /** @var string filename */
     private $filename;
 
-    /** @var bool Control whether to presist session cookies or not. */
+    /** @var bool Control whether to persist session cookies or not. */
     private $storeSessionCookies;
     
     /**

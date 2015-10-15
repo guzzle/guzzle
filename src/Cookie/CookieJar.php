@@ -82,7 +82,7 @@ class CookieJar implements CookieJarInterface
      * that survives between requests.
      *
      * @param SetCookie $cookie Being evaluated.
-     * @param bool $allowSessionCookies If we should presist session cookies
+     * @param bool $allowSessionCookies If we should persist session cookies
      * @return bool
      */
     public static function shouldPersist(
