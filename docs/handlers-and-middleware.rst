@@ -80,7 +80,7 @@ function that takes the following form.
         return function (callable $handler) {
             return function (RequestInterface $request, array $options) use ($handler) {
                 return $handler($request, $options);
-            }
+            };
         };
     }
 
@@ -106,7 +106,7 @@ Here's an example of adding a header to each request.
             ) use ($handler, $header, $value) {
                 $request = $request->withHeader($header, $value);
                 return $handler($request, $options);
-            }
+            };
         };
     }
 
