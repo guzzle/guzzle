@@ -62,7 +62,7 @@ class MockHandler implements \Countable
     /**
      * @param RequestInterface $request
      * @param array $options
-     * @return mixed
+     * @return ResponseInterface
      */
     public function __invoke(RequestInterface $request, array $options)
     {
@@ -157,7 +157,7 @@ class MockHandler implements \Countable
     /**
      * @param RequestInterface $request
      * @param array $options
-     * @param ResponseInterface|null $response
+     * @param ResponseInterface $response
      * @param $reason
      */
     private function invokeStats(

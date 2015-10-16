@@ -115,7 +115,7 @@ class RetryMiddleware
     /**
      * @param RequestInterface $request
      * @param array $options
-     * @return mixed
+     * @return RequestInterface
      */
     private function doRetry(RequestInterface $request, array $options)
     {

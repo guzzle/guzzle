@@ -38,7 +38,7 @@ class UriTemplate
     /**
      * @param $template
      * @param array $variables
-     * @return mixed
+     * @return string
      */
     public function expand($template, array $variables)
     {

@@ -165,7 +165,7 @@ class Client implements ClientInterface
     /**
      * @param $uri
      * @param array $config
-     * @return Psr7\Uri|UriInterface
+     * @return UriInterface
      */
     private function buildUri($uri, array $config)
     {

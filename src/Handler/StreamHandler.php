@@ -144,7 +144,7 @@ class StreamHandler
     /**
      * @param StreamInterface $stream
      * @param array $options
-     * @return Psr7\Stream|StreamInterface
+     * @return StreamInterface
      */
     private function createSink(StreamInterface $stream, array $options)
     {

@@ -118,7 +118,7 @@ class RedirectMiddleware
     /**
      * @param PromiseInterface $promise
      * @param $uri
-     * @return mixed
+     * @return PromiseInterface
      */
     private function withTracking(PromiseInterface $promise, $uri)
     {
