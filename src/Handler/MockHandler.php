@@ -59,6 +59,11 @@ class MockHandler implements \Countable
         }
     }
 
+    /**
+     * @param RequestInterface $request
+     * @param array $options
+     * @return mixed
+     */
     public function __invoke(RequestInterface $request, array $options)
     {
         if (!$this->queue) {
@@ -149,6 +154,12 @@ class MockHandler implements \Countable
         return count($this->queue);
     }
 
+    /**
+     * @param RequestInterface $request
+     * @param array $options
+     * @param ResponseInterface|null $response
+     * @param $reason
+     */
     private function invokeStats(
         RequestInterface $request,
         array $options,

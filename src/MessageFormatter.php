@@ -170,6 +170,10 @@ class MessageFormatter
         );
     }
 
+    /**
+     * @param MessageInterface $message
+     * @return string
+     */
     private function headers(MessageInterface $message)
     {
         $result = '';

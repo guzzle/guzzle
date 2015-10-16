@@ -77,6 +77,9 @@ final class EasyHandle
         );
     }
 
+    /**
+     * @param string $name
+     */
     public function __get($name)
     {
         $msg = $name === 'handle'

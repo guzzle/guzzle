@@ -82,6 +82,9 @@ class SetCookie
         }
     }
 
+    /**
+     * @return string
+     */
     public function __toString()
     {
         $str = $this->data['Name'] . '=' . $this->data['Value'] . '; ';
@@ -98,6 +101,9 @@ class SetCookie
         return rtrim($str, '; ');
     }
 
+    /**
+     * @return array
+     */
     public function toArray()
     {
         return $this->data;

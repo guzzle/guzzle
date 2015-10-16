@@ -30,6 +30,11 @@ class CurlHandler
             : new CurlFactory(3);
     }
 
+    /**
+     * @param RequestInterface $request
+     * @param array $options
+     * @return \GuzzleHttp\Promise\PromiseInterface
+     */
     public function __invoke(RequestInterface $request, array $options)
     {
         if (isset($options['delay'])) {

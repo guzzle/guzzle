@@ -98,6 +98,9 @@ class CookieJar implements CookieJarInterface
         return false;
     }
 
+    /**
+     * @return array
+     */
     public function toArray()
     {
         return array_map(function (SetCookie $cookie) {
@@ -105,6 +108,11 @@ class CookieJar implements CookieJarInterface
         }, $this->getIterator()->getArrayCopy());
     }
 
+    /**
+     * @param $domain
+     * @param $path
+     * @param $name
+     */
     public function clear($domain = null, $path = null, $name = null)
     {
         if (!$domain) {
@@ -147,6 +155,10 @@ class CookieJar implements CookieJarInterface
         );
     }
 
+    /**
+     * @param SetCookie $cookie
+     * @return bool
+     */
     public function setCookie(SetCookie $cookie)
     {
         // If the name string is empty (but not 0), ignore the set-cookie
@@ -208,16 +220,26 @@ class CookieJar implements CookieJarInterface
         return true;
     }
 
+    /**
+     * @return int
+     */
     public function count()
     {
         return count($this->cookies);
     }
 
+    /**
+     * @return \ArrayIterator
+     */
     public function getIterator()
     {
         return new \ArrayIterator(array_values($this->cookies));
     }
 
+    /**
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
+     */
     public function extractCookies(
         RequestInterface $request,
         ResponseInterface $response
@@ -233,6 +255,10 @@ class CookieJar implements CookieJarInterface
         }
     }
 
+    /**
+     * @param RequestInterface $request
+     * @return RequestInterface
+     */
     public function withCookieHeader(RequestInterface $request)
     {
         $values = [];

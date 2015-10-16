@@ -35,6 +35,11 @@ class UriTemplate
         '%40', '%21', '%24', '%26', '%27', '%28', '%29', '%2A', '%2B', '%2C',
         '%3B', '%3D');
 
+    /**
+     * @param $template
+     * @param array $variables
+     * @return mixed
+     */
     public function expand($template, array $variables)
     {
         if (false === strpos($template, '{')) {
