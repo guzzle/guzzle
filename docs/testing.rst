@@ -27,11 +27,14 @@ a response or exception by shifting return values off of a queue.
     use GuzzleHttp\Handler\MockHandler;
     use GuzzleHttp\HandlerStack;
     use GuzzleHttp\Psr7\Response;
+    use GuzzleHttp\Psr7\Request;
+    use GuzzleHttp\Exception\RequestException;
 
     // Create a mock and queue two responses.
     $mock = new MockHandler([
         new Response(200, ['X-Foo' => 'Bar']),
-        new Response(202, ['Content-Length' => 0])
+        new Response(202, ['Content-Length' => 0]),
+        new RequestException("Error Communicating with Server", new Request('GET', 'test'))
     ]);
 
     $handler = HandlerStack::create($mock);
