@@ -29,11 +29,6 @@ class CurlFactory implements CurlFactoryInterface
         $this->maxHandles = $maxHandles;
     }
 
-    /**
-     * @param RequestInterface $request
-     * @param array $options
-     * @return EasyHandle
-     */
     public function create(RequestInterface $request, array $options)
     {
         if (isset($options['curl']['body_as_string'])) {
@@ -64,9 +59,6 @@ class CurlFactory implements CurlFactoryInterface
         return $easy;
     }
 
-    /**
-     * @param EasyHandle $easy
-     */
     public function release(EasyHandle $easy)
     {
         $resource = $easy->handle;

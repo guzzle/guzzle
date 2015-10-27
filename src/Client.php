@@ -87,11 +87,6 @@ class Client implements ClientInterface
             : $this->request($method, $uri, $opts);
     }
 
-    /**
-     * @param RequestInterface $request
-     * @param array $options
-     * @return Promise\PromiseInterface
-     */
     public function sendAsync(RequestInterface $request, array $options = [])
     {
         // Merge the base URI into the request URI if needed.
@@ -103,23 +98,12 @@ class Client implements ClientInterface
         );
     }
 
-    /**
-     * @param RequestInterface $request
-     * @param array $options
-     * @return Promise\PromiseInterface
-     */
     public function send(RequestInterface $request, array $options = [])
     {
         $options[RequestOptions::SYNCHRONOUS] = true;
         return $this->sendAsync($request, $options)->wait();
     }
 
-    /**
-     * @param string $method
-     * @param UriInterface $uri
-     * @param array $options
-     * @return Promise\PromiseInterface
-     */
     public function requestAsync($method, $uri = null, array $options = [])
     {
         $options = $this->prepareDefaults($options);
@@ -139,22 +123,12 @@ class Client implements ClientInterface
         return $this->transfer($request, $options);
     }
 
-    /**
-     * @param string $method
-     * @param UriInterface $uri
-     * @param array $options
-     * @return Promise\PromiseInterface
-     */
     public function request($method, $uri = null, array $options = [])
     {
         $options[RequestOptions::SYNCHRONOUS] = true;
         return $this->requestAsync($method, $uri, $options)->wait();
     }
 
-    /**
-     * @param $option
-     * @return array|null
-     */
     public function getConfig($option = null)
     {
         return $option === null
