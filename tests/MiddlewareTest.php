@@ -193,13 +193,14 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $h = new MockHandler([new Response(404)]);
         $stack = new HandlerStack($h);
         $logger = new Logger();
-        $formatter = new MessageFormatter('"{method} {target} HTTP/{version}\" {code} {error}');
+        $formatter = new MessageFormatter('{code} {error}');
         $stack->push(Middleware::log($logger, $formatter));
         $stack->push(Middleware::httpErrors());
         $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com'), ['http_errors' => true]);
         $p->wait(false);
-        $this->assertContains('"PUT / HTTP/1.1\" 404 Client error: 404', $logger->output);
+        $this->assertContains('PUT http://www.google.com', $logger->output);
+        $this->assertContains('404 Not Found', $logger->output);
     }
 }
 

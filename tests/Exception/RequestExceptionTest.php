@@ -31,8 +31,12 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
     public function testCreatesClientErrorResponseException()
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(400));
-        $this->assertEquals(
-            'Client error response [url] / [http method] GET [status code] 400 [reason phrase] Bad Request',
+        $this->assertContains(
+            'GET /',
+            $e->getMessage()
+        );
+        $this->assertContains(
+            '400 Bad Request',
             $e->getMessage()
         );
         $this->assertInstanceOf('GuzzleHttp\Exception\ClientException', $e);
@@ -41,8 +45,12 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
     public function testCreatesServerErrorResponseException()
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(500));
-        $this->assertEquals(
-            'Server error response [url] / [http method] GET [status code] 500 [reason phrase] Internal Server Error',
+        $this->assertContains(
+            'GET /',
+            $e->getMessage()
+        );
+        $this->assertContains(
+            '500 Internal Server Error',
             $e->getMessage()
         );
         $this->assertInstanceOf('GuzzleHttp\Exception\ServerException', $e);
@@ -51,8 +59,57 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
     public function testCreatesGenericErrorResponseException()
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(600));
-        $this->assertEquals(
-            'Unsuccessful response [url] / [http method] GET [status code] 600 [reason phrase] ',
+        $this->assertContains(
+            'GET /',
+            $e->getMessage()
+        );
+        $this->assertContains(
+            '600 ',
+            $e->getMessage()
+        );
+        $this->assertInstanceOf('GuzzleHttp\Exception\RequestException', $e);
+    }
+
+    public function dataPrintableResponses()
+    {
+        return [
+            ['You broke the test!'],
+            ['<h1>zlomený zkouška</h1>'],
+            ['{"tester": "Philépe Gonzalez"}'],
+            ["<xml>\n\t<text>Your friendly test</text>\n</xml>"],
+            ['document.body.write("here comes a test");'],
+            ["body:before {\n\tcontent: 'test style';\n}"],
+        ];
+    }
+
+    /**
+     * @dataProvider dataPrintableResponses
+     */
+    public function testCreatesExceptionWithPrintableBodySummary($content)
+    {
+        $response = new Response(
+            500,
+            [],
+            $content
+        );
+        $e = RequestException::create(new Request('GET', '/'), $response);
+        $this->assertContains(
+            $content,
+            $e->getMessage()
+        );
+        $this->assertInstanceOf('GuzzleHttp\Exception\RequestException', $e);
+    }
+
+    public function testCreatesExceptionWithoutPrintableBody()
+    {
+        $response = new Response(
+            500,
+            ['Content-Type' => 'image/gif'],
+            $content = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7') // 1x1 gif
+        );
+        $e = RequestException::create(new Request('GET', '/'), $response);
+        $this->assertNotContains(
+            $content,
             $e->getMessage()
         );
         $this->assertInstanceOf('GuzzleHttp\Exception\RequestException', $e);
