@@ -100,6 +100,15 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('GuzzleHttp\Exception\RequestException', $e);
     }
 
+    public function testCreatesExceptionWithTruncatedSummary()
+    {
+        $content = str_repeat('+', 121);
+        $response = new Response(500, [], $content);
+        $e = RequestException::create(new Request('GET', '/'), $response);
+        $expected = str_repeat('+', 120) . ' (truncated...)';
+        $this->assertContains($expected, $e->getMessage());
+    }
+
     public function testCreatesExceptionWithoutPrintableBody()
     {
         $response = new Response(

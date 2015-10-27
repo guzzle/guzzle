@@ -79,13 +79,13 @@ class RequestException extends TransferException
 
         $level = floor($response->getStatusCode() / 100);
         if ($level == '4') {
-            $label = 'Client Error';
+            $label = 'Client error';
             $className = __NAMESPACE__ . '\\ClientException';
         } elseif ($level == '5') {
-            $label = 'Server Error';
+            $label = 'Server error';
             $className = __NAMESPACE__ . '\\ServerException';
         } else {
-            $label = 'Unsuccessful Request';
+            $label = 'Unsuccessful request';
             $className = __CLASS__;
         }
 
@@ -100,7 +100,7 @@ class RequestException extends TransferException
 
         $summary = static::getResponseBodySummary($response);
 
-        if (is_string($summary)) {
+        if ($summary !== null) {
             $message .= ":\n{$summary}\n";
         }
 
@@ -124,8 +124,13 @@ class RequestException extends TransferException
             return null;
         }
 
+        $size = $body->getSize();
         $summary = $body->read(120);
         $body->rewind();
+
+        if ($size > 120) {
+            $summary .= ' (truncated...)';
+        }
 
         // Matches any printable character, including unicode characters:
         // letters, marks, numbers, punctuation, spacing, and separators.
