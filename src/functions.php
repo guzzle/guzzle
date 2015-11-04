@@ -264,7 +264,7 @@ function is_host_in_noproxy($host, array $noProxyArray)
         return true;
     }
 
-    foreach ( as $area) {
+    foreach ($noProxyArray as $area) {
         // Always match on wildcards.
         if (empty($area)) {
             // Don't match on empty values.
