@@ -366,6 +366,7 @@ class StreamHandler
         }
 
         $options['ssl']['verify_peer'] = true;
+        $options['ssl']['verify_peer_name'] = true;
         $options['ssl']['allow_self_signed'] = false;
     }
 
