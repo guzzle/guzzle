@@ -159,7 +159,7 @@ class Client implements ClientInterface
             'cookies'			=> false,
             'verify'			=> true,
             'allow_self_signed'		=> false,
-            'verify_peer_name'		=> false,
+            'verify_peer_name'		=> true,
         ];
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set
