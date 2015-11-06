@@ -360,9 +360,9 @@ class StreamHandler
         } elseif ($value === false) {
             $options['ssl']['verify_peer'] = false;
             return;
+        } else {
+            throw new \InvalidArgumentException('Invalid verify request option');
         }
-        
-        throw new \InvalidArgumentException('Invalid verify request option');
     }
 
     private function add_allow_self_signed(RequestInterface $request, &$options, $value, &$params)
