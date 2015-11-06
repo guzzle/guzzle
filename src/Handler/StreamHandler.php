@@ -296,6 +296,11 @@ class StreamHandler
         }
 
         $context = [
+            'ssl' => [
+                'verify_peer'		=> true,
+                'verify_peer_name'	=> true,
+                'allow_self_signed'	=> false,
+            ],
             'http' => [
                 'method'           => $request->getMethod(),
                 'header'           => $headers,
@@ -363,9 +368,16 @@ class StreamHandler
         } else {
             throw new \InvalidArgumentException('Invalid verify request option');
         }
+    }
 
-        $options['ssl']['verify_peer'] = true;
-        $options['ssl']['allow_self_signed'] = false;
+    private function add_allow_self_signed(RequestInterface $request, &$options, $value, &$params)
+    {
+        $options['ssl']['allow_self_signed'] = ($value ? true : false);
+    }
+
+    private function add_verify_peer_name(RequestInterface $request, &$options, $value, &$params)
+    {
+        $options['ssl']['verify_peer_name'] = ($value ? true : false);
     }
 
     private function add_cert(RequestInterface $request, &$options, $value, &$params)

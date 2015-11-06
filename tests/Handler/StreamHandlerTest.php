@@ -230,6 +230,16 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $this->getSendResult(['verify' => false]);
     }
 
+    public function testVerifyPeerNameCanBeDisabled()
+    {
+        $this->getSendResult(['verify_peer_name' => false]);
+    }
+
+    public function testAllowSelfSignedCanBeEnabled()
+    {
+        $this->getSendResult(['allow_self_signed' => true]);
+    }
+
     /**
      * @expectedException \GuzzleHttp\Exception\RequestException
      * @expectedExceptionMessage SSL certificate not found: /does/not/exist
@@ -245,6 +255,8 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $res = $this->getSendResult(['verify' => $path]);
         $opts = stream_context_get_options($res->getBody()->detach());
         $this->assertEquals(true, $opts['ssl']['verify_peer']);
+        $this->assertEquals(true, $opts['ssl']['verify_peer_name']);
+        $this->assertEquals(false, $opts['ssl']['allow_self_signed']);
         $this->assertEquals($path, $opts['ssl']['cafile']);
         $this->assertTrue(file_exists($opts['ssl']['cafile']));
     }

@@ -153,11 +153,13 @@ class Client implements ClientInterface
     private function configureDefaults(array $config)
     {
         $defaults = [
-            'allow_redirects' => RedirectMiddleware::$defaultSettings,
-            'http_errors'     => true,
-            'decode_content'  => true,
-            'verify'          => true,
-            'cookies'         => false
+            'allow_redirects'		=> RedirectMiddleware::$defaultSettings,
+            'http_errors'		=> true,
+            'decode_content'		=> true,
+            'cookies'			=> false,
+            'verify'			=> true,
+            'allow_self_signed'		=> false,
+            'verify_peer_name'		=> true,
         ];
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set
