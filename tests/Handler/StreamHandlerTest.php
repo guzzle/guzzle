@@ -230,6 +230,16 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $this->getSendResult(['verify' => false]);
     }
 
+    public function testVerifyPeerNameCanBeDisabled()
+    {
+        $this->getSendResult(['verify_peer_name' => false]);
+    }
+
+    public function testAllowSelfSignedCanBeEnabled()
+    {
+        $this->getSendResult(['allow_self_signed' => true]);
+    }
+
     /**
      * @expectedException \GuzzleHttp\Exception\RequestException
      * @expectedExceptionMessage SSL certificate not found: /does/not/exist
