@@ -161,7 +161,7 @@ class Client implements ClientInterface
             'decode_content'	=> true,
             'verify'		=> true,
             'cookies'		=> false,
-            'allow_self_signed'	=> false,
+            'allow_self_signed' => false,
             'verify_peer_name'	=> false,
         ];
 
