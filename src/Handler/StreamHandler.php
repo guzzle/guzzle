@@ -359,12 +359,14 @@ class StreamHandler
             }
         } elseif ($value === false) {
             $options['ssl']['verify_peer'] = false;
+            $options['ssl']['verify_peer_name'] = false;
             return;
         } else {
             throw new \InvalidArgumentException('Invalid verify request option');
         }
 
         $options['ssl']['verify_peer'] = true;
+        $options['ssl']['verify_peer_name'] = true;
         $options['ssl']['allow_self_signed'] = false;
     }
 
