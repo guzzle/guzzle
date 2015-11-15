@@ -71,13 +71,6 @@ class StreamHandler
         }
     }
 
-    /**
-     * @param array $options
-     * @param RequestInterface $request
-     * @param $startTime
-     * @param ResponseInterface|null $response
-     * @param $error
-     */
     private function invokeStats(
         array $options,
         RequestInterface $request,
@@ -97,13 +90,6 @@ class StreamHandler
         }
     }
 
-    /**
-     * @param RequestInterface $request
-     * @param array $options
-     * @param $stream
-     * @param $startTime
-     * @return FulfilledPromise|RejectedPromise
-     */
     private function createResponse(
         RequestInterface $request,
         array $options,
@@ -141,11 +127,6 @@ class StreamHandler
         return new FulfilledPromise($response);
     }
 
-    /**
-     * @param StreamInterface $stream
-     * @param array $options
-     * @return StreamInterface
-     */
     private function createSink(StreamInterface $stream, array $options)
     {
         if (!empty($options['stream'])) {
@@ -161,12 +142,6 @@ class StreamHandler
             : Psr7\stream_for($sink);
     }
 
-    /**
-     * @param array $options
-     * @param array $headers
-     * @param $stream
-     * @return array
-     */
     private function checkDecode(array $options, array $headers, $stream)
     {
         // Automatically decode responses when instructed.
@@ -250,11 +225,6 @@ class StreamHandler
         return $resource;
     }
 
-    /**
-     * @param RequestInterface $request
-     * @param array $options
-     * @return resource
-     */
     private function createStream(RequestInterface $request, array $options)
     {
         static $methods;
@@ -316,10 +286,6 @@ class StreamHandler
         );
     }
 
-    /**
-     * @param RequestInterface $request
-     * @return array
-     */
     private function getDefaultContext(RequestInterface $request)
     {
         $headers = '';
@@ -465,10 +431,6 @@ class StreamHandler
         );
     }
 
-    /**
-     * @param array $params
-     * @param callable $notify
-     */
     private function addNotification(array &$params, callable $notify)
     {
         // Wrap the existing function if needed.
@@ -482,10 +444,6 @@ class StreamHandler
         }
     }
 
-    /**
-     * @param array $functions
-     * @return \Closure
-     */
     private function callArray(array $functions)
     {
         return function () use ($functions) {

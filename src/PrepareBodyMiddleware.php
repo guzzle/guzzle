@@ -72,11 +72,6 @@ class PrepareBodyMiddleware
         return $fn(Psr7\modify_request($request, $modify), $options);
     }
 
-    /**
-     * @param RequestInterface $request
-     * @param array $options
-     * @param array $modify
-     */
     private function addExpectHeader(
         RequestInterface $request,
         array $options,

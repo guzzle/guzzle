@@ -133,9 +133,6 @@ class CurlMultiHandler
         }
     }
 
-    /**
-     * @param array $entry
-     */
     private function addRequest(array $entry)
     {
         $easy = $entry['easy'];

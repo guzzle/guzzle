@@ -136,11 +136,6 @@ class Client implements ClientInterface
             : (isset($this->config[$option]) ? $this->config[$option] : null);
     }
 
-    /**
-     * @param $uri
-     * @param array $config
-     * @return UriInterface
-     */
     private function buildUri($uri, array $config)
     {
         if (!isset($config['base_uri'])) {

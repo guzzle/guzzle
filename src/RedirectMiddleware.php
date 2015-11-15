@@ -115,11 +115,6 @@ class RedirectMiddleware
         return $promise;
     }
 
-    /**
-     * @param PromiseInterface $promise
-     * @param $uri
-     * @return PromiseInterface
-     */
     private function withTracking(PromiseInterface $promise, $uri)
     {
         return $promise->then(
@@ -134,10 +129,6 @@ class RedirectMiddleware
         );
     }
 
-    /**
-     * @param RequestInterface $request
-     * @param array $options
-     */
     private function guardMax(RequestInterface $request, array &$options)
     {
         $current = isset($options['__redirect_count'])
