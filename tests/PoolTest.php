@@ -136,6 +136,28 @@ class PoolTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($called);
     }
 
+    public function testUsesYieldedKeyInFulfilledCallback()
+    {
+        $r1 = new Promise(function () use (&$r1) { $r1->resolve(new Response()); });
+        $r2 = new Promise(function () use (&$r2) { $r2->resolve(new Response()); });
+        $r3 = new Promise(function () use (&$r3) { $r3->resolve(new Response()); });
+        $handler = new MockHandler([$r1, $r2, $r3]);
+        $c = new Client(['handler' => $handler]);
+        $keys = [];
+        $requests = [
+            'request_1' => new Request('GET', 'http://example.com'),
+            'request_2' => new Request('GET', 'http://example.com'),
+            'request_3' => new Request('GET', 'http://example.com'),
+        ];
+        $p = new Pool($c, $requests, [
+            'pool_size' => 2,
+            'fulfilled' => function($res, $index) use (&$keys) { $keys[] = $index; }
+        ]);
+        $p->promise()->wait();
+        $this->assertCount(3, $keys);
+        $this->assertSame($keys, array_keys($requests));
+    }
+
     private function getClient($total = 1)
     {
         $queue = [];
