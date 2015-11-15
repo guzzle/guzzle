@@ -62,6 +62,48 @@ class MockHandlerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(['foo' => 'bar'], $mock->getLastOptions());
     }
 
+    public function testSinkFilename()
+    {
+        $filename = sys_get_temp_dir().'/mock_test_'.uniqid();
+        $res = new Response(200, [], 'TEST CONTENT');
+        $mock = new MockHandler([$res]);
+        $request = new Request('GET', '/');
+        $p = $mock($request, ['sink' => $filename]);
+        $p->wait();
+
+        $this->assertFileExists($filename);
+        $this->assertEquals('TEST CONTENT', file_get_contents($filename));
+
+        unlink($filename);
+    }
+
+    public function testSinkResource()
+    {
+        $file = tmpfile();
+        $meta = stream_get_meta_data($file);
+        $res = new Response(200, [], 'TEST CONTENT');
+        $mock = new MockHandler([$res]);
+        $request = new Request('GET', '/');
+        $p = $mock($request, ['sink' => $file]);
+        $p->wait();
+
+        $this->assertFileExists($meta['uri']);
+        $this->assertEquals('TEST CONTENT', file_get_contents($meta['uri']));
+    }
+
+    public function testSinkStream()
+    {
+        $stream = new \GuzzleHttp\Psr7\Stream(tmpfile());
+        $res = new Response(200, [], 'TEST CONTENT');
+        $mock = new MockHandler([$res]);
+        $request = new Request('GET', '/');
+        $p = $mock($request, ['sink' => $stream]);
+        $p->wait();
+
+        $this->assertFileExists($stream->getMetadata('uri'));
+        $this->assertEquals('TEST CONTENT', file_get_contents($stream->getMetadata('uri')));
+    }
+
     public function testCanEnqueueCallables()
     {
         $r = new Response();
