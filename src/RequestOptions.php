@@ -93,6 +93,11 @@ final class RequestOptions
     const DELAY = 'delay';
 
     /**
+     * retries: (int) The amount of retries per request(?) if request is rejected.
+     */
+    const RETRIES = 'retries';
+
+    /**
      * expect: (bool|integer) Controls the behavior of the
      * "Expect: 100-Continue" header.
      *
