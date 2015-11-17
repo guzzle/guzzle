@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Promise\RejectedPromise;
+use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransferStats;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -65,8 +66,8 @@ class MockHandler implements \Countable
             throw new \OutOfBoundsException('Mock queue is empty');
         }
 
-        if (isset($options['delay'])) {
-            usleep($options['delay'] * 1000);
+        if (isset($options[RequestOptions::DELAY])) {
+            usleep($options[RequestOptions::DELAY] * 1000);
         }
 
         $this->lastRequest = $request;
@@ -87,9 +88,9 @@ class MockHandler implements \Countable
                 if ($this->onFulfilled) {
                     call_user_func($this->onFulfilled, $value);
                 }
-                if (isset($options['sink'])) {
+                if (isset($options[RequestOptions::SINK])) {
                     $contents = (string) $value->getBody();
-                    $sink = $options['sink'];
+                    $sink = $options[RequestOptions::SINK];
 
                     if (is_resource($sink)) {
                         fwrite($sink, $contents);
@@ -168,9 +169,9 @@ class MockHandler implements \Countable
         ResponseInterface $response = null,
         $reason = null
     ) {
-        if (isset($options['on_stats'])) {
+        if (isset($options[RequestOptions::ON_STATS])) {
             $stats = new TransferStats($request, $response, 0, $reason);
-            call_user_func($options['on_stats'], $stats);
+            call_user_func($options[RequestOptions::ON_STATS], $stats);
         }
     }
 }

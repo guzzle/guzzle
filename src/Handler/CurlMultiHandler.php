@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Psr7;
+use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -129,10 +130,10 @@ class CurlMultiHandler
         $easy = $entry['easy'];
         $id = (int) $easy->handle;
         $this->handles[$id] = $entry;
-        if (empty($easy->options['delay'])) {
+        if (empty($easy->options[RequestOptions::DELAY])) {
             curl_multi_add_handle($this->_mh, $easy->handle);
         } else {
-            $this->delays[$id] = microtime(true) + ($easy->options['delay'] / 1000);
+            $this->delays[$id] = microtime(true) + ($easy->options[RequestOptions::DELAY] / 1000);
         }
     }
 
