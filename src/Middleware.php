@@ -5,6 +5,7 @@ use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Psr7;
+use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
@@ -26,12 +27,12 @@ final class Middleware
     {
         return function (callable $handler) {
             return function ($request, array $options) use ($handler) {
-                if (empty($options['cookies'])) {
+                if (empty($options[RequestOptions::COOKIES])) {
                     return $handler($request, $options);
-                } elseif (!($options['cookies'] instanceof CookieJarInterface)) {
+                } elseif (!($options[RequestOptions::COOKIES] instanceof CookieJarInterface)) {
                     throw new \InvalidArgumentException('cookies must be an instance of GuzzleHttp\Cookie\CookieJarInterface');
                 }
-                $cookieJar = $options['cookies'];
+                $cookieJar = $options[RequestOptions::COOKIES];
                 $request = $cookieJar->withCookieHeader($request);
                 return $handler($request, $options)
                     ->then(function ($response) use ($cookieJar, $request) {
@@ -53,7 +54,7 @@ final class Middleware
     {
         return function (callable $handler) {
             return function ($request, array $options) use ($handler) {
-                if (empty($options['http_errors'])) {
+                if (empty($options[RequestOptions::HTTP_ERRORS])) {
                     return $handler($request, $options);
                 }
                 return $handler($request, $options)->then(
