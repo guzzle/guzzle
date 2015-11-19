@@ -23,7 +23,7 @@ $res = $client->request('GET', 'https://api.github.com/user', [
     'auth' => ['user', 'pass']
 ]);
 echo $res->getStatusCode();
-// "200"
+// 200
 echo $res->getHeader('content-type');
 // 'application/json; charset=utf8'
 echo $res->getBody();
