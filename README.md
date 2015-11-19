@@ -19,14 +19,14 @@ trivial to integrate with web services.
 
 ```php
 $client = new GuzzleHttp\Client();
-$res = $client->request('GET', 'https://api.github.com/user', [
+$response = $client->request('GET', 'https://api.github.com/user', [
     'auth' => ['user', 'pass']
 ]);
-echo $res->getStatusCode();
+echo $response->getStatusCode();
 // "200"
-echo $res->getHeader('content-type');
+echo $response->getHeader('content-type');
 // 'application/json; charset=utf8'
-echo $res->getBody();
+echo $response->getBody();
 // {"type":"User"...'
 
 // Send an asynchronous request.
