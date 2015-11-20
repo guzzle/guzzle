@@ -45,6 +45,18 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(2, $jar);
     }
 
+    public function testGetsCookiesByName()
+    {
+        $cookies = $this->getTestCookies();
+        foreach ($cookies as $cookie) {
+            $this->assertTrue($this->jar->setCookie($cookie));
+        }
+
+        $testCookie = $this->getTestCookies()[0];
+        $this->assertEquals($testCookie, $this->jar->getCookieByName($testCookie->getName()));
+        $this->assertNull($this->jar->getCookieByName("doesnotexist"));
+    }
+
     /**
      * Provides test data for cookie cookieJar retrieval
      */
