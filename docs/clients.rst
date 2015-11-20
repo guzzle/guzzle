@@ -14,23 +14,23 @@ Creating a client
 The constructor of a client accepts an associative array of configuration
 options.
 
-base_url
+base_uri
     Configures a base URL for the client so that requests created
-    using a relative URL are combined with the ``base_url`` of the client
+    using a relative URL are combined with the ``base_uri`` of the client
     according to section `5.2 of RFC 3986 <http://tools.ietf.org/html/rfc3986#section-5.2>`_.
 
     .. code-block:: php
 
         // Create a client with a base URL
-        $client = new GuzzleHttp\Client(['base_url' => 'https://github.com']);
+        $client = new GuzzleHttp\Client(['base_uri' => 'https://github.com']);
         // Send a request to https://github.com/notifications
         $response = $client->get('/notifications');
 
     Don't feel like reading RFC 3986? Here are some quick examples on how a
-    ``base_url`` is resolved with another URI.
+    ``base_uri`` is resolved with another URI.
 
     =======================  ==================  ===============================
-    base_url                 URI                 Result
+    base_uri                 URI                 Result
     =======================  ==================  ===============================
     ``http://foo.com``       ``/bar``            ``http://foo.com/bar``
     ``http://foo.com/foo``   ``/bar``            ``http://foo.com/bar``
@@ -69,7 +69,7 @@ Here's an example of creating a client with various options.
     use GuzzleHttp\Client;
 
     $client = new Client([
-        'base_url' => ['https://api.twitter.com/{version}/', ['version' => 'v1.1']],
+        'base_uri' => ['https://api.twitter.com/{version}/', ['version' => 'v1.1']],
         'defaults' => [
             'headers' => ['Foo' => 'Bar'],
             'query'   => ['testing' => '123'],
@@ -454,7 +454,7 @@ All of the following examples use the following client:
 
 .. code-block:: php
 
-    $client = new GuzzleHttp\Client(['base_url' => 'http://httpbin.org']);
+    $client = new GuzzleHttp\Client(['base_uri' => 'http://httpbin.org']);
 
 headers
 -------
