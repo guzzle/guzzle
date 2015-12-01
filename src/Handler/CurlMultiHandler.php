@@ -192,6 +192,6 @@ class CurlMultiHandler
             }
         }
 
-        return max(0, $currentTime - $nextTime);
+        return max(0, $nextTime - $currentTime) * 1000000;
     }
 }
