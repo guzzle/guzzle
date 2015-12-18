@@ -136,7 +136,7 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
      */
     public function testMergesHeadersCaseInsensitively()
     {
-        $response = new Response(200, ['SET-COOKIE' => 'a=1', 'Set-Cookie' => ['b=2', 'c=3'], 'Content-Type' => 'text/plain']);
+        $response = new Response(200, ['Set-Cookie' => 'a=1', 'SET-COOKIE' => ['b=2', 'c=3'], 'Content-Type' => 'text/plain']);
         $this->assertEquals([
             'Set-Cookie' => ['a=1', 'b=2', 'c=3'],
             'Content-Type' => ['text/plain'],
