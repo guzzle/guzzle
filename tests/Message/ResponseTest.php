@@ -129,4 +129,17 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
         $response->setReasonPhrase('Foo');
         $this->assertEquals('Foo', $response->getReasonPhrase());
     }
+
+    /**
+     * This tests array-like header merging compatibility with errant HTTP servers that return header names of varying
+     * cases within the same request.
+     */
+    public function testMergesHeadersCaseInsensitively()
+    {
+        $response = new Response(200, ['SET-COOKIE' => 'a=1', 'Set-Cookie' => ['b=2', 'c=3'], 'Content-Type' => 'text/plain']);
+        $this->assertEquals([
+            'Set-Cookie' => ['a=1', 'b=2', 'c=3'],
+            'Content-Type' => ['text/plain'],
+        ], $response->getHeaders());
+    }
 }
