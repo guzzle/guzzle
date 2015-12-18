@@ -93,7 +93,17 @@ abstract class AbstractMessage implements MessageInterface
         $name = strtolower($header);
         $this->headerNames[$name] = $header;
 
-        if (is_array($value)) {
+        // Value exists for this header after normalization; should merge
+        if (isset($this->headers[$name])) {
+            if (is_array($value)) {
+                foreach ($value as &$v) {
+                    $v = trim($v);
+                    $this->headers[$name][] = trim($v);
+                }
+            } else {
+                $this->headers[$name][] = trim($value);
+            }
+        } else if (is_array($value)) {
             foreach ($value as &$v) {
                 $v = trim($v);
             }
