@@ -59,7 +59,7 @@ Getting an EventEmitter
 -----------------------
 
 You can get the event emitter of ``GuzzleHttp\Event\HasEmitterInterface``
-object using the the ``getEmitter()`` method. Here's an example of getting a
+object using the ``getEmitter()`` method. Here's an example of getting a
 client object's event emitter.
 
 .. code-block:: php
