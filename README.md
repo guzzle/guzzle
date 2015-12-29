@@ -24,7 +24,7 @@ $res = $client->request('GET', 'https://api.github.com/user', [
 ]);
 echo $res->getStatusCode();
 // 200
-echo $res->getHeader('content-type');
+echo $res->getHeaderLine('content-type');
 // 'application/json; charset=utf8'
 echo $res->getBody();
 // {"type":"User"...'
