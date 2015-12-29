@@ -93,6 +93,11 @@ final class RequestOptions
     const DELAY = 'delay';
 
     /**
+     * retries: (int) The amount of retries per request(?) if request is rejected.
+     */
+    const RETRIES = 'retries';
+
+    /**
      * expect: (bool|integer) Controls the behavior of the
      * "Expect: 100-Continue" header.
      *
@@ -149,6 +154,14 @@ final class RequestOptions
      * will be added to the part.
      */
     const MULTIPART = 'multipart';
+
+    /**
+     * on_redirect: (callable) PHP callable that is invoked when a redirect
+     * is encountered. The callable is invoked with the request, the redirect
+     * response that was received, and the effective URI. Any return value
+     * from the on_redirect function is ignored.
+     */
+    const ON_REDIRECT = 'on_redirect';
 
     /**
      * on_headers: (callable) A callable that is invoked when the HTTP headers

@@ -2,6 +2,7 @@
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
@@ -53,7 +54,7 @@ final class EasyHandle
         $headers = \GuzzleHttp\headers_from_lines($this->headers);
         $normalizedKeys = \GuzzleHttp\normalize_header_keys($headers);
 
-        if (!empty($this->options['decode_content'])
+        if (!empty($this->options[RequestOptions::DECODE_CONTENT])
             && isset($normalizedKeys['content-encoding'])
         ) {
             unset($headers[$normalizedKeys['content-encoding']]);

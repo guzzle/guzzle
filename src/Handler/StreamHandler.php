@@ -7,6 +7,7 @@ use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
+use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransferStats;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -23,18 +24,20 @@ class StreamHandler
      * Sends an HTTP request.
      *
      * @param RequestInterface $request Request to send.
-     * @param array            $options Request transfer options.
+     * @param array $options Request transfer options.
      *
+     * @throws \Exception
+     * @throws \InvalidArgumentException
      * @return PromiseInterface
      */
     public function __invoke(RequestInterface $request, array $options)
     {
         // Sleep if there is a delay specified.
-        if (isset($options['delay'])) {
-            usleep($options['delay'] * 1000);
+        if (isset($options[RequestOptions::DELAY])) {
+            usleep($options[RequestOptions::DELAY] * 1000);
         }
 
-        $startTime = isset($options['on_stats']) ? microtime(true) : null;
+        $startTime = isset($options[RequestOptions::ON_STATS]) ? microtime(true) : null;
 
         try {
             // Does not support the expect header.
@@ -78,7 +81,7 @@ class StreamHandler
         ResponseInterface $response = null,
         $error = null
     ) {
-        if (isset($options['on_stats'])) {
+        if (isset($options[RequestOptions::ON_STATS])) {
             $stats = new TransferStats(
                 $request,
                 $response,
@@ -86,7 +89,7 @@ class StreamHandler
                 $error,
                 []
             );
-            call_user_func($options['on_stats'], $stats);
+            call_user_func($options[RequestOptions::ON_STATS], $stats);
         }
     }
 
@@ -108,9 +111,9 @@ class StreamHandler
         $sink = $this->createSink($stream, $options);
         $response = new Psr7\Response($status, $headers, $sink, $ver, $reason);
 
-        if (isset($options['on_headers'])) {
+        if (isset($options[RequestOptions::ON_HEADERS])) {
             try {
-                $options['on_headers']($response);
+                $options[RequestOptions::ON_HEADERS]($response);
             } catch (\Exception $e) {
                 $msg = 'An error was encountered during the on_headers event';
                 $ex = new RequestException($msg, $request, $response, $e);
@@ -129,12 +132,12 @@ class StreamHandler
 
     private function createSink(StreamInterface $stream, array $options)
     {
-        if (!empty($options['stream'])) {
+        if (!empty($options[RequestOptions::STREAM])) {
             return $stream;
         }
 
-        $sink = isset($options['sink'])
-            ? $options['sink']
+        $sink = isset($options[RequestOptions::SINK])
+            ? $options[RequestOptions::SINK]
             : fopen('php://temp', 'r+');
 
         return is_string($sink)
@@ -145,7 +148,7 @@ class StreamHandler
     private function checkDecode(array $options, array $headers, $stream)
     {
         // Automatically decode responses when instructed.
-        if (!empty($options['decode_content'])) {
+        if (!empty($options[RequestOptions::DECODE_CONTENT])) {
             $normalizedKeys = \GuzzleHttp\normalize_header_keys($headers);
             if (isset($normalizedKeys['content-encoding'])) {
                 $encoding = $headers[$normalizedKeys['content-encoding']];
@@ -241,14 +244,14 @@ class StreamHandler
         }
 
         // Ensure SSL is verified by default
-        if (!isset($options['verify'])) {
-            $options['verify'] = true;
+        if (!isset($options[RequestOptions::VERIFY])) {
+            $options[RequestOptions::VERIFY] = true;
         }
 
         $params = [];
         $context = $this->getDefaultContext($request, $options);
 
-        if (isset($options['on_headers']) && !is_callable($options['on_headers'])) {
+        if (isset($options[RequestOptions::ON_HEADERS]) && !is_callable($options[RequestOptions::ON_HEADERS])) {
             throw new \InvalidArgumentException('on_headers must be callable');
         }
 

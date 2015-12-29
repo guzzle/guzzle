@@ -7,6 +7,7 @@ use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\LazyOpenStream;
+use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransferStats;
 use Psr\Http\Message\RequestInterface;
 
@@ -95,7 +96,7 @@ class CurlFactory implements CurlFactoryInterface
         EasyHandle $easy,
         CurlFactoryInterface $factory
     ) {
-        if (isset($easy->options['on_stats'])) {
+        if (isset($easy->options[RequestOptions::ON_STATS])) {
             self::invokeStats($easy);
         }
 
@@ -125,7 +126,7 @@ class CurlFactory implements CurlFactoryInterface
             $easy->errno,
             $curlStats
         );
-        call_user_func($easy->options['on_stats'], $stats);
+        call_user_func($easy->options[RequestOptions::ON_STATS], $stats);
     }
 
     private static function finishError(
@@ -314,26 +315,26 @@ class CurlFactory implements CurlFactoryInterface
     private function applyHandlerOptions(EasyHandle $easy, array &$conf)
     {
         $options = $easy->options;
-        if (isset($options['verify'])) {
-            if ($options['verify'] === false) {
+        if (isset($options[RequestOptions::VERIFY])) {
+            if ($options[RequestOptions::VERIFY] === false) {
                 unset($conf[CURLOPT_CAINFO]);
                 $conf[CURLOPT_SSL_VERIFYHOST] = 0;
                 $conf[CURLOPT_SSL_VERIFYPEER] = false;
             } else {
                 $conf[CURLOPT_SSL_VERIFYHOST] = 2;
                 $conf[CURLOPT_SSL_VERIFYPEER] = true;
-                if (is_string($options['verify'])) {
-                    $conf[CURLOPT_CAINFO] = $options['verify'];
-                    if (!file_exists($options['verify'])) {
+                if (is_string($options[RequestOptions::VERIFY])) {
+                    $conf[CURLOPT_CAINFO] = $options[RequestOptions::VERIFY];
+                    if (!file_exists($options[RequestOptions::VERIFY])) {
                         throw new \InvalidArgumentException(
-                            "SSL CA bundle not found: {$options['verify']}"
+                            "SSL CA bundle not found: {$options[RequestOptions::VERIFY]}"
                         );
                     }
                 }
             }
         }
 
-        if (!empty($options['decode_content'])) {
+        if (!empty($options[RequestOptions::DECODE_CONTENT])) {
             $accept = $easy->request->getHeaderLine('Accept-Encoding');
             if ($accept) {
                 $conf[CURLOPT_ENCODING] = $accept;
@@ -344,8 +345,8 @@ class CurlFactory implements CurlFactoryInterface
             }
         }
 
-        if (isset($options['sink'])) {
-            $sink = $options['sink'];
+        if (isset($options[RequestOptions::SINK])) {
+            $sink = $options[RequestOptions::SINK];
             if (!is_string($sink)) {
                 $sink = \GuzzleHttp\Psr7\stream_for($sink);
             } elseif (!is_dir(dirname($sink))) {
@@ -368,32 +369,32 @@ class CurlFactory implements CurlFactoryInterface
             $easy->sink = Psr7\stream_for($conf[CURLOPT_FILE]);
         }
 
-        if (isset($options['timeout'])) {
-            $conf[CURLOPT_TIMEOUT_MS] = $options['timeout'] * 1000;
+        if (isset($options[RequestOptions::TIMEOUT])) {
+            $conf[CURLOPT_TIMEOUT_MS] = $options[RequestOptions::TIMEOUT] * 1000;
         }
 
-        if (isset($options['connect_timeout'])) {
-            $conf[CURLOPT_CONNECTTIMEOUT_MS] = $options['connect_timeout'] * 1000;
+        if (isset($options[RequestOptions::CONNECT_TIMEOUT])) {
+            $conf[CURLOPT_CONNECTTIMEOUT_MS] = $options[RequestOptions::CONNECT_TIMEOUT] * 1000;
         }
 
-        if (isset($options['proxy'])) {
-            if (!is_array($options['proxy'])) {
-                $conf[CURLOPT_PROXY] = $options['proxy'];
+        if (isset($options[RequestOptions::PROXY])) {
+            if (!is_array($options[RequestOptions::PROXY])) {
+                $conf[CURLOPT_PROXY] = $options[RequestOptions::PROXY];
             } else {
                 $scheme = $easy->request->getUri()->getScheme();
-                if (isset($options['proxy'][$scheme])) {
+                if (isset($options[RequestOptions::PROXY][$scheme])) {
                     $host = $easy->request->getUri()->getHost();
-                    if (!isset($options['proxy']['no']) ||
-                        !\GuzzleHttp\is_host_in_noproxy($host, $options['proxy']['no'])
+                    if (!isset($options[RequestOptions::PROXY]['no']) ||
+                        !\GuzzleHttp\is_host_in_noproxy($host, $options[RequestOptions::PROXY]['no'])
                     ) {
-                        $conf[CURLOPT_PROXY] = $options['proxy'][$scheme];
+                        $conf[CURLOPT_PROXY] = $options[RequestOptions::PROXY][$scheme];
                     }
                 }
             }
         }
 
-        if (isset($options['cert'])) {
-            $cert = $options['cert'];
+        if (isset($options[RequestOptions::CERT])) {
+            $cert = $options[RequestOptions::CERT];
             if (is_array($cert)) {
                 $conf[CURLOPT_SSLCERTPASSWD] = $cert[1];
                 $cert = $cert[0];
@@ -406,8 +407,8 @@ class CurlFactory implements CurlFactoryInterface
             $conf[CURLOPT_SSLCERT] = $cert;
         }
 
-        if (isset($options['ssl_key'])) {
-            $sslKey = $options['ssl_key'];
+        if (isset($options[RequestOptions::SSL_KEY])) {
+            $sslKey = $options[RequestOptions::SSL_KEY];
             if (is_array($sslKey)) {
                 $conf[CURLOPT_SSLKEYPASSWD] = $sslKey[1];
                 $sslKey = $sslKey[0];
@@ -420,8 +421,8 @@ class CurlFactory implements CurlFactoryInterface
             $conf[CURLOPT_SSLKEY] = $sslKey;
         }
 
-        if (isset($options['progress'])) {
-            $progress = $options['progress'];
+        if (isset($options[RequestOptions::PROGRESS])) {
+            $progress = $options[RequestOptions::PROGRESS];
             if (!is_callable($progress)) {
                 throw new \InvalidArgumentException(
                     'progress client option must be callable'
@@ -438,8 +439,8 @@ class CurlFactory implements CurlFactoryInterface
             };
         }
 
-        if (!empty($options['debug'])) {
-            $conf[CURLOPT_STDERR] = \GuzzleHttp\debug_resource($options['debug']);
+        if (!empty($options[RequestOptions::DEBUG])) {
+            $conf[CURLOPT_STDERR] = \GuzzleHttp\debug_resource($options[RequestOptions::DEBUG]);
             $conf[CURLOPT_VERBOSE] = true;
         }
     }
@@ -492,12 +493,12 @@ class CurlFactory implements CurlFactoryInterface
 
     private function createHeaderFn(EasyHandle $easy)
     {
-        if (!isset($easy->options['on_headers'])) {
+        if (!isset($easy->options[RequestOptions::ON_HEADERS])) {
             $onHeaders = null;
-        } elseif (!is_callable($easy->options['on_headers'])) {
+        } elseif (!is_callable($easy->options[RequestOptions::ON_HEADERS])) {
             throw new \InvalidArgumentException('on_headers must be callable');
         } else {
-            $onHeaders = $easy->options['on_headers'];
+            $onHeaders = $easy->options[RequestOptions::ON_HEADERS];
         }
 
         return function ($ch, $h) use (

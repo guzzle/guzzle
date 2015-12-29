@@ -3,6 +3,7 @@ namespace GuzzleHttp;
 
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Promise\RejectedPromise;
+use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 
@@ -58,8 +59,8 @@ class RetryMiddleware
      */
     public function __invoke(RequestInterface $request, array $options)
     {
-        if (!isset($options['retries'])) {
-            $options['retries'] = 0;
+        if (!isset($options[RequestOptions::RETRIES])) {
+            $options[RequestOptions::RETRIES] = 0;
         }
 
         $fn = $this->nextHandler;
@@ -75,7 +76,7 @@ class RetryMiddleware
         return function ($value) use ($req, $options) {
             if (!call_user_func(
                 $this->decider,
-                $options['retries'],
+                $options[RequestOptions::RETRIES],
                 $req,
                 $value,
                 null
@@ -91,7 +92,7 @@ class RetryMiddleware
         return function ($reason) use ($req, $options) {
             if (!call_user_func(
                 $this->decider,
-                $options['retries'],
+                $options[RequestOptions::RETRIES],
                 $req,
                 null,
                 $reason
@@ -104,7 +105,7 @@ class RetryMiddleware
 
     private function doRetry(RequestInterface $request, array $options)
     {
-        $options['delay'] = call_user_func($this->delay, ++$options['retries']);
+        $options[RequestOptions::DELAY] = call_user_func($this->delay, ++$options[RequestOptions::RETRIES]);
 
         return $this($request, $options);
     }

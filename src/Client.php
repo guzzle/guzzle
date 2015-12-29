@@ -4,6 +4,7 @@ namespace GuzzleHttp;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Promise;
 use GuzzleHttp\Psr7;
+use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -108,9 +109,9 @@ class Client implements ClientInterface
     {
         $options = $this->prepareDefaults($options);
         // Remove request modifying parameter because it can be done up-front.
-        $headers = isset($options['headers']) ? $options['headers'] : [];
-        $body = isset($options['body']) ? $options['body'] : null;
-        $version = isset($options['version']) ? $options['version'] : '1.1';
+        $headers = isset($options[RequestOptions::HEADERS]) ? $options[RequestOptions::HEADERS] : [];
+        $body = isset($options[RequestOptions::BODY]) ? $options[RequestOptions::BODY] : null;
+        $version = isset($options[RequestOptions::VERSION]) ? $options[RequestOptions::VERSION] : '1.1';
         // Merge the URI into the base URI.
         $uri = $this->buildUri($uri, $options);
         if (is_array($body)) {
@@ -118,7 +119,7 @@ class Client implements ClientInterface
         }
         $request = new Psr7\Request($method, $uri, $headers, $body, $version);
         // Remove the option so that they are not doubly-applied.
-        unset($options['headers'], $options['body'], $options['version']);
+        unset($options[RequestOptions::HEADERS], $options[RequestOptions::BODY], $options[RequestOptions::VERSION]);
 
         return $this->transfer($request, $options);
     }
@@ -153,44 +154,44 @@ class Client implements ClientInterface
     private function configureDefaults(array $config)
     {
         $defaults = [
-            'allow_redirects' => RedirectMiddleware::$defaultSettings,
-            'http_errors'     => true,
-            'decode_content'  => true,
-            'verify'          => true,
-            'cookies'         => false
+            RequestOptions::ALLOW_REDIRECTS => RedirectMiddleware::$defaultSettings,
+            RequestOptions::HTTP_ERRORS     => true,
+            RequestOptions::DECODE_CONTENT  => true,
+            RequestOptions::VERIFY          => true,
+            RequestOptions::COOKIES         => false
         ];
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set
         if ($proxy = getenv('HTTP_PROXY')) {
-            $defaults['proxy']['http'] = $proxy;
+            $defaults[RequestOptions::PROXY]['http'] = $proxy;
         }
 
         if ($proxy = getenv('HTTPS_PROXY')) {
-            $defaults['proxy']['https'] = $proxy;
+            $defaults[RequestOptions::PROXY]['https'] = $proxy;
         }
 
         if ($noProxy = getenv('NO_PROXY')) {
             $cleanedNoProxy = str_replace(' ', '', $noProxy);
-            $defaults['proxy']['no'] = explode(',', $cleanedNoProxy);
+            $defaults[RequestOptions::PROXY]['no'] = explode(',', $cleanedNoProxy);
         }
         
         $this->config = $config + $defaults;
 
-        if (!empty($config['cookies']) && $config['cookies'] === true) {
-            $this->config['cookies'] = new CookieJar();
+        if (!empty($config[RequestOptions::COOKIES]) && $config[RequestOptions::COOKIES] === true) {
+            $this->config[RequestOptions::COOKIES] = new CookieJar();
         }
 
         // Add the default user-agent header.
-        if (!isset($this->config['headers'])) {
-            $this->config['headers'] = ['User-Agent' => default_user_agent()];
+        if (!isset($this->config[RequestOptions::HEADERS])) {
+            $this->config[RequestOptions::HEADERS] = ['User-Agent' => default_user_agent()];
         } else {
             // Add the User-Agent header if one was not already set.
-            foreach (array_keys($this->config['headers']) as $name) {
+            foreach (array_keys($this->config[RequestOptions::HEADERS]) as $name) {
                 if (strtolower($name) === 'user-agent') {
                     return;
                 }
             }
-            $this->config['headers']['User-Agent'] = default_user_agent();
+            $this->config[RequestOptions::HEADERS]['User-Agent'] = default_user_agent();
         }
     }
 
@@ -199,26 +200,27 @@ class Client implements ClientInterface
      *
      * @param array $options Options to modify by reference
      *
+     * @throws \InvalidArgumentException
      * @return array
      */
     private function prepareDefaults($options)
     {
         $defaults = $this->config;
 
-        if (!empty($defaults['headers'])) {
+        if (!empty($defaults[RequestOptions::HEADERS])) {
             // Default headers are only added if they are not present.
-            $defaults['_conditional'] = $defaults['headers'];
-            unset($defaults['headers']);
+            $defaults['_conditional'] = $defaults[RequestOptions::HEADERS];
+            unset($defaults[RequestOptions::HEADERS]);
         }
 
         // Special handling for headers is required as they are added as
         // conditional headers and as headers passed to a request ctor.
-        if (array_key_exists('headers', $options)) {
+        if (array_key_exists(RequestOptions::HEADERS, $options)) {
             // Allows default headers to be unset.
-            if ($options['headers'] === null) {
+            if ($options[RequestOptions::HEADERS] === null) {
                 $defaults['_conditional'] = null;
-                unset($options['headers']);
-            } elseif (!is_array($options['headers'])) {
+                unset($options[RequestOptions::HEADERS]);
+            } elseif (!is_array($options[RequestOptions::HEADERS])) {
                 throw new \InvalidArgumentException('headers must be an array');
             }
         }
@@ -251,13 +253,13 @@ class Client implements ClientInterface
     {
         // save_to -> sink
         if (isset($options['save_to'])) {
-            $options['sink'] = $options['save_to'];
+            $options[RequestOptions::SINK] = $options['save_to'];
             unset($options['save_to']);
         }
 
         // exceptions -> http_error
         if (isset($options['exceptions'])) {
-            $options['http_errors'] = $options['exceptions'];
+            $options[RequestOptions::HTTP_ERRORS] = $options['exceptions'];
             unset($options['exceptions']);
         }
 
@@ -275,62 +277,63 @@ class Client implements ClientInterface
      * Applies the array of request options to a request.
      *
      * @param RequestInterface $request
-     * @param array            $options
+     * @param array $options
      *
+     * @throws \InvalidArgumentException
      * @return RequestInterface
      */
     private function applyOptions(RequestInterface $request, array &$options)
     {
         $modify = [];
 
-        if (isset($options['form_params'])) {
-            if (isset($options['multipart'])) {
+        if (isset($options[RequestOptions::FORM_PARAMS])) {
+            if (isset($options[RequestOptions::MULTIPART])) {
                 throw new \InvalidArgumentException('You cannot use '
                     . 'form_params and multipart at the same time. Use the '
                     . 'form_params option if you want to send application/'
                     . 'x-www-form-urlencoded requests, and the multipart '
                     . 'option to send multipart/form-data requests.');
             }
-            $options['body'] = http_build_query($options['form_params'], null, '&');
-            unset($options['form_params']);
+            $options[RequestOptions::BODY] = http_build_query($options[RequestOptions::FORM_PARAMS], null, '&');
+            unset($options[RequestOptions::FORM_PARAMS]);
             $options['_conditional']['Content-Type'] = 'application/x-www-form-urlencoded';
         }
 
-        if (isset($options['multipart'])) {
-            $elements = $options['multipart'];
-            unset($options['multipart']);
-            $options['body'] = new Psr7\MultipartStream($elements);
+        if (isset($options[RequestOptions::MULTIPART])) {
+            $elements = $options[RequestOptions::MULTIPART];
+            unset($options[RequestOptions::MULTIPART]);
+            $options[RequestOptions::BODY] = new Psr7\MultipartStream($elements);
         }
 
-        if (!empty($options['decode_content'])
-            && $options['decode_content'] !== true
+        if (!empty($options[RequestOptions::DECODE_CONTENT])
+            && $options[RequestOptions::DECODE_CONTENT] !== true
         ) {
-            $modify['set_headers']['Accept-Encoding'] = $options['decode_content'];
+            $modify['set_headers']['Accept-Encoding'] = $options[RequestOptions::DECODE_CONTENT];
         }
 
-        if (isset($options['headers'])) {
+        if (isset($options[RequestOptions::HEADERS])) {
             if (isset($modify['set_headers'])) {
-                $modify['set_headers'] = $options['headers'] + $modify['set_headers'];
+                $modify['set_headers'] = $options[RequestOptions::HEADERS] + $modify['set_headers'];
             } else {
-                $modify['set_headers'] = $options['headers'];
+                $modify['set_headers'] = $options[RequestOptions::HEADERS];
             }
-            unset($options['headers']);
+            unset($options[RequestOptions::HEADERS]);
         }
 
-        if (isset($options['body'])) {
-            if (is_array($options['body'])) {
+        if (isset($options[RequestOptions::BODY])) {
+            if (is_array($options[RequestOptions::BODY])) {
                 $this->invalidBody();
             }
-            $modify['body'] = Psr7\stream_for($options['body']);
-            unset($options['body']);
+            $modify[RequestOptions::BODY] = Psr7\stream_for($options[RequestOptions::BODY]);
+            unset($options[RequestOptions::BODY]);
         }
 
-        if (!empty($options['auth'])) {
-            $value = $options['auth'];
+        if (!empty($options[RequestOptions::AUTH])) {
+            $value = $options[RequestOptions::AUTH];
             $type = is_array($value)
                 ? (isset($value[2]) ? strtolower($value[2]) : 'basic')
                 : $value;
-            $config['auth'] = $value;
+            $config[RequestOptions::AUTH] = $value;
             switch (strtolower($type)) {
                 case 'basic':
                     $modify['set_headers']['Authorization'] = 'Basic '
@@ -344,22 +347,22 @@ class Client implements ClientInterface
             }
         }
 
-        if (isset($options['query'])) {
-            $value = $options['query'];
+        if (isset($options[RequestOptions::QUERY])) {
+            $value = $options[RequestOptions::QUERY];
             if (is_array($value)) {
                 $value = http_build_query($value, null, '&', PHP_QUERY_RFC3986);
             }
             if (!is_string($value)) {
                 throw new \InvalidArgumentException('query must be a string or array');
             }
-            $modify['query'] = $value;
-            unset($options['query']);
+            $modify[RequestOptions::QUERY] = $value;
+            unset($options[RequestOptions::QUERY]);
         }
 
-        if (isset($options['json'])) {
-            $modify['body'] = Psr7\stream_for(json_encode($options['json']));
+        if (isset($options[RequestOptions::JSON])) {
+            $modify[RequestOptions::BODY] = Psr7\stream_for(json_encode($options[RequestOptions::JSON]));
             $options['_conditional']['Content-Type'] = 'application/json';
-            unset($options['json']);
+            unset($options[RequestOptions::JSON]);
         }
 
         $request = Psr7\modify_request($request, $modify);

@@ -2,6 +2,7 @@
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Psr7;
+use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -32,8 +33,8 @@ class CurlHandler
 
     public function __invoke(RequestInterface $request, array $options)
     {
-        if (isset($options['delay'])) {
-            usleep($options['delay'] * 1000);
+        if (isset($options[RequestOptions::DELAY])) {
+            usleep($options[RequestOptions::DELAY] * 1000);
         }
 
         $easy = $this->factory->create($request, $options);

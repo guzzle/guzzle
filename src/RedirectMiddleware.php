@@ -40,28 +40,29 @@ class RedirectMiddleware
 
     /**
      * @param RequestInterface $request
-     * @param array            $options
+     * @param array $options
      *
+     * @throws \InvalidArgumentException
      * @return PromiseInterface
      */
     public function __invoke(RequestInterface $request, array $options)
     {
         $fn = $this->nextHandler;
 
-        if (empty($options['allow_redirects'])) {
+        if (empty($options[RequestOptions::ALLOW_REDIRECTS])) {
             return $fn($request, $options);
         }
 
-        if ($options['allow_redirects'] === true) {
-            $options['allow_redirects'] = self::$defaultSettings;
-        } elseif (!is_array($options['allow_redirects'])) {
+        if ($options[RequestOptions::ALLOW_REDIRECTS] === true) {
+            $options[RequestOptions::ALLOW_REDIRECTS] = self::$defaultSettings;
+        } elseif (!is_array($options[RequestOptions::ALLOW_REDIRECTS])) {
             throw new \InvalidArgumentException('allow_redirects must be true, false, or array');
         } else {
             // Merge the default settings with the provided settings
-            $options['allow_redirects'] += self::$defaultSettings;
+            $options[RequestOptions::ALLOW_REDIRECTS] += self::$defaultSettings;
         }
 
-        if (empty($options['allow_redirects']['max'])) {
+        if (empty($options[RequestOptions::ALLOW_REDIRECTS]['max'])) {
             return $fn($request, $options);
         }
 
@@ -92,9 +93,9 @@ class RedirectMiddleware
         $this->guardMax($request, $options);
         $nextRequest = $this->modifyRequest($request, $options, $response);
 
-        if (isset($options['allow_redirects']['on_redirect'])) {
+        if (isset($options[RequestOptions::ALLOW_REDIRECTS][RequestOptions::ON_REDIRECT])) {
             call_user_func(
-                $options['allow_redirects']['on_redirect'],
+                $options[RequestOptions::ALLOW_REDIRECTS][RequestOptions::ON_REDIRECT],
                 $request,
                 $response,
                 $nextRequest->getUri()
@@ -105,7 +106,7 @@ class RedirectMiddleware
         $promise = $this($nextRequest, $options);
 
         // Add headers to be able to track history of redirects.
-        if (!empty($options['allow_redirects']['track_redirects'])) {
+        if (!empty($options[RequestOptions::ALLOW_REDIRECTS]['track_redirects'])) {
             return $this->withTracking(
                 $promise,
                 (string) $nextRequest->getUri()
@@ -135,7 +136,7 @@ class RedirectMiddleware
             ? $options['__redirect_count']
             : 0;
         $options['__redirect_count'] = $current + 1;
-        $max = $options['allow_redirects']['max'];
+        $max = $options[RequestOptions::ALLOW_REDIRECTS]['max'];
 
         if ($options['__redirect_count'] > $max) {
             throw new TooManyRedirectsException(
@@ -159,17 +160,17 @@ class RedirectMiddleware
     ) {
         // Request modifications to apply.
         $modify = [];
-        $protocols = $options['allow_redirects']['protocols'];
+        $protocols = $options[RequestOptions::ALLOW_REDIRECTS]['protocols'];
 
         // Use a GET request if this is an entity enclosing request and we are
         // not forcing RFC compliance, but rather emulating what all browsers
         // would do.
         $statusCode = $response->getStatusCode();
         if ($statusCode == 303 ||
-            ($statusCode <= 302 && $request->getBody() && !$options['allow_redirects']['strict'])
+            ($statusCode <= 302 && $request->getBody() && !$options[RequestOptions::ALLOW_REDIRECTS]['strict'])
         ) {
             $modify['method'] = 'GET';
-            $modify['body'] = '';
+            $modify[RequestOptions::BODY] = '';
         }
 
         $modify['uri'] = $this->redirectUri($request, $response, $protocols);
@@ -177,7 +178,7 @@ class RedirectMiddleware
 
         // Add the Referer header if it is told to do so and only
         // add the header if we are not redirecting from https to http.
-        if ($options['allow_redirects']['referer']
+        if ($options[RequestOptions::ALLOW_REDIRECTS]['referer']
             && $modify['uri']->getScheme() === $request->getUri()->getScheme()
         ) {
             $uri = $request->getUri()->withUserInfo('', '');
@@ -197,10 +198,11 @@ class RedirectMiddleware
     /**
      * Set the appropriate URL on the request based on the location header
      *
-     * @param RequestInterface  $request
+     * @param RequestInterface $request
      * @param ResponseInterface $response
-     * @param array             $protocols
+     * @param array $protocols
      *
+     * @throws Exception\BadResponseException
      * @return UriInterface
      */
     private function redirectUri(

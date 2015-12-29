@@ -47,7 +47,7 @@ class Proxy
         callable $streaming
     ) {
         return function (RequestInterface $request, array $options) use ($default, $streaming) {
-            return empty($options['stream'])
+            return empty($options[RequestOptions::STREAM])
                 ? $default($request, $options)
                 : $streaming($request, $options);
         };
