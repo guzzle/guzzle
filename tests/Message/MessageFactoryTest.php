@@ -514,6 +514,18 @@ class MessageFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('null', (string) $request->getBody());
     }
 
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testInvalidJsonException()
+    {
+        $selfReferencing = new \stdClass();
+        $selfReferencing->property = $selfReferencing;
+        $request = (new MessageFactory())->createRequest('POST', 'http://f.com', [
+            'json' => ['foo' => $selfReferencing]
+        ]);
+    }
+
     public function testCanUseCustomRequestOptions()
     {
         $c = false;
