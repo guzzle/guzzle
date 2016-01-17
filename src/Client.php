@@ -92,8 +92,10 @@ class Client implements ClientInterface
         // Merge the base URI into the request URI if needed.
         $options = $this->prepareDefaults($options);
 
+        $preserveHost = isset($options['preserve_host']) ? (bool)$options['preserve_host'] : false;
+
         return $this->transfer(
-            $request->withUri($this->buildUri($request->getUri(), $options)),
+            $request->withUri($this->buildUri($request->getUri(), $options), $preserveHost),
             $options
         );
     }
