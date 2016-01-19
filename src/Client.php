@@ -291,7 +291,7 @@ class Client implements ClientInterface
                     . 'x-www-form-urlencoded requests, and the multipart '
                     . 'option to send multipart/form-data requests.');
             }
-            $options['body'] = http_build_query($options['form_params'], null, '&');
+            $options['body'] = http_build_query($options['form_params'], '', '&');
             unset($options['form_params']);
             $options['_conditional']['Content-Type'] = 'application/x-www-form-urlencoded';
         }
