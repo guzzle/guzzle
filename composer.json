@@ -1,5 +1,5 @@
 {
-    "name": "guzzlehttp/guzzle",
+    "name": "lexakozakov/guzzle",
     "type": "library",
     "description": "Guzzle is a PHP HTTP client library",
     "keywords": ["framework", "http", "rest", "web service", "curl", "client", "HTTP client"],
