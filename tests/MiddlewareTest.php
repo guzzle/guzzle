@@ -69,9 +69,11 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('rejected', $p->getState());
     }
 
-    public function testTracksHistory()
+    /**
+     * @dataProvider getHistoryUseCases
+     */
+    public function testTracksHistory($container)
     {
-        $container = [];
         $m = Middleware::history($container);
         $h = new MockHandler([new Response(200), new Response(201)]);
         $f = $m($h);
@@ -86,6 +88,14 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('HEAD', $container[1]['request']->getMethod());
         $this->assertEquals('bar', $container[0]['options']['headers']['foo']);
         $this->assertEquals('baz', $container[1]['options']['headers']['foo']);
+    }
+
+    public function getHistoryUseCases()
+    {
+        return [
+            [[]],                // 1. Container is an array
+            [new \ArrayObject()] // 2. Container is an ArrayObject
+        ];
     }
 
     public function testTracksHistoryForFailures()
