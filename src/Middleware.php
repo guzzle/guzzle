@@ -76,7 +76,7 @@ final class Middleware
      *
      * @return callable Returns a function that accepts the next handler.
      */
-    public static function history(array &$container)
+    public static function history(\ArrayAccess &$container)
     {
         return function (callable $handler) use (&$container) {
             return function ($request, array $options) use ($handler, &$container) {
