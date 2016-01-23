@@ -51,7 +51,7 @@ interface ClientInterface
      * @return ResponseInterface
      * @throws GuzzleException
      */
-    public function request($method, $uri, array $options = []);
+    public function request($method, $uri = null, array $options = []);
 
     /**
      * Create and send an asynchronous HTTP request.
