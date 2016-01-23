@@ -44,9 +44,9 @@ interface ClientInterface
      * relative path to append to the base path of the client. The URL can
      * contain the query string as well.
      *
-     * @param string              $method  HTTP method
-     * @param string|UriInterface $uri     URI object or string.
-     * @param array               $options Request options to apply.
+     * @param string                   $method  HTTP method
+     * @param string|UriInterface|null $uri     URI object or string.
+     * @param array                    $options Request options to apply.
      *
      * @return ResponseInterface
      * @throws GuzzleException
