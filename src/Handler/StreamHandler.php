@@ -138,7 +138,7 @@ class StreamHandler
             : fopen('php://temp', 'r+');
 
         return is_string($sink)
-            ? new Psr7\Stream(Psr7\try_fopen($sink, 'r+'))
+            ? new Psr7\LazyOpenStream($sink, 'w+')
             : Psr7\stream_for($sink);
     }
 

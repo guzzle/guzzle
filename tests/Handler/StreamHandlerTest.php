@@ -127,6 +127,21 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         unlink($tmpfname);
     }
 
+    public function testDrainsResponseIntoSaveToBodyAtNonExistentPath()
+    {
+        $tmpfname = tempnam('/tmp', 'save_to_path');
+        unlink($tmpfname);
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $response = $handler($request, ['sink' => $tmpfname])->wait();
+        $body = $response->getBody();
+        $this->assertEquals($tmpfname, $body->getMetadata('uri'));
+        $this->assertEquals('hi', $body->read(2));
+        $body->close();
+        unlink($tmpfname);
+    }
+
     public function testAutomaticallyDecompressGzip()
     {
         Server::flush();
