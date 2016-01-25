@@ -93,7 +93,7 @@ class Client implements ClientInterface
         $options = $this->prepareDefaults($options);
 
         return $this->transfer(
-            $request->withUri($this->buildUri($request->getUri(), $options), $request->hasHeader("Host")),
+            $request->withUri($this->buildUri($request->getUri(), $options), $request->hasHeader('Host')),
             $options
         );
     }

@@ -597,22 +597,22 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $mockHandler = new MockHandler([new Response(200)]);
         $client = new Client(['base_uri' => '127.0.0.1:8585', 'handler' => $mockHandler]);
-        $request = new Request('GET', '/test', ["Host"=>"foo.com"]);
+        $request = new Request('GET', '/test', ['Host'=>'foo.com']);
 
         $client->send($request);
 
-        $this->assertEquals("foo.com", $mockHandler->getLastRequest()->getHeader("Host")[0]);
+        $this->assertEquals('foo.com', $mockHandler->getLastRequest()->getHeader('Host')[0]);
     }
 
     public function testSendSendsWithDomainAndHostHeaderInRequestTheHostShouldBePreserved()
     {
         $mockHandler = new MockHandler([new Response(200)]);
         $client = new Client(['base_uri' => 'http://foo2.com', 'handler' => $mockHandler]);
-        $request = new Request('GET', '/test', ["Host"=>"foo.com"]);
+        $request = new Request('GET', '/test', ['Host'=>'foo.com']);
 
         $client->send($request);
 
-        $this->assertEquals("foo.com", $mockHandler->getLastRequest()->getHeader('Host')[0]);
+        $this->assertEquals('foo.com', $mockHandler->getLastRequest()->getHeader('Host')[0]);
     }
 
 }
