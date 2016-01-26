@@ -342,9 +342,20 @@ class MessageFactory implements MessageFactoryInterface
 
             case 'json':
 
-                $json = json_encode($value);
-                if (!$json) {
-                    throw new Iae('JSON encoding error: ' . json_last_error_msg());
+                $json = @json_encode($value);
+                $error = json_last_error();
+                if ($error != JSON_ERROR_NONE) {
+                    if (function_exists('json_last_error_msg')) {
+                        throw new Iae('JSON encoding error: ' . json_last_error_msg());
+                    } else {
+                        if ($error == JSON_ERROR_DEPTH) {
+                            throw new Iae('JSON encoding error: The maximum stack depth has been exceeded');
+                        } else if ($error == JSON_ERROR_UTF8) {
+                            throw new Iae('JSON encoding error: Malformed UTF-8 characters, possibly incorrectly encoded');
+                        } else {
+                            throw new Iae('JSON encoding error');
+                        }
+                    }
                 }
                 $request->setBody(Stream::factory($json));
                 if (!$request->hasHeader('Content-Type')) {
