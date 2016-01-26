@@ -343,7 +343,7 @@ class MessageFactory implements MessageFactoryInterface
             case 'json':
 
                 $json = json_encode($value);
-                if(!$json) {
+                if (!$json) {
                     throw new Iae('JSON encoding error: ' . json_last_error_msg());
                 }
                 $request->setBody(Stream::factory($json));
