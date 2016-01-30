@@ -127,7 +127,7 @@ final class Middleware
         return function (callable $handler) use ($before, $after) {
             return function ($request, array $options) use ($handler, $before, $after) {
                 if ($before) {
-                    $before($request, $options);
+                    $request = $before($request, $options);
                 }
                 $response = $handler($request, $options);
                 if ($after) {
