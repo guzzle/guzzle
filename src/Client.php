@@ -173,7 +173,7 @@ class Client implements ClientInterface
             $cleanedNoProxy = str_replace(' ', '', $noProxy);
             $defaults['proxy']['no'] = explode(',', $cleanedNoProxy);
         }
-        
+
         $this->config = $config + $defaults;
 
         if (!empty($config['cookies']) && $config['cookies'] === true) {
@@ -357,7 +357,8 @@ class Client implements ClientInterface
         }
 
         if (isset($options['json'])) {
-            $modify['body'] = Psr7\stream_for(json_encode($options['json']));
+            $jsonStr = \GuzzleHttp\json_encode($options['json']);
+            $modify['body'] = Psr7\stream_for($jsonStr);
             $options['_conditional']['Content-Type'] = 'application/json';
             unset($options['json']);
         }

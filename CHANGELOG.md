@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.2.0 - TBD
+
+* Feature: added `GuzzleHttp\json_encode` and `GuzzleHttp\json_decode`.
+
 ## 6.1.1 - 2015-11-22
 
 * Bug fix: Proxy::wrapSync() now correctly proxies to the appropriate handler
