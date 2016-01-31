@@ -25,7 +25,7 @@ class FileCookieJarTest extends \PHPUnit_Framework_TestCase
         new FileCookieJar($this->file);
     }
 
-    public function testLoadsFromFileFile()
+    public function testLoadsFromFile()
     {
         $jar = new FileCookieJar($this->file);
         $this->assertEquals([], $jar->getIterator()->getArrayCopy());
@@ -35,7 +35,7 @@ class FileCookieJarTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider testPersistsToFileFileParameters
      */
-    public function testPersistsToFileFile($testSaveSessionCookie = false)
+    public function testPersistsToFile($testSaveSessionCookie = false)
     {
         $jar = new FileCookieJar($this->file, $testSaveSessionCookie);
         $jar->setCookie(new SetCookie([
