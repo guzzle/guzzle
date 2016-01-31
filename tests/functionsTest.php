@@ -101,6 +101,32 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
     {
         \GuzzleHttp\is_host_in_noproxy('', []);
     }
+
+    public function testEncodesJson()
+    {
+        $this->assertEquals('true', \GuzzleHttp\json_encode(true));
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testEncodesJsonAndThrowsOnError()
+    {
+        \GuzzleHttp\json_encode("\x99");
+    }
+
+    public function testDecodesJson()
+    {
+        $this->assertSame(true, \GuzzleHttp\json_decode('true'));
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testDecodesJsonAndThrowsOnError()
+    {
+        \GuzzleHttp\json_decode('{{]]');
+    }
 }
 
 final class StrClass
