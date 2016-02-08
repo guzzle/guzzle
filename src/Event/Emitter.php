@@ -44,8 +44,7 @@ class Emitter implements EmitterInterface
     public function once($eventName, callable $listener, $priority = 0)
     {
         $onceListener = function (
-            EventInterface $event,
-            $eventName
+            EventInterface $event
         ) use (&$onceListener, $eventName, $listener, $priority) {
             $this->removeListener($eventName, $onceListener);
             $listener($event, $eventName, $this);
