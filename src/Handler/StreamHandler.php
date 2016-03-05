@@ -153,10 +153,15 @@ class StreamHandler
                     $stream = new Psr7\InflateStream(
                         Psr7\stream_for($stream)
                     );
+                    $headers['x-encoded-content-encoding']
+                        = $headers[$normalizedKeys['content-encoding']];
                     // Remove content-encoding header
                     unset($headers[$normalizedKeys['content-encoding']]);
                     // Fix content-length header
                     if (isset($normalizedKeys['content-length'])) {
+                        $headers['x-encoded-content-length']
+                            = $headers[$normalizedKeys['content-length']];
+
                         $length = (int) $stream->getSize();
                         if ($length == 0) {
                             unset($headers[$normalizedKeys['content-length']]);

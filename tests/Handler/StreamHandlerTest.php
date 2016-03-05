@@ -160,6 +160,30 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == $response->getBody()->getSize());
     }
 
+    public function testReportsOriginalSizeAndContentEncodingAfterDecoding()
+    {
+        Server::flush();
+        $content = gzencode('test');
+        Server::enqueue([
+            new Response(200, [
+                'Content-Encoding' => 'gzip',
+                'Content-Length'   => strlen($content),
+            ], $content)
+        ]);
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $response = $handler($request, ['decode_content' => true])->wait();
+
+        $this->assertSame(
+            'gzip',
+            $response->getHeaderLine('x-encoded-content-encoding')
+        );
+        $this->assertSame(
+            strlen($content),
+            (int) $response->getHeaderLine('x-encoded-content-length')
+        );
+    }
+
     public function testDoesNotForceGzipDecode()
     {
         Server::flush();

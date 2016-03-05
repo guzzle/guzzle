@@ -301,6 +301,23 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($sent->hasHeader('Accept-Encoding'));
     }
 
+    public function testReportsOriginalSizeAndContentEncodingAfterDecoding()
+    {
+        $this->addDecodeResponse();
+        $handler = new Handler\CurlMultiHandler();
+        $request = new Psr7\Request('GET', Server::$url);
+        $response = $handler($request, ['decode_content' => true]);
+        $response = $response->wait();
+        $this->assertSame(
+            'gzip',
+            $response->getHeaderLine('x-encoded-content-encoding')
+        );
+        $this->assertSame(
+            strlen(gzencode('test')),
+            (int) $response->getHeaderLine('x-encoded-content-length')
+        );
+    }
+
     public function testDecodesGzippedResponsesWithHeader()
     {
         $this->addDecodeResponse();
