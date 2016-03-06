@@ -5,7 +5,7 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * Cookie jar that stores cookies an an array
+ * Cookie jar that stores cookies an array
  */
 class CookieJar implements CookieJarInterface
 {
