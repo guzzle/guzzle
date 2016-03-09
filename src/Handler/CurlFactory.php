@@ -265,6 +265,9 @@ class CurlFactory implements CurlFactoryInterface
                 $this->removeHeader('Content-Length', $conf);
             }
             $body = $request->getBody();
+            if ($body->isSeekable()) {
+                $body->rewind();
+            }
             $conf[CURLOPT_READFUNCTION] = function ($ch, $fd, $length) use ($body) {
                 return $body->read($length);
             };
