@@ -151,7 +151,7 @@ downstream handler. This example adds a header to the response.
                         return $response->withHeader($header, $value);
                     }
                 );
-            }
+            };
         };
     }
 
