@@ -57,7 +57,7 @@ curl -sS https://getcomposer.org/installer | php
 Next, run the Composer command to install the latest stable version of Guzzle:
 
 ```bash
-composer.phar require guzzlehttp/guzzle
+php composer.phar require guzzlehttp/guzzle
 ```
 
 After installing, you need to require Composer's autoloader:
