@@ -15,25 +15,25 @@ class UriTemplate
     private $variables;
 
     /** @var array Hash for quick operator lookups */
-    private static $operatorHash = array(
-        ''  => array('prefix' => '',  'joiner' => ',', 'query' => false),
-        '+' => array('prefix' => '',  'joiner' => ',', 'query' => false),
-        '#' => array('prefix' => '#', 'joiner' => ',', 'query' => false),
-        '.' => array('prefix' => '.', 'joiner' => '.', 'query' => false),
-        '/' => array('prefix' => '/', 'joiner' => '/', 'query' => false),
-        ';' => array('prefix' => ';', 'joiner' => ';', 'query' => true),
-        '?' => array('prefix' => '?', 'joiner' => '&', 'query' => true),
-        '&' => array('prefix' => '&', 'joiner' => '&', 'query' => true)
-    );
+    private static $operatorHash = [
+        ''  => ['prefix' => '',  'joiner' => ',', 'query' => false],
+        '+' => ['prefix' => '',  'joiner' => ',', 'query' => false],
+        '#' => ['prefix' => '#', 'joiner' => ',', 'query' => false],
+        '.' => ['prefix' => '.', 'joiner' => '.', 'query' => false],
+        '/' => ['prefix' => '/', 'joiner' => '/', 'query' => false],
+        ';' => ['prefix' => ';', 'joiner' => ';', 'query' => true],
+        '?' => ['prefix' => '?', 'joiner' => '&', 'query' => true],
+        '&' => ['prefix' => '&', 'joiner' => '&', 'query' => true]
+    ];
 
     /** @var array Delimiters */
-    private static $delims = array(':', '/', '?', '#', '[', ']', '@', '!', '$',
-        '&', '\'', '(', ')', '*', '+', ',', ';', '=');
+    private static $delims = [':', '/', '?', '#', '[', ']', '@', '!', '$',
+        '&', '\'', '(', ')', '*', '+', ',', ';', '='];
 
     /** @var array Percent encoded delimiters */
-    private static $delimsPct = array('%3A', '%2F', '%3F', '%23', '%5B', '%5D',
+    private static $delimsPct = ['%3A', '%2F', '%3F', '%23', '%5B', '%5D',
         '%40', '%21', '%24', '%26', '%27', '%28', '%29', '%2A', '%2B', '%2C',
-        '%3B', '%3D');
+        '%3B', '%3D'];
 
     public function expand($template, array $variables)
     {
@@ -60,7 +60,7 @@ class UriTemplate
      */
     private function parseExpression($expression)
     {
-        $result = array();
+        $result = [];
 
         if (isset(self::$operatorHash[$expression[0]])) {
             $result['operator'] = $expression[0];
@@ -71,7 +71,7 @@ class UriTemplate
 
         foreach (explode(',', $expression) as $value) {
             $value = trim($value);
-            $varspec = array();
+            $varspec = [];
             if ($colonPos = strpos($value, ':')) {
                 $varspec['value'] = substr($value, 0, $colonPos);
                 $varspec['modifier'] = ':';
@@ -98,9 +98,9 @@ class UriTemplate
      */
     private function expandMatch(array $matches)
     {
-        static $rfc1738to3986 = array('+' => '%20', '%7e' => '~');
+        static $rfc1738to3986 = ['+' => '%20', '%7e' => '~'];
 
-        $replacements = array();
+        $replacements = [];
         $parsed = self::parseExpression($matches[1]);
         $prefix = self::$operatorHash[$parsed['operator']]['prefix'];
         $joiner = self::$operatorHash[$parsed['operator']]['joiner'];
@@ -119,7 +119,7 @@ class UriTemplate
             if (is_array($variable)) {
 
                 $isAssoc = $this->isAssoc($variable);
-                $kvp = array();
+                $kvp = [];
                 foreach ($variable as $key => $var) {
 
                     if ($isAssoc) {
