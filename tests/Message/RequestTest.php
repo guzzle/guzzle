@@ -6,6 +6,7 @@ use GuzzleHttp\Event\Emitter;
 use GuzzleHttp\Message\Request;
 use GuzzleHttp\Query;
 use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Stream\StreamInterface;
 
 /**
  * @covers GuzzleHttp\Message\Request
@@ -59,6 +60,14 @@ class RequestTest extends \PHPUnit_Framework_TestCase
 
         $r->setPath('/abc');
         $this->assertEquals('/test', $r2->getPath());
+    }
+
+    public function testCastsStringToStream()
+    {
+        $r = new Request('GET', 'http://test.com/test', ['foo' => 'baz'], 'body');
+        $s = $r->getBody();
+        $this->assertInstanceOf(StreamInterface::class, $s);
+        $this->assertSame('body', $s->getContents());
     }
 
     public function testCastsToString()

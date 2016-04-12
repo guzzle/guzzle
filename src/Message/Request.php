@@ -3,6 +3,8 @@ namespace GuzzleHttp\Message;
 
 use GuzzleHttp\Collection;
 use GuzzleHttp\Event\HasEmitterTrait;
+use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Stream\StreamInterface;
 use GuzzleHttp\Subscriber\Prepare;
 use GuzzleHttp\Url;
 
@@ -46,6 +48,9 @@ class Request extends AbstractMessage implements RequestInterface
         $this->addPrepareEvent();
 
         if ($body !== null) {
+            if (!($body instanceof StreamInterface)) {
+                $body = Stream::factory($body);
+            }
             $this->setBody($body);
         }
 
