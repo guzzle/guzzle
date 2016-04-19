@@ -27,6 +27,9 @@ class Client implements ClientInterface
     /** @var array Default request options */
     private $config;
 
+    /** @var  array Default credentials for every request */
+    protected $defaultCredentials;
+
     /**
      * Clients accept an array of constructor parameters.
      *
@@ -68,6 +71,10 @@ class Client implements ClientInterface
         // Convert the base_uri to a UriInterface
         if (isset($config['base_uri'])) {
             $config['base_uri'] = Psr7\uri_for($config['base_uri']);
+        }
+
+        if (isset($config['default_credentials'])) {
+            $this->defaultCredentials = $config['default_credentials'];
         }
 
         $this->configureDefaults($config);
@@ -325,6 +332,27 @@ class Client implements ClientInterface
             unset($options['body']);
         }
 
+        //Before parsing request's credentials, if default credentials are specified for this Client
+        //they are parsed and added to the request
+        if (!empty($this->defaultCredentials)) {
+            $value = $this->defaultCredentials;
+            $type = is_array($value)
+                ? (isset($value[2]) ? strtolower($value[2]) : 'basic')
+                : $value;
+            $config['auth'] = $value;
+            switch (strtolower($type)) {
+                case 'basic':
+                    $modify['set_headers']['Authorization'] = 'Basic '
+                        . base64_encode("$value[0]:$value[1]");
+                    break;
+                case 'digest':
+                    // @todo: Do not rely on curl
+                    $options['curl'][CURLOPT_HTTPAUTH] = CURLAUTH_DIGEST;
+                    $options['curl'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
+                    break;
+            }
+        }
+
         if (!empty($options['auth'])) {
             $value = $options['auth'];
             $type = is_array($value)
@@ -395,4 +423,22 @@ class Client implements ClientInterface
             . 'application/x-www-form-urlencoded request, or a the "multipart" '
             . 'request option to send a multipart/form-data request.');
     }
+
+    /**
+     * @return array
+     */
+    public function getDefaultCredentials()
+    {
+        return $this->defaultCredentials;
+    }
+
+    /**
+     * @param array $defaultCredentials
+     */
+    public function setDefaultCredentials($defaultCredentials)
+    {
+        $this->defaultCredentials = $defaultCredentials;
+    }
+
 }
+

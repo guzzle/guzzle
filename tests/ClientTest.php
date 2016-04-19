@@ -615,4 +615,18 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('foo.com', $mockHandler->getLastRequest()->getHeader('Host')[0]);
     }
 
+    public function testBaseDefaultCredentialsAreReadInConstructor()
+    {
+        $client = new Client(['base_uri' => 'http://foo2.com', 'default_credentials' => ['foo', 'bar']]);
+        $this->assertEquals(['foo', 'bar'], $client->getDefaultCredentials());
+    }
+
+    public function testDefaultCredentialsAreSentWithRequest()
+    {
+        $mockHandler = new MockHandler([new Response(200)]);
+        $client = new Client(['default_credentials' => ['foo', 'bar'], 'handler' => $mockHandler]);
+        $request = new Request('GET', '/test', ['Host'=>'foo.com']);
+        $client->send($request);
+        $this->assertArrayHasKey('Authorization', $mockHandler->getLastRequest()->getHeaders());
+    }
 }
