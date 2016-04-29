@@ -113,7 +113,22 @@ class Client implements ClientInterface
 
     public function requestAsync($method, $uri = null, array $options = [])
     {
+        // Remove the option so that they are not doubly-applied.
         $options = $this->prepareDefaults($options);
+        $request = $this->createNewRequest($method, $uri, $options);
+        unset($options['headers'], $options['body'], $options['version']);
+        return $this->transfer($request, $options);
+    }
+
+    /**
+     * Returns a Request object with the provided configuration
+     * @param $method
+     * @param null $uri
+     * @param array $options
+     * @return Psr7\Request
+     */
+    public function createNewRequest($method, $uri = null, array $options = [])
+    {
         // Remove request modifying parameter because it can be done up-front.
         $headers = isset($options['headers']) ? $options['headers'] : [];
         $body = isset($options['body']) ? $options['body'] : null;
@@ -123,11 +138,7 @@ class Client implements ClientInterface
         if (is_array($body)) {
             $this->invalidBody();
         }
-        $request = new Psr7\Request($method, $uri, $headers, $body, $version);
-        // Remove the option so that they are not doubly-applied.
-        unset($options['headers'], $options['body'], $options['version']);
-
-        return $this->transfer($request, $options);
+        return new Psr7\Request($method, $uri, $headers, $body, $version);
     }
 
     public function request($method, $uri = null, array $options = [])
