@@ -27,6 +27,9 @@ class Client implements ClientInterface
     /** @var array Default request options */
     private $config;
 
+    /** @var  array Default credentials for every request */
+    protected $defaultCredentials;
+
     /**
      * Clients accept an array of constructor parameters.
      *
@@ -70,6 +73,10 @@ class Client implements ClientInterface
             $config['base_uri'] = Psr7\uri_for($config['base_uri']);
         }
 
+        if (isset($config['default_credentials'])) {
+            $this->defaultCredentials = $config['default_credentials'];
+        }
+
         $this->configureDefaults($config);
     }
 
@@ -106,7 +113,22 @@ class Client implements ClientInterface
 
     public function requestAsync($method, $uri = null, array $options = [])
     {
+        // Remove the option so that they are not doubly-applied.
         $options = $this->prepareDefaults($options);
+        $request = $this->createNewRequest($method, $uri, $options);
+        unset($options['headers'], $options['body'], $options['version']);
+        return $this->transfer($request, $options);
+    }
+
+    /**
+     * Returns a Request object with the provided configuration
+     * @param $method
+     * @param null $uri
+     * @param array $options
+     * @return Psr7\Request
+     */
+    public function createNewRequest($method, $uri = null, array $options = [])
+    {
         // Remove request modifying parameter because it can be done up-front.
         $headers = isset($options['headers']) ? $options['headers'] : [];
         $body = isset($options['body']) ? $options['body'] : null;
@@ -116,11 +138,7 @@ class Client implements ClientInterface
         if (is_array($body)) {
             $this->invalidBody();
         }
-        $request = new Psr7\Request($method, $uri, $headers, $body, $version);
-        // Remove the option so that they are not doubly-applied.
-        unset($options['headers'], $options['body'], $options['version']);
-
-        return $this->transfer($request, $options);
+        return new Psr7\Request($method, $uri, $headers, $body, $version);
     }
 
     public function request($method, $uri = null, array $options = [])
@@ -325,6 +343,27 @@ class Client implements ClientInterface
             unset($options['body']);
         }
 
+        //Before parsing request's credentials, if default credentials are specified for this Client
+        //they are parsed and added to the request
+        if (!empty($this->defaultCredentials)) {
+            $value = $this->defaultCredentials;
+            $type = is_array($value)
+                ? (isset($value[2]) ? strtolower($value[2]) : 'basic')
+                : $value;
+            $config['auth'] = $value;
+            switch (strtolower($type)) {
+                case 'basic':
+                    $modify['set_headers']['Authorization'] = 'Basic '
+                        . base64_encode("$value[0]:$value[1]");
+                    break;
+                case 'digest':
+                    // @todo: Do not rely on curl
+                    $options['curl'][CURLOPT_HTTPAUTH] = CURLAUTH_DIGEST;
+                    $options['curl'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
+                    break;
+            }
+        }
+
         if (!empty($options['auth'])) {
             $value = $options['auth'];
             $type = is_array($value)
@@ -395,4 +434,22 @@ class Client implements ClientInterface
             . 'application/x-www-form-urlencoded request, or a the "multipart" '
             . 'request option to send a multipart/form-data request.');
     }
+
+    /**
+     * @return array
+     */
+    public function getDefaultCredentials()
+    {
+        return $this->defaultCredentials;
+    }
+
+    /**
+     * @param array $defaultCredentials
+     */
+    public function setDefaultCredentials($defaultCredentials)
+    {
+        $this->defaultCredentials = $defaultCredentials;
+    }
+
 }
+
