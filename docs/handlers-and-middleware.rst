@@ -145,13 +145,13 @@ downstream handler. This example adds a header to the response.
                 RequestInterface $request,
                 array $options
             ) use ($handler, $header, $value) {
-                $promise = $handler($request, $options)
+                $promise = $handler($request, $options);
                 return $promise->then(
                     function (ResponseInterface $response) use ($header, $value) {
                         return $response->withHeader($header, $value);
                     }
                 );
-            }
+            };
         };
     }
 

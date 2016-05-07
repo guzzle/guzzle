@@ -28,14 +28,6 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
         ];
     }
 
-    public function testQuotesBadCookieValues()
-    {
-        $this->assertEquals('foo', CookieJar::getCookieValue('foo'));
-        $this->assertEquals('"foo,bar"', CookieJar::getCookieValue('foo,bar'));
-        $this->assertEquals('"foobar="', CookieJar::getCookieValue('foobar='));
-        $this->assertEquals('"foo;bar"', CookieJar::getCookieValue('foo;bar'));
-    }
-
     public function testCreatesFromArray()
     {
         $jar = CookieJar::fromArray([

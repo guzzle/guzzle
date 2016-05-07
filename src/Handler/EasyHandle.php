@@ -56,8 +56,13 @@ final class EasyHandle
         if (!empty($this->options['decode_content'])
             && isset($normalizedKeys['content-encoding'])
         ) {
+            $headers['x-encoded-content-encoding']
+                = $headers[$normalizedKeys['content-encoding']];
             unset($headers[$normalizedKeys['content-encoding']]);
             if (isset($normalizedKeys['content-length'])) {
+                $headers['x-encoded-content-length']
+                    = $headers[$normalizedKeys['content-length']];
+
                 $bodyLength = (int) $this->sink->getSize();
                 if ($bodyLength) {
                     $headers[$normalizedKeys['content-length']] = $bodyLength;

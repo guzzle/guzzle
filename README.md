@@ -23,8 +23,8 @@ $res = $client->request('GET', 'https://api.github.com/user', [
     'auth' => ['user', 'pass']
 ]);
 echo $res->getStatusCode();
-// "200"
-echo $res->getHeader('content-type');
+// 200
+echo $res->getHeaderLine('content-type');
 // 'application/json; charset=utf8'
 echo $res->getBody();
 // {"type":"User"...'
@@ -57,7 +57,7 @@ curl -sS https://getcomposer.org/installer | php
 Next, run the Composer command to install the latest stable version of Guzzle:
 
 ```bash
-composer.phar require guzzlehttp/guzzle
+php composer.phar require guzzlehttp/guzzle
 ```
 
 After installing, you need to require Composer's autoloader:

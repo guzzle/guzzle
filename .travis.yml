@@ -14,16 +14,17 @@ before_script:
   - composer install --no-interaction --prefer-source --dev
   - ~/.nvm/nvm.sh install v0.6.14
   - ~/.nvm/nvm.sh run v0.6.14
+  - '[ "$TRAVIS_PHP_VERSION" != "7.0" ] || echo "xdebug.overload_var_dump = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini'
 
 script: make test
 
 matrix:
   allow_failures:
     - php: hhvm
-    - php: 7.0
   fast_finish: true
 
 before_deploy:
+  - rvm 1.9.3 do gem install mime-types -v 2.6.2
   - make package
 
 deploy:

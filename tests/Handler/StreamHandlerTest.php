@@ -127,6 +127,21 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         unlink($tmpfname);
     }
 
+    public function testDrainsResponseIntoSaveToBodyAtNonExistentPath()
+    {
+        $tmpfname = tempnam('/tmp', 'save_to_path');
+        unlink($tmpfname);
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $response = $handler($request, ['sink' => $tmpfname])->wait();
+        $body = $response->getBody();
+        $this->assertEquals($tmpfname, $body->getMetadata('uri'));
+        $this->assertEquals('hi', $body->read(2));
+        $body->close();
+        unlink($tmpfname);
+    }
+
     public function testAutomaticallyDecompressGzip()
     {
         Server::flush();
@@ -143,6 +158,30 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('test', (string) $response->getBody());
         $this->assertFalse($response->hasHeader('content-encoding'));
         $this->assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == $response->getBody()->getSize());
+    }
+
+    public function testReportsOriginalSizeAndContentEncodingAfterDecoding()
+    {
+        Server::flush();
+        $content = gzencode('test');
+        Server::enqueue([
+            new Response(200, [
+                'Content-Encoding' => 'gzip',
+                'Content-Length'   => strlen($content),
+            ], $content)
+        ]);
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $response = $handler($request, ['decode_content' => true])->wait();
+
+        $this->assertSame(
+            'gzip',
+            $response->getHeaderLine('x-encoded-content-encoding')
+        );
+        $this->assertSame(
+            strlen($content),
+            (int) $response->getHeaderLine('x-encoded-content-length')
+        );
     }
 
     public function testDoesNotForceGzipDecode()

@@ -28,6 +28,8 @@ Creating a Client
         'timeout'  => 2.0,
     ]);
 
+Clients are immutable in Guzzle 6, which means that you cannot change the defaults used by a client after it's created.
+
 The client constructor accepts an associative array of options:
 
 ``base_uri``
@@ -181,8 +183,12 @@ requests.
         'webp'  => $client->getAsync('/image/webp')
     ];
 
-    // Wait on all of the requests to complete.
+    // Wait on all of the requests to complete. Throws a ConnectException 
+    // if any of the requests fail
     $results = Promise\unwrap($promises);
+    
+    // Wait for the requests to complete, even if some of them fail
+    $results = Promise\settle($promises)->wait();
 
     // You can access each result using the key provided to the unwrap
     // function.
@@ -222,7 +228,24 @@ amount of requests you wish to send.
 
     // Force the pool of requests to complete.
     $promise->wait();
+    
+Or using a closure that will return a promise once the pool calls the closure.
 
+.. code-block:: php
+
+    $client = new Client();
+
+    $requests = function ($total) use ($client) {
+        $uri = 'http://127.0.0.1:8126/guzzle-server/perf';
+        for ($i = 0; $i < $total; $i++) {
+            yield function() use ($client, $uri) {
+                return $client->getAsync($uri);
+            };
+        }
+    };
+
+    $pool = new Pool($client, $requests(100));
+        
 
 Using Responses
 ===============

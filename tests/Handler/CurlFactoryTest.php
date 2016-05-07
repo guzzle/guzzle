@@ -301,6 +301,23 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($sent->hasHeader('Accept-Encoding'));
     }
 
+    public function testReportsOriginalSizeAndContentEncodingAfterDecoding()
+    {
+        $this->addDecodeResponse();
+        $handler = new Handler\CurlMultiHandler();
+        $request = new Psr7\Request('GET', Server::$url);
+        $response = $handler($request, ['decode_content' => true]);
+        $response = $response->wait();
+        $this->assertSame(
+            'gzip',
+            $response->getHeaderLine('x-encoded-content-encoding')
+        );
+        $this->assertSame(
+            strlen(gzencode('test')),
+            (int) $response->getHeaderLine('x-encoded-content-length')
+        );
+    }
+
     public function testDecodesGzippedResponsesWithHeader()
     {
         $this->addDecodeResponse();
@@ -691,5 +708,36 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         );
         $this->assertInternalType('float', $gotStats->getTransferTime());
         $this->assertInternalType('int', $gotStats->getHandlerErrorData());
+    }
+
+    public function testRewindsBodyIfPossible()
+    {
+        $body = Psr7\stream_for(str_repeat('x', 1024 * 1024 * 2));
+        $body->seek(1024 * 1024);
+        $this->assertSame(1024 * 1024, $body->tell());
+
+        $req = new Psr7\Request('POST', 'https://www.example.com', [
+            'Content-Length' => 1024 * 1024 * 2,
+        ], $body);
+        $factory = new CurlFactory(1);
+        $factory->create($req, []);
+
+        $this->assertSame(0, $body->tell());
+    }
+
+    public function testDoesNotRewindUnseekableBody()
+    {
+        $body = Psr7\stream_for(str_repeat('x', 1024 * 1024 * 2));
+        $body->seek(1024 * 1024);
+        $body = new Psr7\NoSeekStream($body);
+        $this->assertSame(1024 * 1024, $body->tell());
+
+        $req = new Psr7\Request('POST', 'https://www.example.com', [
+            'Content-Length' => 1024 * 1024,
+        ], $body);
+        $factory = new CurlFactory(1);
+        $factory->create($req, []);
+
+        $this->assertSame(1024 * 1024, $body->tell());
     }
 }

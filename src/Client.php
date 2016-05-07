@@ -93,7 +93,7 @@ class Client implements ClientInterface
         $options = $this->prepareDefaults($options);
 
         return $this->transfer(
-            $request->withUri($this->buildUri($request->getUri(), $options)),
+            $request->withUri($this->buildUri($request->getUri(), $options), $request->hasHeader('Host')),
             $options
         );
     }
@@ -173,7 +173,7 @@ class Client implements ClientInterface
             $cleanedNoProxy = str_replace(' ', '', $noProxy);
             $defaults['proxy']['no'] = explode(',', $cleanedNoProxy);
         }
-        
+
         $this->config = $config + $defaults;
 
         if (!empty($config['cookies']) && $config['cookies'] === true) {
@@ -291,7 +291,7 @@ class Client implements ClientInterface
                     . 'x-www-form-urlencoded requests, and the multipart '
                     . 'option to send multipart/form-data requests.');
             }
-            $options['body'] = http_build_query($options['form_params'], null, '&');
+            $options['body'] = http_build_query($options['form_params'], '', '&');
             unset($options['form_params']);
             $options['_conditional']['Content-Type'] = 'application/x-www-form-urlencoded';
         }
@@ -357,7 +357,8 @@ class Client implements ClientInterface
         }
 
         if (isset($options['json'])) {
-            $modify['body'] = Psr7\stream_for(json_encode($options['json']));
+            $jsonStr = \GuzzleHttp\json_encode($options['json']);
+            $modify['body'] = Psr7\stream_for($jsonStr);
             $options['_conditional']['Content-Type'] = 'application/json';
             unset($options['json']);
         }

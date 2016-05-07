@@ -1,5 +1,39 @@
 # CHANGELOG
 
+## 6.2.0 - 2016-03-21
+
+* Feature: added `GuzzleHttp\json_encode` and `GuzzleHttp\json_decode`.
+  https://github.com/guzzle/guzzle/pull/1389
+* Bug fix: Fix sleep calculation when waiting for delayed requests.
+  https://github.com/guzzle/guzzle/pull/1324
+* Feature: More flexible history containers.
+  https://github.com/guzzle/guzzle/pull/1373
+* Bug fix: defer sink stream opening in StreamHandler.
+  https://github.com/guzzle/guzzle/pull/1377
+* Bug fix: do not attempt to escape cookie values.
+  https://github.com/guzzle/guzzle/pull/1406
+* Feature: report original content encoding and length on decoded responses.
+  https://github.com/guzzle/guzzle/pull/1409
+* Bug fix: rewind seekable request bodies before dispatching to cURL.
+  https://github.com/guzzle/guzzle/pull/1422
+* Bug fix: provide an empty string to `http_build_query` for HHVM workaround.
+  https://github.com/guzzle/guzzle/pull/1367
+
+## 6.1.1 - 2015-11-22
+
+* Bug fix: Proxy::wrapSync() now correctly proxies to the appropriate handler
+  https://github.com/guzzle/guzzle/commit/911bcbc8b434adce64e223a6d1d14e9a8f63e4e4
+* Feature: HandlerStack is now more generic.
+  https://github.com/guzzle/guzzle/commit/f2102941331cda544745eedd97fc8fd46e1ee33e
+* Bug fix: setting verify to false in the StreamHandler now disables peer
+  verification. https://github.com/guzzle/guzzle/issues/1256
+* Feature: Middleware now uses an exception factory, including more error
+  context. https://github.com/guzzle/guzzle/pull/1282
+* Feature: better support for disabled functions.
+  https://github.com/guzzle/guzzle/pull/1287
+* Bug fix: fixed regression where MockHandler was not using `sink`.
+  https://github.com/guzzle/guzzle/pull/1292
+
 ## 6.1.0 - 2015-09-08
 
 * Feature: Added the `on_stats` request option to provide access to transfer

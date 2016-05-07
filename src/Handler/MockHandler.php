@@ -27,7 +27,7 @@ class MockHandler implements \Countable
      * @param callable $onFulfilled Callback to invoke when the return value is fulfilled.
      * @param callable $onRejected  Callback to invoke when the return value is rejected.
      *
-     * @return MockHandler
+     * @return HandlerStack
      */
     public static function createWithMiddleware(
         array $queue = null,
@@ -74,7 +74,7 @@ class MockHandler implements \Countable
         $response = array_shift($this->queue);
 
         if (is_callable($response)) {
-            $response = $response($request, $options);
+            $response = call_user_func($response, $request, $options);
         }
 
         $response = $response instanceof \Exception

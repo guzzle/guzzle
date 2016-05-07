@@ -192,6 +192,10 @@ This setting can be set to any of the following types:
       $stream = GuzzleHttp\Psr7\stream_for('contents...');
       $client->request('POST', '/post', ['body' => $stream]);
 
+.. note::
+
+    This option cannot be used with ``form_params``, ``multipart``, or ``json``
+
 
 .. _cert-option:
 
@@ -419,6 +423,8 @@ present.
     one or the other. Use ``form_params`` for ``application/x-www-form-urlencoded``
     requests, and ``multipart`` for ``multipart/form-data`` requests.
 
+    This option cannot be used with ``body``, ``multipart``, or ``json``
+
 
 headers
 -------
@@ -548,6 +554,8 @@ over the wire.
     option and you must specify the correct Content-Type header using the
     ``headers`` request option.
 
+    This option cannot be used with ``body``, ``form_params``, or ``multipart``
+
 
 multipart
 ---------
@@ -592,6 +600,8 @@ the following key value pairs:
     ``multipart`` cannot be used with the ``form_params`` option. You will need to
     use one or the other. Use ``form_params`` for ``application/x-www-form-urlencoded``
     requests, and ``multipart`` for ``multipart/form-data`` requests.
+
+    This option cannot be used with ``body``, ``form_params``, or ``json``
 
 
 .. _on-headers:
