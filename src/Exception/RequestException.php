@@ -19,11 +19,18 @@ class RequestException extends TransferException
     /** @var array */
     private $handlerContext;
 
+    /**
+     * @param string $message
+     * @param \Psr\Http\Message\RequestInterface $request
+     * @param \Psr\Http\Message\ResponseInterface $response
+     * @param \Exception|\Throwable $previous
+     * @param mixed[] $handlerContext
+     */
     public function __construct(
         $message,
         RequestInterface $request,
         ResponseInterface $response = null,
-        \Exception $previous = null,
+        $previous = null,
         array $handlerContext = []
     ) {
         // Set the code of the exception if the response is set and not future.
