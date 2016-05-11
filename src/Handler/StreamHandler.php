@@ -68,6 +68,11 @@ class StreamHandler
             $this->invokeStats($options, $request, $startTime, null, $e);
 
             return new RejectedPromise($e);
+        } catch (\Throwable $e) {
+            $e = RequestException::wrapException($request, $e);
+            $this->invokeStats($options, $request, $startTime, null, $e);
+
+            return new RejectedPromise($e);
         }
     }
 
@@ -112,6 +117,10 @@ class StreamHandler
             try {
                 $options['on_headers']($response);
             } catch (\Exception $e) {
+                $msg = 'An error was encountered during the on_headers event';
+                $ex = new RequestException($msg, $request, $response, $e);
+                return new RejectedPromise($ex);
+            } catch (\Throwable $e) {
                 $msg = 'An error was encountered during the on_headers event';
                 $ex = new RequestException($msg, $request, $response, $e);
                 return new RejectedPromise($ex);

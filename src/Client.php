@@ -268,6 +268,8 @@ class Client implements ClientInterface
             return Promise\promise_for($handler($request, $options));
         } catch (\Exception $e) {
             return Promise\rejection_for($e);
+        } catch (\Throwable $e) {
+            return Promise\rejection_for($e);
         }
     }
 
