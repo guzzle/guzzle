@@ -346,7 +346,9 @@ class StreamHandler
 
     private function add_timeout(RequestInterface $request, &$options, $value, &$params)
     {
-        $options['http']['timeout'] = $value;
+        if ($value > 0) {
+            $options['http']['timeout'] = $value;
+        }
     }
 
     private function add_verify(RequestInterface $request, &$options, $value, &$params)
