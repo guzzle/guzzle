@@ -87,7 +87,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testCanMergeOnBaseUriWithRequest()
     {
-        $mock = new MockHandler([new Response()]);
+        $mock = new MockHandler([new Response(), new Response()]);
         $client = new Client([
             'handler'  => $mock,
             'base_uri' => 'http://foo.com/bar/'
@@ -96,6 +96,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(
             'http://foo.com/bar/baz',
             (string) $mock->getLastRequest()->getUri()
+        );
+
+        $client->request('GET', new Uri('baz'), ['base_uri' => 'http://example.com/foo/']);
+        $this->assertEquals(
+            'http://example.com/foo/baz',
+            (string) $mock->getLastRequest()->getUri(),
+            'Can overwrite the base_uri through the request options'
         );
     }
 

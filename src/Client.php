@@ -104,7 +104,7 @@ class Client implements ClientInterface
         return $this->sendAsync($request, $options)->wait();
     }
 
-    public function requestAsync($method, $uri, array $options = [])
+    public function requestAsync($method, $uri = '', array $options = [])
     {
         $options = $this->prepareDefaults($options);
         // Remove request modifying parameter because it can be done up-front.
@@ -123,7 +123,7 @@ class Client implements ClientInterface
         return $this->transfer($request, $options);
     }
 
-    public function request($method, $uri, array $options = [])
+    public function request($method, $uri = '', array $options = [])
     {
         $options[RequestOptions::SYNCHRONOUS] = true;
         return $this->requestAsync($method, $uri, $options)->wait();
@@ -142,7 +142,7 @@ class Client implements ClientInterface
             return $uri instanceof UriInterface ? $uri : new Psr7\Uri($uri);
         }
 
-        return Psr7\Uri::resolve($config['base_uri'], $uri);
+        return Psr7\Uri::resolve(Psr7\uri_for($config['base_uri']), $uri);
     }
 
     /**
