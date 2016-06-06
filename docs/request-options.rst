@@ -745,7 +745,7 @@ query
     // Send a GET request to /get?foo=bar
     $client->request('GET', '/get', ['query' => ['foo' => 'bar']]);
 
-Query strings specified in the ``query`` option will overwrite an query string
+Query strings specified in the ``query`` option will overwrite a query string
 values supplied in the URI of a request.
 
 .. code-block:: php
