@@ -104,7 +104,7 @@ class Client implements ClientInterface
         return $this->sendAsync($request, $options)->wait();
     }
 
-    public function requestAsync($method, $uri = null, array $options = [])
+    public function requestAsync($method, $uri = '', array $options = [])
     {
         $options = $this->prepareDefaults($options);
         // Remove request modifying parameter because it can be done up-front.
@@ -123,7 +123,7 @@ class Client implements ClientInterface
         return $this->transfer($request, $options);
     }
 
-    public function request($method, $uri = null, array $options = [])
+    public function request($method, $uri = '', array $options = [])
     {
         $options[RequestOptions::SYNCHRONOUS] = true;
         return $this->requestAsync($method, $uri, $options)->wait();
@@ -255,7 +255,7 @@ class Client implements ClientInterface
             unset($options['save_to']);
         }
 
-        // exceptions -> http_error
+        // exceptions -> http_errors
         if (isset($options['exceptions'])) {
             $options['http_errors'] = $options['exceptions'];
             unset($options['exceptions']);
@@ -297,9 +297,14 @@ class Client implements ClientInterface
         }
 
         if (isset($options['multipart'])) {
-            $elements = $options['multipart'];
+            $options['body'] = new Psr7\MultipartStream($options['multipart']);
             unset($options['multipart']);
-            $options['body'] = new Psr7\MultipartStream($elements);
+        }
+
+        if (isset($options['json'])) {
+            $options['body'] = \GuzzleHttp\json_encode($options['json']);
+            unset($options['json']);
+            $options['_conditional']['Content-Type'] = 'application/json';
         }
 
         if (!empty($options['decode_content'])
@@ -351,13 +356,6 @@ class Client implements ClientInterface
             }
             $modify['query'] = $value;
             unset($options['query']);
-        }
-
-        if (isset($options['json'])) {
-            $jsonStr = \GuzzleHttp\json_encode($options['json']);
-            $modify['body'] = Psr7\stream_for($jsonStr);
-            $options['_conditional']['Content-Type'] = 'application/json';
-            unset($options['json']);
         }
 
         // Ensure that sink is not an invalid value.
