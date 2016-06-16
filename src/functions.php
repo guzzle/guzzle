@@ -309,7 +309,7 @@ function json_decode($json, $assoc = false, $depth = 512, $options = 0)
 /**
  * Wrapper for JSON encoding that throws when an error occurs.
  *
- * @param string $value   The value being encoded
+ * @param mixed $value   The value being encoded
  * @param int    $options JSON encode option bitmask
  * @param int    $depth   Set the maximum depth. Must be greater than zero.
  *
