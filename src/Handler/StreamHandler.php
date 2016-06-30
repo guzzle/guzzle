@@ -149,7 +149,7 @@ class StreamHandler
             $normalizedKeys = \GuzzleHttp\normalize_header_keys($headers);
             if (isset($normalizedKeys['content-encoding'])) {
                 $encoding = $headers[$normalizedKeys['content-encoding']];
-                if ($encoding[0] == 'gzip' || $encoding[0] == 'deflate') {
+                if ($encoding[0] === 'gzip' || $encoding[0] === 'deflate') {
                     $stream = new Psr7\InflateStream(
                         Psr7\stream_for($stream)
                     );

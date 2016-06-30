@@ -233,7 +233,7 @@ class CookieJar implements CookieJarInterface
             if ($cookie->matchesPath($path) &&
                 $cookie->matchesDomain($host) &&
                 !$cookie->isExpired() &&
-                (!$cookie->getSecure() || $scheme == 'https')
+                (!$cookie->getSecure() || $scheme === 'https')
             ) {
                 $values[] = $cookie->getName() . '='
                     . $cookie->getValue();
