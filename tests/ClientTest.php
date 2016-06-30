@@ -593,7 +593,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testProperlyBuildsQuery()
     {
-        $mock = new MockHandler([new Response(200)]);
+        $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
         $request = new Request('PUT', 'http://foo.com');
         $client->send($request, ['query' => ['foo' => 'bar', 'john' => 'doe']]);
@@ -602,8 +602,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testSendSendsWithIpAddressAndPortAndHostHeaderInRequestTheHostShouldBePreserved()
     {
-        $mockHandler = new MockHandler([new Response(200)]);
-        $client = new Client(['base_uri' => '127.0.0.1:8585', 'handler' => $mockHandler]);
+        $mockHandler = new MockHandler([new Response()]);
+        $client = new Client(['base_uri' => 'http://127.0.0.1:8585', 'handler' => $mockHandler]);
         $request = new Request('GET', '/test', ['Host'=>'foo.com']);
 
         $client->send($request);
@@ -613,7 +613,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testSendSendsWithDomainAndHostHeaderInRequestTheHostShouldBePreserved()
     {
-        $mockHandler = new MockHandler([new Response(200)]);
+        $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['base_uri' => 'http://foo2.com', 'handler' => $mockHandler]);
         $request = new Request('GET', '/test', ['Host'=>'foo.com']);
 
@@ -627,8 +627,18 @@ class ClientTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatesSink()
     {
-        $mockHandler = new MockHandler([new Response(200)]);
+        $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
         $client->get('http://test.com', ['sink' => true]);
+    }
+
+    public function testHttpDefaultSchemeIfUriHasNone()
+    {
+        $mockHandler = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mockHandler]);
+
+        $client->request('GET', '//example.org/test');
+
+        $this->assertSame('http://example.org/test', (string) $mockHandler->getLastRequest()->getUri());
     }
 }
