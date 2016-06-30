@@ -142,6 +142,24 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         unlink($tmpfname);
     }
 
+    public function testDrainsResponseAndReadsOnlyContentLengthBytes()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, [
+                'Foo' => 'Bar',
+                'Content-Length' => 8,
+            ], 'hi there... This has way too much data!')
+        ]);
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $response = $handler($request, [])->wait();
+        $body = $response->getBody();
+        $stream = $body->detach();
+        $this->assertEquals('hi there', stream_get_contents($stream));
+        fclose($stream);
+    }
+
     public function testAutomaticallyDecompressGzip()
     {
         Server::flush();
