@@ -77,7 +77,7 @@ class RequestException extends TransferException
             );
         }
 
-        $level = (int) ($response->getStatusCode() / 100);
+        $level = (int) floor($response->getStatusCode() / 100);
         if ($level === 4) {
             $label = 'Client error';
             $className = __NAMESPACE__ . '\\ClientException';
