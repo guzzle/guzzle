@@ -160,6 +160,25 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         fclose($stream);
     }
 
+    public function testDoesNotDrainWhenHeadRequest()
+    {
+        Server::flush();
+        // Say the content-length is 8, but return no response.
+        Server::enqueue([
+            new Response(200, [
+                'Foo' => 'Bar',
+                'Content-Length' => 8,
+            ], '')
+        ]);
+        $handler = new StreamHandler();
+        $request = new Request('HEAD', Server::$url);
+        $response = $handler($request, [])->wait();
+        $body = $response->getBody();
+        $stream = $body->detach();
+        $this->assertEquals('', stream_get_contents($stream));
+        fclose($stream);
+    }
+
     public function testAutomaticallyDecompressGzip()
     {
         Server::flush();
