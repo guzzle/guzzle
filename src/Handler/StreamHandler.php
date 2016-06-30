@@ -163,7 +163,7 @@ class StreamHandler
                             = $headers[$normalizedKeys['content-length']];
 
                         $length = (int) $stream->getSize();
-                        if ($length == 0) {
+                        if ($length === 0) {
                             unset($headers[$normalizedKeys['content-length']]);
                         } else {
                             $headers[$normalizedKeys['content-length']] = [$length];
