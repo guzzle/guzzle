@@ -284,7 +284,7 @@ class StreamHandler
 
         return $this->createResource(
             function () use ($request, &$http_response_header, $context) {
-                $resource = fopen($request->getUri(), 'r', null, $context);
+                $resource = fopen((string) $request->getUri()->withFragment(''), 'r', null, $context);
                 $this->lastHeaders = $http_response_header;
                 return $resource;
             }
@@ -425,7 +425,7 @@ class StreamHandler
             'bytes_transferred', 'bytes_max'];
 
         $value = \GuzzleHttp\debug_resource($value);
-        $ident = $request->getMethod() . ' ' . $request->getUri();
+        $ident = $request->getMethod() . ' ' . $request->getUri()->withFragment('');
         $this->addNotification(
             $params,
             function () use ($ident, $value, $map, $args) {
