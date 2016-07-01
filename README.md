@@ -18,7 +18,7 @@ trivial to integrate with web services.
 - Middleware system allows you to augment and compose client behavior.
 
 ```php
-$client = new GuzzleHttp\Client();
+$client = new \GuzzleHttp\Client();
 $res = $client->request('GET', 'https://api.github.com/user', [
     'auth' => ['user', 'pass']
 ]);
