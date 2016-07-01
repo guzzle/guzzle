@@ -105,7 +105,12 @@ class StreamHandler
         $headers = \GuzzleHttp\headers_from_lines($hdrs);
         list ($stream, $headers) = $this->checkDecode($options, $headers, $stream);
         $stream = Psr7\stream_for($stream);
-        $sink = $this->createSink($stream, $options);
+        $sink = $stream;
+
+        if (strcasecmp('HEAD', $request->getMethod())) {
+            $sink = $this->createSink($stream, $options);
+        }
+
         $response = new Psr7\Response($status, $headers, $sink, $ver, $reason);
 
         if (isset($options['on_headers'])) {
@@ -118,8 +123,14 @@ class StreamHandler
             }
         }
 
+        // Do not drain when the request is a HEAD request because they have
+        // no body.
         if ($sink !== $stream) {
-            $this->drain($stream, $sink);
+            $this->drain(
+                $stream,
+                $sink,
+                $response->getHeaderLine('Content-Length')
+            );
         }
 
         $this->invokeStats($options, $request, $startTime, $response, null);
@@ -181,13 +192,27 @@ class StreamHandler
      *
      * @param StreamInterface $source
      * @param StreamInterface $sink
+     * @param string          $contentLength Header specifying the amount of
+     *                                       data to read.
      *
      * @return StreamInterface
      * @throws \RuntimeException when the sink option is invalid.
      */
-    private function drain(StreamInterface $source, StreamInterface $sink)
-    {
-        Psr7\copy_to_stream($source, $sink);
+    private function drain(
+        StreamInterface $source,
+        StreamInterface $sink,
+        $contentLength
+    ) {
+        // If a content-length header is provided, then stop reading once
+        // that number of bytes has been read. This can prevent infinitely
+        // reading from a stream when dealing with servers that do not honor
+        // Connection: Close headers.
+        Psr7\copy_to_stream(
+            $source,
+            $sink,
+            strlen($contentLength) > 0 ? (int) $contentLength : -1
+        );
+
         $sink->seek(0);
         $source->close();
 
