@@ -125,10 +125,10 @@ class RequestException extends TransferException
         }
 
         $size = $body->getSize();
-        $summary = $body->read(120);
+        $summary = $body->read(240);
         $body->rewind();
 
-        if ($size > 120) {
+        if ($size > 240) {
             $summary .= ' (truncated...)';
         }
 
