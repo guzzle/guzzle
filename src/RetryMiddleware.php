@@ -101,7 +101,7 @@ class RetryMiddleware
             return $this->doRetry($req, $options);
         };
     }
-
+    
     private function doRetry(RequestInterface $request, array $options)
     {
         $options['delay'] = call_user_func($this->delay, ++$options['retries']);

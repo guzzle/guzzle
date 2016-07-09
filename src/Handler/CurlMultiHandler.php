@@ -41,6 +41,10 @@ class CurlMultiHandler
             ? $options['select_timeout'] : 1;
     }
 
+    /**
+     * @param $name
+     * @return resource
+     */
     public function __get($name)
     {
         if ($name === '_mh') {
@@ -58,6 +62,11 @@ class CurlMultiHandler
         }
     }
 
+    /**
+     * @param RequestInterface $request
+     * @param array $options
+     * @return Promise
+     */
     public function __invoke(RequestInterface $request, array $options)
     {
         $easy = $this->factory->create($request, $options);

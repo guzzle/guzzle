@@ -59,6 +59,11 @@ class MockHandler implements \Countable
         }
     }
 
+    /**
+     * @param RequestInterface $request
+     * @param array $options
+     * @return ResponseInterface
+     */
     public function __invoke(RequestInterface $request, array $options)
     {
         if (!$this->queue) {
