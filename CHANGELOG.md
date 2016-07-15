@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+4.2.4 (2016-07-18)
+------------------
+
+* Address HTTP_PROXY security vulnerability, CVE-2016-5385:
+  https://httpoxy.org/
+
 4.2.3 (2014-10-05)
 ------------------
 
