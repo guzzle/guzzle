@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 5.3.1 - 2016-07-18
+
+* Address HTTP_PROXY security vulnerability, CVE-2016-5385:
+  https://httpoxy.org/
+* Event name fix: https://github.com/guzzle/guzzle/commit/fcae91ff31de41e312fe113ec3acbcda31b2622e
+* Response header case sensitivity fix: https://github.com/guzzle/guzzle/commit/043eeadf20ee40ddc6712faee4d3957a91f2b041
+
 ## 5.3.0 - 2015-05-19
 
 * Mock now supports `save_to`
