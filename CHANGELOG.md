@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 6.2.1 - 2016-07-18
+
+* Address HTTP_PROXY security vulnerability, CVE-2016-5385:
+  https://httpoxy.org/
+* Fixing timeout bug with StreamHandler:
+  https://github.com/guzzle/guzzle/pull/1488
+* Only read up to `Content-Length` in PHP StreamHandler to avoid timeouts when
+  a server does not honor `Connection: close`.
+* Ignore URI fragment when sending requests.
+
 ## 6.2.0 - 2016-03-21
 
 * Feature: added `GuzzleHttp\json_encode` and `GuzzleHttp\json_decode`.
