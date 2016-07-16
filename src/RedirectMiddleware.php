@@ -23,7 +23,7 @@ class RedirectMiddleware
         'max'             => 5,
         'protocols'       => ['http', 'https'],
         'strict'          => false,
-        'referer'         => false,
+        'referer'         => true,
         'track_redirects' => false,
     ];
 
