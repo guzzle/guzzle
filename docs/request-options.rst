@@ -30,7 +30,7 @@ allow_redirects
         [
             'max'             => 5,
             'strict'          => false,
-            'referer'         => true,
+            'referer'         => false,
             'protocols'       => ['http', 'https'],
             'track_redirects' => false
         ]
@@ -62,7 +62,7 @@ pairs:
   Strict RFC compliant redirects mean that POST redirect requests are sent as
   POST requests vs. doing what most browsers do which is redirect POST requests
   with GET requests.
-- referer: (bool, default=true) Set to false to disable adding the Referer
+- referer: (bool, default=false) Set to true to enable adding the Referer
   header when redirecting.
 - protocols: (array, default=['http', 'https']) Specified which protocols are
   allowed for redirect requests.
