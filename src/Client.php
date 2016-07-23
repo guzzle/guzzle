@@ -9,18 +9,18 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * @method ResponseInterface get($uri, array $options = [])
- * @method ResponseInterface head($uri, array $options = [])
- * @method ResponseInterface put($uri, array $options = [])
- * @method ResponseInterface post($uri, array $options = [])
- * @method ResponseInterface patch($uri, array $options = [])
- * @method ResponseInterface delete($uri, array $options = [])
- * @method Promise\PromiseInterface getAsync($uri, array $options = [])
- * @method Promise\PromiseInterface headAsync($uri, array $options = [])
- * @method Promise\PromiseInterface putAsync($uri, array $options = [])
- * @method Promise\PromiseInterface postAsync($uri, array $options = [])
- * @method Promise\PromiseInterface patchAsync($uri, array $options = [])
- * @method Promise\PromiseInterface deleteAsync($uri, array $options = [])
+ * @method ResponseInterface get(string|UriInterface $uri, array $options = [])
+ * @method ResponseInterface head(string|UriInterface $uri, array $options = [])
+ * @method ResponseInterface put(string|UriInterface $uri, array $options = [])
+ * @method ResponseInterface post(string|UriInterface $uri, array $options = [])
+ * @method ResponseInterface patch(string|UriInterface $uri, array $options = [])
+ * @method ResponseInterface delete(string|UriInterface $uri, array $options = [])
+ * @method Promise\PromiseInterface getAsync(string|UriInterface $uri, array $options = [])
+ * @method Promise\PromiseInterface headAsync(string|UriInterface $uri, array $options = [])
+ * @method Promise\PromiseInterface putAsync(string|UriInterface $uri, array $options = [])
+ * @method Promise\PromiseInterface postAsync(string|UriInterface $uri, array $options = [])
+ * @method Promise\PromiseInterface patchAsync(string|UriInterface $uri, array $options = [])
+ * @method Promise\PromiseInterface deleteAsync(string|UriInterface $uri, array $options = [])
  */
 class Client implements ClientInterface
 {
