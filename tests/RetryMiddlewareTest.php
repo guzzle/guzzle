@@ -19,9 +19,10 @@ class RetryMiddlewareTest extends \PHPUnit_Framework_TestCase
             $calls[] = func_get_args();
             return count($calls) < 3;
         };
-        $delay = function ($retries) use (&$delayCalls) {
+        $delay = function ($retries, $response) use (&$delayCalls) {
             $delayCalls++;
             $this->assertEquals($retries, $delayCalls);
+            $this->assertInstanceOf(Response::class, $response);
             return 1;
         };
         $m = Middleware::retry($decider, $delay);
