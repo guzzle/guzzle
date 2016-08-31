@@ -641,4 +641,16 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $this->assertSame('http://example.org/test', (string) $mockHandler->getLastRequest()->getUri());
     }
+
+    public function testOnlyAddSchemeWhenHostIsPresent()
+    {
+        $mockHandler = new MockHandler([new Response()]);
+        $client = new Client(['handler'  => $mockHandler]);
+
+        $client->request('GET', 'baz');
+        $this->assertSame(
+            'baz',
+            (string) $mockHandler->getLastRequest()->getUri()
+        );
+    }
 }
