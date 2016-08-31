@@ -152,4 +152,19 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
         $e = new RequestException('foo', $r, null, null, ['bar' => 'baz']);
         $this->assertEquals(['bar' => 'baz'], $e->getHandlerContext());
     }
+
+    public function testObfuscateUrlWithUsername()
+    {
+        $r = new Request('GET', 'http://username@www.oo.com');
+        $e = RequestException::create($r, new Response(500));
+        $this->assertContains('username@', $e->getMessage());
+    }
+
+    public function testObfuscateUrlWithUsernameAndPassword()
+    {
+        $r = new Request('GET', 'http://user:password@www.oo.com');
+        $e = RequestException::create($r, new Response(500));
+        $this->assertNotContains('user:password', $e->getMessage());
+        $this->assertContains('user:***', $e->getMessage());
+    }
 }
