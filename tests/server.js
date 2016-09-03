@@ -125,60 +125,93 @@ var GuzzleServer = function(port, log) {
   };
 
   var controlRequest = function(request, req, res) {
-    if (req.url == '/guzzle-server/perf') {
-      res.writeHead(200, 'OK', {'Content-Length': 16});
-      res.end('Body of response');
-    } else if (req.method == 'DELETE') {
-      if (req.url == '/guzzle-server/requests') {
-        // Clear the received requests
-        that.requests = [];
-        res.writeHead(200, 'OK', { 'Content-Length': 0 });
-        res.end();
-        if (that.log) {
-          console.log('Flushing requests');
-        }
-      } else if (req.url == '/guzzle-server') {
-        // Shutdown the server
-        res.writeHead(200, 'OK', { 'Content-Length': 0, 'Connection': 'close' });
-        res.end();
-        if (that.log) {
-          console.log('Shutting down');
-        }
-        that.server.close();
+    switch (req.url) {
+
+      case '/guzzle-server/perf': {
+        res.writeHead(200, 'OK', {'Content-Length': 16});
+        res.end('Body of response');
       }
-    } else if (req.method == 'GET') {
-      if (req.url === '/guzzle-server/requests') {
-        if (that.log) {
-          console.log('Sending received requests');
-        }
-        // Get received requests
-        var body = JSON.stringify(that.requests);
-        res.writeHead(200, 'OK', { 'Content-Length': body.length });
-        res.end(body);
-      }
-    } else if (req.method == 'PUT' && req.url == '/guzzle-server/responses') {
-      if (that.log) {
-        console.log('Adding responses...');
-      }
-      if (!request.body) {
-        if (that.log) {
-          console.log('No response data was provided');
-        }
-        res.writeHead(400, 'NO RESPONSES IN REQUEST', { 'Content-Length': 0 });
-      } else {
-        that.responses = eval('(' + request.body + ')');
-        for (var i = 0; i < that.responses.length; i++) {
-          if (that.responses[i].body) {
-            that.responses[i].body = new Buffer(that.responses[i].body, 'base64');
-          }
-        }
-        if (that.log) {
-          console.log(that.responses);
-        }
-        res.writeHead(200, 'OK', { 'Content-Length': 0 });
-      }
-      res.end();
+      break;
     }
+
+    switch (req.method) {
+
+      case 'DELETE': {
+        switch (req.url) {
+
+          case '/guzzle-server/requests': {
+            // Clear the received requests
+            that.requests = [];
+            res.writeHead(200, 'OK', { 'Content-Length': 0 });
+            res.end();
+            if (that.log) {
+              console.log('Flushing requests');
+            }
+          }
+          break;
+
+          case '/guzzle-server': {
+            // Shutdown the server
+            res.writeHead(200, 'OK', { 'Content-Length': 0, 'Connection': 'close' });
+            res.end();
+            if (that.log) {
+              console.log('Shutting down');
+            }
+            that.server.close();
+          }
+          break;
+        }
+      }
+      break;
+
+      case 'GET': {
+        switch(req.url) {
+
+          case '/guzzle-server/requests': {
+            if (that.log) {
+              console.log('Sending received requests');
+            }
+            // Get received requests
+            var body = JSON.stringify(that.requests);
+            res.writeHead(200, 'OK', { 'Content-Length': body.length });
+            res.end(body);
+          }
+          break;
+        }
+      }
+      break;
+
+      case 'PUT': {
+        switch(req.url) {
+          case '/guzzle-server/responses': {
+            if (that.log) {
+              console.log('Adding responses...');
+            }
+            if (!request.body) {
+              if (that.log) {
+                console.log('No response data was provided');
+              }
+              res.writeHead(400, 'NO RESPONSES IN REQUEST', { 'Content-Length': 0 });
+            } else {
+              that.responses = eval('(' + request.body + ')');
+              for (var i = 0; i < that.responses.length; i++) {
+                if (that.responses[i].body) {
+                  that.responses[i].body = new Buffer(that.responses[i].body, 'base64');
+                }
+              }
+              if (that.log) {
+                console.log(that.responses);
+              }
+              res.writeHead(200, 'OK', { 'Content-Length': 0 });
+            }
+          }
+          break;
+        }
+      }
+      break;
+    }
+
+    res.end();
   };
 
   var receivedRequest = function(request, req, res) {
