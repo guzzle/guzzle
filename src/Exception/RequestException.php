@@ -152,7 +152,7 @@ class RequestException extends TransferException
      *
      * @return UriInterface
      */
-    public static function obfuscateUri($uri)
+    private static function obfuscateUri($uri)
     {
         $userInfo = $uri->getUserInfo();
 
