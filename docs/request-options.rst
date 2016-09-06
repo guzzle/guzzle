@@ -682,6 +682,40 @@ The callable accepts a ``GuzzleHttp\TransferStats`` object.
     ]);
 
 
+progress
+--------
+
+:Summary: Defines a function to invoke when transfer progress is made.
+:Types: - callable
+:Default: None
+:Constant: ``GuzzleHttp\RequestOptions::PROGRESS``
+
+The function accepts the following positional arguments:
+
+- the total number of bytes expected to be downloaded
+- the number of bytes downloaded so far
+- the total number of bytes expected to be uploaded
+- the number of bytes uploaded so far
+
+.. code-block:: php
+
+    // Send a GET request to /get?foo=bar
+    $result = $client->request(
+        'GET',
+        '/',
+        [
+            'progress' => function(
+                $downloadTotal,
+                $downloadedBytes,
+                $uploadTotal,
+                $uploadedBytes
+            ) {
+                //do something
+            },
+        ]
+    );
+
+
 .. _proxy-option:
 
 proxy
