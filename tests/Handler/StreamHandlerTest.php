@@ -636,4 +636,22 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $response = $promise->wait();
         $this->assertEquals(200, $response->getStatusCode());
     }
+
+    public function testDrainsResponseAndReadsAllContentWhenContentLengthIsZero()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, [
+                'Foo' => 'Bar',
+                'Content-Length' => '0',
+            ], 'hi there... This has a lot of data!')
+        ]);
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $response = $handler($request, [])->wait();
+        $body = $response->getBody();
+        $stream = $body->detach();
+        $this->assertEquals('hi there... This has a lot of data!', stream_get_contents($stream));
+        fclose($stream);
+    }
 }
