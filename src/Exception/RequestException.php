@@ -4,6 +4,7 @@ namespace GuzzleHttp\Exception;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use GuzzleHttp\Promise\PromiseInterface;
+use Psr\Http\Message\UriInterface;
 
 /**
  * HTTP Request exception
@@ -89,12 +90,15 @@ class RequestException extends TransferException
             $className = __CLASS__;
         }
 
+        $uri = $request->getUri();
+        $uri = static::obfuscateUri($uri);
+
         // Server Error: `GET /` resulted in a `404 Not Found` response:
         // <html> ... (truncated)
         $message = sprintf(
             '%s: `%s` resulted in a `%s` response',
             $label,
-            $request->getMethod() . ' ' . $request->getUri(),
+            $request->getMethod() . ' ' . $uri,
             $response->getStatusCode() . ' ' . $response->getReasonPhrase()
         );
 
@@ -139,6 +143,24 @@ class RequestException extends TransferException
         }
 
         return $summary;
+    }
+
+    /**
+     * Obfuscates URI if there is an username and a password present
+     *
+     * @param UriInterface $uri
+     *
+     * @return UriInterface
+     */
+    private static function obfuscateUri($uri)
+    {
+        $userInfo = $uri->getUserInfo();
+
+        if (false !== ($pos = strpos($userInfo, ':'))) {
+            return $uri->withUserInfo(substr($userInfo, 0, $pos), '***');
+        }
+
+        return $uri;
     }
 
     /**
