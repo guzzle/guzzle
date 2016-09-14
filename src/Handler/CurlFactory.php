@@ -379,6 +379,13 @@ class CurlFactory implements CurlFactoryInterface
             $conf[CURLOPT_CONNECTTIMEOUT_MS] = $options['connect_timeout'] * 1000;
         }
 
+        if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
+            if (isset($options['timeout']) || isset($options['connect_timeout'])) {
+                $conf[CURLOPT_NOSIGNAL] = 1;
+            }
+        }
+
+
         if (isset($options['proxy'])) {
             if (!is_array($options['proxy'])) {
                 $conf[CURLOPT_PROXY] = $options['proxy'];
