@@ -203,15 +203,18 @@ class StreamHandler
         StreamInterface $sink,
         $contentLength
     ) {
+        $length = strlen($contentLength) > 0 ? (int) $contentLength : -1;
         // If a content-length header is provided, then stop reading once
         // that number of bytes has been read. This can prevent infinitely
         // reading from a stream when dealing with servers that do not honor
         // Connection: Close headers.
-        Psr7\copy_to_stream(
-            $source,
-            $sink,
-            (strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1
-        );
+        if ($length > 0) {
+            Psr7\copy_to_stream(
+                $source,
+                $sink,
+                (strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1
+            );
+        }
 
         $sink->seek(0);
         $source->close();
