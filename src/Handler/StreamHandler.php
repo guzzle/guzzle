@@ -208,7 +208,7 @@ class StreamHandler
         // that number of bytes has been read. This can prevent infinitely
         // reading from a stream when dealing with servers that do not honor
         // Connection: Close headers.
-        if ($length > 0) {
+        if ($length !== 0) {
             Psr7\copy_to_stream(
                 $source,
                 $sink,
