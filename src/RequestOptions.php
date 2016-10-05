@@ -238,6 +238,12 @@ final class RequestOptions
     const TIMEOUT = 'timeout';
 
     /**
+     * read_timeout: (float, default=default_socket_timeout ini setting) Float describing
+     * the body read timeout, for stream requests.
+     */
+    const READ_TIMEOUT = 'read_timeout';
+
+    /**
      * version: (float) Specifies the HTTP protocol version to attempt to use.
      */
     const VERSION = 'version';

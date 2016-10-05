@@ -787,6 +787,30 @@ values supplied in the URI of a request.
     // Send a GET request to /get?foo=bar
     $client->request('GET', '/get?abc=123', ['query' => ['foo' => 'bar']]);
 
+read_timeout
+------------
+
+:Summary: Float describing the timeout to use when reading a streamed body
+:Types: float
+:Default: Defaults to the value of the ``default_socket_timeout`` PHP ini setting
+:Constant: ``GuzzleHttp\RequestOptions::READ_TIMEOUT``
+
+The timeout applies to individual read operations on a streamed body (when the ``stream`` option is enabled).
+
+.. code-block:: php
+
+    $response = $client->request('GET', '/stream', [
+        'stream' => true,
+        'read_timeout' => 10,
+    ]);
+
+    $body = $response->getBody();
+
+    // Returns false on timeout
+    $data = $body->read(1024);
+
+    // Returns false on timeout
+    $line = fgets($body->detach());
 
 .. _sink-option:
 
