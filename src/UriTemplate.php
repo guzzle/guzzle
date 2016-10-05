@@ -131,9 +131,7 @@ class UriTemplate
 
                     if (!$isNestedArray) {
                         $var = rawurlencode($var);
-                        if ($parsed['operator'] === '+' ||
-                            $parsed['operator'] === '#'
-                        ) {
+                        if (in_array($parsed['operator'], ['+', '#'], true)) {
                             $var = $this->decodeReserved($var);
                         }
                     }
@@ -185,7 +183,7 @@ class UriTemplate
                     $variable = substr($variable, 0, $value['position']);
                 }
                 $expanded = rawurlencode($variable);
-                if ($parsed['operator'] === '+' || $parsed['operator'] === '#') {
+                if (in_array($parsed['operator'], ['+', '#'], true)) {
                     $expanded = $this->decodeReserved($expanded);
                 }
             }
