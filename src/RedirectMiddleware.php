@@ -83,7 +83,8 @@ class RedirectMiddleware
         array $options,
         ResponseInterface $response
     ) {
-        if (substr($response->getStatusCode(), 0, 1) != '3'
+        if (
+            (substr($response->getStatusCode(), 0, 1) != '3' && !in_array($response->getStatusCode(), [201,202])) 
             || !$response->hasHeader('Location')
         ) {
             return $response;
