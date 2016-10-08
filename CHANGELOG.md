@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 6.2.2 - 2016-10-08
+
+* Allow to pass nullable Response to delay callable
+* Only add scheme when host is present
+* Fix drain case where content-length is the literal string zero
+* Obfuscate in-URL credentials in exceptions
+
 ## 6.2.1 - 2016-07-18
 
 * Address HTTP_PROXY security vulnerability, CVE-2016-5385:
