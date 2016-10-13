@@ -230,9 +230,7 @@ class CurlFactory implements CurlFactoryInterface
         if (($method === 'PUT' || $method === 'POST') && !$easy->request->hasHeader('Content-Length')) {
             // See http://tools.ietf.org/html/rfc7230#section-3.3.2
             $conf[CURLOPT_HTTPHEADER][] = 'Content-Length: 0';
-        }
-
-        if ($method === 'HEAD') {
+        } elseif ($method === 'HEAD') {
             $conf[CURLOPT_NOBODY] = true;
             unset(
                 $conf[CURLOPT_WRITEFUNCTION],
