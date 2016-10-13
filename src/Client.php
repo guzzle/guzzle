@@ -191,13 +191,10 @@ class Client implements ClientInterface
         if (!isset($this->config['headers'])) {
             $this->config['headers'] = ['User-Agent' => default_user_agent()];
         } else {
-            // Add the User-Agent header if one was not already set.
-            foreach (array_keys($this->config['headers']) as $name) {
-                if (strtolower($name) === 'user-agent') {
-                    return;
-                }
+            $lowercasedHeaders = array_change_key_case($this->config['headers'], CASE_LOWER);
+            if (!isset($lowercasedHeaders['user-agent'])) {
+                $this->config['headers']['User-Agent'] = default_user_agent();
             }
-            $this->config['headers']['User-Agent'] = default_user_agent();
         }
     }
 
@@ -234,13 +231,9 @@ class Client implements ClientInterface
         $result = $options + $defaults;
 
         // Remove null values.
-        foreach ($result as $k => $v) {
-            if ($v === null) {
-                unset($result[$k]);
-            }
-        }
-
-        return $result;
+        return array_filter($result, function ($value) {
+            return !is_null($value);
+        });
     }
 
     /**
