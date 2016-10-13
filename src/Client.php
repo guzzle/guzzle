@@ -190,11 +190,11 @@ class Client implements ClientInterface
         // Add the default user-agent header.
         if (!isset($this->config['headers'])) {
             $this->config['headers'] = ['User-Agent' => default_user_agent()];
-        }
-
-        $lowercasedHeaders = array_change_key_case($this->config['headers'], CASE_LOWER);
-        if (!isset($lowercasedHeaders['user-agent'])) {
-            $this->config['headers']['User-Agent'] = default_user_agent();
+        } else {
+            $lowercasedHeaders = array_change_key_case($this->config['headers'], CASE_LOWER);
+            if (!isset($lowercasedHeaders['user-agent'])) {
+                $this->config['headers']['User-Agent'] = default_user_agent();
+            }
         }
     }
 
