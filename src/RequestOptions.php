@@ -241,4 +241,9 @@ final class RequestOptions
      * version: (float) Specifies the HTTP protocol version to attempt to use.
      */
     const VERSION = 'version';
+
+    /**
+     * force_ip_resolve: (bool) Force client to use only ipv4 or ipv6 protocol
+     */
+    const FORCE_IP_RESOLVE = 'force_ip_resolve';
 }

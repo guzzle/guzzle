@@ -975,6 +975,30 @@ timeout
     // PHP Fatal error:  Uncaught exception 'GuzzleHttp\Exception\RequestException'
 
 
+.. force_ip_resolve-option:
+
+force_ip_resolve
+----------------
+
+:Summary: Set to "v4" if you want the HTTP handlers to use only ipv4 protocol or "v6" for ipv6 protocol.
+:Types: string
+:Default: null
+:Constant: ``GuzzleHttp\RequestOptions::FORCE_IP_RESOLVE``
+
+.. code-block:: php
+
+    // Force ipv4 protocol
+    $client->request('GET', '/foo', ['force_ip_resolve' => 'v4']);
+
+    // Force ipv6 protocol
+    $client->request('GET', '/foo', ['force_ip_resolve' => 'v6']);
+
+.. note::
+
+    This setting must be supported by the HTTP handler used to send a request.
+    ``force_ip_resolve`` is currently only supported by the built-in cURL
+    handler.
+
 .. _version-option:
 
 version

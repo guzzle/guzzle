@@ -375,6 +375,15 @@ class CurlFactory implements CurlFactoryInterface
             $conf[CURLOPT_TIMEOUT_MS] = $options['timeout'] * 1000;
         }
 
+        // CURL default value is CURL_IPRESOLVE_WHATEVER
+        if (isset($options['force_ip_resolve'])) {
+            if ('v4' === $options['force_ip_resolve']) {
+                $conf[CURLOPT_IPRESOLVE] = CURL_IPRESOLVE_V4;
+            } else if ('v6' === $options['force_ip_resolve']) {
+                $conf[CURLOPT_IPRESOLVE] = CURL_IPRESOLVE_V6;
+            }
+        }
+
         if (isset($options['connect_timeout'])) {
             $conf[CURLOPT_CONNECTTIMEOUT_MS] = $options['connect_timeout'] * 1000;
         }
