@@ -129,6 +129,11 @@ class RequestException extends TransferException
         }
 
         $size = $body->getSize();
+
+        if ($size === 0) {
+            return null;
+        }
+
         $summary = $body->read(120);
         $body->rewind();
 
