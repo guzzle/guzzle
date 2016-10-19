@@ -550,6 +550,8 @@ behavior of the library.
     the timeout.
 ``HTTP_PROXY``
     Defines the proxy to use when sending requests using the "http" protocol.
+    
+    Note: this only works using the CLI SAPI.
 ``HTTPS_PROXY``
     Defines the proxy to use when sending requests using the "https" protocol.
 
