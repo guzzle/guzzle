@@ -6,7 +6,7 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 
 /**
- * @covers GuzzleHttp\Exception\RequestException
+ * @covers \GuzzleHttp\Exception\RequestException
  */
 class RequestExceptionTest extends \PHPUnit_Framework_TestCase
 {
