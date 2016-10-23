@@ -94,15 +94,11 @@ class CookieJar implements CookieJarInterface
      */
     public function getCookieByName($name)
     {
-        $foundCookie = null;
         foreach($this->cookies as $cookie) {
-            if(strtolower($cookie->getName()) === strtolower($name)) {
-                $foundCookie = $cookie;
-                break;
+            if(strcasecmp($cookie->getName(), $name) === 0) {
+                return $cookie;
             }
         }
-
-        return($foundCookie);
     }
 
     public function toArray()
