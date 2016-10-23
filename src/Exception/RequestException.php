@@ -93,13 +93,15 @@ class RequestException extends TransferException
         $uri = $request->getUri();
         $uri = static::obfuscateUri($uri);
 
-        // Server Error: `GET /` resulted in a `404 Not Found` response:
+        // Client Error: `GET /` resulted in a `404 Not Found` response:
         // <html> ... (truncated)
         $message = sprintf(
-            '%s: `%s` resulted in a `%s` response',
+            '%s: `%s %s` resulted in a `%s %s` response',
             $label,
-            $request->getMethod() . ' ' . $uri,
-            $response->getStatusCode() . ' ' . $response->getReasonPhrase()
+            $request->getMethod(),
+            $uri,
+            $response->getStatusCode(),
+            $response->getReasonPhrase()
         );
 
         $summary = static::getResponseBodySummary($response);
