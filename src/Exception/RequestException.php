@@ -4,6 +4,7 @@ namespace GuzzleHttp\Exception;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use GuzzleHttp\Promise\PromiseInterface;
+use Psr\Http\Message\UriInterface;
 
 /**
  * HTTP Request exception
@@ -77,11 +78,11 @@ class RequestException extends TransferException
             );
         }
 
-        $level = floor($response->getStatusCode() / 100);
-        if ($level == '4') {
+        $level = (int) floor($response->getStatusCode() / 100);
+        if ($level === 4) {
             $label = 'Client error';
             $className = __NAMESPACE__ . '\\ClientException';
-        } elseif ($level == '5') {
+        } elseif ($level === 5) {
             $label = 'Server error';
             $className = __NAMESPACE__ . '\\ServerException';
         } else {
@@ -89,13 +90,18 @@ class RequestException extends TransferException
             $className = __CLASS__;
         }
 
-        // Server Error: `GET /` resulted in a `404 Not Found` response:
+        $uri = $request->getUri();
+        $uri = static::obfuscateUri($uri);
+
+        // Client Error: `GET /` resulted in a `404 Not Found` response:
         // <html> ... (truncated)
         $message = sprintf(
-            '%s: `%s` resulted in a `%s` response',
+            '%s: `%s %s` resulted in a `%s %s` response',
             $label,
-            $request->getMethod() . ' ' . $request->getUri(),
-            $response->getStatusCode() . ' ' . $response->getReasonPhrase()
+            $request->getMethod(),
+            $uri,
+            $response->getStatusCode(),
+            $response->getReasonPhrase()
         );
 
         $summary = static::getResponseBodySummary($response);
@@ -125,6 +131,11 @@ class RequestException extends TransferException
         }
 
         $size = $body->getSize();
+
+        if ($size === 0) {
+            return null;
+        }
+
         $summary = $body->read(120);
         $body->rewind();
 
@@ -139,6 +150,24 @@ class RequestException extends TransferException
         }
 
         return $summary;
+    }
+
+    /**
+     * Obfuscates URI if there is an username and a password present
+     *
+     * @param UriInterface $uri
+     *
+     * @return UriInterface
+     */
+    private static function obfuscateUri($uri)
+    {
+        $userInfo = $uri->getUserInfo();
+
+        if (false !== ($pos = strpos($userInfo, ':'))) {
+            return $uri->withUserInfo(substr($userInfo, 0, $pos), '***');
+        }
+
+        return $uri;
     }
 
     /**

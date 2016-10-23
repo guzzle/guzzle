@@ -142,6 +142,43 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         unlink($tmpfname);
     }
 
+    public function testDrainsResponseAndReadsOnlyContentLengthBytes()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, [
+                'Foo' => 'Bar',
+                'Content-Length' => 8,
+            ], 'hi there... This has way too much data!')
+        ]);
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $response = $handler($request, [])->wait();
+        $body = $response->getBody();
+        $stream = $body->detach();
+        $this->assertEquals('hi there', stream_get_contents($stream));
+        fclose($stream);
+    }
+
+    public function testDoesNotDrainWhenHeadRequest()
+    {
+        Server::flush();
+        // Say the content-length is 8, but return no response.
+        Server::enqueue([
+            new Response(200, [
+                'Foo' => 'Bar',
+                'Content-Length' => 8,
+            ], '')
+        ]);
+        $handler = new StreamHandler();
+        $request = new Request('HEAD', Server::$url);
+        $response = $handler($request, [])->wait();
+        $body = $response->getBody();
+        $stream = $body->detach();
+        $this->assertEquals('', stream_get_contents($stream));
+        fclose($stream);
+    }
+
     public function testAutomaticallyDecompressGzip()
     {
         Server::flush();
@@ -583,5 +620,38 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
             ConnectException::class,
             $gotStats->getHandlerErrorData()
         );
+    }
+
+    public function testStreamIgnoresZeroTimeout()
+    {
+        Server::flush();
+        Server::enqueue([new Psr7\Response(200)]);
+        $req = new Psr7\Request('GET', Server::$url);
+        $gotStats = null;
+        $handler = new StreamHandler();
+        $promise = $handler($req, [
+            'connect_timeout' => 10,
+            'timeout' => 0
+        ]);
+        $response = $promise->wait();
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function testDrainsResponseAndReadsAllContentWhenContentLengthIsZero()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, [
+                'Foo' => 'Bar',
+                'Content-Length' => '0',
+            ], 'hi there... This has a lot of data!')
+        ]);
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $response = $handler($request, [])->wait();
+        $body = $response->getBody();
+        $stream = $body->detach();
+        $this->assertEquals('hi there... This has a lot of data!', stream_get_contents($stream));
+        fclose($stream);
     }
 }

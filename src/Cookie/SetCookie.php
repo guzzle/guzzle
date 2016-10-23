@@ -86,8 +86,8 @@ class SetCookie
     {
         $str = $this->data['Name'] . '=' . $this->data['Value'] . '; ';
         foreach ($this->data as $k => $v) {
-            if ($k != 'Name' && $k != 'Value' && $v !== null && $v !== false) {
-                if ($k == 'Expires') {
+            if ($k !== 'Name' && $k !== 'Value' && $v !== null && $v !== false) {
+                if ($k === 'Expires') {
                     $str .= 'Expires=' . gmdate('D, d M Y H:i:s \G\M\T', $v) . '; ';
                 } else {
                     $str .= ($v === true ? $k : "{$k}={$v}") . '; ';
@@ -307,7 +307,7 @@ class SetCookie
         $cookiePath = $this->getPath();
 
         // Match on exact matches or when path is the default empty "/"
-        if ($cookiePath == '/' || $cookiePath == $requestPath) {
+        if ($cookiePath === '/' || $cookiePath == $requestPath) {
             return true;
         }
 
@@ -317,12 +317,12 @@ class SetCookie
         }
 
         // Match if the last character of the cookie-path is "/"
-        if (substr($cookiePath, -1, 1) == '/') {
+        if (substr($cookiePath, -1, 1) === '/') {
             return true;
         }
 
         // Match if the first character not included in cookie path is "/"
-        return substr($requestPath, strlen($cookiePath), 1) == '/';
+        return substr($requestPath, strlen($cookiePath), 1) === '/';
     }
 
     /**

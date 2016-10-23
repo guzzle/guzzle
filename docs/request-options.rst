@@ -30,7 +30,7 @@ allow_redirects
         [
             'max'             => 5,
             'strict'          => false,
-            'referer'         => true,
+            'referer'         => false,
             'protocols'       => ['http', 'https'],
             'track_redirects' => false
         ]
@@ -62,7 +62,7 @@ pairs:
   Strict RFC compliant redirects mean that POST redirect requests are sent as
   POST requests vs. doing what most browsers do which is redirect POST requests
   with GET requests.
-- referer: (bool, default=true) Set to false to disable adding the Referer
+- referer: (bool, default=false) Set to true to enable adding the Referer
   header when redirecting.
 - protocols: (array, default=['http', 'https']) Specified which protocols are
   allowed for redirect requests.
@@ -682,6 +682,40 @@ The callable accepts a ``GuzzleHttp\TransferStats`` object.
     ]);
 
 
+progress
+--------
+
+:Summary: Defines a function to invoke when transfer progress is made.
+:Types: - callable
+:Default: None
+:Constant: ``GuzzleHttp\RequestOptions::PROGRESS``
+
+The function accepts the following positional arguments:
+
+- the total number of bytes expected to be downloaded
+- the number of bytes downloaded so far
+- the total number of bytes expected to be uploaded
+- the number of bytes uploaded so far
+
+.. code-block:: php
+
+    // Send a GET request to /get?foo=bar
+    $result = $client->request(
+        'GET',
+        '/',
+        [
+            'progress' => function(
+                $downloadTotal,
+                $downloadedBytes,
+                $uploadTotal,
+                $uploadedBytes
+            ) {
+                //do something
+            },
+        ]
+    );
+
+
 .. _proxy-option:
 
 proxy
@@ -745,7 +779,7 @@ query
     // Send a GET request to /get?foo=bar
     $client->request('GET', '/get', ['query' => ['foo' => 'bar']]);
 
-Query strings specified in the ``query`` option will overwrite an query string
+Query strings specified in the ``query`` option will overwrite a query string
 values supplied in the URI of a request.
 
 .. code-block:: php

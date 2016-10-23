@@ -105,7 +105,12 @@ class StreamHandler
         $headers = \GuzzleHttp\headers_from_lines($hdrs);
         list ($stream, $headers) = $this->checkDecode($options, $headers, $stream);
         $stream = Psr7\stream_for($stream);
-        $sink = $this->createSink($stream, $options);
+        $sink = $stream;
+
+        if (strcasecmp('HEAD', $request->getMethod())) {
+            $sink = $this->createSink($stream, $options);
+        }
+
         $response = new Psr7\Response($status, $headers, $sink, $ver, $reason);
 
         if (isset($options['on_headers'])) {
@@ -118,8 +123,14 @@ class StreamHandler
             }
         }
 
+        // Do not drain when the request is a HEAD request because they have
+        // no body.
         if ($sink !== $stream) {
-            $this->drain($stream, $sink);
+            $this->drain(
+                $stream,
+                $sink,
+                $response->getHeaderLine('Content-Length')
+            );
         }
 
         $this->invokeStats($options, $request, $startTime, $response, null);
@@ -149,7 +160,7 @@ class StreamHandler
             $normalizedKeys = \GuzzleHttp\normalize_header_keys($headers);
             if (isset($normalizedKeys['content-encoding'])) {
                 $encoding = $headers[$normalizedKeys['content-encoding']];
-                if ($encoding[0] == 'gzip' || $encoding[0] == 'deflate') {
+                if ($encoding[0] === 'gzip' || $encoding[0] === 'deflate') {
                     $stream = new Psr7\InflateStream(
                         Psr7\stream_for($stream)
                     );
@@ -163,7 +174,7 @@ class StreamHandler
                             = $headers[$normalizedKeys['content-length']];
 
                         $length = (int) $stream->getSize();
-                        if ($length == 0) {
+                        if ($length === 0) {
                             unset($headers[$normalizedKeys['content-length']]);
                         } else {
                             $headers[$normalizedKeys['content-length']] = [$length];
@@ -181,13 +192,27 @@ class StreamHandler
      *
      * @param StreamInterface $source
      * @param StreamInterface $sink
+     * @param string          $contentLength Header specifying the amount of
+     *                                       data to read.
      *
      * @return StreamInterface
      * @throws \RuntimeException when the sink option is invalid.
      */
-    private function drain(StreamInterface $source, StreamInterface $sink)
-    {
-        Psr7\copy_to_stream($source, $sink);
+    private function drain(
+        StreamInterface $source,
+        StreamInterface $sink,
+        $contentLength
+    ) {
+        // If a content-length header is provided, then stop reading once
+        // that number of bytes has been read. This can prevent infinitely
+        // reading from a stream when dealing with servers that do not honor
+        // Connection: Close headers.
+        Psr7\copy_to_stream(
+            $source,
+            $sink,
+            (strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1
+        );
+
         $sink->seek(0);
         $source->close();
 
@@ -284,7 +309,7 @@ class StreamHandler
 
         return $this->createResource(
             function () use ($request, &$http_response_header, $context) {
-                $resource = fopen($request->getUri(), 'r', null, $context);
+                $resource = fopen((string) $request->getUri()->withFragment(''), 'r', null, $context);
                 $this->lastHeaders = $http_response_header;
                 return $resource;
             }
@@ -346,7 +371,9 @@ class StreamHandler
 
     private function add_timeout(RequestInterface $request, &$options, $value, &$params)
     {
-        $options['http']['timeout'] = $value;
+        if ($value > 0) {
+            $options['http']['timeout'] = $value;
+        }
     }
 
     private function add_verify(RequestInterface $request, &$options, $value, &$params)
@@ -423,7 +450,7 @@ class StreamHandler
             'bytes_transferred', 'bytes_max'];
 
         $value = \GuzzleHttp\debug_resource($value);
-        $ident = $request->getMethod() . ' ' . $request->getUri();
+        $ident = $request->getMethod() . ' ' . $request->getUri()->withFragment('');
         $this->addNotification(
             $params,
             function () use ($ident, $value, $map, $args) {

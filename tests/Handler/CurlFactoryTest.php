@@ -355,16 +355,6 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(CURL_HTTP_VERSION_1_0, $_SERVER['_curl'][CURLOPT_HTTP_VERSION]);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
-    public function testValidatesSink()
-    {
-        $handler = new Handler\CurlMultiHandler();
-        $request = new Psr7\Request('GET', Server::$url);
-        $handler($request, ['sink' => true]);
-    }
-
     public function testSavesToStream()
     {
         $stream = fopen('php://memory', 'r+');

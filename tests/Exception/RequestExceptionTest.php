@@ -109,6 +109,12 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
         $this->assertContains($expected, $e->getMessage());
     }
 
+    public function testExceptionMessageIgnoresEmptyBody()
+    {
+        $e = RequestException::create(new Request('GET', '/'), new Response(500));
+        $this->assertStringEndsWith('response', $e->getMessage());
+    }
+
     public function testCreatesExceptionWithoutPrintableBody()
     {
         $response = new Response(
@@ -124,7 +130,8 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('GuzzleHttp\Exception\RequestException', $e);
     }
 
-    public function testHasStatusCodeAsExceptionCode() {
+    public function testHasStatusCodeAsExceptionCode()
+    {
         $e = RequestException::create(new Request('GET', '/'), new Response(442));
         $this->assertEquals(442, $e->getCode());
     }
@@ -151,5 +158,19 @@ class RequestExceptionTest extends \PHPUnit_Framework_TestCase
         $r = new Request('GET', 'http://www.oo.com');
         $e = new RequestException('foo', $r, null, null, ['bar' => 'baz']);
         $this->assertEquals(['bar' => 'baz'], $e->getHandlerContext());
+    }
+
+    public function testObfuscateUrlWithUsername()
+    {
+        $r = new Request('GET', 'http://username@www.oo.com');
+        $e = RequestException::create($r, new Response(500));
+        $this->assertContains('http://username@www.oo.com', $e->getMessage());
+    }
+
+    public function testObfuscateUrlWithUsernameAndPassword()
+    {
+        $r = new Request('GET', 'http://user:password@www.oo.com');
+        $e = RequestException::create($r, new Response(500));
+        $this->assertContains('http://user:***@www.oo.com', $e->getMessage());
     }
 }
