@@ -551,7 +551,7 @@ behavior of the library.
 ``HTTP_PROXY``
     Defines the proxy to use when sending requests using the "http" protocol.
     
-    Note: this only works using the CLI SAPI.
+    Note: because the HTTP_PROXY variable may contain arbitrary user input on some (CGI) environments, the variable is only used on the CLI SAPI. See https://httpoxy.org for more information.
 ``HTTPS_PROXY``
     Defines the proxy to use when sending requests using the "https" protocol.
 
