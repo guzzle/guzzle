@@ -158,7 +158,7 @@ class MockHandler implements \Countable
     /**
      * Get the last received request options.
      *
-     * @return RequestInterface
+     * @return array
      */
     public function getLastOptions()
     {
