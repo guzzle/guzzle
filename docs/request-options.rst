@@ -462,7 +462,7 @@ created by the client (e.g., ``request()`` and ``requestAsync()``).
 
     // Sets the X-Foo header to "test", which prevents the default header
     // from being applied.
-    $client->request('GET', '/get', ['headers' => ['X-Foo' => 'test']);
+    $client->request('GET', '/get', ['headers' => ['X-Foo' => 'test']]);
 
     // Will disable adding in default headers.
     $client->request('GET', '/get', ['headers' => null]);
