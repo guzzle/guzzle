@@ -81,10 +81,10 @@ class RequestException extends TransferException
         $level = (int) floor($response->getStatusCode() / 100);
         if ($level === 4) {
             $label = 'Client error';
-            $className = __NAMESPACE__ . '\\ClientException';
+            $className = static::getClientExceptionClass($response->getStatusCode());
         } elseif ($level === 5) {
             $label = 'Server error';
-            $className = __NAMESPACE__ . '\\ServerException';
+            $className = ServerException::class;
         } else {
             $label = 'Unsuccessful request';
             $className = __CLASS__;
@@ -111,6 +111,33 @@ class RequestException extends TransferException
         }
 
         return new $className($message, $request, $response, $previous, $ctx);
+    }
+
+    /**
+     * Returns the instance of the class to load for client exception cases
+     *
+     * @param int $statusCode The int result code of the server's attempt 
+     * @return string The class name of the ClientException
+     */
+    private static function getClientExceptionClass($statusCode)
+    {
+        $classes = [
+            400 => BadRequestException::class,
+            401 => UnauthorizedException::class,
+            403 => ForbiddenException::class,
+            404 => NotFoundException::class,
+            405 => MethodNotAllowedException::class,
+            406 => NotAcceptableException::class,
+            409 => ConflictException::class,
+            410 => GoneException::class,
+            429 => TooManyRequestsException::class,
+        ];
+
+        if (isset($classes[$statusCode])) {
+            return $classes[$statusCode];
+        }
+
+        return ClientException::class;
     }
 
     /**
