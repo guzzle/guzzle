@@ -21,7 +21,7 @@ trivial to integrate with web services.
 $client = new \GuzzleHttp\Client();
 $res = $client->request('GET', 'https://api.github.com/user', [
     'auth' => ['user', 'pass']
-]);
+])->send();
 echo $res->getStatusCode();
 // 200
 echo $res->getHeaderLine('content-type');
