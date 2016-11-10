@@ -1,6 +1,6 @@
-build/*          export-ignore
-docs/*           export-ignore
-tests/*          export-ignore
+build            export-ignore
+docs             export-ignore
+tests            export-ignore
 .editorconfig    export-ignore
 .gitattributes   export-ignore
 .gitignore       export-ignore
