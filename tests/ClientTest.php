@@ -377,11 +377,32 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('Basic YTpi', $last->getHeaderLine('Authorization'));
     }
 
+    public function testAuthCanBeArrayForBasicAuthWithConfigKeys()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', ['auth' => ['username' => 'a', 'password' => 'b', 'type' => 'basic']]);
+        $last = $mock->getLastRequest();
+        $this->assertEquals('Basic YTpi', $last->getHeaderLine('Authorization'));
+    }
+
     public function testAuthCanBeArrayForDigestAuth()
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
         $client->get('http://foo.com', ['auth' => ['a', 'b', 'digest']]);
+        $last = $mock->getLastOptions();
+        $this->assertEquals([
+            CURLOPT_HTTPAUTH => 2,
+            CURLOPT_USERPWD  => 'a:b'
+        ], $last['curl']);
+    }
+
+    public function testAuthCanBeArrayForDigestAuthWithConfigKeys()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', ['auth' => ['username' => 'a', 'password' => 'b', 'type' => 'digest']]);
         $last = $mock->getLastOptions();
         $this->assertEquals([
             CURLOPT_HTTPAUTH => 2,

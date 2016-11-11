@@ -339,7 +339,16 @@ class Client implements ClientInterface
 
         if (!empty($options['auth']) && is_array($options['auth'])) {
             $value = $options['auth'];
-            $type = isset($value[2]) ? strtolower($value[2]) : 'basic';
+            $type = 'basic';
+            if (isset($value['type'])) {
+                $type = strtolower($value['type']);
+            } elseif (isset($value[2])) {
+                $type = strtolower($value[2]);
+            }
+            $value = [
+                isset($value['username']) ? $value['username'] : $value[0],
+                isset($value['password']) ? $value['password'] : $value[1],
+            ];
             switch ($type) {
                 case 'basic':
                     $modify['set_headers']['Authorization'] = 'Basic '
