@@ -11,6 +11,7 @@ use GuzzleHttp\TransferStats;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\UriInterface;
 
 /**
  * HTTP handler that uses PHP's HTTP stream wrapper.
@@ -301,6 +302,8 @@ class StreamHandler
             );
         }
 
+        $uri = $this->resolveUri($request->getUri(), $options);
+
         $context = $this->createResource(
             function () use ($context, $params) {
                 return stream_context_create($context, $params);
@@ -308,12 +311,33 @@ class StreamHandler
         );
 
         return $this->createResource(
-            function () use ($request, &$http_response_header, $context) {
-                $resource = fopen((string) $request->getUri()->withFragment(''), 'r', null, $context);
+            function () use ($uri, &$http_response_header, $context) {
+                $resource = fopen((string) $uri, 'r', null, $context);
                 $this->lastHeaders = $http_response_header;
                 return $resource;
             }
         );
+    }
+
+    private function resolveUri(UriInterface $uri, array $options)
+    {
+        if (isset($options['force_ip_resolve'])) {
+            if ('v4' === $options['force_ip_resolve']) {
+                $records = dns_get_record($uri->getHost(), DNS_A);
+                if (!isset($records[0]['ip'])) {
+                    throw new ConnectException("Could not resolve IPv4 address for host '{$uri->getHost()}'", $request);
+                }
+                $uri = $uri->withHost($records[0]['ip']);
+            } elseif ('v6' === $options['force_ip_resolve']) {
+                $records = dns_get_record($uri->getHost(), DNS_AAAA);
+                if (!isset($records[0]['ipv6'])) {
+                    throw new ConnectException("Could not resolve IPv6 address for host '{$uri->getHost()}'", $request);
+                }
+                $uri = $uri->withHost('[' . $records[0]['ipv6'] . ']');
+            }
+        }
+
+        return $uri;
     }
 
     private function getDefaultContext(RequestInterface $request)
