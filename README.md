@@ -19,15 +19,13 @@ trivial to integrate with web services.
 
 ```php
 $client = new \GuzzleHttp\Client();
-$res = $client->request('GET', 'https://api.github.com/user', [
-    'auth' => ['user', 'pass']
-]);
+$res = $client->request('GET', 'https://api.github.com/repos/guzzle/guzzle');
 echo $res->getStatusCode();
 // 200
 echo $res->getHeaderLine('content-type');
 // 'application/json; charset=utf8'
 echo $res->getBody();
-// {"type":"User"...'
+// '{"id": 1420053, "name": "guzzle", ...}'
 
 // Send an asynchronous request.
 $request = new \GuzzleHttp\Psr7\Request('GET', 'http://httpbin.org');
