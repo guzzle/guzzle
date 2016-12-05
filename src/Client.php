@@ -182,6 +182,13 @@ class Client implements ClientInterface
                 return new FutureResponse(new RejectedPromise($e));
             }
             throw RequestException::wrapException($trans->request, $e);
+        } catch (\TypeError $error) {
+            $exception = new \Exception($error->getMessage(), $error->getCode(), $error);
+            if ($isFuture) {
+                // Wrap the exception in a promise
+                return new FutureResponse(new RejectedPromise($exception));
+            }
+            throw RequestException::wrapException($trans->request, $exception);
         }
     }
 

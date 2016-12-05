@@ -61,12 +61,20 @@ class ResponseTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(null, $response->json());
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\ParseException
-     * @expectedExceptionMessage Unable to parse JSON data: JSON_ERROR_SYNTAX - Syntax error, malformed JSON
-     */
     public function testThrowsExceptionWhenFailsToParseJsonResponse()
     {
+        if (PHP_VERSION_ID < 70000) {
+            $this->setExpectedException(
+                'GuzzleHttp\Exception\ParseException',
+                'Unable to parse JSON data: JSON_ERROR_SYNTAX - Syntax error, malformed JSON'
+            );
+        } else {
+            $this->setExpectedException(
+                'GuzzleHttp\Exception\ParseException',
+                'Unable to parse JSON data: JSON_ERROR_CTRL_CHAR - Unexpected control character found'
+            );
+        }
+
         $response = new Response(200, [], Stream::factory('{"foo": "'));
         $response->json();
     }

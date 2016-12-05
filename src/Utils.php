@@ -131,6 +131,10 @@ final class Utils
      */
     public static function jsonDecode($json, $assoc = false, $depth = 512, $options = 0)
     {
+        if ($json === '' || $json === null) {
+            return null;
+        }
+
         static $jsonErrors = [
             JSON_ERROR_DEPTH => 'JSON_ERROR_DEPTH - Maximum stack depth exceeded',
             JSON_ERROR_STATE_MISMATCH => 'JSON_ERROR_STATE_MISMATCH - Underflow or the modes mismatch',
