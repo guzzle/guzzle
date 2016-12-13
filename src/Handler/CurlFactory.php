@@ -334,7 +334,8 @@ class CurlFactory implements CurlFactoryInterface
                     }
                     // If it's a directory or a link to a directory use CURLOPT_CAPATH.
                     // If not, it's probably a file, or a link to a file, so use CURLOPT_CAINFO.
-                    if (is_dir($options['verify']) || (is_link($options['verify']) && is_dir(readlink($options['verify'])))) {
+                    if (is_dir($options['verify']) || 
+                        (is_link($options['verify']) && is_dir(readlink($options['verify'])))) {
                         $conf[CURLOPT_CAPATH] = $options['verify'];
                     } else {
                         $conf[CURLOPT_CAINFO] = $options['verify'];
