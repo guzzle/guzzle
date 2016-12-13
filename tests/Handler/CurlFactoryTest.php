@@ -125,6 +125,15 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(true, $_SERVER['_curl'][CURLOPT_SSL_VERIFYPEER]);
     }
 
+    public function testCanSetVerifyToDir()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'http://foo.com'), ['verify' => __DIR__]);
+        $this->assertEquals(__DIR__, $_SERVER['_curl'][CURLOPT_CAPATH]);
+        $this->assertEquals(2, $_SERVER['_curl'][CURLOPT_SSL_VERIFYHOST]);
+        $this->assertEquals(true, $_SERVER['_curl'][CURLOPT_SSL_VERIFYPEER]);
+    }
+
     public function testAddsVerifyAsTrue()
     {
         $f = new Handler\CurlFactory(3);
