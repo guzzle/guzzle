@@ -557,7 +557,7 @@ over the wire.
     $clientHandler = $client->getConfig('handler');
     // Create a middleware that echoes parts of the request.
     $tapMiddleware = Middleware::tap(function ($request) {
-        echo $request->getHeader('Content-Type');
+        echo $request->getHeaderLine('Content-Type');
         // application/json
         echo $request->getBody();
         // {"foo":"bar"}
