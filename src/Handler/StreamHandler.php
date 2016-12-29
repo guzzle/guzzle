@@ -11,7 +11,6 @@ use GuzzleHttp\TransferStats;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
-use Psr\Http\Message\UriInterface;
 
 /**
  * HTTP handler that uses PHP's HTTP stream wrapper.
@@ -302,7 +301,7 @@ class StreamHandler
             );
         }
 
-        $uri = $this->resolveUri($request->getUri(), $options);
+        $uri = $this->resolveHost($request, $options);
 
         $context = $this->createResource(
             function () use ($context, $params) {
@@ -319,19 +318,21 @@ class StreamHandler
         );
     }
 
-    private function resolveUri(UriInterface $uri, array $options)
+    private function resolveHost(RequestInterface $request, array $options)
     {
-        if (isset($options['force_ip_resolve'])) {
+        $uri = $request->getUri();
+
+        if (isset($options['force_ip_resolve']) && !filter_var($uri->getHost(), FILTER_VALIDATE_IP)) {
             if ('v4' === $options['force_ip_resolve']) {
                 $records = dns_get_record($uri->getHost(), DNS_A);
                 if (!isset($records[0]['ip'])) {
-                    throw new ConnectException("Could not resolve IPv4 address for host '{$uri->getHost()}'", $request);
+                    throw new ConnectException(sprintf("Could not resolve IPv4 address for host '%s'", $uri->getHost()), $request);
                 }
                 $uri = $uri->withHost($records[0]['ip']);
             } elseif ('v6' === $options['force_ip_resolve']) {
                 $records = dns_get_record($uri->getHost(), DNS_AAAA);
                 if (!isset($records[0]['ipv6'])) {
-                    throw new ConnectException("Could not resolve IPv6 address for host '{$uri->getHost()}'", $request);
+                    throw new ConnectException(sprintf("Could not resolve IPv6 address for host '%s'", $uri->getHost()), $request);
                 }
                 $uri = $uri->withHost('[' . $records[0]['ipv6'] . ']');
             }
