@@ -111,7 +111,7 @@ class RedirectMiddleware
             return $this->withTracking(
                 $promise,
                 (string) $nextRequest->getUri(),
-                (int) $response->getStatusCode()
+                (string) $response->getStatusCode()
             );
         }
 
@@ -129,7 +129,8 @@ class RedirectMiddleware
                 $statusHeader = $response->getHeader(self::STATUS_HISTORY_HEADER);
                 array_unshift($historyHeader, $uri);
                 array_unshift($statusHeader, $statusCode);
-                return $response->withHeader(self::HISTORY_HEADER, $historyHeader)->withHeader(self::STATUS_HISTORY_HEADER, $statusHeader);
+                return $response->withHeader(self::HISTORY_HEADER, $historyHeader)
+                                ->withHeader(self::STATUS_HISTORY_HEADER, $statusHeader);
             }
         );
     }
