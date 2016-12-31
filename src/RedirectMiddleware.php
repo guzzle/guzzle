@@ -19,6 +19,8 @@ class RedirectMiddleware
 {
     const HISTORY_HEADER = 'X-Guzzle-Redirect-History';
 
+    const STATUS_HISTORY_HEADER = 'X-Guzzle-Redirect-Status-History';
+
     public static $defaultSettings = [
         'max'             => 5,
         'protocols'       => ['http', 'https'],
@@ -122,9 +124,11 @@ class RedirectMiddleware
                 // Note that we are pushing to the front of the list as this
                 // would be an earlier response than what is currently present
                 // in the history header.
-                $header = $response->getHeader(self::HISTORY_HEADER);
-                array_unshift($header, $uri);
-                return $response->withHeader(self::HISTORY_HEADER, $header);
+                $historyHeader = $response->getHeader(self::HISTORY_HEADER);
+                $statusHeader = $response->getHeader(self::STATUS_HISTORY_HEADER);
+                array_unshift($historyHeader, $uri);
+                array_unshift($statusHeader, $response->getStatusCode());
+                return $response->withHeader(self::HISTORY_HEADER, $historyHeader)->withHeader(self::STATUS_HISTORY_HEADER, $statusHeader);
             }
         );
     }
