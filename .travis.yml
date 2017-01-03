@@ -7,22 +7,30 @@ php:
   - 7.0
   - hhvm
 
+env:
+  global:
+    - TEST_COMMAND="composer test"
+
 before_script:
   - curl --version
   - pear config-set php_ini ~/.phpenv/versions/`php -r 'echo phpversion();'`/etc/php.ini || echo 'Error modifying PEAR'
   - pecl install uri_template || echo 'Error installing uri_template'
-  - composer self-update
-  - composer install --no-interaction --prefer-source --dev
+  # To be removed when this issue will be resolved: https://github.com/composer/composer/issues/5355
+  - if [[ "$COMPOSER_FLAGS" == *"--prefer-lowest"* ]]; then travis_retry composer update --prefer-dist --no-interaction --prefer-stable --quiet; fi
+  - travis_retry composer update ${COMPOSER_FLAGS} --prefer-dist --no-interaction
   - ~/.nvm/nvm.sh install v0.6.14
   - ~/.nvm/nvm.sh run v0.6.14
 
-script: make test
+script: $TEST_COMMAND
 
 matrix:
   allow_failures:
     - php: hhvm
     - php: 7.0
   fast_finish: true
+  include:
+    - php: 5.4
+      env: COMPOSER_FLAGS="--prefer-stable --prefer-lowest" COVERAGE=true TEST_COMMAND="composer test-ci"
 
 before_deploy:
   - make package
