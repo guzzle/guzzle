@@ -16,7 +16,7 @@ use Psr\Http\Message\RequestInterface;
 class CurlFactory implements CurlFactoryInterface
 {
     /** @var array */
-    private $handles;
+    private $handles = [];
 
     /** @var int Total number of idle handles to keep in cache */
     private $maxHandles;
@@ -373,6 +373,15 @@ class CurlFactory implements CurlFactoryInterface
 
         if (isset($options['timeout'])) {
             $conf[CURLOPT_TIMEOUT_MS] = $options['timeout'] * 1000;
+        }
+
+        // CURL default value is CURL_IPRESOLVE_WHATEVER
+        if (isset($options['force_ip_resolve'])) {
+            if ('v4' === $options['force_ip_resolve']) {
+                $conf[CURLOPT_IPRESOLVE] = CURL_IPRESOLVE_V4;
+            } else if ('v6' === $options['force_ip_resolve']) {
+                $conf[CURLOPT_IPRESOLVE] = CURL_IPRESOLVE_V6;
+            }
         }
 
         if (isset($options['connect_timeout'])) {

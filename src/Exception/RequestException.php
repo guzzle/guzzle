@@ -81,10 +81,10 @@ class RequestException extends TransferException
         $level = (int) floor($response->getStatusCode() / 100);
         if ($level === 4) {
             $label = 'Client error';
-            $className = __NAMESPACE__ . '\\ClientException';
+            $className = ClientException::class;
         } elseif ($level === 5) {
             $label = 'Server error';
-            $className = __NAMESPACE__ . '\\ServerException';
+            $className = ServerException::class;
         } else {
             $label = 'Unsuccessful request';
             $className = __CLASS__;
