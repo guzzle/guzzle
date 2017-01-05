@@ -89,10 +89,10 @@ class CookieJar implements CookieJarInterface
     /**
      * Finds and returns the cookie based on the name
      *
-     * @param string $name cookie name to search for
+     * @param string $name cookie name to search for (null by default)
      * @return SetCookie|null cookie that was found or null if not found
      */
-    public function getCookieByName($name)
+    public function getCookieByName($name = null)
     {
         foreach($this->cookies as $cookie) {
             if(strcasecmp($cookie->getName(), $name) === 0) {
