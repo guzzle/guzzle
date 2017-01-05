@@ -402,7 +402,7 @@ class Client implements ClientInterface
         throw new \InvalidArgumentException('Passing in the "body" request '
             . 'option as an array to send a POST request has been deprecated. '
             . 'Please use the "form_params" request option to send a '
-            . 'application/x-www-form-urlencoded request, or a the "multipart" '
+            . 'application/x-www-form-urlencoded request, or the "multipart" '
             . 'request option to send a multipart/form-data request.');
     }
 }
