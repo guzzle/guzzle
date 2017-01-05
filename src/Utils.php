@@ -139,7 +139,22 @@ final class Utils
             JSON_ERROR_UTF8 => 'JSON_ERROR_UTF8 - Malformed UTF-8 characters, possibly incorrectly encoded'
         ];
 
-        $data = \json_decode($json, $assoc, $depth, $options);
+        if (version_compare(PHP_VERSION, '5.4.0', '>=') && !(defined('JSON_C_VERSION') && PHP_INT_SIZE > 4)) {
+            /** In PHP >=5.4.0, json_decode() accepts an options parameter, that allows you
+             * to specify that large ints (like Steam Transaction IDs) should be treated as
+             * strings, rather than the PHP default behaviour of converting them to floats.
+             */
+            $data = \json_decode($json, $assoc, $depth, $options);
+        } else {
+            /** Not all servers will support that, however, so for older versions we must
+             * manually detect large ints in the JSON string and quote them (thus converting
+             * them to strings) before decoding, hence the preg_replace() call.
+             */
+            $maxIntLength = strlen((string) PHP_INT_MAX) - 1;
+            $jsonWithoutBigInt = preg_replace('/:\s*(-?\d{' . $maxIntLength . ',})/', ': "$1"', $json);
+
+            $data = \json_decode($jsonWithoutBigInt, $assoc, $depth, $options);
+        }
 
         if (JSON_ERROR_NONE !== json_last_error()) {
             $last = json_last_error();
