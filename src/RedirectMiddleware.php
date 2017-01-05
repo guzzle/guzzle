@@ -111,7 +111,7 @@ class RedirectMiddleware
             return $this->withTracking(
                 $promise,
                 (string) $nextRequest->getUri(),
-                (string) $response->getStatusCode()
+                $response->getStatusCode()
             );
         }
 
