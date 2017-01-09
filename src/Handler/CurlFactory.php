@@ -390,7 +390,7 @@ class CurlFactory implements CurlFactoryInterface
             $conf[CURLOPT_CONNECTTIMEOUT_MS] = $options['connect_timeout'] * 1000;
         }
 
-        if ($timeoutRequiresNoSignal) {
+        if ($timeoutRequiresNoSignal && strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
             $conf[CURLOPT_NOSIGNAL] = true;
         }
 
