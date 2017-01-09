@@ -129,3 +129,54 @@ setting the ``expect`` request option to ``false``:
 
     // Disable the expect header on all client requests
     $client = new GuzzleHttp\Client(['expect' => false]);
+
+How can I track a redirected requests HTTP codes?
+============================================
+
+You can enable the `track_redirects` option which will enable Guzzle to track
+any redirected URI and status code. Each redirected URI will be stored in the
+``X-Guzzle-Redirect-History`` header and each Response Code will be stored in
+the ``X-Guzzle-Redirect-Status-History`` header.
+
+The ``X-Guzzle-Redirect-History`` header will exclude the initial request's URI
+and the ``X-Guzzle-Redirect-Status-History`` header will exclude the final
+response code. With this in mind you should easily be able to track a requests
+full redirect path.
+
+For example, let's say you need to track redirects and provide both results
+together in a single report:
+
+.. code-block:: php
+
+    // First you configure Guzzle with redirect tracking and make a request
+    $client = new Client([
+                RequestOptions::CONNECT_TIMEOUT => 10,
+                RequestOptions::TIMEOUT => 10,
+                RequestOptions::COOKIES => true,
+                RequestOptions::ALLOW_REDIRECTS => [
+                    'max'             => 10,        // allow at most 10 redirects.
+                    'strict'          => true,      // use "strict" RFC compliant redirects.
+                    'referer'         => true,      // add a Referer header
+                    'track_redirects' => true
+                ]
+            ]);
+    $initialRequest = '/redirect/3'; // Store the request URI for later use
+    $response = $client->request('GET', $initialRequest); // Make your request
+
+    // Retrieve both Redirect History headers
+    $redirectUriHistory = $response->getHeader('X-Guzzle-Redirect-History'); // retrieve Redirects URI history
+    $redirectCodeHistory = $response->getHeader('X-Guzzle-Redirect-Status-History'); // retrieve Redirects HTTP Status history
+
+    // Add the initial URI requested to the URI history
+    $reversedUriHistory = array_reverse($redirectUriHistory); // First we reverse the array items
+    array_push($reversedUriHistory, $initialRequest); // then we add the initial URL on the end
+    $redirectUriHistory = array_reverse($reversedUriHistory); // Overwrite original variable with new list
+
+    // Add the final HTTP status code to the HTTP response history
+    array_push($redirectCodeHistory, $response->getStatusCode()); // Add final response status to code array
+
+    // (Optional) Combine the items of each array into a single result set
+    $fullRedirectReport = [];
+    foreach ($redirectUriHistory as $key => $value) {
+        $fullRedirectReport[$key] = ['location' => $value, 'code' => $redirectCodeHistory[$key]];
+    }
