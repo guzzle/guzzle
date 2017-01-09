@@ -14,9 +14,6 @@ class PrepareBodyMiddleware
     /** @var callable  */
     private $nextHandler;
 
-    /** @var array */
-    private static $skipMethods = ['GET' => true, 'HEAD' => true];
-
     /**
      * @param callable $nextHandler Next handler to invoke.
      */
@@ -36,9 +33,7 @@ class PrepareBodyMiddleware
         $fn = $this->nextHandler;
 
         // Don't do anything if the request has no body.
-        if (isset(self::$skipMethods[$request->getMethod()])
-            || $request->getBody()->getSize() === 0
-        ) {
+        if ($request->getBody()->getSize() === 0) {
             return $fn($request, $options);
         }
 
@@ -54,8 +49,7 @@ class PrepareBodyMiddleware
         }
 
         // Add a default content-length or transfer-encoding header.
-        if (!isset(self::$skipMethods[$request->getMethod()])
-            && !$request->hasHeader('Content-Length')
+        if (!$request->hasHeader('Content-Length')
             && !$request->hasHeader('Transfer-Encoding')
         ) {
             $size = $request->getBody()->getSize();
