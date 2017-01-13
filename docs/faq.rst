@@ -131,17 +131,16 @@ setting the ``expect`` request option to ``false``:
     $client = new GuzzleHttp\Client(['expect' => false]);
 
 How can I track a redirected requests HTTP codes?
-============================================
+=================================================
 
-You can enable the `track_redirects` option which will enable Guzzle to track
-any redirected URI and status code. Each redirected URI will be stored in the
-``X-Guzzle-Redirect-History`` header and each Response Code will be stored in
+You can enable tracking of redirected URLs and the status codes via the
+`track_redirects` option. Each redirected URI will be stored in the
+``X-Guzzle-Redirect-History`` header and each status code will be stored in
 the ``X-Guzzle-Redirect-Status-History`` header.
 
-The ``X-Guzzle-Redirect-History`` header will exclude the initial request's URI
-and the ``X-Guzzle-Redirect-Status-History`` header will exclude the final
-response code. With this in mind you should easily be able to track a requests
-full redirect path.
+The URL history header will exclude the initial request's URI and the
+status code history header will exclude the final status code. With this
+in mind you should easily be able to track a request's full redirect path.
 
 For example, let's say you need to track redirects and provide both results
 together in a single report:
@@ -167,13 +166,11 @@ together in a single report:
     $redirectUriHistory = $response->getHeader('X-Guzzle-Redirect-History'); // retrieve Redirects URI history
     $redirectCodeHistory = $response->getHeader('X-Guzzle-Redirect-Status-History'); // retrieve Redirects HTTP Status history
 
-    // Add the initial URI requested to the URI history
-    $reversedUriHistory = array_reverse($redirectUriHistory); // First we reverse the array items
-    array_push($reversedUriHistory, $initialRequest); // then we add the initial URL on the end
-    $redirectUriHistory = array_reverse($reversedUriHistory); // Overwrite original variable with new list
+    // Add the initial URI requested to the (beginning of) URI history
+    array_unshift($reversedUriHistory, $initialRequest); // then we add the initial URL on the end
 
     // Add the final HTTP status code to the HTTP response history
-    array_push($redirectCodeHistory, $response->getStatusCode()); // Add final response status to code array
+    array_push($redirectCodeHistory, $response->getStatusCode()); // Add final status code to code array
 
     // (Optional) Combine the items of each array into a single result set
     $fullRedirectReport = [];
