@@ -154,6 +154,20 @@ digest
     creating a replacement that can be used with any HTTP handler is
     planned.
 
+ntlm
+    Use `Microsoft NTLM authentication <https://msdn.microsoft.com/en-us/library/windows/desktop/aa378749(v=vs.85).aspx>`_
+    (must be supported by the HTTP handler).
+
+.. code-block:: php
+
+    $client->request('GET', '/get', [
+        'auth' => ['username', 'password', 'ntlm']
+    ]);
+
+.. note::
+
+    This is currently only supported when using the cURL handler.
+
 
 body
 ----

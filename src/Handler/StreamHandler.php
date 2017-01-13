@@ -301,6 +301,16 @@ class StreamHandler
             );
         }
 
+        // Microsoft NTLM authentication only supported with curl handler
+        if (isset($options['auth'])
+            && is_array($options['auth'])
+            && isset($options['auth'][2])
+            && 'ntlm' == $options['auth'][2]
+        ) {
+
+            throw new \InvalidArgumentException('Microsoft NTLM authentication only supported with curl handler');
+        }
+
         $context = $this->createResource(
             function () use ($context, $params) {
                 return stream_context_create($context, $params);
