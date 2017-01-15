@@ -167,7 +167,7 @@ together in a single report:
     $redirectCodeHistory = $response->getHeader('X-Guzzle-Redirect-Status-History'); // retrieve Redirects HTTP Status history
 
     // Add the initial URI requested to the (beginning of) URI history
-    array_unshift($reversedUriHistory, $initialRequest); // then we add the initial URL on the end
+    array_unshift($redirectUriHistory, $initialRequest); // then we add the initial URL on the end
 
     // Add the final HTTP status code to the HTTP response history
     array_push($redirectCodeHistory, $response->getStatusCode()); // Add final status code to code array
@@ -177,3 +177,4 @@ together in a single report:
     foreach ($redirectUriHistory as $key => $value) {
         $fullRedirectReport[$key] = ['location' => $value, 'code' => $redirectCodeHistory[$key]];
     }
+    echo json_encode($fullRedirectReport);

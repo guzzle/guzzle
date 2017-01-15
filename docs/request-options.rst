@@ -70,15 +70,14 @@ pairs:
   is encountered. The callable is invoked with the original request and the
   redirect response that was received. Any return value from the on_redirect
   function is ignored.
-- track_redirects: (bool) When set to ``true``, each redirected URI and Response
-  Code encountered will be tracked in the ``X-Guzzle-Redirect-History`` and 
+- track_redirects: (bool) When set to ``true``, each redirected URI and status
+  code encountered will be tracked in the ``X-Guzzle-Redirect-History`` and
   ``X-Guzzle-Redirect-Status-History`` headers respectively. All URIs and
-  Response Codes will be stored in the order in which the redirects were
-  encountered.
+  status codes will be stored in the order which the redirects were encountered.
 
   Note: When tracking redirects the ``X-Guzzle-Redirect-History`` header will
   exclude the initial request's URI and the ``X-Guzzle-Redirect-Status-History``
-  header will exclude the final response code.
+  header will exclude the final status code.
 
 .. code-block:: php
 
