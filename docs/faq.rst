@@ -130,17 +130,16 @@ setting the ``expect`` request option to ``false``:
     // Disable the expect header on all client requests
     $client = new GuzzleHttp\Client(['expect' => false]);
 
-How can I track a redirected requests HTTP codes?
-=================================================
+How can I track a redirected requests?
+======================================
 
-You can enable tracking of redirected URLs and the status codes via the
-`track_redirects` option. Each redirected URI will be stored in the
-``X-Guzzle-Redirect-History`` header and each status code will be stored in
-the ``X-Guzzle-Redirect-Status-History`` header.
+You can enable tracking of redirected URIs and status codes via the
+`track_redirects` option. Each redirected URI and status code will be stored in the
+``X-Guzzle-Redirect-History`` and the ``X-Guzzle-Redirect-Status-History``
+header respectively.
 
-The URL history header will exclude the initial request's URI and the
-status code history header will exclude the final status code. With this
-in mind you should easily be able to track a request's full redirect path.
+The initial request's URI and the final status code will be excluded from the results.
+With this in mind you should be able to easily track a request's full redirect path.
 
 For example, let's say you need to track redirects and provide both results
 together in a single report:
@@ -149,28 +148,25 @@ together in a single report:
 
     // First you configure Guzzle with redirect tracking and make a request
     $client = new Client([
-                RequestOptions::CONNECT_TIMEOUT => 10,
-                RequestOptions::TIMEOUT => 10,
-                RequestOptions::COOKIES => true,
-                RequestOptions::ALLOW_REDIRECTS => [
-                    'max'             => 10,        // allow at most 10 redirects.
-                    'strict'          => true,      // use "strict" RFC compliant redirects.
-                    'referer'         => true,      // add a Referer header
-                    'track_redirects' => true
-                ]
-            ]);
+        RequestOptions::ALLOW_REDIRECTS => [
+            'max'             => 10,        // allow at most 10 redirects.
+            'strict'          => true,      // use "strict" RFC compliant redirects.
+            'referer'         => true,      // add a Referer header
+            'track_redirects' => true,
+        ],
+    ]);
     $initialRequest = '/redirect/3'; // Store the request URI for later use
     $response = $client->request('GET', $initialRequest); // Make your request
 
     // Retrieve both Redirect History headers
-    $redirectUriHistory = $response->getHeader('X-Guzzle-Redirect-History'); // retrieve Redirects URI history
-    $redirectCodeHistory = $response->getHeader('X-Guzzle-Redirect-Status-History'); // retrieve Redirects HTTP Status history
+    $redirectUriHistory = $response->getHeader('X-Guzzle-Redirect-History'); // retrieve Redirect URI history
+    $redirectCodeHistory = $response->getHeader('X-Guzzle-Redirect-Status-History'); // retrieve Redirect HTTP Status history
 
     // Add the initial URI requested to the (beginning of) URI history
-    array_unshift($redirectUriHistory, $initialRequest); // then we add the initial URL on the end
+    array_unshift($redirectUriHistory, $initialRequest);
 
-    // Add the final HTTP status code to the HTTP response history
-    array_push($redirectCodeHistory, $response->getStatusCode()); // Add final status code to code array
+    // Add the final HTTP status code to the end of HTTP response history
+    array_push($redirectCodeHistory, $response->getStatusCode());
 
     // (Optional) Combine the items of each array into a single result set
     $fullRedirectReport = [];
