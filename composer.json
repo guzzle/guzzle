@@ -33,6 +33,9 @@
             "GuzzleHttp\\Tests\\": "tests/"
         }
     },
+    "suggest": {
+        "psr/log": "This package holds all interfaces/classes/traits related to PSR-3 in order to use Middleware::log()"
+    },
     "extra": {
         "branch-alias": {
             "dev-master": "6.2-dev"
