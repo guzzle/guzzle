@@ -34,7 +34,7 @@
         }
     },
     "suggest": {
-        "psr/log": "This package holds all interfaces/classes/traits related to PSR-3 in order to use Middleware::log()"
+        "psr/log": "Required for using the Log middleware"
     },
     "extra": {
         "branch-alias": {
