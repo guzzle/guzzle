@@ -730,4 +730,33 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
 
         $this->assertSame(1024 * 1024, $body->tell());
     }
+
+    public function testProgesssAbortedRequest()
+    {
+        $size = 128;
+        $content = str_repeat('0123456789', $size);
+        $length = strlen($content);
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, ['Content-Length' => $length], $content),
+        ]);
+
+        $req = new Psr7\Request('GET', Server::$url);
+        $handler = new Handler\CurlHandler();
+        $promise = $handler($req, [
+            'curl' => [CURLOPT_BUFFERSIZE => $size],
+            'progress' => function ($total, $bytes) use ($size) {
+                return $bytes >= $size;
+            }
+        ]);
+
+        $response = $promise->wait();
+
+        $body = (string) $response->getBody();
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals($length, $response->getHeaderLine('Content-Length'));
+        $this->assertStringStartsWith('0123456789', $body);
+        $this->assertGreaterThanOrEqual($size, strlen($body));
+        $this->assertLessThan($length, strlen($body));
+    }
 }
