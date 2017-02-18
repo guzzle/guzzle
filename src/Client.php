@@ -96,6 +96,7 @@ class Client implements ClientInterface
 
         return $this->transfer(
             $request->withUri($this->buildUri($request->getUri(), $options), $request->hasHeader('Host')),
+            $options['handler'],
             $options
         );
     }
@@ -122,7 +123,7 @@ class Client implements ClientInterface
         // Remove the option so that they are not doubly-applied.
         unset($options['headers'], $options['body'], $options['version']);
 
-        return $this->transfer($request, $options);
+        return $this->transfer($request, $options['handler'], $options);
     }
 
     public function request($method, $uri = '', array $options = [])
@@ -252,11 +253,11 @@ class Client implements ClientInterface
      * as-is without merging in default options.
      *
      * @param RequestInterface $request
+     * @param callable         $handler
      * @param array            $options
-     *
      * @return Promise\PromiseInterface
      */
-    private function transfer(RequestInterface $request, array $options)
+    private function transfer(RequestInterface $request, callable $handler, array $options)
     {
         // save_to -> sink
         if (isset($options['save_to'])) {
@@ -271,8 +272,6 @@ class Client implements ClientInterface
         }
 
         $request = $this->applyOptions($request, $options);
-        $handler = $options['handler'];
-
         try {
             return Promise\promise_for($handler($request, $options));
         } catch (\Exception $e) {
