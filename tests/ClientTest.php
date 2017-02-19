@@ -653,4 +653,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             (string) $mockHandler->getLastRequest()->getUri()
         );
     }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testHandlerIsCallable()
+    {
+        new Client(['handler' => 'not_cllable']);
+    }
+
 }
