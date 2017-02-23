@@ -308,9 +308,17 @@ class StreamHandler
         );
 
         return $this->createResource(
-            function () use ($request, &$http_response_header, $context) {
+            function () use ($request, &$http_response_header, $context, $options) {
                 $resource = fopen((string) $request->getUri()->withFragment(''), 'r', null, $context);
                 $this->lastHeaders = $http_response_header;
+
+                if (isset($options['read_timeout'])) {
+                    $readTimeout = $options['read_timeout'];
+                    $sec = (int) $readTimeout;
+                    $usec = ($readTimeout - $sec) * 100000;
+                    stream_set_timeout($resource, $sec, $usec);
+                }
+
                 return $resource;
             }
         );
