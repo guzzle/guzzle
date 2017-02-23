@@ -234,7 +234,7 @@ scheme can be set to "http" or "https".
 
     $request = new Request('GET', 'http://httpbin.org');
     echo $request->getUri()->getScheme(); // http
-    echo $request->getUri(); // http://httpbin.org/get
+    echo $request->getUri(); // http://httpbin.org
 
 
 Host
