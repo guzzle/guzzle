@@ -43,8 +43,8 @@ final class RequestOptions
     const AUTH = 'auth';
 
     /**
-     * body: (string|null|callable|iterator|object) Body to send in the
-     * request.
+     * body: (resource|string|null|int|float|StreamInterface|callable|\Iterator)
+     * Body to send in the request.
      */
     const BODY = 'body';
 
