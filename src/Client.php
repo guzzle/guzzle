@@ -142,7 +142,7 @@ class Client implements ClientInterface
         $uri = Psr7\uri_for($uri === null ? '' : $uri);
 
         if (isset($config['base_uri'])) {
-            $uri = Psr7\Uri::resolve(Psr7\uri_for($config['base_uri']), $uri);
+            $uri = Psr7\UriResolver::resolve(Psr7\uri_for($config['base_uri']), $uri);
         }
 
         return $uri->getScheme() === '' && $uri->getHost() !== '' ? $uri->withScheme('http') : $uri;

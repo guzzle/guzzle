@@ -208,9 +208,9 @@ class RedirectMiddleware
         ResponseInterface $response,
         array $protocols
     ) {
-        $location = Psr7\Uri::resolve(
+        $location = Psr7\UriResolver::resolve(
             $request->getUri(),
-            $response->getHeaderLine('Location')
+            new Psr7\Uri($response->getHeaderLine('Location'))
         );
 
         // Ensure that the redirect URI is allowed based on the protocols.
