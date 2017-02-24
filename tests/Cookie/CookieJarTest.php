@@ -47,6 +47,7 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
         $testCookie = $cookies[0];
         $this->assertEquals($testCookie, $this->jar->getCookieByName($testCookie->getName()));
         $this->assertNull($this->jar->getCookieByName("doesnotexist"));
+        $this->assertNull($this->jar->getCookieByName(null));
     }
 
     /**
