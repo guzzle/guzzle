@@ -19,6 +19,8 @@ class RedirectMiddleware
 {
     const HISTORY_HEADER = 'X-Guzzle-Redirect-History';
 
+    const STATUS_HISTORY_HEADER = 'X-Guzzle-Redirect-Status-History';
+
     public static $defaultSettings = [
         'max'             => 5,
         'protocols'       => ['http', 'https'],
@@ -108,23 +110,27 @@ class RedirectMiddleware
         if (!empty($options['allow_redirects']['track_redirects'])) {
             return $this->withTracking(
                 $promise,
-                (string) $nextRequest->getUri()
+                (string) $nextRequest->getUri(),
+                $response->getStatusCode()
             );
         }
 
         return $promise;
     }
 
-    private function withTracking(PromiseInterface $promise, $uri)
+    private function withTracking(PromiseInterface $promise, $uri, $statusCode)
     {
         return $promise->then(
-            function (ResponseInterface $response) use ($uri) {
+            function (ResponseInterface $response) use ($uri, $statusCode) {
                 // Note that we are pushing to the front of the list as this
                 // would be an earlier response than what is currently present
                 // in the history header.
-                $header = $response->getHeader(self::HISTORY_HEADER);
-                array_unshift($header, $uri);
-                return $response->withHeader(self::HISTORY_HEADER, $header);
+                $historyHeader = $response->getHeader(self::HISTORY_HEADER);
+                $statusHeader = $response->getHeader(self::STATUS_HISTORY_HEADER);
+                array_unshift($historyHeader, $uri);
+                array_unshift($statusHeader, $statusCode);
+                return $response->withHeader(self::HISTORY_HEADER, $historyHeader)
+                                ->withHeader(self::STATUS_HISTORY_HEADER, $statusHeader);
             }
         );
     }
