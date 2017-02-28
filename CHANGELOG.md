@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.2.3 - 2017-02-28
+
+* Fix deprecations with guzzle/psr7 version 1.4
+
 ## 6.2.2 - 2016-10-08
 
 * Allow to pass nullable Response to delay callable
