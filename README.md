@@ -38,7 +38,7 @@ $promise->wait();
 ## Help and docs
 
 - [Documentation](http://guzzlephp.org/)
-- [stackoverflow](http://stackoverflow.com/questions/tagged/guzzle)
+- [Stack Overflow](http://stackoverflow.com/questions/tagged/guzzle)
 - [Gitter](https://gitter.im/guzzle/guzzle)
 
 
