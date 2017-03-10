@@ -248,15 +248,18 @@ class CookieJar implements CookieJarInterface
     public function getCookieByName($name)
     {
         $cookiesArray = $this->toArray();
+        $key = array_search(
+            $name,
+            array_map(function ($element) {
+                return $element['Name'];
+            }, $cookiesArray)
+        );
 
-        return $this->cookies[
-            array_search(
-                $name,
-                array_map(function ($element) {
-                    return $element['Name'];
-                }, $cookiesArray)
-            )
-        ];
+        if ($key === false) {
+            return null;
+        }
+
+        return $this->cookies[$key];
     }
 
     /**
