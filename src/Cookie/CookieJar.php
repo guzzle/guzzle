@@ -252,7 +252,9 @@ class CookieJar implements CookieJarInterface
         return $this->cookies[
             array_search(
                 $name,
-                array_column($cookiesArray, 'Name')
+                array_map(function ($element) {
+                    return $element['Name'];
+                }, $cookiesArray)
             )
         ];
     }
