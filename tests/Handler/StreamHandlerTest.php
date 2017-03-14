@@ -194,6 +194,7 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $request = new Request('GET', Server::$url);
         $response = $handler($request, ['decode_content' => true])->wait();
         $this->assertEquals('test', (string) $response->getBody());
+        $this->assertTrue(null === $response->getBody()->getSize() || 4 === $response->getBody()->getSize());
         $this->assertFalse($response->hasHeader('content-encoding'));
         $this->assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == $response->getBody()->getSize());
     }
