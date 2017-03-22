@@ -352,6 +352,10 @@ class Client implements ClientInterface
                     $options['curl'][CURLOPT_HTTPAUTH] = CURLAUTH_DIGEST;
                     $options['curl'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
                     break;
+                case 'ntlm':
+                    $options['curl'][CURLOPT_HTTPAUTH] = CURLAUTH_NTLM;
+                    $options['curl'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
+                    break;
             }
         }
 
