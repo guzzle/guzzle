@@ -63,6 +63,8 @@ class Client implements ClientInterface
     {
         if (!isset($config['handler'])) {
             $config['handler'] = HandlerStack::create();
+        } elseif (!is_callable($config['handler'])) {
+            throw new \InvalidArgumentException('handler must be a callable');
         }
 
         // Convert the base_uri to a UriInterface
@@ -142,7 +144,7 @@ class Client implements ClientInterface
         $uri = Psr7\uri_for($uri === null ? '' : $uri);
 
         if (isset($config['base_uri'])) {
-            $uri = Psr7\Uri::resolve(Psr7\uri_for($config['base_uri']), $uri);
+            $uri = Psr7\UriResolver::resolve(Psr7\uri_for($config['base_uri']), $uri);
         }
 
         return $uri->getScheme() === '' && $uri->getHost() !== '' ? $uri->withScheme('http') : $uri;
@@ -350,6 +352,10 @@ class Client implements ClientInterface
                     $options['curl'][CURLOPT_HTTPAUTH] = CURLAUTH_DIGEST;
                     $options['curl'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
                     break;
+                case 'ntlm':
+                    $options['curl'][CURLOPT_HTTPAUTH] = CURLAUTH_NTLM;
+                    $options['curl'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
+                    break;
             }
         }
 
@@ -402,7 +408,7 @@ class Client implements ClientInterface
         throw new \InvalidArgumentException('Passing in the "body" request '
             . 'option as an array to send a POST request has been deprecated. '
             . 'Please use the "form_params" request option to send a '
-            . 'application/x-www-form-urlencoded request, or a the "multipart" '
+            . 'application/x-www-form-urlencoded request, or the "multipart" '
             . 'request option to send a multipart/form-data request.');
     }
 }

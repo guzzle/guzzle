@@ -7,6 +7,7 @@ use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\FnStream;
+use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Tests\Server;
 use GuzzleHttp\TransferStats;
 use Psr\Http\Message\ResponseInterface;
@@ -653,5 +654,27 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $stream = $body->detach();
         $this->assertEquals('hi there... This has a lot of data!', stream_get_contents($stream));
         fclose($stream);
+    }
+
+    public function testHonorsReadTimeout()
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $response = $handler(
+            new Request('GET', Server::$url . 'guzzle-server/read-timeout'),
+            [
+                RequestOptions::READ_TIMEOUT => 1,
+                RequestOptions::STREAM => true,
+            ]
+        )->wait();
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('OK', $response->getReasonPhrase());
+        $body = $response->getBody()->detach();
+        $line = fgets($body);
+        $this->assertEquals("sleeping 60 seconds ...\n", $line);
+        $line = fgets($body);
+        $this->assertFalse($line);
+        $this->assertTrue(stream_get_meta_data($body)['timed_out']);
+        $this->assertFalse(feof($body));
     }
 }

@@ -389,6 +389,18 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         ], $last['curl']);
     }
 
+    public function testAuthCanBeArrayForNtlmAuth()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', ['auth' => ['a', 'b', 'ntlm']]);
+        $last = $mock->getLastOptions();
+        $this->assertEquals([
+            CURLOPT_HTTPAUTH => 8,
+            CURLOPT_USERPWD  => 'a:b'
+        ], $last['curl']);
+    }
+
     public function testAuthCanBeCustomType()
     {
         $mock = new MockHandler([new Response()]);
@@ -653,4 +665,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             (string) $mockHandler->getLastRequest()->getUri()
         );
     }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testHandlerIsCallable()
+    {
+        new Client(['handler' => 'not_cllable']);
+    }
+
 }

@@ -70,9 +70,14 @@ pairs:
   is encountered. The callable is invoked with the original request and the
   redirect response that was received. Any return value from the on_redirect
   function is ignored.
-- track_redirects: (bool) When set to ``true``, each redirected URI encountered
-  will be tracked in the ``X-Guzzle-Redirect-History`` header in the order in
-  which the redirects were encountered.
+- track_redirects: (bool) When set to ``true``, each redirected URI and status
+  code encountered will be tracked in the ``X-Guzzle-Redirect-History`` and
+  ``X-Guzzle-Redirect-Status-History`` headers respectively. All URIs and
+  status codes will be stored in the order which the redirects were encountered.
+
+  Note: When tracking redirects the ``X-Guzzle-Redirect-History`` header will
+  exclude the initial request's URI and the ``X-Guzzle-Redirect-Status-History``
+  header will exclude the final status code.
 
 .. code-block:: php
 
@@ -104,6 +109,9 @@ pairs:
 
     echo $res->getHeaderLine('X-Guzzle-Redirect-History');
     // http://first-redirect, http://second-redirect, etc...
+
+    echo $res->getHeaderLine('X-Guzzle-Redirect-Status-History');
+    // 301, 302, etc...
 
 .. warning::
 
@@ -153,6 +161,20 @@ digest
     This is currently only supported when using the cURL handler, but
     creating a replacement that can be used with any HTTP handler is
     planned.
+
+ntlm
+    Use `Microsoft NTLM authentication <https://msdn.microsoft.com/en-us/library/windows/desktop/aa378749(v=vs.85).aspx>`_
+    (must be supported by the HTTP handler).
+
+.. code-block:: php
+
+    $client->request('GET', '/get', [
+        'auth' => ['username', 'password', 'ntlm']
+    ]);
+
+.. note::
+
+    This is currently only supported when using the cURL handler.
 
 
 body
@@ -557,7 +579,7 @@ over the wire.
     $clientHandler = $client->getConfig('handler');
     // Create a middleware that echoes parts of the request.
     $tapMiddleware = Middleware::tap(function ($request) {
-        echo $request->getHeader('Content-Type');
+        echo $request->getHeaderLine('Content-Type');
         // application/json
         echo $request->getBody();
         // {"foo":"bar"}
@@ -802,7 +824,7 @@ query
     // Send a GET request to /get?foo=bar
     $client->request('GET', '/get', ['query' => ['foo' => 'bar']]);
 
-Query strings specified in the ``query`` option will overwrite a query string
+Query strings specified in the ``query`` option will overwrite all query string
 values supplied in the URI of a request.
 
 .. code-block:: php
@@ -810,6 +832,30 @@ values supplied in the URI of a request.
     // Send a GET request to /get?foo=bar
     $client->request('GET', '/get?abc=123', ['query' => ['foo' => 'bar']]);
 
+read_timeout
+------------
+
+:Summary: Float describing the timeout to use when reading a streamed body
+:Types: float
+:Default: Defaults to the value of the ``default_socket_timeout`` PHP ini setting
+:Constant: ``GuzzleHttp\RequestOptions::READ_TIMEOUT``
+
+The timeout applies to individual read operations on a streamed body (when the ``stream`` option is enabled).
+
+.. code-block:: php
+
+    $response = $client->request('GET', '/stream', [
+        'stream' => true,
+        'read_timeout' => 10,
+    ]);
+
+    $body = $response->getBody();
+
+    // Returns false on timeout
+    $data = $body->read(1024);
+
+    // Returns false on timeout
+    $line = fgets($body->detach());
 
 .. _sink-option:
 

@@ -192,8 +192,8 @@ requests.
 
     // You can access each result using the key provided to the unwrap
     // function.
-    echo $results['image']->getHeader('Content-Length');
-    echo $results['png']->getHeader('Content-Length');
+    echo $results['image']['value']->getHeader('Content-Length')[0]
+    echo $results['png']['value']->getHeader('Content-Length')[0]
 
 You can use the ``GuzzleHttp\Pool`` object when you have an indeterminate
 amount of requests you wish to send.
@@ -427,7 +427,7 @@ Cookies
 
 Guzzle can maintain a cookie session for you if instructed using the
 ``cookies`` request option. When sending a request, the ``cookies`` option
-must be set an an instance of ``GuzzleHttp\Cookie\CookieJarInterface``.
+must be set to an instance of ``GuzzleHttp\Cookie\CookieJarInterface``.
 
 .. code-block:: php
 

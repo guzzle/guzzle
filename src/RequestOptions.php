@@ -43,8 +43,8 @@ final class RequestOptions
     const AUTH = 'auth';
 
     /**
-     * body: (string|null|callable|iterator|object) Body to send in the
-     * request.
+     * body: (resource|string|null|int|float|StreamInterface|callable|\Iterator)
+     * Body to send in the request.
      */
     const BODY = 'body';
 
@@ -236,6 +236,12 @@ final class RequestOptions
      * request in seconds. Use 0 to wait indefinitely (the default behavior).
      */
     const TIMEOUT = 'timeout';
+
+    /**
+     * read_timeout: (float, default=default_socket_timeout ini setting) Float describing
+     * the body read timeout, for stream requests.
+     */
+    const READ_TIMEOUT = 'read_timeout';
 
     /**
      * version: (float) Specifies the HTTP protocol version to attempt to use.
