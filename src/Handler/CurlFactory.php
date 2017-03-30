@@ -21,6 +21,9 @@ class CurlFactory implements CurlFactoryInterface
     /** @var int Total number of idle handles to keep in cache */
     private $maxHandles;
 
+    /** @var array */
+    private static $skipMethods = ['GET' => true, 'HEAD' => true];
+
     /**
      * @param int $maxHandles Maximum number of idle handles.
      */
@@ -258,7 +261,7 @@ class CurlFactory implements CurlFactoryInterface
             // Don't duplicate the Content-Length header
             $this->removeHeader('Content-Length', $conf);
             $this->removeHeader('Transfer-Encoding', $conf);
-        } else {
+        } elseif (!isset(self::$skipMethods[$request->getMethod()])) {
             $conf[CURLOPT_UPLOAD] = true;
             if ($size !== null) {
                 $conf[CURLOPT_INFILESIZE] = $size;
