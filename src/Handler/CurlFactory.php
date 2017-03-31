@@ -261,19 +261,22 @@ class CurlFactory implements CurlFactoryInterface
             // Don't duplicate the Content-Length header
             $this->removeHeader('Content-Length', $conf);
             $this->removeHeader('Transfer-Encoding', $conf);
-        } elseif (!isset(self::$skipMethods[$request->getMethod()])) {
-            $conf[CURLOPT_UPLOAD] = true;
-            if ($size !== null) {
-                $conf[CURLOPT_INFILESIZE] = $size;
-                $this->removeHeader('Content-Length', $conf);
+        } else {
+                if (!isset(self::$skipMethods[$request->getMethod()])) {
+                    $conf[CURLOPT_UPLOAD] = true;
+                }
+                if ($size !== null) {
+                    $conf[CURLOPT_INFILESIZE] = $size;
+                    $this->removeHeader('Content-Length', $conf);
+                }
+                $body = $request->getBody();
+                if ($body->isSeekable()) {
+                    $body->rewind();
+                }
+                $conf[CURLOPT_READFUNCTION] = function ($ch, $fd, $length) use ($body) {
+                    return $body->read($length);
+                };
             }
-            $body = $request->getBody();
-            if ($body->isSeekable()) {
-                $body->rewind();
-            }
-            $conf[CURLOPT_READFUNCTION] = function ($ch, $fd, $length) use ($body) {
-                return $body->read($length);
-            };
         }
 
         // If the Expect header is not present, prevent curl from adding it
