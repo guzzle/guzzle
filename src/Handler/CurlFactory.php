@@ -261,8 +261,10 @@ class CurlFactory implements CurlFactoryInterface
             // Don't duplicate the Content-Length header
             $this->removeHeader('Content-Length', $conf);
             $this->removeHeader('Transfer-Encoding', $conf);
-        } elseif (!isset(self::$skipMethods[$request->getMethod()])) {
-            $conf[CURLOPT_UPLOAD] = true;
+        } else {
+            if (!isset(self::$skipMethods[$request->getMethod()])) {
+                $conf[CURLOPT_UPLOAD] = true;
+            }
             if ($size !== null) {
                 $conf[CURLOPT_INFILESIZE] = $size;
                 $this->removeHeader('Content-Length', $conf);
