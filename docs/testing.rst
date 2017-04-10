@@ -97,6 +97,34 @@ history of the requests that were sent by a client.
     }
 
 
+Stackable Mock Adapter
+============
+
+In addition to using the MockAdapter, you can use the
+``GuzzleHttp\Adapter\StackedMockAdapter`` as the adapter of a client to return
+responses from a stack. You can give the adapter a set of responses to return,
+and it will return them in order. Looks like the node.js test server, only without
+using the node.js server.
+
+.. code-block:: php
+
+    use GuzzleHttp\Client;
+    use GuzzleHttp\Adapter\StackedMockAdapter;
+    use GuzzleHttp\Adapter\TransactionInterface;
+    use GuzzleHttp\Message\Response;
+
+    $responses = array(
+        new Response(200),
+        new Response(400)
+    );
+
+    $mockAdapter = new StackedMockAdapter($responses);
+
+    $client = new Client(['adapter' => $mockAdapter]);
+
+The first request will return a 200 response, the second a 400,
+and the third will throw a runtime exception.
+
 Test Web Server
 ===============
 
