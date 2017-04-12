@@ -157,6 +157,8 @@ class Server
             return true;
         } catch (\Exception $e) {
             return false;
+        } catch (\Throwable $e) {
+            return false;
         }
     }
 
