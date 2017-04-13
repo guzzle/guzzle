@@ -267,12 +267,12 @@ function is_host_in_noproxy($host, array $noProxyArray)
             return true;
         }
 
-	    // Don't match on empty values.
+        // Don't match on empty values.
         if (empty($area)) {
             continue;
         }
 
-	    // Exact matches.
+        // Exact matches.
         if ($area === $host) {
             return true;
         }
