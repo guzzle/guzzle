@@ -265,20 +265,24 @@ function is_host_in_noproxy($host, array $noProxyArray)
         // Always match on wildcards.
         if ($area === '*') {
             return true;
-        } elseif (empty($area)) {
-            // Don't match on empty values.
-            continue;
-        } elseif ($area === $host) {
-            // Exact matches.
-            return true;
-        } else {
-            // Special match if the area when prefixed with ".". Remove any
-            // existing leading "." and add a new leading ".".
-            $area = '.' . ltrim($area, '.');
-            if (substr($host, -(strlen($area))) === $area) {
-                return true;
-            }
         }
+
+	    // Don't match on empty values.
+        if (empty($area)) {
+            continue;
+        }
+
+	    // Exact matches.
+        if ($area === $host) {
+            return true;
+        }
+
+	    // Special match if the area when prefixed with ".". Remove any
+	    // existing leading "." and add a new leading ".".
+	    $area = '.' . ltrim($area, '.');
+	    if (substr($host, -(strlen($area))) === $area) {
+		    return true;
+	    }
     }
 
     return false;
