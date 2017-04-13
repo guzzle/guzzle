@@ -277,12 +277,12 @@ function is_host_in_noproxy($host, array $noProxyArray)
             return true;
         }
 
-	    // Special match if the area when prefixed with ".". Remove any
-	    // existing leading "." and add a new leading ".".
-	    $area = '.' . ltrim($area, '.');
-	    if (substr($host, -(strlen($area))) === $area) {
-		    return true;
-	    }
+        // Special match if the area when prefixed with ".". Remove any
+        // existing leading "." and add a new leading ".".
+        $area = '.' . ltrim($area, '.');
+        if (substr($host, -(strlen($area))) === $area) {
+            return true;
+        }
     }
 
     return false;
