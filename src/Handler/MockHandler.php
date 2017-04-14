@@ -14,7 +14,7 @@ use Psr\Http\Message\ResponseInterface;
  */
 class MockHandler implements \Countable
 {
-    private $queue;
+    private $queue = [];
     private $lastRequest;
     private $lastOptions;
     private $onFulfilled;
