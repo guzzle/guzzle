@@ -261,16 +261,15 @@ function is_host_in_noproxy($host, array $noProxyArray)
         $host = explode($host, ':', 2)[0];
     }
 
+    if (in_array('*', $noProxyArray) or in_array($host, $noProxyArray)) {
+        return true;
+    }
+
     foreach ($noProxyArray as $area) {
         // Always match on wildcards.
-        if ($area === '*') {
-            return true;
-        } elseif (empty($area)) {
+        if (empty($area)) {
             // Don't match on empty values.
             continue;
-        } elseif ($area === $host) {
-            // Exact matches.
-            return true;
         } else {
             // Special match if the area when prefixed with ".". Remove any
             // existing leading "." and add a new leading ".".
