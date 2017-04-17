@@ -20,7 +20,7 @@ trivial to integrate with web services.
 
 .. code-block:: php
 
-    $client = new GuzzleHttp\Client();
+    $client = new \GuzzleHttp\Client();
     $res = $client->request('GET', 'https://api.github.com/user', [
         'auth' => ['user', 'pass']
     ]);
