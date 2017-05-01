@@ -26,7 +26,6 @@ script: $TEST_COMMAND
 matrix:
   allow_failures:
     - php: hhvm
-    - php: 7.0
   fast_finish: true
   include:
     - php: 5.4
