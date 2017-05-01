@@ -438,7 +438,7 @@ force_ip_resolve
 
     This setting must be supported by the HTTP handler used to send a request.
     ``force_ip_resolve`` is currently only supported by the built-in cURL
-    handler.
+    and stream handlers.
 
 
 form_params
