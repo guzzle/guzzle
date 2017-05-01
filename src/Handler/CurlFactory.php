@@ -326,11 +326,19 @@ class CurlFactory implements CurlFactoryInterface
                 $conf[CURLOPT_SSL_VERIFYHOST] = 2;
                 $conf[CURLOPT_SSL_VERIFYPEER] = true;
                 if (is_string($options['verify'])) {
-                    $conf[CURLOPT_CAINFO] = $options['verify'];
+                    // Throw an error if the file/folder/link path is not valid or doesn't exist.
                     if (!file_exists($options['verify'])) {
                         throw new \InvalidArgumentException(
                             "SSL CA bundle not found: {$options['verify']}"
                         );
+                    }
+                    // If it's a directory or a link to a directory use CURLOPT_CAPATH.
+                    // If not, it's probably a file, or a link to a file, so use CURLOPT_CAINFO.
+                    if (is_dir($options['verify']) || 
+                        (is_link($options['verify']) && is_dir(readlink($options['verify'])))) {
+                        $conf[CURLOPT_CAPATH] = $options['verify'];
+                    } else {
+                        $conf[CURLOPT_CAINFO] = $options['verify'];
                     }
                 }
             }
