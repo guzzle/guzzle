@@ -28,6 +28,11 @@ class MockHandlerTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(2, $mock);
     }
 
+    public function testEmptyHandlerIsCountable()
+    {
+        $this->assertCount(0, new MockHandler());
+    }
+
     /**
      * @expectedException \InvalidArgumentException
      */

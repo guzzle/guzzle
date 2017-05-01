@@ -37,6 +37,11 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(2, $jar);
     }
 
+    public function testEmptyJarIsCountable()
+    {
+        $this->assertCount(0, new CookieJar());
+    }
+
     public function testGetsCookiesByName()
     {
         $cookies = $this->getTestCookies();
