@@ -378,8 +378,9 @@ class CurlFactory implements CurlFactoryInterface
             $conf[CURLOPT_FILE] = fopen('php://temp', 'w+');
             $easy->sink = Psr7\stream_for($conf[CURLOPT_FILE]);
         }
-
+        $timeoutRequiresNoSignal = false;
         if (isset($options['timeout'])) {
+            $timeoutRequiresNoSignal |= $options['timeout'] < 1;
             $conf[CURLOPT_TIMEOUT_MS] = $options['timeout'] * 1000;
         }
 
@@ -393,7 +394,12 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         if (isset($options['connect_timeout'])) {
+            $timeoutRequiresNoSignal |= $options['connect_timeout'] < 1;
             $conf[CURLOPT_CONNECTTIMEOUT_MS] = $options['connect_timeout'] * 1000;
+        }
+
+        if ($timeoutRequiresNoSignal && strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
+            $conf[CURLOPT_NOSIGNAL] = true;
         }
 
         if (isset($options['proxy'])) {
