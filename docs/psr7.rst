@@ -326,7 +326,7 @@ As described earlier, you can get the body of a response using the
 
 .. code-block:: php
 
-    $body = $response->getBody()) {
+    $body = $response->getBody();
     echo $body;
     // Cast to a string: { ... }
     $body->seek(0);
