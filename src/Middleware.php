@@ -102,7 +102,7 @@ final class Middleware
                             'error'    => $reason,
                             'options'  => $options
                         ];
-                        return new RejectedPromise($reason);
+                        return \GuzzleHttp\Promise\rejection_for($reason);
                     }
                 );
             };
