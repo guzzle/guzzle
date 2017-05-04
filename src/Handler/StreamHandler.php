@@ -67,7 +67,7 @@ class StreamHandler
             $e = RequestException::wrapException($request, $e);
             $this->invokeStats($options, $request, $startTime, null, $e);
 
-            return new RejectedPromise($e);
+            return \GuzzleHttp\Promise\rejection_for($e);
         }
     }
 
@@ -119,7 +119,7 @@ class StreamHandler
             } catch (\Exception $e) {
                 $msg = 'An error was encountered during the on_headers event';
                 $ex = new RequestException($msg, $request, $response, $e);
-                return new RejectedPromise($ex);
+                return \GuzzleHttp\Promise\rejection_for($ex);
             }
         }
 
@@ -310,7 +310,7 @@ class StreamHandler
 
             throw new \InvalidArgumentException('Microsoft NTLM authentication only supported with curl handler');
         }
-      
+
         $uri = $this->resolveHost($request, $options);
 
         $context = $this->createResource(
