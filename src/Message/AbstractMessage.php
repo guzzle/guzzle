@@ -106,8 +106,31 @@ abstract class AbstractMessage implements MessageInterface
     public function setHeaders(array $headers)
     {
         $this->headers = $this->headerNames = [];
-        foreach ($headers as $key => $value) {
-            $this->addHeader($key, $value);
+
+        // Needed to cater to tests depending on resultant header case
+        $lowercaseNameToOriginalName = [];
+
+        // Merge headers of differing case; singular setHeader()'s de facto behavior is not to merge so must merge here
+        $mergedHeaders = [];
+        foreach ($headers as $headerName => &$value) {
+            $headerNameLCase = strtolower($headerName);
+            if (!isset($lowercaseNameToOriginalName[$headerNameLCase])) {
+                $lowercaseNameToOriginalName[$headerNameLCase] = $headerName;
+            }
+
+            if (!isset($mergedHeaders[$headerNameLCase])) {
+                $mergedHeaders[$headerNameLCase] = is_array($value) ? $value : [$value];
+            }
+            else if (is_array($value)) {
+                $mergedHeaders[$headerNameLCase] = array_merge($mergedHeaders[$headerNameLCase], $value);
+            }
+            else {
+                $mergedHeaders[$headerNameLCase][] = $value;
+            }
+        }
+
+        foreach ($mergedHeaders as $headerNameLCase => $value) {
+            $this->addHeader($lowercaseNameToOriginalName[$headerNameLCase], $value);
         }
     }
 
