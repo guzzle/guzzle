@@ -75,14 +75,17 @@ class Client implements ClientInterface
         $this->configureDefaults($config);
     }
 
-    public function __call($method, $args)
+    public function __call($phpMethod, $args)
     {
-        if (count($args) < 1) {
-            throw new \InvalidArgumentException('Magic request methods require a URI and optional options array');
+        if (count($args) < 2) {
+            throw new \InvalidArgumentException(
+                'Magic request methods require a method, URI and optional options array'
+            );
         }
 
-        $uri = $args[0];
-        $opts = isset($args[1]) ? $args[1] : [];
+        $method = $args[0];
+        $uri = $args[1];
+        $opts = isset($args[2]) ? $args[2] : [];
 
         return substr($method, -5) === 'Async'
             ? $this->requestAsync(substr($method, 0, -5), $uri, $opts)
