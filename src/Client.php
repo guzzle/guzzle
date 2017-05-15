@@ -363,6 +363,7 @@ class Client implements ClientInterface
             $value = $options['query'];
             if (is_array($value)) {
                 $value = http_build_query($value, null, '&', PHP_QUERY_RFC3986);
+                $value = preg_replace('/%5B(?:[0-9]|[1-9][0-9]+)%5D=/', '=', $value);
             }
             if (!is_string($value)) {
                 throw new \InvalidArgumentException('query must be a string or array');
