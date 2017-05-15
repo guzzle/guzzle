@@ -21,6 +21,9 @@ class CurlFactory implements CurlFactoryInterface
     /** @var int Total number of idle handles to keep in cache */
     private $maxHandles;
 
+    /** @var array */
+    private static $skipMethods = ['GET' => true, 'HEAD' => true];
+
     /**
      * @param int $maxHandles Maximum number of idle handles.
      */
@@ -259,7 +262,9 @@ class CurlFactory implements CurlFactoryInterface
             $this->removeHeader('Content-Length', $conf);
             $this->removeHeader('Transfer-Encoding', $conf);
         } else {
-            $conf[CURLOPT_UPLOAD] = true;
+            if (!isset(self::$skipMethods[$request->getMethod()])) {
+                $conf[CURLOPT_UPLOAD] = true;
+            }
             if ($size !== null) {
                 $conf[CURLOPT_INFILESIZE] = $size;
                 $this->removeHeader('Content-Length', $conf);
@@ -271,6 +276,7 @@ class CurlFactory implements CurlFactoryInterface
             $conf[CURLOPT_READFUNCTION] = function ($ch, $fd, $length) use ($body) {
                 return $body->read($length);
             };
+            }
         }
 
         // If the Expect header is not present, prevent curl from adding it
