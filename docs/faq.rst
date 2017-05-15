@@ -48,7 +48,7 @@ of the returned promise.
 How can I add custom cURL options?
 ==================================
 
-cURL offer a huge number of `customizable options <http://us1.php.net/curl_setopt>`_.
+cURL offers a huge number of `customizable options <http://us1.php.net/curl_setopt>`_.
 While Guzzle normalizes many of these options across different handlers, there
 are times when you need to set custom cURL options. This can be accomplished
 by passing an associative array of cURL settings in the **curl** key of a
