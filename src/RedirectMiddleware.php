@@ -27,6 +27,7 @@ class RedirectMiddleware
         'strict'          => false,
         'referer'         => false,
         'track_redirects' => false,
+        'diff_domain'     => false,
     ];
 
     /** @var callable  */
@@ -193,7 +194,8 @@ class RedirectMiddleware
         }
 
         // Remove Authorization header if host is different.
-        if ($request->getUri()->getHost() !== $modify['uri']->getHost()) {
+        if ($request->getUri()->getHost() !== $modify['uri']->getHost() &&
+            ! $options['allow_redirects']['diff_domain']) {
             $modify['remove_headers'][] = 'Authorization';
         }
 
