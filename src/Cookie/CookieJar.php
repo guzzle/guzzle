@@ -264,6 +264,23 @@ class CookieJar implements CookieJarInterface
             : $request;
     }
 
+    public function getCookieByName($name)
+    {
+        $cookiesArray = $this->toArray();
+        $key = array_search(
+            $name,
+            array_map(function ($element) {
+                return $element['Name'];
+            }, $cookiesArray)
+        );
+
+        if ($key === false) {
+            return null;
+        }
+
+        return $this->cookies[$key];
+    }
+
     /**
      * If a cookie already exists and the server asks to set it again with a
      * null value, the cookie must be deleted.
