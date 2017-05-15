@@ -406,7 +406,7 @@ class StreamHandler
                         $value['no']
                     )
                 ) {
-                    $options['http']['proxy'] = $value[$scheme];
+                    $options['http']['proxy'] = rtrim($value[$scheme], '/');
                 }
             }
         }

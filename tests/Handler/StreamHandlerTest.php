@@ -274,7 +274,7 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $url = rtrim($url, '/');
         $res = $this->getSendResult(['proxy' => ['http' => $url]]);
         $opts = stream_context_get_options($res->getBody()->detach());
-        $this->assertEquals($url, $opts['http']['proxy']);
+        $this->assertEquals(rtrim($url, '/'), $opts['http']['proxy']);
     }
 
     public function testAddsProxyButHonorsNoProxy()
