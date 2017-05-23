@@ -184,6 +184,36 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('"PUT / HTTP/1.1" 200', $logger->output);
     }
 
+    public function testRewindStreamAfterLogsRequestsAndResponses()
+    {
+        $h = new MockHandler([new Response(200, [], 'bar')]);
+        $stack = new HandlerStack($h);
+        $logger = new Logger();
+        $formatter = new MessageFormatter(MessageFormatter::DEBUG);
+        $stack->push(Middleware::log($logger, $formatter));
+        $comp = $stack->resolve();
+        $p = $comp(new Request('GET', 'http://www.google.com', [], 'foo=bar'), []);
+        $response = $p->wait();
+        $this->assertContains('bar', $logger->output);
+        $this->assertContains('foo', $h->getLastRequest()->getBody()->getContents());
+        $this->assertContains('bar', $response->getBody()->getContents());
+    }
+
+    public function testLogDoesNotRewindStreamWhenRequestsAndResponsesNotUsed()
+    {
+        $h = new MockHandler([new Response(200)]);
+        $stack = new HandlerStack($h);
+        $logger = new Logger();
+        $formatter = new MessageFormatter();
+        $stack->push(Middleware::log($logger, $formatter));
+        $comp = $stack->resolve();
+        $p = $comp(new Request('GET', 'http://www.google.com'), []);
+        $response = $p->wait();
+        $this->assertContains('"GET / HTTP/1.1" 200', $logger->output);
+        $this->assertFalse($h->getLastRequest()->getBody()->eof());
+        $this->assertFalse($response->getBody()->eof());
+    }
+
     public function testLogsRequestsAndResponsesCustomLevel()
     {
         $h = new MockHandler([new Response(200)]);

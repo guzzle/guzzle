@@ -176,6 +176,8 @@ final class Middleware
      * Middleware that logs requests, responses, and errors using a message
      * formatter.
      *
+     * If the stream of the request or response has consumed, rewinds the stream.
+     *
      * @param LoggerInterface  $logger Logs messages.
      * @param MessageFormatter $formatter Formatter used to create message strings.
      * @param string           $logLevel Level at which to log requests.
@@ -190,6 +192,8 @@ final class Middleware
                     function ($response) use ($logger, $request, $formatter, $logLevel) {
                         $message = $formatter->format($request, $response);
                         $logger->log($logLevel, $message);
+                        $request->getBody()->eof() && $request->getBody()->rewind();
+                        $response->getBody()->eof() && $response->getBody()->rewind();
                         return $response;
                     },
                     function ($reason) use ($logger, $request, $formatter) {
