@@ -190,10 +190,55 @@ final class Middleware
             return function ($request, array $options) use ($handler, $logger, $formatter, $logLevel) {
                 return $handler($request, $options)->then(
                     function ($response) use ($logger, $request, $formatter, $logLevel) {
-                        $message = $formatter->format($request, $response);
+                        // Request and response bodies may be mutated by logging.
+                        // If a request or response body stream is not seekable
+                        // then log an empty body to preserve state. Otherwise
+                        // log the request and response bodies and seek them back
+                        // to their original position after logging.
+                        $rewindRequest = true;
+                        $rewindResponse = true;
+                        $requestToLog = $request;
+                        $responseToLog = $response;
+                        $requestPos = $request->getBody()->tell();
+                        $responsePos = $response->getBody()->tell();
+
+                        if ($request->getBody()->isSeekable()) {
+                            $request->getBody()->rewind();
+                        } else {
+                            $rewindRequest = false;
+                            $requestToLog = new Psr7\Request(
+                                $request->getMethod(),
+                                $request->getUri(),
+                                $request->getHeaders(),
+                                Psr7\stream_for(''),
+                                $request->getProtocolVersion()
+                            );
+                        }
+
+                        if ($response->getBody()->isSeekable()) {
+                            $response->getBody()->rewind();
+                        } else {
+                            $rewindResponse = false;
+                            $responseToLog = new Psr7\Response(
+                                $response->getStatusCode(),
+                                $response->getHeaders(),
+                                Psr7\stream_for(''),
+                                $response->getProtocolVersion(),
+                                $response->getReasonPhrase()
+                            );
+                        }
+
+                        $message = $formatter->format($requestToLog, $responseToLog);
+
+                        if ($rewindRequest) {
+                            $request->getBody()->seek($requestPos);
+                        }
+
+                        if ($rewindResponse) {
+                            $response->getBody()->seek($responsePos);
+                        }
+
                         $logger->log($logLevel, $message);
-                        $request->getBody()->eof() && $request->getBody()->rewind();
-                        $response->getBody()->eof() && $response->getBody()->rewind();
                         return $response;
                     },
                     function ($reason) use ($logger, $request, $formatter) {

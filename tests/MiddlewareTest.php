@@ -214,6 +214,90 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($response->getBody()->eof());
     }
 
+    public function testLogUsesEmptyStreamWhenRequestBodyIsNotSeekable()
+    {
+        $stream = fopen('php://temp', 'wb');
+        fwrite($stream, 'foobar');
+        fseek($stream, 2);
+
+        $mockBody = $this->getMockBuilder(Psr7\Stream::class)
+            ->setConstructorArgs([$stream])
+            ->setMethods(['isSeekable'])
+            ->getMock();
+
+        $mockBody->expects($this->any())
+            ->method('isSeekable')
+            ->willReturn(false);
+
+        $h = new MockHandler([new Response(200, [], 'bar')]);
+        $stack = new HandlerStack($h);
+        $logger = new Logger();
+        $formatter = new MessageFormatter(MessageFormatter::DEBUG);
+        $stack->push(Middleware::log($logger, $formatter));
+        $comp = $stack->resolve();
+        $request = new Request('GET', 'http://www.google.com', [], $mockBody);
+        $p = $comp($request, []);
+        $p->wait();
+        $this->assertNotContains('foobar', $logger->output);
+        $this->assertEquals(2, $request->getBody()->tell());
+
+        fclose($stream);
+    }
+
+    public function testLogUsesEmptyStreamWhenResponseBodyIsNotSeekable()
+    {
+        $stream = fopen('php://temp', 'wb');
+        fwrite($stream, 'foobar');
+        fseek($stream, 3);
+
+        $mockBody = $this->getMockBuilder(Psr7\Stream::class)
+            ->setConstructorArgs([$stream])
+            ->setMethods(['isSeekable'])
+            ->getMock();
+
+        $mockBody->expects($this->any())
+            ->method('isSeekable')
+            ->willReturn(false);
+
+        $h = new MockHandler([new Response(200, [], $mockBody)]);
+        $stack = new HandlerStack($h);
+        $logger = new Logger();
+        $formatter = new MessageFormatter(MessageFormatter::DEBUG);
+        $stack->push(Middleware::log($logger, $formatter));
+        $comp = $stack->resolve();
+        $p = $comp(new Request('GET', 'http://www.google.com'), []);
+        $response = $p->wait();
+        $this->assertNotContains('foobar', $logger->output);
+        $this->assertEquals(3, $response->getBody()->tell());
+
+        fclose($stream);
+    }
+
+    public function testSeeksStreamToTheSamePositionAfterLogsRequestsAndResponses()
+    {
+        $h = new MockHandler([new Response(200, [], 'baz')]);
+        $stack = new HandlerStack($h);
+        $logger = new Logger();
+        $formatter = new MessageFormatter(MessageFormatter::DEBUG);
+        $stack->push(Middleware::log($logger, $formatter));
+        $stack->push(Middleware::mapRequest(function (RequestInterface $request) {
+            $request->getBody()->seek(1);
+            return $request;
+        }));
+        $stack->push(Middleware::mapResponse(function (ResponseInterface $response) {
+            $response->getBody()->seek(2);
+            return $response;
+        }));
+        $comp = $stack->resolve();
+        $request = new Request('GET', 'http://www.google.com', [], 'foo=bar');
+        $p = $comp($request, []);
+        $response = $p->wait();
+        $this->assertContains('foo=bar', $logger->output);
+        $this->assertContains('baz', $logger->output);
+        $this->assertEquals(1, $request->getBody()->tell());
+        $this->assertEquals(2, $response->getBody()->tell());
+    }
+
     public function testLogsRequestsAndResponsesCustomLevel()
     {
         $h = new MockHandler([new Response(200)]);
