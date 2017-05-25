@@ -287,9 +287,12 @@ class CurlFactory implements CurlFactoryInterface
     private function applyHeaders(EasyHandle $easy, array &$conf)
     {
         foreach ($conf['_headers'] as $name => $values) {
-            foreach ($values as $value) {
-                $conf[CURLOPT_HTTPHEADER][] = "$name: $value";
+            if (count($values) >= 2) {
+                $value = "$name: " . implode(",", array_values($values));
+            } else {
+                $value = "$name: $values[0]";
             }
+            $conf[CURLOPT_HTTPHEADER][] = $value;
         }
 
         // Remove the Accept header if one was not set
