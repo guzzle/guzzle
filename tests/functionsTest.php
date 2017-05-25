@@ -41,7 +41,21 @@ class FunctionsTest extends TestCase
      */
     public function testDescribesType($input, $output)
     {
+        /**
+         * Output may not match if Xdebug is loaded and overloading var_dump().
+         *
+         * @see https://xdebug.org/docs/display#overload_var_dump
+         */
+        if (extension_loaded('xdebug')) {
+            $originalOverload =  ini_get('xdebug.overload_var_dump');
+            ini_set('xdebug.overload_var_dump', 0);
+        }
+
         self::assertSame($output, GuzzleHttp\describe_type($input));
+
+        if (extension_loaded('xdebug')) {
+            ini_set('xdebug.overload_var_dump', $originalOverload);
+        }
     }
 
     public function testParsesHeadersFromLines()
