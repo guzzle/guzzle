@@ -411,4 +411,13 @@ class Client implements ClientInterface
             . 'application/x-www-form-urlencoded request, or the "multipart" '
             . 'request option to send a multipart/form-data request.');
     }
+
+    /**
+     * @param $property
+     * @param $value
+     */
+    public function setConfigProperty($property, $value)
+    {
+        $this->config[$property] = $value;
+    }
 }
