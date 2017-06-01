@@ -131,7 +131,7 @@ You can also use the `sendAsync()` and `requestAsync()` methods of a client:
     use GuzzleHttp\Psr7\Request;
 
     // Create a PSR-7 request object to send
-    $headers = ['X-Foo' => 'Bar'];
+    $headers = ['headers' => ['X-Foo' => 'Bar']];
     $body = 'Hello!';
     $request = new Request('HEAD', 'http://httpbin.org/head', $headers, $body);
 
