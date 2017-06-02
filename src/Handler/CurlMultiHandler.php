@@ -18,11 +18,11 @@ use Psr\Http\Message\RequestInterface;
 class CurlMultiHandler
 {
     /** @var CurlFactoryInterface */
-    private $factory;
-    private $selectTimeout;
-    private $active;
-    private $handles = [];
-    private $delays = [];
+    protected $factory;
+    protected $selectTimeout;
+    protected $active;
+    protected $handles = [];
+    protected $delays = [];
 
     /**
      * This handler accepts the following options:
@@ -124,7 +124,7 @@ class CurlMultiHandler
         }
     }
 
-    private function addRequest(array $entry)
+    protected function addRequest(array $entry)
     {
         $easy = $entry['easy'];
         $id = (int) $easy->handle;
@@ -143,7 +143,7 @@ class CurlMultiHandler
      *
      * @return bool True on success, false on failure.
      */
-    private function cancel($id)
+    protected function cancel($id)
     {
         // Cannot cancel if it has been processed.
         if (!isset($this->handles[$id])) {
@@ -158,7 +158,7 @@ class CurlMultiHandler
         return true;
     }
 
-    private function processMessages()
+    protected function processMessages()
     {
         while ($done = curl_multi_info_read($this->_mh)) {
             $id = (int) $done['handle'];
@@ -182,7 +182,7 @@ class CurlMultiHandler
         }
     }
 
-    private function timeToNext()
+    protected function timeToNext()
     {
         $currentTime = microtime(true);
         $nextTime = PHP_INT_MAX;
