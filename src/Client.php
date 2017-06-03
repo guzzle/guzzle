@@ -4,9 +4,9 @@ namespace GuzzleHttp;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Promise;
 use GuzzleHttp\Psr7;
-use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriInterface;
 
 /**
  * @method ResponseInterface get(string|UriInterface $uri, array $options = [])
@@ -230,6 +230,13 @@ class Client implements ClientInterface
             } elseif (!is_array($options['headers'])) {
                 throw new \InvalidArgumentException('headers must be an array');
             }
+        }
+
+        if (isset($options['handler'])) {
+            @trigger_error(
+                'Sending a request using handler as an option is deprecated since version 6.3 and will be removed in 7.0.',
+                E_USER_DEPRECATED
+            );
         }
 
         // Shallow merge defaults underneath options.
