@@ -235,9 +235,39 @@ class CookieJar implements CookieJarInterface
                 if (!$sc->getDomain()) {
                     $sc->setDomain($request->getUri()->getHost());
                 }
+                if (0 !== strpos($sc->getPath(), '/')) {
+                    $sc->setPath($this->getCookiePathFromRequest($request));
+                }
                 $this->setCookie($sc);
             }
         }
+    }
+
+    /**
+     * Computes cookie path following RFC 6265 section 5.1.4
+     *
+     * @link https://tools.ietf.org/html/rfc6265#section-5.1.4
+     *
+     * @param RequestInterface $request
+     * @return string
+     */
+    private function getCookiePathFromRequest(RequestInterface $request)
+    {
+        $uriPath = $request->getUri()->getPath();
+        if (''  === $uriPath) {
+            return '/';
+        }
+        if (0 !== strpos($uriPath, '/')) {
+            return '/';
+        }
+        if ('/' === $uriPath) {
+            return '/';
+        }
+        if (0 === $lastSlashPos = strrpos($uriPath, '/')) {
+            return '/';
+        }
+
+        return substr($uriPath, 0, $lastSlashPos);
     }
 
     public function withCookieHeader(RequestInterface $request)

@@ -361,4 +361,45 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(3, $newCookieJar);
         $this->assertSame($jar->toArray(), $newCookieJar->toArray());
     }
+
+    public function testAddsCookiesWithEmptyPathFromResponse()
+    {
+        $response = new Response(200, array(
+            'Set-Cookie' => "fpc=foobar; expires=Fri, 02-Mar-2019 02:17:40 GMT; path=;"
+        ));
+        $request = new Request('GET', 'http://www.example.com');
+        $this->jar->extractCookies($request, $response);
+        $newRequest = $this->jar->withCookieHeader(new Request('GET','http://www.example.com/foo'));
+        $this->assertTrue($newRequest->hasHeader('Cookie'));
+    }
+
+    public function getCookiePathsDataProvider()
+    {
+        return [
+            ['', '/'],
+            ['/', '/'],
+            ['/foo', '/'],
+            ['/foo/bar', '/foo'],
+            ['/foo/bar/', '/foo/bar'],
+            ['foo', '/'],
+            ['foo/bar', '/'],
+            ['foo/bar/', '/'],
+        ];
+    }
+
+    /**
+     * @dataProvider getCookiePathsDataProvider
+     */
+    public function testCookiePathWithEmptySetCookiePath($uriPath, $cookiePath)
+    {
+        $response = (new Response(200))
+            ->withAddedHeader('Set-Cookie', "foo=bar; expires=Fri, 02-Mar-2019 02:17:40 GMT; domain=www.example.com; path=;")
+            ->withAddedHeader('Set-Cookie', "bar=foo; expires=Fri, 02-Mar-2019 02:17:40 GMT; domain=www.example.com; path=foobar;")
+        ;
+        $request = (new Request('GET', $uriPath))->withHeader('Host', 'www.example.com');
+        $this->jar->extractCookies($request, $response);
+
+        $this->assertEquals($cookiePath, $this->jar->toArray()[0]['Path']);
+        $this->assertEquals($cookiePath, $this->jar->toArray()[1]['Path']);
+    }
 }
