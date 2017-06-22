@@ -7,6 +7,7 @@ use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\RetryMiddleware;
 
 class RetryMiddlewareTest extends \PHPUnit_Framework_TestCase
@@ -65,6 +66,28 @@ class RetryMiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(1, $calls[1][0]);
         $this->assertInstanceOf(Response::class, $calls[1][2]);
         $this->assertNull($calls[1][3]);
+    }
+
+    public function testCanRetryWithDifferentRequest()
+    {
+        $calls = [];
+        $decider = function ($retries, $request, $response, $error) use (&$calls) {
+            $calls[] = func_get_args();
+            if (count($calls) === 1) {
+                return $request->withUri(Uri::withQueryValue($request->getUri(), 'access_token', 2));
+            }
+            return false;
+        };
+        $m = Middleware::retry($decider);
+        $h = new MockHandler([new Response(200), new Response(201)]);
+        $c = new Client(['handler' => $m($h)]);
+        $p = $c->sendAsync(new Request('GET', 'http://test.com?access_token=1'), []);
+        $this->assertEquals(201, $p->wait()->getStatusCode());
+        $this->assertCount(2, $calls);
+        $this->assertEquals(0, $calls[0][0]);
+        $this->assertEquals('access_token=1', $calls[0][1]->getUri()->getQuery());
+        $this->assertEquals(1, $calls[1][0]);
+        $this->assertEquals('access_token=2', $calls[1][1]->getUri()->getQuery());
     }
 
     public function testBackoffCalculateDelay()

@@ -2,8 +2,6 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Promise\RejectedPromise;
-use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -74,14 +72,18 @@ class RetryMiddleware
     private function onFulfilled(RequestInterface $req, array $options)
     {
         return function ($value) use ($req, $options) {
-            if (!call_user_func(
+            $result = call_user_func(
                 $this->decider,
                 $options['retries'],
                 $req,
                 $value,
                 null
-            )) {
+            );
+            if (!$result) {
                 return $value;
+            }
+            if ($result instanceof RequestInterface) {
+                $req = $result;
             }
             return $this->doRetry($req, $options, $value);
         };
@@ -90,14 +92,18 @@ class RetryMiddleware
     private function onRejected(RequestInterface $req, array $options)
     {
         return function ($reason) use ($req, $options) {
-            if (!call_user_func(
+            $result = call_user_func(
                 $this->decider,
                 $options['retries'],
                 $req,
                 null,
                 $reason
-            )) {
+            );
+            if (!$result) {
                 return \GuzzleHttp\Promise\rejection_for($reason);
+            }
+            if ($result instanceof RequestInterface) {
+                $req = $result;
             }
             return $this->doRetry($req, $options);
         };
