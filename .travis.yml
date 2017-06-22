@@ -8,7 +8,6 @@ php:
   - 7.0
   - 7.1
   - nightly
-  - hhvm
 
 before_script:
   - curl --version
@@ -22,7 +21,11 @@ script: make test
 matrix:
   allow_failures:
     - php: hhvm
+      dist: trusty
     - php: nightly
+  include: 
+    - php: hhvm
+      dist: trusty
   fast_finish: true
 
 before_deploy:
