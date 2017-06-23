@@ -151,15 +151,17 @@ final class Middleware
     }
 
     /**
-     * Middleware that retries requests based on the boolean result of
-     * invoking the provided "decider" function.
+     * Middleware that retries requests based on the result of invoking
+     * the provided "decider" function.
      *
      * If no delay function is provided, a simple implementation of exponential
      * backoff will be utilized.
      *
      * @param callable $decider Function that accepts the number of retries,
      *                          a request, [response], and [exception] and
-     *                          returns true if the request is to be retried.
+     *                          returns true if previous request is to be retried
+     *                          and returns RequestInterface if RequestInterface
+     *                          is to be retried.
      * @param callable $delay   Function that accepts the number of retries and
      *                          returns the number of milliseconds to delay.
      *

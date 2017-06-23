@@ -6,8 +6,8 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * Middleware that retries requests based on the boolean result of
- * invoking the provided "decider" function.
+ * Middleware that retries requests based on the result of invoking
+ * the provided "decider" function.
  */
 class RetryMiddleware
 {
@@ -18,10 +18,11 @@ class RetryMiddleware
     private $decider;
 
     /**
-     * @param callable $decider     Function that accepts the number of retries,
-     *                              a request, [response], and [exception] and
-     *                              returns true if the request is to be
-     *                              retried.
+     * @param callable $decider Function that accepts the number of retries,
+     *                          a request, [response], and [exception] and
+     *                          returns true if previous request is to be retried
+     *                          and returns RequestInterface if RequestInterface
+     *                          is to be retried.
      * @param callable $nextHandler Next handler to invoke.
      * @param callable $delay       Function that accepts the number of retries
      *                              and [response] and returns the number of
@@ -79,6 +80,7 @@ class RetryMiddleware
                 $value,
                 null
             );
+            // For backward compatibility, use type-casting instead of strict comparison $result===false.
             if (!$result) {
                 return $value;
             }
@@ -99,6 +101,7 @@ class RetryMiddleware
                 null,
                 $reason
             );
+            // For backward compatibility, use type-casting instead of strict comparison $result===false.
             if (!$result) {
                 return \GuzzleHttp\Promise\rejection_for($reason);
             }
