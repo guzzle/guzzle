@@ -161,7 +161,7 @@ class Client implements ClientInterface
             'allow_redirects' => RedirectMiddleware::$defaultSettings,
             'http_errors'     => true,
             'decode_content'  => true,
-            'verify'          => true,
+            'verify'          => false,//false关闭https证书验证
             'cookies'         => false
         ];
 
