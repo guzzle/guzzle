@@ -703,14 +703,14 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $request = new Request('get', '/bar', [], null, '1.1');
         $client->send($request, [RequestOptions::VERSION => '1.0']);
         $this->assertSame(
-            '1.1',
+            '1.0',
             (string) $mockHandler->getLastRequest()->getProtocolVersion()
         );
 
         $request = new Request('get', '/bar', [], null, '1.0');
         $client->send($request, [RequestOptions::VERSION => '1.1']);
         $this->assertSame(
-            '1.0',
+            '1.1',
             (string) $mockHandler->getLastRequest()->getProtocolVersion()
         );
     }
