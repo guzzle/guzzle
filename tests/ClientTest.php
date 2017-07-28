@@ -306,6 +306,16 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('foo', (string) $last->getBody());
     }
 
+    public function testOverwritesBodyOfRequest()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $request = new Request('PUT', 'http://foo.com', 'bar');
+        $client->send($request, ['body' => 'foo']);
+        $last = $mock->getLastRequest();
+        $this->assertEquals('foo', (string) $last->getBody());
+    }
+
     /**
      * @expectedException \InvalidArgumentException
      */
