@@ -10,6 +10,7 @@ use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\ResponseInterface;
 
 class ClientTest extends \PHPUnit_Framework_TestCase
@@ -663,6 +664,24 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertSame(
             'baz',
             (string) $mockHandler->getLastRequest()->getUri()
+        );
+    }
+
+    public function testVersionOfRequestIsSet()
+    {
+        $mockHandler = new MockHandler([new Response(), new Response()]);
+        $client = new Client(['handler'  => $mockHandler]);
+
+        $client->request('GET', 'baz', [RequestOptions::VERSION => '1.1']);
+        $this->assertSame(
+            '1.1',
+            (string) $mockHandler->getLastRequest()->getProtocolVersion()
+        );
+
+        $client->request('GET', 'baz', [RequestOptions::VERSION => '1.0']);
+        $this->assertSame(
+            '1.0',
+            (string) $mockHandler->getLastRequest()->getProtocolVersion()
         );
     }
 
