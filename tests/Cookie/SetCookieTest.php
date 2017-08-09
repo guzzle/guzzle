@@ -395,4 +395,15 @@ class SetCookieTest extends \PHPUnit_Framework_TestCase
             }
         }
     }
+
+    public function testCookieString()
+    {
+        $cookie = new SetCookie();
+        $cookie = $cookie->fromString(';path=/;HttpOnly');
+
+        $this->assertEquals(
+            'path=/; Path=/; HttpOnly',
+            (string)$cookie
+        );
+    }
 }
