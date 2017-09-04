@@ -69,7 +69,7 @@ used with a client.
 How can I add custom stream context options?
 ============================================
 
-You can pass custom `stream context options <http://www.php.net/manual/en/context.php>`_
+You can pass custom `stream context options <http://php.net/manual/en/context.php>`_
 using the **stream_context** key of the request option. The **stream_context**
 array is an associative array where each key is a PHP transport, and each value
 is an associative array of transport options.
