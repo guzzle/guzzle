@@ -6,6 +6,8 @@ use Psr\Http\Message\ResponseInterface;
 
 /**
  * Exception when an HTTP error occurs (4xx or 5xx error)
+ * 
+ * @method ResponseInterface getResponse()
  */
 class BadResponseException extends RequestException
 {
