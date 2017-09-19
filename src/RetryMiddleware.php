@@ -106,7 +106,9 @@ class RetryMiddleware
     private function doRetry(RequestInterface $request, array $options, ResponseInterface $response = null)
     {
         $options['delay'] = call_user_func($this->delay, ++$options['retries'], $response);
-
+        if ($request->getBody()->isSeekable()){
+            $request->getBody()->rewind();
+        }
         return $this($request, $options);
     }
 }
