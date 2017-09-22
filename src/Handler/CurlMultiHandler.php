@@ -38,7 +38,7 @@ class CurlMultiHandler
         $this->factory = isset($options['handle_factory'])
             ? $options['handle_factory'] : new CurlFactory(50);
         $this->selectTimeout = isset($options['select_timeout'])
-            ? $options['select_timeout'] : 1;
+            ? $options['select_timeout'] : 0;
     }
 
     public function __get($name)
@@ -95,17 +95,11 @@ class CurlMultiHandler
         // Step through the task queue which may add additional requests.
         P\queue()->run();
 
-        if ($this->active &&
-            curl_multi_select($this->_mh, $this->selectTimeout) === -1
-        ) {
-            // Perform a usleep if a select returns -1.
-            // See: https://bugs.php.net/bug.php?id=61141
-            usleep(250);
+        $cms = curl_multi_select($this->_mh, $this->selectTimeout);
+        if ($cms != 0) {	
+            while (curl_multi_exec($this->_mh, $this->active) === CURLM_CALL_MULTI_PERFORM);
+            $this->processMessages();
         }
-
-        while (curl_multi_exec($this->_mh, $this->active) === CURLM_CALL_MULTI_PERFORM);
-
-        $this->processMessages();
     }
 
     /**
