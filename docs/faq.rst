@@ -130,7 +130,7 @@ setting the ``expect`` request option to ``false``:
     // Disable the expect header on all client requests
     $client = new GuzzleHttp\Client(['expect' => false]);
 
-How can I track a redirected requests?
+How can I track redirected requests?
 ======================================
 
 You can enable tracking of redirected URIs and status codes via the
