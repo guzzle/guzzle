@@ -131,7 +131,7 @@ setting the ``expect`` request option to ``false``:
     $client = new GuzzleHttp\Client(['expect' => false]);
 
 How can I track redirected requests?
-======================================
+====================================
 
 You can enable tracking of redirected URIs and status codes via the
 `track_redirects` option. Each redirected URI and status code will be stored in the
