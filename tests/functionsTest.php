@@ -2,8 +2,9 @@
 namespace GuzzleHttp\Test;
 
 use GuzzleHttp;
+use PHPUnit\Framework\TestCase;
 
-class FunctionsTest extends \PHPUnit_Framework_TestCase
+class FunctionsTest extends TestCase
 {
     public function testExpandsTemplate()
     {

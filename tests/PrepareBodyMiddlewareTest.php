@@ -10,8 +10,9 @@ use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\RequestInterface;
+use PHPUnit\Framework\TestCase;
 
-class PrepareBodyMiddlewareTest extends \PHPUnit_Framework_TestCase
+class PrepareBodyMiddlewareTest extends TestCase
 {
 
     public function methodProvider()

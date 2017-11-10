@@ -3,8 +3,9 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\Psr7;
+use PHPUnit\Framework\TestCase;
 
-class TransferStatsTest extends \PHPUnit_Framework_TestCase
+class TransferStatsTest extends TestCase
 {
     public function testHasData()
     {

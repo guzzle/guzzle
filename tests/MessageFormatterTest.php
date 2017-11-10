@@ -6,11 +6,12 @@ use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\MessageFormatter;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers GuzzleHttp\MessageFormatter
  */
-class MessageFormatterTest extends \PHPUnit_Framework_TestCase
+class MessageFormatterTest extends TestCase
 {
     public function testCreatesWithClfByDefault()
     {

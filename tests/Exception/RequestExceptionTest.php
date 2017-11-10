@@ -4,11 +4,12 @@ namespace GuzzleHttp\Tests\Event;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers GuzzleHttp\Exception\RequestException
  */
-class RequestExceptionTest extends \PHPUnit_Framework_TestCase
+class RequestExceptionTest extends TestCase
 {
     public function testHasRequestAndResponse()
     {

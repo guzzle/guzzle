@@ -6,11 +6,12 @@ use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\TransferStats;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \GuzzleHttp\Handler\MockHandler
  */
-class MockHandlerTest extends \PHPUnit_Framework_TestCase
+class MockHandlerTest extends TestCase
 {
     public function testReturnsMockResponse()
     {

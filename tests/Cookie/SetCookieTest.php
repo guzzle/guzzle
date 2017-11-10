@@ -2,11 +2,12 @@
 namespace GuzzleHttp\Tests\CookieJar;
 
 use GuzzleHttp\Cookie\SetCookie;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers GuzzleHttp\Cookie\SetCookie
  */
-class SetCookieTest extends \PHPUnit_Framework_TestCase
+class SetCookieTest extends TestCase
 {
     public function testInitializesDefaultValues()
     {
