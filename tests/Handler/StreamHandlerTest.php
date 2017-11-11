@@ -50,7 +50,7 @@ class StreamHandlerTest extends TestCase
     }
 
     /**
-     * @expectedException \GuzzleHttp\Exception\ConnectException
+     * @expectedException \GuzzleHttp\Exception\RequestException
      */
     public function testAddsErrorToResponse()
     {
