@@ -180,25 +180,26 @@ final class Middleware
      * @param LoggerInterface  $logger Logs messages.
      * @param MessageFormatter $formatter Formatter used to create message strings.
      * @param string           $logLevel Level at which to log requests.
+     * @param array            $context Context to log requests.
      *
      * @return callable Returns a function that accepts the next handler.
      */
-    public static function log(LoggerInterface $logger, MessageFormatter $formatter, $logLevel = LogLevel::INFO)
+    public static function log(LoggerInterface $logger, MessageFormatter $formatter, $logLevel = LogLevel::INFO, $context = [])
     {
-        return function (callable $handler) use ($logger, $formatter, $logLevel) {
-            return function ($request, array $options) use ($handler, $logger, $formatter, $logLevel) {
+        return function (callable $handler) use ($logger, $formatter, $logLevel, $context) {
+            return function ($request, array $options) use ($handler, $logger, $formatter, $logLevel, $context) {
                 return $handler($request, $options)->then(
-                    function ($response) use ($logger, $request, $formatter, $logLevel) {
+                    function ($response) use ($logger, $request, $formatter, $logLevel, $context) {
                         $message = $formatter->format($request, $response);
-                        $logger->log($logLevel, $message);
+                        $logger->log($logLevel, $message, $context);
                         return $response;
                     },
-                    function ($reason) use ($logger, $request, $formatter) {
+                    function ($reason) use ($logger, $request, $formatter, $context) {
                         $response = $reason instanceof RequestException
                             ? $reason->getResponse()
                             : null;
                         $message = $formatter->format($request, $response, $reason);
-                        $logger->notice($message);
+                        $logger->notice($message, $context);
                         return \GuzzleHttp\Promise\rejection_for($reason);
                     }
                 );

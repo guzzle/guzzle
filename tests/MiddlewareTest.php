@@ -198,6 +198,19 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('[debug]', $logger->output);
     }
 
+    public function testLogsRequestsAndResponsesWithContext()
+    {
+        $h = new MockHandler([new Response(200)]);
+        $stack = new HandlerStack($h);
+        $logger = new Logger();
+        $formatter = new MessageFormatter();
+        $stack->push(Middleware::log($logger, $formatter, 'info', ['token' => 1234, 'id' => 4321]));
+        $comp = $stack->resolve();
+        $p = $comp(new Request('PUT', 'http://www.google.com'), []);
+        $p->wait();
+        $this->assertContains('1234;4321', $logger->output);
+    }
+
     public function testLogsRequestsAndErrors()
     {
         $h = new MockHandler([new Response(404)]);
@@ -224,6 +237,6 @@ class Logger implements LoggerInterface
 
     public function log($level, $message, array $context = [])
     {
-        $this->output .= "[{$level}] {$message}\n";
+        $this->output .= sprintf("[%s] %s %s\n", $level, $message, implode(';', $context));
     }
 }
