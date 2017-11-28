@@ -323,10 +323,10 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $path = $path = \GuzzleHttp\default_ca_bundle();
         $res = $this->getSendResult(['verify' => $path]);
         $opts = stream_context_get_options($res->getBody()->detach());
-        $this->assertEquals(true, $opts['ssl']['verify_peer']);
-        $this->assertEquals(true, $opts['ssl']['verify_peer_name']);
+        $this->assertTrue($opts['ssl']['verify_peer']);
+        $this->assertTrue($opts['ssl']['verify_peer_name']);
         $this->assertEquals($path, $opts['ssl']['cafile']);
-        $this->assertTrue(file_exists($opts['ssl']['cafile']));
+        $this->assertFileExists($opts['ssl']['cafile']);
     }
 
     public function testUsesSystemDefaultBundle()
