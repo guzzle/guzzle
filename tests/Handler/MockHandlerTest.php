@@ -217,7 +217,7 @@ class MockHandlerTest extends \PHPUnit_Framework_TestCase
         };
         $mock($request, ['on_stats' => $onStats])->wait(false);
         $this->assertSame($e, $stats->getHandlerErrorData());
-        $this->assertSame(null, $stats->getResponse());
+        $this->assertNull($stats->getResponse());
         $this->assertSame($request, $stats->getRequest());
     }
 }

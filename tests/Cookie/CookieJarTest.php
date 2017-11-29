@@ -123,7 +123,7 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
 
     public function testDoesNotAddIncompleteCookies()
     {
-        $this->assertEquals(false, $this->jar->setCookie(new SetCookie()));
+        $this->assertFalse($this->jar->setCookie(new SetCookie()));
         $this->assertFalse($this->jar->setCookie(new SetCookie(array(
             'Name' => 'foo'
         ))));
@@ -195,7 +195,7 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(1, count($this->jar));
 
         $c = $this->jar->getIterator()->getArrayCopy();
-        $this->assertEquals(false, $c[0]->getDiscard());
+        $this->assertFalse($c[0]->getDiscard());
 
         // Make sure it doesn't duplicate the cookie
         $this->jar->setCookie(new SetCookie($data));
