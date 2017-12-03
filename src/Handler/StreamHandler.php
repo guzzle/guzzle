@@ -4,7 +4,6 @@ namespace GuzzleHttp\Handler;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Promise\FulfilledPromise;
-use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\TransferStats;
@@ -276,7 +275,7 @@ class StreamHandler
         }
 
         $params = [];
-        $context = $this->getDefaultContext($request, $options);
+        $context = $this->getDefaultContext($request);
 
         if (isset($options['on_headers']) && !is_callable($options['on_headers'])) {
             throw new \InvalidArgumentException('on_headers must be callable');
