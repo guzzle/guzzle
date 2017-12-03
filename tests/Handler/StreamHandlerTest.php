@@ -76,7 +76,7 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('8', $response->getHeaderLine('Content-Length'));
         $body = $response->getBody();
         $stream = $body->detach();
-        $this->assertTrue(is_resource($stream));
+        $this->assertInternalType('resource', $stream);
         $this->assertEquals('http', stream_get_meta_data($stream)['wrapper_type']);
         $this->assertEquals('hi there', stream_get_contents($stream));
         fclose($stream);
