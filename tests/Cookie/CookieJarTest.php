@@ -81,8 +81,8 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
             $this->assertTrue($this->jar->setCookie($cookie));
         }
 
-        $this->assertEquals(3, count($this->jar));
-        $this->assertEquals(3, count($this->jar->getIterator()));
+        $this->assertCount(3, $this->jar);
+        $this->assertCount(3, $this->jar->getIterator());
         $this->assertEquals($cookies, $this->jar->getIterator()->getArrayCopy());
     }
 
@@ -107,18 +107,18 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
 
         // Remove foo.com cookies
         $this->jar->clear('foo.com');
-        $this->assertEquals(2, count($this->jar));
+        $this->assertCount(2, $this->jar);
         // Try again, removing no further cookies
         $this->jar->clear('foo.com');
-        $this->assertEquals(2, count($this->jar));
+        $this->assertCount(2, $this->jar);
 
         // Remove bar.com cookies with path of /boo
         $this->jar->clear('bar.com', '/boo');
-        $this->assertEquals(1, count($this->jar));
+        $this->assertCount(1, $this->jar);
 
         // Remove cookie by name
         $this->jar->clear(null, null, 'test');
-        $this->assertEquals(0, count($this->jar));
+        $this->assertCount(0, $this->jar);
     }
 
     public function testDoesNotAddIncompleteCookies()
@@ -188,23 +188,23 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
 
         // Make sure that the discard cookie is overridden with the non-discard
         $this->assertTrue($this->jar->setCookie(new SetCookie($data)));
-        $this->assertEquals(1, count($this->jar));
+        $this->assertCount(1, $this->jar);
 
         $data['Discard'] = false;
         $this->assertTrue($this->jar->setCookie(new SetCookie($data)));
-        $this->assertEquals(1, count($this->jar));
+        $this->assertCount(1, $this->jar);
 
         $c = $this->jar->getIterator()->getArrayCopy();
         $this->assertFalse($c[0]->getDiscard());
 
         // Make sure it doesn't duplicate the cookie
         $this->jar->setCookie(new SetCookie($data));
-        $this->assertEquals(1, count($this->jar));
+        $this->assertCount(1, $this->jar);
 
         // Make sure the more future-ful expiration date supersede the other
         $data['Expires'] = time() + 2000;
         $this->assertTrue($this->jar->setCookie(new SetCookie($data)));
-        $this->assertEquals(1, count($this->jar));
+        $this->assertCount(1, $this->jar);
         $c = $this->jar->getIterator()->getArrayCopy();
         $this->assertNotEquals($t, $c[0]->getExpires());
     }
@@ -228,13 +228,13 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
 
         $data['Value'] = 'boo';
         $this->assertTrue($this->jar->setCookie(new SetCookie($data)));
-        $this->assertEquals(1, count($this->jar));
+        $this->assertCount(1, $this->jar);
 
         // Changing the value plus a parameter also must overwrite the existing one
         $data['Value'] = 'zoo';
         $data['Secure'] = false;
         $this->assertTrue($this->jar->setCookie(new SetCookie($data)));
-        $this->assertEquals(1, count($this->jar));
+        $this->assertCount(1, $this->jar);
 
         $c = $this->jar->getIterator()->getArrayCopy();
         $this->assertEquals('zoo', $c[0]->getValue());
@@ -247,7 +247,7 @@ class CookieJarTest extends \PHPUnit_Framework_TestCase
         ));
         $request = new Request('GET', 'http://www.example.com');
         $this->jar->extractCookies($request, $response);
-        $this->assertEquals(1, count($this->jar));
+        $this->assertCount(1, $this->jar);
     }
 
     public function getMatchingCookiesDataProvider()

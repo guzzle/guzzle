@@ -77,7 +77,7 @@ class MockHandlerTest extends \PHPUnit_Framework_TestCase
         $p->wait();
 
         $this->assertFileExists($filename);
-        $this->assertEquals('TEST CONTENT', file_get_contents($filename));
+        $this->assertStringEqualsFile($filename, 'TEST CONTENT');
 
         unlink($filename);
     }
@@ -93,7 +93,7 @@ class MockHandlerTest extends \PHPUnit_Framework_TestCase
         $p->wait();
 
         $this->assertFileExists($meta['uri']);
-        $this->assertEquals('TEST CONTENT', file_get_contents($meta['uri']));
+        $this->assertStringEqualsFile($meta['uri'], 'TEST CONTENT');
     }
 
     public function testSinkStream()
@@ -106,7 +106,7 @@ class MockHandlerTest extends \PHPUnit_Framework_TestCase
         $p->wait();
 
         $this->assertFileExists($stream->getMetadata('uri'));
-        $this->assertEquals('TEST CONTENT', file_get_contents($stream->getMetadata('uri')));
+        $this->assertStringEqualsFile($stream->getMetadata('uri'), 'TEST CONTENT');
     }
 
     public function testCanEnqueueCallables()
