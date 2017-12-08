@@ -26,7 +26,7 @@ trivial to integrate with web services.
     ]);
     echo $res->getStatusCode();
     // "200"
-    echo $res->getHeader('content-type');
+    echo $res->getHeader('content-type')[0];
     // 'application/json; charset=utf8'
     echo $res->getBody();
     // {"type":"User"...'
