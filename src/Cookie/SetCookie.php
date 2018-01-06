@@ -42,7 +42,6 @@ class SetCookie
 
         // Add the cookie pieces into the parsed data array
         foreach ($pieces as $part) {
-
             $cookieParts = explode('=', $part, 2);
             $key = trim($cookieParts[0]);
             $value = isset($cookieParts[1])

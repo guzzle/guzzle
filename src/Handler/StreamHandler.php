@@ -102,7 +102,7 @@ class StreamHandler
         $status = $parts[1];
         $reason = isset($parts[2]) ? $parts[2] : null;
         $headers = \GuzzleHttp\headers_from_lines($hdrs);
-        list ($stream, $headers) = $this->checkDecode($options, $headers, $stream);
+        list($stream, $headers) = $this->checkDecode($options, $headers, $stream);
         $stream = Psr7\stream_for($stream);
         $sink = $stream;
 
@@ -306,7 +306,6 @@ class StreamHandler
             && isset($options['auth'][2])
             && 'ntlm' == $options['auth'][2]
         ) {
-
             throw new \InvalidArgumentException('Microsoft NTLM authentication only supported with curl handler');
         }
 
