@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 5.3.2 - 2018-01-15
+
+* Improve tests
+* Fix react promise dependency
+* Fix PHP 7 compatibility
+
 ## 5.3.1 - 2016-07-18
 
 * Address HTTP_PROXY security vulnerability, CVE-2016-5385:
