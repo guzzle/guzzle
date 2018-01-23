@@ -384,9 +384,9 @@ class SetCookie
                 . 'following characters: ()<>@,;:\"/?={}';
         }
 
-        // Value must not be empty, but can be 0
+        // Value must not be empty, but can be 0 or an empty string
         $value = $this->getValue();
-        if (empty($value) && !is_numeric($value)) {
+        if (empty($value) && !is_numeric($value) && $value !== '') {
             return 'The cookie value must not be empty';
         }
 
