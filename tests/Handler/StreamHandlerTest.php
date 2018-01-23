@@ -285,7 +285,7 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
             'no'   => ['*']
         ]]);
         $opts = stream_context_get_options($res->getBody()->detach());
-        $this->assertTrue(empty($opts['http']['proxy']));
+        $this->assertEmpty($opts['http']['proxy']);
     }
 
     public function testAddsTimeout()
