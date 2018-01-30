@@ -208,6 +208,7 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com'), []);
         $p->wait();
+        $this->assertContains('"PUT / HTTP/1.1" 200', $logger->output);
         $this->assertContains('1234;4321', $logger->output);
     }
 
@@ -224,6 +225,22 @@ class MiddlewareTest extends \PHPUnit_Framework_TestCase
         $p->wait(false);
         $this->assertContains('PUT http://www.google.com', $logger->output);
         $this->assertContains('404 Not Found', $logger->output);
+    }
+
+    public function testLogsRequestsAndErrorsWithContext()
+    {
+        $h = new MockHandler([new Response(404)]);
+        $stack = new HandlerStack($h);
+        $logger = new Logger();
+        $formatter = new MessageFormatter('{code} {error}');
+        $stack->push(Middleware::log($logger, $formatter, 'info', ['token' => 1234, 'id' => 4321]));
+        $stack->push(Middleware::httpErrors());
+        $comp = $stack->resolve();
+        $p = $comp(new Request('PUT', 'http://www.google.com'), ['http_errors' => true]);
+        $p->wait(false);
+        $this->assertContains('PUT http://www.google.com', $logger->output);
+        $this->assertContains('404 Not Found', $logger->output);
+        $this->assertContains('1234;4321', $logger->output);
     }
 }
 
