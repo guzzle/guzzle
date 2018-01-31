@@ -115,6 +115,9 @@ class SetCookieTest extends \PHPUnit_Framework_TestCase
 
         $cookie->setDomain('.local');
         $this->assertTrue($cookie->matchesDomain('example.local'));
+
+        $cookie->setDomain('example.com/'); // malformed domain
+        $this->assertFalse($cookie->matchesDomain('example.com'));
     }
 
     public function pathMatchProvider()
