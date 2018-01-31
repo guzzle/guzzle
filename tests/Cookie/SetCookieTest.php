@@ -223,6 +223,7 @@ class SetCookieTest extends \PHPUnit_Framework_TestCase
             ),
             array('', []),
             array('foo', []),
+            array('; foo', []),
             array(
                 'foo="bar"',
                 [
