@@ -64,10 +64,8 @@ class CurlMultiHandler
         $id = (int) $easy->handle;
 
         $promise = new Promise(
-            [$this, 'execute'],
-            function () use ($id) {
-                return $this->cancel($id);
-            }
+            function () use ($id) { $this->executeFor($id); },
+            function () use ($id) { return $this->cancel($id); }
         );
 
         $this->addRequest(['easy' => $easy, 'deferred' => $promise]);
@@ -118,6 +116,32 @@ class CurlMultiHandler
         $queue = P\queue();
 
         while ($this->handles || !$queue->isEmpty()) {
+            // If there are no transfers, then sleep for the next delay
+            if (!$this->active && $this->delays) {
+                usleep($this->timeToNext());
+            }
+            $this->tick();
+        }
+    }
+
+    /**
+     * Runs until specified outstanding connections have completed.
+     */
+    public function executeFor($id)
+    {
+        $queue = P\queue();
+
+        while ($this->handles || !$queue->isEmpty()) {
+            if (!isset($this->handles[$id])) {
+                break;
+            } else {
+                /** @var Promise $promise */
+                $promise = $this->handles[$id]['deferred'];
+                if ($promise->getState() != Promise::PENDING) {
+                    break;
+                }
+            }
+
             // If there are no transfers, then sleep for the next delay
             if (!$this->active && $this->delays) {
                 usleep($this->timeToNext());
