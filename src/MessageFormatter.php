@@ -19,7 +19,6 @@ use Psr\Http\Message\ResponseInterface;
  * - {host}:           Host of the request
  * - {method}:         Method of the request
  * - {uri}:            URI of the request
- * - {host}:           Host of the request
  * - {version}:        Protocol version
  * - {target}:         Request target of the request (path + query + fragment)
  * - {hostname}:       Hostname of the machine that sent the request
