@@ -9,11 +9,12 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RedirectMiddleware;
 use Psr\Http\Message\RequestInterface;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers GuzzleHttp\RedirectMiddleware
  */
-class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
+class RedirectMiddlewareTest extends TestCase
 {
     public function testIgnoresNonRedirects()
     {

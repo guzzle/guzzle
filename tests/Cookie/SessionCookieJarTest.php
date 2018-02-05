@@ -3,11 +3,12 @@ namespace GuzzleHttp\Tests\CookieJar;
 
 use GuzzleHttp\Cookie\SessionCookieJar;
 use GuzzleHttp\Cookie\SetCookie;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers GuzzleHttp\Cookie\SessionCookieJar
  */
-class SessionCookieJarTest extends \PHPUnit_Framework_TestCase
+class SessionCookieJarTest extends TestCase
 {
     private $sessionVar;
 

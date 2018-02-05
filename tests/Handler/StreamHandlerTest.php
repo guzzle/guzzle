@@ -11,11 +11,12 @@ use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Tests\Server;
 use GuzzleHttp\TransferStats;
 use Psr\Http\Message\ResponseInterface;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \GuzzleHttp\Handler\StreamHandler
  */
-class StreamHandlerTest extends \PHPUnit_Framework_TestCase
+class StreamHandlerTest extends TestCase
 {
     private function queueRes()
     {
@@ -49,7 +50,7 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \GuzzleHttp\Exception\ConnectException
+     * @expectedException \GuzzleHttp\Exception\RequestException
      */
     public function testAddsErrorToResponse()
     {

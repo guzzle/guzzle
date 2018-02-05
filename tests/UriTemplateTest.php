@@ -2,11 +2,12 @@
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\UriTemplate;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers GuzzleHttp\UriTemplate
  */
-class UriTemplateTest extends \PHPUnit_Framework_TestCase
+class UriTemplateTest extends TestCase
 {
     /**
      * @return array

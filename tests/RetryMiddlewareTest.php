@@ -8,8 +8,9 @@ use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RetryMiddleware;
+use PHPUnit\Framework\TestCase;
 
-class RetryMiddlewareTest extends \PHPUnit_Framework_TestCase
+class RetryMiddlewareTest extends TestCase
 {
     public function testRetriesWhenDeciderReturnsTrue()
     {

@@ -6,8 +6,9 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\TestCase;
 
-class HandlerStackTest extends \PHPUnit_Framework_TestCase
+class HandlerStackTest extends TestCase
 {
     public function testSetsHandlerInCtor()
     {
