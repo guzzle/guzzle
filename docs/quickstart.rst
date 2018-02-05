@@ -273,7 +273,7 @@ You can retrieve headers from the response:
     }
 
     // Get a header from the response.
-    echo $response->getHeader('Content-Length');
+    echo $response->getHeader('Content-Length')[0];
 
     // Get all of the response headers.
     foreach ($response->getHeaders() as $name => $values) {
