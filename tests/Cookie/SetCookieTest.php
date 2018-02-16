@@ -396,4 +396,45 @@ class SetCookieTest extends TestCase
             }
         }
     }
+
+    /**
+     * Provides the data for testing isExpired
+     *
+     * @return array
+     */
+    public function isExpiredProvider() {
+        return array(
+            array(
+                'FOO=bar; expires=Thu, 01 Jan 1970 00:00:00 GMT;',
+                true,
+            ),
+            array(
+                'FOO=bar; expires=Thu, 01 Jan 1970 00:00:01 GMT;',
+                true,
+            ),
+            array(
+                'FOO=bar; expires='.date(\DateTime::RFC1123, time()+10).';',
+                false,
+            ),
+            array(
+                'FOO=bar; expires='.date(\DateTime::RFC1123, time()-10).';',
+                true,
+            ),
+            array(
+                'FOO=bar;',
+                false,
+            ),
+        );
+    }
+
+    /**
+     * @dataProvider isExpiredProvider
+     */
+    public function testIsExpired($cookie, $expired)
+    {
+        $this->assertEquals(
+            $expired,
+            SetCookie::fromString($cookie)->isExpired()
+        );
+    }
 }
