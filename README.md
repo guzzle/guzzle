@@ -2,6 +2,11 @@ Guzzle, PHP HTTP client
 =======================
 
 [![Build Status](https://travis-ci.org/guzzle/guzzle.svg?branch=master)](https://travis-ci.org/guzzle/guzzle)
+[![Latest Stable Version](https://poser.pugx.org/guzzlehttp/guzzle/v/stable)](https://packagist.org/packages/guzzlehttp/guzzle)
+[![Total Downloads](https://poser.pugx.org/guzzlehttp/guzzle/downloads)](https://packagist.org/packages/guzzlehttp/guzzle)
+[![Latest Unstable Version](https://poser.pugx.org/guzzlehttp/guzzle/v/unstable)](https://packagist.org/packages/guzzlehttp/guzzle)
+[![License](https://poser.pugx.org/guzzlehttp/guzzle/license)](https://packagist.org/packages/guzzlehttp/guzzle)
+[![Daily Downloads](https://poser.pugx.org/guzzlehttp/guzzle/d/daily)](https://packagist.org/packages/guzzlehttp/guzzle)
 
 Guzzle is a PHP HTTP client that makes it easy to send HTTP requests and
 trivial to integrate with web services.
