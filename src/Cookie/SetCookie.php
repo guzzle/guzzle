@@ -35,6 +35,7 @@ class SetCookie
         $data = self::$defaults;
         // Explode the cookie string using a series of semicolons
         $pieces = array_filter(array_map('trim', explode(';', $cookie)));
+        $pieces = array_values($pieces);
         // The name of the cookie (first kvp) must include an equal sign.
         if (empty($pieces) || !strpos($pieces[0], '=')) {
             return new self($data);
