@@ -224,6 +224,7 @@ class SetCookieTest extends TestCase
             ),
             array('', []),
             array('foo', []),
+            array('; foo', []),
             array(
                 'foo="bar"',
                 [
