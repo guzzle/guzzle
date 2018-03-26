@@ -358,7 +358,7 @@ class SetCookie
      */
     public function isExpired()
     {
-        return $this->getExpires() && time() > $this->getExpires();
+        return $this->getExpires() !== null && time() > $this->getExpires();
     }
 
     /**
