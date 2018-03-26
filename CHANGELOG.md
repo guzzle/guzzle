@@ -1,5 +1,10 @@
 # Change Log
 
+## 6.3.2 - 2018-03-26
+
+* Fix: Release process
+
+
 ## 6.3.1 - 2018-03-26
 
 * Bug fix: Parsing 0 epoch expiry times in cookies [#2014](https://github.com/guzzle/guzzle/pull/2014)

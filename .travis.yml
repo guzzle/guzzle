@@ -30,11 +30,11 @@ matrix:
   fast_finish: true
 
 before_deploy:
-  - rvm 1.9.3 do gem install mime-types -v 2.6.2
   - make package
 
 deploy:
   provider: releases
+  skip_cleanup: true
   api_key:
     secure: UpypqlYgsU68QT/x40YzhHXvzWjFwCNo9d+G8KAdm7U9+blFfcWhV1aMdzugvPMl6woXgvJj7qHq5tAL4v6oswCORhpSBfLgOQVFaica5LiHsvWlAedOhxGmnJqMTwuepjBCxXhs3+I8Kof1n4oUL9gKytXjOVCX/f7XU1HiinU=
   file:
