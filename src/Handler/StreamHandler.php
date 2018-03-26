@@ -60,6 +60,7 @@ class StreamHandler
             if (strpos($message, 'getaddrinfo') // DNS lookup failed
                 || strpos($message, 'Connection refused')
                 || strpos($message, "couldn't connect to host") // error on HHVM
+                || strpos($message, "connection attempt failed")
             ) {
                 $e = new ConnectException($e->getMessage(), $request, $e);
             }
