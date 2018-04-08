@@ -201,7 +201,7 @@ class ClientTest extends TestCase
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
         $client->get('http://foo.com', ['allow_redirects' => true]);
-        $this->assertInternalType('array',  $mock->getLastOptions()['allow_redirects']);
+        $this->assertInternalType('array', $mock->getLastOptions()['allow_redirects']);
     }
 
     /**
@@ -674,5 +674,4 @@ class ClientTest extends TestCase
     {
         new Client(['handler' => 'not_cllable']);
     }
-
 }

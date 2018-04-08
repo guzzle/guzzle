@@ -64,7 +64,7 @@ class FunctionsTest extends TestCase
 
     public function testReturnsDebugResource()
     {
-        $this->assertInternalType('resource' , GuzzleHttp\debug_resource());
+        $this->assertInternalType('resource', GuzzleHttp\debug_resource());
     }
 
     public function testProvidesDefaultCaBundler()
