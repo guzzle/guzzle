@@ -370,7 +370,7 @@ class CookieJarTest extends TestCase
         ));
         $request = new Request('GET', 'http://www.example.com');
         $this->jar->extractCookies($request, $response);
-        $newRequest = $this->jar->withCookieHeader(new Request('GET','http://www.example.com/foo'));
+        $newRequest = $this->jar->withCookieHeader(new Request('GET', 'http://www.example.com/foo'));
         $this->assertTrue($newRequest->hasHeader('Cookie'));
     }
 
