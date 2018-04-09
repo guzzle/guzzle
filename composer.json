@@ -19,7 +19,7 @@
     },
     "require-dev": {
         "ext-curl": "*",
-        "phpunit/phpunit": "^4.8.35 || ^5.7 || ^6.4",
+        "phpunit/phpunit": "^4.8.35 || ^5.7 || ^6.4 || ^7.0",
         "psr/log": "^1.0"
     },
     "autoload": {
