@@ -169,7 +169,10 @@ class RedirectMiddleware
         if ($statusCode == 303 ||
             ($statusCode <= 302 && !$options['allow_redirects']['strict'])
         ) {
-            $modify['method'] = 'GET';
+            $safeMethods = ['GET', 'HEAD', 'OPTIONS'];
+            $requestMethod = $request->getMethod();
+
+            $modify['method'] = in_array($requestMethod, $safeMethods) ? $requestMethod : 'GET';
             $modify['body'] = '';
         }
 
