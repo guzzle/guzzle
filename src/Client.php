@@ -331,7 +331,7 @@ class Client implements ClientInterface
             && $options['decode_content'] !== true
         ) {
             // Ensure that we don't have the header in different case and set the new value.
-            $options['_conditional'] = Psr7\_caseless_remove(['Accept-Encoding'], $modify['set_headers']);
+            $options['_conditional'] = Psr7\_caseless_remove(['Accept-Encoding'], $options['_conditional']);
             $modify['set_headers']['Accept-Encoding'] = $options['decode_content'];
         }
 
