@@ -51,7 +51,7 @@ interface ClientInterface
      * @return ResponseInterface
      * @throws GuzzleException
      */
-    public function request($method, $uri, array $options = []);
+    public function request($method, $uri = '', array $options = []);
 
     /**
      * Create and send an asynchronous HTTP request.
@@ -67,7 +67,7 @@ interface ClientInterface
      *
      * @return PromiseInterface
      */
-    public function requestAsync($method, $uri, array $options = []);
+    public function requestAsync($method, $uri = '', array $options = []);
 
     /**
      * Get a client configuration option.
