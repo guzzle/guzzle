@@ -1,5 +1,10 @@
 # Change Log
 
+## 6.3.3 - 2018-04-22
+
+* Fix: Default headers when decode_content is specified
+
+
 ## 6.3.2 - 2018-03-26
 
 * Fix: Release process
