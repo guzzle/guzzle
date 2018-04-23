@@ -21,7 +21,7 @@ class FunctionsTest extends TestCase
     public function testProvidesDefaultUserAgent()
     {
         $ua = GuzzleHttp\default_user_agent();
-        $this->assertEquals(1, preg_match('#^GuzzleHttp/.+ curl/.+ PHP/.+$#', $ua));
+        $this->assertRegExp('#^GuzzleHttp/.+ curl/.+ PHP/.+$#', $ua);
     }
 
     public function typeProvider()
