@@ -394,8 +394,14 @@ class CookieJarTest extends TestCase
     public function testCookiePathWithEmptySetCookiePath($uriPath, $cookiePath)
     {
         $response = (new Response(200))
-            ->withAddedHeader('Set-Cookie', "foo=bar; expires=Fri, 02-Mar-2019 02:17:40 GMT; domain=www.example.com; path=;")
-            ->withAddedHeader('Set-Cookie', "bar=foo; expires=Fri, 02-Mar-2019 02:17:40 GMT; domain=www.example.com; path=foobar;")
+            ->withAddedHeader(
+                'Set-Cookie',
+                "foo=bar; expires=Fri, 02-Mar-2019 02:17:40 GMT; domain=www.example.com; path=;"
+            )
+            ->withAddedHeader(
+                'Set-Cookie',
+                "bar=foo; expires=Fri, 02-Mar-2019 02:17:40 GMT; domain=www.example.com; path=foobar;"
+            )
         ;
         $request = (new Request('GET', $uriPath))->withHeader('Host', 'www.example.com');
         $this->jar->extractCookies($request, $response);

@@ -340,7 +340,10 @@ class CurlFactoryTest extends TestCase
         $this->assertEquals('gzip', $sent->getHeaderLine('Accept-Encoding'));
         $this->assertEquals('test', (string) $response->getBody());
         $this->assertFalse($response->hasHeader('content-encoding'));
-        $this->assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == $response->getBody()->getSize());
+        $this->assertTrue(
+            !$response->hasHeader('content-length') ||
+            $response->getHeaderLine('content-length') == $response->getBody()->getSize()
+        );
     }
 
     public function testDoesNotForceDecode()
