@@ -3,11 +3,12 @@ namespace GuzzleHttp\Tests\CookieJar;
 
 use GuzzleHttp\Cookie\FileCookieJar;
 use GuzzleHttp\Cookie\SetCookie;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers GuzzleHttp\Cookie\FileCookieJar
  */
-class FileCookieJarTest extends \PHPUnit_Framework_TestCase
+class FileCookieJarTest extends TestCase
 {
     private $file;
 
@@ -56,7 +57,7 @@ class FileCookieJarTest extends \PHPUnit_Framework_TestCase
             'Domain'  => 'foo.com',
         ]));
 
-        $this->assertEquals(3, count($jar));
+        $this->assertCount(3, $jar);
         unset($jar);
 
         // Make sure it wrote to the file
@@ -67,10 +68,10 @@ class FileCookieJarTest extends \PHPUnit_Framework_TestCase
         $jar = new FileCookieJar($this->file);
 
         if ($testSaveSessionCookie) {
-            $this->assertEquals(3, count($jar));
+            $this->assertCount(3, $jar);
         } else {
             // Weeds out temporary and session cookies
-            $this->assertEquals(2, count($jar));
+            $this->assertCount(2, $jar);
         }
 
         unset($jar);

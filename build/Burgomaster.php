@@ -157,7 +157,7 @@ class Burgomaster
      *                           Defaults to "php" files only (e.g., ['php']).
      * @throws \InvalidArgumentException if the source directory is invalid.
      */
-    function recursiveCopy(
+    public function recursiveCopy(
         $sourceDir,
         $destDir,
         $extensions = array('php')
@@ -227,7 +227,8 @@ class Burgomaster
      * @param string $filename Name of the autoloader file.
      * @throws \RuntimeException if the file cannot be written
      */
-    function createAutoloader($files = array(), $filename = 'autoloader.php') {
+    public function createAutoloader($files = array(), $filename = 'autoloader.php')
+    {
         $sourceDir = realpath($this->stageDir);
         $iter = new \RecursiveDirectoryIterator($sourceDir);
         $iter = new \RecursiveIteratorIterator($iter);

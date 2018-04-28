@@ -1,7 +1,9 @@
 Guzzle, PHP HTTP client
 =======================
 
-[![Build Status](https://travis-ci.org/guzzle/guzzle.svg?branch=master)](https://travis-ci.org/guzzle/guzzle)
+[![Latest Version](https://img.shields.io/github/release/guzzle/guzzle.svg?style=flat-square)](https://github.com/guzzle/guzzle/releases)
+[![Build Status](https://img.shields.io/travis/guzzle/guzzle.svg?style=flat-square)](https://travis-ci.org/guzzle/guzzle)
+[![Total Downloads](https://img.shields.io/packagist/dt/guzzlehttp/guzzle.svg?style=flat-square)](https://packagist.org/packages/guzzlehttp/guzzle)
 
 Guzzle is a PHP HTTP client that makes it easy to send HTTP requests and
 trivial to integrate with web services.
@@ -19,15 +21,13 @@ trivial to integrate with web services.
 
 ```php
 $client = new \GuzzleHttp\Client();
-$res = $client->request('GET', 'https://api.github.com/user', [
-    'auth' => ['user', 'pass']
-]);
+$res = $client->request('GET', 'https://api.github.com/repos/guzzle/guzzle');
 echo $res->getStatusCode();
 // 200
 echo $res->getHeaderLine('content-type');
 // 'application/json; charset=utf8'
 echo $res->getBody();
-// {"type":"User"...'
+// '{"id": 1420053, "name": "guzzle", ...}'
 
 // Send an asynchronous request.
 $request = new \GuzzleHttp\Psr7\Request('GET', 'http://httpbin.org');
@@ -40,7 +40,7 @@ $promise->wait();
 ## Help and docs
 
 - [Documentation](http://guzzlephp.org/)
-- [stackoverflow](http://stackoverflow.com/questions/tagged/guzzle)
+- [Stack Overflow](http://stackoverflow.com/questions/tagged/guzzle)
 - [Gitter](https://gitter.im/guzzle/guzzle)
 
 
@@ -75,14 +75,15 @@ composer.phar update
 
 ## Version Guidance
 
-| Version | Status      | Packagist           | Namespace    | Repo                | Docs                | PSR-7 |
-|---------|-------------|---------------------|--------------|---------------------|---------------------|-------|
-| 3.x     | EOL         | `guzzle/guzzle`     | `Guzzle`     | [v3][guzzle-3-repo] | [v3][guzzle-3-docs] | No    |
-| 4.x     | EOL         | `guzzlehttp/guzzle` | `GuzzleHttp` | N/A                 | N/A                 | No    |
-| 5.x     | Maintained  | `guzzlehttp/guzzle` | `GuzzleHttp` | [v5][guzzle-5-repo] | [v5][guzzle-5-docs] | No    |
-| 6.x     | Latest      | `guzzlehttp/guzzle` | `GuzzleHttp` | [v6][guzzle-6-repo] | [v6][guzzle-6-docs] | Yes   |
+| Version | Status     | Packagist           | Namespace    | Repo                | Docs                | PSR-7 | PHP Version |
+|---------|------------|---------------------|--------------|---------------------|---------------------|-------|-------------|
+| 3.x     | EOL        | `guzzle/guzzle`     | `Guzzle`     | [v3][guzzle-3-repo] | [v3][guzzle-3-docs] | No    | >= 5.3.3    |
+| 4.x     | EOL        | `guzzlehttp/guzzle` | `GuzzleHttp` | [v4][guzzle-4-repo] | N/A                 | No    | >= 5.4      |
+| 5.x     | Maintained | `guzzlehttp/guzzle` | `GuzzleHttp` | [v5][guzzle-5-repo] | [v5][guzzle-5-docs] | No    | >= 5.4      |
+| 6.x     | Latest     | `guzzlehttp/guzzle` | `GuzzleHttp` | [v6][guzzle-6-repo] | [v6][guzzle-6-docs] | Yes   | >= 5.5      |
 
 [guzzle-3-repo]: https://github.com/guzzle/guzzle3
+[guzzle-4-repo]: https://github.com/guzzle/guzzle/tree/4.x
 [guzzle-5-repo]: https://github.com/guzzle/guzzle/tree/5.3
 [guzzle-6-repo]: https://github.com/guzzle/guzzle
 [guzzle-3-docs]: http://guzzle3.readthedocs.org/en/latest/

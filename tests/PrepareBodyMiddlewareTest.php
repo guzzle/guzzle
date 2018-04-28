@@ -10,14 +10,33 @@ use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\RequestInterface;
+use PHPUnit\Framework\TestCase;
 
-class PrepareBodyMiddlewareTest extends \PHPUnit_Framework_TestCase
+class PrepareBodyMiddlewareTest extends TestCase
 {
-    public function testAddsContentLengthWhenMissingAndPossible()
+    public function methodProvider()
+    {
+        $methods = ['GET', 'PUT', 'POST'];
+        $bodies = ['Test', ''];
+        foreach ($methods as $method) {
+            foreach ($bodies as $body) {
+                yield [$method, $body];
+            }
+        }
+    }
+    /**
+     * @dataProvider methodProvider
+     */
+    public function testAddsContentLengthWhenMissingAndPossible($method, $body)
     {
         $h = new MockHandler([
-            function (RequestInterface $request) {
-                $this->assertEquals(3, $request->getHeaderLine('Content-Length'));
+            function (RequestInterface $request) use ($body) {
+                $length = strlen($body);
+                if ($length > 0) {
+                    $this->assertEquals($length, $request->getHeaderLine('Content-Length'));
+                } else {
+                    $this->assertFalse($request->hasHeader('Content-Length'));
+                }
                 return new Response(200);
             }
         ]);
@@ -25,7 +44,7 @@ class PrepareBodyMiddlewareTest extends \PHPUnit_Framework_TestCase
         $stack = new HandlerStack($h);
         $stack->push($m);
         $comp = $stack->resolve();
-        $p = $comp(new Request('PUT', 'http://www.google.com', [], '123'), []);
+        $p = $comp(new Request($method, 'http://www.google.com', [], $body), []);
         $this->assertInstanceOf(PromiseInterface::class, $p);
         $response = $p->wait();
         $this->assertEquals(200, $response->getStatusCode());

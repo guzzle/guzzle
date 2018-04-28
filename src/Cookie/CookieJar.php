@@ -86,6 +86,25 @@ class CookieJar implements CookieJarInterface
         return false;
     }
 
+    /**
+     * Finds and returns the cookie based on the name
+     *
+     * @param string $name cookie name to search for
+     * @return SetCookie|null cookie that was found or null if not found
+     */
+    public function getCookieByName($name)
+    {
+        // don't allow a null name
+        if ($name === null) {
+            return null;
+        }
+        foreach ($this->cookies as $cookie) {
+            if ($cookie->getName() !== null && strcasecmp($cookie->getName(), $name) === 0) {
+                return $cookie;
+            }
+        }
+    }
+
     public function toArray()
     {
         return array_map(function (SetCookie $cookie) {
@@ -216,9 +235,39 @@ class CookieJar implements CookieJarInterface
                 if (!$sc->getDomain()) {
                     $sc->setDomain($request->getUri()->getHost());
                 }
+                if (0 !== strpos($sc->getPath(), '/')) {
+                    $sc->setPath($this->getCookiePathFromRequest($request));
+                }
                 $this->setCookie($sc);
             }
         }
+    }
+
+    /**
+     * Computes cookie path following RFC 6265 section 5.1.4
+     *
+     * @link https://tools.ietf.org/html/rfc6265#section-5.1.4
+     *
+     * @param RequestInterface $request
+     * @return string
+     */
+    private function getCookiePathFromRequest(RequestInterface $request)
+    {
+        $uriPath = $request->getUri()->getPath();
+        if (''  === $uriPath) {
+            return '/';
+        }
+        if (0 !== strpos($uriPath, '/')) {
+            return '/';
+        }
+        if ('/' === $uriPath) {
+            return '/';
+        }
+        if (0 === $lastSlashPos = strrpos($uriPath, '/')) {
+            return '/';
+        }
+
+        return substr($uriPath, 0, $lastSlashPos);
     }
 
     public function withCookieHeader(RequestInterface $request)

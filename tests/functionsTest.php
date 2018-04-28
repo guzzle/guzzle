@@ -2,8 +2,9 @@
 namespace GuzzleHttp\Test;
 
 use GuzzleHttp;
+use PHPUnit\Framework\TestCase;
 
-class FunctionsTest extends \PHPUnit_Framework_TestCase
+class FunctionsTest extends TestCase
 {
     public function testExpandsTemplate()
     {
@@ -20,7 +21,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
     public function testProvidesDefaultUserAgent()
     {
         $ua = GuzzleHttp\default_user_agent();
-        $this->assertEquals(1, preg_match('#^GuzzleHttp/.+ curl/.+ PHP/.+$#', $ua));
+        $this->assertRegExp('#^GuzzleHttp/.+ curl/.+ PHP/.+$#', $ua);
     }
 
     public function typeProvider()
@@ -63,7 +64,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
 
     public function testReturnsDebugResource()
     {
-        $this->assertTrue(is_resource(GuzzleHttp\debug_resource()));
+        $this->assertInternalType('resource', GuzzleHttp\debug_resource());
     }
 
     public function testProvidesDefaultCaBundler()
@@ -117,7 +118,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
 
     public function testDecodesJson()
     {
-        $this->assertSame(true, \GuzzleHttp\json_decode('true'));
+        $this->assertTrue(\GuzzleHttp\json_decode('true'));
     }
 
     /**

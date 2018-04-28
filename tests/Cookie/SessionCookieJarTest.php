@@ -3,11 +3,12 @@ namespace GuzzleHttp\Tests\CookieJar;
 
 use GuzzleHttp\Cookie\SessionCookieJar;
 use GuzzleHttp\Cookie\SetCookie;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers GuzzleHttp\Cookie\SessionCookieJar
  */
-class SessionCookieJarTest extends \PHPUnit_Framework_TestCase
+class SessionCookieJarTest extends TestCase
 {
     private $sessionVar;
 
@@ -60,7 +61,7 @@ class SessionCookieJarTest extends \PHPUnit_Framework_TestCase
             'Domain'  => 'foo.com',
         ]));
 
-        $this->assertEquals(3, count($jar));
+        $this->assertCount(3, $jar);
         unset($jar);
 
         // Make sure it wrote to the sessionVar in $_SESSION
@@ -71,10 +72,10 @@ class SessionCookieJarTest extends \PHPUnit_Framework_TestCase
         $jar = new SessionCookieJar($this->sessionVar);
 
         if ($testSaveSessionCookie) {
-            $this->assertEquals(3, count($jar));
+            $this->assertCount(3, $jar);
         } else {
             // Weeds out temporary and session cookies
-            $this->assertEquals(2, count($jar));
+            $this->assertCount(2, $jar);
         }
 
         unset($jar);

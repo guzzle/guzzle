@@ -10,8 +10,9 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Promise\Promise;
 use Psr\Http\Message\RequestInterface;
+use PHPUnit\Framework\TestCase;
 
-class PoolTest extends \PHPUnit_Framework_TestCase
+class PoolTest extends TestCase
 {
     /**
      * @expectedException \InvalidArgumentException

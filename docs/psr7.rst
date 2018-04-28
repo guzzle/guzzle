@@ -234,7 +234,7 @@ scheme can be set to "http" or "https".
 
     $request = new Request('GET', 'http://httpbin.org');
     echo $request->getUri()->getScheme(); // http
-    echo $request->getUri(); // http://httpbin.org/get
+    echo $request->getUri(); // http://httpbin.org
 
 
 Host
@@ -257,7 +257,7 @@ No port is necessary when using the "http" or "https" schemes.
 
 .. code-block:: php
 
-    $request = $client->createRequest('GET', 'http://httpbin.org:8080');
+    $request = new Request('GET', 'http://httpbin.org:8080');
     echo $request->getUri()->getPort(); // 8080
     echo $request->getUri(); // http://httpbin.org:8080
 
@@ -326,7 +326,7 @@ As described earlier, you can get the body of a response using the
 
 .. code-block:: php
 
-    $body = $response->getBody()) {
+    $body = $response->getBody();
     echo $body;
     // Cast to a string: { ... }
     $body->seek(0);

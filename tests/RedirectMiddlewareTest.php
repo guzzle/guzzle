@@ -9,11 +9,12 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RedirectMiddleware;
 use Psr\Http\Message\RequestInterface;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers GuzzleHttp\RedirectMiddleware
  */
-class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
+class RedirectMiddlewareTest extends TestCase
 {
     public function testIgnoresNonRedirects()
     {
@@ -155,6 +156,35 @@ class RedirectMiddlewareTest extends \PHPUnit_Framework_TestCase
                 'http://example.com/bar',
             ],
             $response->getHeader(RedirectMiddleware::HISTORY_HEADER)
+        );
+    }
+
+    public function testAddsGuzzleRedirectStatusHeader()
+    {
+        $mock = new MockHandler([
+            new Response(301, ['Location' => 'http://example.com']),
+            new Response(302, ['Location' => 'http://example.com/foo']),
+            new Response(301, ['Location' => 'http://example.com/bar']),
+            new Response(302, ['Location' => 'http://example.com/baz']),
+            new Response(200)
+        ]);
+
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('GET', 'http://example.com?a=b');
+        $promise = $handler($request, [
+            'allow_redirects' => ['track_redirects' => true]
+        ]);
+        $response = $promise->wait(true);
+        $this->assertEquals(
+            [
+                301,
+                302,
+                301,
+                302,
+            ],
+            $response->getHeader(RedirectMiddleware::STATUS_HISTORY_HEADER)
         );
     }
 

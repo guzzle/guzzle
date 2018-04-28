@@ -5,11 +5,12 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\RequestOptions;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \GuzzleHttp\Handler\Proxy
  */
-class ProxyTest extends \PHPUnit_Framework_TestCase
+class ProxyTest extends TestCase
 {
     public function testSendsToNonSync()
     {

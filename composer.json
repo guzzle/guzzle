@@ -14,12 +14,12 @@
     ],
     "require": {
         "php": ">=5.5",
-        "guzzlehttp/psr7": "^1.3.1",
+        "guzzlehttp/psr7": "^1.4",
         "guzzlehttp/promises": "^1.0"
     },
     "require-dev": {
         "ext-curl": "*",
-        "phpunit/phpunit": "^4.0",
+        "phpunit/phpunit": "^4.8.35 || ^5.7 || ^6.4 || ^7.0",
         "psr/log": "^1.0"
     },
     "autoload": {
@@ -33,9 +33,12 @@
             "GuzzleHttp\\Tests\\": "tests/"
         }
     },
+    "suggest": {
+        "psr/log": "Required for using the Log middleware"
+    },
     "extra": {
         "branch-alias": {
-            "dev-master": "6.2-dev"
+            "dev-master": "6.3-dev"
         }
     }
 }

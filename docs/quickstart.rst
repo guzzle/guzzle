@@ -134,6 +134,7 @@ You can also use the `sendAsync()` and `requestAsync()` methods of a client:
     $headers = ['X-Foo' => 'Bar'];
     $body = 'Hello!';
     $request = new Request('HEAD', 'http://httpbin.org/head', $headers, $body);
+    $promise = $client->sendAsync($request);
 
     // Or, if you don't need to pass in a request instance:
     $promise = $client->requestAsync('GET', 'http://httpbin.org/get');
@@ -192,8 +193,8 @@ requests.
 
     // You can access each result using the key provided to the unwrap
     // function.
-    echo $results['image']->getHeader('Content-Length');
-    echo $results['png']->getHeader('Content-Length');
+    echo $results['image']['value']->getHeader('Content-Length')[0]
+    echo $results['png']['value']->getHeader('Content-Length')[0]
 
 You can use the ``GuzzleHttp\Pool`` object when you have an indeterminate
 amount of requests you wish to send.
@@ -272,7 +273,7 @@ You can retrieve headers from the response:
     }
 
     // Get a header from the response.
-    echo $response->getHeader('Content-Length');
+    echo $response->getHeader('Content-Length')[0];
 
     // Get all of the response headers.
     foreach ($response->getHeaders() as $name => $values) {
@@ -427,7 +428,7 @@ Cookies
 
 Guzzle can maintain a cookie session for you if instructed using the
 ``cookies`` request option. When sending a request, the ``cookies`` option
-must be set an an instance of ``GuzzleHttp\Cookie\CookieJarInterface``.
+must be set to an instance of ``GuzzleHttp\Cookie\CookieJarInterface``.
 
 .. code-block:: php
 

@@ -63,6 +63,8 @@ class Client implements ClientInterface
     {
         if (!isset($config['handler'])) {
             $config['handler'] = HandlerStack::create();
+        } elseif (!is_callable($config['handler'])) {
+            throw new \InvalidArgumentException('handler must be a callable');
         }
 
         // Convert the base_uri to a UriInterface
@@ -142,7 +144,7 @@ class Client implements ClientInterface
         $uri = Psr7\uri_for($uri === null ? '' : $uri);
 
         if (isset($config['base_uri'])) {
-            $uri = Psr7\Uri::resolve(Psr7\uri_for($config['base_uri']), $uri);
+            $uri = Psr7\UriResolver::resolve(Psr7\uri_for($config['base_uri']), $uri);
         }
 
         return $uri->getScheme() === '' && $uri->getHost() !== '' ? $uri->withScheme('http') : $uri;
@@ -288,7 +290,14 @@ class Client implements ClientInterface
      */
     private function applyOptions(RequestInterface $request, array &$options)
     {
-        $modify = [];
+        $modify = [
+            'set_headers' => [],
+        ];
+
+        if (isset($options['headers'])) {
+            $modify['set_headers'] = $options['headers'];
+            unset($options['headers']);
+        }
 
         if (isset($options['form_params'])) {
             if (isset($options['multipart'])) {
@@ -300,6 +309,8 @@ class Client implements ClientInterface
             }
             $options['body'] = http_build_query($options['form_params'], '', '&');
             unset($options['form_params']);
+            // Ensure that we don't have the header in different case and set the new value.
+            $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
             $options['_conditional']['Content-Type'] = 'application/x-www-form-urlencoded';
         }
 
@@ -311,22 +322,17 @@ class Client implements ClientInterface
         if (isset($options['json'])) {
             $options['body'] = \GuzzleHttp\json_encode($options['json']);
             unset($options['json']);
+            // Ensure that we don't have the header in different case and set the new value.
+            $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
             $options['_conditional']['Content-Type'] = 'application/json';
         }
 
         if (!empty($options['decode_content'])
             && $options['decode_content'] !== true
         ) {
+            // Ensure that we don't have the header in different case and set the new value.
+            $options['_conditional'] = Psr7\_caseless_remove(['Accept-Encoding'], $options['_conditional']);
             $modify['set_headers']['Accept-Encoding'] = $options['decode_content'];
-        }
-
-        if (isset($options['headers'])) {
-            if (isset($modify['set_headers'])) {
-                $modify['set_headers'] = $options['headers'] + $modify['set_headers'];
-            } else {
-                $modify['set_headers'] = $options['headers'];
-            }
-            unset($options['headers']);
         }
 
         if (isset($options['body'])) {
@@ -351,12 +357,18 @@ class Client implements ClientInterface
             ];
             switch ($type) {
                 case 'basic':
+                    // Ensure that we don't have the header in different case and set the new value.
+                    $modify['set_headers'] = Psr7\_caseless_remove(['Authorization'], $modify['set_headers']);
                     $modify['set_headers']['Authorization'] = 'Basic '
                         . base64_encode("$value[0]:$value[1]");
                     break;
                 case 'digest':
                     // @todo: Do not rely on curl
                     $options['curl'][CURLOPT_HTTPAUTH] = CURLAUTH_DIGEST;
+                    $options['curl'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
+                    break;
+                case 'ntlm':
+                    $options['curl'][CURLOPT_HTTPAUTH] = CURLAUTH_NTLM;
                     $options['curl'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
                     break;
             }
@@ -385,6 +397,8 @@ class Client implements ClientInterface
         $request = Psr7\modify_request($request, $modify);
         if ($request->getBody() instanceof Psr7\MultipartStream) {
             // Use a multipart/form-data POST if a Content-Type is not set.
+            // Ensure that we don't have the header in different case and set the new value.
+            $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
             $options['_conditional']['Content-Type'] = 'multipart/form-data; boundary='
                 . $request->getBody()->getBoundary();
         }
@@ -411,7 +425,7 @@ class Client implements ClientInterface
         throw new \InvalidArgumentException('Passing in the "body" request '
             . 'option as an array to send a POST request has been deprecated. '
             . 'Please use the "form_params" request option to send a '
-            . 'application/x-www-form-urlencoded request, or a the "multipart" '
+            . 'application/x-www-form-urlencoded request, or the "multipart" '
             . 'request option to send a multipart/form-data request.');
     }
 }

@@ -14,7 +14,7 @@ use Psr\Http\Message\ResponseInterface;
  */
 class MockHandler implements \Countable
 {
-    private $queue;
+    private $queue = [];
     private $lastRequest;
     private $lastOptions;
     private $onFulfilled;
@@ -91,7 +91,7 @@ class MockHandler implements \Countable
         }
 
         $response = $response instanceof \Exception
-            ? new RejectedPromise($response)
+            ? \GuzzleHttp\Promise\rejection_for($response)
             : \GuzzleHttp\Promise\promise_for($response);
 
         return $response->then(
@@ -120,7 +120,7 @@ class MockHandler implements \Countable
                 if ($this->onRejected) {
                     call_user_func($this->onRejected, $reason);
                 }
-                return new RejectedPromise($reason);
+                return \GuzzleHttp\Promise\rejection_for($reason);
             }
         );
     }

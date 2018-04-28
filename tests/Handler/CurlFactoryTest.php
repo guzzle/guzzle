@@ -8,11 +8,12 @@ use GuzzleHttp\Handler;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\TransferStats;
 use Psr\Http\Message\ResponseInterface;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \GuzzleHttp\Handler\CurlFactory
  */
-class CurlFactoryTest extends \PHPUnit_Framework_TestCase
+class CurlFactoryTest extends TestCase
 {
     public static function setUpBeforeClass()
     {
@@ -121,6 +122,15 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $f = new Handler\CurlFactory(3);
         $f->create(new Psr7\Request('GET', 'http://foo.com'), ['verify' => __FILE__]);
         $this->assertEquals(__FILE__, $_SERVER['_curl'][CURLOPT_CAINFO]);
+        $this->assertEquals(2, $_SERVER['_curl'][CURLOPT_SSL_VERIFYHOST]);
+        $this->assertEquals(true, $_SERVER['_curl'][CURLOPT_SSL_VERIFYPEER]);
+    }
+
+    public function testCanSetVerifyToDir()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'http://foo.com'), ['verify' => __DIR__]);
+        $this->assertEquals(__DIR__, $_SERVER['_curl'][CURLOPT_CAPATH]);
         $this->assertEquals(2, $_SERVER['_curl'][CURLOPT_SSL_VERIFYHOST]);
         $this->assertEquals(true, $_SERVER['_curl'][CURLOPT_SSL_VERIFYPEER]);
     }
@@ -330,7 +340,10 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('gzip', $sent->getHeaderLine('Accept-Encoding'));
         $this->assertEquals('test', (string) $response->getBody());
         $this->assertFalse($response->hasHeader('content-encoding'));
-        $this->assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == $response->getBody()->getSize());
+        $this->assertTrue(
+            !$response->hasHeader('content-length') ||
+            $response->getHeaderLine('content-length') == $response->getBody()->getSize()
+        );
     }
 
     public function testDoesNotForceDecode()
@@ -395,7 +408,7 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
             'sink'           => $tmpfile,
         ]);
         $response->wait();
-        $this->assertEquals('test', file_get_contents($tmpfile));
+        $this->assertStringEqualsFile($tmpfile, 'test');
         unlink($tmpfile);
     }
 
@@ -547,7 +560,7 @@ class CurlFactoryTest extends \PHPUnit_Framework_TestCase
         $request = new Psr7\Request('PUT', Server::$url, [], $bd);
         $f->create($request, []);
         $this->assertEquals(1, $_SERVER['_curl'][CURLOPT_UPLOAD]);
-        $this->assertTrue(is_callable($_SERVER['_curl'][CURLOPT_READFUNCTION]));
+        $this->assertInternalType('callable', $_SERVER['_curl'][CURLOPT_READFUNCTION]);
     }
 
     /**
