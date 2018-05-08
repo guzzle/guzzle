@@ -317,6 +317,8 @@ class Client implements ClientInterface
         if (isset($options['multipart'])) {
             $options['body'] = new Psr7\MultipartStream($options['multipart']);
             unset($options['multipart']);
+            
+            $request = $request->withAddedHeader('content-type', 'boundary=' . $options['body']->getBoundary());
         }
 
         if (isset($options['json'])) {
