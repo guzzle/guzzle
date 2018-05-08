@@ -294,6 +294,8 @@ class Client implements ClientInterface
             'set_headers' => [],
         ];
 
+        $contentTypeHeaderName = 'Content-Type';
+
         if (isset($options['headers'])) {
             $modify['set_headers'] = $options['headers'];
             unset($options['headers']);
@@ -310,23 +312,26 @@ class Client implements ClientInterface
             $options['body'] = http_build_query($options['form_params'], '', '&');
             unset($options['form_params']);
             // Ensure that we don't have the header in different case and set the new value.
-            $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
-            $options['_conditional']['Content-Type'] = 'application/x-www-form-urlencoded';
+            $options['_conditional'] = Psr7\_caseless_remove([$contentTypeHeaderName], $options['_conditional']);
+            $options['_conditional'][$contentTypeHeaderName] = 'application/x-www-form-urlencoded';
         }
 
         if (isset($options['multipart'])) {
             $options['body'] = new Psr7\MultipartStream($options['multipart']);
             unset($options['multipart']);
-            
-            $request = $request->withAddedHeader('content-type', 'boundary=' . $options['body']->getBoundary());
+            if (empty($request->getHeaderLine($contentTypeHeaderName))
+                || strpos($request->getHeaderLine($contentTypeHeaderName), 'multipart/form-data') === false) {
+                $request = $request->withHeader($contentTypeHeaderName, 'multipart/form-data');
+            }
+            $request = $request->withAddedHeader($contentTypeHeaderName, 'boundary=' . $options['body']->getBoundary());
         }
 
         if (isset($options['json'])) {
             $options['body'] = \GuzzleHttp\json_encode($options['json']);
             unset($options['json']);
             // Ensure that we don't have the header in different case and set the new value.
-            $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
-            $options['_conditional']['Content-Type'] = 'application/json';
+            $options['_conditional'] = Psr7\_caseless_remove([$contentTypeHeaderName], $options['_conditional']);
+            $options['_conditional'][$contentTypeHeaderName] = 'application/json';
         }
 
         if (!empty($options['decode_content'])
@@ -391,8 +396,8 @@ class Client implements ClientInterface
         if ($request->getBody() instanceof Psr7\MultipartStream) {
             // Use a multipart/form-data POST if a Content-Type is not set.
             // Ensure that we don't have the header in different case and set the new value.
-            $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
-            $options['_conditional']['Content-Type'] = 'multipart/form-data; boundary='
+            $options['_conditional'] = Psr7\_caseless_remove([$contentTypeHeaderName], $options['_conditional']);
+            $options['_conditional'][$contentTypeHeaderName] = 'multipart/form-data; boundary='
                 . $request->getBody()->getBoundary();
         }
 

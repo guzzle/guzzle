@@ -484,7 +484,11 @@ class ClientTest extends TestCase
 
         $last = $mock->getLastRequest();
         $this->assertContains(
-            'multipart/form-data; boundary=',
+            'multipart/form-data',
+            $last->getHeaderLine('Content-Type')
+        );
+        $this->assertContains(
+            'boundary=',
             $last->getHeaderLine('Content-Type')
         );
 
