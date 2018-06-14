@@ -177,7 +177,7 @@ class CurlFactory implements CurlFactoryInterface
             'cURL error %s: %s (%s)',
             $ctx['errno'],
             $ctx['error'],
-            'see http://curl.haxx.se/libcurl/c/libcurl-errors.html'
+            'see https://curl.haxx.se/libcurl/c/libcurl-errors.html'
         );
 
         // Create a connection exception if it was a specific error code.
