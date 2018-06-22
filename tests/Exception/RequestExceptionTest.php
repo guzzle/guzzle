@@ -5,6 +5,8 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * @covers GuzzleHttp\Exception\RequestException
@@ -173,5 +175,37 @@ class RequestExceptionTest extends TestCase
         $r = new Request('GET', 'http://user:password@www.oo.com');
         $e = RequestException::create($r, new Response(500));
         $this->assertContains('http://user:***@www.oo.com', $e->getMessage());
+    }
+
+    public function testGetResponseBodySummaryOfNonReadableStream()
+    {
+        $stream = $this->prophesize(StreamInterface::class);
+        $stream->isSeekable()->willReturn(true);
+        $stream->isReadable()->willReturn(false);
+
+        $response = $this->prophesize(ResponseInterface::class);
+        $response->getBody()->willReturn($stream->reveal());
+
+        $this->assertNull(RequestException::getResponseBodySummary($response->reveal()));
+    }
+
+    public function testGetResponseBodySummary()
+    {
+        $message = 'PHPUnit test response';
+
+        $stream = $this->prophesize(StreamInterface::class);
+        $stream->isSeekable()->willReturn(true);
+        $stream->isReadable()->willReturn(true);
+        $stream->getSize()->willReturn(strlen($message));
+        $stream->read(120)->willReturn($message);
+        $stream->rewind()->willReturn();
+
+        $response = $this->prophesize(ResponseInterface::class);
+        $response->getBody()->willReturn($stream->reveal());
+
+        $this->assertSame(
+            $message,
+            RequestException::getResponseBodySummary($response->reveal())
+        );
     }
 }
