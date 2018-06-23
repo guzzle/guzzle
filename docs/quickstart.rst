@@ -486,7 +486,7 @@ Exceptions
 **Tree View**
 
 The following tree view describes how the Guzzle Exceptions depend
-on eachother.
+on each other.
 
 .. code-block:: none
 
